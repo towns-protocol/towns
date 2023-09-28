@@ -25,6 +25,7 @@ contracts/docgen/*
 packages/contract/out
 contracts/coverage/*
 contracts/deployments/*
+common/xchain/src/gen/*
 
 broadcast/*
 cache/*

@@ -4,4 +4,5 @@ use (
 	./casablanca/node
 	./servers/dendrite
 	./servers/xchain
+	./common/xchain
 )

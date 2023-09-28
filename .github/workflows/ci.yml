@@ -74,6 +74,12 @@ jobs:
                   cache: true
                   cache-dependency-path: 'servers/**/go.sum'
 
+            - name: Run deps.sh script
+              run: |
+                  cd common/xchain
+                  chmod +x deps.sh
+                  ./deps.sh
+
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
@@ -527,6 +533,21 @@ jobs:
             - name: Git submodules
               run: git submodule update --init --recursive
 
+            - name: Setup Go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: '1.20'
+                  cache: true
+                  cache-dependency-path: |
+                      servers/xchain/go.sum
+                      common/xchain/go.sum
+
+            - name: Run deps.sh script
+              run: |
+                  cd common/xchain
+                  chmod +x deps.sh
+                  ./deps.sh
+
             - uses: actions/setup-node@v3
               with:
                   node-version: '20'
@@ -551,14 +572,6 @@ jobs:
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
 
-            - name: Setup Go
-              uses: actions/setup-go@v3
-              with:
-                  go-version: '1.20'
-                  cache: true
-                  cache-dependency-path: |
-                      servers/xchain/go.sum
-
             - name: Start anvil
               # Start anvil in the background, and wait for it to be ready
               run: anvil & ./scripts/wait-for-blockchain.sh
@@ -569,7 +582,7 @@ jobs:
             - name: Build town contract types
               run: ./scripts/build-town-types.sh localhost --frozen
 
-            - name: Run node tests
+            - name: Run xchain node tests
               run: go test --race ./...
               working-directory: servers/xchain
 
@@ -577,7 +590,15 @@ jobs:
               run: go build --race ./...
               working-directory: servers/xchain
 
-            # If CI failed, we send a slack notification
+            - name: Run xchain common go tests
+              run: go test --race ./...
+              working-directory: common/xchain
+
+            - name: Run xchain common typescript tests
+              run: yarn test
+              working-directory: common/xchain
+
+              # If CI failed, we send a slack notification
             - name: Slack notification
               if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
               uses: rtCamp/action-slack-notify@v2

@@ -11,8 +11,8 @@
 		"lint": "yarn eslint --format unix ./src",
 		"lint:fix": "yarn lint --fix",
 		"publish:prod": "wrangler deploy --env production",
-		"publish:test": "wrangler deploy --env test",
 		"publish:prod-beta": "wrangler deploy --env production-beta",
+		"publish:test": "wrangler deploy --env test",
 		"publish:test-beta": "wrangler deploy --env test-beta",
 		"test": "yarn test:unit",
 		"test:unit": "jest"
@@ -26,7 +26,7 @@
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20230710.1",
-		"@types/jest": "^29.4.0",
+		"@types/jest": "^29.5.3",
 		"@typescript-eslint/eslint-plugin": "^5.61.0",
 		"@typescript-eslint/parser": "^5.61.0",
 		"eslint": "^8.42.0",
@@ -35,7 +35,7 @@
 		"miniflare": "^3.20230710.0",
 		"prettier": "^2.8.8",
 		"ts-jest": "^29.1.1",
-		"typescript": "^5.1.3",
+		"typescript": "^5.1.6",
 		"wrangler": "^3.2.0"
 	}
 }

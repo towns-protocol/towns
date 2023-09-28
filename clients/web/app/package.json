@@ -11,9 +11,9 @@
         "lint": "eslint .",
         "lint:fix": "yarn lint --fix",
         "preview": "vite preview",
-        "vitest-preview": "vitest-preview",
         "test": "yarn test:unit",
-        "test:unit": "VITE_TOKEN_SERVER_URL=http://fake.com VITE_MATRIX_HOMESERVER_URL=https://node1-test.towns.com VITE_CASABLANCA_HOMESERVER_URL=http://fake.com VITE_CHAIN_ID=31337 VITE_AUTH_WORKER_HEADER_SECRET=fake VITE_GIPHY_API_KEY=fake VITE_UNFURL_SERVER_URL=http://fake.com VITE_ALCHEMY_API_KEY=fake VITE_GATEWAY_URL=http://fake.com vitest"
+        "test:unit": "VITE_TOKEN_SERVER_URL=http://fake.com VITE_MATRIX_HOMESERVER_URL=https://node1-test.towns.com VITE_CASABLANCA_HOMESERVER_URL=http://fake.com VITE_CHAIN_ID=31337 VITE_AUTH_WORKER_HEADER_SECRET=fake VITE_GIPHY_API_KEY=fake VITE_UNFURL_SERVER_URL=http://fake.com VITE_ALCHEMY_API_KEY=fake VITE_GATEWAY_URL=http://fake.com vitest",
+        "vitest-preview": "vitest-preview"
     },
     "dependencies": {
         "@amplitude/analytics-browser": "1.8.0",
@@ -125,7 +125,7 @@
         "rollup-plugin-sourcemaps": "https://github.com/HereNotThere/rollup-plugin-sourcemaps.git",
         "rollup-plugin-visualizer": "^5.9.0",
         "token-worker": "workspace:^",
-        "typescript": "^5.1.3",
+        "typescript": "^5.1.6",
         "unfurl-worker": "workspace:^",
         "vite": "^4.4.4",
         "vite-plugin-checker": "^0.6.0",
