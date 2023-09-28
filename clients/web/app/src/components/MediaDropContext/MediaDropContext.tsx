@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useState } from 'react'
 import { SpaceProtocol } from 'use-zion-client'
 import { Box, Heading, Icon, Stack } from '@ui'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { useDevice } from 'hooks/useDevice'
 
 const MediaDropContext = createContext<{
     files: File[]
@@ -29,15 +30,15 @@ export const MediaDropContextProvider = ({
     const [files, setFiles] = useState<File[]>([])
     const { protocol } = useEnvironment()
     const disableDrop = props.disableDrop || false
+    const { isTouch } = useDevice()
 
     const onDropImage = useCallback(async (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault()
         event.stopPropagation()
-
+        setIsDragging(false)
         if (event.dataTransfer.files.length < 1) {
             return
         }
-        setIsDragging(false)
         setFiles([...event.dataTransfer.files])
     }, [])
 
@@ -56,7 +57,7 @@ export const MediaDropContextProvider = ({
         setIsDragging(false)
     }, [])
 
-    if (protocol !== SpaceProtocol.Casablanca) {
+    if (isTouch || protocol !== SpaceProtocol.Casablanca) {
         return children
     }
 
