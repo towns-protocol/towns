@@ -31,11 +31,6 @@ ENVIRONMENT = "development"
 routes = [{ pattern = "token-worker.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "production" }
 
-# test routes
-# yarn publish:test
-[env.test]
-routes = [{ pattern = "token-worker-test.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "test" }
 
 # Beta ...
 # production routes

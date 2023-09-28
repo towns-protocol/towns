@@ -46,17 +46,6 @@ services = [ {binding = "authz", service = "siwe-worker-production", environment
 # created with wrangler kv:namespace create "SPACE" --env production
 kv_namespaces = [{ binding = "USER", id = "8b1f2abcf4ca4e56855b7d3774d23612" }, { binding = "SPACE", id = "4f0bf1efdb164939bca166cb4b65b1a0" }]
 
-# test routes
-# yarn publish:test
-[env.test]
-routes = [{ pattern = "gateway-worker-test.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "test", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"} # [vars] access, not secrets
-services = [ {binding = "authz", service = "siwe-worker-test", environment = "production"} ]
-# created with wrangler kv:namespace create "USER" --env test
-# created with wrangler kv:namespace create "SPACE" --env test
-kv_namespaces = [{ binding = "USER", id = "15aff97d1d534bc3a2494e3be2629cc2" }, { binding = "SPACE", id = "b9bc4f32aff34213b44c8479215232f6" }]
-
-
 # BETA below
 # production routes
 # yarn publish:prod-beta

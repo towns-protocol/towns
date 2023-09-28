@@ -71,14 +71,14 @@ Hello World from GET!
 
 Deployment account and workers domain is defined in wrangler.toml config.
 
-TEST
+TEST (beta)
 Publish to test for testing the workers.
 
 ```bash
-yarn publish:test
+yarn publish:test-beta
 ```
 
-PRODUCTION
+PRODUCTION (alpha)
 
 Unless specified in config, workers are deployed to `{name}`.johnhnt.workers.dev domain. See [Wrangler Config](https://developers.cloudflare.com/workers/wrangler/configuration/) for more details.
 

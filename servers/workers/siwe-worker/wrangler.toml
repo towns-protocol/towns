@@ -1,7 +1,7 @@
 main = "./src/index.ts"
 name = "siwe-worker"
 compatibility_date = "2023-01-18"
-account_id="9840f8a36a817b103e00e29a0e2bad6f"
+account_id = "9840f8a36a817b103e00e29a0e2bad6f"
 minify = true
 node_compat = true
 
@@ -32,12 +32,6 @@ VERIFY = "true"
 [env.production]
 routes = [{ pattern = "siwe-worker.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "production", VERIFY = "true" }
-
-# test routes
-# yarn publish:test
-[env.test]
-routes = [{ pattern = "siwe-worker-test.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "test", VERIFY = "true" }
 
 # beta routes
 # yarn publish:prod-beta

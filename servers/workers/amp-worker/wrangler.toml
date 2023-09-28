@@ -1,7 +1,7 @@
 main = "./src/index.ts"
 name = "amp-worker"
 compatibility_date = "2023-01-18"
-account_id="9840f8a36a817b103e00e29a0e2bad6f"
+account_id = "9840f8a36a817b103e00e29a0e2bad6f"
 minify = true
 node_compat = true
 
@@ -29,12 +29,6 @@ ENVIRONMENT = "development"
 [env.production]
 routes = [{ pattern = "amp-worker.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "production" }
-
-# test routes
-# yarn publish:test
-[env.test]
-routes = [{ pattern = "amp-worker-test.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "test" }
 
 # BETA ...
 # production routes

@@ -6,7 +6,9 @@ compatibility_date = "2022-07-26"
 [miniflare]
 cache_persist = false
 
-[env.test]
+[env.test-beta]
+[env.production-beta]
+[env.production]
 
 [vars]
 # VAR_NAME = "some_value"

@@ -32,12 +32,6 @@ VAPID_SUBJECT = "mailto:test@test.test"
 # to create D1 db
 # wrangler d1 create <DATABASE_NAME>
 
-[env.test]
-name = "push-notification-worker-test"
-d1_databases = [
-  { binding = "DB", database_name = "PushSubscription_test", database_id = "e6cdffba-1799-407f-af82-cda4a7c3da27"}
-]
-vars = { ENVIRONMENT = "test", VAPID_SUBJECT = "mailto:test@towns.com" }
 
 [env.production]
 name = "push-notification-worker-production"
