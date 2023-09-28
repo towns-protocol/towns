@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 cd contracts/
 
+# this line makes sure that the script exits if any command fails
+set -eo pipefail 
+
 set -a
 . .env.localhost
 set +a
