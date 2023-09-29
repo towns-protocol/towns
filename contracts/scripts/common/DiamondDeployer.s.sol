@@ -11,6 +11,8 @@ import {Deployer} from "./Deployer.s.sol";
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
 abstract contract DiamondDeployer is Deployer {
+  uint256 index = 0;
+
   function __deploy(uint256, address) public pure override returns (address) {
     return address(0);
   }
@@ -71,5 +73,17 @@ abstract contract DiamondDeployer is Deployer {
     );
 
     saveDeployment(versionName(), deployedAddr);
+
+    _afterDeployment(pk, deployer, deployedAddr);
+  }
+
+  function _afterDeployment(
+    uint256 pk,
+    address deployer,
+    address diamond
+  ) internal virtual {}
+
+  function _resetIndex() internal {
+    index = 0;
   }
 }

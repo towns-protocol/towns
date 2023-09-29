@@ -29,8 +29,8 @@ var (
 	_ = abi.ConvertType
 )
 
-// IEntitlementsBaseEntitlement is an auto generated low-level Go binding around an user-defined struct.
-type IEntitlementsBaseEntitlement struct {
+// IEntitlementsManagerBaseEntitlement is an auto generated low-level Go binding around an user-defined struct.
+type IEntitlementsManagerBaseEntitlement struct {
 	Name          string
 	ModuleAddress common.Address
 	ModuleType    string
@@ -39,7 +39,7 @@ type IEntitlementsBaseEntitlement struct {
 
 // SepoliaTownsEntitlementsMetaData contains all meta data concerning the SepoliaTownsEntitlements contract.
 var SepoliaTownsEntitlementsMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[],\"name\":\"Entitlement__InvalidValue\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Entitlement__NotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Entitlement__ValueAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__EntitlementAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__EntitlementDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__ImmutableEntitlement\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__InvalidEntitlementAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__InvalidEntitlementInterface\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Ownable__NotOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Ownable__ZeroAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Pausable__NotPaused\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Pausable__Paused\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Paused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Unpaused\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"entitlement\",\"type\":\"address\"}],\"name\":\"addEntitlement\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"entitlements\",\"type\":\"address[]\"}],\"name\":\"addImmutableEntitlements\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"entitlement\",\"type\":\"address\"}],\"name\":\"getEntitlement\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"moduleAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"moduleType\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isImmutable\",\"type\":\"bool\"}],\"internalType\":\"structIEntitlementsBase.Entitlement\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getEntitlements\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"moduleAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"moduleType\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isImmutable\",\"type\":\"bool\"}],\"internalType\":\"structIEntitlementsBase.Entitlement[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"permission\",\"type\":\"string\"}],\"name\":\"isEntitledToChannel\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"permission\",\"type\":\"string\"}],\"name\":\"isEntitledToTown\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"entitlement\",\"type\":\"address\"}],\"name\":\"removeEntitlement\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[],\"name\":\"Entitlement__InvalidValue\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Entitlement__NotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Entitlement__ValueAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__EntitlementAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__EntitlementDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__ImmutableEntitlement\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__InvalidEntitlementAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__InvalidEntitlementInterface\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Ownable__NotOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Ownable__ZeroAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Pausable__NotPaused\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Pausable__Paused\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Paused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Unpaused\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"entitlement\",\"type\":\"address\"}],\"name\":\"addEntitlementModule\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"entitlements\",\"type\":\"address[]\"}],\"name\":\"addImmutableEntitlements\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"entitlement\",\"type\":\"address\"}],\"name\":\"getEntitlement\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"moduleAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"moduleType\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isImmutable\",\"type\":\"bool\"}],\"internalType\":\"structIEntitlementsManagerBase.Entitlement\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getEntitlements\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"moduleAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"moduleType\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isImmutable\",\"type\":\"bool\"}],\"internalType\":\"structIEntitlementsManagerBase.Entitlement[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"permission\",\"type\":\"string\"}],\"name\":\"isEntitledToChannel\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"permission\",\"type\":\"string\"}],\"name\":\"isEntitledToTown\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"entitlement\",\"type\":\"address\"}],\"name\":\"removeEntitlementModule\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // SepoliaTownsEntitlementsABI is the input ABI used to generate the binding from.
@@ -191,15 +191,15 @@ func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsTransactorRaw) Transact
 // GetEntitlement is a free data retrieval call binding the contract method 0xfba4ff9d.
 //
 // Solidity: function getEntitlement(address entitlement) view returns((string,address,string,bool))
-func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsCaller) GetEntitlement(opts *bind.CallOpts, entitlement common.Address) (IEntitlementsBaseEntitlement, error) {
+func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsCaller) GetEntitlement(opts *bind.CallOpts, entitlement common.Address) (IEntitlementsManagerBaseEntitlement, error) {
 	var out []interface{}
 	err := _SepoliaTownsEntitlements.contract.Call(opts, &out, "getEntitlement", entitlement)
 
 	if err != nil {
-		return *new(IEntitlementsBaseEntitlement), err
+		return *new(IEntitlementsManagerBaseEntitlement), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(IEntitlementsBaseEntitlement)).(*IEntitlementsBaseEntitlement)
+	out0 := *abi.ConvertType(out[0], new(IEntitlementsManagerBaseEntitlement)).(*IEntitlementsManagerBaseEntitlement)
 
 	return out0, err
 
@@ -208,29 +208,29 @@ func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsCaller) GetEntitlement(
 // GetEntitlement is a free data retrieval call binding the contract method 0xfba4ff9d.
 //
 // Solidity: function getEntitlement(address entitlement) view returns((string,address,string,bool))
-func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsSession) GetEntitlement(entitlement common.Address) (IEntitlementsBaseEntitlement, error) {
+func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsSession) GetEntitlement(entitlement common.Address) (IEntitlementsManagerBaseEntitlement, error) {
 	return _SepoliaTownsEntitlements.Contract.GetEntitlement(&_SepoliaTownsEntitlements.CallOpts, entitlement)
 }
 
 // GetEntitlement is a free data retrieval call binding the contract method 0xfba4ff9d.
 //
 // Solidity: function getEntitlement(address entitlement) view returns((string,address,string,bool))
-func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsCallerSession) GetEntitlement(entitlement common.Address) (IEntitlementsBaseEntitlement, error) {
+func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsCallerSession) GetEntitlement(entitlement common.Address) (IEntitlementsManagerBaseEntitlement, error) {
 	return _SepoliaTownsEntitlements.Contract.GetEntitlement(&_SepoliaTownsEntitlements.CallOpts, entitlement)
 }
 
 // GetEntitlements is a free data retrieval call binding the contract method 0x487dc38c.
 //
 // Solidity: function getEntitlements() view returns((string,address,string,bool)[])
-func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsCaller) GetEntitlements(opts *bind.CallOpts) ([]IEntitlementsBaseEntitlement, error) {
+func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsCaller) GetEntitlements(opts *bind.CallOpts) ([]IEntitlementsManagerBaseEntitlement, error) {
 	var out []interface{}
 	err := _SepoliaTownsEntitlements.contract.Call(opts, &out, "getEntitlements")
 
 	if err != nil {
-		return *new([]IEntitlementsBaseEntitlement), err
+		return *new([]IEntitlementsManagerBaseEntitlement), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new([]IEntitlementsBaseEntitlement)).(*[]IEntitlementsBaseEntitlement)
+	out0 := *abi.ConvertType(out[0], new([]IEntitlementsManagerBaseEntitlement)).(*[]IEntitlementsManagerBaseEntitlement)
 
 	return out0, err
 
@@ -239,14 +239,14 @@ func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsCaller) GetEntitlements
 // GetEntitlements is a free data retrieval call binding the contract method 0x487dc38c.
 //
 // Solidity: function getEntitlements() view returns((string,address,string,bool)[])
-func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsSession) GetEntitlements() ([]IEntitlementsBaseEntitlement, error) {
+func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsSession) GetEntitlements() ([]IEntitlementsManagerBaseEntitlement, error) {
 	return _SepoliaTownsEntitlements.Contract.GetEntitlements(&_SepoliaTownsEntitlements.CallOpts)
 }
 
 // GetEntitlements is a free data retrieval call binding the contract method 0x487dc38c.
 //
 // Solidity: function getEntitlements() view returns((string,address,string,bool)[])
-func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsCallerSession) GetEntitlements() ([]IEntitlementsBaseEntitlement, error) {
+func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsCallerSession) GetEntitlements() ([]IEntitlementsManagerBaseEntitlement, error) {
 	return _SepoliaTownsEntitlements.Contract.GetEntitlements(&_SepoliaTownsEntitlements.CallOpts)
 }
 
@@ -312,25 +312,25 @@ func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsCallerSession) IsEntitl
 	return _SepoliaTownsEntitlements.Contract.IsEntitledToTown(&_SepoliaTownsEntitlements.CallOpts, user, permission)
 }
 
-// AddEntitlement is a paid mutator transaction binding the contract method 0x2c90a840.
+// AddEntitlementModule is a paid mutator transaction binding the contract method 0x070b9c3f.
 //
-// Solidity: function addEntitlement(address entitlement) returns()
-func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsTransactor) AddEntitlement(opts *bind.TransactOpts, entitlement common.Address) (*types.Transaction, error) {
-	return _SepoliaTownsEntitlements.contract.Transact(opts, "addEntitlement", entitlement)
+// Solidity: function addEntitlementModule(address entitlement) returns()
+func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsTransactor) AddEntitlementModule(opts *bind.TransactOpts, entitlement common.Address) (*types.Transaction, error) {
+	return _SepoliaTownsEntitlements.contract.Transact(opts, "addEntitlementModule", entitlement)
 }
 
-// AddEntitlement is a paid mutator transaction binding the contract method 0x2c90a840.
+// AddEntitlementModule is a paid mutator transaction binding the contract method 0x070b9c3f.
 //
-// Solidity: function addEntitlement(address entitlement) returns()
-func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsSession) AddEntitlement(entitlement common.Address) (*types.Transaction, error) {
-	return _SepoliaTownsEntitlements.Contract.AddEntitlement(&_SepoliaTownsEntitlements.TransactOpts, entitlement)
+// Solidity: function addEntitlementModule(address entitlement) returns()
+func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsSession) AddEntitlementModule(entitlement common.Address) (*types.Transaction, error) {
+	return _SepoliaTownsEntitlements.Contract.AddEntitlementModule(&_SepoliaTownsEntitlements.TransactOpts, entitlement)
 }
 
-// AddEntitlement is a paid mutator transaction binding the contract method 0x2c90a840.
+// AddEntitlementModule is a paid mutator transaction binding the contract method 0x070b9c3f.
 //
-// Solidity: function addEntitlement(address entitlement) returns()
-func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsTransactorSession) AddEntitlement(entitlement common.Address) (*types.Transaction, error) {
-	return _SepoliaTownsEntitlements.Contract.AddEntitlement(&_SepoliaTownsEntitlements.TransactOpts, entitlement)
+// Solidity: function addEntitlementModule(address entitlement) returns()
+func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsTransactorSession) AddEntitlementModule(entitlement common.Address) (*types.Transaction, error) {
+	return _SepoliaTownsEntitlements.Contract.AddEntitlementModule(&_SepoliaTownsEntitlements.TransactOpts, entitlement)
 }
 
 // AddImmutableEntitlements is a paid mutator transaction binding the contract method 0x8bfc820f.
@@ -354,25 +354,25 @@ func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsTransactorSession) AddI
 	return _SepoliaTownsEntitlements.Contract.AddImmutableEntitlements(&_SepoliaTownsEntitlements.TransactOpts, entitlements)
 }
 
-// RemoveEntitlement is a paid mutator transaction binding the contract method 0xc9b968cd.
+// RemoveEntitlementModule is a paid mutator transaction binding the contract method 0xbe24138d.
 //
-// Solidity: function removeEntitlement(address entitlement) returns()
-func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsTransactor) RemoveEntitlement(opts *bind.TransactOpts, entitlement common.Address) (*types.Transaction, error) {
-	return _SepoliaTownsEntitlements.contract.Transact(opts, "removeEntitlement", entitlement)
+// Solidity: function removeEntitlementModule(address entitlement) returns()
+func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsTransactor) RemoveEntitlementModule(opts *bind.TransactOpts, entitlement common.Address) (*types.Transaction, error) {
+	return _SepoliaTownsEntitlements.contract.Transact(opts, "removeEntitlementModule", entitlement)
 }
 
-// RemoveEntitlement is a paid mutator transaction binding the contract method 0xc9b968cd.
+// RemoveEntitlementModule is a paid mutator transaction binding the contract method 0xbe24138d.
 //
-// Solidity: function removeEntitlement(address entitlement) returns()
-func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsSession) RemoveEntitlement(entitlement common.Address) (*types.Transaction, error) {
-	return _SepoliaTownsEntitlements.Contract.RemoveEntitlement(&_SepoliaTownsEntitlements.TransactOpts, entitlement)
+// Solidity: function removeEntitlementModule(address entitlement) returns()
+func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsSession) RemoveEntitlementModule(entitlement common.Address) (*types.Transaction, error) {
+	return _SepoliaTownsEntitlements.Contract.RemoveEntitlementModule(&_SepoliaTownsEntitlements.TransactOpts, entitlement)
 }
 
-// RemoveEntitlement is a paid mutator transaction binding the contract method 0xc9b968cd.
+// RemoveEntitlementModule is a paid mutator transaction binding the contract method 0xbe24138d.
 //
-// Solidity: function removeEntitlement(address entitlement) returns()
-func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsTransactorSession) RemoveEntitlement(entitlement common.Address) (*types.Transaction, error) {
-	return _SepoliaTownsEntitlements.Contract.RemoveEntitlement(&_SepoliaTownsEntitlements.TransactOpts, entitlement)
+// Solidity: function removeEntitlementModule(address entitlement) returns()
+func (_SepoliaTownsEntitlements *SepoliaTownsEntitlementsTransactorSession) RemoveEntitlementModule(entitlement common.Address) (*types.Transaction, error) {
+	return _SepoliaTownsEntitlements.Contract.RemoveEntitlementModule(&_SepoliaTownsEntitlements.TransactOpts, entitlement)
 }
 
 // SepoliaTownsEntitlementsOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the SepoliaTownsEntitlements contract.

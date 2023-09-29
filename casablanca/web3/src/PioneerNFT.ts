@@ -2,6 +2,7 @@ import { ethers, BigNumber } from 'ethers'
 import { IStaticContractsInfoV3, getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
 
 import { PioneerNFTShim } from './v3/PioneerNFTShim'
+import { OwnableFacetShim } from './v3/OwnableFacetShim'
 
 export interface PioneerNFTContractState {
     contractBalance: BigNumber
@@ -14,11 +15,17 @@ export class PioneerNFT {
     private readonly contractsInfo: IStaticContractsInfoV3
     private readonly provider: ethers.providers.Provider | undefined
     public readonly pioneerNFTShim: PioneerNFTShim
+    public readonly ownable: OwnableFacetShim
 
     constructor(chainId: number, provider: ethers.providers.Provider | undefined) {
         this.provider = provider
         this.contractsInfo = getContractsInfoV3(chainId)
         this.pioneerNFTShim = new PioneerNFTShim(
+            this.contractsInfo.pioneerTokenAddress,
+            chainId,
+            provider,
+        )
+        this.ownable = new OwnableFacetShim(
             this.contractsInfo.pioneerTokenAddress,
             chainId,
             provider,
@@ -60,9 +67,9 @@ export class PioneerNFT {
 
         const contractBalance = await this.provider.getBalance(this.pioneerNFTShim.address)
 
-        const mintReward = await this.pioneerNFTShim.read.mintReward()
+        const mintReward = await this.pioneerNFTShim.read.getMintReward()
 
-        const owner = await this.pioneerNFTShim.read.owner()
+        const owner = await this.ownable.read.owner()
 
         return {
             contractBalance,

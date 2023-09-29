@@ -6,7 +6,7 @@ import {ERC721} from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {StdStorage, stdStorage} from "forge-std/StdStorage.sol";
 
-contract PioneerTest is TestUtils {
+contract PioneersTest is TestUtils {
   using stdStorage for StdStorage;
 
   StdStorage private stdstore;

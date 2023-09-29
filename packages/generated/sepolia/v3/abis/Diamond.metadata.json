@@ -267,6 +267,10 @@
       {
         "stateMutability": "payable",
         "type": "fallback"
+      },
+      {
+        "stateMutability": "payable",
+        "type": "receive"
       }
     ],
     "devdoc": {
@@ -337,11 +341,11 @@
   },
   "sources": {
     "contracts/src/diamond/Diamond.sol": {
-      "keccak256": "0x8788c4adf69122542b2b108de311c6b092db9229c678505af5cd6c37e6c89748",
+      "keccak256": "0x3bdaf57e179f96d9213feea12d092642c0c6a9708807099d9caffbd76cf4a5a9",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://cf42f45b20fc8bbf19ac1c7922d67ff2016910204567ea5f15745f38e17c0981",
-        "dweb:/ipfs/QmdQ8ftGRQKcfS9ZdkyWDAMxAPRVyJ6hRibNjweankVgAx"
+        "bzz-raw://63b47cb1703fe9bfccbc72d4c56deb653c95681f62de07701a5946cb1d64a8b2",
+        "dweb:/ipfs/QmUv3oQwKQkg6fxgHMugQBKUUCgTYgpihjheYUJ2dUscVx"
       ]
     },
     "contracts/src/diamond/IDiamond.sol": {

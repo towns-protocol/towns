@@ -12,18 +12,6 @@ import {DeployHelpers} from "./DeployHelpers.s.sol";
 contract DeployBase is DeployHelpers, Script {
   string internal constant DEPLOYMENT_CACHE_PATH = "packages/generated";
 
-  constructor() {
-    // Pending PR: https://github.com/foundry-rs/forge-std/pull/437
-    setChain(
-      "base_goerli",
-      ChainData("Base Goerli", 84531, "https://goerli.base.org")
-    );
-    setChain(
-      "base",
-      ChainData("Base Mainnet", 8453, "https://mainnet.base.org")
-    );
-  }
-
   // =============================================================
   //                      DEPLOYMENT HELPERS
   // =============================================================

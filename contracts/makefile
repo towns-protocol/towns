@@ -45,7 +45,7 @@ upgrade-anvil:;
 # ===========================
 deploy-base-goerli :;
 	@forge build
-	@forge script script/${contract}.s.sol:${contract} --ffi --rpc-url base_goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch
 
 # ===========================
 # 				 		Base

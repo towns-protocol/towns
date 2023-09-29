@@ -261,5 +261,9 @@ export default [
   {
     "stateMutability": "payable",
     "type": "fallback"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
   }
 ] as const

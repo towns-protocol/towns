@@ -25,9 +25,9 @@ XCHAIN_PACKAGE="_xchain"
 forge clean
 forge build --extra-output-files metadata --extra-output-files abi --force
 
-yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|OwnableFacet|TokenPausableFacet|UserEntitlement|ITownOwner|MockERC721A|MembershipFacet|Member|Pioneer).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
+yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|OwnableFacet|TokenPausableFacet|UserEntitlement|ITownOwner|MockERC721A|MembershipFacet|Member|PioneerFacet).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
 
-mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,TownArchitect,ProxyManager,Pausable,EntitlementsManager,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,WalletLink,TokenPausableFacet,UserEntitlement,TownOwner,MockERC721A,MembershipFacet,Member,Pioneer}.sol/* "$ABI_DIR"
+mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,TownArchitect,ProxyManager,Pausable,EntitlementsManager,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,WalletLink,TokenPausableFacet,UserEntitlement,TownOwner,MockERC721A,MembershipFacet,Member,PioneerFacet}.sol/* "$ABI_DIR"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do

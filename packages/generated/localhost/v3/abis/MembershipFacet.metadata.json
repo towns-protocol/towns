@@ -1652,19 +1652,19 @@
       ]
     },
     "contracts/src/towns/facets/membership/MembershipBase.sol": {
-      "keccak256": "0xf09c908364387be54478b1ad6a09cd7e10a8f4759914020d8758a558fb8b7e29",
+      "keccak256": "0x0a44e7e067256359ad28633f0b0c425e6e41656da5698900f9e80687c88fd6cc",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c415ddd362d5e739e4676c67c26d2107f25f0870871acc23fa8623f95644b902",
-        "dweb:/ipfs/Qma6Rp74PCnnoqyiW5FnmUeL4uMuCLQ2ggoEVPyfexR899"
+        "bzz-raw://8df997b8c4e56cce846dcd6b13543462e5436ec4bdcdb6af320569424887be96",
+        "dweb:/ipfs/QmaHbT7LuAPWm3Zmiynv4ocz6a5c5YechFkoAGaXFKX6Ts"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0xd789ae0f86a57fb53e4cbb185ea9ed42f8416d0dada3ee43c7ededb74dff7127",
+      "keccak256": "0x396c1896171b6c8a3ddbbec6b422a34e2884e7c59a92bf595e6d0c238906f193",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://2847a05d0aa9888527b0e2249a52c6c7ec6655909bc44a0e178cc633cdcec4e0",
-        "dweb:/ipfs/QmXyCxu3D3s6t9ykAauEM6zoRmUGo3Sm4EoDSqng4HhiG8"
+        "bzz-raw://733e89b8803883e3fe971dff781ba6047471bd41365f31d4004b2a664a66ff69",
+        "dweb:/ipfs/QmbUCGFNrgpLFsTwcj6QPDbi48hN5WPwTfGfKXMA2yk1iL"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipStorage.sol": {
@@ -1697,14 +1697,6 @@
       "urls": [
         "bzz-raw://7c30d846735bf111493739fc41a4d8826100108d220728d7e170c0567e5d22bc",
         "dweb:/ipfs/QmcLiTv1RgrEvLxFhYK2AaxwiZ3XXFkdY7XkDQtDGiz7cG"
-      ]
-    },
-    "lib/forge-std/src/console.sol": {
-      "keccak256": "0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70",
-        "dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec"
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": {

@@ -9,11 +9,7 @@ import {IPlatformRequirements} from "contracts/src/towns/facets/platform/require
 import {MembershipStorage} from "./MembershipStorage.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 // contracts
-
 abstract contract MembershipBase is IMembershipBase {
   function __MembershipBase_init(
     uint256 membershipPrice,

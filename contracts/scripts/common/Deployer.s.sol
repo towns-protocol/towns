@@ -65,7 +65,9 @@ abstract contract Deployer is Script, DeployBase {
       vm.toString(deployedAddr)
     );
 
-    saveDeployment(versionName(), deployedAddr);
+    if (deployedAddr != address(0)) {
+      saveDeployment(versionName(), deployedAddr);
+    }
   }
 
   function run() public virtual {

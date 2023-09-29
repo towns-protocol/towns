@@ -15,9 +15,6 @@ import {ERC2771RecipientBase} from "contracts/src/diamond/facets/recipient/ERC27
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {Entitled} from "contracts/src/towns/facets/Entitled.sol";
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 contract MembershipFacet is
   IMembership,
   MembershipBase,

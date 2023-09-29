@@ -167,12 +167,12 @@
   ],
   "bytecode": {
     "object": "0x608060405234801561001057600080fd5b5061001961001e565b6100c4565b7f2d0d21306acfe8e9bb163a4573e95aff6cef95dc1102c6a16d5f19eac08cc4de8054640100000000900460ff161561006a576040516366008a2d60e01b815260040160405180910390fd5b805463ffffffff90811610156100c157805463ffffffff191663ffffffff90811782556040519081527fe9c9b456cb2994b80aeef036cf59d26e9617df80f816a6ee5a5b4166e07e2f5c9060200160405180910390a15b50565b610391806100d36000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c80633f4ba83a146100515780635c975abb1461005b5780638456cb591461007757806384d2023a1461007f575b600080fd5b610059610087565b005b610063610101565b604051901515815260200160405180910390f35b610059610121565b610059610195565b61008f6101df565b6001600160a01b0316336001600160a01b0316146100c7576040516365f4906560e01b81523360048201526024015b60405180910390fd5b6000805160206103718339815191525460ff166100f757604051632ca4452d60e11b815260040160405180910390fd5b6100ff6102a9565b565b600061011c6000805160206103718339815191525460ff1690565b905090565b6101296101df565b6001600160a01b0316336001600160a01b03161461015c576040516365f4906560e01b81523360048201526024016100be565b6000805160206103718339815191525460ff161561018d576040516302ca8ced60e11b815260040160405180910390fd5b6100ff6102f6565b7f2d0d21306acfe8e9bb163a4573e95aff6cef95dc1102c6a16d5f19eac08cc4de54640100000000900460ff166100f757604051630ef4733760e31b815260040160405180910390fd5b6040805180820182527f9bd0e1a7aef81c47cff971a2fee48406b20f55522326b2e2616c49c24aa506d0546001600160a01b03168082527f9bd0e1a7aef81c47cff971a2fee48406b20f55522326b2e2616c49c24aa506d154602080840182905284516331a9108f60e11b815260048101929092529351600094636352211e92602480820193918290030181865afa15801561027f573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102a39190610340565b91505090565b600080516020610371833981519152805460ff191690556040513381527f5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa906020015b60405180910390a1565b600080516020610371833981519152805460ff191660011790556040513381527f62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258906020016102ec565b60006020828403121561035257600080fd5b81516001600160a01b038116811461036957600080fd5b939250505056fef421ea548af7158b1d71ba0aeccf57104c067038bd8fd214edd05c09eb4f735b",
-    "sourceMap": "432:393:67:-:0;;;;;;;;;;;;-1:-1:-1;385:22:38;:20;:22::i;:::-;432:393:67;;1653:314:43;186:68:44;1779:14:43;;;;;;;1775:62;;;1802:35;;-1:-1:-1;;;1802:35:43;;;;;;;;;;;1775:62;1848:9;;1860:16;1848:9;;;:28;1844:119;;;1886:28;;-1:-1:-1;;1886:28:43;1898:16;1886:28;;;;;1927:29;;158:42:438;;;1927:29:43;;146:2:438;131:18;1927:29:43;;;;;;;1844:119;1694:273;1653:314::o;14:192:438:-;432:393:67;;;;;;",
+    "sourceMap": "432:393:69:-:0;;;;;;;;;;;;-1:-1:-1;385:22:40;:20;:22::i;:::-;432:393:69;;1653:314:45;186:68:46;1779:14:45;;;;;;;1775:62;;;1802:35;;-1:-1:-1;;;1802:35:45;;;;;;;;;;;1775:62;1848:9;;1860:16;1848:9;;;:28;1844:119;;;1886:28;;-1:-1:-1;;1886:28:45;1898:16;1886:28;;;;;1927:29;;158:42:446;;;1927:29:45;;146:2:446;131:18;1927:29:45;;;;;;;1844:119;1694:273;1653:314::o;14:192:446:-;432:393:69;;;;;;",
     "linkReferences": {}
   },
   "deployedBytecode": {
     "object": "0x608060405234801561001057600080fd5b506004361061004c5760003560e01c80633f4ba83a146100515780635c975abb1461005b5780638456cb591461007757806384d2023a1461007f575b600080fd5b610059610087565b005b610063610101565b604051901515815260200160405180910390f35b610059610121565b610059610195565b61008f6101df565b6001600160a01b0316336001600160a01b0316146100c7576040516365f4906560e01b81523360048201526024015b60405180910390fd5b6000805160206103718339815191525460ff166100f757604051632ca4452d60e11b815260040160405180910390fd5b6100ff6102a9565b565b600061011c6000805160206103718339815191525460ff1690565b905090565b6101296101df565b6001600160a01b0316336001600160a01b03161461015c576040516365f4906560e01b81523360048201526024016100be565b6000805160206103718339815191525460ff161561018d576040516302ca8ced60e11b815260040160405180910390fd5b6100ff6102f6565b7f2d0d21306acfe8e9bb163a4573e95aff6cef95dc1102c6a16d5f19eac08cc4de54640100000000900460ff166100f757604051630ef4733760e31b815260040160405180910390fd5b6040805180820182527f9bd0e1a7aef81c47cff971a2fee48406b20f55522326b2e2616c49c24aa506d0546001600160a01b03168082527f9bd0e1a7aef81c47cff971a2fee48406b20f55522326b2e2616c49c24aa506d154602080840182905284516331a9108f60e11b815260048101929092529351600094636352211e92602480820193918290030181865afa15801561027f573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102a39190610340565b91505090565b600080516020610371833981519152805460ff191690556040513381527f5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa906020015b60405180910390a1565b600080516020610371833981519152805460ff191660011790556040513381527f62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258906020016102ec565b60006020828403121561035257600080fd5b81516001600160a01b038116811461036957600080fd5b939250505056fef421ea548af7158b1d71ba0aeccf57104c067038bd8fd214edd05c09eb4f735b",
-    "sourceMap": "432:393:67:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;753:70;;;:::i;:::-;;602:74;;;:::i;:::-;;;179:14:438;;172:22;154:41;;142:2;127:18;602:74:67;;;;;;;680:69;;;:::i;524:74::-;;;:::i;753:70::-;600:8:60;:6;:8::i;:::-;-1:-1:-1;;;;;586:22:60;:10;-1:-1:-1;;;;;586:22:60;;582:79;;625:29;;-1:-1:-1;;;625:29:60;;643:10;625:29;;;352:51:438;325:18;;625:29:60;;;;;;;;582:79;-1:-1:-1;;;;;;;;;;;526:31:64;;;391:59:::1;;422:21;;-1:-1:-1::0;;;422:21:64::1;;;;;;;;;;;391:59;808:10:67::2;:8;:10::i;:::-;753:70::o:0;602:74::-;643:4;662:9;-1:-1:-1;;;;;;;;;;;526:31:64;;;;465:97;662:9:67;655:16;;602:74;:::o;680:69::-;600:8:60;:6;:8::i;:::-;-1:-1:-1;;;;;586:22:60;:10;-1:-1:-1;;;;;586:22:60;;582:79;;625:29;;-1:-1:-1;;;625:29:60;;643:10;625:29;;;352:51:438;325:18;;625:29:60;206:203:438;582:79:60;-1:-1:-1;;;;;;;;;;;526:31:64;;;293:55:::1;;;323:18;;-1:-1:-1::0;;;323:18:64::1;;;;;;;;;;;293:55;736:8:67::2;:6;:8::i;524:74::-:0;186:68:44;1263:42:43;;;;;;1258:100;;1320:38;;-1:-1:-1;;;1320:38:43;;;;;;;;;;;676:189:60;738:67;;;;;;;;185::62;738::60;-1:-1:-1;;;;;738:67:60;;;;;;;;;;;;;818:42;;-1:-1:-1;;;818:42:60;;;;;560:25:438;;;;818:42:60;;717:13;;818:30;;533:18:438;;;;;818:42:60;;;;;;738:67;818:42;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;811:49;;;676:189;:::o;675:110:64:-;-1:-1:-1;;;;;;;;;;;710:39:64;;-1:-1:-1;;710:39:64;;;760:20;;769:10;352:51:438;;760:20:64;;340:2:438;325:18;760:20:64;;;;;;;;675:110::o;566:105::-;-1:-1:-1;;;;;;;;;;;599:38:64;;-1:-1:-1;;599:38:64;633:4;599:38;;;648:18;;655:10;352:51:438;;648:18:64;;340:2:438;325:18;648::64;206:203:438;596:290;666:6;719:2;707:9;698:7;694:23;690:32;687:52;;;735:1;732;725:12;687:52;761:16;;-1:-1:-1;;;;;806:31:438;;796:42;;786:70;;852:1;849;842:12;786:70;875:5;596:290;-1:-1:-1;;;596:290:438:o",
+    "sourceMap": "432:393:69:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;753:70;;;:::i;:::-;;602:74;;;:::i;:::-;;;179:14:446;;172:22;154:41;;142:2;127:18;602:74:69;;;;;;;680:69;;;:::i;524:74::-;;;:::i;753:70::-;600:8:62;:6;:8::i;:::-;-1:-1:-1;;;;;586:22:62;:10;-1:-1:-1;;;;;586:22:62;;582:79;;625:29;;-1:-1:-1;;;625:29:62;;643:10;625:29;;;352:51:446;325:18;;625:29:62;;;;;;;;582:79;-1:-1:-1;;;;;;;;;;;526:31:66;;;391:59:::1;;422:21;;-1:-1:-1::0;;;422:21:66::1;;;;;;;;;;;391:59;808:10:69::2;:8;:10::i;:::-;753:70::o:0;602:74::-;643:4;662:9;-1:-1:-1;;;;;;;;;;;526:31:66;;;;465:97;662:9:69;655:16;;602:74;:::o;680:69::-;600:8:62;:6;:8::i;:::-;-1:-1:-1;;;;;586:22:62;:10;-1:-1:-1;;;;;586:22:62;;582:79;;625:29;;-1:-1:-1;;;625:29:62;;643:10;625:29;;;352:51:446;325:18;;625:29:62;206:203:446;582:79:62;-1:-1:-1;;;;;;;;;;;526:31:66;;;293:55:::1;;;323:18;;-1:-1:-1::0;;;323:18:66::1;;;;;;;;;;;293:55;736:8:69::2;:6;:8::i;524:74::-:0;186:68:46;1263:42:45;;;;;;1258:100;;1320:38;;-1:-1:-1;;;1320:38:45;;;;;;;;;;;676:189:62;738:67;;;;;;;;185::64;738::62;-1:-1:-1;;;;;738:67:62;;;;;;;;;;;;;818:42;;-1:-1:-1;;;818:42:62;;;;;560:25:446;;;;818:42:62;;717:13;;818:30;;533:18:446;;;;;818:42:62;;;;;;738:67;818:42;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;811:49;;;676:189;:::o;675:110:66:-;-1:-1:-1;;;;;;;;;;;710:39:66;;-1:-1:-1;;710:39:66;;;760:20;;769:10;352:51:446;;760:20:66;;340:2:446;325:18;760:20:66;;;;;;;;675:110::o;566:105::-;-1:-1:-1;;;;;;;;;;;599:38:66;;-1:-1:-1;;599:38:66;633:4;599:38;;;648:18;;655:10;352:51:446;;648:18:66;;340:2:446;325:18;648::66;206:203:446;596:290;666:6;719:2;707:9;698:7;694:23;690:32;687:52;;;735:1;732;725:12;687:52;761:16;;-1:-1:-1;;;;;806:31:446;;796:42;;786:70;;852:1;849;842:12;786:70;875:5;596:290;-1:-1:-1;;;596:290:446:o",
     "linkReferences": {}
   },
   "methodIdentifiers": {
@@ -523,31 +523,31 @@
   },
   "ast": {
     "absolutePath": "contracts/src/diamond/facets/pausable/token/TokenPausableFacet.sol",
-    "id": 8924,
+    "id": 9338,
     "exportedSymbols": {
       "Facet": [
-        6529
+        6943
       ],
       "IPausable": [
-        8705
+        9119
       ],
       "PausableBase": [
-        8782
+        9196
       ],
       "TokenOwnableBase": [
-        8591
+        9005
       ],
       "TokenPausableFacet": [
-        8923
+        9337
       ]
     },
     "nodeType": "SourceUnit",
-    "src": "39:787:67",
+    "src": "39:787:69",
     "nodes": [
       {
-        "id": 8866,
+        "id": 9280,
         "nodeType": "PragmaDirective",
-        "src": "39:24:67",
+        "src": "39:24:69",
         "nodes": [],
         "literals": [
           "solidity",
@@ -557,24 +557,24 @@
         ]
       },
       {
-        "id": 8868,
+        "id": 9282,
         "nodeType": "ImportDirective",
-        "src": "79:78:67",
+        "src": "79:78:69",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/pausable/IPausable.sol",
         "file": "contracts/src/diamond/facets/pausable/IPausable.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 8924,
-        "sourceUnit": 8706,
+        "scope": 9338,
+        "sourceUnit": 9120,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 8867,
+              "id": 9281,
               "name": "IPausable",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 8705,
-              "src": "87:9:67",
+              "referencedDeclaration": 9119,
+              "src": "87:9:69",
               "typeDescriptions": {}
             },
             "nameLocation": "-1:-1:-1"
@@ -583,24 +583,24 @@
         "unitAlias": ""
       },
       {
-        "id": 8870,
+        "id": 9284,
         "nodeType": "ImportDirective",
-        "src": "186:61:67",
+        "src": "186:61:69",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/Facet.sol",
         "file": "contracts/src/diamond/facets/Facet.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 8924,
-        "sourceUnit": 6530,
+        "scope": 9338,
+        "sourceUnit": 6944,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 8869,
+              "id": 9283,
               "name": "Facet",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 6529,
-              "src": "194:5:67",
+              "referencedDeclaration": 6943,
+              "src": "194:5:69",
               "typeDescriptions": {}
             },
             "nameLocation": "-1:-1:-1"
@@ -609,24 +609,24 @@
         "unitAlias": ""
       },
       {
-        "id": 8872,
+        "id": 9286,
         "nodeType": "ImportDirective",
-        "src": "248:84:67",
+        "src": "248:84:69",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/pausable/PausableBase.sol",
         "file": "contracts/src/diamond/facets/pausable/PausableBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 8924,
-        "sourceUnit": 8783,
+        "scope": 9338,
+        "sourceUnit": 9197,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 8871,
+              "id": 9285,
               "name": "PausableBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 8782,
-              "src": "256:12:67",
+              "referencedDeclaration": 9196,
+              "src": "256:12:69",
               "typeDescriptions": {}
             },
             "nameLocation": "-1:-1:-1"
@@ -635,24 +635,24 @@
         "unitAlias": ""
       },
       {
-        "id": 8874,
+        "id": 9288,
         "nodeType": "ImportDirective",
-        "src": "333:97:67",
+        "src": "333:97:69",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol",
         "file": "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 8924,
-        "sourceUnit": 8592,
+        "scope": 9338,
+        "sourceUnit": 9006,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 8873,
+              "id": 9287,
               "name": "TokenOwnableBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 8591,
-              "src": "341:16:67",
+              "referencedDeclaration": 9005,
+              "src": "341:16:69",
               "typeDescriptions": {}
             },
             "nameLocation": "-1:-1:-1"
@@ -661,19 +661,19 @@
         "unitAlias": ""
       },
       {
-        "id": 8923,
+        "id": 9337,
         "nodeType": "ContractDefinition",
-        "src": "432:393:67",
+        "src": "432:393:69",
         "nodes": [
           {
-            "id": 8891,
+            "id": 9305,
             "nodeType": "FunctionDefinition",
-            "src": "524:74:67",
+            "src": "524:74:69",
             "nodes": [],
             "body": {
-              "id": 8890,
+              "id": 9304,
               "nodeType": "Block",
-              "src": "577:21:67",
+              "src": "577:21:69",
               "nodes": [],
               "statements": [
                 {
@@ -681,18 +681,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 8887,
+                      "id": 9301,
                       "name": "_unpause",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 8781,
-                      "src": "583:8:67",
+                      "referencedDeclaration": 9195,
+                      "src": "583:8:69",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$__$returns$__$",
                         "typeString": "function ()"
                       }
                     },
-                    "id": 8888,
+                    "id": 9302,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -701,16 +701,16 @@
                     "nameLocations": [],
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "583:10:67",
+                    "src": "583:10:69",
                     "tryCall": false,
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 8889,
+                  "id": 9303,
                   "nodeType": "ExpressionStatement",
-                  "src": "583:10:67"
+                  "src": "583:10:69"
                 }
               ]
             },
@@ -719,50 +719,50 @@
             "kind": "function",
             "modifiers": [
               {
-                "id": 8885,
+                "id": 9299,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 8884,
+                  "id": 9298,
                   "name": "onlyInitializing",
                   "nameLocations": [
-                    "560:16:67"
+                    "560:16:69"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 7433,
-                  "src": "560:16:67"
+                  "referencedDeclaration": 7847,
+                  "src": "560:16:69"
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "560:16:67"
+                "src": "560:16:69"
               }
             ],
             "name": "__Pausable_init",
-            "nameLocation": "533:15:67",
+            "nameLocation": "533:15:69",
             "parameters": {
-              "id": 8883,
+              "id": 9297,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "548:2:67"
+              "src": "548:2:69"
             },
             "returnParameters": {
-              "id": 8886,
+              "id": 9300,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "577:0:67"
+              "src": "577:0:69"
             },
-            "scope": 8923,
+            "scope": 9337,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 8900,
+            "id": 9314,
             "nodeType": "FunctionDefinition",
-            "src": "602:74:67",
+            "src": "602:74:69",
             "nodes": [],
             "body": {
-              "id": 8899,
+              "id": 9313,
               "nodeType": "Block",
-              "src": "649:27:67",
+              "src": "649:27:69",
               "nodes": [],
               "statements": [
                 {
@@ -770,18 +770,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 8896,
+                      "id": 9310,
                       "name": "_paused",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 8747,
-                      "src": "662:7:67",
+                      "referencedDeclaration": 9161,
+                      "src": "662:7:69",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$__$returns$_t_bool_$",
                         "typeString": "function () view returns (bool)"
                       }
                     },
-                    "id": 8897,
+                    "id": 9311,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -790,48 +790,48 @@
                     "nameLocations": [],
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "662:9:67",
+                    "src": "662:9:69",
                     "tryCall": false,
                     "typeDescriptions": {
                       "typeIdentifier": "t_bool",
                       "typeString": "bool"
                     }
                   },
-                  "functionReturnParameters": 8895,
-                  "id": 8898,
+                  "functionReturnParameters": 9309,
+                  "id": 9312,
                   "nodeType": "Return",
-                  "src": "655:16:67"
+                  "src": "655:16:69"
                 }
               ]
             },
             "baseFunctions": [
-              8698
+              9112
             ],
             "functionSelector": "5c975abb",
             "implemented": true,
             "kind": "function",
             "modifiers": [],
             "name": "paused",
-            "nameLocation": "611:6:67",
+            "nameLocation": "611:6:69",
             "parameters": {
-              "id": 8892,
+              "id": 9306,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "617:2:67"
+              "src": "617:2:69"
             },
             "returnParameters": {
-              "id": 8895,
+              "id": 9309,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 8894,
+                  "id": 9308,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 8900,
-                  "src": "643:4:67",
+                  "scope": 9314,
+                  "src": "643:4:69",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -839,10 +839,10 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 8893,
+                    "id": 9307,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
-                    "src": "643:4:67",
+                    "src": "643:4:69",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bool",
                       "typeString": "bool"
@@ -851,22 +851,22 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "642:6:67"
+              "src": "642:6:69"
             },
-            "scope": 8923,
+            "scope": 9337,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 8911,
+            "id": 9325,
             "nodeType": "FunctionDefinition",
-            "src": "680:69:67",
+            "src": "680:69:69",
             "nodes": [],
             "body": {
-              "id": 8910,
+              "id": 9324,
               "nodeType": "Block",
-              "src": "730:19:67",
+              "src": "730:19:69",
               "nodes": [],
               "statements": [
                 {
@@ -874,18 +874,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 8907,
+                      "id": 9321,
                       "name": "_pause",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 8764,
-                      "src": "736:6:67",
+                      "referencedDeclaration": 9178,
+                      "src": "736:6:69",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$__$returns$__$",
                         "typeString": "function ()"
                       }
                     },
-                    "id": 8908,
+                    "id": 9322,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -894,87 +894,87 @@
                     "nameLocations": [],
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "736:8:67",
+                    "src": "736:8:69",
                     "tryCall": false,
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 8909,
+                  "id": 9323,
                   "nodeType": "ExpressionStatement",
-                  "src": "736:8:67"
+                  "src": "736:8:69"
                 }
               ]
             },
             "baseFunctions": [
-              8701
+              9115
             ],
             "functionSelector": "8456cb59",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 8903,
+                "id": 9317,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 8902,
+                  "id": 9316,
                   "name": "onlyOwner",
                   "nameLocations": [
-                    "706:9:67"
+                    "706:9:69"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 8519,
-                  "src": "706:9:67"
+                  "referencedDeclaration": 8933,
+                  "src": "706:9:69"
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "706:9:67"
+                "src": "706:9:69"
               },
               {
-                "id": 8905,
+                "id": 9319,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 8904,
+                  "id": 9318,
                   "name": "whenNotPaused",
                   "nameLocations": [
-                    "716:13:67"
+                    "716:13:69"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 8724,
-                  "src": "716:13:67"
+                  "referencedDeclaration": 9138,
+                  "src": "716:13:69"
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "716:13:67"
+                "src": "716:13:69"
               }
             ],
             "name": "pause",
-            "nameLocation": "689:5:67",
+            "nameLocation": "689:5:69",
             "parameters": {
-              "id": 8901,
+              "id": 9315,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "694:2:67"
+              "src": "694:2:69"
             },
             "returnParameters": {
-              "id": 8906,
+              "id": 9320,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "730:0:67"
+              "src": "730:0:69"
             },
-            "scope": 8923,
+            "scope": 9337,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 8922,
+            "id": 9336,
             "nodeType": "FunctionDefinition",
-            "src": "753:70:67",
+            "src": "753:70:69",
             "nodes": [],
             "body": {
-              "id": 8921,
+              "id": 9335,
               "nodeType": "Block",
-              "src": "802:21:67",
+              "src": "802:21:69",
               "nodes": [],
               "statements": [
                 {
@@ -982,18 +982,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 8918,
+                      "id": 9332,
                       "name": "_unpause",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 8781,
-                      "src": "808:8:67",
+                      "referencedDeclaration": 9195,
+                      "src": "808:8:69",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$__$returns$__$",
                         "typeString": "function ()"
                       }
                     },
-                    "id": 8919,
+                    "id": 9333,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1002,74 +1002,74 @@
                     "nameLocations": [],
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "808:10:67",
+                    "src": "808:10:69",
                     "tryCall": false,
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 8920,
+                  "id": 9334,
                   "nodeType": "ExpressionStatement",
-                  "src": "808:10:67"
+                  "src": "808:10:69"
                 }
               ]
             },
             "baseFunctions": [
-              8704
+              9118
             ],
             "functionSelector": "3f4ba83a",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 8914,
+                "id": 9328,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 8913,
+                  "id": 9327,
                   "name": "onlyOwner",
                   "nameLocations": [
-                    "781:9:67"
+                    "781:9:69"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 8519,
-                  "src": "781:9:67"
+                  "referencedDeclaration": 8933,
+                  "src": "781:9:69"
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "781:9:67"
+                "src": "781:9:69"
               },
               {
-                "id": 8916,
+                "id": 9330,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 8915,
+                  "id": 9329,
                   "name": "whenPaused",
                   "nameLocations": [
-                    "791:10:67"
+                    "791:10:69"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 8736,
-                  "src": "791:10:67"
+                  "referencedDeclaration": 9150,
+                  "src": "791:10:69"
                 },
                 "nodeType": "ModifierInvocation",
-                "src": "791:10:67"
+                "src": "791:10:69"
               }
             ],
             "name": "unpause",
-            "nameLocation": "762:7:67",
+            "nameLocation": "762:7:69",
             "parameters": {
-              "id": 8912,
+              "id": 9326,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "769:2:67"
+              "src": "769:2:69"
             },
             "returnParameters": {
-              "id": 8917,
+              "id": 9331,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "802:0:67"
+              "src": "802:0:69"
             },
-            "scope": 8923,
+            "scope": 9337,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
@@ -1079,63 +1079,63 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 8875,
+              "id": 9289,
               "name": "IPausable",
               "nameLocations": [
-                "465:9:67"
+                "465:9:69"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 8705,
-              "src": "465:9:67"
+              "referencedDeclaration": 9119,
+              "src": "465:9:69"
             },
-            "id": 8876,
+            "id": 9290,
             "nodeType": "InheritanceSpecifier",
-            "src": "465:9:67"
+            "src": "465:9:69"
           },
           {
             "baseName": {
-              "id": 8877,
+              "id": 9291,
               "name": "PausableBase",
               "nameLocations": [
-                "478:12:67"
+                "478:12:69"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 8782,
-              "src": "478:12:67"
+              "referencedDeclaration": 9196,
+              "src": "478:12:69"
             },
-            "id": 8878,
+            "id": 9292,
             "nodeType": "InheritanceSpecifier",
-            "src": "478:12:67"
+            "src": "478:12:69"
           },
           {
             "baseName": {
-              "id": 8879,
+              "id": 9293,
               "name": "TokenOwnableBase",
               "nameLocations": [
-                "494:16:67"
+                "494:16:69"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 8591,
-              "src": "494:16:67"
+              "referencedDeclaration": 9005,
+              "src": "494:16:69"
             },
-            "id": 8880,
+            "id": 9294,
             "nodeType": "InheritanceSpecifier",
-            "src": "494:16:67"
+            "src": "494:16:69"
           },
           {
             "baseName": {
-              "id": 8881,
+              "id": 9295,
               "name": "Facet",
               "nameLocations": [
-                "514:5:67"
+                "514:5:69"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 6529,
-              "src": "514:5:67"
+              "referencedDeclaration": 6943,
+              "src": "514:5:69"
             },
-            "id": 8882,
+            "id": 9296,
             "nodeType": "InheritanceSpecifier",
-            "src": "514:5:67"
+            "src": "514:5:69"
           }
         ],
         "canonicalName": "TokenPausableFacet",
@@ -1143,41 +1143,41 @@
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          8923,
-          6529,
-          7660,
-          7563,
-          7521,
-          8591,
-          8043,
-          8782,
-          8705,
-          8691
+          9337,
+          6943,
+          8074,
+          7977,
+          7935,
+          9005,
+          8457,
+          9196,
+          9119,
+          9105
         ],
         "name": "TokenPausableFacet",
-        "nameLocation": "441:18:67",
-        "scope": 8924,
+        "nameLocation": "441:18:69",
+        "scope": 9338,
         "usedErrors": [
-          7301,
-          7303,
-          7550,
-          7552,
-          8031,
-          8035,
-          8680,
-          8682
+          7715,
+          7717,
+          7964,
+          7966,
+          8445,
+          8449,
+          9094,
+          9096
         ],
         "usedEvents": [
-          7307,
-          7557,
-          7562,
-          8042,
-          8686,
-          8690
+          7721,
+          7971,
+          7976,
+          8456,
+          9100,
+          9104
         ]
       }
     ],
     "license": "Apache-2.0"
   },
-  "id": 67
+  "id": 69
 }
