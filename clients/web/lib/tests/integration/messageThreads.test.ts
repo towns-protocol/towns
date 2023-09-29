@@ -4,7 +4,7 @@
  * @group dendrite
  */
 import {
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
@@ -25,11 +25,10 @@ describe('messageThreads', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const spaceId = (await createTestSpaceWithZionMemberRole(
-            bob,
-            [Permission.Read, Permission.Write],
-            [],
-        )) as RoomIdentifier
+        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])) as RoomIdentifier
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
@@ -39,6 +38,7 @@ describe('messageThreads', () => {
         }))!
 
         // alice joins the room
+        await alice.joinTown(spaceId, alice.wallet)
         await waitForWithRetries(() => alice.joinRoom(channelId))
 
         // alice sends a message

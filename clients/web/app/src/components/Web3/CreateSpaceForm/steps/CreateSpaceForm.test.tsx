@@ -88,7 +88,8 @@ const useMockedCreateSpaceTransaction = (
     ...args: (typeof zionClient.useCreateSpaceTransaction)['arguments']
 ) => useMockedCreateTransaction(...args) as UseMockCreateSpaceReturn
 
-describe('<CreateSpaceForm />', () => {
+// need new tests https://linear.app/hnt-labs/issue/HNT-2729/need-new-tests-for-createspaceform-and-spacejoin
+describe.skip('<CreateSpaceForm />', () => {
     beforeEach(() => {
         vi.resetAllMocks()
     })

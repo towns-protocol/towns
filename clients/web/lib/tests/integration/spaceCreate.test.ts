@@ -1,18 +1,25 @@
+/**
+ * @group casablanca
+ */
+
 import { Permission } from '@river/web3'
 import {
-    createTestSpaceWithEveryoneRole,
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownNft,
+    createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
 } from './helpers/TestUtils'
 
-describe.skip('ITownArchitect tests', () => {
+describe('ITownArchitect tests', () => {
     test('create a town with Everyone role', async () => {
         /* Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
         /* Act */
-        const townId = await createTestSpaceWithEveryoneRole(alice)
+        const townId = await createTestSpaceGatedByTownNft(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])
 
         /* Assert */
         expect(townId).toBeDefined()
@@ -25,7 +32,7 @@ describe.skip('ITownArchitect tests', () => {
         await alice.fundWallet()
 
         /* Act */
-        const townId = await createTestSpaceWithZionMemberRole(alice, permissions)
+        const townId = await createTestSpaceGatedByTownAndZionNfts(alice, permissions)
 
         /* Assert */
         expect(townId).toBeDefined()

@@ -19,8 +19,9 @@ abstract contract ManagedProxyBase is IManagedProxyBase, Proxy {
     bytes4 managerSelector,
     address manager
   ) internal {
-    _setManagerSelector(managerSelector);
-    _setManager(manager);
+    ManagedProxyStorage.Layout storage ds = ManagedProxyStorage.layout();
+    ds.managerSelector = managerSelector;
+    ds.manager = manager;
   }
 
   /**
@@ -56,6 +57,7 @@ abstract contract ManagedProxyBase is IManagedProxyBase, Proxy {
    * @param manager address
    */
   function _setManager(address manager) internal virtual {
+    if (manager == address(0)) revert ManagedProxy__InvalidManager();
     ManagedProxyStorage.layout().manager = manager;
   }
 
@@ -64,6 +66,8 @@ abstract contract ManagedProxyBase is IManagedProxyBase, Proxy {
    * @param managerSelector function selector used to fetch implementation from manager
    */
   function _setManagerSelector(bytes4 managerSelector) internal virtual {
+    if (managerSelector == bytes4(0))
+      revert ManagedProxy__InvalidManagerSelector();
     ManagedProxyStorage.layout().managerSelector = managerSelector;
   }
 }

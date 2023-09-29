@@ -2,10 +2,7 @@ import * as Sentry from '@sentry/react'
 
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-    CreateSpaceInfo,
     EmittedTransaction,
-    Permission,
-    RoomVisibility,
     SignerUndefinedError,
     TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
@@ -41,10 +38,7 @@ import {
     ERROR_NAME_CONTAINS_INVALID_CHARACTERS,
     ERROR_NAME_LENGTH_INVALID,
     ERROR_SPACE_ALREADY_REGISTERED,
-    EVERYONE,
-    TOKEN_HOLDERS,
 } from './constants'
-import { createTokenEntitlementStruct } from '../utils'
 
 type HeaderProps = {
     formId: string
@@ -122,13 +116,7 @@ export const CreateSpaceForm = () => {
     const { spaceDapp } = useZionClient()
     const { step } = useDevOnlyQueryParams('step')
     const startAt = step && (step as number) > 0 ? (step as number) - 1 : 0
-    const {
-        data: roomId,
-        error,
-        transactionStatus,
-        transactionHash,
-        createSpaceTransactionWithRole,
-    } = useCreateSpaceTransaction()
+    const { data: roomId, error, transactionStatus, transactionHash } = useCreateSpaceTransaction()
     const navigate = useNavigate()
     const isCreatingSpace = useRef<boolean>(false)
 
@@ -213,38 +201,14 @@ export const CreateSpaceForm = () => {
     const createSpace = useCallback(async () => {
         const { step1, step2 } = useCreateSpaceFormStore.getState()
 
-        const { membershipType, tokens } = step1
+        const { membershipType } = step1
         const { spaceName } = step2
 
         if (!membershipType || !spaceName || !spaceName) {
             isCreatingSpace.current = false
             return
         }
-
-        const tokenGrantedPermissions =
-            membershipType === TOKEN_HOLDERS ? [Permission.Read, Permission.Write] : []
-
-        const everyonePermissions =
-            membershipType === EVERYONE ? [Permission.Read, Permission.Write] : []
-
-        const createSpaceInfo: CreateSpaceInfo = {
-            name: spaceName,
-            visibility: RoomVisibility.Public,
-        }
-
-        await createSpaceTransactionWithRole(
-            createSpaceInfo,
-            'Member',
-            tokens.map((t) =>
-                createTokenEntitlementStruct({
-                    contractAddress: t.contractAddress,
-                    tokenIds: t.tokenIds,
-                }),
-            ),
-            tokenGrantedPermissions,
-            everyonePermissions,
-        )
-    }, [createSpaceTransactionWithRole])
+    }, [])
 
     const onSubmit = useCallback(async () => {
         if (isCreatingSpace.current) {

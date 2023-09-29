@@ -74,6 +74,8 @@ export async function registerAndStartClients(
     const clients = clientNames.map((name) => new ZionTestClient(chainId, name, props))
     // start them up
     await Promise.all(clients.map((client) => client.registerWalletAndStartClient()))
+    // all clients need funds to create or join a space
+    await Promise.all(clients.map((client) => client.fundWallet()))
     // return a dictionary of clients
     return clients.reduce((records: Record<string, ZionTestClient>, client: ZionTestClient) => {
         records[client.name] = client
@@ -136,10 +138,12 @@ export async function fundWallet(walletToFund: ethers.Wallet) {
     return true
 }
 
-export async function createTestSpaceWithZionMemberRole(
+/**
+ * Create a town with an "Member" role that is gated by a membership token + zion token
+ */
+export async function createTestSpaceGatedByTownAndZionNfts(
     client: ZionTestClient,
-    tokenGrantedPermissions: Permission[],
-    everyonePermissions: Permission[] = [],
+    rolePermissions: Permission[],
     createSpaceInfo?: CreateSpaceInfo,
 ): Promise<RoomIdentifier | undefined> {
     if (!createSpaceInfo) {
@@ -147,27 +151,40 @@ export async function createTestSpaceWithZionMemberRole(
             name: client.makeUniqueName(),
             visibility: RoomVisibility.Public,
         }
+    }
+
+    if (!client.walletAddress) {
+        throw new Error('client.walletAddress is undefined')
     }
 
     const memberNftAddress = getMemberNftAddress(client.chainId)
     const tokens = createExternalTokenStruct([memberNftAddress])
-    const tokenEntitlement: ITownArchitectBase.MemberEntitlementStruct = {
-        role: {
-            name: 'Member',
-            permissions: tokenGrantedPermissions,
+
+    const membershipInfo: ITownArchitectBase.MembershipStruct = {
+        name: 'Member',
+        price: 0,
+        limit: 100,
+        currency: ethers.constants.AddressZero,
+        feeRecipient: client.walletAddress,
+        permissions: rolePermissions,
+        requirements: {
+            everyone: false,
+            tokens,
+            users: [],
         },
-        tokens,
-        users: [],
     }
 
     // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.
     await client.mintMockNFT()
-    return client.createSpace(createSpaceInfo, tokenEntitlement, everyonePermissions)
+    return client.createSpace(createSpaceInfo, membershipInfo)
 }
 
-export async function createTestSpaceWithEveryoneRole(
+/**
+ * Create a town with an "Everyone" role that is gated only by a membership token
+ */
+export async function createTestSpaceGatedByTownNft(
     client: ZionTestClient,
-    everyonePermissions: Permission[] = [],
+    rolePermissions: Permission[],
     createSpaceInfo?: CreateSpaceInfo,
 ): Promise<RoomIdentifier | undefined> {
     if (!createSpaceInfo) {
@@ -177,19 +194,28 @@ export async function createTestSpaceWithEveryoneRole(
         }
     }
 
-    // No member role. Everyone role is the only role.
-    const tokenEntitlement: ITownArchitectBase.MemberEntitlementStruct = {
-        role: {
-            name: '',
-            permissions: [],
+    if (!client.walletAddress) {
+        throw new Error('client.walletAddress is undefined')
+    }
+
+    // Everyone role
+    const membershipInfo: ITownArchitectBase.MembershipStruct = {
+        name: 'Everyone',
+        price: 0,
+        limit: 100,
+        currency: ethers.constants.AddressZero,
+        feeRecipient: client.walletAddress,
+        permissions: rolePermissions,
+        requirements: {
+            everyone: true,
+            tokens: [],
+            users: [],
         },
-        tokens: [],
-        users: [],
     }
 
     // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.
     await client.mintMockNFT()
-    return client.createSpace(createSpaceInfo, tokenEntitlement, everyonePermissions)
+    return client.createSpace(createSpaceInfo, membershipInfo)
 }
 
 export async function createTestChannelWithSpaceRoles(

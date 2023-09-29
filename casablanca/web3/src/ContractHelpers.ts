@@ -5,6 +5,7 @@ import { MockERC721AShim } from './v3/MockERC721AShim'
 import { TokenEntitlementDataTypes } from './v3/TokenEntitlementShim'
 import { getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
 import { ISpaceDapp } from './ISpaceDapp'
+import { ITownArchitectBase } from './v3/ITownArchitectShim'
 
 export function mintMockNFT(
     chainId: number,
@@ -48,6 +49,32 @@ export function createExternalTokenStruct(
         }),
     )
     return tokenStruct
+}
+
+//
+export function createMembershipStruct({
+    name,
+    permissions,
+    tokenAddresses,
+}: {
+    tokenAddresses: string[]
+} & Omit<
+    ITownArchitectBase.MembershipStruct,
+    'price' | 'limit' | 'currency' | 'requirements' | 'feeRecipient'
+>): ITownArchitectBase.MembershipStruct {
+    return {
+        name,
+        price: 0,
+        limit: 1000,
+        currency: ethers.constants.AddressZero,
+        feeRecipient: ethers.constants.AddressZero,
+        permissions,
+        requirements: {
+            everyone: tokenAddresses.length === 0,
+            tokens: createExternalTokenStruct(tokenAddresses),
+            users: [],
+        },
+    }
 }
 
 export async function getFilteredRolesFromSpace(

@@ -32,6 +32,7 @@ import { ethers, Wallet } from 'ethers'
 const base_log = dlog('csb:test:withEntitlements')
 
 const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL_WITH_ENTITILEMENTS)
+const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
 describe('withEntitlements', () => {
     let bobsWallet: Wallet
@@ -77,14 +78,18 @@ describe('withEntitlements', () => {
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
         log('Bob created user, about to create space', { spacedStreamId, channelId })
         // first on the blockchain
-        const everyonePermissions: Permission[] = [Permission.Read, Permission.Write]
-        const memberEntitlements: ITownArchitectBase.MemberEntitlementStruct = {
-            role: {
-                name: '',
-                permissions: [],
+        const membershipInfo: ITownArchitectBase.MembershipStruct = {
+            name: 'Everyone',
+            price: 0,
+            limit: 1000,
+            currency: ETH_ADDRESS,
+            feeRecipient: bobsUserId,
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
+                everyone: true,
+                tokens: [],
+                users: [],
             },
-            tokens: [],
-            users: [],
         }
         const transaction = await spaceDapp.createSpace(
             {
@@ -93,8 +98,7 @@ describe('withEntitlements', () => {
                 spaceMetadata: 'bobs-space-metadata',
                 channelId: channelId,
                 channelName: 'general', // default channel name
-                memberEntitlements,
-                everyonePermissions,
+                membership: membershipInfo,
             },
             provider.wallet,
         )

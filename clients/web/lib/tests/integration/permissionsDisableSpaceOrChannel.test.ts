@@ -5,8 +5,8 @@
  */
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
-    createTestSpaceWithEveryoneRole,
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownNft,
+    createTestSpaceGatedByTownAndZionNfts,
     getPrimaryProtocol,
     registerAndStartClient,
     registerAndStartClients,
@@ -26,7 +26,7 @@ describe.skip('disable channel', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
         const spaceNetworkId: string | undefined = roomId?.networkId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
@@ -50,7 +50,7 @@ describe.skip('disable channel', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId should be defined')
         }
@@ -84,7 +84,7 @@ describe.skip('disable channel', () => {
         await alice.fundWallet()
         await bob.fundWallet()
 
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
         const spaceNetworkId: string | undefined = roomId?.networkId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
@@ -118,11 +118,11 @@ describe.skip('disable channel', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = await createTestSpaceWithZionMemberRole(bob, [
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(bob, [
             Permission.Read,
             Permission.Write,
         ])
-        if (roomId === undefined) {
+        if (spaceId === undefined) {
             throw new Error('roomId should be defined')
         }
         if (tokenGrantedUser.getUserId() === undefined) {
@@ -130,13 +130,13 @@ describe.skip('disable channel', () => {
         }
 
         // invite user to join the space by first checking if they can read.
-        await bob.inviteUser(roomId, tokenGrantedUser.getUserId()!)
-        await tokenGrantedUser.joinRoom(roomId)
+        await bob.inviteUser(spaceId, tokenGrantedUser.getUserId()!)
+        await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
 
         /** Act */
 
         // set space access off, disabling space in ZionSpaceManager
-        await bob.setSpaceAccess(roomId.networkId, true, bob.provider.wallet)
+        await bob.setSpaceAccess(spaceId.networkId, true, bob.provider.wallet)
 
         /** Assert */
 
@@ -144,7 +144,7 @@ describe.skip('disable channel', () => {
         // leave since the space is disabled
         await waitFor(
             () =>
-                expect(tokenGrantedUser.scrollback(roomId, 30)).rejects.toThrow(
+                expect(tokenGrantedUser.scrollback(spaceId, 30)).rejects.toThrow(
                     'You cannot remain in a disabled server',
                 ),
             TestConstants.DoubleDefaultWaitForTimeout,
@@ -152,7 +152,7 @@ describe.skip('disable channel', () => {
         // give dendrite time to federate leave event
         // can't rejoin the room after it's disabled without a re-invite
         await waitFor(
-            () => expect(tokenGrantedUser.joinRoom(roomId)).rejects.toThrow('Unauthorised'),
+            () => expect(tokenGrantedUser.joinRoom(spaceId)).rejects.toThrow('Unauthorised'),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
     })
@@ -168,7 +168,7 @@ describe.skip('disable channel', () => {
         // create all the users for the test
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
         await bob.fundWallet()
-        const roomId = await createTestSpaceWithEveryoneRole(
+        const spaceId = await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
@@ -176,7 +176,7 @@ describe.skip('disable channel', () => {
                 visibility: RoomVisibility.Private,
             },
         )
-        if (roomId === undefined) {
+        if (spaceId === undefined) {
             throw new Error('roomId should be defined')
         }
         if (alice.getUserId() === undefined) {
@@ -185,15 +185,15 @@ describe.skip('disable channel', () => {
 
         /** Act */
 
-        await bob.inviteUser(roomId, alice.getUserId()!)
-        await alice.joinRoom(roomId)
+        await bob.inviteUser(spaceId, alice.getUserId()!)
+        await alice.joinTown(spaceId, alice.wallet)
 
         // set space access off, disabling space in ZionSpaceManager
-        await bob.setSpaceAccess(roomId.networkId, true, bob.provider.wallet)
+        await bob.setSpaceAccess(spaceId.networkId, true, bob.provider.wallet)
 
         await waitFor(
             () =>
-                expect(alice.scrollback(roomId, 30)).rejects.toThrow(
+                expect(alice.scrollback(spaceId, 30)).rejects.toThrow(
                     'You cannot remain in a disabled server',
                 ),
             TestConstants.DoubleDefaultWaitForTimeout,
@@ -202,12 +202,12 @@ describe.skip('disable channel', () => {
         // space is re-enabled. Should be able to join.
 
         // re-enable space
-        await bob.setSpaceAccess(roomId.networkId, false, bob.provider.wallet)
+        await bob.setSpaceAccess(spaceId.networkId, false, bob.provider.wallet)
 
         /** Assert */
-        await bob.inviteUser(roomId, alice.getUserId()!)
+        await bob.inviteUser(spaceId, alice.getUserId()!)
         await waitFor(
-            () => expect(alice.joinRoom(roomId)).resolves.toBeDefined(),
+            () => expect(alice.joinRoom(spaceId)).resolves.toBeDefined(),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
     })

@@ -4,8 +4,8 @@
  */
 import { NoThrownError, getError } from './helpers/ErrorUtils'
 import {
-    createTestSpaceWithEveryoneRole,
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownNft,
+    createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
     waitForWithRetries,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
@@ -23,7 +23,7 @@ describe.skip('redact messages', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
         // create a space
-        const spaceId = await createTestSpaceWithZionMemberRole(alice, [
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -76,7 +76,7 @@ describe.skip('redact messages', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         await alice.fundWallet()
         // create a space with entitlement to read and write
-        const spaceId = await createTestSpaceWithEveryoneRole(alice, [
+        const spaceId = await createTestSpaceGatedByTownNft(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -134,7 +134,7 @@ describe.skip('redact messages', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         await alice.fundWallet()
         // create a space with entitlement to read and write
-        const spaceId = await createTestSpaceWithEveryoneRole(alice, [
+        const spaceId = await createTestSpaceGatedByTownNft(alice, [
             Permission.Read,
             Permission.Write,
         ])

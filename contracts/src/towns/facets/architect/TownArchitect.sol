@@ -26,13 +26,15 @@ contract TownArchitect is
   function __TownArchitect_init(
     address townOwner,
     address userEntitlementImplementation,
-    address tokenEntitlementImplementation
+    address tokenEntitlementImplementation,
+    address trustedForwarder
   ) external onlyInitializing {
     _setImplementations(
       townOwner,
       userEntitlementImplementation,
       tokenEntitlementImplementation
     );
+    _setTrustedForwarder(trustedForwarder);
   }
 
   function isTokenGated(address token) external view returns (bool) {
@@ -56,9 +58,12 @@ contract TownArchitect is
   }
 
   // get pre mint town address
-  function computeTown(string memory townId) external view returns (address) {
+  function computeTown(
+    string memory townId,
+    Membership memory membership
+  ) external view returns (address) {
     uint256 tokenId = _getNextTokenId();
-    return _getTownDeploymentAddress(townId, tokenId);
+    return _getTownDeploymentAddress(townId, tokenId, membership);
   }
 
   // get town address

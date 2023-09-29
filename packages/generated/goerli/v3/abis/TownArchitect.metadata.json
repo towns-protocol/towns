@@ -221,6 +221,11 @@
             "internalType": "address",
             "name": "tokenEntitlementImplementation",
             "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "trustedForwarder",
+            "type": "address"
           }
         ],
         "name": "__TownArchitect_init",
@@ -234,6 +239,87 @@
             "internalType": "string",
             "name": "townId",
             "type": "string"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "price",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "limit",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "currency",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "feeRecipient",
+                "type": "address"
+              },
+              {
+                "internalType": "string[]",
+                "name": "permissions",
+                "type": "string[]"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "bool",
+                    "name": "everyone",
+                    "type": "bool"
+                  },
+                  {
+                    "components": [
+                      {
+                        "internalType": "address",
+                        "name": "contractAddress",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "quantity",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "bool",
+                        "name": "isSingleToken",
+                        "type": "bool"
+                      },
+                      {
+                        "internalType": "uint256[]",
+                        "name": "tokenIds",
+                        "type": "uint256[]"
+                      }
+                    ],
+                    "internalType": "struct ITokenEntitlement.ExternalToken[]",
+                    "name": "tokens",
+                    "type": "tuple[]"
+                  },
+                  {
+                    "internalType": "address[]",
+                    "name": "users",
+                    "type": "address[]"
+                  }
+                ],
+                "internalType": "struct ITownArchitectBase.MembershipRequirements",
+                "name": "requirements",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct ITownArchitectBase.Membership",
+            "name": "membership",
+            "type": "tuple"
           }
         ],
         "name": "computeTown",
@@ -274,69 +360,77 @@
                     "type": "string"
                   },
                   {
+                    "internalType": "uint256",
+                    "name": "price",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "limit",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "currency",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "feeRecipient",
+                    "type": "address"
+                  },
+                  {
                     "internalType": "string[]",
                     "name": "permissions",
                     "type": "string[]"
-                  }
-                ],
-                "internalType": "struct ITownArchitectBase.RoleInfo",
-                "name": "everyoneEntitlement",
-                "type": "tuple"
-              },
-              {
-                "components": [
-                  {
-                    "components": [
-                      {
-                        "internalType": "string",
-                        "name": "name",
-                        "type": "string"
-                      },
-                      {
-                        "internalType": "string[]",
-                        "name": "permissions",
-                        "type": "string[]"
-                      }
-                    ],
-                    "internalType": "struct ITownArchitectBase.RoleInfo",
-                    "name": "role",
-                    "type": "tuple"
                   },
                   {
                     "components": [
                       {
-                        "internalType": "address",
-                        "name": "contractAddress",
-                        "type": "address"
-                      },
-                      {
-                        "internalType": "uint256",
-                        "name": "quantity",
-                        "type": "uint256"
-                      },
-                      {
                         "internalType": "bool",
-                        "name": "isSingleToken",
+                        "name": "everyone",
                         "type": "bool"
                       },
                       {
-                        "internalType": "uint256[]",
-                        "name": "tokenIds",
-                        "type": "uint256[]"
+                        "components": [
+                          {
+                            "internalType": "address",
+                            "name": "contractAddress",
+                            "type": "address"
+                          },
+                          {
+                            "internalType": "uint256",
+                            "name": "quantity",
+                            "type": "uint256"
+                          },
+                          {
+                            "internalType": "bool",
+                            "name": "isSingleToken",
+                            "type": "bool"
+                          },
+                          {
+                            "internalType": "uint256[]",
+                            "name": "tokenIds",
+                            "type": "uint256[]"
+                          }
+                        ],
+                        "internalType": "struct ITokenEntitlement.ExternalToken[]",
+                        "name": "tokens",
+                        "type": "tuple[]"
+                      },
+                      {
+                        "internalType": "address[]",
+                        "name": "users",
+                        "type": "address[]"
                       }
                     ],
-                    "internalType": "struct ITokenEntitlement.ExternalToken[]",
-                    "name": "tokens",
-                    "type": "tuple[]"
-                  },
-                  {
-                    "internalType": "address[]",
-                    "name": "users",
-                    "type": "address[]"
+                    "internalType": "struct ITownArchitectBase.MembershipRequirements",
+                    "name": "requirements",
+                    "type": "tuple"
                   }
                 ],
-                "internalType": "struct ITownArchitectBase.MemberEntitlement",
-                "name": "memberEntitlement",
+                "internalType": "struct ITownArchitectBase.Membership",
+                "name": "membership",
                 "type": "tuple"
               },
               {
@@ -516,7 +610,7 @@
       },
       "kind": "dev",
       "methods": {
-        "createTown((string,string,string,(string,string[]),((string,string[]),(address,uint256,bool,uint256[])[],address[]),(string,string)))": {
+        "createTown((string,string,string,(string,uint256,uint256,address,address,string[],(bool,(address,uint256,bool,uint256[])[],address[])),(string,string)))": {
           "params": {
             "townInfo": "Town information"
           }
@@ -535,7 +629,7 @@
       },
       "kind": "user",
       "methods": {
-        "createTown((string,string,string,(string,string[]),((string,string[]),(address,uint256,bool,uint256[])[],address[]),(string,string)))": {
+        "createTown((string,string,string,(string,uint256,uint256,address,address,string[],(bool,(address,uint256,bool,uint256[])[],address[])),(string,string)))": {
           "notice": "Creates a new town"
         }
       },
@@ -604,11 +698,11 @@
       ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
-      "keccak256": "0x503b6ce030f8a760e9a877545b35307d05bbb704b501095795ab2168fe40db59",
+      "keccak256": "0xbdc803a2179838316625692285c4b720cdbae1c78e5f9a68560719c909253d00",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://769658fed18c26f67dec9bf4ca18dd595c0343bc8ea21bb3e50595eca3401265",
-        "dweb:/ipfs/QmVuqWH5eKqBJbNEtXzybgZ7ahtjTraMew8CMb4TuVUyo6"
+        "bzz-raw://776a4490b22b01b554770d71afde7bed4c32ea639a08c84a194076eddf5517be",
+        "dweb:/ipfs/QmcPVR9T7vXccCg7RXQ4wXtHaBG6ugrEXk8qnhRpsYMVd6"
       ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
@@ -644,11 +738,11 @@
       ]
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol": {
-      "keccak256": "0x61304bf241c1d14017416d3cc1742960f6157411d90a1464b8bde23bd322da89",
+      "keccak256": "0xa2498b875cb3c6f8c642a6b2fd5d9f017f698e687e07610135c3ae0c418e10e1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ac41ce2830e16be806340ea576a1885db9ecd02cc4f5002bfdeb4dfd4ac0115e",
-        "dweb:/ipfs/QmXqE8xZjwkFA2YgfV3eExFVEMqHizVSBTxyNDhM9WVrEZ"
+        "bzz-raw://6881798ca926328f2b7e6731b06babfa548d47c1210ff52cdede3d31f99188b4",
+        "dweb:/ipfs/QmRPKteWS4tSg1iTG1nsKJXgGxWWcEVdyXJaxMamZ7EdL6"
       ]
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol": {
@@ -683,6 +777,30 @@
         "dweb:/ipfs/QmVQb23iSSbYQJqk3EB9vT5fjSp6J8Uj2AwgEaHMSkF6wa"
       ]
     },
+    "contracts/src/diamond/facets/recipient/ERC2771RecipientBase.sol": {
+      "keccak256": "0x8bc4ba2434fe953b044842bde8221e91986076bc7a2991e2326ad81eafc1c2df",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://7e7abe4d785d77b1ada045857eebe50d94643b211716789a05e618f66af91681",
+        "dweb:/ipfs/QmZhDnkSMu9TFWZhufwaG2hb6BH4MQuAXUm2FkT2Wv9xtk"
+      ]
+    },
+    "contracts/src/diamond/facets/recipient/ERC2771RecipientStorage.sol": {
+      "keccak256": "0xbc05f921c7f0d4a61bde16443d89633eef695cc86715aeab4d356c5110fba2d3",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://b35bb2b1b879c728be85655549ffe26a4f2b99c328f5b466656ffe323804f150",
+        "dweb:/ipfs/QmRFaRnhiS4RgwsSWFQzhcQge4PGBDb9oUchDTZrFPGGbs"
+      ]
+    },
+    "contracts/src/diamond/facets/recipient/IERC2771Recipient.sol": {
+      "keccak256": "0x5be5673df93a2162aa89c13802f0f4240fa889b2b8c6e57f372166d27ce779c1",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://3b276d85daa4373d0fc6e0bc6f29650903ac5b4ee00669e886bf828f5e075aaa",
+        "dweb:/ipfs/QmRrCEXA3UwKpHEHtgEhsqwfMNXy3dMVhdDUd64fTqfesM"
+      ]
+    },
     "contracts/src/diamond/facets/reentrancy/IReentrancyGuard.sol": {
       "keccak256": "0x507dfdcf6a41cf53878f7bd5ce7e1b0d6e55143eb6a797c7d898677c6ff745dd",
       "license": "Apache-2.0",
@@ -705,6 +823,14 @@
       "urls": [
         "bzz-raw://76dbe11f006b449792ed47c699d266ea89706a2babe0e7177a287283aa9f15f1",
         "dweb:/ipfs/Qmd1AZpAYqzejHFBjpenbMwDWHFhYX7MQTNc18PKtDdoNd"
+      ]
+    },
+    "contracts/src/diamond/facets/token/ERC5643/IERC5643.sol": {
+      "keccak256": "0xd8bdaad94ddd9d05f4b124e4a616cbc0a9b7787169722252b45116c3b8ec4ed0",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c03a38ce42b8636aefd8200e231864995ac34a61adca44ff885649efa3ac8272",
+        "dweb:/ipfs/QmStu2XFdLd2GT6g9cko45SsyactK9w8zFs9gzh6VGK5GT"
       ]
     },
     "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol": {
@@ -756,19 +882,19 @@
       ]
     },
     "contracts/src/diamond/proxy/managed/IManagedProxy.sol": {
-      "keccak256": "0xeb89a77b1dba2f6fe1a370de65c2950738bd1b6cadbd11635fabb1133d4754a0",
+      "keccak256": "0x317df6ae40ed3e0b950c1737e1152356e57c2d412bd50002788f0e3499335026",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://6e8cddcb3f93cbb32114752e525dd68f362faeaa67a3d41b9122e7bdc280a75e",
-        "dweb:/ipfs/QmZ3tgrTxBKM9g4zr7bxcYyX9LPzjagwUcsVk28fz54b9N"
+        "bzz-raw://57328a7fa860da26d7043fd21413d8045267d9e587f4b2ef94f4b8fb0c8ec106",
+        "dweb:/ipfs/QmQaoFYFgfjEnXzpXf3yqT9e7PercCpCuoS6tVfu8oLzKq"
       ]
     },
     "contracts/src/diamond/proxy/managed/ManagedProxyBase.sol": {
-      "keccak256": "0xe0d7fb721d82cd1a2b74bcb5dd71f54e0385850f307e586d55bd44d6d98ad0e3",
+      "keccak256": "0xd06eca06b020f416112b72c1e63045993fb778460922753193ac24a3a8def1e3",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://4b0851980314e0767e33b42c7b51bb949ecedc9fd4d998807a440064b25b12b1",
-        "dweb:/ipfs/QmRVtyXb4biz5Bf8wkLBDARUFbPis6Gbpa3GDS9DceTfS1"
+        "bzz-raw://a9a4d95fa9cd4e9896d360db04d702a1400bdb30c6843bef2c27e243197a7b28",
+        "dweb:/ipfs/Qmaw9Ji9eLMEKzS6BLHXJf3Zh6pBmABjDuh2CM69Mo38Ye"
       ]
     },
     "contracts/src/diamond/proxy/managed/ManagedProxyStorage.sol": {
@@ -819,36 +945,44 @@
         "dweb:/ipfs/QmWQxEWsG9hVeKh6n8fz1yePGGJ8DcFtMkz2iYtv3Edh3U"
       ]
     },
-    "contracts/src/towns/facets/architect/ITownArchitect.sol": {
-      "keccak256": "0x63c13811042a0f880b8fb5d46ea6a1bc2350739599e998bac2e06e3725a7077f",
+    "contracts/src/towns/facets/Permissions.sol": {
+      "keccak256": "0x71c581d53e94675ff22111bbdcb54d9238cb2476c1c87d22c1c8709643ca20c3",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c77177d4cc5e2e2844f5e3a923e43c52ce7780768e4a98577eb494283dc07ca1",
-        "dweb:/ipfs/QmUw2hQr6gZKYjbKj8Zu3j1iM2pX5ekbopSZiJhQAbHDyX"
+        "bzz-raw://33571102d8b2339eea4e68cdb4461e6c46617fa2597bc7fc9d3bd085ed3b8939",
+        "dweb:/ipfs/QmPsppLQ4sXNwh9QC3hPw1wSdWDXKHsTbeqVPkz97F7KMd"
+      ]
+    },
+    "contracts/src/towns/facets/architect/ITownArchitect.sol": {
+      "keccak256": "0xe026e43f7aafc699cc27e8e1a32f6ba65dc85a99134266707d582834d7c6aa48",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://6f67bab6f09e1bb2170ec6eec1551e12c7589575184498ccd4e243229b1cff91",
+        "dweb:/ipfs/QmNq1L8eZ5f5QFj6QnUPh5LHj6uPE5g8XmRq9Tkr5uBpGn"
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitect.sol": {
-      "keccak256": "0x76ddbf166c47596d06693d1241569128b1a250a683847e31a9763a4347484487",
+      "keccak256": "0x399019bd9df067001b182fc91baed8e8d8f0433c8ef6f013874e327adb2b6e14",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://472d60eff584f1e4c9de400177a4f2f5b9e5d45ee14217f95bef3edeee7b7df1",
-        "dweb:/ipfs/QmPGfgLGWeELxr5NKYayiHYjXwqzxt6jJbb4yF2paXV6nv"
+        "bzz-raw://5ef5d01107386ab028f8fb2c7b6379aa76c63975687cd9524692d670922690f1",
+        "dweb:/ipfs/QmUkeVx92AuuZca3hA8NSr2kKfpnx5kS4xsGHfKtzwSviw"
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitectBase.sol": {
-      "keccak256": "0x916f040e3cf31072bef2ed57882bceb1f0cdef542e5782151f2f1b2f29ef7448",
+      "keccak256": "0xc659aa4bb4b4f30c3ef89bbdb3e15f36cf28fe7a9f9c55564ec8ed57ac8a336a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://436cd596b5075c13a9d70bab478d969ac26a32476dd26f97507829c10d4f87bd",
-        "dweb:/ipfs/QmZ4kK3nmvdvP2XWiBWN9c67RwoXA5qyXDrNpk6FWouHdv"
+        "bzz-raw://2df1c51247b776b9001f40889fb7b4e9b2245b17e0d724e7e24016a4b5424614",
+        "dweb:/ipfs/QmXrkBjLFoNiKQTrGiRzdFMW8dn7T9etgp9eJaFVeTtJyy"
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitectStorage.sol": {
-      "keccak256": "0x22c5edf790763e3594104bddece0b8efceebd291dd1469f8daa7056a19577403",
+      "keccak256": "0x2c7b6002b9e583b1f67127157ae7aa4df4ebca944a53bb4fb0c3fd23c7233d12",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://124e4aa12922e951df010e28587465d70cb69540cfa0cd2b83f6756b4cc1727f",
-        "dweb:/ipfs/QmRreTp3ykNpB64y53oW2yYhpYnxsAsS8pCkenB6JFoPK7"
+        "bzz-raw://5810bbb5b96368577749315c8aa80d20665fcaa874564a636c8d1aa1de218699",
+        "dweb:/ipfs/QmP6bVqtgW5wHmQGVodM4kV4UBmQQRSLFUjv4UFngpntss"
       ]
     },
     "contracts/src/towns/facets/channels/IChannel.sol": {
@@ -915,6 +1049,30 @@
         "dweb:/ipfs/QmevKHxfcRtHeWypqwtDMrC7i4Jb2AZ8Yz6v8Wo65sGn66"
       ]
     },
+    "contracts/src/towns/facets/membership/IMembership.sol": {
+      "keccak256": "0x3850a57d0605852c08b500c4ac18a097ac81295b3ba4c3a65061ba31454dc963",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://f2f8ee5df52e748adb0f0ecbb6b49eef1616deb07c271d8fea2c991d225f6d26",
+        "dweb:/ipfs/QmcbL9Wf8R9YxzFj8LZZUJq3D2XtndpTwaqLBsZqM9NBtz"
+      ]
+    },
+    "contracts/src/towns/facets/membership/MembershipBase.sol": {
+      "keccak256": "0x5decd0ae4cdf5b3959734524dc203d8f01ba581230eaa3a98a822570c81e02a8",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://418c51270a7b238bc7469759c89f38e314d4caa8e5d1045551c7bf9177d4c1a0",
+        "dweb:/ipfs/QmdPbCv6KhA7ax4GbfdvDZbFELLaJVmUiLNed1FwmQJMSc"
+      ]
+    },
+    "contracts/src/towns/facets/membership/MembershipStorage.sol": {
+      "keccak256": "0xf61c275fd438990e41184171964bf5438ff347a1e654162b2c12bfe6f4973833",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://8ed7a0fc30e464a98a8c9876855066ecad26147bb055cee6e33a7f6a2ecec691",
+        "dweb:/ipfs/QmSU45tU2HrDxbqY4Zj4JqQQnao3KS4yf89XxeqbmeDF64"
+      ]
+    },
     "contracts/src/towns/facets/owner/ITownOwner.sol": {
       "keccak256": "0x8f02d28faa3b57b7d888d32bdb3c79bd81d75af49fe20aff0410b1b5f4f3cede",
       "license": "Apache-2.0",
@@ -947,12 +1105,28 @@
         "dweb:/ipfs/QmXEWWRtYSL1fmJ7PkRrP921bM1465PbFmc8cmY8PAgjXd"
       ]
     },
-    "contracts/src/towns/facets/proxy/TownProxy.sol": {
-      "keccak256": "0x56fa9e309e5e3b7840c47935284fc4aa65e08626529049f6d05d3c486552a964",
+    "contracts/src/towns/facets/platform/requirements/IPlatformRequirements.sol": {
+      "keccak256": "0x2b9abe044df8fad7a5e4427fbcee87b0bdbbb714bc7d9282e94fa4b0b0f5d514",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://13a6357277ea2735c561cb9ad7a67ae1cc84e1019b0806d8682dce69e08dace7",
-        "dweb:/ipfs/QmQMKp2fk9gzR6N67Y7yZ6BFYT15Nz1o8LLAVarN61Eobi"
+        "bzz-raw://ee228bbd5cbaaba40e99001d5bc23e2b7f4b82647028ad383932470668ab0a12",
+        "dweb:/ipfs/QmUziav1iLXZA5NjbF41bUWXBG6CfyCgjK6ET52gE4KdLm"
+      ]
+    },
+    "contracts/src/towns/facets/proxy/ITownProxy.sol": {
+      "keccak256": "0x47f5a7b1b96a24eb36e06f1a8506a39438f553c052707985296b00dac9c8832b",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1ca9e3e25251e041fdda918c1ee5ff47af923f8b3f1d673c7cb9c708f1ffa065",
+        "dweb:/ipfs/QmZbUVfpgXZoPHKne3nJ5xFF1ffhp17ZvzaMNNbxK8h6eP"
+      ]
+    },
+    "contracts/src/towns/facets/proxy/TownProxy.sol": {
+      "keccak256": "0x2a73b4baa8eb45b72f250b2ae76f2aa455d912e19ed72613ccebfce2d37dc50c",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://ab0e8ec34708bdff77cf483ebca7f0dc23cf881a1f28e903eb2f6f069b26e226",
+        "dweb:/ipfs/QmTz8mcYJfHEGxXyoGdKwTPgaJnzQ3v5UbGZLZMoFbX3Xj"
       ]
     },
     "contracts/src/towns/facets/roles/IRoles.sol": {
@@ -985,6 +1159,22 @@
       "urls": [
         "bzz-raw://1427d925bf4d9f0ea065c60a7afcff8439dbd62cfa3e4a34e301b1b85df2a184",
         "dweb:/ipfs/QmYETDCx4zhBUqkgmYhyyb1un469ZeuhCpeY4RdtRoYvEz"
+      ]
+    },
+    "contracts/src/utils/interfaces/IWETH.sol": {
+      "keccak256": "0xd274612ab96215dcdb6e3717a63e7a0f76c7facadff93b2b23ed278f6e7b3b00",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://12444da1f06a0fbe6d2d564d73d6d6bc58c09496af3aeea6988c3d3f9ee81c73",
+        "dweb:/ipfs/QmTkpQ6cZmRYgvLUS4mqzLvFg5nabgQjpMnVK8JENboiA3"
+      ]
+    },
+    "contracts/src/utils/libraries/CurrencyTransfer.sol": {
+      "keccak256": "0xedde3d732d497dd4600867be3540646cf731ac9e36323254233491cd567c1b2b",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://7c30d846735bf111493739fc41a4d8826100108d220728d7e170c0567e5d22bc",
+        "dweb:/ipfs/QmcLiTv1RgrEvLxFhYK2AaxwiZ3XXFkdY7XkDQtDGiz7cG"
       ]
     },
     "lib/openzeppelin-contracts/contracts/interfaces/draft-IERC1822.sol": {
@@ -1033,6 +1223,22 @@
       "urls": [
         "bzz-raw://5a7d5b1ef5d8d5889ad2ed89d8619c09383b80b72ab226e0fe7bde1636481e34",
         "dweb:/ipfs/QmebXWgtEfumQGBdVeM6c71McLixYXQP5Bk6kKXuoY4Bmr"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/draft-IERC20Permit.sol": {
+      "keccak256": "0xf41ca991f30855bf80ffd11e9347856a517b977f0a6c2d52e6421a99b7840329",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://b2717fd2bdac99daa960a6de500754ea1b932093c946388c381da48658234b95",
+        "dweb:/ipfs/QmP6QVMn6UeA3ByahyJbYQr5M6coHKBKsf3ySZSfbyA8R7"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol": {
+      "keccak256": "0x9b72f93be69ca894d8492c244259615c4a742afc8d63720dbc8bb81087d9b238",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://f5a7b96e511be78d5cdf635c784e6ab8cdd38625bb8cafb8a80914a1c89cf0f6",
+        "dweb:/ipfs/QmVzTCwJxQAkjRQHboT5QrvsVJGWQHgfEjeTbvyxoKBrds"
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {

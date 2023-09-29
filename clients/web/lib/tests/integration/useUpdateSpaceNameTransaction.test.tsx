@@ -18,7 +18,7 @@ import { useUpdateSpaceNameTransaction } from '../../src/hooks/use-update-space-
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
-import { getMemberNftAddress } from '@river/web3'
+import { createMembershipStruct, getMemberNftAddress } from '@river/web3'
 import { useSpaceName } from '../../src/hooks/use-space-data'
 
 /**
@@ -107,9 +107,11 @@ function TestComponent(args: { originalSpaceName: string; newSpaceName: string }
                     name: args.originalSpaceName,
                     visibility: RoomVisibility.Public,
                 },
-                'Test Role',
-                [],
-                [],
+                createMembershipStruct({
+                    name: 'Test Role',
+                    permissions: [],
+                    tokenAddresses: [],
+                }),
             )
         }
         void handleClick()
@@ -170,7 +172,8 @@ function SpacesComponent(args: { spaceId?: string }): JSX.Element {
  * Assert helper functions
  */
 async function assertSpaceName(htmlElement: HTMLElement, spaceName: string) {
-    await waitFor(() => expect(htmlElement).toHaveTextContent(`spaceName:${spaceName}`), {
-        timeout: 1000,
-    })
+    await waitFor(
+        () => expect(htmlElement).toHaveTextContent(`spaceName:${spaceName}`),
+        TestConstants.DoubleDefaultWaitForTimeout,
+    )
 }

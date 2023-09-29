@@ -4,7 +4,7 @@
 import { ClientEvent, NotificationCountType } from 'matrix-js-sdk'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
     registerAndStartClient,
     waitForWithRetries,
@@ -31,10 +31,9 @@ describe('unreadMessageCount', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space
-        const spaceId = (await createTestSpaceWithZionMemberRole(
+        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
             bob,
             [Permission.Read, Permission.Write],
-            [],
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Private,
@@ -125,7 +124,7 @@ describe('unreadMessageCount', () => {
         await waitFor(() => expect(countFor(channel_2)).toBe(0))
 
         // alice joins the room
-        await alice.joinRoom(spaceId)
+        await alice.joinTown(spaceId, alice.wallet)
         await waitForWithRetries(() => alice.joinRoom(channel_1))
         await waitForWithRetries(() => alice.joinRoom(channel_2))
         // expect our membership to be join

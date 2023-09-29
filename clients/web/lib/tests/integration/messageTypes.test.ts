@@ -11,7 +11,7 @@ import {
 } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     makeUniqueName,
     registerAndStartClients,
     registerAndStartClient,
@@ -32,10 +32,9 @@ describe('messageTypes', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const spaceId = (await createTestSpaceWithZionMemberRole(
+        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
             bob,
             [Permission.Read, Permission.Write],
-            [],
             {
                 name: makeUniqueName('bobs room'),
                 visibility: RoomVisibility.Public,
@@ -50,6 +49,7 @@ describe('messageTypes', () => {
         }))!
 
         // alice joins the room
+        await alice.joinTown(spaceId, alice.wallet)
         await waitForWithRetries(() => alice.joinRoom(channelId))
 
         // alice sends a gm message
@@ -92,10 +92,9 @@ describe('messageTypes', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const spaceId = (await createTestSpaceWithZionMemberRole(
+        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
             bob,
             [Permission.Read, Permission.Write],
-            [],
             {
                 name: makeUniqueName('bobs room'),
                 visibility: RoomVisibility.Public,
@@ -110,6 +109,7 @@ describe('messageTypes', () => {
         }))!
 
         // alice joins the room
+        await alice.joinTown(spaceId, alice.wallet)
         await waitForWithRetries(() => alice.joinRoom(channelId))
         // alice sends a image message
         await waitForWithRetries(() => alice.sendMessage(channelId, 'what.jpg', IMAGE_MSG_CONTENT))

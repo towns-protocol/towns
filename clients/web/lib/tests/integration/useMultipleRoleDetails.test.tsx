@@ -18,12 +18,8 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
-import {
-    createExternalTokenStruct,
-    getMemberNftAddress,
-    BasicRoleInfo,
-    Permission,
-} from '@river/web3'
+import { getMemberNftAddress, BasicRoleInfo, Permission, createMembershipStruct } from '@river/web3'
+import { useZionClient } from '../../src/hooks/use-zion-client'
 
 /**
  * This test suite tests the useRoles hook.
@@ -98,6 +94,12 @@ describe('useRoleDetails', () => {
         await waitFor(() => expect(screen.getAllByTestId('rolesElement')).toHaveLength(2))
 
         const rolesElementA = await waitFor(() => screen.getByTestId('role-Role A'))
+        const membershipTokenAddressRoleA = await waitFor(() =>
+            screen.getByTestId('membershipTokenAddress-Role A'),
+        )
+        if (!membershipTokenAddressRoleA.textContent) {
+            throw new Error('membershipTokenAddress is undefined')
+        }
         /* Assert */
         // verify the role name, permissions, token entitlements for the space.
         // in the test components, each field is tagged with this pattern <roleName>:<field>:<value>.
@@ -106,16 +108,22 @@ describe('useRoleDetails', () => {
         // verify the permissions
         await assertPermissions(rolesElementA, roleNameA, permissionsA)
         // verify the token entitlement
-        await assertNft(rolesElementA, roleNameA, memberNftAddress, 1)
+        await assertNft(rolesElementA, roleNameA, membershipTokenAddressRoleA.textContent, 1)
 
         screen.debug(undefined, Infinity)
 
         const rolesElementB = await waitFor(() => screen.getByTestId('role-Role B'))
+        const membershipTokenAddressRoleB = await waitFor(() =>
+            screen.getByTestId('membershipTokenAddress-Role B'),
+        )
+        if (!membershipTokenAddressRoleB.textContent) {
+            throw new Error('membershipTokenAddress is undefined')
+        }
         await assertRoleName(rolesElementB, roleNameB)
         // verify the permissions
         await assertPermissions(rolesElementB, roleNameB, permissionsB)
         // verify the token entitlement
-        await assertNft(rolesElementB, roleNameB, memberNftAddress, 1)
+        await assertNft(rolesElementB, roleNameB, membershipTokenAddressRoleB.textContent, 1)
     }) // end test
 }) // end describe
 
@@ -136,9 +144,11 @@ function TestComponentMultiple(args: {
                     name: args.spaceNames[0],
                     visibility: RoomVisibility.Public,
                 },
-                args.roleName[0],
-                createExternalTokenStruct([args.councilNftAddress]),
-                args.permissions[0],
+                createMembershipStruct({
+                    name: args.roleName[0],
+                    permissions: args.permissions[0],
+                    tokenAddresses: [args.councilNftAddress],
+                }),
             )
 
             await createSpaceTransactionWithRole(
@@ -146,9 +156,11 @@ function TestComponentMultiple(args: {
                     name: args.spaceNames[1],
                     visibility: RoomVisibility.Public,
                 },
-                args.roleName[1],
-                createExternalTokenStruct([args.councilNftAddress]),
-                args.permissions[1],
+                createMembershipStruct({
+                    name: args.roleName[1],
+                    permissions: args.permissions[1],
+                    tokenAddresses: [args.councilNftAddress],
+                }),
             )
         }
 
@@ -194,11 +206,38 @@ function SpacesComponent(): JSX.Element {
 
 function MultipleRoleDetailsComponent(props: { spaceId: string; roleIds: number[] }) {
     const { data } = useMultipleRoleDetails(props.spaceId, props.roleIds)
+    const [membershipTokenAddress, setMembershipTokenAddress] = React.useState<string | undefined>()
+    const { spaceDapp } = useZionClient()
+
+    useEffect(() => {
+        let cancel = false
+        async function setMembershipAddress() {
+            if (!spaceDapp || !props.spaceId) {
+                return
+            }
+            if (!cancel) {
+                setMembershipTokenAddress(
+                    await spaceDapp?.getTownMembershipTokenAddress(props.spaceId),
+                )
+            }
+        }
+        void setMembershipAddress()
+
+        return () => {
+            cancel = true
+        }
+    }, [spaceDapp, props.spaceId])
+
     return (
         <>
             {data?.map((role) => {
                 return (
                     <div data-testid={`role-${role.name}`} key={`role-${role.name}`}>
+                        {membershipTokenAddress && (
+                            <div data-testid={`membershipTokenAddress-${role.name}`}>
+                                {membershipTokenAddress}
+                            </div>
+                        )}
                         <div>roleName:{role.name}</div>
                         <div>{role.id}</div>
                         <div>

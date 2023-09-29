@@ -17,6 +17,7 @@ import { CreateChannelInfo, RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
+import { createMembershipStruct } from '@river/web3'
 
 /// regression, channels weren't showing in sidebar after they were created
 describe('createSpaceChannelHooks', () => {
@@ -46,9 +47,11 @@ describe('createSpaceChannelHooks', () => {
                             name: name,
                             visibility: RoomVisibility.Public,
                         },
-                        'Test Role',
-                        [],
-                        [],
+                        createMembershipStruct({
+                            name: 'Test Role',
+                            permissions: [],
+                            tokenAddresses: [],
+                        }),
                     )
                     setSpaceId(result?.data)
                     console.log('onClickCreateSpace', { name, result })

@@ -13,6 +13,7 @@ export enum Permission {
     ModifySpaceSettings = 'ModifySpaceSettings',
     Owner = 'Owner',
     Upgrade = 'Upgrade',
+    JoinTown = 'JoinTown',
 }
 
 /**

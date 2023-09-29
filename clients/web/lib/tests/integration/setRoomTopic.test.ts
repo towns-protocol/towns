@@ -2,7 +2,7 @@
  * @group dendrite
  */
 import {
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
     registerAndStartClient,
 } from './helpers/TestUtils'
@@ -20,7 +20,7 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = (await createTestSpaceWithZionMemberRole(alice, [
+        const roomId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])) as RoomIdentifier
@@ -39,7 +39,7 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = (await createTestSpaceWithZionMemberRole(alice, [
+        const roomId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])) as RoomIdentifier
@@ -77,17 +77,17 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to modify space settings
-        const roomId = (await createTestSpaceWithZionMemberRole(alice, [
+        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.ModifySpaceSettings,
         ])) as RoomIdentifier
 
-        await alice.inviteUser(roomId, tokenGrantedUser.getUserId() as string)
-        await tokenGrantedUser.joinRoom(roomId)
+        await alice.inviteUser(spaceId, tokenGrantedUser.getUserId() as string)
+        await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
 
         /* Act */
-        await tokenGrantedUser.setRoomTopic(roomId, 'test topic')
-        const topic = await alice.getRoomTopic(roomId)
+        await tokenGrantedUser.setRoomTopic(spaceId, 'test topic')
+        const topic = await alice.getRoomTopic(spaceId)
 
         /* Assert */
         assert(topic === 'test topic')

@@ -24,7 +24,7 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateChannelTransaction } from '../../src/hooks/use-update-channel-transaction'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import { createExternalTokenStruct, getMemberNftAddress, Permission } from '@river/web3'
+import { createMembershipStruct, getMemberNftAddress, Permission } from '@river/web3'
 /**
  * This test suite tests the useRoles hook.
  */
@@ -187,9 +187,11 @@ function TestComponent(args: {
                     name: args.spaceName,
                     visibility: RoomVisibility.Public,
                 },
-                args.spaceRoleName,
-                createExternalTokenStruct([args.nftAddress]),
-                args.permissions,
+                createMembershipStruct({
+                    name: args.spaceRoleName,
+                    permissions: args.permissions,
+                    tokenAddresses: [args.nftAddress],
+                }),
             )
         }
         void handleClick()

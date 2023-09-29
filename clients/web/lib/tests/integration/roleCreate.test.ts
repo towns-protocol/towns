@@ -4,7 +4,7 @@
  */
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
     registerAndStartClient,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
@@ -19,7 +19,7 @@ describe('create role', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -51,7 +51,7 @@ describe('create role', () => {
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
 
-        const roomId = await createTestSpaceWithZionMemberRole(bob, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(bob, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -89,13 +89,15 @@ describe('create role', () => {
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
 
-        const roomId = await createTestSpaceWithZionMemberRole(bob, [
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(bob, [
             Permission.Read,
             Permission.ModifySpaceSettings,
         ])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
+
+        await tokenGrantedUser.joinTown(roomId, tokenGrantedUser.wallet)
 
         /** Act */
         // create new role in space
@@ -120,7 +122,7 @@ describe('create role', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
         /** Act */
         // create new role in space
         const permissions = [Permission.Ban]

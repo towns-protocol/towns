@@ -3,11 +3,16 @@ pragma solidity ^0.8.20;
 
 // interfaces
 import {IIntrospectionBase} from "./IERC165.sol";
+import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 // libraries
 import {IntrospectionStorage} from "./IntrospectionStorage.sol";
 
 abstract contract IntrospectionBase is IIntrospectionBase {
+  function __IntrospectionBase_init() internal {
+    _addInterface(type(IERC165).interfaceId);
+  }
+
   function _addInterface(bytes4 interfaceId) internal {
     if (!_supportsInterface(interfaceId)) {
       IntrospectionStorage.layout().supportedInterfaces[interfaceId] = true;

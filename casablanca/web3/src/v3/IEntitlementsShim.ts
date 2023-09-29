@@ -1,24 +1,24 @@
 import {
-    IEntitlements as GoerliContract,
-    IEntitlementsInterface as GoerliInterface,
-} from '@towns/generated/goerli/v3/typings/IEntitlements'
+    IEntitlementsManager as GoerliContract,
+    IEntitlementsManagerInterface as GoerliInterface,
+} from '@towns/generated/goerli/v3/typings/IEntitlementsManager'
 import {
-    IEntitlements as LocalhostContract,
-    IEntitlementsBase as LocalhostIEntitlementsBase,
-    IEntitlementsInterface as LocalhostInterface,
-} from '@towns/generated/localhost/v3/typings/IEntitlements'
+    IEntitlementsManager as LocalhostContract,
+    IEntitlementsManagerBase as LocalhostIEntitlementsBase,
+    IEntitlementsManagerInterface as LocalhostInterface,
+} from '@towns/generated/localhost/v3/typings/IEntitlementsManager'
 import {
-    IEntitlements as SepoliaContract,
-    IEntitlementsInterface as SepoliaInterface,
-} from '@towns/generated/sepolia/v3/typings/IEntitlements'
+    IEntitlementsManager as SepoliaContract,
+    IEntitlementsManagerInterface as SepoliaInterface,
+} from '@towns/generated/sepolia/v3/typings/IEntitlementsManager'
 
 import { BaseContractShimV3 } from './BaseContractShimV3'
 
-import GoerliAbi from '@towns/generated/goerli/v3/abis/Entitlements.abi.json' assert { type: 'json' }
+import GoerliAbi from '@towns/generated/goerli/v3/abis/EntitlementsManager.abi.json' assert { type: 'json' }
 
-import LocalhostAbi from '@towns/generated/localhost/v3/abis/Entitlements.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns/generated/localhost/v3/abis/EntitlementsManager.abi.json' assert { type: 'json' }
 
-import SepoliaAbi from '@towns/generated/sepolia/v3/abis/Entitlements.abi.json' assert { type: 'json' }
+import SepoliaAbi from '@towns/generated/sepolia/v3/abis/EntitlementsManager.abi.json' assert { type: 'json' }
 import { ethers } from 'ethers'
 
 export type { LocalhostIEntitlementsBase as IEntitlementsBase }

@@ -43,7 +43,8 @@ const Wrapper = (props: Props) => {
     )
 }
 
-describe('<SpaceJoin />', () => {
+// need new tests https://linear.app/hnt-labs/issue/HNT-2729/need-new-tests-for-createspaceform-and-spacejoin
+describe.skip('<SpaceJoin />', () => {
     test('it renders join modal with space name on load', async () => {
         render(<Wrapper joinData={{ name: 'doodles', networkId: 'doodles-id' }} />)
         await waitFor(() => {

@@ -21,12 +21,8 @@ import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
-import {
-    createExternalTokenStruct,
-    getMemberNftAddress,
-    BasicRoleInfo,
-    Permission,
-} from '@river/web3'
+import { getMemberNftAddress, BasicRoleInfo, Permission, createMembershipStruct } from '@river/web3'
+import { useZionClient } from '../../src/hooks/use-zion-client'
 /**
  * This test suite tests the useRoles hook.
  */
@@ -87,7 +83,13 @@ describe('useRoleDetails', () => {
             () => expect(spaceElement).toHaveTextContent(spaceName),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
-
+        const membershipTokenAddress = await waitFor(
+            () => screen.getByTestId('membershipTokenAddress'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+        if (!membershipTokenAddress.textContent) {
+            throw new Error('membershipTokenAddress is undefined')
+        }
         const rolesElement = screen.getByTestId('rolesElement')
         /* Assert */
         // verify the role name, permissions, token entitlements for the space.
@@ -96,8 +98,10 @@ describe('useRoleDetails', () => {
         await assertRoleName(rolesElement, roleName)
         // verify the permissions
         await assertPermissions(rolesElement, roleName, permissions)
-        // verify the token entitlement
-        await assertNft(rolesElement, roleName, memberNftAddress, 1)
+        // verify the token entitlement on the minter role - gated by the member nft address
+        await assertNft(rolesElement, 'Minter', memberNftAddress, 1)
+        // verify the token entitlement on the member role - gated by the space membership token address
+        await assertNft(rolesElement, roleName, membershipTokenAddress.textContent, 1)
     }) // end test
 }) // end describe
 
@@ -121,9 +125,11 @@ function TestComponent(args: {
                     name: args.spaceName,
                     visibility: RoomVisibility.Public,
                 },
-                args.roleName,
-                createExternalTokenStruct([args.councilNftAddress]),
-                args.permissions,
+                createMembershipStruct({
+                    name: args.roleName,
+                    permissions: args.permissions,
+                    tokenAddresses: [args.councilNftAddress],
+                }),
             )
         }
 
@@ -218,6 +224,28 @@ function RoleDetailsComponent({
 
 function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined }): JSX.Element {
     const { isLoading, spaceRoles, error } = useRoles(spaceNetworkId)
+    const [membershipTokenAddress, setMembershipTokenAddress] = React.useState<string | undefined>()
+    const { spaceDapp } = useZionClient()
+
+    useEffect(() => {
+        let cancel = false
+        async function setMembershipAddress() {
+            if (!spaceDapp || !spaceNetworkId) {
+                return
+            }
+            if (!cancel) {
+                setMembershipTokenAddress(
+                    await spaceDapp?.getTownMembershipTokenAddress(spaceNetworkId),
+                )
+            }
+        }
+        void setMembershipAddress()
+
+        return () => {
+            cancel = true
+        }
+    }, [spaceDapp, spaceNetworkId])
+
     useEffect(() => {
         console.log({
             isLoading,
@@ -227,6 +255,9 @@ function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined
     }, [error, isLoading, spaceRoles])
     return (
         <div data-testid="rolesElement">
+            {membershipTokenAddress && (
+                <div data-testid="membershipTokenAddress">{membershipTokenAddress}</div>
+            )}
             {spaceNetworkId &&
                 spaceRoles &&
                 spaceRoles.map((role) => {

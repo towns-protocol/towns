@@ -11,29 +11,32 @@ interface ITownArchitectBase {
   // =============================================================
   //                           STRUCTS
   // =============================================================
+  struct MembershipRequirements {
+    bool everyone;
+    ITokenEntitlement.ExternalToken[] tokens;
+    address[] users;
+  }
+
+  struct Membership {
+    string name;
+    uint256 price;
+    uint256 limit;
+    address currency;
+    address feeRecipient;
+    string[] permissions;
+    MembershipRequirements requirements;
+  }
 
   struct ChannelInfo {
     string id;
     string metadata;
   }
 
-  struct RoleInfo {
-    string name;
-    string[] permissions;
-  }
-
-  struct MemberEntitlement {
-    RoleInfo role;
-    ITokenEntitlement.ExternalToken[] tokens;
-    address[] users;
-  }
-
   struct TownInfo {
     string id;
     string name;
     string uri;
-    RoleInfo everyoneEntitlement;
-    MemberEntitlement memberEntitlement;
+    Membership membership;
     ChannelInfo channel;
   }
 
@@ -62,7 +65,10 @@ interface ITownArchitect is ITownArchitectBase {
   /// @param townInfo Town information
   function createTown(TownInfo memory townInfo) external returns (address);
 
-  function computeTown(string memory townId) external view returns (address);
+  function computeTown(
+    string memory townId,
+    Membership memory membership
+  ) external view returns (address);
 
   function getTownArchitectImplementations()
     external

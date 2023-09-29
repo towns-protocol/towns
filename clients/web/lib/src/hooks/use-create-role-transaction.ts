@@ -49,6 +49,7 @@ export function useCreateRoleTransaction() {
                 console.warn('useCreateRoleTransaction', 'Transaction already in progress')
                 return undefined
             }
+
             let transactionResult: RoleTransactionContext | undefined
             if (!signer) {
                 transactionResult = createRoleTransactionContext({

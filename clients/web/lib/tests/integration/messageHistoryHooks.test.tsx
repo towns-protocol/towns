@@ -8,7 +8,7 @@ import { RoomIdentifier } from '../../src/types/room-identifier'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     getPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
@@ -39,11 +39,12 @@ describe('messageHistoryHooks', () => {
             // create client
             // create alice provider
             const aliceProvider = new ZionTestWeb3Provider()
+            await aliceProvider.fundWallet()
             const { bob } = await registerAndStartClients(['bob'])
             // bob needs funds to create a space
             await bob.fundWallet()
             // create a space
-            const spaceId = (await createTestSpaceWithEveryoneRole(bob, [
+            const spaceId = (await createTestSpaceGatedByTownNft(bob, [
                 Permission.Read,
                 Permission.Write,
             ])) as RoomIdentifier

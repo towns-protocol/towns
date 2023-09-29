@@ -5,10 +5,10 @@
  */
 import { MAXTRIX_ERROR, MatrixError, NoThrownError } from './helpers/ErrorUtils'
 import {
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
     registerAndStartClient,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     createTestChannelWithSpaceRoles,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
@@ -28,7 +28,7 @@ describe('space invite', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement
-        const roomId = await createTestSpaceWithZionMemberRole(bob, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(bob, [Permission.Read])
 
         /** Act */
         // invite users to join the space.
@@ -56,7 +56,7 @@ describe('space invite', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = await createTestSpaceWithZionMemberRole(bob, [
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(bob, [
             Permission.Read,
             Permission.Write,
         ])
@@ -100,18 +100,21 @@ describe('space invite', () => {
         // default Read which invariably allows all invitees regardless of
         // token gating
 
-        const roomId = await createTestSpaceWithZionMemberRole(bob, [
+        const roomId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
             Permission.Read,
             Permission.Write,
-        ])
+        ])) as RoomIdentifier
+
+        await tokenGrantedUser.mintMembershipTransaction(roomId, tokenGrantedUser.wallet)
+
         const isEntitledRead = await tokenGrantedUser.isEntitled(
-            roomId?.networkId as string,
+            roomId?.networkId,
             '',
             tokenGrantedUser.provider.wallet.address,
             Permission.Read,
         )
         const isEntitledWrite = await tokenGrantedUser.isEntitled(
-            roomId?.networkId as string,
+            roomId?.networkId,
             '',
             tokenGrantedUser.provider.wallet.address,
             Permission.Write,
@@ -139,19 +142,19 @@ describe('space invite', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement
-        const roomId = await createTestSpaceWithZionMemberRole(bob, [Permission.Read])
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(bob, [Permission.Read])
 
         // invite users to join the space.
-        if (roomId) {
+        if (spaceId) {
             const tokenGrantedUserId = tokenGrantedUser.getUserId()
             if (tokenGrantedUserId) {
-                await bob.inviteUser(roomId, tokenGrantedUserId)
+                await bob.inviteUser(spaceId, tokenGrantedUserId)
             }
         }
         /** Act */
         let actualJoin: Room | undefined
-        if (roomId) {
-            actualJoin = await tokenGrantedUser.joinRoom(roomId)
+        if (spaceId) {
+            actualJoin = await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
         }
 
         /** Assert */
@@ -159,28 +162,28 @@ describe('space invite', () => {
         expect(actualJoin).toBeDefined()
     }) // end test
 
-    test('Read permission is denied', async () => {
+    test('Mint permission is denied', async () => {
         /** Arrange */
 
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         await bob.fundWallet()
 
-        // create a space with token entitlement
-        const roomId = await createTestSpaceWithZionMemberRole(bob, [Permission.Read])
+        // create a space with token entitlement for minting
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(bob, [Permission.Read])
 
         // invite users to join the space.
-        if (roomId) {
+        if (spaceId) {
             const aliceUserId = alice.getUserId()
             if (aliceUserId) {
-                await bob.inviteUser(roomId, aliceUserId)
+                await bob.inviteUser(spaceId, aliceUserId)
             }
         }
 
         /** Act */
         try {
-            if (roomId) {
-                await alice.joinRoom(roomId)
+            if (spaceId) {
+                await alice.joinTown(spaceId, alice.wallet)
             }
         } catch (e) {
             const error = e as MatrixError
@@ -192,7 +195,8 @@ describe('space invite', () => {
                 expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
             } else {
                 // Casablanca
-                expect((e as Error).message).toMatch(new RegExp('permission_denied'))
+                expect((e as Error).message).toMatch(new RegExp('execution reverted'))
+                expect((e as Error).name).toMatch(new RegExp('Entitlement__NotAllowed'))
             }
         }
     }) // end test
@@ -227,7 +231,7 @@ describe('space invite', () => {
         await bob.fundWallet()
 
         // create a space with everyone entitlement
-        const roomId = await createTestSpaceWithEveryoneRole(bob, [Permission.Read], {
+        const spaceId = await createTestSpaceGatedByTownNft(bob, [Permission.Read], {
             name: 'test',
             visibility: RoomVisibility.Public,
         })
@@ -236,10 +240,10 @@ describe('space invite', () => {
         /** Act */
         let failedJoinIndex = 0
         let numJoinersProcessed = 1
-        if (roomId) {
+        if (spaceId) {
             for (const user of joiners) {
                 try {
-                    await user.joinRoom(roomId)
+                    await user.joinTown(spaceId, user.wallet)
                     numJoinersProcessed++
                 } catch (e) {
                     console.log('error joining room', e)
@@ -280,7 +284,7 @@ describe('space invite', () => {
         await bob.fundWallet()
 
         // create a space with everyone entitlement
-        const spaceId = await createTestSpaceWithEveryoneRole(bob, [Permission.Read], {
+        const spaceId = await createTestSpaceGatedByTownNft(bob, [Permission.Read], {
             name: 'test',
             visibility: RoomVisibility.Public,
         })
@@ -298,7 +302,7 @@ describe('space invite', () => {
         if (spaceId) {
             for (const user of joiners) {
                 try {
-                    await user.joinRoom(spaceId)
+                    await user.joinTown(spaceId, user.wallet)
                 } catch (e) {
                     console.log('error joining room', e)
                     break

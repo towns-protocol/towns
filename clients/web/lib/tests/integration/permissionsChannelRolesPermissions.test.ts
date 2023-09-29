@@ -7,15 +7,16 @@ import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownNft,
+    createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
     registerAndStartClient,
     waitForWithRetries,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { TestConstants } from './helpers/TestConstants'
-import { Permission } from '@river/web3'
+import { Permission, createExternalTokenStruct, getMemberNftAddress } from '@river/web3'
+import { RoleIdentifier } from '../../src/types/web3-types'
 
 describe('channel with roles and permissions', () => {
     test('join token-gated channel', async () => {
@@ -30,11 +31,10 @@ describe('channel with roles and permissions', () => {
         const { alice } = await registerAndStartClients(['alice'])
         // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceWithZionMemberRole(
-            alice,
-            [Permission.Read, Permission.Write],
-            [],
-        )) as RoomIdentifier
+        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])) as RoomIdentifier
 
         // create a channel with the same roles and permissions as the space
         const channelId = (await createTestChannelWithSpaceRoles(alice, {
@@ -50,6 +50,7 @@ describe('channel with roles and permissions', () => {
         /** Act */
 
         // join the channel
+        await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
         await waitForWithRetries(() => tokenGrantedUser.joinRoom(channelId))
     }) // end test
 
@@ -60,7 +61,7 @@ describe('channel with roles and permissions', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceWithEveryoneRole(alice, [
+        const spaceId = (await createTestSpaceGatedByTownNft(alice, [
             Permission.Read,
             Permission.Write,
         ])) as RoomIdentifier
@@ -76,6 +77,7 @@ describe('channel with roles and permissions', () => {
         /** Act */
 
         // join the channel
+        await bob.joinTown(spaceId, bob.wallet)
         await waitForWithRetries(() => bob.joinRoom(channelId))
     }) // end test
 
@@ -85,20 +87,30 @@ describe('channel with roles and permissions', () => {
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         const bobUserId = bob.getUserId() as string
-        // create a space with token entitlement to read & write
         await alice.fundWallet()
-        const spaceId = (await createTestSpaceWithZionMemberRole(
-            alice,
-            [Permission.Read, Permission.Write],
-            [],
-        )) as RoomIdentifier
+        const spaceId = (await createTestSpaceGatedByTownNft(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])) as RoomIdentifier
 
-        // create a channel with the same roles and permissions as the space
+        const memberNftAddress = getMemberNftAddress(alice.chainId)
+        const memberNftToken = createExternalTokenStruct([memberNftAddress])[0]
+        const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
+            spaceId.networkId,
+            'newRoleName',
+            [Permission.Read, Permission.Write],
+            [memberNftToken],
+            [],
+        )
+        if (!roleIdentifier) {
+            throw new Error('roleIdentifier is undefined')
+        }
+
         const channelId = (await createTestChannelWithSpaceRoles(alice, {
             name: 'alice channel',
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
-            roleIds: [],
+            roleIds: [roleIdentifier.roleId],
         })) as RoomIdentifier
         // invite user to join the channel
         await alice.inviteUser(channelId, bobUserId)
@@ -106,6 +118,7 @@ describe('channel with roles and permissions', () => {
         /** Act & Assert */
 
         // join the channel
+        await bob.joinTown(spaceId, bob.wallet)
         await expect(bob.joinRoom(channelId)).rejects.toThrow(
             new RegExp('Unauthorised|permission_denied'),
         )

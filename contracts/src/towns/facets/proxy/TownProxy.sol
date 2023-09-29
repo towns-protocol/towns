@@ -2,23 +2,62 @@
 pragma solidity ^0.8.20;
 
 // interfaces
+import {ITownProxy} from "./ITownProxy.sol";
+import {IERC5643} from "contracts/src/diamond/facets/token/ERC5643/IERC5643.sol";
+import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 // libraries
 
 // contracts
 import {ManagedProxyBase} from "contracts/src/diamond/proxy/managed/ManagedProxyBase.sol";
 import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
+import {MembershipBase} from "contracts/src/towns/facets/membership/MembershipBase.sol";
+import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
+import {IntrospectionBase} from "contracts/src/diamond/facets/introspection/IntrospectionBase.sol";
+import {ERC2771RecipientBase} from "contracts/src/diamond/facets/recipient/ERC2771RecipientBase.sol";
+
 import {Multicall} from "contracts/src/diamond/utils/multicall/Multicall.sol";
 
-contract TownProxy is ManagedProxyBase, TokenOwnableBase, Multicall {
-  constructor(
-    bytes4 managerSelector,
-    address manager,
-    address townToken,
-    uint256 tokenId
-  ) {
-    __ManagedProxyBase_init(managerSelector, manager);
-    __TokenOwnableBase_init(townToken, tokenId);
+contract TownProxy is
+  ITownProxy,
+  IntrospectionBase,
+  ManagedProxyBase,
+  TokenOwnableBase,
+  ERC721ABase,
+  MembershipBase,
+  ERC2771RecipientBase,
+  Multicall
+{
+  constructor(TownProxyInit memory init) {
+    __IntrospectionBase_init();
+    __ManagedProxyBase_init(
+      init.managedProxy.managerSelector,
+      init.managedProxy.manager
+    );
+    __TokenOwnableBase_init(
+      init.tokenOwnable.townOwner,
+      init.tokenOwnable.tokenId
+    );
+    __ERC721ABase_init(init.membership.name, "TOWN");
+    __MembershipBase_init(
+      init.membership.price,
+      init.membership.limit,
+      init.membership.currency,
+      init.membership.feeRecipient,
+      init.managedProxy.manager
+    );
+    __ERC2771RecipientBase_init(init.forwarder.trustedForwarder);
+  }
+
+  function _startTokenId() internal pure override returns (uint256) {
+    return 1;
+  }
+
+  function _setInterfaceIds() internal {
+    _addInterface(0x80ac58cd); // ERC165 Interface ID for ERC721
+    _addInterface(0x5b5e139f); // ERC165 Interface ID for ERC721Metadata
+    _addInterface(type(IERC5643).interfaceId); // ERC165 Interface ID for IERC5643
+    _addInterface(type(IERC173).interfaceId); // ERC165 Interface ID for IERC173
   }
 
   receive() external payable {}

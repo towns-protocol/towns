@@ -60,8 +60,7 @@ interface ZionClientImpl {
     spaceDapp: ISpaceDapp | undefined
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
-        memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
-        everyonePermissions: Permission[],
+        membership: ITownArchitectBase.MembershipStruct,
         signer: ethers.Signer | undefined,
     ) => Promise<CreateSpaceTransactionContext | undefined>
     waitForCreateSpaceTransaction: (
@@ -146,6 +145,10 @@ interface ZionClientImpl {
     logout: () => Promise<void>
     loginWithWalletToMatrix: (statement: string) => Promise<void>
     loginWithWalletToCasablanca: (statement: string) => Promise<void>
+    joinTown: (
+        spaceId: RoomIdentifier,
+        signer: ethers.Signer | undefined,
+    ) => Promise<Room | undefined>
     redactEvent: (roomId: RoomIdentifier, eventId: string, reason?: string) => Promise<void>
     registerWalletWithMatrix: (statement: string) => Promise<void>
     registerWalletWithCasablanca: (statement: string) => Promise<void>
@@ -252,6 +255,7 @@ export function useZionClient(): ZionClientImpl {
         loginWithWalletToMatrix,
         loginWithWalletToCasablanca,
         logout,
+        joinTown: useWithCatch(client?.joinTown),
         redactEvent: useWithCatch(client?.redactEvent),
         registerWalletWithMatrix,
         registerWalletWithCasablanca,

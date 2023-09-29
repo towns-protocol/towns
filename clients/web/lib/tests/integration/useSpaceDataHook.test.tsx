@@ -4,7 +4,7 @@
  */
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     makeUniqueName,
     registerAndStartClients,
     registerAndStartClient,
@@ -34,11 +34,10 @@ describe('useSpaceDataHook', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space
-        const spaceId = (await createTestSpaceWithZionMemberRole(
+        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
             bob,
             // For alice to create a channel, the role must include the AddRemoveChannels permission.
             [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
-            [],
             {
                 name: makeUniqueName('bobs space'),
                 visibility: RoomVisibility.Public,
@@ -63,7 +62,7 @@ describe('useSpaceDataHook', () => {
                 if (!client) {
                     throw new Error('aw shucks, no client')
                 }
-                await client.joinRoom(spaceId)
+                await client.joinTown(spaceId, alice.wallet)
             }, [client])
             return (
                 <>

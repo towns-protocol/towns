@@ -2,28 +2,22 @@
 cd contracts/
 
 # this line makes sure that the script exits if any command fails
-set -eo pipefail 
+set -eo pipefail
 
 set -a
 . .env.localhost
 set +a
 
-# V2 Contracts
-make deploy-anvil contract=DeployMember
-make deploy-anvil contract=DeployPioneer
-make deploy-anvil contract=DeployOldTownOwner
-make deploy-anvil contract=DeploySpaceImpl
-make deploy-anvil contract=DeployTokenImpl
-make deploy-anvil contract=DeployUserImpl
-make deploy-anvil contract=DeploySpaceFactory
-make deploy-anvil contract=DeploySpaceUpgrades
-
 # V3 Contracts
+make deploy-anvil contract=DeployPioneer
 make deploy-anvil contract=DeployTownOwner
 make deploy-anvil contract=DeployUserEntitlement
 make deploy-anvil contract=DeployTokenEntitlement
 make deploy-anvil contract=DeployTown
 make deploy-anvil contract=DeployTownFactory
+
+# For testing
+make deploy-anvil contract=DeployMember
 make deploy-anvil contract=DeployMockNFT
 
 cd ../

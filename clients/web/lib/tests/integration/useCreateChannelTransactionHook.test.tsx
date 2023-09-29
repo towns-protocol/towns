@@ -26,7 +26,7 @@ import { ZTEvent } from '../../src/types/timeline-types'
 import { MatrixEvent, MsgType as MatrixMsgType, RoomEvent } from 'matrix-js-sdk'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import { createExternalTokenStruct, getMemberNftAddress, Permission } from '@river/web3'
+import { createMembershipStruct, getMemberNftAddress, Permission } from '@river/web3'
 
 describe('useCreateChannelTransactionHook', () => {
     test('user can create channel', async () => {
@@ -141,9 +141,15 @@ describe('useCreateChannelTransactionHook', () => {
                             name: spaceName,
                             visibility: RoomVisibility.Public,
                         },
-                        'Test Role',
-                        createExternalTokenStruct([memberNftAddress]),
-                        [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
+                        createMembershipStruct({
+                            name: 'Test Role',
+                            permissions: [
+                                Permission.Read,
+                                Permission.Write,
+                                Permission.AddRemoveChannels,
+                            ],
+                            tokenAddresses: [memberNftAddress],
+                        }),
                     )
                 }
 

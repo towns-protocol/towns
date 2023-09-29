@@ -7,15 +7,17 @@ import {
     useSpaceContext,
     useSpaceData,
     useSpaceFromContract,
+    useWeb3Context,
     useZionClient,
 } from 'use-zion-client'
 
 export const Spaces = () => {
     const { channelSlug } = useParams()
-    const { joinRoom } = useZionClient()
+    const { joinTown } = useZionClient()
     const navigate = useNavigate()
     const { spaceId } = useSpaceContext()
     const space = useSpaceData()
+    const { signer } = useWeb3Context()
 
     const onClickSpace = useCallback(() => {
         if (!space) {
@@ -26,11 +28,11 @@ export const Spaces = () => {
 
     const onClickJoinSpace = useCallback(async () => {
         if (spaceId) {
-            await joinRoom(spaceId)
+            await joinTown(spaceId, signer)
         } else {
             console.error('No spaceId')
         }
-    }, [joinRoom, spaceId])
+    }, [joinTown, signer, spaceId])
 
     // console.log("SPACE CONTENT", space?.id.networkId, channelSlug);
     if (space && channelSlug) {

@@ -401,8 +401,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     public async createSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
-        everyonePermissions: Permission[],
+        membership: ITownArchitectBase.MembershipStruct,
         signer: ethers.Signer | undefined,
     ): Promise<CreateSpaceTransactionContext> {
         if (!signer) {
@@ -416,19 +415,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
         switch (createSpaceInfo.spaceProtocol) {
             case SpaceProtocol.Casablanca:
-                return this.createCasablancaSpaceTransaction(
-                    createSpaceInfo,
-                    memberEntitlements,
-                    everyonePermissions,
-                    signer,
-                )
+                return this.createCasablancaSpaceTransaction(createSpaceInfo, membership, signer)
             case SpaceProtocol.Matrix:
-                return this.createMatrixSpaceTransaction(
-                    createSpaceInfo,
-                    memberEntitlements,
-                    everyonePermissions,
-                    signer,
-                )
+                return this.createMatrixSpaceTransaction(createSpaceInfo, membership, signer)
             default:
                 staticAssertNever(createSpaceInfo.spaceProtocol)
         }
@@ -545,8 +534,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     private async createCasablancaSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
-        everyonePermissions: Permission[],
+        membership: ITownArchitectBase.MembershipStruct,
         signer: ethers.Signer,
     ): Promise<CreateSpaceTransactionContext> {
         const spaceId: RoomIdentifier = makeCasablancaStreamIdentifier(makeUniqueSpaceStreamId())
@@ -565,8 +553,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                     spaceMetadata: createSpaceInfo.name,
                     channelId: channelId.networkId,
                     channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
-                    memberEntitlements,
-                    everyonePermissions,
+                    membership,
                 },
                 signer,
             )
@@ -590,8 +577,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     private async createMatrixSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
-        everyonePermissions: Permission[],
+        membership: ITownArchitectBase.MembershipStruct,
         signer: ethers.Signer,
     ): Promise<CreateSpaceTransactionContext> {
         let transaction: ContractTransaction | undefined
@@ -641,8 +627,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                     spaceMetadata: '', // unused
                     channelId: channelId.networkId,
                     channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
-                    memberEntitlements,
-                    everyonePermissions,
+                    membership,
                 },
                 signer,
             )
@@ -1154,6 +1139,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
+
         try {
             transaction = await this.spaceDapp.createRole(
                 spaceNetworkId,
@@ -1667,8 +1653,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     /************************************************
      * joinRoom
-     * at the time of writing, both spaces and channels are
-     * identified by a room id, this function handls joining both
+     * - this function can handle joining both spaces and channels BUT should be used for channels only
+     * - for spaces, use joinTown
+     * @todo deprecate this in favor of separate joinTown and joinChannel functions
      *************************************************/
     public async joinRoom(roomId: RoomIdentifier, parentNetworkId?: string) {
         switch (roomId.protocol) {
@@ -1725,6 +1712,55 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             }
             default:
                 staticAssertNever(roomId)
+        }
+    }
+
+    /************************************************
+     * joinTown
+     * - mints membership if needed
+     * - joins the space
+     *************************************************/
+    public async joinTown(spaceId: RoomIdentifier, signer: ethers.Signer | undefined) {
+        if (!signer) {
+            throw new SignerUndefinedError()
+        }
+
+        const wallet = await signer.getAddress()
+
+        try {
+            if (await this.spaceDapp.hasTownMembership(spaceId.networkId, wallet)) {
+                return this.joinRoom(spaceId)
+            }
+        } catch (error) {
+            const decodeError = await this.getDecodedErrorForSpace(spaceId.networkId, error)
+            console.error('[mintMembershipAndJoinRoom] failed', decodeError)
+            throw decodeError
+        }
+
+        await this.mintMembershipTransaction(spaceId, signer)
+
+        return this.joinRoom(spaceId)
+    }
+
+    /************************************************
+     * mintMembershipTransaction
+     *************************************************/
+    public async mintMembershipTransaction(
+        spaceId: RoomIdentifier,
+        signer: ethers.Signer | undefined,
+    ) {
+        if (!signer) {
+            throw new SignerUndefinedError()
+        }
+        const wallet = await signer.getAddress()
+
+        try {
+            const transaction = await this.spaceDapp.joinTown(spaceId.networkId, wallet, signer)
+            await transaction.wait()
+        } catch (error) {
+            const decodeError = await this.getDecodedErrorForSpace(spaceId.networkId, error)
+            console.error('[mintMembershipAndJoinRoom] failed', decodeError)
+            throw decodeError
         }
     }
 

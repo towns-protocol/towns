@@ -7,7 +7,7 @@ import React, { useCallback } from 'react'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     getPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
@@ -36,10 +36,12 @@ describe('unreadMessageCountHooks', () => {
         const { jane } = await registerAndStartClients(['jane'])
         // create a wallet for bob
         const bobProvider = new ZionTestWeb3Provider()
+        // bob needs funds to mint membership
+        await bobProvider.fundWallet()
         // jane needs funds to create a space
         await jane.fundWallet()
         // create a space
-        const janesSpaceId = (await createTestSpaceWithEveryoneRole(jane, [
+        const janesSpaceId = (await createTestSpaceGatedByTownNft(jane, [
             Permission.Read,
             Permission.Write,
         ])) as RoomIdentifier
@@ -59,7 +61,7 @@ describe('unreadMessageCountHooks', () => {
 
         // create a veiw for bob
         const TestComponent = () => {
-            const { joinRoom, sendMessage, sendReadReceipt } = useZionClient()
+            const { joinRoom, joinTown, sendMessage, sendReadReceipt } = useZionClient()
             const { spaceUnreads, spaceUnreadChannelIds } = useZionContext()
             const spaceFullyReadmarker = useFullyReadMarker(janesSpaceId)
             const channelFullyReadMarker = useFullyReadMarker(janesChannelId)
@@ -70,8 +72,8 @@ describe('unreadMessageCountHooks', () => {
             const messages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
             // handle join
             const onClickJoinSpace = useCallback(() => {
-                void joinRoom(janesSpaceId)
-            }, [joinRoom])
+                void joinTown(janesSpaceId, bobProvider.wallet)
+            }, [joinTown])
             // handle join
             const onClickJoinChannel = useCallback(() => {
                 void joinRoom(janesChannelId)

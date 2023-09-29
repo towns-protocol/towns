@@ -3,7 +3,7 @@
  */
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     registerAndStartClients,
     waitForWithRetries,
 } from './helpers/TestUtils'
@@ -19,6 +19,7 @@ import {
     ITownArchitectBase,
     Permission,
 } from '@river/web3'
+import { ethers } from 'ethers'
 
 describe('Zion event handlers test', () => {
     test('onCreateSpace', async () => {
@@ -46,17 +47,22 @@ describe('Zion event handlers test', () => {
         expect(memberNftAddress).toBeDefined()
         expect(memberNftAddress).not.toBe('')
         const tokens = createExternalTokenStruct([memberNftAddress])
-        const tokenEntitlement: ITownArchitectBase.MemberEntitlementStruct = {
-            role: {
-                name: 'Member',
-                permissions: [Permission.Read as string, Permission.Write as string],
+        const membership: ITownArchitectBase.MembershipStruct = {
+            name: 'Member',
+            price: 0,
+            limit: 100,
+            currency: ethers.constants.AddressZero,
+            feeRecipient: alice.wallet.address,
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
+                everyone: false,
+                tokens,
+                users: [],
             },
-            tokens,
-            users: [],
         }
         // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.
         await alice.mintMockNFT()
-        await waitForWithRetries(() => alice.createSpace(createSpaceInfo, tokenEntitlement, []))
+        await waitForWithRetries(() => alice.createSpace(createSpaceInfo, membership))
 
         expect(eventHandlerResult).toBeDefined()
         expect(eventHandlerResult?.roomIdentifier).toBeDefined()
@@ -82,12 +88,12 @@ describe('Zion event handlers test', () => {
         await alice.fundWallet()
 
         // alice creates a room
-        const spaceId = await createTestSpaceWithEveryoneRole(
+        const spaceId = await createTestSpaceGatedByTownNft(
             alice,
             [Permission.Read, Permission.Write],
             {
                 name: alice.makeUniqueName(),
-                visibility: RoomVisibility.Private,
+                visibility: RoomVisibility.Public,
             },
         )
 
@@ -106,7 +112,7 @@ describe('Zion event handlers test', () => {
 
         console.log('alice.getRoomData(spaceId)', alice.getRoomData(spaceId))
 
-        await bob.joinRoom(spaceId)
+        await bob.joinTown(spaceId, bob.wallet)
         await waitFor(() => expect(eventHandlerResult).toBeDefined())
 
         expect(eventHandlerResult?.roomId).toEqual(spaceId)
@@ -131,7 +137,7 @@ describe('Zion event handlers test', () => {
         await alice.fundWallet()
 
         // alice creates a room
-        const spaceId = await createTestSpaceWithEveryoneRole(
+        const spaceId = await createTestSpaceGatedByTownNft(
             alice,
             [Permission.Read, Permission.Write],
             {
@@ -244,7 +250,7 @@ describe('Zion event handlers test', () => {
         await alice.fundWallet()
 
         // alice creates a room
-        const spaceId = await createTestSpaceWithEveryoneRole(
+        const spaceId = await createTestSpaceGatedByTownNft(
             alice,
             [Permission.Read, Permission.Write],
             {

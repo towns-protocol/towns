@@ -6,7 +6,7 @@
 import { MAXTRIX_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import { Room, RoomVisibility } from '../../src/types/zion-types'
 import {
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClient,
     registerAndStartClients,
     waitForWithRetries,
@@ -41,7 +41,7 @@ describe('delete role', () => {
         const newUsers: string[] = []
         // create a new test space
         await alice.fundWallet()
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -76,7 +76,9 @@ describe('delete role', () => {
             throw new Error('channel is undefined')
         }
         // sanity check: bob joins the space successfully
-        await waitForWithRetries(() => bobWithNft.joinRoom(channel, spaceId))
+        // have to join and mint b/c down below there is a check to see if bob is entitled to the space
+        await bobWithNft.joinTown(roomId, bobWithNft.wallet)
+        await waitForWithRetries(() => bobWithNft.joinRoom(channel))
         // bob leaves the room so that we can delete the role, and test
         // that bob can no longer join the room
         await bobWithNft.leave(channel, spaceId)
@@ -162,7 +164,7 @@ describe('delete role', () => {
         const newUsers: string[] = [bob.walletAddress]
         // create a new test space
         await alice.fundWallet()
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -281,7 +283,7 @@ describe('delete role', () => {
         const newUsers: string[] = [bob.walletAddress]
         // create a new test space
         await alice.fundWallet()
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])

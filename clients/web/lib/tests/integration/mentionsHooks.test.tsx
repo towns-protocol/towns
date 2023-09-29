@@ -10,7 +10,7 @@ import { RoomIdentifier } from '../../src/types/room-identifier'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     registerAndStartClients,
     waitForWithRetries,
 } from './helpers/TestUtils'
@@ -40,7 +40,7 @@ describe('mentionsHooks', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // create a space
-        const spaceId = (await createTestSpaceWithEveryoneRole(bob, [
+        const spaceId = (await createTestSpaceGatedByTownNft(bob, [
             Permission.Read,
             Permission.Write,
         ])) as RoomIdentifier
@@ -54,7 +54,7 @@ describe('mentionsHooks', () => {
         expect(spaceId).toBeDefined()
         expect(channelId).toBeDefined()
         // alice join space and channel
-        await alice.joinRoom(spaceId)
+        await alice.joinTown(spaceId, alice.wallet)
         await waitForWithRetries(() => alice.joinRoom(channelId))
         // logout alice
         await alice.logout()

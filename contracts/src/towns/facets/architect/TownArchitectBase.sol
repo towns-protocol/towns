@@ -8,19 +8,21 @@ import {IRoles, IRolesBase} from "contracts/src/towns/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol";
 import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.sol";
+import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
+import {ITownProxyBase} from "contracts/src/towns/facets/proxy/ITownProxy.sol";
 
 // libraries
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {TownArchitectStorage} from "./TownArchitectStorage.sol";
+import {Permissions} from "contracts/src/towns/facets/Permissions.sol";
 
 // contracts
 import {Factory} from "contracts/src/utils/Factory.sol";
 import {TownProxy} from "contracts/src/towns/facets/proxy/TownProxy.sol";
 
 // modules
-
 import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -28,6 +30,7 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
   using StringSet for StringSet.Set;
 
   address internal constant EVERYONE_ADDRESS = address(1);
+  string internal constant MINTER_ROLE = "Minter";
 
   function _getTownById(string memory townId) internal view returns (address) {
     TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
@@ -39,6 +42,14 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
   ) internal view returns (uint256) {
     TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
     return ds.tokenIdByTownId[townId];
+  }
+
+  function _setTrustedForwarder(address trustedForwarder) internal {
+    TownArchitectStorage.layout().trustedForwarder = trustedForwarder;
+  }
+
+  function _getTrustedForwarder() internal view returns (address) {
+    return TownArchitectStorage.layout().trustedForwarder;
   }
 
   function _setImplementations(
@@ -86,18 +97,18 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     if (ds.townIds.contains(townInfo.id))
       revert TownArchitect__InvalidNetworkId();
 
-    // mint the town owner token
+    // get the token id of the next town
     uint256 tokenId = TownOwner(ds.townToken).nextTokenId();
 
     // deploy town
-    townAddress = _deployTown(townInfo.id, tokenId);
+    townAddress = _deployTown(townInfo.id, tokenId, townInfo.membership);
 
     // save town info to storage
     ds.townIds.add(townInfo.id);
     ds.tokenIdByTownId[townInfo.id] = tokenId;
     ds.townById[townInfo.id] = townAddress;
 
-    // mint token to TownArchitect
+    // mint token to and transfer to TownArchitect
     TownOwner(ds.townToken).mintTown(
       townInfo.name,
       townInfo.uri,
@@ -124,44 +135,34 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     // set entitlements as immutable
     IEntitlementsManager(townAddress).addImmutableEntitlements(entitlements);
 
-    // create everyone role with permissions
-    uint256 everyoneRoleId = _createEveryoneEntitlement(
+    // create minter role with requirements
+    _createMinterEntitlement(
       townAddress,
       userEntitlement,
-      townInfo.everyoneEntitlement
+      tokenEntitlement,
+      townInfo.membership.requirements
     );
 
-    uint256 memberRoleId;
-
-    // create member role with permissions
-    if (
-      townInfo.memberEntitlement.users.length > 0 ||
-      townInfo.memberEntitlement.tokens.length > 0
-    ) {
-      memberRoleId = _createMemberEntitlement(
-        townAddress,
-        userEntitlement,
-        tokenEntitlement,
-        townInfo.memberEntitlement
-      );
-    }
+    // create member role with membership as the requirement
+    uint256 memberRoleId = _createMemberEntitlement(
+      townAddress,
+      tokenEntitlement,
+      townInfo.membership.name,
+      townInfo.membership.permissions
+    );
 
     // create channels
-    _createChannel(
-      townAddress,
-      memberRoleId != 0 ? memberRoleId : everyoneRoleId,
-      townInfo.channel
-    );
+    _createChannel(townAddress, memberRoleId, townInfo.channel);
 
-    // transfer nft to msg.sender
+    // transfer nft to sender
     TownOwner(ds.townToken).safeTransferFrom(
       address(this),
-      msg.sender,
+      _msgSenderTownArchitect(),
       tokenId
     );
 
     // emit event
-    emit TownCreated(msg.sender, tokenId, townAddress);
+    emit TownCreated(_msgSenderTownArchitect(), tokenId, townAddress);
   }
 
   // =============================================================
@@ -182,64 +183,90 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
   //                     Entitlement Helpers
   // =============================================================
 
-  function _createMemberEntitlement(
-    address town,
+  function _createMinterEntitlement(
+    address townAddress,
     address userEntitlement,
     address tokenEntitlement,
-    MemberEntitlement memory member
+    MembershipRequirements memory requirements
   ) internal returns (uint256 roleId) {
-    // create role with no entitlements
-    roleId = IRoles(town).createRole(
-      member.role.name,
-      member.role.permissions,
+    string[] memory joinPermissions = new string[](1);
+    joinPermissions[0] = Permissions.JoinTown;
+
+    roleId = IRoles(townAddress).createRole(
+      MINTER_ROLE,
+      joinPermissions,
       new IRolesBase.CreateEntitlement[](0)
     );
 
-    if (member.users.length != 0) {
-      // validate users
-      for (uint256 i = 0; i < member.users.length; i++) {
-        Validator.checkAddress(member.users[i]);
-      }
+    if (requirements.everyone) {
+      address[] memory users = new address[](1);
+      users[0] = EVERYONE_ADDRESS;
 
-      IRoles(town).addRoleToEntitlement(
+      IRoles(townAddress).addRoleToEntitlement(
         roleId,
         IRolesBase.CreateEntitlement({
           module: userEntitlement,
-          data: abi.encode(member.users)
+          data: abi.encode(users)
+        })
+      );
+
+      return roleId;
+    }
+
+    if (requirements.users.length != 0) {
+      // validate users
+      for (uint256 i = 0; i < requirements.users.length; ) {
+        Validator.checkAddress(requirements.users[i]);
+        unchecked {
+          i++;
+        }
+      }
+
+      IRoles(townAddress).addRoleToEntitlement(
+        roleId,
+        IRolesBase.CreateEntitlement({
+          module: userEntitlement,
+          data: abi.encode(requirements.users)
         })
       );
     }
 
-    if (member.tokens.length == 0) return roleId;
+    if (requirements.tokens.length == 0) return roleId;
 
-    IRoles(town).addRoleToEntitlement(
+    IRoles(townAddress).addRoleToEntitlement(
       roleId,
       IRolesBase.CreateEntitlement({
         module: tokenEntitlement,
-        data: abi.encode(member.tokens)
+        data: abi.encode(requirements.tokens)
       })
     );
   }
 
-  function _createEveryoneEntitlement(
-    address town,
-    address userEntitlement,
-    RoleInfo memory everyone
+  function _createMemberEntitlement(
+    address townAddress,
+    address tokenEntitlement,
+    string memory memberName,
+    string[] memory memberPermissions
   ) internal returns (uint256 roleId) {
-    IRolesBase.CreateEntitlement[]
-      memory entitlements = new IRolesBase.CreateEntitlement[](1);
+    // create external token requirement for the member nft
+    ITokenEntitlement.ExternalToken[]
+      memory tokens = new ITokenEntitlement.ExternalToken[](1);
 
-    address[] memory users = new address[](1);
-    users[0] = EVERYONE_ADDRESS;
-
-    entitlements[0] = IRolesBase.CreateEntitlement({
-      module: userEntitlement,
-      data: abi.encode(users)
+    tokens[0] = ITokenEntitlement.ExternalToken({
+      contractAddress: townAddress,
+      quantity: 1,
+      isSingleToken: false,
+      tokenIds: new uint256[](0)
     });
 
-    roleId = IRoles(town).createRole(
-      everyone.name,
-      everyone.permissions,
+    IRolesBase.CreateEntitlement[]
+      memory entitlements = new IRolesBase.CreateEntitlement[](1);
+    entitlements[0].module = tokenEntitlement;
+    entitlements[0].data = abi.encode(tokens);
+
+    roleId = IRoles(townAddress).createRole(
+      memberName,
+      memberPermissions,
       entitlements
     );
   }
@@ -250,7 +277,8 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
 
   function _getTownDeploymentAddress(
     string memory townId,
-    uint256 tokenId
+    uint256 tokenId,
+    Membership memory membership
   ) internal view returns (address town) {
     TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
 
@@ -258,14 +286,16 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     (bytes memory initCode, bytes32 salt) = _getTownDeploymentInfo(
       townId,
       ds.townToken,
-      tokenId
+      tokenId,
+      membership
     );
     return _calculateDeploymentAddress(keccak256(initCode), salt);
   }
 
   function _deployTown(
     string memory townId,
-    uint256 tokenId
+    uint256 tokenId,
+    Membership memory membership
   ) internal returns (address town) {
     TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
 
@@ -273,7 +303,8 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     (bytes memory initCode, bytes32 salt) = _getTownDeploymentInfo(
       townId,
       ds.townToken,
-      tokenId
+      tokenId,
+      membership
     );
     return _deploy(initCode, salt);
   }
@@ -296,20 +327,39 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
 
   function _getTownDeploymentInfo(
     string memory townId,
-    address tokenCollection,
-    uint256 tokenId
+    address townOwnerCollection,
+    uint256 tokenId,
+    Membership memory membership
   ) internal view returns (bytes memory initCode, bytes32 salt) {
     // calculate salt
-    salt = keccak256(abi.encode(townId, tokenCollection, tokenId));
+    salt = keccak256(abi.encode(townId, townOwnerCollection, tokenId));
 
     // calculate init code
     initCode = abi.encodePacked(
       type(TownProxy).creationCode,
       abi.encode(
-        IProxyManager.getImplementation.selector,
-        address(this),
-        tokenCollection,
-        tokenId
+        ITownProxyBase.TownProxyInit({
+          managedProxy: ITownProxyBase.ManagedProxy({
+            managerSelector: IProxyManager.getImplementation.selector,
+            manager: address(this)
+          }),
+          tokenOwnable: ITownProxyBase.TokenOwnable({
+            townOwner: townOwnerCollection,
+            tokenId: tokenId
+          }),
+          membership: ITownProxyBase.Membership({
+            name: membership.name,
+            price: membership.price,
+            limit: membership.limit,
+            currency: membership.currency,
+            feeRecipient: membership.feeRecipient == address(0)
+              ? _msgSenderTownArchitect()
+              : membership.feeRecipient
+          }),
+          forwarder: ITownProxyBase.Forwarder({
+            trustedForwarder: _getTrustedForwarder()
+          })
+        })
       )
     );
   }
@@ -317,5 +367,9 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
   function _getNextTokenId() internal view returns (uint256 tokenId) {
     TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
     tokenId = TownOwner(ds.townToken).nextTokenId();
+  }
+
+  function _msgSenderTownArchitect() internal view virtual returns (address) {
+    return msg.sender;
   }
 }

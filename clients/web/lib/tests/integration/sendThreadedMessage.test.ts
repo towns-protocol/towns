@@ -5,7 +5,8 @@
 // group dendrite TODO: https://linear.app/hnt-labs/issue/HNT-1604/testsintegrationsendthreadedmessagetestts
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
+    makeUniqueName,
     registerAndStartClients,
     waitForWithRetries,
 } from './helpers/TestUtils'
@@ -14,6 +15,7 @@ import { Permission } from '@river/web3'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { waitFor } from '@testing-library/dom'
 import { RoomMessageEvent } from '../../src/types/timeline-types'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 
 describe('sendThreadedMessage', () => {
     // usefull for debugging or running against cloud servers
@@ -24,14 +26,15 @@ describe('sendThreadedMessage', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // create a space
-        const spaceId = (await createTestSpaceWithEveryoneRole(
+        const spaceId = (await createTestSpaceGatedByTownNft(
             bob,
-            [Permission.Read, Permission.Write],
+            // For alice to create a channel, the role must include the AddRemoveChannels permission.
+            [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
             {
-                name: bob.makeUniqueName(),
+                name: makeUniqueName('bobs space'),
                 visibility: RoomVisibility.Public,
             },
-        ))!
+        )) as RoomIdentifier
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
@@ -42,6 +45,7 @@ describe('sendThreadedMessage', () => {
 
         console.log("bob's spaceId", { spaceId, channelId })
 
+        await alice.joinTown(spaceId, alice.wallet)
         await waitForWithRetries(() => alice.joinRoom(channelId))
 
         // bob sends a message to the room

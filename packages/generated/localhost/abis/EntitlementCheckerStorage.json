@@ -2,12 +2,12 @@
   "abi": [],
   "bytecode": {
     "object": "0x60206037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fd",
-    "sourceMap": "204:337:33:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;204:337:33;;;;;;;;;;;;;;;;;",
+    "sourceMap": "204:337:34:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;204:337:34;;;;;;;;;;;;;;;;;",
     "linkReferences": {}
   },
   "deployedBytecode": {
     "object": "0x73000000000000000000000000000000000000000030146080604052600080fd",
-    "sourceMap": "204:337:33:-:0;;;;;;;;",
+    "sourceMap": "204:337:34:-:0;;;;;;;;",
     "linkReferences": {}
   },
   "methodIdentifiers": {},
@@ -79,22 +79,22 @@
   },
   "ast": {
     "absolutePath": "contracts/src/crosschain/checker/EntitlementCheckerStorage.sol",
-    "id": 6208,
+    "id": 6328,
     "exportedSymbols": {
       "EntitlementCheckerStorage": [
-        6207
+        6327
       ],
       "EnumerableSet": [
-        130153
+        130216
       ]
     },
     "nodeType": "SourceUnit",
-    "src": "39:503:33",
+    "src": "39:503:34",
     "nodes": [
       {
-        "id": 6183,
+        "id": 6303,
         "nodeType": "PragmaDirective",
-        "src": "39:24:33",
+        "src": "39:24:34",
         "nodes": [],
         "literals": [
           "solidity",
@@ -104,24 +104,24 @@
         ]
       },
       {
-        "id": 6185,
+        "id": 6305,
         "nodeType": "ImportDirective",
-        "src": "93:95:33",
+        "src": "93:95:34",
         "nodes": [],
         "absolutePath": "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol",
         "file": "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 6208,
-        "sourceUnit": 130154,
+        "scope": 6328,
+        "sourceUnit": 130217,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 6184,
+              "id": 6304,
               "name": "EnumerableSet",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 130153,
-              "src": "101:13:33",
+              "referencedDeclaration": 130216,
+              "src": "101:13:34",
               "typeDescriptions": {}
             },
             "nameLocation": "-1:-1:-1"
@@ -130,20 +130,20 @@
         "unitAlias": ""
       },
       {
-        "id": 6207,
+        "id": 6327,
         "nodeType": "ContractDefinition",
-        "src": "204:337:33",
+        "src": "204:337:34",
         "nodes": [
           {
-            "id": 6190,
+            "id": 6310,
             "nodeType": "VariableDeclaration",
-            "src": "242:94:33",
+            "src": "242:94:34",
             "nodes": [],
             "constant": true,
             "mutability": "constant",
             "name": "STORAGE_SLOT",
-            "nameLocation": "268:12:33",
-            "scope": 6207,
+            "nameLocation": "268:12:34",
+            "scope": 6327,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -151,10 +151,10 @@
               "typeString": "bytes32"
             },
             "typeName": {
-              "id": 6186,
+              "id": 6306,
               "name": "bytes32",
               "nodeType": "ElementaryTypeName",
-              "src": "242:7:33",
+              "src": "242:7:34",
               "typeDescriptions": {
                 "typeIdentifier": "t_bytes32",
                 "typeString": "bytes32"
@@ -164,14 +164,14 @@
               "arguments": [
                 {
                   "hexValue": "63726f7373636861696e2e456e7469746c656d656e74436865636b657253746f72616765",
-                  "id": 6188,
+                  "id": 6308,
                   "isConstant": false,
                   "isLValue": false,
                   "isPure": true,
                   "kind": "string",
                   "lValueRequested": false,
                   "nodeType": "Literal",
-                  "src": "297:38:33",
+                  "src": "297:38:34",
                   "typeDescriptions": {
                     "typeIdentifier": "t_stringliteral_fc7acd906223ea4362cec2df6e927b10b0448ae1bf045557e5b57490cab1e1bc",
                     "typeString": "literal_string \"crosschain.EntitlementCheckerStorage\""
@@ -186,18 +186,18 @@
                     "typeString": "literal_string \"crosschain.EntitlementCheckerStorage\""
                   }
                 ],
-                "id": 6187,
+                "id": 6307,
                 "name": "keccak256",
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
                 "referencedDeclaration": -8,
-                "src": "287:9:33",
+                "src": "287:9:34",
                 "typeDescriptions": {
                   "typeIdentifier": "t_function_keccak256_pure$_t_bytes_memory_ptr_$returns$_t_bytes32_$",
                   "typeString": "function (bytes memory) pure returns (bytes32)"
                 }
               },
-              "id": 6189,
+              "id": 6309,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -206,7 +206,7 @@
               "nameLocations": [],
               "names": [],
               "nodeType": "FunctionCall",
-              "src": "287:49:33",
+              "src": "287:49:34",
               "tryCall": false,
               "typeDescriptions": {
                 "typeIdentifier": "t_bytes32",
@@ -216,45 +216,45 @@
             "visibility": "internal"
           },
           {
-            "id": 6194,
+            "id": 6314,
             "nodeType": "StructDefinition",
-            "src": "341:55:33",
+            "src": "341:55:34",
             "nodes": [],
             "canonicalName": "EntitlementCheckerStorage.Layout",
             "members": [
               {
                 "constant": false,
-                "id": 6193,
+                "id": 6313,
                 "mutability": "mutable",
                 "name": "nodes",
-                "nameLocation": "386:5:33",
+                "nameLocation": "386:5:34",
                 "nodeType": "VariableDeclaration",
-                "scope": 6194,
-                "src": "361:30:33",
+                "scope": 6314,
+                "src": "361:30:34",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
-                  "typeIdentifier": "t_struct$_AddressSet_$129866_storage_ptr",
+                  "typeIdentifier": "t_struct$_AddressSet_$129929_storage_ptr",
                   "typeString": "struct EnumerableSet.AddressSet"
                 },
                 "typeName": {
-                  "id": 6192,
+                  "id": 6312,
                   "nodeType": "UserDefinedTypeName",
                   "pathNode": {
-                    "id": 6191,
+                    "id": 6311,
                     "name": "EnumerableSet.AddressSet",
                     "nameLocations": [
-                      "361:13:33",
-                      "375:10:33"
+                      "361:13:34",
+                      "375:10:34"
                     ],
                     "nodeType": "IdentifierPath",
-                    "referencedDeclaration": 129866,
-                    "src": "361:24:33"
+                    "referencedDeclaration": 129929,
+                    "src": "361:24:34"
                   },
-                  "referencedDeclaration": 129866,
-                  "src": "361:24:33",
+                  "referencedDeclaration": 129929,
+                  "src": "361:24:34",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_AddressSet_$129866_storage_ptr",
+                    "typeIdentifier": "t_struct$_AddressSet_$129929_storage_ptr",
                     "typeString": "struct EnumerableSet.AddressSet"
                   }
                 },
@@ -262,35 +262,35 @@
               }
             ],
             "name": "Layout",
-            "nameLocation": "348:6:33",
-            "scope": 6207,
+            "nameLocation": "348:6:34",
+            "scope": 6327,
             "visibility": "public"
           },
           {
-            "id": 6206,
+            "id": 6326,
             "nodeType": "FunctionDefinition",
-            "src": "400:139:33",
+            "src": "400:139:34",
             "nodes": [],
             "body": {
-              "id": 6205,
+              "id": 6325,
               "nodeType": "Block",
-              "src": "459:80:33",
+              "src": "459:80:34",
               "nodes": [],
               "statements": [
                 {
                   "assignments": [
-                    6201
+                    6321
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 6201,
+                      "id": 6321,
                       "mutability": "mutable",
                       "name": "slot",
-                      "nameLocation": "473:4:33",
+                      "nameLocation": "473:4:34",
                       "nodeType": "VariableDeclaration",
-                      "scope": 6205,
-                      "src": "465:12:33",
+                      "scope": 6325,
+                      "src": "465:12:34",
                       "stateVariable": false,
                       "storageLocation": "default",
                       "typeDescriptions": {
@@ -298,10 +298,10 @@
                         "typeString": "bytes32"
                       },
                       "typeName": {
-                        "id": 6200,
+                        "id": 6320,
                         "name": "bytes32",
                         "nodeType": "ElementaryTypeName",
-                        "src": "465:7:33",
+                        "src": "465:7:34",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes32",
                           "typeString": "bytes32"
@@ -310,40 +310,40 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 6203,
+                  "id": 6323,
                   "initialValue": {
-                    "id": 6202,
+                    "id": 6322,
                     "name": "STORAGE_SLOT",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 6190,
-                    "src": "480:12:33",
+                    "referencedDeclaration": 6310,
+                    "src": "480:12:34",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
                     }
                   },
                   "nodeType": "VariableDeclarationStatement",
-                  "src": "465:27:33"
+                  "src": "465:27:34"
                 },
                 {
                   "AST": {
                     "nodeType": "YulBlock",
-                    "src": "507:28:33",
+                    "src": "507:28:34",
                     "statements": [
                       {
                         "nodeType": "YulAssignment",
-                        "src": "515:14:33",
+                        "src": "515:14:34",
                         "value": {
                           "name": "slot",
                           "nodeType": "YulIdentifier",
-                          "src": "525:4:33"
+                          "src": "525:4:34"
                         },
                         "variableNames": [
                           {
                             "name": "l.slot",
                             "nodeType": "YulIdentifier",
-                            "src": "515:6:33"
+                            "src": "515:6:34"
                           }
                         ]
                       }
@@ -352,24 +352,24 @@
                   "evmVersion": "paris",
                   "externalReferences": [
                     {
-                      "declaration": 6198,
+                      "declaration": 6318,
                       "isOffset": false,
                       "isSlot": true,
-                      "src": "515:6:33",
+                      "src": "515:6:34",
                       "suffix": "slot",
                       "valueSize": 1
                     },
                     {
-                      "declaration": 6201,
+                      "declaration": 6321,
                       "isOffset": false,
                       "isSlot": false,
-                      "src": "525:4:33",
+                      "src": "525:4:34",
                       "valueSize": 1
                     }
                   ],
-                  "id": 6204,
+                  "id": 6324,
                   "nodeType": "InlineAssembly",
-                  "src": "498:37:33"
+                  "src": "498:37:34"
                 }
               ]
             },
@@ -377,58 +377,58 @@
             "kind": "function",
             "modifiers": [],
             "name": "layout",
-            "nameLocation": "409:6:33",
+            "nameLocation": "409:6:34",
             "parameters": {
-              "id": 6195,
+              "id": 6315,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "415:2:33"
+              "src": "415:2:34"
             },
             "returnParameters": {
-              "id": 6199,
+              "id": 6319,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 6198,
+                  "id": 6318,
                   "mutability": "mutable",
                   "name": "l",
-                  "nameLocation": "456:1:33",
+                  "nameLocation": "456:1:34",
                   "nodeType": "VariableDeclaration",
-                  "scope": 6206,
-                  "src": "441:16:33",
+                  "scope": 6326,
+                  "src": "441:16:34",
                   "stateVariable": false,
                   "storageLocation": "storage",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_Layout_$6194_storage_ptr",
+                    "typeIdentifier": "t_struct$_Layout_$6314_storage_ptr",
                     "typeString": "struct EntitlementCheckerStorage.Layout"
                   },
                   "typeName": {
-                    "id": 6197,
+                    "id": 6317,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 6196,
+                      "id": 6316,
                       "name": "Layout",
                       "nameLocations": [
-                        "441:6:33"
+                        "441:6:34"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 6194,
-                      "src": "441:6:33"
+                      "referencedDeclaration": 6314,
+                      "src": "441:6:34"
                     },
-                    "referencedDeclaration": 6194,
-                    "src": "441:6:33",
+                    "referencedDeclaration": 6314,
+                    "src": "441:6:34",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Layout_$6194_storage_ptr",
+                      "typeIdentifier": "t_struct$_Layout_$6314_storage_ptr",
                       "typeString": "struct EntitlementCheckerStorage.Layout"
                     }
                   },
                   "visibility": "internal"
                 }
               ],
-              "src": "440:18:33"
+              "src": "440:18:34"
             },
-            "scope": 6207,
+            "scope": 6327,
             "stateMutability": "pure",
             "virtual": false,
             "visibility": "internal"
@@ -441,16 +441,16 @@
         "contractKind": "library",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          6207
+          6327
         ],
         "name": "EntitlementCheckerStorage",
-        "nameLocation": "212:25:33",
-        "scope": 6208,
+        "nameLocation": "212:25:34",
+        "scope": 6328,
         "usedErrors": [],
         "usedEvents": []
       }
     ],
     "license": "Apache-2.0"
   },
-  "id": 33
+  "id": 34
 }

@@ -13,6 +13,7 @@ import { useDevice } from 'hooks/useDevice'
 import { DirectMessageIndex } from '@components/DirectMessages/DirectMessageIndex'
 import { DirectMessageThread } from '@components/DirectMessages/DirectMessageThread'
 import { CreateSpaceFormV2 } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2'
+import { CreateSpaceFormTemp } from '@components/Web3/CreateSpaceFormTemp'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
@@ -21,7 +22,6 @@ import { SpaceMentions } from './SpaceMentions'
 import { SpacesChannel, SpacesChannelRoute } from './SpacesChannel'
 import { SpacesChannelReplies } from './SpacesChannelReplies'
 import { SpacesInvite } from './SpacesInvite'
-import { SpacesNew } from './SpacesNew'
 import { SpacesSettingsOld } from './SpaceSettingsOld'
 import { SpaceThreads } from './SpaceThreads'
 import { SpaceProfilePanel } from './SpacesProfilePanel'
@@ -87,7 +87,10 @@ export const AuthenticatedRoutes = () => {
                         <Route element={<AppPanelLayout />}>
                             {(env.DEV || isHolderOfPioneerNft) && (
                                 <>
-                                    <Route path={`${PATHS.SPACES}/new`} element={<SpacesNew />} />
+                                    <Route
+                                        path={`${PATHS.SPACES}/new`}
+                                        element={<CreateSpaceFormTemp />}
+                                    />
                                 </>
                             )}
                             <Route path={`${PATHS.SPACES}/:spaceSlug`}>

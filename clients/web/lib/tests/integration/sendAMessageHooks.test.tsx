@@ -14,7 +14,7 @@ import React, { useCallback, useMemo } from 'react'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     makeUniqueName,
     registerAndStartClients,
 } from './helpers/TestUtils'
@@ -38,11 +38,14 @@ describe('sendMessageHooks', () => {
         // create clients
         // create a wallet for bob
         const bobProvider = new ZionTestWeb3Provider()
+        // bob needs funds to mint
+        await bobProvider.fundWallet()
+
         const { jane } = await registerAndStartClients(['jane'])
         // jane needs funds to create a space
         await jane.fundWallet()
         // create a space
-        const janesSpaceId = (await createTestSpaceWithEveryoneRole(
+        const janesSpaceId = (await createTestSpaceGatedByTownNft(
             jane,
             [Permission.Read, Permission.Write],
             {
@@ -179,7 +182,10 @@ describe('sendMessageHooks', () => {
             TestConstants.DecaDefaultWaitForTimeout,
         )
         // wait for the channel join
-        await waitFor(() => expect(channelMembership).toHaveTextContent(Membership.Join))
+        await waitFor(
+            () => expect(channelMembership).toHaveTextContent(Membership.Join),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
         // have jane send a message to bob
         await act(async () => {
             await jane.sendMessage(janesChannelId, 'hello bob')

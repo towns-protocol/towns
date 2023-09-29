@@ -9,7 +9,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     getPrimaryProtocol,
     registerAndStartClients,
     waitForWithRetries,
@@ -39,7 +39,7 @@ describe('sendAMessage', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // create a space
-        const spaceId = (await createTestSpaceWithEveryoneRole(
+        const spaceId = (await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
@@ -61,7 +61,7 @@ describe('sendAMessage', () => {
         for (let i = 1; i < numClients; i++) {
             console.log(`!!!!!! client ${i} joins room`)
             const client = clients[`client_${i}`]
-            await client.joinRoom(spaceId)
+            await client.joinTown(spaceId, client.wallet)
         }
         // everyone joins the room
         for (let i = 1; i < numClients; i++) {

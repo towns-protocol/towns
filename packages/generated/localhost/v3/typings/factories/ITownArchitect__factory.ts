@@ -62,6 +62,87 @@ const _abi = [
         name: "townId",
         type: "string",
       },
+      {
+        components: [
+          {
+            internalType: "string",
+            name: "name",
+            type: "string",
+          },
+          {
+            internalType: "uint256",
+            name: "price",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "limit",
+            type: "uint256",
+          },
+          {
+            internalType: "address",
+            name: "currency",
+            type: "address",
+          },
+          {
+            internalType: "address",
+            name: "feeRecipient",
+            type: "address",
+          },
+          {
+            internalType: "string[]",
+            name: "permissions",
+            type: "string[]",
+          },
+          {
+            components: [
+              {
+                internalType: "bool",
+                name: "everyone",
+                type: "bool",
+              },
+              {
+                components: [
+                  {
+                    internalType: "address",
+                    name: "contractAddress",
+                    type: "address",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "quantity",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "bool",
+                    name: "isSingleToken",
+                    type: "bool",
+                  },
+                  {
+                    internalType: "uint256[]",
+                    name: "tokenIds",
+                    type: "uint256[]",
+                  },
+                ],
+                internalType: "struct ITokenEntitlement.ExternalToken[]",
+                name: "tokens",
+                type: "tuple[]",
+              },
+              {
+                internalType: "address[]",
+                name: "users",
+                type: "address[]",
+              },
+            ],
+            internalType: "struct ITownArchitectBase.MembershipRequirements",
+            name: "requirements",
+            type: "tuple",
+          },
+        ],
+        internalType: "struct ITownArchitectBase.Membership",
+        name: "membership",
+        type: "tuple",
+      },
     ],
     name: "computeTown",
     outputs: [
@@ -101,69 +182,78 @@ const _abi = [
                 type: "string",
               },
               {
+                internalType: "uint256",
+                name: "price",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "limit",
+                type: "uint256",
+              },
+              {
+                internalType: "address",
+                name: "currency",
+                type: "address",
+              },
+              {
+                internalType: "address",
+                name: "feeRecipient",
+                type: "address",
+              },
+              {
                 internalType: "string[]",
                 name: "permissions",
                 type: "string[]",
               },
-            ],
-            internalType: "struct ITownArchitectBase.RoleInfo",
-            name: "everyoneEntitlement",
-            type: "tuple",
-          },
-          {
-            components: [
               {
                 components: [
-                  {
-                    internalType: "string",
-                    name: "name",
-                    type: "string",
-                  },
-                  {
-                    internalType: "string[]",
-                    name: "permissions",
-                    type: "string[]",
-                  },
-                ],
-                internalType: "struct ITownArchitectBase.RoleInfo",
-                name: "role",
-                type: "tuple",
-              },
-              {
-                components: [
-                  {
-                    internalType: "address",
-                    name: "contractAddress",
-                    type: "address",
-                  },
-                  {
-                    internalType: "uint256",
-                    name: "quantity",
-                    type: "uint256",
-                  },
                   {
                     internalType: "bool",
-                    name: "isSingleToken",
+                    name: "everyone",
                     type: "bool",
                   },
                   {
-                    internalType: "uint256[]",
-                    name: "tokenIds",
-                    type: "uint256[]",
+                    components: [
+                      {
+                        internalType: "address",
+                        name: "contractAddress",
+                        type: "address",
+                      },
+                      {
+                        internalType: "uint256",
+                        name: "quantity",
+                        type: "uint256",
+                      },
+                      {
+                        internalType: "bool",
+                        name: "isSingleToken",
+                        type: "bool",
+                      },
+                      {
+                        internalType: "uint256[]",
+                        name: "tokenIds",
+                        type: "uint256[]",
+                      },
+                    ],
+                    internalType: "struct ITokenEntitlement.ExternalToken[]",
+                    name: "tokens",
+                    type: "tuple[]",
+                  },
+                  {
+                    internalType: "address[]",
+                    name: "users",
+                    type: "address[]",
                   },
                 ],
-                internalType: "struct ITokenEntitlement.ExternalToken[]",
-                name: "tokens",
-                type: "tuple[]",
-              },
-              {
-                internalType: "address[]",
-                name: "users",
-                type: "address[]",
+                internalType:
+                  "struct ITownArchitectBase.MembershipRequirements",
+                name: "requirements",
+                type: "tuple",
               },
             ],
-            internalType: "struct ITownArchitectBase.MemberEntitlement",
-            name: "memberEntitlement",
+            internalType: "struct ITownArchitectBase.Membership",
+            name: "membership",
             type: "tuple",
           },
           {

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IERC173} from "./IERC173.sol";
+import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 // libraries
 

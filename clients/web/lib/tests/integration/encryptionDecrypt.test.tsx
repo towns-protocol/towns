@@ -14,7 +14,7 @@ import { TimelineEvent } from '../../src/types/timeline-types'
 import { LoginWithWallet, RegisterAndJoinSpace } from './helpers/TestComponents'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     makeUniqueName,
     registerAndStartClients,
 } from './helpers/TestUtils'
@@ -31,7 +31,7 @@ describe('encryptionDecrypt', () => {
         const bobProvider = new ZionTestWeb3Provider()
 
         // create a space
-        const janesSpaceId = (await createTestSpaceWithEveryoneRole(
+        const janesSpaceId = (await createTestSpaceGatedByTownNft(
             jane,
             [Permission.Read, Permission.Write],
             {

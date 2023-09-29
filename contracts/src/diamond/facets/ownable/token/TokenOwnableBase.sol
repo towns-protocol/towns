@@ -15,8 +15,9 @@ abstract contract TokenOwnableBase is IOwnableBase {
     address collection,
     uint256 tokenId
   ) internal {
-    TokenOwnableStorage.layout().collection = collection;
-    TokenOwnableStorage.layout().tokenId = tokenId;
+    TokenOwnableStorage.Layout storage ds = TokenOwnableStorage.layout();
+    ds.collection = collection;
+    ds.tokenId = tokenId;
   }
 
   modifier onlyOwner() {

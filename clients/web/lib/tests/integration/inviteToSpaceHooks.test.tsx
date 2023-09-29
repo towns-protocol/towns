@@ -6,7 +6,7 @@ import { Membership, RoomVisibility, SpaceItem } from '../../src/types/zion-type
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     makeUniqueName,
     registerAndStartClients,
 } from './helpers/TestUtils'
@@ -35,7 +35,7 @@ describe.skip('inviteToSpace', () => {
         // jane needs funds to create a space
         await jane.fundWallet()
         const janes_space_1 = makeUniqueName('janes_space_1')
-        const janesSpaceId_1 = (await createTestSpaceWithEveryoneRole(
+        const janesSpaceId_1 = (await createTestSpaceGatedByTownNft(
             jane,
             [Permission.Read, Permission.Write],
             {
@@ -45,7 +45,7 @@ describe.skip('inviteToSpace', () => {
         )) as RoomIdentifier
         // create a second space
         const janes_space_2 = makeUniqueName('janes_space_2')
-        const janesSpaceId_2 = (await createTestSpaceWithEveryoneRole(
+        const janesSpaceId_2 = (await createTestSpaceGatedByTownNft(
             jane,
             [Permission.Read, Permission.Write],
             {
@@ -74,7 +74,7 @@ describe.skip('inviteToSpace', () => {
         await jane.inviteUser(janesSpaceId_1, bobUserId)
         // create a veiw for bob
         const TestSpaceInvitesComponent = () => {
-            const { joinRoom } = useZionClient()
+            const { joinTown } = useZionClient()
             const { spaces, invitedToIds } = useZionContext()
 
             const myMembership1 = useMyMembership(janesSpaceId_1)
@@ -83,14 +83,14 @@ describe.skip('inviteToSpace', () => {
 
             // accept the invites
             const onClickAcceptInvite1 = useCallback(() => {
-                void joinRoom(janesSpaceId_1)
-            }, [joinRoom])
+                void joinTown(janesSpaceId_1, bob.wallet)
+            }, [joinTown])
             const onClickAcceptInvite2 = useCallback(() => {
-                void joinRoom(janesSpaceId_2)
-            }, [joinRoom])
+                void joinTown(janesSpaceId_2, bob.wallet)
+            }, [joinTown])
             const onClickAcceptInvite3 = useCallback(() => {
-                void joinRoom(janesChannelId_2)
-            }, [joinRoom])
+                void joinTown(janesChannelId_2, bob.wallet)
+            }, [joinTown])
             // format for easy reading
             function formatSpace(s: SpaceItem) {
                 return `${s.id.networkId}: ${s.name}`

@@ -27,69 +27,6 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace ITownArchitectBase {
-  export type RoleInfoStruct = {
-    name: PromiseOrValue<string>;
-    permissions: PromiseOrValue<string>[];
-  };
-
-  export type RoleInfoStructOutput = [string, string[]] & {
-    name: string;
-    permissions: string[];
-  };
-
-  export type MemberEntitlementStruct = {
-    role: ITownArchitectBase.RoleInfoStruct;
-    tokens: ITokenEntitlement.ExternalTokenStruct[];
-    users: PromiseOrValue<string>[];
-  };
-
-  export type MemberEntitlementStructOutput = [
-    ITownArchitectBase.RoleInfoStructOutput,
-    ITokenEntitlement.ExternalTokenStructOutput[],
-    string[]
-  ] & {
-    role: ITownArchitectBase.RoleInfoStructOutput;
-    tokens: ITokenEntitlement.ExternalTokenStructOutput[];
-    users: string[];
-  };
-
-  export type ChannelInfoStruct = {
-    id: PromiseOrValue<string>;
-    metadata: PromiseOrValue<string>;
-  };
-
-  export type ChannelInfoStructOutput = [string, string] & {
-    id: string;
-    metadata: string;
-  };
-
-  export type TownInfoStruct = {
-    id: PromiseOrValue<string>;
-    name: PromiseOrValue<string>;
-    uri: PromiseOrValue<string>;
-    everyoneEntitlement: ITownArchitectBase.RoleInfoStruct;
-    memberEntitlement: ITownArchitectBase.MemberEntitlementStruct;
-    channel: ITownArchitectBase.ChannelInfoStruct;
-  };
-
-  export type TownInfoStructOutput = [
-    string,
-    string,
-    string,
-    ITownArchitectBase.RoleInfoStructOutput,
-    ITownArchitectBase.MemberEntitlementStructOutput,
-    ITownArchitectBase.ChannelInfoStructOutput
-  ] & {
-    id: string;
-    name: string;
-    uri: string;
-    everyoneEntitlement: ITownArchitectBase.RoleInfoStructOutput;
-    memberEntitlement: ITownArchitectBase.MemberEntitlementStructOutput;
-    channel: ITownArchitectBase.ChannelInfoStructOutput;
-  };
-}
-
 export declare namespace ITokenEntitlement {
   export type ExternalTokenStruct = {
     contractAddress: PromiseOrValue<string>;
@@ -111,10 +48,88 @@ export declare namespace ITokenEntitlement {
   };
 }
 
+export declare namespace ITownArchitectBase {
+  export type MembershipRequirementsStruct = {
+    everyone: PromiseOrValue<boolean>;
+    tokens: ITokenEntitlement.ExternalTokenStruct[];
+    users: PromiseOrValue<string>[];
+  };
+
+  export type MembershipRequirementsStructOutput = [
+    boolean,
+    ITokenEntitlement.ExternalTokenStructOutput[],
+    string[]
+  ] & {
+    everyone: boolean;
+    tokens: ITokenEntitlement.ExternalTokenStructOutput[];
+    users: string[];
+  };
+
+  export type MembershipStruct = {
+    name: PromiseOrValue<string>;
+    price: PromiseOrValue<BigNumberish>;
+    limit: PromiseOrValue<BigNumberish>;
+    currency: PromiseOrValue<string>;
+    feeRecipient: PromiseOrValue<string>;
+    permissions: PromiseOrValue<string>[];
+    requirements: ITownArchitectBase.MembershipRequirementsStruct;
+  };
+
+  export type MembershipStructOutput = [
+    string,
+    BigNumber,
+    BigNumber,
+    string,
+    string,
+    string[],
+    ITownArchitectBase.MembershipRequirementsStructOutput
+  ] & {
+    name: string;
+    price: BigNumber;
+    limit: BigNumber;
+    currency: string;
+    feeRecipient: string;
+    permissions: string[];
+    requirements: ITownArchitectBase.MembershipRequirementsStructOutput;
+  };
+
+  export type ChannelInfoStruct = {
+    id: PromiseOrValue<string>;
+    metadata: PromiseOrValue<string>;
+  };
+
+  export type ChannelInfoStructOutput = [string, string] & {
+    id: string;
+    metadata: string;
+  };
+
+  export type TownInfoStruct = {
+    id: PromiseOrValue<string>;
+    name: PromiseOrValue<string>;
+    uri: PromiseOrValue<string>;
+    membership: ITownArchitectBase.MembershipStruct;
+    channel: ITownArchitectBase.ChannelInfoStruct;
+  };
+
+  export type TownInfoStructOutput = [
+    string,
+    string,
+    string,
+    ITownArchitectBase.MembershipStructOutput,
+    ITownArchitectBase.ChannelInfoStructOutput
+  ] & {
+    id: string;
+    name: string;
+    uri: string;
+    membership: ITownArchitectBase.MembershipStructOutput;
+    channel: ITownArchitectBase.ChannelInfoStructOutput;
+  };
+}
+
 export interface ITownArchitectInterface extends utils.Interface {
   functions: {
-    "computeTown(string)": FunctionFragment;
-    "createTown((string,string,string,(string,string[]),((string,string[]),(address,uint256,bool,uint256[])[],address[]),(string,string)))": FunctionFragment;
+    "computeTown(string,(string,uint256,uint256,address,address,string[],(bool,(address,uint256,bool,uint256[])[],address[])))": FunctionFragment;
+    "createTown((string,string,string,(string,uint256,uint256,address,address,string[],(bool,(address,uint256,bool,uint256[])[],address[])),(string,string)))": FunctionFragment;
     "gateByToken(address,uint256)": FunctionFragment;
     "getTokenIdByTownId(string)": FunctionFragment;
     "getTownArchitectImplementations()": FunctionFragment;
@@ -139,7 +154,7 @@ export interface ITownArchitectInterface extends utils.Interface {
 
   encodeFunctionData(
     functionFragment: "computeTown",
-    values: [PromiseOrValue<string>]
+    values: [PromiseOrValue<string>, ITownArchitectBase.MembershipStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "createTown",
@@ -260,6 +275,7 @@ export interface ITownArchitect extends BaseContract {
   functions: {
     computeTown(
       townId: PromiseOrValue<string>,
+      membership: ITownArchitectBase.MembershipStruct,
       overrides?: CallOverrides
     ): Promise<[string]>;
 
@@ -314,6 +330,7 @@ export interface ITownArchitect extends BaseContract {
 
   computeTown(
     townId: PromiseOrValue<string>,
+    membership: ITownArchitectBase.MembershipStruct,
     overrides?: CallOverrides
   ): Promise<string>;
 
@@ -368,6 +385,7 @@ export interface ITownArchitect extends BaseContract {
   callStatic: {
     computeTown(
       townId: PromiseOrValue<string>,
+      membership: ITownArchitectBase.MembershipStruct,
       overrides?: CallOverrides
     ): Promise<string>;
 
@@ -436,6 +454,7 @@ export interface ITownArchitect extends BaseContract {
   estimateGas: {
     computeTown(
       townId: PromiseOrValue<string>,
+      membership: ITownArchitectBase.MembershipStruct,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -485,6 +504,7 @@ export interface ITownArchitect extends BaseContract {
   populateTransaction: {
     computeTown(
       townId: PromiseOrValue<string>,
+      membership: ITownArchitectBase.MembershipStruct,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

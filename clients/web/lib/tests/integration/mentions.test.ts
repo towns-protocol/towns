@@ -8,7 +8,7 @@ import { RoomVisibility } from '../../src/types/zion-types'
 import { ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     registerAndStartClients,
     waitForWithRetries,
 } from './helpers/TestUtils'
@@ -20,7 +20,7 @@ describe('mentions', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // create a space
-        const spaceId = (await createTestSpaceWithEveryoneRole(
+        const spaceId = (await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {

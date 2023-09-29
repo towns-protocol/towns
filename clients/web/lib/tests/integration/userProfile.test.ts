@@ -4,7 +4,7 @@
  */
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
     registerAndStartClient,
 } from './helpers/TestUtils'
@@ -25,28 +25,26 @@ describe('userProfile', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a room
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const roomId = (await createTestSpaceWithZionMemberRole(
-            bob,
-            [Permission.Read, Permission.Write],
-            [],
-        )) as RoomIdentifier
+        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])) as RoomIdentifier
         // alice needs to have a valid nft in order to join bob's space / channel
         const alice = await registerAndStartClient('alice', TestConstants.getWalletWithMemberNft())
         // alice joins the room
-        await alice.joinRoom(roomId)
+        await alice.joinTown(spaceId, alice.wallet)
         // alice should see bob's user name
         await waitFor(() =>
-            expect(alice.getRoomMember(roomId, bob.getUserId()!)?.name).toBe("Bob's your uncle"),
+            expect(alice.getRoomMember(spaceId, bob.getUserId()!)?.name).toBe("Bob's your uncle"),
         )
         // alice should see bob's profile photo
         await waitFor(() =>
-            expect(alice.getRoomMember(roomId, bob.getUserId()!)?.avatarUrl).toBe(
+            expect(alice.getRoomMember(spaceId, bob.getUserId()!)?.avatarUrl).toBe(
                 'https://example.com/bob.png',
             ),
         )
         // log alice's view of bob
-        const alicesViewOfBob = alice.getRoomMember(roomId, bob.getUserId()!)
+        const alicesViewOfBob = alice.getRoomMember(spaceId, bob.getUserId()!)
         console.log('alice sees bob as', {
             name: alicesViewOfBob?.name,
             disambiguate: alicesViewOfBob?.disambiguate,
@@ -54,7 +52,7 @@ describe('userProfile', () => {
             avatarUrl: alicesViewOfBob?.avatarUrl,
         })
         // log bob's view of alice
-        const bobsViewOfAlice = bob.getRoomMember(roomId, alice.getUserId()!)
+        const bobsViewOfAlice = bob.getRoomMember(spaceId, alice.getUserId()!)
         console.log('bob sees alice as', {
             name: bobsViewOfAlice?.name,
             disambiguate: bobsViewOfAlice?.disambiguate,
@@ -68,26 +66,26 @@ describe('userProfile', () => {
         })
         // bob should see alices new user name
         await waitFor(() =>
-            expect(bob.getRoomMember(roomId, alice.getUserId()!)?.name).toBe("Alice's your aunt"),
+            expect(bob.getRoomMember(spaceId, alice.getUserId()!)?.name).toBe("Alice's your aunt"),
         )
         // alice should see bob's profile photo
         await waitFor(() =>
-            expect(bob.getRoomMember(roomId, alice.getUserId()!)?.avatarUrl).toBe(
+            expect(bob.getRoomMember(spaceId, alice.getUserId()!)?.avatarUrl).toBe(
                 'https://example.com/alice.png',
             ),
         )
         // send a message
         await act(async () => {
-            await bob.sendMessage(roomId, 'hello')
+            await bob.sendMessage(spaceId, 'hello')
         })
         // alice should see the message
         await waitFor(
-            () => expect(alice.getMessages(roomId)).toContain('hello'),
+            () => expect(alice.getMessages(spaceId)).toContain('hello'),
             TestConstants.DecaDefaultWaitForTimeout,
         )
         // get the message
         const message = alice
-            .getEvents_TypedRoomMessage(roomId)
+            .getEvents_TypedRoomMessage(spaceId)
             .find((event) => event.content.body === 'hello')
         // sender?
         expect(message?.sender?.displayName).toBe("Bob's your uncle")

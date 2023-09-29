@@ -22,8 +22,7 @@ export interface CreateSpaceParams {
     spaceMetadata: string
     channelId: string
     channelName: string
-    memberEntitlements: ITownArchitectBase.MemberEntitlementStruct
-    everyonePermissions: string[]
+    membership: ITownArchitectBase.MembershipStruct
 }
 
 export interface UpdateChannelParams {
@@ -103,4 +102,11 @@ export interface ISpaceDapp {
         disabled: boolean,
         signer: ethers.Signer,
     ) => Promise<ContractTransaction>
+    getTownMembershipTokenAddress: (spaceId: string) => Promise<string>
+    joinTown: (
+        spaceId: string,
+        recipient: string,
+        signer: ethers.Signer,
+    ) => Promise<ContractTransaction>
+    hasTownMembership: (spaceId: string, wallet: string) => Promise<boolean>
 }

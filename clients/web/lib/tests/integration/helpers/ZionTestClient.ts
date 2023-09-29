@@ -129,13 +129,11 @@ export class ZionTestClient extends ZionClient {
      *************************************************/
     public async createSpace(
         createSpaceInfo: CreateSpaceInfo,
-        memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
-        everyonePermissions: Permission[],
+        membership: ITownArchitectBase.MembershipStruct,
     ): Promise<RoomIdentifier | undefined> {
         const txContext = await this.createSpaceTransaction(
             createSpaceInfo,
-            memberEntitlements,
-            everyonePermissions,
+            membership,
             this.provider.wallet,
         )
         if (txContext.error) {

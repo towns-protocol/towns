@@ -21,7 +21,7 @@ import { makeUniqueName } from 'use-zion-client/tests/integration/helpers/TestUt
 import { useCreateSpaceTransaction } from 'use-zion-client/src/hooks/use-create-space-transaction'
 import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
 import { useZionClient } from 'use-zion-client/src/hooks/use-zion-client'
-import { createExternalTokenStruct, getMemberNftAddress, Permission } from '@river/web3'
+import { createMembershipStruct, getMemberNftAddress, Permission } from '@river/web3'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -55,9 +55,11 @@ describe('spaceManagerContractHooks', () => {
                             name: spaceName,
                             visibility: RoomVisibility.Public,
                         },
-                        'Test Role',
-                        [],
-                        [],
+                        createMembershipStruct({
+                            name: 'Test Role',
+                            permissions: [],
+                            tokenAddresses: [],
+                        }),
                     )
                     console.log('spaceManagerContractHooks onClickCreateSpace', spaceName)
 
@@ -79,9 +81,11 @@ describe('spaceManagerContractHooks', () => {
                             name: tokenGatedSpaceName,
                             visibility: RoomVisibility.Public,
                         },
-                        'Zion Role',
-                        createExternalTokenStruct([zionTokenAddress]),
-                        [Permission.Read, Permission.Write],
+                        createMembershipStruct({
+                            name: 'Zion Role',
+                            permissions: [Permission.Read, Permission.Write],
+                            tokenAddresses: [zionTokenAddress],
+                        }),
                     )
                     console.log(
                         'spaceManagerContractHooks createSpaceTransactionWithRole',

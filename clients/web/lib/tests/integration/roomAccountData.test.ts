@@ -5,7 +5,7 @@
  * @group dendrite
  */
 import {
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
@@ -29,7 +29,7 @@ describe('roomAccountData', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const spaceId = (await createTestSpaceWithEveryoneRole(bob, [
+        const spaceId = (await createTestSpaceGatedByTownNft(bob, [
             Permission.Read,
             Permission.Write,
         ])) as RoomIdentifier
@@ -42,7 +42,7 @@ describe('roomAccountData', () => {
         }))!
 
         // alice joins the space
-        await alice.joinRoom(spaceId)
+        await alice.joinTown(spaceId, alice.wallet)
 
         // alice joins the channel
         await waitForWithRetries(() => alice.joinRoom(channelId))

@@ -6,7 +6,7 @@ import { Membership, RoomMember, RoomVisibility } from '../../src/types/zion-typ
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     makeUniqueName,
     registerAndStartClients,
 } from './helpers/TestUtils'
@@ -40,7 +40,7 @@ describe('userProfileHooks', () => {
         // alice needs funds to create a space
         await alice.fundWallet()
         // create a space
-        const alicesSpaceId = (await createTestSpaceWithEveryoneRole(
+        const alicesSpaceId = (await createTestSpaceGatedByTownNft(
             alice,
             [Permission.Read, Permission.Write],
             {

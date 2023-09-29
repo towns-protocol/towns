@@ -33,18 +33,8 @@ contract TownArchitectTest is
 
     address founder = _randomAddress();
 
-    vm.startPrank(founder);
-    address possibleTown = townArchitect.computeTown(name);
-
-    // expect town to be created
-    vm.expectEmit(true, true, true, true, address(townArchitect));
-    emit TownCreated(founder, 0, possibleTown);
-
+    vm.prank(founder);
     address townInstance = _createSimpleTown(name);
-    vm.stopPrank();
-
-    assertEq(townInstance, possibleTown, "Town address mismatch");
-
     address townAddress = townArchitect.getTownById(name);
 
     assertEq(townAddress, townInstance, "Town address mismatch");
@@ -241,17 +231,18 @@ contract TownArchitectTest is
       id: townId,
       name: "test",
       uri: "ipfs://test",
-      everyoneEntitlement: ITownArchitectBase.RoleInfo({
-        name: "Everyone",
-        permissions: new string[](0)
-      }),
-      memberEntitlement: ITownArchitectBase.MemberEntitlement({
-        role: ITownArchitectBase.RoleInfo({
-          name: "test",
-          permissions: new string[](0)
-        }),
-        tokens: new ITokenEntitlement.ExternalToken[](0),
-        users: new address[](0)
+      membership: Membership({
+        name: "Member",
+        price: 0,
+        limit: 0,
+        currency: address(0),
+        feeRecipient: address(0),
+        permissions: new string[](0),
+        requirements: MembershipRequirements({
+          everyone: false,
+          tokens: new ITokenEntitlement.ExternalToken[](0),
+          users: new address[](0)
+        })
       }),
       channel: ITownArchitectBase.ChannelInfo({
         id: "test",

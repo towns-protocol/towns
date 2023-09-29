@@ -4,7 +4,7 @@
  */
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     makeUniqueName,
     registerAndStartClients,
     registerAndStartClient,
@@ -26,11 +26,10 @@ describe('spaceHierarchy', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space
-        const spaceId = (await createTestSpaceWithZionMemberRole(
-            bob,
-            [Permission.Read, Permission.Write],
-            [],
-        )) as RoomIdentifier
+        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])) as RoomIdentifier
 
         // bob creates a room
         const roomId = (await createTestChannelWithSpaceRoles(bob, {
@@ -48,7 +47,7 @@ describe('spaceHierarchy', () => {
         // expect alice to see info about the space
 
         // alice joins the space
-        await alice.joinRoom(spaceId)
+        await alice.joinTown(spaceId, alice.wallet)
 
         // alice syncs the space
         const alice_spaceInfo = await alice.syncSpace(spaceId, alice.provider.wallet.address)
@@ -67,10 +66,9 @@ describe('spaceHierarchy', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space
-        const spaceId = (await createTestSpaceWithZionMemberRole(
+        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
             bob,
             [Permission.Read, Permission.Write],
-            [],
             {
                 name: makeUniqueName('bobs space'),
                 visibility: RoomVisibility.Private,
@@ -99,7 +97,7 @@ describe('spaceHierarchy', () => {
         await bob.inviteUser(spaceId, alice.getUserId()!)
 
         // alice joins the space
-        await alice.joinRoom(spaceId)
+        await alice.joinTown(spaceId, alice.wallet)
 
         // alice syncs the space
         const alice_spaceInfo = await alice.syncSpace(spaceId, alice.provider.wallet.address)

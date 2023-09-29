@@ -3,7 +3,7 @@
  * @group dendrite
  */
 import {
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
     registerAndStartClient,
 } from './helpers/TestUtils'
@@ -22,24 +22,23 @@ describe('messageScrollback', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const roomId = (await createTestSpaceWithZionMemberRole(
-            bob,
-            [Permission.Read, Permission.Write],
-            [],
-        )) as RoomIdentifier
+        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])) as RoomIdentifier
         // send 25 messages (20 is our default initialSyncLimit)
         for (let i = 0; i < 25; i++) {
-            await bob.sendMessage(roomId, `message ${i}`)
+            await bob.sendMessage(spaceId, `message ${i}`)
         }
         // alice joins the room
-        await alice.joinRoom(roomId)
+        await alice.joinTown(spaceId, alice.wallet)
         //
         // alice should receive 20 messages message
         //
-        await waitFor(() => expect(alice.getEvents(roomId).length).toBe(20))
+        await waitFor(() => expect(alice.getEvents(spaceId).length).toBe(20))
         // call scrollback
-        await alice.scrollback(roomId, 30)
+        await alice.scrollback(spaceId, 30)
         // did we get more events?
-        await waitFor(() => expect(alice.getEvents(roomId).length).toBeGreaterThan(20))
+        await waitFor(() => expect(alice.getEvents(spaceId).length).toBeGreaterThan(20))
     }) // end test - send a threaded message
 }) // end describe

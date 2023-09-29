@@ -5,7 +5,7 @@
  */
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     makeUniqueName,
     registerAndStartClients,
     registerAndStartClient,
@@ -33,11 +33,10 @@ describe('spaceHierarchyHooks', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space
-        const spaceId = (await createTestSpaceWithZionMemberRole(
+        const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
             bob,
             // For alice to create a channel, the role must include the AddRemoveChannels permission.
             [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
-            [],
             {
                 name: makeUniqueName('bobs space'),
                 visibility: RoomVisibility.Public,
@@ -54,7 +53,7 @@ describe('spaceHierarchyHooks', () => {
         // stop bob, we'll be using him in the react component
         await bob.stopClients()
         // alice joins the room
-        await alice.joinRoom(spaceId)
+        await alice.joinTown(spaceId, alice.wallet)
         // create a power levels view for bob
         const SpaceChannelsContent = () => {
             const space = useSpaceData()

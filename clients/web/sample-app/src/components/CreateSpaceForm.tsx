@@ -39,20 +39,64 @@ interface Props {
     onClick: (roomId: RoomIdentifier, membership: Membership) => void
 }
 
+type FormValues = {
+    spaceName: string
+    price: number
+    limit: number
+    membershipRequirement: MembershipRequirement
+    visibility: RoomVisibility
+    protocol: SpaceProtocol
+}
+
 export const CreateSpaceForm = (props: Props) => {
     const { chain, accounts } = useWeb3Context()
     const { chainName, chainId } = useEnvironment()
     const { chain: walletChain } = useNetwork()
     const { loginStatus: matrixLoginStatus } = useMatrixStore()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
-    const [spaceName, setSpaceName] = useState<string>('')
-    const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Public)
-    const [protocol, setProtocol] = useState<SpaceProtocol>(SpaceProtocol.Casablanca)
     const { blip } = useZionClient()
+    const { signer } = useWeb3Context()
 
-    const [membershipRequirement, setMembershipRequirement] = useState<MembershipRequirement>(
-        MembershipRequirement.Everyone,
-    )
+    const [formValue, setFormValue] = useState<FormValues>({
+        spaceName: '',
+        price: 0,
+        limit: 1000,
+        membershipRequirement: MembershipRequirement.Everyone,
+        visibility: RoomVisibility.Public,
+        protocol: SpaceProtocol.Casablanca,
+    })
+
+    function updateFormValue<P extends keyof FormValues>(property: P, value: FormValues[P]) {
+        setFormValue((prevFormValue: FormValues) => ({
+            ...prevFormValue,
+            [property]: value,
+        }))
+    }
+
+    function updateName(event: React.ChangeEvent<HTMLInputElement>) {
+        updateFormValue('spaceName', event.target.value)
+    }
+
+    function updatePrice(event: React.ChangeEvent<HTMLInputElement>) {
+        updateFormValue('price', Number(event.target.value))
+    }
+
+    function updateLimit(event: React.ChangeEvent<HTMLInputElement>) {
+        updateFormValue('limit', Number(event.target.value))
+    }
+
+    function updateProtocol(event: SelectChangeEvent<SpaceProtocol>) {
+        updateFormValue('protocol', event.target.value as SpaceProtocol)
+    }
+
+    function updateMembershipRequirement(membershipRequirement: MembershipRequirement) {
+        updateFormValue('membershipRequirement', membershipRequirement)
+    }
+
+    function updateVisibility(event: SelectChangeEvent<RoomVisibility>) {
+        updateFormValue('visibility', event.target.value as RoomVisibility)
+    }
+
     const {
         isLoading,
         data: roomId,
@@ -64,8 +108,8 @@ export const CreateSpaceForm = (props: Props) => {
     const { onClick } = props
 
     const disableCreateButton = useMemo(
-        () => spaceName.length === 0 || isLoading,
-        [isLoading, spaceName.length],
+        () => formValue.spaceName.length === 0 || isLoading,
+        [isLoading, formValue.spaceName.length],
     )
 
     const councilNftAddress = useMemo(() => {
@@ -80,32 +124,12 @@ export const CreateSpaceForm = (props: Props) => {
         }
     }, [chainId])
 
-    const onChangespaceName = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        setSpaceName(event.target.value)
-    }, [])
-
-    const onChangeMembershipRequirement = useCallback(
-        (membershipRequirement: MembershipRequirement) => {
-            setMembershipRequirement(membershipRequirement)
-        },
-        [],
-    )
-
-    const onChangeVisibility = useCallback((event: SelectChangeEvent) => {
-        setVisibility(event.target.value as RoomVisibility)
-    }, [])
-
-    const onChangeProtocol = useCallback((event: SelectChangeEvent) => {
-        setProtocol(event.target.value as SpaceProtocol)
-    }, [])
-
     const onClickCreateSpace = useCallback(async () => {
         let tokenAddresses: string[] = []
-        let tokenGrantedPermissions: Permission[] = []
-        let everyonePermissions: Permission[] = []
-        switch (membershipRequirement) {
+        const memberPermissions: Permission[] = [Permission.Read, Permission.Write]
+        // let everyonePermissions: Permission[] = []
+        switch (formValue.membershipRequirement) {
             case MembershipRequirement.Everyone:
-                everyonePermissions = [Permission.Read, Permission.Write]
                 break
             case MembershipRequirement.MemberNFT:
                 if (!councilNftAddress) {
@@ -113,7 +137,6 @@ export const CreateSpaceForm = (props: Props) => {
                     return undefined
                 }
                 tokenAddresses = [councilNftAddress]
-                tokenGrantedPermissions = [Permission.Read, Permission.Write]
                 break
             case MembershipRequirement.PioneerNFT:
                 if (!pioneerNftAddress) {
@@ -121,33 +144,38 @@ export const CreateSpaceForm = (props: Props) => {
                     return undefined
                 }
                 tokenAddresses = [pioneerNftAddress]
-                tokenGrantedPermissions = [Permission.Read, Permission.Write]
                 break
             default:
                 throw new Error('Unhandled membership requirement')
         }
 
         const createSpaceInfo: CreateSpaceInfo = {
-            name: spaceName,
-            visibility,
-            spaceProtocol: protocol,
+            name: formValue.spaceName,
+            visibility: formValue.visibility,
+            spaceProtocol: formValue.protocol,
         }
-        await createSpaceTransactionWithRole(
-            createSpaceInfo,
-            'Member',
-            tokenAddresses.map((addr) => createTokenEntitlmentStruct({ contractAddress: addr })),
-            tokenGrantedPermissions,
-            everyonePermissions,
-        )
-    }, [
-        councilNftAddress,
-        pioneerNftAddress,
-        membershipRequirement,
-        spaceName,
-        visibility,
-        protocol,
-        createSpaceTransactionWithRole,
-    ])
+        if (!signer) {
+            console.error('Cannot create space. No signer.')
+            return undefined
+        }
+        const requirements = {
+            name: 'Member',
+            price: formValue.price,
+            limit: formValue.limit,
+            currency: ethers.constants.AddressZero,
+            feeRecipient: await signer.getAddress(),
+            permissions: memberPermissions,
+            requirements: {
+                everyone: tokenAddresses.length === 0,
+                tokens: tokenAddresses.map((addr) =>
+                    createTokenEntitlmentStruct({ contractAddress: addr }),
+                ),
+                users: [],
+            },
+        }
+
+        await createSpaceTransactionWithRole(createSpaceInfo, requirements)
+    }, [formValue, signer, createSpaceTransactionWithRole, councilNftAddress, pioneerNftAddress])
 
     useEffect(() => {
         if (transactionStatus === TransactionStatus.Success && roomId) {
@@ -205,9 +233,47 @@ export const CreateSpaceForm = (props: Props) => {
                         id="filled-basic"
                         label="Name of the Town"
                         variant="filled"
-                        onChange={onChangespaceName}
+                        defaultValue={formValue.spaceName}
+                        onChange={updateName}
                     />
                 </Box>
+
+                <Box
+                    display="grid"
+                    alignItems="center"
+                    gridTemplateColumns="repeat(2, 1fr)"
+                    marginTop="10px"
+                >
+                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
+                        Price:
+                    </Typography>
+                    <TextField
+                        id="price-to-mint"
+                        label="Price to Mint"
+                        variant="filled"
+                        defaultValue={formValue.price}
+                        onChange={updatePrice}
+                    />
+                </Box>
+
+                <Box
+                    display="grid"
+                    alignItems="center"
+                    gridTemplateColumns="repeat(2, 1fr)"
+                    marginTop="10px"
+                >
+                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
+                        Limit:
+                    </Typography>
+                    <TextField
+                        id="limit"
+                        label="Limit"
+                        variant="filled"
+                        defaultValue={formValue.limit}
+                        onChange={updateLimit}
+                    />
+                </Box>
+
                 <Box
                     display="grid"
                     alignItems="center"
@@ -223,8 +289,8 @@ export const CreateSpaceForm = (props: Props) => {
                             <Select
                                 labelId="visibility-select-label"
                                 id="visibility-select"
-                                value={visibility}
-                                onChange={onChangeVisibility}
+                                value={formValue.visibility}
+                                onChange={updateVisibility}
                             >
                                 <MenuItem value={RoomVisibility.Public}>public</MenuItem>
                                 <MenuItem value={RoomVisibility.Private}>private</MenuItem>
@@ -241,8 +307,8 @@ export const CreateSpaceForm = (props: Props) => {
                             <Select
                                 labelId="protocol-select-label"
                                 id="protocol-select"
-                                value={protocol}
-                                onChange={onChangeProtocol}
+                                value={formValue.protocol}
+                                onChange={updateProtocol}
                             >
                                 <MenuItem value={SpaceProtocol.Matrix}>Matrix</MenuItem>
                                 <MenuItem value={SpaceProtocol.Casablanca}>Casablanca</MenuItem>
@@ -256,7 +322,7 @@ export const CreateSpaceForm = (props: Props) => {
                     gridTemplateColumns="repeat(1, 1fr)"
                     marginTop="20px"
                 >
-                    <SpaceRoleSettings onChangeValue={onChangeMembershipRequirement} />
+                    <SpaceRoleSettings onChangeValue={updateMembershipRequirement} />
                 </Box>
                 <Box
                     display="grid"

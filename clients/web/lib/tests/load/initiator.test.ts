@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     registerAndStartClients,
     waitForWithRetries,
 } from '../integration/helpers/TestUtils'
@@ -42,7 +42,7 @@ describe('loadtest1', () => {
         await bob.fundWallet()
 
         // First user (Bob) creates a space
-        const spaceId = (await createTestSpaceWithEveryoneRole(
+        const spaceId = (await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
@@ -64,7 +64,7 @@ describe('loadtest1', () => {
 
         for (let i = 1; i < numClients; i++) {
             const client = clients[`client_${i}`]
-            promises.push(client.joinRoom(spaceId) as never)
+            promises.push(client.joinTown(spaceId, client.wallet) as never)
         }
 
         await Promise.all(promises)

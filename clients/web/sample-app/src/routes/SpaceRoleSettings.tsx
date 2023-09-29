@@ -41,7 +41,7 @@ export function SpaceRoleSettings(props: Props): JSX.Element {
     return (
         <div onChange={onChangeValue}>
             <fieldset>
-                <legend>Member Role</legend>
+                <legend>Who can mint?</legend>
                 <input
                     readOnly
                     type="radio"

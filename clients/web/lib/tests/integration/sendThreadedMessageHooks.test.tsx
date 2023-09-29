@@ -14,7 +14,7 @@ import React, { useCallback, useMemo } from 'react'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     makeUniqueName,
     registerAndStartClients,
 } from './helpers/TestUtils'
@@ -61,10 +61,12 @@ describe('sendThreadedMessageHooks', () => {
         const { jane } = await registerAndStartClients(['jane'])
         // create a wallet for bob
         const bobProvider = new ZionTestWeb3Provider()
+        await bobProvider.fundWallet()
+
         // jane needs funds to create a spaceß
         await jane.fundWallet()
         // create a space
-        const spaceId = (await createTestSpaceWithEveryoneRole(
+        const spaceId = (await createTestSpaceGatedByTownNft(
             jane,
             [Permission.Read, Permission.Write],
             {
@@ -244,7 +246,7 @@ describe('sendThreadedMessageHooks', () => {
 
             return (
                 <>
-                    <RegisterAndJoin roomIds={[spaceId, channel_1, channel_2]} />
+                    <RegisterAndJoin spaceId={spaceId} channelIds={[channel_1, channel_2]} />
                     <button onClick={sendInitialMessages}>sendInitialMessages</button>
 
                     <button onClick={editChannel2Message1}>editChannel2Message1</button>
@@ -361,7 +363,10 @@ describe('sendThreadedMessageHooks', () => {
         await waitFor(() => expect(channel_1_message_0.eventId.startsWith('~')).toBe(false))
 
         // - bob renders channel_1
-        await waitFor(() => expect(channelMessages).toHaveTextContent('hello channel_1'))
+        await waitFor(
+            () => expect(channelMessages).toHaveTextContent('hello channel_1'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
 
         // - jane replies to janes's message in channel_1 creating channel_1.thread
         await act(async () => {

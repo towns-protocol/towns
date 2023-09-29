@@ -53,11 +53,7 @@ export class SpaceDappV3 implements ISpaceDapp {
             id: params.spaceId,
             name: params.spaceName,
             uri: params.spaceMetadata,
-            everyoneEntitlement: {
-                name: 'Everyone',
-                permissions: params.everyonePermissions,
-            },
-            memberEntitlement: params.memberEntitlements,
+            membership: params.membership,
             channel: {
                 id: params.channelId,
                 metadata: params.channelName || '',
@@ -306,6 +302,34 @@ export class SpaceDappV3 implements ISpaceDapp {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
         }
         return town.Channels.write(signer).updateChannel(channelId, '', disabled)
+    }
+
+    public async getTownMembershipTokenAddress(spaceId: string): Promise<string> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Membership.address
+    }
+
+    public async joinTown(
+        spaceId: string,
+        recipient: string,
+        signer: ethers.Signer,
+    ): Promise<ContractTransaction> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Membership.write(signer).joinTown(recipient)
+    }
+
+    public async hasTownMembership(spaceId: string, address: string): Promise<boolean> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Membership.hasMembership(address)
     }
 
     private async getTown(townId: string): Promise<Town | undefined> {

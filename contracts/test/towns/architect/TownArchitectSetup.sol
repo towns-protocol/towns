@@ -19,6 +19,7 @@ import {UserEntitlement} from "contracts/src/towns/entitlements/user/UserEntitle
 import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEntitlement.sol";
 
 import {TownImplementationHelper} from "contracts/test/towns/Town.t.sol";
+import {MinimalForwarder} from "openzeppelin-contracts/contracts/metatx/MinimalForwarder.sol";
 
 contract TownArchitectSetup is FacetTest {
   address internal townToken;
@@ -52,6 +53,7 @@ contract TownArchitectSetup is FacetTest {
     TownImplementationHelper townHelper = new TownImplementationHelper();
 
     MultiInit multiInit = new MultiInit();
+    MinimalForwarder forwarder = new MinimalForwarder();
 
     userEntitlement = address(new UserEntitlement());
     tokenEntitlement = address(new TokenEntitlement());
@@ -85,7 +87,8 @@ contract TownArchitectSetup is FacetTest {
       townArchitectHelper.initializer(),
       townToken, // townToken
       userEntitlement, // userEntitlement
-      tokenEntitlement // tokenEntitlement
+      tokenEntitlement, // tokenEntitlement
+      address(forwarder) // forwarder
     );
     initDatas[1] = proxyManagerHelper.makeInitData(
       abi.encode(townImplementation)

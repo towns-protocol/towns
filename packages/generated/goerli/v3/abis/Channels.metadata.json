@@ -496,11 +496,11 @@
       ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
-      "keccak256": "0x503b6ce030f8a760e9a877545b35307d05bbb704b501095795ab2168fe40db59",
+      "keccak256": "0xbdc803a2179838316625692285c4b720cdbae1c78e5f9a68560719c909253d00",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://769658fed18c26f67dec9bf4ca18dd595c0343bc8ea21bb3e50595eca3401265",
-        "dweb:/ipfs/QmVuqWH5eKqBJbNEtXzybgZ7ahtjTraMew8CMb4TuVUyo6"
+        "bzz-raw://776a4490b22b01b554770d71afde7bed4c32ea639a08c84a194076eddf5517be",
+        "dweb:/ipfs/QmcPVR9T7vXccCg7RXQ4wXtHaBG6ugrEXk8qnhRpsYMVd6"
       ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
@@ -520,11 +520,11 @@
       ]
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol": {
-      "keccak256": "0x61304bf241c1d14017416d3cc1742960f6157411d90a1464b8bde23bd322da89",
+      "keccak256": "0xa2498b875cb3c6f8c642a6b2fd5d9f017f698e687e07610135c3ae0c418e10e1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ac41ce2830e16be806340ea576a1885db9ecd02cc4f5002bfdeb4dfd4ac0115e",
-        "dweb:/ipfs/QmXqE8xZjwkFA2YgfV3eExFVEMqHizVSBTxyNDhM9WVrEZ"
+        "bzz-raw://6881798ca926328f2b7e6731b06babfa548d47c1210ff52cdede3d31f99188b4",
+        "dweb:/ipfs/QmRPKteWS4tSg1iTG1nsKJXgGxWWcEVdyXJaxMamZ7EdL6"
       ]
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol": {

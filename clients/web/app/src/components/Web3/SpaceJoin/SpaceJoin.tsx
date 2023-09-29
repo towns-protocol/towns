@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { RoomIdentifier, makeRoomIdentifier, useZionClient } from 'use-zion-client'
+import { RoomIdentifier, makeRoomIdentifier, useWeb3Context, useZionClient } from 'use-zion-client'
 import { useAccount } from 'wagmi'
 import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -191,6 +191,7 @@ export const SpaceJoin = (props: Props) => {
     const { client } = useZionClient()
     const [notEntitled, setNotEntitled] = useState(false)
     const [maxLimitReached, setMaxLimitReached] = useState(false)
+    const { signer } = useWeb3Context()
 
     // TODO: use this to check if user is entitled to join before trying to join (join v2)
     // const { data: userIsEntitled } = useUserIsEntitledByTokenBalance(joinData.networkId)
@@ -204,7 +205,7 @@ export const SpaceJoin = (props: Props) => {
 
             try {
                 // use client.joinRoom b/c it will throw an error, not the joinRoom wrapped in useWithCatch()
-                const result = await client.joinRoom(roomIdentifier)
+                const result = await client.joinTown(roomIdentifier, signer)
                 if (!result) {
                     setNotEntitled(true)
                 } else {
@@ -218,7 +219,7 @@ export const SpaceJoin = (props: Props) => {
                 }
             }
         }
-    }, [joinData.networkId, client, onSuccessfulJoin])
+    }, [client, joinData.networkId, signer, onSuccessfulJoin])
 
     const onHide = useCallback(() => {
         setModal(false)

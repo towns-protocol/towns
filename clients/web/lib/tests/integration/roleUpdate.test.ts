@@ -4,8 +4,8 @@
  */
 import {
     assertRoleEquals,
-    createTestSpaceWithEveryoneRole,
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownNft,
+    createTestSpaceGatedByTownAndZionNfts,
     findRoleByName,
     registerAndStartClients,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
@@ -25,7 +25,7 @@ describe('update role', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceWithEveryoneRole(alice, [Permission.Ban])
+        const roomId = await createTestSpaceGatedByTownNft(alice, [Permission.Ban])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -69,7 +69,7 @@ describe('update role', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Ban])
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Ban])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -127,7 +127,7 @@ describe('update role', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -208,7 +208,7 @@ describe('update role', () => {
                     // this is the role we are updating
                     // assert that they have been updated
                     assertRoleEquals(actual, newModeratorRole)
-                } else if (role.name === 'Everyone' || role.name == 'Upgrade') {
+                } else if (role.name === 'Minter') {
                     // ignore it
                     // this is a role that is created by default with every space
                 } else {
@@ -222,7 +222,7 @@ describe('update role', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -303,7 +303,7 @@ describe('update role', () => {
                     // this is the role we are updating
                     // assert that they have been updated
                     assertRoleEquals(actual, newModeratorRole)
-                } else if (role.name === 'Everyone' || role.name == 'Upgrade') {
+                } else if (role.name === 'Minter') {
                     // ignore it
                     // this is a role that is created by default with every space
                 } else {

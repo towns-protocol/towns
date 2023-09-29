@@ -10,4 +10,6 @@ import {IProxy} from "../IProxy.sol";
 
 interface IManagedProxyBase is IProxy {
   error ManagedProxy__FetchImplementationFailed();
+  error ManagedProxy__InvalidManager();
+  error ManagedProxy__InvalidManagerSelector();
 }

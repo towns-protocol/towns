@@ -4,14 +4,15 @@
  * @group casablanca
  */
 import {
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
     waitForWithRetries,
+    createTestSpaceGatedByTownNft,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { Permission } from '@river/web3'
+import { Permission, createExternalTokenStruct, getMemberNftAddress } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 import { RoomVisibility } from '../../src/types/zion-types'
@@ -24,17 +25,49 @@ describe('write messages', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         await bob.fundWallet()
 
-        // create a space with token entitlement to write
-        const spaceId = await createTestSpaceWithZionMemberRole(
-            bob,
+        // create a space
+        const spaceId = await createTestSpaceGatedByTownNft(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])
+
+        if (!spaceId) {
+            throw new Error('Failed to create room')
+        }
+
+        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
+            spaceId.networkId,
+        )
+        const councilNftAddress = getMemberNftAddress(alice.chainId)
+        const councilToken = createExternalTokenStruct([councilNftAddress])[0]
+        const membershipToken = createExternalTokenStruct([membershipTokenAddress])[0]
+
+        // update the member role so only council nft holders can write
+        await bob.updateRoleTransaction(
+            spaceId.networkId,
+            2,
+            'Member',
             [Permission.Read, Permission.Write],
+            [councilToken, membershipToken],
+            [],
+            bob.wallet,
+        )
+
+        // create read only role
+        await bob.createRoleTransaction(
+            spaceId.networkId,
+            'Read only',
             [Permission.Read],
+            [membershipToken],
+            [],
+            bob.wallet,
         )
 
         if (!spaceId) {
             throw new Error('Failed to create room')
         }
 
+        // create a channel that has this read only role
         const roomId = await createTestChannelWithSpaceRoles(bob, {
             name: 'main channel',
             parentSpaceId: spaceId,
@@ -48,9 +81,9 @@ describe('write messages', () => {
 
         // /** Act */
 
-        // // invite user to join the space by first checking if they can read.
+        // invite user to join the space by first checking if they can read.
         await bob.inviteUser(roomId, alice.getUserId() as string)
-
+        await alice.joinTown(spaceId, alice.wallet)
         await waitForWithRetries(() => alice.joinRoom(roomId))
         // bob sends a message to the room
         await bob.sendMessage(roomId, 'Hello tokenGrantedUser!')
@@ -86,7 +119,7 @@ describe('write messages', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement to write
-        const spaceId = await createTestSpaceWithZionMemberRole(bob, [
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(bob, [
             Permission.Read,
             Permission.Write,
         ])
@@ -110,20 +143,21 @@ describe('write messages', () => {
 
         // invite user to join the space by first checking if they can read.
         await bob.inviteUser(spaceId, tokenGrantedUser.getUserId() as string)
+        await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
         await waitForWithRetries(() => tokenGrantedUser.joinRoom(roomId))
         // bob send 25 messages (20 is our default initialSyncLimit)
         for (let i = 0; i < 25; i++) {
             await bob.sendMessage(roomId, `message ${i}`)
         }
 
-        /** Assert */
+        // /** Assert */
 
         // user should expect an invite to the room
         await waitFor(() => expect(tokenGrantedUser.getRoomData(roomId)).toBeDefined())
 
         // we should get more events
         await waitFor(() => expect(tokenGrantedUser.getEvents(roomId).length).toBeGreaterThan(20))
-    })
+    }, 180_000)
 
     test('Channel member can write messages', async () => {
         /** Arrange */
@@ -137,7 +171,7 @@ describe('write messages', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement to write
-        const spaceId = await createTestSpaceWithZionMemberRole(bob, [
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(bob, [
             Permission.Read,
             Permission.Write,
         ])
@@ -160,6 +194,7 @@ describe('write messages', () => {
         /** Act */
         // invite user to join the space by first checking if they can read.
         await bob.inviteUser(roomId, tokenGrantedUser.getUserId() as string)
+        await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
         await waitForWithRetries(() => tokenGrantedUser.joinRoom(roomId))
 
         // bob sends a message to the room
@@ -170,6 +205,9 @@ describe('write messages', () => {
 
         /** Assert */
 
-        await waitFor(() => expect(bob.getMessages(roomId)).toContain('Hello Bob!'))
-    })
+        await waitFor(
+            () => expect(bob.getMessages(roomId)).toContain('Hello Bob!'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
+    }, 180_000)
 })

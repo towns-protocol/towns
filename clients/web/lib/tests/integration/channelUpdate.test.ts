@@ -4,7 +4,7 @@
 import { MAXTRIX_ERROR, MatrixError, NoThrownError, getError } from './helpers/ErrorUtils'
 import { Room, RoomVisibility } from '../../src/types/zion-types'
 import {
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     findRoleByName,
     registerAndStartClients,
     waitForWithRetries,
@@ -25,7 +25,7 @@ describe.skip('channel update', () => {
         const permissions = [Permission.Read, Permission.Write]
         // create a token-gated space
         await alice.fundWallet()
-        const spaceId = await createTestSpaceWithZionMemberRole(alice, permissions)
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, permissions)
         if (!spaceId) {
             throw new Error('spaceId is undefined')
         }
@@ -115,7 +115,7 @@ describe.skip('channel update', () => {
         const permissions = [Permission.Read, Permission.Write]
         // create a token-gated space
         await alice.fundWallet()
-        const spaceId = await createTestSpaceWithZionMemberRole(alice, permissions)
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, permissions)
         if (!spaceId) {
             throw new Error('spaceId is undefined')
         }

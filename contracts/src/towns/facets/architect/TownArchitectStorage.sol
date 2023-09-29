@@ -20,6 +20,7 @@ library TownArchitectStorage {
     address townToken;
     address userEntitlement;
     address tokenEntitlement;
+    address trustedForwarder;
   }
 
   function layout() internal pure returns (Layout storage ds) {

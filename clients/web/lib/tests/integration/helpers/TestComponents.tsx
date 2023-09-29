@@ -169,7 +169,8 @@ interface RegisterAndJoinSpaceProps {
 
 export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
     const { spaceId, channelId } = props
-    const { clientRunning, joinRoom } = useZionClient()
+    const { clientRunning, joinRoom, joinTown } = useZionClient()
+    const { signer } = useWeb3Context()
     const mySpaceMembership = useMyMembership(spaceId)
     const myChannelMembership = useMyMembership(channelId)
     const [joinComplete, setJoinComplete] = React.useState(false)
@@ -178,13 +179,13 @@ export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
         if (clientRunning && !joiningRooms.current) {
             joiningRooms.current = true
             void (async () => {
-                await joinRoom(spaceId)
+                await joinTown(spaceId, signer)
                 await joinRoom(channelId)
                 setJoinComplete(true)
                 joiningRooms.current = false
             })()
         }
-    }, [channelId, clientRunning, joinRoom, spaceId])
+    }, [channelId, clientRunning, joinRoom, joinTown, signer, spaceId])
     return (
         <>
             <RegisterWallet />
@@ -195,23 +196,30 @@ export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
     )
 }
 
-export const RegisterAndJoin = (props: { roomIds: RoomIdentifier[] }) => {
-    const { roomIds } = props
+export const RegisterAndJoin = (props: {
+    spaceId: RoomIdentifier
+    channelIds: RoomIdentifier[]
+}) => {
+    const { spaceId, channelIds } = props
     const didExecute = useRef(false)
-    const { clientRunning, joinRoom } = useZionClient()
+    const { clientRunning, joinTown, joinRoom } = useZionClient()
     const [joinComplete, setJoinComplete] = React.useState(false)
+    const { signer } = useWeb3Context()
 
     useEffect(() => {
         if (clientRunning && !didExecute.current) {
             didExecute.current = true
             void (async () => {
-                for (const roomId of roomIds) {
+                await joinTown(spaceId, signer)
+
+                for (const roomId of channelIds) {
                     await joinRoom(roomId)
                 }
+
                 setJoinComplete(true)
             })()
         }
-    }, [clientRunning, joinRoom, roomIds])
+    }, [clientRunning, joinTown, channelIds, spaceId, joinRoom, signer])
     return (
         <>
             <RegisterWallet />

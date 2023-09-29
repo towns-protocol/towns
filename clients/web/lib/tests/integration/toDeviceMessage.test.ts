@@ -9,7 +9,7 @@ import { Permission } from '@river/web3'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
 import {
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     getPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
@@ -23,7 +23,7 @@ describe('toDeviceMessage', () => {
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
         await bob.fundWallet()
 
-        const spaceId = (await createTestSpaceWithEveryoneRole(
+        const spaceId = (await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
@@ -32,7 +32,7 @@ describe('toDeviceMessage', () => {
             },
         ))!
 
-        await alice.joinRoom(spaceId)
+        await alice.joinTown(spaceId, alice.wallet)
         // needed for casablanca client to listen for toDeviceMessage
         await setTimeout(100)
 

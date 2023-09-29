@@ -21,7 +21,9 @@ abstract contract MembershipBase is IMembershipBase {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
     ds.membershipPrice = membershipPrice;
     ds.membershipLimit = membershipLimit;
-    ds.membershipCurrency = membershipCurrency;
+    ds.membershipCurrency = membershipCurrency == address(0)
+      ? CurrencyTransfer.NATIVE_TOKEN
+      : membershipCurrency;
     ds.membershipFeeRecipient = membershipFeeRecipient;
     ds.townFactory = townFactory;
   }

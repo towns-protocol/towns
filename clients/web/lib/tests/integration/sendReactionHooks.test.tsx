@@ -13,7 +13,7 @@ import React, { useCallback } from 'react'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     makeUniqueName,
     registerAndStartClients,
 } from './helpers/TestUtils'
@@ -40,10 +40,12 @@ describe('sendReactionHooks', () => {
         const { jane } = await registerAndStartClients(['jane'])
         // create a wallet for bob
         const bobProvider = new ZionTestWeb3Provider()
+        // bob needs funds to mint
+        await bobProvider.fundWallet()
         // jane needs funds to create a space
         await jane.fundWallet()
         // create a space
-        const janesSpaceId = (await createTestSpaceWithEveryoneRole(
+        const janesSpaceId = (await createTestSpaceGatedByTownNft(
             jane,
             [Permission.Read, Permission.Write],
             {

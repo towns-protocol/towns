@@ -3,7 +3,7 @@
  * @group casablanca
  */
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
-import { createTestSpaceWithZionMemberRole, registerAndStartClients } from './helpers/TestUtils'
+import { createTestSpaceGatedByTownAndZionNfts, registerAndStartClients } from './helpers/TestUtils'
 
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
@@ -16,7 +16,7 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])
@@ -46,7 +46,7 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = (await createTestSpaceWithZionMemberRole(alice, [
+        const roomId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])) as RoomIdentifier
@@ -78,7 +78,7 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = (await createTestSpaceWithZionMemberRole(alice, [
+        const roomId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
         ])) as RoomIdentifier

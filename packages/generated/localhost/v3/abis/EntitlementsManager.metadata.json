@@ -417,11 +417,11 @@
       ]
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol": {
-      "keccak256": "0x61304bf241c1d14017416d3cc1742960f6157411d90a1464b8bde23bd322da89",
+      "keccak256": "0xa2498b875cb3c6f8c642a6b2fd5d9f017f698e687e07610135c3ae0c418e10e1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ac41ce2830e16be806340ea576a1885db9ecd02cc4f5002bfdeb4dfd4ac0115e",
-        "dweb:/ipfs/QmXqE8xZjwkFA2YgfV3eExFVEMqHizVSBTxyNDhM9WVrEZ"
+        "bzz-raw://6881798ca926328f2b7e6731b06babfa548d47c1210ff52cdede3d31f99188b4",
+        "dweb:/ipfs/QmRPKteWS4tSg1iTG1nsKJXgGxWWcEVdyXJaxMamZ7EdL6"
       ]
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol": {

@@ -52,7 +52,7 @@ contract MembershipFacet is
     // if the receiver is already a member, revert
     if (_balanceOf(receiver) > 0) revert Membership__AlreadyMember();
 
-    // if the membership price is 0, and we have reached the membership limit, revert
+    // // if the membership price is 0, and we have reached the membership limit, revert
     if (_getMembershipPrice() == 0 && _totalSupply() >= _getMembershipLimit()) {
       revert Membership__LimitReached();
     }

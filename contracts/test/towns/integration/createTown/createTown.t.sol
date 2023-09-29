@@ -7,17 +7,21 @@ import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol";
 import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
-import {IRoles, IRolesBase} from "contracts/src/towns/facets/roles/IRoles.sol";
-import {ITownArchitect, ITownArchitectBase} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
+import {IRoles} from "contracts/src/towns/facets/roles/IRoles.sol";
+import {IRolesBase} from "contracts/src/towns/facets/roles/IRoles.sol";
+import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
+import {ITownArchitectBase} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
+import {IMembership} from "contracts/src/towns/facets/membership/IMembership.sol";
+import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 // libraries
 import {Permissions} from "contracts/src/towns/facets/Permissions.sol";
 
 // contracts
-import {IntegrationSetup} from "contracts/test/towns/integration/Integration.t.sol";
+import {TownArchitectSetup} from "contracts/test/towns/architect/TownArchitectSetup.sol";
 
 contract Integration_CreateTown is
-  IntegrationSetup,
+  TownArchitectSetup,
   IRolesBase,
   ITownArchitectBase
 {
@@ -143,27 +147,75 @@ contract Integration_CreateTown is
       id: townId,
       name: "test",
       uri: "ipfs://test",
-      everyoneEntitlement: RoleInfo({
-        name: "Everyone",
-        permissions: new string[](0)
-      }),
-      memberEntitlement: MemberEntitlement({
-        role: RoleInfo({name: "Member", permissions: new string[](1)}),
-        tokens: new ITokenEntitlement.ExternalToken[](0),
-        users: new address[](1)
+      membership: Membership({
+        name: "Member",
+        price: 0,
+        limit: 0,
+        currency: address(0),
+        feeRecipient: address(0),
+        permissions: new string[](1),
+        requirements: MembershipRequirements({
+          everyone: false,
+          tokens: new ITokenEntitlement.ExternalToken[](0),
+          users: new address[](1)
+        })
       }),
       channel: ChannelInfo({metadata: "ipfs://test", id: "test"})
     });
 
-    townInfo.memberEntitlement.role.permissions[0] = "Read";
-    townInfo.memberEntitlement.users[0] = bob;
+    townInfo.membership.permissions[0] = "Read";
+    townInfo.membership.requirements.users[0] = bob;
 
     vm.prank(founder);
     address newTown = ITownArchitect(diamond).createTown(townInfo);
 
     assertTrue(
+      IEntitlementsManager(newTown).isEntitledToTown(bob, "JoinTown"),
+      "Bob should be entitled to mint membership"
+    );
+
+    vm.prank(bob);
+    IMembership(newTown).joinTown(bob);
+
+    assertEq(
+      IERC721A(newTown).balanceOf(bob),
+      1,
+      "Bob should have 1 membership token"
+    );
+
+    assertTrue(
       IEntitlementsManager(newTown).isEntitledToTown(bob, "Read"),
       "Bob should be entitled to read"
     );
+  }
+
+  // =============================================================
+  //                           Helpers
+  // =============================================================
+  function _createSimpleTown(string memory townId) internal returns (address) {
+    ITownArchitectBase.TownInfo memory townInfo = ITownArchitectBase.TownInfo({
+      id: townId,
+      name: "test",
+      uri: "ipfs://test",
+      membership: ITownArchitectBase.Membership({
+        name: "Member",
+        price: 0,
+        limit: 0,
+        currency: address(0),
+        feeRecipient: address(0),
+        permissions: new string[](0),
+        requirements: ITownArchitectBase.MembershipRequirements({
+          everyone: false,
+          tokens: new ITokenEntitlement.ExternalToken[](0),
+          users: new address[](0)
+        })
+      }),
+      channel: ITownArchitectBase.ChannelInfo({
+        id: "test",
+        metadata: "ipfs://test"
+      })
+    });
+
+    return townArchitect.createTown(townInfo);
   }
 }

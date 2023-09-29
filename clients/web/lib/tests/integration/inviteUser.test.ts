@@ -4,7 +4,7 @@
  * @group casablanca
  */
 import {
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     getPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
@@ -22,7 +22,7 @@ describe('inviteUser', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a room
-        const roomId = (await createTestSpaceWithEveryoneRole(
+        const roomId = (await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
@@ -38,7 +38,6 @@ describe('inviteUser', () => {
             await waitFor(() => expect(alice.getRoomData(roomId)).toBeDefined())
         }
         // alice joins the room
-        await alice.joinRoom(roomId)
         await waitFor(() => expect(bob.getRoomData(roomId)?.members.length == 2))
     }) // end test
 }) // end describe

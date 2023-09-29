@@ -9,7 +9,7 @@ import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     makeUniqueName,
     registerAndStartClients,
     waitForWithRetries,
@@ -25,7 +25,7 @@ describe('historyVisibility', () => {
         //
         await bob.fundWallet()
         // bob creates a room
-        const spaceId = await createTestSpaceWithEveryoneRole(
+        const spaceId = await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
@@ -49,7 +49,7 @@ describe('historyVisibility', () => {
             throw new Error('roomId is undefined')
         }
 
-        await john.joinRoom(spaceId)
+        await john.joinTown(spaceId, john.wallet)
 
         await waitForWithRetries(() => john.joinRoom(roomId))
 
@@ -76,7 +76,7 @@ describe('historyVisibility', () => {
         // would not be able to see messages if she registered after bob sent a message)
         const { alice } = await registerAndStartClients(['alice'])
         // alice joins the room
-        await alice.joinRoom(spaceId)
+        await alice.joinTown(spaceId, alice.wallet)
 
         await waitForWithRetries(() => alice.joinRoom(roomId))
 

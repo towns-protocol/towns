@@ -13,7 +13,7 @@ import { useSyncSpace } from './use-sync-space'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
-import { ITownArchitectBase, TokenEntitlementDataTypes, Permission } from '@river/web3'
+import { ITownArchitectBase } from '@river/web3'
 /**
  * Combine Matrix space creation and smart contract space
  * creation into one hook.
@@ -40,10 +40,7 @@ export function useCreateSpaceTransaction() {
     const createSpaceTransactionWithRole = useCallback(
         async function (
             createInfo: CreateSpaceInfo,
-            roleName: string,
-            tokenAddresses: TokenEntitlementDataTypes.ExternalTokenStruct[],
-            memberPermissions: Permission[],
-            everyonePermissions: Permission[] = [],
+            membershipInfo: ITownArchitectBase.MembershipStruct,
         ): Promise<TransactionContext<RoomIdentifier> | undefined> {
             if (isTransacting.current) {
                 // Transaction already in progress
@@ -64,33 +61,8 @@ export function useCreateSpaceTransaction() {
             try {
                 transactionResult = createTransactionContext({ status: TransactionStatus.Pending })
                 setTransactionContext(transactionResult)
-                let tokenEntitlement: ITownArchitectBase.MemberEntitlementStruct
-                if (tokenAddresses.length) {
-                    tokenEntitlement = {
-                        role: {
-                            name: roleName,
-                            permissions: memberPermissions,
-                        },
-                        tokens: tokenAddresses,
-                        users: [],
-                    }
-                } else {
-                    tokenEntitlement = {
-                        role: {
-                            name: '',
-                            permissions: [],
-                        },
-                        tokens: [],
-                        users: [],
-                    }
-                }
 
-                transactionResult = await createSpaceTransaction(
-                    createInfo,
-                    tokenEntitlement,
-                    everyonePermissions,
-                    signer,
-                )
+                transactionResult = await createSpaceTransaction(createInfo, membershipInfo, signer)
 
                 setTransactionContext(transactionResult)
 

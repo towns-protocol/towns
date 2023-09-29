@@ -19,7 +19,7 @@ import {
 } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     registerAndStartClients,
 } from './helpers/TestUtils'
 import { setTimeout } from 'timers/promises'
@@ -58,7 +58,7 @@ describe('casablanca', () => {
         await bob.fundWallet()
 
         log("Bob's wallet funded, creating a space")
-        const spaceId = (await createTestSpaceWithEveryoneRole(
+        const spaceId = (await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
@@ -102,7 +102,7 @@ describe('casablanca', () => {
         await bob.fundWallet()
 
         log("Bob's wallet funded, creating a space")
-        const spaceId = (await createTestSpaceWithEveryoneRole(
+        const spaceId = (await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
@@ -123,6 +123,7 @@ describe('casablanca', () => {
         log("bob's spaceId and channelId", { spaceId, channelId })
 
         log("Bob's channel created, joining Alice to the channel")
+        await alice.joinTown(spaceId, alice.wallet)
         await alice.joinRoom(channelId)
 
         log('Alice joined the channel, sending an encrypted message from Bob')
@@ -158,7 +159,7 @@ describe('casablanca', () => {
         await bob.fundWallet()
 
         log("Bob's wallet funded, creating a space")
-        const spaceId = (await createTestSpaceWithEveryoneRole(
+        const spaceId = (await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
@@ -179,6 +180,7 @@ describe('casablanca', () => {
         log("bob's spaceId and channelId", { spaceId, channelId })
 
         log("Bob's channel created, joining Alice to the channel")
+        await alice.joinTown(spaceId, alice.wallet)
         await alice.joinRoom(channelId)
 
         log('Alice joined the channel, sending a message from Bob')

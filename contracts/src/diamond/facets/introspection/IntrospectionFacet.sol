@@ -12,7 +12,7 @@ import {Facet} from "../Facet.sol";
 
 contract IntrospectionFacet is IntrospectionBase, IERC165, Facet {
   function __Introspection_init() external virtual onlyInitializing {
-    _addInterface(type(IERC165).interfaceId);
+    __IntrospectionBase_init();
   }
 
   /// @inheritdoc IERC165

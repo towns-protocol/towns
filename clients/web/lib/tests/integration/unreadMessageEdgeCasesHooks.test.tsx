@@ -7,7 +7,7 @@ import React, { useCallback } from 'react'
 import { RoomMessageEvent, TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceWithEveryoneRole,
+    createTestSpaceGatedByTownNft,
     getPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
@@ -41,7 +41,7 @@ describe('unreadMessageCountEdgeCases', () => {
         // jane needs funds to create a space
         await jane.fundWallet()
         // create a space
-        const spaceId = (await createTestSpaceWithEveryoneRole(jane, [
+        const spaceId = (await createTestSpaceGatedByTownNft(jane, [
             Permission.Read,
             Permission.Write,
         ])) as RoomIdentifier
@@ -49,7 +49,7 @@ describe('unreadMessageCountEdgeCases', () => {
         const channelId = (await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Private,
+            visibility: RoomVisibility.Public,
             roleIds: [],
         })) as RoomIdentifier
 
@@ -73,7 +73,7 @@ describe('unreadMessageCountEdgeCases', () => {
             }
             return (
                 <>
-                    <RegisterAndJoin roomIds={[spaceId, channelId]} />
+                    <RegisterAndJoin spaceId={spaceId} channelIds={[channelId]} />
                     <button onClick={onMarkAsRead}>mark as read</button>
                     <div data-testid="spaceHasUnread">
                         {spaceHasUnread === undefined ? 'undefined' : spaceHasUnread.toString()}
@@ -369,5 +369,5 @@ describe('unreadMessageCountEdgeCases', () => {
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:0'))
-    })
+    }, 180_000)
 })

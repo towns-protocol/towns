@@ -1,0 +1,37 @@
+{
+  "31337": {
+    "spaceFactory": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+    "spaceToken": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+    "pioneerToken": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+    "member": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "townOwner": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+    "townFactory": "0xf5059a5D33d5853360D16C683c16e67980206f36",
+    "town": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319",
+    "walletLink": "0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9",
+    "mockNFT": "0x9d4454B023096f34B160D6B654540c56A1F81688",
+    "entitlementChecker": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    "entitlementGatedExample": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+  },
+  "5": {
+    "spaceFactory": "0x59E16E32040Af97E56244562b569a244D3e59342",
+    "spaceToken": "0xCbAcb4AA0Efc34F6f567000248a5348a6300DaB7",
+    "pioneerToken": "0xdb66D5b28B9acc9FB55B96751Ba694829d7EE606",
+    "member": "0x4bC01028a7f1a56E267Ecabd735567cdB1Fc7744",
+    "townOwner": "0x66d0929417FE684734d45F153a5831C78efFB191",
+    "townFactory": "0xcA0785D9C42e28e1b802D5DC72c51a1796Aee5c2",
+    "town": "0x6CE0b1d4Ff723E24129db83F2baC4845805B5f5a",
+    "walletLink": "",
+    "entitlementChecker": ""
+  },
+  "11155111": {
+    "spaceFactory": "0x39a7aDB6528B969c577566914A714aAD15bbA6B5",
+    "spaceToken": "0x05d20AA1f18bFe3BD430baF7eB467A48e38093cE",
+    "pioneerToken": "0xc47de7eCFd251b03D075Ee52a662AA1be5E3AF9d",
+    "member": "",
+    "townOwner": "0x20aB2655Dfcd7C0876bC19fBB281FB0Cde6Fb288",
+    "townFactory": "0xD7efA82c6CEa706B396F4FfA23f0D01726F675cc",
+    "town": "0xe7c4cd054a0A0C2e6FB4Cd1e9f599598c3c45dF0",
+    "walletLink": "",
+    "entitlementChecker": ""
+  }
+}

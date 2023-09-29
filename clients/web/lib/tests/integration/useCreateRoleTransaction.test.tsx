@@ -27,6 +27,7 @@ import {
     getMemberNftAddress,
     BasicRoleInfo,
     Permission,
+    createMembershipStruct,
 } from '@river/web3'
 
 /**
@@ -142,9 +143,11 @@ function TestComponent(args: {
                     name: args.spaceName,
                     visibility: RoomVisibility.Public,
                 },
-                args.roleName,
-                createExternalTokenStruct([args.councilNftAddress]),
-                args.permissions,
+                createMembershipStruct({
+                    name: args.roleName,
+                    permissions: args.permissions,
+                    tokenAddresses: [args.councilNftAddress],
+                }),
             )
         }
 

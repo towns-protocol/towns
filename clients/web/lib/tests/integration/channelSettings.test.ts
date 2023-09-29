@@ -3,19 +3,14 @@
  * @group dendrite
  */
 import {
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownAndZionNfts,
     findRoleByName,
     registerAndStartClients,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { RoomVisibility } from '../../src/types/zion-types'
-import {
-    createExternalTokenStruct,
-    getMemberNftAddress,
-    Permission,
-    RoleEntitlements,
-} from '@river/web3'
+import { createExternalTokenStruct, Permission, RoleEntitlements } from '@river/web3'
 
 describe('channel settings', () => {
     test('get channel settings', async () => {
@@ -26,12 +21,25 @@ describe('channel settings', () => {
         if (!bob.walletAddress) {
             throw new Error('bob.walletAddress is undefined')
         }
-        const memberNftAddress = getMemberNftAddress(alice.chainId)
+
+        const memberPermissions = [Permission.Read, Permission.Write]
+
+        // create a new test space
+        await alice.fundWallet()
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, memberPermissions)
+        if (!spaceId) {
+            throw new Error('spaceId is undefined')
+        }
+
+        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
+            spaceId.networkId,
+        )
+        // const memberNftAddress = getMemberNftAddress(alice.chainId)
         const memberRole: RoleEntitlements = {
             roleId: 3, // dummy
             name: 'Member',
-            permissions: [Permission.Read, Permission.Write],
-            tokens: createExternalTokenStruct([memberNftAddress]),
+            permissions: memberPermissions,
+            tokens: createExternalTokenStruct([membershipTokenAddress]),
             users: [],
         }
         const moderatorRole: RoleEntitlements = {
@@ -41,9 +49,6 @@ describe('channel settings', () => {
             tokens: [],
             users: [bob.walletAddress],
         }
-        // create a new test space
-        await alice.fundWallet()
-        const spaceId = await createTestSpaceWithZionMemberRole(alice, memberRole.permissions)
         if (!spaceId) {
             throw new Error('roomId is undefined')
         }

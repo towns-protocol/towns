@@ -26,6 +26,7 @@ import { UNKNOWN_ERROR } from './BaseContractShimV3'
 import { UserEntitlementShim } from './UserEntitlementShim'
 import { isRoleIdInArray } from '../ContractHelpers'
 import { toPermissions } from './ConvertersRoles'
+import { IMembershipShim } from './IMembershipShim'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -52,6 +53,7 @@ export class Town {
     private readonly pausable: TokenPausableFacetShim
     private readonly roles: IRolesShim
     private readonly townOwner: ITownOwnerShim
+    private readonly membership: IMembershipShim
 
     constructor({ address, spaceId, chainId, provider, townOwnerAddress }: TownConstructorArgs) {
         this.address = address
@@ -65,6 +67,7 @@ export class Town {
         this.pausable = new TokenPausableFacetShim(address, chainId, provider)
         this.roles = new IRolesShim(address, chainId, provider)
         this.townOwner = new ITownOwnerShim(townOwnerAddress, chainId, provider)
+        this.membership = new IMembershipShim(address, chainId, provider)
     }
 
     public get Address(): string {
@@ -101,6 +104,10 @@ export class Town {
 
     public get TownOwner(): ITownOwnerShim {
         return this.townOwner
+    }
+
+    public get Membership(): IMembershipShim {
+        return this.membership
     }
 
     public getTownInfo(): Promise<ITownOwnerBase.TownStruct> {
@@ -209,6 +216,10 @@ export class Town {
             return err
         }
         err = this.roles.parseError(error)
+        if (err?.name !== UNKNOWN_ERROR) {
+            return err
+        }
+        err = this.membership.parseError(error)
         if (err?.name !== UNKNOWN_ERROR) {
             return err
         }

@@ -4,8 +4,8 @@
  */
 import {
     assertRoleEquals,
-    createTestSpaceWithEveryoneRole,
-    createTestSpaceWithZionMemberRole,
+    createTestSpaceGatedByTownNft,
+    createTestSpaceGatedByTownAndZionNfts,
     findRoleByName,
     registerAndStartClients,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
@@ -28,7 +28,7 @@ describe('get role details', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -68,7 +68,7 @@ describe('get role details', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -126,28 +126,47 @@ describe('get role details', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
         const permissions = [Permission.Read, Permission.Write]
-        const roomId = await createTestSpaceWithZionMemberRole(alice, permissions)
-        if (!roomId) {
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, permissions)
+        if (!spaceId) {
             throw new Error('roomId is undefined')
         }
 
         /** Act */
-        const memberRole = await findRoleByName(alice, roomId.networkId, 'Member')
+        // minter role is created with a JoinTown permission, and is gated by any tokens passed in the createTestSpaceGatedByTownAndZionNfts requirements config
+        const minterRole = await findRoleByName(alice, spaceId.networkId, 'Minter')
+        // member role is created with the permissions passed in to createTestSpaceGatedByTownAndZionNfts, and is gated by the membership token
+        const memberRole = await findRoleByName(alice, spaceId.networkId, 'Member')
 
         /** Assert */
+        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
+            spaceId.networkId,
+        )
         const councilNftAddress = getMemberNftAddress(alice.chainId)
-        const expectedToken = createExternalTokenStruct([councilNftAddress])[0]
+        const expectedMinterTokens = createExternalTokenStruct([councilNftAddress])[0]
+        const expectedMemberToken = createExternalTokenStruct([membershipTokenAddress])[0]
+        const expectedMinterRole: RoleDetails = {
+            id: 1,
+            name: 'Minter',
+            tokens: [expectedMinterTokens],
+            users: [],
+            permissions: [Permission.JoinTown],
+            channels: [],
+        }
         const expectedMemberRole: RoleDetails = {
-            id: 0,
+            id: 2,
             name: 'Member',
-            tokens: [expectedToken],
+            tokens: [expectedMemberToken],
             users: [],
             permissions,
             channels: [],
         }
+        if (!minterRole) {
+            throw new Error('minterRole is undefined')
+        }
         if (!memberRole) {
             throw new Error('memberRole is undefined')
         }
+        assertRoleEquals(minterRole, expectedMinterRole)
         assertRoleEquals(memberRole, expectedMemberRole)
     })
 
@@ -156,26 +175,46 @@ describe('get role details', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
         const permissions = [Permission.Read, Permission.Write]
-        const roomId = await createTestSpaceWithEveryoneRole(alice, permissions)
-        if (!roomId) {
+        const spaceId = await createTestSpaceGatedByTownNft(alice, permissions)
+        if (!spaceId) {
             throw new Error('roomId is undefined')
         }
 
         /** Act */
-        const everyoneRole = await findRoleByName(alice, roomId.networkId, 'Everyone')
+        // minter role is created with a JoinTown permission, and is not gated by any tokens see createTestSpaceGatedByTownNft
+        const minterRole = await findRoleByName(alice, spaceId.networkId, 'Minter')
+        // everyone is just another member role. member role is created with the permissions passed in to createTestSpaceGatedByTownNft, and is gated by the membership token
+        const everyoneRole = await findRoleByName(alice, spaceId.networkId, 'Everyone')
 
         /** Assert */
+        if (!minterRole) {
+            throw new Error('minterRole is undefined')
+        }
         if (!everyoneRole) {
             throw new Error('everyoneRole is undefined')
         }
-        const expectedEveryoneRole: RoleDetails = {
-            id: 0,
-            name: 'Everyone',
+        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
+            spaceId.networkId,
+        )
+        const expectedMemberToken = createExternalTokenStruct([membershipTokenAddress])[0]
+
+        const expectedMinterRole: RoleDetails = {
+            id: 1,
+            name: 'Minter',
             tokens: [],
             users: [TestConstants.EveryoneAddress],
+            permissions: [Permission.JoinTown],
+            channels: [],
+        }
+        const expectedEveryoneRole: RoleDetails = {
+            id: 2,
+            name: 'Everyone',
+            tokens: [expectedMemberToken],
+            users: [],
             permissions,
             channels: [],
         }
+        assertRoleEquals(minterRole, expectedMinterRole)
         assertRoleEquals(everyoneRole, expectedEveryoneRole)
     })
 
@@ -183,7 +222,7 @@ describe('get role details', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
@@ -236,7 +275,7 @@ describe('get role details', () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
-        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
+        const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
         if (!roomId) {
             throw new Error('roomId is undefined')
         }

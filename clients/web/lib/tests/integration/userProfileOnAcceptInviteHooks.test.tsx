@@ -3,7 +3,7 @@
  * @group dendrite
  */
 import { Membership, RoomVisibility } from '../../src/types/zion-types'
-import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
+import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { LoginWithWallet } from './helpers/TestComponents'
@@ -36,7 +36,7 @@ describe('userProfileOnAcceptInviteHooks', () => {
         const TestUserProfileOnAcceptInvite = () => {
             const myProfile = useMyProfile()
             const { spaces } = useZionContext()
-            const { joinRoom } = useZionClient()
+            const { joinTown } = useZionClient()
             const invites = useInvites()
             const roomId = invites[0]?.id ?? spaces[0]?.id
             const myMembership = useMyMembership(roomId)
@@ -49,7 +49,9 @@ describe('userProfileOnAcceptInviteHooks', () => {
                     </div>
                     <div data-testid="roomId">{roomId?.networkId ?? 'none'}</div>
                     <div data-testid="myMembership">{myMembership}</div>
-                    <button onClick={() => void joinRoom(roomId)}>Accept Invite</button>
+                    <button onClick={() => void joinTown(roomId, alice.wallet)}>
+                        Accept Invite
+                    </button>
                 </>
             )
         }
@@ -69,7 +71,7 @@ describe('userProfileOnAcceptInviteHooks', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a room
-        const roomId = (await createTestSpaceWithEveryoneRole(
+        const roomId = (await createTestSpaceGatedByTownNft(
             bob,
             [Permission.Read, Permission.Write],
             {
