@@ -1,3 +1,6 @@
+// See [conventions.md](../conventions.md) for usage examples.
+// TODO: use formatter for dlog for value formatting instead of fmt.
+
 package base
 
 import (

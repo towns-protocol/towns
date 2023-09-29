@@ -25,3 +25,7 @@ https://connect.build/docs/go/getting-started/#install-tools:
 If you get Docker errors when running tests:
 
     sudo ln -s ~/Library/Containers/com.docker.docker/Data/docker.raw.sock /var/run/docker.sock
+
+# Code Conventions
+
+See [conventions](conventions.md)
