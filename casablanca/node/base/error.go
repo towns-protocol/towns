@@ -22,13 +22,6 @@ func RiverError(code protocol.Err, msg string, tags ...any) *RiverErrorImpl {
 	return e
 }
 
-func RiverErrorf(code protocol.Err, format string, a ...any) *RiverErrorImpl {
-	return &RiverErrorImpl{
-		Code: code,
-		Msg:  fmt.Sprintf(format, a...),
-	}
-}
-
 type RiverErrorImpl struct {
 	Code      protocol.Err
 	Msg       string

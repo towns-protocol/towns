@@ -15,11 +15,10 @@ type UserDeviceStreamView interface {
 }
 
 func (r *streamViewImpl) IsDeviceIdRevoked(rdkId RdkId) (bool, error) {
-
 	// snapshot
 	snapshotContent, ok := r.snapshot.Content.(*Snapshot_UserDeviceKeyContent)
 	if !ok {
-		return false, RiverErrorf(Err_INVALID_ARGUMENT, "IsDeviceIdRevoked: stream type mismatch streamId: %s, expected: UserDevicekeyContent, got:%T", r.streamId, r.snapshot.Content)
+		return false, RiverError(Err_INVALID_ARGUMENT, "IsDeviceIdRevoked: stream type is not UserDevicekeyContent")
 	}
 	// loop over device keys in UserDeviceKeyContent:
 	// if we find a revoked device key, return true

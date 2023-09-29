@@ -23,7 +23,6 @@ type StreamView interface {
 }
 
 func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
-
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
@@ -265,9 +264,9 @@ func (r *streamViewImpl) indexOfMiniblockWithNum(mininblockNum int64) (int, erro
 		if diff >= 0 && diff < int64(len(r.blocks)) {
 			return int(diff), nil
 		}
-		return 0, RiverErrorf(Err_INVALID_ARGUMENT, "indexOfMiniblockWithNum index not found: requested=%d min=%d, max=%d", mininblockNum, r.blocks[0].header().MiniblockNum, r.blocks[len(r.blocks)-1].header().MiniblockNum)
+		return 0, RiverError(Err_INVALID_ARGUMENT, "indexOfMiniblockWithNum index not found", "requested", mininblockNum, "min", r.blocks[0].header().MiniblockNum, "max", r.blocks[len(r.blocks)-1].header().MiniblockNum)
 	}
-	return 0, RiverErrorf(Err_INVALID_ARGUMENT, "indexOfMiniblockWithNum No blocks loaded: requested=%d, stream=%s", mininblockNum, r.streamId)
+	return 0, RiverError(Err_INVALID_ARGUMENT, "indexOfMiniblockWithNum No blocks loaded", "requested", mininblockNum, "streamId", r.streamId)
 }
 
 func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (bool, error)) error {

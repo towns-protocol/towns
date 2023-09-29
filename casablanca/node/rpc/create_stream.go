@@ -339,9 +339,8 @@ func (s *Service) createStream_Media(
 	parsedEvents []*ParsedEvent,
 	inception *MediaPayload_Inception,
 ) (StreamView, error) {
-
 	if !CheckMediaStreamId(inception.StreamId) {
-		return nil, RiverErrorf(Err_BAD_STREAM_ID, "CreateStream: invalid space stream id '%s'", inception.StreamId)
+		return nil, RiverError(Err_BAD_STREAM_ID, "CreateStream: invalid space stream id", "streamId", inception.StreamId)
 	}
 
 	// TODO: Authorization. (HNT-2506)
