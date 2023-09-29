@@ -71,6 +71,5 @@ abstract contract DiamondDeployer is Deployer {
     );
 
     saveDeployment(versionName(), deployedAddr);
-    saveToPackages(versionName(), deployedAddr);
   }
 }
