@@ -10,7 +10,7 @@
         "buf:clean": "rm -rf ./src/gen/*",
         "buf:generate": "./gen.sh",
         "buf:lint": "buf lint --path entitlement.proto",
-        "build": "yarn buf:generate",
+        "build": "tsc",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf ./dist",
         "test": "jest",

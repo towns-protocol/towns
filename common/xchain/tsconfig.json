@@ -23,7 +23,8 @@
         "noFallthroughCasesInSwitch": true /* Enable error reporting for fallthrough cases in switch statements. */,
 
         "rootDir": "./src" /* Specify the root folder within your source files. */,
-        "outDir": "./dist" /* Specify an output folder for all emitted files. */
+        "outDir": "./dist" /* Specify an output folder for all emitted files. */,
+        "skipLibCheck": true // Avoid checking if the WeakMap type is matches between lodash and typescript lib.es5.d.ts
     },
     "include": ["./src/**/*"]
 }

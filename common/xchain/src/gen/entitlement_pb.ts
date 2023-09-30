@@ -3,573 +3,483 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type {
-    BinaryReadOptions,
-    FieldList,
-    JsonReadOptions,
-    JsonValue,
-    PartialMessage,
-    PlainMessage,
-} from '@bufbuild/protobuf'
-import { Message, proto3 } from '@bufbuild/protobuf'
+import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
+import { Message, proto3 } from "@bufbuild/protobuf";
 
 /**
  * @generated from message xchain_proto.v1.biguint256
  */
 export class biguint256 extends Message<biguint256> {
-    /**
-     * @generated from field: bytes data = 1;
-     */
-    data = new Uint8Array(0)
+  /**
+   * @generated from field: bytes data = 1;
+   */
+  data = new Uint8Array(0);
 
-    constructor(data?: PartialMessage<biguint256>) {
-        super()
-        proto3.util.initPartial(data, this)
-    }
+  constructor(data?: PartialMessage<biguint256>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime: typeof proto3 = proto3
-    static readonly typeName = 'xchain_proto.v1.biguint256'
-    static readonly fields: FieldList = proto3.util.newFieldList(() => [
-        { no: 1, name: 'data', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
-    ])
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "xchain_proto.v1.biguint256";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "data", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): biguint256 {
-        return new biguint256().fromBinary(bytes, options)
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): biguint256 {
+    return new biguint256().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): biguint256 {
-        return new biguint256().fromJson(jsonValue, options)
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): biguint256 {
+    return new biguint256().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): biguint256 {
-        return new biguint256().fromJsonString(jsonString, options)
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): biguint256 {
+    return new biguint256().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: biguint256 | PlainMessage<biguint256> | undefined,
-        b: biguint256 | PlainMessage<biguint256> | undefined,
-    ): boolean {
-        return proto3.util.equals(biguint256, a, b)
-    }
+  static equals(a: biguint256 | PlainMessage<biguint256> | undefined, b: biguint256 | PlainMessage<biguint256> | undefined): boolean {
+    return proto3.util.equals(biguint256, a, b);
+  }
 }
 
 /**
  * @generated from message xchain_proto.v1.ERC20Operation
  */
 export class ERC20Operation extends Message<ERC20Operation> {
-    /**
-     * @generated from field: string chain_id = 1;
-     */
-    chainId = ''
+  /**
+   * @generated from field: string chain_id = 1;
+   */
+  chainId = "";
 
-    /**
-     * @generated from field: string contract_address = 2;
-     */
-    contractAddress = ''
+  /**
+   * @generated from field: string contract_address = 2;
+   */
+  contractAddress = "";
 
-    /**
-     * @generated from field: xchain_proto.v1.biguint256 threshold = 3;
-     */
-    threshold?: biguint256
+  /**
+   * @generated from field: xchain_proto.v1.biguint256 threshold = 3;
+   */
+  threshold?: biguint256;
 
-    constructor(data?: PartialMessage<ERC20Operation>) {
-        super()
-        proto3.util.initPartial(data, this)
-    }
+  constructor(data?: PartialMessage<ERC20Operation>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime: typeof proto3 = proto3
-    static readonly typeName = 'xchain_proto.v1.ERC20Operation'
-    static readonly fields: FieldList = proto3.util.newFieldList(() => [
-        { no: 1, name: 'chain_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
-        { no: 2, name: 'contract_address', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
-        { no: 3, name: 'threshold', kind: 'message', T: biguint256 },
-    ])
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "xchain_proto.v1.ERC20Operation";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "chain_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "contract_address", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "threshold", kind: "message", T: biguint256 },
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ERC20Operation {
-        return new ERC20Operation().fromBinary(bytes, options)
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ERC20Operation {
+    return new ERC20Operation().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ERC20Operation {
-        return new ERC20Operation().fromJson(jsonValue, options)
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ERC20Operation {
+    return new ERC20Operation().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ERC20Operation {
-        return new ERC20Operation().fromJsonString(jsonString, options)
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ERC20Operation {
+    return new ERC20Operation().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: ERC20Operation | PlainMessage<ERC20Operation> | undefined,
-        b: ERC20Operation | PlainMessage<ERC20Operation> | undefined,
-    ): boolean {
-        return proto3.util.equals(ERC20Operation, a, b)
-    }
+  static equals(a: ERC20Operation | PlainMessage<ERC20Operation> | undefined, b: ERC20Operation | PlainMessage<ERC20Operation> | undefined): boolean {
+    return proto3.util.equals(ERC20Operation, a, b);
+  }
 }
 
 /**
  * @generated from message xchain_proto.v1.ERC721Operation
  */
 export class ERC721Operation extends Message<ERC721Operation> {
-    /**
-     * @generated from field: string chain_id = 1;
-     */
-    chainId = ''
+  /**
+   * @generated from field: string chain_id = 1;
+   */
+  chainId = "";
 
-    /**
-     * @generated from field: string contract_address = 2;
-     */
-    contractAddress = ''
+  /**
+   * @generated from field: string contract_address = 2;
+   */
+  contractAddress = "";
 
-    /**
-     * @generated from field: xchain_proto.v1.biguint256 threshold = 3;
-     */
-    threshold?: biguint256
+  /**
+   * @generated from field: xchain_proto.v1.biguint256 threshold = 3;
+   */
+  threshold?: biguint256;
 
-    constructor(data?: PartialMessage<ERC721Operation>) {
-        super()
-        proto3.util.initPartial(data, this)
-    }
+  constructor(data?: PartialMessage<ERC721Operation>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime: typeof proto3 = proto3
-    static readonly typeName = 'xchain_proto.v1.ERC721Operation'
-    static readonly fields: FieldList = proto3.util.newFieldList(() => [
-        { no: 1, name: 'chain_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
-        { no: 2, name: 'contract_address', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
-        { no: 3, name: 'threshold', kind: 'message', T: biguint256 },
-    ])
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "xchain_proto.v1.ERC721Operation";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "chain_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "contract_address", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "threshold", kind: "message", T: biguint256 },
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ERC721Operation {
-        return new ERC721Operation().fromBinary(bytes, options)
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ERC721Operation {
+    return new ERC721Operation().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ERC721Operation {
-        return new ERC721Operation().fromJson(jsonValue, options)
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ERC721Operation {
+    return new ERC721Operation().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ERC721Operation {
-        return new ERC721Operation().fromJsonString(jsonString, options)
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ERC721Operation {
+    return new ERC721Operation().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: ERC721Operation | PlainMessage<ERC721Operation> | undefined,
-        b: ERC721Operation | PlainMessage<ERC721Operation> | undefined,
-    ): boolean {
-        return proto3.util.equals(ERC721Operation, a, b)
-    }
+  static equals(a: ERC721Operation | PlainMessage<ERC721Operation> | undefined, b: ERC721Operation | PlainMessage<ERC721Operation> | undefined): boolean {
+    return proto3.util.equals(ERC721Operation, a, b);
+  }
 }
 
 /**
  * @generated from message xchain_proto.v1.ERC1155Operation
  */
 export class ERC1155Operation extends Message<ERC1155Operation> {
-    /**
-     * @generated from field: string chain_id = 1;
-     */
-    chainId = ''
+  /**
+   * @generated from field: string chain_id = 1;
+   */
+  chainId = "";
 
-    /**
-     * @generated from field: string contract_address = 2;
-     */
-    contractAddress = ''
+  /**
+   * @generated from field: string contract_address = 2;
+   */
+  contractAddress = "";
 
-    /**
-     * @generated from field: xchain_proto.v1.biguint256 threshold = 3;
-     */
-    threshold?: biguint256
+  /**
+   * @generated from field: xchain_proto.v1.biguint256 threshold = 3;
+   */
+  threshold?: biguint256;
 
-    constructor(data?: PartialMessage<ERC1155Operation>) {
-        super()
-        proto3.util.initPartial(data, this)
-    }
+  constructor(data?: PartialMessage<ERC1155Operation>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime: typeof proto3 = proto3
-    static readonly typeName = 'xchain_proto.v1.ERC1155Operation'
-    static readonly fields: FieldList = proto3.util.newFieldList(() => [
-        { no: 1, name: 'chain_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
-        { no: 2, name: 'contract_address', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
-        { no: 3, name: 'threshold', kind: 'message', T: biguint256 },
-    ])
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "xchain_proto.v1.ERC1155Operation";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "chain_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "contract_address", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "threshold", kind: "message", T: biguint256 },
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ERC1155Operation {
-        return new ERC1155Operation().fromBinary(bytes, options)
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ERC1155Operation {
+    return new ERC1155Operation().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ERC1155Operation {
-        return new ERC1155Operation().fromJson(jsonValue, options)
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ERC1155Operation {
+    return new ERC1155Operation().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(
-        jsonString: string,
-        options?: Partial<JsonReadOptions>,
-    ): ERC1155Operation {
-        return new ERC1155Operation().fromJsonString(jsonString, options)
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ERC1155Operation {
+    return new ERC1155Operation().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: ERC1155Operation | PlainMessage<ERC1155Operation> | undefined,
-        b: ERC1155Operation | PlainMessage<ERC1155Operation> | undefined,
-    ): boolean {
-        return proto3.util.equals(ERC1155Operation, a, b)
-    }
+  static equals(a: ERC1155Operation | PlainMessage<ERC1155Operation> | undefined, b: ERC1155Operation | PlainMessage<ERC1155Operation> | undefined): boolean {
+    return proto3.util.equals(ERC1155Operation, a, b);
+  }
 }
 
 /**
  * @generated from message xchain_proto.v1.IsEntitledOperation
  */
 export class IsEntitledOperation extends Message<IsEntitledOperation> {
-    /**
-     * @generated from field: string chain_id = 1;
-     */
-    chainId = ''
+  /**
+   * @generated from field: string chain_id = 1;
+   */
+  chainId = "";
 
-    /**
-     * @generated from field: string contract_address = 2;
-     */
-    contractAddress = ''
+  /**
+   * @generated from field: string contract_address = 2;
+   */
+  contractAddress = "";
 
-    /**
-     * @generated from field: xchain_proto.v1.biguint256 threshold = 3;
-     */
-    threshold?: biguint256
+  /**
+   * @generated from field: xchain_proto.v1.biguint256 threshold = 3;
+   */
+  threshold?: biguint256;
 
-    constructor(data?: PartialMessage<IsEntitledOperation>) {
-        super()
-        proto3.util.initPartial(data, this)
-    }
+  constructor(data?: PartialMessage<IsEntitledOperation>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime: typeof proto3 = proto3
-    static readonly typeName = 'xchain_proto.v1.IsEntitledOperation'
-    static readonly fields: FieldList = proto3.util.newFieldList(() => [
-        { no: 1, name: 'chain_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
-        { no: 2, name: 'contract_address', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
-        { no: 3, name: 'threshold', kind: 'message', T: biguint256 },
-    ])
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "xchain_proto.v1.IsEntitledOperation";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "chain_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "contract_address", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "threshold", kind: "message", T: biguint256 },
+  ]);
 
-    static fromBinary(
-        bytes: Uint8Array,
-        options?: Partial<BinaryReadOptions>,
-    ): IsEntitledOperation {
-        return new IsEntitledOperation().fromBinary(bytes, options)
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): IsEntitledOperation {
+    return new IsEntitledOperation().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): IsEntitledOperation {
-        return new IsEntitledOperation().fromJson(jsonValue, options)
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): IsEntitledOperation {
+    return new IsEntitledOperation().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(
-        jsonString: string,
-        options?: Partial<JsonReadOptions>,
-    ): IsEntitledOperation {
-        return new IsEntitledOperation().fromJsonString(jsonString, options)
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): IsEntitledOperation {
+    return new IsEntitledOperation().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: IsEntitledOperation | PlainMessage<IsEntitledOperation> | undefined,
-        b: IsEntitledOperation | PlainMessage<IsEntitledOperation> | undefined,
-    ): boolean {
-        return proto3.util.equals(IsEntitledOperation, a, b)
-    }
+  static equals(a: IsEntitledOperation | PlainMessage<IsEntitledOperation> | undefined, b: IsEntitledOperation | PlainMessage<IsEntitledOperation> | undefined): boolean {
+    return proto3.util.equals(IsEntitledOperation, a, b);
+  }
 }
 
 /**
  * @generated from message xchain_proto.v1.CheckOperation
  */
 export class CheckOperation extends Message<CheckOperation> {
+  /**
+   * @generated from oneof xchain_proto.v1.CheckOperation.check_clause
+   */
+  checkClause: {
     /**
-     * @generated from oneof xchain_proto.v1.CheckOperation.check_clause
+     * @generated from field: xchain_proto.v1.ERC20Operation erc20_operation = 1;
      */
-    checkClause:
-        | {
-              /**
-               * @generated from field: xchain_proto.v1.ERC20Operation erc20_operation = 1;
-               */
-              value: ERC20Operation
-              case: 'erc20Operation'
-          }
-        | {
-              /**
-               * @generated from field: xchain_proto.v1.ERC721Operation erc721_operation = 2;
-               */
-              value: ERC721Operation
-              case: 'erc721Operation'
-          }
-        | {
-              /**
-               * @generated from field: xchain_proto.v1.ERC1155Operation erc1155_operation = 3;
-               */
-              value: ERC1155Operation
-              case: 'erc1155Operation'
-          }
-        | {
-              /**
-               * @generated from field: xchain_proto.v1.IsEntitledOperation is_entitled_operation = 4;
-               */
-              value: IsEntitledOperation
-              case: 'isEntitledOperation'
-          }
-        | { case: undefined; value?: undefined } = { case: undefined }
+    value: ERC20Operation;
+    case: "erc20Operation";
+  } | {
+    /**
+     * @generated from field: xchain_proto.v1.ERC721Operation erc721_operation = 2;
+     */
+    value: ERC721Operation;
+    case: "erc721Operation";
+  } | {
+    /**
+     * @generated from field: xchain_proto.v1.ERC1155Operation erc1155_operation = 3;
+     */
+    value: ERC1155Operation;
+    case: "erc1155Operation";
+  } | {
+    /**
+     * @generated from field: xchain_proto.v1.IsEntitledOperation is_entitled_operation = 4;
+     */
+    value: IsEntitledOperation;
+    case: "isEntitledOperation";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
-    constructor(data?: PartialMessage<CheckOperation>) {
-        super()
-        proto3.util.initPartial(data, this)
-    }
+  constructor(data?: PartialMessage<CheckOperation>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime: typeof proto3 = proto3
-    static readonly typeName = 'xchain_proto.v1.CheckOperation'
-    static readonly fields: FieldList = proto3.util.newFieldList(() => [
-        {
-            no: 1,
-            name: 'erc20_operation',
-            kind: 'message',
-            T: ERC20Operation,
-            oneof: 'check_clause',
-        },
-        {
-            no: 2,
-            name: 'erc721_operation',
-            kind: 'message',
-            T: ERC721Operation,
-            oneof: 'check_clause',
-        },
-        {
-            no: 3,
-            name: 'erc1155_operation',
-            kind: 'message',
-            T: ERC1155Operation,
-            oneof: 'check_clause',
-        },
-        {
-            no: 4,
-            name: 'is_entitled_operation',
-            kind: 'message',
-            T: IsEntitledOperation,
-            oneof: 'check_clause',
-        },
-    ])
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "xchain_proto.v1.CheckOperation";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "erc20_operation", kind: "message", T: ERC20Operation, oneof: "check_clause" },
+    { no: 2, name: "erc721_operation", kind: "message", T: ERC721Operation, oneof: "check_clause" },
+    { no: 3, name: "erc1155_operation", kind: "message", T: ERC1155Operation, oneof: "check_clause" },
+    { no: 4, name: "is_entitled_operation", kind: "message", T: IsEntitledOperation, oneof: "check_clause" },
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CheckOperation {
-        return new CheckOperation().fromBinary(bytes, options)
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CheckOperation {
+    return new CheckOperation().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CheckOperation {
-        return new CheckOperation().fromJson(jsonValue, options)
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CheckOperation {
+    return new CheckOperation().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CheckOperation {
-        return new CheckOperation().fromJsonString(jsonString, options)
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CheckOperation {
+    return new CheckOperation().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: CheckOperation | PlainMessage<CheckOperation> | undefined,
-        b: CheckOperation | PlainMessage<CheckOperation> | undefined,
-    ): boolean {
-        return proto3.util.equals(CheckOperation, a, b)
-    }
+  static equals(a: CheckOperation | PlainMessage<CheckOperation> | undefined, b: CheckOperation | PlainMessage<CheckOperation> | undefined): boolean {
+    return proto3.util.equals(CheckOperation, a, b);
+  }
 }
 
 /**
  * @generated from message xchain_proto.v1.AndOperation
  */
 export class AndOperation extends Message<AndOperation> {
-    /**
-     * @generated from field: xchain_proto.v1.Operation left_operation = 1;
-     */
-    leftOperation?: Operation
+  /**
+   * @generated from field: xchain_proto.v1.Operation left_operation = 1;
+   */
+  leftOperation?: Operation;
 
-    /**
-     * @generated from field: xchain_proto.v1.Operation right_operation = 2;
-     */
-    rightOperation?: Operation
+  /**
+   * @generated from field: xchain_proto.v1.Operation right_operation = 2;
+   */
+  rightOperation?: Operation;
 
-    constructor(data?: PartialMessage<AndOperation>) {
-        super()
-        proto3.util.initPartial(data, this)
-    }
+  constructor(data?: PartialMessage<AndOperation>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime: typeof proto3 = proto3
-    static readonly typeName = 'xchain_proto.v1.AndOperation'
-    static readonly fields: FieldList = proto3.util.newFieldList(() => [
-        { no: 1, name: 'left_operation', kind: 'message', T: Operation },
-        { no: 2, name: 'right_operation', kind: 'message', T: Operation },
-    ])
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "xchain_proto.v1.AndOperation";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "left_operation", kind: "message", T: Operation },
+    { no: 2, name: "right_operation", kind: "message", T: Operation },
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AndOperation {
-        return new AndOperation().fromBinary(bytes, options)
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AndOperation {
+    return new AndOperation().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AndOperation {
-        return new AndOperation().fromJson(jsonValue, options)
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AndOperation {
+    return new AndOperation().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AndOperation {
-        return new AndOperation().fromJsonString(jsonString, options)
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AndOperation {
+    return new AndOperation().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: AndOperation | PlainMessage<AndOperation> | undefined,
-        b: AndOperation | PlainMessage<AndOperation> | undefined,
-    ): boolean {
-        return proto3.util.equals(AndOperation, a, b)
-    }
+  static equals(a: AndOperation | PlainMessage<AndOperation> | undefined, b: AndOperation | PlainMessage<AndOperation> | undefined): boolean {
+    return proto3.util.equals(AndOperation, a, b);
+  }
 }
 
 /**
  * @generated from message xchain_proto.v1.OrOperation
  */
 export class OrOperation extends Message<OrOperation> {
-    /**
-     * @generated from field: xchain_proto.v1.Operation left_operation = 1;
-     */
-    leftOperation?: Operation
+  /**
+   * @generated from field: xchain_proto.v1.Operation left_operation = 1;
+   */
+  leftOperation?: Operation;
 
-    /**
-     * @generated from field: xchain_proto.v1.Operation right_operation = 2;
-     */
-    rightOperation?: Operation
+  /**
+   * @generated from field: xchain_proto.v1.Operation right_operation = 2;
+   */
+  rightOperation?: Operation;
 
-    constructor(data?: PartialMessage<OrOperation>) {
-        super()
-        proto3.util.initPartial(data, this)
-    }
+  constructor(data?: PartialMessage<OrOperation>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime: typeof proto3 = proto3
-    static readonly typeName = 'xchain_proto.v1.OrOperation'
-    static readonly fields: FieldList = proto3.util.newFieldList(() => [
-        { no: 1, name: 'left_operation', kind: 'message', T: Operation },
-        { no: 2, name: 'right_operation', kind: 'message', T: Operation },
-    ])
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "xchain_proto.v1.OrOperation";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "left_operation", kind: "message", T: Operation },
+    { no: 2, name: "right_operation", kind: "message", T: Operation },
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrOperation {
-        return new OrOperation().fromBinary(bytes, options)
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrOperation {
+    return new OrOperation().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OrOperation {
-        return new OrOperation().fromJson(jsonValue, options)
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OrOperation {
+    return new OrOperation().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OrOperation {
-        return new OrOperation().fromJsonString(jsonString, options)
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OrOperation {
+    return new OrOperation().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: OrOperation | PlainMessage<OrOperation> | undefined,
-        b: OrOperation | PlainMessage<OrOperation> | undefined,
-    ): boolean {
-        return proto3.util.equals(OrOperation, a, b)
-    }
+  static equals(a: OrOperation | PlainMessage<OrOperation> | undefined, b: OrOperation | PlainMessage<OrOperation> | undefined): boolean {
+    return proto3.util.equals(OrOperation, a, b);
+  }
 }
 
 /**
  * @generated from message xchain_proto.v1.Operation
  */
 export class Operation extends Message<Operation> {
+  /**
+   * @generated from oneof xchain_proto.v1.Operation.operation_clause
+   */
+  operationClause: {
     /**
-     * @generated from oneof xchain_proto.v1.Operation.operation_clause
+     * @generated from field: xchain_proto.v1.CheckOperation check_operation = 1;
      */
-    operationClause:
-        | {
-              /**
-               * @generated from field: xchain_proto.v1.CheckOperation check_operation = 1;
-               */
-              value: CheckOperation
-              case: 'checkOperation'
-          }
-        | {
-              /**
-               * @generated from field: xchain_proto.v1.AndOperation and_operation = 2;
-               */
-              value: AndOperation
-              case: 'andOperation'
-          }
-        | {
-              /**
-               * @generated from field: xchain_proto.v1.OrOperation or_operation = 3;
-               */
-              value: OrOperation
-              case: 'orOperation'
-          }
-        | { case: undefined; value?: undefined } = { case: undefined }
+    value: CheckOperation;
+    case: "checkOperation";
+  } | {
+    /**
+     * @generated from field: xchain_proto.v1.AndOperation and_operation = 2;
+     */
+    value: AndOperation;
+    case: "andOperation";
+  } | {
+    /**
+     * @generated from field: xchain_proto.v1.OrOperation or_operation = 3;
+     */
+    value: OrOperation;
+    case: "orOperation";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
-    constructor(data?: PartialMessage<Operation>) {
-        super()
-        proto3.util.initPartial(data, this)
-    }
+  constructor(data?: PartialMessage<Operation>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime: typeof proto3 = proto3
-    static readonly typeName = 'xchain_proto.v1.Operation'
-    static readonly fields: FieldList = proto3.util.newFieldList(() => [
-        {
-            no: 1,
-            name: 'check_operation',
-            kind: 'message',
-            T: CheckOperation,
-            oneof: 'operation_clause',
-        },
-        {
-            no: 2,
-            name: 'and_operation',
-            kind: 'message',
-            T: AndOperation,
-            oneof: 'operation_clause',
-        },
-        { no: 3, name: 'or_operation', kind: 'message', T: OrOperation, oneof: 'operation_clause' },
-    ])
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "xchain_proto.v1.Operation";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "check_operation", kind: "message", T: CheckOperation, oneof: "operation_clause" },
+    { no: 2, name: "and_operation", kind: "message", T: AndOperation, oneof: "operation_clause" },
+    { no: 3, name: "or_operation", kind: "message", T: OrOperation, oneof: "operation_clause" },
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Operation {
-        return new Operation().fromBinary(bytes, options)
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Operation {
+    return new Operation().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Operation {
-        return new Operation().fromJson(jsonValue, options)
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Operation {
+    return new Operation().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Operation {
-        return new Operation().fromJsonString(jsonString, options)
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Operation {
+    return new Operation().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: Operation | PlainMessage<Operation> | undefined,
-        b: Operation | PlainMessage<Operation> | undefined,
-    ): boolean {
-        return proto3.util.equals(Operation, a, b)
-    }
+  static equals(a: Operation | PlainMessage<Operation> | undefined, b: Operation | PlainMessage<Operation> | undefined): boolean {
+    return proto3.util.equals(Operation, a, b);
+  }
 }
 
 /**
  * @generated from message xchain_proto.v1.OperationTree
  */
 export class OperationTree extends Message<OperationTree> {
-    /**
-     * @generated from field: xchain_proto.v1.Operation operation = 1;
-     */
-    operation?: Operation
+  /**
+   * @generated from field: xchain_proto.v1.Operation operation = 1;
+   */
+  operation?: Operation;
 
-    constructor(data?: PartialMessage<OperationTree>) {
-        super()
-        proto3.util.initPartial(data, this)
-    }
+  constructor(data?: PartialMessage<OperationTree>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
 
-    static readonly runtime: typeof proto3 = proto3
-    static readonly typeName = 'xchain_proto.v1.OperationTree'
-    static readonly fields: FieldList = proto3.util.newFieldList(() => [
-        { no: 1, name: 'operation', kind: 'message', T: Operation },
-    ])
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "xchain_proto.v1.OperationTree";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "operation", kind: "message", T: Operation },
+  ]);
 
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OperationTree {
-        return new OperationTree().fromBinary(bytes, options)
-    }
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OperationTree {
+    return new OperationTree().fromBinary(bytes, options);
+  }
 
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OperationTree {
-        return new OperationTree().fromJson(jsonValue, options)
-    }
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OperationTree {
+    return new OperationTree().fromJson(jsonValue, options);
+  }
 
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OperationTree {
-        return new OperationTree().fromJsonString(jsonString, options)
-    }
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OperationTree {
+    return new OperationTree().fromJsonString(jsonString, options);
+  }
 
-    static equals(
-        a: OperationTree | PlainMessage<OperationTree> | undefined,
-        b: OperationTree | PlainMessage<OperationTree> | undefined,
-    ): boolean {
-        return proto3.util.equals(OperationTree, a, b)
-    }
+  static equals(a: OperationTree | PlainMessage<OperationTree> | undefined, b: OperationTree | PlainMessage<OperationTree> | undefined): boolean {
+    return proto3.util.equals(OperationTree, a, b);
+  }
 }
+
