@@ -43,7 +43,7 @@ jobs:
                       ${{ runner.os }}-turbo-
 
             - name: Build
-              run: yarn build --filter='!xchain'
+              run: yarn build
 
             - name: Sentry
               run: make -C ./scripts setup_release
