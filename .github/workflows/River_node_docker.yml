@@ -85,7 +85,7 @@ jobs:
                           "step": "Build River Docker Image",
                           "environment": "N/",
                           "branch": "${{ github.ref }}",
-                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
                           "commit": "${{ github.sha }}",
                           "actor": "${{ github.actor }}"
                       }
