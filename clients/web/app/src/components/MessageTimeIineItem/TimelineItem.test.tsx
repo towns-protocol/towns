@@ -158,16 +158,17 @@ describe('#TimelineItem', () => {
                     msgtype: MessageType.Image,
                     info: {
                         url: url,
-                        h: 250,
+                        height: 250,
+                        width: 250,
                         mimetype: 'image/gif',
                         size: 929864,
                     },
                     thumbnail: {
                         url: url,
-                        h: 250,
+                        height: 250,
+                        width: 250,
                         mimetype: 'image/gif',
                         size: 929864,
-                        w: 250,
                     },
                 }}
             />,

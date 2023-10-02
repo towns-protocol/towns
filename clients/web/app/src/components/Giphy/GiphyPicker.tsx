@@ -85,14 +85,14 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
             info: {
                 url: ogImage.url,
                 size: checkSize(ogImage.size),
-                w: ogImage.width,
-                h: ogImage.height,
+                width: ogImage.width,
+                height: ogImage.height,
                 mimetype: 'image/gif',
             },
             thumbnail: {
                 url: downsized.url,
-                w: downsized.width,
-                h: downsized.height,
+                width: downsized.width,
+                height: downsized.height,
                 size: checkSize(downsized.size),
                 mimetype: 'image/gif',
             },

@@ -117,8 +117,8 @@ export const MessageItem = (props: Props) => {
                         <RatioedBackgroundImage
                             withLinkOut
                             url={event.content.content.info.url}
-                            width={event.content.content.thumbnail?.w}
-                            height={event.content.content.thumbnail?.h}
+                            width={event.content.content.thumbnail?.width}
+                            height={event.content.content.thumbnail?.height}
                         />
                     ) : (
                         // render pre-beta image format

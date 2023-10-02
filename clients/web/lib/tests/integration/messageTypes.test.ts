@@ -74,15 +74,15 @@ describe('messageTypes', () => {
                 url: 'https://what.com/what.jpg',
                 size: 500,
                 mimetype: 'image/jpg',
-                w: 300,
-                h: 400,
+                width: 300,
+                height: 400,
             },
             thumbnail: {
                 url: 'https://what.com/what-thumb.jpg',
                 size: 30,
                 mimetype: 'image/jpg',
-                w: 100,
-                h: 100,
+                width: 100,
+                height: 100,
             },
         } satisfies SendImageMessageOptions
         // create clients
