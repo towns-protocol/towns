@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
     deploy:
-        name: Deploy to AWS ECS
+        name: Reset
         runs-on: ubuntu-latest
 
         environment:
