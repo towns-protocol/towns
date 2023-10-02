@@ -212,3 +212,57 @@ export const lastEventFiltered = <T extends (a: ParsedEvent) => any | undefined>
     })
     return ret
 }
+
+export function waitFor<T>(
+    callback: (() => T) | (() => Promise<T>),
+    options: { timeoutMS: number } = { timeoutMS: 5000 },
+): Promise<T | undefined> {
+    const errorContext: Error = new Error(
+        'waitFor timed out after ' + options.timeoutMS.toString() + 'ms',
+    )
+    return new Promise((resolve, reject) => {
+        const timeoutMS = options.timeoutMS ?? 1000
+        const pollIntervalMS = Math.min(timeoutMS / 2, 100)
+        let lastError: any | undefined = undefined
+        let promiseStatus: 'none' | 'pending' | 'resolved' | 'rejected' = 'none'
+        const intervalId = setInterval(checkCallback, pollIntervalMS)
+        const timeoutId = setInterval(onTimeout, timeoutMS)
+        function onDone(result?: T) {
+            clearInterval(intervalId)
+            clearInterval(timeoutId)
+            if (result) {
+                resolve(result)
+            } else {
+                reject(lastError)
+            }
+        }
+        function onTimeout() {
+            lastError = lastError ?? errorContext
+            onDone()
+        }
+        function checkCallback() {
+            if (promiseStatus === 'pending') return
+            try {
+                const result = callback()
+                if (result && result instanceof Promise) {
+                    promiseStatus = 'pending'
+                    result.then(
+                        (res) => {
+                            promiseStatus = 'resolved'
+                            onDone(res)
+                        },
+                        (err) => {
+                            promiseStatus = 'rejected'
+                            lastError = err
+                        },
+                    )
+                } else {
+                    promiseStatus = 'resolved'
+                    resolve(result)
+                }
+            } catch (err) {
+                lastError = err
+            }
+        }
+    })
+}
