@@ -37,7 +37,7 @@ find . -name ".eslintcache" -type f -exec rm -r "{}" \;
 echo ""
 
 # remove files not tracked by git, but keep dev files
-git clean -fdx -e .DS_Store -e '.env.*' -e '*.yaml' -e .vscode -e '*.pem' -e '*.crt' -e '*.key' -e .keys -e .wrangler
+git clean -fdx -e .DS_Store -e '.env.*' -e '*.yaml' -e .vscode -e '*.pem' -e '*.crt' -e '*.key' -e .keys -e .wrangler -e .dev.*
 
 # remove empty directories and directories that only contain .DS_Store files
 find . -type d -not -path "./.git/*" -print0 | while IFS= read -r -d '' dir; do
