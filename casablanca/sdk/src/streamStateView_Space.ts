@@ -22,7 +22,7 @@ export class StreamStateView_Space {
     readonly spaceChannelsMetadata = new Map<string, ChannelProperties>()
 
     constructor(userId: string, inception: SpacePayload_Inception) {
-        this.memberships = new StreamStateView_Membership(userId)
+        this.memberships = new StreamStateView_Membership(userId, inception.streamId)
         this.streamId = inception.streamId
     }
 
@@ -32,7 +32,7 @@ export class StreamStateView_Space {
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         // update memberships
-        this.memberships.initialize(content.memberships, this.streamId, emitter)
+        this.memberships.initialize(content.memberships, emitter)
         // loop over content.channels, update space channels metadata
         for (const [_, payload] of Object.entries(content.channels)) {
             this.addSpacePayload_Channel(payload, emitter)
@@ -73,8 +73,8 @@ export class StreamStateView_Space {
                 break
             case 'membership':
                 this.memberships.appendMembershipEvent(
+                    event.hashStr,
                     payload.content.value,
-                    this.streamId,
                     emitter,
                 )
                 break

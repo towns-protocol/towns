@@ -425,7 +425,7 @@ export class StreamStateView {
                 throw new Error('Stream has no content')
             default:
                 logNever(this.contentKind)
-                return new StreamStateView_Membership('')
+                return new StreamStateView_Membership('', '')
         }
     }
 }

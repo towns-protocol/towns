@@ -20,7 +20,7 @@ export class StreamStateView_Channel {
     readonly receipts = new Map<string, ParsedEvent>()
 
     constructor(userId: string, inception: ChannelPayload_Inception) {
-        this.memberships = new StreamStateView_Membership(userId)
+        this.memberships = new StreamStateView_Membership(userId, inception.streamId)
         this.streamId = inception.streamId
         this.spaceId = inception.spaceId
     }
@@ -30,7 +30,7 @@ export class StreamStateView_Channel {
         content: ChannelPayload_Snapshot,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
-        this.memberships.initialize(content.memberships, this.streamId, emitter)
+        this.memberships.initialize(content.memberships, emitter)
     }
 
     prependEvent(
@@ -70,8 +70,8 @@ export class StreamStateView_Channel {
                 break
             case 'membership':
                 this.memberships.appendMembershipEvent(
+                    event.hashStr,
                     payload.content.value,
-                    this.streamId,
                     emitter,
                 )
                 break
