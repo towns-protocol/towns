@@ -47,6 +47,14 @@ deploy-base-goerli :;
 	@forge build
 	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch
 
+interact-base-goerli :;
+	@forge build
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_goerli --private-key ${PRIVATE_KEY} --broadcast --watch
+
+verify-base-goerli :;
+	@forge build
+	@forge verify-contract ${address} ${contract} --chain base-goerli
+
 # ===========================
 # 				 		Base
 # ===========================
