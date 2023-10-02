@@ -10,6 +10,11 @@ on:
                 type: choice
                 options:
                     - test-beta
+            skip_slack_notification:
+                description: 'Skip Slack notification'
+                required: false
+                default: false
+                type: boolean
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -40,6 +45,7 @@ jobs:
 
             # We notify via Slack that the reset is starting
             - name: Slack notification
+              if: ${{ !github.event.inputs.skip_slack_notification }}
               uses: slackapi/slack-github-action@v1.24.0
               with:
                   payload: |
@@ -52,4 +58,4 @@ jobs:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RESET_ENV_WORKFLOW_WEBHOOK_URL }}
 
             - name: Reset environment
-              run: DB_URL=${{ vars.DB_URL }} CLUSTER_NAME=${{ vars.CLUSTER_NAME }} ./scripts/reset-environment.sh
+              run: DB_URL=${{ secrets.DB_URL }} CLUSTER_NAME=${{ vars.CLUSTER_NAME }} ./scripts/reset-environment.sh
