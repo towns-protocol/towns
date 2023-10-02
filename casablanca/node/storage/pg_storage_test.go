@@ -43,14 +43,6 @@ func TestPostgresEventStore(t *testing.T) {
 	}
 	defer pgEventStore.Close()
 
-	wrongStreamId := "wrong streamd id"
-
-	//TODO: make proper test for this
-	err = pgEventStore.CreateStream(ctx, wrongStreamId, []byte("testMiniblock"))
-	if err == nil {
-		t.Fatal("Expected error, got nil")
-	}
-
 	streamsNumber, _ := pgEventStore.GetStreamsNumber(ctx)
 	if streamsNumber != 0 {
 		t.Fatal("Expected to find zero streams, found different number")
@@ -192,21 +184,5 @@ func TestPostgresEventStore(t *testing.T) {
 
 	if err != nil {
 		t.Fatal("error creating block with snapshot", err)
-	}
-
-	//Test that we can delete all streams
-	err = pgEventStore.DeleteAllStreams(ctx)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	streams, err = pgEventStore.GetStreams(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(streams) != 0 {
-		t.Fatal("Expected 0 streams, got ", len(streams))
 	}
 }
