@@ -4,34 +4,47 @@ enum QuerKeysEnum {
     FirstBySpaceIds = 'spaceIds',
     ThenByRoleIds = 'spaceRoleIds',
     ThenByChannelIds = 'channelIds',
-    SyncEntitledChannels = 'syncEntitledChannels',
 }
 
+// when adding a query, make sure each is unique for the given purpose
+// recommended pattern: [queryName, ...queryArgs], where queryArgs goes from generic to specific
+// example: ['roles', spaceId, roleId]
 export const blockchainKeys = {
-    spaceAndChannel: (spaceId: string, channelId: string) =>
-        [QuerKeysEnum.FirstBySpaceIds, spaceId, QuerKeysEnum.ThenByChannelIds, channelId] as const,
+    spaceAndChannel: (spaceId: string, channelId: string) => [
+        'spacesAndChannels',
+        QuerKeysEnum.FirstBySpaceIds,
+        spaceId,
+        QuerKeysEnum.ThenByChannelIds,
+        channelId,
+    ],
     hasPermission: (args: {
         spaceId?: string
         channelId?: string
         walletAddress: string
         permission: Permission
-    }) => ['hasPermission', args] as const,
-    roles: (spaceId: string) => [QuerKeysEnum.FirstBySpaceIds, spaceId] as const,
-    roleDetails: (spaceId: string, roleId: number) =>
-        [QuerKeysEnum.FirstBySpaceIds, spaceId, QuerKeysEnum.ThenByRoleIds, roleId] as const,
-    spaceName: (spaceId: string) => [QuerKeysEnum.FirstBySpaceIds, spaceId] as const,
-    spaceNames: (spaceIds: string[]) => [QuerKeysEnum.FirstBySpaceIds, spaceIds] as const,
-    multipleRoleDetails: (spaceId: string, roleIds?: number[]) =>
-        roleIds
-            ? ([
-                  QuerKeysEnum.FirstBySpaceIds,
-                  spaceId,
-                  QuerKeysEnum.ThenByRoleIds,
-                  roleIds,
-              ] as const)
-            : ([QuerKeysEnum.FirstBySpaceIds, spaceId, QuerKeysEnum.ThenByRoleIds] as const),
-    entitledChannels: (spaceId?: string) =>
-        spaceId
-            ? ([QuerKeysEnum.SyncEntitledChannels, spaceId] as const)
-            : ([QuerKeysEnum.SyncEntitledChannels] as const),
+    }) => ['hasPermission', args],
+    roles: (spaceId: string) => ['roles', QuerKeysEnum.FirstBySpaceIds, spaceId],
+    roleDetails: (spaceId: string, roleId: number) => [
+        'rolesDetails',
+        QuerKeysEnum.FirstBySpaceIds,
+        spaceId,
+        QuerKeysEnum.ThenByRoleIds,
+        roleId,
+    ],
+    spaceName: (spaceId: string) => ['spaceName', QuerKeysEnum.FirstBySpaceIds, spaceId],
+    spaceNames: (spaceIds: string[]) => ['spaceNames[]', QuerKeysEnum.FirstBySpaceIds, spaceIds],
+    // optional roledIds allow for passing only spaceId to get all multipleRoleDetails queries for this space
+    multipleRoleDetails: (spaceId: string, roleIds?: number[]) => {
+        const queryKey: (string | number[])[] = [
+            'multipleRolesDetails',
+            QuerKeysEnum.FirstBySpaceIds,
+            spaceId,
+            QuerKeysEnum.ThenByRoleIds,
+        ]
+        if (roleIds) {
+            queryKey.push(roleIds)
+        }
+        return queryKey
+    },
+    entitledChannels: (spaceId: string) => ['syncEntitledChannels', spaceId],
 }
