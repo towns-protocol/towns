@@ -9,7 +9,7 @@ import { notUndefined } from 'ui/utils/utils'
 const log = debug('app:useMessageIndex')
 log.enabled = true
 
-export const useMessageIndex = () => {
+export const useIndexMessages = () => {
     const channels = useSpaceChannels()
     const timelines = useThrottledValue(
         useDeferredValue(useTimelineStore((s) => s.timelines)),

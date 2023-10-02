@@ -19,6 +19,8 @@ interface AppState {
     setDidClosePWAPrompt: (didClosePWAPrompt: boolean) => void
     pushNotificationsPromptClosed: boolean
     setPushNotificationsPromptClosed: { (denied: boolean): void }
+    setSearchTerms: (searchTerms: string) => void
+    searchTerms: string
 }
 
 export const GLOBAL_STORE_NAME = 'towns/global'
@@ -77,6 +79,10 @@ export const useStore = create(
             setPushNotificationsPromptClosed: (denied) => {
                 set(() => ({ pushNotificationsPromptClosed: denied }))
             },
+            searchTerms: '',
+            setSearchTerms: (searchTerms) => {
+                set(() => ({ searchTerms }))
+            },
         }),
         {
             name: GLOBAL_STORE_NAME,
@@ -84,7 +90,7 @@ export const useStore = create(
             partialize: (state) => {
                 // probably should not save the isWindowFocused state
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { isWindowFocused, ...rest } = state
+                const { isWindowFocused, searchTerms, ...rest } = state
                 return rest as AppState
             },
         },

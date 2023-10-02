@@ -48,6 +48,7 @@ export const TouchTabBar = () => {
                     scrollToTopId={TouchScrollToTopScrollId.HomeTabScrollId}
                     highlightPattern={`${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/*`}
                 />
+
                 <TabBarItem
                     title="Threads"
                     icon={() => (
@@ -65,6 +66,17 @@ export const TouchTabBar = () => {
                     to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.MENTIONS}`}
                     scrollToTopId={TouchScrollToTopScrollId.MentionsTabScrollId}
                 />
+
+                <TabBarItem
+                    title="Search"
+                    icon={() => <Icon type="search" size="toolbar_icon" />}
+                    to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.SEARCH}`}
+                    scrollToTopId={TouchScrollToTopScrollId.SearchTabScrollId}
+                    onPressTwice={() => {
+                        document.getElementById(TouchScrollToTopScrollId.SearchTabInputId)?.focus()
+                    }}
+                />
+
                 <TabBarItem
                     title="You"
                     icon={(highlighted) => (
@@ -87,10 +99,11 @@ type TabBarItemProps = {
     highlightPattern?: string
     scrollToTopId: TouchScrollToTopScrollId
     icon: (highlighted: boolean) => React.ReactNode
+    onPressTwice?: () => void
 }
 
 const TabBarItem = (props: TabBarItemProps) => {
-    const { title, icon, to, scrollToTopId } = props
+    const { title, icon, to, scrollToTopId, onPressTwice } = props
     const location = useLocation()
 
     const resolved = useResolvedPath(to)
@@ -112,12 +125,15 @@ const TabBarItem = (props: TabBarItemProps) => {
 
     const onClick = useCallback(() => {
         if (location.pathname === to) {
+            if (onPressTwice) {
+                onPressTwice()
+            }
             const element = document.getElementById(scrollToTopId)
             element?.scrollTo({ top: 0, behavior: 'smooth' })
             return
         }
         navigate(to)
-    }, [navigate, to, location, scrollToTopId])
+    }, [location.pathname, to, navigate, onPressTwice, scrollToTopId])
 
     return (
         <Stack

@@ -74,7 +74,7 @@ export const IsolatedMessageItem = (
         <Box
             hoverable
             overflow="hidden"
-            background={props.selected ? 'level3' : 'level2'}
+            background={isTouch ? 'inherit' : props.selected ? 'level3' : 'level2'}
             elevate={!isTouch}
             rounded="sm"
         >

@@ -1,22 +1,17 @@
 import { ErrorBoundary } from '@sentry/react'
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
-import { SearchResult } from 'minisearch'
 import React, { useCallback, useMemo, useState } from 'react'
-import { Outlet } from 'react-router'
+import { Outlet, useNavigate } from 'react-router'
 import {
     RoomMember,
     SpaceData,
     getAccountAddress,
     useSpaceData,
     useSpaceMembers,
-    useTimelineStore,
 } from 'use-zion-client'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { NavItem } from '@components/NavItem/_NavItem'
-import { MessageResultItem } from '@components/SearchModal/SearchModal'
-import { useMessageIndex } from '@components/SearchModal/hooks/useMessageIndex'
-import { useMiniSearch } from '@components/SearchModal/hooks/useMiniSearch'
 import { usePrepopulateChannels } from 'hooks/usePrepopulateChannels'
 import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
@@ -27,9 +22,11 @@ import {
     Avatar,
     Badge,
     Box,
-    Heading,
+    BoxProps,
+    Divider,
     Icon,
     IconButton,
+    IconProps,
     MotionBox,
     MotionStack,
     Paragraph,
@@ -47,6 +44,7 @@ import { vars } from 'ui/styles/vars.css'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useStore } from 'store/store'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
@@ -125,14 +123,14 @@ export const TouchHome = () => {
     const onDisplayMainPanel = useCallback(() => {
         setActiveOverlay('main-panel')
     }, [])
+
     const { imageSrc } = useImageSource(space?.id.slug ?? '', ImageVariants.thumbnail300)
 
     const channels = useSpaceChannels()
     const preloadIds = useMemo(() => channels.map((c) => c.id), [channels])
     usePrepopulateChannels(preloadIds)
 
-    const { messages } = useMessageIndex()
-    const messageResults = useMiniSearch(messages, searchString)
+    const hasResult = filteredChannels.length > 0 || filteredMembers.length > 0
 
     return (
         <ErrorBoundary fallback={ErrorFallbackComponent}>
@@ -232,20 +230,13 @@ export const TouchHome = () => {
                                                     <UserList members={filteredMembers} />
                                                 </>
                                             )}
-                                            {messageResults.length > 0 && (
+
+                                            {isSearching && searchString.length > 1 && (
                                                 <>
-                                                    <SectionHeader title="Messages" />
-                                                    <MessageList messages={messageResults} />
+                                                    {hasResult ? <Divider space="sm" /> : <></>}
+                                                    <SearchForTermRow searchString={searchString} />
                                                 </>
                                             )}
-                                            {isSearching &&
-                                                searchString.length > 0 &&
-                                                filteredChannels.length === 0 &&
-                                                readChannels.length === 0 &&
-                                                messageResults.length === 0 &&
-                                                filteredMembers.length === 0 && (
-                                                    <NoResults searchString={searchString} />
-                                                )}
                                         </Box>
                                     ) : (
                                         <Box absoluteFill centerContent>
@@ -291,10 +282,10 @@ const ChannelList = (props: {
 }) => {
     const { channels, space } = props
     return (
-        <Stack paddingX="sm">
+        <Stack>
             {channels.map((c) =>
                 c.isJoined ? (
-                    <ChannelRow
+                    <TouchChannelResultRow
                         key={c.channelNetworkId}
                         channelNetworkId={c.channelNetworkId}
                         name={c.name}
@@ -318,7 +309,7 @@ const ChannelList = (props: {
     )
 }
 
-const ChannelRow = (props: {
+export const TouchChannelResultRow = (props: {
     channelNetworkId: string
     name: string
     unread: boolean
@@ -326,32 +317,30 @@ const ChannelRow = (props: {
     muted: boolean
 }) => {
     const { channelNetworkId, name, unread, mentionCount, muted } = props
+    const { createLink } = useCreateLink()
+    const link = createLink({ channelId: channelNetworkId })
 
     return (
-        <NavItem to={`channels/${channelNetworkId}/`} padding="none">
+        <NavItem to={link} padding="none">
             <Stack
                 horizontal
+                paddingX="sm"
                 alignItems="center"
                 key={channelNetworkId}
                 width="100%"
                 gap="sm"
                 overflowX="hidden"
                 fontWeight={unread ? 'strong' : 'normal'}
+                color={unread ? 'default' : 'gray1'}
             >
-                <Icon
-                    type="tag"
-                    padding="line"
-                    background="level2"
-                    size="square_lg"
-                    color={unread ? 'default' : 'gray1'}
-                />
-                <Text truncate color={unread ? 'default' : 'gray1'} textAlign="left">
+                <SearchResultItemIcon type="tag" />
+                <Text truncate textAlign="left">
                     {name}
                 </Text>
                 <Box grow />
                 {muted && <Icon type="muteActive" color="gray2" size="square_xs" />}
                 {mentionCount > 0 && <Badge value={mentionCount}>{mentionCount}</Badge>}
-                <Icon type="arrowRight" color="gray2" />
+                <SearchResultItemIcon type="arrowRight" background="inherit" color="gray2" />
             </Stack>
         </NavItem>
     )
@@ -363,13 +352,13 @@ const UserList = (props: { members: RoomMember[] }) => {
     return (
         <Stack>
             {members.map((m) => (
-                <UserRow key={m.userId} member={m} />
+                <TouchUserResultRow key={m.userId} member={m} />
             ))}
         </Stack>
     )
 }
 
-const UserRow = (props: { member: RoomMember }) => {
+export const TouchUserResultRow = (props: { member: RoomMember }) => {
     const { member } = props
     const accountAddress = getAccountAddress(member.userId)
     const { createLink } = useCreateLink()
@@ -386,7 +375,7 @@ const UserRow = (props: { member: RoomMember }) => {
                 width="100%"
             >
                 <Avatar size="avatar_x4" userId={member.userId} />
-                <Stack gap="sm" overflowX="hidden" paddingY="xxs">
+                <Stack gap="sm" overflow="hidden" paddingY="xxs">
                     <Text truncate fontWeight="medium" size="sm" color="default">
                         {getPrettyDisplayName(member).initialName}
                     </Text>
@@ -397,32 +386,10 @@ const UserRow = (props: { member: RoomMember }) => {
                     )}
                 </Stack>
                 <Box grow />
-                <Icon type="arrowRight" color="gray2" />
+                <SearchResultItemIcon type="arrowRight" background="inherit" />
             </Stack>
         </NavItem>
     )
-}
-
-const MessageList = (props: { messages: SearchResult[] }) => {
-    const { members } = useSpaceMembers()
-    const channels = useSpaceChannels()
-    const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
-        threadsStats,
-    }))
-    const miscProps = useMemo(
-        () => ({ channels, members, threadsStats }),
-        [channels, members, threadsStats],
-    )
-    return props.messages.map((m) => (
-        <Box key={m.key} paddingX="none" paddingY="xs">
-            <MessageResultItem
-                channelId={m.channelId}
-                event={m.source}
-                highligtTerms={m.terms}
-                misc={miscProps}
-            />
-        </Box>
-    ))
 }
 
 const SectionHeader = (props: { title: string }) => {
@@ -434,18 +401,48 @@ const SectionHeader = (props: { title: string }) => {
     )
 }
 
-const NoResults = (props: { searchString: string }) => {
+const SearchForTermRow = (props: { searchString: string }) => {
     const { searchString } = props
+    const navigate = useNavigate()
+    const { createLink } = useCreateLink()
+    const { setSearchTerms } = useStore(({ setSearchTerms }) => ({ setSearchTerms }))
+    const onSeachTerm = useCallback(() => {
+        const link = createLink({ route: 'search' })
+        setSearchTerms(searchString)
+        console.log(link)
+        if (link) {
+            navigate(link)
+        }
+    }, [createLink, navigate, searchString, setSearchTerms])
     return (
-        <Box centerContent position="relative" paddingTop="x8">
-            <Heading level={3}>No results</Heading>
-            <Paragraph textAlign="center" color="gray2">
-                No results for &quot;
-                <span className={atoms({ fontWeight: 'medium', color: 'default' })}>
-                    {searchString}
-                </span>
-                &quot;
-            </Paragraph>
+        <Box paddingX="md" paddingY="sm">
+            <Box horizontal gap="sm" alignItems="center">
+                <SearchResultItemIcon type="search" />
+                <Stack horizontal grow overflow="hidden" paddingY="sm" onClick={onSeachTerm}>
+                    <Paragraph truncate color="gray1">
+                        Search messages for &quot;
+                        <span className={atoms({ fontWeight: 'medium', color: 'default' })}>
+                            {searchString}
+                        </span>
+                        &quot;
+                    </Paragraph>
+                </Stack>
+                <SearchResultItemIcon type="arrowRight" background="inherit" />
+            </Box>
         </Box>
     )
 }
+
+const SearchResultItemIcon = ({ type, ...boxProps }: { type: IconProps['type'] } & BoxProps) => (
+    <Box
+        centerContent
+        shrink={false}
+        square="square_lg"
+        background="level3"
+        rounded="sm"
+        color="inherit"
+        {...boxProps}
+    >
+        <Icon type={type} size="square_sm" />
+    </Box>
+)

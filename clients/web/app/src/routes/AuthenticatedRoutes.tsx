@@ -32,6 +32,7 @@ import { ChannelMembers } from './ChannelMembers'
 import { TouchProfile } from './TouchProfile'
 import { SpacesChannelAnimated } from './SpacesChannelAnimated'
 import { AppPanelLayout } from './layouts/AppPanelLayout'
+import { TouchSearchTab } from './TouchSearchTab'
 
 const CheckRedirect = () => {
     const { state } = useLocation()
@@ -174,6 +175,8 @@ const TownRoutes = () => (
         </Route>
 
         <Route path="invite" element={<SpacesInvite />} />
+
+        <Route path="search" element={<TouchSearchTab />} />
 
         <Route element={<SpacesChannelRoute />}>
             <Route path="channels/:channelSlug/members" element={<ChannelMembers />}>

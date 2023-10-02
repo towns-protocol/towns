@@ -17,12 +17,17 @@ const profilePaths = [
         path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel?/:channelPanelParam?`,
         replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/profile/:profileId`,
     },
-    // wildcard matching for one level deep profiles such as threads/mentions
-    { path: `/${PATHS.SPACES}/:spaceId/:customPath/profile?/:profileId?` },
     {
         path: `/${PATHS.SPACES}/:spaceId/home/profile?/:profileId?`,
         replace: `/${PATHS.SPACES}/:spaceId/profile/:profileId`,
     },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/search/profile?/:profileId?`,
+        replace: `/${PATHS.SPACES}/:spaceId/profile/:profileId`,
+    },
+    // wildcard matching for one level deep profiles such as threads/mentions
+    { path: `/${PATHS.SPACES}/:spaceId/:customPath/profile?/:profileId?` },
+
     // TODO: may not need this
     { path: `/${PATHS.SPACES}/:spaceId/profile?/:profileId?` },
 ] satisfies Path[]
@@ -42,8 +47,15 @@ const townInfoPaths: Path[] = [
 
 const channelInfoPaths: Path[] = [
     {
-        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel?/:channelPanelParam?`,
+        path: `/${PATHS.SPACES}/:spaceId/*`,
         replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?channel`,
+    },
+]
+
+const channelPaths: Path[] = [
+    {
+        path: `/${PATHS.SPACES}/:spaceId/*`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/`,
     },
 ]
 
@@ -51,6 +63,13 @@ const channelDirectoryPaths: Path[] = [
     {
         path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel?/:channelPanelParam?`,
         replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/info?directory`,
+    },
+]
+
+const searchPaths: Path[] = [
+    {
+        path: `/${PATHS.SPACES}/:spaceId/*`,
+        replace: `/${PATHS.SPACES}/:spaceId/search`,
     },
 ]
 
@@ -64,6 +83,11 @@ const linkParams = {
         params: {
             spaceId: 'spaceId' as string | undefined,
             panel: 'townInfo',
+        },
+    },
+    channel: {
+        params: {
+            channelId: 'spaceId' as string | undefined,
         },
     },
     channelInfo: {
@@ -80,6 +104,11 @@ const linkParams = {
             panel: 'channelDirectory',
         },
     },
+    search: {
+        params: {
+            route: 'search',
+        },
+    },
 } as const
 
 type LinkParams = (typeof linkParams)[keyof typeof linkParams]['params']
@@ -88,16 +117,20 @@ const getSearchPathsForParams = (linkParams: LinkParams) => {
     if ('profileId' in linkParams) {
         return profilePaths
     }
-    if ('spaceId' in linkParams && linkParams.panel === 'townInfo') {
+    if ('spaceId' in linkParams && 'panel' in linkParams && linkParams.panel === 'townInfo') {
         return townInfoPaths
     }
     if ('channelId' in linkParams) {
-        if (linkParams.panel === 'channelInfo') {
+        if ('panel' in linkParams && linkParams.panel === 'channelInfo') {
             return channelInfoPaths
         }
-        if (linkParams.panel === 'channelDirectory') {
+        if ('panel' in linkParams && linkParams.panel === 'channelDirectory') {
             return channelDirectoryPaths
         }
+        return channelPaths
+    }
+    if ('route' in linkParams && linkParams.route === 'search') {
+        return searchPaths
     }
 }
 

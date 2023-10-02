@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { uniqBy } from 'lodash'
 import debug from 'debug'
 import { useDebounce } from 'hooks/useDebounce'
-import { EventDocument } from '../types'
+import { EventDocument } from '../components/SearchModal/types'
 
 const log = debug('app:search')
 log.enabled = true
@@ -19,6 +19,8 @@ export const useMiniSearch = (messages: EventDocument[], _search: string) => {
     )
     const search = useDebounce(_search, 250)
 
+    const [iteration, setIteration] = useState(0)
+
     useEffect(() => {
         const filteredMessages = uniqBy(
             messages.map((m) => ({ ...m, id: m.key })),
@@ -28,17 +30,17 @@ export const useMiniSearch = (messages: EventDocument[], _search: string) => {
             .filter((m) => !miniSearch.has(m.id))
 
         miniSearch.addAll(filteredMessages)
+        setIteration((t) => t + 1)
     }, [messages, miniSearch])
 
     const results = useMemo(() => {
-        return (
-            (search.length > 1 &&
-                miniSearch?.search(search, {
-                    fuzzy: 0.2,
-                })) ||
-            []
-        )
-    }, [miniSearch, search])
+        if (!iteration || search.length <= 1) {
+            return []
+        }
+        return miniSearch.search(search, {
+            fuzzy: 0.2,
+        })
+    }, [iteration, miniSearch, search])
 
     return results
 }

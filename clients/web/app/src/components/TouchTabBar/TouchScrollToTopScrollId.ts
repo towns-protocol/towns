@@ -3,4 +3,6 @@ export enum TouchScrollToTopScrollId {
     MentionsTabScrollId = 'mentionsTabScrollId',
     ProfileTabScrollId = 'profileTabScrollId',
     ThreadsTabScrollId = 'threadsTabScrollId',
+    SearchTabScrollId = 'searchTabScrollId',
+    SearchTabInputId = 'searchTabInputId',
 }
