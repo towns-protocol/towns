@@ -1,4 +1,4 @@
-name: 'River_deploy'
+name: 'Reset_environment'
 
 on:
     workflow_dispatch:
