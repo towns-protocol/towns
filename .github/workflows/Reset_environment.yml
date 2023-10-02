@@ -1,0 +1,55 @@
+name: 'River_deploy'
+
+on:
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: 'Environment'
+                required: true
+                default: 'test-beta'
+                type: choice
+                options:
+                    - test-beta
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    deploy:
+        name: Deploy to AWS ECS
+        runs-on: ubuntu-latest
+
+        environment:
+            name: ${{ github.event.inputs.environment }}
+
+        permissions:
+            contents: write
+            packages: write
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            # We notify via Slack that the reset is starting
+            - name: Slack notification
+              uses: slackapi/slack-github-action@v1.24.0
+              with:
+                  payload: |
+                      {
+                          "environment": "${{ github.event.inputs.environment }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}}",
+                          "actor": "${{ github.actor }}"
+                      }
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RESET_ENV_WORKFLOW_WEBHOOK_URL }}
+
+            - name: Reset environment
+              run: DB_URL=${{ vars.DB_URL }} CLUSTER_NAME=${{ vars.CLUSTER_NAME }} ./scripts/reset-environment.sh
