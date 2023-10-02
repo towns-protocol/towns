@@ -1890,38 +1890,38 @@
   },
   "ast": {
     "absolutePath": "contracts/src/towns/facets/architect/TownArchitect.sol",
-    "id": 30954,
+    "id": 30929,
     "exportedSymbols": {
       "Facet": [
-        7010
+        6985
       ],
       "GateBase": [
-        33832
+        33807
       ],
       "ITownArchitect": [
-        30760
+        30735
       ],
       "OwnableBase": [
-        8646
+        8621
       ],
       "PausableBase": [
-        9277
+        9252
       ],
       "ReentrancyGuard": [
-        9704
+        9679
       ],
       "TownArchitect": [
-        30953
+        30928
       ],
       "TownArchitectBase": [
-        31878
+        31853
       ]
     },
     "nodeType": "SourceUnit",
     "src": "39:2751:161",
     "nodes": [
       {
-        "id": 30762,
+        "id": 30737,
         "nodeType": "PragmaDirective",
         "src": "39:24:161",
         "nodes": [],
@@ -1933,23 +1933,23 @@
         ]
       },
       {
-        "id": 30764,
+        "id": 30739,
         "nodeType": "ImportDirective",
         "src": "79:87:161",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/architect/ITownArchitect.sol",
         "file": "contracts/src/towns/facets/architect/ITownArchitect.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 30954,
-        "sourceUnit": 30761,
+        "scope": 30929,
+        "sourceUnit": 30736,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 30763,
+              "id": 30738,
               "name": "ITownArchitect",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 30760,
+              "referencedDeclaration": 30735,
               "src": "87:14:161",
               "typeDescriptions": {}
             },
@@ -1959,23 +1959,23 @@
         "unitAlias": ""
       },
       {
-        "id": 30766,
+        "id": 30741,
         "nodeType": "ImportDirective",
         "src": "195:58:161",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/architect/TownArchitectBase.sol",
         "file": "./TownArchitectBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 30954,
-        "sourceUnit": 31879,
+        "scope": 30929,
+        "sourceUnit": 31854,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 30765,
+              "id": 30740,
               "name": "TownArchitectBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 31878,
+              "referencedDeclaration": 31853,
               "src": "203:17:161",
               "typeDescriptions": {}
             },
@@ -1985,23 +1985,23 @@
         "unitAlias": ""
       },
       {
-        "id": 30768,
+        "id": 30743,
         "nodeType": "ImportDirective",
         "src": "254:70:161",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/gate/GateBase.sol",
         "file": "contracts/src/towns/facets/gate/GateBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 30954,
-        "sourceUnit": 33833,
+        "scope": 30929,
+        "sourceUnit": 33808,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 30767,
+              "id": 30742,
               "name": "GateBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 33832,
+              "referencedDeclaration": 33807,
               "src": "262:8:161",
               "typeDescriptions": {}
             },
@@ -2011,23 +2011,23 @@
         "unitAlias": ""
       },
       {
-        "id": 30770,
+        "id": 30745,
         "nodeType": "ImportDirective",
         "src": "325:81:161",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/ownable/OwnableBase.sol",
         "file": "contracts/src/diamond/facets/ownable/OwnableBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 30954,
-        "sourceUnit": 8647,
+        "scope": 30929,
+        "sourceUnit": 8622,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 30769,
+              "id": 30744,
               "name": "OwnableBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 8646,
+              "referencedDeclaration": 8621,
               "src": "333:11:161",
               "typeDescriptions": {}
             },
@@ -2037,23 +2037,23 @@
         "unitAlias": ""
       },
       {
-        "id": 30772,
+        "id": 30747,
         "nodeType": "ImportDirective",
         "src": "407:92:161",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol",
         "file": "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 30954,
-        "sourceUnit": 9705,
+        "scope": 30929,
+        "sourceUnit": 9680,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 30771,
+              "id": 30746,
               "name": "ReentrancyGuard",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 9704,
+              "referencedDeclaration": 9679,
               "src": "415:15:161",
               "typeDescriptions": {}
             },
@@ -2063,23 +2063,23 @@
         "unitAlias": ""
       },
       {
-        "id": 30774,
+        "id": 30749,
         "nodeType": "ImportDirective",
         "src": "500:84:161",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/pausable/PausableBase.sol",
         "file": "contracts/src/diamond/facets/pausable/PausableBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 30954,
-        "sourceUnit": 9278,
+        "scope": 30929,
+        "sourceUnit": 9253,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 30773,
+              "id": 30748,
               "name": "PausableBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 9277,
+              "referencedDeclaration": 9252,
               "src": "508:12:161",
               "typeDescriptions": {}
             },
@@ -2089,23 +2089,23 @@
         "unitAlias": ""
       },
       {
-        "id": 30776,
+        "id": 30751,
         "nodeType": "ImportDirective",
         "src": "585:61:161",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/Facet.sol",
         "file": "contracts/src/diamond/facets/Facet.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 30954,
-        "sourceUnit": 7011,
+        "scope": 30929,
+        "sourceUnit": 6986,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 30775,
+              "id": 30750,
               "name": "Facet",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 7010,
+              "referencedDeclaration": 6985,
               "src": "593:5:161",
               "typeDescriptions": {}
             },
@@ -2115,17 +2115,17 @@
         "unitAlias": ""
       },
       {
-        "id": 30953,
+        "id": 30928,
         "nodeType": "ContractDefinition",
         "src": "648:2141:161",
         "nodes": [
           {
-            "id": 30814,
+            "id": 30789,
             "nodeType": "FunctionDefinition",
             "src": "787:372:161",
             "nodes": [],
             "body": {
-              "id": 30813,
+              "id": 30788,
               "nodeType": "Block",
               "src": "987:172:161",
               "nodes": [],
@@ -2134,11 +2134,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 30804,
+                        "id": 30779,
                         "name": "townOwner",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30792,
+                        "referencedDeclaration": 30767,
                         "src": "1020:9:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2146,11 +2146,11 @@
                         }
                       },
                       {
-                        "id": 30805,
+                        "id": 30780,
                         "name": "userEntitlementImplementation",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30794,
+                        "referencedDeclaration": 30769,
                         "src": "1037:29:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2158,11 +2158,11 @@
                         }
                       },
                       {
-                        "id": 30806,
+                        "id": 30781,
                         "name": "tokenEntitlementImplementation",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30796,
+                        "referencedDeclaration": 30771,
                         "src": "1074:30:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2185,18 +2185,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 30803,
+                      "id": 30778,
                       "name": "_setImplementations",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 31141,
+                      "referencedDeclaration": 31116,
                       "src": "993:19:161",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_address_$_t_address_$returns$__$",
                         "typeString": "function (address,address,address)"
                       }
                     },
-                    "id": 30807,
+                    "id": 30782,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2212,7 +2212,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 30808,
+                  "id": 30783,
                   "nodeType": "ExpressionStatement",
                   "src": "993:117:161"
                 },
@@ -2220,11 +2220,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 30810,
+                        "id": 30785,
                         "name": "trustedForwarder",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30798,
+                        "referencedDeclaration": 30773,
                         "src": "1137:16:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2239,18 +2239,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 30809,
+                      "id": 30784,
                       "name": "_setTrustedForwarder",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 31066,
+                      "referencedDeclaration": 31041,
                       "src": "1116:20:161",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$returns$__$",
                         "typeString": "function (address)"
                       }
                     },
-                    "id": 30811,
+                    "id": 30786,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2266,7 +2266,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 30812,
+                  "id": 30787,
                   "nodeType": "ExpressionStatement",
                   "src": "1116:38:161"
                 }
@@ -2277,16 +2277,16 @@
             "kind": "function",
             "modifiers": [
               {
-                "id": 30801,
+                "id": 30776,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 30800,
+                  "id": 30775,
                   "name": "onlyInitializing",
                   "nameLocations": [
                     "970:16:161"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 7914,
+                  "referencedDeclaration": 7889,
                   "src": "970:16:161"
                 },
                 "nodeType": "ModifierInvocation",
@@ -2296,17 +2296,17 @@
             "name": "__TownArchitect_init",
             "nameLocation": "796:20:161",
             "parameters": {
-              "id": 30799,
+              "id": 30774,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30792,
+                  "id": 30767,
                   "mutability": "mutable",
                   "name": "townOwner",
                   "nameLocation": "830:9:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30814,
+                  "scope": 30789,
                   "src": "822:17:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2315,7 +2315,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30791,
+                    "id": 30766,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "822:7:161",
@@ -2329,12 +2329,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 30794,
+                  "id": 30769,
                   "mutability": "mutable",
                   "name": "userEntitlementImplementation",
                   "nameLocation": "853:29:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30814,
+                  "scope": 30789,
                   "src": "845:37:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2343,7 +2343,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30793,
+                    "id": 30768,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "845:7:161",
@@ -2357,12 +2357,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 30796,
+                  "id": 30771,
                   "mutability": "mutable",
                   "name": "tokenEntitlementImplementation",
                   "nameLocation": "896:30:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30814,
+                  "scope": 30789,
                   "src": "888:38:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2371,7 +2371,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30795,
+                    "id": 30770,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "888:7:161",
@@ -2385,12 +2385,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 30798,
+                  "id": 30773,
                   "mutability": "mutable",
                   "name": "trustedForwarder",
                   "nameLocation": "940:16:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30814,
+                  "scope": 30789,
                   "src": "932:24:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2399,7 +2399,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30797,
+                    "id": 30772,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "932:7:161",
@@ -2415,23 +2415,23 @@
               "src": "816:144:161"
             },
             "returnParameters": {
-              "id": 30802,
+              "id": 30777,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "987:0:161"
             },
-            "scope": 30953,
+            "scope": 30928,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 30826,
+            "id": 30801,
             "nodeType": "FunctionDefinition",
             "src": "1163:104:161",
             "nodes": [],
             "body": {
-              "id": 30825,
+              "id": 30800,
               "nodeType": "Block",
               "src": "1229:38:161",
               "nodes": [],
@@ -2440,11 +2440,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 30822,
+                        "id": 30797,
                         "name": "token",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30816,
+                        "referencedDeclaration": 30791,
                         "src": "1256:5:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2459,18 +2459,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 30821,
+                      "id": 30796,
                       "name": "_isTokenGated",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 33819,
+                      "referencedDeclaration": 33794,
                       "src": "1242:13:161",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_address_$returns$_t_bool_$",
                         "typeString": "function (address) view returns (bool)"
                       }
                     },
-                    "id": 30823,
+                    "id": 30798,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2486,15 +2486,15 @@
                       "typeString": "bool"
                     }
                   },
-                  "functionReturnParameters": 30820,
-                  "id": 30824,
+                  "functionReturnParameters": 30795,
+                  "id": 30799,
                   "nodeType": "Return",
                   "src": "1235:27:161"
                 }
               ]
             },
             "baseFunctions": [
-              30747
+              30722
             ],
             "functionSelector": "1c05bbc7",
             "implemented": true,
@@ -2503,17 +2503,17 @@
             "name": "isTokenGated",
             "nameLocation": "1172:12:161",
             "parameters": {
-              "id": 30817,
+              "id": 30792,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30816,
+                  "id": 30791,
                   "mutability": "mutable",
                   "name": "token",
                   "nameLocation": "1193:5:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30826,
+                  "scope": 30801,
                   "src": "1185:13:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2522,7 +2522,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30815,
+                    "id": 30790,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1185:7:161",
@@ -2538,17 +2538,17 @@
               "src": "1184:15:161"
             },
             "returnParameters": {
-              "id": 30820,
+              "id": 30795,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30819,
+                  "id": 30794,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30826,
+                  "scope": 30801,
                   "src": "1223:4:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2557,7 +2557,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 30818,
+                    "id": 30793,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "1223:4:161",
@@ -2571,18 +2571,18 @@
               ],
               "src": "1222:6:161"
             },
-            "scope": 30953,
+            "scope": 30928,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 30841,
+            "id": 30816,
             "nodeType": "FunctionDefinition",
             "src": "1303:113:161",
             "nodes": [],
             "body": {
-              "id": 30840,
+              "id": 30815,
               "nodeType": "Block",
               "src": "1376:40:161",
               "nodes": [],
@@ -2591,11 +2591,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 30836,
+                        "id": 30811,
                         "name": "token",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30828,
+                        "referencedDeclaration": 30803,
                         "src": "1395:5:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2603,11 +2603,11 @@
                         }
                       },
                       {
-                        "id": 30837,
+                        "id": 30812,
                         "name": "quantity",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30830,
+                        "referencedDeclaration": 30805,
                         "src": "1402:8:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -2626,18 +2626,18 @@
                           "typeString": "uint256"
                         }
                       ],
-                      "id": 30835,
+                      "id": 30810,
                       "name": "_gateByToken",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 33794,
+                      "referencedDeclaration": 33769,
                       "src": "1382:12:161",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_uint256_$returns$__$",
                         "typeString": "function (address,uint256)"
                       }
                     },
-                    "id": 30838,
+                    "id": 30813,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2653,30 +2653,30 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 30839,
+                  "id": 30814,
                   "nodeType": "ExpressionStatement",
                   "src": "1382:29:161"
                 }
               ]
             },
             "baseFunctions": [
-              30754
+              30729
             ],
             "functionSelector": "5b560b67",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 30833,
+                "id": 30808,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 30832,
+                  "id": 30807,
                   "name": "onlyOwner",
                   "nameLocations": [
                     "1366:9:161"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 8572,
+                  "referencedDeclaration": 8547,
                   "src": "1366:9:161"
                 },
                 "nodeType": "ModifierInvocation",
@@ -2686,17 +2686,17 @@
             "name": "gateByToken",
             "nameLocation": "1312:11:161",
             "parameters": {
-              "id": 30831,
+              "id": 30806,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30828,
+                  "id": 30803,
                   "mutability": "mutable",
                   "name": "token",
                   "nameLocation": "1332:5:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30841,
+                  "scope": 30816,
                   "src": "1324:13:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2705,7 +2705,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30827,
+                    "id": 30802,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1324:7:161",
@@ -2719,12 +2719,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 30830,
+                  "id": 30805,
                   "mutability": "mutable",
                   "name": "quantity",
                   "nameLocation": "1347:8:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30841,
+                  "scope": 30816,
                   "src": "1339:16:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2733,7 +2733,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 30829,
+                    "id": 30804,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1339:7:161",
@@ -2748,23 +2748,23 @@
               "src": "1323:33:161"
             },
             "returnParameters": {
-              "id": 30834,
+              "id": 30809,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1376:0:161"
             },
-            "scope": 30953,
+            "scope": 30928,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 30853,
+            "id": 30828,
             "nodeType": "FunctionDefinition",
             "src": "1420:89:161",
             "nodes": [],
             "body": {
-              "id": 30852,
+              "id": 30827,
               "nodeType": "Block",
               "src": "1477:32:161",
               "nodes": [],
@@ -2773,11 +2773,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 30849,
+                        "id": 30824,
                         "name": "token",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30843,
+                        "referencedDeclaration": 30818,
                         "src": "1498:5:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2792,18 +2792,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 30848,
+                      "id": 30823,
                       "name": "_ungateByToken",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 33806,
+                      "referencedDeclaration": 33781,
                       "src": "1483:14:161",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$returns$__$",
                         "typeString": "function (address)"
                       }
                     },
-                    "id": 30850,
+                    "id": 30825,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2819,30 +2819,30 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 30851,
+                  "id": 30826,
                   "nodeType": "ExpressionStatement",
                   "src": "1483:21:161"
                 }
               ]
             },
             "baseFunctions": [
-              30759
+              30734
             ],
             "functionSelector": "edddeb4d",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 30846,
+                "id": 30821,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 30845,
+                  "id": 30820,
                   "name": "onlyOwner",
                   "nameLocations": [
                     "1467:9:161"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 8572,
+                  "referencedDeclaration": 8547,
                   "src": "1467:9:161"
                 },
                 "nodeType": "ModifierInvocation",
@@ -2852,17 +2852,17 @@
             "name": "ungateByToken",
             "nameLocation": "1429:13:161",
             "parameters": {
-              "id": 30844,
+              "id": 30819,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30843,
+                  "id": 30818,
                   "mutability": "mutable",
                   "name": "token",
                   "nameLocation": "1451:5:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30853,
+                  "scope": 30828,
                   "src": "1443:13:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2871,7 +2871,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30842,
+                    "id": 30817,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1443:7:161",
@@ -2887,23 +2887,23 @@
               "src": "1442:15:161"
             },
             "returnParameters": {
-              "id": 30847,
+              "id": 30822,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1477:0:161"
             },
-            "scope": 30953,
+            "scope": 30928,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 30875,
+            "id": 30850,
             "nodeType": "FunctionDefinition",
             "src": "1513:180:161",
             "nodes": [],
             "body": {
-              "id": 30874,
+              "id": 30849,
               "nodeType": "Block",
               "src": "1621:72:161",
               "nodes": [],
@@ -2913,7 +2913,7 @@
                     "arguments": [
                       {
                         "expression": {
-                          "id": 30866,
+                          "id": 30841,
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
@@ -2924,7 +2924,7 @@
                             "typeString": "msg"
                           }
                         },
-                        "id": 30867,
+                        "id": 30842,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -2946,18 +2946,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 30865,
+                      "id": 30840,
                       "name": "_checkTokenGate",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 33831,
+                      "referencedDeclaration": 33806,
                       "src": "1627:15:161",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_address_$returns$__$",
                         "typeString": "function (address) view"
                       }
                     },
-                    "id": 30868,
+                    "id": 30843,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2973,7 +2973,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 30869,
+                  "id": 30844,
                   "nodeType": "ExpressionStatement",
                   "src": "1627:27:161"
                 },
@@ -2981,14 +2981,14 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 30871,
+                        "id": 30846,
                         "name": "townInfo",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30856,
+                        "referencedDeclaration": 30831,
                         "src": "1679:8:161",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_struct$_TownInfo_$30670_memory_ptr",
+                          "typeIdentifier": "t_struct$_TownInfo_$30645_memory_ptr",
                           "typeString": "struct ITownArchitectBase.TownInfo memory"
                         }
                       }
@@ -2996,22 +2996,22 @@
                     "expression": {
                       "argumentTypes": [
                         {
-                          "typeIdentifier": "t_struct$_TownInfo_$30670_memory_ptr",
+                          "typeIdentifier": "t_struct$_TownInfo_$30645_memory_ptr",
                           "typeString": "struct ITownArchitectBase.TownInfo memory"
                         }
                       ],
-                      "id": 30870,
+                      "id": 30845,
                       "name": "_createTown",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 31360,
+                      "referencedDeclaration": 31335,
                       "src": "1667:11:161",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_internal_nonpayable$_t_struct$_TownInfo_$30670_memory_ptr_$returns$_t_address_$",
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_struct$_TownInfo_$30645_memory_ptr_$returns$_t_address_$",
                         "typeString": "function (struct ITownArchitectBase.TownInfo memory) returns (address)"
                       }
                     },
-                    "id": 30872,
+                    "id": 30847,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3027,47 +3027,47 @@
                       "typeString": "address"
                     }
                   },
-                  "functionReturnParameters": 30864,
-                  "id": 30873,
+                  "functionReturnParameters": 30839,
+                  "id": 30848,
                   "nodeType": "Return",
                   "src": "1660:28:161"
                 }
               ]
             },
             "baseFunctions": [
-              30698
+              30673
             ],
             "functionSelector": "9fbd83bc",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 30859,
+                "id": 30834,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 30858,
+                  "id": 30833,
                   "name": "nonReentrant",
                   "nameLocations": [
                     "1576:12:161"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 9677,
+                  "referencedDeclaration": 9652,
                   "src": "1576:12:161"
                 },
                 "nodeType": "ModifierInvocation",
                 "src": "1576:12:161"
               },
               {
-                "id": 30861,
+                "id": 30836,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 30860,
+                  "id": 30835,
                   "name": "whenNotPaused",
                   "nameLocations": [
                     "1589:13:161"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 9219,
+                  "referencedDeclaration": 9194,
                   "src": "1589:13:161"
                 },
                 "nodeType": "ModifierInvocation",
@@ -3077,41 +3077,41 @@
             "name": "createTown",
             "nameLocation": "1522:10:161",
             "parameters": {
-              "id": 30857,
+              "id": 30832,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30856,
+                  "id": 30831,
                   "mutability": "mutable",
                   "name": "townInfo",
                   "nameLocation": "1554:8:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30875,
+                  "scope": 30850,
                   "src": "1538:24:161",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_TownInfo_$30670_memory_ptr",
+                    "typeIdentifier": "t_struct$_TownInfo_$30645_memory_ptr",
                     "typeString": "struct ITownArchitectBase.TownInfo"
                   },
                   "typeName": {
-                    "id": 30855,
+                    "id": 30830,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 30854,
+                      "id": 30829,
                       "name": "TownInfo",
                       "nameLocations": [
                         "1538:8:161"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 30670,
+                      "referencedDeclaration": 30645,
                       "src": "1538:8:161"
                     },
-                    "referencedDeclaration": 30670,
+                    "referencedDeclaration": 30645,
                     "src": "1538:8:161",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_TownInfo_$30670_storage_ptr",
+                      "typeIdentifier": "t_struct$_TownInfo_$30645_storage_ptr",
                       "typeString": "struct ITownArchitectBase.TownInfo"
                     }
                   },
@@ -3121,17 +3121,17 @@
               "src": "1532:34:161"
             },
             "returnParameters": {
-              "id": 30864,
+              "id": 30839,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30863,
+                  "id": 30838,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30875,
+                  "scope": 30850,
                   "src": "1612:7:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3140,7 +3140,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30862,
+                    "id": 30837,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1612:7:161",
@@ -3155,35 +3155,35 @@
               ],
               "src": "1611:9:161"
             },
-            "scope": 30953,
+            "scope": 30928,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 30897,
+            "id": 30872,
             "nodeType": "FunctionDefinition",
             "src": "1728:230:161",
             "nodes": [],
             "body": {
-              "id": 30896,
+              "id": 30871,
               "nodeType": "Block",
               "src": "1845:113:161",
               "nodes": [],
               "statements": [
                 {
                   "assignments": [
-                    30886
+                    30861
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 30886,
+                      "id": 30861,
                       "mutability": "mutable",
                       "name": "tokenId",
                       "nameLocation": "1859:7:161",
                       "nodeType": "VariableDeclaration",
-                      "scope": 30896,
+                      "scope": 30871,
                       "src": "1851:15:161",
                       "stateVariable": false,
                       "storageLocation": "default",
@@ -3192,7 +3192,7 @@
                         "typeString": "uint256"
                       },
                       "typeName": {
-                        "id": 30885,
+                        "id": 30860,
                         "name": "uint256",
                         "nodeType": "ElementaryTypeName",
                         "src": "1851:7:161",
@@ -3204,23 +3204,23 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 30889,
+                  "id": 30864,
                   "initialValue": {
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 30887,
+                      "id": 30862,
                       "name": "_getNextTokenId",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 31868,
+                      "referencedDeclaration": 31843,
                       "src": "1869:15:161",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$__$returns$_t_uint256_$",
                         "typeString": "function () view returns (uint256)"
                       }
                     },
-                    "id": 30888,
+                    "id": 30863,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3243,11 +3243,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 30891,
+                        "id": 30866,
                         "name": "townId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30877,
+                        "referencedDeclaration": 30852,
                         "src": "1925:6:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -3255,11 +3255,11 @@
                         }
                       },
                       {
-                        "id": 30892,
+                        "id": 30867,
                         "name": "tokenId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30886,
+                        "referencedDeclaration": 30861,
                         "src": "1933:7:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -3267,14 +3267,14 @@
                         }
                       },
                       {
-                        "id": 30893,
+                        "id": 30868,
                         "name": "membership",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30880,
+                        "referencedDeclaration": 30855,
                         "src": "1942:10:161",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_struct$_Membership_$30652_memory_ptr",
+                          "typeIdentifier": "t_struct$_Membership_$30627_memory_ptr",
                           "typeString": "struct ITownArchitectBase.Membership memory"
                         }
                       }
@@ -3290,22 +3290,22 @@
                           "typeString": "uint256"
                         },
                         {
-                          "typeIdentifier": "t_struct$_Membership_$30652_memory_ptr",
+                          "typeIdentifier": "t_struct$_Membership_$30627_memory_ptr",
                           "typeString": "struct ITownArchitectBase.Membership memory"
                         }
                       ],
-                      "id": 30890,
+                      "id": 30865,
                       "name": "_getTownDeploymentAddress",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 31683,
+                      "referencedDeclaration": 31658,
                       "src": "1899:25:161",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$_t_uint256_$_t_struct$_Membership_$30652_memory_ptr_$returns$_t_address_$",
+                        "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$_t_uint256_$_t_struct$_Membership_$30627_memory_ptr_$returns$_t_address_$",
                         "typeString": "function (string memory,uint256,struct ITownArchitectBase.Membership memory) view returns (address)"
                       }
                     },
-                    "id": 30894,
+                    "id": 30869,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3321,15 +3321,15 @@
                       "typeString": "address"
                     }
                   },
-                  "functionReturnParameters": 30884,
-                  "id": 30895,
+                  "functionReturnParameters": 30859,
+                  "id": 30870,
                   "nodeType": "Return",
                   "src": "1892:61:161"
                 }
               ]
             },
             "baseFunctions": [
-              30708
+              30683
             ],
             "functionSelector": "ab8e6a76",
             "implemented": true,
@@ -3338,17 +3338,17 @@
             "name": "computeTown",
             "nameLocation": "1737:11:161",
             "parameters": {
-              "id": 30881,
+              "id": 30856,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30877,
+                  "id": 30852,
                   "mutability": "mutable",
                   "name": "townId",
                   "nameLocation": "1768:6:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30897,
+                  "scope": 30872,
                   "src": "1754:20:161",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -3357,7 +3357,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 30876,
+                    "id": 30851,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1754:6:161",
@@ -3370,36 +3370,36 @@
                 },
                 {
                   "constant": false,
-                  "id": 30880,
+                  "id": 30855,
                   "mutability": "mutable",
                   "name": "membership",
                   "nameLocation": "1798:10:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30897,
+                  "scope": 30872,
                   "src": "1780:28:161",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_Membership_$30652_memory_ptr",
+                    "typeIdentifier": "t_struct$_Membership_$30627_memory_ptr",
                     "typeString": "struct ITownArchitectBase.Membership"
                   },
                   "typeName": {
-                    "id": 30879,
+                    "id": 30854,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 30878,
+                      "id": 30853,
                       "name": "Membership",
                       "nameLocations": [
                         "1780:10:161"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 30652,
+                      "referencedDeclaration": 30627,
                       "src": "1780:10:161"
                     },
-                    "referencedDeclaration": 30652,
+                    "referencedDeclaration": 30627,
                     "src": "1780:10:161",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Membership_$30652_storage_ptr",
+                      "typeIdentifier": "t_struct$_Membership_$30627_storage_ptr",
                       "typeString": "struct ITownArchitectBase.Membership"
                     }
                   },
@@ -3409,17 +3409,17 @@
               "src": "1748:64:161"
             },
             "returnParameters": {
-              "id": 30884,
+              "id": 30859,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30883,
+                  "id": 30858,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30897,
+                  "scope": 30872,
                   "src": "1836:7:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3428,7 +3428,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30882,
+                    "id": 30857,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1836:7:161",
@@ -3443,18 +3443,18 @@
               ],
               "src": "1835:9:161"
             },
-            "scope": 30953,
+            "scope": 30928,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 30909,
+            "id": 30884,
             "nodeType": "FunctionDefinition",
             "src": "1984:113:161",
             "nodes": [],
             "body": {
-              "id": 30908,
+              "id": 30883,
               "nodeType": "Block",
               "src": "2059:38:161",
               "nodes": [],
@@ -3463,11 +3463,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 30905,
+                        "id": 30880,
                         "name": "townId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30899,
+                        "referencedDeclaration": 30874,
                         "src": "2085:6:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -3482,18 +3482,18 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 30904,
+                      "id": 30879,
                       "name": "_getTownById",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 31030,
+                      "referencedDeclaration": 31005,
                       "src": "2072:12:161",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$returns$_t_address_$",
                         "typeString": "function (string memory) view returns (address)"
                       }
                     },
-                    "id": 30906,
+                    "id": 30881,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3509,15 +3509,15 @@
                       "typeString": "address"
                     }
                   },
-                  "functionReturnParameters": 30903,
-                  "id": 30907,
+                  "functionReturnParameters": 30878,
+                  "id": 30882,
                   "nodeType": "Return",
                   "src": "2065:27:161"
                 }
               ]
             },
             "baseFunctions": [
-              30733
+              30708
             ],
             "functionSelector": "11a8b382",
             "implemented": true,
@@ -3526,17 +3526,17 @@
             "name": "getTownById",
             "nameLocation": "1993:11:161",
             "parameters": {
-              "id": 30900,
+              "id": 30875,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30899,
+                  "id": 30874,
                   "mutability": "mutable",
                   "name": "townId",
                   "nameLocation": "2019:6:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30909,
+                  "scope": 30884,
                   "src": "2005:20:161",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -3545,7 +3545,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 30898,
+                    "id": 30873,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "2005:6:161",
@@ -3560,17 +3560,17 @@
               "src": "2004:22:161"
             },
             "returnParameters": {
-              "id": 30903,
+              "id": 30878,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30902,
+                  "id": 30877,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30909,
+                  "scope": 30884,
                   "src": "2050:7:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3579,7 +3579,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30901,
+                    "id": 30876,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2050:7:161",
@@ -3594,18 +3594,18 @@
               ],
               "src": "2049:9:161"
             },
-            "scope": 30953,
+            "scope": 30928,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 30921,
+            "id": 30896,
             "nodeType": "FunctionDefinition",
             "src": "2101:135:161",
             "nodes": [],
             "body": {
-              "id": 30920,
+              "id": 30895,
               "nodeType": "Block",
               "src": "2191:45:161",
               "nodes": [],
@@ -3614,11 +3614,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 30917,
+                        "id": 30892,
                         "name": "townId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30911,
+                        "referencedDeclaration": 30886,
                         "src": "2224:6:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -3633,18 +3633,18 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 30916,
+                      "id": 30891,
                       "name": "_getTokenIdByTownId",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 31052,
+                      "referencedDeclaration": 31027,
                       "src": "2204:19:161",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$returns$_t_uint256_$",
                         "typeString": "function (string memory) view returns (uint256)"
                       }
                     },
-                    "id": 30918,
+                    "id": 30893,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3660,15 +3660,15 @@
                       "typeString": "uint256"
                     }
                   },
-                  "functionReturnParameters": 30915,
-                  "id": 30919,
+                  "functionReturnParameters": 30890,
+                  "id": 30894,
                   "nodeType": "Return",
                   "src": "2197:34:161"
                 }
               ]
             },
             "baseFunctions": [
-              30740
+              30715
             ],
             "functionSelector": "9c7843c2",
             "implemented": true,
@@ -3677,17 +3677,17 @@
             "name": "getTokenIdByTownId",
             "nameLocation": "2110:18:161",
             "parameters": {
-              "id": 30912,
+              "id": 30887,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30911,
+                  "id": 30886,
                   "mutability": "mutable",
                   "name": "townId",
                   "nameLocation": "2148:6:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30921,
+                  "scope": 30896,
                   "src": "2134:20:161",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -3696,7 +3696,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 30910,
+                    "id": 30885,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "2134:6:161",
@@ -3711,17 +3711,17 @@
               "src": "2128:30:161"
             },
             "returnParameters": {
-              "id": 30915,
+              "id": 30890,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30914,
+                  "id": 30889,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30921,
+                  "scope": 30896,
                   "src": "2182:7:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3730,7 +3730,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 30913,
+                    "id": 30888,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "2182:7:161",
@@ -3744,18 +3744,18 @@
               ],
               "src": "2181:9:161"
             },
-            "scope": 30953,
+            "scope": 30928,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 30934,
+            "id": 30909,
             "nodeType": "FunctionDefinition",
             "src": "2240:241:161",
             "nodes": [],
             "body": {
-              "id": 30933,
+              "id": 30908,
               "nodeType": "Block",
               "src": "2442:39:161",
               "nodes": [],
@@ -3765,18 +3765,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 30930,
+                      "id": 30905,
                       "name": "_getImplementations",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 31165,
+                      "referencedDeclaration": 31140,
                       "src": "2455:19:161",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$_t_address_$_t_address_$",
                         "typeString": "function () view returns (address,address,address)"
                       }
                     },
-                    "id": 30931,
+                    "id": 30906,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3792,15 +3792,15 @@
                       "typeString": "tuple(address,address,address)"
                     }
                   },
-                  "functionReturnParameters": 30929,
-                  "id": 30932,
+                  "functionReturnParameters": 30904,
+                  "id": 30907,
                   "nodeType": "Return",
                   "src": "2448:28:161"
                 }
               ]
             },
             "baseFunctions": [
-              30717
+              30692
             ],
             "functionSelector": "18c7f066",
             "implemented": true,
@@ -3809,23 +3809,23 @@
             "name": "getTownArchitectImplementations",
             "nameLocation": "2249:31:161",
             "parameters": {
-              "id": 30922,
+              "id": 30897,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "2280:2:161"
             },
             "returnParameters": {
-              "id": 30929,
+              "id": 30904,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30924,
+                  "id": 30899,
                   "mutability": "mutable",
                   "name": "townToken",
                   "nameLocation": "2333:9:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30934,
+                  "scope": 30909,
                   "src": "2325:17:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3834,7 +3834,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30923,
+                    "id": 30898,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2325:7:161",
@@ -3848,12 +3848,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 30926,
+                  "id": 30901,
                   "mutability": "mutable",
                   "name": "userEntitlementImplementation",
                   "nameLocation": "2358:29:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30934,
+                  "scope": 30909,
                   "src": "2350:37:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3862,7 +3862,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30925,
+                    "id": 30900,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2350:7:161",
@@ -3876,12 +3876,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 30928,
+                  "id": 30903,
                   "mutability": "mutable",
                   "name": "tokenEntitlementImplementation",
                   "nameLocation": "2403:30:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30934,
+                  "scope": 30909,
                   "src": "2395:38:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3890,7 +3890,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30927,
+                    "id": 30902,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2395:7:161",
@@ -3905,18 +3905,18 @@
               ],
               "src": "2317:122:161"
             },
-            "scope": 30953,
+            "scope": 30928,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 30952,
+            "id": 30927,
             "nodeType": "FunctionDefinition",
             "src": "2485:302:161",
             "nodes": [],
             "body": {
-              "id": 30951,
+              "id": 30926,
               "nodeType": "Block",
               "src": "2659:128:161",
               "nodes": [],
@@ -3925,11 +3925,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 30946,
+                        "id": 30921,
                         "name": "townToken",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30936,
+                        "referencedDeclaration": 30911,
                         "src": "2692:9:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -3937,11 +3937,11 @@
                         }
                       },
                       {
-                        "id": 30947,
+                        "id": 30922,
                         "name": "userEntitlementImplementation",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30938,
+                        "referencedDeclaration": 30913,
                         "src": "2709:29:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -3949,11 +3949,11 @@
                         }
                       },
                       {
-                        "id": 30948,
+                        "id": 30923,
                         "name": "tokenEntitlementImplementation",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 30940,
+                        "referencedDeclaration": 30915,
                         "src": "2746:30:161",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -3976,18 +3976,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 30945,
+                      "id": 30920,
                       "name": "_setImplementations",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 31141,
+                      "referencedDeclaration": 31116,
                       "src": "2665:19:161",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_address_$_t_address_$returns$__$",
                         "typeString": "function (address,address,address)"
                       }
                     },
-                    "id": 30949,
+                    "id": 30924,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -4003,30 +4003,30 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 30950,
+                  "id": 30925,
                   "nodeType": "ExpressionStatement",
                   "src": "2665:117:161"
                 }
               ]
             },
             "baseFunctions": [
-              30726
+              30701
             ],
             "functionSelector": "51ec4c1d",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 30943,
+                "id": 30918,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 30942,
+                  "id": 30917,
                   "name": "onlyOwner",
                   "nameLocations": [
                     "2649:9:161"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 8572,
+                  "referencedDeclaration": 8547,
                   "src": "2649:9:161"
                 },
                 "nodeType": "ModifierInvocation",
@@ -4036,17 +4036,17 @@
             "name": "setTownArchitectImplementations",
             "nameLocation": "2494:31:161",
             "parameters": {
-              "id": 30941,
+              "id": 30916,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 30936,
+                  "id": 30911,
                   "mutability": "mutable",
                   "name": "townToken",
                   "nameLocation": "2539:9:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30952,
+                  "scope": 30927,
                   "src": "2531:17:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -4055,7 +4055,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30935,
+                    "id": 30910,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2531:7:161",
@@ -4069,12 +4069,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 30938,
+                  "id": 30913,
                   "mutability": "mutable",
                   "name": "userEntitlementImplementation",
                   "nameLocation": "2562:29:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30952,
+                  "scope": 30927,
                   "src": "2554:37:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -4083,7 +4083,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30937,
+                    "id": 30912,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2554:7:161",
@@ -4097,12 +4097,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 30940,
+                  "id": 30915,
                   "mutability": "mutable",
                   "name": "tokenEntitlementImplementation",
                   "nameLocation": "2605:30:161",
                   "nodeType": "VariableDeclaration",
-                  "scope": 30952,
+                  "scope": 30927,
                   "src": "2597:38:161",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -4111,7 +4111,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 30939,
+                    "id": 30914,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2597:7:161",
@@ -4127,12 +4127,12 @@
               "src": "2525:114:161"
             },
             "returnParameters": {
-              "id": 30944,
+              "id": 30919,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "2659:0:161"
             },
-            "scope": 30953,
+            "scope": 30928,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
@@ -4142,165 +4142,165 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 30777,
+              "id": 30752,
               "name": "ITownArchitect",
               "nameLocations": [
                 "676:14:161"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 30760,
+              "referencedDeclaration": 30735,
               "src": "676:14:161"
             },
-            "id": 30778,
+            "id": 30753,
             "nodeType": "InheritanceSpecifier",
             "src": "676:14:161"
           },
           {
             "baseName": {
-              "id": 30779,
+              "id": 30754,
               "name": "TownArchitectBase",
               "nameLocations": [
                 "694:17:161"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 31878,
+              "referencedDeclaration": 31853,
               "src": "694:17:161"
             },
-            "id": 30780,
+            "id": 30755,
             "nodeType": "InheritanceSpecifier",
             "src": "694:17:161"
           },
           {
             "baseName": {
-              "id": 30781,
+              "id": 30756,
               "name": "OwnableBase",
               "nameLocations": [
                 "715:11:161"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 8646,
+              "referencedDeclaration": 8621,
               "src": "715:11:161"
             },
-            "id": 30782,
+            "id": 30757,
             "nodeType": "InheritanceSpecifier",
             "src": "715:11:161"
           },
           {
             "baseName": {
-              "id": 30783,
+              "id": 30758,
               "name": "GateBase",
               "nameLocations": [
                 "730:8:161"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 33832,
+              "referencedDeclaration": 33807,
               "src": "730:8:161"
             },
-            "id": 30784,
+            "id": 30759,
             "nodeType": "InheritanceSpecifier",
             "src": "730:8:161"
           },
           {
             "baseName": {
-              "id": 30785,
+              "id": 30760,
               "name": "PausableBase",
               "nameLocations": [
                 "742:12:161"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 9277,
+              "referencedDeclaration": 9252,
               "src": "742:12:161"
             },
-            "id": 30786,
+            "id": 30761,
             "nodeType": "InheritanceSpecifier",
             "src": "742:12:161"
           },
           {
             "baseName": {
-              "id": 30787,
+              "id": 30762,
               "name": "ReentrancyGuard",
               "nameLocations": [
                 "758:15:161"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 9704,
+              "referencedDeclaration": 9679,
               "src": "758:15:161"
             },
-            "id": 30788,
+            "id": 30763,
             "nodeType": "InheritanceSpecifier",
             "src": "758:15:161"
           },
           {
             "baseName": {
-              "id": 30789,
+              "id": 30764,
               "name": "Facet",
               "nameLocations": [
                 "777:5:161"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 7010,
+              "referencedDeclaration": 6985,
               "src": "777:5:161"
             },
-            "id": 30790,
+            "id": 30765,
             "nodeType": "InheritanceSpecifier",
             "src": "777:5:161"
           }
         ],
         "canonicalName": "TownArchitect",
         "contractDependencies": [
-          37092,
-          138836
+          37067,
+          138811
         ],
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          30953,
-          7010,
-          8154,
-          8044,
-          8002,
-          9704,
-          9642,
-          9277,
-          9186,
-          33832,
-          8646,
-          8533,
-          31878,
-          30760,
-          30687,
-          40850
+          30928,
+          6985,
+          8129,
+          8019,
+          7977,
+          9679,
+          9617,
+          9252,
+          9161,
+          33807,
+          8621,
+          8508,
+          31853,
+          30735,
+          30662,
+          40825
         ],
         "name": "TownArchitect",
         "nameLocation": "657:13:161",
-        "scope": 30954,
+        "scope": 30929,
         "usedErrors": [
-          7782,
-          7784,
-          8031,
-          8033,
-          8521,
-          8525,
-          9175,
-          9177,
-          9641,
-          30680,
-          30682,
-          30684,
-          30686,
-          33846,
-          40774,
-          42291,
-          42295
+          7757,
+          7759,
+          8006,
+          8008,
+          8496,
+          8500,
+          9150,
+          9152,
+          9616,
+          30655,
+          30657,
+          30659,
+          30661,
+          33821,
+          40749,
+          42266,
+          42270
         ],
         "usedEvents": [
-          7788,
-          8038,
-          8043,
-          8532,
-          9181,
-          9185,
-          30678
+          7763,
+          8013,
+          8018,
+          8507,
+          9156,
+          9160,
+          30653
         ]
       }
     ],

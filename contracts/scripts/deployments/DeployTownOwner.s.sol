@@ -7,7 +7,7 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 // libraries
 
 // contracts
-import {Deployer} from "../common/Deployer.s.sol";
+import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 
 // facets
 import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
@@ -28,7 +28,7 @@ import {IntrospectionHelper} from "contracts/test/diamond/introspection/Introspe
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-contract DeployTownOwner is Deployer {
+contract DeployTownOwner is DiamondDeployer {
   DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
   DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
   OwnableHelper ownableHelper = new OwnableHelper();
@@ -52,11 +52,11 @@ contract DeployTownOwner is Deployer {
     return "townOwner";
   }
 
-  function __deploy(
-    uint256 deployerPK,
+  function diamondInitParams(
+    uint256 pk,
     address deployer
-  ) public override returns (address) {
-    vm.startBroadcast();
+  ) public override returns (Diamond.InitParams memory) {
+    vm.startBroadcast(pk);
     diamondCut = address(new DiamondCutFacet());
     diamondLoupe = address(new DiamondLoupeFacet());
     ownable = address(new OwnableFacet());
@@ -67,7 +67,6 @@ contract DeployTownOwner is Deployer {
     vm.stopBroadcast();
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](6);
-    uint256 index;
 
     cuts[index++] = diamondCutHelper.makeCut(
       diamondCut,
@@ -78,12 +77,10 @@ contract DeployTownOwner is Deployer {
       IDiamond.FacetCutAction.Add
     );
     cuts[index++] = ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add);
-
     cuts[index++] = introspectionHelper.makeCut(
       introspection,
       IDiamond.FacetCutAction.Add
     );
-
     cuts[index++] = townOwnerHelper.makeCut(
       townOwner,
       IDiamond.FacetCutAction.Add
@@ -93,7 +90,7 @@ contract DeployTownOwner is Deployer {
       IDiamond.FacetCutAction.Add
     );
 
-    index = 0;
+    _resetIndex();
 
     addresses[index++] = diamondCut;
     addresses[index++] = diamondLoupe;
@@ -102,7 +99,7 @@ contract DeployTownOwner is Deployer {
     addresses[index++] = townOwner;
     addresses[index++] = guardian;
 
-    index = 0;
+    _resetIndex();
 
     payloads[index++] = diamondCutHelper.makeInitData("");
     payloads[index++] = diamondLoupeHelper.makeInitData("");
@@ -115,22 +112,15 @@ contract DeployTownOwner is Deployer {
     );
     payloads[index++] = guardianHelper.makeInitData(7 days);
 
-    vm.startBroadcast(deployerPK);
-    address townOwnerAddress = address(
-      new Diamond(
-        Diamond.InitParams({
-          baseFacets: cuts,
-          init: multiInit,
-          initData: abi.encodeWithSelector(
-            MultiInit.multiInit.selector,
-            addresses,
-            payloads
-          )
-        })
-      )
-    );
-    vm.stopBroadcast();
-
-    return townOwnerAddress;
+    return
+      Diamond.InitParams({
+        baseFacets: cuts,
+        init: multiInit,
+        initData: abi.encodeWithSelector(
+          MultiInit.multiInit.selector,
+          addresses,
+          payloads
+        )
+      });
   }
 }
