@@ -50,4 +50,13 @@ export class StreamStateView_Media {
                 logNever(payload.content)
         }
     }
+
+    prependEvent(
+        _event: ParsedEvent,
+        _payload: MediaPayload,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        // append / prepend are identical for media content
+        this.appendEvent(_event, _payload, _emitter)
+    }
 }

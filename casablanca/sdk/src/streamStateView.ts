@@ -278,8 +278,7 @@ export class StreamStateView {
                     this.userDeviceKeyContent?.prependEvent(event, payload.value, emitter)
                     break
                 case 'mediaPayload':
-                    // append / prepend are identical for media content
-                    this.mediaContent?.appendEvent(event, payload.value, emitter)
+                    this.mediaContent?.prependEvent(event, payload.value, emitter)
                     break
                 case 'miniblockHeader':
                     this.updateMiniblockInfo(payload.value, { min: payload.value.miniblockNum })
