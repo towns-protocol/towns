@@ -132,38 +132,30 @@ describe('sendAMessage', () => {
         }
 
         if (primaryProtocol === SpaceProtocol.Casablanca) {
-            await waitFor(() =>
-                expect(
-                    clientEvents.find((e) => {
-                        const content = e.getClearContent_ChannelMessage()
-                        if (
-                            content?.payload &&
-                            content?.payload?.case === 'post' &&
-                            content?.payload?.value?.content?.case === 'text'
-                        ) {
-                            return content?.payload?.value?.content?.value.body === 'Hello Alice!'
-                        }
-                        return false
-                    }),
-                ).toBeDefined(),
-            )
-            await waitFor(() =>
-                expect(
-                    bobRecievedEvents.find((e) => {
-                        const content = e.getClearContent_ChannelMessage()
-                        if (
-                            content?.payload &&
-                            content?.payload?.case === 'post' &&
-                            content?.payload?.value?.content?.case === 'text'
-                        ) {
-                            return content?.payload?.value?.content?.value.body?.includes(
-                                'Hello Bob!',
-                            )
-                        }
-                        return false
-                    }),
-                ).toBeDefined(),
-            )
+            await waitFor(() => {
+                const events = getMessages(clientEvents)
+                expect(events).toContain('Hello Alice!')
+            })
+
+            await waitFor(() => {
+                const client = clients[`client_${1}`]
+                const events = getMessages(bobRecievedEvents)
+                expect(events).toContain(`Hello Bob! from ${client.getUserId()!}`)
+            })
         }
     }) // end test
 }) // end describe
+
+function getMessages(events: RiverEvent[]): string[] {
+    return events.map((e) => {
+        const content = e.getClearContent_ChannelMessage()
+        if (
+            content?.payload &&
+            content?.payload?.case === 'post' &&
+            content?.payload?.value?.content?.case === 'text'
+        ) {
+            return content?.payload?.value?.content?.value.body
+        }
+        return content?.payload?.case ?? 'undefined'
+    })
+}
