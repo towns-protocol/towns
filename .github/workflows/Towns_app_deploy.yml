@@ -16,8 +16,7 @@ on:
                 default: 'test'
                 type: choice
                 options:
-                    - test
-                    - production
+                    - alpha
             commit_hash:
                 description: 'Commit hash (Leave blank to use latest commit)'
                 required: false
