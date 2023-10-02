@@ -13,10 +13,11 @@ on:
             environment:
                 description: 'Environment'
                 required: true
-                default: 'test'
+                default: 'alpha'
                 type: choice
                 options:
                     - alpha
+                    - test-beta
             commit_hash:
                 description: 'Commit hash (Leave blank to use latest commit)'
                 required: false
