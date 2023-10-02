@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import {
     CreateSpaceInfo,
     Permission,
@@ -16,18 +16,19 @@ type FormValues = {
     spaceName: string
     price: number
     limit: number
-    pioneerGated: boolean
+    tokens: string[]
 }
 
 export function CreateSpaceFormTemp() {
     const { signer } = useWeb3Context()
     const { chainId } = useEnvironment()
+    const tokenFieldRef = useRef<HTMLInputElement>(null)
 
     const [formValue, setFormValue] = useState<FormValues>({
         spaceName: '',
         price: 0,
         limit: 1000,
-        pioneerGated: false,
+        tokens: [],
     })
 
     const pioneerNftAddress = getPioneerNftAddress(chainId)
@@ -61,7 +62,31 @@ export function CreateSpaceFormTemp() {
     }
 
     function updatePioneerCheckbox(event: React.ChangeEvent<HTMLInputElement>) {
-        updateFormValue('pioneerGated', event.target.checked)
+        if (event.target.checked) {
+            addToken(pioneerNftAddress)
+        } else {
+            removeToken(pioneerNftAddress)
+        }
+    }
+
+    function addToken(address: string) {
+        const set = new Set([...formValue.tokens, address])
+        updateFormValue('tokens', [...set])
+        if (tokenFieldRef.current) {
+            tokenFieldRef.current.value = ''
+        }
+    }
+    function removeToken(address: string) {
+        const set = new Set([...formValue.tokens])
+        set.delete(address)
+        updateFormValue('tokens', [...set])
+    }
+
+    function clearTokens() {
+        updateFormValue('tokens', [])
+        if (tokenFieldRef.current) {
+            tokenFieldRef.current.value = ''
+        }
     }
 
     async function createSpace() {
@@ -73,7 +98,6 @@ export function CreateSpaceFormTemp() {
             console.error('Cannot create space. No signer.')
             return undefined
         }
-        const isPioneerGated = formValue.pioneerGated
 
         const requirements = {
             name: 'Member',
@@ -83,8 +107,8 @@ export function CreateSpaceFormTemp() {
             feeRecipient: await signer.getAddress(),
             permissions: [Permission.Read, Permission.Write],
             requirements: {
-                everyone: !isPioneerGated,
-                tokens: isPioneerGated ? createExternalTokenStruct([pioneerNftAddress]) : [],
+                everyone: formValue.tokens.length === 0,
+                tokens: createExternalTokenStruct(formValue.tokens),
                 users: [],
             },
         }
@@ -97,8 +121,8 @@ export function CreateSpaceFormTemp() {
     }
 
     return (
-        <Stack gap>
-            <h1>create casablanca space</h1>
+        <Stack gap maxWidth="600" alignSelf="center" padding="x8">
+            <h1>create space</h1>
             <TextField border="level4" placeholder="name" onChange={updateName} />
             <TextField
                 border="level4"
@@ -112,7 +136,21 @@ export function CreateSpaceFormTemp() {
                 defaultValue={formValue.price}
                 onChange={updatePrice}
             />
+            <Stack horizontal gap>
+                <TextField ref={tokenFieldRef} border="level4" placeholder="Token address" />
+                <Button onClick={() => addToken(tokenFieldRef.current?.value ?? '')}>
+                    Add Token
+                </Button>
+                <Button onClick={clearTokens}>Clear tokens</Button>
+            </Stack>
             <Checkbox name="pioneer" label="Pioneer gated" onChange={updatePioneerCheckbox} />
+
+            <Stack>
+                Gating by:{' '}
+                {formValue.tokens.map((addr) => (
+                    <Stack key={addr}> {addr}</Stack>
+                ))}
+            </Stack>
 
             <Button disabled={!formValue.spaceName} onClick={createSpace}>
                 Create Space
