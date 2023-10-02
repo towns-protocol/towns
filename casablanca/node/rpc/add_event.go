@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 
@@ -189,12 +190,12 @@ func (*Service) addUserSettingsPayload(ctx context.Context, payload *StreamEvent
 }
 
 func (s *Service) addMediaPayload(ctx context.Context, payload *StreamEvent_MediaPayload, stream Stream, streamView StreamView, parsedEvent *ParsedEvent) error {
-	switch payload.MediaPayload.Content.(type) {
+	switch content := payload.MediaPayload.Content.(type) {
 	case *MediaPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
 
 	case *MediaPayload_Chunk_:
-		return stream.AddEvent(ctx, parsedEvent)
+		return s.addMediaChunk(ctx, stream, streamView, content.Chunk, parsedEvent)
 
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
@@ -482,4 +483,26 @@ func (s *Service) checkStaleDelegate(ctx context.Context, parsedEvents []*Parsed
 		}
 	}
 	return nil
+}
+
+func (s *Service) addMediaChunk(ctx context.Context, stream Stream, streamView StreamView, chunk *MediaPayload_Chunk, parsedEvent *ParsedEvent) error {
+	inceptionPayload := streamView.InceptionPayload()
+
+	lastEventCreatorAddress := streamView.LastEvent().Event.CreatorAddress
+	if !bytes.Equal(parsedEvent.Event.CreatorAddress, lastEventCreatorAddress) {
+		return RiverError(Err_PERMISSION_DENIED, "only the creator of the stream can add media chunks")
+	}
+
+	mediaInfo, err := MediaStreamInfoFromInceptionPayload(inceptionPayload, streamView.StreamId())
+
+	if err != nil {
+		return err
+	}
+
+	if chunk.ChunkIndex >= mediaInfo.ChunkCount || chunk.ChunkIndex < 0 {
+		return RiverError(Err_INVALID_ARGUMENT, "chunk index out of bounds")
+	}
+
+	err = stream.AddEvent(ctx, parsedEvent)
+	return err
 }

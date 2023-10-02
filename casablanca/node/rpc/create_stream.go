@@ -3,6 +3,7 @@ package rpc
 import (
 	"bytes"
 	"casablanca/node/auth"
+	"casablanca/node/common"
 	. "casablanca/node/events"
 	"casablanca/node/infra"
 	. "casablanca/node/protocol"
@@ -340,10 +341,66 @@ func (s *Service) createStream_Media(
 	inception *MediaPayload_Inception,
 ) (StreamView, error) {
 	if !CheckMediaStreamId(inception.StreamId) {
-		return nil, RiverError(Err_BAD_STREAM_ID, "CreateStream: invalid space stream id", "streamId", inception.StreamId)
+		return nil, RiverError(Err_BAD_STREAM_ID, "CreateStream: invalid media stream id '%s'", inception.StreamId)
 	}
 
-	// TODO: Authorization. (HNT-2506)
+	if inception.SpaceId == "" {
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "space id must not be empty for media stream")
+	}
+
+	if inception.ChannelId == "" {
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel id must not be empty for media stream")
+	}
+
+	// TODO: replace with stream registry stream existence check
+	// Make sure that the space exists
+	_, _, err := s.loadStream(ctx, inception.SpaceId)
+	if err != nil {
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "space does not exist")
+	}
+
+	// Make sure that the channel exists, get channelStreamView for auth
+	_, channelStreamView, err := s.loadStream(ctx, inception.ChannelId)
+	if err != nil {
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel does not exist")
+	}
+
+	user, err := common.AddressHex(parsedEvents[0].Event.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	info, err := StreamInfoFromInceptionPayload(channelStreamView.InceptionPayload(), inception.ChannelId, user)
+	if err != nil {
+		return nil, err
+	}
+
+	allowed, err := s.townsContract.IsAllowed(
+		ctx,
+		auth.AuthorizationArgs{
+			StreamId:   inception.ChannelId,
+			UserId:     user,
+			Permission: auth.PermissionWrite,
+		},
+		info,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowed {
+		return nil, RiverError(Err_PERMISSION_DENIED, "user is not allowed to write to stream", "user", user)
+	}
+
+	// check if user is a member of the channel
+	member, err := s.checkMembership(ctx, channelStreamView, user)
+	if err != nil {
+		return nil, err
+	}
+	if !member {
+		return nil, RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+	}
 
 	streamId := inception.GetStreamId()
 	_, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents)
