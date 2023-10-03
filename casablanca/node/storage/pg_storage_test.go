@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
 
 	"casablanca/node/crypto"
 	"casablanca/node/events"
@@ -16,32 +16,34 @@ import (
 
 var testDatabaseUrl string
 var testSchemaName string
+var pgEventStore *storage.PostgresEventStore
 
 func TestMain(m *testing.M) {
 	dbUrl, dbSchemaName, closer, err := testutils.StartDB(context.Background())
 	if err != nil {
 		panic("Could not connect to docker" + err.Error())
 	}
-	defer closer()
 	testDatabaseUrl = dbUrl
 	testSchemaName = dbSchemaName
+
+	// Create a new PGEventStore
+	pgEventStore, err = storage.NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, true)
+	if err != nil {
+		panic("Can't create event store: " + err.Error())
+	}
 
 	//Run tests
 	code := m.Run()
 
 	// You can't defer this because os.Exit doesn't care for defer
+	pgEventStore.Close()
+	closer()
 
 	os.Exit(code)
 }
 
 func TestPostgresEventStore(t *testing.T) {
 	ctx := context.Background()
-	// Create a new PGEventStore
-	pgEventStore, err := storage.NewPostgresEventStore(ctx, testDatabaseUrl, testSchemaName, true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer pgEventStore.Close()
 
 	streamsNumber, _ := pgEventStore.GetStreamsNumber(ctx)
 	if streamsNumber != 0 {
@@ -53,7 +55,7 @@ func TestPostgresEventStore(t *testing.T) {
 	streamId3 := "11-0sfdsf_sdfds3"
 
 	wallet, _ := crypto.NewWallet(ctx)
-	_, err = events.MakeEnvelopeWithPayload(
+	_, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserPayload_Inception(streamId1, nil),
 		nil,
@@ -185,4 +187,11 @@ func TestPostgresEventStore(t *testing.T) {
 	if err != nil {
 		t.Fatal("error creating block with snapshot", err)
 	}
+}
+
+func TestNoStream(t *testing.T) {
+	res, err := pgEventStore.GetStreamFromLastSnapshot(context.Background(), "noStream")
+	assert.Nil(t, res)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "NOT_FOUND")
 }

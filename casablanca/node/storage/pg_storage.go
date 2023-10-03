@@ -110,13 +110,15 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, stre
 
 	//first let's check what is the last block with snapshot
 	var latest_snapshot_miniblock_index int
-
-	row := tx.QueryRow(ctx, "SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1", streamId)
-
-	err = row.Scan(&latest_snapshot_miniblock_index)
-
+	err = tx.
+		QueryRow(ctx, "SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1", streamId).
+		Scan(&latest_snapshot_miniblock_index)
 	if err != nil {
-		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error retrieving latest snapshot miniblock index")
+		if err == pgx.ErrNoRows {
+			return nil, WrapRiverError(Err_NOT_FOUND, err).Message("stream not found in local storage")
+		} else {
+			return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error retrieving latest snapshot miniblock index")
+		}
 	}
 
 	result.StartMiniblockNumber = latest_snapshot_miniblock_index
