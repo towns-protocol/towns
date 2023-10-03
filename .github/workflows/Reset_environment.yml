@@ -45,7 +45,7 @@ jobs:
 
             # We notify via Slack that the reset is starting
             - name: Slack notification
-              if: ${{ !github.event.inputs.skip_slack_notification }}
+              if: !inputs.skip_slack_notification
               uses: slackapi/slack-github-action@v1.24.0
               with:
                   payload: |
