@@ -93,20 +93,28 @@ func (b *miniblockInfo) forEachEvent(op func(e *ParsedEvent) (bool, error)) erro
 	return nil
 }
 
-func NewMiniblockInfoFromBytes(bytes []byte) (*miniblockInfo, error) {
+func NewMiniblockInfoFromBytes(bytes []byte, expectedBlockNumber int) (*miniblockInfo, error) {
 	var pb Miniblock
 	err := proto.Unmarshal(bytes, &pb)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewMiniblockInfoFromProto(&pb)
+	return NewMiniblockInfoFromProto(&pb, expectedBlockNumber)
 }
 
-func NewMiniblockInfoFromProto(pb *Miniblock) (*miniblockInfo, error) {
+func NewMiniblockInfoFromProto(pb *Miniblock, expectedBlockNumber int) (*miniblockInfo, error) {
 	headerEvent, err := ParseEvent(pb.Header)
 	if err != nil {
 		return nil, err
+	}
+
+	blockHeader := headerEvent.Event.GetMiniblockHeader()
+	if blockHeader == nil {
+		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")
+	}
+	if expectedBlockNumber != -1 && blockHeader.MiniblockNum != int64(expectedBlockNumber) {
+		return nil, RiverError(Err_BAD_EVENT, "block number mismatch", "expected", expectedBlockNumber, "actual", blockHeader.MiniblockNum)
 	}
 
 	events, err := ParseEvents(pb.Events)

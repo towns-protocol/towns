@@ -363,7 +363,7 @@ func (s *PostgresEventStore) createBlock(
 	}
 
 	if minipoolGeneration != latest_blocks_number+1 {
-		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Minipool generation missmatch")
+		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Minipool generation missmatch", "latest_blocks_number", latest_blocks_number)
 	}
 
 	//clean up minipool

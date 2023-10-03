@@ -29,7 +29,7 @@ func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*strea
 
 	miniblocks := make([]*miniblockInfo, len(streamData.Miniblocks))
 	for i, binMiniblock := range streamData.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock)
+		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, streamData.StartMiniblockNumber+i)
 		if err != nil {
 			return nil, err
 		}
@@ -62,6 +62,7 @@ func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*strea
 
 	return &streamViewImpl{
 		streamId:      streamId,
+		firstBlockNum: streamData.StartMiniblockNumber,
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents),
 		snapshot:      snapshot,
@@ -75,10 +76,14 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 	}
 
 	miniblocks := make([]*miniblockInfo, len(resp.Miniblocks))
+	startMiniblockNumber := -1
 	for i, binMiniblock := range resp.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromProto(binMiniblock)
+		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, startMiniblockNumber+i)
 		if err != nil {
 			return nil, err
+		}
+		if i == 0 {
+			startMiniblockNumber = int(miniblock.header().MiniblockNum)
 		}
 		miniblocks[i] = miniblock
 	}
@@ -103,10 +108,11 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 
 	return &streamViewImpl{
 		streamId:      streamId,
+		firstBlockNum: startMiniblockNumber,
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents),
 		snapshot:      snapshot,
-		snapshotIndex: int(miniblocks[0].headerEvent.Event.GetMiniblockHeader().GetMiniblockNum()),
+		snapshotIndex: startMiniblockNumber,
 	}, nil
 }
 

@@ -276,9 +276,11 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	miniblockProtoBytes, _ := proto.Marshal(miniblock)
 	// create a stream view from the miniblock bytes
 	var streamView StreamView
-	streamView, _ = MakeStreamView(&storage.GetStreamFromLastSnapshotResult{
-		Miniblocks: [][]byte{miniblockProtoBytes},
+	streamView, err = MakeStreamView(&storage.GetStreamFromLastSnapshotResult{
+		StartMiniblockNumber: 1,
+		Miniblocks:           [][]byte{miniblockProtoBytes},
 	})
+	assert.NoError(t, err)
 
 	/* Act */
 	// create a channel view from the stream view
@@ -329,9 +331,11 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	miniblockProtoBytes, _ := proto.Marshal(miniblock)
 	// create a stream view from the miniblock bytes
 	var streamView StreamView
-	streamView, _ = MakeStreamView(&storage.GetStreamFromLastSnapshotResult{
-		Miniblocks: [][]byte{miniblockProtoBytes},
+	streamView, err = MakeStreamView(&storage.GetStreamFromLastSnapshotResult{
+		StartMiniblockNumber: 1,
+		Miniblocks:           [][]byte{miniblockProtoBytes},
 	})
+	assert.NoError(t, err)
 
 	/* Act */
 	// create a channel view from the stream view
