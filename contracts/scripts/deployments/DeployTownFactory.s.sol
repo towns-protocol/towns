@@ -6,7 +6,7 @@ import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 import {ITownOwner} from "contracts/src/towns/facets/owner/ITownOwner.sol";
 
 // helpers
-import {Deployer} from "../common/Deployer.s.sol";
+import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 
 // contracts
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
@@ -38,7 +38,7 @@ import {MinimalForwarder} from "openzeppelin-contracts/contracts/metatx/MinimalF
 
 // mocks
 
-contract DeployTownFactory is Deployer {
+contract DeployTownFactory is DiamondDeployer {
   // diamond helpers
   DiamondCutHelper cutHelper = new DiamondCutHelper();
   DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
@@ -79,13 +79,10 @@ contract DeployTownFactory is Deployer {
     return "townFactory";
   }
 
-  function __deploy(
+  function diamondInitParams(
     uint256 deployerPK,
     address deployer
-  ) public override returns (address) {
-    address pioneerToken = getDeployment("pioneerToken");
-    address townToken = getDeployment("townOwner");
-
+  ) public override returns (Diamond.InitParams memory) {
     vm.startBroadcast(deployerPK);
     diamondCut = address(new DiamondCutFacet());
     diamondLoupe = address(new DiamondLoupeFacet());
@@ -103,7 +100,6 @@ contract DeployTownFactory is Deployer {
     vm.stopBroadcast();
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](totalFacets);
-    uint256 index;
 
     cuts[index++] = cutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add);
     cuts[index++] = loupeHelper.makeCut(
@@ -132,7 +128,7 @@ contract DeployTownFactory is Deployer {
       IDiamond.FacetCutAction.Add
     );
 
-    index = 0;
+    _resetIndex();
 
     initAddresses[index++] = diamondCut;
     initAddresses[index++] = diamondLoupe;
@@ -144,14 +140,14 @@ contract DeployTownFactory is Deployer {
     initAddresses[index++] = pausable;
     initAddresses[index++] = platformReqs;
 
-    index = 0;
+    _resetIndex();
 
     initDatas[index++] = cutHelper.makeInitData("");
     initDatas[index++] = loupeHelper.makeInitData("");
     initDatas[index++] = introspectionHelper.makeInitData("");
     initDatas[index++] = abi.encodeWithSelector(
       townArchitectHelper.initializer(),
-      townToken, // townToken
+      getDeployment("townOwner"), // townToken
       getDeployment("userEntitlement"), // userEntitlement
       getDeployment("tokenEntitlement"), // tokenEntitlement
       forwarder // forwarder
@@ -171,24 +167,29 @@ contract DeployTownFactory is Deployer {
       365 days // membershipDuration
     );
 
-    vm.startBroadcast(deployerPK);
-    address townFactory = address(
-      new Diamond(
-        Diamond.InitParams({
-          baseFacets: cuts,
-          init: multiInit,
-          initData: abi.encodeWithSelector(
-            MultiInit.multiInit.selector,
-            initAddresses,
-            initDatas
-          )
-        })
-      )
-    );
+    return
+      Diamond.InitParams({
+        baseFacets: cuts,
+        init: multiInit,
+        initData: abi.encodeWithSelector(
+          MultiInit.multiInit.selector,
+          initAddresses,
+          initDatas
+        )
+      });
+  }
+
+  function _afterDeployment(
+    uint256 pk,
+    address,
+    address townFactory
+  ) internal override {
+    address pioneerToken = getDeployment("pioneerToken");
+    address townToken = getDeployment("townOwner");
+
+    vm.startBroadcast(pk);
     ITownOwner(townToken).setFactory(address(townFactory));
     TownArchitect(townFactory).gateByToken(pioneerToken, 1);
     vm.stopBroadcast();
-
-    return townFactory;
   }
 }

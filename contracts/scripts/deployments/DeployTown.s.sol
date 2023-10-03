@@ -7,7 +7,7 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 //libraries
 
 //contracts
-import {Deployer} from "../common/Deployer.s.sol";
+import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 
 import {OwnablePendingHelper} from "contracts/test/diamond/ownable/pending/OwnablePendingSetup.sol";
 import {TokenOwnableHelper} from "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol";
@@ -34,7 +34,7 @@ import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipF
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-contract DeployTown is Deployer {
+contract DeployTown is DiamondDeployer {
   TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
   OwnablePendingHelper ownableHelper = new OwnablePendingHelper();
   DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
@@ -67,10 +67,10 @@ contract DeployTown is Deployer {
     return "town";
   }
 
-  function __deploy(
+  function diamondInitParams(
     uint256 deployerPK,
     address deployer
-  ) public override returns (address) {
+  ) public override returns (Diamond.InitParams memory) {
     vm.startBroadcast(deployerPK);
     ownable = address(new OwnablePendingFacet());
     tokenOwnable = address(new TokenOwnableFacet());
@@ -86,7 +86,6 @@ contract DeployTown is Deployer {
     vm.stopBroadcast();
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](9);
-    uint256 index;
 
     cuts[index++] = tokenOwnableHelper.makeCut(
       tokenOwnable,
@@ -122,31 +121,29 @@ contract DeployTown is Deployer {
       IDiamond.FacetCutAction.Add
     );
 
-    initAddresses[0] = ownable;
-    initAddresses[1] = diamondCut;
-    initAddresses[2] = diamondLoupe;
-    initAddresses[3] = introspection;
+    _resetIndex();
 
-    initDatas[0] = ownableHelper.makeInitData(deployer);
-    initDatas[1] = diamondCutHelper.makeInitData("");
-    initDatas[2] = diamondLoupeHelper.makeInitData("");
-    initDatas[3] = introspectionHelper.makeInitData("");
+    initAddresses[index++] = ownable;
+    initAddresses[index++] = diamondCut;
+    initAddresses[index++] = diamondLoupe;
+    initAddresses[index++] = introspection;
 
-    vm.broadcast(deployerPK);
-    address townAddress = address(
-      new Diamond(
-        Diamond.InitParams({
-          baseFacets: cuts,
-          init: multiInit,
-          initData: abi.encodeWithSelector(
-            MultiInit.multiInit.selector,
-            initAddresses,
-            initDatas
-          )
-        })
-      )
-    );
+    _resetIndex();
 
-    return townAddress;
+    initDatas[index++] = ownableHelper.makeInitData(deployer);
+    initDatas[index++] = diamondCutHelper.makeInitData("");
+    initDatas[index++] = diamondLoupeHelper.makeInitData("");
+    initDatas[index++] = introspectionHelper.makeInitData("");
+
+    return
+      Diamond.InitParams({
+        baseFacets: cuts,
+        init: multiInit,
+        initData: abi.encodeWithSelector(
+          MultiInit.multiInit.selector,
+          initAddresses,
+          initDatas
+        )
+      });
   }
 }
