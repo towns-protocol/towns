@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/bufbuild/connect-go v1.8.0
+	github.com/deckarep/golang-set/v2 v2.1.0
 	github.com/ethereum/go-ethereum v1.11.5
 	github.com/gologme/log v1.3.0
 	github.com/gorilla/mux v1.8.0
@@ -39,7 +40,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
 	github.com/docker/cli v23.0.2+incompatible // indirect
 	github.com/docker/docker v23.0.2+incompatible // indirect
