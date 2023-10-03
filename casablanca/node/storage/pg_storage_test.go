@@ -32,14 +32,17 @@ func TestMain(m *testing.M) {
 		panic("Can't create event store: " + err.Error())
 	}
 
-	//Run tests
-	code := m.Run()
+	var code int = 1
 
-	// You can't defer this because os.Exit doesn't care for defer
-	pgEventStore.Close()
-	closer()
+	// Defer the cleanup so it always runs, even if something panics
+	defer func() {
+		pgEventStore.Close()
+		closer()
+		os.Exit(code)
+	}()
 
-	os.Exit(code)
+	// Run tests
+	code = m.Run()
 }
 
 func TestPostgresEventStore(t *testing.T) {
