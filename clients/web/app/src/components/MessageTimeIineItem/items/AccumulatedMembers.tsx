@@ -5,6 +5,7 @@ import { firstBy } from 'thenby'
 import { AvatarStack, Card, Paragraph, Stack, TooltipRenderer } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { notUndefined } from 'ui/utils/utils'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { AccumulatedRoomMemberRenderEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 type Props = {
@@ -42,7 +43,12 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
                     }
                     return (
                         <Link key={e.content.userId} to={`profile/${e.content.userId}`}>
-                            {e.content.displayName}
+                            {
+                                getPrettyDisplayName({
+                                    userId: e.content.userId,
+                                    name: e.content.displayName ?? '',
+                                }).name
+                            }
                         </Link>
                     )
                 })
