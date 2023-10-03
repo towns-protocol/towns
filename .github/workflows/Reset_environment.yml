@@ -51,7 +51,7 @@ jobs:
                   payload: |
                       {
                           "environment": "${{ github.event.inputs.environment }}",
-                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
                           "actor": "${{ github.actor }}"
                       }
               env:
