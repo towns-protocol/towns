@@ -1,6 +1,6 @@
 import React from 'react'
 import { FieldValues, Path, UseFormReturn } from 'react-hook-form'
-import { Box, BoxProps, ErrorMessage, Icon, Text } from '@ui'
+import { Box, BoxProps, ErrorMessage, Icon, IconProps, Text } from '@ui'
 import { Spinner } from '@components/Spinner'
 import { vars } from 'ui/styles/vars.css'
 import { UploadInput } from 'ui/components/Form/Upload'
@@ -19,6 +19,7 @@ type Props<T extends FieldValues> = {
     imageRestrictions?: UseOnImageChangeEventProps<T>['imageRestrictions']
     overrideUploadCb?: UseOnImageChangeEventProps<T>['overrideUploadCb']
     uploadIconPosition?: BoxProps['position']
+    uploadIconSize?: IconProps['size']
 } & Pick<UseFormReturn<T>, 'setError' | 'clearErrors' | 'formState' | 'register'>
 
 const config: BoxProps = {
@@ -40,6 +41,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
         setError,
         clearErrors,
         overrideUploadCb,
+        uploadIconSize = 'square_sm',
         uploadIconPosition = 'topRight',
     } = props
 
@@ -63,9 +65,16 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
         ref.current?.click()
     }
 
+    const imageAreaIsClickable = uploadIconPosition === 'absoluteCenter'
+
     return (
         <Box position="relative" data-testid="upload-image-container">
-            <Box className={isLoading ? loadingStyles : ''}>{children}</Box>
+            <Box
+                className={isLoading ? loadingStyles : ''}
+                onClick={imageAreaIsClickable ? onClick : void 0}
+            >
+                {children}
+            </Box>
 
             {isLoading && (
                 <>
@@ -80,36 +89,11 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
 
             {canEdit && (
                 <>
-                    <Box position={uploadIconPosition} padding="md">
-                        <Box
-                            centerContent
-                            disabled={isLoading}
-                            data-testid="upload-image-button"
-                            role="button"
-                            top="xs"
-                            right="xs"
-                            background="level3"
-                            width="x4"
-                            height="x4"
-                            rounded="full"
-                            border="strongLevel1"
-                            padding="md"
-                            cursor="pointer"
-                            onClick={onClick}
-                        >
-                            <Icon
-                                type="camera"
-                                size="square_sm"
-                                style={{
-                                    color: vars.color.foreground.gray2,
-                                }}
-                            />
-                        </Box>
-                    </Box>
                     <Box
                         {...config}
                         centerContent
-                        absoluteFill
+                        position="absoluteCenter"
+                        background={imageAreaIsClickable ? 'level2' : 'none'}
                         justifySelf="center"
                         alignSelf="center"
                         pointerEvents="none"
@@ -123,6 +107,32 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
                             onChange={onChange}
                         />
                         <FieldOutline tone="accent" rounded="md" />
+                    </Box>
+                    <Box position={uploadIconPosition} padding="md">
+                        <Box
+                            centerContent
+                            disabled={isLoading}
+                            data-testid="upload-image-button"
+                            role="button"
+                            top="xs"
+                            right="xs"
+                            background={imageAreaIsClickable ? 'level2' : 'level3'}
+                            width="x4"
+                            height="x4"
+                            rounded="full"
+                            border={imageAreaIsClickable ? 'none' : 'strongLevel1'}
+                            padding="md"
+                            cursor="pointer"
+                            onClick={onClick}
+                        >
+                            <Icon
+                                type="camera"
+                                size={uploadIconSize}
+                                style={{
+                                    color: vars.color.foreground.gray2,
+                                }}
+                            />
+                        </Box>
                     </Box>
                     {formState?.errors[formFieldName] && (
                         <Box centerContent padding width="100%">

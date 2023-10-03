@@ -17,12 +17,12 @@ export const TownsTokenConfig = {
             fontSize: 12,
         },
         xl: {
-            containerSize: 280,
-            addressSize: 270,
+            containerSize: 290,
+            addressSize: 300,
             addressRadius: 16,
-            badgeSize: 216,
+            badgeSize: 236,
             badgeRadius: 16,
-            fontSize: 16,
+            fontSize: 20,
         },
     },
 } as const

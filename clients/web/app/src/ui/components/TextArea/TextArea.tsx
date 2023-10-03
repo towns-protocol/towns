@@ -1,7 +1,7 @@
 import { clsx } from 'clsx'
 import React, { InputHTMLAttributes, forwardRef, useCallback, useState } from 'react'
 import { Box } from '../Box/Box'
-import { Text } from '../Text/Text'
+import { Text, TextProps } from '../Text/Text'
 import { Field, FieldBaseProps } from '../_internal/Field/Field'
 import * as styles from './TextArea.css'
 
@@ -16,12 +16,13 @@ type InputCallbackProps = {
 
 type Props = {
     placeholder?: string
+    fontSize?: TextProps['size']
 } & FieldBaseProps &
     InputCallbackProps &
     Omit<InputHTMLAttributes<HTMLTextAreaElement>, 'color'>
 
 export const TextArea = forwardRef<HTMLTextAreaElement, Props>((props, ref) => {
-    const { placeholder, onChange, ...fieldProps } = props
+    const { placeholder, onChange, fontSize, ...fieldProps } = props
     const [length, setLength] = useState(
         props.defaultValue?.toString().length || props.value?.toString().length || 0,
     )
@@ -47,6 +48,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, Props>((props, ref) => {
                     <Box
                         ref={ref}
                         as="textarea"
+                        fontSize={fontSize}
                         {...inputProps}
                         placeholder={placeholder}
                         className={clsx(className, styles.input)}
