@@ -57,13 +57,13 @@ export const MediaDropContextProvider = ({
         setIsDragging(false)
     }, [])
 
-    if (isTouch || protocol !== SpaceProtocol.Casablanca) {
+    if (protocol !== SpaceProtocol.Casablanca) {
         return children
     }
 
     return (
         <MediaDropContext.Provider value={{ files: files, addFiles: setFiles, id: props.id }}>
-            <Box display="contents" onDragEnter={onDragEnter}>
+            <Box display="contents" onDragEnter={isTouch ? undefined : onDragEnter}>
                 {children}
                 {isDragging && !disableDrop && (
                     <Box
