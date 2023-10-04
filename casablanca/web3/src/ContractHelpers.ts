@@ -21,12 +21,12 @@ export function mintMockNFT(
     throw new Error(`Unsupported chainId ${chainId}, only 31337 is supported.`)
 }
 
-export function getMemberNftAddress(chainId: number): string {
+export function getMemberNftAddress(chainId: number): string | null {
     const contractInfo = getContractsInfoV3(chainId)
     if (!contractInfo) {
         throw new Error(`Contract info for chainId ${chainId} is not found.`)
     }
-    return contractInfo.memberTokenAddress
+    return contractInfo.memberTokenAddress ?? null
 }
 
 export function getPioneerNftAddress(chainId: number): string {

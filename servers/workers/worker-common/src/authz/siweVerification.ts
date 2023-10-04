@@ -2,6 +2,7 @@ import { SiweMessage } from 'siwe'
 import { ethers } from 'ethers'
 import { AuthEnv, Environment } from '..'
 import { Permission, createSpaceDapp } from '@river/web3'
+import { env } from 'process'
 
 export interface Env extends AuthEnv {
     // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
@@ -20,11 +21,13 @@ export interface Env extends AuthEnv {
 const GOERLI_RPC_URL = 'https://goerli.infura.io/v3/'
 const LOCALHOST_RPC_URL = 'http://127.0.0.1:8545' // not localhost
 const SEPOLIA_RPC_URL = 'https://sepolia.infura.io/v3/'
+const BASE_GOERLI_RPC_URL = 'https://base-goerli.g.alchemy.com/v2/'
 
 const providerMap = new Map<string, string>([
     ['development', LOCALHOST_RPC_URL],
-    ['test', GOERLI_RPC_URL],
-    ['production', SEPOLIA_RPC_URL],
+    ['test', `${GOERLI_RPC_URL}${env.INFURA_API_KEY}`],
+    ['production', `${SEPOLIA_RPC_URL}${env.INFURA_API_KEY}`],
+    ['test-beta', `${BASE_GOERLI_RPC_URL}${env.ALCHEMY_API_KEY}`],
 ])
 
 const GOERLI = 5
@@ -52,10 +55,7 @@ export async function verifySiweMessage(
         const network = ethers.providers.getNetwork(siweMessage.chainId)
         const provider = new ethers.providers.StaticJsonRpcProvider(
             {
-                url:
-                    env.ENVIRONMENT == 'development'
-                        ? `${providerMap.get(env.ENVIRONMENT)}`
-                        : `${providerMap.get(env.ENVIRONMENT)}${env.INFURA_API_KEY}`,
+                url: providerMap.get(env.ENVIRONMENT) ?? '',
                 skipFetchSetup: true,
             },
             network,

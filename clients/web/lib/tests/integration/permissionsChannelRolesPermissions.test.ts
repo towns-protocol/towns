@@ -94,6 +94,9 @@ describe('channel with roles and permissions', () => {
         ])) as RoomIdentifier
 
         const memberNftAddress = getMemberNftAddress(alice.chainId)
+        if (!memberNftAddress) {
+            throw new Error('memberNftAddress is undefined')
+        }
         const memberNftToken = createExternalTokenStruct([memberNftAddress])[0]
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             spaceId.networkId,

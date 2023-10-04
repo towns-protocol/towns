@@ -17,6 +17,7 @@ VERIFY = "true"
 # The necessary secrets are:
 # AUTH_SECRET
 # INFURA_API_KEY
+# ALCHEMY_APY_KEY
 #
 # for local development, you can add these in .dev.vars
 #

@@ -14,11 +14,15 @@ import SepoliaTownOwnerAddress from '@towns/generated/sepolia/addresses/townOwne
 import SepoliaMemberAddress from '@towns/generated/sepolia/addresses/member.json' assert { type: 'json' }
 import SepoliaPioneerAddress from '@towns/generated/sepolia/addresses/pioneerToken.json' assert { type: 'json' }
 
+import BaseGoerliTownFactoryAddress from '@towns/generated/base_goerli/addresses/townFactory.json' assert { type: 'json' }
+import BaseGoerliTownOwnerAddress from '@towns/generated/base_goerli/addresses/townOwner.json' assert { type: 'json' }
+import BaseGoerliPioneerAddress from '@towns/generated/base_goerli/addresses/pioneerToken.json' assert { type: 'json' }
+
 export interface IStaticContractsInfoV3 {
     townFactoryAddress: string
     townOwnerAddress: string
     mockErc721aAddress: string
-    memberTokenAddress: string
+    memberTokenAddress?: string
     pioneerTokenAddress: string
 }
 
@@ -46,6 +50,13 @@ const sepoliaContractsInfo: IStaticContractsInfoV3 = {
     pioneerTokenAddress: SepoliaPioneerAddress.address,
 }
 
+const baseGoerliContractsInfo: IStaticContractsInfoV3 = {
+    townFactoryAddress: BaseGoerliTownFactoryAddress.address,
+    townOwnerAddress: BaseGoerliTownOwnerAddress.address,
+    mockErc721aAddress: '',
+    pioneerTokenAddress: BaseGoerliPioneerAddress.address,
+}
+
 /// get contract info for a given chain id
 export function getContractsInfoV3(chainId: number): IStaticContractsInfoV3 {
     switch (chainId) {
@@ -56,6 +67,8 @@ export function getContractsInfoV3(chainId: number): IStaticContractsInfoV3 {
             return localhostContractsInfo
         case 11155111:
             return sepoliaContractsInfo
+        case 84531:
+            return baseGoerliContractsInfo
         default:
             throw new Error(`Unsupported chainId ${chainId}. Update IStaticContractsInfo.ts`)
     }

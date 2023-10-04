@@ -81,6 +81,13 @@ func NewTownsContract(cfg *config.ChainConfig) (TownsContract, error) {
 			return nil, err
 		}
 		za.spaceContract = sepolia
+	case 84531:
+		baseGoerli, err := NewSpaceContractBaseGoerli(za.ethClient)
+		if err != nil {
+			slog.Error("error instantiating SpaceContractBaseGoerli", "error", err)
+			return nil, err
+		}
+		za.spaceContract = baseGoerli
 	default:
 		slog.Error("Bad chain id", "id", za.chainId)
 		return nil, fmt.Errorf("unsupported chain id: %d", za.chainId)

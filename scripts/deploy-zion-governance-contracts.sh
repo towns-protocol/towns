@@ -27,3 +27,4 @@ cp packages/generated/sepolia/addresses/townFactory.json servers/dendrite/zion/c
 cp packages/generated/localhost/addresses/townFactory.json casablanca/node/auth/contracts/localhost_town_factory.json
 cp packages/generated/goerli/addresses/townFactory.json casablanca/node/auth/contracts/goerli_town_factory.json
 cp packages/generated/sepolia/addresses/townFactory.json casablanca/node/auth/contracts/sepolia_town_factory.json
+cp packages/generated/base_goerli/addresses/townFactory.json casablanca/node/auth/contracts/base_goerli_town_factory.json

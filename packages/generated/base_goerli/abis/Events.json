@@ -1,0 +1,815 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "caller",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "roleId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "roleName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "networkId",
+          "type": "string"
+        }
+      ],
+      "name": "RoleCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "caller",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "roleId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "networkId",
+          "type": "string"
+        }
+      ],
+      "name": "RoleRemoved",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "caller",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "roleId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "roleName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "networkId",
+          "type": "string"
+        }
+      ],
+      "name": "RoleUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "spaceAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "ownerAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "networkId",
+          "type": "string"
+        }
+      ],
+      "name": "SpaceCreated",
+      "type": "event"
+    }
+  ],
+  "bytecode": {
+    "object": "0x60206037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fd",
+    "sourceMap": "63:488:133:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;63:488:133;;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x73000000000000000000000000000000000000000030146080604052600080fd",
+    "sourceMap": "63:488:133:-:0;;;;;;;;",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"roleName\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"networkId\",\"type\":\"string\"}],\"name\":\"RoleCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"networkId\",\"type\":\"string\"}],\"name\":\"RoleRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"roleName\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"networkId\",\"type\":\"string\"}],\"name\":\"RoleUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spaceAddress\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"ownerAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"networkId\",\"type\":\"string\"}],\"name\":\"SpaceCreated\",\"type\":\"event\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/spaces/libraries/Events.sol\":\"Events\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":ERC721A/=lib/ERC721A/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"contracts/src/spaces/libraries/Events.sol\":{\"keccak256\":\"0x99aaeab8cc78d73bf26c609378a89e6b826105d8bf528c6d2a0e0c2344788f33\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://7f8fce84a1480276eabd24fd18dc606d219852a56f577130d24b93a596d081c9\",\"dweb:/ipfs/QmVtoA5cYwvbU1eLqAbBwbH7mwmzieEpSp1k6bk1eSnqB5\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.20+commit.a1b79de6"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "caller",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "roleId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "string",
+              "name": "roleName",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "string",
+              "name": "networkId",
+              "type": "string",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "RoleCreated",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "caller",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "roleId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "string",
+              "name": "networkId",
+              "type": "string",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "RoleRemoved",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "caller",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "roleId",
+              "type": "uint256",
+              "indexed": true
+            },
+            {
+              "internalType": "string",
+              "name": "roleName",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "string",
+              "name": "networkId",
+              "type": "string",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "RoleUpdated",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "spaceAddress",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "ownerAddress",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "string",
+              "name": "networkId",
+              "type": "string",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "SpaceCreated",
+          "anonymous": false
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@prb/test/=lib/prb-test/src/",
+        "ERC721A/=lib/ERC721A/contracts/",
+        "council/=lib/council/contracts/",
+        "ds-test/=lib/ds-test/src/",
+        "erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "operator-filter-registry/=lib/operator-filter-registry/",
+        "prb-test/=lib/prb-test/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "none",
+        "appendCBOR": false
+      },
+      "compilationTarget": {
+        "contracts/src/spaces/libraries/Events.sol": "Events"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "contracts/src/spaces/libraries/Events.sol": {
+        "keccak256": "0x99aaeab8cc78d73bf26c609378a89e6b826105d8bf528c6d2a0e0c2344788f33",
+        "urls": [
+          "bzz-raw://7f8fce84a1480276eabd24fd18dc606d219852a56f577130d24b93a596d081c9",
+          "dweb:/ipfs/QmVtoA5cYwvbU1eLqAbBwbH7mwmzieEpSp1k6bk1eSnqB5"
+        ],
+        "license": "Apache-2.0"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "contracts/src/spaces/libraries/Events.sol",
+    "id": 24999,
+    "exportedSymbols": {
+      "Events": [
+        24998
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "38:514:133",
+    "nodes": [
+      {
+        "id": 24961,
+        "nodeType": "PragmaDirective",
+        "src": "38:23:133",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "0.8",
+          ".20"
+        ]
+      },
+      {
+        "id": 24998,
+        "nodeType": "ContractDefinition",
+        "src": "63:488:133",
+        "nodes": [
+          {
+            "id": 24969,
+            "nodeType": "EventDefinition",
+            "src": "82:113:133",
+            "nodes": [],
+            "anonymous": false,
+            "eventSelector": "78d7e431fd0a46d11f5c8889cf2db64699be1f95ccb8b1419211c83bcdbce580",
+            "name": "SpaceCreated",
+            "nameLocation": "88:12:133",
+            "parameters": {
+              "id": 24968,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 24963,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "spaceAddress",
+                  "nameLocation": "122:12:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24969,
+                  "src": "106:28:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 24962,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "106:7:133",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 24965,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "ownerAddress",
+                  "nameLocation": "156:12:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24969,
+                  "src": "140:28:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 24964,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "140:7:133",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 24967,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "networkId",
+                  "nameLocation": "181:9:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24969,
+                  "src": "174:16:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 24966,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "174:6:133",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "100:94:133"
+            }
+          },
+          {
+            "id": 24979,
+            "nodeType": "EventDefinition",
+            "src": "199:121:133",
+            "nodes": [],
+            "anonymous": false,
+            "eventSelector": "39772407c6dd2e83adbd292cdfa17a6817c9a7500e56cfe57b7a82d797f8d39b",
+            "name": "RoleCreated",
+            "nameLocation": "205:11:133",
+            "parameters": {
+              "id": 24978,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 24971,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "caller",
+                  "nameLocation": "238:6:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24979,
+                  "src": "222:22:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 24970,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "222:7:133",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 24973,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "roleId",
+                  "nameLocation": "266:6:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24979,
+                  "src": "250:22:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 24972,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "250:7:133",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 24975,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "roleName",
+                  "nameLocation": "285:8:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24979,
+                  "src": "278:15:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 24974,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "278:6:133",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 24977,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "networkId",
+                  "nameLocation": "306:9:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24979,
+                  "src": "299:16:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 24976,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "299:6:133",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "216:103:133"
+            }
+          },
+          {
+            "id": 24989,
+            "nodeType": "EventDefinition",
+            "src": "324:121:133",
+            "nodes": [],
+            "anonymous": false,
+            "eventSelector": "f3c55faf0b13ffa681c984baddbb8ef7638e514188ea19bd6461d7f87b9c7953",
+            "name": "RoleUpdated",
+            "nameLocation": "330:11:133",
+            "parameters": {
+              "id": 24988,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 24981,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "caller",
+                  "nameLocation": "363:6:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24989,
+                  "src": "347:22:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 24980,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "347:7:133",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 24983,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "roleId",
+                  "nameLocation": "391:6:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24989,
+                  "src": "375:22:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 24982,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "375:7:133",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 24985,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "roleName",
+                  "nameLocation": "410:8:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24989,
+                  "src": "403:15:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 24984,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "403:6:133",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 24987,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "networkId",
+                  "nameLocation": "431:9:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24989,
+                  "src": "424:16:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 24986,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "424:6:133",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "341:103:133"
+            }
+          },
+          {
+            "id": 24997,
+            "nodeType": "EventDefinition",
+            "src": "449:100:133",
+            "nodes": [],
+            "anonymous": false,
+            "eventSelector": "1d5667a301e36f2d5b1ee32b7f187b0adb46c706297242fa945d3fed1e7f8a19",
+            "name": "RoleRemoved",
+            "nameLocation": "455:11:133",
+            "parameters": {
+              "id": 24996,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 24991,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "caller",
+                  "nameLocation": "488:6:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24997,
+                  "src": "472:22:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 24990,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "472:7:133",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 24993,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "roleId",
+                  "nameLocation": "516:6:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24997,
+                  "src": "500:22:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 24992,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "500:7:133",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 24995,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "networkId",
+                  "nameLocation": "535:9:133",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24997,
+                  "src": "528:16:133",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 24994,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "528:6:133",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "466:82:133"
+            }
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "Events",
+        "contractDependencies": [],
+        "contractKind": "library",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          24998
+        ],
+        "name": "Events",
+        "nameLocation": "71:6:133",
+        "scope": 24999,
+        "usedErrors": [],
+        "usedEvents": [
+          24969,
+          24979,
+          24989,
+          24997
+        ]
+      }
+    ],
+    "license": "Apache-2.0"
+  },
+  "id": 133
+}

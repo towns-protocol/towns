@@ -15,3 +15,8 @@ export const PATHS = {
     PROFILE: 'profile',
     SEARCH: 'search',
 } as const
+
+export const QUERY_PARAMS = {
+    GALLERY_ID: 'galleryId',
+    GALLERY_THREAD_ID: 'galleryThreadId',
+} as const

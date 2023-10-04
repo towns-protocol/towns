@@ -8,6 +8,7 @@ import {
     useTimelineThread,
 } from 'use-zion-client'
 import { firstBy } from 'thenby'
+import { useLocation } from 'react-router'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
@@ -19,6 +20,8 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import { useThrottledValue } from 'hooks/useThrottledValue'
+import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
+import { QUERY_PARAMS } from 'routes'
 
 export const MessageThread = (props: {
     userId: string
@@ -31,6 +34,11 @@ export const MessageThread = (props: {
     const { parent, messages: unthrottledMessages } = useTimelineThread(channelId, parentId)
     const parentMessage = parent?.parentEvent
     const { isTouch } = useDevice()
+    const location = useLocation()
+    const searchParams = new URLSearchParams(location.search)
+    const galleryId = searchParams.get(QUERY_PARAMS.GALLERY_ID)
+    const galleryThreadId = searchParams.get(QUERY_PARAMS.GALLERY_THREAD_ID)
+    const showGallery = galleryThreadId === parentId || galleryId === parentId
 
     const messages = useThrottledValue(unthrottledMessages, 1000)
 
@@ -130,6 +138,7 @@ export const MessageThread = (props: {
                         </Box>
                     </Stack>
                 </Stack>
+                {showGallery && <FullScreenMedia events={messagesWithParent} threadId={parentId} />}
             </>
         </MessageTimelineWrapper>
     ) : (

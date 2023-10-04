@@ -13,12 +13,17 @@ import {
     ITownArchitect as SepoliaContract,
     ITownArchitectInterface as SepoliaInterface,
 } from '@towns/generated/sepolia/v3/typings/ITownArchitect'
+import {
+    ITownArchitect as BaseGoerliContract,
+    ITownArchitectInterface as BaseGoerliInterface,
+} from '@towns/generated/base_goerli/v3/typings/ITownArchitect'
 
 import GoerliAbi from '@towns/generated/goerli/v3/abis/TownArchitect.abi.json' assert { type: 'json' }
 
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/TownArchitect.abi.json' assert { type: 'json' }
 
 import SepoliaAbi from '@towns/generated/sepolia/v3/abis/TownArchitect.abi.json' assert { type: 'json' }
+import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TownArchitect.abi.json' assert { type: 'json' }
 
 import { BaseContractShimV3 } from './BaseContractShimV3'
 import { ethers } from 'ethers'
@@ -31,13 +36,16 @@ export class ITownArchitectShim extends BaseContractShimV3<
     GoerliContract,
     GoerliInterface,
     SepoliaContract,
-    SepoliaInterface
+    SepoliaInterface,
+    BaseGoerliContract,
+    BaseGoerliInterface
 > {
     constructor(address: string, chainId: number, provider: ethers.providers.Provider | undefined) {
         super(address, chainId, provider, {
             localhostAbi: LocalhostAbi,
             goerliAbi: GoerliAbi,
             sepoliaAbi: SepoliaAbi,
+            baseGoerliAbi: BaseGoerliAbi,
         })
     }
 }

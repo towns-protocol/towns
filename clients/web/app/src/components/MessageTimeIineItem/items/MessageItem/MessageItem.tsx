@@ -1,5 +1,6 @@
-import React, { useContext, useRef, useState } from 'react'
+import React, { useCallback, useContext, useRef, useState } from 'react'
 import { MessageType, ThreadStats, TimelineEvent, ZTEvent } from 'use-zion-client'
+import { useNavigate } from 'react-router'
 import {
     MessageLayout,
     MessageLayoutProps,
@@ -12,6 +13,7 @@ import { TooltipRenderer } from '@ui'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { ChunkedMedia } from '@components/ChunkedMedia/ChunkedMedia'
 import { EmbeddedMedia } from '@components/EmbeddedMedia/EmbeddedMedia'
+import { QUERY_PARAMS } from 'routes'
 import {
     MessageTimelineContext,
     MessageTimelineType,
@@ -39,8 +41,23 @@ export const MessageItem = (props: Props) => {
     const { isTouch } = useDevice()
     const messageTooltipRef = useRef<HTMLElement | null>(null)
     const [hoveredMentionUserId, setHoveredMentionUserId] = useState<string | undefined>(undefined)
-
+    const navigate = useNavigate()
     const timelineContext = useContext(MessageTimelineContext)
+
+    const onMediaClick = useCallback(
+        (e: React.MouseEvent<HTMLElement>) => {
+            e.stopPropagation()
+            e.preventDefault()
+            if (!event.threadParentId || event.threadParentId.length === 0) {
+                navigate(`./?${QUERY_PARAMS.GALLERY_ID}=${event.eventId}`)
+                return
+            }
+            return navigate(
+                `./?${QUERY_PARAMS.GALLERY_ID}=${event.eventId}&${QUERY_PARAMS.GALLERY_THREAD_ID}=${event.threadParentId}`,
+            )
+        },
+        [navigate, event.eventId, event.threadParentId],
+    )
 
     if (!timelineContext) {
         return <></>
@@ -119,6 +136,7 @@ export const MessageItem = (props: Props) => {
                             url={event.content.content.info.url}
                             width={event.content.content.thumbnail?.width}
                             height={event.content.content.thumbnail?.height}
+                            onClick={onMediaClick}
                         />
                     ) : (
                         // render pre-beta image format
@@ -128,6 +146,7 @@ export const MessageItem = (props: Props) => {
                             url={event.content.content.url}
                             width={event.content.content.info?.thumbnail_info?.w}
                             height={event.content.content.info?.thumbnail_info?.h}
+                            onClick={onMediaClick}
                         />
                     )
                 ) : event.content.msgType === MessageType.EmbeddedMedia ? (
@@ -136,6 +155,7 @@ export const MessageItem = (props: Props) => {
                         width={event.content.content.widthPixels}
                         height={event.content.content.heightPixels}
                         content={event.content.content.content}
+                        onClick={onMediaClick}
                     />
                 ) : event.content.msgType === MessageType.ChunkedMedia ? (
                     <ChunkedMedia
@@ -146,6 +166,7 @@ export const MessageItem = (props: Props) => {
                         iv={event.content.content.iv}
                         secretKey={event.content.content.secretKey}
                         thumbnail={event.content.content.thumbnail}
+                        onClick={onMediaClick}
                     />
                 ) : (
                     <>

@@ -79,6 +79,17 @@ const ArrowDownActive = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => 
     </svg>
 ))
 
+export const ArrowLeft = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M15.7071 5.29289C15.3166 4.90237 14.6834 4.90237 14.2929 5.29289L8.46447 11.1213C8.07394 11.5118 8.07394 12.145 8.46447 12.5355L14.2929 18.364C14.6834 18.7545 15.3166 18.7545 15.7071 18.364C16.0976 17.9734 16.0976 17.3403 15.7071 16.9497L10.5858 11.8284L15.7071 6.70711C16.0976 6.31658 16.0976 5.68342 15.7071 5.29289Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const ArrowRight = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -518,6 +529,23 @@ export const LogoutIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) =
             fillRule="evenodd"
             clipRule="evenodd"
             d="M8 20C8 19.4477 7.55228 19 7 19L5 19C4.44772 19 4 18.5523 4 18L4 6C4 5.44772 4.44772 5 5 5L7 5C7.55229 5 8 4.55228 8 4C8 3.44772 7.55229 3 7 3L5 3C3.34315 3 2 4.34315 2 6L2 18C2 19.6569 3.34315 21 5 21L7 21C7.55228 21 8 20.5523 8 20Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
+export const MaximizeIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M3 6C3 4.34315 4.34315 3 6 3H12C12.5523 3 13 3.44772 13 4C13 4.55228 12.5523 5 12 5H6C5.44772 5 5 5.44772 5 6V12C5 12.5523 4.55228 13 4 13C3.44772 13 3 12.5523 3 12V6Z"
+            fill="currentColor"
+        />
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M21 18C21 19.6569 19.6569 21 18 21L11 21C10.4477 21 10 20.5523 10 20C10 19.4477 10.4477 19 11 19L18 19C18.5523 19 19 18.5523 19 18L19 12C19 11.4477 19.4477 11 20 11C20.5523 11 21 11.4477 21 12L21 18Z"
             fill="currentColor"
         />
     </svg>
@@ -1253,6 +1281,7 @@ const iconMap = {
     all: AllIcon,
     arrowDown: ArrowDown,
     arrowDownActive: ArrowDownActive,
+    arrowLeft: ArrowLeft,
     arrowRight: ArrowRight,
     at: AtIcon,
     back: BackIcon,
@@ -1292,6 +1321,7 @@ const iconMap = {
     metamask: MetamaskIcon,
     more: MoreIcon,
     newmessage: NewMessageIcon,
+    maximize: MaximizeIcon,
     muteActive: MuteActiveIcon,
     muteInactive: MuteInactiveIcon,
     nokey: NoKeyIcon,

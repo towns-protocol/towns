@@ -1,0 +1,929 @@
+{
+  "compiler": {
+    "version": "0.8.20+commit.a1b79de6"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [],
+        "name": "AddressNotFound",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementNotFound",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "QuantityNotFound",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "RoleAlreadyExists",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "previousAdmin",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "newAdmin",
+            "type": "address"
+          }
+        ],
+        "name": "AdminChanged",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "beacon",
+            "type": "address"
+          }
+        ],
+        "name": "BeaconUpgraded",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "uint8",
+            "name": "version",
+            "type": "uint8"
+          }
+        ],
+        "name": "Initialized",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          }
+        ],
+        "name": "Upgraded",
+        "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "SPACE_ADDRESS",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "TOKEN_ADDRESS",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "TOKEN_ID",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "addRoleIdToChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "allEntitlementIds",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "description",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "contractAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "quantity",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bool",
+                "name": "isSingleToken",
+                "type": "bool"
+              },
+              {
+                "internalType": "uint256[]",
+                "name": "tokenIds",
+                "type": "uint256[]"
+              }
+            ],
+            "internalType": "struct DataTypes.ExternalToken[]",
+            "name": "tokens",
+            "type": "tuple[]"
+          }
+        ],
+        "name": "encodeExternalTokens",
+        "outputs": [],
+        "stateMutability": "pure",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "entitlementIdsByRoleId",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "name": "entitlementsById",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "grantedBy",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "grantedTime",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getEntitlementDataByRoleId",
+        "outputs": [
+          {
+            "internalType": "bytes[]",
+            "name": "",
+            "type": "bytes[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          }
+        ],
+        "name": "getRoleIdsByChannelId",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          }
+        ],
+        "name": "getUserRoles",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "roleId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Role[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_tokenAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "initialize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "permission",
+            "type": "bytes32"
+          }
+        ],
+        "name": "isEntitled",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "moduleType",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "name",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "proxiableUUID",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "entitlementData",
+            "type": "bytes"
+          }
+        ],
+        "name": "removeEntitlement",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "entitlementId",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "removeRoleIdFromChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "roleIdsByChannelId",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "entitlementData",
+            "type": "bytes"
+          }
+        ],
+        "name": "setEntitlement",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "entitlementId",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_space",
+            "type": "address"
+          }
+        ],
+        "name": "setSpace",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "name": "supportsInterface",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newImplementation",
+            "type": "address"
+          }
+        ],
+        "name": "upgradeTo",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newImplementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeToAndCall",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "events": {
+        "AdminChanged(address,address)": {
+          "details": "Emitted when the admin account has changed."
+        },
+        "BeaconUpgraded(address)": {
+          "details": "Emitted when the beacon is upgraded."
+        },
+        "Initialized(uint8)": {
+          "details": "Triggered when the contract has been initialized or reinitialized."
+        },
+        "Upgraded(address)": {
+          "details": "Emitted when the implementation is upgraded."
+        }
+      },
+      "kind": "dev",
+      "methods": {
+        "addRoleIdToChannel(string,uint256)": {
+          "params": {
+            "channelId": "id of the channel to add the role to",
+            "roleId": "id of the role to add"
+          }
+        },
+        "constructor": {
+          "custom:oz-upgrades-unsafe-allow": "constructor"
+        },
+        "getEntitlementDataByRoleId(uint256)": {
+          "params": {
+            "roleId": "the roleId to fetch the entitlement data for"
+          },
+          "returns": {
+            "_0": "entitlementData array for the role"
+          }
+        },
+        "getRoleIdsByChannelId(string)": {
+          "params": {
+            "channelId": "the channel to fetch the roleIds for"
+          },
+          "returns": {
+            "_0": "roleIds array of all the roleIds for the channel"
+          }
+        },
+        "getUserRoles(address)": {
+          "params": {
+            "user": "the user to fetch the roles for"
+          },
+          "returns": {
+            "_0": "roles array of all the roles for the user"
+          }
+        },
+        "isEntitled(string,address,bytes32)": {
+          "params": {
+            "channelId": "id of the channel to check, if empty string, checks space",
+            "permission": "the permission to check",
+            "user": "address of the user to check"
+          },
+          "returns": {
+            "_0": "whether the user is entitled to the permission"
+          }
+        },
+        "proxiableUUID()": {
+          "details": "Implementation of the ERC1822 {proxiableUUID} function. This returns the storage slot used by the implementation. It is used to validate the implementation's compatibility when performing an upgrade. IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this function revert if invoked through a proxy. This is guaranteed by the `notDelegated` modifier."
+        },
+        "removeEntitlement(uint256,bytes)": {
+          "params": {
+            "entitlementData": "abi encoded array of the data associated with that entitlement",
+            "roleId": "id of the role to remove"
+          },
+          "returns": {
+            "entitlementId": "the id that was removed"
+          }
+        },
+        "removeRoleIdFromChannel(string,uint256)": {
+          "params": {
+            "channelId": "id of the channel to remove the role from",
+            "roleId": "id of the role to remove"
+          }
+        },
+        "setEntitlement(uint256,bytes)": {
+          "params": {
+            "entitlementData": "abi encoded array of data necessary to set the entitlement",
+            "roleId": "id of the role to gate"
+          },
+          "returns": {
+            "entitlementId": "the id that was set"
+          }
+        },
+        "setSpace(address)": {
+          "params": {
+            "_space": "address of the space"
+          }
+        },
+        "supportsInterface(bytes4)": {
+          "details": "See {IERC165-supportsInterface}."
+        },
+        "upgradeTo(address)": {
+          "details": "Upgrade the implementation of the proxy to `newImplementation`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
+        },
+        "upgradeToAndCall(address,bytes)": {
+          "details": "Upgrade the implementation of the proxy to `newImplementation`, and subsequently execute the function call encoded in `data`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
+        }
+      },
+      "stateVariables": {
+        "__gap": {
+          "details": "Added to allow future versions to add new variables in case this contract becomes      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps"
+        }
+      },
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {
+        "addRoleIdToChannel(string,uint256)": {
+          "notice": "adds a role to a channel"
+        },
+        "allEntitlementIds(uint256)": {
+          "notice": "array of all the entitlementIds"
+        },
+        "description()": {
+          "notice": "The description of the entitlement module"
+        },
+        "entitlementIdsByRoleId(uint256,uint256)": {
+          "notice": "mapping of all the entitlements for a given roleId"
+        },
+        "entitlementsById(bytes32)": {
+          "notice": "mapping holding all the entitlements of entitlementId to Entitlement"
+        },
+        "getEntitlementDataByRoleId(uint256)": {
+          "notice": "fetches the entitlement data for a roleId"
+        },
+        "getRoleIdsByChannelId(string)": {
+          "notice": "fetches the roleIds for a given channel"
+        },
+        "getUserRoles(address)": {
+          "notice": "fetches the roles for a given user in the space"
+        },
+        "isEntitled(string,address,bytes32)": {
+          "notice": "checks whether a user is has a given permission for a channel or a space"
+        },
+        "moduleType()": {
+          "notice": "The type of the entitlement module"
+        },
+        "name()": {
+          "notice": "The name of the entitlement module"
+        },
+        "removeEntitlement(uint256,bytes)": {
+          "notice": "removes an entitlement"
+        },
+        "removeRoleIdFromChannel(string,uint256)": {
+          "notice": "removes a role from a channel"
+        },
+        "roleIdsByChannelId(bytes32,uint256)": {
+          "notice": "mapping of all the roles for a given channelId"
+        },
+        "setEntitlement(uint256,bytes)": {
+          "notice": "sets a new entitlement"
+        },
+        "setSpace(address)": {
+          "notice": "sets the address for the space that controls this entitlement"
+        }
+      },
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/spaces/entitlements/TokenEntitlement.sol": "TokenEntitlement"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/test/=lib/prb-test/src/",
+      ":ERC721A/=lib/ERC721A/contracts/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-test/=lib/prb-test/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/spaces/entitlements/TokenEntitlement.sol": {
+      "keccak256": "0x3a87578901e1669867fafb128f1cffb57eb3f11e9a7413bded550f9cbc383e36",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c7ffbdb20a2883cd84d6b96721acecf6ccd0caa8d3b5a62c95aa1e6549ec4009",
+        "dweb:/ipfs/QmdtwuKPTgaC47c5fo5RKYrNCURtWWVxkc7tgW1rF9sKZZ"
+      ]
+    },
+    "contracts/src/spaces/interfaces/IEntitlement.sol": {
+      "keccak256": "0xd117eda6a43363b673a45755af9d7670fca134aa6fc4cb8f4c12e03d55e4fbf3",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://a58ad45677f42ce7ab8ebf687f59ad7dce4c0986a9904d23b6b639955aaaa900",
+        "dweb:/ipfs/QmZNosFfF6x2AM2hWwgoWL1NfM1mJTajkT6gc9wb76U4Dz"
+      ]
+    },
+    "contracts/src/spaces/interfaces/ISpace.sol": {
+      "keccak256": "0xe2bc4de0bc95702a13d258b28db02b33f5c42021be14356956fcf7e6e360801b",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://5850f8f96a04bf479a6c56c514375b9cac166ce9aa2b200d8db95921c38478d4",
+        "dweb:/ipfs/QmR6jf1P26ZtZJHDae3kzZnFukFnx9W2wTT84LkRSoT9FN"
+      ]
+    },
+    "contracts/src/spaces/libraries/DataTypes.sol": {
+      "keccak256": "0x9a6a567062168b76d863eb72f73019323b8298493fd17df28553801dbbbc3ff3",
+      "license": "Apache-20",
+      "urls": [
+        "bzz-raw://ccf7817629f02e35dc00593d05ce6318755d962c0790b20cb6da53c248fec93f",
+        "dweb:/ipfs/QmddwD9Q4FKNPeKG9jXsFAgLjJUWuiZmBQDobT3vSK7wyy"
+      ]
+    },
+    "contracts/src/spaces/libraries/Errors.sol": {
+      "keccak256": "0xb0a9a538c142afb52002a9ed67fe15f71263406b905ab854f58d0c4bbb168f79",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://f9a27883f35eee16c86c768b5084a1552058f996f72457e7ef624a20e731f4f7",
+        "dweb:/ipfs/QmWNJYmVeNmsbq8Q6DAfa5ciBzXg61ARKteprhxFsAF289"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/interfaces/draft-IERC1822Upgradeable.sol": {
+      "keccak256": "0x77c89f893e403efc6929ba842b7ccf6534d4ffe03afe31670b4a528c0ad78c0f",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://496bd9b3df2455d571018c09f0c6badd29713fdeb907c6aa09d8d28cb603f053",
+        "dweb:/ipfs/QmXdJDyYs6WMwMh21dez2BYPxhSUaUYFMDtVNcn2cgFR79"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol": {
+      "keccak256": "0x315887e846f1e5f8d8fa535a229d318bb9290aaa69485117f1ee8a9a6b3be823",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://29dda00da6d269685b555e710e4abf1c3eb6d00c15b888a7880a2f8dd3c4fdc2",
+        "dweb:/ipfs/QmSqcjtdECygtT1Gy7uEo42x8542srpgGEeKKHfcnQqXgn"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/proxy/beacon/IBeaconUpgradeable.sol": {
+      "keccak256": "0x24b86ac8c005b8c654fbf6ac34a5a4f61580d7273541e83e013e89d66fbf0908",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://4dbfe1a3b3b3fb64294ce41fd2ad362e7b7012208117864f42c1a67620a6d5c1",
+        "dweb:/ipfs/QmVMU5tWt7zBQMmf5cpMX8UMHV86T3kFeTxBTBjFqVWfoJ"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol": {
+      "keccak256": "0x037c334add4b033ad3493038c25be1682d78c00992e1acb0e2795caff3925271",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://8a313cf42389440e2706837c91370323b85971c06afd6d056d21e2bc86459618",
+        "dweb:/ipfs/QmT8XUrUvQ9aZaPKrqgRU2JVGWnaxBcUYJA7Q7K5KcLBSZ"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol": {
+      "keccak256": "0x7967d130887c4b40666cd88f8744691d4527039a1b2a38aa0de41481ef646778",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://40e60cbf0e2efede4d9c169e66336a64615af7b719a896ef1f37ae8cd4614ec1",
+        "dweb:/ipfs/QmYNiwY22ifhfa8yK6mLCEKfj39caYUHLqe2VBtzDnvdsV"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/AddressUpgradeable.sol": {
+      "keccak256": "0x2edcb41c121abc510932e8d83ff8b82cf9cdde35e7c297622f5c29ef0af25183",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://72460c66cd1c3b1c11b863e0d8df0a1c56f37743019e468dc312c754f43e3b06",
+        "dweb:/ipfs/QmPExYKiNb9PUsgktQBupPaM33kzDHxaYoVeJdLhv8s879"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol": {
+      "keccak256": "0x963ea7f0b48b032eef72fe3a7582edf78408d6f834115b9feadd673a4d5bd149",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d6520943ea55fdf5f0bafb39ed909f64de17051bc954ff3e88c9e5621412c79c",
+        "dweb:/ipfs/QmWZ4rAKTQbNG2HxGs46AcTXShsVytKeLs7CUCdCSv5N7a"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/StorageSlotUpgradeable.sol": {
+      "keccak256": "0x09864aea84f01e39313375b5610c73a3c1c68abbdc51e5ccdd25ff977fdadf9a",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://aedb48081190fa828d243529ce25c708202c7d4ccfe99f0e4ecd6bc0cfcd03f3",
+        "dweb:/ipfs/QmWyiDQHPZA56iqsAwTmiJoxvNeRQLUVr4gTfzpdpXivpo"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/introspection/ERC165Upgradeable.sol": {
+      "keccak256": "0x9a3b990bd56d139df3e454a9edf1c64668530b5a77fc32eb063bc206f958274a",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://0895399d170daab2d69b4c43a0202e5a07f2e67a93b26e3354dcbedb062232f7",
+        "dweb:/ipfs/QmUM1VH3XDk559Dsgh4QPvupr3YVKjz87HrSyYzzVFZbxw"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/introspection/IERC165Upgradeable.sol": {
+      "keccak256": "0xc6cef87559d0aeffdf0a99803de655938a7779ec0a3cd5d4383483ad85565a09",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://92ad7e572cf44e6b4b37631b44b62f9eb9fb1cf14d9ce51c1504d5dc7ccaf758",
+        "dweb:/ipfs/QmcnbqX85tsWnUXPmtuPLE4SczME2sJaTfmqEFkuAJvWhy"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol": {
+      "keccak256": "0x6392f2cfe3a5ee802227fe7a2dfd47096d881aec89bddd214b35c5b46d3cd941",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://bd9c47a375639888e726a99da718890ba16d17d7ad9eacb0ccc892d46d1b3ee0",
+        "dweb:/ipfs/Qmb41W5RUjy2sWg49A2rMnxekSeEk6SvGyJL5tyCCSr7un"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": {
+      "keccak256": "0x9750c6b834f7b43000631af5cc30001c5f547b3ceb3635488f140f60e897ea6b",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://5a7d5b1ef5d8d5889ad2ed89d8619c09383b80b72ab226e0fe7bde1636481e34",
+        "dweb:/ipfs/QmebXWgtEfumQGBdVeM6c71McLixYXQP5Bk6kKXuoY4Bmr"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+      "keccak256": "0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56",
+        "dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+      "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+        "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+      ]
+    }
+  },
+  "version": 1
+}

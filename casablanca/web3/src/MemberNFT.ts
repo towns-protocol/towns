@@ -9,7 +9,8 @@ export interface MemberNFTContractState {
     contractAddress: string
     owner: string
 }
-
+// jterzis note 10/2023: Member.sol contract has been deprecated and so this class is no longer used
+// in new network environments.
 export class MemberNFT {
     private readonly contractsInfo: IStaticContractsInfoV3
     public readonly memberNFTShim: MemberNFTShim
@@ -19,7 +20,7 @@ export class MemberNFT {
         this.signer = signer
         this.contractsInfo = getContractsInfoV3(chainId)
         this.memberNFTShim = new MemberNFTShim(
-            this.contractsInfo.memberTokenAddress,
+            this.contractsInfo.memberTokenAddress ?? '',
             chainId,
             provider,
         )

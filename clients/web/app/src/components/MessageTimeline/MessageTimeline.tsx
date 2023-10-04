@@ -91,6 +91,13 @@ export const MessageTimeline = (props: Props) => {
 
     const fullyReadPersisted = fullyPersistedRef.current
 
+    useEffect(() => {
+        if (fullyReadPersisted) {
+            // ensure a receipt can be sent if the fully-read marker gets replaced
+            isSentRef.current = false
+        }
+    }, [fullyReadPersisted])
+
     const isSentRef = useRef(fullyReadMarker && !fullyReadMarker.isUnread)
     const { sendReadReceipt } = useZionClient()
     const onMarkAsRead = useCallback(

@@ -158,7 +158,7 @@ export async function createTestSpaceGatedByTownAndZionNfts(
     }
 
     const memberNftAddress = getMemberNftAddress(client.chainId)
-    const tokens = createExternalTokenStruct([memberNftAddress])
+    const tokens = createExternalTokenStruct([memberNftAddress ?? ''])
 
     const membershipInfo: ITownArchitectBase.MembershipStruct = {
         name: 'Member',

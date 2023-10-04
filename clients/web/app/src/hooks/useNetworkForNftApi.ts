@@ -13,17 +13,24 @@ export const hasGoerliParam = () => {
     return hasQueryParam('goerli')
 }
 
+export const hasBaseGoerliParam = () => {
+    return hasQueryParam('base_goerli')
+}
+
 export const fetchVitalikTokens = env.DEV && hasVitalkTokensParam()
 export const fetchGoerli = env.DEV && hasGoerliParam()
+export const fetchBaseGoerli = env.DEV && hasBaseGoerliParam()
 export const vitalikAddress = '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
 const GOERLI = 'eth-goerli'
 const MAINNET = 'eth-mainnet'
 const SEPOLIA = 'eth-sepolia'
+const BASE_GOERLI = 'eth-base-goerli'
 
 const NETWORK_NAME_MAP: Record<number, string | undefined> = {
     5: GOERLI,
     1: MAINNET,
     11155111: SEPOLIA,
+    84531: BASE_GOERLI,
     31337: undefined,
 }
 
@@ -36,6 +43,10 @@ export const useNetworkForNftApi = () => {
         // fetch vitalik's tokens so we can see how a ton of tokens looks in the UI
         if (fetchVitalikTokens) {
             return MAINNET
+        }
+
+        if (fetchBaseGoerli) {
+            return BASE_GOERLI
         }
         // fetch tokens from goerli - useful if you are pointing to local homeserver but want to grab your tokens from goerli
         if (fetchGoerli) {

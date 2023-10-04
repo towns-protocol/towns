@@ -1,0 +1,51 @@
+[
+  {
+    "inputs": [],
+    "name": "EntitlementGated_InvalidAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EntitlementGated_NodeAlreadyVoted",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EntitlementGated_NodeNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EntitlementGated_TransactionAlreadyCompleted",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EntitlementGated_TransactionAlreadyRegistered",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EntitlementGated_TransactionNotRegistered",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "transactionId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum IEntitlementGatedBase.NodeVoteStatus",
+        "name": "result",
+        "type": "uint8"
+      }
+    ],
+    "name": "EntitlementCheckResultPosted",
+    "type": "event"
+  }
+]

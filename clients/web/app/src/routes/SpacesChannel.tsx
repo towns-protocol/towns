@@ -1,6 +1,6 @@
 import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useInView } from 'react-intersection-observer'
-import { Outlet, useParams } from 'react-router'
+import { Outlet, useLocation, useParams } from 'react-router'
 import {
     ChannelContextProvider,
     Membership,
@@ -29,6 +29,8 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useAuth } from 'hooks/useAuth'
 import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
+import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
+import { QUERY_PARAMS } from 'routes'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 type Props = {
@@ -67,7 +69,10 @@ const SpacesChannelComponent = (props: Props) => {
     const { spaceId, channelId, channel } = useChannelData()
 
     const isChannelEncrypted = channel !== undefined
-
+    const location = useLocation()
+    const searchParams = new URLSearchParams(location.search)
+    const galleryId = searchParams.get(QUERY_PARAMS.GALLERY_ID)
+    const galleryThreadId = searchParams.get(QUERY_PARAMS.GALLERY_THREAD_ID)
     const myMembership = useMyMembership(channelId)
 
     const { timeline: channelMessages } = useChannelTimeline()
@@ -244,6 +249,10 @@ const SpacesChannelComponent = (props: Props) => {
                         />
                     </Box>
                 </MediaDropContextProvider>
+            )}
+
+            {galleryId && (
+                <FullScreenMedia events={channelMessages} threadId={galleryThreadId ?? undefined} />
             )}
         </CentralPanelLayout>
     )
