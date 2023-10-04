@@ -114,6 +114,8 @@ export const blockProperties = defineProperties({
             'sw-resize',
             'nesw-resize',
             'nwse-resize',
+            'zoom-in',
+            'zoom-out',
         ],
     },
     shorthands: {

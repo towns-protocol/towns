@@ -3,7 +3,8 @@ import { assignInlineVars } from '@vanilla-extract/dynamic'
 import { Box, IconButton } from '@ui'
 import { vars } from 'ui/styles/vars.css'
 import { useRestrictedImageDimensions } from 'ui/hooks/useRestrictedImageDimensions'
-import { buttonStyle, containerStyle } from './RatioedBackgroundImage.css'
+import { useDevice } from 'hooks/useDevice'
+import { containerStyle } from './RatioedBackgroundImage.css'
 
 // shrinks image dimensions if too large for container
 
@@ -11,20 +12,18 @@ export const RatioedBackgroundImage = ({
     url,
     width,
     height,
-    withLinkOut = false,
+    onClick,
 }: {
     url: string
     width?: number
     height?: number
     withLinkOut?: boolean
+    onClick?: (event: React.MouseEvent<HTMLElement>) => void
 }) => {
     const MAX_WIDTH = 500
     const MAX_HEIGHT = 400
     const ref = useRef<HTMLDivElement>(null)
-
-    const onClick = () => {
-        window.open(url, '_blank', 'noopener,noreferrer')
-    }
+    const { isTouch } = useDevice()
 
     const { width: calculatedWidth, height: calculatedHeight } = useRestrictedImageDimensions({
         maxWidth: ref?.current?.offsetWidth || MAX_WIDTH,
@@ -52,15 +51,14 @@ export const RatioedBackgroundImage = ({
                     backgroundSize: 'contain',
                     backgroundRepeat: 'no-repeat',
                 })}
+                onClick={isTouch ? undefined : onClick}
             >
-                {withLinkOut && (
+                {isTouch && (
                     <IconButton
                         opaque
-                        icon="linkOut"
-                        className={buttonStyle}
-                        size="square_xs"
+                        icon="maximize"
                         position="absolute"
-                        top="sm"
+                        bottom="sm"
                         right="sm"
                         onClick={onClick}
                     />
