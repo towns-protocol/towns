@@ -59,6 +59,7 @@ export { useTimelineThread } from './hooks/use-timeline-thread'
 export { useTimelineThreadStats } from './hooks/use-timeline-thread-stats'
 export { useUpdateChannelTransaction } from './hooks/use-update-channel-transaction'
 export { useUpdateRoleTransaction } from './hooks/use-update-role-transaction'
+export { useUpdateSpaceNameTransaction } from './hooks/use-update-space-name-transaction'
 export { useUser } from './hooks/use-user'
 export { useZionClient } from './hooks/use-zion-client'
 
