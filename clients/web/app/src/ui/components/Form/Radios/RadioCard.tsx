@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import React from 'react'
-import { Controller, UseFormReturn } from 'react-hook-form'
+import { Controller, FieldValues, Path, UseFormReturn } from 'react-hook-form'
 import { Stack } from '../../Stack/Stack'
 import { Paragraph } from '../../Text/Paragraph'
 import { MotionBox, MotionStack } from '../../Motion/MotionComponents'
@@ -8,7 +8,7 @@ import * as fieldStyles from '../../_internal/Field/Field.css'
 import { FieldOutline } from '../../_internal/Field/FieldOutline/FieldOutline'
 import * as style from './RadioSelect/RadioSelect.css'
 
-type Props = {
+type Props<T extends FieldValues> = {
     value: string
     title: string
     description: string
@@ -16,9 +16,9 @@ type Props = {
     children?: () => React.ReactNode
     name: string
     onClick?: () => void
-} & Partial<UseFormReturn>
+} & Partial<UseFormReturn<T>>
 
-export const RadioCard = (props: Props) => {
+export const RadioCard = <T extends FieldValues>(props: Props<T>) => {
     const { title, description, children, onClick, name, control } = props
 
     return (
@@ -46,7 +46,7 @@ export const RadioCard = (props: Props) => {
                     </Paragraph>
                 </Stack>
                 <Controller
-                    name={name}
+                    name={name as Path<T>}
                     control={control}
                     render={({ field }) => {
                         return (

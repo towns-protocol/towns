@@ -1,10 +1,24 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import React, { ReactNode, useCallback, useRef, useState } from 'react'
+import { FormProvider, UseFormReturn, useFormContext } from 'react-hook-form'
 import { useMyProfile } from 'use-zion-client'
-import { Box, FormRender, Grid, IconButton, MotionBox, Stack, Text, TextField } from '@ui'
+import { ethers } from 'ethers'
+import { useNavigate } from 'react-router'
+import {
+    Box,
+    Button,
+    ErrorMessage,
+    FormRender,
+    Grid,
+    Icon,
+    IconButton,
+    MotionBox,
+    MotionStack,
+    Stack,
+    Text,
+    TextField,
+} from '@ui'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
-import { TEMPORARY_SPACE_ICON_URL } from '@components/Web3/CreateSpaceForm/constants'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { UploadImageRequestConfig } from 'api/lib/uploadImage'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
@@ -12,17 +26,23 @@ import { TextArea } from 'ui/components/TextArea/TextArea'
 import { useAuth } from 'hooks/useAuth'
 import { AvatarTextHorizontal } from 'ui/components/Avatar/AvatarTextHorizontal'
 import { shortAddress } from 'ui/utils/utils'
+import { FadeInBox } from '@components/Transitions'
+import { TEMPORARY_SPACE_ICON_URL } from '@components/Web3/CreateSpaceForm/constants'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
+import { PanelType, TransactionDetails } from './types'
+import { PanelContent } from './PanelContents'
+import { CreateTownSubmit } from './CreateTownSubmit'
 
 export function CreateSpaceFormV2() {
-    const nameRef = useRef<HTMLInputElement>(null)
     const { loggedInWalletAddress } = useAuth()
     const displayName = shortAddress(useMyProfile()?.displayName ?? '')
-
-    useEffect(() => {
-        nameRef.current?.focus()
-    }, [])
+    const hasReached2Chars = useRef(false)
+    const navigate = useNavigate()
+    const [transactionDetails, setTransactionDetails] = useState<TransactionDetails>({
+        isTransacting: false,
+        townAddress: undefined,
+    })
 
     const members = [
         {
@@ -34,90 +54,221 @@ export function CreateSpaceFormV2() {
         })),
     ]
 
+    const [panelType, setPanelType] = useState<PanelType | undefined>()
+
     return (
-        <Stack horizontal grow borderTop position="relative">
-            <Stack grow centerContent>
-                <FormRender id="CreateSpaceFormV2" schema={schema} mode="onChange" display="block">
-                    {({ register, formState, setError, clearErrors }) => {
-                        return (
-                            <Stack>
-                                <div>
-                                    <BackgroundImageUpdater />
-                                </div>
-                                <TextField
-                                    paddingY="md"
-                                    ref={nameRef}
-                                    style={{
-                                        fontFamily: 'TitleFont',
-                                        textTransform: 'uppercase',
-                                    }}
-                                    fontSize="h1"
-                                    placeholder="town name"
-                                    tone="none"
-                                    maxWidth="500"
-                                />
-                                <Box alignItems="start" paddingLeft="md" gap="sm">
-                                    <FormFieldEdit label="By">
-                                        <>
-                                            {loggedInWalletAddress && (
-                                                <AvatarTextHorizontal
-                                                    address={loggedInWalletAddress}
-                                                    name={displayName ?? ''}
+        <Stack horizontal absoluteFill>
+            <Stack position="absolute" top="xs" left="xs" zIndex="above">
+                <Button
+                    tone="none"
+                    color="default"
+                    disabled={transactionDetails.isTransacting}
+                    onClick={() => navigate('/')}
+                >
+                    <Icon type="back" /> Back
+                </Button>
+            </Stack>
+            <FormRender
+                absoluteFill
+                horizontal
+                id="CreateSpaceFormV2"
+                schema={schema}
+                defaultValues={{
+                    membershipType: 'everyone',
+                    membershipLimit: 1000,
+                    membershipCost: 0,
+                    spaceName: null,
+                    tokensGatingMembership: [],
+                    spaceIconUrl: null,
+                    // TODO: currency defaults to ETH when addressZero
+                    membershipCurrency: ethers.constants.AddressZero,
+                }}
+                mode="all"
+            >
+                {(hookForm) => {
+                    const _form = hookForm as unknown as UseFormReturn<CreateSpaceFormV2SchemaType>
+
+                    const [spaceNameValue, price, limit] = _form.watch([
+                        'spaceName',
+                        'membershipCost',
+                        'membershipLimit',
+                    ])
+
+                    if (spaceNameValue && !hasReached2Chars.current && spaceNameValue.length > 1) {
+                        hasReached2Chars.current = true
+                    }
+
+                    const showSpaceNameError = () => {
+                        const spaceNameError = _form.formState.errors['spaceName']
+                        if (spaceNameError?.type !== 'too_small') {
+                            return true
+                        }
+                        // only show the too_small error if the user has typed more than 2 characters
+                        return hasReached2Chars.current
+                    }
+
+                    return (
+                        <FormProvider {..._form}>
+                            <Stack grow>
+                                {/* columns */}
+                                <Stack grow centerContent paddingX="lg" width="100%">
+                                    <Stack
+                                        horizontal
+                                        position="relative"
+                                        width="100%"
+                                        maxWidth="1200"
+                                    >
+                                        {/* form col */}
+                                        <Stack grow>
+                                            <Stack>
+                                                <Stack display="block">
+                                                    <BackgroundImageUpdater
+                                                        transactionDetails={transactionDetails}
+                                                    />
+                                                </Stack>
+                                                <Stack paddingY="x4" gap="sm">
+                                                    <TextField
+                                                        paddingY="none"
+                                                        paddingX="none"
+                                                        style={{
+                                                            fontFamily: 'TitleFont',
+                                                            textTransform: 'uppercase',
+                                                        }}
+                                                        fontSize="h1"
+                                                        placeholder="town name"
+                                                        maxWidth="500"
+                                                        tone="none"
+                                                        {..._form.register('spaceName')}
+                                                    />
+                                                    {_form.formState.errors['spaceName'] &&
+                                                        showSpaceNameError() && (
+                                                            <FadeInBox key="spaceNameError">
+                                                                <ErrorMessage
+                                                                    errors={_form.formState.errors}
+                                                                    fieldName="spaceName"
+                                                                />
+                                                            </FadeInBox>
+                                                        )}
+                                                </Stack>
+
+                                                <Box alignItems="start" gap="md">
+                                                    <FormFieldEdit label="By">
+                                                        <>
+                                                            {loggedInWalletAddress && (
+                                                                <AvatarTextHorizontal
+                                                                    address={loggedInWalletAddress}
+                                                                    name={displayName ?? ''}
+                                                                />
+                                                            )}
+                                                        </>
+                                                    </FormFieldEdit>
+
+                                                    <FormFieldEdit
+                                                        label="For"
+                                                        onClick={() =>
+                                                            setPanelType(PanelType.gating)
+                                                        }
+                                                    >
+                                                        <>
+                                                            <Text strong size="lg">
+                                                                Anyone
+                                                            </Text>
+                                                        </>
+                                                    </FormFieldEdit>
+
+                                                    <FormFieldEdit
+                                                        label="Membership"
+                                                        onClick={() =>
+                                                            setPanelType(PanelType.pricing)
+                                                        }
+                                                    >
+                                                        <>
+                                                            <Text strong size="lg">
+                                                                {isNaN(limit) ? '--' : limit} *{' '}
+                                                                {isNaN(price) ? '--' : price}
+                                                            </Text>
+                                                        </>
+                                                    </FormFieldEdit>
+                                                </Box>
+                                                <TextArea
+                                                    maxWidth="420"
+                                                    paddingX="none"
+                                                    paddingY="md"
+                                                    placeholder="Add town bio"
+                                                    tone="none"
+                                                    fontSize="lg"
                                                 />
-                                            )}
-                                        </>
-                                    </FormFieldEdit>
+                                            </Stack>
+                                        </Stack>
 
-                                    <FormFieldEdit label="For">
-                                        <>
-                                            <Text strong size="lg">
-                                                Anyone
-                                            </Text>
-                                        </>
-                                    </FormFieldEdit>
-
-                                    <FormFieldEdit label="Membership">
-                                        <>
-                                            <Text strong size="lg">
-                                                1000 * Free
-                                            </Text>
-                                        </>
-                                    </FormFieldEdit>
-                                </Box>
-                                <TextArea
-                                    maxWidth="420"
-                                    paddingY="md"
-                                    placeholder="Add town bio"
-                                    tone="none"
-                                    fontSize="lg"
+                                        {/* member col */}
+                                        <Stack>
+                                            <Stack width="500" maxWidth="500">
+                                                <Grid columnMinSize="80px">
+                                                    {members.map((member, idx) => (
+                                                        <Stack
+                                                            paddingBottom="lg"
+                                                            key={`member_${
+                                                                member.address
+                                                                    ? member.address
+                                                                    : idx
+                                                            }`}
+                                                        >
+                                                            <AvatarPlaceholder member={member} />
+                                                        </Stack>
+                                                    ))}
+                                                </Grid>
+                                            </Stack>
+                                        </Stack>
+                                    </Stack>
+                                </Stack>
+                                <CreateTownSubmit
+                                    panelType={panelType}
+                                    setPanelType={setPanelType}
+                                    form={_form}
+                                    setTransactionDetails={setTransactionDetails}
                                 />
                             </Stack>
-                        )
-                    }}
-                </FormRender>
-            </Stack>
 
-            <Stack grow centerContent>
-                <Stack width="500" maxWidth="500">
-                    <Grid columnMinSize="80px">
-                        {members.map((member, idx) => (
-                            <Stack
-                                paddingBottom="sm"
-                                key={`member_${member.address ? member.address : idx}`}
+                            {/* Panel */}
+                            <MotionStack
+                                width="600"
+                                position="absolute"
+                                background="level1"
+                                height="100vh"
+                                right="none"
+                                initial={{
+                                    x: '100%',
+                                }}
+                                animate={{
+                                    x: panelType ? '0' : '100%',
+                                }}
+                                transition={{
+                                    type: 'easeInOut',
+                                    duration: 0.2,
+                                }}
+                                borderLeft="level3"
                             >
-                                <AvatarPlaceholder member={member} />
-                            </Stack>
-                        ))}
-                    </Grid>
-                </Stack>
-            </Stack>
+                                <PanelContent
+                                    panelType={panelType}
+                                    onClick={() => setPanelType(undefined)}
+                                />
+                            </MotionStack>
+                        </FormProvider>
+                    )
+                }}
+            </FormRender>
         </Stack>
     )
 }
 
-function BackgroundImageUpdater() {
+function BackgroundImageUpdater({
+    transactionDetails,
+}: {
+    transactionDetails: TransactionDetails
+}) {
     const { register, formState, setError, clearErrors, setValue, watch } =
-        useForm<CreateSpaceFormV2SchemaType>()
+        useFormContext<CreateSpaceFormV2SchemaType>()
 
     const rawImageSrc = watch('spaceIconUrl')
     // b/c it's a FileList before upload
@@ -131,7 +282,6 @@ function BackgroundImageUpdater() {
             setLoadedResource(id, {
                 imageUrl,
             })
-            // TODO: save to form values
             setValue('spaceIconUrl', imageUrl)
         },
         [setValue],
@@ -139,7 +289,16 @@ function BackgroundImageUpdater() {
 
     return (
         <Box display="inline-block">
-            <BlurredBackground imageSrc={imageSrc ?? ''} blur={40} />
+            <Box
+                position="fixed"
+                top="none"
+                left="none"
+                bottom="none"
+                right="none"
+                pointerEvents="none"
+            >
+                <BlurredBackground imageSrc={imageSrc ?? ''} blur={40} />
+            </Box>
             <LargeUploadImageTemplate<CreateSpaceFormV2SchemaType>
                 canEdit
                 type="spaceIcon"
@@ -157,7 +316,7 @@ function BackgroundImageUpdater() {
                     mintMode
                     key={imageSrc}
                     size="xl"
-                    address="address"
+                    address={transactionDetails.townAddress}
                     imageSrc={imageSrc ?? undefined}
                 />
             </LargeUploadImageTemplate>
@@ -165,7 +324,15 @@ function BackgroundImageUpdater() {
     )
 }
 
-function FormFieldEdit({ label, children }: { label: string; children: React.ReactNode }) {
+function FormFieldEdit({
+    label,
+    children,
+    onClick,
+}: {
+    label: string
+    children: ReactNode
+    onClick?: () => void
+}) {
     const [hovered, setHovered] = useState(false)
     return (
         <Box
@@ -181,13 +348,15 @@ function FormFieldEdit({ label, children }: { label: string; children: React.Rea
                 {label}
             </Text>
             {children}
-            <MotionBox
-                animate={{
-                    opacity: hovered ? 1 : 0,
-                }}
-            >
-                <IconButton icon="edit" />
-            </MotionBox>
+            {onClick && (
+                <MotionBox
+                    animate={{
+                        opacity: hovered ? 1 : 0,
+                    }}
+                >
+                    <IconButton icon="edit" onClick={onClick} />
+                </MotionBox>
+            )}
         </Box>
     )
 }
