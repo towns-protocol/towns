@@ -29,7 +29,6 @@ find . -name "node_modules" -type d -exec rm -r "{}" \;
 find . -name "dist" -type d -exec rm -r "{}" \;
 find . -name "coverage" -type d -exec rm -r "{}" \;
 find . -name "out" -type d -exec rm -r "{}" \;
-find . -name "gen" -type d -exec rm -r "{}" \;
 find . -name ".turbo" -type d -exec rm -r "{}" \;
 find . -name "tsconfig.tsbuildinfo" -type f -exec rm -r "{}" \;
 find . -name ".eslintcache" -type f -exec rm -r "{}" \;
