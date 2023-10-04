@@ -80,26 +80,31 @@ func TestUserDeviceKeyViewState(t *testing.T) {
 						userId,
 						deviceId,
 					),
-					[][]byte{stream.view.LastEvent().Hash},
+					[][]byte{view1.LastEvent().Hash},
 				),
 			),
 		)
 		assert.NoError(t, err)
+		// update the view to latest
+		view1, err = stream.GetView(ctx)
+		assert.NoError(t, err)
 	}
-	// update the view to latest
-	view1, err = stream.GetView(ctx)
-	assert.NoError(t, err)
-	// check that users are joined when loading from the snapshot
-	UDKViewStateText_CheckDKRevoked(t, view1.(UserDeviceStreamView), deviceId1, true)
-	UDKViewStateText_CheckDKRevoked(t, view1.(UserDeviceStreamView), deviceId2, true)
-	UDKViewStateText_CheckDKRevoked(t, view1.(UserDeviceStreamView), deviceId3, true)
-
+	// check that devices are not revoked yet, we haven't made a block
+	UDKViewStateText_CheckDKRevoked(t, view1.(UserDeviceStreamView), deviceId1, false)
+	UDKViewStateText_CheckDKRevoked(t, view1.(UserDeviceStreamView), deviceId2, false)
+	UDKViewStateText_CheckDKRevoked(t, view1.(UserDeviceStreamView), deviceId3, false)
 	// make a miniblock
 	err = stream.makeMiniblock(ctx)
 	assert.NoError(t, err)
 	// check that we have 2 blocks
 	assert.Equal(t, 2, len(stream.view.blocks))
-
+	// update the view to latest
+	view1, err = stream.GetView(ctx)
+	assert.NoError(t, err)
+	// check that devices are revoked
+	UDKViewStateText_CheckDKRevoked(t, view1.(UserDeviceStreamView), deviceId1, true)
+	UDKViewStateText_CheckDKRevoked(t, view1.(UserDeviceStreamView), deviceId2, true)
+	UDKViewStateText_CheckDKRevoked(t, view1.(UserDeviceStreamView), deviceId3, true)
 	// now, turn that block into bytes, then load it back into a view
 	miniblocks := stream.view.MiniblocksFromLastSnapshot()
 	assert.Equal(t, 1, len(miniblocks))
@@ -110,7 +115,7 @@ func TestUserDeviceKeyViewState(t *testing.T) {
 	var view2 StreamView
 	view2, err = MakeStreamView(&storage.GetStreamFromLastSnapshotResult{
 		StartMiniblockNumber: 1,
-		Miniblocks: [][]byte{miniblockProtoBytes},
+		Miniblocks:           [][]byte{miniblockProtoBytes},
 	})
 	assert.NoError(t, err)
 	assert.NotNil(t, view2)

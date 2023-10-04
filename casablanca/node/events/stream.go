@@ -368,7 +368,16 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<
 			log.Warn("Stream.Sub: out of date cookie.MiniblockNum sending all known blocks.", "error", err.Error())
 			miniblockIndex = 0
 		}
+		// append events from blocks
 		err = s.view.forEachEvent(miniblockIndex, func(e *ParsedEvent) (bool, error) {
+			envelopes = append(envelopes, e.Envelope)
+			return true, nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		// append events from minipool
+		err = s.view.minipool.forEachEvent(func(e *ParsedEvent) (bool, error) {
 			envelopes = append(envelopes, e.Envelope)
 			return true, nil
 		})

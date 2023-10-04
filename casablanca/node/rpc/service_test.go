@@ -213,7 +213,7 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 	return resspace.Msg.Stream.NextSyncCookie, joinSpace.Hash, nil
 }
 
-func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string, channelId string) (*protocol.SyncCookie, []byte, error) {
+func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string, channelId string, streamSettings *protocol.StreamSettings) (*protocol.SyncCookie, []byte, error) {
 	var channelProperties protocol.EncryptedData
 	channelProperties.Text = "encrypted text supposed to be here"
 	channelStreamId := common.ChannelStreamIdFromName(channelId)
@@ -222,9 +222,8 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 		events.Make_ChannelPayload_Inception(
 			channelStreamId,
 			spaceId,
-			//TODO: add channel settings
 			&channelProperties,
-			nil,
+			streamSettings,
 		),
 		nil,
 	)
@@ -363,7 +362,14 @@ func TestMethods(t *testing.T) {
 
 		// create channel
 		//TODO: add channel setting instead of "channel1"
-		channel, channelHash, err := createChannel(ctx, wallet1, client, common.SpaceStreamIdFromName("test"), "channel1")
+		channel, channelHash, err := createChannel(
+			ctx,
+			wallet1,
+			client,
+			common.SpaceStreamIdFromName("test"),
+			"channel1",
+			&protocol.StreamSettings{MinEventsPerSnapshot: int32(200), MiniblockTimeMs: 1}, // custom miniblock timing
+		)
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
 		}
@@ -454,12 +460,13 @@ func TestMethods(t *testing.T) {
 		if len(msg.Streams) != 1 {
 			t.Errorf("expected 1 stream, got %d", len(msg.Streams))
 		}
-		if len(msg.Streams[0].Events) != 2 {
-			t.Errorf("expected 2 events, got %d", len(msg.Streams[0].Events))
+		// join, miniblock, message, miniblock
+		if len(msg.Streams[0].Events) != 4 {
+			t.Errorf("expected 4 events, got %d", len(msg.Streams[0].Events))
 		}
 
 		var payload protocol.StreamEvent
-		err = proto.Unmarshal(msg.Streams[0].Events[1].Event, &payload)
+		err = proto.Unmarshal(msg.Streams[0].Events[len(msg.Streams[0].Events)-2].Event, &payload)
 		if err != nil {
 			t.Errorf("error unmarshaling event: %v", err)
 		}
@@ -511,7 +518,7 @@ func TestRiverDeviceId(t *testing.T) {
 			t.Errorf("nil sync cookie")
 		}
 
-		channel, channelHash, err := createChannel(ctx, wallet, client, common.SpaceStreamIdFromName("test"), "channel1")
+		channel, channelHash, err := createChannel(ctx, wallet, client, common.SpaceStreamIdFromName("test"), "channel1", nil)
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
 		}
@@ -612,7 +619,14 @@ func DisableTestManyUsers(t *testing.T) {
 	var channels []*protocol.SyncCookie
 	for i := 0; i < totalChannels; i++ {
 		//TODO: add channel setting instead of "channel1"
-		channel, channelHash, err := createChannel(ctx, wallets[0], client, common.SpaceStreamIdFromName("test"), fmt.Sprintf("channel-%d", i))
+		channel, channelHash, err := createChannel(
+			ctx,
+			wallets[0],
+			client,
+			common.SpaceStreamIdFromName("test"),
+			fmt.Sprintf("channel-%d", i),
+			nil,
+		)
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
 		}

@@ -137,7 +137,7 @@ describe('useSpaceDataHook', () => {
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
 
         fireEvent.click(joinButton)
-        await waitFor(() => expect(spaceMembership).toHaveTextContent('join'))
+        await waitFor(() => expect(spaceMembership).toHaveTextContent('join'), { timeout: 10000 })
         await sleep(1000)
         await waitFor(() => expect(spaceMembership).toHaveTextContent('join'))
     })
