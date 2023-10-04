@@ -23,7 +23,9 @@ if [ -f .nvmrc ]; then
 
         exit 1
     else
+        echo
         echo "Correct Node.js version ($NVM_VERSION) is in use."
+        echo
     fi
 else
     echo ".nvmrc file does not exist!"

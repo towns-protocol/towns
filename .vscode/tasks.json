@@ -20,7 +20,7 @@
       // and use the artifacts of the contracts in their builds
       "label": "~Start Local Dev~",
       "dependsOn": [
-        "CheckNodeVersion",
+        "CheckVersions",
         "YarnInstall",
         "Stage 1"
       ],
@@ -122,9 +122,9 @@
       }
     },
     {
-      "label": "CheckNodeVersion",
+      "label": "CheckVersions",
       "type": "shell",
-      "command": "./scripts/check-node-version.sh",
+      "command": "./scripts/check-node-version.sh && ./scripts/check-go-version.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
