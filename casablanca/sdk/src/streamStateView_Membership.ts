@@ -10,6 +10,8 @@ export class StreamStateView_Membership {
     readonly streamId: string
     readonly joinedUsers = new Set<string>()
     readonly invitedUsers = new Set<string>()
+    readonly pendingJoinedUsers = new Set<string>()
+    readonly pendingInvitedUsers = new Set<string>()
     readonly pendingEvents = new Map<string, Membership>()
 
     constructor(userId: string, streamId: string) {
@@ -23,7 +25,7 @@ export class StreamStateView_Membership {
     ) {
         // iterate over map, add joined and invited users
         for (const membership of Object.values(memberships)) {
-            this.applyMembershipEvent(membership, emitter)
+            this.applyMembershipEvent(membership, 'confirmed', emitter)
         }
     }
 
@@ -36,8 +38,8 @@ export class StreamStateView_Membership {
             const eventId = bin_toHexString(eventHash)
             const payload = this.pendingEvents.get(eventId)
             if (payload) {
-                this.applyMembershipEvent(payload, emitter)
                 this.pendingEvents.delete(eventId)
+                this.applyMembershipEvent(payload, 'confirmed', emitter)
             }
         }
     }
@@ -48,9 +50,10 @@ export class StreamStateView_Membership {
     appendMembershipEvent(
         eventHashStr: string,
         payload: Membership,
-        _emitter?: TypedEmitter<EmittedEvents>,
+        emitter?: TypedEmitter<EmittedEvents>,
     ): void {
         this.pendingEvents.set(eventHashStr, payload)
+        this.applyMembershipEvent(payload, 'pending', emitter)
     }
 
     /**
@@ -60,28 +63,66 @@ export class StreamStateView_Membership {
         return this.joinedUsers.has(userId ?? this.userId)
     }
 
-    private applyMembershipEvent(payload: Membership, emitter?: TypedEmitter<EmittedEvents>) {
+    /**
+     * If no userId is provided, checks current user
+     */
+    isMember(membership: MembershipOp, inUserId?: string): boolean {
+        const userId = inUserId ?? this.userId
+        switch (membership) {
+            case MembershipOp.SO_INVITE:
+                return this.invitedUsers.has(userId)
+            case MembershipOp.SO_JOIN:
+                return this.joinedUsers.has(userId)
+            case MembershipOp.SO_LEAVE:
+                return !this.invitedUsers.has(userId) && !this.joinedUsers.has(userId)
+            case MembershipOp.SO_UNSPECIFIED:
+                return false
+            default:
+                logNever(membership)
+                return false
+        }
+    }
+
+    private applyMembershipEvent(
+        payload: Membership,
+        type: 'pending' | 'confirmed',
+        emitter?: TypedEmitter<EmittedEvents>,
+    ) {
         const { op, userId } = payload
         switch (op) {
             case MembershipOp.SO_INVITE:
-                if (this.invitedUsers.add(userId)) {
-                    emitter?.emit('streamNewUserInvited', this.streamId, userId)
-                    this.maybeEmitMyMembershipChange(userId, emitter, this.streamId)
+                if (type === 'confirmed') {
+                    this.pendingInvitedUsers.delete(userId)
+                    if (this.invitedUsers.add(userId)) {
+                        emitter?.emit('streamNewUserInvited', this.streamId, userId)
+                        this.emitMembershipChange(userId, emitter, this.streamId)
+                    }
+                } else {
+                    if (this.pendingInvitedUsers.add(userId)) {
+                        emitter?.emit('streamPendingMembershipUpdated', this.streamId, userId)
+                    }
                 }
                 break
             case MembershipOp.SO_JOIN:
-                if (this.joinedUsers.add(userId)) {
-                    emitter?.emit('streamNewUserJoined', this.streamId, userId)
-                    this.maybeEmitMyMembershipChange(userId, emitter, this.streamId)
+                if (type === 'confirmed') {
+                    this.pendingJoinedUsers.delete(userId)
+                    if (this.joinedUsers.add(userId)) {
+                        emitter?.emit('streamNewUserJoined', this.streamId, userId)
+                        this.emitMembershipChange(userId, emitter, this.streamId)
+                    }
+                } else {
+                    if (this.pendingJoinedUsers.add(userId)) {
+                        emitter?.emit('streamPendingMembershipUpdated', this.streamId, userId)
+                    }
                 }
                 break
             case MembershipOp.SO_LEAVE:
-                {
+                if (type === 'confirmed') {
                     const wasJoined = this.joinedUsers.delete(userId)
                     const wasInvited = this.invitedUsers.delete(userId)
                     if (wasJoined || wasInvited) {
                         emitter?.emit('streamUserLeft', this.streamId, userId)
-                        this.maybeEmitMyMembershipChange(userId, emitter, this.streamId)
+                        this.emitMembershipChange(userId, emitter, this.streamId)
                     }
                 }
                 break
@@ -92,11 +133,12 @@ export class StreamStateView_Membership {
         }
     }
 
-    private maybeEmitMyMembershipChange(
+    private emitMembershipChange(
         userId: string,
         emitter: TypedEmitter<StreamEvents> | undefined,
         streamId: string,
     ) {
+        emitter?.emit('streamMembershipUpdated', streamId, userId)
         if (userId === this.userId) {
             emitter?.emit('streamMyMembershipUpdated', streamId, {
                 invited: this.invitedUsers.has(userId),
