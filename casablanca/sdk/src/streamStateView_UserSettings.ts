@@ -2,6 +2,7 @@ import {
     EncryptedData,
     FullyReadMarkerContent,
     FullyReadMarkersContent,
+    MiniblockHeader,
     Snapshot,
     UserSettingsPayload,
     UserSettingsPayload_FullyReadMarkers,
@@ -14,10 +15,11 @@ import { EmittedEvents } from './client'
 import { logNever } from './check'
 import { StreamEvents } from './streamEvents'
 import { dlog } from './dlog'
+import { StreamStateView_IContent } from './streamStateView_IContent'
 
 const log = dlog('csb:stream')
 
-export class StreamStateView_UserSettings {
+export class StreamStateView_UserSettings implements StreamStateView_IContent {
     readonly streamId: string
     readonly settings = new Map<string, string>()
     //this property can be used during the UI part initialization to get initial state of fullyReadMarkers
@@ -32,6 +34,10 @@ export class StreamStateView_UserSettings {
         for (const [_, payload] of Object.entries(content.fullyReadMarkers)) {
             this.fullyReadMarkerUpdate(payload)
         }
+    }
+
+    onMiniblockHeader(_blockHeader: MiniblockHeader, _emitter?: TypedEmitter<EmittedEvents>): void {
+        // nothing to do
     }
 
     prependEvent(

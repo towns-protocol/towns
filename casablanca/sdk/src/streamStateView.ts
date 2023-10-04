@@ -21,6 +21,10 @@ import { StreamStateView_UserSettings } from './streamStateView_UserSettings'
 import { StreamStateView_UserDeviceKeys } from './streamStateView_UserDeviceKey'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { StreamStateView_Media } from './streamStateView_Media'
+import {
+    StreamStateView_IContent,
+    StreamStateView_UnknownContent,
+} from './streamStateView_IContent'
 
 const log = dlog('csb:streams')
 
@@ -228,6 +232,7 @@ export class StreamStateView {
                     this.mediaContent?.appendEvent(event, payload.value, emitter)
                     break
                 case 'miniblockHeader':
+                    this.getContent().onMiniblockHeader(payload.value, emitter)
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     break
                 case undefined:
@@ -426,6 +431,28 @@ export class StreamStateView {
             default:
                 logNever(this.contentKind)
                 return new StreamStateView_Membership('', '')
+        }
+    }
+
+    getContent(): StreamStateView_IContent {
+        switch (this.contentKind) {
+            case 'channelContent':
+                return this.channelContent
+            case 'spaceContent':
+                return this.spaceContent
+            case 'userContent':
+                return this.userContent
+            case 'userSettingsContent':
+                return this.userSettingsContent
+            case 'userDeviceKeyContent':
+                return this.userDeviceKeyContent
+            case 'mediaContent':
+                return this.mediaContent
+            case undefined:
+                throw new Error('Stream has no content')
+            default:
+                logNever(this.contentKind)
+                return new StreamStateView_UnknownContent()
         }
     }
 }

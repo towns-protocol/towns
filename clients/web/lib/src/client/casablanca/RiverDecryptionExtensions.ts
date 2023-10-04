@@ -163,6 +163,9 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         // listen for new channel message events
         client.on('channelNewMessage', this.onChannelEvent)
 
+        // listen for roster changes
+        client.on('streamNewUserJoined', this.onNewUserJoinedEvent)
+
         // todo: listen for device update events
 
         // listen for decryption events
@@ -176,6 +179,7 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         this.client.off('toDeviceMessage', this.onToDeviceEvent)
         this.client.off('channelTimelineEvent', this.onChannelTimelineEvent)
         this.client.off('channelNewMessage', this.onChannelEvent)
+        this.client.off('streamNewUserJoined', this.onNewUserJoinedEvent)
         this.client.off('eventDecrypted', this.onDecryptedEvent)
         this.receivedToDeviceProcessorMap = {}
         this.receivedToDeviceEventQueue.stop()
@@ -339,6 +343,12 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         })().catch((e) => {
             console.error('CDE::onToDeviceEvent - error decrypting event', e)
         })
+    }
+
+    private onNewUserJoinedEvent = () => {
+        if (this.throttledStartLookingForKeys) {
+            this.throttledStartLookingForKeys()
+        }
     }
 
     private async startLookingForKeys() {

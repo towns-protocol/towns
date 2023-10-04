@@ -9,7 +9,7 @@ import {
     makeUserDeviceKeyStreamId,
 } from './id'
 import { IFallbackKey } from './types'
-import { makeDonePromise, makeTestClient } from './util.test'
+import { makeDonePromise, makeTestClient, waitFor } from './util.test'
 import { DeviceKeys, SnapshotCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@river/proto'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@bufbuild/connect'
@@ -794,12 +794,18 @@ describe('clientTest', () => {
         await expect(alicesClient.joinStream(bobsChannelId)).toResolve()
         const channelStream = bobsClient.stream(bobsChannelId)
         expect(channelStream).toBeDefined()
-        expect(channelStream?.view.getMemberships().joinedUsers).toContain(alicesClient.userId)
-
+        await waitFor(() => {
+            expect(channelStream?.view.getMemberships().joinedUsers).toContain(alicesClient.userId)
+        })
         // leave the space
         await expect(alicesClient.leaveStream(bobsSpaceId)).toResolve()
 
         // the channel should be left as well
-        expect(channelStream?.view.getMemberships().joinedUsers).not.toContain(alicesClient.userId)
+        await waitFor(() => {
+            expect(channelStream?.view.getMemberships().joinedUsers).not.toContain(
+                alicesClient.userId,
+            )
+        })
+        await alicesClient.stopSync()
     })
 })

@@ -1,14 +1,16 @@
-import { Membership, MembershipOp } from '@river/proto'
+import { Membership, MembershipOp, MiniblockHeader } from '@river/proto'
 import { logNever } from './check'
 import TypedEmitter from 'typed-emitter'
 import { StreamEvents } from './streamEvents'
 import { EmittedEvents } from './client'
+import { bin_toHexString } from './binary'
 
 export class StreamStateView_Membership {
     readonly userId: string
     readonly streamId: string
     readonly joinedUsers = new Set<string>()
     readonly invitedUsers = new Set<string>()
+    readonly pendingEvents = new Map<string, Membership>()
 
     constructor(userId: string, streamId: string) {
         this.userId = userId
@@ -25,12 +27,30 @@ export class StreamStateView_Membership {
         }
     }
 
+    /**
+     * process a miniblock header, applying membership events in order
+     */
+    onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
+        // loop over confirmed events, apply membership events in order
+        for (const eventHash of blockHeader.eventHashes) {
+            const eventId = bin_toHexString(eventHash)
+            const payload = this.pendingEvents.get(eventId)
+            if (payload) {
+                this.applyMembershipEvent(payload, emitter)
+                this.pendingEvents.delete(eventId)
+            }
+        }
+    }
+
+    /**
+     * Places event in a pending queue, to be applied when the event is confirmed in a miniblock header
+     */
     appendMembershipEvent(
-        _eventHashStr: string,
+        eventHashStr: string,
         payload: Membership,
-        emitter?: TypedEmitter<StreamEvents>,
+        _emitter?: TypedEmitter<EmittedEvents>,
     ): void {
-        this.applyMembershipEvent(payload, emitter)
+        this.pendingEvents.set(eventHashStr, payload)
     }
 
     /**
@@ -40,7 +60,7 @@ export class StreamStateView_Membership {
         return this.joinedUsers.has(userId ?? this.userId)
     }
 
-    private applyMembershipEvent(payload: Membership, emitter?: TypedEmitter<StreamEvents>): void {
+    private applyMembershipEvent(payload: Membership, emitter?: TypedEmitter<EmittedEvents>) {
         const { op, userId } = payload
         switch (op) {
             case MembershipOp.SO_INVITE:
