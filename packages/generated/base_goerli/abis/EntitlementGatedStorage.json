@@ -1,0 +1,479 @@
+{
+  "abi": [],
+  "bytecode": {
+    "object": "0x60206037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fd",
+    "sourceMap": "171:369:29:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;171:369:29;;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x73000000000000000000000000000000000000000030146080604052600080fd",
+    "sourceMap": "171:369:29:-:0;;;;;;;;",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/crosschain/EntitlementGatedStorage.sol\":\"EntitlementGatedStorage\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":ERC721A/=lib/ERC721A/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"contracts/src/crosschain/EntitlementGatedStorage.sol\":{\"keccak256\":\"0x51b85ff651a75d749eb65e768428b25d158ef6ae9678655e65e8d2f1e9b638cb\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://8f98bd3e02018d9c2620e8f94b3b212e25af4b23a2faf2b54c48121cd2042676\",\"dweb:/ipfs/QmNMGZBvqWDERgM2idJNGZs5J2D2qQszfJDeiaeG5k5kMK\"]},\"contracts/src/crosschain/IEntitlementGated.sol\":{\"keccak256\":\"0xa6f6876226c72f9b1a58fed8f07824e01e5bae0bd998a358c98f111b97673b5b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bcb111cd2c4756c6f8320bee975f69983ac5fb9661cdab4fc744f31e9fde5016\",\"dweb:/ipfs/QmVaei4ML3v2tCaUPiJGkCx4g5kkzNNTQ1XrgjUxzoy6vi\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.20+commit.a1b79de6"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@prb/test/=lib/prb-test/src/",
+        "ERC721A/=lib/ERC721A/contracts/",
+        "council/=lib/council/contracts/",
+        "ds-test/=lib/ds-test/src/",
+        "erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "operator-filter-registry/=lib/operator-filter-registry/",
+        "prb-test/=lib/prb-test/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "none",
+        "appendCBOR": false
+      },
+      "compilationTarget": {
+        "contracts/src/crosschain/EntitlementGatedStorage.sol": "EntitlementGatedStorage"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "contracts/src/crosschain/EntitlementGatedStorage.sol": {
+        "keccak256": "0x51b85ff651a75d749eb65e768428b25d158ef6ae9678655e65e8d2f1e9b638cb",
+        "urls": [
+          "bzz-raw://8f98bd3e02018d9c2620e8f94b3b212e25af4b23a2faf2b54c48121cd2042676",
+          "dweb:/ipfs/QmNMGZBvqWDERgM2idJNGZs5J2D2qQszfJDeiaeG5k5kMK"
+        ],
+        "license": "Apache-2.0"
+      },
+      "contracts/src/crosschain/IEntitlementGated.sol": {
+        "keccak256": "0xa6f6876226c72f9b1a58fed8f07824e01e5bae0bd998a358c98f111b97673b5b",
+        "urls": [
+          "bzz-raw://bcb111cd2c4756c6f8320bee975f69983ac5fb9661cdab4fc744f31e9fde5016",
+          "dweb:/ipfs/QmVaei4ML3v2tCaUPiJGkCx4g5kkzNNTQ1XrgjUxzoy6vi"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "contracts/src/crosschain/EntitlementGatedStorage.sol",
+    "id": 5796,
+    "exportedSymbols": {
+      "EntitlementGatedStorage": [
+        5795
+      ],
+      "IEntitlementGatedBase": [
+        5841
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "39:502:29",
+    "nodes": [
+      {
+        "id": 5769,
+        "nodeType": "PragmaDirective",
+        "src": "39:24:29",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".19"
+        ]
+      },
+      {
+        "id": 5771,
+        "nodeType": "ImportDirective",
+        "src": "79:62:29",
+        "nodes": [],
+        "absolutePath": "contracts/src/crosschain/IEntitlementGated.sol",
+        "file": "./IEntitlementGated.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 5796,
+        "sourceUnit": 5866,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 5770,
+              "name": "IEntitlementGatedBase",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 5841,
+              "src": "87:21:29",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 5795,
+        "nodeType": "ContractDefinition",
+        "src": "171:369:29",
+        "nodes": [
+          {
+            "id": 5776,
+            "nodeType": "VariableDeclaration",
+            "src": "207:92:29",
+            "nodes": [],
+            "constant": true,
+            "mutability": "constant",
+            "name": "STORAGE_SLOT",
+            "nameLocation": "233:12:29",
+            "scope": 5795,
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_bytes32",
+              "typeString": "bytes32"
+            },
+            "typeName": {
+              "id": 5772,
+              "name": "bytes32",
+              "nodeType": "ElementaryTypeName",
+              "src": "207:7:29",
+              "typeDescriptions": {
+                "typeIdentifier": "t_bytes32",
+                "typeString": "bytes32"
+              }
+            },
+            "value": {
+              "arguments": [
+                {
+                  "hexValue": "63726f7373636861696e2e456e7469746c656d656e74476174656453746f72616765",
+                  "id": 5774,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "kind": "string",
+                  "lValueRequested": false,
+                  "nodeType": "Literal",
+                  "src": "262:36:29",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_stringliteral_133f5e83927ae0f4eccaf443b57ee2634efab46c5ecb3a58ec4bb3201dd55ef6",
+                    "typeString": "literal_string \"crosschain.EntitlementGatedStorage\""
+                  },
+                  "value": "crosschain.EntitlementGatedStorage"
+                }
+              ],
+              "expression": {
+                "argumentTypes": [
+                  {
+                    "typeIdentifier": "t_stringliteral_133f5e83927ae0f4eccaf443b57ee2634efab46c5ecb3a58ec4bb3201dd55ef6",
+                    "typeString": "literal_string \"crosschain.EntitlementGatedStorage\""
+                  }
+                ],
+                "id": 5773,
+                "name": "keccak256",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": -8,
+                "src": "252:9:29",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_function_keccak256_pure$_t_bytes_memory_ptr_$returns$_t_bytes32_$",
+                  "typeString": "function (bytes memory) pure returns (bytes32)"
+                }
+              },
+              "id": 5775,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "functionCall",
+              "lValueRequested": false,
+              "nameLocations": [],
+              "names": [],
+              "nodeType": "FunctionCall",
+              "src": "252:47:29",
+              "tryCall": false,
+              "typeDescriptions": {
+                "typeIdentifier": "t_bytes32",
+                "typeString": "bytes32"
+              }
+            },
+            "visibility": "internal"
+          },
+          {
+            "id": 5782,
+            "nodeType": "StructDefinition",
+            "src": "304:91:29",
+            "nodes": [],
+            "canonicalName": "EntitlementGatedStorage.Layout",
+            "members": [
+              {
+                "constant": false,
+                "id": 5781,
+                "mutability": "mutable",
+                "name": "transactions",
+                "nameLocation": "378:12:29",
+                "nodeType": "VariableDeclaration",
+                "scope": 5782,
+                "src": "324:66:29",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Transaction_$5821_storage_$",
+                  "typeString": "mapping(bytes32 => struct IEntitlementGatedBase.Transaction)"
+                },
+                "typeName": {
+                  "id": 5780,
+                  "keyName": "",
+                  "keyNameLocation": "-1:-1:-1",
+                  "keyType": {
+                    "id": 5777,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "332:7:29",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "nodeType": "Mapping",
+                  "src": "324:53:29",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_mapping$_t_bytes32_$_t_struct$_Transaction_$5821_storage_$",
+                    "typeString": "mapping(bytes32 => struct IEntitlementGatedBase.Transaction)"
+                  },
+                  "valueName": "",
+                  "valueNameLocation": "-1:-1:-1",
+                  "valueType": {
+                    "id": 5779,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 5778,
+                      "name": "IEntitlementGatedBase.Transaction",
+                      "nameLocations": [
+                        "343:21:29",
+                        "365:11:29"
+                      ],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 5821,
+                      "src": "343:33:29"
+                    },
+                    "referencedDeclaration": 5821,
+                    "src": "343:33:29",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Transaction_$5821_storage_ptr",
+                      "typeString": "struct IEntitlementGatedBase.Transaction"
+                    }
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "Layout",
+            "nameLocation": "311:6:29",
+            "scope": 5795,
+            "visibility": "public"
+          },
+          {
+            "id": 5794,
+            "nodeType": "FunctionDefinition",
+            "src": "399:139:29",
+            "nodes": [],
+            "body": {
+              "id": 5793,
+              "nodeType": "Block",
+              "src": "458:80:29",
+              "nodes": [],
+              "statements": [
+                {
+                  "assignments": [
+                    5789
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 5789,
+                      "mutability": "mutable",
+                      "name": "slot",
+                      "nameLocation": "472:4:29",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 5793,
+                      "src": "464:12:29",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes32",
+                        "typeString": "bytes32"
+                      },
+                      "typeName": {
+                        "id": 5788,
+                        "name": "bytes32",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "464:7:29",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 5791,
+                  "initialValue": {
+                    "id": 5790,
+                    "name": "STORAGE_SLOT",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 5776,
+                    "src": "479:12:29",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "464:27:29"
+                },
+                {
+                  "AST": {
+                    "nodeType": "YulBlock",
+                    "src": "506:28:29",
+                    "statements": [
+                      {
+                        "nodeType": "YulAssignment",
+                        "src": "514:14:29",
+                        "value": {
+                          "name": "slot",
+                          "nodeType": "YulIdentifier",
+                          "src": "524:4:29"
+                        },
+                        "variableNames": [
+                          {
+                            "name": "l.slot",
+                            "nodeType": "YulIdentifier",
+                            "src": "514:6:29"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "evmVersion": "paris",
+                  "externalReferences": [
+                    {
+                      "declaration": 5786,
+                      "isOffset": false,
+                      "isSlot": true,
+                      "src": "514:6:29",
+                      "suffix": "slot",
+                      "valueSize": 1
+                    },
+                    {
+                      "declaration": 5789,
+                      "isOffset": false,
+                      "isSlot": false,
+                      "src": "524:4:29",
+                      "valueSize": 1
+                    }
+                  ],
+                  "id": 5792,
+                  "nodeType": "InlineAssembly",
+                  "src": "497:37:29"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "layout",
+            "nameLocation": "408:6:29",
+            "parameters": {
+              "id": 5783,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "414:2:29"
+            },
+            "returnParameters": {
+              "id": 5787,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 5786,
+                  "mutability": "mutable",
+                  "name": "l",
+                  "nameLocation": "455:1:29",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 5794,
+                  "src": "440:16:29",
+                  "stateVariable": false,
+                  "storageLocation": "storage",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_Layout_$5782_storage_ptr",
+                    "typeString": "struct EntitlementGatedStorage.Layout"
+                  },
+                  "typeName": {
+                    "id": 5785,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 5784,
+                      "name": "Layout",
+                      "nameLocations": [
+                        "440:6:29"
+                      ],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 5782,
+                      "src": "440:6:29"
+                    },
+                    "referencedDeclaration": 5782,
+                    "src": "440:6:29",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Layout_$5782_storage_ptr",
+                      "typeString": "struct EntitlementGatedStorage.Layout"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "439:18:29"
+            },
+            "scope": 5795,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "EntitlementGatedStorage",
+        "contractDependencies": [],
+        "contractKind": "library",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          5795
+        ],
+        "name": "EntitlementGatedStorage",
+        "nameLocation": "179:23:29",
+        "scope": 5796,
+        "usedErrors": [],
+        "usedEvents": []
+      }
+    ],
+    "license": "Apache-2.0"
+  },
+  "id": 29
+}

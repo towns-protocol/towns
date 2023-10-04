@@ -51,6 +51,9 @@ describe('useDeleteRoleTransaction', () => {
             throw new Error('chainId is undefined')
         }
         const memberNftAddress = getMemberNftAddress(chainId)
+        if (!memberNftAddress) {
+            throw new Error('councilNftAddress is undefined')
+        }
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()

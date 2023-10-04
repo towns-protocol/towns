@@ -15,3 +15,7 @@ func NewSpaceContractGoerli(ethClient *ethclient.Client) (SpaceContract, error) 
 func NewSpaceContractSepolia(ethClient *ethclient.Client) (SpaceContract, error) {
 	return NewSpaceContractSepoliaV3(ethClient)
 }
+
+func NewSpaceContractBaseGoerli(ethClient *ethclient.Client) (SpaceContract, error) {
+	return NewSpaceContractBaseGoerliV3(ethClient)
+}

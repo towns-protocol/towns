@@ -142,6 +142,9 @@ describe('get role details', () => {
             spaceId.networkId,
         )
         const councilNftAddress = getMemberNftAddress(alice.chainId)
+        if (!councilNftAddress) {
+            throw new Error('councilNftAddress is undefined')
+        }
         const expectedMinterTokens = createExternalTokenStruct([councilNftAddress])[0]
         const expectedMemberToken = createExternalTokenStruct([membershipTokenAddress])[0]
         const expectedMinterRole: RoleDetails = {
@@ -229,6 +232,9 @@ describe('get role details', () => {
         // create new role in space
         const permissions = [Permission.Read, Permission.Write, Permission.Redact]
         const councilNftAddress = getMemberNftAddress(alice.chainId)
+        if (!councilNftAddress) {
+            throw new Error('councilNftAddress is undefined')
+        }
         const pioneerNftAddress = getPioneerNftAddress(alice.chainId)
         const tokens = createExternalTokenStruct([councilNftAddress, pioneerNftAddress])
         const expectedCouncilToken = tokens[0]

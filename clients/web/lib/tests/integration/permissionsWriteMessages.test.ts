@@ -39,6 +39,9 @@ describe('write messages', () => {
             spaceId.networkId,
         )
         const councilNftAddress = getMemberNftAddress(alice.chainId)
+        if (!councilNftAddress) {
+            throw new Error('councilNftAddress is undefined')
+        }
         const councilToken = createExternalTokenStruct([councilNftAddress])[0]
         const membershipToken = createExternalTokenStruct([membershipTokenAddress])[0]
 

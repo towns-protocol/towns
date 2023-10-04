@@ -37,6 +37,9 @@ describe('useCreateChannelTransactionHook', () => {
             throw new Error('chainId is undefined')
         }
         const memberNftAddress = getMemberNftAddress(chainId)
+        if (!memberNftAddress) {
+            throw new Error('councilNftAddress is undefined')
+        }
         const spaceName = makeUniqueName('alice')
         const channelName = 'test channel'
         await provider.fundWallet()

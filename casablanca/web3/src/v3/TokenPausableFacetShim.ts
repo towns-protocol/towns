@@ -10,12 +10,17 @@ import {
     TokenPausableFacet as SepoliaContract,
     TokenPausableFacetInterface as SepoliaInterface,
 } from '@towns/generated/sepolia/v3/typings/TokenPausableFacet'
+import {
+    TokenPausableFacet as BaseGoerliContract,
+    TokenPausableFacetInterface as BaseGoerliInterface,
+} from '@towns/generated/base_goerli/v3/typings/TokenPausableFacet'
 
 import GoerliAbi from '@towns/generated/goerli/v3/abis/TokenPausableFacet.abi.json' assert { type: 'json' }
 
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/TokenPausableFacet.abi.json' assert { type: 'json' }
 
 import SepoliaAbi from '@towns/generated/sepolia/v3/abis/TokenPausableFacet.abi.json' assert { type: 'json' }
+import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TokenPausableFacet.abi.json' assert { type: 'json' }
 import { ethers } from 'ethers'
 
 import { BaseContractShimV3 } from './BaseContractShimV3'
@@ -26,13 +31,16 @@ export class TokenPausableFacetShim extends BaseContractShimV3<
     GoerliContract,
     GoerliInterface,
     SepoliaContract,
-    SepoliaInterface
+    SepoliaInterface,
+    BaseGoerliContract,
+    BaseGoerliInterface
 > {
     constructor(address: string, chainId: number, provider: ethers.providers.Provider | undefined) {
         super(address, chainId, provider, {
             localhostAbi: LocalhostAbi,
             goerliAbi: GoerliAbi,
             sepoliaAbi: SepoliaAbi,
+            baseGoerliAbi: BaseGoerliAbi,
         })
     }
 }

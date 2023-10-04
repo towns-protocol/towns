@@ -11,12 +11,17 @@ import {
     TokenEntitlement as SepoliaContract,
     TokenEntitlementInterface as SepoliaInterface,
 } from '@towns/generated/sepolia/v3/typings/TokenEntitlement'
+import {
+    TokenEntitlement as BaseGoerliContract,
+    TokenEntitlementInterface as BaseGoerliInterface,
+} from '@towns/generated/base_goerli/v3/typings/TokenEntitlement'
 
 import GoerliAbi from '@towns/generated/goerli/v3/abis/TokenEntitlement.abi.json' assert { type: 'json' }
 
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/TokenEntitlement.abi.json' assert { type: 'json' }
 
 import SepoliaAbi from '@towns/generated/sepolia/v3/abis/TokenEntitlement.abi.json' assert { type: 'json' }
+import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TokenEntitlement.abi.json' assert { type: 'json' }
 import { BigNumberish, ethers } from 'ethers'
 
 import { BaseContractShimV3 } from './BaseContractShimV3'
@@ -32,7 +37,9 @@ export class TokenEntitlementShim
         GoerliContract,
         GoerliInterface,
         SepoliaContract,
-        SepoliaInterface
+        SepoliaInterface,
+        BaseGoerliContract,
+        BaseGoerliInterface
     >
     implements EntitlementModule
 {
@@ -41,6 +48,7 @@ export class TokenEntitlementShim
             localhostAbi: LocalhostAbi,
             goerliAbi: GoerliAbi,
             sepoliaAbi: SepoliaAbi,
+            baseGoerliAbi: BaseGoerliAbi,
         })
     }
 

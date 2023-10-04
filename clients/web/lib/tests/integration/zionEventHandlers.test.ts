@@ -44,6 +44,9 @@ describe('Zion event handlers test', () => {
             visibility: RoomVisibility.Public,
         }
         const memberNftAddress = getMemberNftAddress(alice.chainId)
+        if (!memberNftAddress) {
+            throw new Error('memberNftAddress is undefined')
+        }
         expect(memberNftAddress).toBeDefined()
         expect(memberNftAddress).not.toBe('')
         const tokens = createExternalTokenStruct([memberNftAddress])

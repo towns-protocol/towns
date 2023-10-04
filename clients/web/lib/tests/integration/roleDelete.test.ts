@@ -37,6 +37,9 @@ describe('delete role', () => {
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
         const newNftAddress = getMemberNftAddress(alice.chainId)
+        if (!newNftAddress) {
+            throw new Error('councilNftAddress is undefined')
+        }
         const newTokens = createExternalTokenStruct([newNftAddress])
         const newUsers: string[] = []
         // create a new test space
