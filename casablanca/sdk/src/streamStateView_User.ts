@@ -94,6 +94,7 @@ export class StreamStateView_User implements StreamStateView_IContent {
                 payload: {
                     parsed_event: event.event.payload,
                     creator_user_id: userIdFromAddress(event.event.creatorAddress),
+                    hash_str: event.hashStr,
                     stream_id: this.streamId,
                 },
             },

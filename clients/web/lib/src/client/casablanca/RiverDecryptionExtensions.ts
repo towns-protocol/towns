@@ -30,9 +30,9 @@ const KEY_REQUEST_TIMEOUT_MS = 3000
 /// how many events to include in the same to-device message
 const MAX_EVENTS_PER_REQUEST = 64
 /// time betwen debounced calls to look for keys
-const TIME_BETWEEN_LOOKING_FOR_KEYS_MS = 250
+const TIME_BETWEEN_LOOKING_FOR_KEYS_MS = 500
 /// time before we bug a user again for keys
-const TIME_BETWEEN_USER_KEY_REQUESTS_MS = 1000 * 60
+const TIME_BETWEEN_USER_KEY_REQUESTS_MS = 1000 * 30
 /// time between processing to-device events
 const DELAY_BETWEEN_PROCESSING_TO_DEVICE_EVENTS_MS = 10
 
@@ -236,6 +236,20 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
             )
             return
         }
+        if (event.getStreamType() === EncryptedEventStreamTypes.ToDevice) {
+            console.log(
+                'CDE::onDecryptionFailure - decryption failure for to-device event, not going to start looking for keys',
+                {
+                    eventId: event.getId() ?? '',
+                    sender: event.getSender(),
+                    senderKey: event.getSenderKey(),
+                    err: err,
+                    channelId: channelId,
+                    spaceId: spaceId,
+                },
+            )
+            return
+        }
         if (!this.roomRecords[channelId]) {
             this.roomRecords[channelId] = {
                 decryptionFailures: [],
@@ -244,7 +258,7 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
             }
         }
         const roomRecord = this.roomRecords[channelId]
-        if (roomRecord.decryptionFailures.indexOf(event) === -1) {
+        if (!roomRecord.decryptionFailures.some((e) => e.getId() === event.getId())) {
             roomRecord.decryptionFailures.push(event)
         }
         if (this.throttledStartLookingForKeys) {
@@ -380,6 +394,7 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
 
         console.log(
             `CDE::startLookingForKeys, found ${rooms.length} unstarted rooms with decryption failures`,
+            { rooms: rooms.map((r) => r.channelId) },
         )
 
         for (const room of rooms) {
@@ -480,37 +495,75 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
             console.log(`CDE::_startLookingForKeys - no room members found`, { channelId })
             return
         }
+
         const now = Date.now()
-        const eligibleMemberIds = roomMembers.filter(
-            (memberId) =>
-                // find someone we haven't sent a request to in a while
+        // toss a coin to give other members that may be online a chance to process keys
+        const roomMembersRandomized = roomMembers.sort(() => Math.random() - 0.5)
+        const eligibleMemberIds = roomMembersRandomized.filter((memberId) => {
+            // find someone we haven't sent a request to in a while
+            return (
                 now - (roomRecord.requests?.[memberId]?.timestamp ?? 0) >
-                TIME_BETWEEN_USER_KEY_REQUESTS_MS,
-        )
+                TIME_BETWEEN_USER_KEY_REQUESTS_MS
+            )
+        })
         console.log(
             `CDE:_startLookingForKeys - original eligible member length`,
             eligibleMemberIds.length,
         )
         if (!eligibleMemberIds.length) {
-            const userWithNewDevices = roomMembers.find(async (memberId) => {
-                const seenDeviceIds = roomRecord.requests?.[memberId]?.toDeviceIds ?? []
-                const currentDeviceIdMap = await this.client.getStoredDevicesForUser(memberId)
-                const currentDeviceIds: string[] = []
-                for (const innerMap of currentDeviceIdMap.values()) {
-                    for (const deviceInfo of innerMap.values()) {
-                        currentDeviceIds.push(deviceInfo.deviceId)
-                    }
-                }
-                return currentDeviceIds.some((deviceId) => !seenDeviceIds.includes(deviceId))
-            })
+            const userWithNewDevices = (
+                await Promise.all(
+                    roomMembersRandomized.map(async (memberId) => {
+                        const seenDeviceIds = roomRecord.requests?.[memberId]?.toDeviceIds ?? []
+                        const currentDeviceIdMap = await this.client.getStoredDevicesForUser(
+                            memberId,
+                        )
+                        const currentDeviceIds: string[] = []
+                        for (const innerMap of currentDeviceIdMap.values()) {
+                            for (const deviceInfo of innerMap.values()) {
+                                if (this.client.deviceId !== deviceInfo.deviceId) {
+                                    // don't search for our current devices deviceId
+                                    currentDeviceIds.push(deviceInfo.deviceId)
+                                }
+                            }
+                        }
+                        const found = currentDeviceIds.some(
+                            (deviceId) => !seenDeviceIds.includes(deviceId),
+                        )
+                        console.log('CDE::_startLookingForKeys - seen device ids for user', {
+                            seenDeviceIds: seenDeviceIds,
+                            currentDeviceIds: currentDeviceIds,
+                            userId: memberId,
+                            foundDeviceIds: found,
+                        })
+                        return found ? memberId : null
+                    }),
+                )
+            ).find((memberId) => memberId !== null)
             if (userWithNewDevices) {
                 console.log('CDE::_startLookingForKeys - found user with new devices online', {
                     channelId,
                     userWithNewDevices,
+                    eligibleMemberIds,
                 })
                 eligibleMemberIds.push(userWithNewDevices)
             } else {
                 console.log('CDE::_startLookingForKeys - no eligible members')
+                roomRecord.lastRequestAt = now
+                roomRecord.timer = setTimeout(() => {
+                    console.log(
+                        'CDE::_startLookingForKeys - key request timed out after finding no eligible members',
+                        {
+                            from: this.userId,
+                            channelId,
+                        },
+                    )
+                    if (this.throttledStartLookingForKeys) {
+                        clearTimeout(roomRecord.timer)
+                        roomRecord.timer = undefined
+                        this.throttledStartLookingForKeys()
+                    }
+                }, KEY_REQUEST_TIMEOUT_MS)
                 return
             }
         }
@@ -656,9 +709,10 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
     private async onKeyRequest(event: RiverEvent, fromUserId: string) {
         const clear_content = event.getClearToDeviceMessage_KeyRequest()
         if (!clear_content) {
-            throw new Error(
+            console.error(
                 'CDE::onKeyRequest - no clear content found in event, did decryption fail?',
             )
+            return
         }
 
         // todo: allow for sending key requests for multiple sessionIds at once
@@ -752,6 +806,7 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         )
 
         const allRequestedSessions = sharedHistorySessions.concat(uniqueRequestedSessions)
+        console.log('CDE::onKeyRequest all requested sessions', { allRequestedSessions })
 
         const exportedSessions: MegolmSessionData[] = []
         try {
@@ -815,7 +870,9 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         })
 
         if (!exportedSessions.length) {
-            console.info('CDE::onKeyRequest got key sharing request for unknown room')
+            console.info('CDE::onKeyRequest got key sharing request for unknown room', {
+                channelId,
+            })
             const response = make_ToDevice_KeyResponse({
                 kind: KeyResponseKind.KRK_KEYS_NOT_FOUND,
                 spaceId,
