@@ -13,7 +13,7 @@ export const membershipCostError = `Only towns with a mint cost of more than 1 E
 
 export const schema = z
     .object({
-        spaceIconUrl: z.string().optional().nullable(),
+        spaceIconUrl: z.coerce.string().optional().nullable(),
         spaceIconFile: z
             .custom<File>((val) => val instanceof File, 'Please upload a file')
             .optional()

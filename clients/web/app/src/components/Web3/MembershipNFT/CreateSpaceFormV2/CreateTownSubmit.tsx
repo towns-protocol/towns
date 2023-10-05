@@ -189,13 +189,12 @@ export function CreateTownSubmit({
                         })
                     }
 
-                    if (values.spaceBio) {
-                        const { spaceBio } = values
-                        uploadSpaceBio({
-                            description: spaceBio,
-                            innerRoomId: makeRoomIdentifier(networkId),
-                        })
-                    }
+                    // if there's no bio, just upload an empty string
+                    const { spaceBio } = values
+                    uploadSpaceBio({
+                        description: spaceBio ?? '',
+                        innerRoomId: makeRoomIdentifier(networkId),
+                    })
 
                     let timeoutDuration = 0
                     try {

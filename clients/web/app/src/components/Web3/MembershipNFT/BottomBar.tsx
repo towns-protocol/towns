@@ -1,8 +1,12 @@
 import React from 'react'
-import { Button, MotionStack, Stack } from '@ui'
+import { useCurrentWalletEqualsSignedInAccount } from 'use-zion-client'
+import { Box, Button, MotionStack, Stack } from '@ui'
 import { useStore } from 'store/store'
 import { TransactionButton } from '@components/TransactionButton'
 import { TransactionUIState } from 'hooks/TransactionUIState'
+import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
+import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
+import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 
 type Props = {
     onClick?: () => void
@@ -26,6 +30,10 @@ export function BottomBar({
     idleText,
 }: Props) {
     const theme = useStore((state) => state.theme)
+    const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
+    const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()
+    const isDisabled = !isTransactionNetwork || !currentWalletEqualsSignedInAccount || disabled
+
     return (
         <>
             <Stack
@@ -36,6 +44,19 @@ export function BottomBar({
                 background={theme === 'dark' ? 'transparentDark' : 'transparentBright'}
             >
                 <Stack width="100%" maxWidth="1200" position="relative">
+                    {!isTransactionNetwork && (
+                        <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                            <RequireTransactionNetworkMessage
+                                postCta="to create a town."
+                                switchNetwork={switchNetwork}
+                            />
+                        </Box>
+                    )}
+                    {isTransactionNetwork && !currentWalletEqualsSignedInAccount && (
+                        <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                            <ErrorMessageText message="Wallet is not connected, or is not the same as the signed in account." />
+                        </Box>
+                    )}
                     <Stack
                         width="100%"
                         maxWidth="500"
@@ -69,7 +90,7 @@ export function BottomBar({
                                 }}
                             >
                                 <TransactionButton
-                                    disabled={disabled}
+                                    disabled={isDisabled}
                                     transactionState={transactionUIState}
                                     transactingText={transactingText}
                                     successText={successText ?? ''}
@@ -82,7 +103,7 @@ export function BottomBar({
                             <Button
                                 tone="cta1"
                                 width="100%"
-                                disabled={disabled}
+                                disabled={isDisabled}
                                 type="button"
                                 onClick={onClick}
                             >

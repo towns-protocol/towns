@@ -176,9 +176,12 @@ export function CreateSpaceFormV2() {
                                                                 'tokensGatingMembership'
                                                             ],
                                                         )}
-                                                        onClick={() =>
+                                                        onClick={() => {
+                                                            if (transactionDetails.isTransacting) {
+                                                                return
+                                                            }
                                                             setPanelType(PanelType.gating)
-                                                        }
+                                                        }}
                                                     >
                                                         <>
                                                             <Text strong size="lg">
@@ -194,9 +197,12 @@ export function CreateSpaceFormV2() {
                                                                 'membershipCost'
                                                             ],
                                                         )}
-                                                        onClick={() =>
+                                                        onClick={() => {
+                                                            if (transactionDetails.isTransacting) {
+                                                                return
+                                                            }
                                                             setPanelType(PanelType.pricing)
-                                                        }
+                                                        }}
                                                     >
                                                         <>
                                                             <Text strong size="lg">
@@ -311,16 +317,21 @@ function BackgroundImageUpdater({
 
     return (
         <Box display="inline-block">
-            <Box
-                position="fixed"
-                top="none"
-                left="none"
-                bottom="none"
-                right="none"
-                pointerEvents="none"
-            >
-                <BlurredBackground imageSrc={imageSrc ?? ''} blur={40} />
-            </Box>
+            {imageSrc && (
+                <MotionBox
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    position="fixed"
+                    top="none"
+                    left="none"
+                    bottom="none"
+                    right="none"
+                    pointerEvents="none"
+                >
+                    <BlurredBackground imageSrc={imageSrc} blur={40} />
+                </MotionBox>
+            )}
             <LargeUploadImageTemplate<CreateSpaceFormV2SchemaType>
                 canEdit={!transactionDetails.isTransacting}
                 type="spaceIcon"
@@ -336,7 +347,6 @@ function BackgroundImageUpdater({
             >
                 <InteractiveTownsToken
                     mintMode
-                    key={imageSrc}
                     size="xl"
                     address={transactionDetails.townAddress}
                     imageSrc={imageSrc ?? undefined}
@@ -367,6 +377,7 @@ function FormFieldEdit({
             display="inline-flex"
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
+            onClick={onClick}
         >
             <Text color="gray2" size="lg">
                 {label}
@@ -375,11 +386,12 @@ function FormFieldEdit({
             {hasError && <Icon size="square_xs" type="alert" color="error" />}
             {onClick && (
                 <MotionBox
+                    color="default"
                     animate={{
                         opacity: hovered ? 1 : 0,
                     }}
                 >
-                    <IconButton icon="edit" onClick={onClick} />
+                    <IconButton icon="edit" color="default" />
                 </MotionBox>
             )}
         </Box>
