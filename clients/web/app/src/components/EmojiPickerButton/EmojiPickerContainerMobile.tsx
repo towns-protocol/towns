@@ -2,7 +2,8 @@ import data from '@emoji-mart/data'
 
 import Picker from '@emoji-mart/react'
 import React, { useCallback } from 'react'
-import { Box, Stack } from '@ui'
+import { createPortal } from 'react-dom'
+import { Box, Stack, useZLayerContext } from '@ui'
 import { vars } from 'ui/styles/vars.css'
 import { emojiPickerClassName } from './EmojiPickerContainer.css'
 
@@ -10,6 +11,7 @@ export const EmojiPickerContainerMobile = (props: {
     onEmojiSelect: (data: EmojiPickerSelection) => void
     onCancel: () => void
 }) => {
+    const root = useZLayerContext().rootLayerRef?.current
     const onEmojiSelect = useCallback(
         (data: EmojiPickerSelection) => {
             props.onEmojiSelect(data)
@@ -18,7 +20,11 @@ export const EmojiPickerContainerMobile = (props: {
         [props],
     )
 
-    return (
+    if (!root) {
+        return undefined
+    }
+
+    return createPortal(
         <Stack
             alignItems="center"
             position="fixed"
@@ -27,7 +33,7 @@ export const EmojiPickerContainerMobile = (props: {
             left="none"
             right="none"
             paddingTop="safeAreaInsetTop"
-            zIndex="tooltips"
+            pointerEvents="all"
         >
             <Box absoluteFill background="level1" opacity="0.5" onClick={props.onCancel} />
             <Box className={emojiPickerClassName} paddingTop="sm">
@@ -40,6 +46,7 @@ export const EmojiPickerContainerMobile = (props: {
                     onEmojiSelect={onEmojiSelect}
                 />
             </Box>
-        </Stack>
+        </Stack>,
+        root,
     )
 }
