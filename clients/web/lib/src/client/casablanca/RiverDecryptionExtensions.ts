@@ -16,7 +16,6 @@ import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { Room } from '../../types/zion-types'
 import { RoomIdentifier } from '../../types/room-identifier'
-import { SpaceProtocol } from '../ZionClientTypes'
 import throttle from 'lodash/throttle'
 // eslint-disable-next-line lodash/import-scope
 import type { DebouncedFunc } from 'lodash'
@@ -456,7 +455,6 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         let room: Room | undefined = undefined
         try {
             room = this.delegate.getRoomData({
-                protocol: SpaceProtocol.Casablanca,
                 slug: '',
                 networkId: channelId,
             })

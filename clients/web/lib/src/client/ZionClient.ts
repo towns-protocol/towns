@@ -3,7 +3,6 @@ import {
     BlockchainTransactionEvent,
     FullyReadMarker,
     RoomMessageEvent,
-    ZTEvent,
 } from '../types/timeline-types'
 import {
     Client as CasablancaClient,
@@ -22,10 +21,8 @@ import {
     IZionServerVersions,
     MatrixAuth,
     RoleTransactionContext,
-    SpaceProtocol,
     TransactionContext,
     TransactionStatus,
-    ZionAccountDataType,
     ZionClientEventHandlers,
     ZionOpts,
     createChannelTransactionContext,
@@ -35,15 +32,11 @@ import {
 } from './ZionClientTypes'
 import {
     ClientEvent,
-    EventType,
-    ISendEventResponse,
     MatrixClient,
     MatrixError,
     PendingEventOrdering,
-    RelationType,
     Store,
     UserEvent,
-    createClient,
 } from 'matrix-js-sdk'
 import {
     CreateChannelInfo,
@@ -62,14 +55,8 @@ import {
     MatrixDecryptionExtension,
     MatrixDecryptionExtensionDelegate,
 } from './matrix/MatrixDecryptionExtensions'
-import {
-    RoomIdentifier,
-    makeCasablancaStreamIdentifier,
-    makeMatrixRoomIdentifier,
-} from '../types/room-identifier'
+import { RoomIdentifier, makeRoomIdentifier } from '../types/room-identifier'
 import { SignerContext } from '@river/sdk'
-import { sendMatrixMessage, sendMatrixNotice } from './matrix/SendMessage'
-import { toZionRoom, toZionUser } from '../store/use-matrix-store'
 import { toZionCasablancaUser } from '../store/use-casablanca-store'
 import { CryptoStore } from 'matrix-js-sdk/lib/crypto/store/base'
 import { MatrixDbManager } from './matrix/MatrixDbManager'
@@ -81,16 +68,11 @@ import {
     updateCasablancaChannel,
 } from './casablanca/CreateOrUpdateChannel'
 import { createCasablancaSpace } from './casablanca/CreateSpace'
-import { createMatrixChannel } from './matrix/CreateChannel'
-import { createMatrixSpace } from './matrix/CreateSpace'
-import { editZionMessage } from './matrix/EditMessage'
-import { inviteMatrixUser } from './matrix/InviteUser'
-import { joinMatrixRoom } from './matrix/Join'
 import { loadOlm } from './loadOlm'
 import { makeUniqueChannelStreamId } from '@river/sdk'
 import { makeUniqueSpaceStreamId } from '@river/sdk'
 import { staticAssertNever } from '../utils/zion-utils'
-import { syncMatrixSpace } from './matrix/SyncSpace'
+import { MatrixSpaceHierarchy } from './matrix/SyncSpace'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import { sendFullyReadMarkers } from './casablanca/SendFullyReadMarkers'
@@ -118,8 +100,8 @@ import {
  * - go to the blockchain when creating a space
  * - go to the blockchain when updating power levels
  * - etc
- * the zion client will wrap the underlying matrix and casablanca clients and
- * ensure correct zion protocol business logic
+ * the zion client will wrap the underlying river client and
+ * ensure correct protocol business logic
  */
 
 const DEFAULT_INITIAL_SYNC_LIMIT = 20
@@ -407,20 +389,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         if (!signer) {
             throw new SignerUndefinedError()
         }
-        if (!createSpaceInfo.spaceProtocol) {
-            if (!this.opts.primaryProtocol) {
-                throw new Error('primaryProtocol is undefined')
-            }
-            createSpaceInfo.spaceProtocol = this.opts.primaryProtocol
-        }
-        switch (createSpaceInfo.spaceProtocol) {
-            case SpaceProtocol.Casablanca:
-                return this.createCasablancaSpaceTransaction(createSpaceInfo, membership, signer)
-            case SpaceProtocol.Matrix:
-                return this.createMatrixSpaceTransaction(createSpaceInfo, membership, signer)
-            default:
-                staticAssertNever(createSpaceInfo.spaceProtocol)
-        }
+        return this.createCasablancaSpaceTransaction(createSpaceInfo, membership, signer)
     }
 
     public async waitForCreateSpaceTransaction(
@@ -449,31 +418,19 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         if (receipt?.status === 1) {
             console.log('[waitForCreateSpaceTransaction] success', roomId)
             if (roomId) {
-                switch (roomId?.protocol) {
-                    case SpaceProtocol.Casablanca:
-                        // wait until the space and channel are minted on-chain
-                        // before creating the streams
-                        if (!this.casablancaClient) {
-                            throw new Error("Casablanca client doesn't exist")
-                        }
-                        await createCasablancaSpace(this.casablancaClient, roomId.networkId)
-                        console.log('[waitForCreateSpaceTransaction] Space stream created', roomId)
-
-                        await this.createSpaceDefaultChannelRoom(
-                            roomId,
-                            'general',
-                            context.channelId,
-                        )
-                        console.log(
-                            '[waitForCreateSpaceTransaction] default channel stream created',
-                            context.channelId,
-                        )
-                        break
-                    case SpaceProtocol.Matrix:
-                        // no op because the room and channel creation logic is
-                        // different, and is handled in createSpaceTransaction
-                        break
+                // wait until the space and channel are minted on-chain
+                // before creating the streams
+                if (!this.casablancaClient) {
+                    throw new Error("Casablanca client doesn't exist")
                 }
+                await createCasablancaSpace(this.casablancaClient, roomId.networkId)
+                console.log('[waitForCreateSpaceTransaction] Space stream created', roomId)
+
+                await this.createSpaceDefaultChannelRoom(roomId, 'general', context.channelId)
+                console.log(
+                    '[waitForCreateSpaceTransaction] default channel stream created',
+                    context.channelId,
+                )
                 // emiting the event here, because the web app calls different
                 // functions to create a space, and this is the only place
                 // that all different functions go through
@@ -507,29 +464,13 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * createSpace
      *************************************************/
     private async createSpaceRoom(
-        createSpaceInfo: CreateSpaceInfo,
+        _createSpaceInfo: CreateSpaceInfo,
         networkId?: string,
     ): Promise<RoomIdentifier> {
-        if (!createSpaceInfo.spaceProtocol) {
-            if (!this.opts.primaryProtocol) {
-                throw new Error('primaryProtocol is undefined')
-            }
-            createSpaceInfo.spaceProtocol = this.opts.primaryProtocol
+        if (!this.casablancaClient) {
+            throw new Error("Casablanca client doesn't exist")
         }
-        switch (createSpaceInfo.spaceProtocol) {
-            case SpaceProtocol.Matrix:
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                return createMatrixSpace(this.matrixClient, createSpaceInfo)
-            case SpaceProtocol.Casablanca:
-                if (!this.casablancaClient) {
-                    throw new Error("Casablanca client doesn't exist")
-                }
-                return createCasablancaSpace(this.casablancaClient, networkId)
-            default:
-                staticAssertNever(createSpaceInfo.spaceProtocol)
-        }
+        return createCasablancaSpace(this.casablancaClient, networkId)
     }
 
     private async createCasablancaSpaceTransaction(
@@ -537,10 +478,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         membership: ITownArchitectBase.MembershipStruct,
         signer: ethers.Signer,
     ): Promise<CreateSpaceTransactionContext> {
-        const spaceId: RoomIdentifier = makeCasablancaStreamIdentifier(makeUniqueSpaceStreamId())
-        const channelId: RoomIdentifier = makeCasablancaStreamIdentifier(
-            makeUniqueChannelStreamId(),
-        )
+        const spaceId: RoomIdentifier = makeRoomIdentifier(makeUniqueSpaceStreamId())
+        const channelId: RoomIdentifier = makeRoomIdentifier(makeUniqueChannelStreamId())
 
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
@@ -575,79 +514,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
     }
 
-    private async createMatrixSpaceTransaction(
-        createSpaceInfo: CreateSpaceInfo,
-        membership: ITownArchitectBase.MembershipStruct,
-        signer: ethers.Signer,
-    ): Promise<CreateSpaceTransactionContext> {
-        let transaction: ContractTransaction | undefined
-        let error: Error | undefined
-        let spaceId: RoomIdentifier | undefined = undefined
-        let channelId: RoomIdentifier | undefined = undefined
-
-        // create matrix space
-        spaceId = await this.createSpaceRoom(createSpaceInfo)
-        if (!spaceId) {
-            console.error('[createMatrixSpaceTransaction] Space creation failed')
-            return {
-                transaction: undefined,
-                receipt: undefined,
-                status: TransactionStatus.Failed,
-                data: undefined,
-                error: new Error('Matrix Space creation failed'),
-            }
-        }
-        console.log('[createMatrixSpaceTransaction] Space created', spaceId)
-
-        try {
-            channelId = await this.createSpaceDefaultChannelRoom(spaceId)
-            console.log('[createMatrixSpaceTransaction] default channel created', channelId)
-        } catch (error) {
-            console.error('[createMatrixSpaceTransaction] default channel creation failed', error)
-            // leave the parent space if the channel creation failed
-            await this.leave(spaceId)
-        }
-
-        if (!channelId) {
-            return {
-                transaction: undefined,
-                receipt: undefined,
-                status: TransactionStatus.Failed,
-                data: undefined,
-                error: new Error('Matrix default channel creation failed'),
-            }
-        }
-
-        // create space transaction
-        try {
-            transaction = await this.spaceDapp.createSpace(
-                {
-                    spaceId: spaceId.networkId,
-                    spaceName: createSpaceInfo.name,
-                    spaceMetadata: '', // unused
-                    channelId: channelId.networkId,
-                    channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
-                    membership,
-                },
-                signer,
-            )
-            console.log(`[createMatrixSpaceTransaction] transaction created` /*, transaction*/)
-        } catch (err) {
-            console.error('[createMatrixSpaceTransaction] error', err)
-            error = await this.onErrorLeaveSpaceRoomAndDecodeError(spaceId, err)
-        }
-
-        return {
-            transaction,
-            receipt: undefined,
-            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-            data: transaction ? spaceId : undefined,
-            channelId,
-            spaceName: createSpaceInfo.name,
-            error,
-        }
-    }
-
     /************************************************
      * createChannelRoom
      *************************************************/
@@ -655,38 +521,20 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         createInfo: CreateChannelInfo,
         networkId?: string,
     ): Promise<RoomIdentifier> {
-        switch (createInfo.parentSpaceId.protocol) {
-            case SpaceProtocol.Matrix: {
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                const roomId = await createMatrixChannel(this.matrixClient, createInfo)
-                // a channel creator always joins the channel, so we set the membership status
-                await this.setChannelMembershipDataOnSpace({
-                    spaceId: createInfo.parentSpaceId,
-                    channelNetworkId: roomId.networkId,
-                    membershipStatus: Membership.Join,
-                })
-                return roomId
-            }
-            case SpaceProtocol.Casablanca:
-                if (!this.casablancaClient) {
-                    throw new Error("createChannel: Casablanca client doesn't exist")
-                }
-                if (networkId === undefined) {
-                    throw new Error('createChannel: networkId is undefined')
-                }
-                return createCasablancaChannel(
-                    this.casablancaClient,
-                    createInfo.parentSpaceId,
-                    createInfo.name,
-                    createInfo.topic ? createInfo.topic : '',
-                    networkId,
-                    createInfo.streamSettings,
-                )
-            default:
-                staticAssertNever(createInfo.parentSpaceId)
+        if (!this.casablancaClient) {
+            throw new Error("createChannel: Casablanca client doesn't exist")
         }
+        if (networkId === undefined) {
+            throw new Error('createChannel: networkId is undefined')
+        }
+        return createCasablancaChannel(
+            this.casablancaClient,
+            createInfo.parentSpaceId,
+            createInfo.name,
+            createInfo.topic ? createInfo.topic : '',
+            networkId,
+            createInfo.streamSettings,
+        )
     }
 
     private async createSpaceDefaultChannelRoom(
@@ -707,7 +555,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         createChannelInfo: CreateChannelInfo,
         signer: ethers.Signer,
     ): Promise<ChannelTransactionContext> {
-        let roomId: RoomIdentifier = makeCasablancaStreamIdentifier(makeUniqueChannelStreamId())
+        let roomId: RoomIdentifier = makeRoomIdentifier(makeUniqueChannelStreamId())
 
         console.log('[createChannelTransaction] Channel created', roomId)
 
@@ -756,58 +604,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
     }
 
-    private async createMatrixChannelTransaction(
-        createChannelInfo: CreateChannelInfo,
-        signer: ethers.Signer,
-    ): Promise<ChannelTransactionContext> {
-        let roomId: RoomIdentifier | undefined
-        try {
-            roomId = await this.createChannelRoom(createChannelInfo, undefined)
-        } catch (error) {
-            const _error = new Error('createChannel failed')
-            _error.name = (error as Error).name ?? 'Error'
-            console.error(_error)
-            return {
-                transaction: undefined,
-                receipt: undefined,
-                status: TransactionStatus.Failed,
-                data: undefined,
-                error: _error,
-            }
-        }
-
-        console.log('[createMatrixChannelTransaction] Channel created', roomId)
-
-        let transaction: ContractTransaction | undefined = undefined
-        let error: Error | undefined = undefined
-
-        try {
-            transaction = await this.spaceDapp.createChannel(
-                createChannelInfo.parentSpaceId.networkId,
-                createChannelInfo.name,
-                roomId.networkId,
-                createChannelInfo.roleIds,
-                signer,
-            )
-            console.log(`[createMatrixChannelTransaction] transaction created` /*, transaction*/)
-        } catch (err) {
-            console.error('[createMatrixChannelTransaction] error', err)
-            error = await this.onErrorLeaveChannelRoomAndDecodeError(
-                createChannelInfo.parentSpaceId.networkId,
-                roomId,
-                err,
-            )
-        }
-
-        return {
-            transaction,
-            receipt: undefined,
-            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-            data: transaction ? roomId : undefined,
-            error,
-        }
-    }
-
     /************************************************
      * createChannel
      *************************************************/
@@ -840,14 +636,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         if (!signer) {
             throw new SignerUndefinedError()
         }
-        switch (createChannelInfo.parentSpaceId.protocol) {
-            case SpaceProtocol.Matrix:
-                return this.createMatrixChannelTransaction(createChannelInfo, signer)
-            case SpaceProtocol.Casablanca:
-                return this.createCasablancaChannelTransaction(createChannelInfo, signer)
-            default:
-                staticAssertNever(createChannelInfo.parentSpaceId)
-        }
+        return this.createCasablancaChannelTransaction(createChannelInfo, signer)
     }
 
     public async waitForCreateChannelTransaction(
@@ -1013,58 +802,22 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     private async updateChannelRoom(updateChannelInfo: UpdateChannelInfo): Promise<void> {
-        switch (updateChannelInfo.channelId.protocol) {
-            case SpaceProtocol.Matrix:
-                {
-                    const matrixUpdates: Promise<ISendEventResponse>[] = []
-                    if (!this.matrixClient) {
-                        throw new Error('matrix client is undefined')
-                    }
-                    // update the matrix room
-                    if (updateChannelInfo.updatedChannelName) {
-                        matrixUpdates.push(
-                            this.matrixClient.setRoomName(
-                                updateChannelInfo.channelId.networkId,
-                                updateChannelInfo.updatedChannelName,
-                            ),
-                        )
-                    }
-                    // update the channel topic
-                    if (updateChannelInfo.updatedChannelTopic) {
-                        matrixUpdates.push(
-                            this.matrixClient.setRoomTopic(
-                                updateChannelInfo.channelId.networkId,
-                                updateChannelInfo.updatedChannelTopic,
-                            ),
-                        )
-                    }
-                    // wait for any updates to complete
-                    if (matrixUpdates.length > 0) {
-                        await Promise.all(matrixUpdates)
-                    }
-                }
-                break
-            case SpaceProtocol.Casablanca:
-                if (!this.casablancaClient) {
-                    throw new Error("updatedChannel: Casablanca client doesn't exist")
-                }
-                if (updateChannelInfo.channelId === undefined) {
-                    throw new Error('updateChannel: channelId is undefined')
-                }
-                if (!updateChannelInfo.updatedChannelName) {
-                    throw new Error('updateChannel: channelName cannot be empty')
-                }
-                await updateCasablancaChannel(
-                    this.casablancaClient,
-                    updateChannelInfo.parentSpaceId.networkId,
-                    updateChannelInfo.updatedChannelName,
-                    updateChannelInfo.updatedChannelTopic ?? '',
-                    updateChannelInfo.channelId.networkId,
-                )
-                break
-            default:
-                staticAssertNever(updateChannelInfo.channelId)
+        if (!this.casablancaClient) {
+            throw new Error("updatedChannel: Casablanca client doesn't exist")
         }
+        if (updateChannelInfo.channelId === undefined) {
+            throw new Error('updateChannel: channelId is undefined')
+        }
+        if (!updateChannelInfo.updatedChannelName) {
+            throw new Error('updateChannel: channelName cannot be empty')
+        }
+        await updateCasablancaChannel(
+            this.casablancaClient,
+            updateChannelInfo.parentSpaceId.networkId,
+            updateChannelInfo.updatedChannelName,
+            updateChannelInfo.updatedChannelTopic ?? '',
+            updateChannelInfo.channelId.networkId,
+        )
     }
 
     /************************************************
@@ -1574,81 +1327,20 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * inviteUser
      *************************************************/
     public async inviteUser(roomId: RoomIdentifier, userId: string) {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                await inviteMatrixUser({
-                    matrixClient: this.matrixClient,
-                    userId,
-                    roomId,
-                })
-                return
-            case SpaceProtocol.Casablanca:
-                if (!this.casablancaClient) {
-                    throw new Error('Casablanca client not initialized')
-                }
-                await this.casablancaClient.inviteUser(roomId.networkId, userId)
-                return
-            default:
-                staticAssertNever(roomId)
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
         }
+        await this.casablancaClient.inviteUser(roomId.networkId, userId)
     }
 
     /************************************************
      * leave
      * ************************************************/
-    public async leave(roomId: RoomIdentifier, parentNetworkId?: string): Promise<void> {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix: {
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-
-                // leaving a space, leave all channels too
-                if (!parentNetworkId) {
-                    const channels = this.getAllChannelMembershipsFromSpace(roomId)
-                    for (const channelId in channels) {
-                        try {
-                            await this.matrixClient.leave(channelId)
-                            await this.setChannelMembershipDataOnSpace({
-                                spaceId: roomId,
-                                channelNetworkId: channelId,
-                                membershipStatus: Membership.Leave,
-                            })
-                        } catch (error) {
-                            console.error('leave channel while leaving space failed', error)
-                        }
-
-                        await this.matrixClient.leave(roomId.networkId)
-                        await this.setChannelMembershipDataOnSpace({
-                            spaceId: roomId,
-                            membershipStatus: Membership.Leave,
-                        })
-                    }
-                }
-                // leaving a channel
-                else {
-                    await this.matrixClient.leave(roomId.networkId)
-                    await this.setChannelMembershipDataOnSpace({
-                        spaceId: makeMatrixRoomIdentifier(parentNetworkId),
-                        channelNetworkId: roomId.networkId,
-                        membershipStatus: Membership.Leave,
-                    })
-                }
-
-                break
-            }
-            case SpaceProtocol.Casablanca:
-                if (!this.casablancaClient) {
-                    throw new Error('Casablanca client not initialized')
-                }
-                await this.casablancaClient.leaveStream(roomId.networkId)
-                break
-            default:
-                staticAssertNever(roomId)
+    public async leave(roomId: RoomIdentifier, _parentNetworkId?: string): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
         }
+        await this.casablancaClient.leaveStream(roomId.networkId)
     }
 
     /************************************************
@@ -1659,63 +1351,20 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      *************************************************/
     public async joinRoom(
         roomId: RoomIdentifier,
-        parentNetworkId?: string,
+        _parentNetworkId?: string,
         opts?: { skipWaitForMiniblockConfirmation: boolean },
     ) {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix: {
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                const matrixRoom = await joinMatrixRoom({
-                    matrixClient: this.matrixClient,
-                    roomId,
-                    parentNetworkId,
-                })
-                const zionRoom = toZionRoom(matrixRoom)
-
-                if (!parentNetworkId && !matrixRoom.isSpaceRoom()) {
-                    const parentEvents = matrixRoom.currentState.getStateEvents(
-                        EventType.SpaceParent,
-                    )
-                    if (parentEvents.length > 0) {
-                        parentNetworkId = parentEvents[0].getStateKey()
-                    } else {
-                        console.error('no parent event found')
-                    }
-                }
-                const spaceId = parentNetworkId ? makeMatrixRoomIdentifier(parentNetworkId) : roomId
-                const channelNetworkId = parentNetworkId ? roomId.networkId : undefined
-
-                await this.setChannelMembershipDataOnSpace({
-                    spaceId,
-                    channelNetworkId,
-                    membershipStatus: Membership.Join,
-                })
-
-                // hack to force immediate sync of room state for tests
-                this._eventHandlers?.onJoinRoom?.(zionRoom.id, spaceId)
-                return zionRoom
-            }
-            case SpaceProtocol.Casablanca: {
-                // TODO: not doing event handlers here since Casablanca is not part of alpha
-                if (!this.casablancaClient) {
-                    throw new Error('Casablanca client not initialized')
-                }
-                const stream = await this.casablancaClient.joinStream(roomId.networkId, opts)
-                let parentId = roomId
-                if (
-                    stream.view.contentKind === 'channelContent' &&
-                    stream.view.channelContent.spaceId
-                ) {
-                    parentId = makeCasablancaStreamIdentifier(stream.view.channelContent.spaceId)
-                }
-                this._eventHandlers?.onJoinRoom?.(roomId, parentId)
-                return toZionRoomFromStream(stream, this.casablancaClient.userId)
-            }
-            default:
-                staticAssertNever(roomId)
+        // TODO: not doing event handlers here since Casablanca is not part of alpha
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
         }
+        const stream = await this.casablancaClient.joinStream(roomId.networkId, opts)
+        let parentId = roomId
+        if (stream.view.contentKind === 'channelContent' && stream.view.channelContent.spaceId) {
+            parentId = makeRoomIdentifier(stream.view.channelContent.spaceId)
+        }
+        this._eventHandlers?.onJoinRoom?.(roomId, parentId)
+        return toZionRoomFromStream(stream, this.casablancaClient.userId)
     }
 
     /************************************************
@@ -1768,35 +1417,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     /************************************************
-     * sendStateEvent
-     *************************************************/
-    public async sendStateEvent(
-        spaceId: RoomIdentifier,
-        eventType: ZTEvent,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        content: any,
-        stateKey: string,
-    ) {
-        switch (spaceId.protocol) {
-            case SpaceProtocol.Matrix:
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                // todo need to figure something out for casablanca
-                await this.matrixClient.sendStateEvent(
-                    spaceId.networkId,
-                    eventType,
-                    content,
-                    stateKey, // need unique state_key
-                )
-                break
-            case SpaceProtocol.Casablanca:
-                console.error('sendStateEvent not implemented for Casablanca')
-                break
-        }
-    }
-
-    /************************************************
      * sendMessage
      *************************************************/
     public async sendMessage(
@@ -1811,115 +1431,94 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 options,
             )
         }
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                await sendMatrixMessage(this.matrixClient, roomId, message, options)
 
-                this._eventHandlers?.onSendMessage?.(roomId, message, options)
-                break
-            case SpaceProtocol.Casablanca:
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
+        }
+        switch (options?.messageType) {
+            case undefined:
+            case MessageType.Text:
                 {
-                    if (!this.casablancaClient) {
-                        throw new Error('Casablanca client not initialized')
-                    }
-                    switch (options?.messageType) {
-                        case undefined:
-                        case MessageType.Text:
-                            {
-                                await this.casablancaClient.sendChannelMessage_Text(
-                                    roomId.networkId,
-                                    {
-                                        threadId: options?.threadId,
-                                        threadPreview: options?.threadPreview,
-                                        content: {
-                                            body: message,
-                                            mentions: options?.mentions ?? [],
-                                        },
-                                    },
-                                )
-                            }
-                            break
-                        case MessageType.Image:
-                            await this.casablancaClient.sendChannelMessage_Image(roomId.networkId, {
-                                threadId: options?.threadId,
-                                threadPreview: options?.threadPreview,
-                                content: {
-                                    title: message,
-                                    info: options?.info,
-                                    thumbnail: options?.thumbnail,
-                                },
-                            })
-                            break
-                        case MessageType.GM:
-                            await this.casablancaClient.sendChannelMessage_GM(roomId.networkId, {
-                                threadId: options?.threadId,
-                                threadPreview: options?.threadPreview,
-                                content: {
-                                    typeUrl: message,
-                                },
-                            })
-                            break
-                        case MessageType.EmbeddedMedia:
-                            await this.casablancaClient.sendChannelMessage_EmbeddedMedia(
-                                roomId.networkId,
-                                {
-                                    threadId: options.threadId,
-                                    threadPreview: options.threadPreview,
-                                    content: {
-                                        content: options.content,
-                                        info: {
-                                            sizeBytes: options.info.sizeBytes,
-                                            mimetype: options.info.mimetype,
-                                            widthPixels: options.info.widthPixels,
-                                            heightPixels: options.info.heightPixels,
-                                        },
-                                    },
-                                },
-                            )
-                            break
-                        case MessageType.ChunkedMedia:
-                            await this.casablancaClient.sendChannelMessage_Media(roomId.networkId, {
-                                threadId: options?.threadId,
-                                threadPreview: options?.threadPreview,
-                                content: {
-                                    streamId: options.streamId,
-                                    info: {
-                                        sizeBytes: options.info.sizeBytes,
-                                        mimetype: options.info.mimetype,
-                                        widthPixels: options.info.widthPixels,
-                                        heightPixels: options.info.heightPixels,
-                                    },
-                                    encryption: {
-                                        case: 'aesgcm',
-                                        value: {
-                                            iv: options.iv,
-                                            secretKey: options.secretKey,
-                                        },
-                                    },
-                                    thumbnail: {
-                                        info: {
-                                            sizeBytes: options.thumbnail.info.sizeBytes,
-                                            mimetype: options.thumbnail.info.mimetype,
-                                            widthPixels: options.thumbnail.info.widthPixels,
-                                            heightPixels: options.thumbnail.info.heightPixels,
-                                        },
-                                        content: options.thumbnail.content,
-                                    },
-                                },
-                            })
-                            break
-                        default:
-                            staticAssertNever(options)
-                    }
-                    this._eventHandlers?.onSendMessage?.(roomId, message, options)
+                    await this.casablancaClient.sendChannelMessage_Text(roomId.networkId, {
+                        threadId: options?.threadId,
+                        threadPreview: options?.threadPreview,
+                        content: {
+                            body: message,
+                            mentions: options?.mentions ?? [],
+                        },
+                    })
                 }
+                break
+            case MessageType.Image:
+                await this.casablancaClient.sendChannelMessage_Image(roomId.networkId, {
+                    threadId: options?.threadId,
+                    threadPreview: options?.threadPreview,
+                    content: {
+                        title: message,
+                        info: options?.info,
+                        thumbnail: options?.thumbnail,
+                    },
+                })
+                break
+            case MessageType.GM:
+                await this.casablancaClient.sendChannelMessage_GM(roomId.networkId, {
+                    threadId: options?.threadId,
+                    threadPreview: options?.threadPreview,
+                    content: {
+                        typeUrl: message,
+                    },
+                })
+                break
+            case MessageType.EmbeddedMedia:
+                await this.casablancaClient.sendChannelMessage_EmbeddedMedia(roomId.networkId, {
+                    threadId: options.threadId,
+                    threadPreview: options.threadPreview,
+                    content: {
+                        content: options.content,
+                        info: {
+                            sizeBytes: options.info.sizeBytes,
+                            mimetype: options.info.mimetype,
+                            widthPixels: options.info.widthPixels,
+                            heightPixels: options.info.heightPixels,
+                        },
+                    },
+                })
+                break
+            case MessageType.ChunkedMedia:
+                await this.casablancaClient.sendChannelMessage_Media(roomId.networkId, {
+                    threadId: options?.threadId,
+                    threadPreview: options?.threadPreview,
+                    content: {
+                        streamId: options.streamId,
+                        info: {
+                            sizeBytes: options.info.sizeBytes,
+                            mimetype: options.info.mimetype,
+                            widthPixels: options.info.widthPixels,
+                            heightPixels: options.info.heightPixels,
+                        },
+                        encryption: {
+                            case: 'aesgcm',
+                            value: {
+                                iv: options.iv,
+                                secretKey: options.secretKey,
+                            },
+                        },
+                        thumbnail: {
+                            info: {
+                                sizeBytes: options.thumbnail.info.sizeBytes,
+                                mimetype: options.thumbnail.info.mimetype,
+                                widthPixels: options.thumbnail.info.widthPixels,
+                                heightPixels: options.thumbnail.info.heightPixels,
+                            },
+                            content: options.thumbnail.content,
+                        },
+                    },
+                })
                 break
             default:
-                staticAssertNever(roomId)
+                staticAssertNever(options)
         }
+        this._eventHandlers?.onSendMessage?.(roomId, message, options)
     }
 
     public async sendMediaPayload(streamId: string, data: Uint8Array, chunkIndex: number) {
@@ -1929,21 +1528,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         await this.casablancaClient.sendMediaPayload(streamId, data, chunkIndex)
     }
 
-    public async sendBlockTxn(roomId: RoomIdentifier, txn: BlockchainTransactionEvent) {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                await sendMatrixNotice(this.matrixClient, roomId, txn)
-                break
-            case SpaceProtocol.Casablanca:
-                // blockchain transactions are not necessary, we can
-                // just listen for channel events in the space stream
-                break
-            default:
-                staticAssertNever(roomId)
-        }
+    public async sendBlockTxn(_roomId: RoomIdentifier, _txn: BlockchainTransactionEvent) {
+        // blockchain transactions are not necessary, we can
+        // just listen for channel events in the space stream
     }
 
     /************************************************
@@ -1954,94 +1541,47 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         eventId: string,
         reaction: string,
     ): Promise<void> {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                {
-                    if (!this.matrixClient) {
-                        throw new Error('matrix client is undefined')
-                    }
-                    const newEventId = await this.matrixClient.sendEvent(
-                        roomId.networkId,
-                        EventType.Reaction,
-                        {
-                            'm.relates_to': {
-                                rel_type: RelationType.Annotation,
-                                event_id: eventId,
-                                key: reaction,
-                            },
-                        },
-                    )
-                    console.log('sendReaction', newEventId)
-                }
-                break
-            case SpaceProtocol.Casablanca:
-                if (!this.casablancaClient) {
-                    throw new Error('Casablanca client not initialized')
-                }
-                await this.casablancaClient.sendChannelMessage_Reaction(roomId.networkId, {
-                    reaction,
-                    refEventId: eventId,
-                })
-                console.log('sendReaction')
-                break
-            default:
-                staticAssertNever(roomId)
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
         }
+        await this.casablancaClient.sendChannelMessage_Reaction(roomId.networkId, {
+            reaction,
+            refEventId: eventId,
+        })
+        console.log('sendReaction')
     }
 
     /************************************************
      * canSendToDevice
      *************************************************/
     public async canSendToDeviceMessage(userId: string): Promise<boolean> {
-        if (isMatrixUserId(userId)) {
-            if (!this.matrixClient) {
-                throw new Error('matrix client is undefined')
-            }
-
-            const devices = this.matrixClient.getStoredDevicesForUser(userId)
-            return devices.length > 0
-        } else {
-            if (!this.casablancaClient) {
-                throw new Error('Casablanca client not initialized')
-            }
-            const devices = await this.casablancaClient.getStoredDevicesForUser(userId)
-            return devices.size > 0
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
         }
+        const devices = await this.casablancaClient.getStoredDevicesForUser(userId)
+        return devices.size > 0
     }
 
     /************************************************
      * sendToDevice
      *************************************************/
     public async sendToDeviceMessage(userId: string, type: string, content: object) {
-        if (isMatrixUserId(userId)) {
-            if (!this.matrixClient) {
-                throw new Error('matrix client is undefined')
-            }
-
-            const devices = this.matrixClient.getStoredDevicesForUser(userId)
-            const devicesInfo = devices.map((d) => ({ userId: userId, deviceInfo: d }))
-            await this.matrixClient.encryptAndSendToDevices(devicesInfo, {
-                type,
-                content,
-            })
-        } else {
-            // todo casablanca look for user in casablanca
-            if (!this.casablancaClient) {
-                throw new Error('Casablanca client not initialized')
-            }
-            const canSend = await this.canSendToDeviceMessage(userId)
-            if (!canSend) {
-                throw new Error('cannot send to device for user ' + userId)
-            }
+        // todo casablanca look for user in casablanca
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
+        }
+        const canSend = await this.canSendToDeviceMessage(userId)
+        if (!canSend) {
+            throw new Error('cannot send to device for user ' + userId)
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        if (isUserPayload_ToDevicePlainMessage(content)) {
+            await this.casablancaClient.sendToDevicesMessage(userId, content, type)
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            if (isUserPayload_ToDevicePlainMessage(content)) {
-                await this.casablancaClient.sendToDevicesMessage(userId, content, type)
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            } else if (isToDevicePlainMessage(content)) {
-                await this.casablancaClient.sendToDevicesMessage(userId, content, type)
-            } else {
-                throw new Error('unknown content type for send to device message')
-            }
+        } else if (isToDevicePlainMessage(content)) {
+            await this.casablancaClient.sendToDevicesMessage(userId, content, type)
+        } else {
+            throw new Error('unknown content type for send to device message')
         }
     }
     /************************************************
@@ -2054,91 +1594,41 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         message: string,
         options: SendTextMessageOptions | undefined,
     ) {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                return await editZionMessage(
-                    this.matrixClient,
-                    roomId,
-                    eventId,
-                    originalEventContent,
-                    message,
-                    options,
-                )
-            case SpaceProtocol.Casablanca:
-                if (!this.casablancaClient) {
-                    throw new Error('casablanca client is undefined')
-                }
-                return await this.casablancaClient.sendChannelMessage_Edit_Text(
-                    roomId.networkId,
-                    eventId,
-                    {
-                        threadId: originalEventContent.inReplyTo,
-                        threadPreview: originalEventContent.threadPreview,
-                        content: {
-                            body: message,
-                            mentions: options?.mentions ?? [],
-                        },
-                    },
-                )
-            default:
-                staticAssertNever(roomId)
+        if (!this.casablancaClient) {
+            throw new Error('casablanca client is undefined')
         }
+        return await this.casablancaClient.sendChannelMessage_Edit_Text(roomId.networkId, eventId, {
+            threadId: originalEventContent.inReplyTo,
+            threadPreview: originalEventContent.threadPreview,
+            content: {
+                body: message,
+                mentions: options?.mentions ?? [],
+            },
+        })
     }
 
     /************************************************
      * redactEvent
      *************************************************/
     public async redactEvent(roomId: RoomIdentifier, eventId: string, reason?: string) {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                {
-                    if (!this.matrixClient) {
-                        throw new Error('matrix client is undefined')
-                    }
-                    const resp = await this.matrixClient.redactEvent(
-                        roomId.networkId,
-                        eventId,
-                        undefined,
-                        {
-                            reason,
-                        },
-                    )
-                    console.log('event redacted', roomId.networkId, eventId, resp)
-                }
-                break
-            case SpaceProtocol.Casablanca:
-                if (!this.casablancaClient) {
-                    throw new Error('casablanca client is undefined')
-                }
-                await this.casablancaClient.sendChannelMessage_Redaction(roomId.networkId, {
-                    refEventId: eventId,
-                    reason,
-                })
-                break
-            default:
-                staticAssertNever(roomId)
+        if (!this.casablancaClient) {
+            throw new Error('casablanca client is undefined')
         }
+        await this.casablancaClient.sendChannelMessage_Redaction(roomId.networkId, {
+            refEventId: eventId,
+            reason,
+        })
     }
 
     /************************************************
      * syncSpace
      *************************************************/
-    public async syncSpace(spaceId: RoomIdentifier, walletAddress: string) {
-        switch (spaceId.protocol) {
-            case SpaceProtocol.Matrix:
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-
-                return syncMatrixSpace(this.matrixClient, this.spaceDapp, spaceId, walletAddress)
-            case SpaceProtocol.Casablanca:
-                throw new Error('not implemented')
-            default:
-                staticAssertNever(spaceId)
-        }
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async syncSpace(
+        _spaceId: RoomIdentifier,
+        _walletAddress: string,
+    ): Promise<MatrixSpaceHierarchy | undefined> {
+        throw new Error('not implemented')
     }
 
     /************************************************
@@ -2148,70 +1638,42 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         roomId: RoomIdentifier,
         content: Record<string, FullyReadMarker>,
     ) {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                return this.matrixClient.setRoomAccountData(
-                    roomId.networkId,
-                    ZionAccountDataType.FullyRead,
-                    content,
-                )
-            case SpaceProtocol.Casablanca:
-                if (!this.casablancaClient) {
-                    throw new Error('Casablanca client is undefined')
-                }
-                await sendFullyReadMarkers(this.casablancaClient, roomId.networkId, content)
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client is undefined')
         }
+        await sendFullyReadMarkers(this.casablancaClient, roomId.networkId, content)
     }
 
     private getAllChannelMembershipsFromSpace(roomId: RoomIdentifier): Record<string, Membership> {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix: {
-                const room = this.matrixClient?.getRoom(roomId.networkId)
-                const content: Record<string, Membership> | undefined = room
-                    ?.getAccountData(ZionAccountDataType.Membership)
-                    ?.getContent()
-                if (content) {
-                    return content
-                }
-                return {}
-            }
-            case SpaceProtocol.Casablanca: {
-                const userStreamId = this.casablancaClient?.userStreamId
-                if (!userStreamId) {
-                    throw new Error('User stream is not defined')
-                }
-
-                const memberships: Record<string, Membership> = {}
-
-                const userStreamRollup = this.casablancaClient?.streams.get(userStreamId)?.view
-
-                if (userStreamRollup === undefined) {
-                    return memberships
-                }
-
-                const spaceStream = this.casablancaClient?.streams.get(roomId.networkId)
-                const spaceChannels = Array.from(
-                    spaceStream?.view?.spaceContent.spaceChannelsMetadata.keys() || [],
-                )
-
-                //We go through all the channels in the space and check if the user is invited or joined
-                spaceChannels?.forEach((channel) => {
-                    if (userStreamRollup?.userContent.userInvitedStreams.has(channel)) {
-                        memberships[channel] = Membership.Invite
-                    }
-                    if (userStreamRollup?.userContent.userJoinedStreams.has(channel)) {
-                        memberships[channel] = Membership.Join
-                    }
-                })
-
-                return memberships
-            }
-            default:
-                staticAssertNever(roomId)
+        const userStreamId = this.casablancaClient?.userStreamId
+        if (!userStreamId) {
+            throw new Error('User stream is not defined')
         }
+
+        const memberships: Record<string, Membership> = {}
+
+        const userStreamRollup = this.casablancaClient?.streams.get(userStreamId)?.view
+
+        if (userStreamRollup === undefined) {
+            return memberships
+        }
+
+        const spaceStream = this.casablancaClient?.streams.get(roomId.networkId)
+        const spaceChannels = Array.from(
+            spaceStream?.view?.spaceContent.spaceChannelsMetadata.keys() || [],
+        )
+
+        //We go through all the channels in the space and check if the user is invited or joined
+        spaceChannels?.forEach((channel) => {
+            if (userStreamRollup?.userContent.userInvitedStreams.has(channel)) {
+                memberships[channel] = Membership.Invite
+            }
+            if (userStreamRollup?.userContent.userJoinedStreams.has(channel)) {
+                memberships[channel] = Membership.Join
+            }
+        })
+
+        return memberships
     }
 
     /************************************************
@@ -2226,90 +1688,14 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     /************************************************
-     * setRoomStatus
-     * Set a membership status for room (space or channel) in space's account data
-     ************************************************/
-    private async setChannelMembershipDataOnSpace({
-        spaceId,
-        channelNetworkId: channelId,
-        membershipStatus,
-    }: {
-        spaceId: RoomIdentifier
-        channelNetworkId?: string
-        membershipStatus: Membership
-    }) {
-        switch (spaceId.protocol) {
-            case SpaceProtocol.Matrix: {
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                const room = this.matrixClient?.getRoom(spaceId.networkId)
-                // safeguard against non space rooms or trying to set data before the room DAG is loaded, which can cause issues with tests - historyVisiblity.test.ts
-                if (!room?.isSpaceRoom()) {
-                    console.warn(
-                        '[setChannelMembershipDataOnSpace] isSpaceRoom() check did not pass, not setting room data',
-                        {
-                            spaceId: spaceId.networkId,
-                            channelId: channelId,
-                            room,
-                            membershipStatus,
-                        },
-                    )
-                    return
-                }
-
-                const currentData = this.getAllChannelMembershipsFromSpace(spaceId)
-                const newData = {
-                    ...currentData,
-                    [channelId ?? spaceId.networkId]: membershipStatus,
-                }
-
-                try {
-                    return this.matrixClient.setRoomAccountData(
-                        spaceId.networkId,
-                        ZionAccountDataType.Membership,
-                        newData,
-                    )
-                } catch (error) {
-                    console.error(
-                        '[setAccountDataRoomMembershipStatus] setting account data',
-                        error,
-                    )
-                }
-                return
-            }
-            case SpaceProtocol.Casablanca:
-                // in casablanca, events are appended to the user stream, so this shouldn't be necessary
-                break
-            default:
-                staticAssertNever(spaceId)
-        }
-    }
-
-    /************************************************
      * getRoomData
      ************************************************/
     public getRoomData(roomId: RoomIdentifier): Room | undefined {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix: {
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                const matrixRoom = this.matrixClient.getRoom(roomId.networkId)
-                return matrixRoom ? toZionRoom(matrixRoom) : undefined
-            }
-            case SpaceProtocol.Casablanca: {
-                if (!this.casablancaClient) {
-                    throw new Error('casablanca client is undefined')
-                }
-                const stream = this.casablancaClient.stream(roomId.networkId)
-                return stream
-                    ? toZionRoomFromStream(stream, this.casablancaClient.userId)
-                    : undefined
-            }
-            default:
-                staticAssertNever(roomId)
+        if (!this.casablancaClient) {
+            throw new Error('casablanca client is undefined')
         }
+        const stream = this.casablancaClient.stream(roomId.networkId)
+        return stream ? toZionRoomFromStream(stream, this.casablancaClient.userId) : undefined
     }
 
     /************************************************
@@ -2324,14 +1710,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * getUser
      ************************************************/
     public getUser(userId: string): User | undefined {
-        if (isMatrixUserId(userId)) {
-            const matrixUser = this.matrixClient?.getUser(userId)
-            return matrixUser ? toZionUser(matrixUser) : undefined
-        } else {
-            //TODO: Make real implementation when user profile support will be implemented
-            const casablancaUser = this.casablancaClient?.userId
-            return toZionCasablancaUser(casablancaUser)
-        }
+        //TODO: Make real implementation when user profile support will be implemented
+        return toZionCasablancaUser(userId)
     }
 
     /************************************************
@@ -2382,59 +1762,27 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * setRoomTopic
      ************************************************/
-    public async setRoomTopic(roomId: RoomIdentifier, name: string): Promise<void> {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                await this.matrixClient.setRoomTopic(roomId.networkId, name)
-                break
-            case SpaceProtocol.Casablanca:
-                console.error('not implemented for casablanca')
-        }
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async setRoomTopic(_roomId: RoomIdentifier, _name: string): Promise<void> {
+        console.error('not implemented for casablanca')
     }
 
     /************************************************
      * setRoomName
      ************************************************/
-    public async setRoomName(roomId: RoomIdentifier, name: string): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async setRoomName(_roomId: RoomIdentifier, _name: string): Promise<void> {
         // todo casablanca display name
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                await this.matrixClient?.setRoomName(roomId.networkId, name)
-                break
-            case SpaceProtocol.Casablanca:
-                console.error('not implemented for casablanca')
-                break
-        }
+        console.error('not implemented for casablanca')
     }
 
     /************************************************
      * getRoomTopic
      ************************************************/
-    public async getRoomTopic(roomId: RoomIdentifier): Promise<string> {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix: {
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const topic: Record<string, any> = await this.matrixClient.getStateEvent(
-                    roomId.networkId,
-                    'm.room.topic',
-                    '',
-                )
-                return (topic?.topic as string) ?? ''
-            }
-            case SpaceProtocol.Casablanca:
-                console.error('not implemented for casablanca')
-                return ''
-        }
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async getRoomTopic(_roomId: RoomIdentifier): Promise<string> {
+        console.error('not implemented for casablanca')
+        return ''
     }
 
     /************************************************
@@ -2442,45 +1790,24 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      ************************************************/
     public async scrollback(
         roomId: RoomIdentifier,
-        limit?: number,
+        _limit?: number,
     ): Promise<{
         terminus: boolean
         eventCount: number
         firstEventId?: string
         firstEventTimestamp?: number
     }> {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix: {
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
-                const room = this.matrixClient.getRoom(roomId.networkId)
-                if (!room) {
-                    throw new Error('room not found')
-                }
-                const resultRoom = await this.matrixClient.scrollback(room, limit)
-                return {
-                    terminus: resultRoom.oldState.paginationToken === null,
-                    eventCount: resultRoom.timeline.length,
-                    firstEventId: resultRoom.timeline.at(0)?.getId(),
-                    firstEventTimestamp: resultRoom.timeline.at(0)?.getTs(),
-                }
-            }
-            case SpaceProtocol.Casablanca: {
-                if (!this.casablancaClient) {
-                    throw new Error('casablanca client is undefined')
-                }
-                const result = await this.casablancaClient.scrollback(roomId.networkId)
-                return {
-                    terminus: result.terminus,
-                    eventCount:
-                        this.casablancaClient?.stream(roomId.networkId)?.view?.timeline.length ?? 0,
-                    firstEventId: result.firstEvent?.hashStr,
-                    firstEventTimestamp: result.firstEvent
-                        ? Number(result.firstEvent.event.createdAtEpocMs)
-                        : undefined,
-                }
-            }
+        if (!this.casablancaClient) {
+            throw new Error('casablanca client is undefined')
+        }
+        const result = await this.casablancaClient.scrollback(roomId.networkId)
+        return {
+            terminus: result.terminus,
+            eventCount: this.casablancaClient?.stream(roomId.networkId)?.view?.timeline.length ?? 0,
+            firstEventId: result.firstEvent?.hashStr,
+            firstEventTimestamp: result.firstEvent
+                ? Number(result.firstEvent.event.createdAtEpocMs)
+                : undefined,
         }
     }
 
@@ -2489,33 +1816,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * no need to send for every message, matrix uses an "up to" algorithm
      ************************************************/
     //TODO: remove this function with Matrix cleanup as it is not required for River
+    // eslint-disable-next-line @typescript-eslint/require-await
     public async sendReadReceipt(
         roomId: RoomIdentifier,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        eventId: string | undefined = undefined,
+        _eventId: string | undefined = undefined,
     ): Promise<void> {
-        if (roomId.protocol === SpaceProtocol.Matrix) {
-            if (!this.matrixClient) {
-                throw new Error('matrix client is undefined')
-            } else {
-                const room = this.matrixClient.getRoom(roomId.networkId)
-                if (!room) {
-                    throw new Error(`room with id ${roomId.networkId} not found`)
-                }
-                const event = eventId
-                    ? room.findEventById(eventId)
-                    : room.getLiveTimeline().getEvents().at(-1)
-                if (!event) {
-                    throw new Error(
-                        `event for room ${roomId.networkId} eventId: ${
-                            eventId ?? 'at(-1)'
-                        } not found`,
-                    )
-                }
-                const result = await this.matrixClient.sendReadReceipt(event)
-                this.log('read receipt sent', result)
-            }
-        }
+        console.error('not implemented')
     }
 
     /************************************************
@@ -2530,28 +1836,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * helper, creates a matrix matrixClient with appropriate auth
      *************************************************/
     protected static createMatrixClient(
-        opts: ZionOpts,
-        auth?: MatrixAuth,
-        store?: Store,
-        cryptoStore?: CryptoStore,
+        _opts: ZionOpts,
+        _auth?: MatrixAuth,
+        _store?: Store,
+        _cryptoStore?: CryptoStore,
     ): MatrixClient {
-        if (auth) {
-            // just *accessing* indexedDB throws an exception in firefox with indexeddb disabled.
-
-            return createClient({
-                baseUrl: opts.matrixServerUrl,
-                accessToken: auth.accessToken,
-                userId: auth.userId,
-                deviceId: auth.deviceId,
-                useAuthorizationHeader: true,
-                store: store,
-                cryptoStore: cryptoStore,
-            })
-        } else {
-            return createClient({
-                baseUrl: opts.matrixServerUrl,
-            })
-        }
+        throw new Error('not implemented')
     }
 
     /*
@@ -2680,8 +1970,4 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
         return f(this.matrixClient)
     }
-}
-
-function isMatrixUserId(userId: string) {
-    return userId.startsWith('@')
 }

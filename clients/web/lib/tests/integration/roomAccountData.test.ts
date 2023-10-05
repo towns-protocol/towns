@@ -15,7 +15,6 @@ import {
 import { FullyReadMarker } from '../../src/types/timeline-types'
 import { Permission } from '@river/web3'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { SpaceProtocol, ZionAccountDataType } from '../../src/client/ZionClientTypes'
 import { waitFor } from '@testing-library/dom'
 import { RoomVisibility } from '../../src/types/zion-types'
 
@@ -76,19 +75,7 @@ describe('roomAccountData', () => {
         // save some data
         // eslint-disable-next-line @typescript-eslint/require-await
         const bob2 = await registerAndStartClient('bob', (async () => bob.provider.wallet)())
-
-        if (channelId.protocol === SpaceProtocol.Matrix) {
-            // bob should have the account data
-            const room = bob2.matrixClient?.getRoom(channelId.networkId)
-            expect(room).toBeTruthy()
-            // get the account data
-            const accountData = room!.getAccountData(ZionAccountDataType.FullyRead)
-            expect(accountData).toBeTruthy()
-            // check out the content
-            const content = accountData?.getContent()
-            expect(content).toEqual(fullyRead)
-        } else {
-            expect(false) // TODO https://linear.app/hnt-labs/issue/HNT-634/getroom-for-casablanca
-        }
+        console.log('bob', bob2)
+        expect(false) // TODO https://linear.app/hnt-labs/issue/HNT-634/getroom-for-casablanca
     }) // end test
 }) // end describe

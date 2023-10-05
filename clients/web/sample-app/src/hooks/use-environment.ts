@@ -14,14 +14,12 @@ export function useEnvironment() {
     }
     const chainId = environmentInfo.chainId
     const chainName = environmentInfo.chain.name
-    const matrixUrl = environmentInfo.matrixUrl
     const casablancaUrl = environmentInfo.casablancaUrl
 
     return {
         environment, // only defined if IS_DEV
         chainId,
         chainName,
-        matrixUrl,
         casablancaUrl,
     }
 }

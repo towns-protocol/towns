@@ -1,14 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 import { describe, expect, test } from 'vitest'
-import { Membership, SpaceContext, SpaceProtocol } from 'use-zion-client'
+import { Membership, SpaceContext } from 'use-zion-client'
 import { RichTextEditor } from './RichTextEditor'
 
 const Wrapper = (props: { children?: React.ReactNode }) => {
     const spaceId = {
         slug: '',
         networkId: '',
-        protocol: SpaceProtocol.Matrix,
     }
     return <SpaceContext.Provider value={{ spaceId }}>{props.children}</SpaceContext.Provider>
 }

@@ -22,7 +22,6 @@ const ownerUser = {
 const generateSpaceData = (networkId: string) => {
     const slug = encodeURIComponent(networkId)
     const roomIdentifier = {
-        protocol: Lib.SpaceProtocol.Matrix,
         slug,
         networkId,
     }

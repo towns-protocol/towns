@@ -5,11 +5,10 @@
 import React, { useEffect, useState } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { ZionTestApp } from './helpers/ZionTestApp'
-import { getPrimaryProtocol, registerAndStartClients } from './helpers/TestUtils'
+import { registerAndStartClients } from './helpers/TestUtils'
 import { LoginWithWallet } from './helpers/TestComponents'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -24,11 +23,7 @@ describe('onboardedStateHooksTest', () => {
         await alice.stopClients()
         // create a veiw for bob
         const TestComponent = () => {
-            const { matrixOnboardingState, casablancaOnboardingState } = useZionContext()
-            const onboardingState =
-                getPrimaryProtocol() === SpaceProtocol.Matrix
-                    ? matrixOnboardingState
-                    : casablancaOnboardingState
+            const { casablancaOnboardingState: onboardingState } = useZionContext()
             const [seenStates, setSeenStates] = useState<string[]>([])
             useEffect(() => {
                 setSeenStates((prev) => [...prev, onboardingState.kind])

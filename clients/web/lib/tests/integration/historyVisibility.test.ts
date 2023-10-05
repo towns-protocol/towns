@@ -15,7 +15,6 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 import { ZionTestClient } from './helpers/ZionTestClient'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 describe('historyVisibility', () => {
     // TODO: https://linear.app/hnt-labs/issue/HNT-1584/testsintegrationhistoryvisibilitytestts
@@ -54,11 +53,6 @@ describe('historyVisibility', () => {
         await waitForWithRetries(() => john.joinRoom(roomId))
 
         // if we don't wait for encryption, we'll send unencrypted messages :(
-        if (roomId.protocol === SpaceProtocol.Matrix) {
-            await waitFor(() =>
-                expect(john.matrixClient?.isRoomEncrypted(roomId.networkId)).toBeTruthy(),
-            )
-        }
 
         await waitForWithRetries(() => john.sendMessage(roomId, "I'm John!"))
 
@@ -66,11 +60,6 @@ describe('historyVisibility', () => {
 
         await john.logout()
 
-        if (roomId.protocol === SpaceProtocol.Matrix) {
-            await waitFor(() =>
-                expect(bob.matrixClient?.isRoomEncrypted(roomId.networkId)).toBeTruthy(),
-            )
-        }
         await bob.sendMessage(roomId, 'Hello World!')
         // create alice (important to do in this order, we had a bug were alice
         // would not be able to see messages if she registered after bob sent a message)

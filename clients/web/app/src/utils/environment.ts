@@ -34,7 +34,6 @@ const envSchema = z.object({
     VITE_UNFURL_SERVER_URL: z.string().url(),
     VITE_GATEWAY_URL: z.string().url(),
     VITE_CASABLANCA_HOMESERVER_URL: z.string().optional(), // for now, we're allowing nullish values for casablanca URL
-    VITE_PRIMARY_PROTOCOL: z.enum(['matrix', 'casablanca']).default('matrix'), // got test errors when trying to import SpaceProtocol from lib
     VITE_AUTH_WORKER_HEADER_SECRET: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?
     VITE_GIPHY_API_KEY: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?
     VITE_ALCHEMY_API_KEY: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?

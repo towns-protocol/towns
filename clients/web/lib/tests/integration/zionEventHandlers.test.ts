@@ -11,7 +11,6 @@ import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
 
 import { waitFor } from '@testing-library/dom'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { sleep } from '../../src/utils/zion-utils'
 import {
     createExternalTokenStruct,
@@ -201,17 +200,8 @@ describe('Zion event handlers test', () => {
                 },
             },
         })
-
-        if (alice.opts.primaryProtocol === SpaceProtocol.Matrix) {
-            await sleep(5000) /// todo: fix matrix logout https://linear.app/hnt-labs/issue/HNT-1334/logging-out-is-problematic-in-the-tests
-            await alice.logout()
-            await sleep(5000)
-            expect(authEvents.loggedIn).toBe(false)
-
-            await alice.loginToMatrixWithTestWallet()
-
-            expect(authEvents.loggedIn).toBe(true)
-        }
+        console.log('alice.getUserId()', alice.getUserId())
+        expect(authEvents.loggedIn).toBe(false) // todo implement for river
     })
 
     test('onLogout', async () => {

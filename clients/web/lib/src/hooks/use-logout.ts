@@ -5,9 +5,9 @@ import { useMatrixStore } from '../store/use-matrix-store'
 import { LoginStatus } from './login'
 
 export const useLogout = () => {
-    const { homeServerUrl, casablancaServerUrl } = useZionContext()
+    const { casablancaServerUrl } = useZionContext()
     const { setLoginStatus } = useMatrixStore()
-    const { setMatrixCredentials, setCasablancaCredentials } = useCredentialStore()
+    const { setCasablancaCredentials } = useCredentialStore()
 
     const { client } = useZionContext()
 
@@ -25,18 +25,10 @@ export const useLogout = () => {
             }
 
             setLoginStatus(LoginStatus.LoggedOut)
-            setMatrixCredentials(homeServerUrl, null)
             if (casablancaServerUrl) {
                 setCasablancaCredentials(casablancaServerUrl, null)
             }
         },
-        [
-            setLoginStatus,
-            client,
-            setMatrixCredentials,
-            homeServerUrl,
-            casablancaServerUrl,
-            setCasablancaCredentials,
-        ],
+        [setLoginStatus, client, casablancaServerUrl, setCasablancaCredentials],
     )
 }

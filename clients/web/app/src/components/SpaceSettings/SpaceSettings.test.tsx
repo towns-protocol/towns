@@ -151,7 +151,6 @@ const Wrapper = () => {
         >
             <Lib.SpaceContextProvider
                 spaceId={{
-                    protocol: Lib.SpaceProtocol.Matrix,
                     slug: spaceRoomIdentifier.slug,
                     networkId: spaceRoomIdentifier.networkId,
                 }}

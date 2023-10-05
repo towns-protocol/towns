@@ -2,18 +2,15 @@ import { Stream } from '@river/sdk'
 import { useZionContext } from '../../components/ZionContextProvider'
 import { useEffect, useState } from 'react'
 import { RoomIdentifier } from '../../types/room-identifier'
-import { SpaceProtocol } from '../../client/ZionClientTypes'
 
 export function useCasablancaStream(streamId?: RoomIdentifier): Stream | undefined {
     const { casablancaClient } = useZionContext()
     const [stream, setStream] = useState<Stream | undefined>(() =>
-        streamId && streamId.protocol === SpaceProtocol.Casablanca
-            ? casablancaClient?.stream(streamId.networkId)
-            : undefined,
+        streamId ? casablancaClient?.stream(streamId.networkId) : undefined,
     )
     useEffect(() => {
         // initial conditions
-        if (!casablancaClient || !streamId || streamId.protocol !== SpaceProtocol.Casablanca) {
+        if (!casablancaClient || !streamId) {
             return
         }
         // fetch stream first time the effect runs, if it was previously set

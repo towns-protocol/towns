@@ -15,7 +15,7 @@ interface Props {
     threadParentId?: string
     timeline: TimelineEvent[]
     membership: string
-    sendMessage: (roomId: RoomIdentifier, message: string) => Promise<void>
+    sendMessage?: (roomId: RoomIdentifier, message: string) => Promise<void>
     joinRoom: (roomId: RoomIdentifier) => Promise<void>
 }
 
@@ -41,7 +41,7 @@ export function ChatMessages(props: Props): JSX.Element {
     const onKeyDown = useCallback(
         async (event: React.KeyboardEvent<HTMLInputElement>) => {
             if (event.key === 'Enter' && currentMessage) {
-                await sendMessage(roomId, currentMessage)
+                await sendMessage?.(roomId, currentMessage)
                 setCurrentMessage('')
             }
         },
@@ -116,7 +116,7 @@ export function ChatMessages(props: Props): JSX.Element {
         <Box display="flex" flexGrow="1" flexDirection="column">
             {chatMessages()}
             <Box display="flex" flexDirection="row" flexGrow={1} />
-            {membership === Membership.Join ? (
+            {membership === Membership.Join && sendMessage !== undefined ? (
                 <>
                     <Divider />
                     <Box sx={messageStyle}>

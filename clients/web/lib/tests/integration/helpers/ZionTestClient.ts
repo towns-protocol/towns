@@ -1,23 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
-    AuthenticationData,
-    LoginTypePublicKey,
-    LoginTypePublicKeyEthereum,
-    RegisterRequest,
-} from '../../../src/hooks/login'
-import {
     RedactionActionEvent,
     RoomMessageEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
 } from '../../../src/types/timeline-types'
-import {
-    SpaceProtocol,
-    TransactionStatus,
-    MatrixAuth,
-    ZionClientEventHandlers,
-} from '../../../src/client/ZionClientTypes'
+import { TransactionStatus, ZionClientEventHandlers } from '../../../src/client/ZionClientTypes'
 import { UserIdentifier, createUserIdFromEthereumAddress } from '../../../src/types/user-identifier'
 
 import { CreateSpaceInfo } from '../../../src/types/zion-types'
@@ -25,22 +14,17 @@ import { RoleIdentifier } from '../../../src/types/web3-types'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
 import { ZionClient } from '../../../src/client/ZionClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
-import { createMessageToSign } from '../../../src/hooks/use-matrix-wallet-sign-in'
 import { ethers } from 'ethers'
-import { getPrimaryProtocol, makeUniqueName } from './TestUtils'
-import { staticAssertNever } from '../../../src/utils/zion-utils'
-import { toEvent as toEventFromMatrixEvent } from '../../../src/hooks/ZionContext/useMatrixTimelines'
+import { makeUniqueName } from './TestUtils'
 import {
     toEvent as toEventFromCasablancaEvent,
     toEvent_FromRiverEvent,
 } from '../../../src/hooks/ZionContext/useCasablancaTimelines'
-import { newMatrixLoginSession, newMatrixRegisterSession } from '../../../src/hooks/session'
 import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@river/sdk'
 import { TokenEntitlementDataTypes, Permission, ITownArchitectBase } from '@river/web3'
 
 export interface ZionTestClientProps {
-    primaryProtocol?: SpaceProtocol
     eventHandlers?: ZionClientEventHandlers
 }
 
@@ -81,8 +65,6 @@ export class ZionTestClient extends ZionClient {
         // super
         super(
             {
-                primaryProtocol: props?.primaryProtocol ?? getPrimaryProtocol(),
-                matrixServerUrl: process.env.HOMESERVER!,
                 casablancaServerUrl: process.env.CASABLANCA_SERVER_URL!,
                 chainId,
                 initialSyncLimit: 20,
@@ -111,17 +93,7 @@ export class ZionTestClient extends ZionClient {
      * getUserId - returns the current user id for the primary protocol, or undefined if not logged in there
      ************************************************/
     getUserId(): string | undefined {
-        if (!this.opts.primaryProtocol) {
-            return undefined
-        }
-        switch (this.opts.primaryProtocol) {
-            case SpaceProtocol.Matrix:
-                return this.auth?.userId
-            case SpaceProtocol.Casablanca:
-                return this.casablancaClient?.userId
-            default:
-                staticAssertNever(this.opts.primaryProtocol)
-        }
+        return this.casablancaClient?.userId
     }
 
     /************************************************
@@ -211,238 +183,33 @@ export class ZionTestClient extends ZionClient {
         this.log('minted mock NFT')
     }
 
-    /// register this users wallet with the matrix server
-    /// a.ellis, would be nice if this used the same code as the web client
-    public async registerMatrixWallet() {
-        if (this.auth) {
-            throw new Error('already registered')
-        }
-
-        const matrixClient = ZionClient.createMatrixClient(this.opts)
-        // create a registration request, this reaches out to our server and sets up a session
-        // and passes back info on about the server
-        const { sessionId, chainIds, error } = await newMatrixRegisterSession(
-            matrixClient,
-            this.provider.wallet.address,
-        )
-
-        // hopefully we didn't get an error
-        if (error) {
-            throw error
-        }
-
-        // make sure the server supports our chainId
-        if (!chainIds.find((x) => x == this.chainId)) {
-            throw new Error(`ChainId ${this.chainId} not found`)
-        }
-
-        const messageToSign = createMessageToSign({
-            walletAddress: this.userIdentifier.accountAddress,
-            chainId: this.chainId,
-            statement: 'this is a test registration',
-        })
-
-        const signature = await this.provider.wallet.signMessage(messageToSign)
-
-        const request: RegisterRequest = {
-            auth: {
-                type: LoginTypePublicKey,
-                session: sessionId,
-                public_key_response: {
-                    type: LoginTypePublicKeyEthereum,
-                    session: sessionId,
-                    message: messageToSign,
-                    signature,
-                    user_id: this.userIdentifier.matrixUserIdLocalpart,
-                },
-            },
-            username: this.userIdentifier.matrixUserIdLocalpart,
-        }
-
-        // register the user
-        const auth = await this.registerWithMatrix(request)
-
-        this.log(
-            'registered, matrixUserIdLocalpart: ',
-            this.userIdentifier.matrixUserIdLocalpart,
-            'userId: ',
-            auth.userId,
-        )
-        return auth
-    }
-
     // Helper function to get a test client up and running.
     // Registers a new user and starts the client.
     public async registerWalletAndStartClient() {
         console.log('registerWalletAndStartClient', this.name, this.opts)
 
-        if (this.auth) {
-            throw new Error('AUTHED!!')
-        }
-
-        if (this.opts.primaryProtocol === SpaceProtocol.Matrix) {
-            const myAuth = await this.registerMatrixWallet()
-            await this.startMatrixClient(myAuth)
-        } else if (this.opts.primaryProtocol === SpaceProtocol.Casablanca) {
-            const casablancaContext = await this.signCasablancaDelegate(
-                this.delegateWallet,
-                this.provider.wallet,
-            )
-            await this.startCasablancaClient(casablancaContext)
-        }
-    }
-
-    /// login to the matrix server with wallet account
-    public async loginToMatrixWithTestWallet(): Promise<MatrixAuth> {
-        if (this.opts.primaryProtocol !== SpaceProtocol.Matrix) {
-            throw new Error('loginToMatrixWithTestWallet called when not using matrix')
-        }
-        const matrixClient = ZionClient.createMatrixClient(this.opts)
-        const { sessionId, chainIds } = await newMatrixLoginSession(matrixClient)
-
-        // make sure the server supports our chainId
-        if (!chainIds.find((x) => x == this.chainId)) {
-            throw new Error(`ChainId ${this.chainId} not found`)
-        }
-
-        const messageToSign = createMessageToSign({
-            walletAddress: this.userIdentifier.accountAddress,
-            chainId: this.userIdentifier.chainId,
-            statement: 'this is a test login',
-        })
-
-        const signature = await this.provider.wallet.signMessage(messageToSign)
-
-        // Send the signed message and auth data to the server.
-        const authRequest: AuthenticationData = {
-            type: LoginTypePublicKeyEthereum,
-            session: sessionId,
-            message: messageToSign,
-            signature,
-            user_id: this.userIdentifier.matrixUserIdLocalpart,
-        }
-
-        return await this.loginToMatrix(authRequest)
-    }
-
-    /**
-     * registerWithMatrix
-     * register wallet with matrix, if successful will
-     * return params that allow you to call start matrixClient
-     */
-    public async registerWithMatrix(request: RegisterRequest): Promise<MatrixAuth> {
-        if (this.auth) {
-            throw new Error('already registered')
-        }
-        const matrixClient = ZionClient.createMatrixClient(this.opts)
-        const { access_token, device_id, user_id } = await matrixClient.registerRequest(
-            request,
-            LoginTypePublicKey,
+        const casablancaContext = await this.signCasablancaDelegate(
+            this.delegateWallet,
+            this.provider.wallet,
         )
-        if (!access_token || !device_id || !user_id) {
-            throw new Error('failed to register')
-        }
-        this._eventHandlers?.onRegister?.({
-            userId: user_id,
-        })
-        return {
-            accessToken: access_token,
-            deviceId: device_id,
-            userId: user_id,
-        }
-    }
-
-    /**
-     * loginToMatrix
-     * set up a login request, will fail if
-     * our wallet is NOT registered
-     */
-    public async loginToMatrix(auth: AuthenticationData): Promise<MatrixAuth> {
-        if (this.auth) {
-            throw new Error('already logged in')
-        }
-        const matrixClient = ZionClient.createMatrixClient(this.opts)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const { access_token, device_id, user_id } = await matrixClient.login(LoginTypePublicKey, {
-            auth,
-        })
-        if (!access_token || !device_id || !user_id) {
-            throw new Error('failed to login')
-        }
-
-        this._eventHandlers?.onLogin?.({
-            userId: user_id as string,
-        })
-
-        return {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            accessToken: access_token,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            deviceId: device_id,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            userId: user_id,
-        }
+        await this.startCasablancaClient(casablancaContext)
     }
 
     public async loginWalletAndStartClient(): Promise<void> {
-        if (!this.opts.primaryProtocol) {
-            return
-        }
-        switch (this.opts.primaryProtocol) {
-            case SpaceProtocol.Matrix:
-                {
-                    let myAuth = this.auth
-                    if (!myAuth) {
-                        myAuth = await this.loginToMatrixWithTestWallet()
-                    }
-                    await this.startMatrixClient(myAuth)
-                }
-                break
-            case SpaceProtocol.Casablanca:
-                {
-                    const casablancaContext = await this.signCasablancaDelegate(
-                        this.delegateWallet,
-                        this.provider.wallet,
-                    )
-                    await this.startCasablancaClient(casablancaContext)
-                }
-                break
-            default:
-                staticAssertNever(this.opts.primaryProtocol)
-        }
+        const casablancaContext = await this.signCasablancaDelegate(
+            this.delegateWallet,
+            this.provider.wallet,
+        )
+        await this.startCasablancaClient(casablancaContext)
     }
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     public async isUserRegistered(): Promise<boolean> {
-        if (!this.opts.primaryProtocol) {
-            throw new Error('primaryProtocol is undefined')
-        }
-        switch (this.opts.primaryProtocol) {
-            case SpaceProtocol.Matrix: {
-                const matrixClient = ZionClient.createMatrixClient(this.opts)
-                const isAvailable = await matrixClient.isUsernameAvailable(
-                    this.userIdentifier.matrixUserIdLocalpart,
-                )
-                // If the username is available, then it is not yet registered.
-                return isAvailable === false
-            }
-            case SpaceProtocol.Casablanca: {
-                return false // n/a for casablanca
-            }
-            default:
-                staticAssertNever(this.opts.primaryProtocol)
-        }
+        return false // n/a for casablanca
     }
 
     public async waitForStream(roomId: RoomIdentifier): Promise<void> {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                return
-            case SpaceProtocol.Casablanca:
-                await this.casablancaClient?.waitForStream(roomId.networkId)
-                return
-            default:
-                staticAssertNever(roomId)
-        }
+        await this.casablancaClient?.waitForStream(roomId.networkId)
     }
     /************************************************
      * getLatestEvent
@@ -451,47 +218,25 @@ export class ZionTestClient extends ZionClient {
         roomId: RoomIdentifier,
         options?: { excludeMiniblockHeaders?: boolean },
     ): TimelineEvent[] {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix: {
-                if (!this.matrixClient) {
-                    return []
-                }
-                const userId = this.matrixClient.getUserId()
-                if (!userId) {
-                    return []
-                }
-                const events =
-                    this.matrixClient
-                        .getRoom(roomId.networkId)
-                        ?.getLiveTimeline()
-                        .getEvents()
-                        .map((e) => toEventFromMatrixEvent(e, userId)) ?? []
-                return events
+        if (!this.casablancaClient) {
+            throw new Error('casablanca client is undefined')
+        }
+        const stream = this.casablancaClient.stream(roomId.networkId)
+        const userId = this.casablancaClient.userId
+        if (!stream) {
+            throw new Error('stream is undefined')
+        }
+        const events = stream.view.timeline.map((event) => {
+            const decryptedEvent = stream.view.decryptedEvents.get(event.hashStr)
+            if (decryptedEvent) {
+                return toEvent_FromRiverEvent(decryptedEvent, userId)
             }
-            case SpaceProtocol.Casablanca: {
-                if (!this.casablancaClient) {
-                    throw new Error('casablanca client is undefined')
-                }
-                const stream = this.casablancaClient.stream(roomId.networkId)
-                const userId = this.casablancaClient.userId
-                if (!stream) {
-                    throw new Error('stream is undefined')
-                }
-                const events = stream.view.timeline.map((event) => {
-                    const decryptedEvent = stream.view.decryptedEvents.get(event.hashStr)
-                    if (decryptedEvent) {
-                        return toEvent_FromRiverEvent(decryptedEvent, userId)
-                    }
-                    return toEventFromCasablancaEvent(event, userId)
-                })
-                if (options?.excludeMiniblockHeaders === true) {
-                    return events.filter((x) => x.content?.kind !== ZTEvent.MiniblockHeader)
-                } else {
-                    return events
-                }
-            }
-            default:
-                staticAssertNever(roomId)
+            return toEventFromCasablancaEvent(event, userId)
+        })
+        if (options?.excludeMiniblockHeaders === true) {
+            return events.filter((x) => x.content?.kind !== ZTEvent.MiniblockHeader)
+        } else {
+            return events
         }
     }
 

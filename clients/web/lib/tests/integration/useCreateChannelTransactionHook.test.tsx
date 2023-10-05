@@ -12,10 +12,10 @@ import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { SpaceProtocol, TransactionStatus } from '../../src/client/ZionClientTypes'
+import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { getPrimaryProtocol, makeUniqueName } from './helpers/TestUtils'
+import { makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
@@ -259,7 +259,6 @@ describe('useCreateChannelTransactionHook', () => {
         const channelElement = screen.getByTestId('channel')
         const transactions = screen.getByTestId('transactions')
         const seenTransactions = screen.getByTestId('seen-transactions')
-        const blockchainEvents = screen.getByTestId('channel-blockchain-events')
         await waitFor(
             () => expect(seenTransactions).toHaveTextContent('1'),
             TestConstants.DecaDefaultWaitForTimeout,
@@ -280,11 +279,6 @@ describe('useCreateChannelTransactionHook', () => {
 
         // the transaction listener should clear this transaction, and the number should go back to 0
         await waitFor(() => expect(transactions).toHaveTextContent('0'))
-
-        if (getPrimaryProtocol() === SpaceProtocol.Matrix) {
-            // we don't we need this for casablanca/river
-            await waitFor(() => expect(blockchainEvents).toHaveTextContent('1'))
-        }
 
         /* Assert */
         await waitFor(

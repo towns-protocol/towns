@@ -1,12 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
-import {
-    MessageContent,
-    MessageType,
-    RoomMessageEvent,
-    SpaceProtocol,
-    ZTEvent,
-} from 'use-zion-client'
+import { MessageContent, MessageType, RoomMessageEvent, ZTEvent } from 'use-zion-client'
 import { describe, expect, test, vi } from 'vitest'
 import { TestApp } from 'test/testUtils'
 import { image, normal, twitter } from '../../../mocks/unfurl/data'
@@ -74,14 +68,12 @@ const Wrapper = ({ messageContent }: { messageContent: MessageContent }) => {
                     spaceId: {
                         slug: '',
                         networkId: '',
-                        protocol: SpaceProtocol.Matrix,
                     },
                     isChannelEncrypted: false,
                     channels: [],
                     channelId: {
                         slug: '',
                         networkId: '',
-                        protocol: SpaceProtocol.Matrix,
                     },
                     events: [],
                     messageRepliesMap: {},

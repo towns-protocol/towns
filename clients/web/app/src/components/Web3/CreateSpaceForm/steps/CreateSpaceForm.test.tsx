@@ -59,7 +59,6 @@ vi.mock('use-zion-client', async () => {
                     spaceId: {
                         networkId: 'some-room-id',
                         slug: 'some-room-id',
-                        protocol: zionClient.SpaceProtocol.Matrix,
                     },
                 },
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment

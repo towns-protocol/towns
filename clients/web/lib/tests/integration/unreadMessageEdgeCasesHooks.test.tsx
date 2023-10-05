@@ -8,14 +8,13 @@ import { RoomMessageEvent, TimelineEvent, ZTEvent } from '../../src/types/timeli
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
-    getPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '@river/web3'
-import { RegisterAndJoin } from './helpers/TestComponents'
+import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -23,16 +22,11 @@ import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useZionContext } from '../../src/components/ZionContextProvider'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
+import { TestConstants } from './helpers/TestConstants'
 
 // make sure things like deleting messages don't cause the unread count to go bad
 describe('unreadMessageCountEdgeCases', () => {
     test('user sees correct unread message counts', async () => {
-        // only works on river
-        if (getPrimaryProtocol() !== SpaceProtocol.Casablanca) {
-            console.log('skipping test, only works on river')
-            return
-        }
         // create clients
         const { jane, bob } = await registerAndStartClients(['jane', 'bob'])
         const bobName = bob.name
@@ -73,7 +67,7 @@ describe('unreadMessageCountEdgeCases', () => {
             }
             return (
                 <>
-                    <RegisterAndJoin spaceId={spaceId} channelIds={[channelId]} />
+                    <RegisterAndJoinSpace spaceId={spaceId} channelId={channelId} />
                     <button onClick={onMarkAsRead}>mark as read</button>
                     <div data-testid="spaceHasUnread">
                         {spaceHasUnread === undefined ? 'undefined' : spaceHasUnread.toString()}
@@ -118,7 +112,10 @@ describe('unreadMessageCountEdgeCases', () => {
 
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // wait for space and channel join
-        await waitFor(() => expect(joinComplete).toHaveTextContent('true'))
+        await waitFor(
+            () => expect(joinComplete).toHaveTextContent('true'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
         // check assumptions
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('undefined'))
         // have jane send a message to bob

@@ -3,16 +3,11 @@
  * @group dendrite
  * @group casablanca
  */
-import {
-    createTestSpaceGatedByTownNft,
-    getPrimaryProtocol,
-    registerAndStartClients,
-} from './helpers/TestUtils'
+import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
 
 import { Permission } from '@river/web3'
 import { waitFor } from '@testing-library/dom'
 import { RoomVisibility } from '../../src/types/zion-types'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 describe('inviteUser', () => {
     // test:
@@ -33,10 +28,6 @@ describe('inviteUser', () => {
         // bob invites alice to the room
         await bob.inviteUser(roomId, alice.getUserId()!)
         await waitFor(() => expect(bob.getRoomData(roomId)?.members.length == 1))
-        if (getPrimaryProtocol() === SpaceProtocol.Matrix) {
-            // alice should expect an invite to the room
-            await waitFor(() => expect(alice.getRoomData(roomId)).toBeDefined())
-        }
         // alice joins the room
         await waitFor(() => expect(bob.getRoomData(roomId)?.members.length == 2))
     }) // end test

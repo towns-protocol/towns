@@ -11,18 +11,12 @@ import { RegisterWallet } from './helpers/TestComponents'
 import { LoginStatus } from '../../src/hooks/login'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { TestConstants } from './helpers/TestConstants'
-import { getPrimaryProtocol } from './helpers/TestUtils'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
-
-// TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('userProfileOnboardingHooks', () => {
     /// make sure that we load a user profile on launch
     test('user sees own non-null profile on first launch', async () => {
         // create provider
         const aliceProvider = new ZionTestWeb3Provider()
-        const network = await aliceProvider.getNetwork()
-        const chainId = network.chainId
 
         // create a veiw for alice
         const TestUserProfileOnLaunch = () => {
@@ -50,16 +44,6 @@ describe('userProfileOnboardingHooks', () => {
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
 
         // verify alice userid is rendering
-        if (getPrimaryProtocol() === SpaceProtocol.Casablanca) {
-            await waitFor(() =>
-                expect(myProfileName).toHaveTextContent(aliceProvider.wallet.address),
-            )
-        } else {
-            await waitFor(() =>
-                expect(myProfileName).toHaveTextContent(
-                    `eip155=3a${chainId}=3a${aliceProvider.wallet.address.toLowerCase()}`, // hmmm....
-                ),
-            )
-        }
+        await waitFor(() => expect(myProfileName).toHaveTextContent(aliceProvider.wallet.address))
     }) // end test
 }) // end describe

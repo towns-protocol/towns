@@ -10,14 +10,11 @@ import { useCredentialStore } from '../store/use-credential-store'
 
 export const useTransactionListener = (
     client: ZionClient | undefined,
-    homeServerUrl: string,
     casablancaServerUrl: string | undefined,
 ) => {
     const transactions = useTransactionStore((state) => state.transactions)
     const deleteAndEmitTransaction = useTransactionStore((state) => state.deleteAndEmitTransaction)
-    const credentialsM = useCredentialStore(
-        (state) => state.matrixCredentialsMap[homeServerUrl] ?? undefined,
-    )
+    const credentialsM = useCredentialStore((state) => state.matrixCredentialsMap[''] ?? undefined)
     const credentialsC = useCredentialStore(
         (state) => state.casablancaCredentialsMap[casablancaServerUrl ?? ''] ?? undefined,
     )

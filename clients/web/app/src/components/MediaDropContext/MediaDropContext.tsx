@@ -1,7 +1,6 @@
 import React, { createContext, useCallback, useContext, useState } from 'react'
-import { SpaceProtocol } from 'use-zion-client'
 import { Box, Heading, Icon, Stack } from '@ui'
-import { useEnvironment } from 'hooks/useEnvironmnet'
+import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
 import { useDevice } from 'hooks/useDevice'
 
 const MediaDropContext = createContext<{

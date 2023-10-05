@@ -19,11 +19,9 @@ import {
     Membership,
     RoomIdentifier,
     RoomVisibility,
-    SpaceProtocol,
     TransactionStatus,
     useCasablancaStore,
     useCreateSpaceTransaction,
-    useMatrixStore,
     useWeb3Context,
     useZionClient,
 } from 'use-zion-client'
@@ -45,14 +43,12 @@ type FormValues = {
     limit: number
     membershipRequirement: MembershipRequirement
     visibility: RoomVisibility
-    protocol: SpaceProtocol
 }
 
 export const CreateSpaceForm = (props: Props) => {
     const { chain, accounts } = useWeb3Context()
     const { chainName, chainId } = useEnvironment()
     const { chain: walletChain } = useNetwork()
-    const { loginStatus: matrixLoginStatus } = useMatrixStore()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
     const { blip } = useZionClient()
     const { signer } = useWeb3Context()
@@ -63,7 +59,6 @@ export const CreateSpaceForm = (props: Props) => {
         limit: 1000,
         membershipRequirement: MembershipRequirement.Everyone,
         visibility: RoomVisibility.Public,
-        protocol: SpaceProtocol.Casablanca,
     })
 
     function updateFormValue<P extends keyof FormValues>(property: P, value: FormValues[P]) {
@@ -83,10 +78,6 @@ export const CreateSpaceForm = (props: Props) => {
 
     function updateLimit(event: React.ChangeEvent<HTMLInputElement>) {
         updateFormValue('limit', Number(event.target.value))
-    }
-
-    function updateProtocol(event: SelectChangeEvent<SpaceProtocol>) {
-        updateFormValue('protocol', event.target.value as SpaceProtocol)
     }
 
     function updateMembershipRequirement(membershipRequirement: MembershipRequirement) {
@@ -152,7 +143,6 @@ export const CreateSpaceForm = (props: Props) => {
         const createSpaceInfo: CreateSpaceInfo = {
             name: formValue.spaceName,
             visibility: formValue.visibility,
-            spaceProtocol: formValue.protocol,
         }
         if (!signer) {
             console.error('Cannot create space. No signer.')
@@ -215,9 +205,6 @@ export const CreateSpaceForm = (props: Props) => {
             </Typography>
             <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                 Casablanca: {casablancaLoginStatus}
-            </Typography>
-            <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
-                Matrix: {matrixLoginStatus}
             </Typography>
             <Box display="grid">
                 <Box
@@ -294,24 +281,6 @@ export const CreateSpaceForm = (props: Props) => {
                             >
                                 <MenuItem value={RoomVisibility.Public}>public</MenuItem>
                                 <MenuItem value={RoomVisibility.Private}>private</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Box>
-
-                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
-                        Protocol:
-                    </Typography>
-                    <Box minWidth="120px">
-                        <FormControl fullWidth>
-                            <InputLabel id="protocol-select-label" />
-                            <Select
-                                labelId="protocol-select-label"
-                                id="protocol-select"
-                                value={formValue.protocol}
-                                onChange={updateProtocol}
-                            >
-                                <MenuItem value={SpaceProtocol.Matrix}>Matrix</MenuItem>
-                                <MenuItem value={SpaceProtocol.Casablanca}>Casablanca</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>

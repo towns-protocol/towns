@@ -1,15 +1,12 @@
 import React from 'react'
 
 import { useServerVersions } from 'use-zion-client'
-import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Box } from '@ui'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const VersionsPage = () => {
-    const { matrixUrl } = useEnvironment()
-
     const { isFetched, isSuccess, isError, serverVersions } = useServerVersions({
-        homeserverUrl: matrixUrl,
+        homeserverUrl: undefined,
     })
 
     return (

@@ -63,7 +63,6 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
     const onCreateSpace = useCallback(
         (roomIdentifier: RoomIdentifier) => {
             analytics.track('create_space', {
-                protocol: roomIdentifier.protocol,
                 slug: roomIdentifier.slug,
                 networkId: roomIdentifier.networkId,
             })
@@ -75,14 +74,12 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
         (roomId: RoomIdentifier, spaceId: RoomIdentifier) => {
             if (isEqual(roomId, spaceId)) {
                 analytics.track('join_space', {
-                    protocol: roomId.protocol,
                     slug: roomId.slug,
                     networkId: roomId.networkId,
                     spaceId: spaceId.slug,
                 })
             } else {
                 analytics.track('join_channel', {
-                    protocol: roomId.protocol,
                     slug: roomId.slug,
                     networkId: roomId.networkId,
                     spaceId: spaceId.slug,
@@ -96,7 +93,6 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
         (roomId: RoomIdentifier, body: string, sendMessageOptions?: SendMessageOptions) => {
             const isURL = getUrls(body).length > 0
             analytics.track('send_message', {
-                protocol: roomId.protocol,
                 slug: roomId.slug,
                 networkId: roomId.networkId,
                 messageType: sendMessageOptions?.messageType,

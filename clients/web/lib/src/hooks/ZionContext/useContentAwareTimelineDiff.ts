@@ -1,12 +1,3 @@
-import {
-    EventType,
-    MatrixClient,
-    MatrixEvent,
-    Room as MatrixRoom,
-    NotificationCountType,
-    RelationType,
-    RoomEvent,
-} from 'matrix-js-sdk'
 import { Client as CasablancaClient, isChannelStreamId, isSpaceStreamId } from '@river/sdk'
 import { FullyReadMarkerContent } from '@river/proto'
 import { useEffect } from 'react'
@@ -14,8 +5,6 @@ import { FullyReadMarker, TimelineEvent, ZTEvent } from '../../types/timeline-ty
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
 import { TimelineStore, useTimelineStore } from '../../store/use-timeline-store'
-import { ZionAccountDataType, SpaceProtocol } from '../../client/ZionClientTypes'
-import { isZTimelineEvent } from './useMatrixTimelines'
 
 type LocalEffectState = {
     encryptedEvents: Record<string, Record<string, number>> // this should be a Map instead of a record
@@ -40,13 +29,7 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
 
         // listen to the timeine for changes, diff each change, and update the unread counts
         const onTimelineChange = (timelineState: TimelineStore, prev: TimelineStore) => {
-            effectState = diffTimeline(
-                timelineState,
-                prev,
-                effectState,
-                userId,
-                SpaceProtocol.Casablanca,
-            )
+            effectState = diffTimeline(timelineState, prev, effectState, userId)
         }
 
         const onChannelUnreadMarkerUpdated = (
@@ -96,67 +79,6 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
         }
     }, [casablancaClient])
 }
-export function useContentAwareTimelineDiff(matrixClient?: MatrixClient) {
-    useEffect(() => {
-        if (!matrixClient) {
-            return
-        }
-        const userId = matrixClient.getUserId()
-        if (!userId) {
-            // can happen on logout
-            return
-        }
-        // state
-        //let effectState = initOnce(matrixClient, userId)
-        let firstTime = true
-        let effectState: LocalEffectState = {
-            encryptedEvents: {},
-        }
-
-        // listen to the timeine for changes, diff each change, and update the unread counts
-        const onTimelineChange = (timelineState: TimelineStore, prev: TimelineStore) => {
-            if (firstTime) {
-                effectState = initOnce(matrixClient, userId, timelineState)
-                firstTime = false
-            }
-            effectState = diffTimeline(
-                timelineState,
-                prev,
-                effectState,
-                userId,
-                SpaceProtocol.Matrix,
-            )
-        }
-
-        const onRoomAccountDataEvent = (
-            event: MatrixEvent,
-            room: MatrixRoom,
-            prev?: MatrixEvent,
-        ) => {
-            onRemoteRoomAccountDataEvent(event, room, prev)
-        }
-
-        // subscribe
-        const unsubTimeline = useTimelineStore.subscribe(onTimelineChange)
-        matrixClient.on(RoomEvent.AccountData, onRoomAccountDataEvent)
-
-        // return ability to unsubscribe
-        return () => {
-            unsubTimeline()
-            matrixClient.off(RoomEvent.AccountData, onRoomAccountDataEvent)
-        }
-    }, [matrixClient])
-}
-
-function isCountedAsUnread(event: MatrixEvent, myUserId: string): boolean {
-    const eventType = event.getType()
-    switch (eventType) {
-        case EventType.RoomMessage:
-            return event.getSender() !== myUserId && !event.isRelation(RelationType.Replace)
-        default:
-            return false
-    }
-}
 
 function isCountedAsUnreadZTEvent(event: TimelineEvent, myUserId: string): boolean {
     switch (event.content?.kind) {
@@ -184,131 +106,10 @@ function isEncryptedZTEvent(event: TimelineEvent): boolean {
 function toCasablancaRoomId(value: any): RoomIdentifier {
     /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
     return {
-        protocol: SpaceProtocol.Casablanca,
         networkId: value.networkId,
         slug: value.slug,
     }
     /* eslint-enable */
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toRoomId(value: any): RoomIdentifier {
-    /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
-    return {
-        protocol: SpaceProtocol.Matrix,
-        networkId: value.networkId,
-        slug: value.slug,
-    }
-    /* eslint-enable */
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toFullyReadMarker(value: any): FullyReadMarker {
-    return {
-        /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-        channelId: toRoomId(value.channelId),
-        threadParentId: value.threadParentId ? (value.threadParentId as string) : undefined,
-        eventId: value.eventId as string,
-        eventCreatedAtEpocMs: value.eventCreatedAtEpochMs
-            ? (value.eventCreatedAtEpochMs as number)
-            : 0,
-        isUnread: value.isUnread as boolean,
-        markedReadAtTs: value.markedReadAtTs as number,
-        markedUnreadAtTs: value.markedUnreadAtTs as number,
-        mentions: value.mentions ? (value.mentions as number) : 0,
-        /* eslint-enable */
-    }
-}
-
-/// matrix keeps track of how many events we miss while we're gone
-/// use the unread count to quickly update our local state when we start up
-function initOnce(
-    matrixClient: MatrixClient,
-    userId: string,
-    timelineState: TimelineStore,
-): LocalEffectState {
-    let effectState: LocalEffectState = {
-        encryptedEvents: {},
-    }
-    useFullyReadMarkerStore.setState((state) => {
-        const updated = { ...state.markers }
-        // loop over all the rooms, get the existing values, get the unread counts, push those into the store
-        matrixClient.getRooms().forEach((room) => {
-            const remoteMarkers = room.getAccountData(ZionAccountDataType.FullyRead)?.getContent()
-            if (remoteMarkers) {
-                for (const [key, value] of Object.entries(remoteMarkers)) {
-                    const marker = toFullyReadMarker(value)
-                    updated[key] = marker
-                    console.log('initOnce: setting marker for', { key, marker })
-                }
-            }
-            const unreadCount = room.getUnreadNotificationCount(NotificationCountType.Total) ?? 0
-            if (unreadCount > 0) {
-                const unreadMatrixEvents = room
-                    .getLiveTimeline()
-                    .getEvents()
-                    .slice(-1 * unreadCount)
-
-                const firstMatrixEvent = unreadMatrixEvents.find(
-                    (e) => isZTimelineEvent(e) && (isCountedAsUnread(e, userId) || e.isEncrypted()),
-                )
-                if (firstMatrixEvent) {
-                    const events = timelineState.timelines[room.roomId] ?? []
-
-                    const firstEventIndex = events.findIndex(
-                        (e) => e.eventId === firstMatrixEvent.getId(),
-                    )
-
-                    if (firstEventIndex >= 0) {
-                        const prev = events.slice(0, firstEventIndex)
-                        const result = _diffTimeline(
-                            room.roomId,
-                            events,
-                            prev,
-                            0,
-                            userId,
-                            {},
-                            effectState,
-                            updated,
-                        )
-                        effectState = result.effectState
-                    }
-                }
-            }
-        })
-        return { markers: updated }
-    })
-
-    return effectState
-}
-
-function onRemoteRoomAccountDataEvent(event: MatrixEvent, _room: MatrixRoom, _prev?: MatrixEvent) {
-    if (event.getType() === ZionAccountDataType.FullyRead) {
-        const remoteMarkers = event.getContent()
-        if (remoteMarkers) {
-            useFullyReadMarkerStore.setState((state) => {
-                let didUpdate = false
-                const updated = { ...state.markers }
-                for (const [key, value] of Object.entries(remoteMarkers)) {
-                    const marker = toFullyReadMarker(value)
-
-                    if (!updated[key] || updated[key].markedReadAtTs < marker.markedReadAtTs) {
-                        console.log('onRoomAccountDataEvent: setting marker for', {
-                            key,
-                            marker,
-                        })
-                        updated[key] = marker
-                        didUpdate = true
-                    }
-                }
-                if (didUpdate) {
-                    return { markers: updated }
-                } else {
-                    return state
-                }
-            })
-        }
-    }
 }
 
 function diffTimeline(
@@ -316,13 +117,12 @@ function diffTimeline(
     prev: TimelineStore,
     effectState: LocalEffectState,
     userId: string,
-    protocol: SpaceProtocol,
 ): LocalEffectState {
     if (Object.keys(prev.timelines).length === 0 || timelineState.timelines === prev.timelines) {
         // noop
         return effectState
     }
-    const roomIds = Object.keys(timelineState.timelines).filter((x) => matchesProtocol(protocol, x))
+    const roomIds = Object.keys(timelineState.timelines).filter(matchesProtocol)
     roomIds.forEach((roomId) => {
         const prevEvents = prev.timelines[roomId] ?? []
         const events = timelineState.timelines[roomId]
@@ -657,13 +457,6 @@ function _diffTimeline(
     return { effectState, didUpdate }
 }
 
-function matchesProtocol(protocol: SpaceProtocol, roomId: string): boolean {
-    switch (protocol) {
-        case SpaceProtocol.Matrix:
-            return roomId.startsWith('!') || roomId.startsWith('#')
-        case SpaceProtocol.Casablanca:
-            return isChannelStreamId(roomId) || isSpaceStreamId(roomId)
-        default:
-            return false
-    }
+function matchesProtocol(roomId: string): boolean {
+    return isChannelStreamId(roomId) || isSpaceStreamId(roomId) || true
 }

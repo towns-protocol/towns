@@ -1,14 +1,13 @@
 import React, { useCallback } from 'react'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getSelection, $isRangeSelection } from 'lexical'
-import { SpaceProtocol } from 'use-zion-client'
 import { GiphyEntryDesktop, GiphyEntryTouch } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton, EmojiPickerButtonTouch } from '@components/EmojiPickerButton'
 import { useDevice } from 'hooks/useDevice'
 import { Box, IconButton, Stack } from '@ui'
 import { MotionIcon, MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
-import { useEnvironment } from 'hooks/useEnvironmnet'
+import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
 import { $createEmojiNode } from './nodes/EmojiNode'
 
 type Props = {

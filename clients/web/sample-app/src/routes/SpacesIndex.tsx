@@ -17,7 +17,7 @@ export const SpacesIndex = () => {
     const space = useSpaceData()
     const membership = useMyMembership(space?.id)
     const { timeline } = useSpaceTimeline()
-    const { leaveRoom, sendMessage, joinRoom, resetFullyReadMarkers } = useZionClient()
+    const { leaveRoom, joinRoom, resetFullyReadMarkers } = useZionClient()
     const [joinFailed, setJoinFailed] = useState(false)
     const [clipboarded, setClipboarded] = useState(false)
 
@@ -51,13 +51,6 @@ export const SpacesIndex = () => {
     const onClickMarkAllAsRead = useCallback(async () => {
         resetFullyReadMarkers()
     }, [resetFullyReadMarkers])
-
-    const onClickSendMessage = useCallback(
-        (roomId: RoomIdentifier, message: string) => {
-            return sendMessage(roomId, message, undefined)
-        },
-        [sendMessage],
-    )
 
     const onClickJoinRoom = useCallback(
         async (roomId: RoomIdentifier) => {
@@ -98,7 +91,7 @@ export const SpacesIndex = () => {
                 roomId={space.id}
                 timeline={timeline}
                 membership={membership}
-                sendMessage={onClickSendMessage}
+                sendMessage={undefined}
                 joinRoom={onClickJoinRoom}
             />
             {joinFailed ? <LargeToast message="Join room failed" /> : null}

@@ -1,5 +1,4 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { SpaceProtocol } from '../client/ZionClientTypes'
 import { HistoryVisibility, IContent, MatrixEvent } from 'matrix-js-sdk'
 import { RoomIdentifier } from './room-identifier'
 import { StreamSettings } from '@river/proto'
@@ -125,7 +124,6 @@ export interface CreateSpaceInfo {
     name: string
     visibility: RoomVisibility
     spaceMetadata?: string
-    spaceProtocol?: SpaceProtocol
     disableEncryption?: boolean
     defaultChannelName?: string
 }

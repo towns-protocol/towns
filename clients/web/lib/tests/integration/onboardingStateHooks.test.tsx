@@ -10,10 +10,6 @@ import { RegisterWallet } from './helpers/TestComponents'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
-import { getPrimaryProtocol } from './helpers/TestUtils'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
-
-// TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('onboardingStateHooks', () => {
     test('test that onboarding state reflects reality', async () => {
@@ -22,11 +18,7 @@ describe('onboardingStateHooks', () => {
         // create a veiw for bob
         const TestComponent = () => {
             const { setDisplayName, setAvatarUrl } = useZionClient()
-            const { matrixOnboardingState, casablancaOnboardingState } = useZionContext()
-            const onboardingState =
-                getPrimaryProtocol() === SpaceProtocol.Matrix
-                    ? matrixOnboardingState
-                    : casablancaOnboardingState
+            const { casablancaOnboardingState: onboardingState } = useZionContext()
             const myProfile = useMyProfile()
             const [seenStates, setSeenStates] = useState<string[]>([])
             const [avatarSet, setAvatarSet] = useState(false)

@@ -50,8 +50,6 @@ export const TestApp = (props: TestAppProps) => {
     return (
         <ZLayerProvider>
             <Lib.ZionContextProvider
-                primaryProtocol={Lib.SpaceProtocol.Matrix}
-                matrixServerUrl=""
                 casablancaServerUrl=""
                 chainId={31337}
                 wagmiConfig={mockConfig}

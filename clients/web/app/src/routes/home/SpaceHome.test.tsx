@@ -17,7 +17,6 @@ vi.mock('react-router', async () => {
 
 const mockSpaceData: Lib.SpaceData = {
     id: {
-        protocol: Lib.SpaceProtocol.Matrix,
         slug: 'some-slug',
         networkId: 'some-network',
     },
@@ -29,7 +28,6 @@ const mockSpaceData: Lib.SpaceData = {
             channels: [
                 {
                     id: {
-                        protocol: Lib.SpaceProtocol.Matrix,
                         slug: 'some-channel-slug',
                         networkId: 'some-network',
                     },
@@ -55,7 +53,6 @@ const Wrapper = () => {
         <TestApp>
             <Lib.SpaceContextProvider
                 spaceId={{
-                    protocol: Lib.SpaceProtocol.Matrix,
                     slug: 'some-slug',
                     networkId: 'some-network',
                 }}

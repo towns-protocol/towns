@@ -6,14 +6,7 @@ import { RoleIdentifier, TProvider } from '../types/web3-types'
 
 import { RoomIdentifier } from '../types/room-identifier'
 
-export enum SpaceProtocol {
-    Matrix = 'matrix',
-    Casablanca = 'casablanca',
-}
-
 export interface ZionOpts {
-    primaryProtocol?: SpaceProtocol
-    matrixServerUrl: string
     casablancaServerUrl?: string
     chainId: number
     initialSyncLimit?: number

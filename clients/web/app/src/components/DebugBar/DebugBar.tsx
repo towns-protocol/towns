@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react'
 import { Address, useBalance, useNetwork, useSwitchNetwork } from 'wagmi'
 import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
-import { SpaceProtocol, mintMockNFT, useWeb3Context } from 'use-zion-client'
+import { mintMockNFT, useWeb3Context } from 'use-zion-client'
 import { debug } from 'debug'
 import { Box, Button, Divider, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -29,11 +29,9 @@ type ModalProps = {
     platform: string
     synced: boolean
     environment?: TownsEnvironment
-    matrixUrl: string
     casablancaUrl?: string
     chainId: number
     chainName: string
-    protocol: SpaceProtocol
     onSwitchEnvironment: (env: TownsEnvironmentInfo) => void
     onClear: () => void
 }
@@ -99,11 +97,9 @@ const FundButton = (props: FundProps & { disabled: boolean }) => {
 
 const DebugModal = ({
     environment,
-    matrixUrl,
     casablancaUrl,
     chainId,
     chainName,
-    protocol,
     onHide,
     onSwitchEnvironment,
     onClear,
@@ -118,14 +114,9 @@ const DebugModal = ({
                     Environment:{' '}
                     {environment ??
                         `Default (${
-                            ENVIRONMENTS.find((e) => e.matrixUrl === matrixUrl)?.name || 'Unknown'
+                            ENVIRONMENTS.find((e) => e.casablancaUrl === casablancaUrl)?.name ||
+                            'Unknown'
                         })`}
-                </Text>
-                <Text strong size="sm">
-                    Protocol: {protocol}
-                </Text>
-                <Text strong size="sm">
-                    MatrixUrl: {matrixUrl}
                 </Text>
                 <Text strong size="sm">
                     CasablancaUrl: {!casablancaUrl ? 'Not Set' : casablancaUrl}
@@ -256,7 +247,6 @@ const DebugBar = ({
     environment,
     chainId: destinationChainId,
     chainName: destinationChainName,
-    matrixUrl,
     casablancaUrl,
     protocol,
     setEnvironment,
@@ -298,10 +288,7 @@ const DebugBar = ({
     const connectedChainId = chain?.id
     const synced = destinationChainId === connectedChainId
 
-    const serverName =
-        protocol === SpaceProtocol.Casablanca
-            ? casablancaUrl?.replaceAll('https://', '').replaceAll('http://', '')
-            : matrixUrl.replaceAll('https://', '').replaceAll('http://', '')
+    const serverName = casablancaUrl?.replaceAll('https://', '').replaceAll('http://', '')
 
     const platform = !chain?.name
         ? `Not connected | server:${serverName}`
@@ -328,8 +315,6 @@ const DebugBar = ({
             {modal && (
                 <DebugModal
                     environment={environment}
-                    matrixUrl={matrixUrl}
-                    protocol={protocol}
                     casablancaUrl={casablancaUrl}
                     chainId={destinationChainId}
                     chainName={destinationChainName}

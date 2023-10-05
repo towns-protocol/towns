@@ -1,10 +1,7 @@
 import React, { createContext, useContext } from 'react'
 import { ZionClient } from '../client/ZionClient'
-import { SpaceProtocol, ZionOpts } from '../client/ZionClientTypes'
-import {
-    useContentAwareTimelineDiff,
-    useContentAwareTimelineDiffCasablanca,
-} from '../hooks/ZionContext/useContentAwareTimelineDiff'
+import { ZionOpts } from '../client/ZionClientTypes'
+import { useContentAwareTimelineDiffCasablanca } from '../hooks/ZionContext/useContentAwareTimelineDiff'
 import { IOnboardingState } from '../hooks/ZionContext/onboarding/IOnboardingState'
 import {
     useOnboardingState_Casablanca,
@@ -13,7 +10,6 @@ import {
 import { useSpacesIds } from '../hooks/ZionContext/useSpaceIds'
 import { useSpaceUnreads } from '../hooks/ZionContext/useSpaceUnreads'
 import { useSpaces } from '../hooks/ZionContext/useSpaces'
-import { useSyncErrorHandler } from '../hooks/ZionContext/useSyncErrorHandler'
 import { useCasablancaSpaceHierarchies } from '../hooks/ZionContext/useCasablancaSpaceHierarchies'
 import {
     useSyncSpaceHierarchies,
@@ -38,14 +34,12 @@ import { Config, WebSocketPublicClient, PublicClient } from 'wagmi'
 import { FallbackTransport } from 'viem'
 
 export interface IZionContext {
-    homeServerUrl: string
     casablancaServerUrl?: string
     appChainId: number /// our app is locked to a single chain that matches the server deployment
     client?: ZionClient /// only set when user is authenticated with matrix or casablanca
     clientSingleton?: ZionClient /// always set, can be use for matrix, this duplication can be removed once we transition to casablanca
     matrixClient?: MatrixClient /// set if we're logged in and matrix client is started
     casablancaClient?: CasablancaClient /// set if we're logged in and casablanca client is started
-    primaryProtocol?: SpaceProtocol
     rooms: Record<string, Room | undefined>
     invitedToIds: RoomIdentifier[] // ordered list of invites (spaces and channels)
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
@@ -56,7 +50,6 @@ export interface IZionContext {
     syncSpaceHierarchy: (spaceId: string) => void // function to force sync the space hierarchy
     matrixOnboardingState: IOnboardingState
     casablancaOnboardingState: IOnboardingState
-    syncError?: string
 }
 
 export const ZionContext = createContext<IZionContext | undefined>(undefined)
@@ -104,27 +97,22 @@ export function ZionContextProvider({
 const ContextImpl = (props: Props): JSX.Element => {
     const {
         casablancaServerUrl,
-        matrixServerUrl,
         enableSpaceRootUnreads,
-        primaryProtocol,
         initalSyncSortPredicate,
         timeBetweenSyncingSpaces,
     } = props
 
-    const { client, clientSingleton, matrixClient, casablancaClient } = useZionClientListener(props)
-    const { invitedToIds } = useSpacesIds(matrixClient, casablancaClient)
-    useContentAwareTimelineDiff(matrixClient)
+    const { client, clientSingleton, casablancaClient } = useZionClientListener(props)
+    const { invitedToIds } = useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
-    const { spaces } = useSpaces(matrixClient, casablancaClient)
+    const { spaces } = useSpaces(undefined, casablancaClient)
     const loggedInWalletAddress = useLoggedInWalletAddress({
-        matrixServerUrl,
         casablancaServerUrl,
-        primaryProtocol,
     })
 
     const { matrixSpaceHierarchies, syncSpaceHierarchy } = useSyncSpaceHierarchies(
         client,
-        matrixClient,
+        undefined,
         invitedToIds,
         loggedInWalletAddress,
         initalSyncSortPredicate,
@@ -138,20 +126,19 @@ const ContextImpl = (props: Props): JSX.Element => {
         enableSpaceRootUnreads === true,
     )
 
-    const matrixRooms = useMatrixRooms(matrixClient)
+    const matrixRooms = useMatrixRooms(undefined)
     const casablancaRooms = useCasablancaRooms(casablancaClient)
     const rooms: Record<string, Room | undefined> = {
         ...matrixRooms,
         ...casablancaRooms,
     }
 
-    useMatrixTimelines(matrixClient)
+    useMatrixTimelines(undefined)
     useCasablancaTimelines(casablancaClient)
-    const matrixOnboardingState = useOnboardingState_Matrix(client, matrixClient)
+    const matrixOnboardingState = useOnboardingState_Matrix(client, undefined)
     const casablancaOnboardingState = useOnboardingState_Casablanca(client, casablancaClient)
-    const syncError = useSyncErrorHandler(matrixServerUrl, client, matrixClient)
 
-    useTransactionListener(client, matrixServerUrl, casablancaServerUrl)
+    useTransactionListener(client, casablancaServerUrl)
 
     return (
         <ZionContext.Provider
@@ -159,8 +146,6 @@ const ContextImpl = (props: Props): JSX.Element => {
                 client,
                 clientSingleton,
                 appChainId: props.chainId,
-                primaryProtocol,
-                matrixClient,
                 casablancaClient,
                 rooms,
                 invitedToIds,
@@ -171,9 +156,7 @@ const ContextImpl = (props: Props): JSX.Element => {
                 spaceHierarchies,
                 matrixOnboardingState,
                 casablancaOnboardingState,
-                homeServerUrl: matrixServerUrl,
                 casablancaServerUrl: casablancaServerUrl,
-                syncError,
                 syncSpaceHierarchy,
             }}
         >

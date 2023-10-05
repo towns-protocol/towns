@@ -79,7 +79,6 @@ describe('<SpaceHome />', () => {
                 id: {
                     slug: '123',
                     networkId: '123',
-                    protocol: Lib.SpaceProtocol.Matrix,
                 },
                 name: '123',
                 avatarSrc: '',

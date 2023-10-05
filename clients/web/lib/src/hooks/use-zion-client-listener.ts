@@ -1,28 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { MatrixClient, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
 import { bin_fromHexString, Client as CasablancaClient, SignerContext } from '@river/sdk'
 import { LoginStatus } from './login'
 import { ZionClient } from '../client/ZionClient'
 import { ZionOpts } from '../client/ZionClientTypes'
-import { isMatrixError } from './use-zion-client'
-import { MatrixCredentials, useCredentialStore } from '../store/use-credential-store'
-import { useMatrixStore } from '../store/use-matrix-store'
+import { useCredentialStore } from '../store/use-credential-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 
 export const useZionClientListener = (opts: ZionOpts) => {
     const { provider } = useWeb3Context()
-    const { setLoginStatus: setMatrixLoginStatus } = useMatrixStore()
     const { setLoginStatus: setCasablancaLoginStatus } = useCasablancaStore()
-    const {
-        matrixCredentialsMap,
-        setMatrixCredentials,
-        casablancaCredentialsMap,
-        setCasablancaCredentials,
-    } = useCredentialStore()
-    const matrixCredentials = matrixCredentialsMap[opts.matrixServerUrl]
+    const { casablancaCredentialsMap, setCasablancaCredentials } = useCredentialStore()
     const casablancaCredentials = casablancaCredentialsMap[opts.casablancaServerUrl ?? '']
-    const [matrixClient, setMatrixClient] = useState<MatrixClient>()
     const [casablancaClient, setCasablancaClient] = useState<CasablancaClient>()
     const clientSingleton = useRef<ZionClient>()
 
@@ -33,60 +22,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
         })
     }
 
-    const startMatrixClient = useCallback(async () => {
-        if (opts.primaryProtocol !== 'matrix') {
-            return
-        }
-        if (!clientSingleton.current || !matrixCredentials) {
-            console.log(
-                'Matrix client listener not started: clientSingleton.current, chainId, accessToken, userId, or deviceId is undefined.',
-                {
-                    singleton: clientSingleton.current !== undefined,
-                    matrixCredentials: matrixCredentials !== null,
-                },
-            )
-            setMatrixClient(undefined)
-            return
-        }
-        // in the standard flow we should already be logged in, but if we're loading
-        // credentials from local host, this aligns the login status with the credentials
-        setMatrixLoginStatus(LoginStatus.LoggedIn)
-        const client = clientSingleton.current
-        // make sure we're not re-starting the client
-        if (client.auth?.accessToken === matrixCredentials.accessToken) {
-            console.log('startMatrixClient: called again with same access token')
-            return
-        }
-        console.log('******* start client *******')
-        // unset the client ref if it's not already, we need to cycle the ui
-        setMatrixClient(undefined)
-        // start it up!
-        try {
-            const matrixClient = await startMatrixClientWithRetries(client, matrixCredentials)
-            setMatrixClient(matrixClient)
-            console.log('******* Matrix client listener started *******')
-        } catch (e) {
-            console.log('******* client encountered exception *******', e)
-            try {
-                await client.logoutFromMatrix()
-            } catch (e) {
-                console.log('error while logging out', e)
-            }
-            setMatrixLoginStatus(LoginStatus.LoggedOut)
-            setMatrixCredentials(opts.matrixServerUrl, null)
-        }
-    }, [
-        opts.primaryProtocol,
-        opts.matrixServerUrl,
-        matrixCredentials,
-        setMatrixLoginStatus,
-        setMatrixCredentials,
-    ])
-
     const startCasablancaClient = useCallback(async () => {
-        if (opts.primaryProtocol !== 'casablanca') {
-            return
-        }
         if (!clientSingleton.current || !casablancaCredentials) {
             console.log('casablanca client listener not yet started:', {
                 singleton: clientSingleton.current !== undefined,
@@ -133,75 +69,17 @@ export const useZionClientListener = (opts: ZionOpts) => {
     }, [
         casablancaCredentials,
         opts.casablancaServerUrl,
-        opts.primaryProtocol,
         setCasablancaCredentials,
         setCasablancaLoginStatus,
     ])
-
-    useEffect(() => {
-        void (async () => await startMatrixClient())()
-    }, [startMatrixClient])
 
     useEffect(() => {
         void (async () => await startCasablancaClient())()
     }, [startCasablancaClient])
 
     return {
-        client: matrixClient || casablancaClient ? clientSingleton.current : undefined,
+        client: casablancaClient ? clientSingleton.current : undefined,
         clientSingleton: clientSingleton.current,
-        matrixClient,
         casablancaClient,
-    }
-}
-
-async function startMatrixClientWithRetries(
-    client: ZionClient,
-    matrixCredentials: MatrixCredentials,
-): Promise<MatrixClient | undefined> {
-    const dummyMatrixEvent = new MatrixEvent()
-    let retryCount = 0
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        try {
-            const matrixClient = await client.startMatrixClient({
-                userId: matrixCredentials.userId,
-                accessToken: matrixCredentials.accessToken,
-                deviceId: matrixCredentials.deviceId,
-            })
-            if (retryCount > 0) {
-                console.log(`startMatrixClientWithRetries succeeded after ${retryCount} retries`)
-            }
-            // succeeded, return
-            return matrixClient
-        } catch (err) {
-            if (isMatrixError(err)) {
-                const retryDelay = MatrixScheduler.RETRY_BACKOFF_RATELIMIT(
-                    dummyMatrixEvent,
-                    Math.max(retryCount, 4), // don't ever want to bail if this is a legit error, signing out will clear the cache
-                    err,
-                )
-                console.log(`MatrixError`, {
-                    retryDelay,
-                    retryCount,
-                    code: err.errcode,
-                    data: err.data,
-                    err,
-                })
-                if (retryDelay >= 0) {
-                    await new Promise((resolve) => setTimeout(resolve, retryDelay))
-                    retryCount++
-                    console.log('Retrying startMatrixClientWithRetries after delay: ', {
-                        retryDelay,
-                        retryCount,
-                    })
-                } else {
-                    throw err
-                }
-            } else {
-                // Not a MatrixError, just give up
-                console.error('Not a retryable startup error', err)
-                throw err
-            }
-        }
     }
 }

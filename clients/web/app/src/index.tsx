@@ -55,7 +55,7 @@ if (env.DEV) {
     })
 }
 
-if (env.VITE_DD_CLIENT_TOKEN && env.VITE_PRIMARY_PROTOCOL === 'casablanca') {
+if (env.VITE_DD_CLIENT_TOKEN) {
     datadogLogs.init({
         clientToken: env.VITE_DD_CLIENT_TOKEN,
         service: 'towns-webapp',

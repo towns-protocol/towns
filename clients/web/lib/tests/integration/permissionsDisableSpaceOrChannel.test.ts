@@ -5,18 +5,11 @@
  */
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
-    createTestSpaceGatedByTownNft,
     createTestSpaceGatedByTownAndZionNfts,
-    getPrimaryProtocol,
-    registerAndStartClient,
     registerAndStartClients,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from '@river/web3'
-import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
-import { TestConstants } from './helpers/TestConstants'
-import { waitFor } from '@testing-library/react'
 
 // https://linear.app/hnt-labs/issue/HNT-2046/testsintegrationpermissionsdisablespaceorchanneltestts
 describe.skip('disable channel', () => {
@@ -99,116 +92,5 @@ describe.skip('disable channel', () => {
         expect(error).toHaveProperty('name')
         const regEx = new RegExp(`${CONTRACT_ERROR.NotAllowed}|${CONTRACT_ERROR.NotOwner}`)
         expect(error.name).toMatch(regEx)
-    })
-
-    test('Channel member cant sync disabled room messages', async () => {
-        if (getPrimaryProtocol() === SpaceProtocol.Casablanca) {
-            // Casablanca always allows users to sync messages from disabled rooms
-            console.log('Skipping test for Casablanca')
-            return
-        }
-        /** Arrange */
-
-        // create all the users for the test
-        const tokenGrantedUser = await registerAndStartClient(
-            'tokenGrantedUser',
-            TestConstants.getWalletWithMemberNft(),
-        )
-        const { bob } = await registerAndStartClients(['bob'])
-        await bob.fundWallet()
-
-        // create a space with token entitlement to write
-        const spaceId = await createTestSpaceGatedByTownAndZionNfts(bob, [
-            Permission.Read,
-            Permission.Write,
-        ])
-        if (spaceId === undefined) {
-            throw new Error('roomId should be defined')
-        }
-        if (tokenGrantedUser.getUserId() === undefined) {
-            throw new Error('alice.getUserId() should be defined')
-        }
-
-        // invite user to join the space by first checking if they can read.
-        await bob.inviteUser(spaceId, tokenGrantedUser.getUserId()!)
-        await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
-
-        /** Act */
-
-        // set space access off, disabling space in ZionSpaceManager
-        await bob.setSpaceAccess(spaceId.networkId, true, bob.provider.wallet)
-
-        /** Assert */
-
-        // scrollback, which calls message sync under the hood, should reject upon performing a
-        // leave since the space is disabled
-        await waitFor(
-            () =>
-                expect(tokenGrantedUser.scrollback(spaceId, 30)).rejects.toThrow(
-                    'You cannot remain in a disabled server',
-                ),
-            TestConstants.DoubleDefaultWaitForTimeout,
-        )
-        // give dendrite time to federate leave event
-        // can't rejoin the room after it's disabled without a re-invite
-        await waitFor(
-            () => expect(tokenGrantedUser.joinRoom(spaceId)).rejects.toThrow('Unauthorised'),
-            TestConstants.DoubleDefaultWaitForTimeout,
-        )
-    })
-
-    test('Channel member needs to rejoin server that was re-enabled', async () => {
-        if (getPrimaryProtocol() === SpaceProtocol.Casablanca) {
-            // Casablanca ignores enabling/disabling room
-            console.log('Skipping test for Casablanca')
-            return
-        }
-        /** Arrange */
-
-        // create all the users for the test
-        const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
-        await bob.fundWallet()
-        const spaceId = await createTestSpaceGatedByTownNft(
-            bob,
-            [Permission.Read, Permission.Write],
-            {
-                name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Private,
-            },
-        )
-        if (spaceId === undefined) {
-            throw new Error('roomId should be defined')
-        }
-        if (alice.getUserId() === undefined) {
-            throw new Error('alice.getUserId() should be defined')
-        }
-
-        /** Act */
-
-        await bob.inviteUser(spaceId, alice.getUserId()!)
-        await alice.joinTown(spaceId, alice.wallet)
-
-        // set space access off, disabling space in ZionSpaceManager
-        await bob.setSpaceAccess(spaceId.networkId, true, bob.provider.wallet)
-
-        await waitFor(
-            () =>
-                expect(alice.scrollback(spaceId, 30)).rejects.toThrow(
-                    'You cannot remain in a disabled server',
-                ),
-            TestConstants.DoubleDefaultWaitForTimeout,
-        )
-
-        // space is re-enabled. Should be able to join.
-
-        // re-enable space
-        await bob.setSpaceAccess(spaceId.networkId, false, bob.provider.wallet)
-
-        /** Assert */
-        await bob.inviteUser(spaceId, alice.getUserId()!)
-        await waitFor(
-            () => expect(alice.joinRoom(spaceId)).resolves.toBeDefined(),
-            TestConstants.DoubleDefaultWaitForTimeout,
-        )
     })
 })

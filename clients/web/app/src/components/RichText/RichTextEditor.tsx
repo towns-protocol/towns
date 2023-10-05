@@ -18,13 +18,7 @@ import { clsx } from 'clsx'
 import isEqual from 'lodash/isEqual'
 import { ErrorBoundary } from '@sentry/react'
 import React, { useCallback, useMemo, useState } from 'react'
-import {
-    Channel,
-    Mention,
-    RoomMember,
-    SendTextMessageOptions,
-    SpaceProtocol,
-} from 'use-zion-client'
+import { Channel, Mention, RoomMember, SendTextMessageOptions } from 'use-zion-client'
 import { NodeEventPlugin } from '@lexical/react/LexicalNodeEventPlugin'
 import { toast } from 'react-hot-toast/headless'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
@@ -35,7 +29,7 @@ import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
-import { useEnvironment } from 'hooks/useEnvironmnet'
+import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
 import { MessageStatusAnnotation, useInitialConfig } from './hooks/useInitialConfig'
 import { AnnotationNode } from './nodes/AnnotationNode'
 import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'

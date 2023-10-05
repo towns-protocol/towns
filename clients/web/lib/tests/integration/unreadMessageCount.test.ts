@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
  */
-import { ClientEvent, NotificationCountType } from 'matrix-js-sdk'
+import { ClientEvent } from 'matrix-js-sdk'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownAndZionNfts,
@@ -15,9 +15,8 @@ import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { SyncState } from 'matrix-js-sdk/lib/sync'
 import { TestConstants } from './helpers/TestConstants'
-import { sleep, staticAssertNever } from '../../src/utils/zion-utils'
+import { sleep } from '../../src/utils/zion-utils'
 import { waitFor } from '@testing-library/dom'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 /// matrix notification counts are broken during sync, but they should work
 /// between syncs. This test is to make sure that the counts are correct
@@ -89,20 +88,11 @@ describe('unreadMessageCount', () => {
             console.log('!!!started alice', { syncData: alice.matrixClient.getSyncStateData() })
         }
 
-        const countFor = (roomId: RoomIdentifier) => {
+        const countFor = (_roomId: RoomIdentifier) => {
             if (!alice.matrixClient) {
                 throw new Error('alice matrix client is not defined')
             }
-            switch (roomId.protocol) {
-                case SpaceProtocol.Matrix:
-                    return alice.matrixClient
-                        .getRoom(roomId.networkId)
-                        ?.getUnreadNotificationCount(NotificationCountType.Total)
-                case SpaceProtocol.Casablanca:
-                    throw new Error('casablanca not implemented')
-                default:
-                    staticAssertNever(roomId)
-            }
+            throw new Error('casablanca not implemented')
         }
 
         ////// Stop alice /////

@@ -1,4 +1,3 @@
-import { useZionContext } from '../components/ZionContextProvider'
 import { useCredentialStore } from '../store/use-credential-store'
 import { useMatrixStore } from '../store/use-matrix-store'
 
@@ -6,10 +5,7 @@ import { useMatrixStore } from '../store/use-matrix-store'
 /// credentials are stored in local storage
 /// login status is stored in the matrix store, and is used to show the login screen
 export function useMatrixCredentials() {
-    const { homeServerUrl } = useZionContext()
-    const credentials = useCredentialStore(
-        (state) => state.matrixCredentialsMap[homeServerUrl] ?? undefined,
-    )
+    const credentials = useCredentialStore((state) => state.matrixCredentialsMap[''] ?? undefined)
     const { loginStatus, loginError } = useMatrixStore()
     const isAuthenticated = credentials?.accessToken !== undefined
 

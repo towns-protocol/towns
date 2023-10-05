@@ -1,7 +1,7 @@
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { Container } from '@mui/material'
-import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
+import { ZionContextProvider } from 'use-zion-client'
 import { ThemeProvider } from '@mui/material/styles'
 import { baseGoerli, foundry, goerli, localhost, sepolia } from 'wagmi/chains'
 import { configureChains, createConfig } from 'wagmi'
@@ -48,14 +48,12 @@ export const wagmiConfig = createConfig({
 })
 
 export const App = () => {
-    const { matrixUrl, casablancaUrl, chainId } = useEnvironment()
+    const { casablancaUrl, chainId } = useEnvironment()
     return (
         <ThemeProvider theme={theme}>
             <Container maxWidth="md">
                 <ZionContextProvider
                     enableSpaceRootUnreads
-                    primaryProtocol={SpaceProtocol.Casablanca}
-                    matrixServerUrl={matrixUrl}
                     casablancaServerUrl={casablancaUrl}
                     chainId={chainId}
                     logNamespaceFilter="csb:*"

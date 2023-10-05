@@ -9,7 +9,6 @@ import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
-    getPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -23,7 +22,6 @@ import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { TestConstants } from './helpers/TestConstants'
 import { sleep } from '../../src/utils/zion-utils'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { Permission } from '@river/web3'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
@@ -32,10 +30,6 @@ describe('messageHistoryHooks', () => {
     test(
         "user's timeline is updated with correct history via scrollback()",
         async () => {
-            if (getPrimaryProtocol() !== SpaceProtocol.Casablanca) {
-                console.log('skipping test for matrix protocol')
-                return
-            }
             // create client
             // create alice provider
             const aliceProvider = new ZionTestWeb3Provider()

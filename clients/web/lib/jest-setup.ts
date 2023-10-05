@@ -12,11 +12,10 @@ import 'fake-indexeddb/auto'
 import { IDBFactory } from 'fake-indexeddb'
 
 process.env.NODE_ENV = 'test'
-process.env.HOMESERVER = 'http://localhost:8008' // OR "https://node1.towns.com";
+process.env.HOMESERVER = ''
 process.env.CASABLANCA_SERVER_URL = 'http://localhost:5157'
 process.env.DISABLE_ENCRYPTION = 'false'
 process.env.ETHERS_NETWORK = 'http://127.0.0.1:8545' // OR "rinkeby"
-//process.env.PRIMARY_PROTOCOL = 'casablanca' // set to matrix | casablanca as the primary protocol
 
 // fetch-polyfill.js
 import fetch, { Headers, Request, Response } from 'node-fetch'

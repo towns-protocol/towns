@@ -19,7 +19,6 @@ const pendingContext = {
     data: {
         slug: 'some-room-id',
         networkId: 'some-room-id',
-        protocol: zionClient.SpaceProtocol.Matrix,
     },
 }
 const successContext = {
@@ -29,7 +28,6 @@ const successContext = {
     data: {
         slug: 'some-room-id',
         networkId: 'some-room-id',
-        protocol: zionClient.SpaceProtocol.Matrix,
     },
 }
 
@@ -40,7 +38,6 @@ const failedWithTransactionContext = {
     data: {
         slug: 'some-room-id',
         networkId: 'some-room-id',
-        protocol: zionClient.SpaceProtocol.Matrix,
     },
     error: { name: 'whatever', message: 'some error' },
 }

@@ -55,9 +55,7 @@ export const App = () => {
 
     return (
         <ZionContextProvider
-            primaryProtocol={environment.protocol}
             casablancaServerUrl={environment.casablancaUrl}
-            matrixServerUrl={environment.matrixUrl}
             onboardingOpts={{ skipAvatar: true }}
             initialSyncLimit={20}
             chainId={environment.chainId}

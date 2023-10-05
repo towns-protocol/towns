@@ -12,7 +12,6 @@ const Wrapper = () => {
         <TestApp>
             <Lib.SpaceContextProvider
                 spaceId={{
-                    protocol: Lib.SpaceProtocol.Matrix,
                     slug: 'some-slug',
                     networkId: 'some-network',
                 }}
@@ -38,7 +37,6 @@ describe('<AppPanelLayout />', () => {
                 chainSpaceLoading: false,
                 serverSpace: {
                     id: {
-                        protocol: Lib.SpaceProtocol.Matrix,
                         slug: 'some-slug',
                         networkId: 'some-network',
                     },
@@ -67,7 +65,6 @@ describe('<AppPanelLayout />', () => {
                 chainSpaceLoading: false,
                 serverSpace: {
                     id: {
-                        protocol: Lib.SpaceProtocol.Matrix,
                         slug: 'some-slug',
                         networkId: 'some-network',
                     },

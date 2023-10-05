@@ -22,7 +22,6 @@ const Wrapper = ({
             <CreateChannelForm
                 spaceId={{
                     slug: '',
-                    protocol: zionClient.SpaceProtocol.Matrix,
                     networkId: '',
                 }}
                 onCreateChannel={onCreateChannel}
@@ -246,7 +245,6 @@ describe('CreateChannelForm', () => {
                 name: 'test-channel',
                 parentSpaceId: {
                     networkId: '',
-                    protocol: 'matrix',
                     slug: '',
                 },
                 roleIds: [7, 8],

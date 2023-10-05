@@ -10,7 +10,6 @@ import {
 } from '@river/sdk'
 import { bin_fromHexString, SignerContext } from '@river/sdk'
 import { ethers } from 'ethers'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
 import {
     RoomMessageEncryptedEvent,
@@ -50,9 +49,7 @@ describe('casablanca', () => {
 
     test('bobTalksToHimself', async () => {
         log("Test starting, registering and starting client 'bob'")
-        const { bob } = await registerAndStartClients(['bob'], {
-            primaryProtocol: SpaceProtocol.Casablanca,
-        })
+        const { bob } = await registerAndStartClients(['bob'])
 
         log("Clients started, funding Bob's wallet")
         await bob.fundWallet()
@@ -64,7 +61,6 @@ describe('casablanca', () => {
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Public,
-                spaceProtocol: SpaceProtocol.Casablanca,
             },
         ))!
 
@@ -94,9 +90,7 @@ describe('casablanca', () => {
 
     test('test creating a casablanca space with the zion client and send encrypted messages', async () => {
         log("Test starting, registering and starting clients 'bob' and 'alice'")
-        const { bob, alice } = await registerAndStartClients(['bob', 'alice'], {
-            primaryProtocol: SpaceProtocol.Casablanca,
-        })
+        const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
 
         log("Clients started, funding Bob's wallet")
         await bob.fundWallet()
@@ -108,7 +102,6 @@ describe('casablanca', () => {
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Public,
-                spaceProtocol: SpaceProtocol.Casablanca,
             },
         ))!
 
@@ -151,9 +144,7 @@ describe('casablanca', () => {
 
     test('test decrypting encrypted content that looks like ciphertext', async () => {
         log("Test starting, registering and starting clients 'bob' and 'alice'")
-        const { bob, alice } = await registerAndStartClients(['bob', 'alice'], {
-            primaryProtocol: SpaceProtocol.Casablanca,
-        })
+        const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
 
         log("Clients started, funding Bob's wallet")
         await bob.fundWallet()
@@ -165,7 +156,6 @@ describe('casablanca', () => {
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Public,
-                spaceProtocol: SpaceProtocol.Casablanca,
             },
         ))!
 

@@ -1,12 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Membership } from '../../types/zion-types'
-import { ClientEvent, MatrixClient, Room as MatrixRoom, RoomEvent } from 'matrix-js-sdk'
+import { useEffect } from 'react'
 import isEqual from 'lodash/isEqual'
-import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
+import { RoomIdentifier } from '../../types/room-identifier'
 import { create } from 'zustand'
 import { Client as CasablancaClient } from '@river/sdk'
-import { useSpacesIds_Matrix } from './useSpaceIds_Matrix'
 import { useSpacesIds_Casablanca } from './useSpaceIds_Casablanca'
 
 export type SpaceIdStore = {
@@ -25,26 +21,15 @@ export const useSpaceIdStore = create<SpaceIdStoreInterface>((set) => ({
 }))
 
 /// returns a stable list of space ids (if the networkId is the same, the object reference should stay the same)
-export function useSpacesIds(
-    matrixClient: MatrixClient | undefined,
-    casablancaClient: CasablancaClient | undefined,
-): {
+export function useSpacesIds(casablancaClient: CasablancaClient | undefined): {
     invitedToIds: RoomIdentifier[]
 } {
     const { setSpaceIds } = useSpaceIdStore()
 
-    const { spaceIds: matrixSpaceIds, invitedToIds: matrixInvitedToIds } =
-        useSpacesIds_Matrix(matrixClient)
-    const { spaceIds: casablancaSpaceIds, invitedToIds: casablancaInvitedToIds } =
-        useSpacesIds_Casablanca(casablancaClient)
-
-    const invitedToIds = useMemo(() => {
-        console.log(`useSpacesIds::setInviteIds`)
-        return [...matrixInvitedToIds, ...casablancaInvitedToIds]
-    }, [casablancaInvitedToIds, matrixInvitedToIds])
+    const { spaceIds, invitedToIds } = useSpacesIds_Casablanca(casablancaClient)
 
     useEffect(() => {
-        const newSpaceIds = [...matrixSpaceIds, ...casablancaSpaceIds]
+        const newSpaceIds = spaceIds
         setSpaceIds((prev) => {
             if (isEqual(prev.spaceIds, newSpaceIds)) {
                 return prev
@@ -55,7 +40,7 @@ export function useSpacesIds(
             })
             return { spaceIds: newSpaceIds }
         })
-    }, [casablancaSpaceIds, matrixSpaceIds, setSpaceIds])
+    }, [spaceIds, setSpaceIds])
 
     return { invitedToIds }
 }

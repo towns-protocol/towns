@@ -3,15 +3,14 @@ import React from 'react'
 import { useServerVersions, useZionContext } from 'use-zion-client'
 
 export const VersionsPage = () => {
-    const { homeServerUrl, casablancaServerUrl } = useZionContext()
+    const { casablancaServerUrl } = useZionContext()
 
     const { isFetched, isSuccess, isError, serverVersions } = useServerVersions({
-        homeserverUrl: homeServerUrl,
+        homeserverUrl: undefined,
     })
 
     return (
         <VersionsPageLayout>
-            <div data-testid="matrixUrl">{`matrixUrl: ${homeServerUrl}`}</div>
             <div data-testid="casablancaUrl">{`casablancaUrl: ${casablancaServerUrl}`}</div>
             <div data-testid="appVersion">{`appVersion: ${APP_VERSION}`}</div>
             <div data-testid="isFetched">{`isFetched: ${JSON.stringify(isFetched)}`}</div>

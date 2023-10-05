@@ -8,7 +8,6 @@ import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
-    getPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -20,15 +19,11 @@ import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { sleep } from '../../src/utils/zion-utils'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useZionContext } from '../../src/components/ZionContextProvider'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
-
-// TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('unreadMessageCountHooks', () => {
     test('user can join a room, see messages, and send messages', async () => {
@@ -150,7 +145,6 @@ describe('unreadMessageCountHooks', () => {
         )
 
         // get our test elements
-        const bobId = screen.getByTestId('userId')
         const clientRunning = screen.getByTestId('clientRunning')
         const spaceMembership = screen.getByTestId('spaceMembership')
         const channelMembership = screen.getByTestId('channelMembership')
@@ -180,10 +174,6 @@ describe('unreadMessageCountHooks', () => {
         // check assumptions
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('undefined'))
-        if (getPrimaryProtocol() === SpaceProtocol.Matrix) {
-            // get invited to the channel
-            await jane.inviteUser(janesChannelId, bobId.textContent!)
-        }
         // check the count (9/28/2022 dendrite doesn't send notifications for invites)
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('undefined'))
@@ -238,20 +228,6 @@ describe('unreadMessageCountHooks', () => {
         )
         if (!newRoomId) {
             throw new Error('new room id is undefined')
-        }
-
-        if (getPrimaryProtocol() === SpaceProtocol.Matrix) {
-            // give bob a chance to see the new space.child message
-            // when we get an invite it doesn't come with any space info
-            // because the previous time we fetched the space we didn't have permission to see this space
-            // we didn't sync it
-            // it might exist in the timeline in a space.child event, but it probably won't be in the recent timeline
-            // and it's not a state event
-            await sleep(1000)
-            // get invited to the channel
-            await jane.inviteUser(newRoomId, bobId.textContent!)
-            // the space should show the unread count, but we don't (9/28/2022 dendrite doesn't send notifications for invites)
-            await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
         }
     })
 })

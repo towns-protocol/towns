@@ -19,13 +19,11 @@ const CHANNEL_ID = 'channel1'
 const SPACE_ID = 'town1'
 const spaceRoomIdentifier = {
     slug: SPACE_ID,
-    protocol: zionClient.SpaceProtocol.Matrix,
     networkId: SPACE_ID,
 }
 
 const channelRoomIdentifier = {
     slug: CHANNEL_ID,
-    protocol: zionClient.SpaceProtocol.Matrix,
     networkId: CHANNEL_ID,
 }
 

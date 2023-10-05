@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef } from 'react'
-import { SpaceProtocol, ZionOnboardingOpts } from '../../../src/client/ZionClientTypes'
+import { ZionOnboardingOpts } from '../../../src/client/ZionClientTypes'
 
 import { TestQueryClientProvider } from './TestQueryClientProvider'
 import { ZionContextProvider } from '../../../src/components/ZionContextProvider'
@@ -8,13 +8,11 @@ import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { foundry } from 'wagmi/chains'
 import { configureChains, createConfig, useConnect } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
-import { getPrimaryProtocol } from './TestUtils'
 import { useZionErrorStore } from '../../../src/hooks/use-zion-client'
 import { publicProvider } from 'wagmi/providers/public'
 
 interface Props {
     provider: ZionTestWeb3Provider
-    primaryProtocol?: SpaceProtocol
     onboardingOpts?: ZionOnboardingOpts
     initialSyncLimit?: number
     pollTimeoutMs?: number
@@ -35,15 +33,12 @@ const mockConfig = createConfig({
 export const ZionTestApp = (props: Props) => {
     const {
         provider,
-        primaryProtocol: inPrimaryProtocol,
         onboardingOpts: inOnboardingOpts,
         initialSyncLimit,
         pollTimeoutMs,
         children,
     } = props
     // pull environment variables from the process
-    const primaryProtocol = inPrimaryProtocol ?? getPrimaryProtocol()
-    const homeServerUrl = process.env.HOMESERVER!
     const casablancaServerUrl = process.env.CASABLANCA_SERVER_URL!
     const onboardingOpts: ZionOnboardingOpts = inOnboardingOpts
         ? inOnboardingOpts
@@ -57,8 +52,6 @@ export const ZionTestApp = (props: Props) => {
 
     return (
         <ZionContextProvider
-            primaryProtocol={primaryProtocol}
-            matrixServerUrl={homeServerUrl}
             casablancaServerUrl={casablancaServerUrl}
             onboardingOpts={onboardingOpts}
             initialSyncLimit={initialSyncLimit}

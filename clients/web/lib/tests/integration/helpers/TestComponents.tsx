@@ -1,18 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Address } from 'wagmi'
-import { LoginStatus } from '../../../src/hooks/login'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
-import { MatrixAuth, SpaceProtocol } from '../../../src/client/ZionClientTypes'
-import { getUsernameFromId } from '../../../src/types/user-identifier'
-import { useCredentialStore } from '../../../src/store/use-credential-store'
+import { MatrixAuth } from '../../../src/client/ZionClientTypes'
 import { useMatrixStore } from '../../../src/store/use-matrix-store'
-import { useMatrixCredentials } from '../../../src/hooks/use-matrix-credentials'
 import { useCasablancaCredentials } from '../../../src/hooks/use-casablanca-credentials'
 import { useMyMembership } from '../../../src/hooks/use-my-membership'
 import { useZionClient } from '../../../src/hooks/use-zion-client'
 import { useWeb3Context } from '../../../src/components/Web3ContextProvider'
 import { WalletStatus } from '../../../src/types/web3-types'
-import { useZionContext } from '../../../src/components/ZionContextProvider'
 import { useCreateSpaceTransaction } from '../../../src/hooks/use-create-space-transaction'
 import { useCreateChannelTransaction } from '../../../src/hooks/use-create-channel-transaction'
 import { useAddRoleToChannelTransaction } from '../../../src/hooks/use-add-role-channel-transaction'
@@ -21,28 +15,15 @@ import { useCreateRoleTransaction } from '../../../src/hooks/use-create-role-tra
 import { useDeleteRoleTransaction } from '../../../src/hooks/use-delete-role-transaction'
 import { useUpdateRoleTransaction } from '../../../src/hooks/use-update-role-transaction'
 import { useUpdateSpaceNameTransaction } from '../../../src/hooks/use-update-space-name-transaction'
-import { getPrimaryProtocol } from './TestUtils'
-import { staticAssertNever } from '../../../src/utils/zion-utils'
 
 export const RegisterWallet = () => {
     const { walletStatus, isConnected } = useWeb3Context()
-    const matrixCredentials = useMatrixCredentials()
     const riverCridentials = useCasablancaCredentials()
-    const loginStatus =
-        getPrimaryProtocol() === SpaceProtocol.Matrix
-            ? matrixCredentials.loginStatus
-            : riverCridentials.loginStatus
-    const loginError =
-        getPrimaryProtocol() === SpaceProtocol.Matrix
-            ? matrixCredentials.loginError
-            : riverCridentials.loginError
-    const userId =
-        getPrimaryProtocol() === SpaceProtocol.Matrix
-            ? matrixCredentials.userId
-            : riverCridentials.userId
+    const loginStatus = riverCridentials.loginStatus
+    const loginError = riverCridentials.loginError
+    const userId = riverCridentials.userId
 
-    const { clientRunning, registerWalletWithMatrix, registerWalletWithCasablanca } =
-        useZionClient()
+    const { clientRunning, registerWalletWithCasablanca } = useZionClient()
     const registeringWallet = useRef(false)
     const [registeredWallet, setRegisteredWallet] = useState(false)
 
@@ -50,21 +31,13 @@ export const RegisterWallet = () => {
         if (walletStatus === WalletStatus.Connected && !registeringWallet.current) {
             registeringWallet.current = true
             void (async () => {
-                const protocol = getPrimaryProtocol()
-                if (protocol === SpaceProtocol.Matrix) {
-                    await registerWalletWithMatrix('login...')
-                } else if (protocol === SpaceProtocol.Casablanca) {
-                    await registerWalletWithCasablanca('login...')
-                } else {
-                    staticAssertNever(protocol)
-                }
+                await registerWalletWithCasablanca('login...')
                 setRegisteredWallet(true)
             })()
         }
-    }, [registerWalletWithCasablanca, registerWalletWithMatrix, walletStatus])
+    }, [registerWalletWithCasablanca, walletStatus])
     return (
         <>
-            <div data-testid="primaryProtocol">{getPrimaryProtocol()}</div>
             <div data-testid="isConnected">{isConnected.toString()}</div>
             <div data-testid="registeredWallet">{String(registeredWallet)}</div>
             <div data-testid="userId">{userId}</div>
@@ -78,38 +51,23 @@ export const RegisterWallet = () => {
 
 export const LoginWithWallet = () => {
     const { walletStatus, isConnected } = useWeb3Context()
-    const matrixCredentials = useMatrixCredentials()
     const riverCridentials = useCasablancaCredentials()
-    const loginStatus =
-        getPrimaryProtocol() === SpaceProtocol.Matrix
-            ? matrixCredentials.loginStatus
-            : riverCridentials.loginStatus
-    const loginError =
-        getPrimaryProtocol() === SpaceProtocol.Matrix
-            ? matrixCredentials.loginError
-            : riverCridentials.loginError
-    const { clientRunning, loginWithWalletToMatrix, loginWithWalletToCasablanca } = useZionClient()
+    const loginStatus = riverCridentials.loginStatus
+    const loginError = riverCridentials.loginError
+    const { clientRunning, loginWithWalletToCasablanca } = useZionClient()
     const logingInWithWallet = useRef(false)
 
     useEffect(() => {
         if (walletStatus === WalletStatus.Connected && !logingInWithWallet.current) {
             logingInWithWallet.current = true
             void (async () => {
-                const protocol = getPrimaryProtocol()
-                if (protocol === SpaceProtocol.Matrix) {
-                    await loginWithWalletToMatrix('login...')
-                } else if (protocol === SpaceProtocol.Casablanca) {
-                    await loginWithWalletToCasablanca('login...')
-                } else {
-                    staticAssertNever(protocol)
-                }
+                await loginWithWalletToCasablanca('login...')
                 logingInWithWallet.current = false
             })()
         }
-    }, [loginWithWalletToCasablanca, loginWithWalletToMatrix, walletStatus])
+    }, [loginWithWalletToCasablanca, walletStatus])
     return (
         <>
-            <div data-testid="primaryProtocol">{getPrimaryProtocol()}</div>
             <div data-testid="isConnected">{isConnected.toString()}</div>
             <div data-testid="walletStatus">{walletStatus}</div>
             <div data-testid="loginStatus">{loginStatus}</div>
@@ -124,35 +82,17 @@ interface LoginWithAuthProps {
     walletAddress: string
 }
 
-export const LoginWithAuth = (props: LoginWithAuthProps) => {
-    const { homeServerUrl } = useZionContext()
+export const LoginWithAuth = (_props: LoginWithAuthProps) => {
     const { walletStatus, isConnected } = useWeb3Context()
-    const { loginStatus, loginError, setLoginStatus } = useMatrixStore()
+    const { loginStatus, loginError } = useMatrixStore()
     const { clientRunning } = useZionClient()
-    const { setMatrixCredentials } = useCredentialStore()
     useEffect(() => {
         if (walletStatus === WalletStatus.Connected) {
-            const protocol = getPrimaryProtocol()
-            if (protocol === SpaceProtocol.Matrix) {
-                setMatrixCredentials(homeServerUrl, {
-                    accessToken: props.auth.accessToken,
-                    deviceId: props.auth.deviceId,
-                    userId: props.auth.userId,
-                    username: getUsernameFromId(props.auth.userId),
-                    loggedInWalletAddress: props.walletAddress as Address,
-                })
-                setLoginStatus(LoginStatus.LoggedIn)
-            } else if (protocol === SpaceProtocol.Casablanca) {
-                throw new Error('Not implemented')
-            } else {
-                staticAssertNever(protocol)
-            }
+            throw new Error('Not implemented')
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [walletStatus])
     return (
         <>
-            <div data-testid="primaryProtocol">{getPrimaryProtocol()}</div>
             <div data-testid="isConnected">{isConnected.toString()}</div>
             <div data-testid="walletStatus">{walletStatus}</div>
             <div data-testid="loginStatus">{loginStatus}</div>
@@ -203,17 +143,20 @@ export const RegisterAndJoin = (props: {
     const { spaceId, channelIds } = props
     const didExecute = useRef(false)
     const { clientRunning, joinTown, joinRoom } = useZionClient()
+    const [joinStatus, setJoinStatus] = useState<Record<string, boolean>>({})
     const [joinComplete, setJoinComplete] = React.useState(false)
     const { signer } = useWeb3Context()
 
     useEffect(() => {
         if (clientRunning && !didExecute.current) {
+            setJoinStatus((prev) => ({ ...prev, ['executing']: true }))
             didExecute.current = true
             void (async () => {
                 await joinTown(spaceId, signer)
-
+                setJoinStatus((prev) => ({ ...prev, [spaceId.networkId]: true }))
                 for (const roomId of channelIds) {
                     await joinRoom(roomId)
+                    setJoinStatus((prev) => ({ ...prev, [roomId.networkId]: true }))
                 }
 
                 setJoinComplete(true)
@@ -223,6 +166,7 @@ export const RegisterAndJoin = (props: {
     return (
         <>
             <RegisterWallet />
+            <div data-testid="joinStatus">{JSON.stringify(joinStatus)}</div>
             <div data-testid="joinComplete">{joinComplete ? 'true' : 'false'}</div>
         </>
     )

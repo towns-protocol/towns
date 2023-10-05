@@ -56,7 +56,6 @@ describe.skip('<SpaceJoin />', () => {
         joinRoomSpy.mockReturnValueOnce(
             Promise.resolve({
                 id: {
-                    protocol: Lib.SpaceProtocol.Matrix,
                     slug: 'some-slug',
                     networkId: 'some-network',
                 },
@@ -89,7 +88,6 @@ describe.skip('<SpaceJoin />', () => {
         await waitFor(() => {
             expect(joinRoomSpy).toHaveBeenCalledWith({
                 networkId: 'doodles-id',
-                protocol: 'matrix',
                 slug: 'doodles-id',
             })
         })
@@ -117,7 +115,6 @@ describe.skip('<SpaceJoin />', () => {
         await waitFor(() => {
             expect(joinRoomSpy).toHaveBeenCalledWith({
                 networkId: 'doodles-id',
-                protocol: 'matrix',
                 slug: 'doodles-id',
             })
         })
@@ -146,7 +143,6 @@ describe.skip('<SpaceJoin />', () => {
         await waitFor(() => {
             expect(joinRoomSpy).toHaveBeenCalledWith({
                 networkId: 'doodles-id',
-                protocol: 'matrix',
                 slug: 'doodles-id',
             })
         })

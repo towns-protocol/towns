@@ -136,21 +136,18 @@ interface ZionClientImpl {
         message: string,
         options: SendTextMessageOptions | undefined,
     ) => Promise<void>
-    getIsWalletRegisteredWithMatrix: () => Promise<boolean>
     getIsWalletRegisteredWithCasablanca: () => Promise<boolean>
     getServerVersions: () => Promise<IZionServerVersions | undefined>
     inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>
     joinRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<Room | undefined>
     leaveRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<void>
     logout: () => Promise<void>
-    loginWithWalletToMatrix: (statement: string) => Promise<void>
     loginWithWalletToCasablanca: (statement: string) => Promise<void>
     joinTown: (
         spaceId: RoomIdentifier,
         signer: ethers.Signer | undefined,
     ) => Promise<Room | undefined>
     redactEvent: (roomId: RoomIdentifier, eventId: string, reason?: string) => Promise<void>
-    registerWalletWithMatrix: (statement: string) => Promise<void>
     registerWalletWithCasablanca: (statement: string) => Promise<void>
     resetFullyReadMarkers: () => void
     scrollback: (
@@ -192,12 +189,7 @@ interface ZionClientImpl {
 }
 
 export function useZionClient(): ZionClientImpl {
-    const {
-        getIsWalletRegisteredWithMatrix,
-        loginWithWalletToMatrix,
-        registerWalletWithMatrix,
-        userOnWrongNetworkForSignIn,
-    } = useMatrixWalletSignIn()
+    const { userOnWrongNetworkForSignIn } = useMatrixWalletSignIn()
     const {
         getIsWalletRegisteredWithCasablanca,
         loginWithWalletToCasablanca,
@@ -246,18 +238,15 @@ export function useZionClient(): ZionClientImpl {
         waitForUpdateSpaceNameTransaction: useWithCatch(client?.waitForUpdateSpaceNameTransaction),
         updateSpaceNameTransaction: useWithCatch(client?.updateSpaceNameTransaction),
         editMessage: useWithCatch(client?.editMessage),
-        getIsWalletRegisteredWithMatrix,
         getIsWalletRegisteredWithCasablanca,
         getServerVersions: useWithCatch(client?.getServerVersions),
         inviteUser: useWithCatch(client?.inviteUser),
         joinRoom: useWithCatch(client?.joinRoom),
         leaveRoom: useWithCatch(client?.leave),
-        loginWithWalletToMatrix,
         loginWithWalletToCasablanca,
         logout,
         joinTown: useWithCatch(client?.joinTown),
         redactEvent: useWithCatch(client?.redactEvent),
-        registerWalletWithMatrix,
         registerWalletWithCasablanca,
         resetFullyReadMarkers,
         scrollback: useWithCatch(client?.scrollback),
