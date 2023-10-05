@@ -1,7 +1,7 @@
 import { getDefaultWallets } from '@rainbow-me/rainbowkit'
 import { Chain, configureChains, createConfig } from 'wagmi'
 import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
-import { foundry, goerli, localhost, sepolia } from 'wagmi/chains'
+import { baseGoerli, foundry, goerli, localhost, sepolia } from 'wagmi/chains'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
 import cloneDeep from 'lodash/cloneDeep'
@@ -22,7 +22,7 @@ if (env.VITE_CF_TUNNEL_PREFIX) {
     }
 }
 
-const SUPPORTED_CHAINS = [goerli, sepolia, foundryClone, localhost]
+const SUPPORTED_CHAINS = [goerli, sepolia, foundryClone, baseGoerli, localhost]
 
 const walletConnectors = ({ chains }: { chains: Chain[] }) => {
     const { connectors: rainbowKitConnectors } = getDefaultWallets({
