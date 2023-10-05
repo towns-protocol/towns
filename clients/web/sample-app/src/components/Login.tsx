@@ -271,7 +271,7 @@ function WalletInfo() {
         onDisconnect: onDisconnectCb,
     })
 
-    const { chainId: appChainId, chainName: appChainName } = useEnvironment()
+    const { chainId: appChainId, chainName: appChainName, casablancaUrl } = useEnvironment()
     const { chain: walletChain } = useNetwork()
     const { connect, connectors, error, isLoading, pendingConnector } = useConnect()
     const { disconnect } = useDisconnect()
