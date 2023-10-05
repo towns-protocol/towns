@@ -73,13 +73,16 @@ export function CreateSpaceFormV2() {
                 horizontal
                 id="CreateSpaceFormV2"
                 schema={schema}
+                // make sure all values from schema are set so the form validates properly
                 defaultValues={{
                     membershipType: 'everyone',
                     membershipLimit: 1000,
                     membershipCost: 0,
-                    spaceName: null,
+                    spaceName: undefined,
                     tokensGatingMembership: [],
                     spaceIconUrl: null,
+                    spaceIconFile: null,
+                    spaceBio: null,
                     // TODO: currency defaults to ETH when addressZero
                     membershipCurrency: ethers.constants.AddressZero,
                 }}
@@ -99,6 +102,9 @@ export function CreateSpaceFormV2() {
                     }
 
                     const showSpaceNameError = () => {
+                        if (_form.formState.isSubmitted) {
+                            return true
+                        }
                         const spaceNameError = _form.formState.errors['spaceName']
                         if (spaceNameError?.type !== 'too_small') {
                             return true
@@ -165,6 +171,11 @@ export function CreateSpaceFormV2() {
 
                                                     <FormFieldEdit
                                                         label="For"
+                                                        hasError={Boolean(
+                                                            _form.formState.errors[
+                                                                'tokensGatingMembership'
+                                                            ],
+                                                        )}
                                                         onClick={() =>
                                                             setPanelType(PanelType.gating)
                                                         }
@@ -178,6 +189,11 @@ export function CreateSpaceFormV2() {
 
                                                     <FormFieldEdit
                                                         label="Membership"
+                                                        hasError={Boolean(
+                                                            _form.formState.errors[
+                                                                'membershipCost'
+                                                            ],
+                                                        )}
                                                         onClick={() =>
                                                             setPanelType(PanelType.pricing)
                                                         }
@@ -197,12 +213,17 @@ export function CreateSpaceFormV2() {
                                                     placeholder="Add town bio"
                                                     tone="none"
                                                     fontSize="lg"
+                                                    {..._form.register('spaceBio')}
                                                 />
                                             </Stack>
                                         </Stack>
 
                                         {/* member col */}
-                                        <Stack>
+                                        <MotionStack
+                                            animate={{
+                                                opacity: panelType === undefined ? 1 : 0,
+                                            }}
+                                        >
                                             <Stack width="500" maxWidth="500">
                                                 <Grid columnMinSize="80px">
                                                     {members.map((member, idx) => (
@@ -219,7 +240,7 @@ export function CreateSpaceFormV2() {
                                                     ))}
                                                 </Grid>
                                             </Stack>
-                                        </Stack>
+                                        </MotionStack>
                                     </Stack>
                                 </Stack>
                                 <CreateTownSubmit
@@ -283,6 +304,7 @@ function BackgroundImageUpdater({
                 imageUrl,
             })
             setValue('spaceIconUrl', imageUrl)
+            setValue('spaceIconFile', file)
         },
         [setValue],
     )
@@ -300,7 +322,7 @@ function BackgroundImageUpdater({
                 <BlurredBackground imageSrc={imageSrc ?? ''} blur={40} />
             </Box>
             <LargeUploadImageTemplate<CreateSpaceFormV2SchemaType>
-                canEdit
+                canEdit={!transactionDetails.isTransacting}
                 type="spaceIcon"
                 formFieldName="spaceIconUrl"
                 resourceId={TEMPORARY_SPACE_ICON_URL}
@@ -328,10 +350,12 @@ function FormFieldEdit({
     label,
     children,
     onClick,
+    hasError,
 }: {
     label: string
     children: ReactNode
     onClick?: () => void
+    hasError?: boolean
 }) {
     const [hovered, setHovered] = useState(false)
     return (
@@ -348,6 +372,7 @@ function FormFieldEdit({
                 {label}
             </Text>
             {children}
+            {hasError && <Icon size="square_xs" type="alert" color="error" />}
             {onClick && (
                 <MotionBox
                     animate={{

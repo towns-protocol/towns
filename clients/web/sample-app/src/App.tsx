@@ -3,7 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import { Container } from '@mui/material'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { ThemeProvider } from '@mui/material/styles'
-import { foundry, goerli, localhost, sepolia } from 'wagmi/chains'
+import { baseGoerli, foundry, goerli, localhost, sepolia } from 'wagmi/chains'
 import { configureChains, createConfig } from 'wagmi'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
@@ -32,7 +32,7 @@ import { AuthenticatedContent } from './routes/AuthenticatedContent'
 
 const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_API_KEY ?? ''
 
-const SUPPORTED_CHAINS = [goerli, sepolia, foundry, localhost]
+const SUPPORTED_CHAINS = [goerli, sepolia, foundry, baseGoerli, localhost]
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
     SUPPORTED_CHAINS,

@@ -14,6 +14,10 @@ export const membershipCostError = `Only towns with a mint cost of more than 1 E
 export const schema = z
     .object({
         spaceIconUrl: z.string().optional().nullable(),
+        spaceIconFile: z
+            .custom<File>((val) => val instanceof File, 'Please upload a file')
+            .optional()
+            .nullable(),
         spaceName: z
             .string({
                 errorMap: (err, ctx) => {
@@ -36,24 +40,7 @@ export const schema = z
             .min(2)
             .max(MAX_LENGTH_SPACE_NAME),
         // spaceOwner: z.string(), TODO contract updates
-        spaceBio: z
-            .string({
-                errorMap: (err, ctx) => {
-                    if (ctx.data?.length === 0 || err.code === 'too_small') {
-                        return { message: 'Town name must be at least 2 characters.' }
-                    }
-                    if (err.code === 'too_big') {
-                        return { message: 'Town name must be less than 32 characters.' }
-                    }
-
-                    return {
-                        message: 'Town name must be between 2 and 32 characters.',
-                    }
-                },
-            })
-            .min(2)
-            .max(MAX_LENGTH_SPACE_BIO)
-            .optional(),
+        spaceBio: z.string().optional().nullable(),
         membershipCurrency: z.string(),
         membershipLimit: z.coerce.number({
             errorMap: (err, ctx) => {

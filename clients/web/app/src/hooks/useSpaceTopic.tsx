@@ -53,16 +53,25 @@ export const useGetSpaceTopic = (networkId: string | undefined) => {
     })
 }
 
-export const useSetSpaceTopic = (roomId: RoomIdentifier | undefined) => {
+export const useSetSpaceTopic = (
+    roomId: RoomIdentifier | undefined,
+    {
+        onError,
+    }: {
+        onError?: (error: unknown) => void
+    } = {},
+) => {
     const queryClient = useQueryClient()
 
     const _setSpaceTopic = useCallback(
-        (description: string) => {
-            if (!roomId) {
+        // in case you cannot pass the roomId as a parameter, you can use the innerRoomId in the callback
+        ({ description, innerRoomId }: { description: string; innerRoomId?: RoomIdentifier }) => {
+            const _id = innerRoomId ?? roomId
+            if (!_id) {
                 return Promise.reject('No space id')
             }
 
-            return setSpaceTopic(roomId, description)
+            return setSpaceTopic(_id, description)
         },
         [roomId],
     )
@@ -73,6 +82,9 @@ export const useSetSpaceTopic = (roomId: RoomIdentifier | undefined) => {
         },
         onError: (error) => {
             console.error('[useSetSpaceTopic] error', error)
+            if (onError) {
+                onError(error)
+            }
         },
     })
 }
