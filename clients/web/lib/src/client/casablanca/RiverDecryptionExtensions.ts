@@ -209,10 +209,7 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         await processor(event, event.event.sender)
     }
 
-    private onDecryptedEvent = (riverEvent: object, err: Error | undefined) => {
-        // note: this cast while not ideal is to get around recursive reference compiler error,
-        // see: HNT-1885
-        const event = riverEvent as RiverEvent
+    private onDecryptedEvent = (event: RiverEvent, err: Error | undefined) => {
         if (!event.isDecryptionFailure()) {
             const streamId = event.getStreamId()
             if (!streamId) {

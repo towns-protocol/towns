@@ -78,8 +78,7 @@ describe('sendAMessage', () => {
             const client = clients[`client_${i}`]
             client.casablancaClient?.on(
                 'eventDecrypted',
-                (riverEvent: object, _err: Error | undefined) => {
-                    const event = riverEvent as RiverEvent
+                (event: RiverEvent, _err: Error | undefined) => {
                     if (
                         !event.isDecryptionFailure() &&
                         event.getStreamType() == EncryptedEventStreamTypes.Channel

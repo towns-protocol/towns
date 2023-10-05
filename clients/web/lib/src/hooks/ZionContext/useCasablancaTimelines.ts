@@ -103,7 +103,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
             }
         }
 
-        const onEventDecrypted = (riverEvent: object, err: Error | undefined) => {
+        const onEventDecrypted = (message: RiverEvent, err: Error | undefined) => {
             if (err) {
                 console.log('$$$ useCasablancaTimelines onEventDecrypted', err)
                 console.log(
@@ -111,7 +111,6 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
                     casablancaClient?.cryptoBackend?.olmDevice?.deviceCurve25519Key,
                 )
             }
-            const message = riverEvent as RiverEvent
             if (message.getStreamType() === 'channelPayload') {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
                 const streamId: string | undefined = message.getStreamId()

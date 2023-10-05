@@ -11,7 +11,6 @@ import {
     ToDeviceOp,
     UserPayload_ToDevice,
 } from '@river/proto'
-import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import {
     IMegolmEncryptedContent,
@@ -258,15 +257,10 @@ export enum EncryptedEventStreamTypes {
 }
 
 export type RiverEvents = {
-    // these should really be passed in as RiverEvent but typescript complains
-    // that RiverEvent is circularly referenced in base class, hence the use of object
-    eventDecrypted: (event: object, err?: Error) => void
-    eventBeforeRedaction: (event: object, redactionEvent: object) => void
-    eventStatus: (event: object, status: EventStatus | undefined, err?: Error) => void
-    eventReplaced: (event: object) => void
+    eventDecrypted: (event: RiverEvent, err?: Error) => void
 }
 
-export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEvents>) {
+export class RiverEvent {
     private _localRedactionEvent: RiverEvent | null = null
     private clearEvent?: IClearEvent
 
@@ -310,8 +304,6 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
         private emitter?: TypedEmitter<RiverEvents>,
         public wireEvent?: ParsedEvent,
     ) {
-        super()
-
         const { parsed_event, hash_str, creator_user_id } = event?.payload || {}
 
         this.txnId = hash_str
