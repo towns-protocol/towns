@@ -38,7 +38,7 @@ func NewTownsWalletLinkLocalhost(ethClient *ethclient.Client, nodeWallet *crypto
 	return contract, nil
 }
 
-func (za *TownsWalletLinkLocalhost) LinkWallet(rootKey common.Address, wallet common.Address, rootKeySignature []byte, walletSignature []byte) error {
+func (za *TownsWalletLinkLocalhost) LinkWalletToRootKey(rootKey common.Address, wallet common.Address, rootKeySignature []byte, walletSignature []byte, nonce uint64) error {
 
 	gasLimit := uint64(1000000)
 	gasPrice, err := za.ethClient.SuggestGasPrice(context.Background())
@@ -53,7 +53,7 @@ func (za *TownsWalletLinkLocalhost) LinkWallet(rootKey common.Address, wallet co
 	txOpts.GasPrice = gasPrice
 	txOpts.GasLimit = gasLimit
 
-	tx, err := za.link.LinkForAll(txOpts, rootKey, true)
+	tx, err := za.link.LinkWalletToRootKey(txOpts, wallet, walletSignature, rootKey, rootKeySignature, nonce)
 	if err != nil {
 		return err
 	}
@@ -69,15 +69,9 @@ func (za *TownsWalletLinkLocalhost) LinkWallet(rootKey common.Address, wallet co
 }
 
 func (za *TownsWalletLinkLocalhost) GetLinkedWallets(rootKey common.Address) ([]common.Address, error) {
-	links, err := za.link.GetLinksByRootKey(nil, rootKey)
-	if err != nil {
-		return nil, err
-	}
-	addresses := []common.Address{}
+	return za.link.GetWalletsByRootKey(nil, rootKey)
+}
 
-	for _, link := range links {
-		addresses = append(addresses, link.Wallet)
-	}
-
-	return addresses, nil
+func (za *TownsWalletLinkLocalhost) GetLatestNonceForRootKey(rootKey common.Address) (uint64, error) {
+	return za.link.GetLatestNonceForRootKey(nil, rootKey)
 }

@@ -11,9 +11,6 @@ import (
 	"casablanca/node/crypto"
 	"casablanca/node/infra"
 	. "casablanca/node/protocol"
-
-	"github.com/ethereum/go-ethereum/common"
-	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
@@ -43,12 +40,18 @@ func (s *Service) linkWallet(ctx context.Context, log *slog.Logger, req *connect
 		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error validating wallet link")
 	}
 
-	rootKeyId, err := hex.DecodeString(req.Msg.RootKeyId)
+	rootKeyAddress, err := ParseEthereumAddress(req.Msg.RootKeyId)
 	if err != nil {
 		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error decoding root key id")
 	}
+	// get nonce from the contract
+	nonce, err := s.walletLinkContract.GetLatestNonceForRootKey(rootKeyAddress)
+	if err != nil {
+		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error decoding wallet address")
+	}
+	nonce = nonce + 1
 
-	walletAddress, err := hex.DecodeString(req.Msg.WalletAddress[2:])
+	walletAddress, err := ParseEthereumAddress(req.Msg.WalletAddress)
 	if err != nil {
 		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error decoding wallet address")
 	}
@@ -62,13 +65,47 @@ func (s *Service) linkWallet(ctx context.Context, log *slog.Logger, req *connect
 	if err != nil {
 		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error decoding wallet signature")
 	}
-	//  TODO once HNT-2344 is implemented, we will pass wallet address and cross wallet-rootkey signatures to the contract
-	err = s.walletLinkContract.LinkWallet(common.BytesToAddress(rootKeyId), common.Address(walletAddress), rootKeySig, walletSig)
+
+	err = s.walletLinkContract.LinkWalletToRootKey(rootKeyAddress, walletAddress, rootKeySig, walletSig, nonce)
 	if err != nil {
 		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error linking wallet")
 	}
 
 	return &connect_go.Response[LinkWalletResponse]{Msg: &LinkWalletResponse{}}, nil
+}
+
+func (s *Service) GetLinkWalletNonce(ctx context.Context, req *connect_go.Request[GetLinkWalletNonceRequest]) (*connect_go.Response[GetLinkWalletNonceResponse], error) {
+	ctx, log := ctxAndLogForRequest(ctx, req)
+
+	res, err := s.getLinkWalletNonce(ctx, log, req)
+	if err != nil {
+		log.Warn("GetLinkWalletNonce ERROR", "error", err)
+		linkWallet.Fail()
+		return nil, err
+	}
+	log.Debug("GetLinkWalletNonce: DONE", "response", res.Msg)
+	linkWallet.Pass()
+	return res, nil
+}
+
+func (s *Service) getLinkWalletNonce(ctx context.Context, log *slog.Logger, req *connect_go.Request[GetLinkWalletNonceRequest]) (*connect_go.Response[GetLinkWalletNonceResponse], error) {
+
+	log.Debug("GetLinkWalletNonce", "request", req.Msg)
+
+	rootKeyAddress, err := ParseEthereumAddress(req.Msg.RootKeyId)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce, err := s.walletLinkContract.GetLatestNonceForRootKey(rootKeyAddress)
+	if err != nil {
+		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("GetLinkWalletNonce").Message("error getting nonce")
+
+	}
+
+	return &connect_go.Response[GetLinkWalletNonceResponse]{Msg: &GetLinkWalletNonceResponse{
+		Nonce: nonce,
+	}}, nil
 }
 
 // Checks if the wallet registration event is valid.
@@ -77,12 +114,13 @@ func (s *Service) linkWallet(ctx context.Context, log *slog.Logger, req *connect
 // 2. The root key signed the wallet address
 // 3. The root key is already registered (user stream already exist)
 func validateWalletLink(message *LinkWalletRequest) error {
-	walletAddressBytes, err := hex.DecodeString(message.WalletAddress[2:])
+
+	walletAddress, err := ParseEthereumAddress(message.WalletAddress)
 	if err != nil {
 		return err
 	}
 
-	rootKeyPub, err := hex.DecodeString(message.RootKeyId)
+	rootKeyAddress, err := ParseEthereumAddress(message.RootKeyId)
 	if err != nil {
 		return err
 	}
@@ -91,6 +129,12 @@ func validateWalletLink(message *LinkWalletRequest) error {
 	if err != nil {
 		return err
 	}
+
+	walletSigHash, err := crypto.PackWithNonce(rootKeyAddress, message.Nonce)
+	if err != nil {
+		return err
+	}
+
 	/**
 		* Using standard ethereum message signature here.
 	    * The signature is produced by pop-up message signing by the ethereum wallet (e.g. Metamask)
@@ -99,18 +143,21 @@ func validateWalletLink(message *LinkWalletRequest) error {
 	    *   1. Message := \x19Ethereum Signed Message:\n{length of message}{RootKey public part}
 	    *   2. Signature := Sign(keccak256(Message), wallet private key)
 	*/
-	err = crypto.CheckEthereumMessageSignature(walletAddressBytes, rootKeyPub, walletSig)
+	err = crypto.CheckEthereumMessageSignature(walletAddress.Bytes(), walletSigHash, walletSig)
 	if err != nil {
 		return err
 	}
-
-	rootKeyAddress := eth_crypto.Keccak256(rootKeyPub[1:])[12:]
 
 	rootKeySig, err := hex.DecodeString(message.RootKeySignature)
 	if err != nil {
 		return err
 	}
 
-	err = crypto.CheckDelegateSig(rootKeyAddress, walletAddressBytes, rootKeySig)
+	rootSigHash, err := crypto.PackWithNonce(walletAddress, message.Nonce)
+	if err != nil {
+		return err
+	}
+
+	err = crypto.CheckEthereumMessageSignature(rootKeyAddress.Bytes(), rootSigHash, rootKeySig)
 	return err
 }

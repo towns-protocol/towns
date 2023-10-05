@@ -119,6 +119,10 @@ func (f *forwarderImpl) addEventImpl(ctx context.Context, req *connect_go.Reques
 	return stub.AddEvent(ctx, req)
 }
 
+func (f *forwarderImpl) GetLinkWalletNonce(ctx context.Context, req *connect_go.Request[GetLinkWalletNonceRequest]) (*connect_go.Response[GetLinkWalletNonceResponse], error) {
+	return f.nodeRegistry.GetLocalNode().Stub.GetLinkWalletNonce(ctx, req)
+}
+
 func (f *forwarderImpl) LinkWallet(ctx context.Context, req *connect_go.Request[LinkWalletRequest]) (*connect_go.Response[LinkWalletResponse], error) {
 	return f.nodeRegistry.GetLocalNode().Stub.LinkWallet(ctx, req)
 }

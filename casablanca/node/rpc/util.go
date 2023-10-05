@@ -3,9 +3,11 @@ package rpc
 import (
 	. "casablanca/node/base"
 	"casablanca/node/dlog"
+	"casablanca/node/protocol"
 	"context"
 
 	connect_go "github.com/bufbuild/connect-go"
+	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/exp/slog"
 )
 
@@ -29,4 +31,14 @@ func ctxAndLogForRequest[T any](ctx context.Context, req *connect_go.Request[T])
 	// Create new context with logger
 	ctx = dlog.CtxWithLog(ctx, log)
 	return ctx, log
+}
+
+func ParseEthereumAddress(address string) (common.Address, error) {
+	if len(address) != 42 {
+		return common.Address{}, RiverError(protocol.Err_BAD_ADDRESS, "invalid address length")
+	}
+	if address[:2] != "0x" {
+		return common.Address{}, RiverError(protocol.Err_BAD_ADDRESS, "invalid address prefix")
+	}
+	return common.HexToAddress(address), nil
 }

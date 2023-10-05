@@ -38,27 +38,8 @@ const _abi = [
         name: "rootKey",
         type: "address",
       },
-      {
-        indexed: false,
-        internalType: "bool",
-        name: "value",
-        type: "bool",
-      },
     ],
-    name: "LinkForAll",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "wallet",
-        type: "address",
-      },
-    ],
-    name: "RevokeAllLinks",
+    name: "LinkWalletToRootKey",
     type: "event",
   },
   {
@@ -77,7 +58,26 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "RevokeLink",
+    name: "RemoveLinkViaRootKey",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "wallet",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "rootKey",
+        type: "address",
+      },
+    ],
+    name: "RemoveLinkViaWallet",
     type: "event",
   },
   {
@@ -93,7 +93,7 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "checkLinkForAll",
+    name: "checkIfLinked",
     outputs: [
       {
         internalType: "bool",
@@ -112,24 +112,31 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "getLinksByRootKey",
+    name: "getLatestNonceForRootKey",
     outputs: [
       {
-        components: [
-          {
-            internalType: "address",
-            name: "wallet",
-            type: "address",
-          },
-          {
-            internalType: "address",
-            name: "rootKey",
-            type: "address",
-          },
-        ],
-        internalType: "struct IWalletLinkBase.WalletLinkInfo[]",
-        name: "info",
-        type: "tuple[]",
+        internalType: "uint64",
+        name: "",
+        type: "uint64",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "rootKey",
+        type: "address",
+      },
+    ],
+    name: "getLatestRemoveNonceForRootKey",
+    outputs: [
+      {
+        internalType: "uint64",
+        name: "",
+        type: "uint64",
       },
     ],
     stateMutability: "view",
@@ -143,11 +150,49 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "getLinksForAll",
+    name: "getLatestRemoveNonceForWallet",
+    outputs: [
+      {
+        internalType: "uint64",
+        name: "",
+        type: "uint64",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "wallet",
+        type: "address",
+      },
+    ],
+    name: "getRootKeyForWallet",
+    outputs: [
+      {
+        internalType: "address",
+        name: "rootKey",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "rootKey",
+        type: "address",
+      },
+    ],
+    name: "getWalletsByRootKey",
     outputs: [
       {
         internalType: "address[]",
-        name: "",
+        name: "wallets",
         type: "address[]",
       },
     ],
@@ -158,23 +203,31 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
+        name: "wallet",
+        type: "address",
+      },
+      {
+        internalType: "bytes",
+        name: "walletSignature",
+        type: "bytes",
+      },
+      {
+        internalType: "address",
         name: "rootKey",
         type: "address",
       },
       {
-        internalType: "bool",
-        name: "value",
-        type: "bool",
+        internalType: "bytes",
+        name: "rootKeySignature",
+        type: "bytes",
+      },
+      {
+        internalType: "uint64",
+        name: "nonce",
+        type: "uint64",
       },
     ],
-    name: "linkForAll",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "revokeAllLinks",
+    name: "linkWalletToRootKey",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -186,8 +239,51 @@ const _abi = [
         name: "rootKey",
         type: "address",
       },
+      {
+        internalType: "bytes",
+        name: "rootKeySignature",
+        type: "bytes",
+      },
+      {
+        internalType: "address",
+        name: "wallet",
+        type: "address",
+      },
+      {
+        internalType: "uint64",
+        name: "removeNonce",
+        type: "uint64",
+      },
     ],
-    name: "revokeLink",
+    name: "removeLinkViaRootKey",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "wallet",
+        type: "address",
+      },
+      {
+        internalType: "bytes",
+        name: "walletSignature",
+        type: "bytes",
+      },
+      {
+        internalType: "address",
+        name: "rootKey",
+        type: "address",
+      },
+      {
+        internalType: "uint64",
+        name: "removeNonce",
+        type: "uint64",
+      },
+    ],
+    name: "removeLinkViaWallet",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

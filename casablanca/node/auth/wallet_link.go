@@ -12,7 +12,8 @@ import (
 )
 
 type WalletLinkContract interface {
-	LinkWallet(rootKey common.Address, wallet common.Address, rootKeySignature []byte, walletSignature []byte) error
+	GetLatestNonceForRootKey(rootKey common.Address) (uint64, error)
+	LinkWalletToRootKey(rootKey common.Address, wallet common.Address, rootKeySignature []byte, walletSignature []byte, nonce uint64) error
 	GetLinkedWallets(rootKey common.Address) ([]common.Address, error)
 }
 

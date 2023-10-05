@@ -5,6 +5,7 @@ import (
 	"casablanca/node/protocol"
 	"context"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"testing"
 
@@ -24,26 +25,36 @@ func TestWalletLinkRpc(t *testing.T) {
 
 	wallet, _ := crypto.NewWallet(ctx)
 	rootKey, _ := crypto.NewWallet(ctx)
-	rootKeyPub, walletSig, err := signRootKeyByWallet(wallet, rootKey)
+
+	nonceMsg, err := client.GetLinkWalletNonce(ctx, connect.NewRequest(&protocol.GetLinkWalletNonceRequest{
+		RootKeyId: "0x" + hex.EncodeToString(rootKey.Address.Bytes()),
+	}))
 	if err != nil {
 		t.Fatal(err)
 	}
-	rootSig, err := signWalletByRootKey(wallet, rootKey)
+	nonce := nonceMsg.Msg.GetNonce() + 1
+
+	walletSig, err := signAddressWithNonce(wallet, rootKey, nonce)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rootSig, err := signAddressWithNonce(rootKey, wallet, nonce)
 	if err != nil {
 		t.Fatal(err)
 	}
 	_, err = client.LinkWallet(ctx, connect.NewRequest(&protocol.LinkWalletRequest{
-		WalletAddress:    wallet.Address.String(),
-		RootKeyId:        hex.EncodeToString(rootKeyPub),
+		WalletAddress:    wallet.Address.Hex(),
+		RootKeyId:        rootKey.Address.Hex(),
 		RootKeySignature: hex.EncodeToString(rootSig),
 		WalletSignature:  hex.EncodeToString(walletSig),
+		Nonce:            nonce,
 	}))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	addresses, err := client.GetLinkedWallets(ctx, connect.NewRequest(&protocol.GetLinkedWalletsRequest{
-		RootKeyId: hex.EncodeToString(rootKeyPub),
+		RootKeyId: rootKey.Address.Hex(),
 	}))
 	if err != nil {
 		t.Fatal(err)
@@ -51,24 +62,25 @@ func TestWalletLinkRpc(t *testing.T) {
 	if len(addresses.Msg.WalletAddresses) != 1 {
 		t.Fatal("wallet not linked")
 	}
-	// TODO HNT-2344 enable when the contract handles requests on behalf of the wallet
-	// if addresses.Msg.WalletAddresses[0] != wallet.Address.String() {
-	// 	t.Fatal(fmt.Printf("wallet address mismatch: %s != %s", addresses.Msg.WalletAddresses[0], wallet.Address.String()))
-	// }
+	if addresses.Msg.WalletAddresses[0] != wallet.Address.String() {
+		t.Fatal(fmt.Printf("wallet address mismatch: %s != %s", addresses.Msg.WalletAddresses[0], wallet.Address.String()))
+	}
 }
 
-func signRootKeyByWallet(wallet *crypto.Wallet, rootKey *crypto.Wallet) ([]byte, []byte, error) {
-	rootKeyPub := eth_crypto.FromECDSAPub(&rootKey.PrivateKeyStruct.PublicKey)
-	hash := accounts.TextHash(rootKeyPub)
-	delegatSig, err := eth_crypto.Sign(hash, wallet.PrivateKeyStruct)
+func signAddressWithNonce(signer *crypto.Wallet, wallet *crypto.Wallet, nonce uint64) ([]byte, error) {
+	address := wallet.Address
+	packed, err := crypto.PackWithNonce(address, nonce)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
+	}
+	hash := accounts.TextHash(packed)
+	delegatSig, err := eth_crypto.Sign(hash, signer.PrivateKeyStruct)
+	if err != nil {
+		return nil, err
 	}
 	delegatSig[64] += 27
-	return rootKeyPub, delegatSig, nil
-}
-
-func signWalletByRootKey(wallet *crypto.Wallet, rootKey *crypto.Wallet) ([]byte, error) {
-	hash := crypto.TownsHash(wallet.Address.Bytes())
-	return eth_crypto.Sign(hash, rootKey.PrivateKeyStruct)
+	fmt.Printf("delegatSig: %v, address: %v, nonce: %v, hash: %s, packed: %s\n", delegatSig, address, nonce,
+		hex.EncodeToString(hash),
+		hex.EncodeToString(packed))
+	return delegatSig, nil
 }

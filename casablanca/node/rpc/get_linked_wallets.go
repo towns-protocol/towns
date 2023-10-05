@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"encoding/hex"
 
 	connect_go "github.com/bufbuild/connect-go"
 	"golang.org/x/exp/slog"
@@ -35,12 +34,15 @@ func (s *Service) GetLinkedWallets(ctx context.Context, req *connect_go.Request[
 }
 
 func (s *Service) getLinkedWallets(ctx context.Context, log *slog.Logger, req *connect_go.Request[GetLinkedWalletsRequest]) (*connect_go.Response[GetLinkedWalletsResponse], error) {
-	rootKeyId, err := hex.DecodeString(req.Msg.RootKeyId)
+
+	log.Debug("GetLinkedWallets", "request", req.Msg)
+
+	rootKeyId, err := ParseEthereumAddress(req.Msg.RootKeyId)
 	if err != nil {
-		return nil, WrapRiverError(Err_BAD_ROOT_KEY_ID, err).Func("GetLinkedWallets").Message("error decoding root key id")
+		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error decoding root key id")
 	}
 
-	wallets, err := s.walletLinkContract.GetLinkedWallets(common.BytesToAddress(rootKeyId))
+	wallets, err := s.walletLinkContract.GetLinkedWallets(rootKeyId)
 	if err != nil {
 		return nil, WrapRiverError(Err_INTERNAL, err).Func("GetLinkedWallets").Message("error getting linked wallets")
 	}
