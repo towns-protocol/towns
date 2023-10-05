@@ -9,6 +9,7 @@ import { AnimatePresence } from 'framer-motion'
 import { Box, IconButton, MotionBox, Stack } from '@ui'
 import { useSendImageMessage } from 'hooks/useSendImageMessage'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
+import { filterAllowedMediaFiles } from 'utils/filterAllowedMediaFiles'
 
 type Props = {
     threadId?: string
@@ -36,10 +37,8 @@ export const PasteImagePlugin = (props: Props) => {
         // sent automatically
 
         const prev = imageFiles
-        for (const file of files) {
-            if (!file.type.startsWith('image/')) {
-                continue
-            }
+        const filteredFiles = filterAllowedMediaFiles(files)
+        for (const file of filteredFiles) {
             if (prev.length > MAX_IMAGE_COUNT) {
                 break
             }
