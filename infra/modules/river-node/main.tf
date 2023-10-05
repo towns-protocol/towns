@@ -77,6 +77,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
       protocol      = "tcp"
     }]
 
+    repositoryCredentials = {
+        credentialsParameter = "arn:aws:secretsmanager:us-east-1:211286738967:secret:dockerhub-QpT8Jf"
+    },
+
     secrets = [
       {
         name      = "DBURL"

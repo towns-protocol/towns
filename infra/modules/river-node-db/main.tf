@@ -59,6 +59,10 @@ resource "aws_iam_role_policy" "ecs-to-river-postgres-secret-policy" {
   name = "${module.global_constants.environment}-ecs-to-river-postgres-secret-policy"
   role = data.aws_iam_role.ecs_task_execution_role.id
 
+  lifecycle {
+    ignore_changes = all
+  }
+
   depends_on = [
     aws_secretsmanager_secret_version.rds_river_node_credentials
   ]
@@ -74,6 +78,37 @@ resource "aws_iam_role_policy" "ecs-to-river-postgres-secret-policy" {
         "Effect": "Allow",
         "Resource": [
           "${aws_secretsmanager_secret.rds_river_node_credentials.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
+# allow ecs_task_execution_role to read the secret but not write it
+resource "aws_iam_role_policy" "ecs-to-wallet-secret-policy" {
+  name = "${module.global_constants.environment}-ecs-to-wallet-secret-policy"
+  role = data.aws_iam_role.ecs_task_execution_role.id
+
+  lifecycle {
+    ignore_changes = all
+  }
+
+  depends_on = [
+    aws_secretsmanager_secret_version.river_node_wallet_credentials
+  ]
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${aws_secretsmanager_secret.river_node_wallet_credentials.arn}"
         ]
       }
     ]

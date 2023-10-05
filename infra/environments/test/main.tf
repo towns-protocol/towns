@@ -48,7 +48,13 @@ locals {
 
 resource "aws_cloudwatch_log_group" "river_log_group" {
   name = "/${module.global_constants.environment}/ecs/river"
-  tags = module.global_constants.tags
+
+  tags = merge(
+    module.global_constants.tags,
+    {
+      "Service_Name" = "river-node"
+    }
+  )
 }
 
 resource "aws_ecs_cluster" "river_ecs_cluster" {
