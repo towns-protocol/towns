@@ -113,7 +113,13 @@ const MediaItemWithBackground = (props: { url: string } & MediaSenderInfoProps) 
                 backgroundRepeat: 'no-repeat',
             }}
         >
-            <Box absoluteFill style={{ backdropFilter: 'blur(10px) brightness(10%)' }}>
+            <Box
+                absoluteFill
+                style={{
+                    backdropFilter: 'blur(10px) brightness(10%)',
+                    WebkitBackdropFilter: 'blur(10px) brightness(10%)',
+                }}
+            >
                 <Box
                     width="100%"
                     height="100%"
@@ -156,7 +162,7 @@ const MediaSenderInfo = (props: { userId: string; timestamp?: number }) => {
     const prettyName = getPrettyDisplayName(profile)
 
     return (
-        <Stack horizontal centerContent gap className={darkTheme}>
+        <Stack horizontal centerContent gap className={darkTheme} paddingTop="safeAreaInsetTop">
             <Avatar userId={props.userId} />
             <Stack gap="sm">
                 <Text fontWeight="medium" color="default">
