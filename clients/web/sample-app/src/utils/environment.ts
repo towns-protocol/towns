@@ -1,8 +1,9 @@
-import { Chain, foundry, goerli, sepolia } from 'wagmi/chains'
+import { Chain, baseGoerli, foundry, sepolia } from 'wagmi/chains'
 
 export enum TownsEnvironment {
     Prod = 'prod',
     Test = 'test',
+    TestBeta = 'test-beta',
     Local = 'local',
 }
 
@@ -25,19 +26,19 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         chain: sepolia,
     },
     {
-        id: TownsEnvironment.Test,
-        name: 'Test',
-        matrixUrl: 'https://node1-test.towns.com',
-        casablancaUrl: undefined,
-        chainId: goerli.id,
-        chain: goerli,
-    },
-    {
         id: TownsEnvironment.Local,
         name: 'Local',
         casablancaUrl: 'http://localhost:5157',
         matrixUrl: 'http://localhost:8008',
         chainId: foundry.id,
         chain: foundry,
+    },
+    {
+        id: TownsEnvironment.TestBeta,
+        name: 'Test Beta',
+        casablancaUrl: 'https://river1-test.towns.com',
+        matrixUrl: 'http://localhost:8008',
+        chain: baseGoerli,
+        chainId: baseGoerli.id,
     },
 ]
