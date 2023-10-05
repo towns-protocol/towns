@@ -97,7 +97,7 @@ export const SpaceSideBar = (props: Props) => {
     }, [client, channels])
 
     return (
-        <SideBar data-testid="space-sidebar" height="100vh" onScroll={onScroll}>
+        <SideBar data-testid="space-sidebar" height="100%" onScroll={onScroll}>
             <FadeInBox grow elevateReadability className={props.className}>
                 <Stack
                     position="absolute"
@@ -184,13 +184,11 @@ export const SpaceSideBar = (props: Props) => {
                         </FadeIn>
                     )}
                 </Stack>
-                <Box grow paddingX="sm" paddingY="lg" justifyContent="end">
+                <Box grow gap paddingX="sm" justifyContent="end" paddingY="lg">
+                    <Text textAlign="center" color="gray2" fontSize="sm">
+                        Towns {APP_VERSION} ({APP_COMMIT_HASH})
+                    </Text>
                     <SentryReportModal />
-                    <Box paddingTop="md">
-                        <Text textAlign="center" color="gray2" fontSize="sm">
-                            Towns {APP_VERSION} ({APP_COMMIT_HASH})
-                        </Text>
-                    </Box>
                 </Box>
             </FadeInBox>
             {isBrowseChannelsModalVisible ? (

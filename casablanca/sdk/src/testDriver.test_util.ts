@@ -1,9 +1,9 @@
 import { Client } from './client'
 import { DLogger, dlog } from './dlog'
 import { makeTestClient } from './util.test'
-import { StreamEventKeys } from './streamEvents'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 import { ClearContent, RiverEvent } from './event'
+import { MembershipOp } from '@river/proto'
 
 const log = dlog('test:aliceAndFriends')
 
@@ -131,14 +131,6 @@ class TestDriver {
         this.stepNum = undefined
         this.log = dlog(`test:client:${this.num}:step:${this.stepNum}`)
     }
-
-    async waitFor(event: StreamEventKeys): Promise<void> {
-        return new Promise((resolve) => {
-            this.client.once(event, () => {
-                resolve()
-            })
-        })
-    }
 }
 
 const makeTestDriver = async (num: number): Promise<TestDriver> => {
@@ -184,8 +176,9 @@ export const converse = async (conversation: string[][], testName: string): Prom
         const allJoinedSpace = Promise.all(
             others.map(async (d) => {
                 log(`${testName} awaiting userJoinedStream for`, d.client.userId)
-                await d.waitFor('userJoinedStream')
-                log(`${testName} recevied userJoinedStream for`, d.client.userId)
+                const stream = await d.client.waitForStream(spaceId)
+                await stream.waitForMembership(MembershipOp.SO_JOIN)
+                log(`${testName} received userJoinedStream for`, d.client.userId)
             }),
         )
         await Promise.all(
@@ -219,8 +212,9 @@ export const converse = async (conversation: string[][], testName: string): Prom
         const allJoined = Promise.all(
             others.map(async (d) => {
                 log(`${testName} awaiting userJoinedStream channel for`, d.client.userId, channelId)
-                await d.waitFor('userJoinedStream')
-                log(`${testName} recevied userJoinedStream channel for`, d.client.userId, channelId)
+                const stream = await d.client.waitForStream(channelId)
+                await stream.waitForMembership(MembershipOp.SO_JOIN)
+                log(`${testName} received userJoinedStream channel for`, d.client.userId, channelId)
             }),
         )
         await Promise.all(

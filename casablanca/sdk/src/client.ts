@@ -588,12 +588,20 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
     }
 
-    private async initStream(streamId: string): Promise<void> {
+    private async initStream(streamId: string): Promise<Stream> {
         try {
             this.logCall('initStream', streamId)
-            if (this.streams.get(streamId) === undefined) {
+            const stream = this.stream(streamId)
+            if (stream) {
+                this.logCall('initStream', streamId, 'already initialized')
+                return stream
+            } else {
                 const response = await this.rpcClient.getStream({ streamId })
-                if (this.streams.get(streamId) === undefined) {
+                const previousStream = this.stream(streamId)
+                if (previousStream) {
+                    this.logCall('initStream', streamId, 'RACE: already initialized')
+                    return previousStream
+                } else {
                     const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
                     this.logCall('initStream', streamAndCookie)
                     const stream = new Stream(
@@ -607,11 +615,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     stream.initialize(streamAndCookie, snapshot, miniblocks)
                     // Blip sync here to make sure it also monitors new stream
                     this.blipSync()
-                } else {
-                    this.logCall('initStream', streamId, 'RACE: already initialized')
+                    return stream
                 }
-            } else {
-                this.logCall('initStream', streamId, 'already initialized')
             }
         } catch (err) {
             this.logCall('initStream', streamId, 'ERROR', err)
@@ -619,7 +624,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
     }
 
-    private onJoinedStream = (streamId: string): Promise<void> => {
+    private onJoinedStream = (streamId: string): Promise<Stream> => {
         this.logEvent('onJoinedStream', streamId)
         return this.initStream(streamId)
     }
@@ -1001,11 +1006,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
     }
 
-    async joinStream(streamId: string): Promise<void> {
+    async joinStream(
+        streamId: string,
+        opts?: { skipWaitForMiniblockConfirmation: boolean },
+    ): Promise<Stream> {
         this.logCall('joinStream', streamId)
-        await this.initStream(streamId)
+        const stream = await this.initStream(streamId)
         if (isChannelStreamId(streamId)) {
-            return this.makeEventAndAddToStream(
+            await this.makeEventAndAddToStream(
                 streamId,
                 make_ChannelPayload_Membership({
                     op: MembershipOp.SO_JOIN,
@@ -1014,7 +1022,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 'joinChannel',
             )
         } else if (isSpaceStreamId(streamId)) {
-            return this.makeEventAndAddToStream(
+            await this.makeEventAndAddToStream(
                 streamId,
                 make_SpacePayload_Membership({
                     op: MembershipOp.SO_JOIN,
@@ -1025,6 +1033,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         } else {
             throw new Error('invalid streamId')
         }
+        if (opts?.skipWaitForMiniblockConfirmation !== true) {
+            await stream.waitForMembership(MembershipOp.SO_JOIN)
+        }
+        return stream
     }
 
     async leaveStream(streamId: string): Promise<void> {

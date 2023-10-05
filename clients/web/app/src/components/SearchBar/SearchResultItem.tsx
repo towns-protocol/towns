@@ -1,15 +1,16 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Channel, RoomIdentifier, RoomMember, useMyProfile } from 'use-zion-client'
 import { ThreadStatsMap } from 'use-zion-client/dist/store/use-timeline-store'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { Avatar, Box, Icon, Paragraph } from '@ui'
-import { IsolatedMessageItem } from '@components/ResultItem/IsolatedMessageItem'
+import { Avatar, Box, BoxProps, Icon, Paragraph } from '@ui'
 import { ZRoomMessageEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useDevice } from 'hooks/useDevice'
 import { TouchChannelResultRow, TouchUserResultRow } from 'routes/home/TouchHome'
+import { IsolatedMessageItem } from '@components/ResultItem/IsolatedMessageItem'
 import { CombinedResult } from './types'
+import { SearchMessagesResultItem } from './SearchMessageResultItem'
 
 export const ResultItem = (props: {
     result: CombinedResult
@@ -35,22 +36,12 @@ export const ResultItem = (props: {
                 <TouchUserResultRow member={item.source} />
             ) : link ? (
                 <Link to={link}>
-                    <Box
-                        hoverable
-                        padding
-                        shrink
-                        horizontal
-                        background="level2"
-                        rounded="sm"
-                        gap="sm"
-                    >
-                        <Box minWidth="x8" padding="sm">
-                            <Avatar userId={item.source.userId} />
-                        </Box>
+                    <ItemContainer>
+                        <Avatar userId={item.source.userId} size="avatar_x4" />
                         <Box centerContent>
                             <Paragraph strong>{getPrettyDisplayName(item.source).name}</Paragraph>
                         </Box>
-                    </Box>
+                    </ItemContainer>
                 </Link>
             ) : null
         }
@@ -71,38 +62,51 @@ export const ResultItem = (props: {
                 />
             ) : link ? (
                 <Link to={link}>
-                    <Box hoverable padding shrink horizontal gap background="level2" rounded="sm">
-                        <Box minWidth="x8" padding="sm">
-                            <Box
-                                centerContent
-                                padding="sm"
-                                aspectRatio="square"
-                                background="level3"
-                                borderRadius="sm"
-                            >
-                                <Icon type="tag" />
-                            </Box>
+                    <ItemContainer>
+                        <Box
+                            centerContent
+                            padding="sm"
+                            aspectRatio="square"
+                            background="level3"
+                            borderRadius="full"
+                        >
+                            <Icon type="tag" size="square_xs" />
                         </Box>
                         <Box centerContent>
                             <Paragraph>{item.source.name}</Paragraph>
                         </Box>
-                    </Box>
+                    </ItemContainer>
                 </Link>
             ) : null
         }
 
         case 'message': {
             return (
-                <MessageResultItem
-                    event={item.source}
-                    channelId={item.channelId}
-                    misc={props.misc}
-                    highlightedTerms={props.result.searchResult.terms}
-                />
+                <ItemContainer paddingY="md">
+                    <MessageResultItem
+                        event={item.source}
+                        channelId={item.channelId}
+                        misc={props.misc}
+                        highlightedTerms={props.result.searchResult.terms}
+                    />
+                </ItemContainer>
             )
         }
     }
 }
+
+const ItemContainer = (props: BoxProps) => (
+    <Box
+        hoverable
+        shrink
+        horizontal
+        background="level2"
+        gap="md"
+        paddingX="md"
+        paddingY="sm"
+        {...props}
+    />
+)
 
 export const MessageResultItem = (props: {
     event: ZRoomMessageEvent
@@ -110,31 +114,42 @@ export const MessageResultItem = (props: {
     channelId: string
     misc: { members: RoomMember[]; channels: Channel[]; threadsStats: ThreadStatsMap }
 }) => {
-    const userId = useMyProfile()?.userId
     const { event, misc } = props
+    const { isTouch } = useDevice()
+    const userId = useMyProfile()?.userId
+
     const { threadsStats, channels } = misc
 
     const channel = channels.find((c) => c.id.networkId === props.channelId)
 
-    if (!channel) {
-        return <></>
-    }
+    const threadStat =
+        channel && event.threadParentId
+            ? threadsStats[channel.id.networkId]?.[event.threadParentId]
+            : undefined
 
-    const threadStat = event.threadParentId
-        ? threadsStats[channel.id.networkId]?.[event.threadParentId]
-        : undefined
+    const result = useMemo(
+        () =>
+            channel
+                ? {
+                      type: 'mention' as const,
+                      unread: false,
+                      event,
+                      channel,
+                      timestamp: event.createdAtEpocMs,
+                      thread: threadStat?.parentEvent,
+                  }
+                : undefined,
+        [channel, event, threadStat?.parentEvent],
+    )
 
-    return (
-        <IsolatedMessageItem
+    return !result ? undefined : isTouch && result ? (
+        <Box inset="sm">
+            <IsolatedMessageItem result={result} />
+        </Box>
+    ) : (
+        <SearchMessagesResultItem
             highligtTerms={props.highlightedTerms}
-            result={{
-                type: 'mention',
-                unread: false,
-                event,
-                channel,
-                timestamp: event.createdAtEpocMs,
-                thread: threadStat?.parentEvent,
-            }}
+            result={result}
             userId={userId}
         />
     )

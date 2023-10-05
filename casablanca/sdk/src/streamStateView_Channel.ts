@@ -6,13 +6,15 @@ import {
     ChannelPayload,
     ChannelPayload_Inception,
     ChannelPayload_Snapshot,
+    MiniblockHeader,
     Snapshot,
 } from '@river/proto'
 import { RiverEvent } from './event'
 import { userIdFromAddress } from './id'
 import { logNever } from './check'
+import { StreamStateView_IContent } from './streamStateView_IContent'
 
-export class StreamStateView_Channel {
+export class StreamStateView_Channel implements StreamStateView_IContent {
     readonly streamId: string
     readonly spaceId?: string
     readonly memberships: StreamStateView_Membership
@@ -31,6 +33,10 @@ export class StreamStateView_Channel {
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         this.memberships.initialize(content.memberships, emitter)
+    }
+
+    onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
+        this.memberships.onMiniblockHeader(blockHeader, emitter)
     }
 
     prependEvent(

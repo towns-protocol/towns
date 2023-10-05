@@ -50,7 +50,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
   family = "${module.global_constants.environment}-river-fargate"
 
   lifecycle {
-    ignore_changes = [container_definitions]
+    ignore_changes = all
   }
 
   network_mode = "awsvpc"
@@ -204,6 +204,9 @@ resource "aws_ecs_service" "river-ecs-service" {
 }
 
 resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
+  lifecycle {
+    ignore_changes = all
+  }
   app_name               = aws_codedeploy_app.river-node-code-deploy-app.name
   deployment_group_name  = "${module.global_constants.environment}-river-${var.node_name}-codedeploy-deployment-group"
   service_role_arn       = aws_iam_role.ecs_code_deploy_role.arn

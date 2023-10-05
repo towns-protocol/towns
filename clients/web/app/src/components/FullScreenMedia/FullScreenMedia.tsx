@@ -95,6 +95,7 @@ export const FullScreenMedia = (props: Props) => {
                 navigation: 350,
             }}
             className={fullScreenMediaStyle}
+            styles={{ toolbar: { paddingTop: 'calc(env(safe-area-inset-top) + 10px)' } }}
         />
     )
 }

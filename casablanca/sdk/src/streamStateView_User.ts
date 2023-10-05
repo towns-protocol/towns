@@ -3,6 +3,7 @@ import { ParsedEvent } from './types'
 import { EmittedEvents } from './client'
 import {
     MembershipOp,
+    MiniblockHeader,
     Snapshot,
     UserPayload,
     UserPayload_Inception,
@@ -13,8 +14,9 @@ import { logNever } from './check'
 import { StreamEvents } from './streamEvents'
 import { RiverEvent } from './event'
 import { userIdFromAddress } from './id'
+import { StreamStateView_IContent } from './streamStateView_IContent'
 
-export class StreamStateView_User {
+export class StreamStateView_User implements StreamStateView_IContent {
     readonly streamId: string
     readonly userInvitedStreams = new Set<string>()
     readonly userJoinedStreams = new Set<string>()
@@ -33,6 +35,10 @@ export class StreamStateView_User {
         for (const [_, payload] of Object.entries(content.memberships)) {
             this.addUserPayload_userMembership(payload, emitter)
         }
+    }
+
+    onMiniblockHeader(_blockHeader: MiniblockHeader, _emitter?: TypedEmitter<EmittedEvents>): void {
+        // nothing to do
     }
 
     prependEvent(
@@ -88,6 +94,7 @@ export class StreamStateView_User {
                 payload: {
                     parsed_event: event.event.payload,
                     creator_user_id: userIdFromAddress(event.event.creatorAddress),
+                    hash_str: event.hashStr,
                     stream_id: this.streamId,
                 },
             },

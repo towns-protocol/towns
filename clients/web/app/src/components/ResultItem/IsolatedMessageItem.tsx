@@ -76,7 +76,6 @@ export const IsolatedMessageItem = (
             overflow="hidden"
             background={isTouch ? 'inherit' : props.selected ? 'level3' : 'level2'}
             elevate={!isTouch}
-            rounded="sm"
         >
             <MessageLayout
                 relativeDate

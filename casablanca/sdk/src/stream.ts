@@ -1,4 +1,4 @@
-import { Miniblock, Snapshot, StreamAndCookie } from '@river/proto'
+import { MembershipOp, Miniblock, Snapshot, StreamAndCookie } from '@river/proto'
 
 import { DLogger } from './dlog'
 import EventEmitter from 'events'
@@ -59,5 +59,55 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logEmitFromStream(event, ...args)
         this.clientEmitter.emit(event, ...args)
         return super.emit(event, ...args)
+    }
+
+    /**
+     * Memberships are processed on block boundaries, so we need to wait for the next block to be processed
+     * passing an undefined userId will wait for the membership to be updated for the current user
+     */
+    public async waitForMembership(membership: MembershipOp, userId?: string) {
+        // check to see if we're already in that state
+        if (this.view.getMemberships().isMember(membership, userId)) {
+            return
+        }
+        // wait for a membership updated event, event, check again
+        await this.waitFor('streamMembershipUpdated', (_streamId: string, iUserId: string) => {
+            return (
+                (userId === undefined || userId === iUserId) &&
+                this.view.getMemberships().isMember(membership, userId)
+            )
+        })
+    }
+
+    /**
+     * Wait for a stream event to be emitted
+     * optionally pass a condition function to check the event args
+     */
+    public async waitFor<E extends keyof EmittedEvents>(
+        event: E,
+        fn?: (...args: Parameters<EmittedEvents[E]>) => boolean,
+        opts: { timeoutMs: number } = { timeoutMs: 10000 },
+    ): Promise<void> {
+        this.logEmitFromStream('waitFor', this.streamId, event)
+        return new Promise((resolve, reject) => {
+            // Set up the event listener
+            const handler = (...args: Parameters<EmittedEvents[E]>): void => {
+                if (!fn || fn(...args)) {
+                    this.logEmitFromStream('waitFor success', this.streamId, event)
+                    this.off(event, handler as EmittedEvents[E])
+                    clearTimeout(timeout)
+                    resolve()
+                }
+            }
+
+            // Set up the timeout
+            const timeout = setTimeout(() => {
+                this.logEmitFromStream('waitFor timeout', this.streamId, event)
+                this.off(event, handler as EmittedEvents[E])
+                reject(new Error(`Timed out waiting for event: ${event}`))
+            }, opts.timeoutMs)
+
+            this.on(event, handler as EmittedEvents[E])
+        })
     }
 }

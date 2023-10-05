@@ -3,12 +3,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { uniqBy } from 'lodash'
 import debug from 'debug'
 import { useDebounce } from 'hooks/useDebounce'
-import { EventDocument } from '../components/SearchModal/types'
+import { EventDocument } from '../components/SearchBar/types'
 
 const log = debug('app:search')
 log.enabled = true
 
-export const useMiniSearch = (messages: EventDocument[], _search: string) => {
+export const useMiniSearch = (_messages: EventDocument[], _search: string) => {
     const [miniSearch] = useState<MiniSearch>(
         () =>
             new MiniSearch<EventDocument>({
@@ -17,30 +17,34 @@ export const useMiniSearch = (messages: EventDocument[], _search: string) => {
                 storeFields: ['key', 'channelId', 'body'],
             }),
     )
+    const messages = useDebounce(_messages, 1000)
     const search = useDebounce(_search, 250)
 
-    const [iteration, setIteration] = useState(0)
+    const filteredMessages = useMemo(
+        () =>
+            uniqBy(
+                messages.map((m) => ({ ...m, id: m.key })),
+                (e) => e.id,
+            )
+                .filter((m) => m?.source)
+                .filter((m) => !miniSearch.has(m.id)),
+        [messages, miniSearch],
+    )
 
     useEffect(() => {
-        const filteredMessages = uniqBy(
-            messages.map((m) => ({ ...m, id: m.key })),
-            (e) => e.id,
-        )
-            .filter((m) => m?.source)
-            .filter((m) => !miniSearch.has(m.id))
-
         miniSearch.addAll(filteredMessages)
-        setIteration((t) => t + 1)
-    }, [messages, miniSearch])
+    }, [filteredMessages, miniSearch])
 
     const results = useMemo(() => {
-        if (!iteration || search.length <= 1) {
+        if (!filteredMessages?.length || search.length <= 1) {
             return []
         }
         return miniSearch.search(search, {
-            fuzzy: 0.2,
+            fuzzy: 0.15,
+            combineWith: 'AND',
+            prefix: true,
         })
-    }, [iteration, miniSearch, search])
+    }, [filteredMessages?.length, miniSearch, search])
 
     return results
 }

@@ -194,7 +194,12 @@ const SpacesChannelComponent = (props: Props) => {
                     </Button>
                 </Box>
             ) : (
-                <MediaDropContextProvider title={imageUploadTitle} id="channel">
+                <MediaDropContextProvider
+                    key={channelId.slug}
+                    title={imageUploadTitle}
+                    id="channel"
+                    disableDrop={!isChannelWritable}
+                >
                     <MessageTimelineWrapper
                         key={channelId.slug}
                         spaceId={spaceId}

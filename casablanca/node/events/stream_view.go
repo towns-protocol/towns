@@ -286,7 +286,8 @@ func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (b
 			return err
 		}
 	}
-	return r.minipool.forEachEvent(op)
+
+	return nil
 }
 
 func (r *streamViewImpl) LastEvent() *ParsedEvent {

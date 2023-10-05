@@ -3,6 +3,7 @@ import React, { useCallback } from 'react'
 import { Stack } from '../Stack/Stack'
 import { Field, FieldBaseProps } from '../_internal/Field/Field'
 import * as styles from './Dropdown.css'
+import { Icon } from '../Icon'
 
 type Props = {
     defaultValue?: string
@@ -22,7 +23,12 @@ export const Dropdown = (props: Props) => {
     )
 
     return (
-        <Field {...fieldProps} background="level2">
+        <Field
+            {...fieldProps}
+            background={fieldProps.background ?? 'level2'}
+            paddingX="none"
+            paddingY="none"
+        >
             {(overlays, { className, ...inputProps }) => (
                 <>
                     <Stack
@@ -30,7 +36,8 @@ export const Dropdown = (props: Props) => {
                         as="select"
                         cursor="pointer"
                         className={clsx(className, styles.dropdown)}
-                        paddingRight="x4"
+                        padding="md"
+                        rounded="sm"
                         onChange={onChange}
                         {...inputProps}
                         defaultValue={defaultValue}
@@ -40,8 +47,9 @@ export const Dropdown = (props: Props) => {
                                 {String(o.label)}
                             </option>
                         ))}
+                        {overlays}
                     </Stack>
-                    {overlays}
+                    <Icon type="arrowDown" pointerEvents="none" position="absolute" right="sm" />
                 </>
             )}
         </Field>

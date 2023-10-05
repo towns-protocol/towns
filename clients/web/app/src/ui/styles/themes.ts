@@ -31,7 +31,7 @@ const overlay = {
     white: Figma.Colors.White,
     black: Figma.Colors.Black,
     transparentBright: `rgba(255,255,255,0.5)`,
-    transparentDark: `rgba(0,0,0,0.5)`,
+    transparentDark: `rgba(0,0,0,0.1)`,
 }
 
 const html = {

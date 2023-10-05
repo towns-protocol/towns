@@ -1657,7 +1657,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * - for spaces, use joinTown
      * @todo deprecate this in favor of separate joinTown and joinChannel functions
      *************************************************/
-    public async joinRoom(roomId: RoomIdentifier, parentNetworkId?: string) {
+    public async joinRoom(
+        roomId: RoomIdentifier,
+        parentNetworkId?: string,
+        opts?: { skipWaitForMiniblockConfirmation: boolean },
+    ) {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix: {
                 if (!this.matrixClient) {
@@ -1698,8 +1702,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 if (!this.casablancaClient) {
                     throw new Error('Casablanca client not initialized')
                 }
-                await this.casablancaClient.joinStream(roomId.networkId)
-                const stream = await this.casablancaClient.waitForStream(roomId.networkId)
+                const stream = await this.casablancaClient.joinStream(roomId.networkId, opts)
                 let parentId = roomId
                 if (
                     stream.view.contentKind === 'channelContent' &&

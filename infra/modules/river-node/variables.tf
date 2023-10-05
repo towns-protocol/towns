@@ -40,11 +40,6 @@ variable "alb_security_group_id" {
   type        = string
 }
 
-variable "bastion_host_security_group_id" {
-  description = "The security group id of the bastion host"
-  type        = string
-}
-
 variable "log_group_name" {
   description = "The name of the log group"
   type        = string

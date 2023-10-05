@@ -16,10 +16,13 @@ type Props = {
     transactionState: TransactionUIState
     disabled?: boolean
     className?: string
+    type?: 'submit' | 'button'
+    onClick?: () => void
 }
 
 export const TransactionButton = (props: Props) => {
     const {
+        type = 'submit',
         transactionState,
         transactingText,
         signingText = 'Waiting for Wallet',
@@ -28,6 +31,7 @@ export const TransactionButton = (props: Props) => {
         disabled,
         className,
         idleText,
+        onClick,
     } = props
 
     const progressBarVisible = transactionState != TransactionUIState.None
@@ -95,7 +99,8 @@ export const TransactionButton = (props: Props) => {
                                         : 1,
                                 zIndex: 1,
                             }}
-                            type="submit"
+                            type={type}
+                            onClick={onClick}
                         >
                             {idleText}
                         </Button>

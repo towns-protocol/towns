@@ -28,7 +28,7 @@ export const ProfileCardButton = () => {
     const hasAvatar = isAuthenticated && userId
 
     return (
-        <Box centerContent paddingBottom="sm">
+        <Box centerContent>
             <Box
                 hoverable={!isSpaceCreateRoute}
                 cursor={isSpaceCreateRoute ? 'auto' : 'pointer'}

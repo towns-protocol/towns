@@ -7,6 +7,7 @@ import {
     ChannelProperties,
     EncryptedData,
     Err,
+    MiniblockHeader,
     Snapshot,
     SpacePayload,
     SpacePayload_Channel,
@@ -15,8 +16,9 @@ import {
 } from '@river/proto'
 import { isDefined, logNever, throwWithCode } from './check'
 import { StreamEvents } from './streamEvents'
+import { StreamStateView_IContent } from './streamStateView_IContent'
 
-export class StreamStateView_Space {
+export class StreamStateView_Space implements StreamStateView_IContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
     readonly spaceChannelsMetadata = new Map<string, ChannelProperties>()
@@ -37,6 +39,10 @@ export class StreamStateView_Space {
         for (const [_, payload] of Object.entries(content.channels)) {
             this.addSpacePayload_Channel(payload, emitter)
         }
+    }
+
+    onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
+        this.memberships.onMiniblockHeader(blockHeader, emitter)
     }
 
     prependEvent(

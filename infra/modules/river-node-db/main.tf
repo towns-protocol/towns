@@ -18,6 +18,9 @@ resource "aws_secretsmanager_secret" "rds_river_node_credentials" {
 
 resource "aws_secretsmanager_secret_version" "rds_river_node_credentials" {
   secret_id     = aws_secretsmanager_secret.rds_river_node_credentials.id
+  lifecycle {
+    ignore_changes = all
+  }
   secret_string = <<EOF
 {
   "username": "river",
@@ -33,7 +36,7 @@ EOF
 }
 
 resource "aws_secretsmanager_secret" "river_node_wallet_credentials" {
-  name = "${module.global_constants.environment}-river-${var.river_node_name}-wallet-credentials"
+  name = "${module.global_constants.environment}-river-${var.river_node_name}-wallet-secret"
   tags = local.tags
 }
 

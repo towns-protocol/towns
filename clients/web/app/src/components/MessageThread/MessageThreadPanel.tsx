@@ -69,7 +69,12 @@ export const MessageThreadPanel = (props: Props) => {
 
     return (
         <Panel label={panelLabel} onClose={props.onClose}>
-            <MediaDropContextProvider title={imageUploadTitle} id="thread-panel">
+            <MediaDropContextProvider
+                title={imageUploadTitle}
+                id={messageId}
+                key={messageId}
+                disableDrop={!isChannelWritable}
+            >
                 <Stack
                     grow
                     position="relative"

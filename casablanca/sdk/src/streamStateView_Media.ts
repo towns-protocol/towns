@@ -1,5 +1,11 @@
 import TypedEmitter from 'typed-emitter'
-import { Snapshot, MediaPayload, MediaPayload_Inception, MediaPayload_Snapshot } from '@river/proto'
+import {
+    Snapshot,
+    MediaPayload,
+    MediaPayload_Inception,
+    MediaPayload_Snapshot,
+    MiniblockHeader,
+} from '@river/proto'
 import { logNever } from './check'
 import { ParsedEvent } from './types'
 import { EmittedEvents } from './client'
@@ -25,6 +31,10 @@ export class StreamStateView_Media {
         _emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         // empty for now — should we store something in the snapshot?
+    }
+
+    onMiniblockHeader(_blockHeader: MiniblockHeader, _emitter?: TypedEmitter<EmittedEvents>): void {
+        // nothing to do
     }
 
     appendEvent(

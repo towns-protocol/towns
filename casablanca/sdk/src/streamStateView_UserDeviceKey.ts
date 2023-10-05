@@ -3,6 +3,7 @@ import { ParsedEvent } from './types'
 import { EmittedEvents } from './client'
 import {
     DeviceKeys,
+    MiniblockHeader,
     Snapshot,
     UserDeviceKeyPayload,
     UserDeviceKeyPayload_Inception,
@@ -10,8 +11,9 @@ import {
     UserDeviceKeyPayload_UserDeviceKey,
 } from '@river/proto'
 import { logNever } from './check'
+import { StreamStateView_IContent } from './streamStateView_IContent'
 
-export class StreamStateView_UserDeviceKeys {
+export class StreamStateView_UserDeviceKeys implements StreamStateView_IContent {
     readonly streamId: string
 
     // device_id -> device_keys, fallback_keys
@@ -30,6 +32,10 @@ export class StreamStateView_UserDeviceKeys {
         for (const [_, value] of Object.entries(content.userDeviceKeys)) {
             this.addUserDeviceKey(value, emitter)
         }
+    }
+
+    onMiniblockHeader(_blockHeader: MiniblockHeader, _emitter?: TypedEmitter<EmittedEvents>): void {
+        // nothing to do
     }
 
     prependEvent(

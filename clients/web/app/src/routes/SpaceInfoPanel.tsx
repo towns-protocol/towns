@@ -17,7 +17,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
-import { EditModeContainer, TextButton } from '@components/UserProfile/UserProfile'
+import { TextButton } from '@components/UserProfile/UserProfile'
 import {
     Avatar,
     Box,
@@ -26,19 +26,15 @@ import {
     FormRender,
     Icon,
     IconButton,
-    MotionStack,
     Paragraph,
     Stack,
     Text,
-    TextField,
 } from '@ui'
 import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useGetSpaceTopic, useSetSpaceTopic } from 'hooks/useSpaceTopic'
 import { PATHS } from 'routes'
 import { TextArea } from 'ui/components/TextArea/TextArea'
-import { vars } from 'ui/styles/vars.css'
-import { transitions } from 'ui/transitions/transitions'
 import { getInviteUrl, shortAddress } from 'ui/utils/utils'
 import { useDevice } from 'hooks/useDevice'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
@@ -52,6 +48,7 @@ import {
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Panel, PanelButton } from '@components/Panel/Panel'
 import { useGetUserFromAddress } from 'hooks/useGetUserFromAddress'
+import { SpaceNameModal } from '@components/SpaceNameModal/SpaceNameModal'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { env } from '../utils/environment'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
@@ -62,15 +59,11 @@ const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) 
     </Box>
 )
 
-enum InputId {
-    SpaceName = 'DisplayName',
-}
-
 export const SpaceInfoPanel = () => {
     const space = useSpaceData()
     const { isTouch } = useDevice()
 
-    const { client, leaveRoom } = useZionClient()
+    const { leaveRoom } = useZionClient()
     const channels = useSpaceChannels()
     const { loggedInWalletAddress } = useAuth()
 
@@ -94,7 +87,7 @@ export const SpaceInfoPanel = () => {
 
     const { members } = useSpaceMembers()
     const [activeModal, setActiveModal] = useState<
-        'browse-channels' | 'members' | 'confirm-leave' | undefined
+        'browse-channels' | 'members' | 'confirm-leave' | 'settings' | undefined
     >(undefined)
     const onHideBrowseChannels = useEvent(() => setActiveModal(undefined))
     const onShowBrowseChannels = useEvent(() => setActiveModal('browse-channels'))
@@ -129,19 +122,6 @@ export const SpaceInfoPanel = () => {
                 setEditErrorMessage("We weren't able to save your changes. Please try again later.")
             },
         })
-    })
-
-    const onSaveItem = useEvent((id: string, content: undefined | string) => {
-        switch (id) {
-            case InputId.SpaceName: {
-                if (!content || !content.match(/[a-z0-9-_()]+/i)) {
-                    throw new Error('Use alphanumeric characters only (TBD)')
-                }
-                if (client && space?.id) {
-                    return client.setRoomName(space?.id, content)
-                }
-            }
-        }
     })
 
     const shareButtonEnabled = isTouch && navigator.share
@@ -199,6 +179,10 @@ export const SpaceInfoPanel = () => {
         }, 1000)
     }, [leaveRoom, navigate, spaceID])
 
+    const onEditSpaceNameClick = useCallback(() => {
+        setActiveModal('settings')
+    }, [setActiveModal])
+
     const { createLink: createProfileLink } = useCreateLink()
 
     const ownerProfileLink = spaceOwner && createProfileLink({ profileId: spaceOwner.userId })
@@ -245,86 +229,16 @@ export const SpaceInfoPanel = () => {
             )}
             <Stack gap padding="lg">
                 <MdGap>
-                    <Stack>
-                        <EditModeContainer
-                            inputId={InputId.SpaceName}
-                            canEdit={canEdit}
-                            initialValue={space?.name}
-                            onSave={onSaveItem}
-                        >
-                            {({
-                                editMenu,
-                                value,
-                                isEditing,
-                                errorComponent,
-                                error,
-                                handleEdit,
-                                onChange,
-                                handleSave,
-                            }) => (
-                                <>
-                                    <MotionStack
-                                        grow
-                                        horizontal
-                                        gap="sm"
-                                        alignItems="start"
-                                        minHeight="input_md"
-                                        insetTop="xs"
-                                        animate={{
-                                            paddingTop: isEditing ? vars.space.sm : ' 0px',
-                                            paddingBottom: isEditing ? vars.space.sm : ' 0px',
-                                        }}
-                                        transition={transitions.button}
-                                    >
-                                        {!isEditing ? (
-                                            <Box
-                                                grow
-                                                horizontal
-                                                alignItems="center"
-                                                gap="xs"
-                                                height="x5"
-                                                onClick={
-                                                    canEdit && !isEditing ? handleEdit : undefined
-                                                }
-                                            >
-                                                <Paragraph strong size="lg" color="default">
-                                                    {value}
-                                                </Paragraph>
-                                            </Box>
-                                        ) : (
-                                            <Stack grow>
-                                                <TextField
-                                                    autoFocus
-                                                    tone={error ? 'error' : undefined}
-                                                    background="level2"
-                                                    value={value}
-                                                    placeholder="Enter display name..."
-                                                    height="x5"
-                                                    style={{
-                                                        width: 0,
-                                                        minWidth: '100%',
-                                                    }} // shrink hack
-                                                    onChange={onChange}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            e.preventDefault()
-                                                            e.stopPropagation()
-                                                            handleSave()
-                                                        } else if (e.key === 'Escape') {
-                                                            handleEdit()
-                                                        }
-                                                    }}
-                                                />
-                                                {errorComponent}
-                                            </Stack>
-                                        )}
-                                        <Box height="x5" justifyContent="center">
-                                            {editMenu}
-                                        </Box>
-                                    </MotionStack>
-                                </>
+                    <Stack gap>
+                        <Stack horizontal alignItems="center" width="100%">
+                            <Paragraph strong truncate size="lg" color="default">
+                                {space?.name ?? ''}
+                            </Paragraph>
+                            <Box grow />
+                            {canEdit && !isTouch && (
+                                <TextButton onClick={onEditSpaceNameClick}>Edit</TextButton>
                             )}
-                        </EditModeContainer>
+                        </Stack>
                         {address && (
                             <ClipboardCopy
                                 label={shortAddress(address)}
@@ -499,6 +413,10 @@ export const SpaceInfoPanel = () => {
                     onConfirm={leaveTown}
                     onCancel={() => setActiveModal(undefined)}
                 />
+            )}
+
+            {activeModal === 'settings' && (
+                <SpaceNameModal onHide={() => setActiveModal(undefined)} />
             )}
         </Panel>
     )
