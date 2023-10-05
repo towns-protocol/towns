@@ -14,7 +14,7 @@ export const Shortcuts = {
             description: 'Show all shortcuts',
         },
         DisplaySearchModal: {
-            keys: ['Meta+F'],
+            keys: ['Meta+K'],
             description: 'Search for Towns, channels, or DMs',
         },
         CreateNewTown: {

@@ -13,8 +13,8 @@ import { usePersistPanes } from 'hooks/usePersistPanes'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { PATHS } from 'routes'
+import { TopBar } from '@components/TopBar/TopBar'
 import { atoms } from 'ui/styles/atoms.css'
-import { SearchModal } from '@components/SearchModal/SearchModal'
 import * as styles from './AppPanelLayout.css'
 import { PersistAndFadeWelcomeLogo } from './WelcomeLayout'
 
@@ -46,10 +46,11 @@ export const AppPanelLayout = () => {
     return (
         <Stack horizontal grow borderTop position="relative">
             <Box absoluteFill>
+                <TopBar />
                 <Allotment
                     // proportionalLayout
                     ref={allotemntRef}
-                    className={atoms({ minHeight: '100%' })}
+                    className={atoms({ borderTop: 'default' })}
                     onChange={onSizesChange}
                 >
                     {/* left-side side-bar goes here */}
@@ -88,7 +89,6 @@ export const AppPanelLayout = () => {
             </Box>
             <PersistAndFadeWelcomeLogo />
             <ShortcutModal />
-            <SearchModal />
         </Stack>
     )
 }

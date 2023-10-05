@@ -3,14 +3,12 @@ import React, { forwardRef } from 'react'
 import { useInvites, useSpaceContext, useZionContext } from 'use-zion-client'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
-import { ProfileCardButton } from '@components/ProfileCardButton/ProfileCardButton'
+import { RegisterMainShortcuts } from '@components/Shortcuts/RegisterMainShortcuts'
 import { SideBar } from '@components/SideBars/_SideBar'
-import { Box } from '@ui'
 import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
+import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
 import { env } from 'utils'
-import { RegisterMainShortcuts } from '@components/Shortcuts/RegisterMainShortcuts'
-import { useDevice } from 'hooks/useDevice'
 
 export const MainSideBar = () => {
     const { isTouch } = useDevice()
@@ -22,10 +20,7 @@ export const MainSideBar = () => {
     return (
         <SideBar elevateReadability paddingY="sm" height="100%">
             {!isTouch && <RegisterMainShortcuts />}
-            <TransitionItem key="profile">
-                <ProfileCardButton />
-            </TransitionItem>
-            <Box borderBottom="faint" height="1" />
+
             {spaces.map((s) => (
                 <TransitionItem key={s.id.slug}>
                     <SpaceNavItem

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { useSpaceData, useSpaceId, useSpaceMembers, useTimelineStore } from 'use-zion-client'
-import { ResultItem } from '@components/SearchModal/SearchResultItem'
+import { ResultItem } from '@components/SearchBar/SearchResultItem'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { Box, Icon, IconButton, Paragraph, Stack, TextField } from '@ui'
 import { useSearch } from 'hooks/useSearch'
@@ -15,7 +15,7 @@ const sectionTypeNameMap = {
     channel: 'Channels',
 } as const
 
-const getSectionTitle = (type: 'user' | 'message' | 'channel') => sectionTypeNameMap[type]
+export const getSectionTitle = (type: 'user' | 'message' | 'channel') => sectionTypeNameMap[type]
 
 export const TouchSearchTab = () => {
     const { setSearchTerms, searchTerms } = useStore(({ setSearchTerms, searchTerms }) => ({
@@ -116,7 +116,9 @@ export const TouchSearchTab = () => {
                         onScroll={onScroll}
                     >
                         {searchResults.length === 0 ? (
-                            <NoResults searchTerms={searchTerms} onSearchClick={onSearchClick} />
+                            <Box alignItems="center" paddingTop="x8" onClick={onSearchClick}>
+                                <NoResults searchTerms={searchTerms} />
+                            </Box>
                         ) : (
                             searchResults.map((s, index, items) => {
                                 const result = (
@@ -151,25 +153,23 @@ export const TouchSearchTab = () => {
     )
 }
 
-const NoResults = (props: { onSearchClick: () => void; searchTerms: string }) => {
+export const NoResults = (props: { searchTerms: string }) => {
     return (
-        <Box alignItems="center" paddingTop="x8" onClick={props.onSearchClick}>
-            <Box gap centerContent padding textAlign="center" color="gray2" maxWidth="300">
-                <Box padding="md" color="gray2" background="level2" rounded="sm">
-                    <Icon type="search" size="square_sm" />
-                </Box>
-                {props.searchTerms.length < 2 ? (
-                    <Paragraph textAlign="center">
-                        You can search for messages, channels and people
-                    </Paragraph>
-                ) : (
-                    <Paragraph textAlign="center">
-                        No results for &quot;
-                        <span className={atoms({ color: 'default' })}>{props.searchTerms}</span>
-                        &quot;
-                    </Paragraph>
-                )}
+        <Box gap centerContent padding textAlign="center" color="gray2" maxWidth="300">
+            <Box padding="md" color="gray2" background="level2" rounded="sm">
+                <Icon type="search" size="square_sm" />
             </Box>
+            {props.searchTerms.length < 2 ? (
+                <Paragraph textAlign="center">
+                    You can search for messages, channels and people
+                </Paragraph>
+            ) : (
+                <Paragraph textAlign="center">
+                    No results for &quot;
+                    <span className={atoms({ color: 'default' })}>{props.searchTerms}</span>
+                    &quot;
+                </Paragraph>
+            )}
         </Box>
     )
 }

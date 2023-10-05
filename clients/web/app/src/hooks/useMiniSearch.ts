@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { uniqBy } from 'lodash'
 import debug from 'debug'
 import { useDebounce } from 'hooks/useDebounce'
-import { EventDocument } from '../components/SearchModal/types'
+import { EventDocument } from '../components/SearchBar/types'
 
 const log = debug('app:search')
 log.enabled = true
