@@ -335,6 +335,9 @@ function WalletInfo() {
                             {`Chain: ${walletChain?.name}`}
                         </Typography>
                         <Typography variant="h6" component="p" sx={{ marginTop: '20px' }}>
+                            {`Remote Url: ${casablancaUrl}`}
+                        </Typography>
+                        <Typography variant="h6" component="p" sx={{ marginTop: '20px' }}>
                             {`Address: ${address}`}
                         </Typography>
                         <Typography variant="h6" component="p" sx={{ marginTop: '20px' }}>
