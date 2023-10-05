@@ -108,20 +108,28 @@ export const SpaceInfoPanel = () => {
         if (!textAreaRef.current?.value.length || !canEdit) {
             return
         }
-        mutate(textAreaRef.current.value, {
-            onSuccess: async () => {
-                setIsEdit(false)
-                setEditErrorMessage(null)
+        mutate(
+            { description: textAreaRef.current.value },
+            {
+                onSuccess: async () => {
+                    setIsEdit(false)
+                    setEditErrorMessage(null)
+                },
+                onError: (error) => {
+                    if (errorHasInvalidCookieResponseHeader(error)) {
+                        toast.custom((t) => (
+                            <InvalidCookieNotification
+                                toast={t}
+                                actionMessage="edit the description"
+                            />
+                        ))
+                    }
+                    setEditErrorMessage(
+                        "We weren't able to save your changes. Please try again later.",
+                    )
+                },
             },
-            onError: (error) => {
-                if (errorHasInvalidCookieResponseHeader(error)) {
-                    toast.custom((t) => (
-                        <InvalidCookieNotification toast={t} actionMessage="edit the description" />
-                    ))
-                }
-                setEditErrorMessage("We weren't able to save your changes. Please try again later.")
-            },
-        })
+        )
     })
 
     const shareButtonEnabled = isTouch && navigator.share

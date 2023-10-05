@@ -4,6 +4,7 @@ import {
     CreateSpaceInfo,
     Permission,
     RoomVisibility,
+    makeRoomIdentifier,
     useCreateSpaceTransaction,
     useWeb3Context,
     useZionClient,
@@ -16,6 +17,10 @@ import { Address } from 'wagmi'
 import { Box, Icon, IconButton, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
 import { toTransactionUIStates } from 'hooks/TransactionUIState'
+import { useImageStore } from '@components/UploadImage/useImageStore'
+import { useUploadImage } from 'api/lib/uploadImage'
+import { useSetSpaceTopic } from 'hooks/useSpaceTopic'
+import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
 import { BottomBar } from '../BottomBar'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
@@ -37,6 +42,7 @@ export function CreateTownSubmit({
 
     const { data, isLoading, error, createSpaceTransactionWithRole, transactionStatus } =
         useCreateSpaceTransaction()
+
     const navigate = useNavigate()
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(data))
 
@@ -52,6 +58,49 @@ export function CreateTownSubmit({
         }
     }, [error, hasError])
 
+    const { mutate: uploadImage } = useUploadImage(undefined, {
+        onError: () => {
+            if (!data?.networkId) {
+                return
+            }
+            const { removeLoadedResource } = useImageStore.getState()
+            removeLoadedResource(data.networkId)
+            toast.custom(
+                (t) => (
+                    <FailedUploadAfterSpaceCreation
+                        toast={t}
+                        spaceId={data.networkId}
+                        message="There was an error uploading your town image."
+                    />
+                ),
+                {
+                    duration: 10_000,
+                },
+            )
+        },
+    })
+    const { mutate: uploadSpaceBio } = useSetSpaceTopic(undefined, {
+        onError: () => {
+            if (!data?.networkId) {
+                return
+            }
+            const { removeLoadedResource } = useImageStore.getState()
+            removeLoadedResource(data.networkId)
+            toast.custom(
+                (t) => (
+                    <FailedUploadAfterSpaceCreation
+                        toast={t}
+                        spaceId={data.networkId}
+                        message="There was an error uploading your town bio."
+                    />
+                ),
+                {
+                    duration: 10_000,
+                },
+            )
+        },
+    })
+
     const onSubmit = useCallback(() => {
         toast.dismiss()
         setTransactionDetails({
@@ -62,8 +111,9 @@ export function CreateTownSubmit({
             async (values) => {
                 const { spaceName, membershipCost, membershipLimit, tokensGatingMembership } =
                     values
+
                 const createSpaceInfo: CreateSpaceInfo = {
-                    name: spaceName,
+                    name: spaceName ?? '',
                     visibility: RoomVisibility.Public,
                 }
                 if (!signer) {
@@ -117,26 +167,51 @@ export function CreateTownSubmit({
                     return
                 }
 
-                // TODO: upload image
                 // TODO: upload town bio
 
                 if (result?.data) {
                     const newPath = `/${PATHS.SPACES}/${result?.data.slug}/${PATHS.GETTING_STARTED}`
-                    // try animating the token
+                    const networkId = result.data.networkId
+
+                    if (values.spaceIconUrl && values.spaceIconFile) {
+                        const { setLoadedResource } = useImageStore.getState()
+                        const { spaceIconUrl, spaceIconFile } = values
+                        // set the image before upload so that it displays immediately
+                        setLoadedResource(networkId, {
+                            imageUrl: values.spaceIconUrl,
+                        })
+
+                        uploadImage({
+                            id: networkId,
+                            file: spaceIconFile,
+                            imageUrl: spaceIconUrl,
+                            type: 'spaceIcon',
+                        })
+                    }
+
+                    if (values.spaceBio) {
+                        const { spaceBio } = values
+                        uploadSpaceBio({
+                            description: spaceBio,
+                            innerRoomId: makeRoomIdentifier(networkId),
+                        })
+                    }
+
+                    let timeoutDuration = 0
                     try {
-                        const spaceInfo = await spaceDapp?.getSpaceInfo(result.data.networkId)
+                        const spaceInfo = await spaceDapp?.getSpaceInfo(networkId)
                         setTransactionDetails({
                             isTransacting: true,
                             townAddress: spaceInfo?.address as Address,
                         })
-
-                        setTimeout(() => {
-                            navigate(newPath)
-                        }, 3000)
+                        timeoutDuration = 3000
                     } catch (error) {
-                        // otherwise just navigate
-                        navigate(newPath)
+                        console.log('error getting space info after creating town: ', error)
                     }
+
+                    setTimeout(() => {
+                        navigate(newPath)
+                    }, timeoutDuration)
                 }
             },
             (errors) => {
@@ -159,6 +234,8 @@ export function CreateTownSubmit({
         setTransactionDetails,
         signer,
         spaceDapp,
+        uploadImage,
+        uploadSpaceBio,
     ])
 
     return (
@@ -166,7 +243,7 @@ export function CreateTownSubmit({
             <BottomBar
                 panelStatus={panelType ? 'open' : 'closed'}
                 text="Create"
-                disabled={isLoading || !form.formState.isValid}
+                disabled={isLoading || Object.keys(form.formState.errors).length > 0}
                 transactingText="Creating town"
                 successText="Town created!"
                 transactionUIState={transactionUIState}

@@ -8,9 +8,11 @@ import { PATHS } from 'routes'
 export const FailedUploadAfterSpaceCreation = ({
     toast,
     spaceId,
+    message,
 }: {
     toast: Toast
     spaceId: string
+    message: string
 }) => {
     const navigate = useNavigate()
     const { pathname } = useLocation()
@@ -35,7 +37,7 @@ export const FailedUploadAfterSpaceCreation = ({
         <Box horizontal gap width="300">
             <Icon color="error" type="alert" />
             <Box gap alignItems="end">
-                <Text size="sm">Oops! We had trouble uploading your town image.</Text>
+                <Text size="sm">{message}</Text>
                 <Box horizontal gap>
                     <Button size="button_sm" onClick={() => headlessToast.dismiss(toast.id)}>
                         Dismiss

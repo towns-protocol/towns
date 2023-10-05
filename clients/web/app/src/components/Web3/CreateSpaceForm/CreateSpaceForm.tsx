@@ -260,7 +260,7 @@ export const CreateSpaceForm = () => {
             const { removeLoadedResource } = useImageStore.getState()
             removeLoadedResource(createdSpaceId)
             toast.custom((t) => (
-                <FailedUploadAfterSpaceCreation toast={t} spaceId={createdSpaceId} />
+                <FailedUploadAfterSpaceCreation toast={t} spaceId={createdSpaceId} message="" />
             ))
         },
     })
