@@ -19,6 +19,10 @@ export const useSendImageMessage = () => {
     const spaceId = useSpaceId()
     const [sendingMessage, setSendingMessage] = useState<boolean>(false)
 
+    function shouldCompressFile(file: File): boolean {
+        return file.type !== 'image/gif'
+    }
+
     const sendEmbeddedImage = useCallback(
         async (
             data: Uint8Array,
@@ -131,11 +135,15 @@ export const useSendImageMessage = () => {
             setProgress: (progress: number) => void,
             threadId?: string,
         ) => {
-            // always do some basic compression to avoid ridiculous file sizes
-            const compressed = await imageCompression(file, {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 2048,
-            })
+            /** Do some basic compression to avoid ridiculous file sizes
+             * unless the image is animated
+             */
+            const compressed = shouldCompressFile(file)
+                ? await imageCompression(file, {
+                      maxSizeMB: 1,
+                      maxWidthOrHeight: 2048,
+                  })
+                : file
             const { width, height } = await imageSize(compressed)
             const buffer = await compressed.arrayBuffer()
             const bytes = new Uint8Array(buffer)
