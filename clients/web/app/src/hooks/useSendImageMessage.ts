@@ -12,7 +12,8 @@ import imageCompression from 'browser-image-compression'
 The encryption limit is 65536*3/4 = 49152 chars (olmDevice.ts)
 40k will sometimes overshoot when the protobuf is serialized, while 35k seems ok!
 */
-const CHUNK_SIZE = 35 * 1024
+const MAX_EMBEDDED_SIZE = 35 * 1024
+const CHUNK_SIZE = 500_000
 
 export const useSendImageMessage = () => {
     const { sendMessage, createMediaStream, sendMediaPayload } = useZionClient()
@@ -148,7 +149,7 @@ export const useSendImageMessage = () => {
             const buffer = await compressed.arrayBuffer()
             const bytes = new Uint8Array(buffer)
 
-            if (compressed.size < CHUNK_SIZE) {
+            if (compressed.size < MAX_EMBEDDED_SIZE) {
                 await sendEmbeddedImage(bytes, width, height, compressed.type, channelId, threadId)
             } else {
                 await sendChunkedImage(

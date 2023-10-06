@@ -8,6 +8,7 @@ import (
 	"casablanca/node/infra"
 	. "casablanca/node/protocol"
 	"context"
+	"fmt"
 
 	connect_go "github.com/bufbuild/connect-go"
 	"golang.org/x/exp/slog"
@@ -350,6 +351,10 @@ func (s *Service) createStream_Media(
 
 	if inception.ChannelId == "" {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel id must not be empty for media stream")
+	}
+
+	if inception.ChunkCount > int32(s.streamConfig.Media.MaxChunkCount) {
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, fmt.Sprintf("chunk count must be less than or equal to %d", s.streamConfig.Media.MaxChunkCount))
 	}
 
 	// TODO: replace with stream registry stream existence check

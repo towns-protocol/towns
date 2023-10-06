@@ -46,6 +46,22 @@ describe('mediaTests', () => {
         await expect(bobsClient.sendMediaPayload(mediaStreamId, chunk, 10)).toReject()
     })
 
+    test('chunkSizeCanBeAtLimit', async () => {
+        const mediaStreamId = await bobCreateMediaStream(10)
+        const chunk = new Uint8Array(500000)
+        await expect(bobsClient.sendMediaPayload(mediaStreamId, chunk, 0)).toResolve()
+    })
+
+    test('chunkSizeNeedsToBeWithinLimit', async () => {
+        const mediaStreamId = await bobCreateMediaStream(10)
+        const chunk = new Uint8Array(500001)
+        await expect(bobsClient.sendMediaPayload(mediaStreamId, chunk, 0)).toReject()
+    })
+
+    test('chunkCountNeedsToBeWithinLimit', async () => {
+        await expect(bobCreateMediaStream(11)).toReject()
+    })
+
     test('clientCanOnlyPostToTheirOwnMediaStream', async () => {
         const mediaStreamId = await bobCreateMediaStream(10)
         const chunk = new Uint8Array(100)

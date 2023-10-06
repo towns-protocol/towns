@@ -121,6 +121,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		wallet:             wallet,
 		skipDelegateCheck:  cfg.SkipDelegateCheck,
 		exitSignal:         make(chan error, 1),
+		streamConfig:       cfg.Stream,
 	}
 
 	streamService.nodeRegistry, err = loadNodeRegistry(

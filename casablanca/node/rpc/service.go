@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"casablanca/node/auth"
+	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/infra"
@@ -21,4 +22,5 @@ type Service struct {
 	exitSignal         chan error
 	nodeRegistry       nodes.NodeRegistry
 	streamRegistry     nodes.StreamRegistry
+	streamConfig       config.StreamConfig
 }

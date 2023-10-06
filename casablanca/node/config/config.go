@@ -19,6 +19,7 @@ type Config struct {
 	SkipDelegateCheck   bool
 	PerformanceTracking PerformanceTrackingConfig
 	PushNotification    PushNotificationConfig
+	Stream              StreamConfig
 	NodeRegistry        string
 	WalletPrivateKey    string
 	LogInstance         bool
@@ -36,4 +37,13 @@ type PerformanceTrackingConfig struct {
 type PushNotificationConfig struct {
 	AuthToken string
 	Url       string
+}
+
+type StreamConfig struct {
+	Media MediaStreamConfig
+}
+
+type MediaStreamConfig struct {
+	MaxChunkCount int
+	MaxChunkSize  int
 }

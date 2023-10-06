@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/bufbuild/connect-go"
 
@@ -501,6 +502,10 @@ func (s *Service) addMediaChunk(ctx context.Context, stream Stream, streamView S
 
 	if chunk.ChunkIndex >= mediaInfo.ChunkCount || chunk.ChunkIndex < 0 {
 		return RiverError(Err_INVALID_ARGUMENT, "chunk index out of bounds")
+	}
+
+	if len(chunk.Data) > s.streamConfig.Media.MaxChunkSize {
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("chunk size must be less than or equal to %d", s.streamConfig.Media.MaxChunkSize))
 	}
 
 	err = stream.AddEvent(ctx, parsedEvent)

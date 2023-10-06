@@ -29,3 +29,7 @@ logInstance: false
 pushNotification:
     url: '' # URL to the push notification worker. Default empty string disables it.
     authToken: '' # auth token for the push notification worker
+stream:
+    media:
+        maxChunkCount: 10 # max number of chunks in a media stream
+        maxChunkSize: 500000 # max number of bytes in a single chunk
