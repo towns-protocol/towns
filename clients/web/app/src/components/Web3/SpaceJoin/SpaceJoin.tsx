@@ -194,7 +194,7 @@ export const SpaceJoin = (props: Props) => {
     const { signer } = useWeb3Context()
 
     // TODO: use this to check if user is entitled to join before trying to join (join v2)
-    // const { data: userIsEntitled } = useUserIsEntitledByTokenBalance(joinData.networkId)
+    // const { data: userIsEntitled } = useMeetsMembershipNftRequirements(joinData.networkId)
 
     const joinSpace = useCallback(async () => {
         if (!client) {

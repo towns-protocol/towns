@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { BigNumber } from 'ethers'
 import { useCallback, useMemo } from 'react'
-import { useMultipleRoleDetails, useRoles } from 'use-zion-client'
+import { useMultipleRoleDetails, useRoleDetails, useRoles } from 'use-zion-client'
 import { Address } from 'wagmi'
 import {
     balanceOfErc1155,
@@ -55,30 +55,38 @@ export function useTokensGatingSpace(spaceId: string | undefined) {
     return tokensGatingSpace
 }
 
-// checks if user has any balances for any of the tokens assigned to any role in the space
-export function useUserIsEntitledByTokenBalance(spaceId: string | undefined) {
-    const tokensGatingSpace = useTokensGatingSpace(spaceId)
+// checks if user has any balances for any of the tokens assigned to the minter role
+export function useMeetsMembershipNftRequirements(spaceId: string | undefined) {
     // TODO: current invite flow requires login first, then shows the join page. That probably needs to be ported to the new join page, TBD the exact flow
     const { loggedInWalletAddress } = useAuth()
+    const { roleDetails: minterRoleDetails } = useRoleDetails(spaceId ?? '', 1)
 
     const checkUserHasToken = useCallback(async () => {
-        if (!tokensGatingSpace || !loggedInWalletAddress) {
+        if (!minterRoleDetails || !loggedInWalletAddress) {
             return false
+        }
+
+        if (minterRoleDetails.tokens.length === 0) {
+            return true
+        }
+
+        if (minterRoleDetails.users.includes(loggedInWalletAddress)) {
+            return true
         }
 
         const walletAddress = loggedInWalletAddress as Address
 
-        for (const addr of Object.keys(tokensGatingSpace)) {
-            const contractAddress = addr as Address
+        for (const token of minterRoleDetails.tokens) {
+            const contractAddress = token.contractAddress as Address
             const type = await getTokenType({ address: contractAddress })
 
             switch (type) {
                 case TokenType.ERC1155: {
-                    for (const id of tokensGatingSpace[contractAddress].tokenIds) {
+                    for (const id of token.tokenIds as BigNumber[]) {
                         if (
                             await balanceOfErc1155({
                                 contractAddress,
-                                id,
+                                id: id.toNumber(),
                                 walletAddress,
                             })
                         ) {
@@ -111,10 +119,10 @@ export function useUserIsEntitledByTokenBalance(spaceId: string | undefined) {
         }
 
         return false
-    }, [tokensGatingSpace, loggedInWalletAddress])
+    }, [loggedInWalletAddress, minterRoleDetails])
 
-    return useQuery([QUERY_KEY, spaceId, tokensGatingSpace], checkUserHasToken, {
-        enabled: Boolean(tokensGatingSpace),
+    return useQuery([QUERY_KEY, spaceId, minterRoleDetails], checkUserHasToken, {
+        enabled: Boolean(minterRoleDetails),
         staleTime: Infinity, // never refetch, TBD if we need to
         refetchOnMount: false,
         refetchOnWindowFocus: false,
