@@ -6,6 +6,7 @@ import { MenuItem } from '@components/Cards/MenuItem'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
 import { SpaceSettingsNavItem } from '../NavItem/SpaceSettingsNavItem'
 import { Role } from './store/hooks/settingsRolesStore'
+import { nonRemovableRoleIds } from './RoleSettings/rolePermissions.const'
 
 export const SpaceSettingsRolesNavItem = (props: {
     role: Role
@@ -18,12 +19,14 @@ export const SpaceSettingsRolesNavItem = (props: {
         props.onRemoveRole(role.id)
     })
 
+    const isNonRemovable = nonRemovableRoleIds.includes(+role.id)
+
     return (
         <>
             <CardOpener
                 trigger="contextmenu"
                 placement="pointer"
-                render={<SpaceRoleNavCard onRemoveRole={onRemoveRole} />}
+                render={isNonRemovable ? <></> : <SpaceRoleNavCard onRemoveRole={onRemoveRole} />}
             >
                 {({ triggerProps }) => {
                     return (

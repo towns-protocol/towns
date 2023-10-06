@@ -4,6 +4,7 @@ import { useEvent } from 'react-use-event-hook'
 import { IconLabelButton, Stack } from '@ui'
 import { useSettingsRolesStore } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
 import { SpaceSettingsRolesNavItem } from './SpaceSettingsRolesNavItem'
+import { nonRemovableRoleIds } from './RoleSettings/rolePermissions.const'
 
 export const NEW_ROLE_ID_PREFIX = 'n-'
 
@@ -23,6 +24,9 @@ export const SpaceSettingsRolesNav = () => {
     })
 
     const onRemoveRole = useEvent((roleId: string) => {
+        if (nonRemovableRoleIds.includes(+roleId)) {
+            return
+        }
         const nextRole = removeRole(roleId)
         navigate(`../roles/${nextRole ? nextRole : 'empty'}/permissions`)
     })

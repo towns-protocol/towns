@@ -28,3 +28,8 @@ export const rolePermissionDescriptions: {
 export const enabledRolePermissions = Object.keys(rolePermissionDescriptions)
     .filter((k) => k !== Permission.Owner)
     .map((key) => Permission[key as keyof typeof Permission])
+
+// the minter and member roles created in town creation
+export const minterRoleId = 1
+export const memberRoleId = 2
+export const nonRemovableRoleIds = [minterRoleId, memberRoleId]

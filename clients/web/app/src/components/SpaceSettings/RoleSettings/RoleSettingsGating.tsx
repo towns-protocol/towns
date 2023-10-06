@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useParams } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import { Address } from 'wagmi'
+import { useSpaceId } from 'use-zion-client'
 import { TokenSelector } from '@components/SpaceSettings/TokenSelector'
 import { Avatar, Box, Button, Divider, Icon, Paragraph, Stack, Text } from '@ui'
 import { useSettingsRolesStore } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
@@ -15,8 +16,10 @@ import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 import { useCheckTokenType } from '@components/Web3/checkTokenType'
 import { TokenType } from '@components/Tokens/types'
 import { useGetUserFromAddress } from 'hooks/useGetUserFromAddress'
+import { useIsMembershipNftAddress } from 'hooks/useIsMembershipNftAddress'
 import { MemberListModal, TokenListModal } from './GatingModals'
 import { MemberSelector } from '../MemberSelector'
+import { memberRoleId } from './rolePermissions.const'
 
 type TokenModalProps = {
     showModal: boolean
@@ -71,6 +74,7 @@ export const RoleSettingsGating = () => {
                         itemRenderer={(props) => (
                             <TokenRenderer
                                 {...props}
+                                roleId={roleId}
                                 onEditSingleToken={() =>
                                     showTokenModal({
                                         singleContractAddress: props.item.contractAddress,
@@ -168,13 +172,20 @@ const MemberRenderer = (props: { item: string; onRemoveItem: (id: string) => voi
 
 type TokenRendererProps = {
     item: TokenDataStruct
+    roleId: string
     onEditSingleToken: (contractAddress: TokenDataStruct['contractAddress']) => void
     onRemoveItem: (contractAddress: TokenDataStruct['contractAddress']) => void
 }
 
 const TokenRenderer = (props: TokenRendererProps) => {
+    const spaceId = useSpaceId()
     const { chainName } = useEnvironment()
     const tokenType = useCheckTokenType({ address: props.item.contractAddress as Address })
+
+    const { data: isMembershipNft } = useIsMembershipNftAddress({
+        address: props.item.contractAddress as Address,
+        spaceId: spaceId?.networkId,
+    })
 
     const onClick = useEvent(() => {
         props.onRemoveItem(props.item.contractAddress)
@@ -191,6 +202,11 @@ const TokenRenderer = (props: TokenRendererProps) => {
             'noopener,noreferrer',
         )
     })
+
+    // The "Member" role from town creation should not be allowed to remove the membership NFT as a gating token
+    // otherwise we could have a town that is not gated by the membership NFT
+    const isMemberRole = +props.roleId === memberRoleId
+    const allowedToRemoveToken = !isMemberRole || (isMemberRole && !isMembershipNft)
 
     return (
         <Stack padding gap key={props.item.contractAddress} background="level2" borderRadius="sm">
@@ -209,7 +225,7 @@ const TokenRenderer = (props: TokenRendererProps) => {
                     }}
                 />
                 <Button size="inline" tone="none" color="gray2" onClick={onAddressClick}>
-                    {shortAddress(props.item.contractAddress)}
+                    {isMembershipNft ? 'Membership NFT' : shortAddress(props.item.contractAddress)}
                     <Icon size="square_sm" type="linkOut" />
                 </Button>
                 {tokenType === TokenType.ERC1155 && (
@@ -217,9 +233,11 @@ const TokenRenderer = (props: TokenRendererProps) => {
                         Edit
                     </Button>
                 )}
-                <Button size="inline" tone="none" color="negative" onClick={onClick}>
-                    Remove
-                </Button>{' '}
+                {allowedToRemoveToken && (
+                    <Button size="inline" tone="none" color="negative" onClick={onClick}>
+                        Remove
+                    </Button>
+                )}
             </Box>
 
             {props.item.tokenIds.length > 0 && (
