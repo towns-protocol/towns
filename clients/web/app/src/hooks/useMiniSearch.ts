@@ -25,14 +25,14 @@ export const useMiniSearch = (_messages: EventDocument[], _search: string) => {
             uniqBy(
                 messages.map((m) => ({ ...m, id: m.key })),
                 (e) => e.id,
-            )
-                .filter((m) => m?.source)
-                .filter((m) => !miniSearch.has(m.id)),
-        [messages, miniSearch],
+            ),
+        [messages],
     )
 
     useEffect(() => {
-        miniSearch.addAll(filteredMessages)
+        miniSearch.addAll(
+            filteredMessages.filter((m) => m?.source).filter((m) => !miniSearch.has(m.id)),
+        )
     }, [filteredMessages, miniSearch])
 
     const results = useMemo(() => {
@@ -40,7 +40,7 @@ export const useMiniSearch = (_messages: EventDocument[], _search: string) => {
             return []
         }
         return miniSearch.search(search, {
-            fuzzy: 0.15,
+            fuzzy: 0.2,
             combineWith: 'AND',
             prefix: true,
         })
