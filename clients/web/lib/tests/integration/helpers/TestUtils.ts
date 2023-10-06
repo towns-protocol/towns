@@ -253,10 +253,7 @@ export async function createTestChannelWithSpaceRoles(
     }
 
     if (txContext.status === TransactionStatus.Pending) {
-        const rxContext = await client.waitForCreateChannelTransaction(
-            createChannelInfo.parentSpaceId.networkId,
-            txContext,
-        )
+        const rxContext = await client.waitForCreateChannelTransaction(createChannelInfo, txContext)
         return rxContext?.data
     }
     // Something went wrong. Don't return a room identifier.

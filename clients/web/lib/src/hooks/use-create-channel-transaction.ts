@@ -78,7 +78,7 @@ export function useCreateChannelTransaction() {
                     }
                     // Wait for transaction to be mined
                     transactionResult = await waitForCreateChannelTransaction(
-                        createInfo.parentSpaceId.networkId,
+                        createInfo,
                         transactionResult,
                     )
                     setTransactionContext(transactionResult)

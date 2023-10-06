@@ -412,7 +412,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             roomId = context.data
             receipt = await context.transaction.wait()
         } catch (err) {
-            error = await this.onErrorLeaveSpaceRoomAndDecodeError(roomId, err)
+            error = this.getDecodedErrorForSpaceFactory(err)
         }
 
         if (receipt?.status === 1) {
@@ -446,10 +446,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
         // got here without success
         if (!error) {
-            error = await this.onErrorLeaveSpaceRoomAndDecodeError(
-                roomId,
-                new Error('Failed to create space'),
-            )
+            error = this.getDecodedErrorForSpaceFactory(new Error('Failed to create space'))
         }
         console.error('[waitForCreateSpaceTransaction] failed', error)
         return createTransactionContext<RoomIdentifier>({
@@ -500,7 +497,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             console.log(`[createCasablancaSpaceTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[createCasablancaSpaceTransaction] error', err)
-            error = await this.onErrorLeaveSpaceRoomAndDecodeError(spaceId, err)
+            error = this.getDecodedErrorForSpaceFactory(err)
         }
 
         return {
@@ -555,7 +552,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         createChannelInfo: CreateChannelInfo,
         signer: ethers.Signer,
     ): Promise<ChannelTransactionContext> {
-        let roomId: RoomIdentifier = makeRoomIdentifier(makeUniqueChannelStreamId())
+        const roomId: RoomIdentifier = makeRoomIdentifier(makeUniqueChannelStreamId())
 
         console.log('[createChannelTransaction] Channel created', roomId)
 
@@ -573,26 +570,10 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             console.log(`[createChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[createChannelTransaction] error', err)
-            error = await this.onErrorLeaveChannelRoomAndDecodeError(
+            error = await this.getDecodedErrorForSpace(
                 createChannelInfo.parentSpaceId.networkId,
-                undefined,
                 err,
             )
-        }
-
-        try {
-            roomId = await this.createChannelRoom(createChannelInfo, roomId.networkId)
-        } catch (error) {
-            const _error = new Error('createChannel failed')
-            _error.name = (error as Error).name ?? 'Error'
-            console.error(_error)
-            return {
-                transaction: undefined,
-                receipt: undefined,
-                status: TransactionStatus.Failed,
-                data: undefined,
-                error: _error,
-            }
         }
 
         return {
@@ -620,7 +601,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
         if (txContext.status === TransactionStatus.Pending) {
             const rxContext = await this.waitForCreateChannelTransaction(
-                createChannelInfo.parentSpaceId.networkId,
+                createChannelInfo,
                 txContext,
             )
             return rxContext?.data
@@ -640,7 +621,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     public async waitForCreateChannelTransaction(
-        parentSpaceId: string,
+        createChannelInfo: CreateChannelInfo,
         context: ChannelTransactionContext | undefined,
     ): Promise<ChannelTransactionContext> {
         if (!context?.transaction) {
@@ -655,28 +636,54 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         let receipt: ContractReceipt | undefined = undefined
         let roomId: RoomIdentifier | undefined = undefined
         let error: Error | undefined = undefined
+
         try {
             transaction = context.transaction
             roomId = context.data
-            // provider.waitForTransaction resolves more quickly than transaction.wait(), why?
             receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
-            if (receipt?.status === 1) {
-                console.log('[waitForCreateChannelTransaction] success', roomId)
-                return createChannelTransactionContext({
-                    status: TransactionStatus.Success,
-                    data: roomId,
-                    transaction,
-                    receipt,
-                })
-            } else if (receipt?.status === 0) {
-                await this.throwTransactionError(receipt)
-            } else {
-                throw new Error('Failed to create channel')
-            }
         } catch (err) {
-            console.error('[waitForCreateChannelTransaction]', err)
-            error = await this.onErrorLeaveChannelRoomAndDecodeError(parentSpaceId, roomId, err)
+            error = await this.getDecodedErrorForSpace(
+                createChannelInfo.parentSpaceId.networkId,
+                err,
+            )
         }
+
+        if (receipt?.status === 1) {
+            console.log('[waitForCreateChannelTransaction] success', roomId)
+            if (roomId) {
+                // wait until the channel is minted on-chain
+                // before creating the stream
+                try {
+                    await this.createChannelRoom(createChannelInfo, roomId.networkId)
+                    console.log('[waitForCreateChannelTransaction] Channel stream created', roomId)
+                } catch (error) {
+                    const _error = new Error('createChannel failed')
+                    _error.name = (error as Error).name ?? 'Error'
+                    console.error(_error)
+                    return {
+                        transaction: undefined,
+                        receipt: undefined,
+                        status: TransactionStatus.Failed,
+                        data: undefined,
+                        error: _error,
+                    }
+                }
+            }
+            return createChannelTransactionContext({
+                status: TransactionStatus.Success,
+                data: roomId,
+                transaction,
+                receipt,
+            })
+        }
+
+        if (!error) {
+            error = await this.getDecodedErrorForSpace(
+                createChannelInfo.parentSpaceId.networkId,
+                new Error('Failed to create channel'),
+            )
+        }
+        console.error('[waitForCreateChannelTransaction] failed', error)
         return createChannelTransactionContext({
             status: TransactionStatus.Failed,
             transaction,
@@ -1838,57 +1845,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         const code = await this.opts.web3Provider?.call(receipt, receipt.blockNumber)
         const reason = toUtf8String(`0x${code?.substring(138) || ''}`)
         throw new Error(reason)
-    }
-
-    private async onErrorLeaveSpaceRoomAndDecodeError(
-        roomId: RoomIdentifier | undefined,
-        error: unknown,
-    ): Promise<Error> {
-        if (roomId) {
-            try {
-                await this.leave(roomId)
-            } catch (e) {
-                console.error('error leaving room after blockchain error', e)
-            }
-        }
-        /**
-         *  Wallet rejection
-         * */
-        const walletRejectionError = this.getWalletRejectionError(error)
-        if (walletRejectionError) {
-            return walletRejectionError
-        }
-
-        /**
-         *  Transaction error generated by space factory contract when creating space.
-         * */
-        return this.getDecodedErrorForSpaceFactory(error)
-    }
-
-    private async onErrorLeaveChannelRoomAndDecodeError(
-        parentSpaceId: string | undefined,
-        channelRoomId: RoomIdentifier | undefined,
-        error: unknown,
-    ): Promise<Error> {
-        if (channelRoomId) {
-            await this.leave(channelRoomId, parentSpaceId)
-        }
-        /**
-         *  Wallet rejection
-         * */
-        const walletRejectionError = this.getWalletRejectionError(error)
-        if (walletRejectionError) {
-            return walletRejectionError
-        }
-
-        /**
-         *  Transaction error created by Space contract when creating channel.
-         * */
-        if (parentSpaceId) {
-            return this.getDecodedErrorForSpace(parentSpaceId, error)
-        }
-        // If no spaceId is provided, we can't decode the error.
-        return new Error('cannot decode error because no spaceId is provided')
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
