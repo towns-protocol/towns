@@ -129,26 +129,12 @@ export const MessageItem = (props: Props) => {
                         )}
                     </>
                 ) : event.content.msgType === MessageType.Image ? (
-                    event.content.content.info?.url ? (
-                        // render v2 image format
-                        <RatioedBackgroundImage
-                            withLinkOut
-                            url={event.content.content.info.url}
-                            width={event.content.content.thumbnail?.width}
-                            height={event.content.content.thumbnail?.height}
-                            onClick={onMediaClick}
-                        />
-                    ) : (
-                        // render pre-beta image format
-                        // see timelineItem.test.tsx for pre-beta format
-                        <RatioedBackgroundImage
-                            withLinkOut
-                            url={event.content.content.url}
-                            width={event.content.content.info?.thumbnail_info?.w}
-                            height={event.content.content.info?.thumbnail_info?.h}
-                            onClick={onMediaClick}
-                        />
-                    )
+                    <RatioedBackgroundImage
+                        url={event.content.content.info.url}
+                        width={event.content.content.thumbnail?.width}
+                        height={event.content.content.thumbnail?.height}
+                        onClick={onMediaClick}
+                    />
                 ) : event.content.msgType === MessageType.EmbeddedMedia ? (
                     <EmbeddedMedia
                         mimetype={event.content.content.mimetype}

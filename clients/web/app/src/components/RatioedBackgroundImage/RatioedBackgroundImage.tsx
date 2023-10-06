@@ -17,7 +17,6 @@ export const RatioedBackgroundImage = ({
     url: string
     width?: number
     height?: number
-    withLinkOut?: boolean
     onClick?: (event: React.MouseEvent<HTMLElement>) => void
 }) => {
     const MAX_WIDTH = 500

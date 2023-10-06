@@ -111,35 +111,6 @@ describe('#TimelineItem', () => {
         expect(link).toHaveAttribute('href', 'https://www.dogs.com/')
     })
 
-    test('it should render MessageType.Image V1 (pre beta) messages', async () => {
-        const url =
-            'https://media0.giphy.com/media/pynZagVcYxVUk/giphy.gif?cid=9e9e0d5019cpfxozhrqwk79csm347av0gzq3ejxup6lneqgv&rid=giphy.gif&ct=g'
-        render(
-            <Wrapper
-                messageContent={{
-                    body: 'The Office Crying GIF',
-                    msgtype: MessageType.Image,
-                    url: url,
-                    info: {
-                        h: 250,
-                        mimetype: 'image/gif',
-                        size: 929864,
-                        thumbnail_info: {
-                            h: 250,
-                            mimetype: 'image/gif',
-                            size: 929864,
-                            w: 250,
-                        },
-                        thumbnail_url: url,
-                    },
-                }}
-            />,
-        )
-        const backgroundImageNode = await screen.findByTestId('ratioed-background-image')
-        expect(backgroundImageNode.style.backgroundImage).toEqual(`url(${url})`)
-        expect(backgroundImageNode.style.maxWidth).toEqual('250px')
-    })
-
     test('it should render MessageType.Image messages', async () => {
         const url =
             'https://media0.giphy.com/media/pynZagVcYxVUk/giphy.gif?cid=9e9e0d5019cpfxozhrqwk79csm347av0gzq3ejxup6lneqgv&rid=giphy.gif&ct=g'
