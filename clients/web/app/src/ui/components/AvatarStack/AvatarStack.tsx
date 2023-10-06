@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { AnimatePresence, LayoutGroup } from 'framer-motion'
 import { avatarSizes } from 'ui/components/Avatar/avatarProperties.css'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { useDevice } from 'hooks/useDevice'
 import { ProfileHoverCard } from '../../../components/ProfileHoverCard/ProfileHoverCard'
 import { Avatar } from '../Avatar/Avatar'
 import { Stack } from '../Stack/Stack'
@@ -19,6 +20,7 @@ type Props = {
 export const AvatarStack = (props: Props) => {
     const { size = 'avatar_md', users } = props
     const { createLink } = useCreateLink()
+    const { isTouch } = useDevice()
 
     return (
         <Stack horizontal>
@@ -29,7 +31,11 @@ export const AvatarStack = (props: Props) => {
                         .map((u, index) => (
                             <Box
                                 key={u.userId}
-                                tooltip={<ProfileHoverCard userId={u.userId ?? ''} />}
+                                tooltip={
+                                    isTouch ? undefined : (
+                                        <ProfileHoverCard userId={u.userId ?? ''} />
+                                    )
+                                }
                                 tooltipOptions={{ immediate: true }}
                             >
                                 <Link key={u.userId} to={createLink({ profileId: u.userId }) ?? ''}>
