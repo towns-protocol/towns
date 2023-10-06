@@ -18,6 +18,7 @@ function getAllowedOrigins(env: Environment): string[] {
                 'https://localhost:3000',
                 'http://127.0.0.1:8787',
                 'https://push-notification-worker-test.johnhntlabs.workers.dev',
+                'https://push-notification-worker-test-beta.towns.com',
                 'https://test-harmony-web-pr-*.onrender.com',
             ]
         case 'staging': // Stay as close to production as possible.
@@ -60,6 +61,7 @@ function getLocalDomainOrigin(origin: string, env: Environment): string | undefi
     switch (env) {
         case 'development':
         case 'test':
+        case 'test-beta':
             return rExp.test(origin) ? origin : undefined
         default:
             return undefined

@@ -1,12 +1,3 @@
-import {
-  arrayBufferToBase64UrlEncoded,
-  base64ToUrlEncoding,
-  base64UrlDecodeString,
-  urlEncodedBase64ToUint8Array,
-} from './utils'
-
-import { VapidDetails } from './web-push-types'
-
 export interface JwtInfo {
   typ: string
   alg: string
