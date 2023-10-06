@@ -38,11 +38,7 @@ export const MentionsPlugin = (props: Props) => {
         return props.members
             .map((m) =>
                 m.name
-                    ? new MentionTypeaheadOption(
-                          getPrettyDisplayName(m).name,
-                          m.userId,
-                          m.userId === props.userId,
-                      )
+                    ? new MentionTypeaheadOption(m.name, m.userId, m.userId === props.userId)
                     : undefined,
             )
             .filter(notUndefined)
@@ -111,7 +107,7 @@ export const MentionsPlugin = (props: Props) => {
                                       isSelected={selectedIndex === i}
                                       key={option.key}
                                       option={option}
-                                      name={option.name + (option.isSelf ? ' (you)' : '')}
+                                      name={option.displayName + (option.isSelf ? ' (you)' : '')}
                                       Icon={<Avatar size="avatar_sm" userId={option.userId} />}
                                       onClick={() => {
                                           setHighlightedIndex(i)
@@ -247,12 +243,14 @@ const getPossibleQueryMatch = (text: string): MenuTextMatch | null => {
 
 class MentionTypeaheadOption extends MenuOption {
     name: string
+    displayName: string
     userId: string
     isSelf: boolean
 
     constructor(name: string, userId: string, isSelf = false) {
         super(name)
         this.name = name
+        this.displayName = getPrettyDisplayName({ name, userId }).name
         this.userId = userId
         this.isSelf = isSelf
     }

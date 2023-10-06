@@ -14,10 +14,12 @@ import {
 } from 'lexical'
 
 import { atoms } from 'ui/styles/atoms.css'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 export type SerializedMentionNode = Spread<
     {
         mentionName: string
+        prettyDisplayName: string
         userId: string
         type: 'mention'
         version: 1
@@ -41,6 +43,7 @@ function convertMentionElement(domNode: HTMLElement): DOMConversionOutput | null
 
 export class MentionNode extends TextNode {
     __mentionName: string
+    __prettyDisplayName: string
     __userId: string
 
     static getType(): string {
@@ -48,7 +51,12 @@ export class MentionNode extends TextNode {
     }
 
     static clone(node: MentionNode): MentionNode {
-        return new MentionNode(node.__mentionName, node.__userId, node.__key)
+        return new MentionNode(
+            node.__mentionName,
+            node.__prettyDisplayName,
+            node.__userId,
+            node.__key,
+        )
     }
 
     static importJSON(serializedNode: SerializedMentionNode): MentionNode {
@@ -61,9 +69,10 @@ export class MentionNode extends TextNode {
         return node
     }
 
-    constructor(mentionName: string, userId: string, key?: NodeKey) {
-        super(mentionName, key)
+    constructor(mentionName: string, prettyDisplayName: string, userId: string, key?: NodeKey) {
+        super(prettyDisplayName, key)
         this.__mentionName = mentionName
+        this.__prettyDisplayName = prettyDisplayName
         this.__userId = userId
     }
 
@@ -82,6 +91,7 @@ export class MentionNode extends TextNode {
         return {
             ...super.exportJSON(),
             mentionName: this.__mentionName,
+            prettyDisplayName: this.__prettyDisplayName,
             userId: this.__userId,
             type: 'mention',
             version: 1,
@@ -134,13 +144,18 @@ export class MentionNode extends TextNode {
         }
     }
 
+    getTextContent(): string {
+        return this.__mentionName
+    }
+
     isTextEntity(): true {
         return true
     }
 }
 
 export function $createMentionNode(mentionName: string, userId: string): MentionNode {
-    const mentionNode = new MentionNode(mentionName, userId)
+    const prettyDisplayName = getPrettyDisplayName({ name: mentionName, userId }).name
+    const mentionNode = new MentionNode(mentionName, prettyDisplayName, userId)
     mentionNode.setMode('segmented').toggleDirectionless()
     return $applyNodeReplacement(mentionNode)
 }
