@@ -317,7 +317,7 @@ message UserSettingsPayload {
     message Snapshot {
         // inception
         Inception inception = 1;
-        // channelId: FullyReadMarker
+        // channelStreamId: FullyReadMarker
         map<string, FullyReadMarkers> fully_read_markers = 2;
     }
 

@@ -30,12 +30,6 @@ export function useSendReadReceipt(client: ZionClient | undefined) {
                 }
             })
 
-            try {
-                await client.sendReadReceipt(marker.channelId)
-            } catch (e) {
-                console.error('Failed to send read receipt', e)
-            }
-
             const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
             const channelMarkers = Object.entries(
                 useFullyReadMarkerStore.getState().markers,

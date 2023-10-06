@@ -10,7 +10,7 @@ export async function sendFullyReadMarkers(
     const fullyReadMarkersContentRecord: Record<string, FullyReadMarkerContent> = {}
     for (const [threadroot, fullyReadMarker] of Object.entries(fullyReadMarkers)) {
         const fullyReadMarkerContent = new FullyReadMarkerContent({
-            channelId: fullyReadMarker.channelId.networkId,
+            channelId: channelId,
             threadParentId: fullyReadMarker.threadParentId,
             eventId: fullyReadMarker.eventId,
             eventCreatedAtEpochMs: fullyReadMarker.eventCreatedAtEpocMs

@@ -22,8 +22,8 @@ const log = dlog('csb:stream')
 export class StreamStateView_UserSettings implements StreamStateView_IContent {
     readonly streamId: string
     readonly settings = new Map<string, string>()
-    //this property can be used during the UI part initialization to get initial state of fullyReadMarkers
-    readonly readFullyReadMarkers = new Map<string, EncryptedData>()
+    readonly fullyReadMarkersSrc = new Map<string, EncryptedData>()
+    readonly fullyReadMarkers = new Map<string, Record<string, FullyReadMarkerContent>>()
 
     constructor(inception: UserSettingsPayload_Inception) {
         this.streamId = inception.streamId
@@ -81,24 +81,18 @@ export class StreamStateView_UserSettings implements StreamStateView_IContent {
         emitter?: TypedEmitter<StreamEvents>,
     ): void {
         const { content } = payload
+        log('$ fullyReadMarkerUpdate', { content })
         if (content === undefined) {
-            log('Content with FullyReadMarkers is undefined')
+            log('$ Content with FullyReadMarkers is undefined')
             return
         }
-
-        this.readFullyReadMarkers.set(payload.channelStreamId, content)
-
-        const fullyReadMarkers: Record<string, FullyReadMarkerContent> = {}
-
-        const fullyReadMarkersContent: FullyReadMarkersContent =
-            FullyReadMarkersContent.fromJsonString(content.text)
-
-        for (const [threadRoot, fullyReadMarker] of Object.entries(
+        this.fullyReadMarkersSrc.set(payload.channelStreamId, content)
+        const fullyReadMarkersContent = FullyReadMarkersContent.fromJsonString(content.text)
+        this.fullyReadMarkers.set(payload.channelStreamId, fullyReadMarkersContent.markers)
+        emitter?.emit(
+            'channelUnreadMarkerUpdated',
+            payload.channelStreamId,
             fullyReadMarkersContent.markers,
-        )) {
-            fullyReadMarkers[threadRoot] = fullyReadMarker
-        }
-
-        emitter?.emit('channelUnreadMarkerUpdated', fullyReadMarkers)
+        )
     }
 }

@@ -3905,7 +3905,7 @@ type UserSettingsPayload_Snapshot struct {
 
 	// inception
 	Inception *UserSettingsPayload_Inception `protobuf:"bytes,1,opt,name=inception,proto3" json:"inception,omitempty"`
-	// channelId: FullyReadMarker
+	// channelStreamId: FullyReadMarker
 	FullyReadMarkers map[string]*UserSettingsPayload_FullyReadMarkers `protobuf:"bytes,2,rep,name=fully_read_markers,json=fullyReadMarkers,proto3" json:"fully_read_markers,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 

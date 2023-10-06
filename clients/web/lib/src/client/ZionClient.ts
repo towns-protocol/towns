@@ -1812,19 +1812,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     /************************************************
-     * send read receipt
-     * no need to send for every message, matrix uses an "up to" algorithm
-     ************************************************/
-    //TODO: remove this function with Matrix cleanup as it is not required for River
-    // eslint-disable-next-line @typescript-eslint/require-await
-    public async sendReadReceipt(
-        roomId: RoomIdentifier,
-        _eventId: string | undefined = undefined,
-    ): Promise<void> {
-        console.error('not implemented')
-    }
-
-    /************************************************
      * log
      *************************************************/
     protected log(message: string, ...optionalParams: unknown[]) {

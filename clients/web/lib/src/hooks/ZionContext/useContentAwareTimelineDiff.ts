@@ -25,50 +25,28 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
             encryptedEvents: {},
         }
 
-        //TODO: Initialization of unread markers is required here.
-
         // listen to the timeine for changes, diff each change, and update the unread counts
         const onTimelineChange = (timelineState: TimelineStore, prev: TimelineStore) => {
             effectState = diffTimeline(timelineState, prev, effectState, userId)
         }
 
         const onChannelUnreadMarkerUpdated = (
+            channelId: string,
             fullyReadMarkers: Record<string, FullyReadMarkerContent>,
         ) => {
-            if (fullyReadMarkers) {
-                useFullyReadMarkerStore.setState((state) => {
-                    let didUpdate = false
-                    const updated = { ...state.markers }
-                    for (const [key, value] of Object.entries(fullyReadMarkers)) {
-                        //TODO: refactor fully read marker createion when we will get rid of Matrix
-                        const marker: FullyReadMarker = {
-                            channelId: toCasablancaRoomId(value.channelId),
-                            threadParentId: value.threadParentId,
-                            eventId: value.eventId,
-                            eventCreatedAtEpocMs: Number(value.eventCreatedAtEpochMs),
-                            isUnread: value.isUnread,
-                            markedUnreadAtTs: Number(value.markedUnreadAtEpochMs),
-                            markedReadAtTs: Number(value.markedReadAtEpochMs),
-                            mentions: value.mentions ? value.mentions : 0,
-                        }
-                        if (!updated[key] || updated[key].markedReadAtTs < marker.markedReadAtTs) {
-                            console.log('onRoomAccountDataEvent: setting marker for', {
-                                key,
-                                marker,
-                            })
-                            updated[key] = marker
-                            didUpdate = true
-                        }
-                    }
-                    if (didUpdate) {
-                        return { markers: updated }
-                    } else {
-                        return state
-                    }
+            updateFullyReadMarkers(channelId, fullyReadMarkers)
+        }
+
+        // initialize markers
+        if (casablancaClient.userSettingsStreamId) {
+            const markers = casablancaClient.stream(casablancaClient.userSettingsStreamId)?.view
+                .userSettingsContent.fullyReadMarkers
+            if (markers) {
+                markers.forEach((value, key) => {
+                    updateFullyReadMarkers(key, value)
                 })
             }
         }
-
         // subscribe
         const unsubTimeline = useTimelineStore.subscribe(onTimelineChange)
         casablancaClient.on('channelUnreadMarkerUpdated', onChannelUnreadMarkerUpdated)
@@ -78,6 +56,42 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
             casablancaClient.off('channelUnreadMarkerUpdated', onChannelUnreadMarkerUpdated)
         }
     }, [casablancaClient])
+}
+
+function updateFullyReadMarkers(
+    _channelId: string,
+    fullyReadMarkers: Record<string, FullyReadMarkerContent>,
+) {
+    useFullyReadMarkerStore.setState((state) => {
+        let didUpdate = false
+        const updated = { ...state.markers }
+        for (const [key, value] of Object.entries(fullyReadMarkers)) {
+            //TODO: refactor fully read marker createion when we will get rid of Matrix
+            const marker: FullyReadMarker = {
+                channelId: toCasablancaRoomId(value.channelId),
+                threadParentId: value.threadParentId,
+                eventId: value.eventId,
+                eventCreatedAtEpocMs: Number(value.eventCreatedAtEpochMs),
+                isUnread: value.isUnread,
+                markedUnreadAtTs: Number(value.markedUnreadAtEpochMs),
+                markedReadAtTs: Number(value.markedReadAtEpochMs),
+                mentions: value.mentions ? value.mentions : 0,
+            }
+            if (!updated[key] || updated[key].markedReadAtTs < marker.markedReadAtTs) {
+                console.log('$ onRoomAccountDataEvent: setting marker for', {
+                    key,
+                    marker,
+                })
+                updated[key] = marker
+                didUpdate = true
+            }
+        }
+        if (didUpdate) {
+            return { markers: updated }
+        } else {
+            return state
+        }
+    })
 }
 
 function isCountedAsUnreadZTEvent(event: TimelineEvent, myUserId: string): boolean {
@@ -162,7 +176,7 @@ function diffTimeline(
                                     // same sate, noop
                                     return state
                                 }
-                                console.log('adding unread marker for decrypted event', {
+                                console.log('$ adding unread marker for decrypted event', {
                                     id,
                                     event,
                                     oldMarker,
@@ -236,7 +250,6 @@ function diffTimeline(
     return effectState
 }
 
-//TODO: _diffDeleted is not implemented yet
 function _diffDeleted(
     roomId: string,
     userId: string,
