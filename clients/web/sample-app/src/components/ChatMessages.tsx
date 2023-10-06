@@ -7,7 +7,7 @@ import {
     useFullyReadMarker,
     useZionClient,
 } from 'use-zion-client'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { AcceptInvitation } from './AcceptInvitation'
 
 interface Props {
@@ -25,14 +25,36 @@ export function ChatMessages(props: Props): JSX.Element {
     const unreadMarker = useFullyReadMarker(roomId, threadParentId)
     const [currentMessage, setCurrentMessage] = useState<string>('')
     const hasUnread = membership === Membership.Join && unreadMarker?.isUnread === true
-    // pull if the first message is create, we've reached the end
-    // Caveat, when we first sync the space in the sample app, there's a leave event
-    // that's prepended to the timeline, not sure where the bug is
-    // issue: https://github.com/HereNotThere/harmony/issues/443
+    const [hasReachedTerminus, setHasReachedTerminus] = useState<boolean>(false)
+    const [autoPost, setAutoPost] = useState<boolean>(false)
+    const [extremeMode, setExtremeMode] = useState<boolean>(false)
+    const [scrollToBottom, setScrollToBottom] = useState<boolean>(true)
     const canLoadMore =
         timeline.length > 1 &&
         timeline[0].content?.kind !== ZTEvent.RoomCreate &&
-        timeline[1].content?.kind !== ZTEvent.RoomCreate
+        !hasReachedTerminus
+    const messagesEndRef = useRef<HTMLDivElement>(null)
+    const messagesStartRef = useRef<HTMLDivElement>(null)
+
+    // auto post effect
+    useEffect(() => {
+        const onInterval = () => {
+            if (autoPost) {
+                void sendMessage?.(roomId, `¿🌝 GM 🌚?`)
+            }
+        }
+        const intervalId = setInterval(onInterval, extremeMode ? 1 : 1000)
+        return () => {
+            clearInterval(intervalId)
+        }
+    }, [autoPost, extremeMode, roomId, sendMessage])
+
+    // scroll to bottom effect
+    useEffect(() => {
+        if (scrollToBottom && messagesEndRef.current && timeline.length > 0) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'instant' })
+        }
+    }, [scrollToBottom, timeline])
 
     const onTextChanged = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         setCurrentMessage(event.target.value)
@@ -49,7 +71,16 @@ export function ChatMessages(props: Props): JSX.Element {
     )
 
     const onClickLoadMore = useCallback(() => {
-        void scrollback(roomId)
+        setScrollToBottom(false)
+        ;(async () => {
+            const result = await scrollback(roomId)
+            if (result?.terminus) {
+                setHasReachedTerminus(true)
+            }
+            if (messagesStartRef.current) {
+                messagesStartRef.current.scrollIntoView({ behavior: 'instant' })
+            }
+        })()
     }, [scrollback, roomId])
 
     const onClickMarkAsRead = useCallback(() => {
@@ -70,38 +101,9 @@ export function ChatMessages(props: Props): JSX.Element {
             if (timeline.length > 0) {
                 return (
                     <>
-                        {canLoadMore && (
-                            <Typography
-                                key={-1}
-                                display="block"
-                                variant="body1"
-                                component="button"
-                                sx={buttonStyle}
-                                onClick={onClickLoadMore}
-                            >
-                                Load More
-                            </Typography>
-                        )}
                         {timeline.map((m: TimelineEvent, index: number) => (
                             <ChatMessage event={m} key={m.eventId} />
                         ))}
-                        {hasUnread && (
-                            <>
-                                <p style={{ ...smallStyle, alignSelf: 'center' }}>
-                                    Unread Event: {truncateEventId(unreadMarker?.eventId ?? '')}
-                                </p>
-                                <Typography
-                                    key={timeline.length}
-                                    display="block"
-                                    variant="body1"
-                                    component="button"
-                                    sx={buttonStyle}
-                                    onClick={onClickMarkAsRead}
-                                >
-                                    Mark as Read
-                                </Typography>
-                            </>
-                        )}
                     </>
                 )
             } else {
@@ -113,12 +115,17 @@ export function ChatMessages(props: Props): JSX.Element {
     }
 
     return (
-        <Box display="flex" flexGrow="1" flexDirection="column">
-            {chatMessages()}
+        <Box display="flex" flexGrow="1" flexDirection="column" height="80vh">
+            <Box overflow="auto" flexGrow="1">
+                <div ref={messagesStartRef} />
+                {chatMessages()}
+                <div ref={messagesEndRef} />
+            </Box>
             <Box display="flex" flexDirection="row" flexGrow={1} />
             {membership === Membership.Join && sendMessage !== undefined ? (
                 <>
                     <Divider />
+
                     <Box sx={messageStyle}>
                         <TextField
                             fullWidth
@@ -130,11 +137,70 @@ export function ChatMessages(props: Props): JSX.Element {
                             onKeyDown={onKeyDown}
                         />
                     </Box>
+                    <Box>
+                        <CheckyBox
+                            label="Auto Post"
+                            checked={autoPost}
+                            onChange={() => setAutoPost(!autoPost)}
+                        />
+                        <CheckyBox
+                            label="Extreme Mode"
+                            checked={extremeMode}
+                            onChange={() => setExtremeMode(!extremeMode)}
+                        />
+                        <CheckyBox
+                            label="Scroll To Bottom"
+                            checked={scrollToBottom}
+                            onChange={() => setScrollToBottom(!scrollToBottom)}
+                        />
+                        {canLoadMore && (
+                            <Typography
+                                key="can-load-more"
+                                display="block"
+                                variant="body1"
+                                component="button"
+                                sx={buttonStyle}
+                                onClick={onClickLoadMore}
+                            >
+                                Load More
+                            </Typography>
+                        )}
+                        {hasUnread && (
+                            <>
+                                <p style={{ ...smallStyle, alignSelf: 'center' }}>
+                                    Unread Event: {truncateEventId(unreadMarker?.eventId ?? '')}
+                                </p>
+                                <Typography
+                                    key="mark-as-read"
+                                    display="block"
+                                    variant="body1"
+                                    component="button"
+                                    sx={buttonStyle}
+                                    onClick={onClickMarkAsRead}
+                                >
+                                    Mark as Read
+                                </Typography>
+                            </>
+                        )}
+                    </Box>
                 </>
             ) : null}
         </Box>
     )
 }
+
+const CheckyBox = (props: { label: string; checked: boolean; onChange: () => void }) => (
+    <>
+        <input
+            key={props.label}
+            type="checkbox"
+            name={props.label}
+            checked={props.checked}
+            onChange={props.onChange}
+        />
+        <label>{props.label}</label>
+    </>
+)
 
 const NoMessages = () => (
     <Typography display="block" variant="body1" component="span" sx={messageStyle}>

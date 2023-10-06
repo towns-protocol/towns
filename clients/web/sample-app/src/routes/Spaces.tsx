@@ -38,19 +38,6 @@ export const Spaces = () => {
     if (space && channelSlug) {
         return (
             <>
-                <Box
-                    display="flex"
-                    flexDirection="row"
-                    alignItems="left"
-                    sx={{
-                        pl: (theme: Theme) => theme.spacing(0),
-                        mb: (theme: Theme) => theme.spacing(1),
-                    }}
-                    onClick={onClickSpace}
-                >
-                    <ArrowRight />
-                    <Link>{space.name}</Link>
-                </Box>
                 <Divider />
                 <Outlet />
             </>

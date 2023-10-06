@@ -1,14 +1,4 @@
-import {
-    AppBar,
-    Box,
-    Button,
-    CssBaseline,
-    Divider,
-    Drawer,
-    Theme,
-    Toolbar,
-    Typography,
-} from '@mui/material'
+import { Box, CssBaseline, Divider, Drawer, Toolbar } from '@mui/material'
 import {
     InviteData,
     RoomIdentifier,
@@ -19,7 +9,6 @@ import {
 import { Outlet, useNavigate } from 'react-router-dom'
 import React, { useCallback, useMemo, useState } from 'react'
 
-import { Logout } from './Logout'
 import { Invites } from './Invites'
 import { SidebarNewItemButton } from './Buttons/SidebarNewItemButton'
 import { SidebarItemButton } from './Buttons/SidebarItemButton'
@@ -40,14 +29,6 @@ export function AppDrawer(props: Props): JSX.Element {
     const { window } = props
     const navigate = useNavigate()
     const [mobileOpen, setMobileOpen] = useState(false)
-    const { userId } = useMatrixCredentials()
-
-    const myWalletAddress = useMemo(() => {
-        if (userId) {
-            const accountAddress = getAccountAddress(userId)
-            return accountAddress ? getShortUsername(accountAddress) : undefined
-        }
-    }, [userId])
 
     const handleDrawerToggle = useCallback(() => {
         setMobileOpen(!mobileOpen)
@@ -85,7 +66,7 @@ export function AppDrawer(props: Props): JSX.Element {
         navigate('/spaces/new')
     }
 
-    const onHomeClick = () => {
+    const onMeClick = () => {
         navigate('/')
     }
 
@@ -113,6 +94,7 @@ export function AppDrawer(props: Props): JSX.Element {
             <Invites title="Invites" onClickInvite={onClickInvite} />
             <SidebarItemButton label="Web 3" onClick={onWeb3Click} />
             <SidebarItemButton label="Logins" onClick={onLoginsClick} />
+            <SidebarItemButton label="Me" onClick={onMeClick} />
             <Divider />
             <DebugBar />
         </div>
@@ -123,36 +105,6 @@ export function AppDrawer(props: Props): JSX.Element {
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
-            <AppBar
-                position="fixed"
-                sx={{
-                    width: { sm: `calc(100% - ${drawerWidth}px)` },
-                    ml: { sm: `${drawerWidth}px` },
-                }}
-            >
-                <Box display="flex" flexDirection="row" alignItems="center">
-                    <Button variant="text" onClick={onHomeClick}>
-                        <Typography
-                            noWrap
-                            variant="h6"
-                            component="div"
-                            sx={spacingStyle}
-                            color="white"
-                        >
-                            Matrix Client
-                        </Typography>
-                    </Button>
-                    <Box display="flex" flexDirection="row" flexGrow={1} />
-                    <Box sx={spacingStyle} alignItems="right">
-                        <Button variant="text" onClick={onHomeClick}>
-                            <Typography color="white">{myWalletAddress}</Typography>
-                        </Button>
-                    </Box>
-                    <Box sx={spacingStyle}>
-                        <Logout />
-                    </Box>
-                </Box>
-            </AppBar>
             <Box
                 component="nav"
                 sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
@@ -199,14 +151,8 @@ export function AppDrawer(props: Props): JSX.Element {
                     width: { sm: `calc(100% - ${drawerWidth}px)` },
                 }}
             >
-                <Toolbar />
                 <Outlet />
             </Box>
         </Box>
     )
-}
-
-const spacingStyle = {
-    padding: (theme: Theme) => theme.spacing(2),
-    gap: (theme: Theme) => theme.spacing(1),
 }

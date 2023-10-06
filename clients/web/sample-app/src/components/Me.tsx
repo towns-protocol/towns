@@ -2,15 +2,15 @@ import { Stack } from '@mui/material'
 import React, { useMemo } from 'react'
 import {
     createUserIdFromString,
-    useMatrixCredentials,
+    useCasablancaCredentials,
     useMyProfile,
     useServerVersions,
 } from 'use-zion-client'
+import { Logout } from './Logout'
 
 export const Me = () => {
-    const { userId } = useMatrixCredentials()
     const myProfile = useMyProfile()
-
+    const { userId } = useCasablancaCredentials()
     const { serverVersions } = useServerVersions({ homeserverUrl: undefined })
     const userIdentifier = useMemo(() => {
         return userId ? createUserIdFromString(userId) : undefined
@@ -42,6 +42,7 @@ export const Me = () => {
             <p>
                 Release Version: <strong>{serverVersions?.release_version ?? '??'}</strong>
             </p>
+            <Logout />
         </Stack>
     )
 }
