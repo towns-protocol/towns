@@ -12,6 +12,9 @@ import {Validator__InvalidStringLength, Validator__InvalidByteLength, Validator_
 // contracts
 import {TownOwnerSetup} from "./TownOwnerSetup.sol";
 
+// debuggging
+import {console} from "forge-std/console.sol";
+
 contract TownOwnerTest is ITownOwnerBase, IOwnableBase, TownOwnerSetup {
   string name = "Town Name";
   string uri = "ipfs://town-name";
@@ -147,5 +150,17 @@ contract TownOwnerTest is ITownOwnerBase, IOwnableBase, TownOwnerSetup {
     vm.prank(deployer);
     vm.expectRevert(Validator__InvalidAddress.selector);
     townOwner.setFactory(address(0));
+  }
+
+  function test_getVotes() external {
+    assertEq(townOwner.getVotes(deployer), 0);
+
+    vm.prank(deployer);
+    townOwner.mintTown(name, "", networkId, _randomAddress());
+
+    vm.prank(deployer);
+    townOwner.delegate(deployer);
+
+    assertEq(townOwner.getVotes(deployer), 1);
   }
 }

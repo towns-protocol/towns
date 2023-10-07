@@ -12,14 +12,25 @@ import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {TownOwnerBase} from "./TownOwnerBase.sol";
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 import {GuardianBase} from "contracts/src/towns/facets/guardian/GuardianBase.sol";
+import {VotesBase} from "contracts/src/diamond/facets/governance/votes/VotesBase.sol";
 
 contract TownOwner is
   ITownOwner,
   TownOwnerBase,
   OwnableBase,
   GuardianBase,
+  VotesBase,
   ERC721A
 {
+  function __TownOwner_init(
+    string memory name,
+    string memory symbol,
+    string memory version
+  ) external initializer {
+    __ERC721A_init_unchained(name, symbol);
+    __EIP712_init(name, version);
+  }
+
   // =============================================================
   //                           Factory
   // =============================================================
@@ -95,6 +106,22 @@ contract TownOwner is
     }
 
     super._beforeTokenTransfers(from, to, startTokenId, quantity);
+  }
+
+  function _afterTokenTransfers(
+    address from,
+    address to,
+    uint256 firstTokenId,
+    uint256 batchSize
+  ) internal virtual override {
+    _transferVotingUnits(from, to, batchSize);
+    super._afterTokenTransfers(from, to, firstTokenId, batchSize);
+  }
+
+  function _getVotingUnits(
+    address account
+  ) internal view virtual override returns (uint256) {
+    return balanceOf(account);
   }
 
   // =============================================================

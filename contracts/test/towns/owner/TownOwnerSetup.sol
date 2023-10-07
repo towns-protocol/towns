@@ -8,7 +8,10 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // helpers
 import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
+
+import {VotesBase} from "contracts/src/diamond/facets/governance/votes/VotesBase.sol";
 import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
+
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {GuardianHelper} from "contracts/test/towns/guardian/GuardianSetup.sol";
@@ -63,7 +66,7 @@ contract TownOwnerImplementation {
 
     bytes[] memory payloads = new bytes[](3);
     payloads[index++] = ownableHelper.makeInitData(abi.encode(deployer));
-    payloads[index++] = townOwnerHelper.makeInitData("TownOwner", "OWNER");
+    payloads[index++] = townOwnerHelper.makeInitData("TownOwner", "OWNER", "1");
     payloads[index++] = guardianHelper.makeInitData(7 days);
 
     return
@@ -92,7 +95,7 @@ contract TownOwnerHelper is ERC721AHelper {
 
   function selectors() public view override returns (bytes4[] memory) {
     bytes4[] memory currentSelectors_ = super.selectors();
-    bytes4[] memory selectors_ = new bytes4[](currentSelectors_.length + 6);
+    bytes4[] memory selectors_ = new bytes4[](currentSelectors_.length + 15);
     uint256 index;
 
     for (uint256 i = 0; i < currentSelectors_.length; i++) {
@@ -106,10 +109,36 @@ contract TownOwnerHelper is ERC721AHelper {
     selectors_[index++] = TownOwner.getTownInfo.selector;
     selectors_[index++] = TownOwner.nextTokenId.selector;
     selectors_[index++] = TownOwner.updateTownInfo.selector;
+
+    // Votes
+    selectors_[index++] = VotesBase.DOMAIN_SEPARATOR.selector;
+    selectors_[index++] = VotesBase.clock.selector;
+    selectors_[index++] = VotesBase.CLOCK_MODE.selector;
+    selectors_[index++] = VotesBase.getVotes.selector;
+    selectors_[index++] = VotesBase.getPastVotes.selector;
+    selectors_[index++] = VotesBase.getPastTotalSupply.selector;
+    selectors_[index++] = VotesBase.delegates.selector;
+    selectors_[index++] = VotesBase.delegate.selector;
+    selectors_[index++] = VotesBase.delegateBySig.selector;
+
     return selectors_;
   }
 
-  function creationCode() public pure virtual returns (bytes memory) {
-    return type(TownOwner).creationCode;
+  function initializer() public view virtual override returns (bytes4) {
+    return townOwner.__TownOwner_init.selector;
+  }
+
+  function makeInitData(
+    string memory name,
+    string memory symbol,
+    string memory version
+  ) public pure returns (bytes memory) {
+    return
+      abi.encodeWithSelector(
+        TownOwner.__TownOwner_init.selector,
+        name,
+        symbol,
+        version
+      );
   }
 }
