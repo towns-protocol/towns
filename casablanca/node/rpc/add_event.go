@@ -12,6 +12,7 @@ import (
 	. "casablanca/node/base"
 	"casablanca/node/common"
 	"casablanca/node/crypto"
+	"casablanca/node/dlog"
 	. "casablanca/node/events"
 	"casablanca/node/infra"
 	. "casablanca/node/protocol"
@@ -22,27 +23,24 @@ var (
 	addEventRequests = infra.NewSuccessMetrics("add_event_requests", serviceRequests)
 )
 
-func (s *Service) AddEvent(ctx context.Context, req *connect.Request[AddEventRequest]) (*connect.Response[AddEventResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
+func (s *Service) localAddEvent(ctx context.Context, req *connect.Request[AddEventRequest]) (*connect.Response[AddEventResponse], error) {
+	log := dlog.CtxLog(ctx)
 
 	parsedEvent, err := ParseEvent(req.Msg.Event)
 	if err != nil {
-		log.Warn("srv.AddEvent ERROR: failed to parse events", "request", req.Msg, "error", err)
 		addEventRequests.Fail()
-		return nil, AsRiverError(err).Func("srv.AddEvent").Tag("streamId", req.Msg.StreamId)
+		return nil, AsRiverError(err).Func("localAddEvent")
 	}
 
-	log.Debug("srv.AddEvent ENTER", "streamId", req.Msg.StreamId, "event", parsedEvent)
+	log.Debug("localAddEvent", "parsedEvent", parsedEvent)
 
 	err = s.addParsedEvent(ctx, req.Msg.StreamId, parsedEvent)
 	if err == nil {
-		log.Debug("srv.AddEvent LEAVE", "streamId", req.Msg.StreamId)
 		addEventRequests.Pass()
 		return connect.NewResponse(&AddEventResponse{}), nil
 	} else {
 		addEventRequests.Fail()
-		log.Warn("srv.AddEvent ERROR", "streamId", req.Msg.StreamId, "error", err)
-		return nil, AsRiverError(err).Func("srv.AddEvent").Tag("streamId", req.Msg.StreamId)
+		return nil, AsRiverError(err).Func("localAddEvent")
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"casablanca/node/auth"
 	"casablanca/node/common"
+	"casablanca/node/dlog"
 	. "casablanca/node/events"
 	"casablanca/node/infra"
 	. "casablanca/node/protocol"
@@ -23,20 +24,19 @@ var (
 	createStreamRequests = infra.NewSuccessMetrics("create_stream_requests", serviceRequests)
 )
 
-func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
-
-	resMsg, err := s.createStream(ctx, log, req.Msg)
+func (s *Service) localCreateStream(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
+	resMsg, err := s.createStream(ctx, req.Msg)
 	if err != nil {
 		createStreamRequests.Fail()
-		return nil, AsRiverError(err).Func("CreateStream").Tag("streamId", req.Msg.StreamId).LogWarn(log)
+		return nil, AsRiverError(err).Func("localCreateStream")
 	}
-	log.Debug("CreateStream: DONE", "response", resMsg)
 	createStreamRequests.Pass()
 	return connect_go.NewResponse(resMsg), nil
 }
 
-func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *CreateStreamRequest) (*CreateStreamResponse, error) {
+func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*CreateStreamResponse, error) {
+	log := dlog.CtxLog(ctx)
+
 	if len(req.Events) == 0 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "no events")
 	}
@@ -46,7 +46,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *Creat
 		return nil, err
 	}
 
-	log.Debug("CreateStream ENTER", "request", req, "events", parsedEvents)
+	log.Debug("localCreateStream", "parsedEvents", parsedEvents)
 
 	if !s.skipDelegateCheck {
 		err = s.checkStaleDelegate(ctx, parsedEvents)

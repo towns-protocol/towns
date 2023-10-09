@@ -3,134 +3,117 @@ package rpc
 import (
 	. "casablanca/node/base"
 	"casablanca/node/dlog"
-	. "casablanca/node/nodes"
 	. "casablanca/node/protocol"
+	. "casablanca/node/protocol/protocolconnect"
 	"context"
 
 	connect_go "github.com/bufbuild/connect-go"
 )
 
-// Implements StreamServiceHandler
-type forwarderImpl struct {
-	nodeRegistry   NodeRegistry
-	streamRegistry StreamRegistry
-}
-
-func NewForwarder(nodeRegistry NodeRegistry, streamRegistry StreamRegistry) *forwarderImpl {
-	return &forwarderImpl{
-		nodeRegistry:   nodeRegistry,
-		streamRegistry: streamRegistry,
-	}
-}
-
-func (f *forwarderImpl) getStubForStream(ctx context.Context, streamId string) (StreamService, error) {
-	nodeAddress, err := f.streamRegistry.GetNodeAddressesForStream(ctx, streamId)
+func (s *Service) getStubForStream(ctx context.Context, streamId string) (StreamServiceClient, error) {
+	nodeAddress, err := s.streamRegistry.GetNodeAddressesForStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
 
+	dlog.CtxLog(ctx).Debug("Forwarding request", "streamId", streamId, "nodeAddress", nodeAddress)
 	// TODO: right now streams are not replicated, so there is only one node that is responsible for a stream.
 	// In the future, some smarter selection logic will be needed.
-	stub, err := f.nodeRegistry.GetStubForAddress(nodeAddress[0])
-	if err != nil {
-		return nil, err
-	}
-
-	return stub, nil
+	return s.nodeRegistry.GetRemoteStubForAddress(nodeAddress[0])
 }
 
-func (f *forwarderImpl) CreateStream(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
-	log := dlog.CtxLog(ctx) // TODO: use ctxAndLogForRequest
-	log.Debug("fwd.CreateStream ENTER", "streamId", req.Msg.StreamId)
-	r, e := f.createStreamImpl(ctx, req)
+func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
+	ctx, log := ctxAndLogForRequest(ctx, req)
+	log.Debug("CreateStream ENTER")
+	r, e := s.createStreamImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("fwd.CreateStream").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(e).Func("CreateStream").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
 	}
-	log.Debug("fwd.CreateStream LEAVE", "response", r.Msg)
+	log.Debug("CreateStream LEAVE", "response", r.Msg)
 	return r, nil
 }
 
-func (f *forwarderImpl) createStreamImpl(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
-	stub, err := f.getStubForStream(ctx, req.Msg.StreamId)
+func (s *Service) createStreamImpl(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
+	stub, err := s.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
 
-	return stub.CreateStream(ctx, req)
+	if stub != nil {
+		return stub.CreateStream(ctx, req)
+	} else {
+		return s.localCreateStream(ctx, req)
+	}
 }
 
-func (f *forwarderImpl) GetStream(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
-	log := dlog.CtxLog(ctx) // TODO: use ctxAndLogForRequest
-	log.Debug("fwd.GetStream ENTER", "streamId", req.Msg.StreamId)
-	r, e := f.getStreamImpl(ctx, req)
+func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
+	ctx, log := ctxAndLogForRequest(ctx, req)
+	log.Debug("GetStream ENTER")
+	r, e := s.getStreamImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("fwd.GetStream").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(e).Func("GetStream").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
 	}
-	log.Debug("fwd.GetStream LEAVE", "response", r.Msg)
+	log.Debug("GetStream LEAVE", "response", r.Msg)
 	return r, nil
 }
 
-func (f *forwarderImpl) getStreamImpl(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
-	stub, err := f.getStubForStream(ctx, req.Msg.StreamId)
+func (s *Service) getStreamImpl(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
+	stub, err := s.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
 
-	return stub.GetStream(ctx, req)
+	if stub != nil {
+		return stub.GetStream(ctx, req)
+	} else {
+		return s.localGetStream(ctx, req)
+	}
 }
 
-func (f *forwarderImpl) GetMiniblocks(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
-	log := dlog.CtxLog(ctx) // TODO: use ctxAndLogForRequest
-	log.Debug("fwd.GetMiniblocks ENTER", "req", req.Msg)
-	r, e := f.getMiniblocksImpl(ctx, req)
+func (s *Service) GetMiniblocks(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
+	ctx, log := ctxAndLogForRequest(ctx, req)
+	log.Debug("GetMiniblocks ENTER", "req", req.Msg)
+	r, e := s.getMiniblocksImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("fwd.GetMiniblocks").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(e).Func("GetMiniblocks").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
 	}
-	log.Debug("fwd.GetMiniblocks LEAVE", "response", r.Msg)
+	log.Debug("GetMiniblocks LEAVE", "response", r.Msg)
 	return r, nil
 }
 
-func (f *forwarderImpl) getMiniblocksImpl(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
-	stub, err := f.getStubForStream(ctx, req.Msg.StreamId)
+func (s *Service) getMiniblocksImpl(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
+	stub, err := s.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
 
-	return stub.GetMiniblocks(ctx, req)
+	if stub != nil {
+		return stub.GetMiniblocks(ctx, req)
+	} else {
+		return s.localGetMiniblocks(ctx, req)
+	}
 }
 
-func (f *forwarderImpl) AddEvent(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
-	log := dlog.CtxLog(ctx) // TODO: use ctxAndLogForRequest
-	log.Debug("fwd.AddEvent ENTER", "req", req.Msg)
-	r, e := f.addEventImpl(ctx, req)
+func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
+	ctx, log := ctxAndLogForRequest(ctx, req)
+	log.Debug("AddEvent ENTER", "req", req.Msg)
+	r, e := s.addEventImpl(ctx, req)
 	if e != nil {
-		return nil, AsRiverError(e).Func("fwd.AddEvent").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(e).Func("AddEvent").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
 	}
-	log.Debug("fwd.AddEvent LEAVE", "streamId", req.Msg.StreamId)
+	log.Debug("AddEvent LEAVE", "streamId", req.Msg.StreamId)
 	return r, nil
 }
 
-func (f *forwarderImpl) addEventImpl(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
-	stub, err := f.getStubForStream(ctx, req.Msg.StreamId)
+func (s *Service) addEventImpl(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
+	stub, err := s.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
 
-	return stub.AddEvent(ctx, req)
-}
-
-func (f *forwarderImpl) GetLinkWalletNonce(ctx context.Context, req *connect_go.Request[GetLinkWalletNonceRequest]) (*connect_go.Response[GetLinkWalletNonceResponse], error) {
-	return f.nodeRegistry.GetLocalNode().Stub.GetLinkWalletNonce(ctx, req)
-}
-
-func (f *forwarderImpl) LinkWallet(ctx context.Context, req *connect_go.Request[LinkWalletRequest]) (*connect_go.Response[LinkWalletResponse], error) {
-	return f.nodeRegistry.GetLocalNode().Stub.LinkWallet(ctx, req)
-}
-
-func (f *forwarderImpl) GetLinkedWallets(ctx context.Context, req *connect_go.Request[GetLinkedWalletsRequest]) (*connect_go.Response[GetLinkedWalletsResponse], error) {
-	return f.nodeRegistry.GetLocalNode().Stub.GetLinkedWallets(ctx, req)
-}
-
-func (f *forwarderImpl) Info(ctx context.Context, req *connect_go.Request[InfoRequest]) (*connect_go.Response[InfoResponse], error) {
-	return f.nodeRegistry.GetLocalNode().Stub.Info(ctx, req)
+	if stub != nil {
+		return stub.AddEvent(ctx, req)
+	} else {
+		return s.localAddEvent(ctx, req)
+	}
 }

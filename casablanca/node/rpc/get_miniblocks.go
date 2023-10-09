@@ -13,21 +13,14 @@ var (
 	getMiniblocksRequests = infra.NewSuccessMetrics("get_miniblocks_requests", serviceRequests)
 )
 
-func (s *Service) GetMiniblocks(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
-
-	log.Debug("GetMiniblocks ENTER", "streamId", req.Msg.StreamId, "from", req.Msg.FromInclusive, "to", req.Msg.ToExclusive)
-
+func (s *Service) localGetMiniblocks(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
 	res, err := s.getMiniblocks(ctx, req)
 	if err != nil {
-		log.Warn("GetMiniblocks WARN", "error", err)
 		getMiniblocksRequests.Fail()
 		return nil, err
 	}
 
-	log.Debug("GetMiniblocks LEAVE", "response", res.Msg)
 	getMiniblocksRequests.Pass()
-
 	return res, nil
 }
 

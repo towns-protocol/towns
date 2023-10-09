@@ -2,8 +2,8 @@ package rpc
 
 import (
 	. "casablanca/node/events"
-	. "casablanca/node/nodes"
 	. "casablanca/node/protocol"
+	. "casablanca/node/protocol/protocolconnect"
 	"context"
 
 	"github.com/bufbuild/connect-go"
@@ -11,7 +11,7 @@ import (
 
 type remoteStream struct {
 	streamID string
-	stub     StreamService
+	stub     StreamServiceClient
 }
 
 var _ Stream = (*remoteStream)(nil)
@@ -22,14 +22,15 @@ func (s *Service) loadStream(ctx context.Context, streamID string) (Stream, Stre
 		return nil, nil, err
 	}
 
-	if s.nodeRegistry.ContainsLocalNode(nodes) {
-		return s.cache.GetStream(ctx, streamID)
-	}
-
 	targetNode := nodes[0]
-	stub, err := s.nodeRegistry.GetStubForAddress(targetNode)
+	stub, err := s.nodeRegistry.GetRemoteStubForAddress(targetNode)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	if stub == nil {
+		// Local node.
+		return s.cache.GetStream(ctx, streamID)
 	}
 
 	resp, err := stub.GetStream(ctx, connect.NewRequest(&GetStreamRequest{

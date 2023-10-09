@@ -13,21 +13,14 @@ var (
 	getStreamRequests = infra.NewSuccessMetrics("get_stream_requests", serviceRequests)
 )
 
-func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
-
-	log.Debug("GetStream ENTER", "streamId", req.Msg.StreamId)
-
+func (s *Service) localGetStream(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
 	res, err := s.getStream(ctx, req)
 	if err != nil {
-		log.Warn("GetStream WARN", "error", err)
 		getStreamRequests.Fail()
 		return nil, err
 	}
 
-	log.Debug("GetStream LEAVE", "response", res.Msg)
 	getStreamRequests.Pass()
-
 	return res, nil
 }
 

@@ -24,16 +24,16 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
-func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNode *nodes.LocalNode) (nodes.NodeRegistry, error) {
+func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAddress string) (nodes.NodeRegistry, error) {
 	log := dlog.CtxLog(ctx)
 
 	if nodeRegistryPath == "" {
 		log.Warn("No node registry path specified, running in single node configuration")
-		return nodes.MakeSingleNodeRegistry(ctx, localNode), nil
+		return nodes.MakeSingleNodeRegistry(ctx, localNodeAddress), nil
 	}
 
 	log.Info("Loading node registry", "path", nodeRegistryPath)
-	return nodes.LoadNodeRegistry(ctx, nodeRegistryPath, localNode)
+	return nodes.LoadNodeRegistry(ctx, nodeRegistryPath, localNodeAddress)
 }
 
 func createStore(ctx context.Context, dbUrl string, storageType string, address string) (storage.StreamStorage, error) {
@@ -108,6 +108,15 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		log.Warn("Using no-op wallet linking contract")
 	}
 
+	nodeRegistry, err := loadNodeRegistry(
+		ctx,
+		cfg.NodeRegistry,
+		wallet.AddressStr,
+	)
+	if err != nil {
+		return nil, 0, nil, err
+	}
+
 	streamService := &Service{
 		cache: events.NewStreamCache(
 			&events.StreamCacheParams{
@@ -121,26 +130,12 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		wallet:             wallet,
 		skipDelegateCheck:  cfg.SkipDelegateCheck,
 		exitSignal:         make(chan error, 1),
+		nodeRegistry:       nodeRegistry,
+		streamRegistry:     nodes.NewStreamRegistry(nodeRegistry),
 		streamConfig:       cfg.Stream,
 	}
 
-	streamService.nodeRegistry, err = loadNodeRegistry(
-		ctx,
-		cfg.NodeRegistry,
-		&nodes.LocalNode{
-			NodeAddress: wallet.AddressStr,
-			Stub:        streamService,
-			Syncer:      streamService,
-		},
-	)
-	if err != nil {
-		return nil, 0, nil, err
-	}
-	streamService.streamRegistry = nodes.NewStreamRegistry(streamService.nodeRegistry)
-
-	forwarder := NewForwarder(streamService.nodeRegistry, streamService.streamRegistry)
-
-	pattern, handler := protocolconnect.NewStreamServiceHandler(forwarder)
+	pattern, handler := protocolconnect.NewStreamServiceHandler(streamService)
 
 	mux := http.NewServeMux()
 	log.Info("Registering handler", "pattern", pattern)

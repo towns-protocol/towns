@@ -18,6 +18,11 @@ on:
                 required: false
                 default: false
                 type: boolean
+            skip_casablanca_multinode:
+                description: Skip Multi-node Tests
+                required: false
+                default: false
+                type: boolean
             skip_casablanca_client_entitlements:
                 description: Skip Casablanca Client Tests with entitlements
                 required: false
@@ -256,6 +261,150 @@ jobs:
 
             - name: Run Node Flush Tests (without entitlements)
               run: yarn workspace @river/sdk run test:node-minipool-flush
+
+            - name: Archive Casablanca log
+              if: always()
+              uses: actions/upload-artifact@v3
+              with:
+                  name: casablanca-node-log
+                  path: |
+                      casablanca/node/logs/dev.log
+
+            # If CI failed, we send a slack notification
+            - name: Slack notification
+              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+
+    Casablanca_Multinode:
+        permissions: write-all
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_multinode
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        services:
+            postgres-casablanca:
+                image: postgres:latest
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                    --name casablanca_postgres_container
+
+        steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Increase max_connections in Postgres
+              run: |
+                  docker exec -i casablanca_postgres_container bash << EOF
+                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+                  EOF
+                  docker restart --time 0 casablanca_postgres_container
+                  sleep 5
+
+            - name: Show PostgreSQL max_connections
+              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: '1.21'
+                  cache: true
+                  cache-dependency-path: |
+                      servers/**/go.sum
+                      casablanca/node/go.sum
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - name: Install Forge modules
+              run: ./scripts/install-deps.sh
+
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Print Yarn package versions
+              run: yarn info --name-only --all
+
+            - name: Maintain Turbo cache
+              uses: actions/cache@v3
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
+
+            - name: Build town types
+              run: ./scripts/build-town-types.sh localhost --frozen
+
+            - name: Start anvil
+              # Start anvil in the background, and wait for it to be ready
+              run: anvil & ./scripts/wait-for-blockchain.sh
+
+            - name: Deploy local zion governance contracts
+              run: ./scripts/deploy-zion-governance-contracts.sh
+
+            - name: Casablanca create db
+              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
+              working-directory: casablanca
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Run multiple nodes
+              run: |
+                  cd ./casablanca/node
+                  ./run_multi.sh -c -n 10 --de
+                  ./run_multi.sh -r
+                  for i in {5170..5179}; do yarn wait-on tcp:$i --timeout=400000 --i=5000 --verbose; done
+
+            - name: Run SDK Tests (without entitlements)
+              run: |
+                  yarn run turbo run build
+                  cd casablanca/sdk
+                  RIVER_TEST_URL=http://localhost:5174 yarn test
 
             - name: Archive Casablanca log
               if: always()
