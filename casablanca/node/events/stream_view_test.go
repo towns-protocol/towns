@@ -35,7 +35,7 @@ func TestLoad(t *testing.T) {
 		[][]byte{inception.Hash},
 	)
 	assert.NoError(t, err)
-	miniblockHeader, err := Make_GenisisMiniblockHeader([]*ParsedEvent{parsedEvent(t, inception), parsedEvent(t, join)})
+	miniblockHeader, err := Make_GenesisMiniblockHeader([]*ParsedEvent{parsedEvent(t, inception), parsedEvent(t, join)})
 	assert.NoError(t, err)
 	miniblockHeaderProto, err := MakeEnvelopeWithPayload(
 		wallet,

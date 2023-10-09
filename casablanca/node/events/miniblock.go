@@ -2,6 +2,7 @@ package events
 
 import (
 	. "casablanca/node/base"
+	"casablanca/node/crypto"
 	. "casablanca/node/protocol"
 
 	"google.golang.org/protobuf/proto"
@@ -9,7 +10,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func Make_GenisisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader, error) {
+func Make_GenesisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader, error) {
 	if len(parsedEvents) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no events to make genisis miniblock header")
 	}
@@ -44,7 +45,32 @@ func Make_GenisisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader,
 			None: &emptypb.Empty{},
 		},
 	}, nil
+}
 
+func MakeGenesisMiniblock(wallet *crypto.Wallet, genesisMiniblockEvents []*ParsedEvent) (*Miniblock, error) {
+	header, err := Make_GenesisMiniblockHeader(genesisMiniblockEvents)
+	if err != nil {
+		return nil, err
+	}
+
+	headerEnvelope, err := MakeEnvelopeWithPayload(
+		wallet,
+		Make_MiniblockHeader(header),
+		[][]byte{genesisMiniblockEvents[len(genesisMiniblockEvents)-1].Hash},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	envelopes := make([]*Envelope, len(genesisMiniblockEvents))
+	for i, e := range genesisMiniblockEvents {
+		envelopes[i] = e.Envelope
+	}
+
+	return &Miniblock{
+		Events: envelopes,
+		Header: headerEnvelope,
+	}, nil
 }
 
 func NextMiniblockTimestamp(prevBlockTimestamp *timestamppb.Timestamp) *timestamppb.Timestamp {

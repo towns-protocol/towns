@@ -61,7 +61,9 @@ func TestUserDeviceKeyViewState(t *testing.T) {
 	})
 	// create a stream
 	events, streamId, userId := makeTestUserDeviceKeyStream(t, userWallet1, nil)
-	s, view1, err := streamCache.CreateStream(ctx, streamId, events)
+	mb, err := MakeGenesisMiniblock(nodeWallet, events)
+	assert.NoError(t, err)
+	s, view1, err := streamCache.CreateStream(ctx, streamId, mb)
 	stream := s.(*streamImpl)
 	assert.NoError(t, err)
 	assert.NotNil(t, stream)

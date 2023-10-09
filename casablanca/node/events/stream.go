@@ -188,31 +188,8 @@ func (s *streamImpl) maybeMakeMiniblock(ctx context.Context) {
 	}
 }
 
-func createStream(ctx context.Context, params *StreamCacheParams, streamId string, genesisMiniblockEvents []*ParsedEvent) (*streamImpl, *streamViewImpl, error) {
-	header, err := Make_GenisisMiniblockHeader(genesisMiniblockEvents)
-	if err != nil {
-		return nil, nil, err
-	}
-	headerEnvelope, err := MakeEnvelopeWithPayload(
-		params.Wallet,
-		Make_MiniblockHeader(header),
-		[][]byte{genesisMiniblockEvents[len(genesisMiniblockEvents)-1].Hash},
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	envelopes := make([]*Envelope, len(genesisMiniblockEvents))
-	for i, e := range genesisMiniblockEvents {
-		envelopes[i] = e.Envelope
-	}
-
-	miniblock := &Miniblock{
-		Events: envelopes,
-		Header: headerEnvelope,
-	}
-
-	serializedMiniblock, err := proto.Marshal(miniblock)
+func createStream(ctx context.Context, params *StreamCacheParams, streamId string, genesisMiniblock *Miniblock) (*streamImpl, *streamViewImpl, error) {
+	serializedMiniblock, err := proto.Marshal(genesisMiniblock)
 	if err != nil {
 		return nil, nil, err
 	}

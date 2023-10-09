@@ -112,6 +112,24 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	}, nil
 }
 
+func (s *Service) createReplicatedStream(
+	ctx context.Context,
+	streamId string,
+	parsedEvents []*ParsedEvent,
+) (StreamView, error) {
+	mb, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
+	if err != nil {
+		return nil, err
+	}
+
+	_, streamView, err := s.cache.CreateStream(ctx, streamId, mb)
+	if err != nil {
+		return nil, err
+	}
+
+	return streamView, nil
+}
+
 func (s *Service) createStream_Channel(
 	ctx context.Context,
 	log *slog.Logger,
@@ -159,7 +177,7 @@ func (s *Service) createStream_Channel(
 	}
 
 	streamId := inception.GetStreamId()
-	_, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents)
+	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +258,7 @@ func (s *Service) createStream_Space(
 
 	// Create stream.
 	streamId := inception.GetStreamId()
-	_, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents)
+	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +291,7 @@ func (s *Service) createStream_User(
 	// TODO: Authorization.
 
 	streamId := inception.GetStreamId()
-	_, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents)
+	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +318,7 @@ func (s *Service) createStream_UserDeviceKey(
 	// TODO: Authorization.
 
 	streamId := inception.GetStreamId()
-	_, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents)
+	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +345,7 @@ func (s *Service) createStream_UserSettings(
 	// TODO: Authorization.
 
 	streamId := inception.GetStreamId()
-	_, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents)
+	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +426,7 @@ func (s *Service) createStream_Media(
 	}
 
 	streamId := inception.GetStreamId()
-	_, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents)
+	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
