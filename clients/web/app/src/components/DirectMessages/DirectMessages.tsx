@@ -1,9 +1,9 @@
 import React, { useCallback } from 'react'
 import { useMatch, useNavigate } from 'react-router'
-import { Avatar, Box, Heading, Icon, Paragraph, Stack, Text } from '@ui'
+import { Avatar, Box, Icon, IconButton, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { env } from 'utils'
 import { PATHS } from 'routes'
+import { CreateDirectMessage } from './CreateDIrectMessage'
 
 type DummyThread = {
     id: string
@@ -16,6 +16,7 @@ type Props = {
 }
 export const DirectMessages = (props: Props) => {
     const { isTouch } = useDevice()
+    const [showCreateDirectMessage, setShowCreateDirectMessage] = React.useState(false)
     const hideNavigation = props.hideNavigation ?? false
     const navigate = useNavigate()
     const backButtonPressed = useCallback(() => {
@@ -30,34 +31,21 @@ export const DirectMessages = (props: Props) => {
                         {isTouch && <Icon type="back" onClick={backButtonPressed} />}
 
                         <Text color="default" fontWeight="strong">
-                            Direct Messages
+                            {showCreateDirectMessage ? 'New Message' : 'Direct Messages'}
                         </Text>
                         <Stack grow />
-                        <Icon type="compose" color="gray2" />
+                        <IconButton
+                            icon={showCreateDirectMessage ? 'close' : 'compose'}
+                            size="square_md"
+                            color="gray2"
+                            insetRight="xs"
+                            onClick={() => setShowCreateDirectMessage(!showCreateDirectMessage)}
+                        />
                     </Stack>
                 </Box>
             )}
 
-            {env.DEV ? (
-                <DummyThreads />
-            ) : (
-                <Stack centerContent grow scroll>
-                    <Stack
-                        centerContent
-                        gap="lg"
-                        width="250"
-                        minHeight={isTouch ? '350' : '100svh'}
-                    >
-                        <Box padding="md" color="gray2" background="level2" rounded="sm">
-                            <Icon type="message" size="square_sm" />
-                        </Box>
-                        <Heading level={3}>No messages yet</Heading>
-                        <Paragraph textAlign="center" color="gray2">
-                            When someone sends you a message, it will appear here
-                        </Paragraph>
-                    </Stack>
-                </Stack>
-            )}
+            {showCreateDirectMessage ? <CreateDirectMessage /> : <DummyThreads />}
         </Stack>
     )
 }

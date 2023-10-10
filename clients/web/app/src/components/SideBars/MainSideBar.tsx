@@ -9,6 +9,8 @@ import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
 import { env } from 'utils'
+import { Icon } from '@ui'
+import { NavItem } from '@components/NavItem/_NavItem'
 
 export const MainSideBar = () => {
     const { isTouch } = useDevice()
@@ -21,6 +23,20 @@ export const MainSideBar = () => {
         <SideBar elevateReadability paddingY="sm" height="100%">
             {!isTouch && <RegisterMainShortcuts />}
 
+            {env.DEV && (
+                <NavItem
+                    centerContent
+                    to={`/${PATHS.MESSAGES}`}
+                    label="Direct Messages"
+                    tooltip="Direct Messages"
+                    tooltipOptions={{
+                        placement: 'horizontal',
+                        immediate: true,
+                    }}
+                >
+                    <Icon width="x4" aspectRatio="1/1" size="square_lg" type="dm" />
+                </NavItem>
+            )}
             {spaces.map((s) => (
                 <TransitionItem key={s.id.slug}>
                     <SpaceNavItem

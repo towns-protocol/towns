@@ -10,6 +10,7 @@ export { AutojoinChannels } from './components/AutojoinChannels'
 
 export { LoginStatus } from './hooks/login'
 export * from './hooks/ZionContext/onboarding/IOnboardingState'
+export { useAllKnownUsers } from './hooks/use-all-known-users'
 export { useCasablancaCredentials } from './hooks/use-casablanca-credentials'
 export { useChannelData } from './hooks/use-channel-data'
 export { useChannelId } from './hooks/use-channel-id'
