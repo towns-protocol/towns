@@ -10,7 +10,6 @@ import {
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
-import { assert } from 'console'
 import { getFilteredRolesFromSpace, Permission } from '@river/web3'
 
 describe('On-chain channel creation tests', () => {
@@ -30,7 +29,7 @@ describe('On-chain channel creation tests', () => {
 
         const topic = await alice.getRoomTopic(roomId)
         /* Assert */
-        assert(topic === 'test topic')
+        expect(topic).toEqual('test topic')
     })
 
     test('update channel topic with owner role', async () => {
@@ -64,7 +63,7 @@ describe('On-chain channel creation tests', () => {
 
         const topic = await alice.getRoomTopic(channel)
         /* Assert */
-        assert(topic === 'test topic')
+        expect(topic).toEqual('test topic')
     })
 
     test('allow update space topic with ModifySpaceSettings permission', async () => {
@@ -90,6 +89,7 @@ describe('On-chain channel creation tests', () => {
         const topic = await alice.getRoomTopic(spaceId)
 
         /* Assert */
-        assert(topic === 'test topic')
+        expect(topic).toEqual('test topic')
+        console.log('topic', topic)
     })
 })

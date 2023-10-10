@@ -1,13 +1,7 @@
 import { Box, CssBaseline, Divider, Drawer, Toolbar } from '@mui/material'
-import {
-    InviteData,
-    RoomIdentifier,
-    getAccountAddress,
-    getShortUsername,
-    useMatrixCredentials,
-} from 'use-zion-client'
+import { InviteData, RoomIdentifier } from 'use-zion-client'
 import { Outlet, useNavigate } from 'react-router-dom'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 
 import { Invites } from './Invites'
 import { SidebarNewItemButton } from './Buttons/SidebarNewItemButton'

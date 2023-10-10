@@ -1,5 +1,4 @@
-import { ArrowRight } from '@mui/icons-material'
-import { Box, Button, Divider, Link, Theme, Typography } from '@mui/material'
+import { Button, Divider, Theme, Typography } from '@mui/material'
 import React, { useCallback } from 'react'
 import { Outlet, useNavigate, useParams } from 'react-router-dom'
 import {
@@ -18,13 +17,6 @@ export const Spaces = () => {
     const { spaceId } = useSpaceContext()
     const space = useSpaceData()
     const { signer } = useWeb3Context()
-
-    const onClickSpace = useCallback(() => {
-        if (!space) {
-            return
-        }
-        navigate(`/spaces/${space.id.slug}`)
-    }, [navigate, space])
 
     const onClickJoinSpace = useCallback(async () => {
         if (spaceId) {

@@ -76,6 +76,6 @@ describe('roomAccountData', () => {
         // eslint-disable-next-line @typescript-eslint/require-await
         const bob2 = await registerAndStartClient('bob', (async () => bob.provider.wallet)())
         console.log('bob', bob2)
-        expect(false) // TODO https://linear.app/hnt-labs/issue/HNT-634/getroom-for-casablanca
+        expect(false).toBe(true) // TODO https://linear.app/hnt-labs/issue/HNT-634/getroom-for-casablanca
     }) // end test
 }) // end describe
