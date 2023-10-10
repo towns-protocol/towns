@@ -1,7 +1,7 @@
 import {
     RoleTransactionContext,
     TransactionStatus,
-    createRoleTransactionContext,
+    createTransactionContext,
 } from '../client/ZionClientTypes'
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -52,7 +52,7 @@ export function useCreateRoleTransaction() {
 
             let transactionResult: RoleTransactionContext | undefined
             if (!signer) {
-                transactionResult = createRoleTransactionContext({
+                transactionResult = createTransactionContext({
                     status: TransactionStatus.Failed,
                     error: new SignerUndefinedError(),
                 })
@@ -62,7 +62,7 @@ export function useCreateRoleTransaction() {
             // ok to proceed
             isTransacting.current = true
             try {
-                transactionResult = createRoleTransactionContext({
+                transactionResult = createTransactionContext({
                     status: TransactionStatus.Pending,
                 })
                 setTransactionContext(transactionResult)
@@ -93,7 +93,7 @@ export function useCreateRoleTransaction() {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
                 console.error('useCreateRoleTransaction', e)
-                transactionResult = createRoleTransactionContext({
+                transactionResult = createTransactionContext({
                     status: TransactionStatus.Failed,
                     error: toError(e),
                 })

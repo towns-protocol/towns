@@ -145,7 +145,7 @@ export class ZionTestClient extends ZionClient {
         }
         if (txContext.status === TransactionStatus.Pending) {
             const rxContext = await this.waitForCreateRoleTransaction(txContext)
-            return rxContext.data
+            return rxContext.data?.roleId
         }
         // Something went wrong. Don't return a room identifier.
         return undefined

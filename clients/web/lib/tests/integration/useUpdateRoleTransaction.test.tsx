@@ -168,10 +168,11 @@ function TestComponent(args: {
     } = spaceTransaction
     const spaceId = txData?.spaceId
     const createRoleTransactionInfo = useCreateRoleTransaction()
-    const { createRoleTransaction, data: roleIdentifier } = createRoleTransactionInfo
+    const { createRoleTransaction, data } = createRoleTransactionInfo
     const updateRoleTransactionInfo = useUpdateRoleTransaction()
     const { updateRoleTransaction } = updateRoleTransactionInfo
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
+    const roleIdentifier = data?.roleId
     const roleId = useMemo(() => roleIdentifier?.roleId ?? -1, [roleIdentifier])
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {

@@ -25,8 +25,6 @@ import {
     TransactionStatus,
     ZionClientEventHandlers,
     ZionOpts,
-    createChannelUpdateTransactionContext,
-    createRoleTransactionContext,
     createTransactionContext,
     logTxnResult,
 } from './ZionClientTypes'
@@ -627,13 +625,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         updateChannelInfo: UpdateChannelInfo,
         signer: ethers.Signer | undefined,
     ): Promise<ChannelUpdateTransactionContext> {
-        const hasOffChainUpdate = !updateChannelInfo.updatedChannelTopic
         if (!signer) {
             const _error = new Error('signer is undefined')
             console.error('[updateChannelTransaction]', _error)
-            return createChannelUpdateTransactionContext({
+            return createTransactionContext({
                 status: TransactionStatus.Failed,
-                hasOffChainUpdate: hasOffChainUpdate,
                 error: _error,
             })
         }
@@ -662,14 +658,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 err,
             )
         }
-        return createChannelUpdateTransactionContext({
+        return createTransactionContext({
             transaction,
-            hasOffChainUpdate,
-            status:
-                // no error, AND either if it has a transaction, or an offchain update
-                !error && (transaction || hasOffChainUpdate)
-                    ? TransactionStatus.Pending
-                    : TransactionStatus.Failed,
+            status: !error && transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
             data: updateChannelInfo,
             error,
         })
@@ -678,65 +669,14 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public async waitForUpdateChannelTransaction(
         context: ChannelUpdateTransactionContext | undefined,
     ): Promise<ChannelUpdateTransactionContext> {
-        if (!context?.transaction) {
-            console.error('[waitForUpdateChannelTransaction] transaction is undefined')
-            return createChannelUpdateTransactionContext({
-                status: TransactionStatus.Failed,
-                hasOffChainUpdate: context?.hasOffChainUpdate ?? false,
-                error: new Error('[waitForUpdateChannelTransaction] transaction is undefined'),
-            })
+        const txContext = await this._waitForBlockchainTransaction(context)
+
+        if (txContext.status === TransactionStatus.Success && txContext.data) {
+            await this.updateChannelRoom(txContext.data)
         }
 
-        let transaction: ContractTransaction | undefined = undefined
-        let receipt: ContractReceipt | undefined = undefined
-        let error: Error | undefined = undefined
-        try {
-            transaction = context.transaction
-            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
-            console.log(
-                '[waitForUpdateChannelTransaction] transaction signed successfully',
-                receipt,
-            )
-            if (receipt?.status === 1) {
-                // transaction is successful
-                // if there is an offchain room update, then update the room
-                // if there is no offchain room update, then do nothing
-                const doOffChainUpdate = receipt?.status === 1 || context?.hasOffChainUpdate
-                if (doOffChainUpdate && context?.data) {
-                    await this.updateChannelRoom(context.data)
-                    console.log('[waitForUpdateChannelTransaction] success')
-                }
-                return createChannelUpdateTransactionContext({
-                    status: TransactionStatus.Success,
-                    data: context.data,
-                    hasOffChainUpdate: context.hasOffChainUpdate,
-                    transaction,
-                    receipt,
-                    error,
-                })
-            } else if (receipt?.status === 0) {
-                // transaction failed
-                await this.throwTransactionError(receipt)
-            } else {
-                // receipt.status is undefined
-                throw new Error('Failed to update channel')
-            }
-        } catch (err) {
-            console.error('[waitForUpdateChannelTransaction]', err)
-            if (err instanceof Error) {
-                error = err
-            } else {
-                error = new Error(`update channel failed: ${JSON.stringify(err)}`)
-            }
-        }
-        // got here without success
-        return createChannelUpdateTransactionContext({
-            status: TransactionStatus.Failed,
-            hasOffChainUpdate: context?.hasOffChainUpdate ?? false,
-            transaction,
-            receipt,
-            error,
-        })
+        logTxnResult('waitForUpdateChannelTransaction', txContext)
+        return txContext
     }
 
     private async updateChannelRoom(updateChannelInfo: UpdateChannelInfo): Promise<void> {
@@ -847,10 +787,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
         return {
             transaction,
-            spaceNetworkId,
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-            data: undefined,
+            data: {
+                spaceNetworkId,
+                roleId: undefined,
+            },
             error,
         }
     }
@@ -858,58 +800,27 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public async waitForCreateRoleTransaction(
         context: RoleTransactionContext | undefined,
     ): Promise<RoleTransactionContext> {
-        if (!context?.transaction) {
-            console.error('[waitForCreateRoleTransaction] transaction is undefined')
-            return createRoleTransactionContext({
-                status: TransactionStatus.Failed,
-                error: new Error('[waitForCreateRoleTransaction] transaction is undefined'),
-            })
+        const txResult = await this._waitForBlockchainTransaction(context)
+
+        if (txResult.status === TransactionStatus.Success && txResult.data?.spaceNetworkId) {
+            const roleId = BigNumber.from(txResult.receipt.logs[0].topics[2]).toNumber()
+            // John: how can we best decode this 32 byte hex string to a human readable string ?
+            const roleName = txResult.receipt.logs[0].topics[1]
+            const roleIdentifier: RoleIdentifier = {
+                roleId,
+                name: roleName,
+                spaceNetworkId: txResult.data.spaceNetworkId,
+            }
+
+            txResult.data = {
+                spaceNetworkId: txResult.data.spaceNetworkId,
+                roleId: roleIdentifier,
+            }
         }
 
-        let transaction: ContractTransaction | undefined = undefined
-        let receipt: ContractReceipt | undefined = undefined
-        let error: Error | undefined = undefined
-        try {
-            transaction = context.transaction
-            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
-            if (receipt?.status === 1 && context?.spaceNetworkId) {
-                // Successfully created the role on-chain.
-                console.log('[waitForCreateRoleTransaction] success', receipt.logs[0].topics[2])
-                const roleId = BigNumber.from(receipt.logs[0].topics[2]).toNumber()
-                // John: how can we best decode this 32 byte hex string to a human readable string ?
-                const roleName = receipt?.logs[0].topics[1]
-                const roleIdentifier: RoleIdentifier = {
-                    roleId,
-                    name: roleName,
-                    spaceNetworkId: context.spaceNetworkId,
-                }
-                return createRoleTransactionContext({
-                    status: TransactionStatus.Success,
-                    data: roleIdentifier,
-                    transaction,
-                    receipt,
-                })
-            } else if (receipt?.status === 0) {
-                await this.throwTransactionError(receipt)
-            } else {
-                // receipt.status is undefined
-                throw new Error('Failed to create role')
-            }
-        } catch (err) {
-            console.error('[waitForCreateRoleTransaction] error', err)
-            if (err instanceof Error) {
-                error = err
-            } else {
-                error = new Error(`create role failed: ${JSON.stringify(err)}`)
-            }
-        }
-        // got here without success
-        return createRoleTransactionContext({
-            status: TransactionStatus.Failed,
-            transaction,
-            receipt,
-            error,
-        })
+        logTxnResult('waitForCreateRoleTransaction', txResult)
+
+        return txResult
     }
 
     public async addRoleToChannelTransaction(

@@ -1,7 +1,7 @@
 import {
     ChannelUpdateTransactionContext,
     TransactionStatus,
-    createChannelUpdateTransactionContext,
+    createTransactionContext,
 } from '../client/ZionClientTypes'
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -47,12 +47,10 @@ export function useUpdateChannelTransaction() {
                 return undefined
             }
             let transactionResult: ChannelUpdateTransactionContext | undefined
-            const hasOffChainUpdate = updateChannelInfo.updatedChannelTopic !== undefined
             if (!signer) {
                 // cannot sign the transaction. stop processing.
-                transactionResult = createChannelUpdateTransactionContext({
+                transactionResult = createTransactionContext({
                     status: TransactionStatus.Failed,
-                    hasOffChainUpdate,
                     error: new SignerUndefinedError(),
                 })
                 setTransactionContext(transactionResult)
@@ -60,9 +58,8 @@ export function useUpdateChannelTransaction() {
             }
             // ok to proceed
             isTransacting.current = true
-            transactionResult = createChannelUpdateTransactionContext({
+            transactionResult = createTransactionContext({
                 status: TransactionStatus.Pending,
-                hasOffChainUpdate,
             })
             setTransactionContext(transactionResult)
             removeSyncedEntitledChannelsQueriesForSpace(updateChannelInfo.parentSpaceId.networkId)
@@ -92,9 +89,8 @@ export function useUpdateChannelTransaction() {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
                 console.error('useUpdateChannelTransaction', e)
-                transactionResult = createChannelUpdateTransactionContext({
+                transactionResult = createTransactionContext({
                     status: TransactionStatus.Failed,
-                    hasOffChainUpdate,
                     error: toError(e),
                 })
                 setTransactionContext(transactionResult)
