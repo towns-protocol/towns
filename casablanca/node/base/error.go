@@ -6,13 +6,54 @@ package base
 import (
 	"casablanca/node/protocol"
 	"context"
+	"errors"
 	"fmt"
+	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
 	connect_go "github.com/bufbuild/connect-go"
 	"golang.org/x/exp/slog"
 )
+
+// Without this limit, go's http reader fails and replaces actual
+// error with "http: suspiciously long trailer after chunked body".
+const CONNECT_ERROR_MESSAGE_LIMIT = 1500
+
+var isDebugCallStack bool
+
+func init() {
+	_, isDebugCallStack = os.LookupEnv("RIVER_DEBUG_CALLSTACK")
+}
+
+func formatCallstack() string {
+	pc := make([]uintptr, 32)
+	n := runtime.Callers(3, pc)
+	if n == 0 {
+		return ""
+	}
+
+	pc = pc[:n]
+	frames := runtime.CallersFrames(pc)
+
+	var frame runtime.Frame
+	more := true
+	var sb strings.Builder
+	sb.WriteString("Callstack:\n")
+	for more {
+		frame, more = frames.Next()
+
+		sb.WriteString("        ")
+		sb.WriteString(frame.Function)
+		sb.WriteString(" ")
+		sb.WriteString(frame.File)
+		sb.WriteString(":")
+		sb.WriteString(strconv.Itoa(frame.Line))
+		sb.WriteString("\n")
+	}
+	return sb.String()
+}
 
 func RiverError(code protocol.Err, msg string, tags ...any) *RiverErrorImpl {
 	e := &RiverErrorImpl{
@@ -21,6 +62,9 @@ func RiverError(code protocol.Err, msg string, tags ...any) *RiverErrorImpl {
 	}
 	if len(tags) > 0 {
 		_ = e.Tags(tags...)
+	}
+	if isDebugCallStack {
+		_ = e.Tag("callstack", formatCallstack())
 	}
 	return e
 }
@@ -168,7 +212,7 @@ func ErrToConnectCode(err protocol.Err) connect_go.Code {
 }
 
 func (e *RiverErrorImpl) AsConnectError() *connect_go.Error {
-	return connect_go.NewError(ErrToConnectCode(e.Code), e)
+	return connect_go.NewError(ErrToConnectCode(e.Code), TruncateErrorToConnectLimit(e))
 }
 
 func (e *RiverErrorImpl) ForEachTag(f func(name string, value any) bool) {
@@ -224,5 +268,16 @@ func ToConnectError(err error) *connect_go.Error {
 	if e, ok := err.(*RiverErrorImpl); ok {
 		return e.AsConnectError()
 	}
-	return connect_go.NewError(connect_go.CodeUnknown, err)
+	return connect_go.NewError(connect_go.CodeUnknown, TruncateErrorToConnectLimit(err))
+}
+
+func TruncateErrorToConnectLimit(err error) error {
+	if err == nil {
+		return nil
+	}
+	msg := err.Error()
+	if len(msg) > CONNECT_ERROR_MESSAGE_LIMIT {
+		return errors.New(msg[:CONNECT_ERROR_MESSAGE_LIMIT])
+	}
+	return err
 }
