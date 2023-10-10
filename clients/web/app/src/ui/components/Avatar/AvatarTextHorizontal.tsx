@@ -6,16 +6,20 @@ import { Avatar } from './Avatar'
 import { Text } from '../Text/Text'
 
 type Props = {
+    prepend?: React.ReactNode
     address: Address
-    name: string
+    name?: string
 }
-export function AvatarTextHorizontal({ address, name }: Props) {
+export function AvatarTextHorizontal({ address, name, prepend }: Props) {
     return (
-        <Stack horizontal centerContent gap>
-            <Avatar userId={address} size="avatar_sm" />
-            <Text strong size="lg">
-                {name}
-            </Text>
+        <Stack horizontal gap="sm" alignItems="center">
+            {prepend}
+            <Avatar userId={address} size="avatar_sm" insetY="xs" />
+            {name && (
+                <Text strong size="lg">
+                    {name}
+                </Text>
+            )}
             <Text size="lg" color="gray2">
                 {shortAddress(address)}
             </Text>

@@ -10,9 +10,9 @@ import { Register } from 'routes/Register'
 import { WelcomeRoute } from 'routes/Welcome'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
 import { LoadingScreen } from 'routes/LoadingScreen'
+import { PublicTownPage } from 'routes/PublicTownPage'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
-const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
 const VersionsPage = React.lazy(() => import('routes/VersionsPage'))
 
 const PlaygroundRoutes = React.lazy(() => import('@components/Playground/PlaygroundRoutes'))
@@ -38,8 +38,8 @@ export const AllRoutes = () => {
                                     <Route path={PATHS.REGISTER} element={<WelcomeRoute />} />
                                     <Route path={PATHS.LOGIN} element={<WelcomeRoute />} />
                                     <Route
-                                        path={`${PATHS.SPACES}/:spaceSlug`}
-                                        element={<InviteLinkLanding />}
+                                        path={`${PATHS.SPACES}/:spaceSlug/*`}
+                                        element={<PublicTownPage />}
                                     />
                                     <Route
                                         path="*"

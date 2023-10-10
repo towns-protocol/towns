@@ -14,7 +14,7 @@ import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinn
 import { PATHS } from 'routes'
 import { LoginComponent } from '@components/Login/LoginComponent'
 import { useDevice } from 'hooks/useDevice'
-import { TownsTokenConfig } from '../components/TownsToken/TownsTokenConfig'
+import { TownsTokenConfig } from '../../components/TownsToken/TownsTokenConfig'
 
 const InviteLinkLanding = () => {
     const spaceId = useSpaceIdFromPathname()

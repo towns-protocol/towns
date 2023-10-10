@@ -1,6 +1,6 @@
 import React from 'react'
 import { Box, BoxProps, Paragraph, Stack } from '@ui'
-import { darkClass, lightClass } from 'ui/styles/globals/storybook.css'
+import { darkTheme, lightTheme } from 'ui/styles/vars.css'
 
 export const Container = ({
     label,
@@ -9,8 +9,8 @@ export const Container = ({
     ...boxProps
 }: { label: string; darkOnly?: boolean } & BoxProps) => (
     <Stack direction={{ touch: 'column', default: 'row' }}>
-        {[darkClass, lightClass]
-            .filter((c) => !darkOnly || c === darkClass)
+        {[darkTheme, lightTheme]
+            .filter((c) => !darkOnly || c === darkTheme)
             .map((c) => (
                 <Stack grow padding key={c} className={c} background="default" color="default">
                     <Stack border grow rounded="xs">

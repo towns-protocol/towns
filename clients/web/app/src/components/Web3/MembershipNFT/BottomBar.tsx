@@ -29,53 +29,32 @@ export function BottomBar({
     successText,
     idleText,
 }: Props) {
-    const theme = useStore((state) => state.theme)
     const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
     const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()
     const isDisabled = !isTransactionNetwork || !currentWalletEqualsSignedInAccount || disabled
 
     return (
         <>
-            <Stack
-                centerContent
-                width="100%"
-                borderTop="level4"
-                paddingX="lg"
-                background={theme === 'dark' ? 'transparentDark' : 'transparentBright'}
-            >
-                <Stack width="100%" maxWidth="1200" position="relative">
-                    {!isTransactionNetwork && (
-                        <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                            <RequireTransactionNetworkMessage
-                                postCta="to create a town."
-                                switchNetwork={switchNetwork}
-                            />
-                        </Box>
-                    )}
-                    {isTransactionNetwork && !currentWalletEqualsSignedInAccount && (
-                        <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                            <ErrorMessageText message="Wallet is not connected, or is not the same as the signed in account." />
-                        </Box>
-                    )}
-                    <Stack
-                        width="100%"
-                        maxWidth="500"
-                        alignSelf={{
-                            desktop: 'end',
-                            mobile: 'center',
-                        }}
-                        paddingY={{
-                            mobile: 'md',
-                            desktop: 'lg',
-                        }}
-                        height={{
-                            desktop: 'x12',
-                            mobile: 'x10',
-                        }}
-                        paddingX={{
-                            mobile: 'sm',
-                        }}
-                    >
+            <BottomBarLayout
+                messageContent={
+                    <>
+                        {!isTransactionNetwork && (
+                            <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                                <RequireTransactionNetworkMessage
+                                    postCta="to create a town."
+                                    switchNetwork={switchNetwork}
+                                />
+                            </Box>
+                        )}
+                        {isTransactionNetwork && !currentWalletEqualsSignedInAccount && (
+                            <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                                <ErrorMessageText message="Wallet is not connected, or is not the same as the signed in account." />
+                            </Box>
+                        )}
+                    </>
+                }
+                buttonContent={
+                    <>
                         {panelStatus && transactionUIState ? (
                             <MotionStack
                                 width="100%"
@@ -110,9 +89,52 @@ export function BottomBar({
                                 {text}
                             </Button>
                         )}
-                    </Stack>
-                </Stack>
-            </Stack>
+                    </>
+                }
+            />
         </>
+    )
+}
+
+export const BottomBarLayout = (props: {
+    messageContent?: React.ReactNode
+    buttonContent?: React.ReactNode
+}) => {
+    const theme = useStore((state) => state.theme)
+    return (
+        <Stack
+            centerContent
+            width="100%"
+            borderTop="level4"
+            paddingX="lg"
+            background={theme === 'dark' ? 'transparentDark' : 'transparentBright'}
+        >
+            <Stack width="100%" maxWidth="1200" position="relative">
+                {props.messageContent}
+                {props.buttonContent && (
+                    <Stack
+                        width="100%"
+                        maxWidth="500"
+                        alignSelf={{
+                            desktop: 'end',
+                            mobile: 'center',
+                        }}
+                        paddingY={{
+                            mobile: 'md',
+                            desktop: 'lg',
+                        }}
+                        height={{
+                            desktop: 'x12',
+                            mobile: 'x10',
+                        }}
+                        paddingX={{
+                            mobile: 'sm',
+                        }}
+                    >
+                        {props.buttonContent}
+                    </Stack>
+                )}
+            </Stack>
+        </Stack>
     )
 }

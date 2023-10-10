@@ -43,8 +43,8 @@ export const addressContainer = style([
         transformStyle: `preserve-3d`,
         transformOrigin: `center center`,
         transform: `
-            translateZ(calc((1 - var(--tk-h,1)) * -5px))
-            rotateY(calc(var(--p-d,1) * 0.1 * -3.14rad * var(--tk-x, 0)))
+            translateZ(calc((-1 + var(--tk-h,1)) * 5px))
+            rotateY(calc(var(--p-d, 1) * 0.1 * -3.14rad * var(--tk-x, 0)))
             rotateX(calc(var(--p-d, 1) * 0.1 * 3.14rad * var(--tk-y, 0)))
         `,
     },
@@ -59,7 +59,7 @@ export const tokenShadow = style([
     },
 ])
 
-globalStyle(`${lightTheme} ${tokenShadow}`, {
+globalStyle(`${darkTheme} ${lightTheme} ${tokenShadow}, ${lightTheme} ${tokenShadow}`, {
     background: `#0003`,
 })
 

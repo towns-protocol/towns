@@ -34,6 +34,8 @@ import { PanelType, TransactionDetails } from './types'
 import { PanelContent } from './PanelContents'
 import { CreateTownSubmit } from './CreateTownSubmit'
 
+type Member = { address: ReturnType<typeof useAuth>['loggedInWalletAddress']; displayName?: string }
+
 export function CreateSpaceFormV2() {
     const { loggedInWalletAddress } = useAuth()
     const displayName = shortAddress(useMyProfile()?.displayName ?? '')
@@ -44,7 +46,7 @@ export function CreateSpaceFormV2() {
         townAddress: undefined,
     })
 
-    const members = [
+    const members: Member[] = [
         {
             address: loggedInWalletAddress,
             displayName,
@@ -128,7 +130,7 @@ export function CreateSpaceFormV2() {
                                         <Stack grow>
                                             <Stack>
                                                 <Stack display="block">
-                                                    <BackgroundImageUpdater
+                                                    <TownPageBackgroundImageUpdater
                                                         transactionDetails={transactionDetails}
                                                     />
                                                 </Stack>
@@ -225,27 +227,13 @@ export function CreateSpaceFormV2() {
                                         </Stack>
 
                                         {/* member col */}
+
                                         <MotionStack
                                             animate={{
                                                 opacity: panelType === undefined ? 1 : 0,
                                             }}
                                         >
-                                            <Stack width="500" maxWidth="500">
-                                                <Grid columnMinSize="80px">
-                                                    {members.map((member, idx) => (
-                                                        <Stack
-                                                            paddingBottom="lg"
-                                                            key={`member_${
-                                                                member.address
-                                                                    ? member.address
-                                                                    : idx
-                                                            }`}
-                                                        >
-                                                            <AvatarPlaceholder member={member} />
-                                                        </Stack>
-                                                    ))}
-                                                </Grid>
-                                            </Stack>
+                                            <TownPageMemberList members={members} />
                                         </MotionStack>
                                     </Stack>
                                 </Stack>
@@ -289,11 +277,23 @@ export function CreateSpaceFormV2() {
     )
 }
 
-function BackgroundImageUpdater({
+export const TownPageMemberList = ({ members }: { members?: Member[] }) => (
+    <Stack width="500" maxWidth="500">
+        <Grid columnMinSize="80px">
+            {members?.map((member, idx) => (
+                <Stack paddingBottom="lg" key={`member_${member.address ? member.address : idx}`}>
+                    <AvatarPlaceholder member={member} />
+                </Stack>
+            ))}
+        </Grid>
+    </Stack>
+)
+
+export const TownPageBackgroundImageUpdater = ({
     transactionDetails,
 }: {
     transactionDetails: TransactionDetails
-}) {
+}) => {
     const { register, formState, setError, clearErrors, setValue, watch } =
         useFormContext<CreateSpaceFormV2SchemaType>()
 

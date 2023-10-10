@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react'
+import React, { CSSProperties, forwardRef } from 'react'
 import { Text, TextProps } from './Text'
 
 enum HeadingNames {
@@ -21,6 +21,7 @@ type HeadingProps = {
      */
     className?: string
     children?: React.ReactNode
+    style?: CSSProperties
     /**
      * Heading level, ordered from most important and down, equivalent to H1, H2, etc.
      */

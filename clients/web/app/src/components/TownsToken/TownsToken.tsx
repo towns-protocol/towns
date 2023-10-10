@@ -1,5 +1,6 @@
 import React from 'react'
-import { Box, Heading } from '@ui'
+import { Box, BoxProps } from '@ui'
+import { FitMaxHeading } from 'ui/components/Text/FitMaxHeading'
 import * as styles from './TownsToken.css'
 import { TokenAddress } from './layers/TokenAddress'
 import { HologramLayer } from './layers/TokenHologram'
@@ -11,14 +12,14 @@ type Props = {
     address?: string
     size: TownsTokenSize
     imageSrc?: string
-    imageSrcRenderKey?: string
-}
+    // imageSrcRenderKey?: string
+} & Omit<BoxProps, 'size'>
 
 export type TownsTokenProps = Props
 
 export const TownsToken = (props: Props) => {
-    const { imageSrc } = props
-    const config = TownsTokenConfig.sizes[props.size]
+    const { imageSrc, address, size, spaceName, ...boxProps } = props
+    const config = TownsTokenConfig.sizes[size]
     const [loaded, setLoaded] = React.useState(false)
     const [error, setError] = React.useState(false)
 
@@ -28,7 +29,7 @@ export const TownsToken = (props: Props) => {
     const onError = () => {
         setError(true)
     }
-    const initial = props.spaceName ? props.spaceName[0] : ''
+    const initial = spaceName?.[0] ?? ''
 
     return (
         <Box
@@ -36,7 +37,7 @@ export const TownsToken = (props: Props) => {
             style={{
                 width: config.containerSize,
                 height: config.containerSize,
-                perspective: `300px`,
+                perspective: `${config.containerSize}px`,
                 perspectiveOrigin: `center`,
                 transformStyle: `preserve-3d`,
             }}
@@ -46,7 +47,7 @@ export const TownsToken = (props: Props) => {
                 <TokenAddress
                     size={config.addressSize}
                     fontSize={config.fontSize}
-                    address={props.address}
+                    address={address}
                     radius={config.addressRadius}
                 />
                 <Box
@@ -61,6 +62,7 @@ export const TownsToken = (props: Props) => {
                     }}
                     overflow="hidden"
                     background="level1"
+                    {...boxProps}
                 >
                     <Box absoluteFill centerContent>
                         {imageSrc && !error ? (
@@ -73,7 +75,15 @@ export const TownsToken = (props: Props) => {
                                 onError={onError}
                             />
                         ) : (
-                            <Heading level={1}>{initial}</Heading>
+                            <Box position="absoluteCenter">
+                                <FitMaxHeading
+                                    align="center"
+                                    width={config.badgeSize * 0.75}
+                                    maxHeight={config.maxTextHeight}
+                                >
+                                    {initial}
+                                </FitMaxHeading>
+                            </Box>
                         )}
                     </Box>
                     <HologramLayer />

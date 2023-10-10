@@ -1,6 +1,6 @@
 import React, { ComponentProps, useReducer } from 'react'
 import { FancyButton, Grid, Paragraph, Stack, Toggle } from '@ui'
-import { lightClass } from 'ui/styles/globals/storybook.css'
+import { lightTheme } from 'ui/styles/vars.css'
 import { Container } from '../components/PlaygroundContainer'
 
 type L = Partial<ComponentProps<typeof FancyButton>>
@@ -38,7 +38,7 @@ export const PageButtons = () => {
                         centerContent
                         minHeight="200"
                         alignItems="center"
-                        className={lightClass}
+                        className={lightTheme}
                         background="level1"
                     >
                         {fancy}

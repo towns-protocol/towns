@@ -41,6 +41,7 @@ export const PageText = () => (
         </Container>
         <Container label="Text Content">
             <Box debug className={richText}>
+                <h1>Heading</h1>
                 <h2>Heading</h2>
                 <h2>
                     Heading with

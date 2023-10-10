@@ -9,6 +9,7 @@ type Props = TownsTokenProps & {
     onAnimationComplete?: () => void
     mintMode?: boolean
     imageSrc?: string
+    imageSrcRenderKey?: string
 }
 
 export const InteractiveTownsToken = (props: Props) => {
@@ -22,21 +23,35 @@ export const InteractiveTownsToken = (props: Props) => {
     const onMouseMove = useCallback((e: React.MouseEvent) => {
         const bounds = ref.current?.getBoundingClientRect()
         if (bounds) {
-            const x = ((e.clientX - bounds.left) / bounds.width - 0.5) * 2
-            const y = ((e.clientY - bounds.top) / bounds.height - 0.5) * 2
+            const x = ((e.clientX - bounds.left) / bounds.width - 0.5) * 1.33
+            const y = ((e.clientY - bounds.top) / bounds.height - 0.5) * 1.33
             const a = Math.atan2(y, x)
             setInput({ x, y, a })
         }
     }, [])
 
-    const [isPop, setPop] = useState(true)
+    const [isOut, setIsOut] = useState(true)
+
+    const [isInteracting, setIsInteracting] = useState(false)
+    useEffect(() => {
+        if (isOut) {
+            setIsInteracting(false)
+        } else {
+            const timeout = setTimeout(() => {
+                setIsInteracting(true)
+            }, 350)
+            return () => {
+                clearTimeout(timeout)
+            }
+        }
+    }, [isOut])
 
     const onMouseEnter = useCallback(() => {
-        setPop(false)
+        setIsOut(false)
     }, [])
 
     const onMouseLeave = useCallback(() => {
-        setPop(true)
+        setIsOut(true)
     }, [])
 
     const distance = Math.sqrt(x * x + y * y)
@@ -47,7 +62,7 @@ export const InteractiveTownsToken = (props: Props) => {
     useEffect(() => {
         const timeout = setTimeout(() => {
             setIsInit(true)
-        }, 1000)
+        }, 100)
         return () => {
             clearTimeout(timeout)
         }
@@ -68,20 +83,24 @@ export const InteractiveTownsToken = (props: Props) => {
                       duration: 0.5,
                       delay: 1,
                   }
-                : !isPop
+                : isOut
                 ? {
                       type: 'spring',
-                      stiffness: 600,
+                      stiffness: 400,
                       damping: 20,
-                      restSpeed: 100,
+                      restSpeed: 0.01,
+                  }
+                : !isInteracting
+                ? {
+                      type: 'spring',
+                      stiffness: 800,
+                      damping: 80,
+                      restSpeed: 0.01,
                   }
                 : {
-                      type: 'spring',
-                      stiffness: 400,
-                      damping: 50,
-                      restSpeed: 0.1,
+                      duration: 0,
                   },
-        [isInit, isMint, isPop],
+        [isInit, isInteracting, isMint, isOut],
     )
 
     // using useEffect instead of motion.div onAnimationComplete because
@@ -105,22 +124,22 @@ export const InteractiveTownsToken = (props: Props) => {
 
                     ['--tk-mint']: 1 - mint,
 
-                    ['--tk-rad']: isPop ? 0 : a * mint,
-                    ['--tk-rad-abs']: isPop ? 0 : Math.abs(a) * mint,
+                    ['--tk-rad']: isOut ? 0 : a * mint,
+                    ['--tk-rad-abs']: isOut ? 0 : Math.abs(a) * mint,
 
-                    ['--tk-x']: isPop ? 0 : x * mint,
-                    ['--tk-y']: isPop ? 0 : y * mint,
+                    ['--tk-x']: isOut ? 0 : x * mint,
+                    ['--tk-y']: isOut ? 0 : y * mint,
 
-                    ['--tk-mx']: isPop ? +0.5 : x * mint,
-                    ['--tk-my']: isPop ? -0.5 : y * mint,
+                    ['--tk-mx']: isOut ? +0.5 : x * mint,
+                    ['--tk-my']: isOut ? -0.5 : y * mint,
 
-                    ['--tk-ax']: isPop ? 0 : Math.abs(x) * mint,
-                    ['--tk-ay']: isPop ? 0 : Math.abs(y) * mint,
+                    ['--tk-ax']: isOut ? 0 : Math.abs(x) * mint,
+                    ['--tk-ay']: isOut ? 0 : Math.abs(y) * mint,
 
-                    ['--tk-d']: isPop ? 1 : 10 * distance * mint,
+                    ['--tk-d']: isOut ? 1 : 10 * distance * mint,
 
-                    ['--tk-px']: isPop ? +0.6 : Math.cos(2 * mint) * 0.8,
-                    ['--tk-py']: isPop ? -0.6 : Math.sin(2 * mint) * 0.8,
+                    ['--tk-px']: isOut ? +0.6 : Math.cos(2 * mint) * 0.8,
+                    ['--tk-py']: isOut ? -0.6 : Math.sin(2 * mint) * 0.8,
 
                     transition: isMint
                         ? {
@@ -172,16 +191,19 @@ export const InteractiveTownsToken = (props: Props) => {
                 ref={ref}
                 style={
                     {
-                        cursor: isPop ? undefined : 'pointer',
+                        cursor: isOut ? undefined : 'pointer',
                         width: config.containerSize,
                         height: config.containerSize,
                     } as React.CSSProperties
                 }
-                onMouseMove={onMouseMove}
-                onMouseEnter={onMouseEnter}
-                onMouseLeave={onMouseLeave}
             >
-                <TownsToken key={props.imageSrcRenderKey} {...props} />
+                <TownsToken
+                    key={props.imageSrcRenderKey}
+                    {...props}
+                    onMouseMove={onMouseMove}
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
+                />
             </Box>
         </motion.div>
     )
