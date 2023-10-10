@@ -32,6 +32,7 @@ import { TouchProfile } from './TouchProfile'
 import { SpacesChannelAnimated } from './SpacesChannelAnimated'
 import { AppPanelLayout } from './layouts/AppPanelLayout'
 import { TouchSearchTab } from './TouchSearchTab'
+import { ValidateMembership } from './ValidateMembership'
 
 const CheckRedirect = () => {
     const { state } = useLocation()
@@ -91,30 +92,32 @@ export const AuthenticatedRoutes = () => {
                                 />
                             </>
                         )}
-                        <Route element={<AppPanelLayout />}>
-                            <Route path={`${PATHS.SPACES}/:spaceSlug`}>
-                                <Route index element={<SpaceHome />} />
-                                <Route path="members" element={<SpaceMembers />}>
-                                    <Route
-                                        path="profile/:profileId"
-                                        element={<SpaceProfilePanel />}
-                                    />
-                                    <Route path="info" element={<InfoPanelWrapper />} />
+                        <Route element={<ValidateMembership />}>
+                            <Route element={<AppPanelLayout />}>
+                                <Route path={`${PATHS.SPACES}/:spaceSlug`}>
+                                    <Route index element={<SpaceHome />} />
+                                    <Route path="members" element={<SpaceMembers />}>
+                                        <Route
+                                            path="profile/:profileId"
+                                            element={<SpaceProfilePanel />}
+                                        />
+                                        <Route path="info" element={<InfoPanelWrapper />} />
+                                    </Route>
+                                    <Route path="channels/:channelSlug" element={<SpacesChannel />}>
+                                        <Route
+                                            path="replies/:messageId"
+                                            element={<SpacesChannelReplies parentRoute="../" />}
+                                        />
+                                        <Route
+                                            path="profile/:profileId"
+                                            element={<SpaceProfilePanel />}
+                                        />
+                                        <Route path="info" element={<InfoPanelWrapper />} />
+                                    </Route>
+                                    <Route path="*" element={<TownRoutes />} />
                                 </Route>
-                                <Route path="channels/:channelSlug" element={<SpacesChannel />}>
-                                    <Route
-                                        path="replies/:messageId"
-                                        element={<SpacesChannelReplies parentRoute="../" />}
-                                    />
-                                    <Route
-                                        path="profile/:profileId"
-                                        element={<SpaceProfilePanel />}
-                                    />
-                                    <Route path="info" element={<InfoPanelWrapper />} />
-                                </Route>
-                                <Route path="*" element={<TownRoutes />} />
+                                <Route path="*" element={<OutsideTownRoutes />} />
                             </Route>
-                            <Route path="*" element={<OutsideTownRoutes />} />
                         </Route>
                     </>
                 )}

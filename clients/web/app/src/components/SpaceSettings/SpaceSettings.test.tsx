@@ -43,6 +43,13 @@ vi.mock('react-router', async () => {
     }
 })
 
+// TODO: skipping membership validation altogether here, we shouldn't have to do this
+vi.mock('routes/ValidateMembership', () => ({
+    ValidateMembership: () => {
+        return <Router.Outlet />
+    },
+}))
+
 vi.mock('hooks/useRequireTransactionNetwork', () => {
     return {
         useRequireTransactionNetwork: () => ({

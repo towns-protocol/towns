@@ -9,8 +9,8 @@ import { Box, BoxProps, Button, Heading, Icon } from '@ui'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { BottomBarLayout } from '@components/Web3/MembershipNFT/BottomBar'
-import { atoms } from 'ui/styles/atoms.css'
 import { PageLogo } from '@components/Logo/Logo'
+import { SpaceJoin } from '@components/Web3/SpaceJoin'
 
 const log = debug('app:public-town')
 log.enabled = true
@@ -21,18 +21,27 @@ export const PublicTownPage = () => {
     const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceSlug)
     const { data: townBio } = useGetSpaceTopic(spaceSlug)
 
-    const onJoin = useCallback(() => {
-        //
+    const [isModalShowing, setIsModalShowing] = React.useState(false)
+    const onCancelJoin = useCallback(() => {
+        setIsModalShowing(false)
+    }, [])
+    const onJoinClick = useCallback(() => {
+        setIsModalShowing(true)
     }, [])
 
     return spaceInfo ? (
         <>
+            <Box horizontal centerContent width="100%" padding="lg">
+                <Box width="1200">
+                    <PageLogo />
+                </Box>
+            </Box>
             <TownPageLayout
                 contentRight={<TownPageMemberList />}
                 bottomContent={
                     <BottomBarLayout
                         buttonContent={
-                            <Button tone="cta1" width="100%" type="button" onClick={onJoin}>
+                            <Button tone="cta1" width="100%" type="button" onClick={onJoinClick}>
                                 Join Town
                             </Button>
                         }
@@ -44,11 +53,16 @@ export const PublicTownPage = () => {
                 owner={isAddress(spaceInfo.owner) ? spaceInfo.owner : undefined}
                 bio={townBio}
             />
-            <Box position="topLeft">
-                <Box padding="lg">
-                    <PageLogo className={atoms({ height: 'x4' })} />
-                </Box>
-            </Box>
+            {isModalShowing && (
+                <SpaceJoin
+                    joinData={{
+                        name: spaceInfo.name,
+                        networkId: spaceInfo.networkId,
+                        spaceAddress: spaceInfo.address,
+                    }}
+                    onCancel={onCancelJoin}
+                />
+            )}
         </>
     ) : isLoading ? (
         <MessageBox>
