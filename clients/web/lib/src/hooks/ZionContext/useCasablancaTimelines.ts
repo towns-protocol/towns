@@ -30,6 +30,7 @@ import {
     RoomMessageEncryptedEvent,
     RoomMessageEvent,
     SpaceChildEvent,
+    SpaceUsernameEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
@@ -713,6 +714,18 @@ function toTownsContent_SpacePayload(
                     membership: toMembership(payload.op),
                     reason: undefined, // todo is this needed?
                 } satisfies RoomMemberEvent,
+            }
+        }
+        case 'username': {
+            // todo: HNT-2845 - implementation for reflecting username changes in app
+            const payload = value.content.value
+            return {
+                content: {
+                    kind: ZTEvent.SpaceUsername,
+                    userId: payload.userId,
+                    username: '',
+                    displayName: '',
+                } satisfies SpaceUsernameEvent,
             }
         }
         case undefined:

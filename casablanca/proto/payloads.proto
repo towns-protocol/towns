@@ -102,6 +102,12 @@ message ChannelProperties {
     string topic = 2;
 }
 
+message UsernameProperties {
+    optional string username = 1;
+    optional string display_name = 2;
+}
+
+
 //value field of a FullyReadMarker message which contains details about 
 //unreads and mentions in the specific channel - related channel_id is set
 //in UserSettingsPayload

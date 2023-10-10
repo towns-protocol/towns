@@ -51,6 +51,7 @@ export enum ZTEvent {
     RoomTopic = 'm.room.topic',
     SpaceChild = 'm.space.child',
     SpaceParent = 'm.space.parent',
+    SpaceUsername = 'm.space.username',
 }
 
 /// a timeline event should have one or none of the following fields set
@@ -75,6 +76,7 @@ export type TimelineEvent_OneOf =
     | RoomTopicEvent
     | SpaceChildEvent
     | SpaceParentEvent
+    | SpaceUsernameEvent
 
 // NOTE this is an inexhaustive list, see https://spec.matrix.org/v1.2/client-server-api/#server-behaviour-16
 // and https://spec.matrix.org/v1.2/client-server-api/#stripped-state
@@ -149,6 +151,13 @@ export interface RoomMemberEvent {
     membership: Membership
     reason?: string
     streamId?: string // in a case of an invitation to a channel with a streamId
+}
+
+export interface SpaceUsernameEvent {
+    kind: ZTEvent.SpaceUsername
+    userId: string
+    username: string
+    displayName?: string
 }
 
 // mentions should always have a user id, but it's data over the wire
@@ -330,6 +339,8 @@ export function getFallbackContent(
             return `${senderDisplayName}: ${content.body}`
         case ZTEvent.RoomName:
             return `newValue: ${content.name}`
+        case ZTEvent.SpaceUsername:
+            return `username: ${content.username}`
         case ZTEvent.RoomTopic:
             return `newValue: ${content.topic}`
         case ZTEvent.RedactedEvent:

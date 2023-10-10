@@ -211,6 +211,10 @@ message SpacePayload {
         map<string, Channel> channels = 2;
         // userId: Membership
         map<string, Membership> memberships = 3;
+        // userId: Username
+        map<string, Username> usernames = 4;
+        // userId: Displayname
+        map<string, Username> displaynames = 5;
     }
     
     message Inception {
@@ -225,10 +229,19 @@ message SpacePayload {
         EncryptedData channel_properties = 4;
     }
 
+    message Username {
+        UsernameOp op = 1;
+        string user_id = 2;
+        EncryptedData username_properties = 3;
+        // reserved for a stable slot number ordering where the username was added to snapshot
+        optional int64 slot_num = 4;
+    }
+
     oneof content {
         Inception inception = 1;
         Channel channel = 2;
         Membership membership = 3;
+        Username username = 4;
     }
 }
 
@@ -410,6 +423,13 @@ enum ToDeviceOp {
 
 enum RiverKeyOp {
     RDKO_KEY_REVOKE = 0;
+}
+
+enum UsernameOp {
+    UNO_UNSPECIFIED = 0;
+    UNO_EDIT_USERNAME = 1;
+    UNO_EDIT_DISPLAYNAME = 2;
+    UNO_EDIT_USERNAME_DISPLAYNAME = 3;
 }
 
 /**
