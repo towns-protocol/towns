@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS es (
 
 CREATE TABLE IF NOT EXISTS miniblocks (
   stream_id VARCHAR NOT NULL,
-  seq_num BIGINT,
+  seq_num BIGINT NOT NULL,
   blockdata BYTEA NOT NULL,
   PRIMARY KEY (stream_id, seq_num)
   ) PARTITION BY LIST (stream_id);
@@ -19,3 +19,9 @@ CREATE TABLE IF NOT EXISTS minipools (
   envelope BYTEA,
   PRIMARY KEY (stream_id, generation, slot_num)
   ) PARTITION BY LIST (stream_id);
+
+  CREATE TABLE IF NOT EXISTS singlenodekey (
+  uuid VARCHAR NOT NULL,
+  storage_connection_time TIMESTAMP NOT NULL,
+  info VARCHAR NOT NULL
+);

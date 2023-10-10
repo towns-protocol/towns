@@ -16,7 +16,7 @@ import (
 func StartDB(ctx context.Context) (string, string, func(), error) {
 	dbSchemaName := os.Getenv("TEST_DATABASE_SCHEMA_NAME")
 	if dbSchemaName == "" {
-		dbSchemaName = "public"
+		dbSchemaName = "testSchema"
 	}
 	dbUrl := os.Getenv("TEST_DATABASE_URL")
 	if dbUrl != "" {

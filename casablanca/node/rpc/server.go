@@ -24,6 +24,8 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
+type Cleanup func(context.Context) error
+
 func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAddress string) (nodes.NodeRegistry, error) {
 	log := dlog.CtxLog(ctx)
 
@@ -36,26 +38,29 @@ func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAdd
 	return nodes.LoadNodeRegistry(ctx, nodeRegistryPath, localNodeAddress)
 }
 
-func createStore(ctx context.Context, dbUrl string, storageType string, address string) (storage.StreamStorage, error) {
+func createStore(ctx context.Context, dbUrl string, storageType string, address string, exitSignal chan error) (storage.StreamStorage, Cleanup, error) {
 	log := dlog.CtxLog(ctx)
 	if storageType == "in-memory" {
 		log.Warn("Using in-memory storage")
-		return storage.NewMemStorage(), nil
+		return storage.NewMemStorage(), nil, nil
 	} else {
 		schema := storage.DbSchemaNameFromAddress(address)
-		store, err := storage.NewPostgresEventStore(ctx, dbUrl, schema, false)
+		store, err := storage.NewPostgresEventStore(ctx, dbUrl, schema, false, exitSignal)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		streamsCount, err := store.GetStreamsNumber(ctx)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		log.Info("Created postgres event store", "schema", schema)
 		log.Info("Current number of streams in the store", "totalStreamsCount", streamsCount)
-		return store, nil
+		var cleaner = func(ctx context.Context) error {
+			return store.CleanupStorage(ctx)
+		}
+		return store, cleaner, nil
 	}
 }
 
@@ -78,7 +83,9 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		ctx = dlog.CtxWithLog(ctx, log)
 	}
 
-	store, err := createStore(ctx, cfg.DbUrl, cfg.StorageType, wallet.AddressStr)
+	exitSignal := make(chan error, 1)
+
+	store, storageCleaner, err := createStore(ctx, cfg.DbUrl, cfg.StorageType, wallet.AddressStr, exitSignal)
 	if err != nil {
 		return nil, 0, nil, err
 	}
@@ -129,7 +136,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		walletLinkContract: walletLinkContract,
 		wallet:             wallet,
 		skipDelegateCheck:  cfg.SkipDelegateCheck,
-		exitSignal:         make(chan error, 1),
+		exitSignal:         exitSignal,
 		nodeRegistry:       nodeRegistry,
 		streamRegistry:     nodes.NewStreamRegistry(nodeRegistry),
 		streamConfig:       cfg.Stream,
@@ -177,7 +184,20 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	}()
 	closer := func() {
 		log.Info("closing server")
-		err := srv.Shutdown(ctx)
+
+		//if there is a cleaner, run it
+		if storageCleaner != nil {
+			err := storageCleaner(ctx)
+			if err != nil {
+				log.Error("failed to cleanup storage", "error", err)
+			}
+		}
+
+		if err != nil {
+			log.Error("failed to cleanup storage", "error", err)
+		}
+
+		err = srv.Shutdown(ctx)
 		if err != nil {
 			log.Error("failed to shutdown server", "error", err)
 			panic(err)

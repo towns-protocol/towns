@@ -17,6 +17,18 @@ import (
 var testDatabaseUrl string
 var testSchemaName string
 var pgEventStore *storage.PostgresEventStore
+var exitSignal chan error
+
+func setupTest() func() {
+	store, err := storage.NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, true, exitSignal)
+	if err != nil {
+		panic("Can't create event store: " + err.Error())
+	}
+	pgEventStore = store
+	return func() {
+		pgEventStore.Close()
+	}
+}
 
 func TestMain(m *testing.M) {
 	dbUrl, dbSchemaName, closer, err := testutils.StartDB(context.Background())
@@ -26,11 +38,7 @@ func TestMain(m *testing.M) {
 	testDatabaseUrl = dbUrl
 	testSchemaName = dbSchemaName
 
-	// Create a new PGEventStore
-	pgEventStore, err = storage.NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, true)
-	if err != nil {
-		panic("Can't create event store: " + err.Error())
-	}
+	exitSignal = make(chan error, 1)
 
 	var code int = 1
 
@@ -46,6 +54,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestPostgresEventStore(t *testing.T) {
+	teardownTest := setupTest()
+	defer teardownTest()
 	ctx := context.Background()
 
 	streamsNumber, _ := pgEventStore.GetStreamsNumber(ctx)
@@ -193,8 +203,25 @@ func TestPostgresEventStore(t *testing.T) {
 }
 
 func TestNoStream(t *testing.T) {
+	teardownTest := setupTest()
+	defer teardownTest()
 	res, err := pgEventStore.GetStreamFromLastSnapshot(context.Background(), "noStream")
 	assert.Nil(t, res)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "NOT_FOUND")
+}
+
+func TestExitIfSecondStorageCreated(t *testing.T) {
+	teardownTest := setupTest()
+	defer teardownTest()
+	ctx := context.Background()
+	_, err := storage.NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, true, exitSignal)
+	if err != nil {
+		t.Fatal("Error creating new storage instance", err)
+	}
+	var genesisMiniblock = []byte("genesisMinoblock")
+	streamId := "11-0sfdsf_sdfds1"
+	err = pgEventStore.CreateStream(ctx, streamId, genesisMiniblock)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "Node number mismatch")
 }
