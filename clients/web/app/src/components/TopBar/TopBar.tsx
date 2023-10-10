@@ -7,12 +7,14 @@ import { vars } from 'ui/styles/vars.css'
 export const TopBar = () => (
     <Stack horizontal minHeight="x7">
         <Box centerContent width="x8">
-            <LogoSingleLetter />
+            <a href="https://towns.com" rel="noreferrer, noopener">
+                <LogoSingleLetter />
+            </a>
         </Box>
-        <Box grow>
-            <SearchBox />
+        <Box grow centerContent>
+            <SearchBar />
         </Box>
-        <Box centerContent width="x8">
+        <Box centerContent width="x8" paddingRight="md">
             <ProfileCardButton />
         </Box>
     </Stack>
@@ -27,10 +29,4 @@ const LogoSingleLetter = () => (
             fill={vars.color.foreground.gray2}
         />
     </svg>
-)
-
-const SearchBox = () => (
-    <Box grow centerContent>
-        <SearchBar />
-    </Box>
 )
