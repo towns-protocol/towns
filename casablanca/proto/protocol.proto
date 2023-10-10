@@ -5,9 +5,21 @@ option go_package = "casablanca/node/protocol";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
+
+/** 
+* Miniblock contains a list of events and the header event.
+* Events must be in the same order as in the header, which is of type MiniblockHeader.
+* Only signed data (Envelopes) should exist in this data structure.
+*/
+message Miniblock {
+    repeated Envelope events = 1;
+    Envelope header = 2;
+}
+
 /**
  * Envelope contains serialized event, and its hash and signature.
  * hash is used as event id. Subsequent events reference this event by hash.
+ * event is a serialized StreamEvent
  */
 message Envelope {
     /**
@@ -28,6 +40,9 @@ message Envelope {
     bytes event = 3;
 }
 
+/**
+* StreamEvent is a single event in the stream.
+*/
 message StreamEvent {
     /**
      * Address of the creator of the event.
@@ -87,10 +102,10 @@ message StreamEvent {
     }
 }
 
-
-// Represents a miniblock header.
-// MiniblockHeader is a special event that forms a block from set of the stream events.
-// Hash of the serialized StreamEvent containing MiniblockHeader is used as a block hash.
+/** 
+* MiniblockHeader is a special event that forms a block from set of the stream events.
+* Hash of the serialized StreamEvent containing MiniblockHeader is used as a block hash.
+*/
 message MiniblockHeader {
     // Miniblock number.
     // 0 for genesis block.
@@ -116,14 +131,216 @@ message MiniblockHeader {
     }
 }
 
-// Contains all events in the miniblock, and the header event.
-// Events must be in the same order as in the header.
-message Miniblock {
-    repeated Envelope events = 1;
-    Envelope header = 2;
+/**
+* SpacePayload
+*/
+message SpacePayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // streamId: Channel
+        map<string, Channel> channels = 2;
+        // userId: Membership
+        map<string, Membership> memberships = 3;
+        // userId: Username
+        map<string, Username> usernames = 4;
+        // userId: Displayname
+        map<string, Username> displaynames = 5;
+    }
+    
+    message Inception {
+        string stream_id = 1;
+        StreamSettings settings = 2;
+    }
+
+    message Channel {
+        ChannelOp op = 1;
+        string channel_id = 2;
+        EventRef origin_event = 3;
+        EncryptedData channel_properties = 4;
+    }
+
+    message Username {
+        UsernameOp op = 1;
+        string user_id = 2;
+        EncryptedData username_properties = 3;
+        // reserved for a stable slot number ordering where the username was added to snapshot
+        optional int64 slot_num = 4;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        Channel channel = 2;
+        Membership membership = 3;
+        Username username = 4;
+    }
 }
 
-// Contains a snapshot of all state events up to the most recent miniblock
+/**
+* ChannelPayload
+*/
+message ChannelPayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // userId: Membership
+        map<string, Membership> memberships = 2;
+    }
+    
+    message Inception {
+        string stream_id = 1;
+        string space_id = 3;
+        /**
+        * channel_name and channel_topic from this payload will be used to 
+        * create associated with that channel space event for stream as we agreed
+        * that channel names and topics will be delivered using space stream
+        */
+        EncryptedData channel_properties = 4;
+        StreamSettings settings = 5;
+    }
+
+    /**
+    * Receipt is used to acknowledge that the event depicted by origin_op and hash 
+    * was responded to by a device. Used to prevent spurious processing of to-device events
+    * by multiple requested users' devices.
+    */
+    message Receipt {
+        ToDeviceOp origin_op = 1;
+        bytes origin_hash = 2;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        EncryptedData message = 2;
+        Membership membership = 3;
+        Receipt receipt = 4;
+    }
+}
+
+/**
+* UserPayload
+*/
+message UserPayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // streamId: UserMembership
+        map<string, UserMembership> memberships = 2;
+    }
+
+    message Inception {
+        string stream_id = 1;
+        StreamSettings settings = 2;
+    }
+    
+    message UserMembership {
+        string stream_id = 1;
+        EventRef origin_event = 2;
+        string inviter_id = 3;
+        MembershipOp op = 4;
+    }
+    
+    message ToDevice {
+        ToDeviceOp op = 1;
+        EncryptedDeviceData message = 2;
+        string device_key = 3;
+        string sender_key = 4;
+    }
+    
+    oneof content {
+        Inception inception = 1;
+        UserMembership user_membership = 2;
+        ToDevice to_device = 3;
+    }
+}
+
+/**
+* UserSettingsPayload
+*/
+message UserSettingsPayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // channelStreamId: FullyReadMarker
+        map<string, FullyReadMarkers> fully_read_markers = 2;
+    }
+
+    message Inception {
+        string stream_id = 1;
+        StreamSettings settings = 2;
+    }
+
+    message FullyReadMarkers {
+        string channel_stream_id = 1;
+        EncryptedData content = 2;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        FullyReadMarkers fully_read_markers = 2;
+    }
+}
+
+/**
+* UserDeviceKeyPayload
+*/
+message UserDeviceKeyPayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // deviceId: UserDeviceKey
+        map<string, UserDeviceKey> user_device_keys = 2;
+    }
+
+    message Inception {
+        string stream_id = 1;
+        string user_id = 2;
+        StreamSettings settings = 3;
+    }
+
+    message UserDeviceKey {
+        string user_id = 1;
+        optional DeviceKeys device_keys = 2;
+        optional FallbackKeys fallback_keys = 3;
+        optional RiverKeyOp river_key_op = 4;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        UserDeviceKey user_device_key = 2;
+    }
+}
+
+/**
+* MediaPayload
+*/
+message MediaPayload {
+    message Snapshot {
+        Inception inception = 1;
+    }
+    
+    message Inception {
+        string stream_id = 1;
+        string space_id = 2;
+        string channel_id = 3;
+        int32 chunk_count = 4;
+        StreamSettings settings = 5;
+    }
+
+    message Chunk {
+        bytes data = 1;
+        int32 chunk_index = 2;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        Chunk chunk = 2;
+    }
+}
+
+/**
+* Snapshot contains a summary of all state events up to the most recent miniblock
+*/
 message Snapshot {
 
     // Snapshot data specific for each stream type.
@@ -168,83 +385,6 @@ message Membership {
 }
 
 
-message UserPayload {
-    message Snapshot {
-        // inception
-        Inception inception = 1;
-        // streamId: UserMembership
-        map<string, UserMembership> memberships = 2;
-    }
-
-    message Inception {
-        string stream_id = 1;
-        StreamSettings settings = 2;
-    }
-    
-    message UserMembership {
-        string stream_id = 1;
-        EventRef origin_event = 2;
-        string inviter_id = 3;
-        MembershipOp op = 4;
-    }
-    
-    message ToDevice {
-        ToDeviceOp op = 1;
-        EncryptedDeviceData message = 2;
-        string device_key = 3;
-        string sender_key = 4;
-    }
-    
-    oneof content {
-        Inception inception = 1;
-        UserMembership user_membership = 2;
-        ToDevice to_device = 3;
-    }
-}
-
-
-message SpacePayload {
-    message Snapshot {
-        // inception
-        Inception inception = 1;
-        // streamId: Channel
-        map<string, Channel> channels = 2;
-        // userId: Membership
-        map<string, Membership> memberships = 3;
-        // userId: Username
-        map<string, Username> usernames = 4;
-        // userId: Displayname
-        map<string, Username> displaynames = 5;
-    }
-    
-    message Inception {
-        string stream_id = 1;
-        StreamSettings settings = 2;
-    }
-
-    message Channel {
-        ChannelOp op = 1;
-        string channel_id = 2;
-        EventRef origin_event = 3;
-        EncryptedData channel_properties = 4;
-    }
-
-    message Username {
-        UsernameOp op = 1;
-        string user_id = 2;
-        EncryptedData username_properties = 3;
-        // reserved for a stable slot number ordering where the username was added to snapshot
-        optional int64 slot_num = 4;
-    }
-
-    oneof content {
-        Inception inception = 1;
-        Channel channel = 2;
-        Membership membership = 3;
-        Username username = 4;
-    }
-}
-
 message EncryptedData {
     /**
     * Ciphertext of the encryption envelope.
@@ -285,144 +425,6 @@ message EncryptedMessageEnvelope {
     * Ciphertext of the encryption envelope.
     */
     string body = 2;
-}
-
-
-message ChannelPayload {
-    message Snapshot {
-        // inception
-        Inception inception = 1;
-        // userId: Membership
-        map<string, Membership> memberships = 2;
-    }
-    
-    message Inception {
-        string stream_id = 1;
-        string space_id = 3;
-        /**
-        * channel_name and channel_topic from this payload will be used to 
-        * create associated with that channel space event for stream as we agreed
-        * that channel names and topics will be delivered using space stream
-        */
-        EncryptedData channel_properties = 4;
-        StreamSettings settings = 5;
-    }
-
-    /**
-    * Receipt is used to acknowledge that the event depicted by origin_op and hash 
-    * was responded to by a device. Used to prevent spurious processing of to-device events
-    * by multiple requested users' devices.
-    */
-    message Receipt {
-        ToDeviceOp origin_op = 1;
-        bytes origin_hash = 2;
-    }
-
-    oneof content {
-        Inception inception = 1;
-        EncryptedData message = 2;
-        Membership membership = 3;
-        Receipt receipt = 4;
-    }
-}
-
-message UserSettingsPayload {
-    message Snapshot {
-        // inception
-        Inception inception = 1;
-        // channelStreamId: FullyReadMarker
-        map<string, FullyReadMarkers> fully_read_markers = 2;
-    }
-
-    message Inception {
-        string stream_id = 1;
-        StreamSettings settings = 2;
-    }
-
-    message FullyReadMarkers {
-        string channel_stream_id = 1;
-        EncryptedData content = 2;
-    }
-
-    oneof content {
-        Inception inception = 1;
-        FullyReadMarkers fully_read_markers = 2;
-    }
-}
-
-message UserDeviceKeyPayload {
-    message Snapshot {
-        // inception
-        Inception inception = 1;
-        // deviceId: UserDeviceKey
-        map<string, UserDeviceKey> user_device_keys = 2;
-    }
-
-    message Inception {
-        string stream_id = 1;
-        string user_id = 2;
-        StreamSettings settings = 3;
-    }
-
-    message UserDeviceKey {
-        string user_id = 1;
-        optional DeviceKeys device_keys = 2;
-        optional FallbackKeys fallback_keys = 3;
-        optional RiverKeyOp river_key_op = 4;
-    }
-
-    oneof content {
-        Inception inception = 1;
-        UserDeviceKey user_device_key = 2;
-    }
-}
-
-message MediaPayload {
-    message Snapshot {
-        Inception inception = 1;
-    }
-    
-    message Inception {
-        string stream_id = 1;
-        string space_id = 2;
-        string channel_id = 3;
-        int32 chunk_count = 4;
-        StreamSettings settings = 5;
-    }
-
-    message Chunk {
-        bytes data = 1;
-        int32 chunk_index = 2;
-    }
-
-    oneof content {
-        Inception inception = 1;
-        Chunk chunk = 2;
-    }
-}
-
-enum MembershipOp {
-    SO_UNSPECIFIED = 0;
-    SO_INVITE = 1;
-    SO_JOIN = 2;
-    SO_LEAVE = 3;
-}
-
-enum ChannelOp {
-    CO_UNSPECIFIED = 0;
-    CO_CREATED = 1;
-    CO_DELETED = 2;
-    CO_UPDATED = 4;
-}
-
-enum ToDeviceOp {
-    TDO_UNSPECIFIED = 0;
-    TDO_KEY_REQUEST = 1;
-    TDO_KEY_RESPONSE = 2;
-}
-
-enum RiverKeyOp {
-    RDKO_KEY_REVOKE = 0;
 }
 
 enum UsernameOp {
@@ -586,6 +588,31 @@ service StreamService {
     rpc GetLinkWalletNonce(GetLinkWalletNonceRequest) returns (GetLinkWalletNonceResponse);
     rpc GetLinkedWallets(GetLinkedWalletsRequest) returns (GetLinkedWalletsResponse);
     rpc Info(InfoRequest) returns (InfoResponse);
+}
+
+
+enum MembershipOp {
+    SO_UNSPECIFIED = 0;
+    SO_INVITE = 1;
+    SO_JOIN = 2;
+    SO_LEAVE = 3;
+}
+
+enum ChannelOp {
+    CO_UNSPECIFIED = 0;
+    CO_CREATED = 1;
+    CO_DELETED = 2;
+    CO_UPDATED = 4;
+}
+
+enum ToDeviceOp {
+    TDO_UNSPECIFIED = 0;
+    TDO_KEY_REQUEST = 1;
+    TDO_KEY_RESPONSE = 2;
+}
+
+enum RiverKeyOp {
+    RDKO_KEY_REVOKE = 0;
 }
 
 // Codes from 1 to 16 match gRPC/Connect codes.

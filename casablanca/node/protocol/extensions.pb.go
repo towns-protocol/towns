@@ -4,34 +4,28 @@ import "fmt"
 
 type IsStreamEvent_Payload = isStreamEvent_Payload
 type IsMiniblockHeader_Content = isMiniblockHeader_Content
-type IsSnapshot_Content = isSnapshot_Content
-type IsUserPayload_Content = isUserPayload_Content
 type IsSpacePayload_Content = isSpacePayload_Content
 type IsChannelPayload_Content = isChannelPayload_Content
+type IsUserPayload_Content = isUserPayload_Content
 type IsUserSettingsPayload_Content = isUserSettingsPayload_Content
 type IsUserDeviceKeyPayload_Content = isUserDeviceKeyPayload_Content
 type IsMediaPayload_Content = isMediaPayload_Content
+type IsSnapshot_Content = isSnapshot_Content
 
 type IsInceptionPayload interface {
 	isInceptionPayload()
 	GetStreamId() string
 	GetSettings() *StreamSettings
 }
-func (*UserPayload_Inception) isInceptionPayload() {}
 func (*SpacePayload_Inception) isInceptionPayload() {}
 func (*ChannelPayload_Inception) isInceptionPayload() {}
+func (*UserPayload_Inception) isInceptionPayload() {}
 func (*UserSettingsPayload_Inception) isInceptionPayload() {}
 func (*UserDeviceKeyPayload_Inception) isInceptionPayload() {}
 func (*MediaPayload_Inception) isInceptionPayload() {}
 
 func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
 	switch e.Content.(type) {
-	case *Snapshot_UserContent:
-		r := e.Content.(*Snapshot_UserContent).UserContent.GetInception()
-		if r == nil {
-			return nil
-		}
-		return r
 	case *Snapshot_SpaceContent:
 		r := e.Content.(*Snapshot_SpaceContent).SpaceContent.GetInception()
 		if r == nil {
@@ -40,6 +34,12 @@ func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
 		return r
 	case *Snapshot_ChannelContent:
 		r := e.Content.(*Snapshot_ChannelContent).ChannelContent.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
+	case *Snapshot_UserContent:
+		r := e.Content.(*Snapshot_UserContent).UserContent.GetInception()
 		if r == nil {
 			return nil
 		}
@@ -69,12 +69,6 @@ func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
 
 func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 	switch e.Payload.(type) {
-	case *StreamEvent_UserPayload:
-		r := e.Payload.(*StreamEvent_UserPayload).UserPayload.GetInception()
-		if r == nil {
-			return nil
-		}
-		return r
 	case *StreamEvent_SpacePayload:
 		r := e.Payload.(*StreamEvent_SpacePayload).SpacePayload.GetInception()
 		if r == nil {
@@ -83,6 +77,12 @@ func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 		return r
 	case *StreamEvent_ChannelPayload:
 		r := e.Payload.(*StreamEvent_ChannelPayload).ChannelPayload.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
+	case *StreamEvent_UserPayload:
+		r := e.Payload.(*StreamEvent_UserPayload).UserPayload.GetInception()
 		if r == nil {
 			return nil
 		}
@@ -112,11 +112,6 @@ func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 
 func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) error {
 	switch e.Payload.(type) {
-	case *StreamEvent_UserPayload:
-		_, ok := i.(*UserPayload_Inception)
-		if !ok {
-			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_UserPayload::%T vs %T", e.GetUserPayload().Content, i)
-		}
 	case *StreamEvent_SpacePayload:
 		_, ok := i.(*SpacePayload_Inception)
 		if !ok {
@@ -126,6 +121,11 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 		_, ok := i.(*ChannelPayload_Inception)
 		if !ok {
 			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_ChannelPayload::%T vs %T", e.GetChannelPayload().Content, i)
+		}
+	case *StreamEvent_UserPayload:
+		_, ok := i.(*UserPayload_Inception)
+		if !ok {
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_UserPayload::%T vs %T", e.GetUserPayload().Content, i)
 		}
 	case *StreamEvent_UserSettingsPayload:
 		_, ok := i.(*UserSettingsPayload_Inception)
