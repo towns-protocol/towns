@@ -65,7 +65,7 @@ interface ZionClientImpl {
     ) => Promise<CreateSpaceTransactionContext | undefined>
     waitForCreateSpaceTransaction: (
         context: CreateSpaceTransactionContext | undefined,
-    ) => Promise<TransactionContext<RoomIdentifier> | undefined>
+    ) => Promise<CreateSpaceTransactionContext | undefined>
     createChannelTransaction: (
         createChannelInfo: CreateChannelInfo,
         signer: ethers.Signer | undefined,

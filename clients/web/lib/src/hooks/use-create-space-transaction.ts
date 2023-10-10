@@ -1,6 +1,6 @@
 import { SignerUndefinedError, toError } from '../types/error-types'
 import {
-    TransactionContext,
+    CreateSpaceTransactionContext,
     TransactionStatus,
     createTransactionContext,
 } from '../client/ZionClientTypes'
@@ -8,7 +8,6 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { BlockchainTransactionType } from '../types/web3-types'
 import { CreateSpaceInfo } from '../types/zion-types'
-import { RoomIdentifier } from '../types/room-identifier'
 import { useSyncSpace } from './use-sync-space'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
@@ -21,7 +20,7 @@ import { ITownArchitectBase } from '@river/web3'
 export function useCreateSpaceTransaction() {
     const { createSpaceTransaction, waitForCreateSpaceTransaction } = useZionClient()
     const [transactionContext, setTransactionContext] = useState<
-        TransactionContext<RoomIdentifier> | undefined
+        CreateSpaceTransactionContext | undefined
     >(undefined)
     const isTransacting = useRef<boolean>(false)
     const { signer } = useWeb3Context()
@@ -41,12 +40,12 @@ export function useCreateSpaceTransaction() {
         async function (
             createInfo: CreateSpaceInfo,
             membershipInfo: ITownArchitectBase.MembershipStruct,
-        ): Promise<TransactionContext<RoomIdentifier> | undefined> {
+        ): Promise<CreateSpaceTransactionContext | undefined> {
             if (isTransacting.current) {
                 // Transaction already in progress
                 return undefined
             }
-            let transactionResult: TransactionContext<RoomIdentifier> | undefined
+            let transactionResult: CreateSpaceTransactionContext | undefined
             if (!signer) {
                 // cannot sign the transaction. stop processing.
                 transactionResult = createTransactionContext({
@@ -74,7 +73,7 @@ export function useCreateSpaceTransaction() {
                             hash: transactionResult.transaction?.hash as `0x${string}`,
                             type: BlockchainTransactionType.CreateSpace,
                             data: {
-                                spaceId: transactionResult.data,
+                                spaceId: transactionResult.data.spaceId,
                             },
                         })
                     }
@@ -85,7 +84,7 @@ export function useCreateSpaceTransaction() {
                         transactionResult?.status === TransactionStatus.Success &&
                         transactionResult?.data
                     ) {
-                        syncSpace(transactionResult.data)
+                        syncSpace(transactionResult.data.spaceId)
                     }
                     setTransactionContext(transactionResult)
                 }

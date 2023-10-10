@@ -137,7 +137,7 @@ function TestComponent(args: {
     const spaceTransaction = useCreateSpaceTransaction()
     const {
         createSpaceTransactionWithRole,
-        data: spaceId,
+        data: spaceTxnData,
         transactionStatus: createSpaceTxStatus,
     } = spaceTransaction
 
@@ -153,6 +153,7 @@ function TestComponent(args: {
     const addRoleTransaction = useAddRoleToChannelTransaction()
     const { addRoleToChannelTransaction, transactionStatus: addRoleToChannelTxStatus } =
         addRoleTransaction
+    const spaceId = spaceTxnData?.spaceId
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
     const { spaceRoles } = useRoles(spaceNetworkId)
 

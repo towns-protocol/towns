@@ -77,9 +77,10 @@ describe('useCreateChannelTransactionHook', () => {
             const spaceTransaction = useCreateSpaceTransaction()
             const {
                 createSpaceTransactionWithRole,
-                data: spaceId,
+                data: txData,
                 transactionStatus: createSpaceTxStatus,
             } = spaceTransaction
+            const spaceId = txData?.spaceId
             const spaceNetworkId = spaceId?.networkId ? spaceId.networkId : ''
             const channelTransaction = useCreateChannelTransaction()
             const {

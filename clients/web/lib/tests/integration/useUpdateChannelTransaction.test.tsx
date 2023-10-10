@@ -151,7 +151,7 @@ function TestComponent(args: {
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
     const {
-        data: spaceId,
+        data: spaceTxnData,
         transactionStatus: createSpaceTxStatus,
         createSpaceTransactionWithRole,
     } = spaceTransaction
@@ -164,6 +164,7 @@ function TestComponent(args: {
     const updateChannelTransactionInfo = useUpdateChannelTransaction()
     const { updateChannelTransaction, transactionStatus: updateChannelTransactionStatus } =
         updateChannelTransactionInfo
+    const spaceId = spaceTxnData?.spaceId
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
     // Use the roles from the parent space to create the channel
     const { spaceRoles } = useRoles(spaceNetworkId)

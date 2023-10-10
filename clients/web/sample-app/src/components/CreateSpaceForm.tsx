@@ -90,7 +90,7 @@ export const CreateSpaceForm = (props: Props) => {
 
     const {
         isLoading,
-        data: roomId,
+        data: txData,
         transactionHash,
         transactionStatus,
         error,
@@ -168,14 +168,14 @@ export const CreateSpaceForm = (props: Props) => {
     }, [formValue, signer, createSpaceTransactionWithRole, councilNftAddress, pioneerNftAddress])
 
     useEffect(() => {
-        if (transactionStatus === TransactionStatus.Success && roomId) {
-            onClick(roomId, Membership.Join)
+        if (transactionStatus === TransactionStatus.Success && txData) {
+            onClick(txData.spaceId, Membership.Join)
         }
-    }, [onClick, roomId, transactionStatus])
+    }, [onClick, txData, transactionStatus])
 
     console.log('CreateSpaceForm', 'states', {
         isLoading,
-        roomId,
+        roomId: txData,
         error,
         transactionHash,
         transactionStatus,

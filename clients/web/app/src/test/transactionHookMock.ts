@@ -5,14 +5,17 @@ import { useCallback, useMemo, useState } from 'react'
 import * as zionClient from 'use-zion-client'
 import { Mock, vi } from 'vitest'
 
-const loadingContext = {
+const loadingContext: zionClient.TransactionContext<undefined> = {
     status: zionClient.TransactionStatus.Pending,
     transaction: undefined,
     receipt: undefined,
     data: undefined,
 }
 
-const pendingContext = {
+const pendingContext: zionClient.TransactionContext<{
+    slug: string
+    networkId: string
+}> = {
     status: zionClient.TransactionStatus.Pending,
     transaction: { hash: '0xhash', status: 0 } as unknown as ContractTransaction,
     receipt: undefined,
@@ -21,7 +24,10 @@ const pendingContext = {
         networkId: 'some-room-id',
     },
 }
-const successContext = {
+const successContext: zionClient.TransactionContext<{
+    slug: string
+    networkId: string
+}> = {
     status: zionClient.TransactionStatus.Success,
     transaction: { hash: '0xhash', status: 1 } as unknown as ContractTransaction,
     receipt: {} as ContractReceipt,
@@ -31,7 +37,10 @@ const successContext = {
     },
 }
 
-const failedWithTransactionContext = {
+const failedWithTransactionContext: zionClient.TransactionContext<{
+    slug: string
+    networkId: string
+}> = {
     status: zionClient.TransactionStatus.Failed,
     transaction: { hash: '0xhash', status: 0 } as unknown as ContractTransaction,
     receipt: undefined,
@@ -42,7 +51,7 @@ const failedWithTransactionContext = {
     error: { name: 'whatever', message: 'some error' },
 }
 
-const failedWithMatrixPermissionContext = {
+const failedWithMatrixPermissionContext: zionClient.TransactionContext<undefined> = {
     status: zionClient.TransactionStatus.Failed,
     transaction: undefined,
     receipt: undefined,
@@ -114,9 +123,7 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
             | 'failedWithMatrixPermissionContext' = 'success',
     ): UseMockHookReturn | undefined => {
         const [transactionContext, setTransactionContext] = useState<
-            // TODO: fix this type - likely a generic
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            zionClient.TransactionContext<any> | undefined
+            zionClient.TransactionContext<unknown> | undefined
         >(undefined)
 
         const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {

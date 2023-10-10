@@ -134,9 +134,11 @@ function TestComponent(args: {
     newRoleUsers: string[]
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
-    const { createSpaceTransactionWithRole, data: spaceId, transactionStatus } = spaceTransaction
+    const { createSpaceTransactionWithRole, data: txData, transactionStatus } = spaceTransaction
     const roleTransaction = useCreateRoleTransaction()
     const { createRoleTransaction } = roleTransaction
+    const spaceId = txData?.spaceId
+
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {

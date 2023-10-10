@@ -25,7 +25,6 @@ import {
     TransactionStatus,
     ZionClientEventHandlers,
     ZionOpts,
-    createChannelTransactionContext,
     createChannelUpdateTransactionContext,
     createRoleTransactionContext,
     createTransactionContext,
@@ -395,67 +394,39 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     public async waitForCreateSpaceTransaction(
         context: CreateSpaceTransactionContext | undefined,
-    ): Promise<TransactionContext<RoomIdentifier>> {
-        if (!context?.transaction) {
-            console.error('[waitForCreateSpaceTransaction] transaction is undefined')
-            return createTransactionContext({
-                status: TransactionStatus.Failed,
-                error: new Error('transaction is undefined'),
-            })
-        }
-
-        let transaction: ContractTransaction | undefined = undefined
-        let receipt: ContractReceipt | undefined = undefined
-        let roomId: RoomIdentifier | undefined = undefined
-        let error: Error | undefined = undefined
-        try {
-            transaction = context.transaction
-            roomId = context.data
-            receipt = await context.transaction.wait()
-        } catch (err) {
-            error = this.getDecodedErrorForSpaceFactory(err)
-        }
-
-        if (receipt?.status === 1) {
-            console.log('[waitForCreateSpaceTransaction] success', roomId)
-            if (roomId) {
+    ): Promise<CreateSpaceTransactionContext> {
+        const txContext = await this._waitForBlockchainTransaction(context)
+        if (txContext.status === TransactionStatus.Success) {
+            if (txContext.data) {
+                const spaceId = txContext.data.spaceId
+                const channelId = txContext.data.channelId
                 // wait until the space and channel are minted on-chain
                 // before creating the streams
                 if (!this.casablancaClient) {
                     throw new Error("Casablanca client doesn't exist")
                 }
-                await createCasablancaSpace(this.casablancaClient, roomId.networkId)
-                console.log('[waitForCreateSpaceTransaction] Space stream created', roomId)
+                await createCasablancaSpace(this.casablancaClient, spaceId.networkId)
+                console.log('[waitForCreateSpaceTransaction] Space stream created', spaceId)
 
-                await this.createSpaceDefaultChannelRoom(roomId, 'general', context.channelId)
+                await this.createSpaceDefaultChannelRoom(spaceId, 'general', channelId)
                 console.log(
                     '[waitForCreateSpaceTransaction] default channel stream created',
-                    context.channelId,
+                    channelId,
                 )
                 // emiting the event here, because the web app calls different
                 // functions to create a space, and this is the only place
                 // that all different functions go through
-                this._eventHandlers?.onCreateSpace?.(roomId)
+                this._eventHandlers?.onCreateSpace?.(spaceId)
             }
-            return createTransactionContext<RoomIdentifier>({
-                status: TransactionStatus.Success,
-                data: roomId,
-                transaction,
-                receipt,
-            })
         }
 
-        // got here without success
-        if (!error) {
-            error = this.getDecodedErrorForSpaceFactory(new Error('Failed to create space'))
+        if (txContext.error) {
+            txContext.error = this.getDecodedErrorForSpaceFactory(txContext.error)
         }
-        console.error('[waitForCreateSpaceTransaction] failed', error)
-        return createTransactionContext<RoomIdentifier>({
-            status: TransactionStatus.Failed,
-            transaction,
-            receipt,
-            error,
-        })
+
+        logTxnResult('waitForCreateSpaceTransaction', txContext)
+
+        return txContext
     }
 
     /************************************************
@@ -505,9 +476,13 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             transaction,
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-            data: transaction ? spaceId : undefined,
-            channelId,
-            spaceName: createSpaceInfo.name,
+            data: transaction
+                ? {
+                      spaceId,
+                      spaceName: createSpaceInfo.name,
+                      channelId,
+                  }
+                : undefined,
             error,
         }
     }
@@ -625,72 +600,27 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         createChannelInfo: CreateChannelInfo,
         context: ChannelTransactionContext | undefined,
     ): Promise<ChannelTransactionContext> {
-        if (!context?.transaction) {
-            console.error('[waitForCreateRoleTransaction] transaction is undefined')
-            return createChannelTransactionContext({
-                status: TransactionStatus.Failed,
-                error: new Error('[waitForCreateChannelTransaction] transaction is undefined'),
-            })
-        }
+        const txnContext = await this._waitForBlockchainTransaction(context)
 
-        let transaction: ContractTransaction | undefined = undefined
-        let receipt: ContractReceipt | undefined = undefined
-        let roomId: RoomIdentifier | undefined = undefined
-        let error: Error | undefined = undefined
-
-        try {
-            transaction = context.transaction
-            roomId = context.data
-            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
-        } catch (err) {
-            error = await this.getDecodedErrorForSpace(
-                createChannelInfo.parentSpaceId.networkId,
-                err,
-            )
-        }
-
-        if (receipt?.status === 1) {
-            console.log('[waitForCreateChannelTransaction] success', roomId)
-            if (roomId) {
+        if (txnContext.status === TransactionStatus.Success) {
+            if (txnContext?.data) {
+                const roomId = txnContext.data
                 // wait until the channel is minted on-chain
                 // before creating the stream
-                try {
-                    await this.createChannelRoom(createChannelInfo, roomId.networkId)
-                    console.log('[waitForCreateChannelTransaction] Channel stream created', roomId)
-                } catch (error) {
-                    const _error = new Error('createChannel failed')
-                    _error.name = (error as Error).name ?? 'Error'
-                    console.error(_error)
-                    return {
-                        transaction: undefined,
-                        receipt: undefined,
-                        status: TransactionStatus.Failed,
-                        data: undefined,
-                        error: _error,
-                    }
-                }
+                await this.createChannelRoom(createChannelInfo, roomId.networkId)
+                console.log('[waitForCreateChannelTransaction] Channel stream created', roomId)
             }
-            return createChannelTransactionContext({
-                status: TransactionStatus.Success,
-                data: roomId,
-                transaction,
-                receipt,
-            })
         }
 
-        if (!error) {
-            error = await this.getDecodedErrorForSpace(
+        if (txnContext.error) {
+            txnContext.error = await this.getDecodedErrorForSpace(
                 createChannelInfo.parentSpaceId.networkId,
-                new Error('Failed to create channel'),
+                txnContext.error,
             )
         }
-        console.error('[waitForCreateChannelTransaction] failed', error)
-        return createChannelTransactionContext({
-            status: TransactionStatus.Failed,
-            transaction,
-            receipt,
-            error,
-        })
+
+        logTxnResult('waitForCreateChannelTransaction', txnContext)
+        return txnContext
     }
 
     public async updateChannelTransaction(

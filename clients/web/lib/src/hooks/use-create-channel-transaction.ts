@@ -3,7 +3,7 @@ import {
     ChannelTransactionContext,
     TransactionContext,
     TransactionStatus,
-    createChannelTransactionContext,
+    createTransactionContext,
 } from '../client/ZionClientTypes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -47,7 +47,7 @@ export function useCreateChannelTransaction() {
             let transactionResult: ChannelTransactionContext | undefined
             if (!signer) {
                 // cannot sign the transaction. stop processing.
-                transactionResult = createChannelTransactionContext({
+                transactionResult = createTransactionContext({
                     status: TransactionStatus.Failed,
                     error: new SignerUndefinedError(),
                 })
@@ -57,7 +57,7 @@ export function useCreateChannelTransaction() {
             // ok to proceed
             isTransacting.current = true
             try {
-                transactionResult = createChannelTransactionContext({
+                transactionResult = createTransactionContext({
                     status: TransactionStatus.Pending,
                 })
                 setTransactionContext(transactionResult)
@@ -85,7 +85,7 @@ export function useCreateChannelTransaction() {
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
-                transactionResult = createChannelTransactionContext({
+                transactionResult = createTransactionContext({
                     status: TransactionStatus.Failed,
                     error: toError(e),
                 })

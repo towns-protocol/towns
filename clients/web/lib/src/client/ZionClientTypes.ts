@@ -70,26 +70,35 @@ export enum TransactionStatus {
     Failed = 'Failed',
 }
 
-export interface TransactionContext<T> {
-    data: T | undefined
-    status: TransactionStatus
-    receipt: ContractReceipt | undefined
-    transaction: ContractTransaction | undefined
-    error?: Error
-}
+export type TransactionContext<T> =
+    | {
+          data: T | undefined
+          status: TransactionStatus.None | TransactionStatus.Pending | TransactionStatus.Failed
+          receipt: undefined
+          transaction: ContractTransaction | undefined
+          error?: Error
+      }
+    | {
+          data: T | undefined
+          status: TransactionStatus.Success
+          receipt: ContractReceipt
+          transaction: ContractTransaction
+          error?: undefined
+      }
 
-export interface CreateSpaceTransactionContext extends TransactionContext<RoomIdentifier> {
+export type CreateSpaceTransactionContext = TransactionContext<{
+    spaceId: RoomIdentifier
     spaceName?: string
     channelId?: RoomIdentifier
-}
+}>
 
 export type ChannelTransactionContext = TransactionContext<RoomIdentifier>
 
-export interface ChannelUpdateTransactionContext extends TransactionContext<UpdateChannelInfo> {
+export type ChannelUpdateTransactionContext = TransactionContext<UpdateChannelInfo> & {
     hasOffChainUpdate: boolean // true if this has an off chain update.
 }
 
-export interface RoleTransactionContext extends TransactionContext<RoleIdentifier> {
+export type RoleTransactionContext = TransactionContext<RoleIdentifier> & {
     spaceNetworkId: string | undefined
 }
 
@@ -113,31 +122,29 @@ export function createTransactionContext<T>(props: {
     receipt?: ContractReceipt
     error?: Error
 }): TransactionContext<T> {
+    if (props.status === TransactionStatus.Success) {
+        if (props.transaction && props.receipt) {
+            return {
+                status: props.status,
+                data: props.data,
+                transaction: props.transaction,
+                receipt: props.receipt,
+                error: undefined,
+            }
+        } else {
+            throw new Error('Invalid transaction context: missing transaction or receipt')
+        }
+    }
     return {
         status: props.status,
         data: props.data,
         transaction: props.transaction,
-        receipt: props.receipt,
+        receipt: undefined,
         error: props.error,
     }
 }
 
-export function createChannelTransactionContext(props: {
-    status: TransactionStatus
-    data?: RoomIdentifier
-    transaction?: ContractTransaction
-    receipt?: ContractReceipt
-    error?: Error
-}): ChannelTransactionContext {
-    return {
-        status: props.status,
-        data: props.data,
-        transaction: props.transaction,
-        receipt: props.receipt,
-        error: props.error,
-    }
-}
-
+// TODO: use createTransactionContext
 export function createChannelUpdateTransactionContext(props: {
     status: TransactionStatus
     hasOffChainUpdate: boolean
@@ -146,16 +153,31 @@ export function createChannelUpdateTransactionContext(props: {
     receipt?: ContractReceipt
     error?: Error
 }): ChannelUpdateTransactionContext {
+    if (props.status === TransactionStatus.Success) {
+        if (props.transaction && props.receipt) {
+            return {
+                status: props.status,
+                hasOffChainUpdate: props.hasOffChainUpdate,
+                data: props.data,
+                transaction: props.transaction,
+                receipt: props.receipt,
+                error: undefined,
+            }
+        } else {
+            throw new Error('Invalid transaction context: missing transaction or receipt')
+        }
+    }
     return {
         status: props.status,
         hasOffChainUpdate: props.hasOffChainUpdate,
         data: props.data,
         transaction: props.transaction,
-        receipt: props.receipt,
+        receipt: undefined,
         error: props.error,
     }
 }
 
+// TODO: use createTransactionContext
 export function createRoleTransactionContext(props: {
     status: TransactionStatus
     data?: RoleIdentifier
@@ -164,12 +186,26 @@ export function createRoleTransactionContext(props: {
     receipt?: ContractReceipt
     error?: Error
 }): RoleTransactionContext {
+    if (props.status === TransactionStatus.Success) {
+        if (props.transaction && props.receipt) {
+            return {
+                status: props.status,
+                data: props.data,
+                spaceNetworkId: props.spaceNetworkId,
+                transaction: props.transaction,
+                receipt: props.receipt,
+                error: undefined,
+            }
+        } else {
+            throw new Error('Invalid transaction context: missing transaction or receipt')
+        }
+    }
     return {
         status: props.status,
         data: props.data,
         spaceNetworkId: props.spaceNetworkId,
         transaction: props.transaction,
-        receipt: props.receipt,
+        receipt: undefined,
         error: props.error,
     }
 }

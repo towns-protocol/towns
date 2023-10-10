@@ -92,9 +92,10 @@ function TestComponent(args: { originalSpaceName: string; newSpaceName: string }
     const spaceTransaction = useCreateSpaceTransaction()
     const {
         createSpaceTransactionWithRole,
-        data: spaceId,
+        data: txData,
         transactionStatus: spaceTransactionStatus,
     } = spaceTransaction
+    const spaceId = txData?.spaceId
     const updateSpaceNameTransactionInfo = useUpdateSpaceNameTransaction()
     const { updateSpaceNameTransaction } = updateSpaceNameTransactionInfo
     const spaceNetworkId = spaceId ? spaceId.networkId : ''

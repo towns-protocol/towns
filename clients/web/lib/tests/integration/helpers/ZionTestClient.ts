@@ -116,7 +116,7 @@ export class ZionTestClient extends ZionClient {
             if (rxContext.error) {
                 throw rxContext.error
             }
-            return rxContext.data
+            return rxContext.data?.spaceId
         }
         // Something went wrong. Don't return a room identifier.
         return undefined

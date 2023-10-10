@@ -138,7 +138,8 @@ function TestComponentMultiple(args: {
     councilNftAddress: string
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
-    const { createSpaceTransactionWithRole, data: spaceId, transactionStatus } = spaceTransaction
+    const { createSpaceTransactionWithRole, data: txData, transactionStatus } = spaceTransaction
+    const spaceId = txData?.spaceId
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {

@@ -163,9 +163,10 @@ function TestComponent(args: {
     const spaceTransaction = useCreateSpaceTransaction()
     const {
         createSpaceTransactionWithRole,
-        data: spaceId,
+        data: txData,
         transactionStatus: spaceTransactionStatus,
     } = spaceTransaction
+    const spaceId = txData?.spaceId
     const createRoleTransactionInfo = useCreateRoleTransaction()
     const { createRoleTransaction, data: roleIdentifier } = createRoleTransactionInfo
     const updateRoleTransactionInfo = useUpdateRoleTransaction()

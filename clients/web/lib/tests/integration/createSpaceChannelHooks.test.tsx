@@ -53,7 +53,7 @@ describe('createSpaceChannelHooks', () => {
                             tokenAddresses: [],
                         }),
                     )
-                    setSpaceId(result?.data)
+                    setSpaceId(result?.data?.spaceId)
                     console.log('onClickCreateSpace', { name, result })
                 })()
             }, [createSpaceTransactionWithRole])
