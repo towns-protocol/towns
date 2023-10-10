@@ -3,6 +3,7 @@ main = "src/index.ts"
 account_id = "9840f8a36a817b103e00e29a0e2bad6f"
 compatibility_date = "2023-05-18"
 node_compat=true
+logpush=true
 
 d1_databases = [
   { binding = "DB", database_name = "PushSubscription_test", database_id = "e6cdffba-1799-407f-af82-cda4a7c3da27" }

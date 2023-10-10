@@ -1,6 +1,7 @@
 main = "./src/index.ts"
 name = "worker-typescript-template"
 compatibility_date = "2022-07-26"
+logpush = true
 
 # this is for tests, so it gets used even though wrangler CLI says otherwise
 [miniflare]
