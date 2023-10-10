@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { BigNumberish, ContractReceipt, ContractTransaction } from 'ethers'
 import { SendMessageOptions, UpdateChannelInfo } from '../types/zion-types'
 import { RoleIdentifier, TProvider } from '../types/web3-types'
@@ -173,5 +171,13 @@ export function createRoleTransactionContext(props: {
         transaction: props.transaction,
         receipt: props.receipt,
         error: props.error,
+    }
+}
+
+export function logTxnResult(name: string, txn: TransactionContext<unknown>) {
+    if (txn.status === TransactionStatus.Success) {
+        console.log(`[${name}]`, 'Success', txn.data)
+    } else if (txn.status === TransactionStatus.Failed) {
+        console.error(`[${name}]`, 'Failed', txn.error)
     }
 }

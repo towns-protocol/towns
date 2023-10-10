@@ -29,6 +29,7 @@ import {
     createChannelUpdateTransactionContext,
     createRoleTransactionContext,
     createTransactionContext,
+    logTxnResult,
 } from './ZionClientTypes'
 import {
     ClientEvent,
@@ -1083,145 +1084,25 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public async waitForAddRoleToChannelTransaction(
         context: TransactionContext<void> | undefined,
     ): Promise<TransactionContext<void>> {
-        let transaction: ContractTransaction | undefined = undefined
-        let receipt: ContractReceipt | undefined = undefined
-        let error: Error | undefined = undefined
-
-        try {
-            if (!context?.transaction) {
-                throw new Error('[waitForAddRoleToChannelTransaction] transaction is undefined')
-            }
-            transaction = context.transaction
-            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
-            if (receipt?.status === 0) {
-                await this.throwTransactionError(receipt)
-            }
-            console.log('[waitForAddRoleToChannelTransaction] transaction completed' /*, receipt */)
-        } catch (err) {
-            console.error('[waitForAddRoleToChannelTransaction] error', err)
-            if (err instanceof Error) {
-                error = err
-            } else {
-                error = new Error('add role to channel failed with an unknown error')
-            }
-        }
-
-        if (receipt?.status === 1) {
-            console.log('[waitForAddRoleToChannelTransaction] success')
-            return {
-                data: undefined,
-                status: TransactionStatus.Success,
-                transaction,
-                receipt,
-            }
-        }
-
-        return {
-            data: undefined,
-            status: TransactionStatus.Failed,
-            transaction,
-            receipt,
-            error,
-        }
+        const txnContext = await this._waitForBlockchainTransaction(context)
+        logTxnResult('waitForAddRoleToChannelTransaction', txnContext)
+        return txnContext
     }
 
     public async waitForUpdateSpaceNameTransaction(
         context: TransactionContext<void> | undefined,
     ): Promise<TransactionContext<void>> {
-        if (!context?.transaction) {
-            console.error('[waitForUpdateSpaceNameTransaction] transaction is undefined')
-            return createTransactionContext({
-                status: TransactionStatus.Failed,
-                error: new Error('[waitForUpdateSpaceNameTransaction] transaction is undefined'),
-            })
-        }
-
-        let transaction: ContractTransaction | undefined = undefined
-        let receipt: ContractReceipt | undefined = undefined
-        let error: Error | undefined = undefined
-
-        try {
-            transaction = context.transaction
-            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
-            if (receipt?.status === 1) {
-                console.log('[waitForUpdateSpaceNameTransaction] success')
-                return createTransactionContext({
-                    status: TransactionStatus.Success,
-                    transaction,
-                    receipt,
-                })
-            } else if (receipt?.status === 0) {
-                await this.throwTransactionError(receipt)
-            } else {
-                // receipt.status is undefined
-                throw new Error('Failed to update space name')
-            }
-        } catch (err) {
-            console.error('[waitForUpdateSpaceNameTransaction] error', err)
-            if (err instanceof Error) {
-                error = err
-            } else {
-                error = new Error(`update space name failed: ${JSON.stringify(err)}`)
-            }
-        }
-
-        // got here without success
-        return createTransactionContext({
-            status: TransactionStatus.Failed,
-            transaction,
-            receipt,
-            error,
-        })
+        const txnContext = await this._waitForBlockchainTransaction(context)
+        logTxnResult('waitForUpdateSpaceNameTransaction', txnContext)
+        return txnContext
     }
 
     public async waitForUpdateRoleTransaction(
         context: TransactionContext<void> | undefined,
     ): Promise<TransactionContext<void>> {
-        if (!context?.transaction) {
-            console.error('[waitForUpdateRoleTransaction] transaction is undefined')
-            return createTransactionContext({
-                status: TransactionStatus.Failed,
-                error: new Error('[waitForUpdateRoleTransaction] transaction is undefined'),
-            })
-        }
-
-        let transaction: ContractTransaction | undefined = undefined
-        let receipt: ContractReceipt | undefined = undefined
-        let error: Error | undefined = undefined
-
-        try {
-            transaction = context.transaction
-            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
-            if (receipt?.status === 1) {
-                // Successfully updated the role on-chain.
-                console.log('[waitForUpdateRoleTransaction] success')
-                return createTransactionContext({
-                    status: TransactionStatus.Success,
-                    transaction,
-                    receipt,
-                })
-            } else if (receipt?.status === 0) {
-                await this.throwTransactionError(receipt)
-            } else {
-                // receipt.status is undefined
-                throw new Error('Failed to update role')
-            }
-        } catch (err) {
-            console.error('[waitForUpdateRoleTransaction] error', err)
-            if (err instanceof Error) {
-                error = err
-            } else {
-                error = new Error(`update role failed: ${JSON.stringify(err)}`)
-            }
-        }
-
-        // got here without success
-        return createTransactionContext({
-            status: TransactionStatus.Failed,
-            transaction,
-            receipt,
-            error,
-        })
+        const txnContext = await this._waitForBlockchainTransaction(context)
+        logTxnResult('waitForUpdateRoleTransaction', txnContext)
+        return txnContext
     }
 
     public async deleteRoleTransaction(
@@ -1251,51 +1132,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public async waitForDeleteRoleTransaction(
         context: TransactionContext<void> | undefined,
     ): Promise<TransactionContext<void>> {
-        let transaction: ContractTransaction | undefined = undefined
-        let receipt: ContractReceipt | undefined = undefined
-        let error: Error | undefined = undefined
-
-        try {
-            if (!context?.transaction) {
-                throw new Error('[waitForDeleteRoleTransaction] transaction is undefined')
-            }
-            transaction = context.transaction
-            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
-            if (receipt?.status === 0) {
-                await this.throwTransactionError(receipt)
-            }
-            console.log(
-                '[waitForDeleteRoleTransaction] deleteRole transaction completed' /*, receipt */,
-            )
-        } catch (err) {
-            console.error('[waitForDeleteRoleTransaction] error', err)
-            if (err instanceof Error) {
-                error = err
-            } else {
-                error = new Error(`delete role failed: ${JSON.stringify(err)}`)
-            }
-            console.error('[waitForDeleteRoleTransaction] failed', error)
-        }
-
-        if (receipt?.status === 1) {
-            // Successfully updated the role on-chain.
-            console.log('[waitForDeleteRoleTransaction] success')
-            return {
-                data: undefined,
-                status: TransactionStatus.Success,
-                transaction,
-                receipt,
-            }
-        }
-
-        // got here without success
-        return {
-            data: undefined,
-            status: TransactionStatus.Failed,
-            transaction,
-            receipt,
-            error,
-        }
+        const txnContext = await this._waitForBlockchainTransaction(context)
+        logTxnResult('waitForDeleteRoleTransaction', txnContext)
+        return txnContext
     }
 
     /************************************************
@@ -1912,5 +1751,54 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             throw new Error('matrix client is undefined')
         }
         return f(this.matrixClient)
+    }
+
+    private async _waitForBlockchainTransaction<TxnContext>(
+        context: TransactionContext<TxnContext> | undefined,
+    ): Promise<TransactionContext<TxnContext>> {
+        if (!context?.transaction) {
+            return createTransactionContext<TxnContext>({
+                status: TransactionStatus.Failed,
+                error: new Error(`[_waitForBlockchainTransaction] transaction is undefined`),
+            })
+        }
+
+        let transaction: ContractTransaction | undefined = undefined
+        let receipt: ContractReceipt | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            transaction = context.transaction
+            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
+
+            if (receipt?.status === 1) {
+                return createTransactionContext({
+                    status: TransactionStatus.Success,
+                    transaction,
+                    data: context.data,
+                    receipt,
+                })
+            } else if (receipt?.status === 0) {
+                await this.throwTransactionError(receipt)
+            } else {
+                throw new Error(
+                    `[_waitForBlockchainTransaction] failed because receipt.status is undefined`,
+                )
+            }
+        } catch (err) {
+            if (err instanceof Error) {
+                error = err
+            } else {
+                error = new Error(`$[_waitForBlockchainTransaction] failed: ${JSON.stringify(err)}`)
+            }
+        }
+
+        // got here without success
+        return createTransactionContext({
+            status: TransactionStatus.Failed,
+            transaction,
+            receipt,
+            error,
+        })
     }
 }
