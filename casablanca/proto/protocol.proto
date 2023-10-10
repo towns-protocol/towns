@@ -125,6 +125,9 @@ message MiniblockHeader {
     // Snapshot of the state at the end of the block.
     optional Snapshot snapshot = 5;
 
+    // count of all events in the stream before this block
+    int64 event_num_offset = 6;
+
     // stream payloads are required to have a content field
     oneof content {
         google.protobuf.Empty none = 100;

@@ -127,6 +127,16 @@ func TestLoad(t *testing.T) {
 	// and miniblocks should have non - nil snapshots
 	miniblock, _ = view.makeMiniblockHeader(context.Background())
 	assert.NotNil(t, miniblock.Snapshot)
+
+	// check count
+	count := 0
+	err = view.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
+		count++
+		return true, nil
+	})
+	assert.NoError(t, err)
+	assert.GreaterOrEqual(t, count, 3)
+	assert.Equal(t, int64(count), miniblock.EventNumOffset)
 }
 
 // TODO: add negative tests

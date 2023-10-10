@@ -180,14 +180,15 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHea
 			}
 		}
 	}
-
 	last := r.lastBlock()
+	eventNumOffset := last.header().EventNumOffset + int64(len(last.events)) + 1 // +1 for header
 	return &MiniblockHeader{
 		MiniblockNum:      last.header().MiniblockNum + 1,
 		Timestamp:         NextMiniblockTimestamp(last.header().Timestamp),
 		EventHashes:       hashes,
 		PrevMiniblockHash: last.headerEvent.Hash,
 		Snapshot:          snapshot,
+		EventNumOffset:    eventNumOffset,
 		Content: &MiniblockHeader_None{
 			None: &emptypb.Empty{},
 		},
