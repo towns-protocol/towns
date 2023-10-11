@@ -16,9 +16,6 @@ import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 abstract contract PioneerSetup is FacetTest {
   PioneerFacet internal pioneer;
 
@@ -36,9 +33,11 @@ abstract contract PioneerSetup is FacetTest {
   {
     OwnableHelper ownableHelper = new OwnableHelper();
     IntrospectionHelper introspectionHelper = new IntrospectionHelper();
+    ERC721AHelper erc721aHelper = new ERC721AHelper();
     PioneerHelper pioneerHelper = new PioneerHelper();
-
     MultiInit multiInit = new MultiInit();
+
+    pioneerHelper.addSelectors(erc721aHelper.selectors());
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](3);
     cuts[0] = ownableHelper.makeCut(IDiamond.FacetCutAction.Add);
@@ -77,10 +76,19 @@ abstract contract PioneerSetup is FacetTest {
 
 contract PioneerHelper is FacetHelper {
   PioneerFacet internal pioneer;
-  ERC721AHelper erc721aHelper = new ERC721AHelper();
 
   constructor() {
     pioneer = new PioneerFacet();
+
+    uint256 index;
+    bytes4[] memory selectors_ = new bytes4[](6);
+    selectors_[index++] = pioneer.mintTo.selector;
+    selectors_[index++] = pioneer.withdraw.selector;
+    selectors_[index++] = pioneer.setAllowed.selector;
+    selectors_[index++] = pioneer.setBaseURI.selector;
+    selectors_[index++] = pioneer.setMintReward.selector;
+    selectors_[index++] = pioneer.getMintReward.selector;
+    addSelectors(selectors_);
   }
 
   function facet() public view virtual override returns (address) {
@@ -92,23 +100,7 @@ contract PioneerHelper is FacetHelper {
   }
 
   function selectors() public virtual override returns (bytes4[] memory) {
-    bytes4[] memory erc721Selectors = erc721aHelper.selectors();
-    bytes4[] memory selectors_ = new bytes4[](erc721Selectors.length + 6);
-
-    uint256 index;
-
-    for (uint256 i = 0; i < erc721Selectors.length; i++) {
-      selectors_[index++] = erc721Selectors[i];
-    }
-
-    selectors_[index++] = pioneer.mintTo.selector;
-    selectors_[index++] = pioneer.withdraw.selector;
-    selectors_[index++] = pioneer.setAllowed.selector;
-    selectors_[index++] = pioneer.setBaseURI.selector;
-    selectors_[index++] = pioneer.setMintReward.selector;
-    selectors_[index++] = pioneer.getMintReward.selector;
-
-    return selectors_;
+    return functionSelectors;
   }
 
   function makeInitData(

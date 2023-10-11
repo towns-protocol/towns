@@ -15,6 +15,7 @@ import {IntrospectionHelper} from "contracts/test/diamond/introspection/Introspe
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
+import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -23,6 +24,7 @@ contract DeployPioneer is DiamondDeployer {
   DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
   OwnableHelper ownableHelper = new OwnableHelper();
   IntrospectionHelper introspectionHelper = new IntrospectionHelper();
+  ERC721AHelper erc721aHelper = new ERC721AHelper();
   PioneerHelper pioneerHelper = new PioneerHelper();
 
   function versionName() public pure override returns (string memory) {
@@ -41,6 +43,8 @@ contract DeployPioneer is DiamondDeployer {
     PioneerFacet pioneer = new PioneerFacet();
     MultiInit multiInit = new MultiInit();
     vm.stopBroadcast();
+
+    pioneerHelper.addSelectors(erc721aHelper.selectors());
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](5);
 

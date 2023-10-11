@@ -7,13 +7,13 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 // libraries
 
 // helpers
-import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
+import {FacetTest, FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 
-import {VotesBase} from "contracts/src/diamond/facets/governance/votes/VotesBase.sol";
 import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
 
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
+import {VotesHelper} from "contracts/test/governance/votes/VotesSetup.sol";
 import {GuardianHelper} from "contracts/test/towns/guardian/GuardianSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
@@ -45,8 +45,15 @@ contract TownOwnerImplementation {
   ) public returns (Diamond.InitParams memory) {
     OwnableHelper ownableHelper = new OwnableHelper();
     GuardianHelper guardianHelper = new GuardianHelper();
+
+    ERC721AHelper erc721aHelper = new ERC721AHelper();
+    VotesHelper votesHelper = new VotesHelper();
     TownOwnerHelper townOwnerHelper = new TownOwnerHelper();
+
     MultiInit multiInit = new MultiInit();
+
+    townOwnerHelper.addSelectors(votesHelper.selectors());
+    townOwnerHelper.addSelectors(erc721aHelper.selectors());
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](3);
     uint256 index;
@@ -82,25 +89,14 @@ contract TownOwnerImplementation {
   }
 }
 
-contract TownOwnerHelper is ERC721AHelper {
+contract TownOwnerHelper is FacetHelper {
   TownOwner internal townOwner;
 
   constructor() {
     townOwner = new TownOwner();
-  }
 
-  function facet() public view override returns (address) {
-    return address(townOwner);
-  }
-
-  function selectors() public view override returns (bytes4[] memory) {
-    bytes4[] memory currentSelectors_ = super.selectors();
-    bytes4[] memory selectors_ = new bytes4[](currentSelectors_.length + 15);
+    bytes4[] memory selectors_ = new bytes4[](6);
     uint256 index;
-
-    for (uint256 i = 0; i < currentSelectors_.length; i++) {
-      selectors_[index++] = currentSelectors_[i];
-    }
 
     // TownOwner
     selectors_[index++] = TownOwner.setFactory.selector;
@@ -109,19 +105,15 @@ contract TownOwnerHelper is ERC721AHelper {
     selectors_[index++] = TownOwner.getTownInfo.selector;
     selectors_[index++] = TownOwner.nextTokenId.selector;
     selectors_[index++] = TownOwner.updateTownInfo.selector;
+    addSelectors(selectors_);
+  }
 
-    // Votes
-    selectors_[index++] = VotesBase.DOMAIN_SEPARATOR.selector;
-    selectors_[index++] = VotesBase.clock.selector;
-    selectors_[index++] = VotesBase.CLOCK_MODE.selector;
-    selectors_[index++] = VotesBase.getVotes.selector;
-    selectors_[index++] = VotesBase.getPastVotes.selector;
-    selectors_[index++] = VotesBase.getPastTotalSupply.selector;
-    selectors_[index++] = VotesBase.delegates.selector;
-    selectors_[index++] = VotesBase.delegate.selector;
-    selectors_[index++] = VotesBase.delegateBySig.selector;
+  function facet() public view override returns (address) {
+    return address(townOwner);
+  }
 
-    return selectors_;
+  function selectors() public view override returns (bytes4[] memory) {
+    return functionSelectors;
   }
 
   function initializer() public view virtual override returns (bytes4) {

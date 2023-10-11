@@ -12,9 +12,6 @@ import {Validator__InvalidStringLength, Validator__InvalidByteLength, Validator_
 // contracts
 import {TownOwnerSetup} from "./TownOwnerSetup.sol";
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 contract TownOwnerTest is ITownOwnerBase, IOwnableBase, TownOwnerSetup {
   string name = "Town Name";
   string uri = "ipfs://town-name";

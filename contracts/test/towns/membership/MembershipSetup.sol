@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 // interfaces
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
-import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IMembership, IMembershipBase} from "contracts/src/towns/facets/membership/IMembership.sol";
 import {IERC2771Recipient} from "contracts/src/diamond/facets/recipient/IERC2771Recipient.sol";
 
@@ -13,6 +12,7 @@ import {IERC2771Recipient} from "contracts/src/diamond/facets/recipient/IERC2771
 import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 import {TokenOwnableHelper} from "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol";
+import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 import {TownArchitectSetup} from "contracts/test/towns/architect/TownArchitectSetup.sol";
@@ -44,6 +44,7 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
     MembershipHelper membershipHelper = new MembershipHelper();
     IntrospectionHelper introspectionHelper = new IntrospectionHelper();
     TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
+    ERC721AHelper erc721aHelper = new ERC721AHelper();
 
     MultiInit multiInit = new MultiInit();
     MinimalForwarder trustedForwarder = new MinimalForwarder();
@@ -55,6 +56,8 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
 
     townArchitectSetup.setUp();
     townFactory = address(townArchitectSetup.townArchitect());
+
+    membershipHelper.addSelectors(erc721aHelper.selectors());
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](3);
 
@@ -106,38 +109,9 @@ contract MembershipHelper is FacetHelper {
 
   constructor() {
     membership = new MembershipFacet();
-  }
 
-  function facet() public view override returns (address) {
-    return address(membership);
-  }
-
-  function initializer() public view override returns (bytes4) {
-    return membership.__Membership_init.selector;
-  }
-
-  function selectors() public pure override returns (bytes4[] memory) {
-    bytes4[] memory selectors_ = new bytes4[](27);
     uint256 index;
-
-    // ERC721A
-    selectors_[index++] = IERC721A.totalSupply.selector;
-    selectors_[index++] = IERC721A.balanceOf.selector;
-    selectors_[index++] = IERC721A.ownerOf.selector;
-    selectors_[index++] = IERC721A.transferFrom.selector;
-    selectors_[index++] = IERC721A.approve.selector;
-    selectors_[index++] = IERC721A.getApproved.selector;
-    selectors_[index++] = IERC721A.setApprovalForAll.selector;
-    selectors_[index++] = IERC721A.isApprovedForAll.selector;
-    selectors_[index++] = IERC721A.name.selector;
-    selectors_[index++] = IERC721A.symbol.selector;
-    selectors_[index++] = IERC721A.tokenURI.selector;
-    selectors_[index++] = bytes4(
-      keccak256("safeTransferFrom(address,address,uint256)")
-    );
-    selectors_[index++] = bytes4(
-      keccak256("safeTransferFrom(address,address,uint256,bytes)")
-    );
+    bytes4[] memory selectors_ = new bytes4[](14);
 
     // Forwarder
     selectors_[index++] = IERC2771Recipient.isTrustedForwarder.selector;
@@ -167,6 +141,18 @@ contract MembershipHelper is FacetHelper {
     // Factory
     selectors_[index++] = IMembership.getTownFactory.selector;
 
-    return selectors_;
+    addSelectors(selectors_);
+  }
+
+  function facet() public view override returns (address) {
+    return address(membership);
+  }
+
+  function initializer() public view override returns (bytes4) {
+    return membership.__Membership_init.selector;
+  }
+
+  function selectors() public view override returns (bytes4[] memory) {
+    return functionSelectors;
   }
 }

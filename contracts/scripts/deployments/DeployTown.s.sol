@@ -19,6 +19,7 @@ import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsSetup.sol";
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 import {MembershipHelper} from "contracts/test/towns/membership/MembershipSetup.sol";
+import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 
 // Facets
 import {OwnablePendingFacet} from "contracts/src/diamond/facets/ownable/pending/OwnablePendingFacet.sol";
@@ -44,6 +45,7 @@ contract DeployTown is DiamondDeployer {
   ChannelsHelper channelsHelper = new ChannelsHelper();
   TokenPausableHelper tokenPausableHelper = new TokenPausableHelper();
   IntrospectionHelper introspectionHelper = new IntrospectionHelper();
+  ERC721AHelper erc721aHelper = new ERC721AHelper();
   MembershipHelper membershipHelper = new MembershipHelper();
 
   address[] initAddresses = new address[](4);
@@ -84,6 +86,8 @@ contract DeployTown is DiamondDeployer {
     membership = address(new MembershipFacet());
     multiInit = address(new MultiInit());
     vm.stopBroadcast();
+
+    membershipHelper.addSelectors(erc721aHelper.selectors());
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](9);
 

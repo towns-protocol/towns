@@ -17,6 +17,7 @@ import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsSetup.sol";
 import {TokenOwnableHelper} from "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol";
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
 import {MembershipHelper} from "contracts/test/towns/membership/MembershipSetup.sol";
+import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -30,6 +31,7 @@ contract TownImplementationHelper {
   RolesHelper rolesHelper = new RolesHelper();
   ChannelsHelper channelsHelper = new ChannelsHelper();
   MembershipHelper membershipHelper = new MembershipHelper();
+  ERC721AHelper erc721aHelper = new ERC721AHelper();
 
   MultiInit multiInit = new MultiInit();
 
@@ -39,6 +41,8 @@ contract TownImplementationHelper {
   function createImplementation(address owner) external returns (Diamond) {
     uint256 cutCount = 8;
     uint256 index;
+
+    membershipHelper.addSelectors(erc721aHelper.selectors());
 
     Diamond.FacetCut[] memory cuts = new Diamond.FacetCut[](cutCount);
     cuts[index++] = tokenOwnableHelper.makeCut(IDiamond.FacetCutAction.Add);

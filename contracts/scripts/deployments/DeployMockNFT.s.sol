@@ -15,6 +15,7 @@ import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 import {ERC721AMockHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
+import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 
 // contracts
 import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
@@ -27,7 +28,8 @@ contract DeployMockNFT is Deployer {
   DiamondCutHelper cutHelper = new DiamondCutHelper();
   DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
   IntrospectionHelper introspectionHelper = new IntrospectionHelper();
-  ERC721AMockHelper erc721aHelper = new ERC721AMockHelper();
+  ERC721AHelper erc721aHelper = new ERC721AHelper();
+  ERC721AMockHelper erc721aMockHelper = new ERC721AMockHelper();
 
   uint256 totalFacets = 4;
   uint256 totalInit = 4;
@@ -38,7 +40,7 @@ contract DeployMockNFT is Deployer {
   address diamondCut;
   address diamondLoupe;
   address introspection;
-  address erc721a;
+  address erc721aMock;
 
   address multiInit;
 
@@ -56,9 +58,11 @@ contract DeployMockNFT is Deployer {
     diamondCut = address(new DiamondCutFacet());
     diamondLoupe = address(new DiamondLoupeFacet());
     introspection = address(new IntrospectionFacet());
-    erc721a = address(new MockERC721A());
+    erc721aMock = address(new MockERC721A());
     multiInit = address(new MultiInit());
     vm.stopBroadcast();
+
+    erc721aMockHelper.addSelectors(erc721aHelper.selectors());
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](totalFacets);
     uint256 index;
@@ -72,21 +76,27 @@ contract DeployMockNFT is Deployer {
       introspection,
       IDiamond.FacetCutAction.Add
     );
-    cuts[index++] = erc721aHelper.makeCut(erc721a, IDiamond.FacetCutAction.Add);
+    cuts[index++] = erc721aMockHelper.makeCut(
+      erc721aMock,
+      IDiamond.FacetCutAction.Add
+    );
 
     index = 0;
 
     addresses[index++] = diamondCut;
     addresses[index++] = diamondLoupe;
     addresses[index++] = introspection;
-    addresses[index++] = erc721a;
+    addresses[index++] = erc721aMock;
 
     index = 0;
 
     payloads[index++] = cutHelper.makeInitData("");
     payloads[index++] = loupeHelper.makeInitData("");
     payloads[index++] = introspectionHelper.makeInitData("");
-    payloads[index++] = erc721aHelper.makeInitData("MockERC721A", "MERC721A");
+    payloads[index++] = erc721aMockHelper.makeInitData(
+      "MockERC721A",
+      "MERC721A"
+    );
 
     vm.startBroadcast(deployerPK);
     address mockERC721A = address(
