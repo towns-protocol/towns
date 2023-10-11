@@ -1,6 +1,6 @@
 import { Button, Divider, Theme, Typography } from '@mui/material'
 import React, { useCallback } from 'react'
-import { Outlet, useNavigate, useParams } from 'react-router-dom'
+import { Outlet, useParams } from 'react-router-dom'
 import {
     RoomIdentifier,
     useSpaceContext,
@@ -13,7 +13,6 @@ import {
 export const Spaces = () => {
     const { channelSlug } = useParams()
     const { joinTown } = useZionClient()
-    const navigate = useNavigate()
     const { spaceId } = useSpaceContext()
     const space = useSpaceData()
     const { signer } = useWeb3Context()
