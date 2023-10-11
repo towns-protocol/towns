@@ -19,7 +19,7 @@ type StreamView interface {
 	LastEvent() *ParsedEvent
 	MinipoolEnvelopes() []*Envelope
 	MiniblocksFromLastSnapshot() []*Miniblock
-	SyncCookie() *SyncCookie
+	SyncCookie(localNodeAddress string) *SyncCookie
 }
 
 func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
@@ -64,7 +64,7 @@ func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*strea
 		streamId:      streamId,
 		firstBlockNum: streamData.StartMiniblockNumber,
 		blocks:        miniblocks,
-		minipool:      newMiniPoolInstance(minipoolEvents),
+		minipool:      newMiniPoolInstance(minipoolEvents, streamData.StartMiniblockNumber+len(miniblocks)),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,
 	}, nil
@@ -76,15 +76,14 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 	}
 
 	miniblocks := make([]*miniblockInfo, len(resp.Miniblocks))
-	startMiniblockNumber := -1
+	// +1 below will make it -1 for the first iteration so block number is not enforced.
+	lastMiniblockNumber := -2
 	for i, binMiniblock := range resp.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, startMiniblockNumber+i)
+		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, lastMiniblockNumber+1)
 		if err != nil {
 			return nil, err
 		}
-		if i == 0 {
-			startMiniblockNumber = int(miniblock.header().MiniblockNum)
-		}
+		lastMiniblockNumber = int(miniblock.header().MiniblockNum)
 		miniblocks[i] = miniblock
 	}
 
@@ -93,6 +92,7 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
 	streamId := snapshot.GetInceptionPayload().GetStreamId()
+	// TODO: also should check here or at the call site if streamId matches the one that was requested.
 	if streamId == "" {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no streamId").Func("MakeStreamView")
 	}
@@ -108,11 +108,11 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 
 	return &streamViewImpl{
 		streamId:      streamId,
-		firstBlockNum: startMiniblockNumber,
+		firstBlockNum: lastMiniblockNumber,
 		blocks:        miniblocks,
-		minipool:      newMiniPoolInstance(minipoolEvents),
+		minipool:      newMiniPoolInstance(minipoolEvents, lastMiniblockNumber+1),
 		snapshot:      snapshot,
-		snapshotIndex: startMiniblockNumber,
+		snapshotIndex: lastMiniblockNumber,
 	}, nil
 }
 
@@ -126,9 +126,7 @@ type streamViewImpl struct {
 	snapshotIndex int
 }
 
-func (r *streamViewImpl) GetMinipoolGeneration() int {
-	return r.firstBlockNum + len(r.blocks)
-}
+var _ StreamView = (*streamViewImpl)(nil)
 
 func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, error) {
 	if event.Event.GetMiniblockHeader() != nil {
@@ -251,7 +249,7 @@ func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamVie
 		streamId:      r.streamId,
 		firstBlockNum: r.firstBlockNum,
 		blocks:        append(r.blocks, miniblock),
-		minipool:      newMiniPoolInstance(minipoolEvents),
+		minipool:      newMiniPoolInstance(minipoolEvents, int(header.MiniblockNum)+1),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,
 	}, nil
@@ -337,14 +335,13 @@ func (r *streamViewImpl) MiniblocksFromLastSnapshot() []*Miniblock {
 	return miniblocks
 }
 
-func (r *streamViewImpl) SyncCookie() *SyncCookie {
-	// TODO: create once and re-use.
+func (r *streamViewImpl) SyncCookie(localNodeAddress string) *SyncCookie {
 	return &SyncCookie{
-		StreamId:         r.streamId,
-		MiniblockNum:     int64(len(r.blocks)),
-		MiniblockHash:    r.lastBlock().headerEvent.Hash,
-		MinipoolInstance: r.minipool.instance,
-		MinipoolSlot:     int64(r.minipool.events.Len()),
+		NodeAddress:       localNodeAddress,
+		StreamId:          r.streamId,
+		MinipoolGen:       int64(len(r.blocks)),
+		MinipoolSlot:      int64(r.minipool.events.Len()),
+		PrevMiniblockHash: r.lastBlock().headerEvent.Hash,
 	}
 }
 

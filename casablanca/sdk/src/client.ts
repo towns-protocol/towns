@@ -684,7 +684,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                         for await (const syncedStream of sync) {
                             this.logSync('got syncStreams', syncedStream)
                             syncedStream.streams.forEach((streamAndCookie) => {
-                                const streamId = streamAndCookie.streamId
+                                const streamId = streamAndCookie.nextSyncCookie?.streamId || ''
                                 this.logSync(
                                     'sync RESULTS for stream',
                                     streamId,
@@ -692,8 +692,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                                     streamAndCookie.events.length,
                                     'nextSyncCookie=',
                                     streamAndCookie.nextSyncCookie,
-                                    'originalSyncCookie=',
-                                    streamAndCookie.originalSyncCookie,
+                                    'startSyncCookie=',
+                                    streamAndCookie.startSyncCookie,
                                 )
                                 const stream = this.streams.get(streamId)
                                 if (stream === undefined) {

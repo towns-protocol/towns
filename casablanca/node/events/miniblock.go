@@ -139,7 +139,7 @@ func NewMiniblockInfoFromProto(pb *Miniblock, expectedBlockNumber int) (*miniblo
 	if blockHeader == nil {
 		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")
 	}
-	if expectedBlockNumber != -1 && blockHeader.MiniblockNum != int64(expectedBlockNumber) {
+	if expectedBlockNumber >= 0 && blockHeader.MiniblockNum != int64(expectedBlockNumber) {
 		return nil, RiverError(Err_BAD_EVENT, "block number mismatch", "expected", expectedBlockNumber, "actual", blockHeader.MiniblockNum)
 	}
 

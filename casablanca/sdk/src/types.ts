@@ -556,16 +556,27 @@ export const unpackStreamResponse = (
 ): { snapshot: Snapshot; streamAndCookie: StreamAndCookie; miniblocks: Miniblock[] } => {
     const streamAndCookie = response.stream
     assert(streamAndCookie !== undefined, 'bad stream')
-    assert(response.miniblocks.length > 0, `bad stream: no blocks ${streamAndCookie.streamId}`)
+    assert(
+        response.miniblocks.length > 0,
+        `bad stream: no blocks ${streamAndCookie.nextSyncCookie!.streamId}`,
+    )
     const block = response.miniblocks[0]
-    assert(block.header !== undefined, `bad block: no header ${streamAndCookie.streamId}`)
+    assert(
+        block.header !== undefined,
+        `bad block: no header ${streamAndCookie.nextSyncCookie!.streamId}`,
+    )
     const miniblock = unpackEnvelope(block.header)
     assert(
         miniblock.event.payload.case === 'miniblockHeader',
-        `bad block: wrong case ${streamAndCookie.streamId} received: ${miniblock.event.payload.case}`,
+        `bad block: wrong case ${streamAndCookie.nextSyncCookie!.streamId} received: ${
+            miniblock.event.payload.case
+        }`,
     )
     const snapshot = miniblock.event.payload.value.snapshot
-    assert(snapshot !== undefined, `bad block: snapshot is undefined ${streamAndCookie.streamId}`)
+    assert(
+        snapshot !== undefined,
+        `bad block: snapshot is undefined ${streamAndCookie.nextSyncCookie!.streamId}`,
+    )
 
     return {
         streamAndCookie,

@@ -129,7 +129,7 @@ describe('streamRpcClient', () => {
         })
         const userStream = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userStream).toBeDefined()
-        expect(userStream.stream?.streamId).toEqual(bobsUserStreamId)
+        expect(userStream.stream?.nextSyncCookie?.streamId).toEqual(bobsUserStreamId)
 
         // try to send a channel message
         const event = await makeEvent(
@@ -667,11 +667,11 @@ const waitForEvent = async (
 ): Promise<SyncCookie> => {
     for await (const res of timeoutIterable(syncStream, 2000)) {
         for (const stream of res.streams) {
-            if (stream.streamId === streamId) {
+            if (stream.nextSyncCookie?.streamId === streamId) {
                 const events = unpackEnvelopes(stream.events)
                 for (const e of events) {
                     if (matcher(e)) {
-                        return stream.nextSyncCookie!
+                        return stream.nextSyncCookie
                     }
                 }
             }

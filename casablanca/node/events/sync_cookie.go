@@ -10,11 +10,11 @@ func SyncCookieEqual(a, b *SyncCookie) bool {
 	if a == nil || b == nil {
 		return a == b
 	}
-	return a.StreamId == b.StreamId &&
-		a.MiniblockNum == b.MiniblockNum &&
-		bytes.Equal(a.MiniblockHash, b.MiniblockHash) &&
-		a.MinipoolInstance == b.MinipoolInstance &&
-		a.MinipoolSlot == b.MinipoolSlot
+	return a.NodeAddress == b.NodeAddress &&
+		a.StreamId == b.StreamId &&
+		a.MinipoolGen == b.MinipoolGen &&
+		a.MinipoolSlot == b.MinipoolSlot &&
+		bytes.Equal(a.PrevMiniblockHash, b.PrevMiniblockHash)
 }
 
 func SyncCookieCopy(a *SyncCookie) *SyncCookie {
@@ -22,22 +22,22 @@ func SyncCookieCopy(a *SyncCookie) *SyncCookie {
 		return nil
 	}
 	return &SyncCookie{
-		StreamId:         a.StreamId,
-		MiniblockNum:     a.MiniblockNum,
-		MiniblockHash:    a.MiniblockHash,
-		MinipoolInstance: a.MinipoolInstance,
-		MinipoolSlot:     a.MinipoolSlot,
+		NodeAddress:       a.NodeAddress,
+		StreamId:          a.StreamId,
+		MinipoolGen:       a.MinipoolGen,
+		MinipoolSlot:      a.MinipoolSlot,
+		PrevMiniblockHash: a.PrevMiniblockHash,
 	}
 }
 
 func SyncCookieValidate(cookie *SyncCookie) error {
 	if cookie == nil ||
+		cookie.NodeAddress == "" ||
 		cookie.StreamId == "" ||
-		cookie.MiniblockNum < 0 ||
-		cookie.MiniblockHash == nil ||
-		len(cookie.MiniblockHash) <= 0 ||
-		cookie.MinipoolInstance == "" ||
-		cookie.MinipoolSlot < 0 {
+		cookie.MinipoolGen <= 0 ||
+		cookie.MinipoolSlot < 0 ||
+		cookie.PrevMiniblockHash == nil ||
+		len(cookie.PrevMiniblockHash) <= 0 {
 		return RiverError(Err_BAD_SYNC_COOKIE, "Bad SyncCookie", "cookie=", cookie)
 	}
 	return nil

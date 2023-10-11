@@ -169,7 +169,7 @@ const createNewChannelAndPostHello = async (
     const channel = await bob.getStream({ streamId: channelId })
     expect(channel).toBeDefined()
     expect(channel.stream).toBeDefined()
-    expect(channel.stream?.streamId).toEqual(channelId)
+    expect(channel.stream?.nextSyncCookie?.streamId).toEqual(channelId)
 
     // Now there must be "channel created" event in the space stream.
     const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
@@ -222,7 +222,7 @@ const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: stri
     const channel2 = await bob.getStream({ streamId: channelId })
     expect(channel2).toBeDefined()
     expect(channel2.stream).toBeDefined()
-    expect(channel2.stream?.streamId).toEqual(channelId)
+    expect(channel2.stream?.nextSyncCookie?.streamId).toEqual(channelId)
     const hello = lastEventFiltered(unpackEnvelopes(channel2.stream!.events), getMessagePayload)
     expect(hello).toBeDefined()
     expect(hello?.text).toEqual('hello')
@@ -232,7 +232,7 @@ const countStreamBlocksAndSnapshots = async (bob: StreamRpcClientType, streamId:
     const stream = await bob.getStream({ streamId: streamId })
     expect(stream).toBeDefined()
     expect(stream.stream).toBeDefined()
-    expect(stream.stream?.streamId).toEqual(streamId)
+    expect(stream.stream?.nextSyncCookie?.streamId).toEqual(streamId)
 
     const minipoolEventNum = stream.stream!.events.length
     let totalEvents = minipoolEventNum

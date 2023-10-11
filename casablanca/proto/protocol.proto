@@ -345,7 +345,6 @@ message MediaPayload {
 * Snapshot contains a summary of all state events up to the most recent miniblock
 */
 message Snapshot {
-
     // Snapshot data specific for each stream type.
     oneof content {
         SpacePayload.Snapshot space_content = 101;
@@ -476,25 +475,18 @@ message Key {
 }
 
 message SyncCookie  {
-    string stream_id = 1;
-    int64 miniblock_num = 2;
-    // TODO: change to prev_miniblock_hash
-    bytes miniblock_hash = 3;
-
-    // minipool_instance is a unique identifier of a cookie generator. 
-    // minipool_slots are not necessary consistent across instances or even restarts.
-    // If minipool_instance is mismatching, then minipool_slot is ignored and stream is synced from the end of the referenced miniblock_num.
-    // This is responsibility of the client to ignore duplicate events.
-    string minipool_instance = 4;
-    int64 minipool_slot = 5;
+    string node_address = 1;
+    string stream_id = 2;
+    int64 minipool_gen = 3;
+    int64 minipool_slot = 4;
+    bytes prev_miniblock_hash = 5;
 }
 
 message StreamAndCookie {
     // events in the current minipool
     repeated Envelope events = 1;
     SyncCookie next_sync_cookie = 2;
-    SyncCookie original_sync_cookie = 3;  // TODO: rename to start_sync_cookie
-    string stream_id = 4;
+    SyncCookie start_sync_cookie = 3;
 }
 
 message CreateStreamRequest {

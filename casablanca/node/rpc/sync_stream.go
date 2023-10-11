@@ -72,26 +72,20 @@ func (s *Service) syncStreamsImpl(
 		}
 	}()
 
-	// TODO: extend syncCookie to include NodeAddress.
-	// TODO: (once above is implemented) handle the case when node is no longer available.
 	for _, cookie := range req.Msg.SyncPos {
-		nodeAddresses, err := s.streamRegistry.GetNodeAddressesForStream(ctx, cookie.StreamId)
-		if err != nil {
-			return err
-		}
-
-		nodeAddr := nodeAddresses[0]
-		if nodeAddr == localNodeAddress {
+		nodeAddr := cookie.NodeAddress
+		if cookie.NodeAddress == localNodeAddress {
 			local = append(local, cookie)
 		} else {
 			remote, ok := remotes[nodeAddr]
 			if !ok {
 				stub, err := s.nodeRegistry.GetRemoteStubForAddress(nodeAddr)
 				if err != nil {
+					// TODO: Handle the case when node is no longer available.
 					return err
 				}
 				if stub == nil {
-					panic("stub always should not be nil for remote node")
+					panic("stub always should set for the remote node")
 				}
 
 				remote = &syncNode{

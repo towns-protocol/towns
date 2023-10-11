@@ -83,10 +83,10 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, 3, len(newEnvelopesHashes))
 	assert.Equal(t, []string{string(inception.Hash), string(join.Hash), string(miniblockHeaderProto.Hash)}, newEnvelopesHashes)
 
-	cookie := view.SyncCookie()
+	cookie := view.SyncCookie("nodeAddress$1")
 	assert.NotNil(t, cookie)
 	assert.Equal(t, "streamid$1", cookie.StreamId)
-	assert.Equal(t, int64(1), cookie.MiniblockNum)
+	assert.Equal(t, int64(1), cookie.MinipoolGen)
 	assert.Equal(t, int64(0), cookie.MinipoolSlot)
 
 	// Check minipool, should be empty

@@ -109,7 +109,7 @@ describe('syncWithBlocks', () => {
         const channel = await bob.getStream({ streamId: channelId })
         expect(channel).toBeDefined()
         expect(channel.stream).toBeDefined()
-        expect(channel.stream?.streamId).toEqual(channelId)
+        expect(channel.stream?.nextSyncCookie?.streamId).toEqual(channelId)
 
         // Last event must be a genesis miniblock header.
         const events = unpackAllResponseEnvelopes(channel)

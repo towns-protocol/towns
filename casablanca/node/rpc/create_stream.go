@@ -105,8 +105,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	return &CreateStreamResponse{
 		Stream: &StreamAndCookie{
 			Events:         streamView.MinipoolEnvelopes(),
-			StreamId:       streamView.StreamId(),
-			NextSyncCookie: streamView.SyncCookie(),
+			NextSyncCookie: streamView.SyncCookie(s.wallet.AddressStr),
 		},
 		Miniblocks: streamView.MiniblocksFromLastSnapshot(),
 	}, nil

@@ -143,7 +143,7 @@ func (s *streamImpl) makeMiniblock(ctx context.Context) error {
 	err = s.params.Storage.CreateBlock(
 		ctx,
 		s.streamId,
-		s.view.GetMinipoolGeneration(),
+		s.view.minipool.generation,
 		s.view.minipool.nextSlotNumber(),
 		miniblockBytes,
 		miniblockHeader.GetSnapshot() != nil,
@@ -157,9 +157,9 @@ func (s *streamImpl) makeMiniblock(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	prevSyncCookie := s.view.SyncCookie()
+	prevSyncCookie := s.view.SyncCookie(s.params.Wallet.AddressStr)
 	s.view = newSV
-	newSyncCookie := s.view.SyncCookie()
+	newSyncCookie := s.view.SyncCookie(s.params.Wallet.AddressStr)
 
 	s.notifySubscribers([]*Envelope{miniblockHeaderEvent.Envelope}, newSyncCookie, prevSyncCookie)
 	return nil
@@ -271,10 +271,9 @@ func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) error {
 func (s *streamImpl) notifySubscribers(envelopes []*Envelope, newSyncCookie *SyncCookie, prevSyncCookie *SyncCookie) {
 	if s.receivers != nil && s.receivers.Cardinality() > 0 {
 		resp := SyncResultFromUpdate(&StreamAndCookie{
-			StreamId:           s.streamId,
-			Events:             envelopes,
-			NextSyncCookie:     newSyncCookie,
-			OriginalSyncCookie: prevSyncCookie,
+			Events:          envelopes,
+			NextSyncCookie:  newSyncCookie,
+			StartSyncCookie: prevSyncCookie,
 		})
 		for receiver := range s.receivers.Iter() {
 			receiver <- resp
@@ -300,9 +299,9 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 	if err != nil {
 		return err
 	}
-	prevSyncCookie := s.view.SyncCookie()
+	prevSyncCookie := s.view.SyncCookie(s.params.Wallet.AddressStr)
 	s.view = newSV
-	newSyncCookie := s.view.SyncCookie()
+	newSyncCookie := s.view.SyncCookie(s.params.Wallet.AddressStr)
 
 	s.notifySubscribers([]*Envelope{event.Envelope}, newSyncCookie, prevSyncCookie)
 
@@ -311,6 +310,9 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 
 func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultChannel) (*StreamAndCookie, error) {
 	log := dlog.CtxLog(ctx)
+	if cookie.NodeAddress != s.params.Wallet.AddressStr {
+		return nil, RiverError(Err_BAD_SYNC_COOKIE, "cookies is not for this node", "cookie.NodeAddress", cookie.NodeAddress, "s.params.Wallet.AddressStr", s.params.Wallet.AddressStr)
+	}
 	if cookie.StreamId != s.streamId {
 		return nil, RiverError(Err_BAD_SYNC_COOKIE, "bad stream id", "cookie.StreamId", cookie.StreamId, "s.streamId", s.streamId)
 	}
@@ -326,7 +328,7 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 		return nil, s.loadError
 	}
 
-	if cookie.MinipoolInstance == s.view.minipool.instance {
+	if cookie.MinipoolGen == int64(s.view.minipool.generation) {
 		if slot > int64(s.view.minipool.events.Len()) {
 			return nil, RiverError(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
 		}
@@ -342,10 +344,9 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 				envelopes = append(envelopes, e.Envelope)
 			}
 			return &StreamAndCookie{
-				StreamId:           s.streamId,
-				Events:             envelopes,
-				NextSyncCookie:     s.view.SyncCookie(),
-				OriginalSyncCookie: cookie,
+				Events:          envelopes,
+				NextSyncCookie:  s.view.SyncCookie(s.params.Wallet.AddressStr),
+				StartSyncCookie: cookie,
 			}, nil
 		} else {
 			return nil, nil
@@ -359,37 +360,40 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 		envelopes := make([]*Envelope, 0, 16)
 		// aellis 9/2023 if the sync cookie passes a miniblockNum that's too old for the view,
 		// we just start with the first block that we have loaded
-		miniblockIndex, err := s.view.indexOfMiniblockWithNum(cookie.MiniblockNum)
+		miniblockIndex, err := s.view.indexOfMiniblockWithNum(cookie.MinipoolGen)
 		if err != nil {
 			log.Warn("Stream.Sub: out of date cookie.MiniblockNum sending all known blocks.", "error", err.Error())
 			miniblockIndex = 0
 		}
+
 		// append events from blocks
 		err = s.view.forEachEvent(miniblockIndex, func(e *ParsedEvent) (bool, error) {
 			envelopes = append(envelopes, e.Envelope)
 			return true, nil
 		})
 		if err != nil {
-			return nil, err
+			panic("Should never happen: Stream.Sub: forEachEvent failed: " + err.Error())
 		}
+
 		// append events from minipool
 		err = s.view.minipool.forEachEvent(func(e *ParsedEvent) (bool, error) {
 			envelopes = append(envelopes, e.Envelope)
 			return true, nil
 		})
 		if err != nil {
-			return nil, err
+			panic("Should never happen: Stream.Sub: forEachEvent failed: " + err.Error())
 		}
 
 		if len(envelopes) > 0 {
 			return &StreamAndCookie{
-				StreamId:       s.streamId,
 				Events:         envelopes,
-				NextSyncCookie: s.view.SyncCookie(),
-				OriginalSyncCookie: &SyncCookie{
-					StreamId:     s.streamId,
-					MiniblockNum: cookie.MiniblockNum,
-					MinipoolSlot: 0,
+				NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
+				StartSyncCookie: &SyncCookie{
+					NodeAddress:       cookie.NodeAddress,
+					StreamId:          cookie.StreamId,
+					MinipoolGen:       cookie.MinipoolGen,
+					MinipoolSlot:      0,
+					PrevMiniblockHash: s.view.blocks[miniblockIndex].header().PrevMiniblockHash,
 				},
 			}, nil
 		} else {

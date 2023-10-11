@@ -9,7 +9,7 @@
         "buf:clean": "rm -rf ./src/gen/*",
         "buf:generate": "buf generate --path protocol.proto && buf generate --path payloads.proto",
         "buf:lint": "buf lint --path protocol.proto && buf lint --path payloads.proto",
-        "build": "buf generate --path protocol.proto && buf generate --path payloads.proto && tsc ",
+        "build": "buf generate --path protocol.proto && buf generate --path payloads.proto && tsc",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf ./dist",
         "my-jest": "yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest) --passWithNoTests",

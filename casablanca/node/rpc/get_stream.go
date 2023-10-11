@@ -35,8 +35,7 @@ func (s *Service) getStream(ctx context.Context, req *connect_go.Request[GetStre
 	resp := &GetStreamResponse{
 		Stream: &StreamAndCookie{
 			Events:         streamView.MinipoolEnvelopes(),
-			StreamId:       streamView.StreamId(),
-			NextSyncCookie: streamView.SyncCookie(),
+			NextSyncCookie: streamView.SyncCookie(s.wallet.AddressStr),
 		},
 		Miniblocks: streamView.MiniblocksFromLastSnapshot(),
 	}

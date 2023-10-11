@@ -10,11 +10,11 @@ import (
 func TestEqualAndCopy(t *testing.T) {
 	require.True(t, SyncCookieEqual(nil, nil))
 	a := &SyncCookie{
-		StreamId:         "streamid$1",
-		MiniblockNum:     5,
-		MiniblockHash:    []byte{0, 1, 2, 4},
-		MinipoolInstance: "minipoolInstanceId$1",
-		MinipoolSlot:     10,
+		NodeAddress:       "nodeAddress$1",
+		StreamId:          "streamid$1",
+		MinipoolGen:       5,
+		MinipoolSlot:      10,
+		PrevMiniblockHash: []byte{0, 1, 2, 4},
 	}
 	require.True(t, SyncCookieEqual(a, a))
 	require.False(t, SyncCookieEqual(nil, a))
@@ -24,13 +24,13 @@ func TestEqualAndCopy(t *testing.T) {
 	b.StreamId = "streamid$2"
 	require.False(t, SyncCookieEqual(a, b))
 	b = SyncCookieCopy(a)
-	b.MiniblockNum = 6
+	b.MinipoolGen = 6
 	require.False(t, SyncCookieEqual(a, b))
 	b = SyncCookieCopy(a)
-	b.MiniblockHash = []byte{0, 1, 2, 5}
+	b.PrevMiniblockHash = []byte{0, 1, 2, 5}
 	require.False(t, SyncCookieEqual(a, b))
 	b = SyncCookieCopy(a)
-	b.MinipoolInstance = "minipoolInstanceId$2"
+	b.NodeAddress = "nodeAddress$2"
 	require.False(t, SyncCookieEqual(a, b))
 	b = SyncCookieCopy(a)
 	b.MinipoolSlot = 11

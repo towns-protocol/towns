@@ -1,28 +1,27 @@
 package events
 
 import (
-	. "casablanca/node/base"
 	. "casablanca/node/utils"
 )
 
 type eventMap = *OrderedMap[string, *ParsedEvent]
 
 type minipoolInstance struct {
-	events   eventMap
-	instance string
+	events     eventMap
+	generation int
 }
 
-func newMiniPoolInstance(events eventMap) *minipoolInstance {
+func newMiniPoolInstance(events eventMap, generation int) *minipoolInstance {
 	return &minipoolInstance{
-		events:   events,
-		instance: GenNanoid(),
+		events:     events,
+		generation: generation,
 	}
 }
 
 func (m *minipoolInstance) copyAndAddEvent(event *ParsedEvent) *minipoolInstance {
 	m = &minipoolInstance{
-		events:   m.events.Copy(1),
-		instance: m.instance,
+		events:     m.events.Copy(1),
+		generation: m.generation,
 	}
 	m.events.Set(event.HashStr, event)
 	return m

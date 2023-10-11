@@ -713,7 +713,7 @@ func DisableTestManyUsers(t *testing.T) {
 			t.Fatalf("expected %d event, got %d", (totalUsers-1)*2, len(streams[0].Events))
 		}
 		for syncPosIdx := range channels {
-			if channels[syncPosIdx].StreamId == streams[i].StreamId {
+			if channels[syncPosIdx].StreamId == streams[i].NextSyncCookie.StreamId {
 				channels[syncPosIdx] = streams[i].NextSyncCookie
 			}
 		}
@@ -783,7 +783,7 @@ func DisableTestManyUsers(t *testing.T) {
 			stats[len(msg.Streams)]++
 			for streamIdx := range msg.Streams {
 				for syncPosStrem := range channels {
-					if channels[syncPosStrem].StreamId == msg.Streams[streamIdx].StreamId {
+					if channels[syncPosStrem].StreamId == msg.Streams[streamIdx].NextSyncCookie.StreamId {
 						channels[syncPosStrem] = msg.Streams[streamIdx].NextSyncCookie
 					}
 				}
