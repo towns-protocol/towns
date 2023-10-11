@@ -15,6 +15,7 @@ import {
 import { StreamRpcClientType } from './makeStreamRpcClient'
 import { makeEvent, SignerContext, unpackEnvelopes, unpackMiniblock } from './sign'
 import {
+    ParsedEvent,
     getChannelPayload,
     getMessagePayload,
     make_ChannelPayload_Inception,
@@ -27,6 +28,7 @@ import {
 import { lastEventFiltered, makeRandomUserContext, makeTestRpcClient } from './util.test'
 
 const log = dlog('csb:test:nodeRestart')
+const data_log = log.extend('data')
 
 describe('nodeRestart', () => {
     let bobsContext: SignerContext
@@ -36,7 +38,7 @@ describe('nodeRestart', () => {
     })
 
     // TODO: HNT-2611 fix and re-enable
-    test.skip('bobCanChatAfterRestart', async () => {
+    test('bobCanChatAfterRestart', async () => {
         log('start')
 
         const bob = makeTestRpcClient()
@@ -222,7 +224,26 @@ const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: stri
     expect(channel2).toBeDefined()
     expect(channel2.stream).toBeDefined()
     expect(channel2.stream?.nextSyncCookie?.streamId).toEqual(channelId)
-    const hello = lastEventFiltered(unpackEnvelopes(channel2.stream!.events, 0n), getMessagePayload)
+
+    const all_events: ParsedEvent[] = []
+    for (const mb of channel2.miniblocks) {
+        const mb_events = unpackEnvelopes(mb.events, 0n)
+        data_log('Got miniblock data', 'events=', mb_events)
+        log('Miniblock event_num=', mb.events.length)
+        all_events.push(...mb_events)
+    }
+
+    const events = unpackEnvelopes(channel2.stream!.events, 0n)
+    data_log('Got channel data, looking for hello', 'events=', events)
+    log(
+        'Got channel data, looking for hello',
+        'num_miniblocks=',
+        channel2.miniblocks.length,
+        'num_events=',
+        channel2.stream!.events.length,
+    )
+    all_events.push(...events)
+    const hello = lastEventFiltered(all_events, getMessagePayload)
     expect(hello).toBeDefined()
     expect(hello?.text).toEqual('hello')
 }
