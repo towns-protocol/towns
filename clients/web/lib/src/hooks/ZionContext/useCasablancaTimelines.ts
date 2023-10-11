@@ -201,6 +201,7 @@ export function toEvent(
     const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.displayName, content, error)}`
     return {
         eventId: eventId,
+        eventNum: message.eventNum,
         status: isSender ? undefined : undefined, // todo: set status for events this user sent
         createdAtEpocMs: Number(message.event.createdAtEpocMs),
         updatedAtEpocMs: undefined,

@@ -173,7 +173,7 @@ const createNewChannelAndPostHello = async (
     // Now there must be "channel created" event in the space stream.
     const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
     const channelCreatePayload = lastEventFiltered(
-        unpackEnvelopes(spaceResponse.stream!.events),
+        unpackEnvelopes(spaceResponse.stream!.events, 0n),
         getChannelPayload,
     )
     expect(channelCreatePayload).toBeDefined()
@@ -222,7 +222,7 @@ const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: stri
     expect(channel2).toBeDefined()
     expect(channel2.stream).toBeDefined()
     expect(channel2.stream?.nextSyncCookie?.streamId).toEqual(channelId)
-    const hello = lastEventFiltered(unpackEnvelopes(channel2.stream!.events), getMessagePayload)
+    const hello = lastEventFiltered(unpackEnvelopes(channel2.stream!.events, 0n), getMessagePayload)
     expect(hello).toBeDefined()
     expect(hello?.text).toEqual('hello')
 }

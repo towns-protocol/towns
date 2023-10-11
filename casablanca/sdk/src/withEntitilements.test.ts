@@ -131,7 +131,7 @@ describe('withEntitlements', () => {
         let userResponse = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userResponse.stream).toBeDefined()
         let joinPayload = lastEventFiltered(
-            unpackEnvelopes(userResponse.stream!.events),
+            unpackEnvelopes(userResponse.stream!.events, 0n),
             getUserPayload_Membership,
         )
         expect(joinPayload).toBeDefined()
@@ -166,7 +166,7 @@ describe('withEntitlements', () => {
         userResponse = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userResponse.stream).toBeDefined()
         joinPayload = lastEventFiltered(
-            unpackEnvelopes(userResponse.stream!.events),
+            unpackEnvelopes(userResponse.stream!.events, 0n),
             getUserPayload_Membership,
         )
 

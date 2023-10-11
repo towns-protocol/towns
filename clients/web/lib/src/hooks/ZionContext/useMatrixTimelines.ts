@@ -207,6 +207,7 @@ export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
     // console.log('!!!! to event', { id: event.getId(), fbc, content, mcontent: event.getContent() })
     return {
         eventId: eventId,
+        eventNum: 0n,
         status: isSender ? event.status ?? undefined : undefined,
         createdAtEpocMs: event.getTs(),
         updatedAtEpocMs: event.replacingEvent()?.getTs(),

@@ -33,11 +33,13 @@ export class StreamStateView {
     readonly contentKind: SnapshotCaseType
     readonly timeline: ParsedEvent[] = []
     readonly events = new Map<string, ParsedEvent>()
+
     // todo: remove this additional map in favor of events map once RiverEvent decrypts to ParsedEvents
     // https://linear.app/hnt-labs/issue/HNT-2049/refactor-riverevent-to-input-and-output-streamevents
     readonly decryptedEvents = new Map<string, RiverEvent>()
     readonly leafEventHashes = new Map<string, Uint8Array>()
 
+    lastEventNum = 0n
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
 
@@ -177,9 +179,10 @@ export class StreamStateView {
         streamAndCookie: StreamAndCookie,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): ParsedEvent[] {
-        const events = unpackEnvelopes(streamAndCookie.events)
+        const events = unpackEnvelopes(streamAndCookie.events, this.lastEventNum)
         for (const event of events) {
             this.appendEvent(event, emitter)
+            this.lastEventNum++
         }
         this.syncCookie = streamAndCookie.nextSyncCookie
         return events
@@ -376,6 +379,9 @@ export class StreamStateView {
         for (const event of rest.flatMap((mb) => mb.events)) {
             this.appendEvent(event, emitter)
         }
+        // initialize the lastEventNum
+        const lastBlock = miniblocks[miniblocks.length - 1]
+        this.lastEventNum = lastBlock.header.eventNumOffset + BigInt(lastBlock.events.length)
         // append the minipool events
         this.appendStreamAndCookie(streamAndCookie, emitter)
         // let everyone know

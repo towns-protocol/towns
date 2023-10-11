@@ -120,6 +120,7 @@ export class ConversationBuilder {
         const timestamp = this.nextTimestamp()
         return {
             eventId: eventId,
+            eventNum: BigInt(this.index),
             status: params.isSender ? undefined : undefined, // todo: set status for events this user sent
             createdAtEpocMs: timestamp,
             updatedAtEpocMs: timestamp,

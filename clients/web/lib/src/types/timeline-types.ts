@@ -214,9 +214,10 @@ export interface SpaceParentEvent {
 
 export interface TimelineEvent {
     eventId: string
+    eventNum: bigint
     status?: EventStatus
-    createdAtEpocMs: number
-    updatedAtEpocMs?: number
+    createdAtEpocMs: number // created at times are generated client side, do not trust them
+    updatedAtEpocMs?: number // updated at times are generated client side, do not trust them
     content?: TimelineEvent_OneOf
     fallbackContent: string
     isLocalPending: boolean /// true if we're waiting for the event to get sent back from the server

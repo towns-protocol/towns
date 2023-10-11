@@ -35,6 +35,7 @@ import { bin_toHexString } from './binary'
 export interface ParsedEvent {
     event: StreamEvent
     envelope: Envelope
+    eventNum: bigint
     hashStr: string
     prevEventsStrs: string[]
     creatorUserId: string
