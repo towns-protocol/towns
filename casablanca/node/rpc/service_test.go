@@ -21,6 +21,7 @@ import (
 	"casablanca/node/protocol/protocolconnect"
 	"casablanca/node/rpc"
 	"casablanca/node/testutils"
+	"casablanca/node/testutils/dbtestutils"
 
 	"github.com/bufbuild/connect-go"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
@@ -33,7 +34,7 @@ var testSchemaName string
 
 func TestMain(m *testing.M) {
 
-	db, schemaName, closer, err := testutils.StartDB(context.Background())
+	db, schemaName, closer, err := dbtestutils.StartDB(context.Background())
 	if err != nil {
 		panic(err)
 	}

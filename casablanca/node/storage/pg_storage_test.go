@@ -1,26 +1,22 @@
-package storage_test
+package storage
 
 import (
+	"casablanca/node/testutils/dbtestutils"
 	"context"
 	"os"
 	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"casablanca/node/crypto"
-	"casablanca/node/events"
-	"casablanca/node/storage"
-	"casablanca/node/testutils"
 )
 
 var testDatabaseUrl string
 var testSchemaName string
-var pgEventStore *storage.PostgresEventStore
+var pgEventStore *PostgresEventStore
 var exitSignal chan error
 
 func setupTest() func() {
-	store, err := storage.NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, true, exitSignal)
+	store, err := NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, true, exitSignal)
 	if err != nil {
 		panic("Can't create event store: " + err.Error())
 	}
@@ -31,7 +27,7 @@ func setupTest() func() {
 }
 
 func TestMain(m *testing.M) {
-	dbUrl, dbSchemaName, closer, err := testutils.StartDB(context.Background())
+	dbUrl, dbSchemaName, closer, err := dbtestutils.StartDB(context.Background())
 	if err != nil {
 		panic("Could not connect to docker" + err.Error())
 	}
@@ -67,19 +63,9 @@ func TestPostgresEventStore(t *testing.T) {
 	streamId2 := "11-0sfdsf_sdfds2"
 	streamId3 := "11-0sfdsf_sdfds3"
 
-	wallet, _ := crypto.NewWallet(ctx)
-	_, err := events.MakeEnvelopeWithPayload(
-		wallet,
-		events.Make_UserPayload_Inception(streamId1, nil),
-		nil,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	//Test that created stream will have proper genesis miniblock
 	var genesisMiniblock = []byte("genesisMinoblock")
-	err = pgEventStore.CreateStream(ctx, streamId1, genesisMiniblock)
+	err := pgEventStore.CreateStream(ctx, streamId1, genesisMiniblock)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,7 +201,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 	teardownTest := setupTest()
 	defer teardownTest()
 	ctx := context.Background()
-	_, err := storage.NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, true, exitSignal)
+	_, err := NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, true, exitSignal)
 	if err != nil {
 		t.Fatal("Error creating new storage instance", err)
 	}
