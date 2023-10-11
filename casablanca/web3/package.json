@@ -18,8 +18,10 @@
     },
     "dependencies": {
         "@towns/generated": "workspace:^",
+        "abitype": "^0.9.10",
         "debug": "^4.3.4",
-        "ethers": "^5.7.2"
+        "ethers": "^5.7.2",
+        "viem": "^1.10.3"
     },
     "devDependencies": {
         "@types/jest": "^29.5.3",

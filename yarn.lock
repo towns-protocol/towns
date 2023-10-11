@@ -5926,6 +5926,7 @@ __metadata:
     "@types/node": ^20.5.0
     "@typescript-eslint/eslint-plugin": ^5.61.0
     "@typescript-eslint/parser": ^5.61.0
+    abitype: ^0.9.10
     debug: ^4.3.4
     eslint: ^8.42.0
     eslint-import-resolver-typescript: ^3.5.5
@@ -5938,6 +5939,7 @@ __metadata:
     ts-node: ^10.9.1
     typed-emitter: ^2.1.0
     typescript: ^5.1.6
+    viem: ^1.10.3
   languageName: unknown
   linkType: soft
 
@@ -8395,6 +8397,21 @@ __metadata:
     zod:
       optional: true
   checksum: d7d887f29d6821e3f7a400de9620511b80ead3f85c5c87308aaec97965d3493e6687ed816e88722b4f512249bd66dee9e69231b49af0e1db8f69400a62c87cf6
+  languageName: node
+  linkType: hard
+
+"abitype@npm:^0.9.10":
+  version: 0.9.10
+  resolution: "abitype@npm:0.9.10"
+  peerDependencies:
+    typescript: ">=5.0.4"
+    zod: ^3 >=3.22.0
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+    zod:
+      optional: true
+  checksum: de703b58c221395f015c04a8512dde2cff2b9541c577a23cf205204604e624fbfd0e682e82f7954968d5e437cd0d7e630b1c159e73543881a4d0040238bfb13a
   languageName: node
   linkType: hard
 
