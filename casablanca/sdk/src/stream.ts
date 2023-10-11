@@ -6,6 +6,7 @@ import TypedEmitter from 'typed-emitter'
 import { StreamStateView } from './streamStateView'
 import { EmittedEvents } from './client'
 import { RiverEvent } from './event'
+import { ParsedMiniblock } from './types'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
     readonly clientEmitter: TypedEmitter<EmittedEvents>
@@ -42,7 +43,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     initialize(
         streamAndCookie: StreamAndCookie,
         snapshot: Snapshot,
-        miniblocks: Miniblock[],
+        miniblocks: ParsedMiniblock[],
     ): void {
         this.view.initialize(streamAndCookie, snapshot, miniblocks, this)
     }

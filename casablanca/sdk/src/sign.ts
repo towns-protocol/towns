@@ -7,6 +7,8 @@ import {
     Miniblock,
     GetStreamResponse,
     CreateStreamResponse,
+    StreamAndCookie,
+    Snapshot,
 } from '@river/proto'
 import { check, hasElements, isDefined } from './check'
 import {
@@ -17,9 +19,10 @@ import {
     publicKeyToUint8Array,
 } from './crypto/crypto'
 import { genIdBlob, userIdFromAddress } from './id'
-import { ParsedEvent } from './types'
+import { ParsedEvent, ParsedMiniblock } from './types'
 import { bin_equal, bin_fromHexString, bin_toHexString } from './binary'
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
+import assert from 'assert'
 
 /**
  * SignerContext is a context used for signing events.
@@ -170,24 +173,43 @@ export const checkDelegateSig = (
     )
 }
 
-export const unpackAllResponseEnvelopes = (
-    response: GetStreamResponse | CreateStreamResponse,
-): ParsedEvent[] => {
+export const unpackStreamResponse = (
+    response: CreateStreamResponse | GetStreamResponse,
+): { snapshot: Snapshot; streamAndCookie: StreamAndCookie; miniblocks: ParsedMiniblock[] } => {
     const streamAndCookie = response.stream
-    check(streamAndCookie !== undefined, 'bad stream')
-    const blockEvents = response.miniblocks.flatMap((b) => unpackMiniblock(b))
-    const minipoolEvents = unpackEnvelopes(streamAndCookie.events)
-    return [...blockEvents, ...minipoolEvents]
+    assert(streamAndCookie !== undefined, 'bad stream')
+    assert(streamAndCookie.nextSyncCookie !== undefined, 'bad stream: no cookie')
+    assert(
+        response.miniblocks.length > 0,
+        `bad stream: no blocks ${streamAndCookie.nextSyncCookie.streamId}`,
+    )
+    const miniblocks = response.miniblocks.map((mb) => unpackMiniblock(mb))
+    const snapshot = miniblocks[0].header.snapshot
+    assert(
+        snapshot !== undefined,
+        `bad block: snapshot is undefined ${streamAndCookie.nextSyncCookie.streamId}`,
+    )
+
+    return {
+        streamAndCookie,
+        snapshot,
+        miniblocks,
+    }
 }
 
-// returns all events + the header event
-export const unpackMiniblock = (miniblock: Miniblock): ParsedEvent[] => {
+// returns all events + the header event and pointer to header content
+export const unpackMiniblock = (miniblock: Miniblock): ParsedMiniblock => {
+    check(isDefined(miniblock.header), 'Miniblock header is not set')
+    const headerEvent = unpackEnvelope(miniblock.header)
+    check(
+        headerEvent.event.payload.case === 'miniblockHeader',
+        `bad miniblock header: wrong case received: ${headerEvent.event.payload.case}`,
+    )
     const events = unpackEnvelopes(miniblock.events)
-    if (miniblock.header) {
-        const header = unpackEnvelope(miniblock.header)
-        return [...events, header]
+    return {
+        header: headerEvent.event.payload.value,
+        events: [...events, headerEvent],
     }
-    return events
 }
 
 export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array): ParsedEvent => {

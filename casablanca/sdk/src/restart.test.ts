@@ -13,11 +13,10 @@ import {
     userIdFromAddress,
 } from './id'
 import { StreamRpcClientType } from './makeStreamRpcClient'
-import { makeEvent, SignerContext, unpackEnvelope, unpackEnvelopes } from './sign'
+import { makeEvent, SignerContext, unpackEnvelopes, unpackMiniblock } from './sign'
 import {
     getChannelPayload,
     getMessagePayload,
-    getMiniblockHeader,
     make_ChannelPayload_Inception,
     make_ChannelPayload_Membership,
     make_ChannelPayload_Message,
@@ -239,12 +238,10 @@ const countStreamBlocksAndSnapshots = async (bob: StreamRpcClientType, streamId:
     const miniblocks = stream.miniblocks.length
     let snapshots = 0
     for (const mb of stream.miniblocks) {
-        const header = getMiniblockHeader(unpackEnvelope(mb.header!))
-        expect(header).toBeDefined()
-
+        expect(mb.header).toBeDefined()
         totalEvents += mb.events.length
-
-        if (header?.snapshot !== undefined) {
+        const parsedBlock = unpackMiniblock(mb)
+        if (parsedBlock.header?.snapshot !== undefined) {
             snapshots++
         }
     }

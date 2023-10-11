@@ -8,7 +8,7 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from './id'
-import { SignerContext, makeEvent, unpackAllResponseEnvelopes, unpackEnvelopes } from './sign'
+import { SignerContext, makeEvent, unpackEnvelopes, unpackStreamResponse } from './sign'
 import {
     getMessagePayload,
     getMiniblockHeader,
@@ -112,7 +112,7 @@ describe('syncWithBlocks', () => {
         expect(channel.stream?.nextSyncCookie?.streamId).toEqual(channelId)
 
         // Last event must be a genesis miniblock header.
-        const events = unpackAllResponseEnvelopes(channel)
+        const events = unpackStreamResponse(channel).miniblocks.flatMap((mb) => mb.events)
         const lastEvent = events.at(-1)
         const miniblockHeader = getMiniblockHeader(lastEvent)
         expect(miniblockHeader).toBeDefined()

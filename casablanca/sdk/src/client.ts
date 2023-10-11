@@ -49,7 +49,7 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from './id'
-import { SignerContext, makeEvent } from './sign'
+import { SignerContext, makeEvent, unpackStreamResponse } from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
@@ -69,7 +69,6 @@ import {
     make_SpacePayload_Channel,
     make_UserSettingsPayload_FullyReadMarkers,
     make_UserSettingsPayload_Inception,
-    unpackStreamResponse,
     make_MediaPayload_Inception,
     ParsedEvent,
     make_MediaPayload_Chunk,

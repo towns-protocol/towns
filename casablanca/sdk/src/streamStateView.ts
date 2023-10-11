@@ -10,7 +10,7 @@ import {
 } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, logNever, isDefined, throwWithCode } from './check'
-import { ParsedEvent } from './types'
+import { ParsedEvent, ParsedMiniblock } from './types'
 import { RiverEvent } from './event'
 import { unpackEnvelopes, unpackMiniblock } from './sign'
 import { EmittedEvents } from './client'
@@ -356,23 +356,24 @@ export class StreamStateView {
     initialize(
         streamAndCookie: StreamAndCookie,
         snapshot: Snapshot,
-        miniblocks: Miniblock[],
+        miniblocks: ParsedMiniblock[],
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         check(miniblocks.length > 0, `Stream has no miniblocks ${this.streamId}`, Err.STREAM_EMPTY)
+        // parse the blocks
         // initialize from snapshot data, this gets all memberships and channel data, etc
         this.initializeFromSnapshot(snapshot, emitter)
         // initialize from miniblocks, the first minblock is the snapshot block, it's events are accounted for
-        const block0 = unpackMiniblock(miniblocks[0])
+        const block0 = miniblocks[0]
         // the rest need to be added to the timeline
-        const rest = miniblocks.slice(1).flatMap((mb) => unpackMiniblock(mb))
+        const rest = miniblocks.slice(1)
         // prepend the snapshotted block in reverse order
-        for (let i = block0.length - 1; i >= 0; i--) {
-            const event = block0[i]
+        for (let i = block0.events.length - 1; i >= 0; i--) {
+            const event = block0.events[i]
             this.prependEvent(event, emitter)
         }
         // append the new block events
-        for (const event of rest) {
+        for (const event of rest.flatMap((mb) => mb.events)) {
             this.appendEvent(event, emitter)
         }
         // append the minipool events
@@ -394,7 +395,7 @@ export class StreamStateView {
         terminus: boolean,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
-        const events = miniblocks.flatMap((mb) => unpackMiniblock(mb))
+        const events = miniblocks.flatMap((mb) => unpackMiniblock(mb).events)
         // prepend the new block events in reverse order
         for (let i = events.length - 1; i >= 0; i--) {
             const event = events[i]
