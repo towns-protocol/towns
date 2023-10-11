@@ -21,7 +21,7 @@ export const ChannelIntro = (props: Props) => {
                     <Paragraph color="gray2">
                         {description
                             ? description
-                            : `Welcome to the #${name}${
+                            : `Welcome to #${name}${
                                   isChannelEncrypted ? `, an end-to-end encrypted channel` : ``
                               }`}
                     </Paragraph>
