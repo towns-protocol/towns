@@ -43,16 +43,6 @@ contract GuardianHelper is FacetHelper {
 
   constructor() {
     guardian = new GuardianFacet();
-
-    bytes4[] memory _selectors = new bytes4[](4);
-    uint256 index;
-
-    _selectors[index++] = guardian.enableGuardian.selector;
-    _selectors[index++] = guardian.guardianCooldown.selector;
-    _selectors[index++] = guardian.disableGuardian.selector;
-    _selectors[index++] = guardian.isGuardianEnabled.selector;
-
-    addSelectors(_selectors);
   }
 
   function facet() public view override returns (address) {
@@ -69,7 +59,13 @@ contract GuardianHelper is FacetHelper {
     override
     returns (bytes4[] memory selectors_)
   {
-    return functionSelectors;
+    selectors_ = new bytes4[](4);
+    uint256 index;
+
+    selectors_[index++] = guardian.enableGuardian.selector;
+    selectors_[index++] = guardian.guardianCooldown.selector;
+    selectors_[index++] = guardian.disableGuardian.selector;
+    selectors_[index++] = guardian.isGuardianEnabled.selector;
   }
 
   function makeInitData(uint256 cooldown) public view returns (bytes memory) {

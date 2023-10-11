@@ -29,24 +29,22 @@ contract ERC721ASetup is FacetTest {
     override
     returns (Diamond.InitParams memory)
   {
-    ERC721AHelper erc721aHelper = new ERC721AHelper();
-    ERC721AMockHelper erc721aMockHelper = new ERC721AMockHelper();
+    ERC721AMockHelper erc721aHelper = new ERC721AMockHelper();
     IntrospectionHelper introspectionHelper = new IntrospectionHelper();
-    MultiInit diamondMultiInit = new MultiInit();
 
-    erc721aMockHelper.addSelectors(erc721aHelper.selectors());
+    MultiInit diamondMultiInit = new MultiInit();
 
     address[] memory addresses = new address[](2);
     bytes[] memory payloads = new bytes[](2);
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
-    cuts[0] = erc721aMockHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[0] = erc721aHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[1] = introspectionHelper.makeCut(IDiamond.FacetCutAction.Add);
 
-    addresses[0] = address(erc721aMockHelper.facet());
+    addresses[0] = address(erc721aHelper.facet());
     addresses[1] = address(introspectionHelper.facet());
 
-    payloads[0] = erc721aMockHelper.makeInitData("MockERC721A", "MERC721A");
+    payloads[0] = erc721aHelper.makeInitData("MockERC721A", "MERC721A");
     payloads[1] = introspectionHelper.makeInitData("");
 
     return
@@ -67,7 +65,17 @@ contract ERC721AHelper is FacetHelper {
 
   constructor() {
     erc721a = new ERC721A();
+  }
 
+  function facet() public view virtual override returns (address) {
+    return address(erc721a);
+  }
+
+  function initializer() public view virtual override returns (bytes4) {
+    return erc721a.__ERC721A_init.selector;
+  }
+
+  function selectors() public view virtual override returns (bytes4[] memory) {
     bytes4[] memory selectors_ = new bytes4[](13);
     uint256 index;
     // Default ones
@@ -89,19 +97,7 @@ contract ERC721AHelper is FacetHelper {
       keccak256("safeTransferFrom(address,address,uint256,bytes)")
     );
 
-    addSelectors(selectors_);
-  }
-
-  function facet() public view virtual override returns (address) {
-    return address(erc721a);
-  }
-
-  function initializer() public view virtual override returns (bytes4) {
-    return erc721a.__ERC721A_init.selector;
-  }
-
-  function selectors() public view virtual override returns (bytes4[] memory) {
-    return functionSelectors;
+    return selectors_;
   }
 
   function makeInitData(
@@ -113,19 +109,11 @@ contract ERC721AHelper is FacetHelper {
   }
 }
 
-contract ERC721AMockHelper is FacetHelper {
+contract ERC721AMockHelper is ERC721AHelper {
   MockERC721A internal mock;
 
   constructor() {
     mock = new MockERC721A();
-
-    bytes4[] memory selectors_ = new bytes4[](3);
-    uint256 index;
-    // Default ones
-    selectors_[index++] = mock.mint.selector;
-    selectors_[index++] = mock.burn.selector;
-    selectors_[index++] = mock.mintTo.selector;
-    addSelectors(selectors_);
   }
 
   function facet() public view override returns (address) {
@@ -133,18 +121,19 @@ contract ERC721AMockHelper is FacetHelper {
   }
 
   function selectors() public view override returns (bytes4[] memory) {
-    return functionSelectors;
-  }
+    bytes4[] memory currentSelectors_ = super.selectors();
+    bytes4[] memory selectors_ = new bytes4[](currentSelectors_.length + 3);
+    uint256 index;
 
-  function initializer() public view virtual override returns (bytes4) {
-    return ERC721A.__ERC721A_init.selector;
-  }
+    for (uint256 i = 0; i < currentSelectors_.length; i++) {
+      selectors_[index++] = currentSelectors_[i];
+    }
 
-  function makeInitData(
-    string memory name,
-    string memory symbol
-  ) public pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(ERC721A.__ERC721A_init.selector, name, symbol);
+    // Custom ones
+    selectors_[index++] = mock.mint.selector;
+    selectors_[index++] = mock.burn.selector;
+    selectors_[index++] = mock.mintTo.selector;
+
+    return selectors_;
   }
 }
