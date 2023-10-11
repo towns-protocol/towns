@@ -146,9 +146,9 @@ message SpacePayload {
         // userId: Membership
         map<string, Membership> memberships = 3;
         // userId: Username
-        map<string, Username> usernames = 4;
+        map<string, WrappedEncryptedData> usernames = 4;
         // userId: Displayname
-        map<string, Username> displaynames = 5;
+        map<string, WrappedEncryptedData> display_names = 5;
     }
     
     message Inception {
@@ -163,19 +163,17 @@ message SpacePayload {
         EncryptedData channel_properties = 4;
     }
 
-    message Username {
-        UsernameOp op = 1;
-        string user_id = 2;
-        EncryptedData username_properties = 3;
-        // reserved for a stable slot number ordering where the username was added to snapshot
-        optional int64 slot_num = 4;
+    message WrappedEncryptedData {
+        EncryptedData data = 1;
+        int64 event_num = 2;
     }
 
     oneof content {
         Inception inception = 1;
         Channel channel = 2;
         Membership membership = 3;
-        Username username = 4;
+        EncryptedData username = 4;
+        EncryptedData display_name = 5;
     }
 }
 
@@ -427,13 +425,6 @@ message EncryptedMessageEnvelope {
     * Ciphertext of the encryption envelope.
     */
     string body = 2;
-}
-
-enum UsernameOp {
-    UNO_UNSPECIFIED = 0;
-    UNO_EDIT_USERNAME = 1;
-    UNO_EDIT_DISPLAYNAME = 2;
-    UNO_EDIT_USERNAME_DISPLAYNAME = 3;
 }
 
 /**

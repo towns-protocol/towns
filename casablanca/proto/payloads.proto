@@ -102,7 +102,7 @@ message ChannelProperties {
     string topic = 2;
 }
 
-message UsernameProperties {
+message UserMetadataProperties {
     optional string username = 1;
     optional string display_name = 2;
 }

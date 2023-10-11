@@ -52,6 +52,7 @@ export enum ZTEvent {
     SpaceChild = 'm.space.child',
     SpaceParent = 'm.space.parent',
     SpaceUsername = 'm.space.username',
+    SpaceDisplayName = 'm.space.display_name',
 }
 
 /// a timeline event should have one or none of the following fields set
@@ -77,6 +78,7 @@ export type TimelineEvent_OneOf =
     | SpaceChildEvent
     | SpaceParentEvent
     | SpaceUsernameEvent
+    | SpaceDisplayNameEvent
 
 // NOTE this is an inexhaustive list, see https://spec.matrix.org/v1.2/client-server-api/#server-behaviour-16
 // and https://spec.matrix.org/v1.2/client-server-api/#stripped-state
@@ -157,7 +159,12 @@ export interface SpaceUsernameEvent {
     kind: ZTEvent.SpaceUsername
     userId: string
     username: string
-    displayName?: string
+}
+
+export interface SpaceDisplayNameEvent {
+    kind: ZTEvent.SpaceDisplayName
+    userId: string
+    displayName: string
 }
 
 // mentions should always have a user id, but it's data over the wire
@@ -342,6 +349,8 @@ export function getFallbackContent(
             return `newValue: ${content.name}`
         case ZTEvent.SpaceUsername:
             return `username: ${content.username}`
+        case ZTEvent.SpaceDisplayName:
+            return `username: ${content.displayName}`
         case ZTEvent.RoomTopic:
             return `newValue: ${content.topic}`
         case ZTEvent.RedactedEvent:

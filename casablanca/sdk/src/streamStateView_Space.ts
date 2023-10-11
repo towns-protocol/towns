@@ -62,6 +62,9 @@ export class StreamStateView_Space implements StreamStateView_IContent {
             case 'username':
                 // nothing to do, username was conveyed in the snapshot
                 break
+            case 'displayName':
+                // nothing to do, username was conveyed in the snapshot
+                break
             case undefined:
                 break
             default:
@@ -88,6 +91,9 @@ export class StreamStateView_Space implements StreamStateView_IContent {
                 )
                 break
             case 'username':
+                // todo: HNT-2845, add support for adding events for usernames
+                break
+            case 'displayName':
                 // todo: HNT-2845, add support for adding events for usernames
                 break
             case undefined:
