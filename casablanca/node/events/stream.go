@@ -40,6 +40,7 @@ func (c SyncResultChannel) Err(err error) {
 
 type SyncStream interface {
 	Stream
+	MakeMiniblock(ctx context.Context)
 	Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultChannel) (*StreamAndCookie, error)
 	Unsub(receiver SyncResultChannel)
 }
@@ -103,7 +104,7 @@ func (s *streamImpl) miniblockTick(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-s.miniblockTicker.C:
-			s.maybeMakeMiniblock(ctx)
+			s.MakeMiniblock(ctx)
 		}
 	}
 }
@@ -165,7 +166,7 @@ func (s *streamImpl) makeMiniblock(ctx context.Context) error {
 	return nil
 }
 
-func (s *streamImpl) maybeMakeMiniblock(ctx context.Context) {
+func (s *streamImpl) MakeMiniblock(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

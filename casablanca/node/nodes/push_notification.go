@@ -2,9 +2,14 @@ package nodes
 
 import (
 	"bytes"
-	. "casablanca/node/config"
+	"casablanca/node/common"
+	"casablanca/node/config"
+	"casablanca/node/dlog"
+	"casablanca/node/events"
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
 )
 
 // PushNotification is used to trigger push notifications to the client.
@@ -12,27 +17,117 @@ import (
 // Worker (PNW). The PNW implements the requirements of the
 // [Push API](https://www.w3.org/TR/push-api/) to trigger the actual push
 // notificaiton.
-// This is a stub interface, it is not implemented yet.
 type PushNotification interface {
 	SendPushNotification(
 		ctx context.Context,
-		cfg PushNotificationConfig,
-		spaceId string,
-		channelId string,
+		streamInfo *common.StreamInfo,
+		streamView *events.StreamView,
 		senderId string, // sender of the event
-		payload NotificationPayload,
-	) (int, error)
+	)
 }
 
-type NotificationType int
+type pushNotificationImpl struct {
+	cfg *config.PushNotificationConfig
+}
+
+func MakePushNotification(ctx context.Context, cfg *config.PushNotificationConfig) PushNotification {
+	log := dlog.CtxLog(ctx)
+	if (cfg.Url == "") || (cfg.AuthToken == "") {
+		log.Warn("PushNotification disabled")
+		return nil
+	}
+	log.Info("PushNotification enabled", "url", cfg.Url)
+	return &pushNotificationImpl{
+		cfg: cfg,
+	}
+}
+
+func (p pushNotificationImpl) SendPushNotification(
+	ctx context.Context,
+	streamInfo *common.StreamInfo,
+	streamView *events.StreamView,
+	senderId string,
+) {
+	go p.sendNotificationRequest(
+		ctx,
+		streamInfo,
+		streamView,
+		senderId,
+	)
+}
+
+func (p pushNotificationImpl) sendNotificationRequest(
+	ctx context.Context,
+	channelInfo *common.StreamInfo,
+	channelView *events.StreamView,
+	senderId string,
+) {
+	log := dlog.CtxLog(ctx)
+	users, err := getUsersToNotify(channelView, senderId)
+	if err != nil {
+		log.Error("PushNotification failed to get channel members", "error", err)
+		return
+	}
+	if len(users) == 0 {
+		log.Debug("PushNotification has no users to notify")
+		return
+	}
+	// prepare the push notification request params and payload
+	payload := notificationPayload{
+		NotificationType: NewMessage.String(),
+		Content: notificationNewMessage{
+			SpaceId:   channelInfo.SpaceId,
+			ChannelId: channelInfo.ChannelId,
+			SenderId:  senderId,
+		},
+	}
+	reqParams := NotificationRequestParams{
+		SpaceId:   channelInfo.SpaceId,
+		ChannelId: channelInfo.ChannelId,
+		Sender:    senderId,
+		Users:     users,
+		Payload:   payload,
+	}
+	// create the body as a stream
+	body, err := reqParams.NewReader()
+	if err != nil {
+		log.Error("PushNotification failed to create request body", "error", err)
+		return
+	}
+	// make the request to the PNW
+	url := fmt.Sprintf("%s/%s", p.cfg.Url, "api/notify-users")
+	request, err := http.NewRequest(http.MethodPost, url, body)
+	if err != nil {
+		log.Error("PushNotification failed to create request", "error", err)
+		return
+	}
+	// set the headers
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", p.cfg.AuthToken))
+	// make the request
+	client := &http.Client{}
+	response, err := client.Do(request.WithContext(ctx))
+	if err != nil || response.StatusCode != http.StatusOK {
+		if err != nil {
+			log.Error("PushNotification failed to send request", "error", err)
+		} else {
+			log.Error("PushNotification failed to send request", "status", response.StatusCode)
+		}
+		return
+	}
+	// success
+	log.Debug("PushNotification request sent", "# of members", len(users))
+}
+
+type notificationType int
 
 const (
-	NewMessage NotificationType = iota
+	NewMessage notificationType = iota
 	Mention
 	ReplyTo
 )
 
-func (n NotificationType) String() string {
+func (n notificationType) String() string {
 	switch n {
 	case NewMessage:
 		return "new_message"
@@ -45,13 +140,13 @@ func (n NotificationType) String() string {
 	}
 }
 
-type NotificationNewMessage struct {
+type notificationNewMessage struct {
 	SpaceId   string `json:"spaceId"`
 	ChannelId string `json:"channelId"`
 	SenderId  string `json:"senderId"`
 }
 
-type NotificationPayload struct {
+type notificationPayload struct {
 	NotificationType string `json:"notificationType"`
 	Content          any    `json:"content"`
 }
@@ -59,9 +154,9 @@ type NotificationPayload struct {
 type NotificationRequestParams struct {
 	SpaceId   string              `json:"spaceId"`
 	ChannelId string              `json:"channelId"`
-	Payload   NotificationPayload `json:"payload"`
 	Sender    string              `json:"sender"`
 	Users     []string            `json:"users"`
+	Payload   notificationPayload `json:"payload"`
 }
 
 func (p NotificationRequestParams) String() string {
@@ -77,4 +172,25 @@ func (p NotificationRequestParams) NewReader() (*bytes.Reader, error) {
 	data := p.String()
 	reader := bytes.NewReader([]byte(data))
 	return reader, nil
+}
+
+func getUsersToNotify(
+	streamView *events.StreamView,
+	senderId string,
+) ([]string, error) {
+	joinableView := (*streamView).(events.JoinableStreamView)
+	// get the channel membership
+	members, err := joinableView.GetChannelMembers()
+	if err != nil {
+		return nil, err
+	}
+	// exclude sender
+	var recipients []string
+	for _, member := range (*members).ToSlice() {
+		if member == senderId {
+			continue
+		}
+		recipients = append(recipients, member)
+	}
+	return recipients, nil
 }

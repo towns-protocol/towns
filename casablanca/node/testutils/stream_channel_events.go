@@ -1,0 +1,184 @@
+package testutils
+
+import (
+	"casablanca/node/common"
+	"casablanca/node/crypto"
+	"casablanca/node/events"
+	"casablanca/node/protocol"
+	"casablanca/node/storage"
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+type StreamContext_T struct {
+	t           *testing.T
+	Context     context.Context
+	StreamCache events.StreamCache
+	StreamInfo  *common.StreamInfo
+	SyncStream  *events.SyncStream
+	StreamView  *events.StreamView
+}
+
+func (s *StreamContext_T) Refresh() *StreamContext_T {
+	// force a new miniblock to be created so that the stream view is updated
+	(*s.SyncStream).MakeMiniblock(s.Context)
+	// reload the stream and the view
+	syncStream, streamView, err := s.StreamCache.GetStream(s.Context, (*s.StreamView).StreamId())
+	assert.NoError(s.t, err)
+	s.SyncStream = &syncStream
+	s.StreamView = &streamView
+	return s
+}
+
+func MakeChannelStreamContext_T(
+	t *testing.T,
+	ctx context.Context,
+	wallet *crypto.Wallet,
+	userId string,
+	channelStreamId string,
+	spaceStreamId string,
+) *StreamContext_T {
+	streamCache := events.NewStreamCache(&events.StreamCacheParams{
+		Storage:    storage.NewMemStorage(),
+		Wallet:     wallet,
+		DefaultCtx: ctx,
+	})
+	// create a channel stream and auto-add the creator as a member
+	channelEvents := MakeChannelInceptionEvents_T(
+		t,
+		wallet,
+		userId,
+		channelStreamId,
+		spaceStreamId,
+	)
+	mb, err := events.MakeGenesisMiniblock(wallet, channelEvents)
+	assert.NoError(t, err)
+	syncStream, streamView, err := streamCache.CreateStream(ctx, channelStreamId, mb)
+	assert.NoError(t, err)
+	info, err := events.StreamInfoFromInceptionPayload(streamView.InceptionPayload(), channelStreamId, userId)
+	assert.NoError(t, err)
+
+	return &StreamContext_T{
+		t:           t,
+		Context:     ctx,
+		StreamCache: streamCache,
+		StreamInfo:  info,
+		SyncStream:  &syncStream,
+		StreamView:  &streamView,
+	}
+}
+
+func JoinChannel_T(
+	t_Context *StreamContext_T,
+	wallet *crypto.Wallet,
+	users []string,
+) *StreamContext_T {
+	t := t_Context.t
+	ctx := t_Context.Context
+	syncStream := *t_Context.SyncStream
+	streamView := *t_Context.StreamView
+	prevEventHash := streamView.LastEvent().Hash
+	for _, user := range users {
+		err := syncStream.AddEvent(
+			ctx,
+			ParsedEvent_T(
+				t,
+				MakeEnvelopeWithPayload_T(
+					t,
+					wallet,
+					events.Make_ChannelPayload_Membership(
+						protocol.MembershipOp_SO_JOIN,
+						user,
+					),
+					[][]byte{prevEventHash},
+				),
+			),
+		)
+		assert.NoError(t, err)
+	}
+	return t_Context.Refresh()
+}
+
+func LeaveChannel_T(
+	t_Context *StreamContext_T,
+	wallet *crypto.Wallet,
+	users []string,
+) *StreamContext_T {
+	t := t_Context.t
+	ctx := t_Context.Context
+	syncStream := *t_Context.SyncStream
+	streamView := *t_Context.StreamView
+	prevEventHash := streamView.LastEvent().Hash
+	for _, user := range users {
+		err := syncStream.AddEvent(
+			ctx,
+			ParsedEvent_T(
+				t,
+				MakeEnvelopeWithPayload_T(
+					t,
+					wallet,
+					events.Make_ChannelPayload_Membership(
+						protocol.MembershipOp_SO_LEAVE,
+						user,
+					),
+					[][]byte{prevEventHash},
+				),
+			),
+		)
+		assert.NoError(t, err)
+	}
+	return t_Context.Refresh()
+}
+
+func ParsedEvent_T(t *testing.T, envelope *protocol.Envelope) *events.ParsedEvent {
+	parsed, err := events.ParseEvent(envelope)
+	if err != nil {
+		assert.NoError(t, err)
+	}
+	return parsed
+}
+
+func MakeEnvelopeWithPayload_T(t *testing.T, wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) *protocol.Envelope {
+	envelope, err := events.MakeEnvelopeWithPayload(wallet, payload, prevHashes)
+	assert.NoError(t, err)
+	return envelope
+}
+
+func MakeChannelInceptionEvents_T(
+	t *testing.T,
+	wallet *crypto.Wallet,
+	userId string,
+	channelStreamId string,
+	spaceStreamId string,
+) []*events.ParsedEvent {
+	streamSettings := &protocol.StreamSettings{
+		MinEventsPerSnapshot: 2,
+		MiniblockTimeMs:      10000000,
+	}
+	channelProperties := &protocol.EncryptedData{
+		Text: "encrypted text supposed to be here",
+	}
+	inception := MakeEnvelopeWithPayload_T(
+		t,
+		wallet,
+		events.Make_ChannelPayload_Inception(
+			channelStreamId,
+			spaceStreamId,
+			channelProperties,
+			streamSettings,
+		),
+		nil,
+	)
+	join := MakeEnvelopeWithPayload_T(
+		t,
+		wallet,
+		events.Make_ChannelPayload_Membership(protocol.MembershipOp_SO_JOIN, userId),
+		[][]byte{inception.Hash},
+	)
+	return []*events.ParsedEvent{
+		ParsedEvent_T(t, inception),
+		ParsedEvent_T(t, join),
+	}
+}
