@@ -376,13 +376,9 @@ export class StreamStateView {
             this.appendEvent(event, emitter)
         }
         // append the minipool events
-        const minipoolEvents = this.appendStreamAndCookie(streamAndCookie, emitter)
+        this.appendStreamAndCookie(streamAndCookie, emitter)
         // let everyone know
-        emitter?.emit('streamInitialized', this.streamId, this.contentKind, [
-            ...block0,
-            ...rest,
-            ...minipoolEvents,
-        ])
+        emitter?.emit('streamInitialized', this.streamId, this.contentKind)
     }
 
     appendEvents(

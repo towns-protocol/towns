@@ -1,4 +1,4 @@
-import { Client as CasablancaClient, ParsedEvent } from '@river/sdk'
+import { Client as CasablancaClient } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { RoomIdentifier, makeRoomIdentifier } from '../../types/room-identifier'
 import isEqual from 'lodash/isEqual'
@@ -48,11 +48,7 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
             })
         }
 
-        const onStreamChange = (
-            _streamId: string,
-            kind: SnapshotCaseType,
-            _messages: ParsedEvent[],
-        ) => {
+        const onStreamChange = (_streamId: string, kind: SnapshotCaseType) => {
             if (kind === 'spaceContent') {
                 updateSpaces()
             }

@@ -43,11 +43,7 @@ export type StreamEvents = {
         deviceKeys: DeviceKeys,
         fallbackKeys: object | undefined,
     ) => void
-    streamInitialized: (
-        streamId: string,
-        contentKind: SnapshotCaseType,
-        events: ParsedEvent[],
-    ) => void
+    streamInitialized: (streamId: string, contentKind: SnapshotCaseType) => void
     streamUpdated: (streamId: string, contentKind: SnapshotCaseType, events: ParsedEvent[]) => void
     streamEventsPrepended: (
         streamId: string,

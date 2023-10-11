@@ -66,14 +66,10 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
             })
         }
 
-        const onStreamInitialized = (
-            streamId: string,
-            kind: SnapshotCaseType,
-            messages: ParsedEvent[],
-        ) => {
+        const onStreamInitialized = (streamId: string, kind: SnapshotCaseType) => {
             if (kind === 'channelContent' || kind === 'spaceContent') {
                 streamIds.add(streamId)
-
+                const messages = casablancaClient.stream(streamId)?.view.timeline ?? []
                 const timelineEvents = messages.map((message) => toEvent(message, userId))
                 setState.initializeRoom(userId, streamId, [])
                 onStreamEvents(streamId, timelineEvents)

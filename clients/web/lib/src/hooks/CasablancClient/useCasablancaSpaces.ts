@@ -1,4 +1,4 @@
-import { Client as CasablancaClient, ParsedEvent, Stream } from '@river/sdk'
+import { Client as CasablancaClient, Stream } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { makeRoomIdentifier } from '../../types/room-identifier'
 import { SpaceItem } from '../../types/zion-types'
@@ -41,11 +41,7 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
             })
         }
 
-        const onStreamChange = (
-            _streamId: string,
-            kind: SnapshotCaseType,
-            _messages: ParsedEvent[],
-        ) => {
+        const onStreamChange = (_streamId: string, kind: SnapshotCaseType) => {
             if (kind === 'spaceContent') {
                 updateSpaces()
             }
