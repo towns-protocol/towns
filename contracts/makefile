@@ -36,7 +36,7 @@ deploy-anvil-staging :;
 	@forge build
 	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=staging forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
 
-deploy-anvil-migration:;
+migrate-anvil:;
 	@forge build
 	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
 
@@ -54,6 +54,10 @@ interact-base-goerli :;
 verify-base-goerli :;
 	@forge build
 	@forge verify-contract ${address} ${contract} --chain base-goerli
+
+migrate-base-goerli:;
+	@forge build
+	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url base_goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
 # ===========================
 # 				 		Base
@@ -79,9 +83,9 @@ upgrade-goerli:;
 	@forge build
 	@forge script scripts/upgrades/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
-deploy-goerli-migration:;
+migrate-goerli:;
 	@forge build
-	@forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${LOCAL_PRIVATE_KEY} --broadcast --verify --watch -vvvv
+	@forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
 # ===========================
 # 				  Sepolia

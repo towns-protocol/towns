@@ -82,6 +82,7 @@ contract DiamondCutHelper is FacetHelper {
 
   constructor() {
     diamondCut = new DiamondCutFacet();
+    addSelector(diamondCut.diamondCut.selector);
   }
 
   function facet() public view override returns (address) {
@@ -89,10 +90,7 @@ contract DiamondCutHelper is FacetHelper {
   }
 
   function selectors() public view override returns (bytes4[] memory) {
-    bytes4[] memory selectors_ = new bytes4[](1);
-    selectors_[0] = diamondCut.diamondCut.selector;
-
-    return selectors_;
+    return functionSelectors;
   }
 
   function initializer() public pure override returns (bytes4) {

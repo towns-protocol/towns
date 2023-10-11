@@ -30,6 +30,8 @@ abstract contract FacetTest is IDiamond, TestUtils {
 }
 
 abstract contract FacetHelper is IDiamond {
+  bytes4[] public functionSelectors;
+
   /// @dev Deploy facet contract in constructor and return address for testing.
   function facet() public view virtual returns (address);
 
@@ -62,5 +64,18 @@ abstract contract FacetHelper is IDiamond {
     bytes memory
   ) public view virtual returns (bytes memory data) {
     return abi.encodeWithSelector(initializer());
+  }
+
+  // =============================================================
+  //                           Selector
+  // =============================================================
+  function addSelector(bytes4 selector) public {
+    functionSelectors.push(selector);
+  }
+
+  function addSelectors(bytes4[] memory selectors_) public {
+    for (uint256 i = 0; i < selectors_.length; i++) {
+      functionSelectors.push(selectors_[i]);
+    }
   }
 }

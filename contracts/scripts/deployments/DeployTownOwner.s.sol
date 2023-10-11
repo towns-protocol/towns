@@ -25,6 +25,8 @@ import {GuardianHelper} from "contracts/test/towns/guardian/GuardianSetup.sol";
 
 import {TownOwnerHelper} from "contracts/test/towns/owner/TownOwnerSetup.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
+import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
+import {VotesHelper} from "contracts/test/governance/votes/VotesSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -34,6 +36,8 @@ contract DeployTownOwner is DiamondDeployer {
   OwnableHelper ownableHelper = new OwnableHelper();
   GuardianHelper guardianHelper = new GuardianHelper();
   IntrospectionHelper introspectionHelper = new IntrospectionHelper();
+  ERC721AHelper erc721aHelper = new ERC721AHelper();
+  VotesHelper votesHelper = new VotesHelper();
 
   TownOwnerHelper townOwnerHelper = new TownOwnerHelper();
 
@@ -65,6 +69,9 @@ contract DeployTownOwner is DiamondDeployer {
     introspection = address(new IntrospectionFacet());
     multiInit = address(new MultiInit());
     vm.stopBroadcast();
+
+    townOwnerHelper.addSelectors(erc721aHelper.selectors());
+    townOwnerHelper.addSelectors(votesHelper.selectors());
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](6);
 
