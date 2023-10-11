@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { RoomIdentifier, makeRoomIdentifier, useWeb3Context, useZionClient } from 'use-zion-client'
+
 import { useAccount } from 'wagmi'
 import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -9,12 +9,7 @@ import { useAuth } from 'hooks/useAuth'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import 'wagmi/window'
-
-export type JoinData = {
-    name: string
-    networkId: string
-    spaceAddress?: string
-}
+import { JoinData, useJoinTown } from 'hooks/useJoinTown'
 
 type ModalProps = {
     onHide: () => void
@@ -185,41 +180,12 @@ export type Props = {
 }
 
 export const SpaceJoin = (props: Props) => {
-    const { onSuccessfulJoin, joinData, onCancel } = props
+    const { onCancel, joinData } = props
     const [modal, setModal] = useState(true)
     const navigate = useNavigate()
-    const { client } = useZionClient()
-    const [notEntitled, setNotEntitled] = useState(false)
-    const [maxLimitReached, setMaxLimitReached] = useState(false)
-    const { signer } = useWeb3Context()
 
     // TODO: use this to check if user is entitled to join before trying to join (join v2)
     // const { data: userIsEntitled } = useMeetsMembershipNftRequirements(joinData.networkId)
-
-    const joinSpace = useCallback(async () => {
-        if (!client) {
-            return
-        }
-        if (joinData?.networkId) {
-            const roomIdentifier: RoomIdentifier = makeRoomIdentifier(joinData.networkId)
-
-            try {
-                // use client.joinRoom b/c it will throw an error, not the joinRoom wrapped in useWithCatch()
-                const result = await client.joinTown(roomIdentifier, signer)
-                if (!result) {
-                    setNotEntitled(true)
-                } else {
-                    onSuccessfulJoin?.()
-                }
-            } catch (error) {
-                if ((error as Error)?.message?.includes('has exceeded the member cap')) {
-                    setMaxLimitReached(true)
-                } else {
-                    setNotEntitled(true)
-                }
-            }
-        }
-    }, [client, joinData.networkId, signer, onSuccessfulJoin])
 
     const onHide = useCallback(() => {
         setModal(false)
@@ -230,6 +196,11 @@ export const SpaceJoin = (props: Props) => {
         onCancel?.()
         onHide()
     }, [onCancel, onHide])
+
+    const { notEntitled, maxLimitReached, joinSpace } = useJoinTown(
+        joinData,
+        props.onSuccessfulJoin,
+    )
 
     return (
         <Box centerContent absoluteFill data-testid="space-join">

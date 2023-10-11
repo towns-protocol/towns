@@ -17,7 +17,6 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
-import { TextButton } from '@components/UserProfile/UserProfile'
 import {
     Avatar,
     Box,
@@ -29,6 +28,7 @@ import {
     Paragraph,
     Stack,
     Text,
+    TextButton,
 } from '@ui'
 import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'

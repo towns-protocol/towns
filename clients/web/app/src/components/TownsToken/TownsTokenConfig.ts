@@ -10,7 +10,7 @@ export const TownsTokenConfig = {
             maxTextHeight: 42,
         },
         lg: {
-            containerSize: 220,
+            containerSize: 200,
             addressSize: 190,
             addressRadius: 20,
             badgeSize: 160,

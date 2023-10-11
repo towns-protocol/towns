@@ -48,6 +48,11 @@ export const AllRoutes = () => {
                                 </>
                             ) : (
                                 <>
+                                    {/* FIXME: moving PublicTownPage to this level when authenticated prevents the page from reloading
+                                        <Route
+                                            path={`${PATHS.SPACES}/:spaceSlug/*`}
+                                            element={<PublicTownPage />}
+                                    /> */}
                                     <Route path="*" element={<AuthenticatedOrRegister />}>
                                         <Route path="*" element={<AuthenticatedRoutes />} />
                                     </Route>

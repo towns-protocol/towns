@@ -15,6 +15,7 @@ type Props = {
     /** with touchTitle present, the modal will be presented full screen on touch screens */
     touchTitle?: string
     rightBarButton?: React.ReactNode
+    padding?: BoxProps['padding']
 }
 
 export const ModalContainer = (props: Props) => {
@@ -143,8 +144,9 @@ export const CenteredModalContainer = (props: Props) => {
                 }
             >
                 <MotionBox
-                    padding
                     border
+                    overflow="hidden"
+                    padding={props.padding ?? 'md'}
                     rounded="md"
                     background="level1"
                     minWidth={minWidth}

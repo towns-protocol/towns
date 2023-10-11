@@ -10,7 +10,7 @@ import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { BottomBarLayout } from '@components/Web3/MembershipNFT/BottomBar'
 import { PageLogo } from '@components/Logo/Logo'
-import { SpaceJoin } from '@components/Web3/SpaceJoin'
+import { TownAccessModal } from '@components/TownAccessModal/TownAccessModal'
 
 const log = debug('app:public-town')
 log.enabled = true
@@ -22,7 +22,7 @@ export const PublicTownPage = () => {
     const { data: townBio } = useGetSpaceTopic(spaceSlug)
 
     const [isModalShowing, setIsModalShowing] = React.useState(false)
-    const onCancelJoin = useCallback(() => {
+    const onHideModal = useCallback(() => {
         setIsModalShowing(false)
     }, [])
     const onJoinClick = useCallback(() => {
@@ -53,16 +53,7 @@ export const PublicTownPage = () => {
                 owner={isAddress(spaceInfo.owner) ? spaceInfo.owner : undefined}
                 bio={townBio}
             />
-            {isModalShowing && (
-                <SpaceJoin
-                    joinData={{
-                        name: spaceInfo.name,
-                        networkId: spaceInfo.networkId,
-                        spaceAddress: spaceInfo.address,
-                    }}
-                    onCancel={onCancelJoin}
-                />
-            )}
+            {isModalShowing && <TownAccessModal spaceInfo={spaceInfo} onHide={onHideModal} />}
         </>
     ) : isLoading ? (
         <MessageBox>

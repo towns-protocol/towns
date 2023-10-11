@@ -229,7 +229,7 @@ export const colorProperties = defineProperties({
 
             [ToneName.Error]: {
                 background: vars.color.tone.negative,
-                color: vars.color.text.onTone,
+                color: vars.color.text.default,
                 vars: {
                     '--background': vars.color.tone.negative,
                 },

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
@@ -17,18 +17,9 @@ type TownPageLayoutProps = {
 }
 
 export const TownPageLayout = (props: TownPageLayoutProps) => {
-    const { address, name, bio } = props
+    const { address, bio, name, networkId, owner } = props
 
-    const { imageSrc } = useImageSource(props.networkId, ImageVariants.thumbnail600)
-
-    const transactionDetails = useMemo(
-        () => ({
-            townAddress: address,
-            isTransacting: false,
-            imageSrc,
-        }),
-        [imageSrc, address],
-    )
+    const { imageSrc } = useImageSource(networkId, ImageVariants.thumbnail600)
 
     return (
         <>
@@ -63,7 +54,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                     <InteractiveTownsToken
                                         key={imageSrc}
                                         size="xl"
-                                        address={transactionDetails.townAddress}
+                                        address={address}
                                         imageSrc={imageSrc ?? undefined}
                                         spaceName={name}
                                     />
@@ -72,9 +63,9 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                 <Heading level={1}>{name}</Heading>
 
                                 <Box fontSize="lg" gap="lg">
-                                    {props.owner && (
+                                    {owner && (
                                         <AvatarTextHorizontal
-                                            address={props.owner}
+                                            address={owner}
                                             prepend={<Text size="lg">By </Text>}
                                         />
                                     )}

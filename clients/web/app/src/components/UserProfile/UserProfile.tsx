@@ -2,24 +2,13 @@ import { getAccountAddress, useZionClient } from 'use-zion-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
-import {
-    Avatar,
-    Box,
-    Button,
-    ButtonProps,
-    FormRender,
-    MotionStack,
-    Paragraph,
-    Stack,
-    TextField,
-} from '@ui'
+import { Avatar, Box, FormRender, MotionStack, Paragraph, Stack, TextButton, TextField } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useSetUserBio } from 'hooks/useUserBio'
 import { shortAddress } from 'ui/utils/utils'
 import { useAuth } from 'hooks/useAuth'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { Spinner } from '@components/Spinner'
-import { ButtonTextProps } from 'ui/components/Text/ButtonText'
 import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
 import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
@@ -412,26 +401,5 @@ export const EditModeContainer = (props: EditRowProps) => {
                 })}
             </Stack>
         </>
-    )
-}
-// TODO: refactor
-export const TextButton = ({
-    children,
-    size = 'sm',
-    ...buttonProps
-}: Omit<ButtonProps, 'size'> & { size?: ButtonTextProps['size'] }) => {
-    return (
-        <Button
-            hoverEffect="none"
-            insetX="xs"
-            insetY="xs"
-            size="button_xs"
-            tone="none"
-            animate={false}
-            color={{ default: 'gray2', hover: 'default' }}
-            {...buttonProps}
-        >
-            {children}
-        </Button>
     )
 }
