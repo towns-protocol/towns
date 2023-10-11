@@ -26,7 +26,13 @@ jobs:
         runs-on: ubuntu-latest
 
         env:
-            ENV_NAME: ${{ (github.event_name == 'push' && 'test-beta') || github.event.inputs.environment }}
+            ENV_NAME: >-
+                ${{
+                  ((github.event_name == 'push' && 
+                    (github.ref == 'refs/head/main' && 'test-beta') || 
+                    (github.ref == 'refs/head/staging') && 'staging-beta')
+                  )
+                || github.event.inputs.environment }}
 
         permissions:
             contents: write

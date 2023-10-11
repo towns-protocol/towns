@@ -1,7 +1,7 @@
 name = "git-tags"
 main = "src/index.ts"
 compatibility_date = "2023-05-12"
-logpush=true
+logpush = true
 
 [vars]
 GITHUB_TOKEN = "example"

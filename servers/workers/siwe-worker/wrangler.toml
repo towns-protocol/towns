@@ -46,3 +46,11 @@ vars = { ENVIRONMENT = "production-beta", VERIFY = "true" }
 [env.test-beta]
 routes = [{ pattern = "siwe-worker-test-beta.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "test-beta", VERIFY = "true" }
+
+# staging routes
+# yarn publish:staging-beta
+[env.staging-beta]
+routes = [
+    { pattern = "siwe-worker-staging-beta.towns.com", custom_domain = true },
+]
+vars = { ENVIRONMENT = "staging-beta", VERIFY = "true" }

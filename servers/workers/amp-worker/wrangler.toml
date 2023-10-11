@@ -43,3 +43,12 @@ vars = { ENVIRONMENT = "production-beta" }
 [env.test-beta]
 routes = [{ pattern = "amp-worker-test-beta.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "test-beta" }
+
+
+# staging routes
+# yarn publish:staging-beta
+[env.staging-beta]
+routes = [
+    { pattern = "amp-worker-staging-beta.towns.com", custom_domain = true },
+]
+vars = { ENVIRONMENT = "staging-beta" }

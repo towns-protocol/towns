@@ -1,10 +1,10 @@
 main = "./src/index.ts"
 name = "jwt-worker"
 compatibility_date = "2023-05-18"
-account_id="9840f8a36a817b103e00e29a0e2bad6f"
+account_id = "9840f8a36a817b103e00e29a0e2bad6f"
 minify = true
-node_compat=true
-logpush=true
+node_compat = true
+logpush = true
 
 
 [dev]
@@ -23,9 +23,13 @@ local_protocol = "http"
 # add your secret property names here
 
 
-
 [env.production-beta]
 routes = [{ pattern = "jwt-worker-beta.towns.com", custom_domain = true }]
 
 [env.test-beta]
 routes = [{ pattern = "jwt-worker-test-beta.towns.com", custom_domain = true }]
+
+[env.staging-beta]
+routes = [
+    { pattern = "jwt-worker-staging-beta.towns.com", custom_domain = true },
+]

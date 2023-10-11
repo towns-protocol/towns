@@ -1,9 +1,9 @@
 main = "./src/index.ts"
 name = "unfurl-worker"
 compatibility_date = "2023-01-18"
-node_compat=true
-account_id="9840f8a36a817b103e00e29a0e2bad6f"
-minify=true
+node_compat = true
+account_id = "9840f8a36a817b103e00e29a0e2bad6f"
+minify = true
 logpush = true
 
 [dev]
@@ -45,5 +45,15 @@ vars = { ENVIRONMENT = "production-beta" }
 # test routes
 # yarn publish:test-beta
 [env.test-beta]
-routes = [{ pattern = "unfurl-worker-test-beta.towns.com", custom_domain = true }]
+routes = [
+    { pattern = "unfurl-worker-test-beta.towns.com", custom_domain = true },
+]
 vars = { ENVIRONMENT = "test-beta" }
+
+# staging routes
+# yarn publish:staging-beta
+[env.staging-beta]
+routes = [
+    { pattern = "unfurl-worker-staging-beta.towns.com", custom_domain = true },
+]
+vars = { ENVIRONMENT = "staging-beta" }

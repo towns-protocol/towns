@@ -1,14 +1,17 @@
 name = "gateway-worker"
 main = "src/index.ts"
 compatibility_date = "2023-01-20"
-account_id="9840f8a36a817b103e00e29a0e2bad6f"
+account_id = "9840f8a36a817b103e00e29a0e2bad6f"
 minify = true
-node_compat=true
-logpush=true
+node_compat = true
+logpush = true
 
 # created with wrangler kv:namespace create "USER" AND wrangler kv:namespace create "USER" --preview
 # each entry needs an `id` and `preview_id` for wrangler to work
-kv_namespaces = [{binding="USER", id="825ab41e031d40e0a975bb29638c194e", preview_id = "9f43fa046a17415191d44c4aa0444234"}, { binding = "SPACE", id = "ffd17fea5af143b8ba3cde0b7e15ef93", preview_id = "1080657b855c43b58d118c086122aa3b" }]
+kv_namespaces = [
+    { binding = "USER", id = "825ab41e031d40e0a975bb29638c194e", preview_id = "9f43fa046a17415191d44c4aa0444234" },
+    { binding = "SPACE", id = "ffd17fea5af143b8ba3cde0b7e15ef93", preview_id = "1080657b855c43b58d118c086122aa3b" },
+]
 
 [dev]
 ip = "localhost"
@@ -18,7 +21,7 @@ local_protocol = "http"
 [vars]
 ENVIRONMENT = "development"
 CF_API = "https://api.cloudflare.com/client/v4/accounts"
-ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"
+ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f"
 
 # The necessary secrets are:
 # AUTH_SECRET
@@ -41,29 +44,64 @@ ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"
 # yarn publish:prod
 [env.production]
 routes = [{ pattern = "gateway-worker.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "production", CF_API = "https://api.cloudflare.com/client/v4/accounts",  ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"} # [vars] access, not secrets
-services = [ {binding = "authz", service = "siwe-worker-production", environment = "production"} ]
+vars = { ENVIRONMENT = "production", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f" } # [vars] access, not secrets
+services = [
+    { binding = "authz", service = "siwe-worker-production", environment = "production" },
+]
 # created with wrangler kv:namespace create "USER" --env production
 # created with wrangler kv:namespace create "SPACE" --env production
-kv_namespaces = [{ binding = "USER", id = "8b1f2abcf4ca4e56855b7d3774d23612" }, { binding = "SPACE", id = "4f0bf1efdb164939bca166cb4b65b1a0" }]
+kv_namespaces = [
+    { binding = "USER", id = "8b1f2abcf4ca4e56855b7d3774d23612" },
+    { binding = "SPACE", id = "4f0bf1efdb164939bca166cb4b65b1a0" },
+]
 
 # BETA below
 # production routes
 # yarn publish:prod-beta
 [env.production-beta]
 routes = [{ pattern = "gateway-worker-beta.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "production-beta", CF_API = "https://api.cloudflare.com/client/v4/accounts",  ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"} # [vars] access, not secrets
-services = [ {binding = "authz", service = "siwe-worker-production-beta", environment = "production"} ]
+vars = { ENVIRONMENT = "production-beta", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f" } # [vars] access, not secrets
+services = [
+    { binding = "authz", service = "siwe-worker-production-beta", environment = "production" },
+]
 # created with wrangler kv:namespace create "USER" --env production-beta
 # created with wrangler kv:namespace create "SPACE" --env production-beta
-kv_namespaces = [{ binding = "USER", id = "b1e29926fc4b45eeba497f687f17a7af" }, { binding = "SPACE", id = "948104f695b84f17aebbb885860ba69a" }]
+kv_namespaces = [
+    { binding = "USER", id = "b1e29926fc4b45eeba497f687f17a7af" },
+    { binding = "SPACE", id = "948104f695b84f17aebbb885860ba69a" },
+]
 
 # test routes
 # yarn publish:test-beta
 [env.test-beta]
-routes = [{ pattern = "gateway-worker-test-beta.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "test-beta", SKIP_SIWE = true, CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"} # [vars] access, not secrets
-services = [ {binding = "authz", service = "siwe-worker-test-beta", environment = "production"} ]
+routes = [
+    { pattern = "gateway-worker-test-beta.towns.com", custom_domain = true },
+]
+vars = { ENVIRONMENT = "test-beta", SKIP_SIWE = true, CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f" } # [vars] access, not secrets
+services = [
+    { binding = "authz", service = "siwe-worker-test-beta", environment = "production" },
+]
 # created with wrangler kv:namespace create "USER" --env test-beta
 # created with wrangler kv:namespace create "SPACE" --env test-beta
-kv_namespaces = [{ binding = "USER", id = "bf4fb160bba4497fb49f4ce1383f5dbb" }, { binding = "SPACE", id = "46e3556d43984c3fa028c3553794e740" }]
+kv_namespaces = [
+    { binding = "USER", id = "bf4fb160bba4497fb49f4ce1383f5dbb" },
+    { binding = "SPACE", id = "46e3556d43984c3fa028c3553794e740" },
+]
+
+
+# staging routes
+# yarn publish:staging-beta
+[env.staging-beta]
+routes = [
+    { pattern = "gateway-worker-staging-beta.towns.com", custom_domain = true },
+]
+vars = { ENVIRONMENT = "staging-beta", SKIP_SIWE = true, CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f" } # [vars] access, not secrets
+services = [
+    { binding = "authz", service = "siwe-worker-staging-beta", environment = "staging" },
+]
+# created with wrangler kv:namespace create "USER" --env staging-beta
+# created with wrangler kv:namespace create "SPACE" --env staging-beta
+kv_namespaces = [
+    { binding = "USER", id = "adfe0b0755cd487c8c2622647fdcfc8d" },
+    { binding = "SPACE", id = "8231a83c3bf745b698711dd6a6f9b7cd" },
+]

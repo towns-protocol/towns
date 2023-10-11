@@ -15,6 +15,7 @@
     "publish:prod-beta": "NO_D1_WARNING=true && wrangler deploy --env production-beta",
     "publish:test": "NO_D1_WARNING=true && wrangler deploy --env test",
     "publish:test-beta": "NO_D1_WARNING=true && wrangler deploy --env test-beta",
+    "publish:staging-beta": "NO_D1_WARNING=true && wrangler deploy --env staging-beta",
     "sqlcreate:local": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_test --local --file=./sql/create-schema.sql",
     "sqlcreate:prod": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription --env production --file=./sql/create-schema.sql",
     "sqlcreate:prod-beta": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_beta --env production-beta --file=./sql/create-schema.sql",
@@ -25,6 +26,7 @@
     "sqlquery:prod-beta": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_beta --env production-beta --file=./sql/query.sql",
     "sqlquery:test": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_test --env test  --file=./sql/query.sql",
     "sqlquery:test-beta": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_test_beta --env test-beta  --file=./sql/query.sql",
+    "sqlquery:staging-beta": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_staging_beta --env staging-beta  --file=./sql/query.sql",
     "sqlrun:local": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_test --local  --file=./sql/run.sql",
     "test": "yarn test:unit --watch",
     "test:unit": "jest"
