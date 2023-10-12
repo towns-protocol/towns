@@ -332,6 +332,26 @@ export class SpaceDappV3 implements ISpaceDapp {
         return town.Membership.hasMembership(address)
     }
 
+    public async getMembershipInfo(spaceId: string) {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const [price, limit, currency, feeRecipient] = await Promise.all([
+            town.Membership.read.getMembershipPrice(),
+            town.Membership.read.getMembershipLimit(),
+            town.Membership.read.getMembershipCurrency(),
+            town.Membership.read.getMembershipFeeRecipient(),
+        ])
+
+        return {
+            price: price.toNumber(),
+            limit: limit.toNumber(),
+            currency: currency,
+            feeRecipient: feeRecipient,
+        }
+    }
+
     private async getTown(townId: string): Promise<Town | undefined> {
         return this.townRegistrar.getTown(townId)
     }

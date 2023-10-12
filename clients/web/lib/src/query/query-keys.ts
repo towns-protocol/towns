@@ -47,4 +47,5 @@ export const blockchainKeys = {
         return queryKey
     },
     entitledChannels: (spaceId: string) => ['syncEntitledChannels', spaceId],
+    membershipInfo: (spaceId: string) => ['membershipInfo', spaceId],
 }

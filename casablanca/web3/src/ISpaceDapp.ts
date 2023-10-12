@@ -2,6 +2,7 @@ import {
     BasicRoleInfo,
     ChannelDetails,
     ChannelMetadata,
+    MembershipInfo,
     Permission,
     RoleDetails,
 } from './ContractTypes'
@@ -109,4 +110,5 @@ export interface ISpaceDapp {
         signer: ethers.Signer,
     ) => Promise<ContractTransaction>
     hasTownMembership: (spaceId: string, wallet: string) => Promise<boolean>
+    getMembershipInfo: (spaceId: string) => Promise<MembershipInfo>
 }
