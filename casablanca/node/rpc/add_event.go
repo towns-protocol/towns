@@ -238,7 +238,18 @@ func (s *Service) addChannelMessage(ctx context.Context, stream Stream, view Str
 		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
 	}
 
-	return stream.AddEvent(ctx, parsedEvent)
+	err = stream.AddEvent(ctx, parsedEvent)
+	if err != nil {
+		return err
+	}
+	// send push notification if it is enabled. fire-and-forget.
+	if s.notification != nil {
+		// Client connection session may be closed while the node is sending the
+		// notification request. It causes random context cancellation. Using
+		// context.Background() to avoid this issue.
+		s.notification.SendPushNotification(context.Background(), info, &view, user)
+	}
+	return nil
 }
 
 func (s *Service) checkMembership(ctx context.Context, streamView StreamView, userId string) (bool, error) {

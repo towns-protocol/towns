@@ -13,7 +13,10 @@ export const usePushSubscription = () => {
         if (notificationsStatus !== 'granted' || !userId) {
             return
         }
-        registerForPushSubscription(userId, abortController.signal)
+        const register = async function () {
+            await registerForPushSubscription(userId, abortController.signal)
+        }
+        register()
         return () => {
             abortController.abort()
         }
@@ -21,6 +24,7 @@ export const usePushSubscription = () => {
 }
 
 async function registerForPushSubscription(userId: string, signal: AbortSignal) {
+    console.log('PUSH: registering for push notifications')
     const subscription = await getOrRegisterPushSubscription()
     if (!subscription) {
         return
@@ -48,8 +52,11 @@ async function registerForPushSubscription(userId: string, signal: AbortSignal) 
 }
 
 async function getOrRegisterPushSubscription() {
+    console.log('PUSH: getting subscription')
     const registration = await navigator.serviceWorker.ready
+    console.log('PUSH: got registration')
     const subscription = await registration.pushManager.getSubscription()
+    console.log('PUSH: got subscription')
     if (subscription) {
         return subscription
     }

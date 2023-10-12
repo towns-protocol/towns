@@ -115,6 +115,10 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		log.Warn("Using no-op wallet linking contract")
 	}
 
+	notification := nodes.MakePushNotification(
+		ctx,
+		&cfg.PushNotification,
+	)
 	nodeRegistry, err := loadNodeRegistry(
 		ctx,
 		cfg.NodeRegistry,
@@ -140,6 +144,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		nodeRegistry:       nodeRegistry,
 		streamRegistry:     nodes.NewStreamRegistry(nodeRegistry),
 		streamConfig:       cfg.Stream,
+		notification:       notification,
 	}
 
 	pattern, handler := protocolconnect.NewStreamServiceHandler(streamService)
