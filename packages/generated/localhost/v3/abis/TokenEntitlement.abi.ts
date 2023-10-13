@@ -6,27 +6,17 @@ export default [
   },
   {
     "inputs": [],
-    "name": "AddressNotFound",
+    "name": "Entitlement__InvalidValue",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "EntitlementNotFound",
+    "name": "Entitlement__NotAllowed",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "NotAllowed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "QuantityNotFound",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "RoleAlreadyExists",
+    "name": "Entitlement__ValueAlreadyExists",
     "type": "error"
   },
   {
@@ -102,69 +92,6 @@ export default [
   },
   {
     "inputs": [],
-    "name": "TOKEN_ADDRESS",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "TOKEN_ID",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "channelId",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "roleId",
-        "type": "uint256"
-      }
-    ],
-    "name": "addRoleIdToChannel",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "allEntitlementIds",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "description",
     "outputs": [
       {
@@ -201,7 +128,7 @@ export default [
             "type": "uint256[]"
           }
         ],
-        "internalType": "struct DataTypes.ExternalToken[]",
+        "internalType": "struct ITokenEntitlement.ExternalToken[]",
         "name": "tokens",
         "type": "tuple[]"
       }
@@ -209,59 +136,6 @@ export default [
     "name": "encodeExternalTokens",
     "outputs": [],
     "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "entitlementIdsByRoleId",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "entitlementsById",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "roleId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "grantedBy",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "grantedTime",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -286,64 +160,9 @@ export default [
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "channelId",
-        "type": "string"
-      }
-    ],
-    "name": "getRoleIdsByChannelId",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
-        "name": "user",
+        "name": "space",
         "type": "address"
-      }
-    ],
-    "name": "getUserRoles",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct DataTypes.Role[]",
-        "name": "",
-        "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_tokenAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_tokenId",
-        "type": "uint256"
       }
     ],
     "name": "initialize",
@@ -446,48 +265,6 @@ export default [
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "channelId",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "roleId",
-        "type": "uint256"
-      }
-    ],
-    "name": "removeRoleIdFromChannel",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "roleIdsByChannelId",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "roleId",
         "type": "uint256"
@@ -506,19 +283,6 @@ export default [
         "type": "bytes32"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_space",
-        "type": "address"
-      }
-    ],
-    "name": "setSpace",
-    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },

@@ -4,7 +4,6 @@ import {
 } from '@towns/generated/goerli/v3/typings/UserEntitlement'
 import {
     UserEntitlement as LocalhostContract,
-    DataTypes as LocalhostUserEntitlementDataTypes,
     UserEntitlementInterface as LocalhostInterface,
 } from '@towns/generated/localhost/v3/typings/UserEntitlement'
 import {
@@ -28,8 +27,6 @@ import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/UserEntitlement.
 import { BigNumberish, ethers } from 'ethers'
 import { decodeUsers } from './ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
-
-export type { LocalhostUserEntitlementDataTypes as UserEntitlementDataTypes }
 
 export class UserEntitlementShim
     extends BaseContractShimV3<

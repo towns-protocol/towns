@@ -4,7 +4,7 @@ import {
 } from '@towns/generated/goerli/v3/typings/TokenEntitlement'
 import {
     TokenEntitlement as LocalhostContract,
-    DataTypes as LocalhostDataTypes,
+    ITokenEntitlement as LocalhostDataTypes,
     TokenEntitlementInterface as LocalhostInterface,
 } from '@towns/generated/localhost/v3/typings/TokenEntitlement'
 import {

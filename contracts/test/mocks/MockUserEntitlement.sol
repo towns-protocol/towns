@@ -4,7 +4,6 @@ pragma solidity 0.8.20;
 import {IEntitlement} from "contracts/src/towns/entitlements/IEntitlement.sol";
 import {IRoles} from "contracts/src/towns/facets/roles/IRoles.sol";
 
-import {Errors} from "contracts/src/spaces/libraries/Errors.sol";
 import {MockUserEntitlementStorage} from "./MockUserEntitlementStorage.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
@@ -32,7 +31,7 @@ contract MockUserEntitlement is
 
   modifier onlyTown() {
     if (_msgSender() != SPACE_ADDRESS) {
-      revert Errors.NotAllowed();
+      revert Entitlement__NotAllowed();
     }
     _;
   }
