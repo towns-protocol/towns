@@ -4,7 +4,7 @@ export const breakpoints = {
     mobile: 0,
     tablet: 740,
     desktop: 992,
-    wide: 1200,
+    wide: 1500,
 } as const
 
 const responsiveConditions = {

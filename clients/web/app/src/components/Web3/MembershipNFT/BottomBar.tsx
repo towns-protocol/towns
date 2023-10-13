@@ -109,16 +109,16 @@ export const BottomBarLayout = (props: {
             paddingX="lg"
             background={theme === 'dark' ? 'transparentDark' : 'transparentBright'}
         >
-            <Stack width="100%" maxWidth="1200" position="relative">
-                {props.messageContent}
+            <Stack
+                direction={{ default: 'row', mobile: 'column' }}
+                width="100%"
+                maxWidth="1200"
+                position="relative"
+            >
+                <Box grow>{props.messageContent}</Box>
                 {props.buttonContent && (
                     <Stack
-                        width="100%"
-                        maxWidth="500"
-                        alignSelf={{
-                            desktop: 'end',
-                            mobile: 'center',
-                        }}
+                        minWidth={{ desktop: '300', mobile: undefined }}
                         paddingY={{
                             mobile: 'md',
                             desktop: 'lg',

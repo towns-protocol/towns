@@ -16,6 +16,8 @@ import { LoginComponent } from '@components/Login/LoginComponent'
 import { useMeetsMembershipNftRequirements } from 'hooks/useTokensGatingMembership'
 import { useJoinTown } from 'hooks/useJoinTown'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
+import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 
 const log = debug('app:public-town')
 log.enabled = true
@@ -53,9 +55,12 @@ export const PublicTownPage = () => {
 
     return spaceInfo ? (
         <>
+            <FixedBackground networkId={spaceInfo.networkId} />
             <Box horizontal centerContent width="100%" padding="lg">
-                <Box width="1200">
-                    <PageLogo />
+                <Box width="wide">
+                    <Box position="absolute">
+                        <PageLogo />
+                    </Box>
                 </Box>
             </Box>
             <TownPageLayout
@@ -125,3 +130,19 @@ const MessageBox = ({ children, ...boxProps }: BoxProps) => (
         </Box>
     </Box>
 )
+
+const FixedBackground = ({ networkId }: { networkId: string }) => {
+    const { imageSrc } = useImageSource(networkId, ImageVariants.thumbnail600)
+    return (
+        <Box
+            position="fixed"
+            top="none"
+            left="none"
+            bottom="none"
+            right="none"
+            pointerEvents="none"
+        >
+            <BlurredBackground imageSrc={imageSrc ?? ''} blur={40} />
+        </Box>
+    )
+}
