@@ -104,6 +104,10 @@ func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, stre
 	return streamFromLastSnaphot, nil
 }
 
+// Supported consistency checks:
+// 1. There are no gaps in miniblocks sequence and it starts from latestsnaphot
+// 2. There are no gaps in slot_num for envelopes in minipools and it starts from 0
+// 3. For envelopes all generations are the same and equals to "max generation seq_num in miniblocks" + 1
 func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, streamId string) (*GetStreamFromLastSnapshotResult, error) {
 	infra.StoreExecutionTimeMetrics("GetStreamFromLastSnapshotMs", time.Now())
 
@@ -137,36 +141,72 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, stre
 
 	result.StartMiniblockNumber = latest_snapshot_miniblock_index
 
+	miniblocksRow, err := tx.Query(ctx, "SELECT blockdata, seq_num FROM miniblocks WHERE seq_num >= $1 AND stream_id = $2 ORDER BY seq_num", latest_snapshot_miniblock_index, streamId)
+	if err != nil {
+		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error reading blocks")
+	}
+
+	defer miniblocksRow.Close()
+
 	//Retrieve miniblocks starting from the latest miniblock with snapshot
 	var miniblocks [][]byte
 
-	miniblocks, err = s.GetMiniblocksWithExternalTx(ctx, tx, s.pool, streamId, -1, -1)
+	//During scanning rows we also check that there are no gaps in miniblocks sequence and it starts from latestsnaphot
+	var counter int = 0
+	var seqNum int
 
-	if err != nil {
-		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error retrieving miniblocks")
+	for miniblocksRow.Next() {
+		var blockdata []byte
+
+		err = miniblocksRow.Scan(&blockdata, &seqNum)
+		if err != nil {
+			return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error scanning blocks")
+		}
+		if seqNum != latest_snapshot_miniblock_index+counter {
+			return nil, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("Miniblocks consistency violation - wrong block sequence number").
+				Tag("ActualSeqNum", seqNum).Tag("ExpectedSeqNum", latest_snapshot_miniblock_index+counter)
+		}
+		miniblocks = append(miniblocks, blockdata)
+		counter++
 	}
+
+	//At this moment seqNum contains max miniblock number in the miniblock storage
 
 	result.Miniblocks = miniblocks
 
 	//Retrieve events from minipool
-	rows, err := tx.Query(ctx, "SELECT envelope FROM minipools WHERE slot_num > -1 AND stream_id = $1", streamId)
+	rows, err := tx.Query(ctx, "SELECT envelope, generation, slot_num FROM minipools WHERE slot_num > -1 AND stream_id = $1 ORDER BY generation, slot_num", streamId)
 	if err != nil {
 		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error retrieving minipool events")
 	}
 
-	var envelopes [][]byte
+	defer rows.Close()
 
+	var envelopes [][]byte
+	var slotNumsCounter int = 0
+
+	//Let's check during scan that slot_nums start from 0 and there are no gaps and that each generation is equal to maxSeqNumInMiniblocksTable+1
 	for rows.Next() {
 		var envelope []byte
-		err = rows.Scan(&envelope)
+		var generation int
+		var slotNum int
+		err = rows.Scan(&envelope, &generation, &slotNum)
 		if err != nil {
 			return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error scanning minipool events")
 		}
+		//Check that we don't have gaps in slot numbers
+		if slotNum != slotNumsCounter {
+			return nil, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("Minipool consistency violation - slotNums are not sequential").
+				Tag("ActualSlotNumber", slotNum).Tag("ExpectedSlotNumber", slotNumsCounter)
+		}
+		//Check that all events in minipool have proper generation
+		if generation != seqNum+1 {
+			return nil, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("Minipool consistency violation - wrong event generation").
+				Tag("ActualGeneration", generation).Tag("ExpectedGeneration", slotNum)
+		}
 		envelopes = append(envelopes, envelope)
+		slotNumsCounter++
 	}
-
-	//TODO: Check if it is correct way of using rows.Close()?
-	rows.Close()
 
 	result.MinipoolEnvelopes = envelopes
 
@@ -264,86 +304,44 @@ func (s *PostgresEventStore) addEvent(ctx context.Context, streamId string, mini
 	return nil
 }
 
+// Supported consistency checks:
+// 1. There are no gaps in miniblocks sequence
+// TODO: Do we want to check that if we get miniblocks an toIndex is greater or equal block with latest snapshot, than in results we will have at least
+// miniblock with latest snapshot?
+// This functional is not transactional as it consists of only one SELECT query
 func (s *PostgresEventStore) GetMiniblocks(ctx context.Context, streamId string, fromIndex int, toIndex int) ([][]byte, error) {
-	//TODO: questionable if transaction is required here at all, though as we use here GetMiniblocksWithExternalTx to avoid code duplication
-	//We have to use transaction for now. May be we need to refactor it.
-	tx, err := startTx(ctx, s.pool)
-
+	miniblocksRow, err := s.pool.Query(ctx, "SELECT blockdata, seq_num FROM miniblocks WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num", fromIndex, toIndex, streamId)
 	if err != nil {
-		return nil, s.enrichErrorWithNodeInfo(WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error starting transaction"))
+		return nil, s.enrichErrorWithNodeInfo(WrapRiverError(Err_DB_OPERATION_FAILURE, err).
+			Func("pg.GetMiniblocks").Message("Error reading blocks").Tag("streamId", streamId))
 	}
+	defer miniblocksRow.Close()
 
-	defer rollbackTx(ctx, tx, "GetMiniblocks")
+	//Retrieve miniblocks starting from the latest miniblock with snapshot
+	var miniblocks [][]byte
 
-	miniblocks, err := s.GetMiniblocksWithExternalTx(ctx, tx, s.pool, streamId, fromIndex, toIndex)
-
-	if err != nil {
-		return nil, s.enrichErrorWithNodeInfo(WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("GetMiniblocks").Message("error retrieving miniblocks"))
-	}
-
-	err = tx.Commit(ctx)
-
-	if err != nil {
-		return nil, s.enrichErrorWithNodeInfo(WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("GetMiniblocks").Message("error committing transaction"))
-	}
-
-	return miniblocks, nil
-}
-
-func (s *PostgresEventStore) GetMiniblocksWithExternalTx(ctx context.Context, externalTx pgx.Tx, pool *pgxpool.Pool, streamId string, fromIndex int, toIndex int) ([][]byte, error) {
-	miniblocks, err := s.getMiniblocksWithExternalTx(ctx, externalTx, pool, streamId, fromIndex, toIndex)
-
-	if err != nil {
-		return nil, s.enrichErrorWithNodeInfo(AsRiverError(err).Func("pg.GetMiniblocks").Tag("streamId", streamId).Tag("streamId", streamId).Tag("fromIndex", fromIndex).Tag("toIndex", toIndex))
-	}
-
-	return miniblocks, nil
-}
-
-func (s *PostgresEventStore) getMiniblocksWithExternalTx(ctx context.Context, externalTx pgx.Tx, pool *pgxpool.Pool, streamId string, fromIndex int, toIndex int) ([][]byte, error) {
-	defer infra.StoreExecutionTimeMetrics("GetMiniblocksMs", time.Now())
-
-	//TODO: do we want to validate here if blocks which are subject to read exist?
-	var err error
-
-	err = s.compareUUID(ctx, externalTx)
-	if err != nil {
-		return nil, err
-	}
-
-	var rows pgx.Rows
-	if toIndex != -1 {
-		if fromIndex != -1 {
-			rows, err = externalTx.Query(ctx, "SELECT blockdata FROM miniblocks WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num", fromIndex, toIndex, streamId)
-		} else {
-			rows, err = externalTx.Query(ctx, "SELECT blockdata FROM miniblocks WHERE seq_num >= (SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1) AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num", streamId, toIndex, streamId)
-		}
-	} else {
-		if fromIndex != -1 {
-			rows, err = externalTx.Query(ctx, "SELECT blockdata FROM miniblocks WHERE seq_num >= $1 AND stream_id = $2 ORDER BY seq_num", fromIndex, streamId)
-		} else {
-			rows, err = externalTx.Query(ctx, "SELECT blockdata FROM miniblocks WHERE seq_num >= (SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1) AND stream_id = $2 ORDER BY seq_num", streamId, streamId)
-		}
-	}
-
-	if err != nil {
-		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error reading blocks")
-	}
-
-	defer rows.Close()
-
-	var blocks [][]byte
-
-	for rows.Next() {
+	var prevSeqNum int = -1 //There is no negative generation, so we use it as a flag on the first step of the loop during miniblocks sequence check
+	for miniblocksRow.Next() {
 		var blockdata []byte
-		err = rows.Scan(&blockdata)
+		var seq_num int
+
+		err = miniblocksRow.Scan(&blockdata, &seq_num)
 		if err != nil {
-			return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error scanning blocks")
+			return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("pg.GetMiniblocks").Tag("streamId", streamId).Message("Error scanning blocks")
 		}
-		blocks = append(blocks, blockdata)
+
+		if (prevSeqNum != -1) && (seq_num != prevSeqNum+1) {
+			//There is a gap in sequence numbers
+			return nil, WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Func("pg.GetMiniblocks").
+				Message("Miniblocks consistency violation").
+				Tag("ActualBlockNumber", seq_num).Tag("ExpectedBlockNumber", prevSeqNum+1).Tag("streamId", streamId)
+		}
+		prevSeqNum = seq_num
+
+		miniblocks = append(miniblocks, blockdata)
 	}
 
-	return blocks, nil
+	return miniblocks, nil
 }
 
 func (s *PostgresEventStore) CreateBlock(

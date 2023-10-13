@@ -231,8 +231,6 @@ func (e *RiverErrorImpl) FlattenTags() []any {
 	return tags
 }
 
-// TODO: should we either make checks above that there is only one tag with the same name
-// or return array here if there are more than one tag with the same falue?
 func (e *RiverErrorImpl) GetTag(name string) any {
 	for _, tag := range e.NamedTags {
 		if tag.Name == name {

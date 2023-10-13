@@ -29,7 +29,7 @@ type StreamStorage interface {
 	// and there should be exactly minipoolSlot events in the minipool.
 	AddEvent(ctx context.Context, streamId string, minipoolGeneration int, minipoolSlot int, envelope []byte) error
 
-	// Current minipool generateion must be minipoolGeneration and size must be minipoolSize,
+	// Current minipool generation must be minipoolGeneration and size must be minipoolSize,
 	// stream must have minipoolGeneration miniblocks.
 	// Deletes current minipool at minipoolGeneration,
 	// creates new minipool at minipoolGeneration + 1,
