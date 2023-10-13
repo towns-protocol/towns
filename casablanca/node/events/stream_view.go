@@ -263,9 +263,12 @@ func (r *streamViewImpl) InceptionPayload() IsInceptionPayload {
 
 func (r *streamViewImpl) indexOfMiniblockWithNum(mininblockNum int64) (int, error) {
 	if len(r.blocks) > 0 {
-		diff := mininblockNum - r.blocks[0].header().MiniblockNum
-		if diff >= 0 && diff < int64(len(r.blocks)) {
-			return int(diff), nil
+		diff := int(mininblockNum - r.blocks[0].header().MiniblockNum)
+		if diff >= 0 && diff < len(r.blocks) {
+			if r.blocks[diff].header().MiniblockNum != mininblockNum {
+				return 0, RiverError(Err_INTERNAL, "indexOfMiniblockWithNum block number mismatch", "requested", mininblockNum, "actual", r.blocks[diff].header().MiniblockNum)
+			}
+			return diff, nil
 		}
 		return 0, RiverError(Err_INVALID_ARGUMENT, "indexOfMiniblockWithNum index not found", "requested", mininblockNum, "min", r.blocks[0].header().MiniblockNum, "max", r.blocks[len(r.blocks)-1].header().MiniblockNum)
 	}
