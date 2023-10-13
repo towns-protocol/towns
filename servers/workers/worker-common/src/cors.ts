@@ -9,7 +9,6 @@ function getAllowedOrigins(env: Environment): string[] {
                 Everything except for production
             */
             return [
-                'https://app-staging.towns.com',
                 'https://app-test.towns.com',
                 'https://app-test-beta.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
@@ -19,9 +18,11 @@ function getAllowedOrigins(env: Environment): string[] {
                 'http://127.0.0.1:8787',
                 'https://push-notification-worker-test.johnhntlabs.workers.dev',
                 'https://push-notification-worker-test-beta.towns.com',
+                'https://river1-test.towns.com',
                 'https://test-harmony-web-pr-*.onrender.com',
             ]
         case 'staging': // Stay as close to production as possible.
+        case 'staging-beta':
         case 'production':
         case 'production-beta':
             /*
@@ -35,6 +36,7 @@ function getAllowedOrigins(env: Environment): string[] {
                 'https://app-staging.towns.com',
                 'https://app-staging-beta.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
+                'https://river1-staging.towns.com',
                 'https://towns.com',
             ]
         default:
