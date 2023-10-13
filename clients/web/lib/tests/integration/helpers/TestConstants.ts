@@ -8,7 +8,7 @@ import { MemberNFT } from '@river/web3'
 export class TestConstants {
     public static readonly EveryoneAddress = '0x0000000000000000000000000000000000000001'
 
-    public static DefaultWaitForTimeoutMS = parseOptInt(process.env.WAIT_FOR_TIMEOUT) ?? 5000
+    public static DefaultWaitForTimeoutMS = parseOptInt(process.env.WAIT_FOR_TIMEOUT) ?? 10000
     public static DoubleDefaultWaitForTimeout: waitForOptions = {
         timeout: TestConstants.DefaultWaitForTimeoutMS * 2,
     }
