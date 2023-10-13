@@ -131,9 +131,17 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "info"
       },
       {
-        name = "LOG__NO_COLOR",
+        name = "LOG__NOCOLOR",
         value = "true"
       },
+      {
+        name = "PUSHNOTIFICATION__AUTHTOKEN",
+        value = ""
+      },
+      {
+        name = "PUSHNOTIFICATION__URL",
+        value = ""
+      }
     ]
 
     logConfiguration = {
