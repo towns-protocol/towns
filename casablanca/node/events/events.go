@@ -183,6 +183,26 @@ func Make_SpacePayload_Channel(op ChannelOp, channelId string, channelProperties
 	}
 }
 
+func Make_SpacePayload_Username(username *EncryptedData) *StreamEvent_SpacePayload {
+	return &StreamEvent_SpacePayload{
+		SpacePayload: &SpacePayload{
+			Content: &protocol.SpacePayload_Username{
+				Username: username,
+			},
+		},
+	}
+}
+
+func Make_SpacePayload_DisplayName(displayName *EncryptedData) *StreamEvent_SpacePayload {
+	return &StreamEvent_SpacePayload{
+		SpacePayload: &SpacePayload{
+			Content: &protocol.SpacePayload_DisplayName{
+				DisplayName: displayName,
+			},
+		},
+	}
+}
+
 func Make_UserPayload_Inception(streamId string, settings *StreamSettings) *StreamEvent_UserPayload {
 	return &StreamEvent_UserPayload{
 		UserPayload: &UserPayload{

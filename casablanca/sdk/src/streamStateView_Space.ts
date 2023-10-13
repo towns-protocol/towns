@@ -1,5 +1,6 @@
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView_Membership } from './streamStateView_Membership'
+import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { ParsedEvent } from './types'
 import { EmittedEvents } from './client'
 import {
@@ -21,10 +22,12 @@ import { StreamStateView_IContent } from './streamStateView_IContent'
 export class StreamStateView_Space implements StreamStateView_IContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
+    readonly userMetadata: StreamStateView_UserMetadata
     readonly spaceChannelsMetadata = new Map<string, ChannelProperties>()
 
     constructor(userId: string, inception: SpacePayload_Inception) {
         this.memberships = new StreamStateView_Membership(userId, inception.streamId)
+        this.userMetadata = new StreamStateView_UserMetadata(userId, inception.streamId)
         this.streamId = inception.streamId
     }
 
@@ -35,6 +38,10 @@ export class StreamStateView_Space implements StreamStateView_IContent {
     ): void {
         // update memberships
         this.memberships.initialize(content.memberships, emitter)
+        // update usernames
+        this.userMetadata.initialize(content.usernames, 'username', emitter)
+        // update displayNames
+        this.userMetadata.initialize(content.displayNames, 'displayName', emitter)
         // loop over content.channels, update space channels metadata
         for (const [_, payload] of Object.entries(content.channels)) {
             this.addSpacePayload_Channel(payload, emitter)
@@ -43,6 +50,7 @@ export class StreamStateView_Space implements StreamStateView_IContent {
 
     onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
         this.memberships.onMiniblockHeader(blockHeader, emitter)
+        this.userMetadata.onMiniblockHeader(blockHeader, emitter)
     }
 
     prependEvent(
@@ -63,7 +71,7 @@ export class StreamStateView_Space implements StreamStateView_IContent {
                 // nothing to do, username was conveyed in the snapshot
                 break
             case 'displayName':
-                // nothing to do, username was conveyed in the snapshot
+                // nothing to do, displayName was conveyed in the snapshot
                 break
             case undefined:
                 break
@@ -91,10 +99,22 @@ export class StreamStateView_Space implements StreamStateView_IContent {
                 )
                 break
             case 'username':
-                // todo: HNT-2845, add support for adding events for usernames
+                this.userMetadata.appendUserMetadataEvent(
+                    event.hashStr,
+                    event.creatorUserId,
+                    payload.content.value,
+                    'username',
+                    emitter,
+                )
                 break
             case 'displayName':
-                // todo: HNT-2845, add support for adding events for usernames
+                this.userMetadata.appendUserMetadataEvent(
+                    event.hashStr,
+                    event.creatorUserId,
+                    payload.content.value,
+                    'username',
+                    emitter,
+                )
                 break
             case undefined:
                 break

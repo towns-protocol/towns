@@ -164,11 +164,13 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHea
 	}
 
 	var snapshot *Snapshot
+	last := r.lastBlock()
+	eventNumOffset := last.header().EventNumOffset + int64(len(last.events)) + 1 // +1 for header
 	if r.shouldSnapshot() {
 		snapshot = proto.Clone(r.snapshot).(*Snapshot)
 		events := r.eventsSinceLastSnapshot()
-		for _, e := range events {
-			err := Update_Snapshot(snapshot, e)
+		for i, e := range events {
+			err := Update_Snapshot(snapshot, e, eventNumOffset, i)
 			if err != nil {
 				log.Error("Failed to update snapshot",
 					"error", err,
@@ -178,8 +180,6 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHea
 			}
 		}
 	}
-	last := r.lastBlock()
-	eventNumOffset := last.header().EventNumOffset + int64(len(last.events)) + 1 // +1 for header
 	return &MiniblockHeader{
 		MiniblockNum:      last.header().MiniblockNum + 1,
 		Timestamp:         NextMiniblockTimestamp(last.header().Timestamp),

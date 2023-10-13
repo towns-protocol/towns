@@ -130,6 +130,12 @@ func (s *Service) addSpacePayload(ctx context.Context, payload *StreamEvent_Spac
 
 	case *SpacePayload_Channel_:
 		return s.updateChannel(ctx, stream, streamView, parsedEvent)
+	
+	case *SpacePayload_Username:
+		return s.addUsernameEvent(ctx, stream, streamView, parsedEvent, content)
+	
+	case *SpacePayload_DisplayName:
+		return s.addDisplayNameEvent(ctx, stream, streamView, parsedEvent, content)
 
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
@@ -154,6 +160,44 @@ func (s *Service) addUserPayload(ctx context.Context, payload *StreamEvent_UserP
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
+}
+
+func (s *Service) addUsernameEvent(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent, username *SpacePayload_Username) error {
+	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+
+	// Check if user is a member of the space
+	member, err := s.checkMembership(ctx, view, creator)
+	if err != nil {
+		return err
+	}
+
+	if !member {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of space", "user", creator)
+	}
+
+	return stream.AddEvent(ctx, parsedEvent)
+}
+
+func (s *Service) addDisplayNameEvent(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent, username *SpacePayload_DisplayName) error {
+	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+
+	// Check if user is a member of the space
+	member, err := s.checkMembership(ctx, view, creator)
+	if err != nil {
+		return err
+	}
+
+	if !member {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of space", "user", creator)
+	}
+
+	return stream.AddEvent(ctx, parsedEvent)
 }
 
 func (s *Service) addUserDeviceKeyPayload(ctx context.Context, payload *StreamEvent_UserDeviceKeyPayload, parsedEvent *ParsedEvent, stream Stream, streamView StreamView) error {

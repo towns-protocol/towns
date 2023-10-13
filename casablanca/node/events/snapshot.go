@@ -1,6 +1,7 @@
 package events
 
 import (
+	"casablanca/node/common"
 	. "casablanca/node/protocol"
 	"errors"
 	"fmt"
@@ -22,8 +23,9 @@ func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
 		Content: content,
 	}
 
-	for _, event := range events[1:] {
-		err = Update_Snapshot(snapshot, event)
+	for i, event := range events[1:] {
+		// start at index 1 to account for inception event
+		err = Update_Snapshot(snapshot, event, 1, i)
 		if err != nil {
 			return nil, err
 		}
@@ -80,10 +82,14 @@ func make_SnapshotContent(iPayload IsInceptionPayload) (IsSnapshot_Content, erro
 }
 
 // mutate snapshot with content of event if applicable
-func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent) error {
+func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, eventNumOffset int64, eventNum int) error {
 	switch payload := event.Event.Payload.(type) {
 	case *StreamEvent_SpacePayload:
-		return update_Snapshot_Space(iSnapshot, payload.SpacePayload)
+		user, err := common.AddressHex(event.Event.CreatorAddress)
+		if err != nil {
+			return err
+		}
+		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, user, eventNumOffset + int64(eventNum))
 	case *StreamEvent_ChannelPayload:
 		return update_Snapshot_Channel(iSnapshot, payload.ChannelPayload)
 	case *StreamEvent_UserPayload:
@@ -97,7 +103,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent) error {
 	}
 }
 
-func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload) error {
+func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, user string, eventNum int64) error {
 	snapshot := iSnapshot.Content.(*Snapshot_SpaceContent)
 	if snapshot == nil {
 		return errors.New("blockheader snapshot is not a space snapshot")
@@ -117,6 +123,18 @@ func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload) erro
 			snapshot.SpaceContent.Memberships = make(map[string]*Membership)
 		}
 		snapshot.SpaceContent.Memberships[content.Membership.UserId] = content.Membership
+		return nil
+	case *SpacePayload_Username:
+		if snapshot.SpaceContent.Usernames == nil {
+			snapshot.SpaceContent.Usernames = make(map[string]*SpacePayload_WrappedEncryptedData)
+		}
+		snapshot.SpaceContent.Usernames[user] = &SpacePayload_WrappedEncryptedData{Data: content.Username, EventNum: eventNum}
+		return nil
+	case *SpacePayload_DisplayName:
+		if snapshot.SpaceContent.DisplayNames == nil {
+			snapshot.SpaceContent.DisplayNames = make(map[string]*SpacePayload_WrappedEncryptedData)
+		}
+		snapshot.SpaceContent.DisplayNames[user] = &SpacePayload_WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum}
 		return nil
 	default:
 		return fmt.Errorf("unknown space payload type %T", spacePayload.Content)
