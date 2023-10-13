@@ -133,10 +133,11 @@ export const RichTextBottomToolbar = (props: Props) => {
                             <MotionIcon
                                 type="camera"
                                 size="square_sm"
-                                color="gray2"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
+                                color={{ hover: 'default', default: 'gray2' }}
+                                cursor="pointer"
+                                initial={isTouch ? { opacity: 0 } : undefined}
+                                animate={isTouch ? { opacity: 1 } : undefined}
+                                exit={isTouch ? { opacity: 0 } : undefined}
                             />
                         </Box>
                     )}
