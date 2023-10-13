@@ -69,7 +69,7 @@ export const useSendImageMessage = () => {
                 chunkCount,
             )
             if (!streamId) {
-                return
+                throw new Error('Failed to create media stream')
             }
 
             let chunkIndex = 0

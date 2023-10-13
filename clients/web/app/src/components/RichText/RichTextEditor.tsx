@@ -299,10 +299,10 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
         setIsSendingImages(true)
     }, [imageCount, setIsSendingImages])
 
-    const onSendImageFailed = useCallback(() => {
+    const showErrorMessage = useCallback((message: string) => {
         setIsSendingImages(false)
         toast.custom((t) => {
-            return <ImageUploadFailedToast toast={t} />
+            return <ImageUploadFailedToast toast={t} message={message} />
         })
     }, [])
 
@@ -391,7 +391,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                             setIsSendingImages={setIsSendingImages}
                             setImageCount={imageCountUpdated}
                             threadId={props.threadId}
-                            imageUploadFailed={onSendImageFailed}
+                            showErrorMessage={showErrorMessage}
                         />
                     )}
                     <RichTextBottomToolbar

@@ -16,12 +16,12 @@ type Props = {
     isSendingImages: boolean
     setIsSendingImages: (sending: boolean) => void
     setImageCount: (count: number) => void
-    imageUploadFailed: () => void
+    showErrorMessage: (message: string) => void
 }
 
 export const PasteImagePlugin = (props: Props) => {
     const mediaDropContext = useMediaDropContext()
-    const { isSendingImages, setImageCount, imageUploadFailed, threadId } = props
+    const { isSendingImages, setImageCount, showErrorMessage, threadId } = props
     const [imageFiles, setImageFiles] = useState<PastedImage[]>([])
     const [editor] = useLexicalComposerContext()
 
@@ -38,6 +38,9 @@ export const PasteImagePlugin = (props: Props) => {
 
         const prev = imageFiles
         const filteredFiles = filterAllowedMediaFiles(files)
+        if (filteredFiles.length !== files.length) {
+            showErrorMessage('Error uploading media. File type is not supported.')
+        }
         for (const file of filteredFiles) {
             if (prev.length > MAX_IMAGE_COUNT) {
                 break
@@ -89,7 +92,7 @@ export const PasteImagePlugin = (props: Props) => {
                                 shouldSend={index === 0 && isSendingImages}
                                 removeImageFile={removeImageFile}
                                 waitingToSend={index !== 0 && isSendingImages}
-                                imageUploadFailed={imageUploadFailed}
+                                showErrorMessage={showErrorMessage}
                             />
                         )
                     })}
@@ -109,7 +112,7 @@ type PastedImageProps = PastedImage & {
     shouldSend: boolean
     waitingToSend: boolean
     removeImageFile: (id: string) => void
-    imageUploadFailed: () => void
+    showErrorMessage: (message: string) => void
 }
 
 const PastedImage = (props: PastedImageProps) => {
@@ -117,7 +120,6 @@ const PastedImage = (props: PastedImageProps) => {
     const channelId = useChannelId()
     const { sendImageMessage } = useSendImageMessage()
     const [progress, setProgress] = useState(0)
-    const [didFail, setDidFail] = useState(false)
 
     const {
         id,
@@ -126,7 +128,7 @@ const PastedImage = (props: PastedImageProps) => {
         shouldSend,
         waitingToSend,
         threadId,
-        imageUploadFailed,
+        showErrorMessage,
     } = props
     const [objectURL, setObjectURL] = useState<string | undefined>(undefined)
     const uploadInProgress = useRef(false)
@@ -138,15 +140,13 @@ const PastedImage = (props: PastedImageProps) => {
             }
 
             uploadInProgress.current = true
-            setDidFail(false)
 
             try {
                 await sendImageMessage(channelId, imageFile, setProgress, threadId)
                 removeImageFile(id)
             } catch (err) {
                 console.error(err)
-                setDidFail(true)
-                imageUploadFailed()
+                showErrorMessage('Oops! We had trouble uploading your image.')
             } finally {
                 uploadInProgress.current = false
             }
@@ -166,7 +166,7 @@ const PastedImage = (props: PastedImageProps) => {
         sendImageMessage,
         setProgress,
         threadId,
-        imageUploadFailed,
+        showErrorMessage,
     ])
 
     useEffect(() => {
@@ -206,7 +206,7 @@ const PastedImage = (props: PastedImageProps) => {
                 opacity={waitingToSend || shouldSend ? '0.5' : 'opaque'}
             />
 
-            {(!shouldSend || didFail) && (
+            {!shouldSend && (
                 <IconButton
                     icon="close"
                     color="default"
@@ -215,22 +215,6 @@ const PastedImage = (props: PastedImageProps) => {
                     tooltipOptions={{ immediate: true }}
                     onClick={() => removeImageFile(id)}
                 />
-            )}
-
-            {didFail && (
-                <Box
-                    position="absolute"
-                    background="inverted"
-                    padding="xs"
-                    rounded="xs"
-                    textAlign="center"
-                    fontSize="xs"
-                    bottom="xs"
-                    left="xs"
-                    right="xs"
-                >
-                    Try again
-                </Box>
             )}
 
             <Box
