@@ -1,24 +1,20 @@
 import { useCallback, useState } from 'react'
 import { RoomIdentifier, makeRoomIdentifier, useWeb3Context, useZionClient } from 'use-zion-client'
 
-export type JoinData = {
-    name: string
-    networkId: string
-    spaceAddress?: string
-}
-
-export const useJoinTown = (joinData: JoinData, onSuccessfulJoin?: () => void) => {
+export const useJoinTown = (networkId: string | undefined, onSuccessfulJoin?: () => void) => {
     const { client } = useZionClient()
     const [notEntitled, setNotEntitled] = useState(false)
     const [maxLimitReached, setMaxLimitReached] = useState(false)
     const { signer } = useWeb3Context()
 
     const joinSpace = useCallback(async () => {
-        if (client && joinData?.networkId) {
-            const roomIdentifier: RoomIdentifier = makeRoomIdentifier(joinData.networkId)
+        if (client && networkId) {
+            const roomIdentifier: RoomIdentifier = makeRoomIdentifier(networkId)
 
             try {
                 // use client.joinRoom b/c it will throw an error, not the joinRoom wrapped in useWithCatch()
+                // we can keep this notEntitled state in the interm to catch some weird errors/states just in case
+                // but the entitled check should already happen in the UI, and never show a join button if not entitled
                 const result = await client.joinTown(roomIdentifier, signer)
                 if (!result) {
                     setNotEntitled(true)
@@ -26,14 +22,14 @@ export const useJoinTown = (joinData: JoinData, onSuccessfulJoin?: () => void) =
                     onSuccessfulJoin?.()
                 }
             } catch (error) {
-                if ((error as Error)?.message?.includes('has exceeded the member cap')) {
+                if ((error as Error)?.message?.includes?.('has exceeded the member cap')) {
                     setMaxLimitReached(true)
                 } else {
                     setNotEntitled(true)
                 }
             }
         }
-    }, [client, joinData.networkId, onSuccessfulJoin, signer])
+    }, [client, networkId, onSuccessfulJoin, signer])
 
     return { notEntitled, maxLimitReached, joinSpace }
 }

@@ -199,7 +199,10 @@ export const InteractiveTownsToken = (props: Props) => {
             >
                 <TownsToken
                     key={props.imageSrcRenderKey}
-                    {...props}
+                    spaceName={props.spaceName}
+                    address={props.address}
+                    size={props.size}
+                    imageSrc={props.imageSrc}
                     onMouseMove={onMouseMove}
                     onMouseEnter={onMouseEnter}
                     onMouseLeave={onMouseLeave}

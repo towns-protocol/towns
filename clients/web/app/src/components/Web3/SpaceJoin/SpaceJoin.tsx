@@ -9,7 +9,12 @@ import { useAuth } from 'hooks/useAuth'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import 'wagmi/window'
-import { JoinData, useJoinTown } from 'hooks/useJoinTown'
+import { useJoinTown } from 'hooks/useJoinTown'
+export type JoinData = {
+    name: string
+    networkId: string
+    spaceAddress?: string
+}
 
 type ModalProps = {
     onHide: () => void
@@ -198,7 +203,7 @@ export const SpaceJoin = (props: Props) => {
     }, [onCancel, onHide])
 
     const { notEntitled, maxLimitReached, joinSpace } = useJoinTown(
-        joinData,
+        joinData.networkId,
         props.onSuccessfulJoin,
     )
 

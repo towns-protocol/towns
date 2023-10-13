@@ -12,6 +12,7 @@ import { useGetPioneerNftAddress } from 'hooks/useGetPioneerNftAddress'
 import { shortAddress } from 'ui/utils/utils'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { TriggerProps } from 'ui/components/Tooltip/TooltipRenderer'
 import { TokenProps } from './types'
 
 const tokenAvatarImageSourceMap = new Map<string, string>()
@@ -79,21 +80,21 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
     return (
         <Box alignItems="center" maxWidth="x6" data-testid="token-avatar" gap="sm" {...layoutProps}>
             <Box position="relative" rounded="full" background="level4">
-                <Box
-                    display="block"
-                    className={clsx(
-                        avatarToggleClasses({ circle: true, noBg: true }),
-                        avatarAtoms({
-                            size,
-                        }),
-                        avatarBaseStyle,
-                    )}
-                    style={{
-                        overflow: 'hidden',
-                    }}
-                >
-                    {content()}
-                </Box>
+                {showLabel ? (
+                    <AvatarImageWrapper size={size}>{content()}</AvatarImageWrapper>
+                ) : (
+                    <TokenAddressTooltip
+                        noCopy={noCopy}
+                        contractAddress={contractAddress}
+                        clipboardCopyRef={clipboardCopyRef}
+                    >
+                        {(triggerProps) => (
+                            <Box {...triggerProps}>
+                                <AvatarImageWrapper size={size}>{content()}</AvatarImageWrapper>
+                            </Box>
+                        )}
+                    </TokenAddressTooltip>
+                )}
 
                 {onClick && contractAddress && (
                     <IconButton
@@ -115,30 +116,17 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
                     />
                 )}
             </Box>
-            {/* wip and maybe remove tooltip */}
+
             {showLabel && (
-                <TooltipRenderer
-                    tooltip={
-                        <Box background="level3" padding="sm" rounded="sm" border="faint">
-                            {noCopy ? (
-                                <Text color="gray2" size="sm">
-                                    {contractAddress}
-                                </Text>
-                            ) : (
-                                <ClipboardCopy
-                                    ref={clipboardCopyRef}
-                                    label={contractAddress}
-                                    clipboardContent={contractAddress}
-                                />
-                            )}
-                        </Box>
-                    }
-                    trigger="hover"
+                <TokenAddressTooltip
+                    contractAddress={contractAddress}
+                    noCopy={noCopy}
+                    clipboardCopyRef={clipboardCopyRef}
                 >
-                    {(props) => (
+                    {(triggerProps) => (
                         <Box
                             gap
-                            {...props.triggerProps}
+                            {...triggerProps}
                             onClick={() => {
                                 clipboardCopyRef.current?.click()
                             }}
@@ -167,9 +155,65 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
                             )}
                         </Box>
                     )}
-                </TooltipRenderer>
+                </TokenAddressTooltip>
             )}
         </Box>
+    )
+}
+
+function AvatarImageWrapper({
+    children,
+    size,
+}: React.PropsWithChildren<{ size: TokenAvatarProps['size'] }>) {
+    return (
+        <Box
+            display="block"
+            className={clsx(
+                avatarToggleClasses({ circle: true, noBg: true }),
+                avatarAtoms({
+                    size,
+                }),
+                avatarBaseStyle,
+            )}
+            style={{
+                overflow: 'hidden',
+            }}
+        >
+            {children}
+        </Box>
+    )
+}
+
+function TokenAddressTooltip({
+    contractAddress,
+    noCopy,
+    clipboardCopyRef,
+    children,
+}: Pick<TokenAvatarProps, 'contractAddress' | 'noCopy'> & {
+    children: (props: TriggerProps) => React.ReactNode
+    clipboardCopyRef: React.RefObject<HTMLDivElement>
+}) {
+    return (
+        <TooltipRenderer
+            tooltip={
+                <Box background="level3" padding="sm" rounded="sm" border="faint">
+                    {noCopy ? (
+                        <Text color="gray2" size="sm">
+                            {contractAddress}
+                        </Text>
+                    ) : (
+                        <ClipboardCopy
+                            ref={clipboardCopyRef}
+                            label={contractAddress}
+                            clipboardContent={contractAddress}
+                        />
+                    )}
+                </Box>
+            }
+            trigger="hover"
+        >
+            {(props) => children(props.triggerProps)}
+        </TooltipRenderer>
     )
 }
 
@@ -187,9 +231,6 @@ function useCheckImage({
 
     useEffect(() => {
         if (isLoading) {
-            return
-        }
-        if (!pioneerAddress) {
             return
         }
 

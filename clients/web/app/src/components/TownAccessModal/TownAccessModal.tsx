@@ -10,7 +10,7 @@ import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackgrou
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { useJoinTown } from 'hooks/useJoinTown'
-import { useMeetsMembershipNftRequirements } from 'hooks/useTokensGatingSpace'
+import { useMeetsMembershipNftRequirements } from 'hooks/useTokensGatingMembership'
 
 const log = debug('app:town-access-modal')
 log.enabled = true
@@ -62,6 +62,7 @@ const JoinStep = (props: Props) => {
     const { spaceInfo } = props
     const { imageSrc } = useImageSource(spaceInfo.networkId, ImageVariants.thumbnail600)
     const { data: townBio } = useGetSpaceTopic(spaceInfo.networkId)
+    const { isConnected } = useAuth()
 
     const onSuccess = useCallback(() => {
         // currently routing gets you to home once logged in
@@ -69,9 +70,9 @@ const JoinStep = (props: Props) => {
 
     const { switchWallet } = useSwitchWallet()
 
-    const isEntitledCheck = useMeetsMembershipNftRequirements(spaceInfo.networkId)
+    const isEntitledCheck = useMeetsMembershipNftRequirements(spaceInfo.networkId, isConnected)
 
-    const { joinSpace, notEntitled, maxLimitReached } = useJoinTown(spaceInfo, onSuccess)
+    const { joinSpace, notEntitled, maxLimitReached } = useJoinTown(spaceInfo.networkId, onSuccess)
     return (
         <>
             <Stack horizontal gap="x4">

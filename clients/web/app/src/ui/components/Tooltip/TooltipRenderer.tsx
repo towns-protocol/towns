@@ -33,7 +33,7 @@ type Props = TooltipOptions & {
     tooltip: React.ReactNode | undefined
 }
 
-type TriggerProps = {
+export type TriggerProps = {
     ref: RefObject<HTMLElement>
     onMouseEnter: () => void
     onMouseLeave: () => void

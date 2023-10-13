@@ -5,6 +5,9 @@ import { ImageVariants, useImageSource } from '@components/UploadImage/useImageS
 import { TownPageMemberList } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2'
 import { Box, Heading, Paragraph, Stack, Text } from '@ui'
 import { AvatarTextHorizontal } from 'ui/components/Avatar/AvatarTextHorizontal'
+import { checkAnyoneCanJoin, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
+import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
+import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 
 type TownPageLayoutProps = {
     contentRight?: React.ReactNode
@@ -18,6 +21,11 @@ type TownPageLayoutProps = {
 
 export const TownPageLayout = (props: TownPageLayoutProps) => {
     const { address, bio, name, networkId, owner } = props
+    const { data: membershipInfo } = useReadableMembershipInfo(networkId)
+
+    const { data: tokensGatingMembership, isLoading: isTokensGatingMembershipLoading } =
+        useTokensGatingMembership(networkId)
+    const anyoneCanJoin = checkAnyoneCanJoin(tokensGatingMembership)
 
     const { imageSrc } = useImageSource(networkId, ImageVariants.thumbnail600)
 
@@ -74,7 +82,65 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                         justifyContent="spaceBetween"
                                         alignContent="center"
                                     >
-                                        <Text size="lg">For Anyone Placeholder</Text>
+                                        {/* requirements */}
+                                        <Box>
+                                            {isTokensGatingMembershipLoading ? (
+                                                'loading'
+                                            ) : anyoneCanJoin ? (
+                                                <Box horizontal centerContent gap="md">
+                                                    For
+                                                    <Text strong display="inline">
+                                                        Anyone
+                                                    </Text>
+                                                </Box>
+                                            ) : (
+                                                <Box horizontal centerContent gap="md">
+                                                    You will Need
+                                                    <Box display="inline-flex" gap="sm">
+                                                        {tokensGatingMembership.tokens.map(
+                                                            (token) => (
+                                                                <FetchedTokenAvatar
+                                                                    noLabel
+                                                                    key={
+                                                                        token.contractAddress as string
+                                                                    }
+                                                                    address={
+                                                                        token.contractAddress as string
+                                                                    }
+                                                                    tokenIds={
+                                                                        token.tokenIds as number[]
+                                                                    }
+                                                                    size="avatar_x4"
+                                                                    labelProps={{
+                                                                        size: 'md',
+                                                                    }}
+                                                                    layoutProps={{
+                                                                        horizontal: true,
+                                                                        maxWidth: 'auto',
+                                                                    }}
+                                                                />
+                                                            ),
+                                                        )}
+                                                    </Box>
+                                                </Box>
+                                            )}
+                                        </Box>
+                                        {/* dot */}
+                                        <Box
+                                            rounded="full"
+                                            display="block"
+                                            alignSelf="center"
+                                            width="x1"
+                                            height="x1"
+                                            background="level4"
+                                        />
+                                        {/* cost */}
+                                        <Box horizontal centerContent gap="md">
+                                            Cost
+                                            <Text strong display="inline">
+                                                {membershipInfo?.price}
+                                            </Text>
+                                        </Box>
                                     </Box>
                                     <Box>
                                         <Paragraph size="lg">{bio}</Paragraph>

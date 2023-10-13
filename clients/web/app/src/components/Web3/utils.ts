@@ -16,3 +16,14 @@ export function createTokenEntitlementStruct({
         tokenIds: tokenIds ?? [],
     }
 }
+
+export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
+export const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+
+export function isEveryoneAddress(address: string): boolean {
+    return address === EVERYONE_ADDRESS
+}
+
+export function isEthAddress(address: string): boolean {
+    return address === ETH_ADDRESS
+}
