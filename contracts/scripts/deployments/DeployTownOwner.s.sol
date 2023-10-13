@@ -30,9 +30,6 @@ import {VotesHelper} from "contracts/test/governance/votes/VotesSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 contract DeployTownOwner is DiamondDeployer {
   DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
   DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
@@ -75,11 +72,6 @@ contract DeployTownOwner is DiamondDeployer {
 
     townOwnerHelper.addSelectors(erc721aHelper.selectors());
     townOwnerHelper.addSelectors(votesHelper.selectors());
-
-    console.log(
-      "townOwnerHelper.selectors",
-      townOwnerHelper.selectors().length
-    );
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](6);
 

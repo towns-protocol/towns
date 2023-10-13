@@ -65,7 +65,19 @@ migrate-base-goerli:;
 
 deploy-base :;
 	@forge build
-	@forge script script/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${PRIVATE_KEY} --broadcast --verify --watch
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${PRIVATE_KEY} --verifier-url ${BASESCAN_URL} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
+
+interact-base :;
+	@forge build
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${PRIVATE_KEY} --broadcast --watch
+
+verify-base :;
+	@forge build
+	@forge verify-contract ${address} ${contract} --verifier-url ${BASESCAN_URL} -e ${BASESCAN_API_KEY}
+
+migrate-base:;
+	@forge build
+	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
 # ===========================
 # 				  Goerli

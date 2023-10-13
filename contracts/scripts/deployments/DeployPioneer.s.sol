@@ -90,7 +90,7 @@ contract DeployPioneer is DiamondDeployer {
       "Pioneer",
       "PIONEER",
       "https://towns.com/",
-      0.1 ether,
+      0.01 ether,
       deployer
     );
 
@@ -113,7 +113,7 @@ contract DeployPioneer is DiamondDeployer {
   ) internal override {
     // send eth to diamond
     vm.broadcast(pk);
-    (bool success, ) = diamond.call{value: 1 ether}("");
+    (bool success, ) = diamond.call{value: 0.1 ether}("");
     require(success, "failed to send eth to diamond");
   }
 }
