@@ -101,6 +101,7 @@ export function isAllowedOrigin(request: Request, env: Environment): boolean {
     switch (env) {
         case 'production':
         case 'development':
+        case 'test-beta':
         case 'test': {
             const origin = request.headers.get('Origin')
             // RFC Origin: https://www.rfc-editor.org/rfc/rfc6454
