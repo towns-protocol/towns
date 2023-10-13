@@ -63,7 +63,7 @@ func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*strea
 	return &streamViewImpl{
 		streamId:      streamId,
 		blocks:        miniblocks,
-		minipool:      newMiniPoolInstance(minipoolEvents, streamData.StartMiniblockNumber+int64(len(miniblocks))),
+		minipool:      newMiniPoolInstance(minipoolEvents, miniblocks[len(miniblocks)-1].header().MiniblockNum+1),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,
 	}, nil
