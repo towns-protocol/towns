@@ -1,6 +1,7 @@
 package storage
 
 import (
+	. "casablanca/node/base"
 	"casablanca/node/testutils/dbtestutils"
 	"context"
 	"os"
@@ -186,6 +187,82 @@ func TestPostgresEventStore(t *testing.T) {
 	if err != nil {
 		t.Fatal("error creating block with snapshot", err)
 	}
+}
+
+func prepareTestDataForAddEventConsistencyCheck(ctx context.Context, streamId string) string {
+	var genesisMiniblock = []byte("genesisMinoblock")
+	_ = pgEventStore.CreateStream(ctx, streamId, genesisMiniblock)
+	_ = pgEventStore.AddEvent(ctx, streamId, 1, 0, []byte("event1"))
+	_ = pgEventStore.AddEvent(ctx, streamId, 1, 1, []byte("event2"))
+	_ = pgEventStore.AddEvent(ctx, streamId, 1, 2, []byte("event3"))
+	return streamId
+}
+
+// Test that if there is an event with wrong generation in minipool, we will get error
+func TestAddEventConsistencyChecksImproperGeneration(t *testing.T) {
+	teardownTest := setupTest()
+	defer teardownTest()
+
+	ctx := context.Background()
+	assert := assert.New(t)
+
+	streamId := "11-0sfdsf_sdfds1"
+
+	prepareTestDataForAddEventConsistencyCheck(ctx, streamId)
+
+	//Corrupt record in minipool
+	_, _ = pgEventStore.pool.Exec(ctx, "UPDATE minipools SET generation = 777 WHERE slot_num = 1")
+	err := pgEventStore.AddEvent(ctx, streamId, 1, 3, []byte("event4"))
+
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "Wrong event generation in minipool")
+	assert.Equal(AsRiverError(err).GetTag("ActualGeneration"), 777)
+	assert.Equal(AsRiverError(err).GetTag("ExpectedGeneration"), 1)
+	assert.Equal(AsRiverError(err).GetTag("SlotNumber"), 1)
+}
+
+// Test that if there is a gap in minipool records, we will get error
+func TestAddEventConsistencyChecksGaps(t *testing.T) {
+	teardownTest := setupTest()
+	defer teardownTest()
+
+	ctx := context.Background()
+	assert := assert.New(t)
+
+	streamId := "11-0sfdsf_sdfds1"
+
+	prepareTestDataForAddEventConsistencyCheck(ctx, streamId)
+
+	//Corrupt record in minipool
+	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM minipools WHERE slot_num = 1")
+	err := pgEventStore.AddEvent(ctx, streamId, 1, 3, []byte("event4"))
+
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "Wrong slot number in minipool")
+	assert.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), 2)
+	assert.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), 1)
+}
+
+// Test that if there is a wrong number minipool records, we will get error
+func TestAddEventConsistencyChecksEventsNumberMismatch(t *testing.T) {
+	teardownTest := setupTest()
+	defer teardownTest()
+
+	ctx := context.Background()
+	assert := assert.New(t)
+
+	streamId := "11-0sfdsf_sdfds1"
+
+	prepareTestDataForAddEventConsistencyCheck(ctx, streamId)
+
+	//Corrupt record in minipool
+	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM minipools WHERE slot_num = 2")
+	err := pgEventStore.AddEvent(ctx, streamId, 1, 3, []byte("event4"))
+
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "Wrong number of records in minipool")
+	assert.Equal(AsRiverError(err).GetTag("ActualRecordsNumber"), 2)
+	assert.Equal(AsRiverError(err).GetTag("ExpectedRecordsNumber"), 3)
 }
 
 func TestNoStream(t *testing.T) {

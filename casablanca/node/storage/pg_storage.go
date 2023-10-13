@@ -191,6 +191,10 @@ func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, mini
 	return nil
 }
 
+// Supported consistency checks:
+// 1. Minipool has proper number of records including service one (equal to minipoolSlot)
+// 2. There are no gaps in seqNums and they start from 0 execpt service record with seqNum = -1
+// 3. All events in minipool have proper generation
 func (s *PostgresEventStore) addEvent(ctx context.Context, streamId string, minipoolGeneration int, minipoolSlot int, envelope []byte) error {
 	defer infra.StoreExecutionTimeMetrics("AddEventMs", time.Now())
 
@@ -208,29 +212,41 @@ func (s *PostgresEventStore) addEvent(ctx context.Context, streamId string, mini
 		return err
 	}
 
-	//query to check number of events in minipool
-	row := tx.QueryRow(ctx, "SELECT COUNT(envelope) as events_count FROM minipools WHERE stream_id = $1", streamId)
-	var events_count int
-	err = row.Scan(&events_count)
+	envelopesRow, err := tx.Query(ctx, "SELECT generation, slot_num FROM minipools WHERE stream_id = $1 ORDER BY slot_num", streamId)
+
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error checking number of events in minipool")
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error retrieving minipool events")
 	}
 
-	if events_count != minipoolSlot {
-		return WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("Missmatch of events number in the minipool")
-	}
+	defer envelopesRow.Close()
 
-	//If minipool is not empty we need to check if all events in minipool have proper generation
-	if events_count > 0 {
-		row = tx.QueryRow(ctx, "SELECT COUNT(envelope) as events_count FROM minipools WHERE generation = $1 AND stream_id = $2", minipoolGeneration, streamId)
-		err = row.Scan(&events_count)
+	var counter int = -1 //counter is set to -1 as we have service record in the first row of minipool table
+
+	for envelopesRow.Next() {
+		var generation int
+		var slotNum int
+		err = envelopesRow.Scan(&generation, &slotNum)
 		if err != nil {
-			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error of query to checking events generation in minipool")
+			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error scanning minipool events")
 		}
+		if generation != minipoolGeneration {
+			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Wrong event generation in minipool").
+				Tag("ExpectedGeneration", minipoolGeneration).Tag("ActualGeneration", generation).
+				Tag("SlotNumber", slotNum)
+		}
+		if slotNum != counter {
+			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Wrong slot number in minipool").
+				Tag("ExpectedSlotNumber", counter).Tag("ActualSlotNumber", slotNum)
+		}
+		//Slots number for envelopes start from 1, so we skip counter equal to zero
+		counter++
+	}
 
-		if events_count != minipoolSlot {
-			return WrapRiverError(Err_MINIBLOCKS_STORAGE_FAILURE, err).Message("Missmatch of minipool generation")
-		}
+	//At this moment counter should be equal to minipoolSlot otherwise it is discrepancy of actual and expected records in minipool
+	//Keep in mind that there is service record with seqNum equal to -1
+	if counter != minipoolSlot {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Wrong number of records in minipool").
+			Tag("ActualRecordsNumber", counter).Tag("ExpectedRecordsNumber", minipoolSlot)
 	}
 
 	//All checks passed - we need to insert event into minipool
