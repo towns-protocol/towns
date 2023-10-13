@@ -24,6 +24,7 @@ export const EmojiPickerContainer = (props: {
     return (
         <Box className={emojiPickerClassName} insetX="xs" paddingTop="lg">
             <Picker
+                autoFocus
                 data={data}
                 previewPosition="none"
                 theme="dark"
