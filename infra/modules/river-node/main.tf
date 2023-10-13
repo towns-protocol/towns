@@ -46,12 +46,21 @@ data "aws_iam_role" "ecs_task_execution_role" {
   name = "ecsTaskExecutionRole"
 }
 
+resource "aws_cloudwatch_log_group" "river_log_group" {
+  name = "/${module.global_constants.environment}/ecs/river/${var.node_name}"
+
+  tags = merge(
+    module.global_constants.tags,
+    {
+      Service_Name = "river-node",
+      Node_Name    = var.node_name
+    }
+  )
+}
+
 resource "aws_ecs_task_definition" "river-fargate" {
   family = "${module.global_constants.environment}-river-fargate"
 
-  lifecycle {
-    ignore_changes = all
-  }
 
   network_mode = "awsvpc"
 
@@ -130,7 +139,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        "awslogs-group"         = var.log_group_name
+        "awslogs-group"         = aws_cloudwatch_log_group.river_log_group.name
         "awslogs-region"        = "us-east-1"
         "awslogs-stream-prefix" = var.node_name
       }

@@ -3,7 +3,10 @@ module "global_constants" {
 }
 
 locals {
-  tags = merge(module.global_constants.tags, { Node_Name = "${var.river_node_name}" })
+  tags = merge(
+    module.global_constants.tags, { 
+      Node_Name = "${var.river_node_name}", 
+    })
 }
 
 resource "random_password" "rds_river_node_postgresql_password" {

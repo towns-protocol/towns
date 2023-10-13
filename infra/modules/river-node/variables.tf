@@ -40,11 +40,6 @@ variable "alb_security_group_id" {
   type        = string
 }
 
-variable "log_group_name" {
-  description = "The name of the log group"
-  type        = string
-}
-
 variable "river_node_blue_target_group_arn" {
   description = "The arn for the blue river node target group"
   type        = string

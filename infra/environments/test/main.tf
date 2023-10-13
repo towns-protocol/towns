@@ -46,17 +46,6 @@ locals {
   river_ecs_cluster_name = "${module.global_constants.environment}-river-ecs-cluster"
 }
 
-resource "aws_cloudwatch_log_group" "river_log_group" {
-  name = "/${module.global_constants.environment}/ecs/river"
-
-  tags = merge(
-    module.global_constants.tags,
-    {
-      "Service_Name" = "river-node"
-    }
-  )
-}
-
 resource "aws_ecs_cluster" "river_ecs_cluster" {
   name = local.river_ecs_cluster_name
 }
@@ -73,8 +62,7 @@ module "river_node" {
 
   depends_on = [
     module.vpc,
-    module.river_alb,
-    aws_cloudwatch_log_group.river_log_group,
+    module.river_alb
   ]
 
   ecs_cluster_id   = aws_ecs_cluster.river_ecs_cluster.id
@@ -83,7 +71,6 @@ module "river_node" {
   node_subnets                   = module.vpc.private_subnets
   vpc_id                         = module.vpc.vpc_id
   node_name                      = "river-1-test"
-  log_group_name                 = aws_cloudwatch_log_group.river_log_group.name
 
   alb_security_group_id             = module.river_alb.security_group_id
   river_https_listener_arn          = module.river_alb.river_https_listener_arn
