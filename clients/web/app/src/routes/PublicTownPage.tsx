@@ -5,7 +5,7 @@ import { isAddress } from 'viem'
 import { Spinner } from '@components/Spinner'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
 import { TownPageMemberList } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2'
-import { Box, BoxProps, Button, Heading, Icon } from '@ui'
+import { Box, BoxProps, Button, Heading, Icon, IconProps, Text } from '@ui'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { BottomBarLayout } from '@components/Web3/MembershipNFT/BottomBar'
@@ -30,10 +30,8 @@ export const PublicTownPage = () => {
     const { data: townBio } = useGetSpaceTopic(spaceSlug)
     const { isConnected, isAuthenticatedAndConnected } = useAuth()
 
-    const { data: meetsMembershipRequirements } = useMeetsMembershipNftRequirements(
-        spaceInfo?.networkId,
-        isConnected,
-    )
+    const { data: meetsMembershipRequirements, isLoading: isLoadingMeetsMembership } =
+        useMeetsMembershipNftRequirements(spaceInfo?.networkId, isConnected)
     const { joinSpace } = useJoinTown(spaceInfo?.networkId)
 
     const onJoinClick = useCallback(async () => {
@@ -58,7 +56,13 @@ export const PublicTownPage = () => {
                     <BottomBarLayout
                         buttonContent={
                             isAuthenticatedAndConnected ? (
-                                meetsMembershipRequirements ? (
+                                isLoadingMeetsMembership ? (
+                                    <MembershipStatusMessage
+                                        spinner
+                                        background="level3"
+                                        message="Checking requirements"
+                                    />
+                                ) : meetsMembershipRequirements ? (
                                     <Button
                                         tone="cta1"
                                         width="100%"
@@ -70,19 +74,11 @@ export const PublicTownPage = () => {
                                         Join {spaceInfo.name}
                                     </Button>
                                 ) : (
-                                    <Box
-                                        horizontal
-                                        centerContent
-                                        gap
-                                        rounded="sm"
+                                    <MembershipStatusMessage
                                         background="error"
-                                        width="100%"
-                                        height="x6"
-                                        padding="lg"
-                                    >
-                                        <Icon type="alert" />{' '}
-                                        {`You don't have the required digital assets to join this town.`}
-                                    </Box>
+                                        icon="alert"
+                                        message={`You don't have the required digital assets to join this town.`}
+                                    />
                                 )
                             ) : (
                                 // shows connect button
@@ -108,6 +104,36 @@ export const PublicTownPage = () => {
             <Icon type="alert" />
             <Heading level={4}>Town not found</Heading>
         </MessageBox>
+    )
+}
+
+function MembershipStatusMessage({
+    background = 'error',
+    message,
+    icon,
+    spinner,
+}: {
+    background?: BoxProps['background']
+    message: string
+    icon?: IconProps['type']
+    spinner?: boolean
+}) {
+    return (
+        <Box
+            horizontal
+            centerContent
+            gap
+            rounded="sm"
+            background={background}
+            width="100%"
+            maxWidth="300"
+            height="x6"
+            padding="lg"
+        >
+            {spinner && <ButtonSpinner />}
+            {icon && <Icon type={icon} />}
+            <Text>{message}</Text>
+        </Box>
     )
 }
 
