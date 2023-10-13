@@ -97,7 +97,7 @@ routes = [
 ]
 vars = { ENVIRONMENT = "staging-beta", SKIP_SIWE = true, CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f" } # [vars] access, not secrets
 services = [
-    { binding = "authz", service = "siwe-worker-staging-beta", environment = "staging" },
+    { binding = "authz", service = "siwe-worker-staging-beta", environment = "production" },
 ]
 # created with wrangler kv:namespace create "USER" --env staging-beta
 # created with wrangler kv:namespace create "SPACE" --env staging-beta
