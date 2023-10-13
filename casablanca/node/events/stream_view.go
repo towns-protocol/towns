@@ -337,7 +337,7 @@ func (r *streamViewImpl) SyncCookie(localNodeAddress string) *SyncCookie {
 	return &SyncCookie{
 		NodeAddress:       localNodeAddress,
 		StreamId:          r.streamId,
-		MinipoolGen:       int64(len(r.blocks)),
+		MinipoolGen:       r.minipool.generation,
 		MinipoolSlot:      int64(r.minipool.events.Len()),
 		PrevMiniblockHash: r.lastBlock().headerEvent.Hash,
 	}
