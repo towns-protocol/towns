@@ -22,8 +22,7 @@ output "tags" {
   value = {
     Managed_By  = "Terraform"
     # If workspace is test, say test-beta
-    Environment = "${terraform.workspace == "test" ? "test-beta" : terraform.workspace}"
-  
+    Environment = "${terraform.workspace == "test" ? "test-beta" : terraform.workspace == "staging" ? "staging-beta" : terraform.workspace}"
   }
   sensitive = true
 }
