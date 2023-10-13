@@ -77,6 +77,7 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 	miniblocks := make([]*miniblockInfo, len(resp.Miniblocks))
 	// +1 below will make it -1 for the first iteration so block number is not enforced.
 	lastMiniblockNumber := -2
+	snapshotIndex := 0
 	for i, binMiniblock := range resp.Miniblocks {
 		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, lastMiniblockNumber+1)
 		if err != nil {
@@ -84,6 +85,9 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 		}
 		lastMiniblockNumber = int(miniblock.header().MiniblockNum)
 		miniblocks[i] = miniblock
+		if miniblock.header().Snapshot != nil {
+			snapshotIndex = i
+		}
 	}
 
 	snapshot := miniblocks[0].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
@@ -110,7 +114,7 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents, lastMiniblockNumber+1),
 		snapshot:      snapshot,
-		snapshotIndex: lastMiniblockNumber,
+		snapshotIndex: snapshotIndex,
 	}, nil
 }
 
