@@ -289,8 +289,7 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 		return err
 	}
 
-	var eventGeneration int = int(s.view.lastBlock().header().MiniblockNum + 1)
-	err = s.params.Storage.AddEvent(ctx, s.streamId, eventGeneration, s.view.minipool.nextSlotNumber(), envelopeBytes)
+	err = s.params.Storage.AddEvent(ctx, s.streamId, s.view.minipool.generation, s.view.minipool.nextSlotNumber(), envelopeBytes)
 	// TODO: for some classes of errors, it's not clear if event was added or not
 	// for those, perhaps entire Stream structure should be scrapped and reloaded
 	if err != nil {
