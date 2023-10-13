@@ -4,19 +4,20 @@ import { Membership } from 'use-zion-client'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { Box, Icon, Paragraph, Text } from '@ui'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { PublicTownPage } from './PublicTownPage'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const ValidateMembership = () => {
     const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
-
+    const initialSyncComplete = useWaitForInitialSync()
     const spaceId = useSpaceIdFromPathname()
 
     if (!spaceId) {
         return <Outlet />
     }
 
-    if (chainSpaceLoading || !chainSpace) {
+    if (chainSpaceLoading || !chainSpace || !initialSyncComplete) {
         return (
             <WelcomeLayout>
                 <Box padding position="bottomRight">

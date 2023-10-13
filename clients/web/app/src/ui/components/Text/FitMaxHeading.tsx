@@ -25,7 +25,9 @@ export const FitMaxHeading = (props: {
     return (
         <>
             <Heading>
-                <Heading style={{ fontSize: `${scale * 100}%` }}>{props.children}</Heading>
+                <Heading as="span" style={{ fontSize: `${scale * 100}%` }}>
+                    {props.children}
+                </Heading>
             </Heading>
             <Box position="absolute" color="gray2" style={{ opacity: 0, height: 0 }}>
                 <Heading ref={ref} style={{ whiteSpace: 'nowrap', display: 'inline' }}>

@@ -10,7 +10,6 @@ import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { BottomBarLayout } from '@components/Web3/MembershipNFT/BottomBar'
 import { PageLogo } from '@components/Logo/Logo'
-import { TownAccessModal } from '@components/TownAccessModal/TownAccessModal'
 import { useAuth } from 'hooks/useAuth'
 import { LoginComponent } from '@components/Login/LoginComponent'
 import { useMeetsMembershipNftRequirements } from 'hooks/useTokensGatingMembership'
@@ -31,10 +30,6 @@ export const PublicTownPage = () => {
     const { data: townBio } = useGetSpaceTopic(spaceSlug)
     const { isConnected, isAuthenticatedAndConnected } = useAuth()
 
-    const [isModalShowing, setIsModalShowing] = React.useState(false)
-    const onHideModal = useCallback(() => {
-        setIsModalShowing(false)
-    }, [])
     const { data: meetsMembershipRequirements } = useMeetsMembershipNftRequirements(
         spaceInfo?.networkId,
         isConnected,
@@ -42,16 +37,10 @@ export const PublicTownPage = () => {
     const { joinSpace } = useJoinTown(spaceInfo?.networkId)
 
     const onJoinClick = useCallback(async () => {
-        // login
-        if (!isAuthenticatedAndConnected) {
-            setIsModalShowing(true)
-            return
-        }
-        // now can join
         setIsJoining(true)
         await joinSpace()
         setIsJoining(false)
-    }, [isAuthenticatedAndConnected, joinSpace])
+    }, [joinSpace])
 
     return spaceInfo ? (
         <>
@@ -68,7 +57,7 @@ export const PublicTownPage = () => {
                 bottomContent={
                     <BottomBarLayout
                         buttonContent={
-                            isConnected ? (
+                            isAuthenticatedAndConnected ? (
                                 meetsMembershipRequirements ? (
                                     <Button
                                         tone="cta1"
@@ -108,7 +97,6 @@ export const PublicTownPage = () => {
                 owner={isAddress(spaceInfo.owner) ? spaceInfo.owner : undefined}
                 bio={townBio}
             />
-            {isModalShowing && <TownAccessModal spaceInfo={spaceInfo} onHide={onHideModal} />}
         </>
     ) : isLoading ? (
         <MessageBox>
