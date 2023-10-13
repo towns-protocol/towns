@@ -1,8 +1,9 @@
+import { useMemo } from 'react'
+import { FullyReadMarker } from '@river/proto'
 import { useTimelineStore } from '../store/use-timeline-store'
-import { FullyReadMarker, ThreadResult, ThreadStats } from '../types/timeline-types'
+import { ThreadResult, ThreadStats } from '../types/timeline-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { useChannels } from './use-channels'
-import { useMemo } from 'react'
 
 export function useSpaceThreadRoots(): ThreadResult[] {
     const channels = useChannels()

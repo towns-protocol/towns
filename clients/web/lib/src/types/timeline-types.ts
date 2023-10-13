@@ -1,8 +1,7 @@
 import { HistoryVisibility, IContent, JoinRule, RestrictedAllowType } from 'matrix-js-sdk'
+import { ChannelOp, FullyReadMarker, MiniblockHeader, PayloadCaseType } from '@river/proto'
 import { Channel, Membership, Mention, PowerLevels } from './zion-types'
-import { RoomIdentifier } from './room-identifier'
 import { BlockchainTransaction } from './web3-types'
-import { ChannelOp, MiniblockHeader, PayloadCaseType } from '@river/proto'
 import { staticAssertNever } from '../utils/zion-utils'
 
 /**************************************************************************
@@ -270,19 +269,6 @@ export type MentionResult = {
     timestamp: number
     event: TimelineEvent
     thread?: TimelineEvent
-}
-
-export interface FullyReadMarker {
-    channelId: RoomIdentifier
-    threadParentId?: string
-    eventId: string
-    eventCreatedAtEpocMs: number
-    isUnread: boolean
-    markedUnreadAtTs: number
-    markedReadAtTs: number
-    mentions: number
-    // possible future extensions
-    // muted: boolean
 }
 
 export interface BlockchainTransactionEvent {

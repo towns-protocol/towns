@@ -107,24 +107,20 @@ message UserMetadataProperties {
     optional string display_name = 2;
 }
 
-
-//value field of a FullyReadMarker message which contains details about 
-//unreads and mentions in the specific channel - related channel_id is set
-//in UserSettingsPayload
-
-message FullyReadMarkerContent {
-    string channel_id = 1;
-    optional string thread_parent_id = 2;
-    string event_id = 3;
-    int64 event_created_at_epoch_ms = 4;
-    bool is_unread = 5;
-    int64 marked_read_at_epoch_ms = 6;
-    int64 marked_unread_at_epoch_ms = 7;
-    optional int32 mentions = 8;
-}
-
-message FullyReadMarkersContent {
-    map<string, FullyReadMarkerContent> markers = 1;
+message FullyReadMarkers {
+    message Content {
+        string channel_id = 1;
+        optional string thread_parent_id = 2;
+        string event_id = 3; // id of the first unread event in the stream
+        int64 event_num = 4; // event number of the first unread event in the stream
+        int64 begin_unread_window = 5; // begining of the unread window, on marking as read, number is set to end+1
+        int64 end_unread_window = 6; // latest event seen by the code
+        bool is_unread = 7;
+        int32 markedReadAtTs = 8; // timestamp when the event was marked as read
+        int32 mentions = 9;
+    }
+    // map of ThreadId to Content
+    map<string, Content> markers = 1;
 }
 
 // value field of a ToDeviceMessage, which is either

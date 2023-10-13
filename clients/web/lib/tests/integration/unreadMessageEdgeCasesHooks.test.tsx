@@ -63,7 +63,7 @@ describe('unreadMessageCountEdgeCases', () => {
             }, [channelFullyReadMarker, sendReadReceipt])
             // format for easy reading
             function formatMessage(e: TimelineEvent) {
-                return `${e.fallbackContent} eventId: ${e.eventId}`
+                return `${e.eventNum} ${e.fallbackContent} eventId: ${e.eventId}`
             }
             return (
                 <>
@@ -117,7 +117,9 @@ describe('unreadMessageCountEdgeCases', () => {
             TestConstants.DecaDefaultWaitForTimeout,
         )
         // check assumptions
-        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('undefined'))
+        await waitFor(() =>
+            expect(channelFullyReadMarker).toHaveTextContent('isUnread:false mentions:0'),
+        )
         // have jane send a message to bob
         await act(() => jane.sendMessage(channelId, 'hello bob'))
         // expect our message to show

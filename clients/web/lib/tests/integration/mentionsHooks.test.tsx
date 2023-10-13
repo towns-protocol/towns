@@ -78,7 +78,14 @@ describe('mentionsHooks', () => {
                         mentions:{channelNotis.mentions.toString()}
                         isUnread:{channelNotis.isUnread.toString()}
                     </div>
-                    <div data-testid="marker">{JSON.stringify(marker, null, 2)}</div>
+                    <div data-testid="marker">
+                        {JSON.stringify(
+                            marker,
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                            (key, value) => (typeof value === 'bigint' ? value.toString() : value),
+                            2,
+                        )}
+                    </div>
                     <div id="allMessages">
                         {timeline.map((event) => event.fallbackContent).join('\n')}
                     </div>

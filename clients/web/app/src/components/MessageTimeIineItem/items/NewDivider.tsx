@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react'
 import { useInView } from 'react-intersection-observer'
-import { FullyReadMarker } from 'use-zion-client'
+import { FullyReadMarker } from '@river/proto'
 import { useStore } from 'store/store'
 import { Box, BoxProps, Paragraph, Stack } from '@ui'
 

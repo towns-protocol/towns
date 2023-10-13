@@ -8,13 +8,13 @@ import React, {
     useState,
 } from 'react'
 import {
-    FullyReadMarker,
     MessageType,
     TimelineEvent,
     ZTEvent,
     useFullyReadMarker,
     useZionClient,
 } from 'use-zion-client'
+import { FullyReadMarker } from '@river/proto'
 import { uniqBy } from 'lodash'
 import { Box, Divider, Paragraph } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'

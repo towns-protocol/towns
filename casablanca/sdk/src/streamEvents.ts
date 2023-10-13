@@ -1,9 +1,4 @@
-import {
-    DeviceKeys,
-    ChannelProperties,
-    FullyReadMarkerContent,
-    SnapshotCaseType,
-} from '@river/proto'
+import { DeviceKeys, ChannelProperties, SnapshotCaseType, FullyReadMarker } from '@river/proto'
 import { ParsedEvent } from './types'
 import { RiverEvent } from './event'
 export type StreamEvents = {
@@ -32,9 +27,9 @@ export type StreamEvents = {
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     channelNewMessage: (channelId: string, message: RiverEvent) => void
     channelTimelineEvent: (channelId: string, spaceId: string, event: ParsedEvent) => void
-    channelUnreadMarkerUpdated: (
+    fullyReadMarkersUpdated: (
         channelId: string,
-        fullyReadMarkers: Record<string, FullyReadMarkerContent>,
+        fullyReadMarkers: Record<string, FullyReadMarker>,
     ) => void
     toDeviceMessage: (streamId: string, event: RiverEvent) => void
     userDeviceKeyMessage: (

@@ -1,6 +1,6 @@
+import { FullyReadMarker } from '@river/proto'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { RoomIdentifier } from '../types/room-identifier'
-import { FullyReadMarker } from '../types/timeline-types'
 
 export function useFullyReadMarker(
     channelId?: RoomIdentifier,

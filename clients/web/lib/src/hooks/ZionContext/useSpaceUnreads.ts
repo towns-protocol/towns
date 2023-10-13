@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
+import { FullyReadMarker } from '@river/proto'
 import { ZionClient } from '../../client/ZionClient'
 import { SpaceHierarchies } from '../../types/zion-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { ThreadStatsMap, useTimelineStore } from '../../store/use-timeline-store'
 import { useSpaceIdStore } from './useSpaceIds'
-import { FullyReadMarker } from 'types/timeline-types'
 import isEqual from 'lodash/isEqual'
 
 export function useSpaceUnreads(
@@ -91,11 +91,11 @@ export function useSpaceUnreads(
                     if (
                         marker.isUnread &&
                         isParticipatingThread(marker, threadsStats) &&
-                        childIds.has(marker.channelId.networkId)
+                        childIds.has(marker.channelId)
                     ) {
                         hasUnread = true
                         mentionCount += marker.mentions
-                        unreadChannelIds.add(marker.channelId.networkId)
+                        unreadChannelIds.add(marker.channelId)
                     }
                 })
 
@@ -119,8 +119,6 @@ const isParticipatingThread = (marker: FullyReadMarker, threadStats: ThreadStats
     if (!marker.threadParentId) {
         return true
     }
-
-    const thread = threadStats[marker.channelId.networkId]?.[marker.threadParentId]
-
+    const thread = threadStats[marker.channelId]?.[marker.threadParentId]
     return thread?.isParticipating
 }

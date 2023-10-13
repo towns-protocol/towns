@@ -1,6 +1,5 @@
 import { firstBy } from 'thenby'
 import {
-    FullyReadMarker,
     Membership,
     RoomCreateEvent,
     RoomMemberEvent,
@@ -10,6 +9,7 @@ import {
     TimelineEvent,
     ZTEvent,
 } from 'use-zion-client'
+import { FullyReadMarker } from '@river/proto'
 import { ExperimentsState } from 'store/experimentsStore'
 
 export enum RenderEventType {

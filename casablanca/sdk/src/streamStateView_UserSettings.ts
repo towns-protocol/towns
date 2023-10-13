@@ -1,7 +1,7 @@
 import {
     EncryptedData,
-    FullyReadMarkerContent,
-    FullyReadMarkersContent,
+    FullyReadMarker,
+    FullyReadMarkers,
     MiniblockHeader,
     Snapshot,
     UserSettingsPayload,
@@ -16,6 +16,7 @@ import { logNever } from './check'
 import { StreamEvents } from './streamEvents'
 import { dlog } from './dlog'
 import { StreamStateView_IContent } from './streamStateView_IContent'
+import { toPlainMessage } from '@bufbuild/protobuf'
 
 const log = dlog('csb:stream')
 
@@ -23,7 +24,7 @@ export class StreamStateView_UserSettings implements StreamStateView_IContent {
     readonly streamId: string
     readonly settings = new Map<string, string>()
     readonly fullyReadMarkersSrc = new Map<string, EncryptedData>()
-    readonly fullyReadMarkers = new Map<string, Record<string, FullyReadMarkerContent>>()
+    readonly fullyReadMarkers = new Map<string, Record<string, FullyReadMarker>>()
 
     constructor(inception: UserSettingsPayload_Inception) {
         this.streamId = inception.streamId
@@ -87,10 +88,13 @@ export class StreamStateView_UserSettings implements StreamStateView_IContent {
             return
         }
         this.fullyReadMarkersSrc.set(payload.channelStreamId, content)
-        const fullyReadMarkersContent = FullyReadMarkersContent.fromJsonString(content.text)
+        const fullyReadMarkersContent = toPlainMessage(
+            FullyReadMarkers.fromJsonString(content.text),
+        )
+
         this.fullyReadMarkers.set(payload.channelStreamId, fullyReadMarkersContent.markers)
         emitter?.emit(
-            'channelUnreadMarkerUpdated',
+            'fullyReadMarkersUpdated',
             payload.channelStreamId,
             fullyReadMarkersContent.markers,
         )

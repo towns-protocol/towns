@@ -12,11 +12,11 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 
-import { FullyReadMarker } from '../../src/types/timeline-types'
 import { Permission } from '@river/web3'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
 import { RoomVisibility } from '../../src/types/zion-types'
+import { FullyReadMarker } from '@river/proto'
 
 // we store fully read markers in the room account data
 // required to show the "new" banner in channels and threads
@@ -58,15 +58,16 @@ describe('roomAccountData', () => {
 
         const fullyRead: Record<string, FullyReadMarker> = {
             [channelId.networkId]: {
-                channelId: channelId,
+                channelId: channelId.networkId,
                 threadParentId: undefined,
                 eventId: event.eventId,
-                eventCreatedAtEpocMs: event.createdAtEpocMs,
+                eventNum: event.eventNum,
+                beginUnreadWindow: event.eventNum - 1n,
+                endUnreadWindow: event.eventNum + 1n,
                 isUnread: false,
                 markedReadAtTs: Date.now(),
-                markedUnreadAtTs: 0,
                 mentions: 0,
-            },
+            } satisfies FullyReadMarker,
         }
 
         await bob.setRoomFullyReadData(channelId, fullyRead)

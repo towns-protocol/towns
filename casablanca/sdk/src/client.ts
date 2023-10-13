@@ -20,14 +20,14 @@ import {
     DeviceKeys,
     UserPayload_ToDevice,
     EncryptedDeviceData,
-    FullyReadMarkerContent,
-    FullyReadMarkersContent,
     ToDeviceMessage,
     EncryptedData,
     GetStreamResponse,
     CreateStreamResponse,
     StreamSettings,
     ChannelMessage_Post_Content_EmbeddedMedia,
+    FullyReadMarkers,
+    FullyReadMarker,
 } from '@river/proto'
 
 import { Crypto, EncryptionTarget } from './crypto/crypto'
@@ -505,7 +505,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     async sendFullyReadMarkers(
         channelId: string,
-        fullyReadMarkers: Record<string, FullyReadMarkerContent>,
+        fullyReadMarkers: Record<string, FullyReadMarker>,
     ) {
         this.logCall('sendFullyReadMarker', fullyReadMarkers)
 
@@ -513,11 +513,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             throw Error('userSettingsStreamId is not defined')
         }
 
-        const fullyReadMarkersContent: FullyReadMarkersContent = new FullyReadMarkersContent()
-
-        for (const [threadRoot, fullyReadMarkerContent] of Object.entries(fullyReadMarkers)) {
-            fullyReadMarkersContent.markers[threadRoot] = fullyReadMarkerContent
-        }
+        const fullyReadMarkersContent: FullyReadMarkers = new FullyReadMarkers({
+            markers: fullyReadMarkers,
+        })
 
         return this.makeEventAndAddToStream(
             this.userSettingsStreamId,

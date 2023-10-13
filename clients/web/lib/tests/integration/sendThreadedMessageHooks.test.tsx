@@ -3,14 +3,15 @@
  * @group dendrite
  * @group casablanca
  */
+import React, { useCallback, useMemo } from 'react'
+import { FullyReadMarker } from '@river/proto'
+import { Permission } from '@river/web3'
 import {
-    FullyReadMarker,
     RoomMessageEvent,
     ThreadResult,
     ThreadStats,
     TimelineEvent,
 } from '../../src/types/timeline-types'
-import React, { useCallback, useMemo } from 'react'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import {
     createTestChannelWithSpaceRoles,
@@ -18,9 +19,7 @@ import {
     makeUniqueName,
     registerAndStartClients,
 } from './helpers/TestUtils'
-
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { Permission } from '@river/web3'
 import { RegisterAndJoin } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
@@ -180,9 +179,17 @@ describe('sendThreadedMessageHooks', () => {
                         started: prev.started + 1,
                     }))
 
-                    await sendReadReceipt(channel_1_fullyRead!)
-                    await sendReadReceipt(channel_2_fullyRead!)
-                    await sendReadReceipt(channel_2_thread_fullyRead!)
+                    if (
+                        !channel_1_fullyRead ||
+                        !channel_2_fullyRead ||
+                        !channel_2_thread_fullyRead
+                    ) {
+                        throw new Error('undefined fullyReadMarker')
+                    }
+
+                    await sendReadReceipt(channel_1_fullyRead)
+                    await sendReadReceipt(channel_2_fullyRead)
+                    await sendReadReceipt(channel_2_thread_fullyRead)
 
                     setUnreadInProgress((prev) => ({
                         ...prev,
@@ -221,9 +228,10 @@ describe('sendThreadedMessageHooks', () => {
                 (e: TimelineEvent, v?: 'short') => {
                     const replyCount = channelThreadStats[e.eventId]?.replyCount
                     const replyCountStr = replyCount ? `(replyCount:${replyCount})` : ''
-                    const idStr = `id:${e.eventId}`
+                    const idxStr = `#${e.eventNum}`
+                    const idStr = `id: ${e.eventId}`
                     const content = v !== undefined ? '' : `content: ${JSON.stringify(e.content)}`
-                    return `${e.fallbackContent} ${replyCountStr} ${idStr} ${content}`
+                    return `${idxStr} ${e.fallbackContent} ${replyCountStr} ${idStr} ${content}`
                 },
                 [channelThreadStats],
             )
@@ -234,9 +242,9 @@ describe('sendThreadedMessageHooks', () => {
             const formatFullyReadMarker = useCallback((m?: FullyReadMarker) => {
                 return m === undefined
                     ? 'undefined'
-                    : `isUnread:${m.isUnread.toString()} eventId:${
-                          m.eventId
-                      } mentions:${m.mentions.toString()}`
+                    : `isUnread:${m.isUnread.toString()} eventId: ${m.eventId} mentions:${
+                          m.mentions
+                      }`
             }, [])
 
             const threadRootsContent = useMemo(
@@ -248,9 +256,15 @@ describe('sendThreadedMessageHooks', () => {
                 <>
                     <RegisterAndJoin spaceId={spaceId} channelIds={[channel_1, channel_2]} />
                     <button onClick={sendInitialMessages}>sendInitialMessages</button>
-
                     <button onClick={editChannel2Message1}>editChannel2Message1</button>
                     <button onClick={markAllAsRead}>markAllAsRead</button>
+                    <div data-testid="info">
+                        {JSON.stringify({
+                            channel_1: channel_1.networkId,
+                            channel_2: channel_2.networkId,
+                            spaceId: spaceId.networkId,
+                        })}
+                    </div>
                     <div data-testid="spaceNotifications">
                         {`isUnread:${spaceNotifications.isUnread.toString()} mentions:${
                             spaceNotifications.mentions
@@ -272,18 +286,17 @@ describe('sendThreadedMessageHooks', () => {
                             : undefined}
                     </div>
                     <div data-testid="channel2ThreadMessages">
-                        {channel_2_thread?.messages
-                            ?.map((e, i) => `message-${i}: ${formatMessage(e)}`)
-                            .join('\n') ?? ''}
+                        {channel_2_thread?.messages?.map((e) => `${formatMessage(e)}`).join('\n') ??
+                            ''}
                     </div>
                     <div data-testid="channelMessages">
                         {channelTimeline
-                            .map((event, i) => `message-${i} ${formatMessage(event, 'short')}`)
+                            .map((event) => `${formatMessage(event, 'short')}`)
                             .join('\n')}
                     </div>
                     <div data-testid="channel_2_messages">
                         {channel_2_timeline
-                            .map((event, i) => `message-${i} ${formatMessage(event, 'short')}`)
+                            .map((event) => `${formatMessage(event, 'short')}`)
                             .join('\n')}
                     </div>
                     <div data-testid="channelThreadStats">
@@ -456,10 +469,10 @@ describe('sendThreadedMessageHooks', () => {
             })
         })
         // do we see mentions?
-        await waitFor(() => expect(spaceNotifications).toHaveTextContent('mentions:3'))
         await waitFor(() => expect(channel_1_fullyRead).toHaveTextContent('mentions:1'))
         await waitFor(() => expect(channel_2_fullyRead).toHaveTextContent('mentions:1'))
         await waitFor(() => expect(channel_2_thread_fullyRead).toHaveTextContent('mentions:1'))
+        await waitFor(() => expect(spaceNotifications).toHaveTextContent('mentions:3'))
         // -- and the message
         await waitFor(() => expect(channel2ThreadMessages).toHaveTextContent('whats up bob!'))
         // - bob marks the thread markers as read

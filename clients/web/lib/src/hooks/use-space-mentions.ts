@@ -34,10 +34,7 @@ export function useSpaceMentions(): MentionResult[] {
                         type: 'mention' as const,
                         unread:
                             fullyReadMarker?.isUnread === true &&
-                            // aellis 11.2022, not sure if we can acutately compare these two dates
-                            // one comes from the server, the other the client. If it's buggy, it should be possible to
-                            // grab the createdAtEpocMs on the last marked read event and compare that
-                            event.createdAtEpocMs > fullyReadMarker.markedReadAtTs,
+                            event.eventNum >= fullyReadMarker.eventNum,
                         channel,
                         timestamp: event.createdAtEpocMs,
                         event,

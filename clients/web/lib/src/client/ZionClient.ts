@@ -1,9 +1,5 @@
 import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 'ethers'
-import {
-    BlockchainTransactionEvent,
-    FullyReadMarker,
-    RoomMessageEvent,
-} from '../types/timeline-types'
+import { BlockchainTransactionEvent, RoomMessageEvent } from '../types/timeline-types'
 import {
     Client as CasablancaClient,
     RiverDbManager,
@@ -14,6 +10,7 @@ import {
     userIdFromAddress,
     isUserPayload_ToDevicePlainMessage,
 } from '@river/sdk'
+import { FullyReadMarker } from '@river/proto'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -73,7 +70,6 @@ import { staticAssertNever } from '../utils/zion-utils'
 import { MatrixSpaceHierarchy } from './matrix/SyncSpace'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
-import { sendFullyReadMarkers } from './casablanca/SendFullyReadMarkers'
 import { RiverDecryptionExtension } from './casablanca/RiverDecryptionExtensions'
 import { isToDevicePlainMessage } from '@river/sdk'
 import { RoleIdentifier } from '../types/web3-types'
@@ -1322,13 +1318,13 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * setRoomFullyReadData
      ************************************************/
     public async setRoomFullyReadData(
-        roomId: RoomIdentifier,
+        channelId: RoomIdentifier,
         content: Record<string, FullyReadMarker>,
     ) {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client is undefined')
         }
-        await sendFullyReadMarkers(this.casablancaClient, roomId.networkId, content)
+        await this.casablancaClient.sendFullyReadMarkers(channelId.networkId, content)
     }
 
     private getAllChannelMembershipsFromSpace(roomId: RoomIdentifier): Record<string, Membership> {

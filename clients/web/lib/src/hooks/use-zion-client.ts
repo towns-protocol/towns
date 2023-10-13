@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/unbound-method */
-
+import { useMemo, useCallback } from 'react'
+import { FullyReadMarker } from '@river/proto'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -19,9 +20,7 @@ import {
     UpdateChannelInfo,
 } from '../types/zion-types'
 import { MatrixError, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
-import { useMemo, useCallback } from 'react'
-
-import { FullyReadMarker, RoomMessageEvent } from '../types/timeline-types'
+import { RoomMessageEvent } from '../types/timeline-types'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
 import { RoomIdentifier } from '../types/room-identifier'
 import { ZionClient } from '../client/ZionClient'

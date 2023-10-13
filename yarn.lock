@@ -13891,6 +13891,7 @@ __metadata:
     "@ngneat/falso": ^6.1.0
     "@rainbow-me/rainbowkit": ^1.0.4
     "@react-hook/resize-observer": ^1.2.6
+    "@river/proto": "workspace:^"
     "@river/web3": "workspace:^"
     "@sentry/cli": ^2.18.1
     "@sentry/react": ^7.54.0
