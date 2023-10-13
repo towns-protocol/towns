@@ -28,6 +28,7 @@ import { AvatarTextHorizontal } from 'ui/components/Avatar/AvatarTextHorizontal'
 import { shortAddress } from 'ui/utils/utils'
 import { FadeInBox } from '@components/Transitions'
 import { TEMPORARY_SPACE_ICON_URL } from '@components/Web3/CreateSpaceForm/constants'
+import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
@@ -45,16 +46,6 @@ export function CreateSpaceFormV2() {
         isTransacting: false,
         townAddress: undefined,
     })
-
-    const members: Member[] = [
-        {
-            address: loggedInWalletAddress,
-            displayName,
-        },
-        ...Array.from({ length: 19 }).map(() => ({
-            address: undefined,
-        })),
-    ]
 
     const [panelType, setPanelType] = useState<PanelType | undefined>()
 
@@ -93,11 +84,14 @@ export function CreateSpaceFormV2() {
                 {(hookForm) => {
                     const _form = hookForm as unknown as UseFormReturn<CreateSpaceFormV2SchemaType>
 
-                    const [spaceNameValue, price, limit] = _form.watch([
-                        'spaceName',
-                        'membershipCost',
-                        'membershipLimit',
-                    ])
+                    const [spaceNameValue, price, limit, tokensGatingMembership, membershipType] =
+                        _form.watch([
+                            'spaceName',
+                            'membershipCost',
+                            'membershipLimit',
+                            'tokensGatingMembership',
+                            'membershipType',
+                        ])
 
                     if (spaceNameValue && !hasReached2Chars.current && spaceNameValue.length > 1) {
                         hasReached2Chars.current = true
@@ -119,21 +113,18 @@ export function CreateSpaceFormV2() {
                         <FormProvider {..._form}>
                             <Stack grow>
                                 {/* columns */}
-                                <Stack grow centerContent paddingX="lg" width="100%">
+                                <Stack grow alignItems="center" paddingX="lg" width="100%">
                                     <Stack
                                         horizontal
+                                        grow
                                         position="relative"
                                         width="100%"
                                         maxWidth="1200"
+                                        paddingTop="x16"
                                     >
-                                        {/* form col */}
+                                        {/* left col */}
                                         <Stack grow>
                                             <Stack>
-                                                <Stack display="block">
-                                                    <TownPageBackgroundImageUpdater
-                                                        transactionDetails={transactionDetails}
-                                                    />
-                                                </Stack>
                                                 <Stack paddingY="x4" gap="sm">
                                                     <TextField
                                                         paddingY="none"
@@ -146,6 +137,7 @@ export function CreateSpaceFormV2() {
                                                         placeholder="town name"
                                                         maxWidth="500"
                                                         tone="none"
+                                                        autoComplete="one-time-code"
                                                         {..._form.register('spaceName')}
                                                     />
                                                     {_form.formState.errors['spaceName'] &&
@@ -185,11 +177,42 @@ export function CreateSpaceFormV2() {
                                                             setPanelType(PanelType.gating)
                                                         }}
                                                     >
-                                                        <>
+                                                        {membershipType === 'tokenHolders' ? (
+                                                            tokensGatingMembership.length === 0 ? (
+                                                                <Text strong size="lg">
+                                                                    Select a token...
+                                                                </Text>
+                                                            ) : (
+                                                                tokensGatingMembership.map(
+                                                                    (token) => (
+                                                                        <FetchedTokenAvatar
+                                                                            noLabel
+                                                                            key={
+                                                                                token.contractAddress as string
+                                                                            }
+                                                                            address={
+                                                                                token.contractAddress as string
+                                                                            }
+                                                                            tokenIds={
+                                                                                token.tokenIds as number[]
+                                                                            }
+                                                                            size="avatar_x4"
+                                                                            labelProps={{
+                                                                                size: 'md',
+                                                                            }}
+                                                                            layoutProps={{
+                                                                                horizontal: true,
+                                                                                maxWidth: 'auto',
+                                                                            }}
+                                                                        />
+                                                                    ),
+                                                                )
+                                                            )
+                                                        ) : (
                                                             <Text strong size="lg">
                                                                 Anyone
                                                             </Text>
-                                                        </>
+                                                        )}
                                                     </FormFieldEdit>
 
                                                     <FormFieldEdit
@@ -226,14 +249,19 @@ export function CreateSpaceFormV2() {
                                             </Stack>
                                         </Stack>
 
-                                        {/* member col */}
+                                        {/* right col */}
 
                                         <MotionStack
+                                            paddingTop="x4"
                                             animate={{
                                                 opacity: panelType === undefined ? 1 : 0,
                                             }}
                                         >
-                                            <TownPageMemberList members={members} />
+                                            <Stack display="block">
+                                                <TownPageBackgroundImageUpdater
+                                                    transactionDetails={transactionDetails}
+                                                />
+                                            </Stack>
                                         </MotionStack>
                                     </Stack>
                                 </Stack>

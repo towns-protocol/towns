@@ -316,7 +316,7 @@ export function CustomTokenWrapper({
             <TokenListItem
                 data={{
                     contractAddress: address,
-                    label: address,
+                    label: 'Add Token',
                     imgSrc: '',
                     id: address,
                     type,

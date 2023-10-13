@@ -129,7 +129,7 @@ function GatingContent() {
                             <TokensList
                                 wallet={wallet}
                                 showTokenList={isTokenHolders}
-                                initialItems={[]}
+                                initialItems={formProps.getValues('tokensGatingMembership')}
                                 onUpdate={(tokens) =>
                                     onSelectedTokensUpdate(tokens, formProps.setValue)
                                 }

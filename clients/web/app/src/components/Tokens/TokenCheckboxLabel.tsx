@@ -1,5 +1,5 @@
 import React from 'react'
-import { RoleDetails, RoomIdentifier } from 'use-zion-client'
+import { RoleDetails } from 'use-zion-client'
 import { BigNumber } from 'ethers'
 import { Box } from '@ui'
 import { FetchedTokenAvatar } from './FetchedTokenAvatar'
@@ -7,7 +7,6 @@ import { FetchedTokenAvatar } from './FetchedTokenAvatar'
 type Tokens = RoleDetails['tokens']
 
 export function TokenCheckboxLabel(props: {
-    spaceId: RoomIdentifier
     tokens: Tokens | undefined
     label: string
 }): JSX.Element {

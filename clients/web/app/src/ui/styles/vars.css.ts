@@ -105,6 +105,7 @@ const root = createGlobalTheme(':root', {
         x4: `${baseline * 4}px`, // old lg
 
         x8: `${baseline * 8}px`,
+        x16: `${baseline * 16}px`,
         // suited for text spacing
         paragraph: `${baseline * 1.5}px`, // m
         line: `${baseline * 0.75}px`,

@@ -234,7 +234,6 @@ export const CreateChannelForm = (props: Props) => {
                                             label={
                                                 <TokenCheckboxLabel
                                                     label={role.name}
-                                                    spaceId={props.spaceId}
                                                     tokens={role.tokens}
                                                 />
                                             }

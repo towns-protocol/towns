@@ -57,13 +57,7 @@ function RoleDetailsComponent(props: {
             <Checkbox
                 width="100%"
                 name={FormStateKeys.roleIds}
-                label={
-                    <TokenCheckboxLabel
-                        label={props.role.name}
-                        spaceId={props.spaceId}
-                        tokens={props.role.tokens}
-                    />
-                }
+                label={<TokenCheckboxLabel label={props.role.name} tokens={props.role.tokens} />}
                 value={props.role.id.toString()}
                 register={props.register}
             />

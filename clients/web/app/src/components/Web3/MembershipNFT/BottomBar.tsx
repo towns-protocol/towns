@@ -58,7 +58,7 @@ export function BottomBar({
                         {panelStatus && transactionUIState ? (
                             <MotionStack
                                 width="100%"
-                                maxWidth="500"
+                                maxWidth="300"
                                 position="absolute"
                                 animate={{
                                     left: panelStatus === 'open' ? '0px' : 'unset',
