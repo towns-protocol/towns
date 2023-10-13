@@ -577,19 +577,27 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         )
 
         // sort eligaile members to prioritize senders of decryption failures
-        const requesteeId = eligibleMemberIds
-            .sort((a, b) => {
-                if (decryptionFailureSenders.has(a)) {
-                    return -1
-                }
-                if (decryptionFailureSenders.has(b)) {
-                    return 1
-                }
-                return 0
-            })
-            .find(async (memberId) => (await this.client.getStoredDevicesForUser(memberId))?.size)
+        const sortedMembers = eligibleMemberIds.sort((a, b) => {
+            if (decryptionFailureSenders.has(a)) {
+                return -1
+            }
+            if (decryptionFailureSenders.has(b)) {
+                return 1
+            }
+            return 0
+        })
 
-        if (!requesteeId) {
+        const { memberId: requesteeId, deviceMap: requesteeDeviceMap } =
+            (
+                await Promise.all(
+                    sortedMembers.map(async (memberId) => ({
+                        memberId,
+                        deviceMap: await this.client.getStoredDevicesForUser(memberId),
+                    })),
+                )
+            )?.find(({ deviceMap }) => deviceMap.size) ?? {}
+
+        if (!requesteeId || !requesteeDeviceMap) {
             console.log('CDE::_startLookingForKeys - no eligible members with devices', {
                 channelId,
             })
@@ -614,7 +622,7 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
 
         // Get the users devices,
         // todo: we should figure out which devices are online
-        const devicesMap = await this.client.getStoredDevicesForUser(requesteeId)
+        const devicesMap = requesteeDeviceMap
         if (!devicesMap.size) {
             throw new Error('error, we filtered for devices but none found')
         }
