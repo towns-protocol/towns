@@ -1071,7 +1071,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 return this.joinRoom(spaceId)
             }
         } catch (error) {
-            const decodeError = await this.getDecodedErrorForSpace(spaceId.networkId, error)
+            const decodeError = this.getDecodedErrorForSpaceFactory(spaceId.networkId)
             console.error('[mintMembershipAndJoinRoom] failed', decodeError)
             throw decodeError
         }
