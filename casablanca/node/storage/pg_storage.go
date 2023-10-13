@@ -127,7 +127,7 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, stre
 	var result GetStreamFromLastSnapshotResult
 
 	//first let's check what is the last block with snapshot
-	var latest_snapshot_miniblock_index int
+	var latest_snapshot_miniblock_index int64
 	err = tx.
 		QueryRow(ctx, "SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1", streamId).
 		Scan(&latest_snapshot_miniblock_index)
@@ -152,8 +152,8 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, stre
 	var miniblocks [][]byte
 
 	//During scanning rows we also check that there are no gaps in miniblocks sequence and it starts from latestsnaphot
-	var counter int = 0
-	var seqNum int
+	var counter int64 = 0
+	var seqNum int64
 
 	for miniblocksRow.Next() {
 		var blockdata []byte
@@ -183,13 +183,13 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, stre
 	defer rows.Close()
 
 	var envelopes [][]byte
-	var slotNumsCounter int = 0
+	var slotNumsCounter int64 = 0
 
 	//Let's check during scan that slot_nums start from 0 and there are no gaps and that each generation is equal to maxSeqNumInMiniblocksTable+1
 	for rows.Next() {
 		var envelope []byte
-		var generation int
-		var slotNum int
+		var generation int64
+		var slotNum int64
 		err = rows.Scan(&envelope, &generation, &slotNum)
 		if err != nil {
 			return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("error scanning minipool events")
@@ -223,7 +223,7 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, stre
 // Adds event to the given minipool.
 // Current generation of minipool should match minipoolGeneration,
 // and there should be exactly minipoolSlot events in the minipool.
-func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, minipoolGeneration int, minipoolSlot int, envelope []byte) error {
+func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, minipoolGeneration int64, minipoolSlot int, envelope []byte) error {
 	err := s.addEvent(ctx, streamId, minipoolGeneration, minipoolSlot, envelope)
 	if err != nil {
 		return s.enrichErrorWithNodeInfo(AsRiverError(err).Func("pg.AddEvent").Tag("streamId", streamId).Tag("minipoolGeneration", minipoolGeneration).Tag("minipoolSlot", minipoolSlot))
@@ -235,7 +235,7 @@ func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, mini
 // 1. Minipool has proper number of records including service one (equal to minipoolSlot)
 // 2. There are no gaps in seqNums and they start from 0 execpt service record with seqNum = -1
 // 3. All events in minipool have proper generation
-func (s *PostgresEventStore) addEvent(ctx context.Context, streamId string, minipoolGeneration int, minipoolSlot int, envelope []byte) error {
+func (s *PostgresEventStore) addEvent(ctx context.Context, streamId string, minipoolGeneration int64, minipoolSlot int, envelope []byte) error {
 	defer infra.StoreExecutionTimeMetrics("AddEventMs", time.Now())
 
 	// Start transaction for making checks of minipool generation and slot
@@ -263,7 +263,7 @@ func (s *PostgresEventStore) addEvent(ctx context.Context, streamId string, mini
 	var counter int = -1 //counter is set to -1 as we have service record in the first row of minipool table
 
 	for envelopesRow.Next() {
-		var generation int
+		var generation int64
 		var slotNum int
 		err = envelopesRow.Scan(&generation, &slotNum)
 		if err != nil {
@@ -347,7 +347,7 @@ func (s *PostgresEventStore) GetMiniblocks(ctx context.Context, streamId string,
 func (s *PostgresEventStore) CreateBlock(
 	ctx context.Context,
 	streamId string,
-	minipoolGeneration int,
+	minipoolGeneration int64,
 	minipoolSize int,
 	miniblock []byte,
 	snapshotMiniblock bool,
@@ -365,7 +365,7 @@ func (s *PostgresEventStore) CreateBlock(
 func (s *PostgresEventStore) createBlock(
 	ctx context.Context,
 	streamId string,
-	minipoolGeneration int,
+	minipoolGeneration int64,
 	minipoolSize int,
 	miniblock []byte,
 	snapshotMiniblock bool,
@@ -388,7 +388,7 @@ func (s *PostgresEventStore) createBlock(
 	//check if stream has minipoolGeneration miniblocks. We return -100 if there are no streams with such id - it is a hack to address missing streams
 	row := tx.QueryRow(ctx, "SELECT COALESCE(MAX(seq_num), -100) as latest_blocks_number FROM miniblocks WHERE stream_id = $1", streamId)
 
-	var latest_blocks_number int
+	var latest_blocks_number int64
 	err = row.Scan(&latest_blocks_number)
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Block creation selecting max seq_num error")

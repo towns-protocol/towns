@@ -8,10 +8,10 @@ type eventMap = *OrderedMap[string, *ParsedEvent]
 
 type minipoolInstance struct {
 	events     eventMap
-	generation int
+	generation int64
 }
 
-func newMiniPoolInstance(events eventMap, generation int) *minipoolInstance {
+func newMiniPoolInstance(events eventMap, generation int64) *minipoolInstance {
 	return &minipoolInstance{
 		events:     events,
 		generation: generation,

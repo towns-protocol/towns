@@ -216,8 +216,8 @@ func TestAddEventConsistencyChecksImproperGeneration(t *testing.T) {
 
 	assert.NotNil(err)
 	assert.Contains(err.Error(), "Wrong event generation in minipool")
-	assert.Equal(AsRiverError(err).GetTag("ActualGeneration"), 777)
-	assert.Equal(AsRiverError(err).GetTag("ExpectedGeneration"), 1)
+	assert.Equal(AsRiverError(err).GetTag("ActualGeneration"), int64(777))
+	assert.Equal(AsRiverError(err).GetTag("ExpectedGeneration"), int64(1))
 	assert.Equal(AsRiverError(err).GetTag("SlotNumber"), 1)
 }
 
@@ -318,8 +318,8 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 
 	assert.NotNil(err)
 	assert.Contains(err.Error(), "Miniblocks consistency violation - wrong block sequence number")
-	assert.Equal(AsRiverError(err).GetTag("ActualSeqNum"), 3)
-	assert.Equal(AsRiverError(err).GetTag("ExpectedSeqNum"), 2)
+	assert.Equal(AsRiverError(err).GetTag("ActualSeqNum"), int64(3))
+	assert.Equal(AsRiverError(err).GetTag("ExpectedSeqNum"), int64(2))
 }
 
 func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *testing.T) {
@@ -350,8 +350,8 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 
 	assert.NotNil(err)
 	assert.Contains(err.Error(), "Minipool consistency violation - wrong event generation")
-	assert.Equal(AsRiverError(err).GetTag("ActualGeneration"), 777)
-	assert.Equal(AsRiverError(err).GetTag("ExpectedGeneration"), 1)
+	assert.Equal(AsRiverError(err).GetTag("ActualGeneration"), int64(777))
+	assert.Equal(AsRiverError(err).GetTag("ExpectedGeneration"), int64(1))
 }
 
 func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing.T) {
@@ -383,8 +383,8 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 
 	assert.NotNil(err)
 	assert.Contains(err.Error(), "Minipool consistency violation - slotNums are not sequential")
-	assert.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), 1)
-	assert.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), 0)
+	assert.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), int64(1))
+	assert.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), int64(0))
 }
 
 func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testing.T) {
@@ -417,8 +417,8 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 
 	assert.NotNil(err)
 	assert.Contains(err.Error(), "Minipool consistency violation - slotNums are not sequential")
-	assert.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), 2)
-	assert.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), 1)
+	assert.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), int64(2))
+	assert.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), int64(1))
 }
 
 func TestGetMiniblocksConsistencyChecks(t *testing.T) {

@@ -42,7 +42,7 @@ func (m *memStorage) GetStreamFromLastSnapshot(ctx context.Context, streamId str
 		return nil, RiverError(Err_NOT_FOUND, "Stream not found")
 	}
 	return &GetStreamFromLastSnapshotResult{
-		StartMiniblockNumber: stream.lastSnapshotIndex,
+		StartMiniblockNumber: int64(stream.lastSnapshotIndex), // mem_storage, has all blocks in memory
 		Miniblocks:           stream.miniblocks[stream.lastSnapshotIndex:],
 		MinipoolEnvelopes:    stream.minipool,
 	}, nil
@@ -62,7 +62,7 @@ func (m *memStorage) GetMiniblocks(ctx context.Context, streamId string, fromInd
 	return stream.miniblocks[fromIndex:toIndex], nil
 }
 
-func (m *memStorage) AddEvent(ctx context.Context, streamId string, minipoolGeneration int, minipoolSlot int, envelope []byte) error {
+func (m *memStorage) AddEvent(ctx context.Context, streamId string, minipoolGeneration int64, minipoolSlot int, envelope []byte) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -70,7 +70,7 @@ func (m *memStorage) AddEvent(ctx context.Context, streamId string, minipoolGene
 	if !ok {
 		return RiverError(Err_NOT_FOUND, "Stream not found")
 	}
-	if minipoolGeneration != len(stream.miniblocks) {
+	if minipoolGeneration != int64(len(stream.miniblocks)) { // mem_storage has app blocks in memory
 		return RiverError(Err_BAD_BLOCK_NUMBER, "Invalid minipool generation")
 	}
 	if minipoolSlot != len(stream.minipool) {
@@ -83,7 +83,7 @@ func (m *memStorage) AddEvent(ctx context.Context, streamId string, minipoolGene
 func (m *memStorage) CreateBlock(
 	ctx context.Context,
 	streamId string,
-	minipoolGeneration int,
+	minipoolGeneration int64,
 	minipoolSize int,
 	miniblock []byte,
 	snapshotMiniblock bool,
@@ -96,7 +96,7 @@ func (m *memStorage) CreateBlock(
 	if !ok {
 		return RiverError(Err_NOT_FOUND, "Stream not found")
 	}
-	if minipoolGeneration != len(stream.miniblocks) {
+	if minipoolGeneration != int64(len(stream.miniblocks)) {
 		return RiverError(Err_BAD_BLOCK_NUMBER, "Invalid minipool generation")
 	}
 	if minipoolSize != len(stream.minipool) {
@@ -105,7 +105,7 @@ func (m *memStorage) CreateBlock(
 	stream.miniblocks = append(stream.miniblocks, miniblock)
 	stream.minipool = envelopes
 	if snapshotMiniblock {
-		stream.lastSnapshotIndex = minipoolGeneration
+		stream.lastSnapshotIndex = len(stream.miniblocks) - 1
 	}
 	return nil
 }

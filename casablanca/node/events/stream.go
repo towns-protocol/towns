@@ -242,14 +242,14 @@ func (s *streamImpl) GetMiniblocks(ctx context.Context, fromIndex int, toIndex i
 	}
 
 	miniblocks := make([]*Miniblock, len(blocks))
-	startMiniblockNumber := -1
+	startMiniblockNumber := int64(-1)
 	for i, binMiniblock := range blocks {
-		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, startMiniblockNumber+i)
+		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, startMiniblockNumber+int64(i))
 		if err != nil {
 			return nil, false, err
 		}
 		if i == 0 {
-			startMiniblockNumber = int(miniblock.header().MiniblockNum)
+			startMiniblockNumber = miniblock.header().MiniblockNum
 		}
 		miniblocks[i] = miniblock.proto
 	}

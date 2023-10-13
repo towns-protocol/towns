@@ -119,7 +119,7 @@ func (b *miniblockInfo) forEachEvent(op func(e *ParsedEvent) (bool, error)) erro
 	return nil
 }
 
-func NewMiniblockInfoFromBytes(bytes []byte, expectedBlockNumber int) (*miniblockInfo, error) {
+func NewMiniblockInfoFromBytes(bytes []byte, expectedBlockNumber int64) (*miniblockInfo, error) {
 	var pb Miniblock
 	err := proto.Unmarshal(bytes, &pb)
 	if err != nil {
@@ -129,7 +129,7 @@ func NewMiniblockInfoFromBytes(bytes []byte, expectedBlockNumber int) (*minibloc
 	return NewMiniblockInfoFromProto(&pb, expectedBlockNumber)
 }
 
-func NewMiniblockInfoFromProto(pb *Miniblock, expectedBlockNumber int) (*miniblockInfo, error) {
+func NewMiniblockInfoFromProto(pb *Miniblock, expectedBlockNumber int64) (*miniblockInfo, error) {
 	headerEvent, err := ParseEvent(pb.Header)
 	if err != nil {
 		return nil, err

@@ -29,7 +29,7 @@ func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*strea
 
 	miniblocks := make([]*miniblockInfo, len(streamData.Miniblocks))
 	for i, binMiniblock := range streamData.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, streamData.StartMiniblockNumber+i)
+		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, streamData.StartMiniblockNumber+int64(i))
 		if err != nil {
 			return nil, err
 		}
@@ -63,7 +63,7 @@ func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*strea
 	return &streamViewImpl{
 		streamId:      streamId,
 		blocks:        miniblocks,
-		minipool:      newMiniPoolInstance(minipoolEvents, streamData.StartMiniblockNumber+len(miniblocks)),
+		minipool:      newMiniPoolInstance(minipoolEvents, streamData.StartMiniblockNumber+int64(len(miniblocks))),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,
 	}, nil
@@ -76,14 +76,14 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 
 	miniblocks := make([]*miniblockInfo, len(resp.Miniblocks))
 	// +1 below will make it -1 for the first iteration so block number is not enforced.
-	lastMiniblockNumber := -2
+	lastMiniblockNumber := int64(-2)
 	snapshotIndex := 0
 	for i, binMiniblock := range resp.Miniblocks {
 		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, lastMiniblockNumber+1)
 		if err != nil {
 			return nil, err
 		}
-		lastMiniblockNumber = int(miniblock.header().MiniblockNum)
+		lastMiniblockNumber = miniblock.header().MiniblockNum
 		miniblocks[i] = miniblock
 		if miniblock.header().Snapshot != nil {
 			snapshotIndex = i
@@ -247,7 +247,7 @@ func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamVie
 	return &streamViewImpl{
 		streamId:      r.streamId,
 		blocks:        append(r.blocks, miniblock),
-		minipool:      newMiniPoolInstance(minipoolEvents, int(header.MiniblockNum)+1),
+		minipool:      newMiniPoolInstance(minipoolEvents, header.MiniblockNum+1),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,
 	}, nil

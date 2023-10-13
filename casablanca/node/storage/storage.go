@@ -7,7 +7,7 @@ type ErrNotFound struct {
 }
 
 type GetStreamFromLastSnapshotResult struct {
-	StartMiniblockNumber int
+	StartMiniblockNumber int64
 	Miniblocks           [][]byte
 	MinipoolEnvelopes    [][]byte
 }
@@ -27,7 +27,7 @@ type StreamStorage interface {
 	// Adds event to the given minipool.
 	// Current generation of minipool should match minipoolGeneration,
 	// and there should be exactly minipoolSlot events in the minipool.
-	AddEvent(ctx context.Context, streamId string, minipoolGeneration int, minipoolSlot int, envelope []byte) error
+	AddEvent(ctx context.Context, streamId string, minipoolGeneration int64, minipoolSlot int, envelope []byte) error
 
 	// Current minipool generation must be minipoolGeneration and size must be minipoolSize,
 	// stream must have minipoolGeneration miniblocks.
@@ -39,7 +39,7 @@ type StreamStorage interface {
 	CreateBlock(
 		ctx context.Context,
 		streamId string,
-		minipoolGeneration int,
+		minipoolGeneration int64,
 		minipoolSize int,
 		miniblock []byte,
 		snapshotMiniblock bool,
