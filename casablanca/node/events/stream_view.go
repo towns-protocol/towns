@@ -62,7 +62,6 @@ func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*strea
 
 	return &streamViewImpl{
 		streamId:      streamId,
-		firstBlockNum: streamData.StartMiniblockNumber,
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents, streamData.StartMiniblockNumber+len(miniblocks)),
 		snapshot:      snapshot,
@@ -108,7 +107,6 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 
 	return &streamViewImpl{
 		streamId:      streamId,
-		firstBlockNum: lastMiniblockNumber,
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents, lastMiniblockNumber+1),
 		snapshot:      snapshot,
@@ -117,9 +115,7 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 }
 
 type streamViewImpl struct {
-	streamId string
-
-	firstBlockNum int
+	streamId      string
 	blocks        []*miniblockInfo
 	minipool      *minipoolInstance
 	snapshot      *Snapshot
@@ -141,7 +137,6 @@ func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, e
 
 	r = &streamViewImpl{
 		streamId:      r.streamId,
-		firstBlockNum: r.firstBlockNum,
 		blocks:        r.blocks,
 		minipool:      r.minipool.copyAndAddEvent(event),
 		snapshot:      r.snapshot,
@@ -247,7 +242,6 @@ func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamVie
 
 	return &streamViewImpl{
 		streamId:      r.streamId,
-		firstBlockNum: r.firstBlockNum,
 		blocks:        append(r.blocks, miniblock),
 		minipool:      newMiniPoolInstance(minipoolEvents, int(header.MiniblockNum)+1),
 		snapshot:      snapshot,
