@@ -3,6 +3,10 @@
 // todo: fix lint issues and remove exception see: https://linear.app/hnt-labs/issue/HNT-1721/address-linter-overrides-in-matrix-encryption-code-from-sdk
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-misused-promises, @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument*/
 
+// OLM_OPTIONS is undefined https://gitlab.matrix.org/matrix-org/olm/-/issues/10
+// but this comment suggests we define it ourselves? https://gitlab.matrix.org/matrix-org/olm/-/blob/master/javascript/olm_pre.js#L22-24
+globalThis.OLM_OPTIONS = {}
+
 /**
  * Utilities common to Olm encryption
  */

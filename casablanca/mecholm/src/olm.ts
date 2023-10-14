@@ -1,7 +1,6 @@
 /* eslint-disable import/no-unresolved */
 // @ts-ignore
 // need to include the olmWasm file for the app/browser. BUT this is probably not what we want to do in the long run
-// This is the same issue as loading olm in `lib` - see `loadOlm.ts`
 // Since we are not bundling the csb SDK, just transpiling TS to JS (like in lib), the SDK is not handling this import at all.
 // Actually `?url` is vite specific - which means that the vite bundler in app is handling this import and doing its thing, and our app runs.
 // But, if another app were to import this that didn't bundle via Vite, or if Vite changes something, this may break.
@@ -28,7 +27,6 @@ export class OlmMegolmDelegate {
             return
         }
         // see note above re. wasm - including it needed for app, but it breaks Jest tests
-        // the lib version in loadOlm works since it inits wasm for app, then falls back to legacy for tests, perhaps we want to do the same here?
         if (process.env.JEST_WORKER_ID) {
             await this.delegate.init()
         } else {
