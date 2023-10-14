@@ -33,15 +33,6 @@ export interface TimelineStoreInterface {
     initialize: (userId: string, timelines: TimelinesMap) => void
     initializeRoom: (userId: string, roomId: string, timelineEvents: TimelineEvent[]) => void
     reset: (roomIds: string[]) => void
-    removeEvent: (roomId: string, eventId: string) => void
-    appendEvent: (userId: string, roomId: string, timelineEvent: TimelineEvent) => void
-    prependEvent: (userId: string, roomId: string, timelineEvent: TimelineEvent) => void
-    replaceEvent: (
-        userId: string,
-        roomId: string,
-        replacedMsgId: string,
-        timelineEvent: TimelineEvent,
-    ) => void
     processEvent: (
         event: TimelineEvent,
         userId: string,
@@ -330,10 +321,6 @@ function makeTimelineStoreInterface(
         initialize,
         initializeRoom,
         reset,
-        removeEvent,
-        appendEvent,
-        prependEvent,
-        replaceEvent,
         processEvent,
         processEvents,
         prependEvents,

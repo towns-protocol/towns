@@ -62,9 +62,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
         const streamIds = new Set<string>()
 
         const onStreamEvents = (streamId: string, timelineEvents: TimelineEvent[]) => {
-            timelineEvents.forEach((event) => {
-                setState.processEvent(event, userId, streamId)
-            })
+            setState.processEvents(timelineEvents, userId, streamId)
         }
 
         const onStreamInitialized = (streamId: string, kind: SnapshotCaseType) => {
