@@ -161,20 +161,21 @@ function diffReplaced(
                     : marker.mentions + 1
 
             const endUnreadWindow = maxBigint(event.newEvent.eventNum, marker.endUnreadWindow)
-            const firstUnread = firstUnreadEvent(
-                events,
-                userId,
-                channelId,
-                markerId,
-                marker.beginUnreadWindow,
-                endUnreadWindow,
-            )
+            // redactions will append a redaction to the end of the timeline,
+            // so replaced messages should never move from countsAsUnread to !countsAsUnread
+            // meaning we just need to check to see if this is the new first unread event
+            const isNewFirstUnread =
+                isCountedAsUnread(event.newEvent, userId) &&
+                (!marker.isUnread || event.newEvent.eventNum <= marker.eventNum)
+            const newEventId = isNewFirstUnread ? event.newEvent.eventId : marker.eventId
+            const newEventNum = isNewFirstUnread ? event.newEvent.eventNum : marker.eventNum
+
             updated[markerId] = {
                 ...marker,
-                eventId: firstUnread?.eventId ?? marker.eventId,
-                eventNum: firstUnread?.eventNum ?? marker.eventNum,
+                eventId: newEventId,
+                eventNum: newEventNum,
                 endUnreadWindow: endUnreadWindow,
-                isUnread: firstUnread !== undefined,
+                isUnread: marker.isUnread || isNewFirstUnread,
                 mentions: mentions,
             }
         }
