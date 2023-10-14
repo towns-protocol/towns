@@ -16,7 +16,6 @@ import {
     InitialSyncSortPredicate,
 } from '../hooks/ZionContext/useSyncSpaceHierarchies'
 import { useMatrixRooms } from '../hooks/ZionContext/useMatrixRooms'
-import { useMatrixTimelines } from '../hooks/ZionContext/useMatrixTimelines'
 import { useZionClientListener } from '../hooks/use-zion-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
@@ -133,7 +132,6 @@ const ContextImpl = (props: Props): JSX.Element => {
         ...casablancaRooms,
     }
 
-    useMatrixTimelines(undefined)
     useCasablancaTimelines(casablancaClient)
     const matrixOnboardingState = useOnboardingState_Matrix(client, undefined)
     const casablancaOnboardingState = useOnboardingState_Casablanca(client, casablancaClient)
