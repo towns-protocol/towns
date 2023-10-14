@@ -11,8 +11,6 @@ import {ERC721Base} from "contracts/src/tokens/base/ERC721Base.sol";
 import {PrimarySale} from "contracts/src/utils/PrimarySale.sol";
 import {SignatureMintERC721} from "contracts/src/utils/SignatureMintERC721.sol";
 
-import {console} from "forge-std/console.sol";
-
 /**
  * @title ERC721SignatureMint
  * @author Towns
