@@ -12,8 +12,6 @@ import {
 } from '@river/sdk'
 import { Permission } from '@river/web3'
 import { ToDeviceOp, KeyResponseKind, MegolmSession, ToDeviceMessage } from '@river/proto'
-import EventEmitter from 'events'
-import TypedEmitter from 'typed-emitter'
 import { Room } from '../../types/zion-types'
 import { RoomIdentifier } from '../../types/room-identifier'
 import throttle from 'lodash/throttle'
@@ -87,20 +85,7 @@ interface RoomRecord {
     requests?: Record<string, KeyRequestRecord>
 }
 
-enum DecryptionExtensionEvents {
-    toDeviceMessage = 'toDeviceMessage',
-}
-
-type DecryptionExtensionEventHandlerMap = {
-    [DecryptionExtensionEvents.toDeviceMessage]: (
-        streamId: string,
-        deviceId: string,
-        op: ToDeviceOp,
-        value: ParsedEvent,
-    ) => void
-}
-
-export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEmitter<DecryptionExtensionEventHandlerMap>) {
+export class RiverDecryptionExtension {
     roomRecords: Record<string, RoomRecord> = {}
     private client: CasablancaClient
     private delegate: DecryptionExtensionDelegate
@@ -115,7 +100,6 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
     private clientRunning = true
 
     constructor(client: CasablancaClient, delegate: DecryptionExtensionDelegate) {
-        super()
         this.client = client
         this.delegate = delegate
         this.userId = getOrThrow(this.client.userId, 'CDE::constructor - no userId')
