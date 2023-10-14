@@ -11,7 +11,6 @@ import { LoginStatus } from '../../src/hooks/login'
 import { MatrixAuth } from '../../src/client/ZionClientTypes'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { createUserIdFromEthereumAddress } from '../../src/types/user-identifier'
-import { ZionTestClient } from './helpers/ZionTestClient'
 import { TestConstants } from './helpers/TestConstants'
 
 /// Test that the login hook returns the correct status when the token is invalid
@@ -24,19 +23,6 @@ describe('invalidTokenHooks', () => {
     beforeEach(() => {
         global.localStorage.clear()
         global.sessionStorage.clear()
-    })
-    test('test matrix js sdk', async () => {
-        const provider = new ZionTestWeb3Provider()
-        const chainId = (await provider.getNetwork()).chainId
-        // create a new client and sign in
-        const xxx = createUserIdFromEthereumAddress(provider.wallet.address, chainId)
-        const badAliceAuth: MatrixAuth = {
-            userId: `@${xxx.matrixUserIdLocalpart}:localhost`,
-            accessToken: '5678',
-            deviceId: '9111',
-        }
-        const alice = new ZionTestClient(chainId, 'alice')
-        await expect(alice.startMatrixClient(badAliceAuth)).rejects.toThrow('Unknown token')
     })
     test('test logging in with a bad auth resolves to good state', async () => {
         const provider = new ZionTestWeb3Provider()

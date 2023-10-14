@@ -26,14 +26,6 @@ import {
     logTxnResult,
 } from './ZionClientTypes'
 import {
-    ClientEvent,
-    MatrixClient,
-    MatrixError,
-    PendingEventOrdering,
-    Store,
-    UserEvent,
-} from 'matrix-js-sdk'
-import {
     CreateChannelInfo,
     CreateSpaceInfo,
     Membership,
@@ -46,31 +38,26 @@ import {
     UpdateChannelInfo,
     User,
 } from '../types/zion-types'
-import {
-    MatrixDecryptionExtension,
-    MatrixDecryptionExtensionDelegate,
-} from './matrix/MatrixDecryptionExtensions'
 import { RoomIdentifier, makeRoomIdentifier } from '../types/room-identifier'
 import { SignerContext } from '@river/sdk'
 import { toZionCasablancaUser } from '../store/use-casablanca-store'
-import { CryptoStore } from 'matrix-js-sdk/lib/crypto/store/base'
-import { MatrixDbManager } from './matrix/MatrixDbManager'
 import { PushNotificationClient } from './PushNotificationClient'
 import { SignerUndefinedError } from '../types/error-types'
-import { SyncState } from 'matrix-js-sdk/lib/sync'
 import {
     createCasablancaChannel,
     updateCasablancaChannel,
 } from './casablanca/CreateOrUpdateChannel'
 import { createCasablancaSpace } from './casablanca/CreateSpace'
-import { loadOlm } from './loadOlm'
 import { makeUniqueChannelStreamId } from '@river/sdk'
 import { makeUniqueSpaceStreamId } from '@river/sdk'
 import { staticAssertNever } from '../utils/zion-utils'
 import { MatrixSpaceHierarchy } from './matrix/SyncSpace'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
-import { RiverDecryptionExtension } from './casablanca/RiverDecryptionExtensions'
+import {
+    DecryptionExtensionDelegate,
+    RiverDecryptionExtension,
+} from './casablanca/RiverDecryptionExtensions'
 import { isToDevicePlainMessage } from '@river/sdk'
 import { RoleIdentifier } from '../types/web3-types'
 import {
@@ -98,19 +85,13 @@ import {
  * ensure correct protocol business logic
  */
 
-const DEFAULT_INITIAL_SYNC_LIMIT = 20
-const DEFAULT_POLL_TIMEOUT = 30 * 1000
-
-export class ZionClient implements MatrixDecryptionExtensionDelegate {
+export class ZionClient implements DecryptionExtensionDelegate {
     public readonly opts: ZionOpts
     public readonly name: string
     public spaceDapp: ISpaceDapp
     public pioneerNFT: PioneerNFT
-    protected matrixClient?: MatrixClient
-    public matrixDecryptionExtension?: MatrixDecryptionExtension
     protected casablancaClient?: CasablancaClient
     public riverDecryptionExtension?: RiverDecryptionExtension
-    private dbManager: MatrixDbManager
     private riverDbManager: RiverDbManager
     private _auth?: MatrixAuth
     private _signerContext?: SignerContext
@@ -121,7 +102,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this.opts = opts
         this.name = name || ''
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
-        this.dbManager = new MatrixDbManager()
         this.riverDbManager = new RiverDbManager()
         this.spaceDapp = createSpaceDapp(opts.chainId, opts.web3Provider)
         this.pioneerNFT = new PioneerNFT(opts.chainId, opts.web3Provider)
@@ -149,11 +129,14 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * getServerVersions
      *************************************************/
+    // eslint-disable-next-line @typescript-eslint/require-await
     public async getServerVersions() {
-        const matrixClient = ZionClient.createMatrixClient(this.opts)
-        const version = await matrixClient.getVersions()
         // TODO casablanca, return server versions
-        return version as IZionServerVersions
+        return {
+            versions: [],
+            unstable_features: {},
+            release_version: '0.0.0',
+        } satisfies IZionServerVersions
     }
 
     /************************************************
@@ -161,33 +144,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      *************************************************/
     public async logout(): Promise<void> {
         this.log('logout')
-        await this.logoutFromMatrix()
         await this.logoutFromCasablanca()
-    }
-
-    /************************************************
-     * logoutFromMatrix
-     *************************************************/
-    public async logoutFromMatrix(): Promise<void> {
-        if (!this.auth) {
-            return
-        }
-        this.log('logoutFromMatrix')
-        const matrixClient = this.matrixClient
-        await this.stopMatrixClient()
-        if (matrixClient) {
-            try {
-                await matrixClient.logout()
-            } catch (error) {
-                this.log("caught error while trying to logout, but we're going to ignore it", error)
-            }
-        }
-
-        this._eventHandlers?.onLogout?.({
-            userId: this._auth?.userId as string,
-        })
-
-        this._auth = undefined
     }
 
     /************************************************
@@ -235,67 +192,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     /************************************************
-     * startMatrixClient
-     * start the matrix matrixClient, add listeners
-     *************************************************/
-    public async startMatrixClient(auth: MatrixAuth): Promise<MatrixClient> {
-        if (this.auth) {
-            throw new Error('already authenticated')
-        }
-        if (this.matrixClient) {
-            throw new Error('matrixClient already running')
-        }
-        if (!this.opts.web3Provider) {
-            throw new Error('web3Provider and web3Signer are required')
-        }
-        // log startOpts
-        this.log('Starting matrixClient')
-        // set auth
-        this._auth = auth
-        // get storage
-        const store = await this.dbManager.getDb(auth.userId, auth.deviceId)
-        const cryptoStore = this.dbManager.getCryptoDb(auth.userId)
-        // new matrixClient
-        this.matrixClient = ZionClient.createMatrixClient(this.opts, this._auth, store, cryptoStore)
-        // start it up, this begins a sync command
-        if (!this.matrixClient.crypto) {
-            await loadOlm()
-        }
-        await this.matrixClient.initCrypto()
-        this.matrixDecryptionExtension = new MatrixDecryptionExtension(this.matrixClient, this)
-        // disable log...
-        this.matrixClient.setGlobalErrorOnUnknownDevices(false)
-        // start matrixClient
-        await this.matrixClient.startClient({
-            pendingEventOrdering: PendingEventOrdering.Chronological,
-            initialSyncLimit: this.opts.initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
-            pollTimeout: this.opts.pollTimeoutMs ?? DEFAULT_POLL_TIMEOUT,
-        })
-
-        // wait for the sync to complete
-        const initialSync = new Promise<string>((resolve, reject) => {
-            if (!this.matrixClient) {
-                throw new Error('matrix client is undefined')
-            }
-            this.matrixClient.once(
-                ClientEvent.Sync,
-                (state: SyncState, prevState: unknown, res: unknown) => {
-                    if (state === SyncState.Prepared) {
-                        resolve(state)
-                    } else {
-                        this.log('Unhandled sync event:', state, prevState, res)
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-                        reject((res as any).error as MatrixError)
-                    }
-                },
-            )
-        })
-        await initialSync
-
-        return this.matrixClient
-    }
-
-    /************************************************
      * startCasablancaClient
      *************************************************/
     public async startCasablancaClient(context: SignerContext): Promise<CasablancaClient> {
@@ -338,21 +234,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     /************************************************
-     * stopMatrixClient
-     *************************************************/
-    public async stopMatrixClient() {
-        this.matrixDecryptionExtension?.stop()
-        this.matrixDecryptionExtension = undefined
-        if (this.matrixClient) {
-            await this.matrixClient.store.save(true)
-            this.matrixClient.stopClient()
-            this.matrixClient.removeAllListeners()
-            this.matrixClient = undefined
-            this.log('Stopped matrixClient')
-        }
-    }
-
-    /************************************************
      * stopCasablancaClient
      *************************************************/
     public async stopCasablancaClient() {
@@ -371,7 +252,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * stopClients
      *************************************************/
     public async stopClients() {
-        await this.stopMatrixClient()
         await this.stopCasablancaClient()
     }
 
@@ -1400,46 +1280,31 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * getProfileInfo
      ************************************************/
+    // eslint-disable-next-line @typescript-eslint/require-await
     public async getProfileInfo(
         userId: string,
     ): Promise<{ avatar_url?: string; displayname?: string }> {
         // todo casablanca look for user in casablanca
-        if (!this.matrixClient) {
-            throw new Error('matrix client is undefined')
-        }
-        const info = await this.matrixClient.getProfileInfo(userId)
-        const user = this.matrixClient.getUser(userId)
-        if (user) {
-            if (info.displayname) {
-                user.setDisplayName(info.displayname)
-                user.emit(UserEvent.DisplayName, user.events.presence, user)
-            }
-            if (info.avatar_url) {
-                user.setAvatarUrl(info.avatar_url)
-                user.emit(UserEvent.AvatarUrl, user.events.presence, user)
-            }
-        }
-        return info
+        console.warn('[getProfileInfo] not implemented', userId)
+        return { avatar_url: undefined, displayname: undefined }
     }
 
     /************************************************
      * setDisplayName
      ************************************************/
+    // eslint-disable-next-line @typescript-eslint/require-await
     public async setDisplayName(name: string): Promise<void> {
         // todo casablanca display name
-        return this.matrixOnly(async (matrixClient) => {
-            await matrixClient.setDisplayName(name)
-        })
+        console.error('not implemented for casablanca', name)
     }
 
     /************************************************
      * avatarUrl
      ************************************************/
+    // eslint-disable-next-line @typescript-eslint/require-await
     public async setAvatarUrl(url: string): Promise<void> {
         // todo casablanca avatar url
-        return this.matrixOnly(async (matrixClient) => {
-            await matrixClient.setAvatarUrl(url)
-        })
+        console.error('not implemented for casablanca', url)
     }
 
     /************************************************
@@ -1499,19 +1364,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      *************************************************/
     protected log(message: string, ...optionalParams: unknown[]) {
         console.log(message, ...optionalParams)
-    }
-
-    /************************************************
-     * createMatrixClient
-     * helper, creates a matrix matrixClient with appropriate auth
-     *************************************************/
-    protected static createMatrixClient(
-        _opts: ZionOpts,
-        _auth?: MatrixAuth,
-        _store?: Store,
-        _cryptoStore?: CryptoStore,
-    ): MatrixClient {
-        throw new Error('not implemented')
     }
 
     /*
@@ -1581,13 +1433,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     public onLogin({ userId }: { userId: string }) {
         this._eventHandlers?.onLogin?.({ userId: userId })
-    }
-
-    private async matrixOnly<T>(f: (client: MatrixClient) => Promise<T>): Promise<T> {
-        if (!this.matrixClient) {
-            throw new Error('matrix client is undefined')
-        }
-        return f(this.matrixClient)
     }
 
     private async _waitForBlockchainTransaction<TxnContext>(
