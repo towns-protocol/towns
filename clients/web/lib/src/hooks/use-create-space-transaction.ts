@@ -8,7 +8,6 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { BlockchainTransactionType } from '../types/web3-types'
 import { CreateSpaceInfo } from '../types/zion-types'
-import { useSyncSpace } from './use-sync-space'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
@@ -24,7 +23,6 @@ export function useCreateSpaceTransaction() {
     >(undefined)
     const isTransacting = useRef<boolean>(false)
     const { signer } = useWeb3Context()
-    const { syncSpace } = useSyncSpace()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -80,12 +78,6 @@ export function useCreateSpaceTransaction() {
 
                     // Wait for transaction to be mined
                     transactionResult = await waitForCreateSpaceTransaction(transactionResult)
-                    if (
-                        transactionResult?.status === TransactionStatus.Success &&
-                        transactionResult?.data
-                    ) {
-                        syncSpace(transactionResult.data.spaceId)
-                    }
                     setTransactionContext(transactionResult)
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,7 +92,7 @@ export function useCreateSpaceTransaction() {
             }
             return transactionResult
         },
-        [createSpaceTransaction, signer, syncSpace, waitForCreateSpaceTransaction],
+        [createSpaceTransaction, signer, waitForCreateSpaceTransaction],
     )
 
     return {

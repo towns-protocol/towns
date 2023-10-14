@@ -51,7 +51,6 @@ import { createCasablancaSpace } from './casablanca/CreateSpace'
 import { makeUniqueChannelStreamId } from '@river/sdk'
 import { makeUniqueSpaceStreamId } from '@river/sdk'
 import { staticAssertNever } from '../utils/zion-utils'
-import { MatrixSpaceHierarchy } from './matrix/SyncSpace'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import {
@@ -1181,17 +1180,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
             refEventId: eventId,
             reason,
         })
-    }
-
-    /************************************************
-     * syncSpace
-     *************************************************/
-    // eslint-disable-next-line @typescript-eslint/require-await
-    public async syncSpace(
-        _spaceId: RoomIdentifier,
-        _walletAddress: string,
-    ): Promise<MatrixSpaceHierarchy | undefined> {
-        throw new Error('not implemented')
     }
 
     /************************************************

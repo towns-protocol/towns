@@ -11,10 +11,6 @@ import { useSpacesIds } from '../hooks/ZionContext/useSpaceIds'
 import { useSpaceUnreads } from '../hooks/ZionContext/useSpaceUnreads'
 import { useSpaces } from '../hooks/ZionContext/useSpaces'
 import { useCasablancaSpaceHierarchies } from '../hooks/ZionContext/useCasablancaSpaceHierarchies'
-import {
-    useSyncSpaceHierarchies,
-    InitialSyncSortPredicate,
-} from '../hooks/ZionContext/useSyncSpaceHierarchies'
 import { useMatrixRooms } from '../hooks/ZionContext/useMatrixRooms'
 import { useZionClientListener } from '../hooks/use-zion-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/zion-types'
@@ -27,10 +23,10 @@ import { Client as CasablancaClient } from '@river/sdk'
 import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
 import { useCasablancaRooms } from '../hooks/ZionContext/useCasablancaRooms'
 import { ethers } from 'ethers'
-import merge from 'lodash/merge'
-import { useLoggedInWalletAddress } from '../hooks/use-logged-in-wallet-address'
 import { Config, WebSocketPublicClient, PublicClient } from 'wagmi'
 import { FallbackTransport } from 'viem'
+
+export type InitialSyncSortPredicate = (a: RoomIdentifier, b: RoomIdentifier) => number
 
 export interface IZionContext {
     casablancaServerUrl?: string
@@ -46,7 +42,6 @@ export interface IZionContext {
     spaceUnreadChannelIds: Record<string, string[]> // spaceId -> array of channelIds with unreads
     spaces: SpaceItem[]
     spaceHierarchies: SpaceHierarchies
-    syncSpaceHierarchy: (spaceId: string) => void // function to force sync the space hierarchy
     matrixOnboardingState: IOnboardingState
     casablancaOnboardingState: IOnboardingState
 }
@@ -69,7 +64,6 @@ interface Props extends ZionOpts {
     children: JSX.Element
     web3Signer?: ethers.Signer
     initalSyncSortPredicate?: InitialSyncSortPredicate
-    timeBetweenSyncingSpaces?: number
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
     wagmiConfig: Config<PublicClient<FallbackTransport>, WebSocketPublicClient<FallbackTransport>>
 }
@@ -94,31 +88,14 @@ export function ZionContextProvider({
 
 /// the zion client needs to be nested inside a Web3 provider, hence the need for this component
 const ContextImpl = (props: Props): JSX.Element => {
-    const {
-        casablancaServerUrl,
-        enableSpaceRootUnreads,
-        initalSyncSortPredicate,
-        timeBetweenSyncingSpaces,
-    } = props
+    const { casablancaServerUrl, enableSpaceRootUnreads } = props
 
     const { client, clientSingleton, casablancaClient } = useZionClientListener(props)
     const { invitedToIds } = useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const { spaces } = useSpaces(undefined, casablancaClient)
-    const loggedInWalletAddress = useLoggedInWalletAddress({
-        casablancaServerUrl,
-    })
 
-    const { matrixSpaceHierarchies, syncSpaceHierarchy } = useSyncSpaceHierarchies(
-        client,
-        undefined,
-        invitedToIds,
-        loggedInWalletAddress,
-        initalSyncSortPredicate,
-        timeBetweenSyncingSpaces,
-    )
-    const casablancaSpaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
-    const spaceHierarchies = merge(matrixSpaceHierarchies, casablancaSpaceHierarchies)
+    const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
     const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads(
         client,
         spaceHierarchies,
@@ -155,7 +132,6 @@ const ContextImpl = (props: Props): JSX.Element => {
                 matrixOnboardingState,
                 casablancaOnboardingState,
                 casablancaServerUrl: casablancaServerUrl,
-                syncSpaceHierarchy,
             }}
         >
             {props.children}

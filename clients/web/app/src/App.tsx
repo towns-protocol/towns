@@ -1,5 +1,5 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import React, { useCallback, useMemo, useRef } from 'react'
+import React, { useCallback, useRef } from 'react'
 import { useLocation } from 'react-router'
 import { InitialSyncSortPredicate, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
@@ -51,8 +51,6 @@ export const App = () => {
         return 1
     }, [])
 
-    const timeBetweenSyncingSpaces = useMemo(() => (isTouch ? 2_000 : 0), [isTouch])
-
     return (
         <ZionContextProvider
             casablancaServerUrl={environment.casablancaUrl}
@@ -60,7 +58,6 @@ export const App = () => {
             initialSyncLimit={20}
             chainId={environment.chainId}
             initalSyncSortPredicate={initalSyncSortPredicate}
-            timeBetweenSyncingSpaces={timeBetweenSyncingSpaces}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
             wagmiConfig={wagmiConfig}

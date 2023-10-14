@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
+import { FullyReadMarker } from '@river/proto'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { ZionClient } from '../../client/ZionClient'
-import { FullyReadMarker } from '@river/proto'
-import { makeRoomIdentifier } from './useCasablancaSpaceHierarchies'
+import { makeRoomIdentifier } from '../../types/room-identifier'
 
 export function useSendReadReceipt(client: ZionClient | undefined) {
     return useCallback(

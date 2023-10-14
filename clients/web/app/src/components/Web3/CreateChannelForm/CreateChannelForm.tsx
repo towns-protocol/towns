@@ -8,7 +8,6 @@ import {
     useCreateChannelTransaction,
     useCurrentWalletEqualsSignedInAccount,
     useMultipleRoleDetails,
-    useSyncSpace,
 } from 'use-zion-client'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
@@ -69,7 +68,6 @@ export const CreateChannelForm = (props: Props) => {
         transactionHash,
         data: channelId,
     } = useCreateChannelTransaction()
-    const { syncSpace } = useSyncSpace()
 
     useEffect(() => {
         console.log(
@@ -175,7 +173,6 @@ export const CreateChannelForm = (props: Props) => {
                 console.log('[CreateChannelForm]', 'createChannelTransaction result', txResult)
                 if (txResult?.status === TransactionStatus.Success) {
                     invalidateQuery()
-                    syncSpace(props.spaceId) // re-sync the space hierarchy once the transaction is completed
                     const channelId = txResult.data
                     if (channelId) {
                         onCreateChannel(channelId)

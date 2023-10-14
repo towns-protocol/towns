@@ -4,7 +4,12 @@ export { TransactionStatus } from './client/ZionClientTypes'
 export { ChannelContextProvider, useChannelContext } from './components/ChannelContextProvider'
 export { QueryProvider } from './components/QueryProvider'
 export * from './components/SpaceContextProvider'
-export { ZionContextProvider, useZionContext, ZionContext } from './components/ZionContextProvider'
+export {
+    ZionContextProvider,
+    useZionContext,
+    ZionContext,
+    type InitialSyncSortPredicate,
+} from './components/ZionContextProvider'
 export { useWeb3Context } from './components/Web3ContextProvider'
 export { AutojoinChannels } from './components/AutojoinChannels'
 
@@ -45,7 +50,6 @@ export { useRoom } from './hooks/use-room'
 export { useServerVersions } from './hooks/use-server-versions'
 export { useSpaceData, useInvites, useInvitesForSpace, useInviteData } from './hooks/use-space-data'
 export { useSpaceDapp } from './hooks/use-space-dapp'
-export { useSpaceHierarchy } from './hooks/use-space-hierarchy'
 export { useSpaceId } from './hooks/use-space-id'
 export { useSpaceMembers } from './hooks/use-space-members'
 export { useSpaceMentions, useSpaceUnreadThreadMentions } from './hooks/use-space-mentions'
@@ -54,8 +58,6 @@ export { useSpaceUnread } from './hooks/use-space-unread'
 export { useSpaceTimeline } from './hooks/use-space-timeline'
 export { useSpaceThreadRoots, useSpaceThreadRootsUnreadCount } from './hooks/use-space-thread-roots'
 export { useSpacesFromContract, useSpaceFromContract } from './hooks/use-spaces-from-contract'
-export { useSyncSpace } from './hooks/use-sync-space'
-export { type InitialSyncSortPredicate } from './hooks/ZionContext/useSyncSpaceHierarchies'
 export { useTimelineReactions } from './hooks/use-timeline-reactions'
 export { useTimelineThread } from './hooks/use-timeline-thread'
 export { useTimelineThreadStats } from './hooks/use-timeline-thread-stats'

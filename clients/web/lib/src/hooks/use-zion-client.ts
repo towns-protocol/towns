@@ -21,7 +21,6 @@ import {
 } from '../types/zion-types'
 import { MatrixError, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
 import { RoomMessageEvent } from '../types/timeline-types'
-import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
 import { RoomIdentifier } from '../types/room-identifier'
 import { ZionClient } from '../client/ZionClient'
 import { useLogout } from '../hooks/use-logout'
@@ -174,10 +173,6 @@ interface ZionClientImpl {
     setRoomName: (roomId: RoomIdentifier, roomName: string) => Promise<void>
     setRoomTopic: (roomId: RoomIdentifier, roomTopic: string) => Promise<void>
     getRoomTopic: (roomId: RoomIdentifier) => Promise<string | undefined>
-    syncSpace: (
-        spaceId: RoomIdentifier,
-        walletAddress: string,
-    ) => Promise<MatrixSpaceHierarchy | undefined>
     updateSpaceNameTransaction: (
         spaceId: string,
         name: string,
@@ -253,7 +248,6 @@ export function useZionClient(): ZionClientImpl {
         sendReaction: useWithCatch(client?.sendReaction),
         sendMediaPayload: useWithCatch(client?.sendMediaPayload),
         sendReadReceipt: useWithCatch(sendReadReceipt),
-        syncSpace: useWithCatch(client?.syncSpace),
         setDisplayName: useWithCatch(client?.setDisplayName),
         setRoomName: useWithCatch(client?.setRoomName),
         setRoomTopic: useWithCatch(client?.setRoomTopic),

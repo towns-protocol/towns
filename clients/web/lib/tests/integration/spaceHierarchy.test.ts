@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
- * @group dendrite
+ * @group casablanca
  */
 import {
     createTestChannelWithSpaceRoles,
@@ -15,6 +15,8 @@ import { Permission } from '@river/web3'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
+import { waitFor } from '@testing-library/dom'
+import { toSpaceHierarchy } from '../../src/hooks/ZionContext/useCasablancaSpaceHierarchies'
 
 describe('spaceHierarchy', () => {
     // TODO: https://linear.app/hnt-labs/issue/HNT-1614/testsintegrationspacehierarchytestts
@@ -39,19 +41,19 @@ describe('spaceHierarchy', () => {
             roleIds: [],
         })) as RoomIdentifier
 
-        const bob_spaceInfo = await bob.syncSpace(spaceId, bob.provider.wallet.address)
-        expect(bob_spaceInfo?.children.length).toEqual(2)
-
-        // alice peeks the space // todo https://github.com/HereNotThere/harmony/issues/188
-        // await alice.client.peekInRoom(spaceId.networkId);
-        // expect alice to see info about the space
+        await waitFor(() => {
+            const bob_spaceInfo = toSpaceHierarchy(bob.casablancaClient!, spaceId)
+            expect(bob_spaceInfo?.children.length).toEqual(2)
+        })
 
         // alice joins the space
         await alice.joinTown(spaceId, alice.wallet)
 
         // alice syncs the space
-        const alice_spaceInfo = await alice.syncSpace(spaceId, alice.provider.wallet.address)
-        expect(alice_spaceInfo?.children.length).toEqual(2)
+        await waitFor(() => {
+            const alice_spaceInfo = toSpaceHierarchy(alice.casablancaClient!, spaceId)
+            expect(alice_spaceInfo?.children.length).toEqual(2)
+        })
 
         // can she join it?
         await waitForWithRetries(() => alice.joinRoom(roomId))
@@ -83,15 +85,13 @@ describe('spaceHierarchy', () => {
             roleIds: [],
         })) as RoomIdentifier
 
-        const bob_spaceInfo = await bob.syncSpace(spaceId, bob.provider.wallet.address)
-        expect(bob_spaceInfo?.children.length).toEqual(2)
+        await waitFor(() => {
+            const bob_spaceInfo = toSpaceHierarchy(bob.casablancaClient!, spaceId)
+            expect(bob_spaceInfo?.children.length).toEqual(2)
+        })
 
         // alice syncs the space before getting an invite...
-        const alice_spaceInfo_pre_join = await alice.syncSpace(
-            spaceId,
-            alice.provider.wallet.address,
-        )
-        expect(alice_spaceInfo_pre_join?.children).toBeUndefined()
+        expect(toSpaceHierarchy(alice.casablancaClient!, spaceId)?.children).toStrictEqual([])
 
         // bob invites alice
         await bob.inviteUser(spaceId, alice.getUserId()!)
@@ -100,8 +100,10 @@ describe('spaceHierarchy', () => {
         await alice.joinTown(spaceId, alice.wallet)
 
         // alice syncs the space
-        const alice_spaceInfo = await alice.syncSpace(spaceId, alice.provider.wallet.address)
-        expect(alice_spaceInfo?.children.length).toEqual(2)
+        await waitFor(() => {
+            const alice_spaceInfo = toSpaceHierarchy(alice.casablancaClient!, spaceId)
+            expect(alice_spaceInfo?.children.length).toEqual(2)
+        })
 
         // can she join it?
         await waitForWithRetries(() => alice.joinRoom(roomId))
