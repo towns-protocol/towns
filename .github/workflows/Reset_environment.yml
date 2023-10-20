@@ -15,6 +15,14 @@ on:
                 required: false
                 default: false
                 type: boolean
+            reset_db:
+                description: 'Reset DB'
+                required: true
+                type: choice
+                default: 'false'
+                options:
+                    - 'true'
+                    - 'false'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -58,4 +66,4 @@ jobs:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RESET_ENV_WORKFLOW_WEBHOOK_URL }}
 
             - name: Reset environment
-              run: DB_URL=${{ secrets.DB_URL }} CLUSTER_NAME=${{ vars.CLUSTER_NAME }} ./scripts/reset-environment.sh
+              run: DB_URL=${{ secrets.DB_URL }} CLUSTER_NAME=${{ vars.CLUSTER_NAME }} RESET_DB=${{ github.event.inputs.reset_db }} ./scripts/reset-environment.sh

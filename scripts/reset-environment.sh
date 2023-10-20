@@ -3,22 +3,28 @@
 # If any command fails, stop executing this script and return its exit code
 set -eo pipefail
 
-if [ -z "$DB_URL" ]; then
-    echo "DB_URL is not set"
-    exit 1
-fi
-
 if [ -z "$CLUSTER_NAME" ]; then
     echo "CLUSTER_NAME is not set"
     exit 1
 fi
 
-# We first reset the database, then the ECS cluster
-echo "Resetting the database ..."
+# Check for env var named $RESET_DB, and skip
+# the database reset if it is not set to "true"
+if [ "$RESET_DB" == "true" ]; then
+    if [ -z "$DB_URL" ]; then
+        echo "DB_URL is not set"
+        exit 1
+    fi
 
-# We drop the database and recreate it
-psql $DB_URL -c "DROP DATABASE river WITH (FORCE);"
-psql $DB_URL -c "CREATE DATABASE river;"
+    echo "Resetting the database ..."
+
+    # We drop the database and recreate it
+    psql $DB_URL -c "DROP DATABASE river WITH (FORCE);"
+    psql $DB_URL -c "CREATE DATABASE river;"
+else 
+    echo "Skipping database reset"
+fi
+
 
 echo "Resetting the ECS cluster $CLUSTER_NAME ..."
 
