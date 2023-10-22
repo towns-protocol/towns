@@ -19,30 +19,22 @@ type Stream interface {
 	AddEvent(ctx context.Context, event *ParsedEvent) error
 }
 
-type SyncResult struct {
-	Resp *SyncStreamsResponse
-	Err  error
-}
-
-func SyncResultFromUpdate(update *StreamAndCookie) SyncResult {
-	return SyncResult{
-		Resp: &SyncStreamsResponse{
-			Streams: []*StreamAndCookie{update},
-		},
-	}
-}
-
-type SyncResultChannel chan<- SyncResult
-
-func (c SyncResultChannel) Err(err error) {
-	c <- SyncResult{Err: err}
+type SyncResultReceiver interface {
+	OnUpdate(r *SyncStreamsResponse)
+	OnSyncError(err error)
 }
 
 type SyncStream interface {
 	Stream
 	MakeMiniblock(ctx context.Context)
-	Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultChannel) (*StreamAndCookie, error)
-	Unsub(receiver SyncResultChannel)
+	Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error
+	Unsub(receiver SyncResultReceiver)
+}
+
+func SyncStreamsResponseFromStreamAndCookie(result *StreamAndCookie) *SyncStreamsResponse {
+	return &SyncStreamsResponse{
+		Streams: []*StreamAndCookie{result},
+	}
 }
 
 type streamImpl struct {
@@ -58,7 +50,7 @@ type streamImpl struct {
 	mu        sync.RWMutex
 	view      *streamViewImpl
 	loadError error
-	receivers mapset.Set[SyncResultChannel]
+	receivers mapset.Set[SyncResultReceiver]
 
 	miniblockTicker           *time.Ticker
 	miniblockTickerContext    context.Context
@@ -271,13 +263,13 @@ func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) error {
 
 func (s *streamImpl) notifySubscribers(envelopes []*Envelope, newSyncCookie *SyncCookie, prevSyncCookie *SyncCookie) {
 	if s.receivers != nil && s.receivers.Cardinality() > 0 {
-		resp := SyncResultFromUpdate(&StreamAndCookie{
+		resp := SyncStreamsResponseFromStreamAndCookie(&StreamAndCookie{
 			Events:          envelopes,
 			NextSyncCookie:  newSyncCookie,
 			StartSyncCookie: prevSyncCookie,
 		})
 		for receiver := range s.receivers.Iter() {
-			receiver <- resp
+			receiver.OnUpdate(resp)
 		}
 	}
 }
@@ -309,33 +301,33 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 	return nil
 }
 
-func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultChannel) (*StreamAndCookie, error) {
+func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error {
 	log := dlog.CtxLog(ctx)
 	if cookie.NodeAddress != s.params.Wallet.AddressStr {
-		return nil, RiverError(Err_BAD_SYNC_COOKIE, "cookies is not for this node", "cookie.NodeAddress", cookie.NodeAddress, "s.params.Wallet.AddressStr", s.params.Wallet.AddressStr)
+		return RiverError(Err_BAD_SYNC_COOKIE, "cookies is not for this node", "cookie.NodeAddress", cookie.NodeAddress, "s.params.Wallet.AddressStr", s.params.Wallet.AddressStr)
 	}
 	if cookie.StreamId != s.streamId {
-		return nil, RiverError(Err_BAD_SYNC_COOKIE, "bad stream id", "cookie.StreamId", cookie.StreamId, "s.streamId", s.streamId)
+		return RiverError(Err_BAD_SYNC_COOKIE, "bad stream id", "cookie.StreamId", cookie.StreamId, "s.streamId", s.streamId)
 	}
 	slot := cookie.MinipoolSlot
 	if slot < 0 {
-		return nil, RiverError(Err_BAD_SYNC_COOKIE, "bad slot", "cookie.MinipoolSlot", slot).Func("Stream.Sub")
+		return RiverError(Err_BAD_SYNC_COOKIE, "bad slot", "cookie.MinipoolSlot", slot).Func("Stream.Sub")
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.loadInternal(ctx)
 	if s.loadError != nil {
-		return nil, s.loadError
+		return s.loadError
 	}
 
 	if cookie.MinipoolGen == int64(s.view.minipool.generation) {
 		if slot > int64(s.view.minipool.events.Len()) {
-			return nil, RiverError(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
+			return RiverError(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
 		}
 
 		if s.receivers == nil {
-			s.receivers = mapset.NewSet[SyncResultChannel]()
+			s.receivers = mapset.NewSet[SyncResultReceiver]()
 		}
 		s.receivers.Add(receiver)
 
@@ -344,17 +336,21 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 			for _, e := range s.view.minipool.events.Values[slot:] {
 				envelopes = append(envelopes, e.Envelope)
 			}
-			return &StreamAndCookie{
-				Events:          envelopes,
-				NextSyncCookie:  s.view.SyncCookie(s.params.Wallet.AddressStr),
-				StartSyncCookie: cookie,
-			}, nil
-		} else {
-			return nil, nil
+			receiver.OnUpdate(
+				SyncStreamsResponseFromStreamAndCookie(
+					&StreamAndCookie{
+						Events:          envelopes,
+						NextSyncCookie:  s.view.SyncCookie(s.params.Wallet.AddressStr),
+						StartSyncCookie: cookie,
+					},
+				),
+			)
+
 		}
+		return nil
 	} else {
 		if s.receivers == nil {
-			s.receivers = mapset.NewSet[SyncResultChannel]()
+			s.receivers = mapset.NewSet[SyncResultReceiver]()
 		}
 		s.receivers.Add(receiver)
 
@@ -386,26 +382,29 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 		}
 
 		if len(envelopes) > 0 {
-			return &StreamAndCookie{
-				Events:         envelopes,
-				NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
-				StartSyncCookie: &SyncCookie{
-					NodeAddress:       cookie.NodeAddress,
-					StreamId:          cookie.StreamId,
-					MinipoolGen:       cookie.MinipoolGen,
-					MinipoolSlot:      0,
-					PrevMiniblockHash: s.view.blocks[miniblockIndex].header().PrevMiniblockHash,
-				},
-			}, nil
-		} else {
-			return nil, nil
+			receiver.OnUpdate(
+				SyncStreamsResponseFromStreamAndCookie(
+					&StreamAndCookie{
+						Events:         envelopes,
+						NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
+						StartSyncCookie: &SyncCookie{
+							NodeAddress:       cookie.NodeAddress,
+							StreamId:          cookie.StreamId,
+							MinipoolGen:       cookie.MinipoolGen,
+							MinipoolSlot:      0,
+							PrevMiniblockHash: s.view.blocks[miniblockIndex].header().PrevMiniblockHash,
+						},
+					},
+				),
+			)
 		}
+		return nil
 	}
 }
 
 // It's ok to unsub non-existing receiver.
 // Such situation arises during ForceFlush.
-func (s *streamImpl) Unsub(receiver SyncResultChannel) {
+func (s *streamImpl) Unsub(receiver SyncResultReceiver) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.receivers != nil {
@@ -422,9 +421,9 @@ func (s *streamImpl) ForceFlush(ctx context.Context) {
 	s.view = nil
 	s.loadError = nil
 	if s.receivers != nil && s.receivers.Cardinality() > 0 {
-		err := SyncResult{Err: RiverError(Err_INTERNAL, "Stream unloaded")}
+		err := RiverError(Err_INTERNAL, "Stream unloaded")
 		for r := range s.receivers.Iter() {
-			r <- err
+			r.OnSyncError(err)
 		}
 	}
 	s.receivers = nil

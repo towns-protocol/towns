@@ -101,51 +101,32 @@ func (s *Service) syncStreamsImpl(
 
 	syncCtx, cancelSync := context.WithCancel(ctx)
 
-	respChan := make(chan SyncResult, 128)
+	receiver := &syncReceiver{
+		ctx:     syncCtx,
+		cancel:  cancelSync,
+		channel: make(chan *SyncStreamsResponse, 128),
+	}
 
 	if len(local) > 0 {
-		go s.syncLocalNode(syncCtx, local, respChan)
+		go s.syncLocalNode(syncCtx, local, receiver)
 	}
 
 	for _, remote := range remotes {
-		go remote.syncRemoteNode(syncCtx, respChan)
+		go remote.syncRemoteNode(syncCtx, receiver)
 	}
 
-	var lastError error
-ForwardLoop:
-	for {
-		select {
-		case <-ctx.Done():
-			lastError = ctx.Err()
-			log.Debug("SyncStreams: context done", "err", lastError)
-			break ForwardLoop
-		case resp := <-respChan:
-			if resp.Err != nil {
-				lastError = resp.Err
-				log.Debug("SyncStreams: received error in forward loop", "err", lastError)
-				break ForwardLoop
-			}
+	receiver.dispatch(res)
 
-			log.Debug("SyncStreams: received update in forward loop", "resp", resp.Resp)
-			if err := res.Send(resp.Resp); err != nil {
-				lastError = err
-				log.Debug("SyncStreams: failed to send update", "resp", "err", lastError)
-				break ForwardLoop
-			}
-		}
-	}
-
-	cancelSync()
-
-	if lastError != nil {
-		return lastError
+	err := receiver.getError()
+	if err != nil {
+		return err
 	}
 
 	log.Error("SyncStreams: sync always should be terminated by context cancel.")
 	return nil
 }
 
-func (s *Service) syncLocalStreamsImpl(ctx context.Context, syncPos []*SyncCookie, receiver SyncResultChannel) error {
+func (s *Service) syncLocalStreamsImpl(ctx context.Context, syncPos []*SyncCookie, receiver SyncResultReceiver) error {
 	if len(syncPos) <= 0 {
 		return nil
 	}
@@ -172,18 +153,11 @@ func (s *Service) syncLocalStreamsImpl(ctx context.Context, syncPos []*SyncCooki
 			return err
 		}
 
-		update, err := streamSub.Sub(ctx, pos, receiver)
+		err = streamSub.Sub(ctx, pos, receiver)
 		if err != nil {
 			return err
 		}
 		subs = append(subs, streamSub)
-		if update != nil {
-			if ctx.Err() != nil {
-				return ctx.Err()
-			}
-
-			receiver <- SyncResultFromUpdate(update)
-		}
 	}
 
 	// Wait for context to be done before unsubbing.
@@ -191,7 +165,7 @@ func (s *Service) syncLocalStreamsImpl(ctx context.Context, syncPos []*SyncCooki
 	return nil
 }
 
-func (s *Service) syncLocalNode(ctx context.Context, syncPos []*SyncCookie, receiver SyncResultChannel) {
+func (s *Service) syncLocalNode(ctx context.Context, syncPos []*SyncCookie, receiver SyncResultReceiver) {
 	log := dlog.CtxLog(ctx)
 
 	if ctx.Err() != nil {
@@ -202,7 +176,7 @@ func (s *Service) syncLocalNode(ctx context.Context, syncPos []*SyncCookie, rece
 	err := s.syncLocalStreamsImpl(ctx, syncPos, receiver)
 	if err != nil {
 		log.Debug("SyncStreams: syncLocalNode failed", "err", err)
-		receiver.Err(err)
+		receiver.OnSyncError(err)
 	}
 }
 
@@ -211,7 +185,7 @@ func (s *Service) syncLocalNode(ctx context.Context, syncPos []*SyncCookie, rece
 // Which in turn means that we need to close all outstanding streams to remote nodes.
 // Without control signals there is no clean way to do so, so for now both ctx is canceled and Close is called
 // async hoping this will trigger Receive to abort.
-func (n *syncNode) syncRemoteNode(ctx context.Context, respChannel SyncResultChannel) {
+func (n *syncNode) syncRemoteNode(ctx context.Context, receiver SyncResultReceiver) {
 	log := dlog.CtxLog(ctx)
 	if ctx.Err() != nil || n.isClosed() {
 		log.Debug("SyncStreams: syncRemoteNode not starting", "context_error", ctx.Err())
@@ -228,7 +202,7 @@ func (n *syncNode) syncRemoteNode(ctx context.Context, respChannel SyncResultCha
 	)
 	if err != nil {
 		log.Debug("SyncStreams: syncRemoteNode remote SyncStreams failed", "err", err)
-		respChannel.Err(err)
+		receiver.OnSyncError(err)
 		return
 	}
 
@@ -251,7 +225,8 @@ func (n *syncNode) syncRemoteNode(ctx context.Context, respChannel SyncResultCha
 		}
 
 		log.Debug("SyncStreams: syncRemoteNode received update", "resp", stream.Msg())
-		respChannel <- SyncResult{Resp: stream.Msg()}
+
+		receiver.OnUpdate(stream.Msg())
 	}
 
 	if ctx.Err() != nil || n.isClosed() {
@@ -260,7 +235,7 @@ func (n *syncNode) syncRemoteNode(ctx context.Context, respChannel SyncResultCha
 
 	if err := stream.Err(); err != nil {
 		log.Debug("SyncStreams: syncRemoteNode receive failed", "err", err)
-		respChannel.Err(err)
+		receiver.OnSyncError(err)
 		return
 	}
 }
