@@ -18,11 +18,17 @@ output "environment" {
   sensitive = false
 }
 
+locals {
+  Environment = "${terraform.workspace == "test" ? "test-beta" : terraform.workspace == "staging" ? "staging-beta" : terraform.workspace}"
+}
+
 output "tags" {
   value = {
     Managed_By  = "Terraform"
     # If workspace is test, say test-beta
-    Environment = "${terraform.workspace == "test" ? "test-beta" : terraform.workspace == "staging" ? "staging-beta" : terraform.workspace}"
+    Environment = local.Environment
+    Env = local.Environment
+    Terraform_Workspace = terraform.workspace
   }
   sensitive = true
 }

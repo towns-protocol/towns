@@ -102,7 +102,13 @@ module "river_alb" {
     },
   ]
 
-  tags = module.global_constants.tags
+    tags = merge(
+    module.global_constants.tags,
+    {
+      Service = "river-node-load-balancer"
+      Instance = "${var.river_node_name}-load-balancer"
+    }
+  )
 
   # setting it to 30 minutes because river context keeps getting cancelled
   idle_timeout = 1800

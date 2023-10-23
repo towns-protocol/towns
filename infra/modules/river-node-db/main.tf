@@ -6,6 +6,7 @@ locals {
   tags = merge(
     module.global_constants.tags, { 
       Node_Name = "${var.river_node_name}", 
+      Service = "river-postgres-db"
     })
 }
 

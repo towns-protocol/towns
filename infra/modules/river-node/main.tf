@@ -54,6 +54,8 @@ resource "aws_cloudwatch_log_group" "river_log_group" {
     {
       Service_Name = "river-node",
       Node_Name    = var.node_name
+      Service = "river-node"
+      Instance = var.node_name
     }
   )
 }
@@ -61,6 +63,9 @@ resource "aws_cloudwatch_log_group" "river_log_group" {
 resource "aws_ecs_task_definition" "river-fargate" {
   family = "${module.global_constants.environment}-river-fargate"
 
+  lifecycle {
+    ignore_changes = all
+  }
 
   network_mode = "awsvpc"
 
@@ -222,6 +227,11 @@ resource "aws_ecs_service" "river-ecs-service" {
     subnets          = var.node_subnets
     assign_public_ip = true
   }
+
+  tags = merge(module.global_constants.tags, { 
+    Instance = var.node_name
+    Service = "river-node"
+  })
 }
 
 resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
