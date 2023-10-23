@@ -66,7 +66,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
         }
 
         const onStreamInitialized = (streamId: string, kind: SnapshotCaseType) => {
-            if (kind === 'channelContent' || kind === 'spaceContent') {
+            if (hasTimelineContent(kind)) {
                 streamIds.add(streamId)
                 const messages = casablancaClient.stream(streamId)?.view.timeline ?? []
                 const timelineEvents = messages.map((message) => toEvent(message, userId))
@@ -80,7 +80,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
             kind: SnapshotCaseType,
             messages: ParsedEvent[],
         ) => {
-            if (kind === 'channelContent' || kind === 'spaceContent') {
+            if (hasTimelineContent(kind)) {
                 streamIds.add(streamId)
                 const timelineEvents = messages.map((message) => toEvent(message, userId))
                 onStreamEvents(streamId, timelineEvents)
@@ -92,7 +92,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
             kind: SnapshotCaseType,
             messages: ParsedEvent[],
         ) => {
-            if (kind === 'channelContent' || kind === 'spaceContent') {
+            if (hasTimelineContent(kind)) {
                 streamIds.add(streamId)
                 const timelineEvents = messages.map((message) => toEvent(message, userId))
                 setState.prependEvents(timelineEvents, userId, streamId)
@@ -126,10 +126,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
         const timelineEvents: Map<string, TimelineEvent[]> = new Map()
         //Step 1: get all the events which are already in the river before listeners started
         casablancaClient?.streams.forEach((stream) => {
-            if (
-                stream.view.contentKind === 'channelContent' ||
-                stream.view.contentKind === 'spaceContent'
-            ) {
+            if (hasTimelineContent(stream.view.contentKind)) {
                 streamIds.add(stream.streamId)
                 timelineEvents.set(stream.streamId, [])
                 console.log('$$$ useCasablancaTimelines load streamId', stream.streamId)
@@ -139,6 +136,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
                         stream.view.channelContent.spaceId !== undefined
                     ) {
                         casablancaClient.emit(
+                            // TODO erik for DM GDM this needs to be fixed, we shouldn't be emitting this event from this location, total violation of separation of concerns
                             'channelTimelineEvent',
                             stream.streamId,
                             stream.view.channelContent.spaceId,
@@ -757,4 +755,8 @@ function toMembership(op: MembershipOp): Membership {
             return Membership.Invite
     }
     return Membership.None
+}
+
+function hasTimelineContent(kind: SnapshotCaseType): boolean {
+    return kind === 'channelContent' || kind === 'spaceContent'
 }

@@ -70,7 +70,7 @@ function diffTimeline(timelineState: TimelineStore, prev: TimelineStore, userId:
         // noop
         return
     }
-    const channelIds = Object.keys(timelineState.timelines).filter(isChannelStreamId)
+    const channelIds = Object.keys(timelineState.timelines).filter(isDiffableStreamTimeline)
     for (const channelId of channelIds) {
         const prevEvents = prev.timelines[channelId] ?? []
         const events = timelineState.timelines[channelId]
@@ -299,4 +299,8 @@ function indexOfFirstEventNumEqualToOrGreaterThan(
 // Math.max only supports numbers
 function maxBigint(x: bigint, y: bigint): bigint {
     return x > y ? x : y
+}
+
+function isDiffableStreamTimeline(streamId: string): boolean {
+    return isChannelStreamId(streamId)
 }
