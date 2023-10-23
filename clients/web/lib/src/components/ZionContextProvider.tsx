@@ -23,8 +23,6 @@ import { Client as CasablancaClient } from '@river/sdk'
 import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
 import { useCasablancaRooms } from '../hooks/ZionContext/useCasablancaRooms'
 import { ethers } from 'ethers'
-import { Config, WebSocketPublicClient, PublicClient } from 'wagmi'
-import { FallbackTransport } from 'viem'
 
 export type InitialSyncSortPredicate = (a: RoomIdentifier, b: RoomIdentifier) => number
 
@@ -65,7 +63,6 @@ interface Props extends ZionOpts {
     web3Signer?: ethers.Signer
     initalSyncSortPredicate?: InitialSyncSortPredicate
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
-    wagmiConfig: Config<PublicClient<FallbackTransport>, WebSocketPublicClient<FallbackTransport>>
 }
 
 export function ZionContextProvider({
@@ -75,11 +72,7 @@ export function ZionContextProvider({
     const { web3Signer, ...contextProps } = props
     return (
         <QueryClientProvider>
-            <Web3ContextProvider
-                wagmiConfig={props.wagmiConfig}
-                chainId={contextProps.chainId}
-                web3Signer={web3Signer}
-            >
+            <Web3ContextProvider chainId={contextProps.chainId} web3Signer={web3Signer}>
                 <ContextImpl {...contextProps}></ContextImpl>
             </Web3ContextProvider>
         </QueryClientProvider>

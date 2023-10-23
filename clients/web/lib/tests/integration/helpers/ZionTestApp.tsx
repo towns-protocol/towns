@@ -6,7 +6,7 @@ import { TestQueryClientProvider } from './TestQueryClientProvider'
 import { ZionContextProvider } from '../../../src/components/ZionContextProvider'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { foundry } from 'wagmi/chains'
-import { configureChains, createConfig, useConnect } from 'wagmi'
+import { WagmiConfig, configureChains, createConfig, useConnect } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { useZionErrorStore } from '../../../src/hooks/use-zion-client'
 import { publicProvider } from 'wagmi/providers/public'
@@ -51,24 +51,25 @@ export const ZionTestApp = (props: Props) => {
     })
 
     return (
-        <ZionContextProvider
-            casablancaServerUrl={casablancaServerUrl}
-            onboardingOpts={onboardingOpts}
-            initialSyncLimit={initialSyncLimit}
-            pollTimeoutMs={pollTimeoutMs}
-            chainId={foundry.id}
-            QueryClientProvider={TestQueryClientProvider}
-            logNamespaceFilter="" // "csb:*" A bit too much for tests, better way to set?
-            web3Signer={provider.wallet}
-            verbose={true}
-            wagmiConfig={mockConfig}
-        >
-            <>
-                <ZionWalletAutoConnect />
-                {children}
-                <ZionErrors />
-            </>
-        </ZionContextProvider>
+        <WagmiConfig config={mockConfig}>
+            <ZionContextProvider
+                casablancaServerUrl={casablancaServerUrl}
+                onboardingOpts={onboardingOpts}
+                initialSyncLimit={initialSyncLimit}
+                pollTimeoutMs={pollTimeoutMs}
+                chainId={foundry.id}
+                QueryClientProvider={TestQueryClientProvider}
+                logNamespaceFilter="" // "csb:*" A bit too much for tests, better way to set?
+                web3Signer={provider.wallet}
+                verbose={true}
+            >
+                <>
+                    <ZionWalletAutoConnect />
+                    {children}
+                    <ZionErrors />
+                </>
+            </ZionContextProvider>
+        </WagmiConfig>
     )
 }
 

@@ -4,7 +4,7 @@ import { Container } from '@mui/material'
 import { ZionContextProvider } from 'use-zion-client'
 import { ThemeProvider } from '@mui/material/styles'
 import { baseGoerli, foundry, goerli, localhost, sepolia } from 'wagmi/chains'
-import { configureChains, createConfig } from 'wagmi'
+import { WagmiConfig, configureChains, createConfig } from 'wagmi'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
 import { InjectedConnector } from 'wagmi/connectors/injected'
@@ -50,49 +50,50 @@ export const wagmiConfig = createConfig({
 export const App = () => {
     const { casablancaUrl, chainId } = useEnvironment()
     return (
-        <ThemeProvider theme={theme}>
-            <Container maxWidth="md">
-                <ZionContextProvider
-                    enableSpaceRootUnreads
-                    casablancaServerUrl={casablancaUrl}
-                    chainId={chainId}
-                    logNamespaceFilter="csb:*"
-                    onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
-                    initialSyncLimit={100}
-                    wagmiConfig={wagmiConfig}
-                >
-                    <Routes>
-                        <Route path="/alpha-access" element={<AlphaAccessMainPage />} />
-                        <Route path="/versions" element={<VersionsPage />} />
-                        <Route element={<MainLayout />}>
-                            <Route element={<AuthenticatedContent />}>
-                                <Route index element={<Home />} />
-                                <Route path="spaces/new" element={<SpacesNew />} />
-                                <Route path="spaces/:spaceSlug" element={<Spaces />}>
-                                    <Route index element={<SpacesIndex />} />
-                                    <Route path="settings" element={<RoomSettings />} />
-                                    <Route path="invite" element={<SpaceInvite />} />
-                                    <Route path="channels/new" element={<SpacesNewChannel />} />
-                                    <Route path="channels/:channelSlug" element={<Channels />}>
-                                        <Route index element={<ChannelsIndex />} />
+        <WagmiConfig config={wagmiConfig}>
+            <ThemeProvider theme={theme}>
+                <Container maxWidth="md">
+                    <ZionContextProvider
+                        enableSpaceRootUnreads
+                        casablancaServerUrl={casablancaUrl}
+                        chainId={chainId}
+                        logNamespaceFilter="csb:*"
+                        onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
+                        initialSyncLimit={100}
+                    >
+                        <Routes>
+                            <Route path="/alpha-access" element={<AlphaAccessMainPage />} />
+                            <Route path="/versions" element={<VersionsPage />} />
+                            <Route element={<MainLayout />}>
+                                <Route element={<AuthenticatedContent />}>
+                                    <Route index element={<Home />} />
+                                    <Route path="spaces/new" element={<SpacesNew />} />
+                                    <Route path="spaces/:spaceSlug" element={<Spaces />}>
+                                        <Route index element={<SpacesIndex />} />
                                         <Route path="settings" element={<RoomSettings />} />
+                                        <Route path="invite" element={<SpaceInvite />} />
+                                        <Route path="channels/new" element={<SpacesNewChannel />} />
+                                        <Route path="channels/:channelSlug" element={<Channels />}>
+                                            <Route index element={<ChannelsIndex />} />
+                                            <Route path="settings" element={<RoomSettings />} />
+                                        </Route>
+                                        <Route path="threads" element={<Threads />} />
+                                        <Route
+                                            path="threads/:channelSlug/:threadParentId"
+                                            element={<Thread />}
+                                        />
+                                        <Route path="mentions" element={<Mentions />} />
                                     </Route>
-                                    <Route path="threads" element={<Threads />} />
-                                    <Route
-                                        path="threads/:channelSlug/:threadParentId"
-                                        element={<Thread />}
-                                    />
-                                    <Route path="mentions" element={<Mentions />} />
+                                    <Route path="web3" element={<Web3 />} />
+                                    <Route path="logins" element={<Login />} />
+                                    <Route path="*" element={<NotFound />} />
                                 </Route>
-                                <Route path="web3" element={<Web3 />} />
-                                <Route path="logins" element={<Login />} />
-                                <Route path="*" element={<NotFound />} />
                             </Route>
-                        </Route>
-                    </Routes>
-                </ZionContextProvider>
-            </Container>
-        </ThemeProvider>
+                        </Routes>
+                    </ZionContextProvider>
+                </Container>
+            </ThemeProvider>
+        </WagmiConfig>
     )
 }
 

@@ -6,7 +6,7 @@ import { afterEach, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { BrowserRouter } from 'react-router-dom'
 import { ethers } from 'ethers'
-import { configureChains, createConfig } from 'wagmi'
+import { WagmiConfig, configureChains, createConfig } from 'wagmi'
 import { foundry } from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
 import { InjectedConnector } from 'wagmi/connectors/injected'
@@ -48,18 +48,19 @@ export const TestApp = (props: TestAppProps) => {
     })
 
     return (
-        <ZLayerProvider>
-            <Lib.ZionContextProvider
-                casablancaServerUrl=""
-                chainId={31337}
-                wagmiConfig={mockConfig}
-                {...props.zionContextProviderProps}
-            >
-                <QueryClientProvider client={queryClient}>
-                    <Router initialEntries={props.initialEntries}>{props.children}</Router>
-                </QueryClientProvider>
-            </Lib.ZionContextProvider>
-        </ZLayerProvider>
+        <WagmiConfig config={mockConfig}>
+            <ZLayerProvider>
+                <Lib.ZionContextProvider
+                    casablancaServerUrl=""
+                    chainId={31337}
+                    {...props.zionContextProviderProps}
+                >
+                    <QueryClientProvider client={queryClient}>
+                        <Router initialEntries={props.initialEntries}>{props.children}</Router>
+                    </QueryClientProvider>
+                </Lib.ZionContextProvider>
+            </ZLayerProvider>
+        </WagmiConfig>
     )
 }
 

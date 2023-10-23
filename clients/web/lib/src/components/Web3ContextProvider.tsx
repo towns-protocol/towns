@@ -1,9 +1,8 @@
-import { Address, Chain, Config, PublicClient, WagmiConfig, WebSocketPublicClient } from 'wagmi'
+import { Address, Chain, usePublicClient } from 'wagmi'
 import React, { createContext, useContext } from 'react'
 import { TProvider, WalletStatus } from '../types/web3-types'
 import { ethers } from 'ethers'
 import { useWeb3 } from '../hooks/Web3Context/useWeb3'
-import { FallbackTransport } from 'viem'
 
 export interface IWeb3Context {
     provider?: TProvider
@@ -32,22 +31,18 @@ interface Props {
     children: JSX.Element
     chainId: number
     web3Signer?: ethers.Signer // sometimes, like during testing, it makes sense to inject a signer
-    wagmiConfig: Config<PublicClient<FallbackTransport>, WebSocketPublicClient<FallbackTransport>>
 }
 
 export function Web3ContextProvider(props: Props): JSX.Element {
-    return (
-        <WagmiConfig config={props.wagmiConfig}>
-            <ContextImpl {...props} />
-        </WagmiConfig>
-    )
+    return <ContextImpl {...props} />
 }
 
 export function ContextImpl(props: Props): JSX.Element {
-    const { chainId, web3Signer, wagmiConfig } = props
+    const { chainId, web3Signer } = props
+    const publicClient = usePublicClient({ chainId })
     // wagmiConfig.chanins is not populated unless you are connected!
     // so use this for now
-    const chain = wagmiConfig.publicClient.chains?.find((c) => c.id === props.chainId)
+    const chain = publicClient.chains?.find((c) => c.id === props.chainId)
 
     if (!chain) {
         console.error('Unsupported chain for Towns', props.chainId)

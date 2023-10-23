@@ -10,16 +10,12 @@ vi.mock('./src/components/Transitions/MotionBox')
 vi.mock('./src/ui/components/ZLayer/ZLayer')
 
 // have to mock this whole module because walletConnect causes a bunch of issues
-vi.mock('./src/wagmiConfig', async () => {
+vi.mock('./src/AppWagmiConfig', async () => {
     return {
         foundryClone: (() => {
             console.log('USING wagmiConfig MOCKED FOUNDRYCLONE')
             return foundry
         })(),
-        walletConnectors: () => {
-            console.log('USING wagmiConfig MOCKED WALLETCONNECTORS')
-            return []
-        },
     }
 })
 

@@ -18,7 +18,7 @@ import { AppNotifications } from '@components/AppNotifications/AppNotifications'
 import { useStore } from 'store/store'
 import { RegisterPushSubscription } from '@components/RegisterPushSubscription/RegisterPushSubscription'
 import { AllRoutes } from 'AllRoutes'
-import { wagmiConfig } from 'wagmiConfig'
+import { AppWagmiConfig } from 'AppWagmiConfig'
 import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
 
 const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
@@ -52,50 +52,55 @@ export const App = () => {
     }, [])
 
     return (
-        <ZionContextProvider
-            casablancaServerUrl={environment.casablancaUrl}
-            onboardingOpts={{ skipAvatar: true }}
-            initialSyncLimit={20}
-            chainId={environment.chainId}
-            initalSyncSortPredicate={initalSyncSortPredicate}
-            pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
-            pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
-            wagmiConfig={wagmiConfig}
-        >
-            <>
-                <FaviconBadge />
-                <AppBadge />
-                <AppNotifications />
-                <RegisterPushSubscription />
-                <Helmet>
-                    <meta
-                        name="theme-color"
-                        content={
-                            isTouch
-                                ? theme === 'dark'
-                                    ? Figma.DarkMode.Level1
-                                    : Figma.LightMode.Level1
-                                : theme === 'dark'
-                                ? Figma.DarkMode.Readability
-                                : Figma.LightMode.Readability
-                        }
-                    />
-                </Helmet>
-                <AnalyticsProvider>
-                    <>{env.DEV && !env.VITE_DISABLE_DEBUG_BARS && <DebugBar {...environment} />}</>
-                    <AllRoutes />
-                </AnalyticsProvider>
-                {!env.VITE_DISABLE_DEBUG_BARS && (
-                    <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
-                )}
-                <Notifications />
-                {
-                    // the service worker won't exist in dev-mode and there's not need to check for updates
-                    (!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && <ReloadPrompt />
-                }
-                <ServiceWorkerSpacesSyncer />
-            </>
-        </ZionContextProvider>
+        <AppWagmiConfig>
+            <ZionContextProvider
+                casablancaServerUrl={environment.casablancaUrl}
+                onboardingOpts={{ skipAvatar: true }}
+                initialSyncLimit={20}
+                chainId={environment.chainId}
+                initalSyncSortPredicate={initalSyncSortPredicate}
+                pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
+                pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
+            >
+                <>
+                    <FaviconBadge />
+                    <AppBadge />
+                    <AppNotifications />
+                    <RegisterPushSubscription />
+                    <Helmet>
+                        <meta
+                            name="theme-color"
+                            content={
+                                isTouch
+                                    ? theme === 'dark'
+                                        ? Figma.DarkMode.Level1
+                                        : Figma.LightMode.Level1
+                                    : theme === 'dark'
+                                    ? Figma.DarkMode.Readability
+                                    : Figma.LightMode.Readability
+                            }
+                        />
+                    </Helmet>
+                    <AnalyticsProvider>
+                        <>
+                            {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && (
+                                <DebugBar {...environment} />
+                            )}
+                        </>
+                        <AllRoutes />
+                    </AnalyticsProvider>
+                    {!env.VITE_DISABLE_DEBUG_BARS && (
+                        <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
+                    )}
+                    <Notifications />
+                    {
+                        // the service worker won't exist in dev-mode and there's not need to check for updates
+                        (!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && <ReloadPrompt />
+                    }
+                    <ServiceWorkerSpacesSyncer />
+                </>
+            </ZionContextProvider>
+        </AppWagmiConfig>
     )
 }
 

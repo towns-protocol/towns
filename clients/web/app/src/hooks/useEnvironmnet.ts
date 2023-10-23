@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Chain } from 'wagmi'
 import { baseGoerli } from 'wagmi/chains'
 import { getChainName } from 'use-zion-client'
-import { foundryClone } from 'wagmiConfig'
+import { foundryClone } from 'AppWagmiConfig'
 import { env } from 'utils'
 
 const TOWNS_DEV_ENV = 'TOWNS_DEV_ENV'

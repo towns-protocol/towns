@@ -1,5 +1,6 @@
+import React from 'react'
 import { getDefaultWallets } from '@rainbow-me/rainbowkit'
-import { Chain, configureChains, createConfig } from 'wagmi'
+import { Chain, WagmiConfig as _WagmiConfig, configureChains, createConfig } from 'wagmi'
 import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
 import { baseGoerli, foundry, goerli, localhost, sepolia } from 'wagmi/chains'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
@@ -57,9 +58,13 @@ const { chains, publicClient, webSocketPublicClient } = configureChains(
     { retryCount: 5 },
 )
 
-export const wagmiConfig = createConfig({
+const wagmiConfig = createConfig({
     autoConnect: true,
     connectors: walletConnectors({ chains }),
     publicClient,
     webSocketPublicClient,
 })
+
+export function AppWagmiConfig({ children }: { children: JSX.Element }) {
+    return <_WagmiConfig config={wagmiConfig}>{children}</_WagmiConfig>
+}
