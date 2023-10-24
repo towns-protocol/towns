@@ -55,7 +55,7 @@ export const PublicTownPage = () => {
 
     return spaceInfo ? (
         <>
-            <FixedBackground networkId={spaceInfo.networkId} />
+            <AbsoluteBackground networkId={spaceInfo.networkId} />
             <Box horizontal centerContent width="100%" padding="lg">
                 <Box horizontal width="wide" justifyContent="spaceBetween">
                     <PageLogo />
@@ -119,7 +119,16 @@ export const PublicTownPage = () => {
     )
 }
 
-function MembershipStatusMessage({
+export const AbsoluteBackground = ({ networkId }: { networkId: string }) => {
+    const { imageSrc } = useImageSource(networkId, ImageVariants.thumbnail600)
+    return (
+        <Box absoluteFill pointerEvents="none">
+            <BlurredBackground imageSrc={imageSrc ?? ''} blur={40} />
+        </Box>
+    )
+}
+
+const MembershipStatusMessage = ({
     background = 'error',
     message,
     icon,
@@ -129,7 +138,7 @@ function MembershipStatusMessage({
     message: string
     icon?: IconProps['type']
     spinner?: boolean
-}) {
+}) => {
     return (
         <Box
             horizontal
@@ -156,22 +165,6 @@ const MessageBox = ({ children, ...boxProps }: BoxProps) => (
         </Box>
     </Box>
 )
-
-const FixedBackground = ({ networkId }: { networkId: string }) => {
-    const { imageSrc } = useImageSource(networkId, ImageVariants.thumbnail600)
-    return (
-        <Box
-            position="fixed"
-            top="none"
-            left="none"
-            bottom="none"
-            right="none"
-            pointerEvents="none"
-        >
-            <BlurredBackground imageSrc={imageSrc ?? ''} blur={40} />
-        </Box>
-    )
-}
 
 const LoggedUserAvatar = () => {
     const profileUser = useMyProfile()

@@ -40,11 +40,12 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                 alignItems="center"
                 justifyContent="center"
                 paddingX="lg"
-                // width="100%"
                 overflowY="scroll"
             >
                 <Stack
                     grow
+                    height="100%"
+                    minHeight="600"
                     paddingY="x8"
                     gap="x4"
                     direction={{ mobile: 'columnReverse', default: 'row' }}
@@ -133,7 +134,11 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                     </Stack>
                     {/* right column */}
                     <Stack>
-                        <Box justifyContent={{ default: 'start', mobile: 'center' }}>
+                        <Box
+                            justifyContent={{ default: 'start', mobile: 'center' }}
+                            insetTop={{ default: 'md', mobile: 'none' }}
+                            insetRight={{ default: 'xs', mobile: 'none' }}
+                        >
                             <InteractiveTownsToken
                                 key={imageSrc}
                                 size={isTouch ? 'lg' : 'xl'}

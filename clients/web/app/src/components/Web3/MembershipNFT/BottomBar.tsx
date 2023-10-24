@@ -105,7 +105,7 @@ export const BottomBarLayout = (props: {
         <Stack
             centerContent
             width="100%"
-            borderTop="level4"
+            borderTop="default"
             paddingX="lg"
             background={theme === 'dark' ? 'transparentDark' : 'transparentBright'}
         >

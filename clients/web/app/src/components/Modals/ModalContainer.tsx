@@ -16,6 +16,7 @@ type Props = {
     touchTitle?: string
     rightBarButton?: React.ReactNode
     padding?: BoxProps['padding']
+    border?: BoxProps['border']
 }
 
 export const ModalContainer = (props: Props) => {
@@ -144,14 +145,14 @@ export const CenteredModalContainer = (props: Props) => {
                 }
             >
                 <MotionBox
-                    border
+                    border={props.border ?? 'default'}
                     overflow="hidden"
                     padding={props.padding ?? 'md'}
                     rounded="md"
                     background="level1"
                     minWidth={minWidth}
                     pointerEvents="auto"
-                    style={{ maxWidth: `calc(100vw - 200px)`, maxHeight: `calc(100vh - 32px)` }}
+                    style={{ maxWidth: `calc(100vw - 100px)`, maxHeight: `calc(100vh - 32px)` }}
                     transition={{
                         type: 'spring',
                         damping: 50,

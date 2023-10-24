@@ -1,3 +1,4 @@
+import { Permission } from '@river/web3'
 import React, { useCallback, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast/headless'
 import { useNavigate } from 'react-router'
@@ -10,12 +11,14 @@ import {
     useSpaceMembers,
     useZionClient,
 } from 'use-zion-client'
-import { Permission } from '@river/web3'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
+import { Panel, PanelButton } from '@components/Panel/Panel'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
+import { SpaceNameModal } from '@components/SpaceNameModal/SpaceNameModal'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import {
     Avatar,
@@ -31,27 +34,25 @@ import {
     TextButton,
 } from '@ui'
 import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
-import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { useGetSpaceTopic, useSetSpaceTopic } from 'hooks/useSpaceTopic'
-import { PATHS } from 'routes'
-import { TextArea } from 'ui/components/TextArea/TextArea'
-import { getInviteUrl, shortAddress } from 'ui/utils/utils'
-import { useDevice } from 'hooks/useDevice'
-import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { useAuth } from 'hooks/useAuth'
 import {
     toggleMuteSetting,
     useMuteSettings,
     useSetMuteSettingForChannelOrSpace,
 } from 'api/lib/notificationSettings'
+import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { Panel, PanelButton } from '@components/Panel/Panel'
+import { useDevice } from 'hooks/useDevice'
 import { useGetUserFromAddress } from 'hooks/useGetUserFromAddress'
-import { SpaceNameModal } from '@components/SpaceNameModal/SpaceNameModal'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { useGetSpaceTopic, useSetSpaceTopic } from 'hooks/useSpaceTopic'
+import { PATHS } from 'routes'
+import { TextArea } from 'ui/components/TextArea/TextArea'
+import { getInviteUrl, shortAddress } from 'ui/utils/utils'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { env } from '../utils/environment'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
+import { PublicTownPage } from './PublicTownPage'
 
 const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) => (
     <Box padding="md" gap="md" {...boxProps} background="level2" rounded="sm">
@@ -87,10 +88,14 @@ export const SpaceInfoPanel = () => {
 
     const { members } = useSpaceMembers()
     const [activeModal, setActiveModal] = useState<
-        'browse-channels' | 'members' | 'confirm-leave' | 'settings' | undefined
+        'browse-channels' | 'members' | 'confirm-leave' | 'settings' | 'preview' | undefined
     >(undefined)
+
     const onHideBrowseChannels = useEvent(() => setActiveModal(undefined))
     const onShowBrowseChannels = useEvent(() => setActiveModal('browse-channels'))
+
+    const onHideTownPreview = useEvent(() => setActiveModal(undefined))
+    const onShowTownPreview = useEvent(() => setActiveModal('preview'))
 
     const onClose = useEvent(() => {
         navigate('../')
@@ -235,7 +240,7 @@ export const SpaceInfoPanel = () => {
                     </FormRender>
                 </Stack>
             )}
-            <Stack gap padding="lg">
+            <Stack gap padding>
                 <MdGap>
                     <Stack gap>
                         <Stack horizontal alignItems="center" width="100%">
@@ -357,6 +362,11 @@ export const SpaceInfoPanel = () => {
                     </>
                 </MdGap>
 
+                <PanelButton disabled={isSettingNotification} onClick={onShowTownPreview}>
+                    <Icon type="search" size="square_sm" color="gray2" />
+                    <Paragraph color="default">Preview</Paragraph>
+                </PanelButton>
+
                 <PanelButton onClick={onMembersClick}>
                     <Icon type="people" size="square_sm" color="gray2" />
                     <Paragraph color="default">
@@ -425,6 +435,19 @@ export const SpaceInfoPanel = () => {
 
             {activeModal === 'settings' && (
                 <SpaceNameModal onHide={() => setActiveModal(undefined)} />
+            )}
+
+            {activeModal === 'preview' && (
+                <ModalContainer padding="none" border="none" onHide={onHideTownPreview}>
+                    <Box
+                        position="relative"
+                        style={{ height: 'calc(100vh - 100px)' }}
+                        pointerEvents="none"
+                        onPointerDown={onHideTownPreview}
+                    >
+                        <PublicTownPage />
+                    </Box>
+                </ModalContainer>
             )}
         </Panel>
     )
