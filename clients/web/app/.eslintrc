@@ -79,6 +79,15 @@
             "name": "use-zion-client",
             "importNames": ["useMatrixCredentials", "useCasablancaCredentials"],
             "message": "Please use useAuth for credentials or useMyProfile for userId."
+          },
+          {
+            "name": "ui/components",
+            "message": "Please import via @ui"
+          },
+          {
+            "name": "framer-motion",
+            "importNames": ["Box"],
+            "message": "Please use Box from @ui"
           }
         ]
       }
