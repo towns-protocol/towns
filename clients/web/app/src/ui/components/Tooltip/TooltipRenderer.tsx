@@ -15,6 +15,7 @@ import { useZLayerContext } from '../ZLayer/ZLayer'
 
 const Trigger = {
     hover: 'hover',
+    click: 'click',
 } as const
 
 export type TooltipOptions = {
@@ -33,12 +34,19 @@ type Props = TooltipOptions & {
     tooltip: React.ReactNode | undefined
 }
 
-export type TriggerProps = {
+export type HoverTriggerProps = {
     ref: RefObject<HTMLElement>
     onMouseEnter: () => void
     onMouseLeave: () => void
     onMouseUp?: () => void
 }
+
+export type ClickTriggerProps = {
+    ref: RefObject<HTMLElement>
+    onMouseUp?: () => void
+}
+
+export type TriggerProps = HoverTriggerProps | ClickTriggerProps
 
 export const TooltipContext = createContext<{
     placement: 'vertical' | 'horizontal'
@@ -46,7 +54,7 @@ export const TooltipContext = createContext<{
 
 export const TooltipRenderer = (props: Props) => {
     const {
-        immediate,
+        immediate = props.trigger === Trigger.hover ? false : true,
         align = 'center',
         active: forceActive = false,
         children,
@@ -68,6 +76,12 @@ export const TooltipRenderer = (props: Props) => {
     const onMouseLeave = useEvent(() => {
         if (!forceActive) {
             setActive(false)
+        }
+    })
+
+    const onMouseClick = useEvent(() => {
+        if (props.trigger === Trigger.click) {
+            setActive((active) => !active)
         }
     })
 
@@ -111,12 +125,18 @@ export const TooltipRenderer = (props: Props) => {
         <>
             {children &&
                 children({
-                    triggerProps: {
-                        ref: triggerRef,
-                        onMouseEnter,
-                        onMouseLeave,
-                        onMouseUp: removeOnClick ? onMouseLeave : undefined,
-                    },
+                    triggerProps:
+                        props.trigger === Trigger.hover
+                            ? {
+                                  ref: triggerRef,
+                                  onMouseEnter,
+                                  onMouseLeave,
+                                  onMouseUp: removeOnClick ? onMouseLeave : undefined,
+                              }
+                            : {
+                                  ref: triggerRef,
+                                  onMouseUp: onMouseClick,
+                              },
                 })}
 
             {keepAlive &&

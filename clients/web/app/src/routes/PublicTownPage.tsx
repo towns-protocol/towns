@@ -1,11 +1,24 @@
 import debug from 'debug'
 import React, { useCallback, useState } from 'react'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { isAddress } from 'viem'
+import { useMyProfile } from 'use-zion-client'
 import { Spinner } from '@components/Spinner'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
 import { TownPageMemberList } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2'
-import { Box, BoxProps, Button, Heading, Icon, IconProps, Text } from '@ui'
+import {
+    Avatar,
+    Box,
+    BoxProps,
+    Button,
+    Card,
+    Heading,
+    Icon,
+    IconProps,
+    Paragraph,
+    Stack,
+    Text,
+} from '@ui'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { BottomBarLayout } from '@components/Web3/MembershipNFT/BottomBar'
@@ -44,10 +57,9 @@ export const PublicTownPage = () => {
         <>
             <FixedBackground networkId={spaceInfo.networkId} />
             <Box horizontal centerContent width="100%" padding="lg">
-                <Box width="wide">
-                    <Box position="absolute">
-                        <PageLogo />
-                    </Box>
+                <Box horizontal width="wide" justifyContent="spaceBetween">
+                    <PageLogo />
+                    <LoggedUserAvatar />
                 </Box>
             </Box>
             <TownPageLayout
@@ -158,5 +170,80 @@ const FixedBackground = ({ networkId }: { networkId: string }) => {
         >
             <BlurredBackground imageSrc={imageSrc ?? ''} blur={40} />
         </Box>
+    )
+}
+
+const LoggedUserAvatar = () => {
+    const profileUser = useMyProfile()
+
+    if (!profileUser) {
+        return
+    }
+
+    return (
+        <Box
+            hoverable
+            cursor="pointer"
+            tooltip={<LoggedUserMenu />}
+            tooltipOptions={{
+                placement: 'vertical',
+                trigger: 'click',
+                align: 'end',
+            }}
+        >
+            <Avatar size="avatar_x4" userId={profileUser.userId} src={profileUser.avatarUrl} />
+        </Box>
+    )
+}
+
+const LoggedUserMenu = () => {
+    const { logout } = useAuth()
+    const onLogOut = useCallback(() => {
+        logout()
+    }, [logout])
+
+    const navigate = useNavigate()
+    const onBackToApp = useCallback(() => {
+        navigate('/')
+    }, [navigate])
+
+    return (
+        <Card border minWidth="250" pointerEvents="all">
+            <Stack
+                horizontal
+                gap
+                padding
+                hoverable
+                cursor="pointer"
+                alignItems="center"
+                paddingBottom="sm"
+                background="level2"
+                onClick={onBackToApp}
+            >
+                <Icon background="level3" type="arrowLeft" padding="sm" size="square_lg" />
+                <Paragraph>Back to App</Paragraph>
+            </Stack>
+            <Stack
+                padding
+                horizontal
+                gap
+                hoverable
+                paddingTop="sm"
+                background="level2"
+                alignItems="center"
+                color="error"
+                cursor="pointer"
+                onClick={onLogOut}
+            >
+                <Icon
+                    background="level3"
+                    type="logout"
+                    padding="sm"
+                    size="square_lg"
+                    color="inherit"
+                />
+                <Paragraph>Log Out</Paragraph>
+            </Stack>
+        </Card>
     )
 }

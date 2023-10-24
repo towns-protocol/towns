@@ -30,8 +30,8 @@ export function LoginComponent(props: Props) {
     const { isConnected } = useAuth()
 
     return (
-        <Box centerContent gap="lg">
-            {isConnected ? <ConnectedState /> : <DisconnectedState {...props} />}
+        <Box centerContent={!props.isPublicPage} gap="lg">
+            {isConnected ? <ConnectedState {...props} /> : <DisconnectedState {...props} />}
         </Box>
     )
 }
@@ -83,7 +83,7 @@ function DisconnectedState(props: Props) {
     )
 }
 
-function ConnectedState() {
+function ConnectedState(props: Props) {
     const { login, register, userOnWrongNetworkForSignIn, loginError } = useAuth()
 
     const {
