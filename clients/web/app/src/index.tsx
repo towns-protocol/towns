@@ -14,6 +14,9 @@ console.log(
     ``,
 )
 
+// fixes: uncaught ReferenceError: global is not defined for 3rd party libs
+window.global ||= globalThis
+
 if (env.DEV) {
     // Register runtime-error overlay
     // From: https://github.com/vitejs/vite/issues/2076
