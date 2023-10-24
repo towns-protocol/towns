@@ -41,7 +41,7 @@ export const tooltipLeft = style({})
 export const tooltipRight = style({})
 
 globalStyle(`${tooltipVertical} ${tooltip}`, {
-    maxWidth: `calc(min(var(--bounds-width) * 1px, 35ch))`,
+    maxWidth: `calc(min(var(--bounds-width) * 1px, 40ch))`,
 })
 globalStyle(`${tooltipHorizontal} ${tooltip}`, {
     maxWidth: `calc(min(var(--bounds-width) * 1px, 25ch))`,

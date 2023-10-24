@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { RoomMember, getAccountAddress, useSpaceMembers } from 'use-zion-client'
 import { CentralPanelLayout } from 'routes/layouts/CentralPanelLayout'
 import { shortAddress } from 'ui/utils/utils'
-import { Avatar, Grid, Paragraph, Stack } from '@ui'
+import { Avatar, Box, Grid, Paragraph, Stack } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -24,7 +24,7 @@ export const MembersPage = (props: Props) => {
                     </Paragraph>
                 </Stack>
                 <Stack grow overflowY="scroll">
-                    <Grid padding="lg" columnMinSize="130px">
+                    <Grid padding="lg" columnMinSize="180px">
                         {members.map((member) => (
                             <GridProfile member={member} key={member.userId} />
                         ))}
@@ -57,24 +57,34 @@ const GridProfile = ({ member }: { member: RoomMember }) => {
     const { createLink } = useCreateLink()
     const link = createLink({ profileId: member.userId })
 
-    const profile = (
-        <Stack centerContent gap>
-            <Avatar size="avatar_x15" userId={member.userId ?? ''} imageVariant="thumbnail300" />
-            <Paragraph textAlign="center">{getPrettyDisplayName(member).initialName}</Paragraph>
-        </Stack>
-    )
-
-    const linkedProfile = !link ? profile : <Link to={link}>{profile}</Link>
-
     return (
-        <Stack centerContent gap padding>
-            {linkedProfile}
-            {accountAddress && accountAddress && (
-                <ClipboardCopy
-                    label={shortAddress(accountAddress)}
-                    clipboardContent={accountAddress}
-                />
-            )}
-        </Stack>
+        <LinkedContainer to={link}>
+            <Stack centerContent gap padding>
+                <Stack gap grow maxWidth="100%">
+                    <Box centerContent>
+                        <Avatar
+                            size="avatar_x15"
+                            userId={member.userId ?? ''}
+                            imageVariant="thumbnail300"
+                        />
+                    </Box>
+                    <Box tooltip={getPrettyDisplayName(member).initialName}>
+                        <Paragraph truncate textAlign="center">
+                            {getPrettyDisplayName(member).initialName}
+                        </Paragraph>
+                    </Box>
+                </Stack>
+                {accountAddress && accountAddress && (
+                    <ClipboardCopy
+                        label={shortAddress(accountAddress)}
+                        clipboardContent={accountAddress}
+                    />
+                )}
+            </Stack>
+        </LinkedContainer>
     )
+}
+
+const LinkedContainer = ({ to, children }: { to?: string; children?: React.ReactNode }) => {
+    return to ? <Link to={to}>{children}</Link> : <>{children}</>
 }
