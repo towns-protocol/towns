@@ -48,6 +48,9 @@ export default ({ mode }: { mode: string }) => {
     let config: UserConfig = {
         optimizeDeps: {
             esbuildOptions: {
+                define: {
+                    global: 'globalThis',
+                },
                 target: 'esnext',
             },
         },
@@ -76,6 +79,7 @@ export default ({ mode }: { mode: string }) => {
         define: {
             APP_VERSION: JSON.stringify(process.env.npm_package_version),
             APP_COMMIT_HASH: JSON.stringify(commitHash),
+            'process.env': {},
         },
         assetsInclude: ['**/*.png', '**/*.svg'],
         plugins: [
