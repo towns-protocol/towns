@@ -79,6 +79,14 @@ export const Shortcuts = {
         },
     },
     Editor: {
+        BoldText: {
+            keys: 'Meta+B',
+            description: 'Bold',
+        },
+        ItalicText: {
+            keys: 'Meta+I',
+            description: 'Italic',
+        },
         OpenGifPicker: {
             keys: 'Meta+G',
             description: 'Open GIF picker',

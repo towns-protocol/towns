@@ -18,6 +18,7 @@ import {
 import { $createCodeNode, $isCodeNode } from '@lexical/code'
 import { $createQuoteNode, $isQuoteNode } from '@lexical/rich-text'
 import { Box, IconButton, Stack } from '@ui'
+import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
 
 export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () => void }) => {
     const { onAddLinkClick, focused } = props
@@ -176,7 +177,7 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
                 opaque
                 active={isBold}
                 icon="bold"
-                tooltip="Bold"
+                tooltip={ShortcutTooltip({ action: 'BoldText' })}
                 tooltipOptions={{ placement: 'vertical', immediate: true }}
                 onClick={onBoldClick}
             />
@@ -184,7 +185,7 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
                 opaque
                 active={isItalic}
                 icon="italic"
-                tooltip="Italic"
+                tooltip={ShortcutTooltip({ action: 'ItalicText' })}
                 tooltipOptions={{ placement: 'vertical', immediate: true }}
                 onClick={onItalicClick}
             />
