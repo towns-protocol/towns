@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react'
+import { APP_NAME } from 'data/constants'
 
-const FALLBACK = 'TOWNS'
+const FALLBACK = APP_NAME
 
 export const useSetDocTitle = () => {
     const setTitle = useCallback((title?: string) => {

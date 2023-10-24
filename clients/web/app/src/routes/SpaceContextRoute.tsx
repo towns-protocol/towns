@@ -7,9 +7,10 @@ import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
+import { APP_NAME } from 'data/constants'
 
 const createSpaceTitle = (spaceName?: string, childLabel?: string) => {
-    return [childLabel, spaceName].filter(Boolean).concat('TOWNS').join(' - ')
+    return [childLabel, spaceName].filter(Boolean).concat(APP_NAME).join(' - ')
 }
 
 export const SpaceContextRoute = () => {
