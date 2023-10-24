@@ -1,4 +1,5 @@
 import {
+    IMembershipBase as LocalhostIMembershipBase,
     ITownArchitect as LocalhostContract,
     ITownArchitectBase as LocalhostITownArchitectBase,
     ITownArchitectInterface as LocalhostInterface,
@@ -15,6 +16,7 @@ import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TownArchitect.ab
 import { BaseContractShimV3 } from './BaseContractShimV3'
 import { ethers } from 'ethers'
 
+export type { LocalhostIMembershipBase as IMembershipBase }
 export type { LocalhostITownArchitectBase as ITownArchitectBase }
 
 export class ITownArchitectShim extends BaseContractShimV3<

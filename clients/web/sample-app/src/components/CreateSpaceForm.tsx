@@ -149,11 +149,15 @@ export const CreateSpaceForm = (props: Props) => {
             return undefined
         }
         const requirements = {
-            name: 'Member',
-            price: formValue.price,
-            limit: formValue.limit,
-            currency: ethers.constants.AddressZero,
-            feeRecipient: await signer.getAddress(),
+            settings: {
+                name: 'Member',
+                symbol: 'MEMBER',
+                price: formValue.price,
+                limit: formValue.limit,
+                duration: 0,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: await signer.getAddress(),
+            },
             permissions: memberPermissions,
             requirements: {
                 everyone: tokenAddresses.length === 0,

@@ -11,6 +11,7 @@ import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "contracts/src/diamond/facets/pausable/IPausable.sol";
 import {IGuardian} from "contracts/src/towns/facets/guardian/IGuardian.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
+import {IMembershipBase} from "contracts/src/towns/facets/membership/IMembership.sol";
 
 // libraries
 
@@ -232,17 +233,21 @@ contract TownArchitectTest is
       name: "test",
       uri: "ipfs://test",
       membership: Membership({
-        name: "Member",
-        price: 0,
-        limit: 0,
-        currency: address(0),
-        feeRecipient: address(0),
-        permissions: new string[](0),
+        settings: IMembershipBase.MembershipInfo({
+          name: "Member",
+          symbol: "MEM",
+          price: 0,
+          limit: 0,
+          duration: 0,
+          currency: address(0),
+          feeRecipient: address(0)
+        }),
         requirements: MembershipRequirements({
           everyone: false,
           tokens: new ITokenEntitlement.ExternalToken[](0),
           users: new address[](0)
-        })
+        }),
+        permissions: new string[](0)
       }),
       channel: ITownArchitectBase.ChannelInfo({
         id: "test",

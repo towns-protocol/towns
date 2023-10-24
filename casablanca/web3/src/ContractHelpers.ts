@@ -1,11 +1,11 @@
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 
-import { BasicRoleInfo } from './ContractTypes'
+import { BasicRoleInfo, Permission } from './ContractTypes'
 import { MockERC721AShim } from './v3/MockERC721AShim'
 import { TokenEntitlementDataTypes } from './v3/TokenEntitlementShim'
 import { getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
 import { ISpaceDapp } from './ISpaceDapp'
-import { ITownArchitectBase } from './v3/ITownArchitectShim'
+import { IMembershipBase, ITownArchitectBase } from './v3/ITownArchitectShim'
 
 export function mintMockNFT(
     chainId: number,
@@ -57,17 +57,22 @@ export function createMembershipStruct({
     permissions,
     tokenAddresses,
 }: {
+    permissions: Permission[]
     tokenAddresses: string[]
 } & Omit<
-    ITownArchitectBase.MembershipStruct,
-    'price' | 'limit' | 'currency' | 'requirements' | 'feeRecipient'
+    IMembershipBase.MembershipInfoStruct,
+    'symbol' | 'price' | 'limit' | 'duration' | 'currency' | 'feeRecipient'
 >): ITownArchitectBase.MembershipStruct {
     return {
-        name,
-        price: 0,
-        limit: 1000,
-        currency: ethers.constants.AddressZero,
-        feeRecipient: ethers.constants.AddressZero,
+        settings: {
+            name,
+            symbol: 'MEMBER',
+            price: 0,
+            limit: 1000,
+            duration: 0,
+            currency: ethers.constants.AddressZero,
+            feeRecipient: ethers.constants.AddressZero,
+        },
         permissions,
         requirements: {
             everyone: tokenAddresses.length === 0,

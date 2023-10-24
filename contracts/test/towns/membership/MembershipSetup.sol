@@ -75,15 +75,16 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
     payloads[1] = abi.encodeWithSelector(
       membershipHelper.initializer(),
       MembershipInfo({
-        membershipPrice: 0,
-        membershipLimit: 0,
-        membershipCurrency: address(0),
-        membershipFeeRecipient: townDAO,
-        townFactory: townFactory,
-        forwarder: address(trustedForwarder),
         name: "Membership",
-        symbol: "MEM"
-      })
+        symbol: "MEM",
+        price: 0,
+        limit: 0,
+        duration: 0,
+        currency: address(0),
+        feeRecipient: townDAO
+      }),
+      townFactory,
+      address(trustedForwarder)
     );
     payloads[2] = abi.encodeWithSelector(
       tokenOwnableHelper.initializer(),
@@ -111,7 +112,7 @@ contract MembershipHelper is FacetHelper {
     membership = new MembershipFacet();
 
     uint256 index;
-    bytes4[] memory selectors_ = new bytes4[](14);
+    bytes4[] memory selectors_ = new bytes4[](16);
 
     // Forwarder
     selectors_[index++] = IERC2771Recipient.isTrustedForwarder.selector;
@@ -121,6 +122,10 @@ contract MembershipHelper is FacetHelper {
     selectors_[index++] = IMembership.renewMembership.selector;
     selectors_[index++] = IMembership.cancelMembership.selector;
     selectors_[index++] = IMembership.expiresAt.selector;
+
+    // Duration
+    selectors_[index++] = IMembership.setMembershipDuration.selector;
+    selectors_[index++] = IMembership.getMembershipDuration.selector;
 
     // Pricing
     selectors_[index++] = IMembership.setMembershipPrice.selector;

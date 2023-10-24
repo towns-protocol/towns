@@ -10,6 +10,8 @@ import {IEntitlementsManager} from "contracts/src/towns/facets/entitlements/IEnt
 import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.sol";
 import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
 import {ITownProxyBase} from "contracts/src/towns/facets/proxy/ITownProxy.sol";
+import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
+import {IMembershipBase} from "contracts/src/towns/facets/membership/IMembership.sol";
 
 // libraries
 import {StringSet} from "contracts/src/utils/StringSet.sol";
@@ -147,7 +149,7 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     uint256 memberRoleId = _createMemberEntitlement(
       townAddress,
       tokenEntitlement,
-      townInfo.membership.name,
+      townInfo.membership.settings.name,
       townInfo.membership.permissions
     );
 
@@ -339,7 +341,7 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
       type(TownProxy).creationCode,
       abi.encode(
         ITownProxyBase.TownProxyInit({
-          managedProxy: ITownProxyBase.ManagedProxy({
+          managedProxy: IManagedProxyBase.ManagedProxyInit({
             managerSelector: IProxyManager.getImplementation.selector,
             manager: address(this)
           }),
@@ -347,14 +349,16 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
             townOwner: townOwnerCollection,
             tokenId: tokenId
           }),
-          membership: ITownProxyBase.Membership({
-            name: membership.name,
-            price: membership.price,
-            limit: membership.limit,
-            currency: membership.currency,
-            feeRecipient: membership.feeRecipient == address(0)
+          membership: IMembershipBase.MembershipInfo({
+            name: membership.settings.name,
+            symbol: membership.settings.symbol,
+            price: membership.settings.price,
+            limit: membership.settings.limit,
+            duration: membership.settings.duration,
+            currency: membership.settings.currency,
+            feeRecipient: membership.settings.feeRecipient == address(0)
               ? _msgSenderTownArchitect()
-              : membership.feeRecipient
+              : membership.settings.feeRecipient
           }),
           forwarder: ITownProxyBase.Forwarder({
             trustedForwarder: _getTrustedForwarder()

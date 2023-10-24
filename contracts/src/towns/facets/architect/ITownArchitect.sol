@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 
 // libraries
 import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
+import {IMembershipBase} from "contracts/src/towns/facets/membership/IMembership.sol";
 
 // contracts
 interface ITownArchitectBase {
@@ -18,13 +19,9 @@ interface ITownArchitectBase {
   }
 
   struct Membership {
-    string name;
-    uint256 price;
-    uint256 limit;
-    address currency;
-    address feeRecipient;
-    string[] permissions;
+    IMembershipBase.MembershipInfo settings;
     MembershipRequirements requirements;
+    string[] permissions;
   }
 
   struct ChannelInfo {

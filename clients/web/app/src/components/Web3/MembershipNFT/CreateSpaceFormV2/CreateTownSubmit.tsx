@@ -122,12 +122,15 @@ export function CreateTownSubmit({
                 }
 
                 const requirements = {
-                    name: 'Member',
-                    price: membershipCost,
-                    limit: membershipLimit,
-                    currency: ethers.constants.AddressZero,
-                    feeRecipient: await signer.getAddress(),
-                    permissions: [Permission.Read, Permission.Write],
+                    settings: {
+                        name: 'Member',
+                        symbol: 'MEMBER',
+                        price: membershipCost,
+                        limit: membershipLimit,
+                        duration: 0,
+                        currency: ethers.constants.AddressZero,
+                        feeRecipient: await signer.getAddress(),
+                    },
                     requirements: {
                         everyone: tokensGatingMembership.length === 0,
                         tokens: tokensGatingMembership.map((token) => ({
@@ -138,6 +141,7 @@ export function CreateTownSubmit({
                         })),
                         users: [],
                     },
+                    permissions: [Permission.Read, Permission.Write],
                 }
                 console.log('submitting values: ', {
                     createSpaceInfo,

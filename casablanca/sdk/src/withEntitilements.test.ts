@@ -79,11 +79,15 @@ describe('withEntitlements', () => {
         log('Bob created user, about to create space', { spacedStreamId, channelId })
         // first on the blockchain
         const membershipInfo: ITownArchitectBase.MembershipStruct = {
-            name: 'Everyone',
-            price: 0,
-            limit: 1000,
-            currency: ETH_ADDRESS,
-            feeRecipient: bobsUserId,
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                limit: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bobsUserId,
+            },
             permissions: [Permission.Read, Permission.Write],
             requirements: {
                 everyone: true,

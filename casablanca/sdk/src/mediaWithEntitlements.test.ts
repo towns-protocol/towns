@@ -57,11 +57,15 @@ describe('mediaWithEntitlementsTests', () => {
 
         // create a space stream,
         const membershipInfo: ITownArchitectBase.MembershipStruct = {
-            name: 'Everyone',
-            price: 0,
-            limit: 1000,
-            currency: ETH_ADDRESS,
-            feeRecipient: bobClient.userId,
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                limit: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bobClient.userId,
+            },
             permissions: [Permission.Read, Permission.Write],
             requirements: {
                 everyone: true,

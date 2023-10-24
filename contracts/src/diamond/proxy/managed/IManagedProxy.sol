@@ -9,6 +9,11 @@ import {IProxy} from "../IProxy.sol";
 // contracts
 
 interface IManagedProxyBase is IProxy {
+  struct ManagedProxyInit {
+    bytes4 managerSelector;
+    address manager;
+  }
+
   error ManagedProxy__FetchImplementationFailed();
   error ManagedProxy__InvalidManager();
   error ManagedProxy__InvalidManagerSelector();

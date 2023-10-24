@@ -13,6 +13,7 @@ import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitec
 import {ITownArchitectBase} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
 import {IMembership} from "contracts/src/towns/facets/membership/IMembership.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
+import {IMembershipBase} from "contracts/src/towns/facets/membership/IMembership.sol";
 
 // libraries
 import {Permissions} from "contracts/src/towns/facets/Permissions.sol";
@@ -148,17 +149,21 @@ contract Integration_CreateTown is
       name: "test",
       uri: "ipfs://test",
       membership: Membership({
-        name: "Member",
-        price: 0,
-        limit: 0,
-        currency: address(0),
-        feeRecipient: address(0),
-        permissions: new string[](1),
+        settings: IMembershipBase.MembershipInfo({
+          name: "Member",
+          symbol: "MEM",
+          price: 0,
+          limit: 0,
+          duration: 0,
+          currency: address(0),
+          feeRecipient: address(0)
+        }),
         requirements: MembershipRequirements({
           everyone: false,
           tokens: new ITokenEntitlement.ExternalToken[](0),
           users: new address[](1)
-        })
+        }),
+        permissions: new string[](1)
       }),
       channel: ChannelInfo({metadata: "ipfs://test", id: "test"})
     });
@@ -198,17 +203,21 @@ contract Integration_CreateTown is
       name: "test",
       uri: "ipfs://test",
       membership: ITownArchitectBase.Membership({
-        name: "Member",
-        price: 0,
-        limit: 0,
-        currency: address(0),
-        feeRecipient: address(0),
-        permissions: new string[](0),
+        settings: IMembershipBase.MembershipInfo({
+          name: "Member",
+          symbol: "MEM",
+          price: 0,
+          limit: 0,
+          duration: 0,
+          currency: address(0),
+          feeRecipient: address(0)
+        }),
         requirements: ITownArchitectBase.MembershipRequirements({
           everyone: false,
           tokens: new ITokenEntitlement.ExternalToken[](0),
           users: new address[](0)
-        })
+        }),
+        permissions: new string[](0)
       }),
       channel: ITownArchitectBase.ChannelInfo({
         id: "test",

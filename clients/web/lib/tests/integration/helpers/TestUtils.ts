@@ -155,11 +155,15 @@ export async function createTestSpaceGatedByTownAndZionNfts(
     const tokens = createExternalTokenStruct([memberNftAddress ?? ''])
 
     const membershipInfo: ITownArchitectBase.MembershipStruct = {
-        name: 'Member',
-        price: 0,
-        limit: 100,
-        currency: ethers.constants.AddressZero,
-        feeRecipient: client.walletAddress,
+        settings: {
+            name: 'Member',
+            symbol: 'MEMBER',
+            price: 0,
+            limit: 100,
+            duration: 0,
+            currency: ethers.constants.AddressZero,
+            feeRecipient: client.walletAddress,
+        },
         permissions: rolePermissions,
         requirements: {
             everyone: false,
@@ -194,11 +198,15 @@ export async function createTestSpaceGatedByTownNft(
 
     // Everyone role
     const membershipInfo: ITownArchitectBase.MembershipStruct = {
-        name: 'Everyone',
-        price: 0,
-        limit: 100,
-        currency: ethers.constants.AddressZero,
-        feeRecipient: client.walletAddress,
+        settings: {
+            name: 'Everyone',
+            symbol: 'MEMBER',
+            price: 0,
+            limit: 100,
+            duration: 0,
+            currency: ethers.constants.AddressZero,
+            feeRecipient: client.walletAddress,
+        },
         permissions: rolePermissions,
         requirements: {
             everyone: true,

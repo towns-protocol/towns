@@ -27,6 +27,36 @@ import type {
   PromiseOrValue,
 } from "./common";
 
+export declare namespace IMembershipBase {
+  export type MembershipInfoStruct = {
+    name: PromiseOrValue<string>;
+    symbol: PromiseOrValue<string>;
+    price: PromiseOrValue<BigNumberish>;
+    limit: PromiseOrValue<BigNumberish>;
+    duration: PromiseOrValue<BigNumberish>;
+    currency: PromiseOrValue<string>;
+    feeRecipient: PromiseOrValue<string>;
+  };
+
+  export type MembershipInfoStructOutput = [
+    string,
+    string,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    string,
+    string
+  ] & {
+    name: string;
+    symbol: string;
+    price: BigNumber;
+    limit: BigNumber;
+    duration: BigNumber;
+    currency: string;
+    feeRecipient: string;
+  };
+}
+
 export declare namespace ITokenEntitlement {
   export type ExternalTokenStruct = {
     contractAddress: PromiseOrValue<string>;
@@ -66,31 +96,19 @@ export declare namespace ITownArchitectBase {
   };
 
   export type MembershipStruct = {
-    name: PromiseOrValue<string>;
-    price: PromiseOrValue<BigNumberish>;
-    limit: PromiseOrValue<BigNumberish>;
-    currency: PromiseOrValue<string>;
-    feeRecipient: PromiseOrValue<string>;
-    permissions: PromiseOrValue<string>[];
+    settings: IMembershipBase.MembershipInfoStruct;
     requirements: ITownArchitectBase.MembershipRequirementsStruct;
+    permissions: PromiseOrValue<string>[];
   };
 
   export type MembershipStructOutput = [
-    string,
-    BigNumber,
-    BigNumber,
-    string,
-    string,
-    string[],
-    ITownArchitectBase.MembershipRequirementsStructOutput
+    IMembershipBase.MembershipInfoStructOutput,
+    ITownArchitectBase.MembershipRequirementsStructOutput,
+    string[]
   ] & {
-    name: string;
-    price: BigNumber;
-    limit: BigNumber;
-    currency: string;
-    feeRecipient: string;
-    permissions: string[];
+    settings: IMembershipBase.MembershipInfoStructOutput;
     requirements: ITownArchitectBase.MembershipRequirementsStructOutput;
+    permissions: string[];
   };
 
   export type ChannelInfoStruct = {
@@ -128,8 +146,8 @@ export declare namespace ITownArchitectBase {
 
 export interface ITownArchitectInterface extends utils.Interface {
   functions: {
-    "computeTown(string,(string,uint256,uint256,address,address,string[],(bool,(address,uint256,bool,uint256[])[],address[])))": FunctionFragment;
-    "createTown((string,string,string,(string,uint256,uint256,address,address,string[],(bool,(address,uint256,bool,uint256[])[],address[])),(string,string)))": FunctionFragment;
+    "computeTown(string,((string,string,uint256,uint256,uint64,address,address),(bool,(address,uint256,bool,uint256[])[],address[]),string[]))": FunctionFragment;
+    "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address),(bool,(address,uint256,bool,uint256[])[],address[]),string[]),(string,string)))": FunctionFragment;
     "gateByToken(address,uint256)": FunctionFragment;
     "getTokenIdByTownId(string)": FunctionFragment;
     "getTownArchitectImplementations()": FunctionFragment;

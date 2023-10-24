@@ -30,22 +30,13 @@ contract TownProxy is
 {
   constructor(TownProxyInit memory init) {
     __IntrospectionBase_init();
-    __ManagedProxyBase_init(
-      init.managedProxy.managerSelector,
-      init.managedProxy.manager
-    );
+    __ManagedProxyBase_init(init.managedProxy);
     __TokenOwnableBase_init(
       init.tokenOwnable.townOwner,
       init.tokenOwnable.tokenId
     );
-    __ERC721ABase_init(init.membership.name, "TOWN");
-    __MembershipBase_init(
-      init.membership.price,
-      init.membership.limit,
-      init.membership.currency,
-      init.membership.feeRecipient,
-      init.managedProxy.manager
-    );
+    __ERC721ABase_init(init.membership.name, init.membership.symbol);
+    __MembershipBase_init(init.membership, init.managedProxy.manager);
     __ERC2771RecipientBase_init(init.forwarder.trustedForwarder);
   }
 

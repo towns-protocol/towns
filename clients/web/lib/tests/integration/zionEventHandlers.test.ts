@@ -50,11 +50,15 @@ describe('Zion event handlers test', () => {
         expect(memberNftAddress).not.toBe('')
         const tokens = createExternalTokenStruct([memberNftAddress])
         const membership: ITownArchitectBase.MembershipStruct = {
-            name: 'Member',
-            price: 0,
-            limit: 100,
-            currency: ethers.constants.AddressZero,
-            feeRecipient: alice.wallet.address,
+            settings: {
+                name: 'Member',
+                symbol: 'MEMBER',
+                price: 0,
+                limit: 100,
+                duration: 0,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: alice.wallet.address,
+            },
             permissions: [Permission.Read, Permission.Write],
             requirements: {
                 everyone: false,

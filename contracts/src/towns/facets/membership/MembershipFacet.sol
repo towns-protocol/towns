@@ -25,17 +25,13 @@ contract MembershipFacet is
   Entitled
 {
   function __Membership_init(
-    MembershipInfo memory info
+    MembershipInfo memory info,
+    address townFactory,
+    address forwarder
   ) external onlyInitializing {
-    __MembershipBase_init(
-      info.membershipPrice,
-      info.membershipLimit,
-      info.membershipCurrency,
-      info.membershipFeeRecipient,
-      info.townFactory
-    );
-    __ERC2771RecipientBase_init(info.forwarder);
+    __MembershipBase_init(info, townFactory);
     __ERC721A_init_unchained(info.name, info.symbol);
+    __ERC2771RecipientBase_init(forwarder);
   }
 
   // =============================================================
@@ -89,6 +85,19 @@ contract MembershipFacet is
   /// @inheritdoc IMembership
   function expiresAt(uint256 tokenId) external view returns (uint256) {
     return _expiresAt(tokenId);
+  }
+
+  // =============================================================
+  //                           Duration
+  // =============================================================
+  /// @inheritdoc IMembership
+  function setMembershipDuration(uint64 newDuration) external onlyOwner {
+    _setMembershipDuration(newDuration);
+  }
+
+  /// @inheritdoc IMembership
+  function getMembershipDuration() external view returns (uint64) {
+    return _getMembershipDuration();
   }
 
   // =============================================================

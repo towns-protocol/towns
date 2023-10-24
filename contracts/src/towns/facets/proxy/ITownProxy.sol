@@ -2,27 +2,16 @@
 pragma solidity ^0.8.19;
 
 // interfaces
+import {IMembershipBase} from "contracts/src/towns/facets/membership/IMembership.sol";
+import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
 
 // libraries
 
 // contracts
 interface ITownProxyBase {
-  struct ManagedProxy {
-    bytes4 managerSelector;
-    address manager;
-  }
-
   struct TokenOwnable {
     address townOwner;
     uint256 tokenId;
-  }
-
-  struct Membership {
-    string name;
-    uint256 price;
-    uint256 limit;
-    address currency;
-    address feeRecipient;
   }
 
   struct Forwarder {
@@ -30,9 +19,9 @@ interface ITownProxyBase {
   }
 
   struct TownProxyInit {
-    ManagedProxy managedProxy;
+    IManagedProxyBase.ManagedProxyInit managedProxy;
     TokenOwnable tokenOwnable;
-    Membership membership;
+    IMembershipBase.MembershipInfo membership;
     Forwarder forwarder;
   }
 }

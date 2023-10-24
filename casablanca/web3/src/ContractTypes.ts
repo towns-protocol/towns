@@ -1,6 +1,6 @@
 import { TokenEntitlementDataTypes, TokenEntitlementShim } from './v3/TokenEntitlementShim'
 import { UserEntitlementShim } from './v3/UserEntitlementShim'
-import { ITownArchitectBase } from './v3/ITownArchitectShim'
+import { IMembershipBase } from './v3/ITownArchitectShim'
 
 export enum Permission {
     Read = 'Read',
@@ -131,6 +131,6 @@ export function isStringArray(
 }
 
 export type MembershipInfo = Pick<
-    ITownArchitectBase.MembershipStruct,
+    IMembershipBase.MembershipInfoStruct,
     'limit' | 'currency' | 'feeRecipient' | 'price'
 >

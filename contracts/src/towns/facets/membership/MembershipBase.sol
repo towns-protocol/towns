@@ -12,19 +12,17 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 // contracts
 abstract contract MembershipBase is IMembershipBase {
   function __MembershipBase_init(
-    uint256 membershipPrice,
-    uint256 membershipLimit,
-    address membershipCurrency,
-    address membershipFeeRecipient,
+    MembershipInfo memory info,
     address townFactory
   ) internal {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
-    ds.membershipPrice = membershipPrice;
-    ds.membershipLimit = membershipLimit;
-    ds.membershipCurrency = membershipCurrency == address(0)
+    ds.membershipPrice = info.price;
+    ds.membershipLimit = info.limit;
+    ds.membershipDuration = info.duration;
+    ds.membershipCurrency = info.currency == address(0)
       ? CurrencyTransfer.NATIVE_TOKEN
-      : membershipCurrency;
-    ds.membershipFeeRecipient = membershipFeeRecipient;
+      : info.currency;
+    ds.membershipFeeRecipient = info.feeRecipient;
     ds.townFactory = townFactory;
   }
 
@@ -98,9 +96,26 @@ abstract contract MembershipBase is IMembershipBase {
   //                           Duration
   // =============================================================
   function _getMembershipDuration() internal view returns (uint64) {
+    MembershipStorage.Layout storage ds = MembershipStorage.layout();
+
+    if (ds.membershipDuration > 0) return ds.membershipDuration;
+
     return
       IPlatformRequirements(MembershipStorage.layout().townFactory)
         .getMembershipDuration();
+  }
+
+  function _setMembershipDuration(uint64 newDuration) internal {
+    if (newDuration < 0) revert Membership__InvalidDuration();
+
+    // verify it's not more than platform max
+    if (
+      newDuration >
+      IPlatformRequirements(MembershipStorage.layout().townFactory)
+        .getMembershipDuration()
+    ) revert Membership__InvalidDuration();
+
+    MembershipStorage.layout().membershipDuration = newDuration;
   }
 
   // =============================================================

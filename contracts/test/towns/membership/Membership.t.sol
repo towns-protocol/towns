@@ -188,6 +188,34 @@ contract MembershipTest is
   }
 
   // =============================================================
+  //                           Duration
+  // =============================================================
+  function test_setMembershipDuration() external {
+    uint64 newDuration = 5 days;
+
+    vm.prank(founder);
+    membership.setMembershipDuration(newDuration);
+
+    assertEq(membership.getMembershipDuration(), newDuration);
+  }
+
+  function test_getMembershipDuration() external {
+    assertEq(
+      membership.getMembershipDuration(),
+      IPlatformRequirements(townFactory).getMembershipDuration()
+    );
+  }
+
+  function test_setMembershipDuration_revert_invalidDuration() external {
+    uint64 duration = IPlatformRequirements(townFactory)
+      .getMembershipDuration();
+
+    vm.prank(founder);
+    vm.expectRevert(Membership__InvalidDuration.selector);
+    membership.setMembershipDuration(duration + 1);
+  }
+
+  // =============================================================
   //                           Helpers
   // =============================================================
   function _calculatePotentialFee(
