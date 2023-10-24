@@ -1,8 +1,0 @@
-{
-  "name": "sample-synapse",
-  "version": "1.0.0",
-  "packageManager": "yarn@3.1.1",
-  "scripts": {
-    "start": "docker run -it --rm --mount type=volume,src=synapse-data,dst=/data -e SYNAPSE_SERVER_NAME=localhost -p 8008:8008 -e SYNAPSE_REPORT_STATS=no matrixdotorg/synapse:latest"
-  }
-}
