@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useImageStore } from './useImageStore'
 
 export const ImageVariants = {
@@ -30,8 +30,15 @@ export const useImageSource = (resourceId: string, variant: ImageVariant) => {
         setImageError(true)
     }, [])
 
+    const storedImageUrlRef = useRef(storedImageUrl)
+
     // reset image loading when a new image is uploaded
     useEffect(() => {
+        if (storedImageUrlRef.current === storedImageUrl) {
+            // prevent reset on initial mount, otherwise state might get reset wrongly
+            return
+        }
+        storedImageUrlRef.current = storedImageUrl
         setImageLoaded(false)
         setImageError(false)
     }, [storedImageUrl])
