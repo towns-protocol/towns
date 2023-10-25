@@ -54,7 +54,8 @@ export const TooltipContext = createContext<{
 
 export const TooltipRenderer = (props: Props) => {
     const {
-        immediate = props.trigger === Trigger.hover ? false : true,
+        trigger = Trigger.hover,
+        immediate = props.trigger === Trigger.click,
         align = 'center',
         active: forceActive = false,
         children,
@@ -126,7 +127,7 @@ export const TooltipRenderer = (props: Props) => {
             {children &&
                 children({
                     triggerProps:
-                        props.trigger === Trigger.hover
+                        trigger === Trigger.hover
                             ? {
                                   ref: triggerRef,
                                   onMouseEnter,
