@@ -55,29 +55,34 @@ export const AuthenticatedRoutes = () => {
             <Route element={<SpaceContextRoute />}>
                 {isTouch ? (
                     <>
-                        <Route path={`${PATHS.SPACES}/:spaceSlug`}>
-                            <Route path="" element={<TouchHome />}>
-                                <Route path="info" element={<InfoPanelWrapper />} />
-                                <Route
-                                    path="channels/:channelSlug"
-                                    element={<SpacesChannelAnimated />}
-                                >
+                        <Route element={<ValidateMembership />}>
+                            <Route path={`${PATHS.SPACES}/:spaceSlug`}>
+                                <Route path="" element={<TouchHome />}>
+                                    <Route path="info" element={<InfoPanelWrapper />} />
                                     <Route
-                                        path="replies/:messageId"
-                                        element={<SpacesChannelReplies parentRoute="../" />}
+                                        path="channels/:channelSlug"
+                                        element={<SpacesChannelAnimated />}
+                                    >
+                                        <Route
+                                            path="replies/:messageId"
+                                            element={<SpacesChannelReplies parentRoute="../" />}
+                                        />
+                                        <Route
+                                            path="profile/:profileId"
+                                            element={<SpaceProfilePanel />}
+                                        />
+                                        <Route path="info" element={<InfoPanelWrapper />} />
+                                    </Route>
+                                    <Route
+                                        path={`${PATHS.PROFILE}/me`}
+                                        element={<TouchProfile />}
                                     />
                                     <Route
-                                        path="profile/:profileId"
+                                        path={`${PATHS.PROFILE}/:profileId`}
                                         element={<SpaceProfilePanel />}
                                     />
-                                    <Route path="info" element={<InfoPanelWrapper />} />
+                                    <Route path="*" element={<TownRoutes />} />
                                 </Route>
-                                <Route path={`${PATHS.PROFILE}/me`} element={<TouchProfile />} />
-                                <Route
-                                    path={`${PATHS.PROFILE}/:profileId`}
-                                    element={<SpaceProfilePanel />}
-                                />
-                                <Route path="*" element={<TownRoutes />} />
                             </Route>
                         </Route>
                         <Route path="*" element={<OutsideTownRoutes />} />
