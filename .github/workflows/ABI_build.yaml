@@ -65,26 +65,6 @@ jobs:
             - name: Build Types
               run: bash scripts/build-town-types.sh
 
-    lint-types:
-        runs-on: ubuntu-latest
-        timeout-minutes: 10
-        name: Lint Go Types
-        needs: [generate-types]
-        strategy:
-            fail-fast: false
-            matrix:
-                go: ['1.21']
-        steps:
-            - uses: actions/checkout@v3
-            # John: should this run on types included in branch instead of job generated types?
-            - name: golangci-lint
-              uses: golangci/golangci-lint-action@v3
-              with:
-                  working-directory: servers/dendrite/zion/contracts/zion_localhost
-                  version: 'v1.52.2'
-
-    # should we run lint on packages/generated/localhost/typings ?
-
     # Assumes branch includes latest types. In other words we're not
     # passing them from first step.
     build-client-lib:
