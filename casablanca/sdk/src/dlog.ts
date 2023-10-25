@@ -39,7 +39,11 @@ const cloneAndFormat = (obj: unknown, depth = 0, seen = new WeakSet()): unknown 
                 newKey = shortenHexString(key)
             }
             if (hasOwnProperty(obj, key)) {
-                newObj[newKey] = cloneAndFormat(obj[key], depth + 1, seen)
+                if (key == 'emitter') {
+                    newObj[newKey] = '[emitter]'
+                } else {
+                    newObj[newKey] = cloneAndFormat(obj[key], depth + 1, seen)
+                }
             }
         }
         return newObj
