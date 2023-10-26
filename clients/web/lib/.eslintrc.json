@@ -38,6 +38,13 @@
                         "group": ["@harmony/contracts"],
                         "message": "Please use import { Foo } from client/web3/shims/... instead"
                     }
+                ],
+                "paths": [
+                    {
+                        "name": "wagmi",
+                        "importNames": ["useConnect", "useWebSocketProvider", "useSwitchNetwork"],
+                        "message": "Privy does not currently support these hooks. https://docs.privy.io/guide/guides/wagmi#supported-hooks. If you need these hooks in a test then you can disable this rule in the test because ZionTestApp does not use Privy."
+                    }
                 ]
             }
         ]

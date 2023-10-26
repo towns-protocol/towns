@@ -38,8 +38,9 @@ export function useWeb3({ chain, chainId, web3Signer }: Web3ContextOptions): IWe
             rpc: activeChain?.rpcUrls,
             def: activeChain?.rpcUrls?.default,
             status,
+            signer,
         })
-    }, [activeChain, activeWalletAddress, chains, connector, status])
+    }, [activeChain, activeWalletAddress, chains, connector, status, signer])
 
     return {
         provider,

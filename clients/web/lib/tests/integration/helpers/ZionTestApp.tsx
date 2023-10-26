@@ -6,6 +6,8 @@ import { TestQueryClientProvider } from './TestQueryClientProvider'
 import { ZionContextProvider } from '../../../src/components/ZionContextProvider'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { foundry } from 'wagmi/chains'
+// It's ok to useConnect in this case because <ZionTestApp /> is using WagmiConfig and not Privy
+// eslint-disable-next-line no-restricted-imports
 import { WagmiConfig, configureChains, createConfig, useConnect } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { useZionErrorStore } from '../../../src/hooks/use-zion-client'
