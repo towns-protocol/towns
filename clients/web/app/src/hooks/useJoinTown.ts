@@ -6,8 +6,10 @@ export const useJoinTown = (networkId: string | undefined, onSuccessfulJoin?: ()
     const [notEntitled, setNotEntitled] = useState(false)
     const [maxLimitReached, setMaxLimitReached] = useState(false)
     const { signer } = useWeb3Context()
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
 
     const joinSpace = useCallback(async () => {
+        setErrorMessage(undefined)
         if (client && networkId) {
             const roomIdentifier: RoomIdentifier = makeRoomIdentifier(networkId)
 
@@ -22,14 +24,20 @@ export const useJoinTown = (networkId: string | undefined, onSuccessfulJoin?: ()
                     onSuccessfulJoin?.()
                 }
             } catch (error) {
-                if ((error as Error)?.message?.includes?.('has exceeded the member cap')) {
+                const _error = error as Error
+                // TODO: temporary error message for no funds
+                if (_error?.message?.toString().includes?.('CallGasCostMoreThanGasLimit')) {
+                    setErrorMessage('Cannot calculate gas. Your wallet may be lacking funds.')
+                } else if (_error?.message?.includes?.('has exceeded the member cap')) {
                     setMaxLimitReached(true)
+                    setErrorMessage('This town has reached its member limit.')
                 } else {
                     setNotEntitled(true)
+                    setErrorMessage('Not entitled to join this town.')
                 }
             }
         }
     }, [client, networkId, onSuccessfulJoin, signer])
 
-    return { notEntitled, maxLimitReached, joinSpace }
+    return { notEntitled, maxLimitReached, joinSpace, errorMessage }
 }

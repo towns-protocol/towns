@@ -54,6 +54,7 @@ export const Activity = (props: { townId: string }) => {
                     gap="sm"
                     style={{ flexWrap: 'wrap' }}
                     maxWidth={{ mobile: '100%', default: '600' }}
+                    key="members"
                 >
                     {members.map((m) => (
                         <Avatar key={m} userId={m} size="avatar_x4" />
@@ -61,7 +62,7 @@ export const Activity = (props: { townId: string }) => {
                 </FadeInBox>
             )}
 
-            <Box gap="lg">
+            <Box gap="lg" key="activities">
                 <Heading level={3}>Activity</Heading>
 
                 {isLoading && <Spinner />}

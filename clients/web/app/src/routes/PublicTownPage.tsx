@@ -30,6 +30,7 @@ import { useJoinTown } from 'hooks/useJoinTown'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { useMeetsMembershipNftRequirements } from 'hooks/useTokensGatingMembership'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { useErrorToast } from 'hooks/useErrorToast'
 
 const log = debug('app:public-town')
 log.enabled = true
@@ -45,13 +46,15 @@ export const PublicTownPage = () => {
 
     const { data: meetsMembershipRequirements, isLoading: isLoadingMeetsMembership } =
         useMeetsMembershipNftRequirements(spaceInfo?.networkId, isConnected)
-    const { joinSpace } = useJoinTown(spaceInfo?.networkId)
+    const { joinSpace, errorMessage } = useJoinTown(spaceInfo?.networkId)
 
     const onJoinClick = useCallback(async () => {
         setIsJoining(true)
         await joinSpace()
         setIsJoining(false)
     }, [joinSpace])
+
+    useErrorToast({ errorMessage })
 
     return spaceInfo ? (
         <>

@@ -21,6 +21,7 @@ export const ErrorNotification = ({
                     </Text>
                 </Box>
                 <IconButton
+                    alignSelf="center"
                     size="square_xs"
                     icon="close"
                     border="level4"
