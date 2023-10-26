@@ -3,7 +3,7 @@ import { FancyButton } from '@ui'
 import {
     Props as RequireTransactionModalProps,
     RequireTransactionNetworkModal,
-} from './RequireTransactionNetworkModal'
+} from '../Login/RequireTransactionNetworkModal'
 
 export const MobileMetaMaskFlow = (
     props: {

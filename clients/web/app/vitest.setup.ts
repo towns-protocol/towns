@@ -6,16 +6,25 @@ import { act } from 'react-test-renderer'
 import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
 import { foundry } from 'wagmi/chains'
 
+server.listen()
+
 vi.mock('./src/components/Transitions/MotionBox')
 vi.mock('./src/ui/components/ZLayer/ZLayer')
 
-// have to mock this whole module because walletConnect causes a bunch of issues
-vi.mock('./src/AppWagmiConfig', async () => {
+// mock privy hooks b/c we don't use PrivyProvider in tests b/c it makes a lot of requests that we have to mock
+vi.mock('@privy-io/react-auth', async () => {
     return {
-        foundryClone: (() => {
-            console.log('USING wagmiConfig MOCKED FOUNDRYCLONE')
-            return foundry
-        })(),
+        usePrivy: () => ({
+            ready: true,
+            authenticated: true,
+            logout: () => {},
+        }),
+        useLogin: () => ({
+            login: () => {},
+        }),
+        useWallets: () => ({
+            wallets: ['0xfakeWallet'],
+        }),
     }
 })
 
@@ -41,8 +50,6 @@ beforeAll(() => {
     globalThis.WebSocket = class extends WebSocket {
         onclose: ((this: WebSocket, ev: CloseEvent) => any) | null
     }
-
-    server.listen()
 })
 
 beforeEach(() => {

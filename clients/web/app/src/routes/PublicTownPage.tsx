@@ -93,8 +93,7 @@ export const PublicTownPage = () => {
                                     />
                                 )
                             ) : (
-                                // shows connect button
-                                <LoginComponent isPublicPage />
+                                <LoginComponent />
                             )
                         }
                     />

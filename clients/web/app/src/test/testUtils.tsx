@@ -6,11 +6,12 @@ import { afterEach, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { BrowserRouter } from 'react-router-dom'
 import { ethers } from 'ethers'
-import { WagmiConfig, configureChains, createConfig } from 'wagmi'
+import { configureChains } from 'wagmi'
 import { foundry } from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
-import { InjectedConnector } from 'wagmi/connectors/injected'
+import { PrivyWagmiConnector } from '@privy-io/wagmi-connector'
 import { ZLayerProvider } from '@ui'
+import { AuthContextProvider } from 'hooks/useAuth'
 
 type TestAppProps = {
     children: JSX.Element
@@ -21,15 +22,8 @@ type TestAppProps = {
 
 export const getWalletAddress = () => ethers.Wallet.createRandom().address
 
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-    [foundry],
-    [publicProvider()],
-)
-const mockConfig = createConfig({
-    connectors: [new InjectedConnector({ chains })],
-    publicClient,
-    webSocketPublicClient,
-})
+const chainsConfig = configureChains([foundry], [publicProvider()])
+
 export const TestApp = (props: TestAppProps) => {
     // new query client for each test for isolation
     const Router = props.Router || MemoryRouter
@@ -48,19 +42,22 @@ export const TestApp = (props: TestAppProps) => {
     })
 
     return (
-        <WagmiConfig config={mockConfig}>
+        // Using PrivyWagmiConnector instead of PrivyProvider b/c PrivyProvider needs a lot of mocking and we don't actually need a wallet for any of our unit tests
+        <PrivyWagmiConnector wagmiChainsConfig={chainsConfig}>
             <ZLayerProvider>
                 <Lib.ZionContextProvider
                     casablancaServerUrl=""
                     chainId={31337}
                     {...props.zionContextProviderProps}
                 >
-                    <QueryClientProvider client={queryClient}>
-                        <Router initialEntries={props.initialEntries}>{props.children}</Router>
-                    </QueryClientProvider>
+                    <AuthContextProvider>
+                        <QueryClientProvider client={queryClient}>
+                            <Router initialEntries={props.initialEntries}>{props.children}</Router>
+                        </QueryClientProvider>
+                    </AuthContextProvider>
                 </Lib.ZionContextProvider>
             </ZLayerProvider>
-        </WagmiConfig>
+        </PrivyWagmiConnector>
     )
 }
 

@@ -4,6 +4,7 @@ import { useLocation } from 'react-router'
 import { InitialSyncSortPredicate, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
 
+import { usePrivy } from '@privy-io/react-auth'
 import { Notifications } from '@components/Notifications/Notifications'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
@@ -18,8 +19,9 @@ import { AppNotifications } from '@components/AppNotifications/AppNotifications'
 import { useStore } from 'store/store'
 import { RegisterPushSubscription } from '@components/RegisterPushSubscription/RegisterPushSubscription'
 import { AllRoutes } from 'AllRoutes'
-import { AppWagmiConfig } from 'AppWagmiConfig'
 import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
+import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
+import { AuthContextProvider } from 'hooks/useAuth'
 
 const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
@@ -29,6 +31,8 @@ export const App = () => {
     const { theme } = useStore((state) => ({
         theme: state.theme,
     }))
+
+    const { ready: privyReady } = usePrivy()
 
     useWindowListener()
 
@@ -51,17 +55,17 @@ export const App = () => {
         return 1
     }, [])
 
-    return (
-        <AppWagmiConfig>
-            <ZionContextProvider
-                casablancaServerUrl={environment.casablancaUrl}
-                onboardingOpts={{ skipAvatar: true }}
-                initialSyncLimit={20}
-                chainId={environment.chainId}
-                initalSyncSortPredicate={initalSyncSortPredicate}
-                pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
-                pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
-            >
+    return privyReady ? (
+        <ZionContextProvider
+            casablancaServerUrl={environment.casablancaUrl}
+            onboardingOpts={{ skipAvatar: true }}
+            initialSyncLimit={20}
+            chainId={environment.chainId}
+            initalSyncSortPredicate={initalSyncSortPredicate}
+            pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
+            pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
+        >
+            <AuthContextProvider>
                 <>
                     <FaviconBadge />
                     <AppBadge />
@@ -99,8 +103,10 @@ export const App = () => {
                     }
                     <ServiceWorkerSpacesSyncer />
                 </>
-            </ZionContextProvider>
-        </AppWagmiConfig>
+            </AuthContextProvider>
+        </ZionContextProvider>
+    ) : (
+        <WelcomeLayout />
     )
 }
 

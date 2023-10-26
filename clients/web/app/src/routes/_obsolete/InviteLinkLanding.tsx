@@ -3,9 +3,12 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
-import { useAuth } from 'hooks/useAuth'
+// import { useAuth } from 'hooks/useAuth'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
-import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
+import {
+    SignupButtonStatus,
+    // useSignupButton
+} from 'hooks/useSignupButton'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { FadeIn } from '@components/Transitions'
 import { useSetDocTitle } from 'hooks/useDocTitle'
@@ -34,12 +37,12 @@ const InviteLinkLanding = () => {
     const currentWalletIsInvalidForTown =
         currentWallet && invalidWallet && currentWallet === invalidWallet
 
-    const { login, register } = useAuth()
+    // const { login, register } = useAuth()
 
-    const { status } = useSignupButton({
-        register,
-        login,
-    })
+    // const { status } = useSignupButton({
+    //     register,
+    //     login,
+    // })
 
     useEffect(() => {
         if (!data) {

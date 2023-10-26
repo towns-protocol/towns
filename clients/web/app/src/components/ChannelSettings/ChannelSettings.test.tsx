@@ -97,6 +97,7 @@ describe('CreateChannelForm', () => {
 
     test('renders correct prefilled values', async () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
+            isReady: true,
             isTransactionNetwork: true,
             name: 'Goerli',
             switchNetwork: () => null,
@@ -155,6 +156,7 @@ describe('CreateChannelForm', () => {
 
     test('submits correct values', async () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
+            isReady: true,
             isTransactionNetwork: true,
             name: 'Goerli',
             switchNetwork: () => null,
@@ -206,6 +208,7 @@ describe('CreateChannelForm', () => {
 
     test('when role details change on load, correct roles are checked and submitted', async () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
+            isReady: true,
             isTransactionNetwork: true,
             name: 'Goerli',
             switchNetwork: () => null,

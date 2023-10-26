@@ -26,8 +26,11 @@ vi.mock('use-zion-client', async () => {
     }
 })
 
-vi.mock('hooks/useAuth', () => {
+vi.mock('hooks/useAuth', async () => {
+    const actual = (await vi.importActual('hooks/useAuth')) as typeof import('hooks/useAuth')
+
     return {
+        ...actual,
         useAuth: () => ({
             register: () => Promise.resolve(),
             loggedInWalletAddress: '0x1234',

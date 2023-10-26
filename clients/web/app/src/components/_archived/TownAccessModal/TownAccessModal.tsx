@@ -1,9 +1,8 @@
 import React, { useCallback } from 'react'
-import { LoginStatus, SpaceInfo, useZionContext } from 'use-zion-client'
+import { SpaceInfo } from 'use-zion-client'
 import debug from 'debug'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { useAuth } from 'hooks/useAuth'
-import { LoginComponent } from '@components/Login/LoginComponent'
 import { Box, Button, Divider, Heading, Icon, Paragraph, Stack, Text, TextButton } from '@ui'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
@@ -39,24 +38,24 @@ export const TownAccessModal = (props: Props) => {
 }
 
 const TownAccessModalContent = (props: Props) => {
-    const { loginStatus } = useAuth()
-    const { casablancaOnboardingState } = useZionContext()
+    // const { loginStatus } = useAuth()
+    // const { casablancaOnboardingState } = useZionContext()
 
-    log('loaded onboarding', casablancaOnboardingState)
-    log(loginStatus)
+    // log('loaded onboarding', casablancaOnboardingState)
+    // log(loginStatus)
 
-    if (loginStatus !== LoginStatus.LoggedIn) {
-        // this should move to button on the previous page
-        return <TownAccessLoginStep />
-    }
+    // if (loginStatus !== loginFlowStatus.LoggedIn) {
+    //     // this should move to button on the previous page
+    //     return <TownAccessLoginStep />
+    // }
     return <JoinStep {...props} />
 }
 
-const TownAccessLoginStep = () => (
-    <Box centerContent grow>
-        <LoginComponent />
-    </Box>
-)
+// const TownAccessLoginStep = () => (
+//     <Box centerContent grow>
+//         <LoginComponent />
+//     </Box>
+// )
 
 const JoinStep = (props: Props) => {
     const { spaceInfo } = props

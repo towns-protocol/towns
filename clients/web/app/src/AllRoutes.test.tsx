@@ -17,8 +17,11 @@ beforeAll(() => {
     globalThis.ResizeObserver = ResizeObserver
 })
 
-vi.mock('hooks/useAuth', () => {
+vi.mock('hooks/useAuth', async () => {
+    const actual = (await vi.importActual('hooks/useAuth')) as typeof import('hooks/useAuth')
+
     return {
+        ...actual,
         useAuth: () => ({
             register: () => Promise.resolve(),
             loggedInWalletAddress: '0x1234',

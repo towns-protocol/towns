@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react'
-import { Address, useBalance, useNetwork, useSwitchNetwork } from 'wagmi'
+import { Address, useBalance, useNetwork } from 'wagmi'
+import { useSwitchNetwork } from '@privy-io/wagmi-connector'
 import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
 import { mintMockNFT, useWeb3Context } from 'use-zion-client'

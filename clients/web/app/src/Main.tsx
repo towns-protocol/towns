@@ -5,6 +5,7 @@ import { AppErrorFallback } from 'AppErrorFallback'
 import { LoadingScreen } from 'routes/LoadingScreen'
 import { ZLayerProvider } from '@ui'
 import { useRootTheme } from 'hooks/useRootTheme'
+import { PrivyProvider } from 'PrivyProvider'
 
 const App = React.lazy(() => import('App'))
 
@@ -16,13 +17,15 @@ export const Main = () => {
 
     return (
         <ErrorBoundary fallback={(props) => <AppErrorFallback {...props} />}>
-            <BrowserRouter>
-                <Suspense fallback={<LoadingScreen />}>
-                    <ZLayerProvider>
-                        <App />
-                    </ZLayerProvider>
-                </Suspense>
-            </BrowserRouter>
+            <PrivyProvider>
+                <BrowserRouter>
+                    <Suspense fallback={<LoadingScreen />}>
+                        <ZLayerProvider>
+                            <App />
+                        </ZLayerProvider>
+                    </Suspense>
+                </BrowserRouter>
+            </PrivyProvider>
         </ErrorBoundary>
     )
 }
