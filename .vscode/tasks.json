@@ -70,7 +70,6 @@
         "TokenWorker",
         "GatewayWorker",
         "PushNotificationsWorker",
-        "Dendrite (from source)",
         "Casablanca",
         "Casablanca-No-Entitlements"
       ],
@@ -159,26 +158,6 @@
       "problemMatcher": [],
       "presentation": {
         "group": "ephemeral"
-      }
-    },
-    {
-      "label": "Dendrite (from source)",
-      "type": "shell",
-      "command": "./scripts/start-local-dendrite.sh",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-servers"
-      }
-    },
-    {
-      "label": "Dendrite (from docker compose)",
-      "type": "shell",
-      "command": "./scripts/start-local-dendrite.sh --docker-compose-only",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-servers"
       }
     },
     {
@@ -379,16 +358,6 @@
       "label": "MITM - Casablanca",
       "type": "shell",
       "command": "mitmweb -p 7105 --mode reverse:http://localhost:7104/",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-mitm"
-      }
-    },
-    {
-      "label": "MITM - Dendrite",
-      "type": "shell",
-      "command": "mitmweb -p 8009 --mode reverse:http://localhost:8008/",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

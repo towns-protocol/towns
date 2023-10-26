@@ -33,24 +33,3 @@ cd servers/workers/push-notification-worker
 
 Launch a browser. Visit <http://127.0.0.1:8787/>. Use the UI to send test
 notifications.
-
-## How to start Dendrite with Push Notification enabled
-
-### Option 1: Run Dendrite from Terminal
-
-```bash
-# from harmony root
-./scripts/start-local-dendrite.sh -wpn
-```
-
-### Option 2: Run Dendrite from VSCode
-
-, create a `.env` file and set
-these env variables in the file:
-
-```bash
-export PUSH_NOTIFICATION_AUTH_TOKEN="foo" # same as .dev.vars
-export PUSH_NOTIFICATION_URL="http://127.0.0.1:8787" # your push worker URL
-```
-
-## How to enable Push Notification on the client

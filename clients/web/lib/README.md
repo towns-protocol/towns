@@ -17,7 +17,6 @@ And run against a local blockchain, See [Zion-Governance](https://github.com:Her
 
 ```bash
 #from client root
-./scripts/start-local-dendrite.sh
 ./scripts/start-local-casablanca.sh
 ./scripts/start-local-blockchain.sh
 ./scripts/deploy-zion-governance-contracts.sh
@@ -91,15 +90,3 @@ Then change all instances of http://localhost:8008/ in your app to http://localh
 - for the sample app, change clients/web/sample-app/env.local
 - for the tests, change clients/web/lib/jest-setup.ts
 - for the app, change the app url in clients/web/app/src/App.tsk
-
-### Non-idempotence of deploy-zion-governance-contracts.sh per local anvil instance
-
-Contract addresses in deploy script are generated deterministically based on account, nonce tuple
-of deploy account. In local development, this is a local anvil instance with deterministic accounts.
-
-That said, running the deploy script multiple times increments the account nonce, therefore generating
-new contract addreses, which will break Dendrite since Dendrite is made aware of contract addresses via
-a `go:embed` of the addresses at build time.
-
-Rule of thumb to avoid issues: Every time you deploy\*sh to re-deploy contracts for local testing or development,
-`./scripts/start-local-dendrite.sh` as well, which will re-build dendrite with the new addreses.
