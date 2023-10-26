@@ -1,11 +1,16 @@
 import debug from 'debug'
 import React, { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { isAddress } from 'viem'
 import { useMyProfile } from 'use-zion-client'
+import { isAddress } from 'viem'
+import { LoginComponent } from '@components/Login/LoginComponent'
+import { PageLogo } from '@components/Logo/Logo'
 import { Spinner } from '@components/Spinner'
+import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
+import { Activity } from '@components/TownPageLayout/TownPageActivity'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
-import { TownPageMemberList } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2'
+import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
+import { BottomBarLayout } from '@components/Web3/MembershipNFT/BottomBar'
 import {
     Avatar,
     Box,
@@ -19,17 +24,12 @@ import {
     Stack,
     Text,
 } from '@ui'
-import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
-import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
-import { BottomBarLayout } from '@components/Web3/MembershipNFT/BottomBar'
-import { PageLogo } from '@components/Logo/Logo'
 import { useAuth } from 'hooks/useAuth'
-import { LoginComponent } from '@components/Login/LoginComponent'
-import { useMeetsMembershipNftRequirements } from 'hooks/useTokensGatingMembership'
+import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useJoinTown } from 'hooks/useJoinTown'
+import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
+import { useMeetsMembershipNftRequirements } from 'hooks/useTokensGatingMembership'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
-import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 
 const log = debug('app:public-town')
 log.enabled = true
@@ -63,7 +63,7 @@ export const PublicTownPage = () => {
                 </Box>
             </Box>
             <TownPageLayout
-                contentRight={<TownPageMemberList />}
+                activityContent={<Activity townId={spaceInfo.networkId} />}
                 bottomContent={
                     <BottomBarLayout
                         buttonContent={

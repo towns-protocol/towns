@@ -1,4 +1,5 @@
 import React from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
@@ -6,10 +7,11 @@ import { Box, Heading, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { checkAnyoneCanJoin, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
 import { AvatarTextHorizontal } from 'ui/components/Avatar/AvatarTextHorizontal'
+import { FadeInBox } from '@components/Transitions'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 
 type TownPageLayoutProps = {
-    contentRight?: React.ReactNode
+    activityContent?: React.ReactNode
     bottomContent?: React.ReactNode
     networkId: string
     address?: `0x${string}`
@@ -57,6 +59,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                     <Stack grow>
                         <Stack gap="x8">
                             {/* header */}
+
                             <Stack gap="lg">
                                 <Heading level={1}>{name}</Heading>
                                 <Box>
@@ -69,67 +72,95 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                 </Box>
                             </Stack>
 
-                            {/* requirements */}
-                            <Box
-                                gap="x4"
-                                direction={{ default: 'row', mobile: 'column' }}
-                                alignItems="start"
-                            >
+                            <Stack gap="lg">
                                 {/* requirements */}
-                                {isTokensGatingMembershipLoading ? (
-                                    'loading'
-                                ) : anyoneCanJoin ? (
-                                    <Box horizontal centerContent gap="sm">
-                                        <Text>For</Text>
+                                <Box
+                                    gap="lg"
+                                    direction={{ default: 'row', mobile: 'column' }}
+                                    alignItems="start"
+                                >
+                                    <AnimatePresence mode="popLayout">
+                                        {/* requirements */}
+                                        {isTokensGatingMembershipLoading ? (
+                                            <FadeInBox
+                                                horizontal
+                                                centerContent
+                                                gap="sm"
+                                                key="requirements-loading"
+                                            >
+                                                <Text>loading</Text>
+                                            </FadeInBox>
+                                        ) : anyoneCanJoin ? (
+                                            <FadeInBox
+                                                horizontal
+                                                centerContent
+                                                gap="sm"
+                                                key="requirements-anoyone"
+                                            >
+                                                <Text>For</Text>
+                                                <Text strong display="inline">
+                                                    Anyone
+                                                </Text>
+                                            </FadeInBox>
+                                        ) : (
+                                            <FadeInBox
+                                                horizontal
+                                                centerContent
+                                                gap="sm"
+                                                key="requirements-token"
+                                            >
+                                                <Text>You will Need</Text>
+                                                <Box display="inline-flex" gap="sm">
+                                                    {tokensGatingMembership.tokens.map((token) => (
+                                                        <FetchedTokenAvatar
+                                                            noLabel
+                                                            key={token.contractAddress as string}
+                                                            address={
+                                                                token.contractAddress as string
+                                                            }
+                                                            tokenIds={token.tokenIds as number[]}
+                                                            size="avatar_x4"
+                                                            labelProps={{
+                                                                size: 'md',
+                                                            }}
+                                                            layoutProps={{
+                                                                horizontal: true,
+                                                                maxWidth: 'auto',
+                                                            }}
+                                                        />
+                                                    ))}
+                                                </Box>
+                                            </FadeInBox>
+                                        )}
+                                    </AnimatePresence>
+
+                                    {/* dot */}
+                                    <Box
+                                        rounded="full"
+                                        display={{ default: 'block', mobile: 'none' }}
+                                        alignSelf="center"
+                                        width="x1"
+                                        height="x1"
+                                        background="inverted"
+                                    />
+
+                                    {/* cost */}
+                                    <Box horizontal centerContent gap="md">
+                                        <Text>Cost</Text>
                                         <Text strong display="inline">
-                                            Anyone
+                                            {membershipInfo?.price}
                                         </Text>
                                     </Box>
-                                ) : (
-                                    <Box horizontal centerContent gap="sm">
-                                        <Text>You will Need</Text>
-                                        <Box display="inline-flex" gap="sm">
-                                            {tokensGatingMembership.tokens.map((token) => (
-                                                <FetchedTokenAvatar
-                                                    noLabel
-                                                    key={token.contractAddress as string}
-                                                    address={token.contractAddress as string}
-                                                    tokenIds={token.tokenIds as number[]}
-                                                    size="avatar_x4"
-                                                    labelProps={{
-                                                        size: 'md',
-                                                    }}
-                                                    layoutProps={{
-                                                        horizontal: true,
-                                                        maxWidth: 'auto',
-                                                    }}
-                                                />
-                                            ))}
-                                        </Box>
-                                    </Box>
-                                )}
-
-                                {/* dot */}
-                                <Box
-                                    rounded="full"
-                                    display={{ default: 'block', mobile: 'none' }}
-                                    alignSelf="center"
-                                    width="x1"
-                                    height="x1"
-                                    background="level4"
-                                />
-
-                                {/* cost */}
-                                <Box horizontal centerContent gap="md">
-                                    <Text>Cost</Text>
-                                    <Text strong display="inline">
-                                        {membershipInfo?.price}
-                                    </Text>
                                 </Box>
-                            </Box>
-                            <Box>
-                                <Paragraph size="lg">{bio}</Paragraph>
-                            </Box>
+                                <Box gap="x8">
+                                    {bio && (
+                                        <Box>
+                                            <Paragraph size="lg">{bio}</Paragraph>
+                                        </Box>
+                                    )}
+                                    {props.activityContent}
+                                </Box>
+                            </Stack>
                         </Stack>
                     </Stack>
                     {/* right column */}
