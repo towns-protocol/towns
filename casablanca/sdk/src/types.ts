@@ -26,6 +26,7 @@ import {
     ChannelMessage_Post,
     MediaPayload_Inception,
     MediaPayload_Chunk,
+    DmChannelPayload_Inception,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
@@ -254,6 +255,34 @@ export const make_ChannelPayload_Inception = (
     }
 }
 
+export const make_DMChannelPayload_Inception = (
+    value: PlainMessage<DmChannelPayload_Inception>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'dmChannelPayload',
+        value: {
+            content: {
+                case: 'inception',
+                value,
+            },
+        },
+    }
+}
+
+export const make_DMChannelPayload_Membership = (
+    value: PlainMessage<Membership>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'dmChannelPayload',
+        value: {
+            content: {
+                case: 'membership',
+                value,
+            },
+        },
+    }
+}
+
 export const make_UserSettingsPayload_Inception = (
     value: PlainMessage<UserSettingsPayload_Inception>,
 ): PlainMessage<StreamEvent>['payload'] => {
@@ -422,6 +451,20 @@ export const make_ChannelPayload_Message = (
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
         case: 'channelPayload',
+        value: {
+            content: {
+                case: 'message',
+                value,
+            },
+        },
+    }
+}
+
+export const make_DMChannelPayload_Message = (
+    value: PlainMessage<EncryptedData>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'dmChannelPayload',
         value: {
             content: {
                 case: 'message',

@@ -11,7 +11,7 @@ import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 
 type Props = {
     channel: Channel
-    spaceId: RoomIdentifier
+    spaceId: RoomIdentifier | undefined
     onTouchClose?: () => void
 }
 
@@ -27,7 +27,7 @@ const DesktopChannelHeader = (props: Props) => {
     const topic = useRoom(channel.id)?.topic
 
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
-        spaceId: spaceId.networkId,
+        spaceId: spaceId?.networkId,
         channelId: channel.id.networkId,
     })
     const isMuted = channelIsMuted || spaceIsMuted

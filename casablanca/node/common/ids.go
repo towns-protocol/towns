@@ -9,6 +9,8 @@ import (
 	. "casablanca/node/protocol"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -32,6 +34,9 @@ const (
 
 	STREAM_MEDIA_PREFIX      = "55"
 	STREAM_MEDIA_PREFIX_DASH = "55-"
+
+	STREAM_DM_CHANNEL_PREFIX      = "66"
+	STREAM_DM_CHANNEL_PREFIX_DASH = "66-"
 )
 
 func AddressHex(address []byte) (string, error) {
@@ -125,4 +130,27 @@ func ValidSpaceStreamId(id string) bool {
 
 func ValidChannelStreamId(id string) bool {
 	return strings.HasPrefix(id, STREAM_CHANNEL_PREFIX_DASH)
+}
+
+func hashString(str string) string {
+	slice := crypto.Keccak256([]byte(str))
+	return fmt.Sprintf("%x", slice)
+}
+
+func ValidDMChannelStreamId(id string, userIdA []byte, userIdB []byte) bool {
+	// Lowercase the user ids, sort them and join them with a dash
+	addressUserA, err := AddressHex(userIdA)
+	if err != nil {
+		return false
+	}
+	addressUserB, err := AddressHex(userIdB)
+	if err != nil {
+		return false
+	}
+
+	ids := []string{strings.ToLower(addressUserA), strings.ToLower(addressUserB)}
+	slices.Sort(ids)
+	joined := strings.Join(ids, "-")
+	streamId := STREAM_DM_CHANNEL_PREFIX_DASH + hashString(joined)
+	return id == streamId
 }

@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react'
-import { useAllKnownUsers, useMyProfile, useUser } from 'use-zion-client'
+import { useAllKnownUsers, useMyProfile, useUser, useZionClient } from 'use-zion-client'
 import fuzzysort from 'fuzzysort'
 import { AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router'
 import {
     Avatar,
     Box,
@@ -16,11 +17,27 @@ import {
 } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
-export const CreateDirectMessage = () => {
+type Props = {
+    onDirectMessageCreated: () => void
+}
+
+export const CreateDirectMessage = (props: Props) => {
     const [searchTerm, setSearchTerm] = useState('')
+    const { onDirectMessageCreated } = props
     const { users } = useAllKnownUsers()
+    const { createDMChannel } = useZionClient()
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
+    const navigate = useNavigate()
     const userId = useMyProfile()?.userId
+
+    const onCreateButtonClicked = useCallback(async () => {
+        const first = Array.from(selectedUserIds)[0]
+        const streamId = await createDMChannel(first)
+        if (streamId) {
+            navigate(`/messages/${streamId.slug}`)
+            onDirectMessageCreated()
+        }
+    }, [selectedUserIds, createDMChannel, navigate, onDirectMessageCreated])
 
     const toggleMember = useCallback((id: string) => {
         setSelectedUserIds((prev) => {
@@ -95,8 +112,12 @@ export const CreateDirectMessage = () => {
                 left="none"
                 right="none"
             >
-                <Button disabled={selectedUserIds.size === 0} tone="cta1">
-                    Create Group DM
+                <Button
+                    disabled={selectedUserIds.size !== 1}
+                    tone="cta1"
+                    onClick={onCreateButtonClicked}
+                >
+                    {selectedUserIds.size > 1 ? 'Create Group DM' : 'Create DM'}
                 </Button>
             </Box>
         </Stack>

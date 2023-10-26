@@ -40,7 +40,9 @@ import TypedEmitter from 'typed-emitter'
 import { check, hasElements, isDefined, throwWithCode } from './check'
 import {
     isChannelStreamId,
+    isDMChannelStreamId,
     isSpaceStreamId,
+    makeDMStreamId,
     makeUniqueChannelStreamId,
     makeUniqueMediaStreamId,
     makeUniqueSpaceStreamId,
@@ -72,6 +74,9 @@ import {
     make_MediaPayload_Inception,
     ParsedEvent,
     make_MediaPayload_Chunk,
+    make_DMChannelPayload_Inception,
+    make_DMChannelPayload_Membership,
+    make_DMChannelPayload_Message,
 } from './types'
 import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
@@ -209,13 +214,17 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         stream.initialize(streamAndCookie, snapshot, miniblocks)
 
         stream.on('userJoinedStream', (s) => void this.onJoinedStream(s))
+        stream.on('userInvitedToStream', (s) => void this.onInvitedToStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
 
-        return Promise.all(
-            Array.from(stream.view.userContent.userJoinedStreams).map((streamId) =>
-                this.initStream(streamId),
+        const streamIds = [
+            ...Array.from(stream.view.userContent.userJoinedStreams),
+            ...Array.from(stream.view.userContent.userInvitedStreams).filter((streamId) =>
+                isDMChannelStreamId(streamId),
             ),
-        ).then(() => {})
+        ]
+
+        return Promise.all(streamIds.map((streamId) => this.initStream(streamId))).then(() => {})
     }
 
     private async initUserSettingsStream(
@@ -438,6 +447,46 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return { streamId: channelId }
     }
 
+    async createDMChannel(
+        userId: string,
+        streamSettings?: PlainMessage<StreamSettings>,
+    ): Promise<{ streamId: string }> {
+        const channelId = makeDMStreamId(this.userId, userId)
+        const inceptionEvent = await makeEvent(
+            this.signerContext,
+            make_DMChannelPayload_Inception({
+                streamId: channelId,
+                firstPartyId: this.userId,
+                secondPartyId: userId,
+                settings: streamSettings,
+            }),
+        )
+
+        const joinEvent = await makeEvent(
+            this.signerContext,
+            make_DMChannelPayload_Membership({
+                userId: this.userId,
+                op: MembershipOp.SO_JOIN,
+            }),
+            [inceptionEvent.hash],
+        )
+
+        const inviteEvent = await makeEvent(
+            this.signerContext,
+            make_DMChannelPayload_Membership({
+                userId: userId,
+                op: MembershipOp.SO_INVITE,
+            }),
+            [joinEvent.hash],
+        )
+
+        await this.rpcClient.createStream({
+            events: [inceptionEvent, joinEvent, inviteEvent],
+            streamId: channelId,
+        })
+        return { streamId: channelId }
+    }
+
     async createMediaStream(
         spaceId: string,
         channelId: string,
@@ -627,6 +676,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return this.initStream(streamId)
     }
 
+    private onInvitedToStream = async (streamId: string): Promise<void> => {
+        this.logEvent('onInvitedToStream', streamId)
+        if (isDMChannelStreamId(streamId)) {
+            await this.initStream(streamId)
+        }
+    }
+
     private onLeftStream = async (streamId: string): Promise<void> => {
         this.logEvent('onLeftStream', streamId)
         // TODO: implement
@@ -810,11 +866,19 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         if (!message) {
             throw new Error('failed to encrypt message')
         }
-        return this.makeEventAndAddToStream(
-            streamId,
-            make_ChannelPayload_Message(message),
-            'sendMessage',
-        )
+        if (isChannelStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_ChannelPayload_Message(message),
+                'sendMessage',
+            )
+        } else if (isDMChannelStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_DMChannelPayload_Message(message),
+                'sendMessage',
+            )
+        }
     }
 
     async sendChannelMessage_Text(
@@ -1028,6 +1092,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 }),
                 'joinSpace',
             )
+        } else if (isDMChannelStreamId(streamId)) {
+            await this.makeEventAndAddToStream(
+                streamId,
+                make_DMChannelPayload_Membership({
+                    op: MembershipOp.SO_JOIN,
+                    userId: this.userId,
+                }),
+            )
         } else {
             throw new Error('invalid streamId')
         }
@@ -1047,6 +1119,15 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     userId: this.userId,
                 }),
                 'leaveChannel',
+            )
+        } else if (isDMChannelStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_DMChannelPayload_Membership({
+                    op: MembershipOp.SO_LEAVE,
+                    userId: this.userId,
+                }),
+                'leaveDMChannel',
             )
         } else if (isSpaceStreamId(streamId)) {
             const channelIds =

@@ -52,6 +52,12 @@ func make_SnapshotContent(iPayload IsInceptionPayload) (IsSnapshot_Content, erro
 				Inception: payload,
 			},
 		}, nil
+	case *DmChannelPayload_Inception:
+		return &Snapshot_DmChannelContent{
+			DmChannelContent: &DmChannelPayload_Snapshot{
+				Inception: payload,
+			},
+		}, nil
 	case *UserPayload_Inception:
 		return &Snapshot_UserContent{
 			UserContent: &UserPayload_Snapshot{
@@ -89,9 +95,11 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, eventNumOffset int
 		if err != nil {
 			return err
 		}
-		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, user, eventNumOffset + int64(eventNum))
+		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, user, eventNumOffset+int64(eventNum))
 	case *StreamEvent_ChannelPayload:
 		return update_Snapshot_Channel(iSnapshot, payload.ChannelPayload)
+	case *StreamEvent_DmChannelPayload:
+		return update_Snapshot_DmChannel(iSnapshot, payload.DmChannelPayload)
 	case *StreamEvent_UserPayload:
 		return update_Snapshot_User(iSnapshot, payload.UserPayload)
 	case *StreamEvent_UserSettingsPayload:
@@ -160,6 +168,27 @@ func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload
 		return nil
 	default:
 		return fmt.Errorf("unknown channel payload type %T", channelPayload.Content)
+	}
+}
+
+func update_Snapshot_DmChannel(iSnapshot *Snapshot, dmChannelPayload *DmChannelPayload) error {
+	snapshot := iSnapshot.Content.(*Snapshot_DmChannelContent)
+	if snapshot == nil {
+		return errors.New("blockheader snapshot is not a dm channel snapshot")
+	}
+	switch content := dmChannelPayload.Content.(type) {
+	case *DmChannelPayload_Inception_:
+		return errors.New("cannot update blockheader with inception event")
+	case *DmChannelPayload_Message:
+		return nil
+	case *DmChannelPayload_Membership:
+		if snapshot.DmChannelContent.Memberships == nil {
+			snapshot.DmChannelContent.Memberships = make(map[string]*Membership)
+		}
+		snapshot.DmChannelContent.Memberships[content.Membership.UserId] = content.Membership
+		return nil
+	default:
+		return fmt.Errorf("unknown dm channel payload type %T", dmChannelPayload.Content)
 	}
 }
 

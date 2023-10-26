@@ -23,6 +23,8 @@ import { Client as CasablancaClient } from '@river/sdk'
 import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
 import { useCasablancaRooms } from '../hooks/ZionContext/useCasablancaRooms'
 import { ethers } from 'ethers'
+import { useCasablancaDMs } from '../hooks/CasablancClient/useCasablancaDMs'
+import { DMChannelIdentifier } from '../types/dm-channel-identifier'
 
 export type InitialSyncSortPredicate = (a: RoomIdentifier, b: RoomIdentifier) => number
 
@@ -40,6 +42,7 @@ export interface IZionContext {
     spaceUnreadChannelIds: Record<string, string[]> // spaceId -> array of channelIds with unreads
     spaces: SpaceItem[]
     spaceHierarchies: SpaceHierarchies
+    dmChannels: DMChannelIdentifier[]
     matrixOnboardingState: IOnboardingState
     casablancaOnboardingState: IOnboardingState
 }
@@ -87,6 +90,7 @@ const ContextImpl = (props: Props): JSX.Element => {
     const { invitedToIds } = useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const { spaces } = useSpaces(undefined, casablancaClient)
+    const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
 
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
     const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads(
@@ -122,6 +126,7 @@ const ContextImpl = (props: Props): JSX.Element => {
                 spaceUnreadChannelIds,
                 spaces,
                 spaceHierarchies,
+                dmChannels,
                 matrixOnboardingState,
                 casablancaOnboardingState,
                 casablancaServerUrl: casablancaServerUrl,

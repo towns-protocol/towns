@@ -4,7 +4,7 @@ import { useSpaceId } from '../hooks/use-space-id'
 
 export interface IChannelContext {
     channelId: RoomIdentifier
-    spaceId: RoomIdentifier
+    spaceId: RoomIdentifier | undefined
 }
 
 export const ChannelContext = createContext<IChannelContext | undefined>(undefined)
@@ -28,9 +28,6 @@ interface Props {
 export function ChannelContextProvider(props: Props): JSX.Element {
     // console.log('~~~~~ Channel Context ~~~~~~', props.channelId)
     const spaceId = useSpaceId()
-    if (!spaceId) {
-        throw new Error('ChannelContextProvider: no spaceId')
-    }
     // convert the room identifier
     const channelId: RoomIdentifier = useMemo(() => {
         if (typeof props.channelId === 'string') {

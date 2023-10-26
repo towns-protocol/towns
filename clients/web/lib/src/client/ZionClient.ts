@@ -574,6 +574,19 @@ export class ZionClient implements DecryptionExtensionDelegate {
     }
 
     /************************************************
+     * DMs
+     *************************************************/
+
+    public async createDMChannel(userId: string): Promise<RoomIdentifier | undefined> {
+        const client = this.casablancaClient
+        if (!client) {
+            throw new Error('No casablanca client')
+        }
+        const { streamId } = await client.createDMChannel(userId)
+        return makeRoomIdentifier(streamId)
+    }
+
+    /************************************************
      * Media
      *************************************************/
     public async createMediaStream(
@@ -596,21 +609,25 @@ export class ZionClient implements DecryptionExtensionDelegate {
      * isEntitled
      *************************************************/
     public async isEntitled(
-        spaceId: string,
+        spaceId: string | undefined,
         channelId: string | undefined,
         user: string,
         permission: Permission,
     ): Promise<boolean> {
         let isEntitled = false
-        if (channelId) {
+        if (channelId && spaceId) {
             isEntitled = await this.spaceDapp.isEntitledToChannel(
                 spaceId,
                 channelId,
                 user,
                 permission,
             )
-        } else {
+        } else if (spaceId) {
             isEntitled = await this.spaceDapp.isEntitledToSpace(spaceId, user, permission)
+        } else {
+            // TODO: Implement entitlement checks for DMs (channels without a space)
+            // https://linear.app/hnt-labs/issue/HNT-3112/implement-entitlement-checks
+            isEntitled = true
         }
         console.log(
             '[isEntitled] is user entitlted for channel and space for permission',

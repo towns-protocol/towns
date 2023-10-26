@@ -90,6 +90,9 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	case *MediaPayload_Inception:
 		streamView, err = s.createStream_Media(ctx, log, parsedEvents, inception)
 
+	case *DmChannelPayload_Inception:
+		streamView, err = s.createStream_DMChannel(ctx, log, parsedEvents, inception)
+
 	default:
 		err = RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream kind")
 	}
@@ -211,6 +214,66 @@ func (s *Service) createStream_Channel(
 		return nil, err
 	}
 
+	return streamView, nil
+}
+
+func (s *Service) createStream_DMChannel(
+	ctx context.Context,
+	log *slog.Logger,
+	parsedEvents []*ParsedEvent,
+	inception *DmChannelPayload_Inception,
+) (StreamView, error) {
+	if len(parsedEvents) != 3 {
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "DM channel stream must have exactly 3 events")
+	}
+
+	inceptionEvent := parsedEvents[0]
+	joinEvent := parsedEvents[1]
+	inviteEvent := parsedEvents[2]
+
+	creatorUserStreamId, err := UserStreamIdFromAddress(inceptionEvent.Event.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	otherUserAddress, err := AddressFromUserId(inviteEvent.Event.GetDmChannelPayload().GetMembership().GetUserId())
+	if err != nil {
+		return nil, err
+	}
+
+	if !ValidDMChannelStreamId(inception.StreamId, inceptionEvent.Event.CreatorAddress, otherUserAddress) {
+		return nil, RiverError(Err_BAD_STREAM_ID, "invalid DM channel stream id")
+	}
+
+	otherUserStreamId, err := UserStreamIdFromAddress(otherUserAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	userStream, userView, err := s.loadStream(ctx, creatorUserStreamId)
+	if err != nil {
+		return nil, err
+	}
+
+	otherUserStream, otherUserView, err := s.loadStream(ctx, otherUserStreamId)
+	if err != nil {
+		return nil, err
+	}
+
+	streamId := inception.GetStreamId()
+	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN)
+	if err != nil {
+		return nil, err
+	}
+	err = s.addDerivedMembershipEventToUserStream(ctx, otherUserStream, otherUserView, streamId, inviteEvent, MembershipOp_SO_INVITE)
+	if err != nil {
+		return nil, err
+	}
 	return streamView, nil
 }
 

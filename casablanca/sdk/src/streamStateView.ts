@@ -25,6 +25,7 @@ import {
     StreamStateView_IContent,
     StreamStateView_UnknownContent,
 } from './streamStateView_IContent'
+import { StreamStateView_DMChannel } from './streamStateView_DMChannel'
 
 const log = dlog('csb:streams')
 
@@ -55,6 +56,16 @@ export class StreamStateView {
     get channelContent(): StreamStateView_Channel {
         check(isDefined(this._channelContent), `channelContent not defined for ${this.contentKind}`)
         return this._channelContent
+    }
+
+    // DM Channel Content
+    private readonly _dmChannelContent?: StreamStateView_DMChannel
+    get dmChannelContent(): StreamStateView_DMChannel {
+        check(
+            isDefined(this._dmChannelContent),
+            `dmChannelContent not defined for ${this.contentKind}`,
+        )
+        return this._dmChannelContent
     }
 
     // User Content
@@ -114,6 +125,12 @@ export class StreamStateView {
                     snapshot.content.value.inception,
                 )
                 break
+            case 'dmChannelContent':
+                this._dmChannelContent = new StreamStateView_DMChannel(
+                    userId,
+                    snapshot.content.value.inception,
+                )
+                break
             case 'spaceContent':
                 this._spaceContent = new StreamStateView_Space(
                     userId,
@@ -151,6 +168,9 @@ export class StreamStateView {
         switch (snapshot.content.case) {
             case 'channelContent':
                 this.channelContent.initialize(snapshot, snapshot.content.value, emitter)
+                break
+            case 'dmChannelContent':
+                this.dmChannelContent.initialize(snapshot, snapshot.content.value, emitter)
                 break
             case 'spaceContent':
                 this.spaceContent.initialize(snapshot, snapshot.content.value, emitter)
@@ -219,6 +239,9 @@ export class StreamStateView {
                 case 'channelPayload':
                     this.channelContent?.appendEvent(event, payload.value, emitter)
                     break
+                case 'dmChannelPayload':
+                    this.dmChannelContent?.appendEvent(event, payload.value, emitter)
+                    break
                 case 'spacePayload':
                     this.spaceContent?.appendEvent(event, payload.value, emitter)
                     break
@@ -238,6 +261,7 @@ export class StreamStateView {
                     this.getContent().onMiniblockHeader(payload.value, emitter)
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     break
+
                 case undefined:
                     break
                 default:
@@ -273,6 +297,9 @@ export class StreamStateView {
                 case 'channelPayload':
                     this.channelContent?.prependEvent(event, payload.value, emitter)
                     break
+                case 'dmChannelPayload':
+                    this.dmChannelContent?.prependEvent(event, payload.value, emitter)
+                    break
                 case 'spacePayload':
                     this.spaceContent?.prependEvent(event, payload.value, emitter)
                     break
@@ -291,6 +318,7 @@ export class StreamStateView {
                 case 'miniblockHeader':
                     this.updateMiniblockInfo(payload.value, { min: payload.value.miniblockNum })
                     break
+
                 case undefined:
                     break
                 default:
@@ -419,6 +447,8 @@ export class StreamStateView {
         switch (this.contentKind) {
             case 'channelContent':
                 return this.channelContent.memberships
+            case 'dmChannelContent':
+                return this.dmChannelContent.memberships
             case 'spaceContent':
                 return this.spaceContent.memberships
             case 'userContent':
@@ -441,6 +471,8 @@ export class StreamStateView {
         switch (this.contentKind) {
             case 'channelContent':
                 return this.channelContent
+            case 'dmChannelContent':
+                return this.dmChannelContent
             case 'spaceContent':
                 return this.spaceContent
             case 'userContent':

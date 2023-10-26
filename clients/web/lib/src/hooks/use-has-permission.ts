@@ -6,7 +6,7 @@ import { blockchainKeys } from '../query/query-keys'
 import { Permission } from '@river/web3'
 
 interface Props {
-    spaceId: string
+    spaceId: string | undefined
     channelId?: string
     walletAddress: string
     permission: Permission

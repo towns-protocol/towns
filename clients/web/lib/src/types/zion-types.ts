@@ -27,7 +27,7 @@ export interface InviteData {
 }
 
 export interface ChannelData {
-    spaceId: RoomIdentifier
+    spaceId: RoomIdentifier | undefined
     channelId: RoomIdentifier
     channel?: Channel
 }

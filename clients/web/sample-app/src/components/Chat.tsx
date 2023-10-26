@@ -23,8 +23,11 @@ export function Chat(props: Props): JSX.Element {
     const [joinFailed, setJoinFailed] = useState(false)
 
     const onClickSettings = useCallback(() => {
+        if (!spaceId?.slug) {
+            throw new Error('No space id')
+        }
         navigate('/spaces/' + spaceId.slug + '/channels/' + channelId.slug + '/settings')
-    }, [spaceId.slug, channelId.slug, navigate])
+    }, [spaceId?.slug, channelId.slug, navigate])
 
     const onClickLeaveRoom = useCallback(async () => {
         await leaveRoom(channelId)
@@ -40,6 +43,9 @@ export function Chat(props: Props): JSX.Element {
 
     const onClickJoinRoom = useCallback(
         async (roomId: RoomIdentifier) => {
+            if (!spaceId) {
+                throw new Error('No space id')
+            }
             const room = await joinRoom(roomId)
             if (room) {
                 setJoinFailed(false)

@@ -25,7 +25,7 @@ export enum MessageTimelineType {
 
 export const MessageTimelineContext = createContext<{
     userId: string
-    spaceId: RoomIdentifier
+    spaceId: RoomIdentifier | undefined
     channelId: RoomIdentifier
     isChannelEncrypted?: boolean
     isChannelWritable?: boolean
@@ -45,7 +45,7 @@ export const MessageTimelineContext = createContext<{
 
 export const MessageTimelineWrapper = (props: {
     children: React.ReactNode
-    spaceId: RoomIdentifier
+    spaceId: RoomIdentifier | undefined
     channelId: RoomIdentifier
     events: TimelineEvent[]
     threadParentId?: string

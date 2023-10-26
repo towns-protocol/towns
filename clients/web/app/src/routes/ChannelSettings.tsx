@@ -12,8 +12,11 @@ export const ChannelSettings = () => {
     const { spaceId, channelId, channel } = useChannelData()
 
     const onCancelClicked = useCallback(() => {
+        if (!spaceId) {
+            return
+        }
         navigate(`/${PATHS.SPACES}/${spaceId.slug}/channels/${channelId.slug}/`)
-    }, [channelId.slug, navigate, spaceId.slug])
+    }, [channelId.slug, navigate, spaceId])
 
     const onInviteClicked = useCallback(
         async (

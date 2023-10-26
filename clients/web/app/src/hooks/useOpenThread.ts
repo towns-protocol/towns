@@ -1,19 +1,24 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { RoomIdentifier } from 'use-zion-client'
-import { PATHS } from 'routes'
+import { useCreateLink } from './useCreateLink'
 
 export const useOpenMessageThread = (spaceId?: RoomIdentifier, channelId?: RoomIdentifier) => {
     const navigate = useNavigate()
+    const { createLink } = useCreateLink()
+
     const onOpenMessageThread = useCallback(
         (eventId: string) => {
-            if (spaceId?.slug && channelId?.slug) {
-                navigate(
-                    `/${PATHS.SPACES}/${spaceId.slug}/channels/${channelId.slug}/replies/${eventId}`,
-                )
+            const link = createLink({
+                threadId: eventId,
+                spaceId: spaceId?.slug,
+                channelId: channelId?.slug,
+            })
+            if (link) {
+                navigate(link)
             }
         },
-        [channelId?.slug, navigate, spaceId?.slug],
+        [channelId?.slug, navigate, spaceId?.slug, createLink],
     )
     return {
         onOpenMessageThread,

@@ -262,7 +262,6 @@ export const MessageLayout = (props: Props) => {
                 </Stack>
                 {!isTouch &&
                     isChannelWritable &&
-                    spaceId &&
                     channelId &&
                     eventId &&
                     isActive &&

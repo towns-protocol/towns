@@ -3,6 +3,7 @@
  */
 
 import { waitFor } from './util.test'
+import { hashString } from './utils'
 
 function stripAnsiColors(input: string): string {
     // eslint-disable-next-line no-control-regex
@@ -36,5 +37,15 @@ describe('util.test', () => {
         }
 
         expect(r).toBeUndefined()
+    })
+
+    test('hashString', () => {
+        expect(hashString('hello')).toEqual(
+            '1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8',
+        )
+
+        expect(hashString('another string')).toEqual(
+            '190b6b638e653f426b7e144f1db5ede7bdb1668e28f7ee0352f20f0678f29e09',
+        )
     })
 })

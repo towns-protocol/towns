@@ -10,6 +10,7 @@ const InvalidStreamType StreamType = -1
 const (
 	Space StreamType = iota
 	Channel
+	DMChannel
 	User
 	UserSettings
 	Unknown
@@ -21,6 +22,8 @@ func (r StreamType) String() string {
 		return "space"
 	case Channel:
 		return "channel"
+	case DMChannel:
+		return "dm_channel"
 	case User:
 		return "user"
 	case UserSettings:
@@ -44,4 +47,9 @@ type MediaStreamInfo struct {
 	StreamInfo
 	MediaId    string
 	ChunkCount int32
+}
+
+type DMStreamInfo struct {
+	FirstPartyId  string
+	SecondPartyId string
 }

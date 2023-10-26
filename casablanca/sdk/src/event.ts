@@ -341,6 +341,29 @@ export class RiverEvent {
                         break
                 }
                 break
+            case 'dmChannelPayload':
+                switch (payload.value.content.case) {
+                    case 'message': {
+                        // encrypted channel contents from protocol.proto
+                        const content = payload.value.content.value
+                        if (!event.content) {
+                            event.content = {} as IContent
+                        }
+                        event.content.content = {
+                            session_id: content.sessionId,
+                            ciphertext: content.text,
+                            algorithm: content.algorithm,
+                            sender_key: content.senderKey,
+                            device_id: content.deviceId,
+                            content: {} as PlainMessage<ChannelMessage>['payload'],
+                        }
+                        event.stream_type = EncryptedEventStreamTypes.Channel
+                        break
+                    }
+                    default:
+                        break
+                }
+                break
             case `userPayload`:
                 switch (payload.value.content.case) {
                     case 'toDevice': {

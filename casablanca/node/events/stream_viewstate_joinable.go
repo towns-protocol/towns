@@ -15,7 +15,7 @@ type JoinableStreamView interface {
 }
 
 func (r *streamViewImpl) IsUserJoined(userId string) (bool, error) {
-	members, err := r.getMembers([]common.StreamType{common.Space, common.Channel})
+	members, err := r.getMembers([]common.StreamType{common.Space, common.Channel, common.DMChannel})
 	if err != nil {
 		return false, err
 	}
@@ -42,6 +42,14 @@ func (r *streamViewImpl) getMembers(filterBy []common.StreamType) (*mapset.Set[s
 	case *protocol.Snapshot_ChannelContent:
 		if slices.Contains(filterBy, common.Channel) {
 			for _, user := range snapshotContent.ChannelContent.GetMemberships() {
+				if user.GetOp() == protocol.MembershipOp_SO_JOIN {
+					members.Add(user.UserId)
+				}
+			}
+		}
+	case *protocol.Snapshot_DmChannelContent:
+		if slices.Contains(filterBy, common.DMChannel) {
+			for _, user := range snapshotContent.DmChannelContent.GetMemberships() {
 				if user.GetOp() == protocol.MembershipOp_SO_JOIN {
 					members.Add(user.UserId)
 				}
@@ -75,6 +83,20 @@ func (r *streamViewImpl) getMembers(filterBy []common.StreamType) (*mapset.Set[s
 					if channelPayload.Membership.GetOp() == protocol.MembershipOp_SO_JOIN {
 						members.Add(user)
 					} else if channelPayload.Membership.GetOp() == protocol.MembershipOp_SO_LEAVE {
+						members.Remove(user)
+					}
+				}
+			default:
+				break
+			}
+		case *protocol.StreamEvent_DmChannelPayload:
+			switch dmChannelPayload := payload.DmChannelPayload.Content.(type) {
+			case *protocol.DmChannelPayload_Membership:
+				if slices.Contains(filterBy, common.DMChannel) {
+					user := dmChannelPayload.Membership.UserId
+					if dmChannelPayload.Membership.GetOp() == protocol.MembershipOp_SO_JOIN {
+						members.Add(user)
+					} else if dmChannelPayload.Membership.GetOp() == protocol.MembershipOp_SO_LEAVE {
 						members.Remove(user)
 					}
 				}

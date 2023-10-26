@@ -23,20 +23,19 @@ export const MainSideBar = () => {
         <SideBar elevateReadability paddingY="sm" height="100%">
             {!isTouch && <RegisterMainShortcuts />}
 
-            {env.DEV && (
-                <NavItem
-                    centerContent
-                    to={`/${PATHS.MESSAGES}`}
-                    label="Direct Messages"
-                    tooltip="Direct Messages"
-                    tooltipOptions={{
-                        placement: 'horizontal',
-                        immediate: true,
-                    }}
-                >
-                    <Icon width="x4" aspectRatio="1/1" size="square_lg" type="dm" />
-                </NavItem>
-            )}
+            <NavItem
+                centerContent
+                to={`/${PATHS.MESSAGES}`}
+                label="Direct Messages"
+                tooltip="Direct Messages"
+                tooltipOptions={{
+                    placement: 'horizontal',
+                    immediate: true,
+                }}
+            >
+                <Icon width="x4" aspectRatio="1/1" size="square_lg" type="dm" />
+            </NavItem>
+
             {spaces.map((s) => (
                 <TransitionItem key={s.id.slug}>
                     <SpaceNavItem

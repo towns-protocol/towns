@@ -4,7 +4,13 @@ import { AuthenticationError, LoginStatus } from '../hooks/login'
 import { User, RoomMember, Room, Membership, getMembershipFor } from '../types/zion-types'
 import { makeRoomIdentifier } from '../types/room-identifier'
 
-import { Client as CasablancaClient, isSpaceStreamId, isChannelStreamId, Stream } from '@river/sdk'
+import {
+    Client as CasablancaClient,
+    isSpaceStreamId,
+    isChannelStreamId,
+    Stream,
+    isDMChannelStreamId,
+} from '@river/sdk'
 import { SpaceInfo } from '@river/web3'
 
 export type CasablancaStoreStates = {
@@ -67,8 +73,12 @@ export function toZionCasablancaRoom(
     }
     const info = spaceInfos ?? []
 
-    //reject if streamId is not associated with a channel or space
-    if (!isSpaceStreamId(streamId) && !isChannelStreamId(streamId)) {
+    //reject if streamId is not associated with a channel, space or DM
+    if (
+        !isSpaceStreamId(streamId) &&
+        !isChannelStreamId(streamId) &&
+        !isDMChannelStreamId(streamId)
+    ) {
         throw new Error('Invalid streamId: ' + streamId)
     }
 
@@ -137,8 +147,12 @@ function toZionMembers(stream: Stream): {
 
 function getMembersWithMembership(membership: Membership, stream: Stream): RoomMember[] {
     const streamId = stream.view.streamId
-    //reject if streamId is not associated with a channel or space
-    if (!isSpaceStreamId(streamId) && !isChannelStreamId(streamId)) {
+    //reject if streamId is not associated with a channel, space or DM
+    if (
+        !isSpaceStreamId(streamId) &&
+        !isChannelStreamId(streamId) &&
+        !isDMChannelStreamId(streamId)
+    ) {
         throw new Error('Invalid streamId: ' + streamId)
     }
 

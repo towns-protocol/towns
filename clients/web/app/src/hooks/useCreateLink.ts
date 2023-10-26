@@ -73,6 +73,17 @@ const searchPaths: Path[] = [
     },
 ]
 
+const threadPaths: Path[] = [
+    {
+        path: `/${PATHS.MESSAGES}/:channelId/*`,
+        replace: `/${PATHS.MESSAGES}/:channelId/replies/:threadId`,
+    },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/channels/:channelId/*`,
+        replace: `/${PATHS.SPACES}/:spaceId/channels/:channelId/replies/:threadId`,
+    },
+]
+
 const linkParams = {
     profile: {
         params: {
@@ -109,11 +120,21 @@ const linkParams = {
             route: 'search',
         },
     },
+    thread: {
+        params: {
+            spaceId: 'spaceId' as string | undefined,
+            channelId: 'channelId' as string | undefined,
+            threadId: 'threadId' as string | undefined,
+        },
+    },
 } as const
 
 type LinkParams = (typeof linkParams)[keyof typeof linkParams]['params']
 
 const getSearchPathsForParams = (linkParams: LinkParams) => {
+    if ('threadId' in linkParams) {
+        return threadPaths
+    }
     if ('profileId' in linkParams) {
         return profilePaths
     }

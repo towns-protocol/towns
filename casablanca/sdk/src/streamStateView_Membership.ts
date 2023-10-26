@@ -10,8 +10,10 @@ export class StreamStateView_Membership {
     readonly streamId: string
     readonly joinedUsers = new Set<string>()
     readonly invitedUsers = new Set<string>()
+    readonly leftUsers = new Set<string>()
     readonly pendingJoinedUsers = new Set<string>()
     readonly pendingInvitedUsers = new Set<string>()
+    readonly pendingLeftUsers = new Set<string>()
     readonly pendingEvents = new Map<string, Membership>()
 
     constructor(userId: string, streamId: string) {
@@ -120,9 +122,15 @@ export class StreamStateView_Membership {
                 if (type === 'confirmed') {
                     const wasJoined = this.joinedUsers.delete(userId)
                     const wasInvited = this.invitedUsers.delete(userId)
+                    this.pendingLeftUsers.delete(userId)
+                    this.leftUsers.add(userId)
                     if (wasJoined || wasInvited) {
                         emitter?.emit('streamUserLeft', this.streamId, userId)
                         this.emitMembershipChange(userId, emitter, this.streamId)
+                    }
+                } else {
+                    if (this.pendingLeftUsers.add(userId)) {
+                        emitter?.emit('streamPendingMembershipUpdated', this.streamId, userId)
                     }
                 }
                 break

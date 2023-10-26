@@ -36,7 +36,7 @@ const DELAY_BETWEEN_PROCESSING_TO_DEVICE_EVENTS_MS = 10
 type MegolmSessionData = PlainMessage<MegolmSession>
 export interface DecryptionExtensionDelegate {
     isEntitled(
-        spaceId: string,
+        spaceId: string | undefined,
         channelId: string | undefined,
         user: string,
         permission: Permission,
@@ -77,7 +77,7 @@ interface KeyRequestRecord {
 interface RoomRecord {
     decryptionFailures: RiverEvent[]
     isEntitled?: boolean
-    spaceId: string
+    spaceId?: string
     channelId?: string
     timer?: NodeJS.Timeout
     lastRequestAt?: number
@@ -204,7 +204,7 @@ export class RiverDecryptionExtension {
         }
         const channelId = event.getChannelId()
         const spaceId = event.getSpaceId()
-        if (!channelId || !spaceId) {
+        if (!channelId) {
             console.log(
                 'CDE::onDecryptionFailure - missing channelId, not going to start looking for keys',
                 {
@@ -397,14 +397,12 @@ export class RiverDecryptionExtension {
         for (const [roomId, roomRecord] of Object.entries(this.roomRecords)) {
             if (roomRecord.isEntitled === undefined) {
                 const spaceId = roomRecord.spaceId
-                if (spaceId) {
-                    roomRecord.isEntitled = await this.delegate.isEntitled(
-                        spaceId,
-                        roomId,
-                        this.accountAddress,
-                        Permission.Read,
-                    )
-                }
+                roomRecord.isEntitled = await this.delegate.isEntitled(
+                    spaceId,
+                    roomId,
+                    this.accountAddress,
+                    Permission.Read,
+                )
             }
         }
     }
@@ -599,11 +597,6 @@ export class RiverDecryptionExtension {
             },
         )
 
-        if (!spaceId) {
-            console.error('CDE::_startLookingForKeys - no spaceId found', { channelId })
-            return
-        }
-
         // Get the users devices,
         // todo: we should figure out which devices are online
         const devicesMap = requesteeDeviceMap
@@ -645,7 +638,7 @@ export class RiverDecryptionExtension {
         }
         */
         const request = make_ToDevice_KeyRequest({
-            spaceId,
+            spaceId: spaceId ?? '',
             channelId: spaceId === channelId ? spaceId : channelId,
             algorithm: MEGOLM_ALGORITHM,
             senderKey: this.client.olmDevice.deviceCurve25519Key ?? '',

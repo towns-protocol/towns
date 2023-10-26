@@ -117,6 +117,8 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, stre
 		isEntitled, err := za.isEntitledToChannel(streamInfo, userIdentifier.AccountAddress, args.Permission)
 		log.Debug("IsAllowed result", "isEntitledToChannel", isEntitled, "err", err)
 		return isEntitled, err
+	case common.DMChannel:
+		fallthrough
 	case common.User:
 		fallthrough
 	case common.UserSettings:

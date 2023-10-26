@@ -2,6 +2,7 @@ import { utils } from 'ethers'
 import { nanoid } from 'nanoid'
 import { check } from './check'
 import { bin_toHexString } from './binary'
+import { hashString } from './utils'
 
 export const userIdFromAddress = (address: Uint8Array): string =>
     utils.getAddress(bin_toHexString(address))
@@ -26,6 +27,7 @@ export enum StreamPrefix {
     UserDevice = '33-',
     UserSettings = '44-',
     Media = '55-',
+    DM = '66-',
 }
 
 export const allowedStreamPrefixes = (): string[] => Object.values(StreamPrefix)
@@ -66,11 +68,22 @@ export const makeUniqueSpaceStreamId = (): string => makeStreamId(StreamPrefix.S
 export const makeUniqueChannelStreamId = (): string => makeStreamId(StreamPrefix.Channel, genId())
 export const makeUniqueMediaStreamId = (): string => makeStreamId(StreamPrefix.Media, genId())
 
+export const makeDMStreamId = (userIdA: string, userIdB: string): string => {
+    const concatenated = [userIdA, userIdB]
+        .map((id) => id.toLowerCase())
+        .sort()
+        .join('-')
+    const hashed = hashString(concatenated)
+    return makeStreamId(StreamPrefix.DM, hashed)
+}
+
 export const isUserStreamId = (streamId: string): boolean => streamId.startsWith(StreamPrefix.User)
 export const isSpaceStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.Space)
 export const isChannelStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.Channel)
+export const isDMChannelStreamId = (streamId: string): boolean =>
+    streamId.startsWith(StreamPrefix.DM)
 export const isValidStreamId = (streamId: string): boolean =>
     allowedStreamPrefixes().some((prefix) => streamId.startsWith(prefix))
 

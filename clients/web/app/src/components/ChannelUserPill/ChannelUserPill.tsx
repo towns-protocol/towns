@@ -6,7 +6,10 @@ import { Avatar, Box, Paragraph, Stack } from '@ui'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 
-export const ChannelUsersPill = (props: { spaceId: RoomIdentifier; channelId: RoomIdentifier }) => {
+export const ChannelUsersPill = (props: {
+    spaceId: RoomIdentifier | undefined
+    channelId: RoomIdentifier
+}) => {
     const { spaceId } = props
     const { members } = useChannelMembers()
     const timelineContext = useContext(MessageTimelineContext)
@@ -53,9 +56,11 @@ export const ChannelUsersPill = (props: { spaceId: RoomIdentifier; channelId: Ro
                 </Stack>
             </Link>
 
-            <Box centerContent borderLeft hoverable paddingX="xs" background="level2">
-                <CopySpaceLink spaceId={spaceId} align="right" offsetTop="md" />
-            </Box>
+            {spaceId && (
+                <Box centerContent borderLeft hoverable paddingX="xs" background="level2">
+                    <CopySpaceLink spaceId={spaceId} align="right" offsetTop="md" />
+                </Box>
+            )}
         </Stack>
     )
 }

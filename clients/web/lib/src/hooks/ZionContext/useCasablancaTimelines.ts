@@ -10,6 +10,7 @@ import {
     SpacePayload,
     MiniblockHeader,
     SnapshotCaseType,
+    DmChannelPayload,
 } from '@river/proto'
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
@@ -142,6 +143,10 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
                             stream.view.channelContent.spaceId,
                             event,
                         )
+                    }
+
+                    if (stream.view.contentKind === 'dmChannelContent') {
+                        casablancaClient.emit('channelTimelineEvent', stream.streamId, '', event)
                     }
                     const parsedEvent = toEvent(event, casablancaClient.userId)
                     timelineEvents.get(stream.streamId)?.push(parsedEvent)
@@ -316,6 +321,13 @@ function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResu
                 message.event.payload.value,
                 description,
             )
+        case 'dmChannelPayload':
+            return toTownsContent_ChannelPayload(
+                eventId,
+                message,
+                message.event.payload.value,
+                description,
+            )
         case 'spacePayload':
             return toTownsContent_SpacePayload(
                 eventId,
@@ -424,7 +436,7 @@ function toTownsContent_UserPayload(
 function toTownsContent_ChannelPayload(
     eventId: string,
     message: ParsedEvent,
-    value: ChannelPayload,
+    value: ChannelPayload | DmChannelPayload,
     description: string,
 ): TownsContentResult {
     switch (value.content.case) {
@@ -438,14 +450,12 @@ function toTownsContent_ChannelPayload(
             }
         }
         case 'inception': {
-            const payload = value.content.value
             return {
                 content: {
                     kind: ZTEvent.RoomCreate,
                     creator: message.creatorUserId,
                     predecessor: undefined, // todo is this needed?
                     type: message.event.payload.case,
-                    spaceId: payload.spaceId,
                 } satisfies RoomCreateEvent,
             }
         }
@@ -758,5 +768,5 @@ function toMembership(op: MembershipOp): Membership {
 }
 
 function hasTimelineContent(kind: SnapshotCaseType): boolean {
-    return kind === 'channelContent' || kind === 'spaceContent'
+    return kind === 'channelContent' || kind === 'spaceContent' || kind === 'dmChannelContent'
 }

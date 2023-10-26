@@ -139,7 +139,12 @@ const OutsideTownRoutes = () => {
         <Routes>
             <Route path="invites/:inviteSlug" element={<InvitesIndex />} />
             <Route path="messages" element={<DirectMessageIndex />} />
-            <Route path="messages/:messageId" element={<DirectMessageThread />} />
+            <Route path="messages/:channelSlug" element={<DirectMessageThread />}>
+                <Route
+                    path="replies/:messageId"
+                    element={<SpacesChannelReplies parentRoute="../" />}
+                />
+            </Route>
             {/* catch all */}
             <Route element={<CheckRedirect />}>
                 <Route path="*" element={<NoJoinedSpacesFallback />}>

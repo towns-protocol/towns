@@ -1,0 +1,8 @@
+import { RoomIdentifier } from './room-identifier'
+
+export type DMChannelIdentifier = {
+    id: RoomIdentifier
+    joined: boolean
+    userIds: string[]
+    lastEventCreatedAtEpocMs: bigint
+}

@@ -23,6 +23,11 @@ func StreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string,
 			ChannelId:  inception.StreamId,
 			StreamType: common.Channel,
 		}, nil
+	case *DmChannelPayload_Inception:
+		return &common.StreamInfo{
+			SpaceId:    inception.StreamId,
+			StreamType: common.DMChannel,
+		}, nil
 	case *SpacePayload_Inception:
 		return &common.StreamInfo{
 			SpaceId:    inception.StreamId,
@@ -35,6 +40,22 @@ func StreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string,
 		}, nil
 	default:
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "unimplemented stream type").Func("StreamInfoFromInceptionPayload")
+	}
+}
+
+func DMStreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string) (*common.DMStreamInfo, error) {
+	if payload == nil {
+		return nil, RiverError(Err_STREAM_NO_INCEPTION_EVENT, "no inception payload for stream", "streamId", streamId)
+	}
+
+	switch inception := payload.(type) {
+	case *DmChannelPayload_Inception:
+		return &common.DMStreamInfo{
+			FirstPartyId:  inception.FirstPartyId,
+			SecondPartyId: inception.SecondPartyId,
+		}, nil
+	default:
+		return nil, RiverError(Err_STREAM_BAD_EVENT, "not a DM inception payload").Func("DMStreamInfoFromInceptionPayload")
 	}
 }
 

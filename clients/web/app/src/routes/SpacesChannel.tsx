@@ -14,6 +14,7 @@ import {
     useSpaceMembers,
     useZionClient,
 } from 'use-zion-client'
+import { isDMChannelStreamId } from '@river/sdk'
 import { ChannelHeader } from '@components/ChannelHeader/ChannelHeader'
 import { ChannelIntro } from '@components/ChannelIntro'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
@@ -22,7 +23,7 @@ import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { TimelineShimmer } from '@components/Shimmer'
 import { DecryptingCard } from '@components/Shimmer/DecryptingCard'
 import { ChannelHeaderShimmer } from '@components/Shimmer/TimelineShimmer'
-import { Box, Button, Stack } from '@ui'
+import { Box, Button, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
@@ -64,7 +65,7 @@ const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
 const SpacesChannelComponent = (props: Props) => {
     const { messageId } = useParams()
     const { isTouch } = useDevice()
-    const { joinRoom, scrollback, sendMessage } = useZionClient()
+    const { joinRoom, leaveRoom, scrollback, sendMessage } = useZionClient()
 
     const { spaceId, channelId, channel } = useChannelData()
 
@@ -91,6 +92,10 @@ const SpacesChannelComponent = (props: Props) => {
     const onJoinChannel = useCallback(() => {
         joinRoom(channelId)
     }, [joinRoom, channelId])
+
+    const onLeaveChannel = useCallback(() => {
+        leaveRoom(channelId)
+    }, [leaveRoom, channelId])
 
     const hasThreadOpen = !!messageId
 
@@ -165,6 +170,10 @@ const SpacesChannelComponent = (props: Props) => {
         })
     }, [channel, channelId, displayDecryptionProgress, myMembership])
 
+    const showJoinChannel =
+        myMembership !== Membership.Join && !isDMChannelStreamId(channelId.networkId)
+    const showDMAcceptInvitation =
+        myMembership === Membership.Invite && isDMChannelStreamId(channelId.networkId)
     return (
         <CentralPanelLayout>
             {!isTouch && <RegisterChannelShortcuts />}
@@ -187,10 +196,10 @@ const SpacesChannelComponent = (props: Props) => {
                         </TimelineShimmer>
                     )}
                 </>
-            ) : myMembership !== Membership.Join ? (
-                <Box absoluteFill centerContent>
+            ) : showJoinChannel ? (
+                <Box absoluteFill centerContent padding="lg">
                     <Button key={channelId.slug} size="button_lg" onClick={onJoinChannel}>
-                        Join #{channel.label}
+                        <Text truncate>Join #{channel.label}</Text>
                     </Button>
                 </Box>
             ) : (
@@ -237,27 +246,42 @@ const SpacesChannelComponent = (props: Props) => {
                         paddingBottom={isTouch ? 'none' : 'lg'}
                         paddingX={isTouch ? 'none' : 'lg'}
                     >
-                        <RichTextEditor
-                            isFullWidthOnTouch
-                            editable={!!isChannelWritable}
-                            background={isChannelWritable ? 'level2' : 'level1'}
-                            displayButtons={isTouch ? 'on-focus' : 'always'}
-                            key={channelId.networkId}
-                            storageId={channel.id.networkId}
-                            autoFocus={!hasThreadOpen && !isTouch}
-                            initialValue=""
-                            placeholder={placeholder}
-                            channels={channels}
-                            members={members}
-                            userId={userId}
-                            onSend={onSend}
-                        />
+                        {!showDMAcceptInvitation && (
+                            <RichTextEditor
+                                isFullWidthOnTouch
+                                editable={!!isChannelWritable}
+                                background={isChannelWritable ? 'level2' : 'level1'}
+                                displayButtons={isTouch ? 'on-focus' : 'always'}
+                                key={channelId.networkId}
+                                storageId={channel.id.networkId}
+                                autoFocus={!hasThreadOpen && !isTouch}
+                                initialValue=""
+                                placeholder={placeholder}
+                                channels={channels}
+                                members={members}
+                                userId={userId}
+                                onSend={onSend}
+                            />
+                        )}
                     </Box>
                 </MediaDropContextProvider>
             )}
 
             {galleryId && (
                 <FullScreenMedia events={channelMessages} threadId={galleryThreadId ?? undefined} />
+            )}
+            {showDMAcceptInvitation && (
+                <Stack borderTop padding gap centerContent width="100%">
+                    <Text fontWeight="medium">You&apos;ve been invited to a Direct Message</Text>
+                    <Stack horizontal gap>
+                        <Button tone="cta1" onClick={onJoinChannel}>
+                            Join
+                        </Button>
+                        <Button tone="level2" onClick={onLeaveChannel}>
+                            Ignore
+                        </Button>
+                    </Stack>
+                </Stack>
             )}
         </CentralPanelLayout>
     )

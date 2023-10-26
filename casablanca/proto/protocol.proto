@@ -99,6 +99,7 @@ message StreamEvent {
         UserSettingsPayload user_settings_payload = 104;
         UserDeviceKeyPayload user_device_key_payload = 105;
         MediaPayload media_payload = 106;
+        DmChannelPayload dm_channel_payload = 107;
     }
 }
 
@@ -215,6 +216,30 @@ message ChannelPayload {
         EncryptedData message = 2;
         Membership membership = 3;
         Receipt receipt = 4;
+    }
+}
+
+/**
+* DmChannelPayload
+*/
+message DmChannelPayload {
+    message Snapshot {
+        Inception inception = 1;
+        map<string, Membership> memberships = 2;
+    }
+
+    message Inception {
+        string stream_id = 1;
+        string first_party_id = 2;
+        string second_party_id = 3;
+        StreamSettings settings = 4;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        Membership membership = 2;
+        EncryptedData message = 3;
+        ChannelPayload.Receipt receipt = 4;
     }
 }
 
@@ -351,6 +376,7 @@ message Snapshot {
         UserSettingsPayload.Snapshot user_settings_content = 104;
         UserDeviceKeyPayload.Snapshot user_device_key_content = 105;
         MediaPayload.Snapshot media_content = 106;
+        DmChannelPayload.Snapshot dm_channel_content = 107;
     }
 }
 

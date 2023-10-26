@@ -1,12 +1,13 @@
 import React, { useCallback } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate } from 'react-router'
+import { SpaceContextProvider } from 'use-zion-client'
 import { Stack } from '@ui'
 import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
+import { SpacesChannel } from 'routes/SpacesChannel'
 
 export const DirectMessageThread = () => {
-    const { messageId } = useParams()
     const { isTouch } = useDevice()
     const navigate = useNavigate()
     const onBack = useCallback(() => {
@@ -14,9 +15,11 @@ export const DirectMessageThread = () => {
     }, [navigate])
 
     return (
-        <Stack>
+        <Stack height="100%" width="100%">
             {isTouch && <TouchPanelNavigationBar title="Message Thread" onBack={onBack} />}
-            <Stack padding>The message thread with id {messageId} will appear here</Stack>
+            <SpaceContextProvider spaceId={undefined}>
+                <SpacesChannel />
+            </SpaceContextProvider>
         </Stack>
     )
 }

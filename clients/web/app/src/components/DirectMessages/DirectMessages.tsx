@@ -1,16 +1,12 @@
 import React, { useCallback } from 'react'
 import { useMatch, useNavigate } from 'react-router'
-import { Avatar, Box, Icon, IconButton, Stack, Text } from '@ui'
+import { useDMLatestMessageText, useZionContext } from 'use-zion-client'
+import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
+import { Avatar, Box, Icon, IconButton, MotionStack, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
 import { CreateDirectMessage } from './CreateDIrectMessage'
 
-type DummyThread = {
-    id: string
-    label: string
-    description: string
-    userId: string
-}
 type Props = {
     hideNavigation?: boolean
 }
@@ -22,6 +18,9 @@ export const DirectMessages = (props: Props) => {
     const backButtonPressed = useCallback(() => {
         navigate('/')
     }, [navigate])
+    const onDirectMessageCreated = useCallback(() => {
+        setShowCreateDirectMessage(false)
+    }, [setShowCreateDirectMessage])
 
     return (
         <Stack height="100%">
@@ -45,14 +44,18 @@ export const DirectMessages = (props: Props) => {
                 </Box>
             )}
 
-            {showCreateDirectMessage ? <CreateDirectMessage /> : <DummyThreads />}
+            {showCreateDirectMessage ? (
+                <CreateDirectMessage onDirectMessageCreated={onDirectMessageCreated} />
+            ) : (
+                <Threads />
+            )}
         </Stack>
     )
 }
 
-const DummyThreads = () => {
+const Threads = () => {
     const navigate = useNavigate()
-
+    const { dmChannels } = useZionContext()
     const messageId = useMatch('messages/:messageId')?.params.messageId
 
     const onThreadClick = useCallback(
@@ -62,64 +65,53 @@ const DummyThreads = () => {
         [navigate],
     )
 
-    const dummyThreads: DummyThread[] = [
-        {
-            id: '1',
-            label: 'tak',
-            description: "You: what's up Tak",
-            userId: '0xd2F4c40C2c5C6A9730f5C7191F5286EEff241DEF',
-        },
-        {
-            id: '2',
-            label: 'erik',
-            description: 'erik: hi there',
-            userId: '0x376eC15Fa24A76A18EB980629093cFFd559333Bb',
-        },
-        {
-            id: '3',
-            label: 'theo_t',
-            description: "You: how's it going",
-            userId: '0x2FaC60B7bCcEc9b234A2f07448D3B2a045d621B9',
-        },
-    ]
-
     return (
         <Stack scroll>
             <Stack minHeight="100svh" paddingBottom="safeAreaInsetBottom">
-                {dummyThreads.map((thread) => {
+                {dmChannels.map((channel) => {
                     return (
-                        <Stack
-                            horizontal
-                            padding
-                            gap
-                            key={thread.id}
-                            alignItems="start"
-                            background={messageId === thread.id ? 'level2' : undefined}
-                            rounded="sm"
-                            onClick={() => onThreadClick(thread.id)}
-                        >
-                            <Avatar size="avatar_lg" userId={thread.userId} />
-                            <Stack grow gap="sm" paddingY="xs">
-                                <Stack
-                                    horizontal
-                                    grow
-                                    gap="sm"
-                                    alignItems="center"
-                                    justifyContent="spaceBetween"
-                                >
-                                    <Text color="default" fontSize="lg">
-                                        {thread.label}
-                                    </Text>
-
-                                    <Text color="gray2">1w</Text>
-                                </Stack>
-
-                                <Text color="gray2">{thread.description}</Text>
-                            </Stack>
-                        </Stack>
+                        <DirectMessageThread
+                            key={channel.id.slug}
+                            channel={channel}
+                            highlighted={messageId === channel.id.slug}
+                            onClick={() => onThreadClick(channel.id.slug)}
+                        />
                     )
                 })}
             </Stack>
         </Stack>
+    )
+}
+
+const DirectMessageThread = (props: {
+    channel: DMChannelIdentifier
+    onClick: () => void
+    highlighted: boolean
+}) => {
+    const { channel, onClick, highlighted } = props
+    const latest = useDMLatestMessageText(channel.id)
+
+    return (
+        <MotionStack
+            horizontal
+            padding
+            gap
+            key={channel.id.slug}
+            alignItems="center"
+            background={highlighted ? 'level2' : undefined}
+            layout="position"
+            transition={{ type: 'spring', damping: 25, stiffness: 120 }}
+            onClick={onClick}
+        >
+            {channel.userIds.map((userId) => (
+                <Avatar key={userId} userId={userId} insetRight="xs" />
+            ))}
+            <Stack gap="md">
+                <Text truncate fontWeight="medium" color="default">
+                    {channel.id.networkId}
+                </Text>
+                <Text truncate>{latest}</Text>
+            </Stack>
+        </MotionStack>
     )
 }
