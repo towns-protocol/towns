@@ -34,6 +34,7 @@ import { IChannelContent, IClearContent, IClearEvent, RiverEvent } from '../../e
 import * as olmLib from '../olmLib'
 import { IEventDecryptionResult, IncomingRoomKeyRequest } from '../crypto'
 import { PlainMessage, toPlainMessage } from '@bufbuild/protobuf'
+import { ClearContent, RiverEventV2 } from '../../eventV2'
 
 export interface IOutboundGroupSessionKey {
     chain_index: number
@@ -1100,7 +1101,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
     // indexes, or which we could only decrypt with untrusted keys:
     // map from senderKey|sessionId to Set of RiverEvents
     private pendingEvents = new Map<string, Map<string, Set<RiverEvent>>>()
-
+    private pendingEventsV2 = new Map<string, Map<string, Set<RiverEventV2>>>()
     // this gets stubbed out by the unit tests.
     private olmlib = olmLib
 
@@ -1218,13 +1219,11 @@ export class MegolmDecryption extends DecryptionAlgorithm {
             clearEvent = {
                 content: plainMessage.payload,
             }
-        } else if (type === 'toDeviceMessage') {
-            const message = ToDeviceMessage.fromJsonString(protoContent)
-            const plainMessage = toPlainMessage(message)
-
-            clearEvent = {
-                content: plainMessage.payload,
-            }
+        } else {
+            throw new DecryptionError(
+                'MEGOLM_UNKNOWN_MESSAGE_TYPE',
+                'Unknown message type: ' + type,
+            )
         }
 
         // todo: tighten event type to avoid this
@@ -1255,6 +1254,136 @@ export class MegolmDecryption extends DecryptionAlgorithm {
     }
 
     /**
+     * returns a promise which resolves to a
+     * {@link EventDecryptionResult} once we have finished
+     * decrypting, or rejects with an `algorithms.DecryptionError` if there is a
+     * problem decrypting the event.
+     */
+    public async decryptEventV2(event: RiverEventV2): Promise<ClearContent> {
+        const content = event.getWireContent()
+
+        if (!content.senderKey || !content.sessionId || !content.text) {
+            throw new DecryptionError('MEGOLM_MISSING_FIELDS', 'Missing fields in input')
+        }
+
+        // we add the event to the pending list *before* we start decryption.
+        //
+        // then, if the key turns up while decryption is in progress (and
+        // decryption fails), we will schedule a retry.
+        // (fixes https://github.com/vector-im/element-web/issues/5001)
+        this.addEventToPendingListV2(event)
+
+        let res: IDecryptedGroupMessage | null
+        try {
+            res = await this.olmDevice.decryptGroupMessage(
+                event.getChannelId()!,
+                content.senderKey,
+                content.sessionId,
+                content.text,
+                event.getId()!,
+            )
+        } catch (e) {
+            if ((<Error>e).name === 'DecryptionError') {
+                // re-throw decryption errors as-is
+                throw e
+            }
+
+            let errorCode = 'OLM_DECRYPT_GROUP_MESSAGE_ERROR'
+
+            if ((<Error>e).message.includes('OLM.UNKNOWN_MESSAGE_INDEX')) {
+                // todo: request keys here
+                errorCode = 'OLM_UNKNOWN_MESSAGE_INDEX'
+            }
+
+            throw new DecryptionError(
+                errorCode,
+                e instanceof Error ? e.message : 'Unknown Error: Error is undefined',
+                {
+                    session: content.senderKey + '|' + content.sessionId,
+                },
+            )
+        }
+
+        if (res === null) {
+            // todo: implement backup
+            //  We've got a message for a session we don't have.
+            // try and get the missing key from the backup first
+            //this.crypto.backupManager
+            //    .queryKeyBackupRateLimited(event.getRoomId(), content.session_id)
+            //    .catch(() => {})
+
+            // (XXX: We might actually have received this key since we started
+            // decrypting, in which case we'll have scheduled a retry, and this
+            // request will be redundant. We could probably check to see if the
+            // event is still in the pending list; if not, a retry will have been
+            // scheduled, so we needn't send out the request here.)
+            // todo: need to implement queued Key request process to request keys from here
+            // this.requestKeysForEvent(event)
+
+            throw new DecryptionError(
+                'MEGOLM_UNKNOWN_INBOUND_SESSION_ID',
+                "The sender's device has not sent us the keys for this message.",
+                {
+                    session: content.senderKey + '|' + content.sessionId,
+                },
+            )
+        }
+
+        // Success. We can remove the event from the pending list, if
+        // that hasn't already happened. However, if the event was
+        // decrypted with an untrusted key, leave it on the pending
+        // list so it will be retried if we find a trusted key later.
+        if (!res.untrusted) {
+            this.removeEventFromPendingListV2(event)
+        }
+
+        const payload = JSON.parse(res.result)
+        if (!isValidPayload(payload)) {
+            throw new DecryptionError(
+                'PROTOBUF_MISSING_INFORMATION',
+                'unable to find required protobuf information',
+            )
+        }
+        let clearEvent: ClearContent | undefined
+
+        const type = payload.type
+        const protoContent = payload.content
+        if (type === 'channelMessage') {
+            const message = ChannelMessage.fromJsonString(protoContent)
+            const plainMessage = toPlainMessage(message)
+            clearEvent = { content: plainMessage.payload, type }
+        } else {
+            throw new DecryptionError(
+                'MEGOLM_UNKNOWN_MESSAGE_TYPE',
+                'Unknown message type: ' + type,
+            )
+        }
+
+        // todo: tighten event type to avoid this
+        // https://linear.app/hnt-labs/issue/HNT-1837/tighten-content-type-of-riverevent
+        const channel_id = payload.channel_id
+
+        // belt-and-braces check that the room id matches that indicated by the HS
+        // (this is somewhat redundant, since the megolm session is scoped to the
+        // room, so neither the sender nor a MITM can lie about the channel_id).
+        if (channel_id !== event.getChannelId()) {
+            throw new DecryptionError(
+                'MEGOLM_BAD_ROOM',
+                'Message intended for channel ' + channel_id,
+            )
+        }
+
+        if (!clearEvent) {
+            throw new DecryptionError(
+                'PROTOBUF_DECODING_FAILED',
+                'unable to find matching protobuf for message type ' + type,
+            )
+        }
+
+        return clearEvent
+    }
+
+    /**
      * Add an event to the list of those awaiting their session keys.
      *
      * @internal
@@ -1279,6 +1408,30 @@ export class MegolmDecryption extends DecryptionAlgorithm {
     }
 
     /**
+     * Add an event to the list of those awaiting their session keys.
+     *
+     * @internal
+     *
+     */
+    private addEventToPendingListV2(event: RiverEventV2): void {
+        const content = event.getWireContent()
+        const senderKey = content.senderKey
+        const sessionId = content.sessionId
+        if (!senderKey || !sessionId) {
+            this.logError('addEventToPendingListV2 called with missing senderKey or sessionId')
+            return
+        }
+        if (!this.pendingEventsV2.has(senderKey)) {
+            this.pendingEventsV2.set(senderKey, new Map<string, Set<RiverEventV2>>())
+        }
+        const senderPendingEvents = this.pendingEventsV2.get(senderKey)!
+        if (!senderPendingEvents.has(sessionId)) {
+            senderPendingEvents.set(sessionId, new Set())
+        }
+        senderPendingEvents.get(sessionId)?.add(event)
+    }
+
+    /**
      * Remove an event from the list of those awaiting their session keys.
      *
      * @internal
@@ -1293,6 +1446,35 @@ export class MegolmDecryption extends DecryptionAlgorithm {
             return
         }
         const senderPendingEvents = this.pendingEvents.get(senderKey)
+        const pendingEvents = senderPendingEvents?.get(sessionId)
+        if (!pendingEvents) {
+            return
+        }
+
+        pendingEvents.delete(event)
+        if (pendingEvents.size === 0) {
+            senderPendingEvents!.delete(sessionId)
+        }
+        if (senderPendingEvents!.size === 0) {
+            this.pendingEvents.delete(senderKey)
+        }
+    }
+
+    /**
+     * Remove an event from the list of those awaiting their session keys.
+     *
+     * @internal
+     *
+     */
+    private removeEventFromPendingListV2(event: RiverEventV2): void {
+        const content = event.getWireContent()
+        const senderKey = content.senderKey
+        const sessionId = content.sessionId
+        if (!senderKey || !sessionId) {
+            this.logError('removeEventToPendingListV2 called with missing senderKey or sessionId')
+            return
+        }
+        const senderPendingEvents = this.pendingEventsV2.get(senderKey)
         const pendingEvents = senderPendingEvents?.get(sessionId)
         if (!pendingEvents) {
             return

@@ -7,6 +7,7 @@ import { IRoomEncryption } from '../store/base'
 import { IEncryptedContent } from '../olmLib'
 import { RiverEvent, IClearContent } from '../../event'
 import { MegolmSession } from '@river/proto'
+import { ClearContent, RiverEventV2 } from '../../eventV2'
 
 /**
  * Map of registered encryption algorithm classes. A map from string to {@link EncryptionAlgorithm} class
@@ -128,6 +129,17 @@ export abstract class DecryptionAlgorithm {
      * `algorithms.DecryptionError` if there is a problem decrypting the event.
      */
     public abstract decryptEvent(event: RiverEvent): Promise<IEventDecryptionResult>
+
+    /**
+     * Decrypt an event
+     *
+     * @param event - undecrypted event
+     *
+     * @returns promise which
+     * resolves once we have finished decrypting. Rejects with an
+     * `algorithms.DecryptionError` if there is a problem decrypting the event.
+     */
+    public abstract decryptEventV2(event: RiverEventV2): Promise<ClearContent>
 
     /**
      * Handle a key event

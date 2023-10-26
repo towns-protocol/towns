@@ -30,7 +30,7 @@ import {
     FullyReadMarker,
 } from '@river/proto'
 
-import { Crypto, EncryptionTarget } from './crypto/crypto'
+import { Crypto, EncryptionTarget, GroupEncryptionInput } from './crypto/crypto'
 import { OlmDevice, IExportedDevice as IExportedOlmDevice } from './crypto/olmDevice'
 import { DeviceInfoMap, DeviceList, IOlmDevice } from './crypto/deviceList'
 import { DLogger, dlog } from './dlog'
@@ -80,6 +80,7 @@ import { IDecryptOptions, RiverEvent, RiverEvents } from './event'
 import debug from 'debug'
 import { MEGOLM_ALGORITHM, OLM_ALGORITHM } from './crypto/olmLib'
 import { Stream } from './stream'
+import { RiverEventV2 } from './eventV2'
 
 const log = dlog('csb:client')
 
@@ -1468,7 +1469,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     /**
      * Attempts to decrypt an event
      */
-    public async decryptEventIfNeeded(event: RiverEvent, options?: IDecryptOptions): Promise<void> {
+    public async decryptEventIfNeeded(
+        event: RiverEvent | RiverEventV2,
+        options?: IDecryptOptions,
+    ): Promise<void> {
         if (event.shouldAttemptDecryption() || options?.forceRedecryptIfUntrusted) {
             if (!this.cryptoBackend) {
                 throw new Error('crypto backend not initialized')
@@ -1534,6 +1538,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             throw new Error('crypto backend not initialized')
         }
         return this.cryptoBackend.encryptEvent(event, target)
+    }
+
+    public encryptGroupEvent(input: GroupEncryptionInput): Promise<PlainMessage<EncryptedData>> {
+        if (!this.cryptoBackend) {
+            throw new Error('crypto backend not initialized')
+        }
+        return this.cryptoBackend.encryptEventV2(input)
     }
 }
 export interface FallbackKeyResponse {

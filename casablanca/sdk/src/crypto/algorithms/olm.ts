@@ -12,6 +12,7 @@ import {
     encryptMessageForDevice,
 } from '../olmLib'
 import { IInboundSession } from '../olmDevice'
+import { ClearContent, RiverEventV2 } from '../../eventV2'
 
 const log = dlog('csb:olm')
 
@@ -242,6 +243,10 @@ export class OlmDecryption extends DecryptionAlgorithm {
             senderCurve25519Key: deviceKey,
             claimedDoNotUseKey: claimedKeys.donotuse || null,
         }
+    }
+
+    public async decryptEventV2(_event: RiverEventV2): Promise<ClearContent> {
+        throw new Error('Method not implemented.')
     }
 
     /**
