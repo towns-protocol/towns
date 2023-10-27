@@ -25,6 +25,7 @@ type Props = (ParagraphProps | LabelProps) & {
     strong?: boolean
 
     display?: BoxProps['display']
+    style?: BoxProps['style']
 } & TextSprinkles
 
 export type TextProps = Props & Pick<BoxProps, 'grow' | 'shrink'>

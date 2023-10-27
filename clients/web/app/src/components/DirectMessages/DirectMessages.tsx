@@ -1,8 +1,9 @@
 import React, { useCallback } from 'react'
 import { useMatch, useNavigate } from 'react-router'
-import { useDMLatestMessageText, useZionContext } from 'use-zion-client'
+import { useDMLatestMessage, useZionContext } from 'use-zion-client'
 import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
-import { Avatar, Box, Icon, IconButton, MotionStack, Stack, Text } from '@ui'
+import { formatDistance } from 'date-fns'
+import { Avatar, Box, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
 import { CreateDirectMessage } from './CreateDIrectMessage'
@@ -67,7 +68,7 @@ const Threads = () => {
 
     return (
         <Stack scroll>
-            <Stack minHeight="100svh" paddingBottom="safeAreaInsetBottom">
+            <Stack padding minHeight="100svh" paddingBottom="safeAreaInsetBottom" gap="xxs">
                 {dmChannels.map((channel) => {
                     return (
                         <DirectMessageThread
@@ -89,29 +90,79 @@ const DirectMessageThread = (props: {
     highlighted: boolean
 }) => {
     const { channel, onClick, highlighted } = props
-    const latest = useDMLatestMessageText(channel.id)
+    const latest = useDMLatestMessage(channel.id)
 
     return (
         <MotionStack
-            horizontal
-            padding
-            gap
             key={channel.id.slug}
-            alignItems="center"
-            background={highlighted ? 'level2' : undefined}
             layout="position"
             transition={{ type: 'spring', damping: 25, stiffness: 120 }}
+            cursor="pointer"
             onClick={onClick}
         >
-            {channel.userIds.map((userId) => (
-                <Avatar key={userId} userId={userId} insetRight="xs" />
-            ))}
-            <Stack gap="md">
-                <Text truncate fontWeight="medium" color="default">
-                    {channel.id.networkId}
-                </Text>
-                <Text truncate>{latest}</Text>
-            </Stack>
+            <Box
+                gap
+                horizontal
+                hoverable={!highlighted}
+                background={highlighted ? 'level2' : 'level1'}
+                alignItems="start"
+                paddingX="sm"
+                paddingY="md"
+                borderRadius="sm"
+            >
+                {channel.userIds.map((userId) => (
+                    <Avatar key={userId} userId={userId} insetRight="xs" />
+                ))}
+                {latest ? (
+                    <Box gap="sm" width="100%" overflow="hidden">
+                        {/* first line: title and date */}
+                        <Stack horizontal gap>
+                            {/* text on the left */}
+                            <Box grow overflow="hidden" paddingY="sm" insetY="xs">
+                                <Text truncate>{channel.id.networkId}</Text>
+                            </Box>
+                            {/* date on the right */}
+                            <Box justifyContent="end">
+                                {latest ? (
+                                    <Paragraph
+                                        size="xs"
+                                        style={{ whiteSpace: 'nowrap' }}
+                                        color="gray2"
+                                    >
+                                        {formatDistance(latest.createdAtEpocMs, Date.now(), {
+                                            addSuffix: false,
+                                        })}
+                                    </Paragraph>
+                                ) : (
+                                    <></>
+                                )}
+                            </Box>
+                        </Stack>
+                        {/* truncated message body */}
+                        <Text>
+                            {/* nested text hack to get cap-size vertical margins right */}
+                            <Text
+                                color="gray2"
+                                size="sm"
+                                style={{
+                                    // todo: experiment with this, may not keep
+                                    // and if we keep it will move into the Text component
+                                    padding: '4px 0',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    display: '-webkit-box',
+                                }}
+                            >
+                                {latest?.body}
+                            </Text>
+                        </Text>
+                    </Box>
+                ) : (
+                    <></>
+                )}
+            </Box>
         </MotionStack>
     )
 }

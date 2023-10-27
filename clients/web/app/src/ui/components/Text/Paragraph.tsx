@@ -11,7 +11,7 @@ export type ParagraphProps = {
     truncate?: boolean
     strong?: boolean
 } & Omit<TextSprinkles, 'size' | 'fontSize'> &
-    Pick<BoxProps, 'grow' | 'shrink' | 'display'>
+    Pick<BoxProps, 'grow' | 'shrink' | 'display' | 'style'>
 
 export const Paragraph = forwardRef<HTMLElement, ParagraphProps>((props, ref) => {
     return <Text as="p" size="md" {...props} ref={ref} />
