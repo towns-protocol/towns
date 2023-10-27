@@ -1,8 +1,8 @@
 import React from 'react'
-import { RoomIdentifier, useDMData, useMyProfile } from 'use-zion-client'
-import { isDMChannelStreamId } from '@river/sdk'
+import { RoomIdentifier, useDMData } from 'use-zion-client'
 import { Box, Icon, Paragraph, Stack } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
+import { useChannelType } from 'hooks/useChannelType'
 
 type Props = {
     roomIdentifier: RoomIdentifier
@@ -13,10 +13,10 @@ type Props = {
 
 export const ChannelIntro = (props: Props) => {
     const { roomIdentifier } = props
-    const channelContext = isDMChannelStreamId(roomIdentifier?.networkId ?? '') ? 'dm' : 'channel'
-    if (channelContext === 'channel') {
+    const channelType = useChannelType(roomIdentifier)
+    if (channelType === 'channel') {
         return <RegularChannelIntro {...props} />
-    } else {
+    } else if (channelType === 'dm') {
         return <ChannelDMIntro roomIdentifier={roomIdentifier} />
     }
 }
@@ -46,9 +46,7 @@ const RegularChannelIntro = (props: Props) => {
 }
 
 export const ChannelDMIntro = (props: { roomIdentifier: RoomIdentifier }) => {
-    const userId = useMyProfile()?.userId
-    const { data } = useDMData(props.roomIdentifier)
-    const counterParty = data?.userIds.find((u) => u !== userId)
+    const { counterParty } = useDMData(props.roomIdentifier)
     if (!counterParty) {
         return null
     }

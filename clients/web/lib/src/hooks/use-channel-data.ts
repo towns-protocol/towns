@@ -3,13 +3,11 @@ import { useChannelContext } from '../components/ChannelContextProvider'
 import { useMemo } from 'react'
 import { useSpaceData } from './use-space-data'
 import { useRoom } from './use-room'
-import { useParams } from 'react-router-dom'
 import { isDMChannelStreamId } from '@river/sdk'
 
 export function useChannelData(): ChannelData {
     const { channelId, spaceId } = useChannelContext()
     const space = useSpaceData()
-    const { channelSlug } = useParams()
     const room = useRoom(channelId)
 
     const channelGroup = useMemo(
@@ -22,10 +20,10 @@ export function useChannelData(): ChannelData {
         const channelChild = channelGroup?.channels.find((c) => c.id.slug === channelId.slug)
         if (!channelChild) {
             // The channel wasn't found in a space, return a DM channel if the prefix matches
-            if (channelSlug && isDMChannelStreamId(channelSlug)) {
+            if (isDMChannelStreamId(channelId.networkId)) {
                 return {
                     id: channelId,
-                    label: channelSlug,
+                    label: channelId.networkId,
                     private: true,
                     highlight: false,
                     topic: '',
@@ -42,7 +40,7 @@ export function useChannelData(): ChannelData {
             topic: room?.topic ?? channelChild.topic,
         }
         return channel
-    }, [channelGroup?.channels, channelId, room?.name, room?.topic, channelSlug])
+    }, [channelGroup?.channels, channelId, room?.name, room?.topic])
     return useMemo(() => {
         return {
             spaceId,

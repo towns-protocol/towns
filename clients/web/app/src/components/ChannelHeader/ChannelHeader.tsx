@@ -1,13 +1,14 @@
 import React, { useCallback } from 'react'
-import { Channel, RoomIdentifier, useChannelMembers, useRoom } from 'use-zion-client'
+import { Channel, RoomIdentifier, useChannelMembers, useDMData, useRoom } from 'use-zion-client'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
-import { Box, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
+import { Avatar, Box, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { useMuteSettings } from 'api/lib/notificationSettings'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
+import { useChannelType } from 'hooks/useChannelType'
 
 type Props = {
     channel: Channel
@@ -31,6 +32,7 @@ const DesktopChannelHeader = (props: Props) => {
         channelId: channel.id.networkId,
     })
     const isMuted = channelIsMuted || spaceIsMuted
+    const channelType = useChannelType(channel.id)
 
     return (
         <Stack gap>
@@ -78,18 +80,45 @@ const DesktopChannelHeader = (props: Props) => {
                         alignItems="center"
                         rounded="sm"
                     >
-                        <Icon type="tag" size="square_sm" color="gray2" />
-                        <Paragraph fontWeight="strong" color="default">
-                            {channel.label}
-                        </Paragraph>
+                        {channelType === 'channel' ? (
+                            <>
+                                <Icon type="tag" size="square_sm" color="gray2" />
+                                <Paragraph fontWeight="strong" color="default">
+                                    {channel.label}
+                                </Paragraph>
+                            </>
+                        ) : channelType === 'dm' ? (
+                            <DMTitleContent roomIdentifier={channel.id} />
+                        ) : (
+                            <></>
+                        )}
                         {isMuted && <Icon type="muteActive" size="square_sm" color="gray2" />}
                     </Stack>
                 </Link>
+
                 {topic && <Paragraph color="gray2">{topic}</Paragraph>}
                 <Stack grow />
-                <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
+
+                {channelType === 'channel' && (
+                    <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
+                )}
             </Stack>
         </Stack>
+    )
+}
+
+const DMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
+    const { counterParty } = useDMData(props.roomIdentifier)
+    if (!counterParty) {
+        return undefined
+    }
+    return (
+        <>
+            <Avatar userId={counterParty} size="avatar_sm" />
+            <Text fontSize="md" fontWeight="medium" color="default">
+                {counterParty}
+            </Text>
+        </>
     )
 }
 
