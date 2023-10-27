@@ -5,6 +5,70 @@ import { StreamService } from '@river/proto'
 import { dlog } from './dlog'
 
 const logProtos = dlog('csb:rpc:protos')
+const logError = dlog('csb:rpc:error')
+logError.enabled = typeof jest !== 'undefined' ? true : false
+
+const logErrorInterceptor: Interceptor = (next) => async (req) => {
+    try {
+        let localReq = req
+        if (req.stream) {
+            // to intercept streaming request messages, we wrap
+            // the AsynchronousIterable with a generator function
+            localReq = {
+                ...req,
+                message: logErrorEachRequest(req.method.name, req.message),
+            }
+        }
+        const res = await next(localReq)
+
+        if (res.stream) {
+            // to intercept streaming response messages, we wrap
+            // the AsynchronousIterable with a generator function
+            return {
+                ...res,
+                message: logErrorEachResponse(res.method.name, res.message),
+            }
+        }
+        return res
+    } catch (err) {
+        logError(req.method.name, 'ERROR MAKING FETCH', err)
+        throw err
+    }
+}
+
+async function* logErrorEachRequest(name: string, stream: AsyncIterable<any>) {
+    try {
+        for await (const m of stream) {
+            try {
+                yield m
+            } catch (err) {
+                logError(name, 'ERROR YIELDING REQUEST', err)
+                throw err
+            }
+        }
+    } catch (err) {
+        logError(name, 'ERROR STREAMING REQUEST', err)
+        throw err
+    }
+}
+
+async function* logErrorEachResponse(name: string, stream: AsyncIterable<any>) {
+    try {
+        for await (const m of stream) {
+            try {
+                yield m
+            } catch (err) {
+                logError(name, 'ERROR YIELDING RESPONSE', err)
+            }
+        }
+    } catch (err) {
+        const where = new Error().stack?.toString()
+        if (err !== 'BLIP' && err !== 'SHUTDOWN') {
+            logError(name, 'ERROR STREAMING RESPONSE2', where, err)
+        }
+        throw err
+    }
+}
 
 const logger: Interceptor = (next) => async (req) => {
     let localRes = req
@@ -21,26 +85,21 @@ const logger: Interceptor = (next) => async (req) => {
         }
     }
 
-    try {
-        const res = await next(localRes)
+    const res = await next(localRes)
 
-        if (logProtos.enabled) {
-            if (res.stream) {
-                // to intercept streaming response messages, we wrap
-                // the AsynchronousIterable with a generator function
-                return {
-                    ...res,
-                    message: logEachResponse(res.method.name, res.message),
-                }
-            } else {
-                logProtos(res.method.name, 'RESPONSE', res.message)
+    if (logProtos.enabled) {
+        if (res.stream) {
+            // to intercept streaming response messages, we wrap
+            // the AsynchronousIterable with a generator function
+            return {
+                ...res,
+                message: logEachResponse(res.method.name, res.message),
             }
+        } else {
+            logProtos(res.method.name, 'RESPONSE', res.message)
         }
-        return res
-    } catch (e) {
-        logProtos(req.method.name, 'ERROR', e)
-        throw e
     }
+    return res
 }
 
 async function* logEachRequest(name: string, stream: AsyncIterable<any>) {
@@ -48,15 +107,15 @@ async function* logEachRequest(name: string, stream: AsyncIterable<any>) {
         logProtos(name, 'STREAMING REQUEST', m)
         yield m
     }
-    logProtos(name, 'STEAMING DONE')
+    logProtos(name, 'STREAMING REQUEST DONE')
 }
 
 async function* logEachResponse(name: string, stream: AsyncIterable<any>) {
     for await (const m of stream) {
-        logProtos(name, 'STEAMING RESPONSE', m)
+        logProtos(name, 'STREAMING RESPONSE', m)
         yield m
     }
-    logProtos(name, 'STEAMING DONE')
+    logProtos(name, 'STREAMING RESPONSE DONE')
 }
 
 export function makeStreamRpcClient(dest: Transport | string): PromiseClient<typeof StreamService> {
@@ -65,7 +124,7 @@ export function makeStreamRpcClient(dest: Transport | string): PromiseClient<typ
         transport = createConnectTransport({
             baseUrl: dest,
             useBinaryFormat: true,
-            interceptors: [logger],
+            interceptors: [logErrorInterceptor, logger],
         })
     } else {
         transport = dest
