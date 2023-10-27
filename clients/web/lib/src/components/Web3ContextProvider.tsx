@@ -15,6 +15,7 @@ export interface IWeb3Context {
     chains: Chain[]
     isConnected: boolean
     walletStatus: WalletStatus
+    setSigner: (signer: ethers.Signer) => void
 }
 
 export const Web3Context = createContext<IWeb3Context | undefined>(undefined)

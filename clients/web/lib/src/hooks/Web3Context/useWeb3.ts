@@ -1,6 +1,6 @@
 import { Chain, useAccount, useNetwork } from 'wagmi'
 import { WalletStatus } from '../../types/web3-types'
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { IWeb3Context } from '../../components/Web3ContextProvider'
 import { ethers } from 'ethers'
@@ -21,7 +21,7 @@ export function useWeb3({ chain, chainId, web3Signer }: Web3ContextOptions): IWe
         () => (activeWalletAddress ? [activeWalletAddress] : []),
         [activeWalletAddress],
     )
-    const signer = useAppSigner(chainId, web3Signer)
+    const { signer, setSigner } = useAppSigner(chainId, web3Signer)
 
     // allowing app to pass in chain allows to load on correct chain per env regardless of user wallet settings
     // they are able to login w/out swapping networks
@@ -42,26 +42,63 @@ export function useWeb3({ chain, chainId, web3Signer }: Web3ContextOptions): IWe
         })
     }, [activeChain, activeWalletAddress, chains, connector, status, signer])
 
-    return {
-        provider,
-        signer,
-        activeWalletAddress,
-        accounts,
-        chain: activeChain,
-        chains: chains,
-        isConnected: isConnected,
-        walletStatus: status as WalletStatus,
-    }
+    return useMemo(
+        () => ({
+            provider,
+            signer,
+            activeWalletAddress,
+            accounts,
+            chain: activeChain,
+            chains: chains,
+            isConnected: isConnected,
+            walletStatus: status as WalletStatus,
+            setSigner,
+        }),
+        [
+            accounts,
+            activeChain,
+            activeWalletAddress,
+            chains,
+            isConnected,
+            provider,
+            setSigner,
+            signer,
+            status,
+        ],
+    )
 }
 
+// we need to set a signer only once, which should be automatic,
+// but in case it's not, we allow the app to set it manually
 function useAppSigner(appChainId: number, web3Signer?: ethers.Signer) {
+    // default to passed web3 signer, if any
+    const [signer, _setSigner] = useState<ethers.Signer | undefined>(web3Signer)
     const wagmiSigner = useEthersSigner({
         chainId: appChainId,
     })
-    if (web3Signer) {
-        return web3Signer
-    } else if (wagmiSigner) {
-        return wagmiSigner
-    }
-    return undefined
+
+    // once wagmi signer is set, we're good to go
+    useEffect(() => {
+        if (signer) {
+            return
+        }
+        if (wagmiSigner) {
+            _setSigner(wagmiSigner)
+        }
+    }, [wagmiSigner, signer])
+
+    // but there might be cases where a wallet is set after this hook is called, and for some unknown reason the wagmiSigner is not updated properly
+    // in this case, the app can set the signer manually
+    const setSigner = useCallback(
+        (signerInput: ethers.Signer) => {
+            if (signer) {
+                console.log('Signer already set, not setting again.')
+                return
+            }
+            _setSigner(signerInput)
+        },
+        [signer],
+    )
+
+    return { signer, setSigner }
 }
