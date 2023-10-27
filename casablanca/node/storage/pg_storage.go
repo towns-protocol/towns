@@ -387,20 +387,20 @@ func (s *PostgresEventStore) createBlock(
 		return err
 	}
 
-	var seqNum int64
+	var seqNum *int64
 
-	err = tx.QueryRow(ctx, "SELECT COALESCE(MAX(seq_num), -100) as latest_blocks_number FROM miniblocks WHERE stream_id = $1", streamId).Scan(&seqNum)
+	err = tx.QueryRow(ctx, "SELECT MAX(seq_num) as latest_blocks_number FROM miniblocks WHERE stream_id = $1", streamId).Scan(&seqNum)
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error getting seqNum")
 	}
 
-	if seqNum == -100 {
+	if seqNum == nil {
 		return WrapRiverError(Err_NOT_FOUND, err).Message("No blocks for the stream found in block storage")
 	}
 
-	if minipoolGeneration != seqNum+1 {
+	if minipoolGeneration != *seqNum+1 {
 		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Minipool generation missmatch").
-			Tag("ExpectedNewMinipoolGeneration", minipoolGeneration).Tag("ActualNewMinipoolGeneration", seqNum+1)
+			Tag("ExpectedNewMinipoolGeneration", minipoolGeneration).Tag("ActualNewMinipoolGeneration", *seqNum+1)
 	}
 
 	//clean up minipool
