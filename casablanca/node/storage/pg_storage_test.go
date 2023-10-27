@@ -274,6 +274,61 @@ func TestNoStream(t *testing.T) {
 	assert.Contains(t, err.Error(), "NOT_FOUND")
 }
 
+func TestCreateBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) {
+	teardownTest := setupTest()
+	defer teardownTest()
+
+	ctx := context.Background()
+
+	assert := assert.New(t)
+
+	streamId := "11-0sfdsf_sdfds1"
+	var genesisMiniblock = []byte("genesisMinoblock")
+	_ = pgEventStore.CreateStream(ctx, streamId, genesisMiniblock)
+
+	var testEnvelopes1 [][]byte
+	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
+	var testEnvelopes2 [][]byte
+	testEnvelopes2 = append(testEnvelopes2, []byte("event2"))
+	var testEnvelopes3 [][]byte
+	testEnvelopes3 = append(testEnvelopes3, []byte("event3"))
+
+	_ = pgEventStore.CreateBlock(ctx, streamId, 1, 1, []byte("block1"), true, testEnvelopes1)
+	_ = pgEventStore.CreateBlock(ctx, streamId, 2, 1, []byte("block2"), false, testEnvelopes2)
+
+	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM miniblocks WHERE seq_num = 2")
+
+	err := pgEventStore.CreateBlock(ctx, streamId, 3, 1, []byte("block3"), false, testEnvelopes3)
+
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "Minipool generation missmatch")
+	assert.Equal(AsRiverError(err).GetTag("ActualNewMinipoolGeneration"), int64(2))
+	assert.Equal(AsRiverError(err).GetTag("ExpectedNewMinipoolGeneration"), int64(3))
+}
+
+func TestCreateBlockNoSuchStreamError(t *testing.T) {
+	teardownTest := setupTest()
+	defer teardownTest()
+
+	ctx := context.Background()
+
+	assert := assert.New(t)
+
+	streamId := "11-0sfdsf_sdfds1"
+	var genesisMiniblock = []byte("genesisMinoblock")
+	_ = pgEventStore.CreateStream(ctx, streamId, genesisMiniblock)
+
+	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM miniblocks")
+
+	var testEnvelopes1 [][]byte
+	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
+	err := pgEventStore.CreateBlock(ctx, streamId, 1, 1, []byte("block1"), false, testEnvelopes1)
+
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "No blocks for the stream found in block storage")
+	assert.Equal(AsRiverError(err).GetTag("streamId"), "11-0sfdsf_sdfds1")
+}
+
 func TestExitIfSecondStorageCreated(t *testing.T) {
 	teardownTest := setupTest()
 	defer teardownTest()

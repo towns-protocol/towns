@@ -109,7 +109,7 @@ func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, stre
 // 2. There are no gaps in slot_num for envelopes in minipools and it starts from 0
 // 3. For envelopes all generations are the same and equals to "max generation seq_num in miniblocks" + 1
 func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, streamId string) (*GetStreamFromLastSnapshotResult, error) {
-	infra.StoreExecutionTimeMetrics("GetStreamFromLastSnapshotMs", time.Now())
+	defer infra.StoreExecutionTimeMetrics("GetStreamFromLastSnapshotMs", time.Now())
 
 	tx, err := startTx(ctx, s.pool)
 
@@ -362,6 +362,8 @@ func (s *PostgresEventStore) CreateBlock(
 	return nil
 }
 
+// Supported consistency checks:
+// 1. Stream has minipoolGeneration-1 miniblocks
 func (s *PostgresEventStore) createBlock(
 	ctx context.Context,
 	streamId string,
@@ -385,21 +387,20 @@ func (s *PostgresEventStore) createBlock(
 		return err
 	}
 
-	//check if stream has minipoolGeneration miniblocks. We return -100 if there are no streams with such id - it is a hack to address missing streams
-	row := tx.QueryRow(ctx, "SELECT COALESCE(MAX(seq_num), -100) as latest_blocks_number FROM miniblocks WHERE stream_id = $1", streamId)
+	var seqNum int64
 
-	var latest_blocks_number int64
-	err = row.Scan(&latest_blocks_number)
+	err = tx.QueryRow(ctx, "SELECT COALESCE(MAX(seq_num), -100) as latest_blocks_number FROM miniblocks WHERE stream_id = $1", streamId).Scan(&seqNum)
 	if err != nil {
-		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Block creation selecting max seq_num error")
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error getting seqNum")
 	}
 
-	if latest_blocks_number == -100 {
-		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Stream does not exist")
+	if seqNum == -100 {
+		return WrapRiverError(Err_NOT_FOUND, err).Message("No blocks for the stream found in block storage")
 	}
 
-	if minipoolGeneration != latest_blocks_number+1 {
-		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Minipool generation missmatch", "latest_blocks_number", latest_blocks_number)
+	if minipoolGeneration != seqNum+1 {
+		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Minipool generation missmatch").
+			Tag("ExpectedNewMinipoolGeneration", minipoolGeneration).Tag("ActualNewMinipoolGeneration", seqNum+1)
 	}
 
 	//clean up minipool
@@ -408,7 +409,7 @@ func (s *PostgresEventStore) createBlock(
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Minipool clean error")
 	}
 
-	//update -1 record of minipool_<<name>> table to minipoolGeneration + 1
+	//update -1 record of minipools table to minipoolGeneration + 1
 	_, err = tx.Exec(ctx, "UPDATE minipools SET generation = $1 WHERE slot_num = -1 AND stream_id = $2", minipoolGeneration+1, streamId)
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Minipool generation update error")
@@ -430,7 +431,7 @@ func (s *PostgresEventStore) createBlock(
 		}
 	}
 
-	//insert new miniblock into miniblock_<<name>> table
+	//insert new miniblock into miniblocks table
 	_, err = tx.Exec(ctx, "INSERT INTO miniblocks (stream_id, seq_num, blockdata) VALUES ($1, $2, $3)", streamId, minipoolGeneration, miniblock)
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Miniblock insertion error")
