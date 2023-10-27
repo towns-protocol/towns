@@ -15,23 +15,32 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
             // can happen on logout
             return
         }
+        let cancelled = false
         // listen to the timeine for changes, diff each change, and update the unread counts
         const onTimelineChange = (timelineState: TimelineStore, prev: TimelineStore) => {
             diffTimeline(timelineState, prev, userId)
         }
         // initialize markers
-        if (casablancaClient.userSettingsStreamId) {
-            const stream = casablancaClient.stream(casablancaClient.userSettingsStreamId)
-            const markers = stream?.view.userSettingsContent.fullyReadMarkers
-            markers?.forEach((value, key) => {
-                updateFullyReadMarkersFromRemote(key, value)
-            })
+        const initFulyReadMarkers = async () => {
+            if (casablancaClient.userSettingsStreamId) {
+                const stream = await casablancaClient.waitForStream(
+                    casablancaClient.userSettingsStreamId,
+                )
+                if (!cancelled) {
+                    const markers = stream.view.userSettingsContent.fullyReadMarkers
+                    markers.forEach((value, key) => {
+                        updateFullyReadMarkersFromRemote(key, value)
+                    })
+                }
+            }
         }
+        void initFulyReadMarkers()
         // subscribe
         const unsubTimeline = useTimelineStore.subscribe(onTimelineChange)
         casablancaClient.on('fullyReadMarkersUpdated', updateFullyReadMarkersFromRemote)
         // return ability to unsubscribe
         return () => {
+            cancelled = true
             unsubTimeline()
             casablancaClient.off('fullyReadMarkersUpdated', updateFullyReadMarkersFromRemote)
         }
