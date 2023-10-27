@@ -230,6 +230,7 @@ const SpacesChannelComponent = (props: Props) => {
                                     <ChannelIntro
                                         name={channel.label}
                                         channelEncrypted={isChannelEncrypted}
+                                        roomIdentifier={channel.id}
                                     />
                                     <ScrollbackMarker
                                         containerRef={timelineContainerRef}

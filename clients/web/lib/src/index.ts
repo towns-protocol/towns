@@ -34,6 +34,7 @@ export { useCurrentWalletEqualsSignedInAccount } from './hooks/use-current-walle
 export { useConnectivity } from './hooks/use-connectivity'
 export { useDeleteRoleTransaction } from './hooks/use-delete-role-transaction'
 export { useDMLatestMessageText } from './hooks/use-dm-latest-message-text'
+export { useDMData } from './hooks/use-dm-data'
 export { useFavIconBadge, useAppBadge } from './hooks/ZionContext/useFavIconBadge'
 export { useFullyReadMarker } from './hooks/use-fully-read-marker'
 export { useMembershipInfo } from './hooks/use-membership-info'
