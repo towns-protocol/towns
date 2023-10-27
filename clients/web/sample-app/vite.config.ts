@@ -19,13 +19,12 @@ export default defineConfig({
                     // This works around a circular dependency issue with the @wagmi package
                     if (id.includes('@wagmi')) {
                         return 'wagmi'
-                        // Lodash is used in many chunks, split it into one bundle
                     } else if (id.includes('lodash')) {
                         return 'lodash'
                     } else if (id.includes('matrix-sdk-crypto')) {
                         return 'matrix-sdk-crypto'
-                    } else if (id.includes('matrix')) {
-                        return 'matrix-rest'
+                    } else if (id.includes('matrix-js-sdk')) {
+                        return 'matrix-js-sdk'
                     }
                 },
                 sourcemapIgnoreList: (relativeSourcePath) => {

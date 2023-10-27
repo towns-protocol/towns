@@ -60,12 +60,15 @@ export default ({ mode }: { mode: string }) => {
             rollupOptions: {
                 output: {
                     manualChunks: (id) => {
-                        if (id.includes('lodash')) {
+                        // This works around a circular dependency issue with the @wagmi package
+                        if (id.includes('@wagmi')) {
+                            return 'wagmi'
+                        } else if (id.includes('lodash')) {
                             return 'lodash'
                         } else if (id.includes('matrix-sdk-crypto')) {
                             return 'matrix-sdk-crypto'
-                        } else if (id.includes('matrix')) {
-                            return 'matrix-rest'
+                        } else if (id.includes('matrix-js-sdk')) {
+                            return 'matrix-js-sdk'
                         }
                     },
                     sourcemapIgnoreList: (relativeSourcePath) => {
