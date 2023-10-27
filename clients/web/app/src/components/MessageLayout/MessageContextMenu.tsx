@@ -81,6 +81,7 @@ export const MessageContextMenu = (props: Props) => {
                 timelineContext?.timelineActions.onSelectEditingMessage(props.eventId)
             }
         }, [props.canEdit, props.eventId, timelineContext?.timelineActions]),
+        { enableOnContentEditable: false },
         [],
     )
     useShortcut(
@@ -90,6 +91,7 @@ export const MessageContextMenu = (props: Props) => {
                 onOpenMessageThread(props.eventId)
             }
         }, [onOpenMessageThread, props.canReply, props.eventId]),
+        { enableOnContentEditable: false },
         [],
     )
 
@@ -100,6 +102,7 @@ export const MessageContextMenu = (props: Props) => {
                 setShowDeletePrompt(true)
             }
         }, [props.canEdit]),
+        { enableOnContentEditable: false },
         [],
     )
 
