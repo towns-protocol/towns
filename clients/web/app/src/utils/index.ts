@@ -3,17 +3,18 @@ export * from './debug'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 
-export function waitFor(
-    predicate: () => boolean,
+export function waitFor<T>(
+    predicate: () => Promise<T>,
     maxWaitTimeMs: number,
     intervalMs = 100,
-): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
         const startTime = Date.now()
 
-        const checkPredicate = () => {
-            if (predicate()) {
-                resolve()
+        const checkPredicate = async () => {
+            const result = await predicate()
+            if (result) {
+                resolve(result)
             } else if (Date.now() - startTime >= maxWaitTimeMs) {
                 reject(
                     new Error('Timeout: Predicate did not become true within the specified time.'),

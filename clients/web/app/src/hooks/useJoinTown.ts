@@ -33,7 +33,7 @@ export const useJoinTown = (networkId: string | undefined, onSuccessfulJoin?: ()
                     setErrorMessage('This town has reached its member limit.')
                 } else {
                     setNotEntitled(true)
-                    setErrorMessage('Not entitled to join this town.')
+                    setErrorMessage(_error?.message)
                 }
             }
         }

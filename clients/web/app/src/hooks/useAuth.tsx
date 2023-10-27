@@ -62,7 +62,7 @@ function useAuthContext(): AuthContext {
             if (!libIsAuthenticated) {
                 // this callback can happen quickly, wait for the signer to be set before trying to login
                 try {
-                    await waitFor(() => signer !== undefined, 2_000)
+                    await waitFor(() => Promise.resolve(signer !== undefined), 2_000)
                     await libLogin()
                 } catch (error) {
                     return

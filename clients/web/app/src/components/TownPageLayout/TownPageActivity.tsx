@@ -102,52 +102,57 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
             return
         }
         const fetch = async () => {
-            const streamId = townId
-            const rpcClient = makeStreamRpcClient(rpcUrl)
-            const client = new UnauthenticatedClient(rpcClient)
-            const stream = await client.getStream(streamId)
-            const { spaceContent, timeline: spaceTimeline } = stream
+            try {
+                const streamId = townId
+                const rpcClient = makeStreamRpcClient(rpcUrl)
+                const client = new UnauthenticatedClient(rpcClient)
+                const stream = await client.getStream(streamId)
+                const { spaceContent, timeline: spaceTimeline } = stream
 
-            setMembers(Array.from(spaceContent.memberships.joinedUsers))
+                setMembers(Array.from(spaceContent.memberships.joinedUsers))
 
-            const numJoinedUsers = spaceTimeline
-                .filter((s) => isWithin(s.event.createdAtEpocMs, WEEK_MS))
-                .filter(
-                    (s) =>
-                        s.event.payload.value?.content.case === 'membership' &&
-                        s.event.payload.value?.content.value?.op === MembershipOp.SO_JOIN,
-                )
-                .reduce((acc, s) => acc.add(s.creatorUserId), new Set())
+                const numJoinedUsers = spaceTimeline
+                    .filter((s) => isWithin(s.event.createdAtEpocMs, WEEK_MS))
+                    .filter(
+                        (s) =>
+                            s.event.payload.value?.content.case === 'membership' &&
+                            s.event.payload.value?.content.value?.op === MembershipOp.SO_JOIN,
+                    )
+                    .reduce((acc, s) => acc.add(s.creatorUserId), new Set())
 
-            setTownStats({
-                numJoinedUsers: Array.from(numJoinedUsers).length,
-            })
-
-            // just for testing, don't bother iterate all channels yet
-            const firstChannelId = Array.from(spaceContent.spaceChannelsMetadata.keys()).at(0)
-
-            if (firstChannelId) {
-                const { channelContent } = await client.getStream(firstChannelId)
-
-                const messages = Array.from(channelContent.messages.values()).filter((f) =>
-                    isWithin(f.event.createdAtEpocMs, DAY_MS),
-                )
-
-                const activeUsers = Array.from(channelContent.messages.values())
-                    .filter((f) => isWithin(f.event.createdAtEpocMs, DAY_MS))
-                    .reduce((acc, curr) => {
-                        acc.add(curr.creatorUserId)
-                        return acc
-                    }, new Set())
-
-                setChannelStats({
-                    numMessages: messages.length,
-                    numActiveUsers: Array.from(activeUsers).length,
+                setTownStats({
+                    numJoinedUsers: Array.from(numJoinedUsers).length,
                 })
-            }
 
-            setIsLoading(false)
+                // just for testing, don't bother iterate all channels yet
+                const firstChannelId = Array.from(spaceContent.spaceChannelsMetadata.keys()).at(0)
+
+                if (firstChannelId) {
+                    const { channelContent } = await client.getStream(firstChannelId)
+
+                    const messages = Array.from(channelContent.messages.values()).filter((f) =>
+                        isWithin(f.event.createdAtEpocMs, DAY_MS),
+                    )
+
+                    const activeUsers = Array.from(channelContent.messages.values())
+                        .filter((f) => isWithin(f.event.createdAtEpocMs, DAY_MS))
+                        .reduce((acc, curr) => {
+                            acc.add(curr.creatorUserId)
+                            return acc
+                        }, new Set())
+
+                    setChannelStats({
+                        numMessages: messages.length,
+                        numActiveUsers: Array.from(activeUsers).length,
+                    })
+                }
+
+                setIsLoading(false)
+            } catch (error) {
+                console.error(error)
+            }
         }
+
         fetch()
     }, [townId])
 

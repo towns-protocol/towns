@@ -3,7 +3,7 @@ import { Address, useBalance, useNetwork } from 'wagmi'
 import { useSwitchNetwork } from '@privy-io/wagmi-connector'
 import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
-import { mintMockNFT, useWeb3Context } from 'use-zion-client'
+import { mintMockNFT, useConnectivity, useWeb3Context } from 'use-zion-client'
 import { debug } from 'debug'
 import { Box, Button, Divider, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -42,6 +42,8 @@ type FundProps = {
     provider?: providers.BaseProvider
     chainId?: number
 }
+
+const goHome = () => (window.location.href = window.location.protocol + '//' + window.location.host)
 
 async function fundWallet({ accountId, provider, chainId }: FundProps) {
     try {
@@ -107,7 +109,8 @@ const DebugModal = ({
 }: ModalProps) => {
     const { accounts, provider } = useWeb3Context()
     const { chain: walletChain } = useNetwork()
-
+    const { logout: libLogout } = useConnectivity()
+    const { logout: fullLogout } = useAuth()
     return (
         <ModalContainer onHide={onHide}>
             <Stack gap="lg">
@@ -176,6 +179,27 @@ const DebugModal = ({
                                         Clear Local Storage
                                     </Text>
                                 </Button>
+
+                                <Button
+                                    size="button_xs"
+                                    onClick={async () => {
+                                        await libLogout()
+                                        goHome()
+                                    }}
+                                >
+                                    Logout from River
+                                </Button>
+
+                                <Button
+                                    size="button_xs"
+                                    onClick={async () => {
+                                        await fullLogout()
+                                        goHome()
+                                    }}
+                                >
+                                    Logout from River + Privy
+                                </Button>
+
                                 <Button size="button_xs" onClick={onHide}>
                                     Cancel
                                 </Button>
@@ -272,7 +296,7 @@ const DebugBar = ({
                 await logout()
                 log('onSwitchEnvironment updating environment')
                 setEnvironment(env.id)
-                window.location.href = window.location.protocol + '//' + window.location.host
+                goHome()
             }
         },
         [chain?.id, environment, logout, setEnvironment, switchNetwork],
