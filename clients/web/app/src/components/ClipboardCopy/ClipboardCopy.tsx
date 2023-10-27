@@ -1,15 +1,18 @@
 import React, { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
 import { Box, Icon, Stack, Text, Tooltip } from '@ui'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
+import { TextProps } from 'ui/components/Text/Text'
 
 type Props = {
     label: string
     clipboardContent?: string
+    color?: TextProps['color']
 }
 
 export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
     const [copied, setCopied] = useState(false)
     const [, copy] = useCopyToClipboard()
+    const color = props.color ?? 'gray2'
 
     const closeHandleRef = useRef<undefined | (() => void)>()
 
@@ -56,12 +59,12 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
                 ref={ref}
                 onClick={onCopy}
             >
-                <Text truncate size="md" color="gray2">
+                <Text truncate size="md" color={color}>
                     {props.label}
                 </Text>
                 <Box ref={iconRef} pointerEvents="none">
                     {!copied ? (
-                        <Icon type="copy" color="gray2" size="square_xs" insetTop="xxs" />
+                        <Icon type="copy" color={color} size="square_xs" insetTop="xxs" />
                     ) : (
                         <Icon type="check" color="positive" size="square_xs" insetTop="xxs" />
                     )}

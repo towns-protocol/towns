@@ -31,6 +31,8 @@ import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { useMeetsMembershipNftRequirements } from 'hooks/useTokensGatingMembership'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useErrorToast } from 'hooks/useErrorToast'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { shortAddress } from 'ui/utils/utils'
 
 const log = debug('app:public-town')
 log.enabled = true
@@ -192,7 +194,7 @@ const LoggedUserAvatar = () => {
 }
 
 const LoggedUserMenu = () => {
-    const { logout } = useAuth()
+    const { logout, loggedInWalletAddress } = useAuth()
     const onLogOut = useCallback(() => {
         logout()
     }, [logout])
@@ -218,6 +220,25 @@ const LoggedUserMenu = () => {
                 <Icon background="level3" type="arrowLeft" padding="sm" size="square_lg" />
                 <Paragraph>Back to App</Paragraph>
             </Stack>
+            {loggedInWalletAddress && (
+                <Stack
+                    horizontal
+                    gap
+                    padding
+                    hoverable
+                    alignItems="center"
+                    paddingY="sm"
+                    background="level2"
+                >
+                    <Icon background="level3" type="wallet" padding="sm" size="square_lg" />
+
+                    <ClipboardCopy
+                        color="none"
+                        label={shortAddress(loggedInWalletAddress)}
+                        clipboardContent={loggedInWalletAddress}
+                    />
+                </Stack>
+            )}
             <Stack
                 padding
                 horizontal
