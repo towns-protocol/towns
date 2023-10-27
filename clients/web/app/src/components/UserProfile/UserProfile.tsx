@@ -2,7 +2,18 @@ import { getAccountAddress, useZionClient } from 'use-zion-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
-import { Avatar, Box, FormRender, MotionStack, Paragraph, Stack, TextButton, TextField } from '@ui'
+import { useBalance } from 'wagmi'
+import {
+    Avatar,
+    Box,
+    FormRender,
+    MotionStack,
+    Paragraph,
+    Stack,
+    Text,
+    TextButton,
+    TextField,
+} from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useSetUserBio } from 'hooks/useUserBio'
 import { shortAddress } from 'ui/utils/utils'
@@ -14,6 +25,7 @@ import { InvalidCookieNotification } from '@components/Notifications/InvalidCook
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { vars } from 'ui/styles/vars.css'
 import { transitions } from 'ui/transitions/transitions'
+import { ExportWalletButton } from '@components/Web3/ExportPrivy'
 
 type Props = {
     displayName: string
@@ -35,6 +47,7 @@ export const UserProfile = (props: Props) => {
     const { loggedInWalletAddress } = useAuth()
     const { setDisplayName } = useZionClient()
     const { mutateAsync: mutateAsyncBio } = useSetUserBio(userAddress)
+    const balance = useBalance({ address: loggedInWalletAddress, watch: true })
 
     const resourceId = useMemo(() => {
         return getAccountAddress(userId ?? '') ?? ''
@@ -79,6 +92,37 @@ export const UserProfile = (props: Props) => {
             }
         }
     })
+
+    const walletContent = () => {
+        if (userAddress) {
+            return (
+                <>
+                    <Box horizontal justifyContent="spaceBetween">
+                        <ClipboardCopy
+                            label={shortAddress(userAddress)}
+                            clipboardContent={userAddress}
+                        />
+                        {canEdit && (
+                            <Text>
+                                {formatEthDisplay(
+                                    Number.parseFloat(balance?.data?.formatted ?? '0'),
+                                )}{' '}
+                                {balance.data?.symbol}
+                            </Text>
+                        )}
+                    </Box>
+
+                    {canEdit && (
+                        <Box paddingTop="md" alignSelf="end">
+                            <ExportWalletButton />
+                        </Box>
+                    )}
+                </>
+            )
+        }
+        return null
+    }
+
     return (
         <Stack grow padding gap position="relative">
             <Stack centerContent={center} padding="lg">
@@ -147,10 +191,10 @@ export const UserProfile = (props: Props) => {
                                         <Box
                                             horizontal
                                             alignItems="center"
+                                            justifyContent="spaceBetween"
                                             gap="xs"
                                             height="x5"
                                             overflow="hidden"
-                                            onClick={canEdit && !isEditing ? handleEdit : undefined}
                                         >
                                             <Paragraph truncate strong size="lg" color="default">
                                                 {displayName}
@@ -162,51 +206,46 @@ export const UserProfile = (props: Props) => {
                                             ) : (
                                                 <></>
                                             )} */}
+                                            <Box height="x5" justifyContent="center">
+                                                {editMenu}
+                                            </Box>
                                         </Box>
-                                        {userAddress && (
-                                            <ClipboardCopy
-                                                label={shortAddress(userAddress)}
-                                                clipboardContent={userAddress}
-                                            />
-                                        )}
+                                        {walletContent()}
                                     </Box>
                                 ) : (
                                     <Box grow horizontal gap>
                                         <Stack grow gap="sm">
                                             <Stack>
-                                                <TextField
-                                                    autoFocus
-                                                    tone={error ? 'error' : undefined}
-                                                    style={{ width: 0, minWidth: '100%' }} // shrink hack
-                                                    background="level2"
-                                                    value={value}
-                                                    placeholder="Enter display name..."
-                                                    height="x5"
-                                                    onChange={onChange}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            e.preventDefault()
-                                                            e.stopPropagation()
-                                                            handleSave()
-                                                        } else if (e.key === 'Escape') {
-                                                            handleEdit()
-                                                        }
-                                                    }}
-                                                />
+                                                <Box horizontal gap="sm">
+                                                    <TextField
+                                                        autoFocus
+                                                        tone={error ? 'error' : undefined}
+                                                        style={{ width: 0, minWidth: '100%' }} // shrink hack
+                                                        background="level2"
+                                                        value={value}
+                                                        placeholder="Enter display name..."
+                                                        height="x5"
+                                                        onChange={onChange}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault()
+                                                                e.stopPropagation()
+                                                                handleSave()
+                                                            } else if (e.key === 'Escape') {
+                                                                handleEdit()
+                                                            }
+                                                        }}
+                                                    />
+                                                    <Box height="x5" justifyContent="center">
+                                                        {editMenu}
+                                                    </Box>
+                                                </Box>
                                                 {errorComponent}
                                             </Stack>
-                                            {userAddress && (
-                                                <ClipboardCopy
-                                                    label={shortAddress(userAddress)}
-                                                    clipboardContent={userAddress}
-                                                />
-                                            )}
+                                            {walletContent()}
                                         </Stack>
                                     </Box>
                                 )}
-                                <Box height="x5" justifyContent="center">
-                                    {editMenu}
-                                </Box>
                             </MotionStack>
                         </Stack>
                     )}
@@ -402,4 +441,11 @@ export const EditModeContainer = (props: EditRowProps) => {
             </Stack>
         </>
     )
+}
+
+function formatEthDisplay(num: number) {
+    let formatted = num.toFixed(5)
+    formatted = formatted.replace(/(\.\d*?[1-9])0+$/, '$1')
+    formatted = formatted.replace(/(\.0*?)$/, '')
+    return formatted
 }
