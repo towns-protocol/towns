@@ -504,6 +504,7 @@ message StreamAndCookie {
     repeated Envelope events = 1;
     SyncCookie next_sync_cookie = 2;
     SyncCookie start_sync_cookie = 3;
+    string stream_id = 4;
 }
 
 message CreateStreamRequest {
@@ -552,9 +553,26 @@ message SyncStreamsRequest {
     repeated SyncCookie sync_pos = 1;
 }
 
-message SyncStreamsResponse {
+message StreamAndCookieList {
     repeated StreamAndCookie streams = 1;
 }
+
+message SyncStreamsResponse {
+    repeated StreamAndCookie streams = 1;
+    string sync_id = 2;
+}
+
+message AddStreamToSyncRequest {
+    repeated SyncCookie sync_pos = 1;
+}
+
+message AddStreamToSyncResponse {}
+
+message RemoveStreamFromSyncRequest {
+    repeated string stream_id = 1;
+}
+
+message RemoveStreamFromSyncResponse {}
 
 message InfoRequest {
     string debug = 1;
@@ -570,6 +588,8 @@ service StreamService {
     rpc GetMiniblocks(GetMiniblocksRequest) returns (GetMiniblocksResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
+    rpc AddStreamToSync(AddStreamToSyncRequest) returns (AddStreamToSyncResponse);
+    rpc RemoveStreamFromSync(RemoveStreamFromSyncRequest) returns (RemoveStreamFromSyncResponse);
     rpc Info(InfoRequest) returns (InfoResponse);
 }
 
@@ -701,4 +721,5 @@ enum Err {
     MINIBLOCKS_STORAGE_FAILURE = 48;
     BAD_ADDRESS = 49;
     BUFFER_FULL = 50;
+    STREAM_ALREADY_EXISTS = 51;
 }

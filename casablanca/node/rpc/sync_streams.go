@@ -7,6 +7,7 @@ import (
 	. "casablanca/node/protocol"
 	. "casablanca/node/protocol/protocolconnect"
 	"context"
+	"errors"
 	"sync"
 
 	connect_go "github.com/bufbuild/connect-go"
@@ -53,6 +54,16 @@ func (s *Service) SyncStreams(
 	}
 	log.Debug("SyncStreams LEAVE")
 	return nil
+}
+
+func (s *Service) AddStreamToSync(ctx context.Context, req *connect_go.Request[AddStreamToSyncRequest]) (*connect_go.Response[AddStreamToSyncResponse], error) {
+	err := AsRiverError(errors.New("not yet implemented")).Func("AddStreamToSync")
+	return connect_go.NewResponse(&AddStreamToSyncResponse{}), err
+}
+
+func (s *Service) RemoveStreamFromSync(ctx context.Context, req *connect_go.Request[RemoveStreamFromSyncRequest]) (*connect_go.Response[RemoveStreamFromSyncResponse], error) {
+	err := AsRiverError(errors.New("not yet implemented")).Func("RemoveStreamFromSync")
+	return connect_go.NewResponse(&RemoveStreamFromSyncResponse{}), err
 }
 
 func (s *Service) syncStreamsImpl(
