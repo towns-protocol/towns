@@ -16,10 +16,13 @@ func (s *Service) getStubForStream(ctx context.Context, streamId string) (Stream
 		return nil, err
 	}
 
-	dlog.CtxLog(ctx).Debug("Forwarding request", "streamId", streamId, "nodeAddress", nodeAddress)
 	// TODO: right now streams are not replicated, so there is only one node that is responsible for a stream.
 	// In the future, some smarter selection logic will be needed.
-	return s.nodeRegistry.GetRemoteStubForAddress(nodeAddress[0])
+	stub, err := s.nodeRegistry.GetRemoteStubForAddress(nodeAddress[0])
+	if stub != nil {
+		dlog.CtxLog(ctx).Debug("Forwarding request", "streamId", streamId, "nodeAddress", nodeAddress[0])
+	}
+	return stub, err
 }
 
 func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {

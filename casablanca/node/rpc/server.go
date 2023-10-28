@@ -188,7 +188,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	mux := http.NewServeMux()
 	log.Info("Registering handler", "pattern", pattern)
-	mux.Handle(pattern, handler)
+	mux.Handle(pattern, newHttpHandler(handler, log))
 
 	mux.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
 		// TODO: reply with graffiti from config and with node version

@@ -1,121 +1,106 @@
-import { Interceptor, PromiseClient, Transport, createPromiseClient } from '@bufbuild/connect'
-
+import {
+    UnaryResponse,
+    StreamResponse,
+    Interceptor,
+    PromiseClient,
+    Transport,
+    createPromiseClient,
+} from '@bufbuild/connect'
+import { AnyMessage } from '@bufbuild/protobuf'
 import { createConnectTransport } from '@bufbuild/connect-web'
 import { StreamService } from '@river/proto'
 import { dlog } from './dlog'
+import { genShortId } from './id'
 
 const logProtos = dlog('csb:rpc:protos')
 const logError = dlog('csb:rpc:error')
-logError.enabled = typeof jest !== 'undefined' ? true : false
+logError.enabled = typeof jest === 'undefined'
 
-const logErrorInterceptor: Interceptor = (next) => async (req) => {
+const interceptor: Interceptor = (next) => async (req) => {
+    let localReq = req
+    const id = genShortId()
+    localReq.header.set('x-river-request-id', id)
+
+    if (req.stream) {
+        // to intercept streaming request messages, we wrap
+        // the AsynchronousIterable with a generator function
+        localReq = {
+            ...req,
+            message: logEachRequest(req.method.name, id, req.message),
+        }
+    } else {
+        logProtos(req.method.name, 'REQUEST', id, req.message)
+    }
+
     try {
-        let localReq = req
-        if (req.stream) {
-            // to intercept streaming request messages, we wrap
-            // the AsynchronousIterable with a generator function
-            localReq = {
-                ...req,
-                message: logErrorEachRequest(req.method.name, req.message),
+        const res: UnaryResponse<AnyMessage, AnyMessage> | StreamResponse<AnyMessage, AnyMessage> =
+            await next(localReq)
+
+        let version = ''
+        for (const [key, value] of res.header.entries()) {
+            if (key === 'x-http-version') {
+                version = value
+                break
             }
         }
-        const res = await next(localReq)
+        if (version !== 'HTTP/2.0') {
+            // TODO: add csb:error logger which is always active and use it here
+            logError(req.method.name, 'BAD HTTP VERSION', id, version)
+        }
 
         if (res.stream) {
             // to intercept streaming response messages, we wrap
             // the AsynchronousIterable with a generator function
             return {
                 ...res,
-                message: logErrorEachResponse(res.method.name, res.message),
+                message: logEachResponse(res.method.name, id, res.message),
             }
+        } else {
+            logProtos(res.method.name, 'RESPONSE', id, res.message)
         }
         return res
-    } catch (err) {
-        logError(req.method.name, 'ERROR MAKING FETCH', err)
-        throw err
+    } catch (e) {
+        logProtos(req.method.name, 'ERROR', id, e)
+        throw e
     }
 }
 
-async function* logErrorEachRequest(name: string, stream: AsyncIterable<any>) {
+async function* logEachRequest(name: string, id: string, stream: AsyncIterable<any>) {
     try {
         for await (const m of stream) {
             try {
+                logProtos(name, 'STREAMING REQUEST', id, m)
                 yield m
             } catch (err) {
-                logError(name, 'ERROR YIELDING REQUEST', err)
+                logError(name, 'ERROR YIELDING REQUEST', id, err)
                 throw err
             }
         }
     } catch (err) {
-        logError(name, 'ERROR STREAMING REQUEST', err)
+        logError(name, 'ERROR STREAMING REQUEST', id, err)
         throw err
     }
+    logProtos(name, 'STREAMING REQUEST DONE', id)
 }
 
-async function* logErrorEachResponse(name: string, stream: AsyncIterable<any>) {
+async function* logEachResponse(name: string, id: string, stream: AsyncIterable<any>) {
     try {
         for await (const m of stream) {
             try {
+                logProtos(name, 'STREAMING RESPONSE', id, m)
                 yield m
             } catch (err) {
-                logError(name, 'ERROR YIELDING RESPONSE', err)
+                logError(name, 'ERROR YIELDING RESPONSE', id, err)
             }
         }
     } catch (err) {
-        const where = new Error().stack?.toString()
         if (err !== 'BLIP' && err !== 'SHUTDOWN') {
-            logError(name, 'ERROR STREAMING RESPONSE2', where, err)
+            const stack = err instanceof Error && 'stack' in err ? err.stack ?? '' : ''
+            logError(name, 'ERROR STREAMING RESPONSE', id, err, stack)
         }
         throw err
     }
-}
-
-const logger: Interceptor = (next) => async (req) => {
-    let localRes = req
-    if (logProtos.enabled) {
-        if (req.stream) {
-            // to intercept streaming request messages, we wrap
-            // the AsynchronousIterable with a generator function
-            localRes = {
-                ...req,
-                message: logEachRequest(req.method.name, req.message),
-            }
-        } else {
-            logProtos(req.method.name, 'REQUEST', req.message)
-        }
-    }
-
-    const res = await next(localRes)
-
-    if (logProtos.enabled) {
-        if (res.stream) {
-            // to intercept streaming response messages, we wrap
-            // the AsynchronousIterable with a generator function
-            return {
-                ...res,
-                message: logEachResponse(res.method.name, res.message),
-            }
-        } else {
-            logProtos(res.method.name, 'RESPONSE', res.message)
-        }
-    }
-    return res
-}
-
-async function* logEachRequest(name: string, stream: AsyncIterable<any>) {
-    for await (const m of stream) {
-        logProtos(name, 'STREAMING REQUEST', m)
-        yield m
-    }
-    logProtos(name, 'STREAMING REQUEST DONE')
-}
-
-async function* logEachResponse(name: string, stream: AsyncIterable<any>) {
-    for await (const m of stream) {
-        logProtos(name, 'STREAMING RESPONSE', m)
-        yield m
-    }
-    logProtos(name, 'STREAMING RESPONSE DONE')
+    logProtos(name, 'STREAMING RESPONSE DONE', id)
 }
 
 export function makeStreamRpcClient(dest: Transport | string): PromiseClient<typeof StreamService> {
@@ -124,7 +109,7 @@ export function makeStreamRpcClient(dest: Transport | string): PromiseClient<typ
         transport = createConnectTransport({
             baseUrl: dest,
             useBinaryFormat: true,
-            interceptors: [logErrorInterceptor, logger],
+            interceptors: [interceptor],
         })
     } else {
         transport = dest
