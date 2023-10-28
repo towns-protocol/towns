@@ -12,7 +12,7 @@ import { IFallbackKey } from './types'
 import { makeDonePromise, makeTestClient, waitFor } from './util.test'
 import { DeviceKeys, SnapshotCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@river/proto'
 import { PartialMessage } from '@bufbuild/protobuf'
-import { CallOptions } from '@bufbuild/connect'
+import { CallOptions } from '@connectrpc/connect'
 // This is needed to get the jest itnerface for using in spyOn
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { jest } from '@jest/globals'

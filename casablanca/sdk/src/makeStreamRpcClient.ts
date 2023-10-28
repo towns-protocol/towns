@@ -5,9 +5,9 @@ import {
     PromiseClient,
     Transport,
     createPromiseClient,
-} from '@bufbuild/connect'
+} from '@connectrpc/connect'
 import { AnyMessage } from '@bufbuild/protobuf'
-import { createConnectTransport } from '@bufbuild/connect-web'
+import { createConnectTransport } from '@connectrpc/connect-web'
 import { StreamService } from '@river/proto'
 import { dlog } from './dlog'
 import { genShortId } from './id'

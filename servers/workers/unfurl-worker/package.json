@@ -11,9 +11,9 @@
         "lint": "yarn eslint --format unix ./src",
         "publish:prod": "wrangler deploy --env production",
         "publish:prod-beta": "wrangler deploy --env production-beta",
+        "publish:staging-beta": "wrangler deploy --env staging-beta",
         "publish:test": "wrangler deploy --env test",
         "publish:test-beta": "wrangler deploy --env test-beta",
-        "publish:staging-beta": "wrangler deploy --env staging-beta",
         "test": "yarn test:unit",
         "test:unit": "jest"
     },

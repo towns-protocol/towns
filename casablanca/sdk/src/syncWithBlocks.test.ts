@@ -1,4 +1,4 @@
-import { ConnectError } from '@bufbuild/connect'
+import { ConnectError } from '@connectrpc/connect'
 import { MembershipOp } from '@river/proto'
 import { dlog } from './dlog'
 import {
