@@ -343,7 +343,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
         >
             <LexicalComposer initialConfig={initialConfig}>
                 <Stack horizontal gap centerContent width="100%" paddingRight="sm">
-                    <Box grow>
+                    <Box grow width="100%">
                         <RichTextUI
                             focused={focused || !isEditorEmpty}
                             editing={isEditing}

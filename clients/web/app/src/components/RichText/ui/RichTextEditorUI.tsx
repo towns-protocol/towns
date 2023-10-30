@@ -197,7 +197,6 @@ export const RichTextUIContainer = ({
     children,
 }: Pick<Props, 'background' | 'readOnly' | 'rounded'> & { children?: React.ReactNode }) => (
     <Stack
-        gap
         transition
         minWidth={readOnly ? undefined : '200'}
         position="relative"
@@ -221,11 +220,10 @@ const OfflineIndicator = (props: { attemptingToSend?: boolean }) => {
             {isOffline ? (
                 <FadeInBox
                     horizontal
+                    paddingX
+                    paddingBottom="sm"
                     key={message}
                     gap="xs"
-                    position="bottomLeft"
-                    style={{ transform: `translateY(100%)` }}
-                    paddingY="xxs"
                     color="error"
                     alignItems="center"
                 >
