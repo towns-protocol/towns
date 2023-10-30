@@ -73,6 +73,7 @@ module "river_alb" {
     {
       name                 = "${module.global_constants.environment}-river-node-blue"
       backend_protocol     = "HTTP"
+      protocol_version     = "HTTP2"
       backend_port         = 80
       target_type          = "ip"
       deregistration_delay = 30
@@ -88,6 +89,7 @@ module "river_alb" {
     {
       name                 = "${module.global_constants.environment}-river-node-green"
       backend_protocol     = "HTTP"
+      protocol_version     = "HTTP2"
       backend_port         = 80
       target_type          = "ip"
       deregistration_delay = 30
