@@ -46,7 +46,7 @@ const DesktopChannelHeader = (props: Props) => {
                     alignItems="center"
                 >
                     <Text fontWeight="strong" color="default">
-                        Turn on notification badges for threads and mentions?
+                        Turn on notifications for threads, mentions and DMs?
                     </Text>
                     <Box grow />
                     <Button tone="cta1" onClick={requestPushPermission}>
@@ -187,7 +187,7 @@ const TouchChannelHeader = (props: Props) => {
                         rounded="sm"
                     >
                         <Text fontWeight="strong" color="default">
-                            Turn on notifications for threads and mentions?
+                            Turn on notifications for threads, mentions and DMs?
                         </Text>
                         <Stack horizontal gap width="100%">
                             <Button size="button_sm" tone="level3" onClick={denyPushPermission}>
