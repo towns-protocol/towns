@@ -144,6 +144,7 @@ const OutsideTownRoutes = () => {
                     path="replies/:messageId"
                     element={<SpacesChannelReplies parentRoute="../" />}
                 />
+                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
             </Route>
             {/* catch all */}
             <Route element={<CheckRedirect />}>

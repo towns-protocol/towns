@@ -25,6 +25,10 @@ const profilePaths = [
         path: `/${PATHS.SPACES}/:spaceId/search/profile?/:profileId?`,
         replace: `/${PATHS.SPACES}/:spaceId/profile/:profileId`,
     },
+    {
+        path: `/${PATHS.MESSAGES}/:channelId/*`,
+        replace: `/${PATHS.MESSAGES}/:channelId/profile/:profileId`,
+    },
     // wildcard matching for one level deep profiles such as threads/mentions
     { path: `/${PATHS.SPACES}/:spaceId/:customPath/profile?/:profileId?` },
 
