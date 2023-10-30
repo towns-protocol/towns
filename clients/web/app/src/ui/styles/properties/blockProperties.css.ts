@@ -8,6 +8,7 @@ export const blockProperties = defineProperties({
             absolute: 'absolute',
             absoluteFill: {
                 position: 'absolute',
+                contain: 'paint',
                 top: 0,
                 right: 0,
                 bottom: 0,
