@@ -291,12 +291,14 @@ export const getEventsByDate = (
 
                     renderEvents.push(accumulatedEvents)
                 }
-                const hasDupe = accumulatedEvents.events.some(
-                    (e) => e.content.userId === event.content.userId,
-                )
-                if (!hasDupe) {
-                    accumulatedEvents.events.push(event)
-                }
+
+                renderEvents.forEach((e) => {
+                    if (e.type === RenderEventType.AccumulatedRoomMembers) {
+                        e.events = e.events.filter((e) => e.content.userId !== event.content.userId)
+                    }
+                })
+
+                accumulatedEvents.events.push(event)
             } else if (isRoomCreate(event)) {
                 renderEvents.push({
                     type: RenderEventType.RoomCreate,
