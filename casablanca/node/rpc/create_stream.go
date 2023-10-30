@@ -425,10 +425,6 @@ func (s *Service) createStream_Media(
 		return nil, RiverError(Err_BAD_STREAM_ID, "CreateStream: invalid media stream id '%s'", inception.StreamId)
 	}
 
-	if inception.SpaceId == "" {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "space id must not be empty for media stream")
-	}
-
 	if inception.ChannelId == "" {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel id must not be empty for media stream")
 	}
@@ -438,12 +434,6 @@ func (s *Service) createStream_Media(
 	}
 
 	// TODO: replace with stream registry stream existence check
-	// Make sure that the space exists
-	_, _, err := s.loadStream(ctx, inception.SpaceId)
-	if err != nil {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "space does not exist")
-	}
-
 	// Make sure that the channel exists, get channelStreamView for auth
 	_, channelStreamView, err := s.loadStream(ctx, inception.ChannelId)
 	if err != nil {
@@ -460,31 +450,51 @@ func (s *Service) createStream_Media(
 		return nil, err
 	}
 
-	allowed, err := s.townsContract.IsAllowed(
-		ctx,
-		auth.AuthorizationArgs{
-			StreamId:   inception.ChannelId,
-			UserId:     user,
-			Permission: auth.PermissionWrite,
-		},
-		info,
-	)
+	if ValidChannelStreamId(inception.GetChannelId()) {
+		allowed, err := s.townsContract.IsAllowed(
+			ctx,
+			auth.AuthorizationArgs{
+				StreamId:   inception.ChannelId,
+				UserId:     user,
+				Permission: auth.PermissionWrite,
+			},
+			info,
+		)
 
-	if err != nil {
-		return nil, err
-	}
+		if err != nil {
+			return nil, err
+		}
 
-	if !allowed {
-		return nil, RiverError(Err_PERMISSION_DENIED, "user is not allowed to write to stream", "user", user)
-	}
+		if !allowed {
+			return nil, RiverError(Err_PERMISSION_DENIED, "user is not allowed to write to stream", "user", user)
+		}
 
-	// check if user is a member of the channel
-	member, err := s.checkMembership(ctx, channelStreamView, user)
-	if err != nil {
-		return nil, err
-	}
-	if !member {
-		return nil, RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+		// check if user is a member of the channel
+		member, err := s.checkMembership(ctx, channelStreamView, user)
+		if err != nil {
+			return nil, err
+		}
+		if !member {
+			return nil, RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+		}
+
+	} else if CheckDMStreamId(inception.GetChannelId()) {
+		_, streamView, err := s.loadStream(ctx, inception.GetChannelId())
+		if err != nil {
+			return nil, err
+		}
+
+		inceptionPayload := streamView.InceptionPayload()
+		info, err := DMStreamInfoFromInceptionPayload(inceptionPayload, inception.GetChannelId())
+		if err != nil {
+			return nil, err
+		}
+
+		if user != info.FirstPartyId && user != info.SecondPartyId {
+			return nil, RiverError(Err_PERMISSION_DENIED, "user is not a member of DM", "user", user)
+		}
+	} else {
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel stream does not support media")
 	}
 
 	streamId := inception.GetStreamId()

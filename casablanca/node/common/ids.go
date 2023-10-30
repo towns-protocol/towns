@@ -102,6 +102,10 @@ func CheckMediaStreamId(streamId string) bool {
 	return strings.HasPrefix(streamId, STREAM_MEDIA_PREFIX_DASH)
 }
 
+func CheckDMStreamId(streamId string) bool {
+	return strings.HasPrefix(streamId, STREAM_DM_CHANNEL_PREFIX_DASH)
+}
+
 func UserDeviceKeyStreamIdFromId(id string) (string, error) {
 	if len(id) != 42 {
 		return "", RiverError(Err_BAD_STREAM_ID, "invalid id length", "id", id)

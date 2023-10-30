@@ -135,7 +135,7 @@ const PastedImage = (props: PastedImageProps) => {
 
     useEffect(() => {
         async function sendImage() {
-            if (!spaceId || !shouldSend || uploadInProgress.current) {
+            if (!shouldSend || uploadInProgress.current) {
                 return
             }
 

@@ -1,6 +1,6 @@
 import { makeTestClient } from './util.test'
 import { Client } from './client'
-import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
+import { genId, makeChannelStreamId, makeDMStreamId, makeSpaceStreamId } from './id'
 
 describe('mediaTests', () => {
     let bobsClient: Client
@@ -23,7 +23,7 @@ describe('mediaTests', () => {
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
         await expect(bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId)).toResolve()
 
-        const { streamId } = await bobsClient.createMediaStream(spaceId, channelId, chunkCount)
+        const { streamId } = await bobsClient.createMediaStream(channelId, chunkCount)
         return streamId
     }
 
@@ -77,18 +77,49 @@ describe('mediaTests', () => {
         await alicesClient.stop()
     })
 
-    test('spaceNeedsToExistBeforeCreatingMediaStream', async () => {
-        const nonExistentSpaceId = makeSpaceStreamId('space-' + genId())
+    test('channelNeedsToExistBeforeCreatingMediaStream', async () => {
         const nonExistentChannelId = makeChannelStreamId('channel-' + genId())
-        await expect(
-            bobsClient.createMediaStream(nonExistentSpaceId, nonExistentChannelId, 10),
-        ).toReject()
+        await expect(bobsClient.createMediaStream(nonExistentChannelId, 10)).toReject()
     })
 
-    test('channelNeedsToExistBeforeCreatingMediaStream', async () => {
-        const spaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(spaceId)).toResolve()
-        const nonExistentChannelId = makeChannelStreamId('channel-' + genId())
-        await expect(bobsClient.createMediaStream(spaceId, nonExistentChannelId, 10)).toReject()
+    test('dmChannelNeedsToExistBeforeCreatingMediaStream', async () => {
+        const alicesClient = await makeTestClient()
+        await alicesClient.createNewUser()
+        await alicesClient.initCrypto()
+        await alicesClient.startSync()
+
+        const nonExistentChannelId = makeDMStreamId(bobsClient.userId, alicesClient.userId)
+        await expect(bobsClient.createMediaStream(nonExistentChannelId, 10)).toReject()
+        await alicesClient.stop()
+    })
+
+    test('userCanUploadMediaToDmIfMember', async () => {
+        const alicesClient = await makeTestClient()
+        await alicesClient.createNewUser()
+        await alicesClient.initCrypto()
+        await alicesClient.startSync()
+
+        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        await expect(bobsClient.createMediaStream(streamId, 10)).toResolve()
+        await expect(alicesClient.createMediaStream(streamId, 10)).toResolve()
+        await alicesClient.stop()
+    })
+
+    test('userCannotUploadMediaToDmUnlessMember', async () => {
+        const alicesClient = await makeTestClient()
+        await alicesClient.createNewUser()
+        await alicesClient.initCrypto()
+        await alicesClient.startSync()
+
+        const charliesClient = await makeTestClient()
+        await charliesClient.createNewUser()
+        await charliesClient.initCrypto()
+        await charliesClient.startSync()
+
+        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+
+        await expect(charliesClient.createMediaStream(streamId, 10)).toReject()
+        await alicesClient.stop()
+        await charliesClient.stop()
     })
 })

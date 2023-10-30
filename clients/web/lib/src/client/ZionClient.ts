@@ -589,19 +589,11 @@ export class ZionClient implements DecryptionExtensionDelegate {
     /************************************************
      * Media
      *************************************************/
-    public async createMediaStream(
-        spaceId: string,
-        channelId: string,
-        chunkCount: number,
-    ): Promise<string> {
+    public async createMediaStream(channelId: string, chunkCount: number): Promise<string> {
         if (!this.casablancaClient) {
             throw new Error("Casablanca client doesn't exist")
         }
-        const { streamId } = await this.casablancaClient.createMediaStream(
-            spaceId,
-            channelId,
-            chunkCount,
-        )
+        const { streamId } = await this.casablancaClient.createMediaStream(channelId, chunkCount)
         return streamId
     }
 

@@ -80,11 +80,7 @@ interface ZionClientImpl {
     waitForUpdateChannelTransaction: (
         context: ChannelUpdateTransactionContext | undefined,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
-    createMediaStream: (
-        spaceId: string,
-        channelId: string,
-        chunkCount: number,
-    ) => Promise<string | undefined>
+    createMediaStream: (channelId: string, chunkCount: number) => Promise<string | undefined>
     createRoleTransaction: (
         spaceNetworkId: string,
         roleName: string,

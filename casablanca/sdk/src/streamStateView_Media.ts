@@ -12,14 +12,12 @@ import { EmittedEvents } from './client'
 
 export class StreamStateView_Media {
     readonly streamId: string
-    readonly spaceId: string
     readonly channelId: string
     readonly chunkCount: number
     readonly chunks: Uint8Array[]
 
     constructor(inception: MediaPayload_Inception) {
         this.streamId = inception.streamId
-        this.spaceId = inception.spaceId
         this.channelId = inception.channelId
         this.chunkCount = inception.chunkCount
         this.chunks = Array<Uint8Array>(inception.chunkCount)

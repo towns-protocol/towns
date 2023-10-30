@@ -44,7 +44,7 @@ type StreamInfo struct {
 }
 
 type MediaStreamInfo struct {
-	StreamInfo
+	ChannelId  string
 	MediaId    string
 	ChunkCount int32
 }

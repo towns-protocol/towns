@@ -488,23 +488,23 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     }
 
     async createMediaStream(
-        spaceId: string,
         channelId: string,
         chunkCount: number,
         streamSettings?: PlainMessage<StreamSettings>,
     ): Promise<{ streamId: string }> {
         const streamId = makeUniqueMediaStreamId()
 
-        this.logCall('createMedia', channelId, spaceId, streamId)
+        this.logCall('createMedia', channelId, streamId)
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
-        assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
-        assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
+        assert(
+            isChannelStreamId(channelId) || isDMChannelStreamId(channelId),
+            'channelId must be a valid streamId',
+        )
 
         const inceptionEvent = await makeEvent(
             this.signerContext,
             make_MediaPayload_Inception({
                 streamId,
-                spaceId,
                 channelId,
                 chunkCount,
                 settings: streamSettings,

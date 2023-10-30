@@ -1,11 +1,5 @@
 import { useCallback, useState } from 'react'
-import {
-    MessageType,
-    RoomIdentifier,
-    encryptAESGCM,
-    useSpaceId,
-    useZionClient,
-} from 'use-zion-client'
+import { MessageType, RoomIdentifier, encryptAESGCM, useZionClient } from 'use-zion-client'
 import imageCompression from 'browser-image-compression'
 
 /* 
@@ -17,7 +11,6 @@ const CHUNK_SIZE = 500_000
 
 export const useSendImageMessage = () => {
     const { sendMessage, createMediaStream, sendMediaPayload } = useZionClient()
-    const spaceId = useSpaceId()
     const [sendingMessage, setSendingMessage] = useState<boolean>(false)
 
     function shouldCompressFile(file: File): boolean {
@@ -63,11 +56,7 @@ export const useSendImageMessage = () => {
             const encryptionResult = await encryptAESGCM(data)
             const chunkCount = Math.ceil(encryptionResult.ciphertext.length / CHUNK_SIZE)
 
-            const streamId = await createMediaStream(
-                spaceId?.networkId ?? '',
-                channelId.networkId,
-                chunkCount,
-            )
+            const streamId = await createMediaStream(channelId.networkId, chunkCount)
             if (!streamId) {
                 throw new Error('Failed to create media stream')
             }
@@ -115,7 +104,7 @@ export const useSendImageMessage = () => {
             setProgress(0)
             setSendingMessage(false)
         },
-        [sendMessage, createMediaStream, sendMediaPayload, spaceId?.networkId],
+        [sendMessage, createMediaStream, sendMediaPayload],
     )
 
     async function imageSize(file: File): Promise<{ width: number; height: number }> {

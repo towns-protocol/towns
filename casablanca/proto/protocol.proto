@@ -347,10 +347,9 @@ message MediaPayload {
     
     message Inception {
         string stream_id = 1;
-        string space_id = 2;
-        string channel_id = 3;
-        int32 chunk_count = 4;
-        StreamSettings settings = 5;
+        string channel_id = 2;
+        int32 chunk_count = 3;
+        StreamSettings settings = 4;
     }
 
     message Chunk {

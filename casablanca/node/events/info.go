@@ -66,10 +66,7 @@ func MediaStreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId st
 	switch inception := payload.(type) {
 	case *MediaPayload_Inception:
 		return &common.MediaStreamInfo{
-			StreamInfo: common.StreamInfo{
-				SpaceId:   inception.SpaceId,
-				ChannelId: inception.ChannelId,
-			},
+			ChannelId:  inception.ChannelId,
 			MediaId:    inception.StreamId,
 			ChunkCount: inception.ChunkCount,
 		}, nil
