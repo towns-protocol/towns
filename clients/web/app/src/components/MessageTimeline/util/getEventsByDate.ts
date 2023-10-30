@@ -319,9 +319,10 @@ export const getEventsByDate = (
             // remove date groups that don't contain any messages (or only redacted messages)
             g.events.some(
                 (e) =>
-                    e.type === RenderEventType.UserMessages &&
-                    // keep redacted messages with replies
-                    !e.events.every((e) => e.isRedacted && !replyMap?.[e.eventId]),
+                    e.type === RenderEventType.RoomCreate ||
+                    (e.type === RenderEventType.UserMessages &&
+                        // keep redacted messages with replies
+                        !e.events.every((e) => e.isRedacted && !replyMap?.[e.eventId])),
             ),
     )
 

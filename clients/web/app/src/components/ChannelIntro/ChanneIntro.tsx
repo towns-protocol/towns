@@ -8,7 +8,6 @@ type Props = {
     roomIdentifier: RoomIdentifier
     name?: string
     description?: string
-    channelEncrypted?: boolean
 }
 
 export const ChannelIntro = (props: Props) => {
@@ -22,7 +21,7 @@ export const ChannelIntro = (props: Props) => {
 }
 
 const RegularChannelIntro = (props: Props) => {
-    const { name = 'general', description, channelEncrypted: isChannelEncrypted } = props
+    const { name = 'general', description } = props
 
     return (
         <Stack gap="md" paddingX="lg" paddingY="sm">
@@ -35,9 +34,7 @@ const RegularChannelIntro = (props: Props) => {
                     <Paragraph color="gray2">
                         {description
                             ? description
-                            : `Welcome to #${name}${
-                                  isChannelEncrypted ? `, an end-to-end encrypted channel` : ``
-                              }`}
+                            : `Welcome to #${name}, an end-to-end encrypted channel`}
                     </Paragraph>
                 </Stack>
             </Stack>

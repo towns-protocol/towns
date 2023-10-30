@@ -69,7 +69,6 @@ const SpacesChannelComponent = (props: Props) => {
 
     const { spaceId, channelId, channel } = useChannelData()
 
-    const isChannelEncrypted = channel !== undefined
     const location = useLocation()
     const searchParams = new URLSearchParams(location.search)
     const galleryId = searchParams.get(QUERY_PARAMS.GALLERY_ID)
@@ -226,12 +225,10 @@ const SpacesChannelComponent = (props: Props) => {
                             align="bottom"
                             containerRef={timelineContainerRef}
                             header={
+                                <ChannelIntro name={channel.label} roomIdentifier={channel.id} />
+                            }
+                            prepend={
                                 <>
-                                    <ChannelIntro
-                                        name={channel.label}
-                                        channelEncrypted={isChannelEncrypted}
-                                        roomIdentifier={channel.id}
-                                    />
                                     <ScrollbackMarker
                                         containerRef={timelineContainerRef}
                                         watermark={channelMessages.at(0)?.eventId}

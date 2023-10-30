@@ -40,6 +40,7 @@ import { ListItem } from './types'
 import { useFocusMessage } from './hooks/useFocusItem'
 
 type Props = {
+    prepend?: JSX.Element
     header?: JSX.Element
     align: 'top' | 'bottom'
     highlightId?: string
@@ -163,8 +164,8 @@ export const MessageTimeline = (props: Props) => {
 
     const flatGroups = useMemo(
         () =>
-            dateGroups.flatMap((f, index) => {
-                return [
+            dateGroups.flatMap((f, groupIndex) => {
+                const flattened = [
                     {
                         type: 'group',
                         date: f.date.humanDate,
@@ -173,6 +174,19 @@ export const MessageTimeline = (props: Props) => {
                     } as const,
                     ...f.events,
                 ]
+
+                // positions the channel intro at the top before date groups
+                if (groupIndex === 0) {
+                    const createRoomEventIndex = flattened.findIndex(
+                        (e) => e.type === RenderEventType.RoomCreate,
+                    )
+                    if (createRoomEventIndex > -1) {
+                        // puts the create event at top before the date group
+                        flattened.unshift(flattened.splice(createRoomEventIndex, 1)[0])
+                    }
+                }
+
+                return flattened
             }),
         [dateGroups],
     )
@@ -397,7 +411,7 @@ export const MessageTimeline = (props: Props) => {
     const itemRenderer = useCallback(
         (r: ListItem, measureRef?: React.RefObject<HTMLDivElement> | undefined) => {
             return r.type === 'header' ? (
-                <>{props.header}</>
+                <>{props.prepend}</>
             ) : r.type === 'group' ? (
                 <DateDivider
                     label={r.date}
@@ -423,6 +437,8 @@ export const MessageTimeline = (props: Props) => {
                     paddingX={timelineContext?.type === MessageTimelineType.Channel ? 'lg' : 'md'}
                     onMarkAsRead={onMarkAsRead}
                 />
+            ) : r.item.type === RenderEventType.RoomCreate ? (
+                props.header ?? <></>
             ) : (
                 <MessageTimelineItem
                     itemData={r.item}
@@ -434,17 +450,18 @@ export const MessageTimeline = (props: Props) => {
             )
         },
         [
-            channelName,
-            isChannelEncrypted,
-            isTouch,
-            isUnreadMarkerFaded,
-            numHidden,
-            onExpandClick,
-            onMarkAsRead,
+            props.prepend,
             props.header,
             props.highlightId,
+            isUnreadMarkerFaded,
+            isTouch,
+            onExpandClick,
+            numHidden,
             timelineContext?.type,
+            onMarkAsRead,
             userId,
+            channelName,
+            isChannelEncrypted,
         ],
     )
 
