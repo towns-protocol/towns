@@ -9,7 +9,7 @@ import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
 import { env } from 'utils'
-import { Icon } from '@ui'
+import { Box, Dot, Icon } from '@ui'
 import { NavItem } from '@components/NavItem/_NavItem'
 
 export const MainSideBar = () => {
@@ -17,6 +17,7 @@ export const MainSideBar = () => {
     const { spaces } = useZionContext()
     const { spaceId } = useSpaceContext()
     const invites = useInvites()
+    const { dmUnreadChannelIds } = useZionContext()
     const { data: isHolderOfPioneerNft } = useIsHolderOfPioneerNFT()
 
     return (
@@ -33,7 +34,10 @@ export const MainSideBar = () => {
                     immediate: true,
                 }}
             >
-                <Icon width="x4" aspectRatio="1/1" size="square_lg" type="dm" />
+                <Box position="relative">
+                    <Icon width="x4" aspectRatio="1/1" size="square_lg" type="dm" />
+                    {dmUnreadChannelIds.size > 0 && <Dot position="bottomRight" />}
+                </Box>
             </NavItem>
 
             {spaces.map((s) => (

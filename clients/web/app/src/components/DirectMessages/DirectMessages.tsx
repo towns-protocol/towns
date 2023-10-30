@@ -58,6 +58,7 @@ const Threads = () => {
     const navigate = useNavigate()
     const { dmChannels } = useZionContext()
     const messageId = useMatch('messages/:messageId')?.params.messageId
+    const { dmUnreadChannelIds } = useZionContext()
 
     const onThreadClick = useCallback(
         (id: string) => {
@@ -75,6 +76,7 @@ const Threads = () => {
                             key={channel.id.slug}
                             channel={channel}
                             highlighted={messageId === channel.id.slug}
+                            unread={dmUnreadChannelIds.has(channel.id.slug)}
                             onClick={() => onThreadClick(channel.id.slug)}
                         />
                     )
@@ -88,8 +90,9 @@ const DirectMessageThread = (props: {
     channel: DMChannelIdentifier
     onClick: () => void
     highlighted: boolean
+    unread: boolean
 }) => {
-    const { channel, onClick, highlighted } = props
+    const { channel, onClick, highlighted, unread } = props
     const latest = useDMLatestMessage(channel.id)
 
     return (
@@ -119,7 +122,13 @@ const DirectMessageThread = (props: {
                         <Stack horizontal gap>
                             {/* text on the left */}
                             <Box grow overflow="hidden" paddingY="sm" insetY="xs">
-                                <Text truncate>{channel.id.networkId}</Text>
+                                <Text
+                                    truncate
+                                    color={unread ? 'default' : 'gray2'}
+                                    fontWeight={unread ? 'medium' : 'normal'}
+                                >
+                                    {channel.id.networkId}
+                                </Text>
                             </Box>
                             {/* date on the right */}
                             <Box justifyContent="end">
@@ -142,7 +151,7 @@ const DirectMessageThread = (props: {
                         <Text>
                             {/* nested text hack to get cap-size vertical margins right */}
                             <Text
-                                color="gray2"
+                                color={unread ? 'default' : 'gray2'}
                                 size="sm"
                                 style={{
                                     // todo: experiment with this, may not keep

@@ -1,6 +1,11 @@
 import { useEffect } from 'react'
 import { FullyReadMarker } from '@river/proto'
-import { Client as CasablancaClient, check, isChannelStreamId } from '@river/sdk'
+import {
+    Client as CasablancaClient,
+    check,
+    isChannelStreamId,
+    isDMChannelStreamId,
+} from '@river/sdk'
 import { TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { TimelineStore, useTimelineStore } from '../../store/use-timeline-store'
@@ -311,5 +316,5 @@ function maxBigint(x: bigint, y: bigint): bigint {
 }
 
 function isDiffableStreamTimeline(streamId: string): boolean {
-    return isChannelStreamId(streamId)
+    return isChannelStreamId(streamId) || isDMChannelStreamId(streamId)
 }
