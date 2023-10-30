@@ -25,6 +25,7 @@
         "test:load:all": "NUM_CLIENTS=24 yarn my-jest --group=integration/load --testTimeout=3000000 --silent=0",
         "test:load:initiator": "NUM_CLIENTS=24 yarn my-jest ./tests/load/initiator.test.ts --testTimeout=3000000 --silent=0",
         "test:load:receiver": "NUM_CLIENTS=24 yarn my-jest ./tests/load/receiver.test.ts --testTimeout=3000000 --silent=0",
+        "create-dev-town": "yarn my-jest ./scripts/create-dev-town.test.ts --testTimeout=3000000 --silent=0",
         "watch": "tsc --watch"
     },
     "dependencies": {

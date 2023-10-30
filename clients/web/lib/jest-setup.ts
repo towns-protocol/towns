@@ -13,9 +13,9 @@ import { IDBFactory } from 'fake-indexeddb'
 
 process.env.NODE_ENV = 'test'
 process.env.HOMESERVER = ''
-process.env.CASABLANCA_SERVER_URL = 'http://localhost:5157'
+process.env.CASABLANCA_SERVER_URL = process.env.CASABLANCA_SERVER_URL || 'http://localhost:5157'
 process.env.DISABLE_ENCRYPTION = 'false'
-process.env.ETHERS_NETWORK = 'http://127.0.0.1:8545' // OR "rinkeby"
+process.env.ETHERS_NETWORK = process.env.ETHERS_NETWORK || 'http://127.0.0.1:8545' // OR "rinkeby"
 
 // fetch-polyfill.js
 import fetch, { Headers, Request, Response } from 'node-fetch'
