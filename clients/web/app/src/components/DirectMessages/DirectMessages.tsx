@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { useMatch, useNavigate } from 'react-router'
 import { useDMLatestMessage, useZionContext } from 'use-zion-client'
 import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
@@ -59,6 +59,12 @@ const Threads = () => {
     const { dmChannels } = useZionContext()
     const messageId = useMatch('messages/:messageId')?.params.messageId
     const { dmUnreadChannelIds } = useZionContext()
+
+    useEffect(() => {
+        if (!messageId && dmChannels.length > 0) {
+            navigate(`/${PATHS.MESSAGES}/${dmChannels[0].id.slug}`)
+        }
+    }, [messageId, dmChannels, navigate])
 
     const onThreadClick = useCallback(
         (id: string) => {
