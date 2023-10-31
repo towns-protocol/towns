@@ -37,9 +37,20 @@ func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[Crea
 }
 
 func (s *Service) createStreamImpl(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
-	stub, err := s.getStubForStream(ctx, req.Msg.StreamId)
+	// TODO: this logic needs to be reworked: checks should happen first, then allocation.
+	nodeAddress, err := s.streamRegistry.AllocateStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
+	}
+
+	// TODO: right now streams are not replicated, so there is only one node that is responsible for a stream.
+	// In the future, some smarter selection logic will be needed.
+	stub, err := s.nodeRegistry.GetRemoteStubForAddress(nodeAddress[0])
+	if err != nil {
+		return nil, err
+	}
+	if stub != nil {
+		dlog.CtxLog(ctx).Debug("Forwarding request", "streamId", req.Msg.StreamId, "nodeAddress", nodeAddress[0])
 	}
 
 	if stub != nil {
