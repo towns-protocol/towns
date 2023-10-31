@@ -7,9 +7,9 @@ import { MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from '@river/web3'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
-import { OLM_ALGORITHM, RiverEvent, make_ToDevice_KeyRequest } from '@river/sdk'
+import { OLM_ALGORITHM, make_ToDevice_KeyRequest } from '@river/sdk'
 import { setTimeout } from 'timers/promises'
-import { ToDeviceOp } from '@river/proto'
+import { ToDeviceMessage, ToDeviceOp, UserPayload_ToDevice } from '@river/proto'
 
 describe('toDeviceMessage', () => {
     test('send toDeviceMessage', async () => {
@@ -29,19 +29,16 @@ describe('toDeviceMessage', () => {
         // needed for casablanca client to listen for toDeviceMessage
         await setTimeout(100)
 
-        type Event = MatrixEvent | RiverEvent
+        type Event = MatrixEvent | UserPayload_ToDevice
         const bobsRecievedMessages: Event[] = []
         let bobUserId = ''
 
-        bob.casablancaClient?.on('toDeviceMessage', (_streamId: string, event: RiverEvent) => {
-            bobsRecievedMessages.push(event)
-        })
-
-        /* todo jterzis 07/12/23: uncomment when CasablancaDecryptionExtension is implemented
-            bob.casablancaClient?.on('eventDecrypted', (event: object, _err: Error | undefined) => {
-                bobsRecievedMessages.push(event as RiverEvent)
-            })
-            */
+        bob.casablancaClient?.on(
+            'toDeviceMessage',
+            (_streamId: string, event: UserPayload_ToDevice, _senderUserId: string): void => {
+                bobsRecievedMessages.push(event)
+            },
+        )
 
         if (bob.casablancaClient?.userId) {
             bobUserId = bob.casablancaClient?.userId
@@ -50,23 +47,25 @@ describe('toDeviceMessage', () => {
         const canSend = await alice.canSendToDeviceMessage(bobUserId)
         expect(canSend).toBe(true)
         const payload = make_ToDevice_KeyRequest({
-            spaceId: spaceId.slug,
-            channelId: spaceId.slug,
+            streamId: spaceId.slug,
             algorithm: OLM_ALGORITHM,
             senderKey: 'fakeSenderKey',
             sessionId: 'fakeSessionId',
             content: 'foo',
         })
-        await alice.sendToDeviceMessage(bobUserId, ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST], payload)
+        await alice.encryptAndSendToDeviceMessage(
+            bobUserId,
+            ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST],
+            new ToDeviceMessage(payload),
+        )
 
         await waitFor(
             () =>
                 expect(
                     bobsRecievedMessages.find(
                         (e) =>
-                            (e.getType() ||
-                                (<RiverEvent>e).getWireContentToDevice()?.content?.op) ===
-                            'TDO_KEY_REQUEST',
+                            ((<UserPayload_ToDevice>e).op || e.getType()) ===
+                            ToDeviceOp.TDO_KEY_REQUEST,
                     ),
                 ).toBeDefined(),
             { timeout: 1000 },

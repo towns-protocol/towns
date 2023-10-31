@@ -30,7 +30,12 @@ import {
     FullyReadMarker,
 } from '@river/proto'
 
-import { Crypto, EncryptionTarget, GroupEncryptionInput } from './crypto/crypto'
+import {
+    Crypto,
+    EncryptionInput,
+    GroupEncryptionInput,
+    IEventOlmDecryptionResult,
+} from './crypto/crypto'
 import { OlmDevice, IExportedDevice as IExportedOlmDevice } from './crypto/olmDevice'
 import { DeviceInfoMap, DeviceList, IOlmDevice } from './crypto/deviceList'
 import { DLogger, dlog } from './dlog'
@@ -83,7 +88,7 @@ import { CryptoStore } from './crypto/store/base'
 import { DeviceInfo } from './crypto/deviceInfo'
 import { IDecryptOptions, RiverEvent, RiverEvents } from './event'
 import debug from 'debug'
-import { MEGOLM_ALGORITHM, OLM_ALGORITHM } from './crypto/olmLib'
+import { MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { Stream } from './stream'
 import { RiverEventV2 } from './eventV2'
 
@@ -858,10 +863,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         })
     }
 
-    async sendChannelMessage(
-        streamId: string,
-        payload: PlainMessage<ChannelMessage>['payload'],
-    ): Promise<void> {
+    async sendChannelMessage(streamId: string, payload: ChannelMessage): Promise<void> {
         const message = await this.createMegolmEncryptedEvent(payload, streamId)
         if (!message) {
             throw new Error('failed to encrypt message')
@@ -888,16 +890,21 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         },
     ): Promise<void> {
         const { content, ...options } = payload
-        return this.sendChannelMessage(streamId, {
-            case: 'post',
-            value: {
-                ...options,
-                content: {
-                    case: 'text',
-                    value: content,
+        return this.sendChannelMessage(
+            streamId,
+            new ChannelMessage({
+                payload: {
+                    case: 'post',
+                    value: {
+                        ...options,
+                        content: {
+                            case: 'text',
+                            value: content,
+                        },
+                    },
                 },
-            },
-        })
+            }),
+        )
     }
 
     async sendChannelMessage_Image(
@@ -907,16 +914,21 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         },
     ): Promise<void> {
         const { content, ...options } = payload
-        return this.sendChannelMessage(streamId, {
-            case: 'post',
-            value: {
-                ...options,
-                content: {
-                    case: 'image',
-                    value: content,
+        return this.sendChannelMessage(
+            streamId,
+            new ChannelMessage({
+                payload: {
+                    case: 'post',
+                    value: {
+                        ...options,
+                        content: {
+                            case: 'image',
+                            value: content,
+                        },
+                    },
                 },
-            },
-        })
+            }),
+        )
     }
 
     async sendChannelMessage_GM(
@@ -926,16 +938,21 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         },
     ): Promise<void> {
         const { content, ...options } = payload
-        return this.sendChannelMessage(streamId, {
-            case: 'post',
-            value: {
-                ...options,
-                content: {
-                    case: 'gm',
-                    value: content,
+        return this.sendChannelMessage(
+            streamId,
+            new ChannelMessage({
+                payload: {
+                    case: 'post',
+                    value: {
+                        ...options,
+                        content: {
+                            case: 'gm',
+                            value: content,
+                        },
+                    },
                 },
-            },
-        })
+            }),
+        )
     }
 
     async sendChannelMessage_EmbeddedMedia(
@@ -945,16 +962,21 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         },
     ): Promise<void> {
         const { content, ...options } = payload
-        return this.sendChannelMessage(streamId, {
-            case: 'post',
-            value: {
-                ...options,
-                content: {
-                    case: 'embeddedMedia',
-                    value: content,
+        return this.sendChannelMessage(
+            streamId,
+            new ChannelMessage({
+                payload: {
+                    case: 'post',
+                    value: {
+                        ...options,
+                        content: {
+                            case: 'embeddedMedia',
+                            value: content,
+                        },
+                    },
                 },
-            },
-        })
+            }),
+        )
     }
 
     async sendChannelMessage_Media(
@@ -964,16 +986,21 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         },
     ): Promise<void> {
         const { content, ...options } = payload
-        return this.sendChannelMessage(streamId, {
-            case: 'post',
-            value: {
-                ...options,
-                content: {
-                    case: 'chunkedMedia',
-                    value: content,
+        return this.sendChannelMessage(
+            streamId,
+            new ChannelMessage({
+                payload: {
+                    case: 'post',
+                    value: {
+                        ...options,
+                        content: {
+                            case: 'chunkedMedia',
+                            value: content,
+                        },
+                    },
                 },
-            },
-        })
+            }),
+        )
     }
 
     async sendMediaPayload(streamId: string, data: Uint8Array, chunkIndex: number): Promise<void> {
@@ -988,10 +1015,15 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         streamId: string,
         payload: PlainMessage<ChannelMessage_Reaction>,
     ): Promise<void> {
-        return this.sendChannelMessage(streamId, {
-            case: 'reaction',
-            value: new ChannelMessage_Reaction(payload),
-        })
+        return this.sendChannelMessage(
+            streamId,
+            new ChannelMessage({
+                payload: {
+                    case: 'reaction',
+                    value: new ChannelMessage_Reaction(payload),
+                },
+            }),
+        )
     }
 
     async sendChannelMessage_Redaction(
@@ -1006,10 +1038,15 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         if (!ref) {
             throw new Error(`ref event not found: ${payload.refEventId}`)
         }
-        return this.sendChannelMessage(streamId, {
-            case: 'redaction',
-            value: new ChannelMessage_Redaction(payload),
-        })
+        return this.sendChannelMessage(
+            streamId,
+            new ChannelMessage({
+                payload: {
+                    case: 'redaction',
+                    value: new ChannelMessage_Redaction(payload),
+                },
+            }),
+        )
     }
 
     async sendChannelMessage_Edit(
@@ -1017,13 +1054,18 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         refEventId: string,
         newPost: PlainMessage<ChannelMessage_Post>,
     ): Promise<void> {
-        return this.sendChannelMessage(streamId, {
-            case: 'edit',
-            value: {
-                refEventId: refEventId,
-                post: newPost,
-            },
-        })
+        return this.sendChannelMessage(
+            streamId,
+            new ChannelMessage({
+                payload: {
+                    case: 'edit',
+                    value: {
+                        refEventId: refEventId,
+                        post: newPost,
+                    },
+                },
+            }),
+        )
     }
 
     async sendChannelMessage_Edit_Text(
@@ -1173,15 +1215,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     async sendToDevicesMessage(
         userId: string,
-        event:
-            | PlainMessage<ToDeviceMessage>['payload']
-            | PlainMessage<UserPayload_ToDevice>['message'],
+        event: EncryptedDeviceData,
         type: ToDeviceOp | string,
-        encrypt = true,
     ): Promise<void[]> {
-        const targetEvent = !encrypt
-            ? (event as PlainMessage<ToDeviceMessage>['payload'])
-            : (event as PlainMessage<UserPayload_ToDevice>['message'])
         const op: ToDeviceOp =
             typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
         assert(op !== undefined, 'invalid to device op')
@@ -1194,13 +1230,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         // retrieve all device keys of a user
         const deviceInfoMap = await this.getStoredDevicesForUser(userId)
         // encrypt event contents and encode ciphertext
-        // todo jterzis: split this function into two: one for encrypted events and one for unencrypted
-        const envelope = encrypt
-            ? await this.createOlmEncryptedEvent(
-                  targetEvent as PlainMessage<ToDeviceMessage>['payload'],
-                  userId,
-              )
-            : (event as PlainMessage<EncryptedDeviceData>)
+        const envelope = event
         const promiseArray = Array.from(deviceInfoMap.keys()).map((userId) => {
             const devicesForUser = deviceInfoMap.get(userId)
             if (!devicesForUser) {
@@ -1238,17 +1268,106 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return Promise.all(promiseArray.flat())
     }
 
+    async encryptAndSendToDevicesMessage(
+        userId: string,
+        event: ToDeviceMessage,
+        type: ToDeviceOp | string,
+    ): Promise<void[]> {
+        const op: ToDeviceOp =
+            typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
+        assert(op !== undefined, 'invalid to device op')
+        const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
+        if (!senderKey) {
+            this.logCall('no sender key')
+        }
+        const streamId: string = makeUserStreamId(userId)
+        await this.loadExistingForeignUser(userId)
+        // retrieve all device keys of a user
+        const deviceInfoMap = await this.getStoredDevicesForUser(userId)
+        // encrypt event contents and encode ciphertext
+        const envelope = await this.createOlmEncryptedEvent(event, userId)
+        const promiseArray = Array.from(deviceInfoMap.keys()).map((userId) => {
+            const devicesForUser = deviceInfoMap.get(userId)
+            if (!devicesForUser) {
+                this.logCall(`no devices for user ${userId}`)
+                return
+            }
+            Array.from(devicesForUser.keys()).map((deviceId) => {
+                const curve25519deviceKeyArr = DeviceInfo.getCurve25519KeyFromUserId(
+                    userId,
+                    deviceInfoMap,
+                    false,
+                    deviceId,
+                )
+                if (!curve25519deviceKeyArr || curve25519deviceKeyArr?.length == 0) {
+                    this.logCall(`no device key for user ${userId}`)
+                    return
+                }
+                this.logCall(`toDevice ${deviceId}, streamId ${streamId}, userId ${userId}`)
+                return this.makeEventAndAddToStream(
+                    streamId,
+                    make_UserPayload_ToDevice({
+                        // key request or response
+                        op,
+                        // todo: this should be encrypted with olm session
+                        message: envelope,
+                        // deviceKey is curve25519 id key of recipient device
+                        deviceKey: curve25519deviceKeyArr[0].key,
+                        // senderKey is curve25519 id key of sender device
+                        senderKey: senderKey ?? '',
+                    }),
+                    'toDevice',
+                )
+            })
+        })
+        return Promise.all(promiseArray.flat())
+    }
+
+    async encryptAndSendToDeviceMessage(
+        userId: string,
+        event: ToDeviceMessage,
+        type: ToDeviceOp | string,
+    ): Promise<void> {
+        const op: ToDeviceOp =
+            typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
+        const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
+        assert(senderKey !== undefined, 'no sender key')
+        const streamId: string = makeUserStreamId(userId)
+        await this.loadExistingForeignUser(userId)
+        const deviceInfoMap = await this.getStoredDevicesForUser(userId)
+        const envelope = await this.createOlmEncryptedEvent(event, userId)
+        const deviceKeyArr = DeviceInfo.getCurve25519KeyFromUserId(userId, deviceInfoMap)
+        if (!deviceKeyArr || deviceKeyArr.length == 0) {
+            throw new Error('no device keys found for target to-device user ' + userId)
+        }
+        // by default we retrieve the first curve25519 match when sending to a single device
+        // of a user
+        // todo: this will change when we support multiple devices per user
+        // see: https://linear.app/hnt-labs/issue/HNT-1839/multi-device-support-in-todevice-transport
+        const deviceKey = deviceKeyArr[0]
+        this.logCall(`toDevice ${deviceKey.deviceId}, streamId ${streamId}, userId ${userId}`)
+        // encrypt event contents and encode ciphertext
+        return this.makeEventAndAddToStream(
+            streamId,
+            make_UserPayload_ToDevice({
+                // key request or response
+                op,
+                message: envelope,
+                // deviceKey is curve25519 id key of recipient device
+                deviceKey: deviceKey.key,
+                // senderKey is curve25519 id key of sender device
+                senderKey: senderKey ?? '',
+                // todo: point to origin event for key responses
+            }),
+            'toDevice',
+        )
+    }
+
     async sendToDeviceMessage(
         userId: string,
-        event:
-            | PlainMessage<ToDeviceMessage>['payload']
-            | PlainMessage<UserPayload_ToDevice>['message'],
+        event: EncryptedDeviceData,
         type: ToDeviceOp | string,
-        encrypt = true,
     ): Promise<void> {
-        const targetEvent = !encrypt
-            ? (event as PlainMessage<ToDeviceMessage>['payload'])
-            : (event as PlainMessage<UserPayload_ToDevice>['message'])
         const op: ToDeviceOp =
             typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
         const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
@@ -1268,20 +1387,12 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const deviceKey = deviceKeyArr[0]
         this.logCall(`toDevice ${deviceKey.deviceId}, streamId ${streamId}, userId ${userId}`)
         // encrypt event contents and encode ciphertext
-        const envelope = encrypt
-            ? await this.createOlmEncryptedEvent(
-                  targetEvent as PlainMessage<ToDeviceMessage>['payload'],
-                  userId,
-              )
-            : // todo: this is a temporary hack to allow calling this function with an unencrypted payload.
-              // create a new function to create a to-device event from an unencrypted event
-              (event as unknown as PlainMessage<EncryptedDeviceData>)
         return this.makeEventAndAddToStream(
             streamId,
             make_UserPayload_ToDevice({
                 // key request or response
                 op,
-                message: envelope,
+                message: event,
                 // deviceKey is curve25519 id key of recipient device
                 deviceKey: deviceKey.key,
                 // senderKey is curve25519 id key of sender device
@@ -1492,16 +1603,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
      *
      */
     private async createMegolmEncryptedEvent(
-        event: PlainMessage<ChannelMessage>['payload'],
+        event: ChannelMessage,
         channelId: string,
-    ): Promise<PlainMessage<EncryptedData> | undefined> {
+    ): Promise<EncryptedData | undefined> {
         // encrypt event contents and encode ciphertext
-        const riverEvent = new RiverEvent({
-            payload: { parsed_event: event },
-            sender: this.userId,
-        })
+        const input = { content: event, recipient: { streamId: channelId } }
+        let encryptedEvent: EncryptedData
         try {
-            await this.encryptEvent(riverEvent, { channelId: channelId })
+            encryptedEvent = await this.encryptGroupEvent(input)
         } catch (e) {
             this.logCall('createMegolmEncryptedEvent: ERROR', e)
             throw e
@@ -1510,14 +1619,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         if (!senderKey) {
             throw new Error('createMegolmEncryptedEvent: no sender key')
         }
-        const { ciphertext, session_id } = riverEvent.getWireContentChannel().content
+        const { text: ciphertext, sessionId: session_id } = encryptedEvent
         const result = ciphertext
-            ? {
+            ? new EncryptedData({
                   senderKey,
                   sessionId: session_id,
                   text: ciphertext,
                   algorithm: MEGOLM_ALGORITHM,
-              }
+              })
             : undefined
         return result
     }
@@ -1528,25 +1637,37 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
      *
      */
     public async createOlmEncryptedEvent(
-        event: PlainMessage<ToDeviceMessage>['payload'],
+        event: ToDeviceMessage,
         recipientUserId: string,
-    ): Promise<PlainMessage<EncryptedDeviceData> | undefined> {
+    ): Promise<EncryptedDeviceData> {
         // encrypt event contents and encode ciphertext
-        const riverEvent = new RiverEvent({
-            payload: { parsed_event: event },
-            sender: this.userId,
-        })
+
+        let encryptedData: EncryptedDeviceData
         try {
-            await this.encryptEvent(riverEvent, { userIds: [recipientUserId] })
+            encryptedData = await this.encryptEvent({
+                content: event,
+                recipient: { userIds: [recipientUserId] },
+            })
         } catch (e) {
             this.logCall('createEncryptedCipherFromEvent: ERROR', e)
             throw e
         }
-        const ciphertext = riverEvent.getWireContentToDevice().content.ciphertext
-        const result = ciphertext ? { ciphertext: ciphertext, algorithm: OLM_ALGORITHM } : undefined
-        return result
+        return encryptedData
     }
 
+    /**
+     * Decrypt a ToDevice message using Olm algorithm.
+     *
+     */
+    public async decryptEventWithOlm(
+        event: UserPayload_ToDevice,
+        senderUserId: string,
+    ): Promise<IEventOlmDecryptionResult> {
+        if (!this.cryptoBackend) {
+            throw new Error('crypto backend not initialized')
+        }
+        return this.cryptoBackend.decryptEventWithOlm(event, senderUserId)
+    }
     /**
      * Attempts to decrypt an event
      */
@@ -1554,7 +1675,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         event: RiverEvent | RiverEventV2,
         options?: IDecryptOptions,
     ): Promise<void> {
-        if (event.shouldAttemptDecryption() || options?.forceRedecryptIfUntrusted) {
+        if (event.shouldAttemptDecryption()) {
             if (!this.cryptoBackend) {
                 throw new Error('crypto backend not initialized')
             }
@@ -1570,20 +1691,19 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return Promise.resolve()
     }
 
-    public hasInboundSessionKeys(
-        channelId: string,
-        senderKey: string,
-        sessionId: string,
-    ): Promise<boolean> {
+    public hasInboundSessionKeys(streamId: string, sessionId: string): Promise<boolean> {
         return this.cryptoBackend?.olmDevice?.hasInboundSessionKeys(
-            channelId,
-            senderKey,
+            streamId,
             sessionId,
         ) as Promise<boolean>
     }
 
-    public async importRoomKeys(keys: MegolmSession[], opts?: object): Promise<void> {
-        return this.cryptoBackend?.importRoomKeys(keys, opts)
+    public async importRoomKeys(
+        streamId: string,
+        keys: MegolmSession[],
+        opts?: object,
+    ): Promise<void> {
+        return this.cryptoBackend?.importRoomKeys(streamId, keys, opts)
     }
 
     public downloadKeys(
@@ -1602,26 +1722,24 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
      */
     public async encryptAndSendToDevices(
         userDeviceInfoArr: IOlmDevice[],
-        payload: object,
-        type?: ToDeviceOp,
+        payload: ToDeviceMessage,
     ): Promise<void> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        return this.cryptoBackend.encryptAndSendToDevices(userDeviceInfoArr, payload, type)
+        return this.cryptoBackend.encryptAndSendToDevices(userDeviceInfoArr, payload)
     }
 
-    public encryptEvent(event: RiverEvent, target: EncryptionTarget): Promise<void> {
-        if (!event.shouldAttemptEncryption()) {
-            throw new Error('event is already encrypted')
-        }
+    // Encrypt event using Olm.
+    public encryptEvent(input: EncryptionInput): Promise<EncryptedDeviceData> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        return this.cryptoBackend.encryptEvent(event, target)
+        return this.cryptoBackend.encryptEvent(input.content, input.recipient)
     }
 
-    public encryptGroupEvent(input: GroupEncryptionInput): Promise<PlainMessage<EncryptedData>> {
+    // Encrypt event using Megolm.
+    public encryptGroupEvent(input: GroupEncryptionInput): Promise<EncryptedData> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }

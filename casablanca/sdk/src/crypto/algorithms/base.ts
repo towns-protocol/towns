@@ -1,13 +1,11 @@
 import { Client } from '../../client'
 import { OlmDevice } from '../olmDevice'
-import { IEventDecryptionResult, Crypto, IncomingRoomKeyRequest } from '../crypto'
+import { Crypto, IncomingRoomKeyRequest } from '../crypto'
 import { DeviceInfo } from '../deviceInfo'
 import { DeviceInfoMap } from '../deviceList'
 import { IRoomEncryption } from '../store/base'
-import { IEncryptedContent } from '../olmLib'
-import { RiverEvent, IClearContent } from '../../event'
+import { RiverEvent } from '../../event'
 import { MegolmSession } from '@river/proto'
-import { ClearContent, RiverEventV2 } from '../../eventV2'
 
 /**
  * Map of registered encryption algorithm classes. A map from string to {@link EncryptionAlgorithm} class
@@ -65,21 +63,6 @@ export abstract class EncryptionAlgorithm {
     }
 
     /**
-     * Encrypt a message event for a set of users or a room
-     *
-     * @public
-     *
-     * @param content - event content
-     *
-     * @returns Promise which resolves to the new event body
-     */
-    public abstract encryptMessage(
-        usersOrRoom: string[] | string,
-        eventType: string,
-        content: IClearContent,
-    ): Promise<IEncryptedContent>
-
-    /**
      * Called when the membership of a member of the room changes.
      *
      * @param event -  event causing the change
@@ -120,28 +103,6 @@ export abstract class DecryptionAlgorithm {
     }
 
     /**
-     * Decrypt an event
-     *
-     * @param event - undecrypted event
-     *
-     * @returns promise which
-     * resolves once we have finished decrypting. Rejects with an
-     * `algorithms.DecryptionError` if there is a problem decrypting the event.
-     */
-    public abstract decryptEvent(event: RiverEvent): Promise<IEventDecryptionResult>
-
-    /**
-     * Decrypt an event
-     *
-     * @param event - undecrypted event
-     *
-     * @returns promise which
-     * resolves once we have finished decrypting. Rejects with an
-     * `algorithms.DecryptionError` if there is a problem decrypting the event.
-     */
-    public abstract decryptEventV2(event: RiverEventV2): Promise<ClearContent>
-
-    /**
      * Handle a key event
      *
      * @param _params - event key event
@@ -156,7 +117,7 @@ export abstract class DecryptionAlgorithm {
      * @param _opts - object
      */
 
-    public async importRoomKey(_session: MegolmSession, _opts: object): Promise<void> {
+    public async importRoomKey(_streamId: string, _session: MegolmSession): Promise<void> {
         // ignore by default
     }
 

@@ -37,10 +37,10 @@ export class MemoryCryptoStore implements CryptoStore {
     private inboundGroupSessionsWithheld: Record<string, IWithheld> = {}
     // Opaque device data object
     private deviceData: IDeviceData | null = null
-    private rooms: { [channelId: string]: IRoomEncryption } = {}
+    private rooms: { [streamId: string]: IRoomEncryption } = {}
     private sessionsNeedingBackup: { [sessionKey: string]: boolean } = {}
     private sharedHistoryInboundGroupSessions: {
-        [channelId: string]: [senderKey: string, sessionId: string][]
+        [streamId: string]: [senderKey: string, sessionId: string][]
     } = {}
     private rk: RK | null = null
     private rdk: RDK | null = null
@@ -64,10 +64,7 @@ export class MemoryCryptoStore implements CryptoStore {
         return Promise.resolve()
     }
 
-    public deleteInboundGroupSessions(
-        _senderCurve25519Key: string,
-        _sessionId: string,
-    ): Promise<void> {
+    public deleteInboundGroupSessions(_streamId: string, _sessionId: string): Promise<void> {
         return Promise.resolve()
     }
 
@@ -361,7 +358,7 @@ export class MemoryCryptoStore implements CryptoStore {
     // Inbound Group Sessions
 
     public getEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         txn: null,
         func: (
@@ -369,7 +366,7 @@ export class MemoryCryptoStore implements CryptoStore {
             groupSessionWithheld: IWithheld | null,
         ) => void,
     ): void {
-        const k = senderCurve25519Key + '/' + sessionId
+        const k = streamId + '/' + sessionId
         func(this.inboundGroupSessions[k] || null, this.inboundGroupSessionsWithheld[k] || null)
     }
 
@@ -384,7 +381,7 @@ export class MemoryCryptoStore implements CryptoStore {
             // (hence 43 characters long).
 
             func({
-                senderKey: key.slice(0, 43),
+                streamId: key.slice(0, 43),
                 sessionId: key.slice(44),
                 sessionData: this.inboundGroupSessions[key],
             })
@@ -393,33 +390,33 @@ export class MemoryCryptoStore implements CryptoStore {
     }
 
     public addEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
         txn: null,
     ): void {
-        const k = senderCurve25519Key + '/' + sessionId
+        const k = streamId + '/' + sessionId
         if (this.inboundGroupSessions[k] === undefined) {
             this.inboundGroupSessions[k] = sessionData
         }
     }
 
     public storeEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
         txn: null,
     ): void {
-        this.inboundGroupSessions[senderCurve25519Key + '/' + sessionId] = sessionData
+        this.inboundGroupSessions[streamId + '/' + sessionId] = sessionData
     }
 
     public storeEndToEndInboundGroupSessionWithheld(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: IWithheld,
         txn: null,
     ): void {
-        const k = senderCurve25519Key + '/' + sessionId
+        const k = streamId + '/' + sessionId
         this.inboundGroupSessionsWithheld[k] = sessionData
     }
 
@@ -435,8 +432,8 @@ export class MemoryCryptoStore implements CryptoStore {
 
     // E2E rooms
 
-    public storeEndToEndRoom(channelId: string, roomInfo: IRoomEncryption, txn: null): void {
-        this.rooms[channelId] = roomInfo
+    public storeEndToEndRoom(streamId: string, roomInfo: IRoomEncryption, txn: null): void {
+        this.rooms[streamId] = roomInfo
     }
 
     public getEndToEndRooms(
@@ -451,7 +448,7 @@ export class MemoryCryptoStore implements CryptoStore {
         for (const session in this.sessionsNeedingBackup) {
             if (this.inboundGroupSessions[session]) {
                 sessions.push({
-                    senderKey: session.slice(0, 43),
+                    streamId: session.slice(0, 43),
                     sessionId: session.slice(44),
                     sessionData: this.inboundGroupSessions[session],
                 })
@@ -469,7 +466,7 @@ export class MemoryCryptoStore implements CryptoStore {
 
     public unmarkSessionsNeedingBackup(sessions: ISession[]): Promise<void> {
         for (const session of sessions) {
-            const sessionKey = session.senderKey + '/' + session.sessionId
+            const sessionKey = session.streamId + '/' + session.sessionId
             delete this.sessionsNeedingBackup[sessionKey]
         }
         return Promise.resolve()
@@ -477,26 +474,22 @@ export class MemoryCryptoStore implements CryptoStore {
 
     public markSessionsNeedingBackup(sessions: ISession[]): Promise<void> {
         for (const session of sessions) {
-            const sessionKey = session.senderKey + '/' + session.sessionId
+            const sessionKey = session.streamId + '/' + session.sessionId
             this.sessionsNeedingBackup[sessionKey] = true
         }
         return Promise.resolve()
     }
 
-    public addSharedHistoryInboundGroupSession(
-        channelId: string,
-        senderKey: string,
-        sessionId: string,
-    ): void {
-        const sessions = this.sharedHistoryInboundGroupSessions[channelId] || []
-        sessions.push([senderKey, sessionId])
-        this.sharedHistoryInboundGroupSessions[channelId] = sessions
+    public addSharedHistoryInboundGroupSession(streamId: string, sessionId: string): void {
+        const sessions = this.sharedHistoryInboundGroupSessions[streamId] || []
+        sessions.push([streamId, sessionId])
+        this.sharedHistoryInboundGroupSessions[streamId] = sessions
     }
 
     public getSharedHistoryInboundGroupSessions(
-        channelId: string,
-    ): Promise<[senderKey: string, sessionId: string][]> {
-        return Promise.resolve(this.sharedHistoryInboundGroupSessions[channelId] || [])
+        streamId: string,
+    ): Promise<[streamId: string, sessionId: string][]> {
+        return Promise.resolve(this.sharedHistoryInboundGroupSessions[streamId] || [])
     }
 
     // Session key backups

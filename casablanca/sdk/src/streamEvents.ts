@@ -1,4 +1,10 @@
-import { DeviceKeys, ChannelProperties, SnapshotCaseType, FullyReadMarker } from '@river/proto'
+import {
+    DeviceKeys,
+    ChannelProperties,
+    SnapshotCaseType,
+    FullyReadMarker,
+    UserPayload_ToDevice,
+} from '@river/proto'
 import { ParsedEvent } from './types'
 import { RiverEvent } from './event'
 export type StreamEvents = {
@@ -31,7 +37,7 @@ export type StreamEvents = {
         channelId: string,
         fullyReadMarkers: Record<string, FullyReadMarker>,
     ) => void
-    toDeviceMessage: (streamId: string, event: RiverEvent) => void
+    toDeviceMessage: (streamId: string, event: UserPayload_ToDevice, senderUserId: string) => void
     userDeviceKeyMessage: (
         streamId: string,
         userId: string,

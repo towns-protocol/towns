@@ -445,7 +445,8 @@ message EncryptedDeviceData {
 }
 
 message EncryptedMessageEnvelope {
-    optional int32 type = 1;
+    // Either 0 for pre-key messages or 1 after session is established.
+    int32 type = 1;
     /**
     * Ciphertext of the encryption envelope.
     */

@@ -2,9 +2,9 @@ import { dlog } from './dlog'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { Client } from './client'
 import { RiverEvent } from './event'
-import { SnapshotCaseType, ToDeviceOp } from '@river/proto'
+import { SnapshotCaseType } from '@river/proto'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
-import { isCiphertext, make_ToDevice_KeyRequest } from './types'
+import { isCiphertext } from './types'
 
 const log = dlog('test')
 
@@ -78,50 +78,6 @@ describe('riverEventTest', () => {
         await done.expectToSucceed()
 
         await bobsClient.stopSync()
-
-        log('done with river event')
-    })
-
-    test('riverEventCreatedFromToDeviceMessage', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
-        await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
-        const aliceUserStreamId = alicesClient.userStreamId
-        log('aliceUserStreamId', aliceUserStreamId)
-        const aliceUserId = alicesClient.userId
-        await alicesClient.startSync()
-
-        const aliceSelfToDevice = makeDonePromise()
-        alicesClient.once('toDeviceMessage', (streamId: string, payload: RiverEvent): void => {
-            const { content } = payload.getWireContentToDevice()
-            const senderKey = content['sender_key']
-            const deviceKey = content['device_key']
-            log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload)
-            aliceSelfToDevice.runAndDone(() => {
-                expect(payload).toBeDefined()
-                expect(content.ciphertext).toBeDefined()
-                // this should be undefined until we attempt decrypting the event
-                expect(payload?.getClearContent()).toBeUndefined()
-            })
-        })
-        // bob sends a message to Alice's device.
-        await expect(
-            bobsClient.sendToDeviceMessage(
-                aliceUserId,
-                make_ToDevice_KeyRequest({
-                    spaceId: '123412',
-                    channelId: '23423',
-                    algorithm: 'OLM',
-                    senderKey: '123412',
-                    sessionId: '123412',
-                    content: 'Hi Alice',
-                }),
-                ToDeviceOp.TDO_UNSPECIFIED,
-            ),
-        ).toResolve()
-        await aliceSelfToDevice.expectToSucceed()
 
         log('done with river event')
     })

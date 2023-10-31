@@ -14,7 +14,7 @@ import {
 import { makeDonePromise, makeTestClient } from './util.test'
 import { dlog } from './dlog'
 import { ChannelMessage, ChannelMessage_Post } from '@river/proto'
-import { PlainMessage, toPlainMessage } from '@bufbuild/protobuf'
+import { toPlainMessage } from '@bufbuild/protobuf'
 
 const log = dlog('csb:test')
 
@@ -79,7 +79,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
 
         const encryptedData = await alicesClient.encryptGroupEvent({
             content: make_ChannelMessage_Redaction(payload.refEventId, payload.reason),
-            target: { channelId: bobsChannelId },
+            recipient: { streamId: bobsChannelId },
         })
         expect(encryptedData).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key
@@ -102,8 +102,8 @@ describe('clientCryptoTest_RiverEventV2', () => {
         await expect(bobsClient.decryptEventIfNeeded(event)).toResolve()
         const clearContent = event.getContent()
         expect(clearContent).toBeDefined()
-        if (clearContent?.content?.case === 'redaction') {
-            expect(clearContent?.content?.value?.refEventId).toEqual('fake_event_id')
+        if (clearContent?.content?.payload.case === 'redaction') {
+            expect(clearContent?.content?.payload.value?.refEventId).toEqual('fake_event_id')
         }
     })
 
@@ -159,7 +159,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
         })
         const encryptedData = await alicesClient.encryptGroupEvent({
             content: make_ChannelMessage_Edit('fake_event_id', toPlainMessage(post)),
-            target: { channelId: bobsChannelId },
+            recipient: { streamId: bobsChannelId },
         })
         expect(encryptedData).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key
@@ -184,11 +184,11 @@ describe('clientCryptoTest_RiverEventV2', () => {
         expect(clearContent).toBeDefined()
 
         if (
-            clearContent?.content?.case === 'edit' &&
-            clearContent?.content?.value?.post?.content?.case === 'text'
+            clearContent?.content?.payload.case === 'edit' &&
+            clearContent?.content?.payload.value?.post?.content?.case === 'text'
         ) {
-            expect(clearContent?.content?.value?.refEventId).toEqual('fake_event_id')
-            expect(clearContent?.content?.value?.post?.content?.value.body).toEqual(
+            expect(clearContent?.content?.payload.value?.refEventId).toEqual('fake_event_id')
+            expect(clearContent?.content?.payload.value?.post?.content?.value.body).toEqual(
                 'First secret encrypted message by Alice!',
             )
         }
@@ -241,7 +241,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
 
         const encryptedData = await alicesClient.encryptGroupEvent({
             content: make_ChannelMessage_Reaction(payload.refEventId, payload.reaction),
-            target: { channelId: bobsChannelId },
+            recipient: { streamId: bobsChannelId },
         })
 
         expect(encryptedData).toBeDefined()
@@ -264,9 +264,9 @@ describe('clientCryptoTest_RiverEventV2', () => {
         const clearContent = event.getContent()
         expect(clearContent).toBeDefined()
 
-        if (clearContent?.content?.case === 'reaction') {
-            expect(clearContent?.content.value.refEventId).toEqual('fake_event_id')
-            expect(clearContent?.content.value.reaction).toEqual('👍')
+        if (clearContent?.content?.payload.case === 'reaction') {
+            expect(clearContent?.content.payload.value.refEventId).toEqual('fake_event_id')
+            expect(clearContent?.content.payload.value.reaction).toEqual('👍')
         }
     })
 
@@ -315,7 +315,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
         }
         const encryptedData = await alicesClient.encryptGroupEvent({
             content: make_ChannelMessage_Post_Content_GM(payload.typeUrl),
-            target: { channelId: bobsChannelId },
+            recipient: { streamId: bobsChannelId },
         })
         expect(encryptedData).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key
@@ -340,10 +340,12 @@ describe('clientCryptoTest_RiverEventV2', () => {
         const clearContent = event.getContent()
         expect(clearContent).toBeDefined()
         if (
-            clearContent?.content?.case === 'post' &&
-            clearContent?.content?.value?.content?.case === 'gm'
+            clearContent?.content?.payload.case === 'post' &&
+            clearContent?.content?.payload.value?.content?.case === 'gm'
         ) {
-            expect(clearContent?.content.value.content.value.typeUrl).toEqual('http://fake_url')
+            expect(clearContent?.content.payload.value.content.value.typeUrl).toEqual(
+                'http://fake_url',
+            )
         }
     })
 
@@ -394,7 +396,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
 
         const encryptedData = await alicesClient.encryptGroupEvent({
             content: make_ChannelMessage_Post_Content_Image(payload.title, payload.info),
-            target: { channelId: bobsChannelId },
+            recipient: { streamId: bobsChannelId },
         })
         expect(encryptedData).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key
@@ -418,11 +420,11 @@ describe('clientCryptoTest_RiverEventV2', () => {
         const clearContent = event.getContent()
         expect(clearContent).toBeDefined()
         if (
-            clearContent?.content?.case === 'post' &&
-            clearContent?.content?.value?.content?.case === 'image'
+            clearContent?.content?.payload.case === 'post' &&
+            clearContent?.content?.payload.value?.content?.case === 'image'
         ) {
-            expect(clearContent?.content?.value?.content?.value?.title).toEqual('image1')
-            expect(clearContent?.content?.value?.content?.value?.info?.url).toEqual(
+            expect(clearContent?.content?.payload.value?.content?.value?.title).toEqual('image1')
+            expect(clearContent?.content?.payload.value?.content?.value?.info?.url).toEqual(
                 'http://fake_url',
             )
         }
@@ -474,7 +476,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
 
         const encryptedData = await alicesClient.encryptGroupEvent({
             content: make_ChannelMessage_Post_Content_Text(payload.content),
-            target: { channelId: bobsChannelId },
+            recipient: { streamId: bobsChannelId },
         })
         expect(encryptedData).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key
@@ -496,10 +498,10 @@ describe('clientCryptoTest_RiverEventV2', () => {
         const clearContent = event.getContent()
         expect(clearContent).toBeDefined()
         if (
-            clearContent?.content?.case === 'post' &&
-            clearContent?.content?.value?.content?.case === 'text'
+            clearContent?.content?.payload.case === 'post' &&
+            clearContent?.content?.payload.value?.content?.case === 'text'
         ) {
-            expect(clearContent?.content?.value?.content.value?.body).toContain(
+            expect(clearContent?.content?.payload.value?.content.value?.body).toContain(
                 'First secret encrypted message!',
             )
         }
@@ -551,7 +553,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
             { content: 'First secret encrypted message by Alice!' },
             { content: 'Second secret encrypted message by Bob!' },
         ]
-        const contents: PlainMessage<ChannelMessage>['payload'][] = []
+        const contents: ChannelMessage[] = []
         for (const payload of payloads) {
             contents.push(make_ChannelMessage_Post_Content_Text(payload.content))
         }
@@ -578,7 +580,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
             expect(content).toBeDefined()
             const encryptedData = await client.encryptGroupEvent({
                 content: content,
-                target: { channelId: bobsChannelId },
+                recipient: { streamId: bobsChannelId },
             })
             expect(encryptedData).toBeDefined()
 
@@ -611,10 +613,10 @@ describe('clientCryptoTest_RiverEventV2', () => {
             const clearContent = encryptedEvent.getContent()
             expect(clearContent).toBeDefined()
             if (
-                clearContent?.content?.case === 'post' &&
-                clearContent?.content?.value?.content?.case === 'text'
+                clearContent?.content?.payload.case === 'post' &&
+                clearContent?.content?.payload.value?.content?.case === 'text'
             ) {
-                expect(clearContent?.content?.value?.content.value?.body).toContain(
+                expect(clearContent?.content?.payload.value?.content.value?.body).toContain(
                     'secret encrypted message',
                 )
             }
@@ -652,7 +654,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
 
         const encryptedData = await bobsClient.encryptGroupEvent({
             content: make_ChannelMessage_Post_Content_Text(payload.content),
-            target: { channelId: bobsChannelId },
+            recipient: { streamId: bobsChannelId },
         })
         expect(encryptedData).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key

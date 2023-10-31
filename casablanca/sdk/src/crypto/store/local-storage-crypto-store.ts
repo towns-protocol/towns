@@ -203,7 +203,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
     // Inbound Group Sessions
 
     public getEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         txn: null,
         func: (
@@ -212,11 +212,8 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         ) => void,
     ): void {
         func(
-            getJsonItem(this.store, keyEndToEndInboundGroupSession(senderCurve25519Key, sessionId)),
-            getJsonItem(
-                this.store,
-                keyEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId),
-            ),
+            getJsonItem(this.store, keyEndToEndInboundGroupSession(streamId, sessionId)),
+            getJsonItem(this.store, keyEndToEndInboundGroupSessionWithheld(streamId, sessionId)),
         )
     }
 
@@ -233,7 +230,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
                 // (hence 43 characters long).
 
                 func({
-                    senderKey: key.slice(
+                    streamId: key.slice(
                         KEY_INBOUND_SESSION_PREFIX.length,
                         KEY_INBOUND_SESSION_PREFIX.length + 43,
                     ),
@@ -246,42 +243,38 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
     }
 
     public addEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
         txn: null,
     ): void {
         const existing = getJsonItem(
             this.store,
-            keyEndToEndInboundGroupSession(senderCurve25519Key, sessionId),
+            keyEndToEndInboundGroupSession(streamId, sessionId),
         )
         if (!existing) {
-            this.storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn)
+            this.storeEndToEndInboundGroupSession(streamId, sessionId, sessionData, txn)
         }
     }
 
     public storeEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
         txn: null,
     ): void {
-        setJsonItem(
-            this.store,
-            keyEndToEndInboundGroupSession(senderCurve25519Key, sessionId),
-            sessionData,
-        )
+        setJsonItem(this.store, keyEndToEndInboundGroupSession(streamId, sessionId), sessionData)
     }
 
     public storeEndToEndInboundGroupSessionWithheld(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: IWithheld,
         txn: null,
     ): void {
         setJsonItem(
             this.store,
-            keyEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId),
+            keyEndToEndInboundGroupSessionWithheld(streamId, sessionId),
             sessionData,
         )
     }
@@ -323,11 +316,11 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         for (const session in sessionsNeedingBackup) {
             if (Object.prototype.hasOwnProperty.call(sessionsNeedingBackup, session)) {
                 // see getAllEndToEndInboundGroupSessions for the magic number explanations
-                const senderKey = session.slice(0, 43)
+                const streamId = session.slice(0, 43)
                 const sessionId = session.slice(44)
-                this.getEndToEndInboundGroupSession(senderKey, sessionId, null, (sessionData) => {
+                this.getEndToEndInboundGroupSession(streamId, sessionId, null, (sessionData) => {
                     sessions.push({
-                        senderKey: senderKey,
+                        streamId: streamId,
                         sessionId: sessionId,
                         sessionData: sessionData!,
                     })
@@ -351,7 +344,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
                 [senderKeySessionId: string]: string
             }>(this.store, KEY_SESSIONS_NEEDING_BACKUP) || {}
         for (const session of sessions) {
-            delete sessionsNeedingBackup[session.senderKey + '/' + session.sessionId]
+            delete sessionsNeedingBackup[session.streamId + '/' + session.sessionId]
         }
         setJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP, sessionsNeedingBackup)
         return Promise.resolve()
@@ -363,7 +356,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
                 [senderKeySessionId: string]: boolean
             }>(this.store, KEY_SESSIONS_NEEDING_BACKUP) || {}
         for (const session of sessions) {
-            sessionsNeedingBackup[session.senderKey + '/' + session.sessionId] = true
+            sessionsNeedingBackup[session.streamId + '/' + session.sessionId] = true
         }
         setJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP, sessionsNeedingBackup)
         return Promise.resolve()
@@ -378,20 +371,9 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         return Promise.resolve()
     }
 
-    public deleteInboundGroupSessions(
-        senderCurve25519Key: string,
-        sessionId: string,
-    ): Promise<void> {
-        setJsonItem(
-            this.store,
-            keyEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId),
-            null,
-        )
-        setJsonItem(
-            this.store,
-            keyEndToEndInboundGroupSession(senderCurve25519Key, sessionId),
-            null,
-        )
+    public deleteInboundGroupSessions(streamId: string, sessionId: string): Promise<void> {
+        setJsonItem(this.store, keyEndToEndInboundGroupSessionWithheld(streamId, sessionId), null)
+        setJsonItem(this.store, keyEndToEndInboundGroupSession(streamId, sessionId), null)
         return Promise.resolve()
     }
 

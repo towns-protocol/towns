@@ -1,27 +1,23 @@
 // todo: fix lint issues and remove exception see: https://linear.app/hnt-labs/issue/HNT-1721/address-linter-overrides-in-matrix-encryption-code-from-sdk
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument */
 import { dlog } from '../../dlog'
-import { IEventDecryptionResult } from '../crypto'
+import { IEventDecryptionResult, IEventOlmDecryptionResult } from '../crypto'
 import { DeviceInfo } from '../deviceInfo'
 import { DecryptionAlgorithm, DecryptionError, EncryptionAlgorithm } from './base'
-import { IClearContent, IContent, RiverEvent } from '../../event'
-import {
-    IEncryptedContent,
-    IOlmEncryptedContent,
-    OLM_ALGORITHM,
-    encryptMessageForDevice,
-} from '../olmLib'
+import { RiverEvent } from '../../event'
+import { IOlmEncryptedContent, OLM_ALGORITHM, encryptMessageForDevice } from '../olmLib'
 import { IInboundSession } from '../olmDevice'
 import { ClearContent, RiverEventV2 } from '../../eventV2'
+import {
+    EncryptedMessageEnvelope,
+    OlmMessage,
+    ToDeviceMessage,
+    UserPayload_ToDevice,
+} from '@river/proto'
 
 const log = dlog('csb:olm')
 
 const DeviceVerification = DeviceInfo.DeviceVerification
-
-export interface IMessage {
-    type?: number
-    body: string
-}
 
 /**
  * Olm encryption implementation
@@ -61,37 +57,29 @@ export class OlmEncryption extends EncryptionAlgorithm {
      * @returns Promise which resolves to the new event body
      */
     public async encryptMessage(
-        users: string[],
-        eventType: string,
-        content: IClearContent,
+        recipientUsers: string[],
+        payload: ToDeviceMessage,
     ): Promise<IOlmEncryptedContent> {
-        /* todo: implement once we have a Room model
-        const members = await room.getEncryptionTargetMembers()
+        await this.ensureSession(recipientUsers)
 
-        const users = members.map(function (u) {
-            return u.userId
-        })
-        */
-
-        await this.ensureSession(users)
-
-        const payloadFields = {
-            type: eventType,
-            content: content,
+        if (payload.payload === undefined) {
+            throw new Error('payload value is undefined')
         }
+
         if (!this.olmDevice.deviceCurve25519Key) {
             throw new Error('Olm device has no curve25519 key')
         }
 
-        const encryptedContent: IEncryptedContent = {
+        const ciphertextRecord: Record<string, EncryptedMessageEnvelope> = {}
+        const encryptedContent: IOlmEncryptedContent = {
             algorithm: OLM_ALGORITHM,
             sender_key: this.olmDevice.deviceCurve25519Key,
-            ciphertext: {},
+            ciphertext: ciphertextRecord,
         }
 
         const promises: Promise<void>[] = []
 
-        for (const userId of users) {
+        for (const userId of recipientUsers) {
             const devices = this.crypto.deviceList.getStoredDevicesForUser(userId) || []
 
             for (const deviceInfo of devices) {
@@ -106,12 +94,11 @@ export class OlmEncryption extends EncryptionAlgorithm {
                     continue
                 }
                 */
+                const payloadFields = new OlmMessage({ content: payload })
 
                 promises.push(
                     encryptMessageForDevice(
                         encryptedContent.ciphertext,
-                        this.userId,
-                        this.deviceId,
                         this.olmDevice,
                         userId,
                         deviceInfo,
@@ -131,6 +118,65 @@ export class OlmEncryption extends EncryptionAlgorithm {
  * @param params - parameters, as per {@link DecryptionAlgorithm}
  */
 export class OlmDecryption extends DecryptionAlgorithm {
+    /**
+     * returns a promise which resolves to a
+     * {@link EventDecryptionResult} once we have finished
+     * decrypting. Rejects with an `algorithms.DecryptionError` if there is a
+     * problem decrypting the event.
+     */
+    public async decryptEventWithOlm(
+        event: UserPayload_ToDevice,
+        senderUserId: string,
+    ): Promise<IEventOlmDecryptionResult> {
+        const deviceKey = event.senderKey
+        const ciphertext = event.message?.ciphertext
+
+        if (!deviceKey) {
+            throw new DecryptionError('OLM_MISSING_SENDER_KEY', 'Missing sender key')
+        }
+        if (!ciphertext) {
+            throw new DecryptionError('OLM_MISSING_CIPHERTEXT', 'Missing ciphertext')
+        }
+        if (!this.olmDevice.deviceCurve25519Key) {
+            throw new DecryptionError('OLM_MISSING_DEVICE_KEY', 'Missing device key')
+        }
+
+        if (!(this.olmDevice.deviceCurve25519Key in ciphertext)) {
+            throw new DecryptionError(
+                'OLM_NOT_INCLUDED_IN_RECIPIENTS',
+                'Not included in recipients',
+            )
+        }
+        const message = ciphertext[this.olmDevice.deviceCurve25519Key]
+        let payloadString: string
+
+        try {
+            payloadString = await this.decryptMessage(deviceKey, message)
+        } catch (e) {
+            throw new DecryptionError('OLM_BAD_ENCRYPTED_MESSAGE', 'Bad Encrypted Message', {
+                sender: deviceKey,
+                err: e as Error,
+            })
+        }
+
+        const payload = OlmMessage.fromJsonString(payloadString)
+
+        // check that the device that encrypted the event belongs to the user
+        // that the event claims it's from.  We need to make sure that our
+        // device list is up-to-date.  If the device is unknown, we can only
+        // assume that the device logged out.  Some event handlers, such as
+        // secret sharing, may be more strict and reject events that come from
+        // unknown devices.
+        await this.crypto.deviceList.downloadKeys([senderUserId], false)
+        // todo: validate device key belongs to sender
+        //const senderKeyUser = this.crypto.deviceList.getUserByIdentityKey(OLM_ALGORITHM, deviceKey)
+
+        return {
+            clearEvent: payload,
+            senderCurve25519Key: deviceKey,
+        }
+    }
+
     /**
      * returns a promise which resolves to a
      * {@link EventDecryptionResult} once we have finished
@@ -162,7 +208,10 @@ export class OlmDecryption extends DecryptionAlgorithm {
         let payloadString: string
 
         try {
-            payloadString = await this.decryptMessage(deviceKey, message)
+            payloadString = await this.decryptMessage(
+                deviceKey,
+                new EncryptedMessageEnvelope(message),
+            )
         } catch (e) {
             throw new DecryptionError('OLM_BAD_ENCRYPTED_MESSAGE', 'Bad Encrypted Message', {
                 sender: deviceKey,
@@ -241,7 +290,6 @@ export class OlmDecryption extends DecryptionAlgorithm {
         return {
             clearEvent: payload,
             senderCurve25519Key: deviceKey,
-            claimedDoNotUseKey: claimedKeys.donotuse || null,
         }
     }
 
@@ -257,7 +305,10 @@ export class OlmDecryption extends DecryptionAlgorithm {
      *
      * @returns payload, if decrypted successfully.
      */
-    private decryptMessage(theirDeviceIdentityKey: string, message: IMessage): Promise<string> {
+    private decryptMessage(
+        theirDeviceIdentityKey: string,
+        message: EncryptedMessageEnvelope,
+    ): Promise<string> {
         // This is a wrapper that serialises decryptions of prekey messages, because
         // otherwise we race between deciding we have no active sessions for the message
         // and creating a new one, which we can only do once because it removes the OTK.
@@ -277,7 +328,7 @@ export class OlmDecryption extends DecryptionAlgorithm {
 
     private async reallyDecryptMessage(
         theirDeviceIdentityKey: string,
-        message: IMessage,
+        message: EncryptedMessageEnvelope,
     ): Promise<string> {
         const sessionIds = await this.olmDevice.getSessionIdsForDevice(theirDeviceIdentityKey)
         if (message.type === undefined) {

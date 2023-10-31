@@ -77,7 +77,6 @@ describe('casablanca', () => {
         await bob.sendMessage(channelId, 'Hello, world from Bob!')
 
         log("Bob sent a message, checking that it's received")
-        await setTimeout(1000)
         log(bob.casablancaClient?.stream(channelId.networkId)?.view)
         await waitFor(async () => {
             const event = await bob.getLatestEvent<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
@@ -131,6 +130,7 @@ describe('casablanca', () => {
             expect(encryptedEvent).toBeDefined()
             expect(encryptedEvent?.fallbackContent).toContain('m.room.encrypted')
         })
+        await setTimeout(10)
         await waitFor(async () => {
             const event = await alice.getLatestEvent<RoomMessageEvent>(
                 channelId,

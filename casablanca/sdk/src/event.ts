@@ -69,6 +69,16 @@ export function isToDevicePlainMessage(content: any): content is IToDeviceConten
     )
 }
 
+export function isToDevicePlainMessagePayload(
+    content: any,
+): content is PlainMessage<ToDeviceMessage> {
+    return (
+        'payload' in content &&
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        (content.payload.case === 'request' || content.payload.case === 'response')
+    )
+}
+
 export function isUserPayload_ToDevicePlainMessage(
     content: any,
 ): content is PlainMessage<UserPayload_ToDevice>['message'] {
@@ -168,8 +178,6 @@ export interface IDecryptOptions {
     emitter?: TypedEmitter<RiverEvents>
     // True if this is a retry (enables more logging)
     isRetry?: boolean
-    // whether the message should be re-decrypted if it was previously successfully decrypted with an untrusted key
-    forceRedecryptIfUntrusted?: boolean
 }
 
 interface StreamEventPayload {
@@ -290,14 +298,6 @@ export class RiverEvent {
      * The curve25519 key of the sender of this event.
      */
     public senderCurve25519Key: string | undefined = undefined
-    /**
-     * donotuse key the sender of this event or creator claims to own.
-     *
-     * Note jterzis 07/19/23: The ed25519 signing key is deprecated and should not be used.
-     * Instead TDK will in the future sign the curve25519 to establish chain of trust to identity.
-     * See: https://linear.app/hnt-labs/issue/HNT-1767/tdk-implementation
-     */
-    public claimedDoNotUseKey: string | undefined = undefined
 
     constructor(
         public event: Partial<IEvent> = {},
@@ -502,14 +502,11 @@ export class RiverEvent {
      * @param senderCurve25519Key - curve25519 key to record for the
      *   sender of this event.
      *
-     * @param claimedDoNotUseKey - claimed ed25519 key to record for the
-     *   sender if this event.
      */
     public makeEncrypted(
         cryptoType: RiverEventType,
         cryptoContent: IEncryptedContent,
         senderCurve25519Key: string,
-        claimedDoNotUseKey: string,
     ): void {
         // keep the plain-text data for 'view source'
         this.clearEvent = {
@@ -530,11 +527,6 @@ export class RiverEvent {
         }
 
         this.senderCurve25519Key = senderCurve25519Key
-        this.claimedDoNotUseKey = claimedDoNotUseKey
-    }
-
-    public getClaimedDoNotUseKey(): string | undefined {
-        return this.claimedDoNotUseKey
     }
 
     public isDecryptionFailure(): boolean {
@@ -566,11 +558,10 @@ export class RiverEvent {
 
     public async attemptDecryption(crypto: Crypto, options: IDecryptOptions = {}): Promise<void> {
         const alreadyDecrypted = this.clearEvent && !this.isDecryptionFailure()
-        const forceRedecrypt = options.forceRedecryptIfUntrusted
         if (options?.emit !== false && options.emitter) {
             this.setEmitter(options.emitter)
         }
-        if (alreadyDecrypted && !forceRedecrypt) {
+        if (alreadyDecrypted) {
             // maybe we should throw an error here, but for now just return
             log('attemptDecryption called on already decrypted event')
             return Promise.resolve()
@@ -713,7 +704,6 @@ export class RiverEvent {
     public setClearData(decryptionResult: IEventDecryptionResult): void {
         this.clearEvent = decryptionResult.clearEvent
         this.senderCurve25519Key = decryptionResult.senderCurve25519Key
-        this.claimedDoNotUseKey = decryptionResult.claimedDoNotUseKey
     }
 
     public setEmitter(emitter: TypedEmitter<RiverEvents>): void {

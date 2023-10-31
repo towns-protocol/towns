@@ -52,10 +52,7 @@ export class Backend implements CryptoStore {
     public async deleteAllData(): Promise<void> {
         throw Error('This is not implemented, call IDBFactory::deleteDatabase(dbName) instead.')
     }
-    public deleteInboundGroupSessions(
-        _senderCurve25519Key: string,
-        _sessionId: string,
-    ): Promise<void> {
+    public deleteInboundGroupSessions(_streamId: string, _sessionId: string): Promise<void> {
         throw Error('This is not implemented.')
     }
 
@@ -564,7 +561,7 @@ export class Backend implements CryptoStore {
     // Inbound group sessions
 
     public getEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         txn: IDBTransaction,
         func: (
@@ -575,7 +572,7 @@ export class Backend implements CryptoStore {
         let session: InboundGroupSessionData | null | boolean = false
         let withheld: IWithheld | null | boolean = false
         const objectStore = txn.objectStore('inbound_group_sessions')
-        const getReq = objectStore.get([senderCurve25519Key, sessionId])
+        const getReq = objectStore.get([streamId, sessionId])
         getReq.onsuccess = function (): void {
             try {
                 if (getReq.result) {
@@ -592,7 +589,7 @@ export class Backend implements CryptoStore {
         }
 
         const withheldObjectStore = txn.objectStore('inbound_group_sessions_withheld')
-        const withheldGetReq = withheldObjectStore.get([senderCurve25519Key, sessionId])
+        const withheldGetReq = withheldObjectStore.get([streamId, sessionId])
         withheldGetReq.onsuccess = function (): void {
             try {
                 if (withheldGetReq.result) {
@@ -620,7 +617,7 @@ export class Backend implements CryptoStore {
             if (cursor) {
                 try {
                     func({
-                        senderKey: cursor.value.senderCurve25519Key,
+                        streamId: cursor.value.streamId,
                         sessionId: cursor.value.sessionId,
                         sessionData: cursor.value.session,
                     })
@@ -639,14 +636,14 @@ export class Backend implements CryptoStore {
     }
 
     public addEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
         txn: IDBTransaction,
     ): void {
         const objectStore = txn.objectStore('inbound_group_sessions')
         const addReq = objectStore.add({
-            senderCurve25519Key,
+            streamId,
             sessionId,
             session: sessionData,
         })
@@ -656,12 +653,7 @@ export class Backend implements CryptoStore {
                 ev.stopPropagation()
                 // ...and this stops it from aborting the transaction
                 ev.preventDefault()
-                log(
-                    'Ignoring duplicate inbound group session: ' +
-                        senderCurve25519Key +
-                        ' / ' +
-                        sessionId,
-                )
+                log('Ignoring duplicate inbound group session: ' + streamId + ' / ' + sessionId)
             } else {
                 abortWithException(
                     txn,
@@ -672,28 +664,28 @@ export class Backend implements CryptoStore {
     }
 
     public storeEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
         txn: IDBTransaction,
     ): void {
         const objectStore = txn.objectStore('inbound_group_sessions')
         objectStore.put({
-            senderCurve25519Key,
+            streamId,
             sessionId,
             session: sessionData,
         })
     }
 
     public storeEndToEndInboundGroupSessionWithheld(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: IWithheld,
         txn: IDBTransaction,
     ): void {
         const objectStore = txn.objectStore('inbound_group_sessions_withheld')
         objectStore.put({
-            senderCurve25519Key,
+            streamId,
             sessionId,
             session: sessionData,
         })
@@ -720,12 +712,12 @@ export class Backend implements CryptoStore {
     }
 
     public storeEndToEndRoom(
-        channelId: string,
+        streamId: string,
         roomInfo: IRoomEncryption,
         txn: IDBTransaction,
     ): void {
         const objectStore = txn.objectStore('rooms')
-        objectStore.put(roomInfo, channelId)
+        objectStore.put(roomInfo, streamId)
     }
 
     public getEndToEndRooms(
@@ -773,7 +765,7 @@ export class Backend implements CryptoStore {
                     const sessionGetReq = sessionStore.get(cursor.key)
                     sessionGetReq.onsuccess = function (): void {
                         sessions.push({
-                            senderKey: sessionGetReq.result.senderCurve25519Key,
+                            streamId: sessionGetReq.result.streamId,
                             sessionId: sessionGetReq.result.sessionId,
                             sessionData: sessionGetReq.result.session,
                         })
@@ -809,7 +801,7 @@ export class Backend implements CryptoStore {
         await Promise.all(
             sessions.map((session) => {
                 return new Promise((resolve, reject) => {
-                    const req = objectStore.delete([session.senderKey, session.sessionId])
+                    const req = objectStore.delete([session.streamId, session.sessionId])
                     req.onsuccess = resolve
                     req.onerror = reject
                 })
@@ -829,7 +821,7 @@ export class Backend implements CryptoStore {
             sessions.map((session) => {
                 return new Promise((resolve, reject) => {
                     const req = objectStore.put({
-                        senderCurve25519Key: session.senderKey,
+                        streamId: session.streamId,
                         sessionId: session.sessionId,
                     })
                     req.onsuccess = resolve
@@ -840,8 +832,7 @@ export class Backend implements CryptoStore {
     }
 
     public addSharedHistoryInboundGroupSession(
-        channelId: string,
-        senderKey: string,
+        streamId: string,
         sessionId: string,
         txn?: IDBTransaction,
     ): void {
@@ -849,23 +840,23 @@ export class Backend implements CryptoStore {
             txn = this.db.transaction('shared_history_inbound_group_sessions', 'readwrite')
         }
         const objectStore = txn.objectStore('shared_history_inbound_group_sessions')
-        const req = objectStore.get([channelId])
+        const req = objectStore.get([streamId])
         req.onsuccess = (): void => {
             const { sessions } = req.result || { sessions: [] }
-            sessions.push([senderKey, sessionId])
-            objectStore.put({ channelId, sessions })
+            sessions.push([streamId, sessionId])
+            objectStore.put({ streamId, sessions })
         }
     }
 
     public getSharedHistoryInboundGroupSessions(
-        channelId: string,
+        streamId: string,
         txn?: IDBTransaction,
-    ): Promise<[senderKey: string, sessionId: string][]> {
+    ): Promise<[streamId: string, sessionId: string][]> {
         if (!txn) {
             txn = this.db.transaction('shared_history_inbound_group_sessions', 'readonly')
         }
         const objectStore = txn.objectStore('shared_history_inbound_group_sessions')
-        const req = objectStore.get([channelId])
+        const req = objectStore.get([streamId])
         return new Promise((resolve, reject) => {
             req.onsuccess = (): void => {
                 const { sessions } = req.result || { sessions: [] }
@@ -928,7 +919,7 @@ const DB_MIGRATIONS: DbMigration[] = [
     },
     (db): void => {
         db.createObjectStore('inbound_group_sessions', {
-            keyPath: ['senderCurve25519Key', 'sessionId'],
+            keyPath: ['streamId', 'sessionId'],
         })
     },
     (db): void => {
@@ -939,12 +930,12 @@ const DB_MIGRATIONS: DbMigration[] = [
     },
     (db): void => {
         db.createObjectStore('sessions_needing_backup', {
-            keyPath: ['senderCurve25519Key', 'sessionId'],
+            keyPath: ['streamId', 'sessionId'],
         })
     },
     (db): void => {
         db.createObjectStore('inbound_group_sessions_withheld', {
-            keyPath: ['senderCurve25519Key', 'sessionId'],
+            keyPath: ['streamId', 'sessionId'],
         })
     },
     (db): void => {
@@ -959,12 +950,12 @@ const DB_MIGRATIONS: DbMigration[] = [
     },
     (db): void => {
         db.createObjectStore('shared_history_inbound_group_sessions', {
-            keyPath: ['channelId'],
+            keyPath: ['streamId'],
         })
     },
     (db): void => {
         db.createObjectStore('parked_shared_history', {
-            keyPath: ['channelId'],
+            keyPath: ['streamId'],
         })
     },
     // Expand as needed.

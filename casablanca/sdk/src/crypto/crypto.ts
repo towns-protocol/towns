@@ -6,7 +6,7 @@ import { assertBytes } from 'ethereum-cryptography/utils'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 import { check } from '../check'
-import { RiverEvent, IClearEvent, EncryptedEventStreamTypes, RiverEventType } from '../event'
+import { RiverEvent, IClearEvent } from '../event'
 import { Client } from '../client'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -17,7 +17,6 @@ import {
     ensureOlmSessionsForDevices,
     IOlmSessionResult,
     IOlmEncryptedContent,
-    IMegolmEncryptedContent,
 } from './olmLib'
 import { OlmMegolmDelegate } from '@river/mecholm'
 import { DeviceInfo, ISignatures, ToDeviceBatch } from './deviceInfo'
@@ -26,8 +25,11 @@ import {
     ChannelMessage,
     EncryptedData,
     EncryptedDeviceData,
+    EncryptedMessageEnvelope,
     Err,
     MegolmSession,
+    OlmMessage,
+    ToDeviceMessage,
     ToDeviceOp,
     UserPayload_ToDevice,
 } from '@river/proto'
@@ -36,17 +38,9 @@ import { bin_fromHexString } from '../binary'
 import { DeviceList, IOlmDevice } from './deviceList'
 import { ethers } from 'ethers'
 import { CryptoStore } from './store/base'
-import {
-    DecryptionAlgorithm,
-    EncryptionAlgorithm,
-    DecryptionError,
-    DECRYPTION_CLASSES,
-    ENCRYPTION_CLASSES,
-    registerAlgorithm,
-} from './algorithms/base'
 import { OlmDecryption, OlmEncryption } from './algorithms/olm'
 import { MegolmDecryption, MegolmEncryption } from './algorithms/megolm'
-import { PlainMessage, toPlainMessage } from '@bufbuild/protobuf'
+import { PlainMessage } from '@bufbuild/protobuf'
 import { ClearContent, RiverEventV2 } from '../eventV2'
 
 const log = dlog('csb:crypto')
@@ -192,40 +186,42 @@ export interface IEventDecryptionResult {
      */
     clearEvent: IClearEvent
     /**
-     * List of curve25519 keys involved in telling us about the senderCurve25519Key and claimedDoNotUseKey.
-     */
-    forwardingCurve25519KeyChain?: string[]
-    /**
      * Key owned by the sender of this event.
      */
     senderCurve25519Key?: string
-    /**
-     * signing key claimed by the sender of this event.
-     */
-    claimedDoNotUseKey?: string
     /**
      * The sender doesn't authorize the unverified devices to decrypt his messages
      */
     encryptedDisabledForUnverifiedDevices?: boolean
 }
 
-export interface IEncryptionUserTarget {
+export interface IEventOlmDecryptionResult {
+    /**
+     * The plaintext payload for the event (typically containing <tt>type</tt> and <tt>content</tt> fields).
+     */
+    clearEvent: OlmMessage
+    /**
+     * Key owned by the sender of this event.
+     */
+    senderCurve25519Key?: string
+}
+
+export interface IEncryptionUserRecipient {
     userIds: string[]
 }
 
-export interface IEncryptionStreamTarget {
-    channelId: string
+export interface IEncryptionStreamRecipient {
+    streamId: string
 }
 
 export type GroupEncryptionInput = {
-    content: PlainMessage<ChannelMessage>['payload']
-    target: IEncryptionStreamTarget
+    content: ChannelMessage
+    recipient: IEncryptionStreamRecipient
 }
 
-export type EncryptionTarget = IEncryptionUserTarget | IEncryptionStreamTarget
-
-function isUserTarget(target: EncryptionTarget): target is IEncryptionUserTarget {
-    return 'userIds' in target
+export type EncryptionInput = {
+    content: ToDeviceMessage
+    recipient: IEncryptionUserRecipient
 }
 
 interface IRoomKey {
@@ -238,7 +234,7 @@ interface IRoomKey {
  */
 export interface IRoomKeyRequestBody extends IRoomKey {
     session_id: string
-    sender_key: string
+    stream_id: string
 }
 
 export interface IRoomKeyRequestRecipient {
@@ -294,13 +290,16 @@ export interface CryptoBackend {
     stop(): void
 
     /**
-     * @param event -  event to be sent
-     * @param target - encryption target (either userIds or roomId)
+     * @param event -  event to be encrypted with Olm
+     * @param target - userIds to encrypt messages for
      *
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    encryptEvent(event: RiverEvent, target: EncryptionTarget): Promise<void>
+    encryptEvent(
+        event: PlainMessage<ToDeviceMessage>,
+        recipients: IEncryptionUserRecipient,
+    ): Promise<PlainMessage<EncryptedDeviceData>>
 
     /**
      * @param event -  event to be sent
@@ -326,6 +325,17 @@ export interface CryptoBackend {
      * Rejects with an error if there is a problem decrypting the event.
      */
     decryptEventV2(event: RiverEventV2): Promise<ClearContent>
+
+    /**
+     * Decrypt a received event using Olm
+     *
+     * @returns a promise which resolves once we have finished decrypting.
+     * Rejects with an error if there is a problem decrypting the event.
+     */
+    decryptEventWithOlm(
+        event: UserPayload_ToDevice,
+        senderUserId: string,
+    ): Promise<IEventOlmDecryptionResult>
 }
 
 interface ISignableObject {
@@ -344,8 +354,10 @@ export class Crypto
     public readonly olmDevice: OlmDevice
     public readonly deviceList: DeviceList
 
-    public readonly streamEncryptors = new Map<string, EncryptionAlgorithm>()
-    public readonly decryptors = new Map<string, DecryptionAlgorithm>()
+    public readonly olmEncryption: OlmEncryption
+    public readonly megolmEncryption: MegolmEncryption
+    public readonly olmDecryption: OlmDecryption
+    public readonly megolmDecryption: MegolmDecryption
 
     public globalBlacklistUnverifiedDevices = false
     public globalErrorOnUnknownDevices = true
@@ -370,18 +382,8 @@ export class Crypto
         })
         this.olmDevice = new OlmDevice(cryptoStore, this.olmDelegate)
         this.deviceList = new DeviceList(this.client, cryptoStore, this.olmDevice)
-        registerAlgorithm(OLM_ALGORITHM, OlmEncryption, OlmDecryption)
-        registerAlgorithm(MEGOLM_ALGORITHM, MegolmEncryption, MegolmDecryption)
         this.supportedAlgorithms = [OLM_ALGORITHM, MEGOLM_ALGORITHM]
-        const olmAlgo = ENCRYPTION_CLASSES.get(OLM_ALGORITHM)
-        const megolmAlgo = ENCRYPTION_CLASSES.get(MEGOLM_ALGORITHM)
-        if (!olmAlgo) {
-            throw new Error('olm algorithm not supported for encryption')
-        }
-        if (!megolmAlgo) {
-            throw new Error('megolm algorithm not supported for encryption')
-        }
-        const alg: EncryptionAlgorithm = new olmAlgo({
+        this.olmEncryption = new OlmEncryption({
             userId: this.userId,
             deviceId: this.deviceId,
             crypto: this,
@@ -389,7 +391,13 @@ export class Crypto
             baseApis: this.client,
             config: { algorithm: OLM_ALGORITHM },
         })
-        const megolmAlg: EncryptionAlgorithm = new megolmAlgo({
+        this.olmDecryption = new OlmDecryption({
+            userId: this.userId,
+            crypto: this,
+            olmDevice: this.olmDevice,
+            baseApis: this.client,
+        })
+        this.megolmEncryption = new MegolmEncryption({
             userId: this.userId,
             deviceId: this.deviceId,
             crypto: this,
@@ -397,11 +405,12 @@ export class Crypto
             baseApis: this.client,
             config: { algorithm: OLM_ALGORITHM },
         })
-        this.streamEncryptors.set(EncryptedEventStreamTypes.Channel, megolmAlg)
-        this.streamEncryptors.set(EncryptedEventStreamTypes.ToDevice, alg)
-        this.streamEncryptors.set(EncryptedEventStreamTypes.Uknown, alg)
-        this.streamEncryptors.set(MEGOLM_ALGORITHM, megolmAlg)
-        this.streamEncryptors.set(OLM_ALGORITHM, alg)
+        this.megolmDecryption = new MegolmDecryption({
+            userId: this.userId,
+            crypto: this,
+            olmDevice: this.olmDevice,
+            baseApis: this.client,
+        })
 
         // todo:: implement
         // outgoingRoomKeyRequestManager
@@ -510,11 +519,11 @@ export class Crypto
     }
 
     /**
-     * Encrypt an event according to the configuration of the stream.
+     * Encrypt an event using Olm.
      *
      * @param event -  event to be sent
      *
-     * @param userIds - destination userId devices to encrypt messages for
+     * @param target - destination userId devices to encrypt messages for
      * jterzis: 06/14/23: if 1 userId, sync all devices for that user and
      * and encrypt contents for those devices. If multiple userIds, sync
      * each user's devices and encrypt contents for those devices. Assumes
@@ -524,35 +533,11 @@ export class Crypto
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    public async encryptEvent(event: RiverEvent, target: EncryptionTarget): Promise<void> {
-        const streamType = event.getStreamType() ?? EncryptedEventStreamTypes.ToDevice
-        const alg = this.streamEncryptors.get(streamType)
-        if (!alg) {
-            throw new Error(
-                'Event for stream type ' +
-                    streamType +
-                    ' was previously configured to use encryption, but is ' +
-                    'no longer.',
-            )
-        }
-
-        // todo: wait for all the room devices to be loaded
-        // await this.trackRoomDevicesImpl(room)
-        const content = event.getTypedContent()
-        if (!content) {
-            throw new Error('Event has no content')
-        }
-        let encryptionTarget: string[] | string
-        if (isUserTarget(target)) {
-            encryptionTarget = target.userIds
-        } else {
-            encryptionTarget = target.channelId
-        }
-        const encryptedContent = await alg.encryptMessage(
-            encryptionTarget,
-            event.getType() ?? '',
-            content.content,
-        )
+    public async encryptEvent(
+        event: ToDeviceMessage,
+        recipient: IEncryptionUserRecipient,
+    ): Promise<EncryptedDeviceData> {
+        const encryptedContent = await this.olmEncryption.encryptMessage(recipient.userIds, event)
 
         if (
             this.olmDevice.deviceCurve25519Key === null ||
@@ -560,12 +545,11 @@ export class Crypto
         ) {
             throw new Error('device keys not initialized, cannot encrypt event')
         }
-        event.makeEncrypted(
-            RiverEventType.Encrypted,
-            encryptedContent,
-            this.olmDevice.deviceCurve25519Key,
-            this.olmDevice.deviceDoNotUseKey,
-        )
+        const encryptedDeviceData = new EncryptedDeviceData({
+            ciphertext: encryptedContent.ciphertext,
+            algorithm: encryptedContent.algorithm,
+        })
+        return encryptedDeviceData
     }
 
     /**
@@ -583,14 +567,8 @@ export class Crypto
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    public async encryptEventV2(input: GroupEncryptionInput): Promise<PlainMessage<EncryptedData>> {
-        const alg = this.streamEncryptors.get(MEGOLM_ALGORITHM)
-        if (!alg) {
-            throw new Error(
-                'Event was previously configured to use megolm encryption, but is no longer.',
-            )
-        }
-
+    public async encryptEventV2(input: GroupEncryptionInput): Promise<EncryptedData> {
+        const alg = this.megolmEncryption
         const content = input.content
         if (!content) {
             throw new Error('Event has no content')
@@ -600,11 +578,7 @@ export class Crypto
             throw new Error('device keys not initialized, cannot encrypt event')
         }
 
-        const encrypted = (await alg.encryptMessage(
-            input.target.channelId,
-            '',
-            content,
-        )) as IMegolmEncryptedContent
+        const encrypted = await alg.encryptMessage(input.recipient.streamId, content)
 
         const encryptedData = new EncryptedData({
             text: encrypted.ciphertext,
@@ -614,7 +588,21 @@ export class Crypto
             sessionId: encrypted.session_id,
         })
 
-        return toPlainMessage(encryptedData)
+        return encryptedData
+    }
+
+    /**
+     * Decrypt a received event using Olm
+     */
+    public async decryptEventWithOlm(
+        event: UserPayload_ToDevice,
+        senderUserId: string,
+    ): Promise<IEventOlmDecryptionResult> {
+        if (!event?.message?.algorithm) {
+            throw new Error('Event has no algorithm specified')
+        }
+        const alg = this.olmDecryption
+        return alg.decryptEventWithOlm(event, senderUserId)
     }
 
     /**
@@ -630,8 +618,13 @@ export class Crypto
             if (!content?.algorithm) {
                 throw new Error('Event has no algorithm specified')
             }
-            const alg = this.getDecryptor(content.algorithm)
-            return alg.decryptEvent(event)
+            // todo jterzis: remove this once we switch to RiverEventV2
+            // this is temp hack to allow support for RiverEvent
+            if (content.algorithm === OLM_ALGORITHM) {
+                return this.olmDecryption.decryptEvent(event)
+            } else {
+                return this.megolmDecryption.decryptEvent(event)
+            }
         }
     }
 
@@ -639,42 +632,8 @@ export class Crypto
      * Decrypt a received event using Megolm
      */
     public async decryptEventV2(event: RiverEventV2): Promise<ClearContent> {
-        const alg = this.getDecryptor(MEGOLM_ALGORITHM)
+        const alg = this.megolmDecryption
         return alg.decryptEventV2(event)
-    }
-
-    /**
-     * Get a decryptor for a given algorithm.
-     *
-     * If we already have a decryptor for a given algorithm for this device, return
-     * it. Otherwise try to instantiate it.
-     *
-     */
-    public getDecryptor(algorithm: string): DecryptionAlgorithm {
-        let alg: DecryptionAlgorithm | undefined
-        alg = this.decryptors.get(algorithm)
-        if (alg) {
-            return alg
-        }
-
-        const AlgClass = DECRYPTION_CLASSES.get(algorithm)
-        if (!AlgClass) {
-            throw new DecryptionError(
-                'UNKNOWN_ENCRYPTION_ALGORITHM',
-                'Unknown encryption algorithm "' + algorithm + '".',
-            )
-        }
-        alg = new AlgClass({
-            userId: this.userId,
-            crypto: this,
-            olmDevice: this.olmDevice,
-            baseApis: this.client,
-        })
-
-        if (this.decryptors) {
-            this.decryptors.set(algorithm, alg)
-        }
-        return alg
     }
 
     /**
@@ -741,26 +700,23 @@ export class Crypto
      */
     public async encryptAndSendToDevices(
         userDeviceInfoArr: IOlmDevice[],
-        payload: object,
-        type: ToDeviceOp = ToDeviceOp.TDO_UNSPECIFIED,
+        payload: ToDeviceMessage,
     ): Promise<void> {
         const toDeviceBatch: ToDeviceBatch = {
             batch: [],
         }
-
-        // todo: standardize this payload envelope across all callers of encryptMessageForDevice
-        const payloadFields = { type: type, content: payload }
 
         try {
             // encrypt payload with Olm for each device individually
             await Promise.all(
                 userDeviceInfoArr.map(async ({ userId, deviceInfo }) => {
                     const deviceId = deviceInfo.deviceId
+                    const ciphertextRecord: Record<string, EncryptedMessageEnvelope> = {}
                     const encryptedContent: IOlmEncryptedContent = {
                         algorithm: OLM_ALGORITHM,
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         sender_key: this.olmDevice.deviceCurve25519Key!,
-                        ciphertext: {} as PlainMessage<EncryptedDeviceData>['ciphertext'],
+                        ciphertext: ciphertextRecord,
                     }
 
                     toDeviceBatch.batch.push({
@@ -776,10 +732,9 @@ export class Crypto
                         new Map([[userId, [deviceInfo]]]),
                     )
 
+                    const payloadFields = new OlmMessage({ content: payload })
                     await encryptMessageForDevice(
                         encryptedContent.ciphertext,
-                        this.userId,
-                        this.deviceId,
                         this.olmDevice,
                         userId,
                         deviceInfo,
@@ -793,7 +748,13 @@ export class Crypto
             // we couldn't encrypt for.
             toDeviceBatch.batch = toDeviceBatch.batch.filter((msg) => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                if (Object.keys(msg?.payload?.ciphertext as object).length > 0) {
+                if (!msg.payload?.ciphertext) {
+                    log(
+                        `encryptAndSendToDevices: no ciphertext for device ${msg.userId}, ${msg.deviceId}`,
+                    )
+                    return false
+                }
+                if (Object.keys(msg.payload.ciphertext).length > 0) {
                     return true
                 } else {
                     log(
@@ -804,17 +765,32 @@ export class Crypto
             })
 
             try {
+                let type: ToDeviceOp
+                switch (payload.payload.case) {
+                    case 'request':
+                        type = ToDeviceOp.TDO_KEY_REQUEST
+                        break
+                    case 'response':
+                        type = ToDeviceOp.TDO_KEY_RESPONSE
+                        break
+                    default:
+                        throw new Error('Unknown payload type')
+                }
                 await Promise.all(
                     toDeviceBatch.batch.map(async (msg) => {
+                        if (!msg.payload?.ciphertext) {
+                            log(
+                                `encryptAndSendToDevices: no ciphertext for device ${msg.userId}, ${msg.deviceId}`,
+                            )
+                            throw new Error('no ciphertext')
+                        }
                         await this.client.sendToDevicesMessage(
                             msg.userId,
-                            {
+                            new EncryptedDeviceData({
                                 algorithm: OLM_ALGORITHM,
-                                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                                ciphertext: msg?.payload?.ciphertext,
-                            } as PlainMessage<UserPayload_ToDevice>['message'],
+                                ciphertext: msg.payload.ciphertext,
+                            }),
                             type,
-                            false,
                         )
                     }),
                 )
@@ -829,12 +805,13 @@ export class Crypto
     }
 
     /**
-     * Import a list of room keys previously exported by exportRoomKeys
+     * Import a list of Megolm room keys previously exported by exportRoomKeys
      *
      * @param keys - a list of session export objects
      * @returns a promise which resolves once the keys have been imported
      */
     public async importRoomKeys(
+        streamId: string,
         keys: MegolmSession[],
         opts: IImportRoomKeysOpts = {},
     ): Promise<void> {
@@ -853,7 +830,7 @@ export class Crypto
 
         await Promise.all(
             keys.map(async (key) => {
-                if (!key.channelId || !key.algorithm) {
+                if (!streamId || !key.algorithm) {
                     dlog('ignoring room key entry with missing fields')
                     failures++
                     if (opts.progressCallback) {
@@ -862,9 +839,9 @@ export class Crypto
                     return null
                 }
 
-                const alg = this.getDecryptor(key.algorithm)
+                const alg = this.megolmDecryption
                 try {
-                    await alg.importRoomKey(key, opts)
+                    await alg.importRoomKey(streamId, key)
                 } catch {
                     dlog(`failed to import key`)
                 }

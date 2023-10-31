@@ -1,5 +1,4 @@
 import { dlog } from './dlog'
-import { PlainMessage } from '@bufbuild/protobuf'
 import { ChannelMessage, EncryptedData } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { ParsedEvent } from './types'
@@ -11,11 +10,11 @@ interface IEncryptedEvent {
     event_id: string // a unique identifer of event (usually hashStr from StreamEvent)
     stream_id: string
     channel_id?: string
-    content: PlainMessage<EncryptedData>
+    content: EncryptedData
 }
 
 export type ClearContent = {
-    content: PlainMessage<ChannelMessage>['payload'] | undefined
+    content: ChannelMessage | undefined
     type?: string // decrypted content type if available (i.e. channelMessage)
     error?: Partial<ErrorContent>
 }
@@ -247,7 +246,7 @@ export class RiverEventV2 {
         this.emitter = emitter
     }
 
-    public getWireContent(): PlainMessage<EncryptedData> {
+    public getWireContent(): EncryptedData {
         return this.encryptedEvent.content
     }
 

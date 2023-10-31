@@ -14,7 +14,13 @@ import { dlog } from '../dlog'
 import { OlmDevice } from './olmDevice'
 import { DeviceInfo, ISignatures } from './deviceInfo'
 import { Client, FallbackKeyResponse, IDownloadKeyRequest, IDownloadKeyResponse } from '../client'
-import { EncryptedData, EncryptedDeviceData, FallbackKeys, Key } from '@river/proto'
+import {
+    EncryptedData,
+    EncryptedMessageEnvelope,
+    FallbackKeys,
+    Key,
+    OlmMessage,
+} from '@river/proto'
 import { IFallbackKey } from '../types'
 import { RiverEvent, RiverEventType } from '../event'
 import { PlainMessage } from '@bufbuild/protobuf'
@@ -50,8 +56,7 @@ export type OlmSessionsExistingByUsers = Map<string, Map<string, IOlmSessionResu
 export interface IOlmEncryptedContent {
     algorithm: typeof OLM_ALGORITHM
     sender_key: string
-    ciphertext: PlainMessage<EncryptedDeviceData>['ciphertext']
-    //ciphertext: Record<string, IMessage>
+    ciphertext: Record<string, EncryptedMessageEnvelope>
 }
 
 export interface IMegolmEncryptedContent {
@@ -392,13 +397,11 @@ export async function verifySignature(
  *    has been encrypted into `resultsObject`
  */
 export async function encryptMessageForDevice(
-    resultsObject: PlainMessage<EncryptedDeviceData>['ciphertext'],
-    ourUserId: string,
-    ourDeviceId: string | undefined,
+    resultsObject: Record<string, EncryptedMessageEnvelope>,
     olmDevice: OlmDevice,
     recipientUserId: string,
     recipientDevice: DeviceInfo,
-    payloadFields: Record<string, any>,
+    payloadFields: OlmMessage,
 ): Promise<void> {
     const deviceKey = recipientDevice.getIdentityKey()
     const sessionId = await olmDevice.getSessionIdForDevice(deviceKey)
@@ -409,7 +412,7 @@ export async function encryptMessageForDevice(
             `[olmlib.encryptMessageForDevice] Unable to find Olm session for device ` +
                 `${recipientUserId}:${recipientDevice.deviceId}`,
         )
-        return
+        throw new Error(`Olm session for device ${deviceKey} not found`)
     }
 
     log(
@@ -417,31 +420,9 @@ export async function encryptMessageForDevice(
             `${recipientUserId}:${recipientDevice.deviceId}`,
     )
 
-    const payload = {
-        sender: ourUserId,
-        sender_device: ourDeviceId,
-
-        // Include the Ed25519 key so that the recipient knows what
-        // device this message came from.
-        // We don't need to include the curve25519 key since the
-        // recipient will already know this from the olm headers.
-        // When combined with the device keys retrieved from the
-        // homeserver signed by the ed25519 key this proves that
-        // the curve25519 key and the ed25519 key are owned by
-        // the same device.
-        keys: {
-            donotuse: olmDevice.deviceDoNotUseKey,
-        },
-
-        // include the recipient device details in the payload,
-        // to avoid unknown key attacks, per
-        // https://github.com/vector-im/vector-web/issues/2483
-        recipient: recipientUserId,
-        recipient_keys: {
-            donotuse: recipientDevice.getFingerprint(),
-        },
-        ...payloadFields,
-    }
+    const payload = new OlmMessage({
+        content: payloadFields.content,
+    })
 
     // TODO: technically, a bunch of that stuff only needs to be included for
     // pre-key messages: after that, both sides know exactly which devices are
@@ -451,7 +432,7 @@ export async function encryptMessageForDevice(
     resultsObject[deviceKey] = await olmDevice.encryptMessage(
         deviceKey,
         sessionId,
-        JSON.stringify(payload),
+        payload.toJsonString(),
     )
 }
 

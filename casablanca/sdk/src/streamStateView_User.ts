@@ -12,8 +12,6 @@ import {
 } from '@river/proto'
 import { logNever } from './check'
 import { StreamEvents } from './streamEvents'
-import { RiverEvent } from './event'
-import { userIdFromAddress } from './id'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 
 export class StreamStateView_User implements StreamStateView_IContent {
@@ -53,7 +51,7 @@ export class StreamStateView_User implements StreamStateView_IContent {
                 // memberships are handled in the snapshot
                 break
             case 'toDevice':
-                this.addToDeviceMessage(event, emitter)
+                this.addToDeviceMessage(event, payload, emitter)
                 break
             case undefined:
                 break
@@ -74,7 +72,7 @@ export class StreamStateView_User implements StreamStateView_IContent {
                 this.addUserPayload_userMembership(payload.content.value, emitter)
                 break
             case 'toDevice':
-                this.addToDeviceMessage(event, emitter)
+                this.addToDeviceMessage(event, payload, emitter)
                 break
             case undefined:
                 break
@@ -85,23 +83,13 @@ export class StreamStateView_User implements StreamStateView_IContent {
 
     private addToDeviceMessage(
         event: ParsedEvent,
+        payload: UserPayload,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
-        // todo jterzis: really we should be passing emitter to RiverEvent
-        // here but it causes a bug in the tests.
-        const riverEvent = new RiverEvent(
-            {
-                payload: {
-                    parsed_event: event.event.payload,
-                    creator_user_id: userIdFromAddress(event.event.creatorAddress),
-                    hash_str: event.hashStr,
-                    stream_id: this.streamId,
-                },
-            },
-            emitter,
-            event,
-        )
-        emitter?.emit('toDeviceMessage', this.streamId, riverEvent)
+        if (payload.content.value === undefined || payload.content.case !== 'toDevice') {
+            return
+        }
+        emitter?.emit('toDeviceMessage', this.streamId, payload.content.value, event.creatorUserId)
 
         // TODO: filter by deviceId and only store current deviceId's events
         this.toDeviceMessages.push(event)

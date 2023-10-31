@@ -183,11 +183,8 @@ export class IndexedDBCryptoStore implements CryptoStore {
         })
     }
 
-    public deleteInboundGroupSessions(
-        senderCurve25519Key: string,
-        sessionId: string,
-    ): Promise<void> {
-        return this.backend!.deleteInboundGroupSessions(senderCurve25519Key, sessionId)
+    public deleteInboundGroupSessions(streamId: string, sessionId: string): Promise<void> {
+        return this.backend!.deleteInboundGroupSessions(streamId, sessionId)
     }
 
     /**
@@ -362,14 +359,13 @@ export class IndexedDBCryptoStore implements CryptoStore {
     /**
      * Retrieve the end-to-end inbound group session for a given
      * server key and session ID
-     * @param senderCurve25519Key - The sender's curve 25519 key
      * @param sessionId - The ID of the session
      * @param txn - An active transaction. See doTxn().
      * @param func - Called with A map from sessionId
      *     to Base64 end-to-end session.
      */
     public getEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         txn: IDBTransaction,
         func: (
@@ -377,7 +373,7 @@ export class IndexedDBCryptoStore implements CryptoStore {
             groupSessionWithheld: IWithheld | null,
         ) => void,
     ): void {
-        this.backend!.getEndToEndInboundGroupSession(senderCurve25519Key, sessionId, txn, func)
+        this.backend!.getEndToEndInboundGroupSession(streamId, sessionId, txn, func)
     }
 
     /**
@@ -397,57 +393,45 @@ export class IndexedDBCryptoStore implements CryptoStore {
     /**
      * Adds an end-to-end inbound group session to the store.
      * If there already exists an inbound group session with the same
-     * senderCurve25519Key and sessionID, the session will not be added.
-     * @param senderCurve25519Key - The sender's curve 25519 key
+     * streamId and sessionID, the session will not be added.
      * @param sessionId - The ID of the session
      * @param sessionData - The session data structure
      * @param txn - An active transaction. See doTxn().
      */
     public addEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
         txn: IDBTransaction,
     ): void {
-        this.backend!.addEndToEndInboundGroupSession(
-            senderCurve25519Key,
-            sessionId,
-            sessionData,
-            txn,
-        )
+        this.backend!.addEndToEndInboundGroupSession(streamId, sessionId, sessionData, txn)
     }
 
     /**
      * Writes an end-to-end inbound group session to the store.
      * If there already exists an inbound group session with the same
-     * senderCurve25519Key and sessionID, it will be overwritten.
-     * @param senderCurve25519Key - The sender's curve 25519 key
+     * streamId and sessionID, it will be overwritten.
      * @param sessionId - The ID of the session
      * @param sessionData - The session data structure
      * @param txn - An active transaction. See doTxn().
      */
     public storeEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
         txn: IDBTransaction,
     ): void {
-        this.backend!.storeEndToEndInboundGroupSession(
-            senderCurve25519Key,
-            sessionId,
-            sessionData,
-            txn,
-        )
+        this.backend!.storeEndToEndInboundGroupSession(streamId, sessionId, sessionData, txn)
     }
 
     public storeEndToEndInboundGroupSessionWithheld(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: IWithheld,
         txn: IDBTransaction,
     ): void {
         this.backend!.storeEndToEndInboundGroupSessionWithheld(
-            senderCurve25519Key,
+            streamId,
             sessionId,
             sessionData,
             txn,
@@ -485,15 +469,15 @@ export class IndexedDBCryptoStore implements CryptoStore {
      * Store the end-to-end state for a room.
      */
     public storeEndToEndRoom(
-        channelId: string,
+        streamId: string,
         roomInfo: IRoomEncryption,
         txn: IDBTransaction,
     ): void {
-        this.backend!.storeEndToEndRoom(channelId, roomInfo, txn)
+        this.backend!.storeEndToEndRoom(streamId, roomInfo, txn)
     }
 
     /**
-     * Get an object of `channelId->roomInfo` for all e2e rooms in the store
+     * Get an object of `streamId->roomInfo` for all e2e rooms in the store
      */
     public getEndToEndRooms(
         txn: IDBTransaction,
@@ -536,22 +520,21 @@ export class IndexedDBCryptoStore implements CryptoStore {
      * Add a shared-history group session for a room.
      */
     public addSharedHistoryInboundGroupSession(
-        channelId: string,
-        senderKey: string,
+        streamId: string,
         sessionId: string,
         txn?: IDBTransaction,
     ): void {
-        this.backend!.addSharedHistoryInboundGroupSession(channelId, senderKey, sessionId, txn)
+        this.backend!.addSharedHistoryInboundGroupSession(streamId, sessionId, txn)
     }
 
     /**
      * Get the shared-history group session for a room.
      */
     public getSharedHistoryInboundGroupSessions(
-        channelId: string,
+        streamId: string,
         txn?: IDBTransaction,
-    ): Promise<[senderKey: string, sessionId: string][]> {
-        return this.backend!.getSharedHistoryInboundGroupSessions(channelId, txn)
+    ): Promise<[streamId: string, sessionId: string][]> {
+        return this.backend!.getSharedHistoryInboundGroupSessions(streamId, txn)
     }
 
     /**

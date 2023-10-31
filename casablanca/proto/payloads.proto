@@ -129,24 +129,19 @@ message FullyReadMarkers {
 // c) a key response
 message ToDeviceMessage {
     message KeyRequest {
-        string space_id = 1;
-        string channel_id = 2;
-        string algorithm = 3;
-        // sender's curve25519 device key
-        string sender_key = 4;
+        string stream_id = 1;
+        string algorithm = 2;
         // request session id
-        string session_id = 5;
-        optional string content = 6;
+        string session_id = 3;
         // known session ids
-        repeated string known_session_ids = 7;
+        repeated string known_session_ids = 4;
     }
 
     message KeyResponse {
-        string space_id = 1;
-        optional string channel_id = 2;
-        repeated MegolmSession sessions = 3;
-        KeyResponseKind kind = 4;
-        optional string content = 5;
+        /** Stream ID that sessions belong to */
+        string stream_id = 1;
+        repeated MegolmSession sessions = 2;
+        KeyResponseKind kind = 3;
     }
 
     oneof payload {
@@ -156,21 +151,23 @@ message ToDeviceMessage {
 
 }
 
+/** Olm encrypted messages are decoded into ToDeviceMessages.
+*
+*/
+message OlmMessage {
+        ToDeviceMessage content = 1;
+}
+
 /** Exported Megolm session data.
 */
 message MegolmSession {
-    /** Sender's Curve25519 device key. */
-    string sender_key = 1;
-    /** Space this session is used for */
-    string space_id = 4;
-    /** Channel this session is used for */
-    string channel_id = 5;
+    /** Stream id associated with session */
+    string stream_id = 1;
     /** Unique id for this session */
-    string session_id = 6;
+    string session_id = 2;
     /** Base64-encoded megolm session key data */
-    string session_key = 7;
-    optional string algorithm = 8;
-    optional string untrusted = 9;
+    string session_key = 3;
+    optional string algorithm = 4;
 }
 
 enum KeyResponseKind {

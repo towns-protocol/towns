@@ -111,126 +111,140 @@ export const make_SpacePayload_Inception = (
 export const make_ChannelMessage_Post_Content_Text = (
     body: string,
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[],
-): PlainMessage<ChannelMessage>['payload'] => {
+): ChannelMessage => {
     const mentionsPayload = mentions !== undefined ? mentions : []
-    return {
-        case: 'post',
-        value: {
-            content: {
-                case: 'text',
-                value: {
-                    body,
-                    mentions: mentionsPayload,
+    return new ChannelMessage({
+        payload: {
+            case: 'post',
+            value: {
+                content: {
+                    case: 'text',
+                    value: {
+                        body,
+                        mentions: mentionsPayload,
+                    },
                 },
             },
         },
-    }
+    })
 }
 
 export const make_ChannelMessage_Post_Content_Image = (
     title: string,
     info: PlainMessage<ChannelMessage_Post_Content_Image_Info>,
     thumbnail?: PlainMessage<ChannelMessage_Post_Content_Image_Info>,
-): PlainMessage<ChannelMessage>['payload'] => {
-    return {
-        case: 'post',
-        value: {
-            content: {
-                case: 'image',
-                value: {
-                    title,
-                    info,
-                    thumbnail,
+): ChannelMessage => {
+    return new ChannelMessage({
+        payload: {
+            case: 'post',
+            value: {
+                content: {
+                    case: 'image',
+                    value: {
+                        title,
+                        info,
+                        thumbnail,
+                    },
                 },
             },
         },
-    }
+    })
 }
 
 export const make_ChannelMessage_Post_Content_GM = (
     typeUrl: string,
     value?: Uint8Array,
-): PlainMessage<ChannelMessage>['payload'] => {
-    return {
-        case: 'post',
-        value: {
-            content: {
-                case: 'gm',
-                value: {
-                    typeUrl,
-                    value,
+): ChannelMessage => {
+    return new ChannelMessage({
+        payload: {
+            case: 'post',
+            value: {
+                content: {
+                    case: 'gm',
+                    value: {
+                        typeUrl,
+                        value,
+                    },
                 },
             },
         },
-    }
+    })
 }
 
 export const make_ChannelMessage_Reaction = (
     refEventId: string,
     reaction: string,
-): PlainMessage<ChannelMessage>['payload'] => {
-    return {
-        case: 'reaction',
-        value: {
-            refEventId,
-            reaction,
+): ChannelMessage => {
+    return new ChannelMessage({
+        payload: {
+            case: 'reaction',
+            value: {
+                refEventId,
+                reaction,
+            },
         },
-    }
+    })
 }
 
 export const make_ChannelMessage_Edit = (
     refEventId: string,
     post: PlainMessage<ChannelMessage_Post>,
-): PlainMessage<ChannelMessage>['payload'] => {
-    return {
-        case: 'edit',
-        value: {
-            refEventId,
-            post,
+): ChannelMessage => {
+    return new ChannelMessage({
+        payload: {
+            case: 'edit',
+            value: {
+                refEventId,
+                post,
+            },
         },
-    }
+    })
 }
 
 export const make_ChannelMessage_Redaction = (
     refEventId: string,
     reason?: string,
-): PlainMessage<ChannelMessage>['payload'] => {
-    return {
-        case: 'redaction',
-        value: {
-            refEventId,
-            reason,
+): ChannelMessage => {
+    return new ChannelMessage({
+        payload: {
+            case: 'redaction',
+            value: {
+                refEventId,
+                reason,
+            },
         },
-    }
+    })
 }
 
 export const make_ToDevice_KeyRequest = (input: {
-    spaceId: string
-    channelId: string
+    streamId: string
     algorithm: string
     senderKey: string
     sessionId: string
     content?: string
     knownSessionIds?: string[]
-}): PlainMessage<ToDeviceMessage>['payload'] => {
+}): PlainMessage<ToDeviceMessage> => {
     const { knownSessionIds: possibleKnownSessionIds, ...rest } = input
     const knownSessionIds = possibleKnownSessionIds ? possibleKnownSessionIds : []
     return {
-        case: 'request',
-        value: { ...rest, knownSessionIds: knownSessionIds },
+        payload: {
+            case: 'request',
+            value: { ...rest, knownSessionIds: knownSessionIds },
+        },
     }
 }
 
 export const make_ToDevice_KeyResponse = (input: {
-    spaceId: string
-    channelId: string
+    streamId: string
     sessions: PlainMessage<MegolmSession>[]
     kind: KeyResponseKind
     content?: string
-}): PlainMessage<ToDeviceMessage>['payload'] => {
+}): PlainMessage<ToDeviceMessage> => {
     return {
-        case: 'response',
-        value: { ...input },
+        payload: {
+            case: 'response',
+            value: { ...input },
+        },
     }
 }
 

@@ -8,9 +8,8 @@ import {
     makeStreamRpcClient,
     takeKeccakFingerprintInHex,
     userIdFromAddress,
-    isUserPayload_ToDevicePlainMessage,
 } from '@river/sdk'
-import { FullyReadMarker } from '@river/proto'
+import { EncryptedDeviceData, FullyReadMarker, ToDeviceMessage } from '@river/proto'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -57,7 +56,6 @@ import {
     DecryptionExtensionDelegate,
     RiverDecryptionExtension,
 } from './casablanca/RiverDecryptionExtensions'
-import { isToDevicePlainMessage } from '@river/sdk'
 import { RoleIdentifier } from '../types/web3-types'
 import {
     createSpaceDapp,
@@ -1136,7 +1134,11 @@ export class ZionClient implements DecryptionExtensionDelegate {
     /************************************************
      * sendToDevice
      *************************************************/
-    public async sendToDeviceMessage(userId: string, type: string, content: object) {
+    public async encryptAndSendToDeviceMessage(
+        userId: string,
+        type: string,
+        content: ToDeviceMessage,
+    ) {
         // todo casablanca look for user in casablanca
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
@@ -1145,15 +1147,22 @@ export class ZionClient implements DecryptionExtensionDelegate {
         if (!canSend) {
             throw new Error('cannot send to device for user ' + userId)
         }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        if (isUserPayload_ToDevicePlainMessage(content)) {
-            await this.casablancaClient.sendToDevicesMessage(userId, content, type)
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        } else if (isToDevicePlainMessage(content)) {
-            await this.casablancaClient.sendToDevicesMessage(userId, content, type)
-        } else {
-            throw new Error('unknown content type for send to device message')
+        await this.casablancaClient.encryptAndSendToDevicesMessage(userId, content, type)
+    }
+
+    /************************************************
+     * sendToDevice
+     *************************************************/
+    public async sendToDeviceMessage(userId: string, type: string, content: EncryptedDeviceData) {
+        // todo casablanca look for user in casablanca
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
         }
+        const canSend = await this.canSendToDeviceMessage(userId)
+        if (!canSend) {
+            throw new Error('cannot send to device for user ' + userId)
+        }
+        await this.casablancaClient.sendToDevicesMessage(userId, content, type)
     }
     /************************************************
      * editMessage

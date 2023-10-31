@@ -14,7 +14,7 @@ export type CryptoTxn = IDBTransaction | null
 export interface CryptoStore {
     startup(): Promise<CryptoStore>
     deleteAllData(): Promise<void>
-    deleteInboundGroupSessions(senderCurve25519Key: string, sessionId: string): Promise<void>
+    deleteInboundGroupSessions(streamId: string, sessionId: string): Promise<void>
     getOrAddOutgoingRoomKeyRequest(request: OutgoingRoomKeyRequest): Promise<OutgoingRoomKeyRequest>
     getOutgoingRoomKeyRequest(
         requestBody: IRoomKeyRequestBody,
@@ -66,7 +66,7 @@ export interface CryptoStore {
 
     // Inbound Group Sessions
     getEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         txn: CryptoTxn,
         func: (
@@ -79,19 +79,19 @@ export interface CryptoStore {
         func: (session: ISession | null) => void,
     ): void
     addEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
         txn: CryptoTxn,
     ): void
     storeEndToEndInboundGroupSession(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
         txn: CryptoTxn,
     ): void
     storeEndToEndInboundGroupSessionWithheld(
-        senderCurve25519Key: string,
+        streamId: string,
         sessionId: string,
         sessionData: IWithheld,
         txn: CryptoTxn,
@@ -106,16 +106,11 @@ export interface CryptoStore {
     countSessionsNeedingBackup(txn?: CryptoTxn): Promise<number>
     unmarkSessionsNeedingBackup(sessions: ISession[], txn?: CryptoTxn): Promise<void>
     markSessionsNeedingBackup(sessions: ISession[], txn?: CryptoTxn): Promise<void>
-    addSharedHistoryInboundGroupSession(
-        channelId: string,
-        senderKey: string,
-        sessionId: string,
-        txn?: CryptoTxn,
-    ): void
+    addSharedHistoryInboundGroupSession(streamId: string, sessionId: string, txn?: CryptoTxn): void
     getSharedHistoryInboundGroupSessions(
-        channelId: string,
+        streamId: string,
         txn?: CryptoTxn,
-    ): Promise<[senderKey: string, sessionId: string][]>
+    ): Promise<[streamId: string, sessionId: string][]>
 
     // Session key backups
     doTxn<T>(
@@ -148,13 +143,13 @@ export interface IDeviceData {
 }
 
 export interface ISession {
-    senderKey: string
+    streamId: string
     sessionId: string
     sessionData?: InboundGroupSessionData
 }
 
 export interface IWithheld {
-    channel_id: string
+    stream_id: string
     code: string
     reason: string
 }
