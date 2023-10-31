@@ -12,7 +12,7 @@ import fs from 'fs'
  * This is not an actual test, it's just a quick hack to create a dev town.
  * We piggy back on jest's browser environment and a few test utils.
  *
- * - WARNING: Make sure ETHERS_NETWORK, CASABLANCA_SERVER_URL, PRIVATE_KEY and CHAIN_ID env vars are set before running this jest script
+ * - WARNING: Make sure ETHERS_NETWORK, CASABLANCA_SERVER_URL, WALLET_PRIVATE_KEY and CHAIN_ID env vars are set before running this jest script
  *
  * Workflow:
  * 1) Creates a zion test client with the provided private key from the environment
@@ -27,10 +27,10 @@ test('create dev town', async () => {
     // jest-setup.ts will provide default values for these env vars if they are not set
     // and they won't work for creating a town on the test-beta environment.
 
-    const { PRIVATE_KEY, CHAIN_ID } = process.env
+    const { WALLET_PRIVATE_KEY, CHAIN_ID } = process.env
 
-    if (!PRIVATE_KEY) {
-        throw new Error('PRIVATE_KEY env var is not set')
+    if (!WALLET_PRIVATE_KEY) {
+        throw new Error('WALLET_PRIVATE_KEY env var is not set')
     }
 
     if (!CHAIN_ID) {
@@ -41,7 +41,7 @@ test('create dev town', async () => {
         parseInt(CHAIN_ID, 10),
         'harmonyHotWallet',
         undefined,
-        new Wallet(PRIVATE_KEY),
+        new Wallet(WALLET_PRIVATE_KEY),
     )
     if (await harmonyHotWallet.isUserRegistered()) {
         await harmonyHotWallet.loginWalletAndStartClient()

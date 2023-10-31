@@ -23,6 +23,14 @@ on:
                 options:
                     - 'true'
                     - 'false'
+            create_new_dev_town:
+                description: 'Create new Dev Town'
+                required: true
+                type: choice
+                default: 'true'
+                options:
+                    - 'true'
+                    - 'false'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -66,4 +74,4 @@ jobs:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RESET_ENV_WORKFLOW_WEBHOOK_URL }}
 
             - name: Reset environment
-              run: DB_URL=${{ secrets.DB_URL }} CLUSTER_NAME=${{ vars.CLUSTER_NAME }} RESET_DB=${{ github.event.inputs.reset_db }} ./scripts/reset-environment.sh
+              run: DB_URL=${{ secrets.DB_URL }} CLUSTER_NAME=${{ vars.CLUSTER_NAME }} RESET_DB=${{ github.event.inputs.reset_db }} CREATE_NEW_DEV_TOWN=${{ github.event.inputs.create_new_dev_town }} ./scripts/reset-environment.sh

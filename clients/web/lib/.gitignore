@@ -18,6 +18,7 @@
 
 # generated directory
 dist/
+inviteLink.txt
 
 # misc
 **/.DS_Store
