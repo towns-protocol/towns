@@ -1,0 +1,11 @@
+main = "./src/index.ts"
+name = "latest-dev-town-worker"
+compatibility_date = "2022-07-26"
+logpush = true
+
+# this is for tests, so it gets used even though wrangler CLI says otherwise
+[miniflare]
+cache_persist = false
+
+[env.test-beta]
+routes = [{ pattern = "latest-dev-town.towns.com", custom_domain = true }]

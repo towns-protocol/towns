@@ -17097,6 +17097,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"latest-dev-town-worker@workspace:servers/workers/latest-dev-town-worker":
+  version: 0.0.0-use.local
+  resolution: "latest-dev-town-worker@workspace:servers/workers/latest-dev-town-worker"
+  dependencies:
+    "@cloudflare/workers-types": ^4.20230710.1
+    "@types/jest": ^29.5.3
+    "@typescript-eslint/eslint-plugin": ^5.61.0
+    "@typescript-eslint/parser": ^5.61.0
+    eslint: ^8.42.0
+    jest: ^29.6.2
+    jest-environment-miniflare: ^2.14.0
+    miniflare: ^3.20230710.0
+    prettier: ^2.8.8
+    ts-jest: ^29.1.1
+    typescript: ^5.1.6
+    wrangler: ^3.2.0
+  languageName: unknown
+  linkType: soft
+
 "leven@npm:^3.1.0":
   version: 3.1.0
   resolution: "leven@npm:3.1.0"
