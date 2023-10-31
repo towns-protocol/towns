@@ -26,3 +26,7 @@ export function hashString(string: string): string {
     const buffer = keccak256(encoded)
     return bin_toHexString(buffer)
 }
+
+export function isJest(): boolean {
+    return process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined
+}

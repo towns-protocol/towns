@@ -11,10 +11,11 @@ import { createConnectTransport } from '@connectrpc/connect-web'
 import { StreamService } from '@river/proto'
 import { dlog } from './dlog'
 import { genShortId } from './id'
+import { isJest } from './utils'
 
 const logProtos = dlog('csb:rpc:protos')
 const logError = dlog('csb:rpc:error')
-logError.enabled = typeof jest === 'undefined'
+logError.enabled = logError.enabled || !isJest()
 
 const interceptor: Interceptor = (next) => async (req) => {
     let localReq = req
@@ -44,7 +45,6 @@ const interceptor: Interceptor = (next) => async (req) => {
             }
         }
         if (version !== 'HTTP/2.0') {
-            // TODO: add csb:error logger which is always active and use it here
             logError(req.method.name, 'BAD HTTP VERSION', id, version)
         }
 
