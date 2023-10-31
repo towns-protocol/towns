@@ -171,6 +171,13 @@ export const truncateParentStyle = style({
     margin: '-0.5em 0',
 })
 
+globalStyle(`${bodyFontStyle.className} ${bodyFontStyle.className}:before`, {
+    display: 'none',
+})
+globalStyle(`${bodyFontStyle.className} ${bodyFontStyle.className}:after`, {
+    display: 'none',
+})
+
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -debugging
 
 /**
