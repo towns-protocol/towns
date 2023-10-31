@@ -1,5 +1,4 @@
 /**
- * @group dendrite
  * @group casablanca
  */
 import { NoThrownError, getError } from './helpers/ErrorUtils'

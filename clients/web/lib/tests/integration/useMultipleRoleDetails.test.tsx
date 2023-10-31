@@ -1,5 +1,4 @@
 /**
- * @group dendrite
  * @group casablanca
  */
 import React, { useCallback, useEffect, useMemo } from 'react'

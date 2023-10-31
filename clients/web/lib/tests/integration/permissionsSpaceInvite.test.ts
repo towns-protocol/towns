@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
- * @group dendrite
  * @group casablanca
  */
 import { MAXTRIX_ERROR, MatrixError, NoThrownError } from './helpers/ErrorUtils'

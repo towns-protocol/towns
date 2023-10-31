@@ -3,7 +3,6 @@
  *
  * // https://www.npmjs.com/package/jest-runner-groups
  * @group casablanca
- * @group dendrite
  *
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */

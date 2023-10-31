@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 /**
- * @group dendrite
  * @group casablanca
  */
 import React, { useCallback, useMemo } from 'react'

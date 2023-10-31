@@ -3,7 +3,6 @@
  *
  * // https://www.npmjs.com/package/jest-runner-groups
  * @group casablanca
- * @group dendrite
  */
 import React, { useCallback, useEffect } from 'react'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'

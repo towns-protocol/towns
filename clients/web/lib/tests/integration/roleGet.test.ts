@@ -1,6 +1,5 @@
 /**
  * @group casablanca
- * @group dendrite
  */
 import {
     assertRoleEquals,

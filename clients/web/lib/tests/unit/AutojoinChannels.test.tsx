@@ -1,5 +1,4 @@
 /**
- * @group dendrite
  * @group casablanca
  */
 

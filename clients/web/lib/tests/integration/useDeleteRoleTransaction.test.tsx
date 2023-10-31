@@ -3,7 +3,6 @@
  *
  * // https://www.npmjs.com/package/jest-runner-groups
  * @group casablanca
- * @group dendrite
  */
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'

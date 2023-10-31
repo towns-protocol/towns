@@ -1,6 +1,5 @@
 /**
  * @group casablanca
- * @group dendrite
  */
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
