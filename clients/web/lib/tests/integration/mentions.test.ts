@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
- * @group dendrite
+ * @group casablanca
  */
 import { waitFor } from '@testing-library/dom'
 import { Permission } from '@river/web3'
@@ -10,7 +10,6 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
     registerAndStartClients,
-    waitForWithRetries,
 } from './helpers/TestUtils'
 
 describe('mentions', () => {
@@ -19,6 +18,7 @@ describe('mentions', () => {
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
         // bob needs funds to create a space
         await bob.fundWallet()
+
         // create a space
         const spaceId = (await createTestSpaceGatedByTownNft(
             bob,
@@ -38,7 +38,8 @@ describe('mentions', () => {
 
         console.log("bob's spaceId", { spaceId, channelId })
 
-        await waitForWithRetries(() => alice.joinRoom(channelId))
+        await alice.joinTown(spaceId, alice.wallet)
+        await alice.joinRoom(channelId)
         const bobDisplayName = bob.getUser(bob.getUserId()!)?.displayName ?? 'bob'
         // alice sends a message
         await alice.sendMessage(channelId, 'Hi @bob', {
