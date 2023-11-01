@@ -19,6 +19,7 @@
 # generated directory
 dist/
 inviteLink.txt
+loadtestMetrics.json
 
 # misc
 **/.DS_Store

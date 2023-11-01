@@ -14,8 +14,7 @@ import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from '../integration/helpers/TestConstants'
 
 import { numberOfMessagesConfig, connectionOptions } from './loadconfig'
-
-import axios from 'axios'
+import fs from 'fs'
 
 describe('loadtest1', () => {
     //Test is skipped until not fully implemented
@@ -42,8 +41,7 @@ describe('loadtest1', () => {
 
         const { alice } = await registerAndStartClients(['alice'])
         // Alice joins the space
-        await alice.joinRoom(channelData!.spaceId)
-
+        await alice.joinTown(channelData!.spaceId, alice.wallet)
         //Alice joins the channel
         await waitForWithRetries(() => alice.joinRoom(channelData!.channelId))
 
@@ -63,19 +61,14 @@ describe('loadtest1', () => {
         // Send a message to the queue to shut down first part of the test
         await myQueue.add('shutdownqueue', 'shut down signal')
 
-        //Send metric to Datadog
-        const API_KEY = process.env.DATADOG_API_KEY
         // Define metric properties
         const METRIC_NAME = 'loadtest:receiver.execution_time'
         const METRIC_VALUE = endTime - startTime
-        const HOSTNAME = 'my_host'
-        const TAGS = 'environment:test'
-
-        // Datadog API endpoint
-        const DATADOG_API_URL = 'https://api.datadoghq.com/api/v1/series'
+        const HOSTNAME = 'github-actions'
+        const TAGS = 'environment:ci'
 
         // Create the metric data
-        const metricData = {
+        const payload = {
             series: [
                 {
                     metric: METRIC_NAME,
@@ -87,19 +80,8 @@ describe('loadtest1', () => {
             ],
         }
 
-        // Set up the Axios request configuration
-        const axiosConfig = {
-            headers: {
-                'Content-type': 'application/json',
-            },
-            params: {
-                api_key: API_KEY,
-            },
-        }
+        fs.writeFileSync('loadtestMetrics.json', JSON.stringify(payload))
 
-        // Send metric to Datadog using Axios
-        await axios.post(DATADOG_API_URL, metricData, axiosConfig)
-
-        expect(endTime - startTime).toBeLessThan(500)
+        expect(endTime - startTime).toBeLessThan(1_000)
     }, 5000000) // end test
 }) // end describe

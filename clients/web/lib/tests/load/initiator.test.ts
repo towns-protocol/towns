@@ -25,14 +25,8 @@ describe('loadtest1', () => {
     test('create space, create channel, add #numClients users, send #numberOfMessages each, send signal to second jest', async () => {
         // Create a BullMQ queue instance to communicate with the second running test
         const myQueue = new Queue('loadtestqueue', { connection: connectionOptions })
-
-        const numClients = process.env.NUM_CLIENTS
-            ? parseInt(process.env.NUM_CLIENTS, 10)
-            : numClientsConfig //Numner of clients which will send messages to channel
-        const numberOfMessages = numberOfMessagesConfig //Total number of messages to send per user
-
         // Create clients
-        const names = Array.from(Array(numClients).keys()).map((i) => `client_${i}`)
+        const names = Array.from(Array(numClientsConfig).keys()).map((i) => `client_${i}`)
         const clients = await registerAndStartClients(names)
 
         //Bob is a user which will create space and channel
@@ -60,30 +54,32 @@ describe('loadtest1', () => {
         })) as RoomIdentifier
 
         // All other users join the space
-        const promises: never[] = []
+        const joinTownPromises: Promise<unknown>[] = []
 
-        for (let i = 1; i < numClients; i++) {
+        for (let i = 1; i < numClientsConfig; i++) {
             const client = clients[`client_${i}`]
-            promises.push(client.joinTown(spaceId, client.wallet) as never)
+            joinTownPromises.push(client.joinTown(spaceId, client.wallet))
+            console.log(`join town ${i}`)
         }
 
-        await Promise.all(promises)
+        await Promise.all(joinTownPromises)
 
-        // All other users join the channel
-        promises.splice(0)
+        const joinRoomPromises: Promise<unknown>[] = []
 
-        for (let i = 1; i < numClients; i++) {
+        for (let i = 1; i < numClientsConfig; i++) {
             const client = clients[`client_${i}`]
-            promises.push(waitForWithRetries(() => client.joinRoom(channelId)) as never)
+            joinRoomPromises.push(waitForWithRetries(() => client.joinRoom(channelId)))
+            console.log(`join room ${i}`)
         }
 
-        await Promise.all(promises)
+        await Promise.all(joinRoomPromises)
 
         // Each of numClients users sends numberOfMessages message to the channel to prepare test data
-        for (let i = 0; i < numClients; i++) {
+        for (let i = 0; i < numClientsConfig; i++) {
             const client = clients[`client_${i}`]
-            for (let j = 0; j < numberOfMessages; j++) {
+            for (let j = 0; j < numberOfMessagesConfig; j++) {
                 await client.sendMessage(channelId, `Message m_${j} from ${i} with number `)
+                console.log(`send message ${j} from ${i}`)
             }
         }
 

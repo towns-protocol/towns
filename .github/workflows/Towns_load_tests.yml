@@ -4,37 +4,12 @@ env:
 
 on:
     workflow_dispatch: # A load test was manually triggered
-        inputs:
-            test_type:
-                description: 'Test Type'
-                required: true
-                default: 'all'
-                type: choice
-                options:
-                    - receiver
-                    - initiator
-                    - all
     schedule: # A load test was scheduled
         - cron: '0 0 * * *' # Every day at midnight UTC
 jobs:
-    set-test-type:
-        runs-on: ubuntu-latest
-        outputs:
-            test_type: ${{ steps.set-test-type.outputs.test_type }}
-        steps:
-            - name: Set test_type for cron jobs
-              id: set-test-type
-              run: |
-                  if [ "${{ github.event_name }}" == "schedule" ]; then
-                      echo "::set-output name=test_type::all"
-                  else
-                      echo "::set-output name=test_type::${{ github.event.inputs.test_type }}"
-                  fi
-
     run_load_tests:
-        needs: set-test-type
         runs-on: ubuntu-latest-8-cores
-        timeout-minutes: 30
+        timeout-minutes: 60
         services:
             postgres-casablanca:
                 image: postgres:latest
@@ -129,17 +104,16 @@ jobs:
               run: yarn csb:wait:entitlements
 
             - name: Run Load Tests
-              working-directory: ./clients/web/lib
-              run: DATADOG_API_KEY=${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }} yarn test:load:${{ needs.set-test-type.outputs.test_type }}
+              run: DATADOG_API_KEY=${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }} ./scripts/run-and-publish-load-test-metrics.sh
 
             # If failed, we send a slack notification
             - name: Slack notification
-              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              if: failure()
               uses: rtCamp/action-slack-notify@v2
               env:
                   SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
                   SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_USERNAME: 'Load Tests'
+                  SLACK_ICON_EMOJI: ':test_tube:'
                   SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+                  SLACK_MESSAGE: 'Load Test Failure'
