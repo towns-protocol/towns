@@ -20,7 +20,7 @@ forge build --extra-output-files metadata --extra-output-files abi --force
 
 yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|OwnableFacet|TokenPausableFacet|UserEntitlement|ITownOwner|MockERC721A|MembershipFacet|Member|PioneerFacet).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
 
-mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,TownArchitect,ProxyManager,Pausable,EntitlementsManager,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,WalletLink,TokenPausableFacet,UserEntitlement,TownOwner,MockERC721A,MembershipFacet,Member,PioneerFacet}.sol/* "$ABI_DIR"
+mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,TownArchitect,ProxyManager,Pausable,EntitlementsManager,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,WalletLink,TokenPausableFacet,UserEntitlement,TownOwner,MockERC721A,MembershipFacet,Member,PioneerFacet,IEntitlementRule}.sol/* "$ABI_DIR"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do
@@ -39,6 +39,7 @@ go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Pa
 # XChain Entitlements typings
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementChecker.sol/IEntitlementChecker.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementChecker" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementChecker.go"
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementGated.sol/IEntitlementGated.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementGated" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementGated.go"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementRule.sol/IEntitlementRule.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementRule" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementRule.go"
 # Towns WalletLink Registry
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/WalletLink.sol/WalletLink.abi.json --pkg "${CHAIN}_towns_wallet_link" --type "${CHAIN}_towns_wallet_link" --out "${RIVER_TOWNS_WALLET_LINK_DIR}/${CHAIN}_towns_wallet_link.go"
 

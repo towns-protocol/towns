@@ -4,13 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/big"
-	"strconv"
 	"time"
 
 	"common/xchain/bindings/erc20"
-
-	p "common/xchain/entitlement/gen"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -19,35 +15,50 @@ import (
 
 func evaluateCheckOperation(
 	ctx context.Context,
-	op *p.CheckOperation,
+	op *CheckOperation,
 	callerAddress *common.Address,
 ) (bool, error) {
-	if op == nil {
-		return false, fmt.Errorf("operation is nil")
-	}
-
-	switch op.GetCheckClause().(type) {
-	case *p.CheckOperation_IsEntitledOperation:
-		return evaluateIsEntitledOperation(ctx, op.GetIsEntitledOperation())
-	case *p.CheckOperation_Erc20Operation:
-		return evaluateErc20Operation(ctx, op.GetErc20Operation(), callerAddress)
-	case *p.CheckOperation_Erc721Operation:
-		return evaluateErc721Operation(ctx, op.GetErc721Operation())
-	case *p.CheckOperation_Erc1155Operation:
-		return evaluateErc1155Operation(ctx, op.GetErc1155Operation())
+	switch op.CheckType {
+	case CheckOperationType(MOCK):
+		return evaluateMockOperation(ctx, op)
+	case CheckOperationType(ISENTITLED):
+		return evaluateIsEntitledOperation(ctx, op)
+	case CheckOperationType(ERC20):
+		return evaluateErc20Operation(ctx, op, callerAddress)
+	case CheckOperationType(ERC721):
+		return evaluateErc721Operation(ctx, op)
+	case CheckOperationType(ERC1155):
+		return evaluateErc1155Operation(ctx, op)
 	default:
 		return false, fmt.Errorf("unknown operation")
 	}
 
 }
 
-func evaluateIsEntitledOperation(ctx context.Context,
-	op *p.IsEntitledOperation) (bool, error) {
+func evaluateMockOperation(ctx context.Context,
+	op *CheckOperation) (bool, error) {
 
-	delay, err := strconv.ParseFloat(op.ContractAddress, 64)
-	if err != nil {
-		return false, err
+	delay := int(op.Threshold.Int64())
+
+	result := awaitTimeout(ctx, func() error {
+		delayDuration := time.Duration(delay) * time.Millisecond
+		time.Sleep(delayDuration) // simulate a long-running operation
+		return nil
+	})
+	if result != nil {
+		return false, result
 	}
+	if op.ChainID.Sign() != 0 {
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
+
+func evaluateIsEntitledOperation(ctx context.Context,
+	op *CheckOperation) (bool, error) {
+
+	delay := int(op.Threshold.Int64())
 
 	result := awaitTimeout(ctx, func() error {
 		delayDuration := time.Duration(delay*1000) * time.Millisecond
@@ -57,7 +68,7 @@ func evaluateIsEntitledOperation(ctx context.Context,
 	if result != nil {
 		return false, result
 	}
-	if op.ChainId == "true" {
+	if op.ChainID.Sign() != 0 {
 		return true, nil
 	} else {
 		return false, nil
@@ -65,7 +76,7 @@ func evaluateIsEntitledOperation(ctx context.Context,
 }
 
 func evaluateErc20Operation(ctx context.Context,
-	op *p.ERC20Operation,
+	op *CheckOperation,
 	callerAddress *common.Address) (bool, error) {
 	client, err := ethclient.Dial("https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID")
 
@@ -74,11 +85,8 @@ func evaluateErc20Operation(ctx context.Context,
 		return false, err
 	}
 
-	// ERC20 contract address
-	contractAddress := common.HexToAddress(op.ContractAddress)
-
 	// Create a new instance of the token contract
-	token, err := erc20.NewErc20Caller(contractAddress, client)
+	token, err := erc20.NewErc20Caller(op.ContractAddress, client)
 	if err != nil {
 		log.Fatalf("Failed to instantiate a Token contract: %v", err)
 		return false, err
@@ -90,10 +98,9 @@ func evaluateErc20Operation(ctx context.Context,
 		return false, err
 	}
 
-	threshold := new(big.Int).SetBytes(op.Threshold.Data)
-	log.Printf("Balance: %s and requires %s", balance.String(), threshold.String()) // Balance is a *big.Int
+	log.Printf("Balance: %s and requires %s", balance.String(), op.Threshold.String()) // Balance is a *big.Int
 
-	if threshold.Sign() > 0 && balance.Sign() > 0 && balance.Cmp(threshold) >= 0 {
+	if op.Threshold.Sign() > 0 && balance.Sign() > 0 && balance.Cmp(op.Threshold) >= 0 {
 		return true, nil
 	} else {
 		return false, nil
@@ -101,12 +108,9 @@ func evaluateErc20Operation(ctx context.Context,
 }
 
 func evaluateErc721Operation(ctx context.Context,
-	operation *p.ERC721Operation) (bool, error) {
+	op *CheckOperation) (bool, error) {
 
-	delay, err := strconv.ParseFloat(operation.ContractAddress, 64)
-	if err != nil {
-		return false, err
-	}
+	delay := int(op.Threshold.Int64())
 
 	result := awaitTimeout(ctx, func() error {
 		delayDuration := time.Duration(delay*1000) * time.Millisecond
@@ -116,7 +120,7 @@ func evaluateErc721Operation(ctx context.Context,
 	if result != nil {
 		return false, result
 	}
-	if operation.ChainId == "true" {
+	if op.ChainID.Sign() != 0 {
 		return true, nil
 	} else {
 		return false, nil
@@ -124,12 +128,9 @@ func evaluateErc721Operation(ctx context.Context,
 }
 
 func evaluateErc1155Operation(ctx context.Context,
-	op *p.ERC1155Operation) (bool, error) {
+	op *CheckOperation) (bool, error) {
 
-	delay, err := strconv.ParseFloat(op.ContractAddress, 64)
-	if err != nil {
-		return false, err
-	}
+	delay := int(op.Threshold.Int64())
 
 	result := awaitTimeout(ctx, func() error {
 		delayDuration := time.Duration(delay*1000) * time.Millisecond
@@ -139,7 +140,7 @@ func evaluateErc1155Operation(ctx context.Context,
 	if result != nil {
 		return false, result
 	}
-	if op.ChainId == "true" {
+	if op.ChainID.Sign() != 0 {
 		return true, nil
 	} else {
 		return false, nil

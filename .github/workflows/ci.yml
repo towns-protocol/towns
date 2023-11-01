@@ -66,12 +66,6 @@ jobs:
                   cache: true
                   cache-dependency-path: 'servers/**/go.sum'
 
-            - name: Run deps.sh script
-              run: |
-                  cd common/xchain
-                  chmod +x deps.sh
-                  ./deps.sh
-
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
@@ -667,12 +661,6 @@ jobs:
                   cache-dependency-path: |
                       servers/xchain/go.sum
                       common/xchain/go.sum
-
-            - name: Run deps.sh script
-              run: |
-                  cd common/xchain
-                  chmod +x deps.sh
-                  ./deps.sh
 
             - uses: actions/setup-node@v3
               with:

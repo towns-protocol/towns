@@ -2,10 +2,7 @@ module common/xchain
 
 go 1.20
 
-require (
-	github.com/ethereum/go-ethereum v1.12.0
-	google.golang.org/protobuf v1.31.0
-)
+require github.com/ethereum/go-ethereum v1.12.0
 
 require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
@@ -23,6 +20,7 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 )
 
