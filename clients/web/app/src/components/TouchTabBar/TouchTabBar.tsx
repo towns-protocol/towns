@@ -1,10 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import {
-    useMyProfile,
-    useSpaceData,
-    useSpaceThreadRootsUnreadCount,
-    useZionContext,
-} from 'use-zion-client'
+import { useMyProfile, useSpaceData, useZionContext } from 'use-zion-client'
 import { matchRoutes, useLocation, useNavigate, useResolvedPath } from 'react-router'
 import { Avatar, Box, Dot, Icon, IconButton, Stack, Text, Tooltip } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
@@ -20,7 +15,6 @@ export const TouchTabBar = () => {
     const space = useSpaceData()
     const userId = useMyProfile()?.userId
     const { showHasUnreadBadgeForCurrentSpace } = useShowHasUnreadBadgeForCurrentSpace()
-    const hasUnreadThreads = useSpaceThreadRootsUnreadCount() > 0
     const { dmUnreadChannelIds } = useZionContext()
     const hasUnreadDMs = dmUnreadChannelIds.size > 0
 
@@ -30,7 +24,7 @@ export const TouchTabBar = () => {
     const { createLink } = useCreateLink()
 
     const messageLink = useMemo(() => {
-        return createLink({ index: 'messages' })
+        return createLink({ route: 'messages' })
     }, [createLink])
 
     if (!space || tabBarHidden) {
@@ -62,24 +56,6 @@ export const TouchTabBar = () => {
                     to={`/${PATHS.SPACES}/${space.id.slug}/`}
                     scrollToTopId={TouchScrollToTopScrollId.HomeTabScrollId}
                     highlightPattern={`${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/*`}
-                />
-
-                <TabBarItem
-                    title="Threads"
-                    icon={() => (
-                        <Box>
-                            <Icon type="message" size="toolbar_icon" />
-                            {hasUnreadThreads && <Dot position="topRight" />}
-                        </Box>
-                    )}
-                    scrollToTopId={TouchScrollToTopScrollId.ThreadsTabScrollId}
-                    to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.THREADS}`}
-                />
-                <TabBarItem
-                    title="Mentions"
-                    icon={() => <Icon type="at" size="toolbar_icon" />}
-                    to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.MENTIONS}`}
-                    scrollToTopId={TouchScrollToTopScrollId.MentionsTabScrollId}
                 />
 
                 {messageLink && (

@@ -9,6 +9,8 @@ import {
     getAccountAddress,
     useSpaceData,
     useSpaceMembers,
+    useSpaceThreadRootsUnreadCount,
+    useSpaceUnreadThreadMentions,
 } from 'use-zion-client'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { NavItem } from '@components/NavItem/_NavItem'
@@ -26,6 +28,7 @@ import {
     Divider,
     Icon,
     IconButton,
+    IconName,
     IconProps,
     MotionBox,
     MotionStack,
@@ -132,6 +135,31 @@ export const TouchHome = () => {
 
     const hasResult = filteredChannels.length > 0 || filteredMembers.length > 0
 
+    const { createLink } = useCreateLink()
+    const threadsLink = createLink({ route: 'threads' })
+    const mentionsLink = createLink({ route: 'mentions' })
+    const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
+    const unreadThreadMentions = useSpaceUnreadThreadMentions()
+
+    const filteredMenuItems = useMemo(
+        () =>
+            fuzzysort.go(
+                searchString,
+                [
+                    { name: 'threads', value: 'threads' },
+                    { name: 'mentions', value: 'mentions' },
+                ],
+                { key: 'name', all: true },
+            ),
+        [searchString],
+    )
+
+    const displayThreadsItem =
+        threadsLink && (!isSearching || filteredMenuItems.some((f) => f.obj.value === 'threads'))
+
+    const displayMentionsItem =
+        mentionsLink && (!isSearching || filteredMenuItems.some((f) => f.obj.value === 'mentions'))
+
     return (
         <ErrorBoundary fallback={ErrorFallbackComponent}>
             <VisualViewportContextProvider>
@@ -198,6 +226,36 @@ export const TouchHome = () => {
                                 >
                                     {!isLoadingChannels ? (
                                         <Box minHeight="forceScroll">
+                                            <>
+                                                {displayThreadsItem || displayMentionsItem ? (
+                                                    <Spacer />
+                                                ) : (
+                                                    <></>
+                                                )}
+                                                {displayThreadsItem && (
+                                                    <>
+                                                        <TouchGenericResultRow
+                                                            to={threadsLink}
+                                                            title="Threads"
+                                                            icon="message"
+                                                            highlight={unreadThreadsCount > 0}
+                                                            badgeCount={unreadThreadMentions}
+                                                        />
+                                                    </>
+                                                )}
+                                                {displayMentionsItem && (
+                                                    <>
+                                                        <TouchGenericResultRow
+                                                            to={mentionsLink}
+                                                            title="Mentions"
+                                                            icon="at"
+                                                        />
+                                                    </>
+                                                )}
+                                            </>
+
+                                            <Spacer />
+
                                             {space && unreadChannels.length > 0 && (
                                                 <>
                                                     <SectionHeader title="Unread" />
@@ -226,6 +284,7 @@ export const TouchHome = () => {
                                             )}
                                             {filteredMembers.length > 0 && (
                                                 <>
+                                                    <Spacer />
                                                     <SectionHeader title="Members" />
                                                     <UserList members={filteredMembers} />
                                                 </>
@@ -376,7 +435,7 @@ export const TouchUserResultRow = (props: { member: RoomMember }) => {
             >
                 <Avatar size="avatar_x4" userId={member.userId} />
                 <Stack gap="sm" overflow="hidden" paddingY="xxs">
-                    <Text truncate fontWeight="medium" size="sm" color="default">
+                    <Text truncate size="sm" color="default">
                         {getPrettyDisplayName(member).initialName}
                     </Text>
                     {accountAddress && (
@@ -396,7 +455,9 @@ const SectionHeader = (props: { title: string }) => {
     const { title } = props
     return (
         <Box paddingX paddingTop="md" paddingBottom="sm">
-            <Text color="gray2">{title}</Text>
+            <Text color="gray2" textTransform="uppercase">
+                {title}
+            </Text>
         </Box>
     )
 }
@@ -409,7 +470,6 @@ const SearchForTermRow = (props: { searchString: string }) => {
     const onSeachTerm = useCallback(() => {
         const link = createLink({ route: 'search' })
         setSearchTerms(searchString)
-        console.log(link)
         if (link) {
             navigate(link)
         }
@@ -446,3 +506,44 @@ const SearchResultItemIcon = ({ type, ...boxProps }: { type: IconProps['type'] }
         <Icon type={type} size="square_sm" />
     </Box>
 )
+
+export const TouchGenericResultRow = (props: {
+    to: string
+    title: string
+    icon: IconName
+    highlight?: boolean
+    badgeCount?: number
+}) => {
+    return (
+        <NavItem to={props.to} height="x6">
+            <Stack
+                horizontal
+                gap="sm"
+                key={props.title}
+                paddingY="sm"
+                alignItems="center"
+                width="100%"
+                overflowX="hidden"
+            >
+                <SearchResultItemIcon type={props.icon} color="default" />
+                <Stack gap="sm" overflow="hidden" paddingY="xxs">
+                    <Text
+                        truncate
+                        fontWeight={props.highlight ? 'strong' : undefined}
+                        size="sm"
+                        color={props.highlight ? 'default' : 'gray1'}
+                    >
+                        {props.title}
+                    </Text>
+                </Stack>
+                <Box grow />
+                {(props?.badgeCount ?? 0) > 0 && (
+                    <Badge value={props.badgeCount}>{props.badgeCount}</Badge>
+                )}
+                <SearchResultItemIcon type="arrowRight" background="inherit" />
+            </Stack>
+        </NavItem>
+    )
+}
+
+const Spacer = () => <Box height="x2" />

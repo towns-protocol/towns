@@ -114,12 +114,20 @@ const messagesThreadPaths: Path[] = [
     },
 ]
 
-const linkParams = {
-    messsageIndex: {
-        params: {
-            index: 'messages' as const,
-        },
+const threadsRoutePaths: Path[] = [
+    {
+        path: `/${PATHS.SPACES}/:spaceId/*`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.THREADS}`,
     },
+]
+const mentionsRoutePaths: Path[] = [
+    {
+        path: `/${PATHS.SPACES}/:spaceId/*`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.MENTIONS}`,
+    },
+]
+
+const linkParams = {
     messageThreads: {
         params: {
             messageId: 'messageId' as string | undefined,
@@ -155,11 +163,7 @@ const linkParams = {
             panel: 'channelDirectory',
         },
     },
-    search: {
-        params: {
-            route: 'search',
-        },
-    },
+
     thread: {
         params: {
             spaceId: 'spaceId' as string | undefined,
@@ -168,15 +172,43 @@ const linkParams = {
             threadId: 'threadId' as string | undefined,
         },
     },
+    search: {
+        params: {
+            route: 'search' as const,
+        },
+    },
+    messages: {
+        params: {
+            route: 'messages',
+        },
+    },
+    threads: {
+        params: {
+            route: 'threads',
+        },
+    },
+    mentions: {
+        params: {
+            route: 'mentions',
+        },
+    },
 } as const
 
 type LinkParams = (typeof linkParams)[keyof typeof linkParams]['params']
 
 const getSearchPathsForParams = (linkParams: LinkParams) => {
-    if ('index' in linkParams && linkParams.index === 'messages') {
+    if ('route' in linkParams && linkParams.route === 'search') {
+        return searchPaths
+    }
+    if ('route' in linkParams && linkParams.route === 'messages') {
         return messagesPaths
     }
-
+    if ('route' in linkParams && linkParams.route === 'threads') {
+        return threadsRoutePaths
+    }
+    if ('route' in linkParams && linkParams.route === 'mentions') {
+        return mentionsRoutePaths
+    }
     if ('threadId' in linkParams) {
         return threadPaths
     }
@@ -197,9 +229,6 @@ const getSearchPathsForParams = (linkParams: LinkParams) => {
             return channelDirectoryPaths
         }
         return channelPaths
-    }
-    if ('route' in linkParams && linkParams.route === 'search') {
-        return searchPaths
     }
 }
 
