@@ -172,8 +172,13 @@ const MessageBox = ({ children, ...boxProps }: BoxProps) => (
 
 const LoggedUserAvatar = () => {
     const profileUser = useMyProfile()
+    // Other authed routes are behind isAuthenticatedAndConnected
+    // but b/c this page is for both public and authed users, there are edge cases where a user might have profile data
+    // but some other condition for them to be authed is not met (like the signer is not set)
+    // so we should check for this too to avoid misleading UI
+    const { isAuthenticatedAndConnected } = useAuth()
 
-    if (!profileUser) {
+    if (!isAuthenticatedAndConnected || !profileUser) {
         return
     }
 
