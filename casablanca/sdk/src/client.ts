@@ -97,6 +97,7 @@ import debug from 'debug'
 import { MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { Stream } from './stream'
 import { RiverEventV2 } from './eventV2'
+import { Code, ConnectError } from '@connectrpc/connect'
 
 const log = dlog('csb:client')
 
@@ -463,6 +464,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         streamSettings?: PlainMessage<StreamSettings>,
     ): Promise<{ streamId: string }> {
         const channelId = makeDMStreamId(this.userId, userId)
+
         const inceptionEvent = await makeEvent(
             this.signerContext,
             make_DMChannelPayload_Inception({
@@ -491,11 +493,20 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             [joinEvent.hash],
         )
 
-        await this.rpcClient.createStream({
-            events: [inceptionEvent, joinEvent, inviteEvent],
-            streamId: channelId,
-        })
-        return { streamId: channelId }
+        try {
+            await this.rpcClient.createStream({
+                events: [inceptionEvent, joinEvent, inviteEvent],
+                streamId: channelId,
+            })
+            return { streamId: channelId }
+        } catch (err) {
+            // Two users can only have a single DM stream between them.
+            // Return the stream id if it already exists.
+            if (err instanceof ConnectError && err.code == Code.AlreadyExists) {
+                return { streamId: channelId }
+            }
+            throw err
+        }
     }
 
     async createGDMChannel(
