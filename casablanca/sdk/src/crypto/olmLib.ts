@@ -22,7 +22,6 @@ import {
     OlmMessage,
 } from '@river/proto'
 import { IFallbackKey } from '../types'
-import { RiverEvent, RiverEventType } from '../event'
 import { PlainMessage } from '@bufbuild/protobuf'
 
 const log = dlog('csb:olmLib')
@@ -487,23 +486,4 @@ export async function getExistingOlmSessions(
     await Promise.all(promises)
 
     return { devicesWithoutSessions, devicesWithSessions }
-}
-
-/**
- * Check that an event was encrypted using olm.
- */
-export function isOlmEncrypted(event: RiverEvent): boolean {
-    const algorithm = event.getWireContent().content?.algorithm
-    if (!event.getSenderKey()) {
-        dlog('Event has no sender key (not encrypted?)')
-        return false
-    }
-    if (
-        event.getWireType() !== RiverEventType.Encrypted ||
-        ![OLM_ALGORITHM].includes(algorithm as Algorithm)
-    ) {
-        dlog('Event was not encrypted using an appropriate algorithm')
-        return false
-    }
-    return true
 }

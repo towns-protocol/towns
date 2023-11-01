@@ -1,7 +1,7 @@
 import { dlog } from './dlog'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { Client } from './client'
-import { RiverEvent } from './event'
+import { RiverEventV2 } from './eventV2'
 import { SnapshotCaseType } from '@river/proto'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { isCiphertext } from './types'
@@ -25,19 +25,19 @@ describe('riverEventTest', () => {
     test('riverEventCreatedFromChannelMessage', async () => {
         const done = makeDonePromise()
 
-        const onChannelNewMessage = (channelId: string, event: RiverEvent): void => {
+        const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
             log('channelNewMessage', channelId)
             done.runAndDone(() => {
                 // event is unencrypted so clear shouldn't be set
-                const content = event.getClearContent_ChannelMessage()
-                expect(content?.payload === undefined).toBeTrue()
-                const wire = event.getWireContentChannel()
+                const content = event.getContent()
+                expect(content).toBeUndefined()
+                const wire = event.getWireContent()
                 expect(wire).toBeDefined()
-                if (wire?.content?.ciphertext) {
-                    expect(isCiphertext(wire?.content?.ciphertext)).toBeTrue()
+                if (wire?.text) {
+                    expect(isCiphertext(wire?.text)).toBeTrue()
                 }
                 // this should be undefined until we attempt decrypting the event
-                expect(event.getClearContent()).toBeUndefined()
+                expect(event.getContent()).toBeUndefined()
             })
         }
 

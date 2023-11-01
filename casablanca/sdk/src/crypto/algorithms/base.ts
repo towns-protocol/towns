@@ -1,10 +1,10 @@
 import { Client } from '../../client'
 import { OlmDevice } from '../olmDevice'
-import { Crypto, IncomingRoomKeyRequest } from '../crypto'
+import { Crypto } from '../crypto'
 import { DeviceInfo } from '../deviceInfo'
 import { DeviceInfoMap } from '../deviceList'
 import { IRoomEncryption } from '../store/base'
-import { RiverEvent } from '../../event'
+import { RiverEventV2 } from '../../eventV2'
 import { MegolmSession } from '@river/proto'
 
 /**
@@ -71,7 +71,7 @@ export abstract class EncryptionAlgorithm {
      * @public
      */
     // todo: implement
-    // public onRoomMembership(event: RiverEvent, member: RoomMember, oldMembership?: string): void {}
+    // public onRoomMembership(event: RiverEventV2, member: RoomMember, oldMembership?: string): void {}
 
     public reshareKeyWithDevice?(
         senderKey: string,
@@ -107,7 +107,7 @@ export abstract class DecryptionAlgorithm {
      *
      * @param _params - event key event
      */
-    public async onRoomKeyEvent(_params: RiverEvent): Promise<void> {
+    public async onRoomKeyEvent(_params: RiverEventV2): Promise<void> {
         // ignore by default
     }
 
@@ -122,24 +122,6 @@ export abstract class DecryptionAlgorithm {
     }
 
     /**
-     * Determine if we have the keys necessary to respond to a room key request
-     *
-     * @returns true if we have the keys and could (theoretically) share
-     *  them; else false.
-     */
-    public hasKeysForKeyRequest(_keyRequest: IncomingRoomKeyRequest): Promise<boolean> {
-        return Promise.resolve(false)
-    }
-
-    /**
-     * Send the response to a room key request
-     *
-     */
-    public shareKeysWithDevice(_keyRequest: IncomingRoomKeyRequest): void {
-        throw new Error('shareKeysWithDevice not supported for this DecryptionAlgorithm')
-    }
-
-    /**
      * Retry decrypting all the events from a sender that haven't been
      * decrypted yet.
      *
@@ -150,7 +132,6 @@ export abstract class DecryptionAlgorithm {
         return false
     }
 
-    public onRoomKeyWithheldEvent?(event: RiverEvent): Promise<void>
     public sendSharedHistoryInboundSessions?(
         channelId: string,
         devicesByUser: Map<string, DeviceInfo[]>,
@@ -213,7 +194,7 @@ export class UnknownDeviceError extends Error {
     public constructor(
         msg: string,
         public readonly devices: DeviceInfoMap,
-        public event?: RiverEvent,
+        public event?: RiverEventV2,
     ) {
         super(msg)
         this.name = 'UnknownDeviceError'

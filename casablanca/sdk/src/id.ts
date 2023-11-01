@@ -86,11 +86,38 @@ export const isChannelStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.Channel)
 export const isDMChannelStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.DM)
+export const isUserDeviceStreamId = (streamId: string): boolean =>
+    streamId.startsWith(StreamPrefix.UserDevice)
+export const isUserSettingsStreamId = (streamId: string): boolean =>
+    streamId.startsWith(StreamPrefix.UserSettings)
+export const isMediaStreamId = (streamId: string): boolean =>
+    streamId.startsWith(StreamPrefix.Media)
 export const isGDMChannelStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.GDM)
 export const isValidStreamId = (streamId: string): boolean =>
     allowedStreamPrefixes().some((prefix) => streamId.startsWith(prefix))
 
+export const getStreamPayloadCase = (streamId: string): string | undefined => {
+    if (!isValidStreamId(streamId)) {
+        return undefined
+    }
+    if (isUserStreamId(streamId)) {
+        return 'userPayload'
+    } else if (isChannelStreamId(streamId)) {
+        return 'channelPayload'
+    } else if (isDMChannelStreamId(streamId)) {
+        return 'dmChannelPayload'
+    } else if (isSpaceStreamId(streamId)) {
+        return 'spacePayload'
+    } else if (isMediaStreamId(streamId)) {
+        return 'mediaPayload'
+    } else if (isUserSettingsStreamId(streamId)) {
+        return 'userSettingsPayload'
+    } else if (isUserDeviceStreamId(streamId)) {
+        return 'userDevicePayload'
+    }
+    return
+}
 export const genId = (): string => {
     return nanoid()
 }

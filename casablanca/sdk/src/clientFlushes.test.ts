@@ -5,7 +5,7 @@
 import { SnapshotCaseType } from '@river/proto'
 import { Client } from './client'
 import { DLogger, dlog } from './dlog'
-import { RiverEvent } from './event'
+import { RiverEventV2 } from './eventV2'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { makeDonePromise, makeTestClient, sendFlush } from './util.test'
 
@@ -28,19 +28,19 @@ describe('clientFlushes', () => {
 
         const done = makeDonePromise()
 
-        const onChannelNewMessage = (channelId: string, event: RiverEvent): void => {
+        const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
             log('channelNewMessage', channelId)
             done.runAndDoneAsync(async () => {
-                const { content } = event.getWireContentChannel()
+                const content = event.getWireContent()
                 expect(content).toBeDefined()
                 await bobsClient.decryptEventIfNeeded(event)
-                const clearEvent = event.getClearContent_ChannelMessage()
-                expect(clearEvent?.payload).toBeDefined()
+                const clearEvent = event.getContent()
+                expect(clearEvent?.content?.payload).toBeDefined()
                 if (
-                    clearEvent?.payload?.case === 'post' &&
-                    clearEvent?.payload?.value?.content?.case === 'text'
+                    clearEvent?.content?.payload?.case === 'post' &&
+                    clearEvent?.content?.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                    expect(clearEvent?.content?.payload?.value?.content.value?.body).toContain(
                         'Hello, world!',
                     )
                 }
@@ -106,19 +106,19 @@ describe('clientFlushes', () => {
 
         const done = makeDonePromise()
 
-        const onChannelNewMessage = (channelId: string, event: RiverEvent): void => {
+        const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
             log('channelNewMessage', channelId)
             done.runAndDoneAsync(async () => {
-                const { content } = event.getWireContentChannel()
+                const content = event.getWireContent()
                 expect(content).toBeDefined()
                 await bobsAnotherClient.decryptEventIfNeeded(event)
-                const clearEvent = event.getClearContent_ChannelMessage()
-                expect(clearEvent?.payload).toBeDefined()
+                const clearEvent = event.getContent()
+                expect(clearEvent?.content?.payload).toBeDefined()
                 if (
-                    clearEvent?.payload?.case === 'post' &&
-                    clearEvent?.payload?.value?.content?.case === 'text'
+                    clearEvent?.content?.payload?.case === 'post' &&
+                    clearEvent?.content?.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                    expect(clearEvent?.content?.payload?.value?.content.value?.body).toContain(
                         'Hello, again!',
                     )
                 }

@@ -92,11 +92,10 @@ import {
 import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
 import { DeviceInfo } from './crypto/deviceInfo'
-import { IDecryptOptions, RiverEvent, RiverEvents } from './event'
+import { IDecryptOptions, RiverEventsV2, RiverEventV2 } from './eventV2'
 import debug from 'debug'
 import { MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { Stream } from './stream'
-import { RiverEventV2 } from './eventV2'
 import { Code } from '@connectrpc/connect'
 import { isIConnectError } from './utils'
 
@@ -120,7 +119,7 @@ interface IExportedDevice {
     deviceId: string
 }
 
-export type EmittedEvents = StreamEvents & RiverEvents
+export type EmittedEvents = StreamEvents & RiverEventsV2
 
 export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
     readonly signerContext: SignerContext
@@ -682,7 +681,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return stream
     }
 
-    public updateDecryptedStream(streamId: string, event: RiverEvent): void {
+    public updateDecryptedStream(streamId: string, event: RiverEventV2): void {
         const stream = this.stream(streamId)
         if (stream === undefined) {
             throw new Error(`Stream ${streamId} not found`)
@@ -1706,7 +1705,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const input = { content: event, recipient: { streamId: channelId } }
         let encryptedEvent: EncryptedData
         try {
-            encryptedEvent = await this.encryptGroupEvent(input)
+            encryptedEvent = await this.encryptMegolmEvent(input)
         } catch (e) {
             this.logCall('createMegolmEncryptedEvent: ERROR', e)
             throw e
@@ -1740,7 +1739,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         let encryptedData: EncryptedDeviceData
         try {
-            encryptedData = await this.encryptEvent({
+            encryptedData = await this.encryptOlmEvent({
                 content: event,
                 recipient: { userIds: [recipientUserId] },
             })
@@ -1755,20 +1754,20 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
      * Decrypt a ToDevice message using Olm algorithm.
      *
      */
-    public async decryptEventWithOlm(
+    public async decryptOlmEvent(
         event: UserPayload_ToDevice,
         senderUserId: string,
     ): Promise<IEventOlmDecryptionResult> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        return this.cryptoBackend.decryptEventWithOlm(event, senderUserId)
+        return this.cryptoBackend.decryptOlmEvent(event, senderUserId)
     }
     /**
      * Attempts to decrypt an event
      */
     public async decryptEventIfNeeded(
-        event: RiverEvent | RiverEventV2,
+        event: RiverEventV2,
         options?: IDecryptOptions,
     ): Promise<void> {
         if (event.shouldAttemptDecryption()) {
@@ -1827,19 +1826,19 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     }
 
     // Encrypt event using Olm.
-    public encryptEvent(input: EncryptionInput): Promise<EncryptedDeviceData> {
+    public encryptOlmEvent(input: EncryptionInput): Promise<EncryptedDeviceData> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        return this.cryptoBackend.encryptEvent(input.content, input.recipient)
+        return this.cryptoBackend.encryptOlmEvent(input.content, input.recipient)
     }
 
     // Encrypt event using Megolm.
-    public encryptGroupEvent(input: GroupEncryptionInput): Promise<EncryptedData> {
+    public encryptMegolmEvent(input: GroupEncryptionInput): Promise<EncryptedData> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        return this.cryptoBackend.encryptEventV2(input)
+        return this.cryptoBackend.encryptMegolmEvent(input)
     }
 }
 export interface FallbackKeyResponse {

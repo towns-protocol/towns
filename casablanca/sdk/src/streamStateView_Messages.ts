@@ -1,8 +1,7 @@
 import TypedEmitter from 'typed-emitter'
 import { ParsedEvent } from './types'
-import { RiverEvent } from './event'
+import { RiverEventV2 } from './eventV2'
 import { EmittedEvents } from './client'
-import { userIdFromAddress } from './id'
 
 export class StreamStateView_Messages {
     readonly streamId: string
@@ -15,16 +14,19 @@ export class StreamStateView_Messages {
 
     addChannelMessage(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined) {
         this.state.set(event.hashStr, event)
-        const riverEvent = new RiverEvent(
+        if (
+            event?.event?.payload.case != 'channelPayload' ||
+            event.event.payload.value.content.case != 'message'
+        ) {
+            throw new Error(`addChannelMessage: event is not a channel message`)
+        }
+        const content = event.event.payload.value.content.value
+        const riverEvent = new RiverEventV2(
             {
                 channel_id: this.streamId,
-                space_id: this.spaceId,
-                payload: {
-                    parsed_event: event.event.payload,
-                    creator_user_id: userIdFromAddress(event.event.creatorAddress),
-                    hash_str: event.hashStr,
-                    stream_id: this.streamId,
-                },
+                event_id: event.hashStr,
+                stream_id: this.streamId,
+                content: content,
             },
             emitter,
             event,

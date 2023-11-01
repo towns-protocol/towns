@@ -2,7 +2,7 @@ import { Client } from './client'
 import { DLogger, dlog } from './dlog'
 import { makeTestClient } from './util.test'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
-import { ClearContent, RiverEvent } from './event'
+import { ClearContent, RiverEventV2 } from './eventV2'
 import { MembershipOp } from '@river/proto'
 
 const log = dlog('test:aliceAndFriends')
@@ -52,22 +52,22 @@ class TestDriver {
         this.log(`userJoinedStream streamId=${streamId}`)
     }
 
-    channelNewMessage(channelId: string, event: RiverEvent): void {
-        let payload: ClearContent
+    channelNewMessage(channelId: string, event: RiverEventV2): void {
+        let payload: ClearContent | undefined
         let content = ''
         ;(async () => {
             await this.client.decryptEventIfNeeded(event)
-            payload = event.getClearContent_ChannelMessage()
+            payload = event.getContent()
             if (!payload) {
                 return
             }
             if (
-                payload.payload?.case !== 'post' ||
-                payload.payload?.value.content.case !== 'text'
+                payload?.content?.payload?.case !== 'post' ||
+                payload?.content?.payload?.value.content.case !== 'text'
             ) {
                 throw new Error(`channelNewMessage is not a post`)
             }
-            content = payload.payload?.value.content.value.body
+            content = payload?.content?.payload?.value.content.value.body
             this.log(`channelNewMessage channelId=${channelId} message=${content}`, this.expected)
             if (this.expected?.delete(content)) {
                 this.log(`channelNewMessage expected message Received, text=${content}`)

@@ -6,7 +6,7 @@ import {
     UserPayload_ToDevice,
 } from '@river/proto'
 import { ParsedEvent } from './types'
-import { RiverEvent } from './event'
+import { RiverEventV2 } from './eventV2'
 export type StreamEvents = {
     streamNewUserJoined: (streamId: string, userId: string) => void
     streamNewUserInvited: (streamId: string, userId: string) => void
@@ -31,7 +31,7 @@ export type StreamEvents = {
         channelProperties: ChannelProperties,
     ) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
-    channelNewMessage: (channelId: string, message: RiverEvent) => void
+    channelNewMessage: (channelId: string, message: RiverEventV2) => void
     channelTimelineEvent: (channelId: string, spaceId: string, event: ParsedEvent) => void
     fullyReadMarkersUpdated: (
         channelId: string,

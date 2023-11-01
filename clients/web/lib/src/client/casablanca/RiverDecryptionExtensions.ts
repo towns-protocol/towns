@@ -1,15 +1,14 @@
 import {
     Client as CasablancaClient,
-    RiverEvent,
+    RiverEventV2,
     ParsedEvent,
     DeviceInfo,
     make_ToDevice_KeyResponse,
-    EncryptedEventStreamTypes,
     make_ToDevice_KeyRequest,
     IndexedDBCryptoStore,
-    userIdFromAddress,
     MEGOLM_ALGORITHM,
     IEventOlmDecryptionResult,
+    isUserStreamId,
 } from '@river/sdk'
 import { Permission } from '@river/web3'
 import {
@@ -82,7 +81,7 @@ interface KeyRequestRecord {
 }
 
 interface RoomRecord {
-    decryptionFailures: RiverEvent[]
+    decryptionFailures: RiverEventV2[]
     isEntitled?: boolean
     spaceId?: string
     channelId?: string
@@ -210,63 +209,67 @@ export class RiverDecryptionExtension {
         await processor(content, event.senderUserId, event.senderCurve25519Key ?? '')
     }
 
-    private onDecryptedEvent = (event: RiverEvent, err: Error | undefined) => {
-        if (!event.isDecryptionFailure()) {
+    private onDecryptedEvent = (event: RiverEventV2, err: Error | undefined) => {
+        ;(async () => {
             const streamId = event.getStreamId()
             if (!streamId) {
                 throw new Error('CDE::onDecryptionSuccess- no streamId found')
             }
-            this.client.updateDecryptedStream(streamId, event)
-            return
-        }
-        const channelId = event.getChannelId()
-        const spaceId = event.getSpaceId()
-        if (!channelId) {
-            console.log(
-                'CDE::onDecryptionFailure - missing channelId, not going to start looking for keys',
-                {
-                    eventId: event.getId() ?? '',
-                    err: err,
-                    channelId: channelId,
-                    spaceId: spaceId,
-                },
-            )
-            return
-        }
-        if (event.getStreamType() === EncryptedEventStreamTypes.ToDevice) {
-            console.log(
-                'CDE::onDecryptionFailure - decryption failure for to-device event, not going to start looking for keys',
-                {
-                    eventId: event.getId() ?? '',
-                    sender: event.getSender(),
-                    senderKey: event.getSenderKey(),
-                    err: err,
-                    channelId: channelId,
-                    spaceId: spaceId,
-                },
-            )
-            return
-        }
-        if (!this.roomRecords[channelId]) {
-            this.roomRecords[channelId] = {
-                decryptionFailures: [],
-                channelId,
-                spaceId,
+            if (!event.isDecryptionFailure()) {
+                this.client.updateDecryptedStream(streamId, event)
+                return
             }
-        }
-        const roomRecord = this.roomRecords[channelId]
-        if (!roomRecord.decryptionFailures.some((e) => e.getId() === event.getId())) {
-            roomRecord.decryptionFailures.push(event)
-        }
-        if (this.throttledStartLookingForKeys) {
-            this.throttledStartLookingForKeys()
-        }
+            const stream = await this.client.getStream(streamId)
+            const spaceId = stream.channelContent.spaceId
+            const channelId = event.getChannelId()
+            if (!channelId) {
+                console.log(
+                    'CDE::onDecryptionFailure - missing channelId, not going to start looking for keys',
+                    {
+                        eventId: event.getId() ?? '',
+                        err: err,
+                        channelId: channelId,
+                        spaceId: spaceId,
+                    },
+                )
+                return
+            }
+            if (isUserStreamId(streamId)) {
+                console.log(
+                    'CDE::onDecryptionFailure - decryption failure for to-device event, not going to start looking for keys',
+                    {
+                        eventId: event.getId() ?? '',
+                        sender: event.getSender(),
+                        err: err,
+                        channelId: channelId,
+                        spaceId: spaceId,
+                    },
+                )
+                return
+            }
+            if (!this.roomRecords[channelId]) {
+                this.roomRecords[channelId] = {
+                    decryptionFailures: [],
+                    channelId,
+                    spaceId,
+                }
+            }
+            const roomRecord = this.roomRecords[channelId]
+            if (!roomRecord.decryptionFailures.some((e) => e.getId() === event.getId())) {
+                roomRecord.decryptionFailures.push(event)
+            }
+            if (this.throttledStartLookingForKeys) {
+                this.throttledStartLookingForKeys()
+            }
+        })().catch((e) => {
+            console.error('CDE::onDecryptedEvent - error decrypting event', e)
+        })
     }
 
-    private onChannelTimelineEvent = (streamId: string, spaceId: string, event: ParsedEvent) => {
+    private onChannelTimelineEvent = (streamId: string, _spaceId: string, event: ParsedEvent) => {
         ;(async () => {
             if (
-                event.event.payload.case == 'channelPayload' &&
+                event?.event?.payload.case != 'channelPayload' ||
                 event.event.payload.value.content.case !== 'message'
             ) {
                 console.log(
@@ -274,23 +277,20 @@ export class RiverDecryptionExtension {
                 )
                 return
             }
-            const riverEvent = new RiverEvent(
+            const content = event?.event?.payload?.value?.content.value
+            const riverEvent = new RiverEventV2(
                 {
                     channel_id: streamId,
-                    space_id: spaceId,
-                    payload: {
-                        parsed_event: event.event.payload,
-                        creator_user_id: userIdFromAddress(event.event.creatorAddress),
-                        hash_str: event.hashStr,
-                        stream_id: streamId,
-                    },
+                    event_id: event.hashStr,
+                    stream_id: streamId,
+                    content: content,
                 },
                 this.client,
                 event,
             )
 
-            const wire = riverEvent.getWireContentChannel()
-            if (wire === undefined || wire.content === undefined) {
+            const wire = riverEvent.getWireContent()
+            if (wire === undefined) {
                 console.log(
                     'CDE::onChannelTimelineEvent - wire content channel undefined, not attempting to decrypt',
                 )
@@ -303,7 +303,7 @@ export class RiverDecryptionExtension {
                     if (riverEvent.isDecryptionFailure()) {
                         console.log(
                             'CDE::onChannelTimelineEvent - decryption failure',
-                            riverEvent.getClearContent_ChannelMessage(),
+                            riverEvent.getContent(),
                         )
                     }
                 } catch (e) {
@@ -315,7 +315,7 @@ export class RiverDecryptionExtension {
         })
     }
 
-    private onChannelEvent = (_streamId: string, event: RiverEvent) => {
+    private onChannelEvent = (_streamId: string, event: RiverEventV2) => {
         ;(async () => {
             console.log('CDE::onChannelEvent - new channel event for streamId', _streamId)
             if (event.shouldAttemptDecryption()) {
@@ -346,7 +346,7 @@ export class RiverDecryptionExtension {
                 return
             }
             try {
-                const clear = await this.client.decryptEventWithOlm(event, senderUserId)
+                const clear = await this.client.decryptOlmEvent(event, senderUserId)
                 const senderCurve25519Key = event.senderKey
                 if (Object.keys(this.receivedToDeviceProcessorMap).includes(ToDeviceOp[op])) {
                     this.receivedToDeviceEventQueue.enqueue({
@@ -576,8 +576,8 @@ export class RiverDecryptionExtension {
                 // note: we're obtaining narrowest concrete type here with assumption
                 // were looking for session_ids for megolm
                 // decryption failures, which for now are limited to Channel messages
-                const wireContent = event.getWireContentChannel()
-                return [wireContent.content.sender_key ?? '', wireContent.content.session_id ?? '']
+                const wireContent = event.getWireContent()
+                return [wireContent.senderKey ?? '', wireContent.sessionId ?? '']
             })
 
         const decryptionFailureSenders = new Set(
@@ -950,9 +950,7 @@ export class RiverDecryptionExtension {
                         for (const content of responseSessions) {
                             // see if we still need the key as there's no point in importing it twice
                             const event = this.roomRecords[streamId]?.decryptionFailures.find(
-                                (e) =>
-                                    e.getWireContentChannel().content.session_id ===
-                                    content.sessionId,
+                                (e) => e.getWireContent().sessionId === content.sessionId,
                             )
 
                             if (event) {

@@ -3,13 +3,13 @@ import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { check, hasElements, isDefined } from './check'
 import { DLogger, dlog } from './dlog'
-import { RiverEvents } from './event'
+import { RiverEventsV2 } from './eventV2'
 import { StreamRpcClientType } from './makeStreamRpcClient'
 import { unpackStreamResponse } from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 
-export type EmittedEvents = StreamEvents & RiverEvents
+export type EmittedEvents = StreamEvents & RiverEventsV2
 
 export class UnauthenticatedClient extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
     readonly rpcClient: StreamRpcClientType

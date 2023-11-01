@@ -28,7 +28,7 @@ export type RiverEventsV2 = {
     eventDecrypted: (event: RiverEventV2, err?: Error) => void
 }
 
-interface IDecryptOptions {
+export interface IDecryptOptions {
     // Emits "event.decrypted" if set to true
     emit?: boolean
     emitter?: TypedEmitter<RiverEventsV2>
@@ -133,7 +133,7 @@ export class RiverEventV2 {
                 if (!crypto) {
                     res = this.badEncryptedMessage('Encryption not enabled')
                 } else {
-                    res = await crypto.decryptEventV2(this)
+                    res = await crypto.decryptMegolmEvent(this)
                     if (options.isRetry === true) {
                         log(`Decrypted event on retry (${this.getDetails()})`)
                     }

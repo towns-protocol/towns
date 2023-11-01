@@ -5,7 +5,7 @@ import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView } from './streamStateView'
 import { EmittedEvents } from './client'
-import { RiverEvent } from './event'
+import { RiverEventV2 } from './eventV2'
 import { ParsedMiniblock } from './types'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
@@ -33,7 +33,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return this.view.streamId
     }
 
-    updateDecrypted(event: RiverEvent): void {
+    updateDecrypted(event: RiverEventV2): void {
         this.view.updateDecrypted(event)
     }
     /**

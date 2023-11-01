@@ -1,5 +1,11 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { Client as CasablancaClient, ParsedEvent, isCiphertext } from '@river/sdk'
+import {
+    Client as CasablancaClient,
+    ParsedEvent,
+    getStreamPayloadCase,
+    isChannelStreamId,
+    isCiphertext,
+} from '@river/sdk'
 import {
     MembershipOp,
     ChannelMessage_Post,
@@ -39,7 +45,7 @@ import {
     ZTEvent,
 } from '../../types/timeline-types'
 import { staticAssertNever } from '../../utils/zion-utils'
-import { RiverEvent } from '@river/sdk'
+import { RiverEventV2 } from '@river/sdk'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -101,7 +107,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
             }
         }
 
-        const onEventDecrypted = (message: RiverEvent, err: Error | undefined) => {
+        const onEventDecrypted = (message: RiverEventV2, err: Error | undefined) => {
             if (err) {
                 console.log('$$$ useCasablancaTimelines onEventDecrypted', err)
                 console.log(
@@ -109,13 +115,12 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
                     casablancaClient?.cryptoBackend?.olmDevice?.deviceCurve25519Key,
                 )
             }
-            if (message.getStreamType() === 'channelPayload') {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-                const streamId: string | undefined = message.getStreamId()
-                if (!streamId) {
-                    console.error('$$$ useCasablancaTimelines onEventDecrypted no streamId')
-                    return
-                }
+            const streamId: string | undefined = message.getStreamId()
+            if (!streamId) {
+                console.error('$$$ useCasablancaTimelines onEventDecrypted no streamId')
+                return
+            }
+            if (isChannelStreamId(streamId)) {
                 const timelineEvent = toEvent_FromRiverEvent(message, userId)
 
                 // get replace Id and remove/replace state or if redaction delete, or
@@ -177,7 +182,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
     }, [casablancaClient, setState])
 }
 
-export function toEvent_FromRiverEvent(message: RiverEvent, userId: string): TimelineEvent {
+export function toEvent_FromRiverEvent(message: RiverEventV2, userId: string): TimelineEvent {
     if (!message.wireEvent) {
         throw new Error('Implementation error, river events should have a wireEvent')
     }
@@ -219,26 +224,28 @@ export function toEvent(
     }
 }
 
-function validateEvent_fromRiverEvent(
+function validateEvent_fromRiverEventV2(
     eventId: string,
-    message: RiverEvent,
+    message: RiverEventV2,
 ): Partial<ErrorResult> & { description?: string } {
     let error: ErrorResult
-    // handle RiverEvent
-    const payloadCase = message.getStreamType() ?? 'unknown payload case'
-    if (!message.event.payload || !message.event.payload.parsed_event) {
+    // handle RiverEventV2
+    const streamId = message.getStreamId()
+    const payloadCase = getStreamPayloadCase(streamId)
+
+    const content = message.getWireContent()
+    if (!content.text || !message.wireEvent?.event.payload?.value) {
         error = { error: 'payloadless payload' }
         return error
     }
-    if (!message.event.payload.parsed_event.case) {
+    if (!message.wireEvent?.event.payload?.case) {
         error = { error: 'caseless payload' }
         return error
     }
-    if (!message.event.payload.parsed_event.value) {
-        error = { error: `${payloadCase} - caseless payload content` }
-        return error
-    }
-    const description = `${payloadCase}::${message.event.payload.parsed_event.case} id: ${eventId}`
+
+    const description = `${payloadCase ?? 'unknown payload case'}::${
+        message.wireEvent.event.payload.case
+    } id: ${eventId}`
     return { description }
 }
 
@@ -263,8 +270,8 @@ function validateEvent(
     return { description }
 }
 
-function toTownsContent_fromRiverEvent(eventId: string, message: RiverEvent): TownsContentResult {
-    const { error, description } = validateEvent_fromRiverEvent(eventId, message)
+function toTownsContent_fromRiverEvent(eventId: string, message: RiverEventV2): TownsContentResult {
+    const { error, description } = validateEvent_fromRiverEventV2(eventId, message)
     if (error) {
         return { error }
     }
@@ -273,19 +280,16 @@ function toTownsContent_fromRiverEvent(eventId: string, message: RiverEvent): To
     }
     // return decryption failures
     if (message.isDecryptionFailure()) {
-        console.log(
-            `$$$ useCasablancaTimelines decryption failure`,
-            message.getClearContent_ChannelMessage(),
-        )
+        console.log(`$$$ useCasablancaTimelines decryption failure`, message.getContent())
         return {
             content: { kind: ZTEvent.RoomMessageEncrypted } satisfies RoomMessageEncryptedEvent,
         }
     }
-    // handle RiverEvents which store potentially decrypted contents of the original parsed event
-    const payloadCase = message.getStreamType() ?? 'unknown payload case'
+    // handle RiverEventV2s which store potentially decrypted contents of the original parsed event
+    const payloadCase = getStreamPayloadCase(message.getStreamId())
     switch (payloadCase) {
         case 'channelPayload':
-            return toTownsContent_ChanelPayload_Message_fromRiverEvent(message, description)
+            return toTownsContent_ChanelPayload_Message_fromRiverEventV2(message, description)
         case 'userPayload':
             return {
                 error: `${description} user payload not supported yet`,
@@ -294,7 +298,7 @@ function toTownsContent_fromRiverEvent(eventId: string, message: RiverEvent): To
             console.error('$$$ useCasablancaTimelines unknown case', {
                 payload: payloadCase,
             })
-            return { error: `unknown payload case ${payloadCase}` }
+            return { error: `unknown payload case ${payloadCase ?? ''}` }
     }
 }
 
@@ -497,13 +501,13 @@ function toTownsContent_ChannelPayload(
     }
 }
 
-function toTownsContent_ChanelPayload_Message_fromRiverEvent(
-    payload: RiverEvent,
+function toTownsContent_ChanelPayload_Message_fromRiverEventV2(
+    payload: RiverEventV2,
     description: string,
 ): TownsContentResult {
     try {
-        const channelMessage = payload.getClearContent_ChannelMessage()
-        if (!channelMessage.payload) {
+        const channelMessage = payload.getContent()
+        if (!channelMessage) {
             // if we don't have clear content available, we either have a decryption failure or we should attempt decryption
             if (payload.shouldAttemptDecryption() || payload.isDecryptionFailure()) {
                 return {
@@ -515,10 +519,12 @@ function toTownsContent_ChanelPayload_Message_fromRiverEvent(
             return { error: `${description} no clear text in message` }
         }
 
-        switch (channelMessage?.payload?.case) {
+        switch (channelMessage.content?.payload?.case) {
             case 'post':
                 return (
-                    toTownsContent_ChannelPayload_Message_Post(channelMessage?.payload.value) ?? {
+                    toTownsContent_ChannelPayload_Message_Post(
+                        channelMessage.content.payload.value,
+                    ) ?? {
                         error: `${description} unknown message type`,
                     }
                 )
@@ -526,37 +532,33 @@ function toTownsContent_ChanelPayload_Message_fromRiverEvent(
                 return {
                     content: {
                         kind: ZTEvent.Reaction,
-                        reaction: channelMessage.payload.value.reaction,
-                        targetEventId: channelMessage.payload.value.refEventId,
+                        reaction: channelMessage.content.payload.value.reaction,
+                        targetEventId: channelMessage.content.payload.value.refEventId,
                     } satisfies ReactionEvent,
                 }
             case 'redaction':
                 return {
                     content: {
                         kind: ZTEvent.RedactionActionEvent,
-                        refEventId: channelMessage.payload.value.refEventId,
+                        refEventId: channelMessage.content.payload.value.refEventId,
                     } satisfies RedactionActionEvent,
                 }
             case 'edit': {
-                const newPost = channelMessage.payload.value.post
+                const newPost = channelMessage.content.payload.value.post
                 if (!newPost) {
                     return { error: `${description} no post in edit` }
                 }
                 const newContent = toTownsContent_ChannelPayload_Message_Post(
                     newPost,
-                    channelMessage.payload.value.refEventId,
+                    channelMessage.content.payload.value.refEventId,
                 )
                 return newContent ?? { error: `${description} no content in edit` }
             }
             case undefined:
                 return { error: `${description} undefined message kind` }
             default: {
-                try {
-                    staticAssertNever(channelMessage.payload)
-                } catch (e) {
-                    return {
-                        error: `${description} unknown message kind`,
-                    }
+                return {
+                    error: `${description} unknown message kind`,
                 }
             }
         }

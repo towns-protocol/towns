@@ -46,7 +46,7 @@ describe('toDeviceMessageTest', () => {
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(content).toBeDefined()
-                    const clear = await alicesClient.decryptEventWithOlm(event, senderUserId)
+                    const clear = await alicesClient.decryptOlmEvent(event, senderUserId)
                     expect(clear).toBeDefined()
                     expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('200')
                 })
@@ -95,7 +95,7 @@ describe('toDeviceMessageTest', () => {
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(content).toBeDefined()
-                    const clear = await alicesClient.decryptEventWithOlm(event, senderUserId)
+                    const clear = await alicesClient.decryptOlmEvent(event, senderUserId)
                     expect(clear).toBeDefined()
                     expect(clear.clearEvent.content?.payload.case).toBe('request')
                     expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('201')
@@ -160,7 +160,7 @@ describe('toDeviceMessageTest', () => {
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(content).toBeDefined()
-                    const clear = await alicesClient.decryptEventWithOlm(event, senderUserId)
+                    const clear = await alicesClient.decryptOlmEvent(event, senderUserId)
                     expect(clear).toBeDefined()
                     expect(clear.clearEvent.content?.payload.case).toBe('request')
                     expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('202')
@@ -214,7 +214,7 @@ describe('toDeviceMessageTest', () => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(content).toBeDefined()
                     expect(event.op).toEqual(ToDeviceOp.TDO_KEY_REQUEST)
-                    const clear = await alicesClient.decryptEventWithOlm(event, senderUserId)
+                    const clear = await alicesClient.decryptOlmEvent(event, senderUserId)
                     expect(clear).toBeDefined()
                     expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('204')
                     await expect(
@@ -252,7 +252,7 @@ describe('toDeviceMessageTest', () => {
                     bobSelfToDevice.runAndDoneAsync(async () => {
                         expect(content).toBeDefined()
                         expect(event.op).toBe(ToDeviceOp.TDO_KEY_RESPONSE)
-                        const clear = await bobsClient.decryptEventWithOlm(event, senderUserId)
+                        const clear = await bobsClient.decryptOlmEvent(event, senderUserId)
                         expect(clear).toBeDefined()
                         expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('203')
                     })

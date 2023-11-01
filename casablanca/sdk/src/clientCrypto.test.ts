@@ -82,7 +82,7 @@ describe('clientCryptoTest', () => {
             // todo: point to origin event for key responses
         }
         // ensure olm session with bob
-        const clear = await bobsClient.decryptEventWithOlm(
+        const clear = await bobsClient.decryptOlmEvent(
             new UserPayload_ToDevice(event),
             alicesClient.userId,
         )
@@ -147,7 +147,7 @@ describe('clientCryptoTest', () => {
             }
 
             // ensure olm session with bob
-            const clear = await bobsClient.decryptEventWithOlm(
+            const clear = await bobsClient.decryptOlmEvent(
                 new UserPayload_ToDevice(event),
                 alicesClient.userId,
             )

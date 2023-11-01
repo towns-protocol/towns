@@ -11,7 +11,7 @@ import {
 import TypedEmitter from 'typed-emitter'
 import { check, logNever, isDefined, throwWithCode } from './check'
 import { ParsedEvent, ParsedMiniblock } from './types'
-import { RiverEvent } from './event'
+import { RiverEventV2 } from './eventV2'
 import { unpackEnvelopes, unpackMiniblock } from './sign'
 import { EmittedEvents } from './client'
 import { StreamStateView_Space } from './streamStateView_Space'
@@ -38,7 +38,7 @@ export class StreamStateView {
 
     // todo: remove this additional map in favor of events map once RiverEvent decrypts to ParsedEvents
     // https://linear.app/hnt-labs/issue/HNT-2049/refactor-riverevent-to-input-and-output-streamevents
-    readonly decryptedEvents = new Map<string, RiverEvent>()
+    readonly decryptedEvents = new Map<string, RiverEventV2>()
     readonly leafEventHashes = new Map<string, Uint8Array>()
 
     lastEventNum = 0n
@@ -379,7 +379,7 @@ export class StreamStateView {
     }
 
     // update streeam state with successfully decrypted events by hashStr event id
-    updateDecrypted(event: RiverEvent): void {
+    updateDecrypted(event: RiverEventV2): void {
         const hashStr = event.getId()
         if (!hashStr) {
             log(`Ignoring decrypted event with no hash id`)

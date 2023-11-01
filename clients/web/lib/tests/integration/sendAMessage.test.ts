@@ -17,7 +17,7 @@ import { Permission } from '@river/web3'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
-import { EncryptedEventStreamTypes, RiverEvent } from '@river/sdk'
+import { RiverEventV2, getStreamPayloadCase } from '@river/sdk'
 
 describe('sendAMessage', () => {
     test('create room, invite user, accept invite, and send encrypted message', async () => {
@@ -69,18 +69,18 @@ describe('sendAMessage', () => {
         console.log(`!!!!!! bob sends message`)
         await bob.sendMessage(channelId, 'Hello Alice!')
 
-        const clientEvents: RiverEvent[] = []
-        const bobRecievedEvents: RiverEvent[] = []
+        const clientEvents: RiverEventV2[] = []
+        const bobRecievedEvents: RiverEventV2[] = []
         // everyone should receive the message
         for (let i = 0; i < numClients; i++) {
             console.log(`!!!!!! client ${i} waits for message`)
             const client = clients[`client_${i}`]
             client.casablancaClient?.on(
                 'eventDecrypted',
-                (event: RiverEvent, _err: Error | undefined) => {
+                (event: RiverEventV2, _err: Error | undefined) => {
                     if (
                         !event.isDecryptionFailure() &&
-                        event.getStreamType() == EncryptedEventStreamTypes.Channel
+                        getStreamPayloadCase(event.getStreamId()) == 'channelPayload'
                     ) {
                         clientEvents.push(event)
                     }
@@ -91,11 +91,10 @@ describe('sendAMessage', () => {
         // bob should receive the message
         bob.casablancaClient?.on(
             'eventDecrypted',
-            (riverEvent: object, _err: Error | undefined) => {
-                const event = riverEvent as RiverEvent
+            (event: RiverEventV2, _err: Error | undefined) => {
                 if (
                     !event.isDecryptionFailure() &&
-                    event.getStreamType() == EncryptedEventStreamTypes.Channel
+                    getStreamPayloadCase(event.getStreamId()) == 'channelPayload'
                 ) {
                     if (event.getSender() !== bob?.casablancaClient?.userId) {
                         bobRecievedEvents.push(event)
@@ -124,16 +123,17 @@ describe('sendAMessage', () => {
     }) // end test
 }) // end describe
 
-function getMessages(events: RiverEvent[]): string[] {
+function getMessages(events: RiverEventV2[]): string[] {
     return events.map((e) => {
-        const content = e.getClearContent_ChannelMessage()
+        const content = e.getContent()
         if (
-            content?.payload &&
-            content?.payload?.case === 'post' &&
-            content?.payload?.value?.content?.case === 'text'
+            content !== undefined &&
+            content?.content?.payload &&
+            content?.content.payload?.case === 'post' &&
+            content?.content.payload?.value?.content?.case === 'text'
         ) {
-            return content?.payload?.value?.content?.value.body
+            return content?.content.payload?.value?.content?.value.body
         }
-        return content?.payload?.case ?? 'undefined'
+        return content?.content?.payload?.case ?? 'undefined'
     })
 }

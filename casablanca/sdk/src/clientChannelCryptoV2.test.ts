@@ -1,6 +1,5 @@
 import { Client } from './client'
 import { RiverEventV2 } from './eventV2'
-import { RiverEvent } from './event'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import {
     make_ChannelMessage_Post_Content_Text,
@@ -77,7 +76,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
             reason: 'good reason',
         }
 
-        const encryptedData = await alicesClient.encryptGroupEvent({
+        const encryptedData = await alicesClient.encryptMegolmEvent({
             content: make_ChannelMessage_Redaction(payload.refEventId, payload.reason),
             recipient: { streamId: bobsChannelId },
         })
@@ -157,7 +156,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
                 value: payload,
             },
         })
-        const encryptedData = await alicesClient.encryptGroupEvent({
+        const encryptedData = await alicesClient.encryptMegolmEvent({
             content: make_ChannelMessage_Edit('fake_event_id', toPlainMessage(post)),
             recipient: { streamId: bobsChannelId },
         })
@@ -239,7 +238,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
             reaction: '👍',
         }
 
-        const encryptedData = await alicesClient.encryptGroupEvent({
+        const encryptedData = await alicesClient.encryptMegolmEvent({
             content: make_ChannelMessage_Reaction(payload.refEventId, payload.reaction),
             recipient: { streamId: bobsChannelId },
         })
@@ -313,7 +312,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
         const payload = {
             typeUrl: 'http://fake_url',
         }
-        const encryptedData = await alicesClient.encryptGroupEvent({
+        const encryptedData = await alicesClient.encryptMegolmEvent({
             content: make_ChannelMessage_Post_Content_GM(payload.typeUrl),
             recipient: { streamId: bobsChannelId },
         })
@@ -394,7 +393,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
             info: { url: 'http://fake_url', mimetype: 'image/png' },
         }
 
-        const encryptedData = await alicesClient.encryptGroupEvent({
+        const encryptedData = await alicesClient.encryptMegolmEvent({
             content: make_ChannelMessage_Post_Content_Image(payload.title, payload.info),
             recipient: { streamId: bobsChannelId },
         })
@@ -474,7 +473,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
             content: 'First secret encrypted message!',
         }
 
-        const encryptedData = await alicesClient.encryptGroupEvent({
+        const encryptedData = await alicesClient.encryptMegolmEvent({
             content: make_ChannelMessage_Post_Content_Text(payload.content),
             recipient: { streamId: bobsChannelId },
         })
@@ -578,7 +577,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
                 event_id = 'alice_event_id'
             }
             expect(content).toBeDefined()
-            const encryptedData = await client.encryptGroupEvent({
+            const encryptedData = await client.encryptMegolmEvent({
                 content: content,
                 recipient: { streamId: bobsChannelId },
             })
@@ -652,7 +651,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
             content: 'First secret encrypted message!',
         }
 
-        const encryptedData = await bobsClient.encryptGroupEvent({
+        const encryptedData = await bobsClient.encryptMegolmEvent({
             content: make_ChannelMessage_Post_Content_Text(payload.content),
             recipient: { streamId: bobsChannelId },
         })
@@ -738,22 +737,22 @@ describe('clientCryptoTest_RiverEventV2', () => {
         await aliceJoined.expectToSucceed()
 
         const bobSelfToDevice = makeDonePromise()
-        bobsClient.on('channelNewMessage', (streamId: string, event: RiverEvent): void => {
-            const { content } = event.getWireContentChannel()
-            const senderKey = content['sender_key']
-            const sessionId = content['session_id']
+        bobsClient.on('channelNewMessage', (streamId: string, event: RiverEventV2): void => {
+            const content = event.getWireContent()
+            const senderKey = content.senderKey
+            const sessionId = content.sessionId
             log('channelNewMessage for Alice', streamId, senderKey, sessionId, content)
             if (streamId == bobsChannelId) {
                 bobSelfToDevice.runAndDoneAsync(async () => {
                     expect(content).toBeDefined()
                     await bobsClient.decryptEventIfNeeded(event)
-                    const clearEvent = event.getClearContent_ChannelMessage()
-                    expect(clearEvent?.payload).toBeDefined()
+                    const clearEvent = event.getContent()
+                    expect(clearEvent?.content?.payload).toBeDefined()
                     if (
-                        clearEvent?.payload?.case === 'post' &&
-                        clearEvent?.payload?.value?.content?.case === 'text'
+                        clearEvent?.content?.payload?.case === 'post' &&
+                        clearEvent?.content?.payload?.value?.content?.case === 'text'
                     ) {
-                        expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                        expect(clearEvent?.content?.payload?.value?.content.value?.body).toContain(
                             'First secret encrypted message!',
                         )
                     }
@@ -817,18 +816,18 @@ describe('clientCryptoTest_RiverEventV2', () => {
         await aliceJoined.expectToSucceed()
 
         const bobSelfToDevice = makeDonePromise()
-        bobsClient.on('channelNewMessage', (streamId: string, event: RiverEvent): void => {
-            const { content } = event.getWireContentChannel()
-            const senderKey = content['sender_key']
-            const sessionId = content['session_id']
+        bobsClient.on('channelNewMessage', (streamId: string, event: RiverEventV2): void => {
+            const content = event.getWireContent()
+            const senderKey = content.senderKey
+            const sessionId = content.sessionId
             log('channelNewMessage', streamId, senderKey, sessionId, content)
             if (streamId == bobsChannelId) {
                 bobSelfToDevice.runAndDoneAsync(async () => {
                     expect(content).toBeDefined()
                     await bobsClient.decryptEventIfNeeded(event)
-                    const wireEvent = event.getWireContentChannel().content.ciphertext
+                    const wireEvent = event.getWireContent()
                     expect(wireEvent).toBeDefined()
-                    expect(isCiphertext(wireEvent ?? '')).toBe(true)
+                    expect(isCiphertext(wireEvent.text ?? '')).toBe(true)
                 })
             }
         })

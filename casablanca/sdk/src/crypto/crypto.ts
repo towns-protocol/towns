@@ -6,7 +6,6 @@ import { assertBytes } from 'ethereum-cryptography/utils'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 import { check } from '../check'
-import { RiverEvent, IClearEvent } from '../event'
 import { Client } from '../client'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -40,7 +39,6 @@ import { ethers } from 'ethers'
 import { CryptoStore } from './store/base'
 import { OlmDecryption, OlmEncryption } from './algorithms/olm'
 import { MegolmDecryption, MegolmEncryption } from './algorithms/megolm'
-import { PlainMessage } from '@bufbuild/protobuf'
 import { ClearContent, RiverEventV2 } from '../eventV2'
 
 const log = dlog('csb:crypto')
@@ -89,37 +87,6 @@ export const townsSign = async (
     // TODO(HNT-1380): why async sign doesn't work in node? Use async sign in the browser, sync sign in node?
     const [sig, recovery] = signSync(hash, privateKey, { recovered: true, der: false })
     return pushByteToUint8Array(sig, recovery)
-}
-
-/**
- * Represents a received r.room_key_request event
- */
-export class IncomingRoomKeyRequest {
-    /** user requesting the key */
-    public readonly userId: string
-    /** device requesting the key */
-    public readonly deviceId: string
-    /** unique id for the request */
-    public readonly requestId: string
-    public readonly requestBody: IRoomKeyRequestBody | undefined
-    /**
-     * callback which, when called, will ask
-     *    the relevant crypto algorithm implementation to share the keys for
-     *    this request.
-     */
-    public share: () => void
-
-    public constructor(event: RiverEvent) {
-        const content = event.getContent()
-
-        this.userId = event.getSender()
-        this.deviceId = content.requesting_device_id ?? ''
-        this.requestId = content.request_id ?? ''
-        this.requestBody = content.request_body
-        this.share = (): void => {
-            throw new Error("don't know how to share keys for this request yet")
-        }
-    }
 }
 
 export const townsVerifySignature = (
@@ -184,7 +151,7 @@ export interface IEventDecryptionResult {
     /**
      * The plaintext payload for the event (typically containing <tt>type</tt> and <tt>content</tt> fields).
      */
-    clearEvent: IClearEvent
+    clearEvent: ClearContent
     /**
      * Key owned by the sender of this event.
      */
@@ -290,33 +257,26 @@ export interface CryptoBackend {
     stop(): void
 
     /**
+     * Encrypt an event using Olm
+     *
      * @param event -  event to be encrypted with Olm
-     * @param target - userIds to encrypt messages for
+     * @param recipients - recipients to encrypt message for
      *
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    encryptEvent(
-        event: PlainMessage<ToDeviceMessage>,
+    encryptOlmEvent(
+        event: ToDeviceMessage,
         recipients: IEncryptionUserRecipient,
-    ): Promise<PlainMessage<EncryptedDeviceData>>
+    ): Promise<EncryptedDeviceData>
 
     /**
-     * @param event -  event to be sent
-     * @param target - encryption target (either userIds or roomId)
+     * Encrypt an event using Megolm
      *
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    encryptEventV2(input: GroupEncryptionInput): Promise<PlainMessage<EncryptedData>>
-
-    /**
-     * Decrypt a received event
-     *
-     * @returns a promise which resolves once we have finished decrypting.
-     * Rejects with an error if there is a problem decrypting the event.
-     */
-    decryptEvent(event: RiverEvent): Promise<IEventDecryptionResult>
+    encryptMegolmEvent(input: GroupEncryptionInput): Promise<EncryptedData>
 
     /**
      * Decrypt a received event using Megolm
@@ -324,7 +284,7 @@ export interface CryptoBackend {
      * @returns a promise which resolves once we have finished decrypting.
      * Rejects with an error if there is a problem decrypting the event.
      */
-    decryptEventV2(event: RiverEventV2): Promise<ClearContent>
+    decryptMegolmEvent(event: RiverEventV2): Promise<ClearContent>
 
     /**
      * Decrypt a received event using Olm
@@ -332,7 +292,7 @@ export interface CryptoBackend {
      * @returns a promise which resolves once we have finished decrypting.
      * Rejects with an error if there is a problem decrypting the event.
      */
-    decryptEventWithOlm(
+    decryptOlmEvent(
         event: UserPayload_ToDevice,
         senderUserId: string,
     ): Promise<IEventOlmDecryptionResult>
@@ -533,7 +493,7 @@ export class Crypto
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    public async encryptEvent(
+    public async encryptOlmEvent(
         event: ToDeviceMessage,
         recipient: IEncryptionUserRecipient,
     ): Promise<EncryptedDeviceData> {
@@ -567,7 +527,7 @@ export class Crypto
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    public async encryptEventV2(input: GroupEncryptionInput): Promise<EncryptedData> {
+    public async encryptMegolmEvent(input: GroupEncryptionInput): Promise<EncryptedData> {
         const alg = this.megolmEncryption
         const content = input.content
         if (!content) {
@@ -594,46 +554,21 @@ export class Crypto
     /**
      * Decrypt a received event using Olm
      */
-    public async decryptEventWithOlm(
+    public async decryptOlmEvent(
         event: UserPayload_ToDevice,
         senderUserId: string,
     ): Promise<IEventOlmDecryptionResult> {
         if (!event?.message?.algorithm) {
             throw new Error('Event has no algorithm specified')
         }
-        const alg = this.olmDecryption
-        return alg.decryptEventWithOlm(event, senderUserId)
-    }
-
-    /**
-     * Decrypt a received event
-     */
-    public async decryptEvent(event: RiverEvent): Promise<IEventDecryptionResult> {
-        if (event.isRedacted()) {
-            // todo: implement
-            throw new Error('decryption of redacted events not implemented')
-        } else {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            const content = event.getWireContent().content
-            if (!content?.algorithm) {
-                throw new Error('Event has no algorithm specified')
-            }
-            // todo jterzis: remove this once we switch to RiverEventV2
-            // this is temp hack to allow support for RiverEvent
-            if (content.algorithm === OLM_ALGORITHM) {
-                return this.olmDecryption.decryptEvent(event)
-            } else {
-                return this.megolmDecryption.decryptEvent(event)
-            }
-        }
+        return this.olmDecryption.decryptEvent(event, senderUserId)
     }
 
     /**
      * Decrypt a received event using Megolm
      */
-    public async decryptEventV2(event: RiverEventV2): Promise<ClearContent> {
-        const alg = this.megolmDecryption
-        return alg.decryptEventV2(event)
+    public async decryptMegolmEvent(event: RiverEventV2): Promise<ClearContent> {
+        return this.megolmDecryption.decryptEvent(event)
     }
 
     /**

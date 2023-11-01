@@ -16,7 +16,7 @@ import { CallOptions } from '@connectrpc/connect'
 // This is needed to get the jest itnerface for using in spyOn
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { jest } from '@jest/globals'
-import { RiverEvent } from './event'
+import { RiverEventV2 } from './eventV2'
 import { SignerContext } from './sign'
 
 const log = dlog('csb:test')
@@ -59,19 +59,19 @@ describe('clientTest', () => {
         await expect(bobsClient.initCrypto()).toResolve()
         await bobsClient.startSync()
 
-        const onChannelNewMessage = (channelId: string, event: RiverEvent): void => {
+        const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
             log('channelNewMessage', channelId)
             done.runAndDoneAsync(async () => {
-                const { content } = event.getWireContentChannel()
+                const content = event.getWireContent()
                 expect(content).toBeDefined()
                 await bobsClient.decryptEventIfNeeded(event)
-                const clearEvent = event.getClearContent_ChannelMessage()
-                expect(clearEvent?.payload).toBeDefined()
+                const clearEvent = event.getContent()
+                expect(clearEvent?.content?.payload).toBeDefined()
                 if (
-                    clearEvent?.payload?.case === 'post' &&
-                    clearEvent?.payload?.value?.content?.case === 'text'
+                    clearEvent?.content?.payload?.case === 'post' &&
+                    clearEvent?.content?.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                    expect(clearEvent?.content?.payload?.value?.content.value?.body).toContain(
                         'Hello, world!',
                     )
                 }
@@ -315,20 +315,20 @@ describe('clientTest', () => {
 
         const done = makeDonePromise()
 
-        const onChannelNewMessage = (channelId: string, event: RiverEvent): void => {
+        const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
             log('channelNewMessage', channelId)
             log(event)
 
             done.runAndDoneAsync(async () => {
-                const { content } = event.getWireContentChannel()
+                const content = event.getWireContent()
                 expect(content).toBeDefined()
                 await bobsAnotherClient.decryptEventIfNeeded(event)
-                const clearEvent = event.getClearContent_ChannelMessage()
+                const clearEvent = event.getContent()
                 if (
-                    clearEvent?.payload?.case === 'post' &&
-                    clearEvent?.payload?.value?.content?.case === 'text'
+                    clearEvent?.content?.payload?.case === 'post' &&
+                    clearEvent?.content?.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                    expect(clearEvent?.content?.payload?.value?.content.value?.body).toContain(
                         'Hello, again!',
                     )
                 }
@@ -392,18 +392,18 @@ describe('clientTest', () => {
 
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
-        bobsClient.once('channelNewMessage', (channelId: string, event: RiverEvent): void => {
+        bobsClient.once('channelNewMessage', (channelId: string, event: RiverEventV2): void => {
             log('channelNewMessage', 'Bob Initial Message', channelId)
             bobSelfHello.runAndDoneAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
                 await bobsClient.decryptEventIfNeeded(event)
-                const clearEvent = event.getClearContent_ChannelMessage()
-                expect(clearEvent?.payload).toBeDefined()
+                const clearEvent = event.getContent()
+                expect(clearEvent?.content?.payload).toBeDefined()
                 if (
-                    clearEvent?.payload?.case === 'post' &&
-                    clearEvent?.payload?.value?.content?.case === 'text'
+                    clearEvent?.content?.payload?.case === 'post' &&
+                    clearEvent?.content?.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                    expect(clearEvent?.content?.payload?.value?.content.value?.body).toContain(
                         'Hello, world from Bob!',
                     )
                 }
@@ -443,18 +443,18 @@ describe('clientTest', () => {
 
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
-        bobsClient.once('channelNewMessage', (channelId: string, event: RiverEvent): void => {
+        bobsClient.once('channelNewMessage', (channelId: string, event: RiverEventV2): void => {
             log('channelNewMessage', 'Bob Initial Message', channelId)
             bobSelfHello.runAndDoneAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
                 await bobsClient.decryptEventIfNeeded(event)
-                const clearEvent = event.getClearContent_ChannelMessage()
-                expect(clearEvent?.payload).toBeDefined()
+                const clearEvent = event.getContent()
+                expect(clearEvent?.content?.payload).toBeDefined()
                 if (
-                    clearEvent?.payload?.case === 'post' &&
-                    clearEvent?.payload?.value?.content?.case === 'text'
+                    clearEvent?.content?.payload?.case === 'post' &&
+                    clearEvent?.content?.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                    expect(clearEvent?.content?.payload?.value?.content.value?.body).toContain(
                         'Hello, world from Bob!',
                     )
                 }
@@ -497,20 +497,20 @@ describe('clientTest', () => {
             'Both!',
         ]
 
-        alicesClient.on('channelNewMessage', (channelId: string, event: RiverEvent): void => {
-            const { content } = event.getWireContentChannel()
+        alicesClient.on('channelNewMessage', (channelId: string, event: RiverEventV2): void => {
+            const content = event.getWireContent()
             expect(content).toBeDefined()
             log('channelNewMessage', 'Alice', channelId)
             aliceGetsMessage.runAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
                 await alicesClient.decryptEventIfNeeded(event)
-                const clearEvent = event.getClearContent_ChannelMessage()
-                expect(clearEvent?.payload).toBeDefined()
+                const clearEvent = event.getContent()
+                expect(clearEvent?.content?.payload).toBeDefined()
                 if (
-                    clearEvent?.payload?.case === 'post' &&
-                    clearEvent?.payload?.value?.content?.case === 'text'
+                    clearEvent?.content?.payload?.case === 'post' &&
+                    clearEvent?.content?.payload?.value?.content?.case === 'text'
                 ) {
-                    const body = clearEvent?.payload?.value?.content.value?.body
+                    const body = clearEvent?.content?.payload?.value?.content.value?.body
                     // @ts-ignore
                     expect(body).toBeOneOf(conversation)
                     if (body === 'Hello, Alice!') {
@@ -525,20 +525,20 @@ describe('clientTest', () => {
             })
         })
 
-        bobsClient.on('channelNewMessage', (channelId: string, event: RiverEvent): void => {
-            const { content } = event.getWireContentChannel()
+        bobsClient.on('channelNewMessage', (channelId: string, event: RiverEventV2): void => {
+            const content = event.getWireContent()
             expect(content).toBeDefined()
             log('channelNewMessage', 'Bob', channelId)
             bobGetsMessage.runAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
                 await bobsClient.decryptEventIfNeeded(event)
-                const clearEvent = event.getClearContent_ChannelMessage()
-                expect(clearEvent?.payload).toBeDefined()
+                const clearEvent = event.getContent()
+                expect(clearEvent?.content?.payload).toBeDefined()
                 if (
-                    clearEvent?.payload?.case === 'post' &&
-                    clearEvent?.payload?.value?.content?.case === 'text'
+                    clearEvent?.content?.payload?.case === 'post' &&
+                    clearEvent?.content?.payload?.value?.content?.case === 'text'
                 ) {
-                    const body = clearEvent?.payload?.value?.content.value?.body
+                    const body = clearEvent?.content?.payload?.value?.content.value?.body
                     // @ts-ignore
                     expect(body).toBeOneOf(conversation)
                     if (body === 'Hello, Bob!') {

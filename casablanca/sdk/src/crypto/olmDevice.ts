@@ -13,7 +13,6 @@ import {
     Session,
 } from '@river/mecholm'
 import { DecryptionError } from './algorithms/base'
-import { WITHHELD_MESSAGES } from '../event'
 import { IOutboundGroupSessionKey } from './algorithms/megolm'
 import { EncryptedMessageEnvelope } from '@river/proto'
 
@@ -47,6 +46,13 @@ function checkPayloadLength(payloadString: string): void {
                 `The maximum for an encrypted message is ${MAX_PLAINTEXT_LENGTH} bytes.`,
         )
     }
+}
+
+const WITHHELD_MESSAGES: Record<string, string> = {
+    'r.unverified': 'The sender has disabled encrypting to unverified devices.',
+    'r.blacklisted': 'The sender has blocked you.',
+    'r.unauthorised': 'You are not authorised to read the message.',
+    'r.no_olm': 'Unable to establish a secure channel.',
 }
 
 export interface IDecryptedGroupMessage {
