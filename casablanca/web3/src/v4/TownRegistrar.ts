@@ -1,12 +1,10 @@
 import { IStaticContractsInfoV4 } from './IStaticContractsInfoV4'
 import { ITownArchitectShim } from './ITownArchitectShim'
 import { Address, Chain, PublicClient, Transport, zeroAddress } from 'viem'
+import { Town } from './Town'
 
-// TEMPORARY, replace with Town class
-type Town = any
-
-interface TownRegistry {
-    [townId: string]: Town
+interface TownRegistry<T extends Transport, C extends Chain> {
+    [townId: string]: Town<T, C>
 }
 
 export class TownRegistrar<T extends Transport, C extends Chain> {
@@ -14,7 +12,7 @@ export class TownRegistrar<T extends Transport, C extends Chain> {
     private readonly publicClient: PublicClient<T, C> | undefined
     private readonly townArchitect: ITownArchitectShim<T, C>
     private readonly townOwnerAddress: Address
-    private readonly towns: TownRegistry = {}
+    private readonly towns: TownRegistry<T, C> = {}
 
     constructor(
         contractsInfo: IStaticContractsInfoV4,
@@ -35,7 +33,7 @@ export class TownRegistrar<T extends Transport, C extends Chain> {
         return this.townArchitect
     }
 
-    public async getTown(spaceId: string): Promise<Town | undefined> {
+    public async getTown(spaceId: string): Promise<Town<T, C> | undefined> {
         if (this.towns[spaceId] === undefined) {
             const townAddress = await this.townArchitect.read({
                 functionName: 'getTownById',
@@ -44,16 +42,16 @@ export class TownRegistrar<T extends Transport, C extends Chain> {
             if (!townAddress || townAddress === zeroAddress) {
                 return undefined // town is not found
             }
-            // TODO
 
-            // this.towns[spaceId] = new Town({
-            //     address: townAddress,
-            //     spaceId: spaceId,
-            //     townOwnerAddress: this.townOwnerAddress,
-            //     chainId: this.chainId,
-            //     provider: this.provider,
-            // })
+            this.towns[spaceId] = new Town({
+                address: townAddress,
+                spaceId: spaceId,
+                townOwnerAddress: this.townOwnerAddress,
+                chainId: this.chainId,
+                publicClient: this.publicClient,
+            })
         }
-        // return this.towns[spaceId]
+
+        return this.towns[spaceId]
     }
 }

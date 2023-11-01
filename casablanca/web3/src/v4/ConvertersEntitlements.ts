@@ -1,9 +1,9 @@
 // import { IRolesBase } from './IRolesShim'
 // import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
 import { Hex, decodeAbiParameters, parseAbiParameters } from 'viem'
-import { ViemExternalTokenStruct } from './types'
+import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
 
-// const UserAddressesEncoding = 'address[]'
+const UserAddressesEncoding = 'address[]'
 const ExternalTokenEncoding =
     '(address contractAddress, uint256 quantity, bool isSingleToken, uint256[] tokenIds)[]'
 
@@ -13,16 +13,18 @@ const ExternalTokenEncoding =
 //     return encodedData
 // }
 
-// export function decodeUsers(encodedData: string): string[] {
-//     const abiCoder = ethers.utils.defaultAbiCoder
-//     const decodedData = abiCoder.decode([UserAddressesEncoding], encodedData) as string[][]
-//     let u: string[] = []
-//     if (decodedData.length) {
-//         // decoded value is in element 0 of the array
-//         u = decodedData[0]
-//     }
-//     return u
-// }
+export function decodeUsers(encodedData: Hex): Hex[] {
+    const decodedData = decodeAbiParameters(
+        parseAbiParameters([UserAddressesEncoding]),
+        encodedData,
+    )
+    let u: Hex[] = []
+    if (decodedData.length) {
+        // decoded value is in element 0 of the array
+        u = decodedData[0].slice()
+    }
+    return u
+}
 
 // export function createTokenEntitlementStruct(
 //     moduleAddress: string,
@@ -54,15 +56,17 @@ const ExternalTokenEncoding =
 //     return encodedData
 // }
 
-export function decodeExternalTokens(encodedData: Hex): ViemExternalTokenStruct[] {
+export function decodeExternalTokens(
+    encodedData: Hex,
+): TokenEntitlementDataTypes['ExternalTokenStruct'][] {
     const decodedData = decodeAbiParameters(
         parseAbiParameters([ExternalTokenEncoding]),
         encodedData,
     )
-    let t: ViemExternalTokenStruct[] = []
+    let t: TokenEntitlementDataTypes['ExternalTokenStruct'][] = []
     if (decodedData.length) {
         // decoded value is in element 0 of the array
-        t = (decodedData as unknown as ViemExternalTokenStruct[][])[0]
+        t = (decodedData as unknown as TokenEntitlementDataTypes['ExternalTokenStruct'][][])[0]
     }
 
     return t

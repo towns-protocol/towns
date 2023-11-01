@@ -3,11 +3,11 @@ import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TownArchitect.ab
 
 import { BaseContractShimV4 } from './BaseContractShimV4'
 import { Address, Chain, PublicClient, Transport } from 'viem'
-import { ContractFunctionParameters } from './types'
+import { ContractFunctionInputs } from './types'
 
 export interface ITownArchitectBase {
-    MembershipStruct: ContractFunctionParameters<typeof LocalhostAbi, 'computeTown'>[1]
-    TownStruct: ContractFunctionParameters<typeof LocalhostAbi, 'createTown'>[0]
+    MembershipStruct: ContractFunctionInputs<typeof LocalhostAbi, 'computeTown'>[1]
+    TownStruct: ContractFunctionInputs<typeof LocalhostAbi, 'createTown'>[0]
 }
 
 const abis = {

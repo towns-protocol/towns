@@ -19,7 +19,7 @@ import { Chain, PublicClient, WalletClient, Transport } from 'viem'
 // import { IRolesBase } from './IRolesShim'
 // import { ITownArchitectBase } from './ITownArchitectShim'
 // import { SpaceInfo } from '../SpaceInfo'
-// import { Town } from './Town'
+import { Town } from './Town'
 import { TownRegistrar } from './TownRegistrar'
 // import { createEntitlementStruct } from './ConvertersRoles'
 import { getContractsInfoV4 } from './IStaticContractsInfoV4'
@@ -40,18 +40,22 @@ export class SpaceDappV4<T extends Transport, C extends Chain> implements ISpace
         this.townRegistrar = new TownRegistrar(contractsInfo, chainId, client)
     }
 
-    // public async addRoleToChannel(
-    //     spaceId: string,
-    //     channelNetworkId: string,
-    //     roleId: number,
-    //     signer: ethers.Signer,
-    // ): Promise<ContractTransaction> {
-    //     const town = await this.getTown(spaceId)
-    //     if (!town) {
-    //         throw new Error(`Town with spaceId "${spaceId}" is not found.`)
-    //     }
-    //     return town.Channels.write(signer).addRoleToChannel(channelNetworkId, roleId)
-    // }
+    public async addRoleToChannel(
+        spaceId: string,
+        channelNetworkId: string,
+        roleId: number,
+        wallet: WalletClient<T, C>,
+    ): Promise<SpaceDappTransaction> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Channels.write({
+            functionName: 'addRoleToChannel',
+            args: [channelNetworkId, BigInt(roleId)],
+            wallet,
+        })
+    }
 
     public async createSpace(
         params: CreateSpaceParams,
@@ -302,9 +306,9 @@ export class SpaceDappV4<T extends Transport, C extends Chain> implements ISpace
     //     return town.Channels.write(signer).updateChannel(channelId, '', disabled)
     // }
 
-    // private async getTown(townId: string): Promise<Town | undefined> {
-    //     return this.townRegistrar.getTown(townId)
-    // }
+    private async getTown(townId: string): Promise<Town<T, C> | undefined> {
+        return this.townRegistrar.getTown(townId)
+    }
 
     // private async encodeUpdateChannelRoles(
     //     town: Town,

@@ -4,7 +4,7 @@ import {
     ChannelMetadata,
     Permission,
     RoleDetails,
-} from '../ContractTypes'
+} from './ContractTypesV4'
 
 import { SpaceInfo } from '../SpaceInfo'
 import { ITownArchitectBase } from '../v4/ITownArchitectShim'
@@ -48,8 +48,8 @@ export interface ISpaceDapp<T extends Transport, C extends Chain> {
         spaceId: string,
         channelNetworkId: string,
         roleId: number,
-        signer: WalletClient,
-    ) => Promise<Transaction>
+        wallet: WalletClient<T, C>,
+    ) => Promise<SpaceDappTransaction>
     createSpace: (
         params: CreateSpaceParams,
         wallet: WalletClient<T, C>,
@@ -59,7 +59,7 @@ export interface ISpaceDapp<T extends Transport, C extends Chain> {
         channelName: string,
         channelNetworkId: string,
         roleIds: number[],
-        signer: WalletClient,
+        signer: WalletClient<T, C>,
     ) => Promise<Transaction>
     createRole(
         spaceId: string,
@@ -67,9 +67,9 @@ export interface ISpaceDapp<T extends Transport, C extends Chain> {
         permissions: Permission[],
         tokens: ViemExternalTokenStruct[],
         users: string[],
-        signer: WalletClient,
+        signer: WalletClient<T, C>,
     ): Promise<Transaction>
-    deleteRole(spaceId: string, roleId: number, signer: WalletClient): Promise<Transaction>
+    deleteRole(spaceId: string, roleId: number, signer: WalletClient<T, C>): Promise<Transaction>
     getChannels: (spaceId: string) => Promise<ChannelMetadata[]>
     getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails | null>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
@@ -85,17 +85,17 @@ export interface ISpaceDapp<T extends Transport, C extends Chain> {
     ) => Promise<boolean>
     parseSpaceFactoryError: (error: unknown) => Error
     parseSpaceError: (spaceId: string, error: unknown) => Promise<Error>
-    updateChannel: (params: UpdateChannelParams, signer: WalletClient) => Promise<Transaction>
-    updateRole: (params: UpdateRoleParams, signer: WalletClient) => Promise<Transaction>
+    updateChannel: (params: UpdateChannelParams, signer: WalletClient<T, C>) => Promise<Transaction>
+    updateRole: (params: UpdateRoleParams, signer: WalletClient<T, C>) => Promise<Transaction>
     setSpaceAccess: (
         spaceId: string,
         disabled: boolean,
-        signer: WalletClient,
+        signer: WalletClient<T, C>,
     ) => Promise<Transaction>
     setChannelAccess: (
         spaceId: string,
         channelId: string,
         disabled: boolean,
-        signer: WalletClient,
+        signer: WalletClient<T, C>,
     ) => Promise<Transaction>
 }

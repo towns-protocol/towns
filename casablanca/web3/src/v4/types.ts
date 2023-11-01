@@ -16,10 +16,15 @@ export type ViemExternalTokenStruct = {
 
 export type ContractFunctionNames<A extends Abi> = ExtractAbiFunctionNames<A>
 
-export type ContractFunctionParameters<
+export type ContractFunctionInputs<
     A extends Abi,
     Name extends ContractFunctionNames<A>,
 > = AbiParametersToPrimitiveTypes<ExtractAbiFunction<A, Name>['inputs']>
+
+export type ContractFunctionOutputs<
+    A extends Abi,
+    Name extends ContractFunctionNames<A>,
+> = AbiParametersToPrimitiveTypes<ExtractAbiFunction<A, Name>['outputs']>
 
 export type SpaceDappTransaction = {
     hash: `0x${string}`
