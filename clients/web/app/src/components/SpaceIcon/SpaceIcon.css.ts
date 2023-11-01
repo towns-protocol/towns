@@ -11,6 +11,9 @@ const fontSizeVariants = {
     display: {
         fontSize: vars.fontSize.display,
     },
+    sm: {
+        fontSize: vars.fontSize.sm,
+    },
 }
 
 export const LetterStyles = recipe({

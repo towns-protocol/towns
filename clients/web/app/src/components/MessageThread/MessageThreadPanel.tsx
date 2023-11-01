@@ -49,7 +49,7 @@ export const MessageThreadPanel = (props: Props) => {
     const { isTouch } = useDevice()
 
     const panelLabel = (
-        <Paragraph>
+        <Paragraph truncate>
             Thread{' '}
             {channelLabel ? (
                 <>

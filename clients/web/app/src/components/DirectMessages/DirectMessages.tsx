@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect } from 'react'
+import { formatDistance } from 'date-fns'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useMatch, useNavigate } from 'react-router'
 import { useDMLatestMessage, useZionContext } from 'use-zion-client'
 import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
-import { formatDistance } from 'date-fns'
-import { Avatar, Box, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { PATHS } from 'routes'
+import { useCreateLink } from 'hooks/useCreateLink'
+import { Avatar, Box, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { CreateDirectMessage } from './CreateDIrectMessage'
 
 type Props = {
@@ -60,17 +60,30 @@ const Threads = () => {
     const messageId = useMatch('messages/:messageId')?.params.messageId
     const { dmUnreadChannelIds } = useZionContext()
 
+    const { isTouch } = useDevice()
+
+    const hasInitRef = useRef(false)
+
+    const { createLink } = useCreateLink()
+
     useEffect(() => {
-        if (!messageId && dmChannels.length > 0) {
-            navigate(`/${PATHS.MESSAGES}/${dmChannels[0].id.slug}`)
+        if (!hasInitRef.current && !isTouch && !messageId && dmChannels.length > 0) {
+            const link = createLink({ messageId: dmChannels[0].id.slug })
+            if (link) {
+                navigate(link)
+            }
         }
-    }, [messageId, dmChannels, navigate])
+        hasInitRef.current = true
+    }, [messageId, dmChannels, navigate, isTouch, createLink])
 
     const onThreadClick = useCallback(
         (id: string) => {
-            navigate(`/${PATHS.MESSAGES}/${id}`)
+            const link = createLink({ messageId: id })
+            if (link) {
+                navigate(link)
+            }
         },
-        [navigate],
+        [createLink, navigate],
     )
 
     return (

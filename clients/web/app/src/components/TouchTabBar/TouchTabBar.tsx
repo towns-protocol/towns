@@ -1,5 +1,10 @@
 import React, { useCallback, useMemo } from 'react'
-import { useMyProfile, useSpaceData, useSpaceThreadRootsUnreadCount } from 'use-zion-client'
+import {
+    useMyProfile,
+    useSpaceData,
+    useSpaceThreadRootsUnreadCount,
+    useZionContext,
+} from 'use-zion-client'
 import { matchRoutes, useLocation, useNavigate, useResolvedPath } from 'react-router'
 import { Avatar, Box, Dot, Icon, IconButton, Stack, Text, Tooltip } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
@@ -7,6 +12,7 @@ import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { PATHS } from 'routes'
 import { useShowHasUnreadBadgeForCurrentSpace } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
+import { useCreateLink } from 'hooks/useCreateLink'
 import { useVisualViewportContext } from '../VisualViewportContext/VisualViewportContext'
 import { TouchScrollToTopScrollId } from './TouchScrollToTopScrollId'
 
@@ -15,9 +21,17 @@ export const TouchTabBar = () => {
     const userId = useMyProfile()?.userId
     const { showHasUnreadBadgeForCurrentSpace } = useShowHasUnreadBadgeForCurrentSpace()
     const hasUnreadThreads = useSpaceThreadRootsUnreadCount() > 0
+    const { dmUnreadChannelIds } = useZionContext()
+    const hasUnreadDMs = dmUnreadChannelIds.size > 0
 
     const { shouldDisplayPWAPrompt, closePWAPrompt } = useInstallPWAPrompt()
     const { visualViewportScrolled: tabBarHidden } = useVisualViewportContext()
+
+    const { createLink } = useCreateLink()
+
+    const messageLink = useMemo(() => {
+        return createLink({ index: 'messages' })
+    }, [createLink])
 
     if (!space || tabBarHidden) {
         return null
@@ -31,6 +45,7 @@ export const TouchTabBar = () => {
                     icon={(highlighted: boolean) => (
                         <Box>
                             <SpaceIcon
+                                letterFontSize="sm"
                                 border={highlighted ? 'iconHighlighted' : 'iconIdle'}
                                 inset="xxs"
                                 width="toolbar_icon"
@@ -67,15 +82,24 @@ export const TouchTabBar = () => {
                     scrollToTopId={TouchScrollToTopScrollId.MentionsTabScrollId}
                 />
 
-                <TabBarItem
-                    title="Search"
-                    icon={() => <Icon type="search" size="toolbar_icon" />}
-                    to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.SEARCH}`}
-                    scrollToTopId={TouchScrollToTopScrollId.SearchTabScrollId}
-                    onPressTwice={() => {
-                        document.getElementById(TouchScrollToTopScrollId.SearchTabInputId)?.focus()
-                    }}
-                />
+                {messageLink && (
+                    <TabBarItem
+                        title="DMs"
+                        icon={() => (
+                            <Box>
+                                <Icon type="inbox" size="toolbar_icon" />
+                                {hasUnreadDMs && <Dot position="topRight" />}
+                            </Box>
+                        )}
+                        to={messageLink}
+                        scrollToTopId={TouchScrollToTopScrollId.SearchTabScrollId}
+                        onPressTwice={() => {
+                            document
+                                .getElementById(TouchScrollToTopScrollId.SearchTabInputId)
+                                ?.focus()
+                        }}
+                    />
+                )}
 
                 <TabBarItem
                     title="You"

@@ -415,6 +415,25 @@ export const HomeIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => 
     </svg>
 ))
 
+export const InboxIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M4.6692 0C3.21934 0 1.97695 1.03688 1.71759 2.46335L0.0201619 11.7992C0.011297 11.8427 0.00525535 11.8872 0.00223662 11.9326C0.00029565 11.9608 -0.000436644 11.9889 -2.52267e-10 12.0167V17C-2.52267e-10 18.6569 1.34315 20 3 20H17C18.6569 20 20 18.6569 20 17V12.0223C20.0009 11.9779 19.9989 11.9331 19.9938 11.8879C19.9907 11.8598 19.9863 11.832 19.9809 11.8046L18.2825 2.46334C18.0231 1.03687 16.7808 0 15.3309 0H4.6692ZM17.8018 11L16.3148 2.82111C16.2283 2.34562 15.8142 2 15.3309 2H4.6692C4.18592 2 3.77179 2.34562 3.68533 2.82112L2.19826 11H7C7.55228 11 8 11.4477 8 12C8 13.1046 8.89543 14 10 14C11.1046 14 12 13.1046 12 12C12 11.4477 12.4477 11 13 11H17.8018ZM18 13H13.874C13.4299 14.7252 11.8638 16 10 16C8.13616 16 6.57006 14.7252 6.12602 13H2V17C2 17.5523 2.44772 18 3 18H17C17.5523 18 18 17.5523 18 17V13Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const InfoIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -1366,6 +1385,7 @@ const iconMap = {
     gif: GifIcon,
     help: Help,
     home: HomeIcon,
+    inbox: InboxIcon,
     info: InfoIcon,
     invite: InviteIcon,
     italic: ItalicIcon,

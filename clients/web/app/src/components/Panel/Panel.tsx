@@ -44,7 +44,7 @@ const DesktopPanel = (props: Props) => {
                 color="gray1"
                 justifySelf="start"
             >
-                <Stack grow color="gray2">
+                <Stack grow color="gray2" overflow="hidden">
                     {props.label}
                 </Stack>
                 <Stack>

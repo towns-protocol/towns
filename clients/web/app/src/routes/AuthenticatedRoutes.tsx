@@ -59,6 +59,7 @@ export const AuthenticatedRoutes = () => {
                             <Route path={`${PATHS.SPACES}/:spaceSlug`}>
                                 <Route path="" element={<TouchHome />}>
                                     <Route path="info" element={<InfoPanelWrapper />} />
+                                    {messages}
                                     <Route
                                         path="channels/:channelSlug"
                                         element={<SpacesChannelAnimated />}
@@ -130,6 +131,14 @@ export const AuthenticatedRoutes = () => {
         </Routes>
     )
 }
+const messages = (
+    <Route path="messages" element={<DirectMessageIndex />}>
+        <Route path=":channelSlug" element={<DirectMessageThread />}>
+            <Route path="replies/:messageId" element={<SpacesChannelReplies parentRoute="../" />} />
+            <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+        </Route>
+    </Route>
+)
 
 /**
  *  authenticated but not under `/t/:townId/*
@@ -138,14 +147,8 @@ const OutsideTownRoutes = () => {
     return (
         <Routes>
             <Route path="invites/:inviteSlug" element={<InvitesIndex />} />
-            <Route path="messages" element={<DirectMessageIndex />} />
-            <Route path="messages/:channelSlug" element={<DirectMessageThread />}>
-                <Route
-                    path="replies/:messageId"
-                    element={<SpacesChannelReplies parentRoute="../" />}
-                />
-                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-            </Route>
+            {messages}
+
             {/* catch all */}
             <Route element={<CheckRedirect />}>
                 <Route path="*" element={<NoJoinedSpacesFallback />}>

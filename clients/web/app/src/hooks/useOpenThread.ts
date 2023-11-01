@@ -14,6 +14,7 @@ export const useOpenMessageThread = (spaceId?: RoomIdentifier, channelId?: RoomI
                 spaceId: spaceId?.slug,
                 channelId: channelId?.slug,
             })
+
             if (link) {
                 navigate(link)
             }

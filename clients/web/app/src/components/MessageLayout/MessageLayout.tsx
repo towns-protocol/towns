@@ -277,11 +277,9 @@ export const MessageLayout = (props: Props) => {
                         />
                     )}
             </Stack>
-
             {isModalSheetVisible &&
                 isTouch &&
                 isChannelWritable &&
-                spaceId &&
                 channelId &&
                 eventId &&
                 isSelectable && (

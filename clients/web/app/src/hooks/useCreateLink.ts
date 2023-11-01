@@ -83,12 +83,48 @@ const threadPaths: Path[] = [
         replace: `/${PATHS.MESSAGES}/:channelId/replies/:threadId`,
     },
     {
+        path: `/${PATHS.SPACES}/:spaceId/${PATHS.MESSAGES}/:messageId/*`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.MESSAGES}/:messageId/replies/:threadId`,
+    },
+    {
         path: `/${PATHS.SPACES}/:spaceId/channels/:channelId/*`,
         replace: `/${PATHS.SPACES}/:spaceId/channels/:channelId/replies/:threadId`,
     },
 ]
 
+const messagesPaths: Path[] = [
+    {
+        path: `/${PATHS.MESSAGES}`,
+        replace: `/${PATHS.MESSAGES}`,
+    },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/*`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.MESSAGES}`,
+    },
+]
+
+const messagesThreadPaths: Path[] = [
+    {
+        path: `/${PATHS.MESSAGES}`,
+        replace: `/${PATHS.MESSAGES}/:messageId`,
+    },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/*`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.MESSAGES}/:messageId`,
+    },
+]
+
 const linkParams = {
+    messsageIndex: {
+        params: {
+            index: 'messages' as const,
+        },
+    },
+    messageThreads: {
+        params: {
+            messageId: 'messageId' as string | undefined,
+        },
+    },
     profile: {
         params: {
             profileId: 'profileId' as string | undefined,
@@ -108,14 +144,14 @@ const linkParams = {
     channelInfo: {
         params: {
             spaceId: 'spaceId' as string | undefined,
-            channelId: 'spaceId' as string | undefined,
+            channelId: 'channelId' as string | undefined,
             panel: 'channelInfo',
         },
     },
     channelDirectory: {
         params: {
             spaceId: 'spaceId' as string | undefined,
-            channelId: 'spaceId' as string | undefined,
+            channelId: 'channelId' as string | undefined,
             panel: 'channelDirectory',
         },
     },
@@ -128,6 +164,7 @@ const linkParams = {
         params: {
             spaceId: 'spaceId' as string | undefined,
             channelId: 'channelId' as string | undefined,
+            messageId: 'messageId' as string | undefined,
             threadId: 'threadId' as string | undefined,
         },
     },
@@ -136,8 +173,15 @@ const linkParams = {
 type LinkParams = (typeof linkParams)[keyof typeof linkParams]['params']
 
 const getSearchPathsForParams = (linkParams: LinkParams) => {
+    if ('index' in linkParams && linkParams.index === 'messages') {
+        return messagesPaths
+    }
+
     if ('threadId' in linkParams) {
         return threadPaths
+    }
+    if ('messageId' in linkParams) {
+        return messagesThreadPaths
     }
     if ('profileId' in linkParams) {
         return profilePaths
@@ -175,10 +219,19 @@ export const useCreateLink = () => {
                 const match = matches?.[0]
 
                 if (match) {
-                    const generated = generatePath(match.route.replace ?? match.route.path, {
+                    const path = match.route.replace ?? match.route.path
+
+                    // remove undefined values so they don't override existing params
+                    const filteredParams = Object.fromEntries(
+                        Object.entries(linkParams).filter(
+                            ([k, v]) => !match.params[k] || v !== undefined,
+                        ),
+                    )
+                    const params = {
                         ...match.params,
-                        ...linkParams,
-                    })
+                        ...filteredParams,
+                    }
+                    const generated = generatePath(path, params)
                     return generated
                 }
 

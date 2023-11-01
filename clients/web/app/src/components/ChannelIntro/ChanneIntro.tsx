@@ -1,8 +1,8 @@
 import React from 'react'
 import { RoomIdentifier, useDMData } from 'use-zion-client'
-import { Box, Icon, Paragraph, Stack } from '@ui'
-import { atoms } from 'ui/styles/atoms.css'
+import { Box, Icon, Paragraph, Stack, Text } from '@ui'
 import { useChannelType } from 'hooks/useChannelType'
+import { shortAddress } from 'ui/utils/utils'
 
 type Props = {
     roomIdentifier: RoomIdentifier
@@ -53,13 +53,13 @@ export const ChannelDMIntro = (props: { roomIdentifier: RoomIdentifier }) => {
                 <Box centerContent rounded="sm" background="level2" aspectRatio="1/1" height="x7">
                     <Icon type="tag" color="gray2" size="square_lg" />
                 </Box>
-                <Stack justifyContent="spaceBetween" paddingY="sm">
+                <Stack justifyContent="spaceBetween" paddingY="sm" overflow="hidden">
                     <Paragraph color="gray1">Direct Message</Paragraph>
                     <Paragraph color="gray2">
                         This end-to-end encrypted chat is just between{' '}
-                        <span className={atoms({ fontWeight: 'medium', color: 'default' })}>
-                            {counterParty}
-                        </span>{' '}
+                        <Text as="span" color="default" fontWeight="medium" display="inline">
+                            {shortAddress(counterParty)}
+                        </Text>{' '}
                         and you
                     </Paragraph>
                 </Stack>
