@@ -101,6 +101,11 @@ export type RoleTransactionContext = TransactionContext<{
     spaceNetworkId: string | undefined
 }>
 
+export type WalletLinkTransactionContext = TransactionContext<{
+    rootKeyAddress: string
+    walletAddress: string
+}>
+
 export type ZionClientEventHandlers = {
     onCreateSpace?: (roomId: RoomIdentifier) => void
     onJoinRoom?: (roomId: RoomIdentifier, spaceId: RoomIdentifier) => void

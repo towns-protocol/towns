@@ -19,6 +19,7 @@ import {
     RoleTransactionContext,
     TransactionContext,
     TransactionStatus,
+    WalletLinkTransactionContext,
     ZionClientEventHandlers,
     ZionOpts,
     createTransactionContext,
@@ -65,6 +66,7 @@ import {
     PioneerNFT,
     TokenEntitlementDataTypes,
     SpaceInfo,
+    UNKNOWN_ERROR,
 } from '@river/web3'
 
 /***
@@ -1375,6 +1377,46 @@ export class ZionClient implements DecryptionExtensionDelegate {
             firstEventTimestamp: result.firstEvent
                 ? Number(result.firstEvent.event.createdAtEpocMs)
                 : undefined,
+        }
+    }
+
+    /************************************************
+     * Wallet linking
+     */
+    public async linkWallet(
+        rootKey: ethers.Wallet,
+        wallet: ethers.Signer,
+    ): Promise<WalletLinkTransactionContext> {
+        const rootKeyAddress = await rootKey.getAddress()
+        const walletAddress = await wallet.getAddress()
+        const walletLink = this.spaceDapp.getWalletLink()
+
+        let transaction: ContractTransaction | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            transaction = await walletLink.linkWallet(rootKey, wallet)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+            // TODO-HNT-3222 implement error parsing for wallet linking errors
+            error = {
+                name: UNKNOWN_ERROR,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                message: err.message,
+            }
+        }
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: transaction
+                ? {
+                      rootKeyAddress,
+                      walletAddress,
+                  }
+                : undefined,
+            error,
         }
     }
 

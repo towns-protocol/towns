@@ -18,18 +18,21 @@ import { TownRegistrar } from './TownRegistrar'
 import { createEntitlementStruct } from './ConvertersRoles'
 import { getContractsInfoV3 } from './IStaticContractsInfoV3'
 import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
+import { WalletLink } from './WalletLink'
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export class SpaceDappV3 implements ISpaceDapp {
     private readonly chainId: number
     private readonly provider: ethers.providers.Provider | undefined
     private readonly townRegistrar: TownRegistrar
+    public readonly walletLink: WalletLink
 
     constructor(chainId: number, provider: ethers.providers.Provider | undefined) {
         this.chainId = chainId
         this.provider = provider
         const contractsInfo = getContractsInfoV3(chainId)
         this.townRegistrar = new TownRegistrar(contractsInfo, chainId, provider)
+        this.walletLink = new WalletLink()
     }
 
     public async addRoleToChannel(
@@ -350,6 +353,10 @@ export class SpaceDappV3 implements ISpaceDapp {
             currency: currency,
             feeRecipient: feeRecipient,
         }
+    }
+
+    public getWalletLink(): WalletLink {
+        return this.walletLink
     }
 
     private async getTown(townId: string): Promise<Town | undefined> {

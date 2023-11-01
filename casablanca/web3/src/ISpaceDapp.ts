@@ -11,6 +11,7 @@ import { ContractTransaction, ethers } from 'ethers'
 import { SpaceInfo } from './SpaceInfo'
 import { TokenEntitlementDataTypes } from './v3/TokenEntitlementShim'
 import { ITownArchitectBase } from './v3/ITownArchitectShim'
+import { WalletLink } from './v3/WalletLink'
 
 export interface EventsContractInfo {
     abi: ethers.ContractInterface
@@ -111,4 +112,6 @@ export interface ISpaceDapp {
     ) => Promise<ContractTransaction>
     hasTownMembership: (spaceId: string, wallet: string) => Promise<boolean>
     getMembershipInfo: (spaceId: string) => Promise<MembershipInfo>
+
+    getWalletLink: () => WalletLink
 }
