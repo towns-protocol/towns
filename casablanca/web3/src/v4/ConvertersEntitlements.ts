@@ -1,17 +1,13 @@
-// import { IRolesBase } from './IRolesShim'
-// import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
-import { Hex, decodeAbiParameters, parseAbiParameters } from 'viem'
-import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
+import { Address, Hex, decodeAbiParameters, encodeAbiParameters, parseAbiParameters } from 'viem'
+import { IRolesBase, TokenEntitlementDataTypes } from './types'
 
 const UserAddressesEncoding = 'address[]'
 const ExternalTokenEncoding =
     '(address contractAddress, uint256 quantity, bool isSingleToken, uint256[] tokenIds)[]'
 
-// export function encodeUsers(users: string[]): string {
-//     const abiCoder = ethers.utils.defaultAbiCoder
-//     const encodedData = abiCoder.encode([UserAddressesEncoding], [users])
-//     return encodedData
-// }
+export function encodeUsers(users: Address[]): Hex {
+    return encodeAbiParameters(parseAbiParameters([UserAddressesEncoding]), [users])
+}
 
 export function decodeUsers(encodedData: Hex): Hex[] {
     const decodedData = decodeAbiParameters(
@@ -26,35 +22,33 @@ export function decodeUsers(encodedData: Hex): Hex[] {
     return u
 }
 
-// export function createTokenEntitlementStruct(
-//     moduleAddress: string,
-//     tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
-// ): IRolesBase.CreateEntitlementStruct {
-//     const data = encodeExternalTokens(tokens)
-//     return {
-//         module: moduleAddress,
-//         data,
-//     }
-// }
+export function createTokenEntitlementStruct(
+    moduleAddress: Address,
+    tokens: TokenEntitlementDataTypes['ExternalTokenStruct'][],
+): IRolesBase['CreateEntitlementStruct'] {
+    const data = encodeExternalTokens(tokens)
+    return {
+        module: moduleAddress,
+        data,
+    }
+}
 
-// export function createUserEntitlementStruct(
-//     moduleAddress: string,
-//     users: string[],
-// ): IRolesBase.CreateEntitlementStruct {
-//     const data = encodeUsers(users)
-//     return {
-//         module: moduleAddress,
-//         data,
-//     }
-// }
+export function createUserEntitlementStruct(
+    moduleAddress: Address,
+    users: Address[],
+): IRolesBase['CreateEntitlementStruct'] {
+    const data = encodeUsers(users)
+    return {
+        module: moduleAddress,
+        data,
+    }
+}
 
-// export function encodeExternalTokens(
-//     tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
-// ): string {
-//     const abiCoder = ethers.utils.defaultAbiCoder
-//     const encodedData = abiCoder.encode([ExternalTokenEncoding], [tokens])
-//     return encodedData
-// }
+export function encodeExternalTokens(
+    tokens: TokenEntitlementDataTypes['ExternalTokenStruct'][],
+): Hex {
+    return encodeAbiParameters(parseAbiParameters([ExternalTokenEncoding]), [tokens])
+}
 
 export function decodeExternalTokens(
     encodedData: Hex,

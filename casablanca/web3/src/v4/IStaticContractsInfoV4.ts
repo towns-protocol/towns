@@ -18,7 +18,7 @@ import { Address } from 'viem'
 export interface IStaticContractsInfoV4 {
     townFactoryAddress: Address
     townOwnerAddress: Address
-    mockErc721aAddress: string
+    mockErc721aAddress: Address
     memberTokenAddress: Address
     pioneerTokenAddress: Address
 }
@@ -26,7 +26,7 @@ export interface IStaticContractsInfoV4 {
 const goerliContractsInfo: IStaticContractsInfoV4 = {
     townFactoryAddress: GoerliTownFactoryAddress.address as Address,
     townOwnerAddress: GoerliTownOwnerAddress.address as Address,
-    mockErc721aAddress: '',
+    mockErc721aAddress: '' as Address,
     memberTokenAddress: GoerliMemberAddress.address as Address,
     pioneerTokenAddress: GoerliPioneerAddress.address as Address,
 }
@@ -42,7 +42,7 @@ const localhostContractsInfo: IStaticContractsInfoV4 = {
 const sepoliaContractsInfo: IStaticContractsInfoV4 = {
     townFactoryAddress: SepoliaTownFactoryAddress.address as Address,
     townOwnerAddress: SepoliaTownOwnerAddress.address as Address,
-    mockErc721aAddress: '',
+    mockErc721aAddress: '' as Address,
     memberTokenAddress: SepoliaMemberAddress.address as Address,
     pioneerTokenAddress: SepoliaPioneerAddress.address as Address,
 }

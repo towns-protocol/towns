@@ -2,24 +2,15 @@ import LocalhostAbi from '@towns/generated/localhost/v3/abis/Roles.abi'
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/Roles.abi'
 
 import { BaseContractShimV4 } from './BaseContractShimV4'
-import { Address, Chain, PublicClient, Transport } from 'viem'
-import { ContractFunctionOutputs } from './types'
+import { Address, PublicClient } from 'viem'
 
 const abis = {
     localhostAbi: LocalhostAbi,
     testnetAbi: BaseGoerliAbi,
 } as const
 
-export interface IRolesBase {
-    RoleStructOutput: ContractFunctionOutputs<typeof LocalhostAbi, 'getRoleById'>[0]
-}
-
-export class IRolesShim<T extends Transport, C extends Chain> extends BaseContractShimV4<
-    typeof abis,
-    T,
-    C
-> {
-    constructor(address: Address, chainId: number, client: PublicClient<T, C> | undefined) {
+export class IRolesShim extends BaseContractShimV4<typeof abis> {
+    constructor(address: Address, chainId: number, client: PublicClient | undefined) {
         super(address, chainId, client, abis)
     }
 }

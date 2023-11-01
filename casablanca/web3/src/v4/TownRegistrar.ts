@@ -1,23 +1,23 @@
 import { IStaticContractsInfoV4 } from './IStaticContractsInfoV4'
 import { ITownArchitectShim } from './ITownArchitectShim'
-import { Address, Chain, PublicClient, Transport, zeroAddress } from 'viem'
+import { Address, PublicClient, zeroAddress } from 'viem'
 import { Town } from './Town'
 
-interface TownRegistry<T extends Transport, C extends Chain> {
-    [townId: string]: Town<T, C>
+interface TownRegistry {
+    [townId: string]: Town
 }
 
-export class TownRegistrar<T extends Transport, C extends Chain> {
+export class TownRegistrar {
     private readonly chainId: number
-    private readonly publicClient: PublicClient<T, C> | undefined
-    private readonly townArchitect: ITownArchitectShim<T, C>
+    private readonly publicClient: PublicClient | undefined
+    private readonly townArchitect: ITownArchitectShim
     private readonly townOwnerAddress: Address
-    private readonly towns: TownRegistry<T, C> = {}
+    private readonly towns: TownRegistry = {}
 
     constructor(
         contractsInfo: IStaticContractsInfoV4,
         chainId: number,
-        publicClient: PublicClient<T, C> | undefined,
+        publicClient: PublicClient | undefined,
     ) {
         this.chainId = chainId
         this.publicClient = publicClient
@@ -29,11 +29,11 @@ export class TownRegistrar<T extends Transport, C extends Chain> {
         )
     }
 
-    public get TownArchitect(): ITownArchitectShim<T, C> {
+    public get TownArchitect(): ITownArchitectShim {
         return this.townArchitect
     }
 
-    public async getTown(spaceId: string): Promise<Town<T, C> | undefined> {
+    public async getTown(spaceId: string): Promise<Town | undefined> {
         if (this.towns[spaceId] === undefined) {
             const townAddress = await this.townArchitect.read({
                 functionName: 'getTownById',

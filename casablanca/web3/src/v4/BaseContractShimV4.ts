@@ -4,13 +4,13 @@ import {
     Abi,
     Address,
     Chain,
+    EncodeFunctionDataParameters,
     PublicClient,
     ReadContractParameters,
     ReadContractReturnType,
     SimulateContractParameters,
-    Transport,
     WalletClient,
-    WriteContractParameters,
+    encodeFunctionData,
 } from 'viem'
 import { waitForTransaction } from './waitForTransactionReceipt'
 import { SpaceDappTransaction } from './types'
@@ -22,16 +22,16 @@ type Abis = {
     readonly testnetAbi: Abi
 }
 
-export class BaseContractShimV4<TAbis extends Abis, T extends Transport, C extends Chain> {
+export class BaseContractShimV4<TAbis extends Abis> {
     public readonly address: Address
     public readonly chainId: number
     public readonly abi: TAbis['localhostAbi'] | TAbis['testnetAbi']
-    private publicClient: PublicClient<T, C> | undefined
+    private publicClient: PublicClient | undefined
 
     constructor(
         address: Address,
         chainId: number,
-        publicClient: PublicClient<T, C> | undefined,
+        publicClient: PublicClient | undefined,
         abis: TAbis,
     ) {
         this.address = address
@@ -140,7 +140,7 @@ export class BaseContractShimV4<TAbis extends Abis, T extends Transport, C exten
         SimulateContractParameters<typeof this.abi, TFunctionName>,
         'chain' | 'address' | 'abi'
     > & {
-        wallet: WalletClient<T, C>
+        wallet: WalletClient
     }): Promise<SpaceDappTransaction> {
         if (!this.publicClient) {
             throw new Error('[writeContract] No public client')
@@ -159,7 +159,7 @@ export class BaseContractShimV4<TAbis extends Abis, T extends Transport, C exten
             const hash = await wallet.writeContract({
                 ...request,
                 chain,
-            } as unknown as WriteContractParameters<typeof this.abi, TFunctionName, C, (typeof wallet)['account']>)
+            })
 
             return {
                 hash,
@@ -177,6 +177,17 @@ export class BaseContractShimV4<TAbis extends Abis, T extends Transport, C exten
         } catch (error: unknown) {
             throw new Error(error as string)
         }
+    }
+
+    public encodeFunctionData<TFunctionName extends string>({
+        functionName,
+        args,
+    }: Omit<EncodeFunctionDataParameters<typeof this.abi, TFunctionName>, 'abi'>) {
+        return encodeFunctionData({
+            abi: this.abi,
+            functionName,
+            args,
+        } as EncodeFunctionDataParameters)
     }
 }
 

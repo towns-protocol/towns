@@ -1,6 +1,6 @@
-import { Chain, Transport } from 'viem'
-import { TokenEntitlementDataTypes, TokenEntitlementShim } from './TokenEntitlementShim'
+import { TokenEntitlementShim } from './TokenEntitlementShim'
 import { UserEntitlementShim } from './UserEntitlementShim'
+import { TokenEntitlementDataTypes } from './types'
 
 export enum Permission {
     Read = 'Read',
@@ -20,9 +20,7 @@ export enum Permission {
 /**
  * Supported entitlement modules
  */
-export type EntitlementShim<T extends Transport, C extends Chain> =
-    | TokenEntitlementShim<T, C>
-    | UserEntitlementShim<T, C>
+export type EntitlementShim = TokenEntitlementShim | UserEntitlementShim
 
 export enum EntitlementModuleType {
     TokenEntitlement = 'TokenEntitlement',
@@ -90,15 +88,15 @@ export interface EntitlementModule {
     moduleType: EntitlementModuleType
 }
 
-export function isTokenEntitlement<T extends Transport, C extends Chain>(
+export function isTokenEntitlement(
     entitlement: EntitlementModule,
-): entitlement is TokenEntitlementShim<T, C> {
+): entitlement is TokenEntitlementShim {
     return entitlement.moduleType === EntitlementModuleType.TokenEntitlement
 }
 
-export function isUserEntitlement<T extends Transport, C extends Chain>(
+export function isUserEntitlement(
     entitlement: EntitlementModule,
-): entitlement is UserEntitlementShim<T, C> {
+): entitlement is UserEntitlementShim {
     return entitlement.moduleType === EntitlementModuleType.UserEntitlement
 }
 

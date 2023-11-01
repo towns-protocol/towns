@@ -12,10 +12,11 @@ import {
     isTokenEntitlement,
     isUserEntitlement,
 } from './ContractTypesV4'
-import { IChannelBase, IChannelShim } from './IChannelShim'
-import { IRolesBase, IRolesShim } from './IRolesShim'
-import { ITownOwnerBase, ITownOwnerShim } from './ITownOwnerShim'
-import { TokenEntitlementDataTypes, TokenEntitlementShim } from './TokenEntitlementShim'
+import { IChannelShim } from './IChannelShim'
+import { IRolesShim } from './IRolesShim'
+import { ITownOwnerShim } from './ITownOwnerShim'
+import { TokenEntitlementShim } from './TokenEntitlementShim'
+import { IChannelBase, IRolesBase, ITownOwnerBase, TokenEntitlementDataTypes } from './types'
 
 import { IEntitlementsShim } from './IEntitlementsShim'
 import { IMulticallShim } from './IMulticallShim'
@@ -23,37 +24,37 @@ import { OwnableFacetShim } from './OwnableFacetShim'
 import { TokenPausableFacetShim } from './TokenPausableFacetShim'
 import { UNKNOWN_ERROR } from './BaseContractShimV4'
 import { UserEntitlementShim } from './UserEntitlementShim'
-import { isRoleIdInArray } from '../ContractHelpers'
+import { isRoleIdInArray } from './ContractHelpersV4'
 import { toPermissions } from './ConvertersRoles'
 import { IMembershipShim } from './IMembershipShim'
-import { Address, Chain, PublicClient, Transport } from 'viem'
+import { Address, PublicClient } from 'viem'
 
-interface AddressToEntitlement<T extends Transport, C extends Chain> {
-    [address: Address]: EntitlementShim<T, C>
+interface AddressToEntitlement {
+    [address: Address]: EntitlementShim
 }
 
-interface TownConstructorArgs<T extends Transport, C extends Chain> {
+interface TownConstructorArgs {
     address: Address
     spaceId: string
     chainId: number
-    publicClient: PublicClient<T, C> | undefined
+    publicClient: PublicClient | undefined
     townOwnerAddress: Address
 }
 
-export class Town<T extends Transport, C extends Chain> {
+export class Town {
     private readonly address: Address
-    private readonly addressToEntitlement: AddressToEntitlement<T, C> = {}
+    private readonly addressToEntitlement: AddressToEntitlement = {}
     private readonly spaceId: string
     private readonly chainId: number
-    private readonly publicClient: TownConstructorArgs<T, C>['publicClient']
-    private readonly channel: IChannelShim<T, C>
-    private readonly entitlements: IEntitlementsShim<T, C>
-    private readonly multicall: IMulticallShim<T, C>
-    private readonly ownable: OwnableFacetShim<T, C>
-    private readonly pausable: TokenPausableFacetShim<T, C>
-    private readonly roles: IRolesShim<T, C>
-    private readonly townOwner: ITownOwnerShim<T, C>
-    private readonly membership: IMembershipShim<T, C>
+    private readonly publicClient: TownConstructorArgs['publicClient']
+    private readonly channel: IChannelShim
+    private readonly entitlements: IEntitlementsShim
+    private readonly multicall: IMulticallShim
+    private readonly ownable: OwnableFacetShim
+    private readonly pausable: TokenPausableFacetShim
+    private readonly roles: IRolesShim
+    private readonly townOwner: ITownOwnerShim
+    private readonly membership: IMembershipShim
 
     constructor({
         address,
@@ -61,7 +62,7 @@ export class Town<T extends Transport, C extends Chain> {
         chainId,
         publicClient,
         townOwnerAddress,
-    }: TownConstructorArgs<T, C>) {
+    }: TownConstructorArgs) {
         this.address = address
         this.spaceId = spaceId
         this.chainId = chainId
@@ -84,35 +85,35 @@ export class Town<T extends Transport, C extends Chain> {
         return this.spaceId
     }
 
-    public get Channels(): IChannelShim<T, C> {
+    public get Channels(): IChannelShim {
         return this.channel
     }
 
-    public get Multicall(): IMulticallShim<T, C> {
+    public get Multicall(): IMulticallShim {
         return this.multicall
     }
 
-    public get Ownable(): OwnableFacetShim<T, C> {
+    public get Ownable(): OwnableFacetShim {
         return this.ownable
     }
 
-    public get Pausable(): TokenPausableFacetShim<T, C> {
+    public get Pausable(): TokenPausableFacetShim {
         return this.pausable
     }
 
-    public get Roles(): IRolesShim<T, C> {
+    public get Roles(): IRolesShim {
         return this.roles
     }
 
-    public get Entitlements(): IEntitlementsShim<T, C> {
+    public get Entitlements(): IEntitlementsShim {
         return this.entitlements
     }
 
-    public get TownOwner(): ITownOwnerShim<T, C> {
+    public get TownOwner(): ITownOwnerShim {
         return this.townOwner
     }
 
-    public get Membership(): IMembershipShim<T, C> {
+    public get Membership(): IMembershipShim {
         return this.membership
     }
 
@@ -211,7 +212,7 @@ export class Town<T extends Transport, C extends Chain> {
 
     public async findEntitlementByType(
         entitlementType: EntitlementModuleType,
-    ): Promise<EntitlementShim<T, C> | null> {
+    ): Promise<EntitlementShim | null> {
         const entitlements = await this.getEntitlementShims()
         for (const entitlement of entitlements) {
             if (entitlement.moduleType === entitlementType) {
@@ -246,7 +247,7 @@ export class Town<T extends Transport, C extends Chain> {
         return err
     }
 
-    private async getEntitlementByAddress(address: Address): Promise<EntitlementShim<T, C>> {
+    private async getEntitlementByAddress(address: Address): Promise<EntitlementShim> {
         if (!this.addressToEntitlement[address]) {
             const entitlement = await this.entitlements.read({
                 functionName: 'getEntitlement',
@@ -254,7 +255,7 @@ export class Town<T extends Transport, C extends Chain> {
             })
             switch (entitlement.moduleType) {
                 case EntitlementModuleType.TokenEntitlement:
-                    this.addressToEntitlement[address] = new TokenEntitlementShim<T, C>(
+                    this.addressToEntitlement[address] = new TokenEntitlementShim(
                         address,
                         this.chainId,
                         this.publicClient,
@@ -289,12 +290,12 @@ export class Town<T extends Transport, C extends Chain> {
         }
     }
 
-    public async getEntitlementShims(): Promise<EntitlementShim<T, C>[]> {
+    public async getEntitlementShims(): Promise<EntitlementShim[]> {
         // get all the entitlement addresses supported in the town
         const entitlementInfo = await this.entitlements.read({
             functionName: 'getEntitlements',
         })
-        const getEntitlementShims: Promise<EntitlementShim<T, C>>[] = []
+        const getEntitlementShims: Promise<EntitlementShim>[] = []
         // with the addresses, get the entitlement shims
         for (const info of entitlementInfo) {
             getEntitlementShims.push(this.getEntitlementByAddress(info.moduleAddress))
@@ -303,7 +304,7 @@ export class Town<T extends Transport, C extends Chain> {
     }
 
     private async getEntitlementDetails(
-        entitlementShims: EntitlementShim<T, C>[],
+        entitlementShims: EntitlementShim[],
         roleId: bigint,
     ): Promise<EntitlementDetails> {
         let tokens: TokenEntitlementDataTypes['ExternalTokenStruct'][] = []
@@ -373,7 +374,7 @@ export class Town<T extends Transport, C extends Chain> {
     }
 
     private async getRoleEntitlements(
-        entitlementShims: EntitlementShim<T, C>[],
+        entitlementShims: EntitlementShim[],
         roleId: bigint,
     ): Promise<RoleEntitlements | null> {
         const [roleInfo, entitlementDetails] = await Promise.all([

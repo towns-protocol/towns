@@ -3,18 +3,18 @@ import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/UserEntitlement.
 
 import { decodeUsers } from './ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from './ContractTypesV4'
-import { Address, Chain, Hex, PublicClient, Transport } from 'viem'
+import { Address, Hex, PublicClient } from 'viem'
 import { BaseContractShimV4 } from './BaseContractShimV4'
 
 const abis = {
     localhostAbi: LocalhostAbi,
     testnetAbi: BaseGoerliAbi,
 } as const
-export class UserEntitlementShim<T extends Transport, C extends Chain>
-    extends BaseContractShimV4<typeof abis, T, C>
+export class UserEntitlementShim
+    extends BaseContractShimV4<typeof abis>
     implements EntitlementModule
 {
-    constructor(address: Address, chainId: number, client: PublicClient<T, C> | undefined) {
+    constructor(address: Address, chainId: number, client: PublicClient | undefined) {
         super(address, chainId, client, abis)
     }
 

@@ -2,26 +2,21 @@ import LocalhostAbi from '@towns/generated/localhost/v3/abis/TokenEntitlement.ab
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TokenEntitlement.abi'
 
 import { BaseContractShimV4 } from './BaseContractShimV4'
-import { Address, Chain, PublicClient, Transport } from 'viem'
-import { ContractFunctionInputs } from './types'
+import { Address, PublicClient } from 'viem'
 import { decodeExternalTokens } from './ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from './ContractTypesV4'
+import { TokenEntitlementDataTypes } from './types'
 
 const abis = {
     localhostAbi: LocalhostAbi,
     testnetAbi: BaseGoerliAbi,
 } as const
 
-export interface TokenEntitlementDataTypes {
-    // get a single array element encodeExternalTokens to match previous ethers type
-    ExternalTokenStruct: ContractFunctionInputs<typeof LocalhostAbi, 'encodeExternalTokens'>[0][0]
-}
-
-export class TokenEntitlementShim<T extends Transport, C extends Chain>
-    extends BaseContractShimV4<typeof abis, T, C>
+export class TokenEntitlementShim
+    extends BaseContractShimV4<typeof abis>
     implements EntitlementModule
 {
-    constructor(address: Address, chainId: number, client: PublicClient<T, C> | undefined) {
+    constructor(address: Address, chainId: number, client: PublicClient | undefined) {
         super(address, chainId, client, abis)
     }
 

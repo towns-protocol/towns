@@ -3,13 +3,11 @@ import type {
     WaitForTransactionReceiptParameters,
     WaitForTransactionReceiptReturnType,
     PublicClient,
-    Transport,
-    Chain,
 } from 'viem'
 import { hexToString } from 'viem'
 type Hash = `0x${string}`
 
-export type WaitForTransactionArgs<T extends Transport, C extends Chain | undefined> = {
+export type WaitForTransactionArgs = {
     /** Chain id to use for Public Client. */
     chainId?: number
     /**
@@ -26,18 +24,18 @@ export type WaitForTransactionArgs<T extends Transport, C extends Chain | undefi
      * @default 0
      */
     timeout?: number
-    publicClient: PublicClient<T, C>
+    publicClient: PublicClient
 }
 
 export type WaitForTransactionResult = WaitForTransactionReceiptReturnType
 
-export async function waitForTransaction<T extends Transport, C extends Chain>({
+export async function waitForTransaction({
     confirmations = 1,
     hash,
     onReplaced,
     timeout = 0,
     publicClient,
-}: WaitForTransactionArgs<T, C>): Promise<WaitForTransactionResult> {
+}: WaitForTransactionArgs): Promise<WaitForTransactionResult> {
     const receipt = await publicClient.waitForTransactionReceipt({
         hash,
         confirmations,
