@@ -397,43 +397,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
         return await this.createChannelRoom(channelInfo, channelId?.networkId)
     }
 
-    private async createCasablancaChannelTransaction(
-        createChannelInfo: CreateChannelInfo,
-        signer: ethers.Signer,
-    ): Promise<ChannelTransactionContext> {
-        const roomId: RoomIdentifier = makeRoomIdentifier(makeUniqueChannelStreamId())
-
-        console.log('[createChannelTransaction] Channel created', roomId)
-
-        let transaction: ContractTransaction | undefined = undefined
-        let error: Error | undefined = undefined
-
-        try {
-            transaction = await this.spaceDapp.createChannel(
-                createChannelInfo.parentSpaceId.networkId,
-                createChannelInfo.name,
-                roomId.networkId,
-                createChannelInfo.roleIds,
-                signer,
-            )
-            console.log(`[createChannelTransaction] transaction created` /*, transaction*/)
-        } catch (err) {
-            console.error('[createChannelTransaction] error', err)
-            error = await this.getDecodedErrorForSpace(
-                createChannelInfo.parentSpaceId.networkId,
-                err,
-            )
-        }
-
-        return {
-            transaction,
-            receipt: undefined,
-            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-            data: transaction ? roomId : undefined,
-            error,
-        }
-    }
-
     /************************************************
      * createChannel
      *************************************************/
@@ -466,7 +429,37 @@ export class ZionClient implements DecryptionExtensionDelegate {
         if (!signer) {
             throw new SignerUndefinedError()
         }
-        return this.createCasablancaChannelTransaction(createChannelInfo, signer)
+        const roomId: RoomIdentifier = makeRoomIdentifier(makeUniqueChannelStreamId())
+
+        console.log('[createChannelTransaction] Channel created', roomId)
+
+        let transaction: ContractTransaction | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            transaction = await this.spaceDapp.createChannel(
+                createChannelInfo.parentSpaceId.networkId,
+                createChannelInfo.name,
+                roomId.networkId,
+                createChannelInfo.roleIds,
+                signer,
+            )
+            console.log(`[createChannelTransaction] transaction created` /*, transaction*/)
+        } catch (err) {
+            console.error('[createChannelTransaction] error', err)
+            error = await this.getDecodedErrorForSpace(
+                createChannelInfo.parentSpaceId.networkId,
+                err,
+            )
+        }
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: transaction ? roomId : undefined,
+            error,
+        }
     }
 
     public async waitForCreateChannelTransaction(
