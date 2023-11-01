@@ -54,11 +54,25 @@ function reset_ecs_containers() {
         exit 1
     fi
 
+    if [ -z "$ENVIRONMENT" ]; then
+        echo "ENVIRONMENT is not set"
+        exit 1
+    fi
+
+    if [ -z "$RIVER_NODE_NAME" ]; then
+        echo "RIVER_NODE_NAME is not set"
+        exit 1
+    fi
+
+    SERVICE_NAME="${ENVIRONMENT}-river-${RIVER_NODE_NAME}-fargate-service"
+
+    echo "Service name: $SERVICE_NAME"
 
     # We just signal the ECS tasks to stop, which will trigger the ECS service to restart them
     echo "Resetting the ECS cluster $CLUSTER_NAME ..."
     for task in $(aws ecs list-tasks --cluster $CLUSTER_NAME --query "taskArns[]" --output text); do
         # stop all the tasks
+        echo "Stopping task $task ..."
         aws ecs stop-task --cluster $CLUSTER_NAME --task $task
     done
 
@@ -66,15 +80,95 @@ function reset_ecs_containers() {
     echo "Waiting for the ECS tasks to stop ..."
     for task in $(aws ecs list-tasks --cluster $CLUSTER_NAME --query "taskArns[]" --output text); do
         # wait for all the tasks to stop
+        echo "Waiting for task $task to stop ..."
         aws ecs wait tasks-stopped --cluster $CLUSTER_NAME --tasks $task
     done
 
     # Wait for all the tasks to start again
     echo "Waiting for the ECS tasks to start ..."
-    for task in $(aws ecs list-tasks --cluster $CLUSTER_NAME --query "taskArns[]" --output text); do
-        # wait for all the tasks to start
-        aws ecs wait tasks-running --cluster $CLUSTER_NAME --tasks $task
+
+    while :; do
+        # Fetch the desired task count of the service
+        DESIRED_COUNT=$(aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME --query "services[0].desiredCount" --output text)
+
+        echo "Desired count: $DESIRED_COUNT"
+
+        # Fetch the count of the running tasks of the service
+        RUNNING_TASKS_COUNT=$(aws ecs list-tasks --cluster $CLUSTER_NAME --service-name $SERVICE_NAME --query "taskArns" --output text | wc -w)
+
+        echo "Running tasks count: $RUNNING_TASKS_COUNT"
+
+        # Check if the desired count matches the running task count
+        if [ "$DESIRED_COUNT" -eq "$RUNNING_TASKS_COUNT" ]; then
+            echo "All tasks are running."
+            break
+        else
+            echo "Not all tasks are running. Desired: $DESIRED_COUNT, Running: $RUNNING_TASKS_COUNT"
+            sleep 10
+        fi
     done
+}
+
+function wait_for_river_to_stop() {
+    set +e
+    # Wait for the river to stop
+
+    echo "Waiting for river to stop ..."
+    URL="${CASABLANCA_SERVER_URL}/info"
+    while true; do
+         # Use curl to fetch the HTTP header & get the HTTP response code
+        RESPONSE=$(curl -f -o /dev/null -s -w "%{http_code}" $URL)
+        # Get the exit code of curl
+        CURL_EXIT_CODE=$?
+
+        if [ $CURL_EXIT_CODE -eq 0 ]; then
+            if [ "$RESPONSE" -eq "200" ]; then
+                echo "Website $URL is still up. Waiting..."
+            else
+                echo "Website $URL returned HTTP code: $RESPONSE"
+                break;
+            fi
+        else
+            echo "Website $URL is down. curl exit code: $CURL_EXIT_CODE"
+            break;
+        fi
+
+        # Wait for 10 seconds before the next check
+        sleep 10
+    done
+    echo "River is down! Continuing..."
+
+    set -eo pipefail
+}
+
+function wait_for_river_to_start() {
+    set +e
+
+    # Wait for the river to start
+    echo "Waiting for river to start ..."
+    URL="${CASABLANCA_SERVER_URL}/info"
+    while true; do
+        # Use curl to fetch the HTTP header & get the HTTP response code
+        RESPONSE=$(curl -f -o /dev/null -s -w "%{http_code}" $URL)
+        # Get the exit code of curl
+        CURL_EXIT_CODE=$?
+
+        if [ $CURL_EXIT_CODE -eq 0 ]; then
+            if [ "$RESPONSE" -eq "200" ]; then
+                echo "Website $URL is up!"
+                break;
+            else
+                echo "Website $URL returned HTTP code: $RESPONSE"
+            fi
+        else
+            echo "Website $URL is down. curl exit code: $CURL_EXIT_CODE"
+        fi
+
+        # Wait for 10 seconds before the next check
+        sleep 10
+    done
+    echo "River is up!"
+    set -eo pipefail
 }
 
 function create_new_dev_town() {
@@ -84,7 +178,7 @@ function create_new_dev_town() {
         pushd ./clients/web/lib
             yarn create-dev-town
 
-            Read the new town invite link from ./inviteLink.txt
+            # Read the new town invite link from ./inviteLink.txt
             echo "Reading the latest dev town name ..."
             export LATEST_DEV_TOWN_INVITE_URL=$(cat ./inviteLink.txt)
         popd
@@ -110,6 +204,8 @@ function create_new_dev_town() {
 reset_latest_dev_town_invite_url
 reset_db
 reset_ecs_containers
+wait_for_river_to_stop
+wait_for_river_to_start
 create_new_dev_town
 
 echo "Done"

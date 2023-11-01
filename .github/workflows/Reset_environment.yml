@@ -1,4 +1,6 @@
 name: 'Reset_environment'
+env:
+    FOUNDRY_VERSION: nightly-ca67d15f4abd46394b324c50e21e66f306a1162d
 
 on:
     workflow_dispatch:
@@ -52,6 +54,36 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v3
 
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: '1.21'
+                  cache: true
+                  cache-dependency-path: 'servers/**/go.sum'
+
+            - name: Run deps.sh script
+              run: |
+                  cd common/xchain
+                  chmod +x deps.sh
+                  ./deps.sh
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - name: Install Forge modules
+              run: ./scripts/install-deps.sh
+
+            - name: Build use-zion-client dependencies
+              run: yarn run turbo run build --filter=use-zion-client
+
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v1
               with:
@@ -74,4 +106,4 @@ jobs:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RESET_ENV_WORKFLOW_WEBHOOK_URL }}
 
             - name: Reset environment
-              run: DB_URL=${{ secrets.DB_URL }} CLUSTER_NAME=${{ vars.CLUSTER_NAME }} RESET_DB=${{ github.event.inputs.reset_db }} CREATE_NEW_DEV_TOWN=${{ github.event.inputs.create_new_dev_town }} ./scripts/reset-environment.sh
+              run: ETHERS_NETWORK=${{ secrets.ETHERS_NETWORK }} RIVER_NODE_NAME=${{ vars.PRIMARY_NODE_NAME }} ENVIRONMENT=${{ vars.ENVIRONMENT }} WALLET_PRIVATE_KEY=${{ secrets.HARMONY_HOT_WALLET_PRIVATE_KEY }} CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} DB_URL=${{ secrets.DB_URL }} CLUSTER_NAME=${{ vars.CLUSTER_NAME }} RESET_DB=${{ github.event.inputs.reset_db }} CREATE_NEW_DEV_TOWN=${{ github.event.inputs.create_new_dev_town }} CLOUDFLARE_ENVIRONMENT=${{ vars.CLOUDFLARE_ENVIRONMENT }} CASABLANCA_SERVER_URL=${{ vars.CASABLANCA_SERVER_URL }} CHAIN_ID=${{ vars.CHAIN_ID }} ./scripts/reset-environment.sh
