@@ -133,7 +133,7 @@ describe('clientFlushes', () => {
                     log('channel content')
                     log(channel.view)
 
-                    const messages = Array.from(channel.view.channelContent.messages.values())
+                    const messages = Array.from(channel.view.channelContent.messages.state.values())
                     expect(messages).toHaveLength(1)
                     if (!bobsAnotherClient.cryptoBackend) {
                         // by the time this runs, the crypto backend should be initialized

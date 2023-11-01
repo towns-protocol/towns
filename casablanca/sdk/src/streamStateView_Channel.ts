@@ -9,20 +9,20 @@ import {
     MiniblockHeader,
     Snapshot,
 } from '@river/proto'
-import { RiverEvent } from './event'
-import { userIdFromAddress } from './id'
 import { logNever } from './check'
 import { StreamStateView_IContent } from './streamStateView_IContent'
+import { StreamStateView_Messages } from './streamStateView_Messages'
 
 export class StreamStateView_Channel implements StreamStateView_IContent {
     readonly streamId: string
     readonly spaceId?: string
     readonly memberships: StreamStateView_Membership
-    readonly messages = new Map<string, ParsedEvent>()
+    readonly messages: StreamStateView_Messages
     readonly receipts = new Map<string, ParsedEvent>()
 
     constructor(userId: string, inception: ChannelPayload_Inception) {
         this.memberships = new StreamStateView_Membership(userId, inception.streamId)
+        this.messages = new StreamStateView_Messages(inception.streamId, inception.spaceId)
         this.streamId = inception.streamId
         this.spaceId = inception.spaceId
     }
@@ -48,7 +48,7 @@ export class StreamStateView_Channel implements StreamStateView_IContent {
             case 'inception':
                 break
             case 'message':
-                this.addChannelMessage(event, emitter)
+                this.messages.addChannelMessage(event, emitter)
                 break
             case 'membership':
                 // nothing to do, membership was conveyed in the snapshot
@@ -72,7 +72,7 @@ export class StreamStateView_Channel implements StreamStateView_IContent {
             case 'inception':
                 break
             case 'message':
-                this.addChannelMessage(event, emitter)
+                this.messages.addChannelMessage(event, emitter)
                 break
             case 'membership':
                 this.memberships.appendMembershipEvent(
@@ -89,27 +89,5 @@ export class StreamStateView_Channel implements StreamStateView_IContent {
             default:
                 logNever(payload.content)
         }
-    }
-
-    private addChannelMessage(
-        event: ParsedEvent,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ) {
-        this.messages.set(event.hashStr, event)
-        const riverEvent = new RiverEvent(
-            {
-                channel_id: this.streamId,
-                space_id: this.spaceId,
-                payload: {
-                    parsed_event: event.event.payload,
-                    creator_user_id: userIdFromAddress(event.event.creatorAddress),
-                    hash_str: event.hashStr,
-                    stream_id: this.streamId,
-                },
-            },
-            emitter,
-            event,
-        )
-        emitter?.emit('channelNewMessage', this.streamId, riverEvent)
     }
 }

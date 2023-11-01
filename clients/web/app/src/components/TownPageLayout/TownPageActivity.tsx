@@ -130,11 +130,11 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                 if (firstChannelId) {
                     const { channelContent } = await client.getStream(firstChannelId)
 
-                    const messages = Array.from(channelContent.messages.values()).filter((f) =>
-                        isWithin(f.event.createdAtEpocMs, DAY_MS),
+                    const messages = Array.from(channelContent.messages.state.values()).filter(
+                        (f) => isWithin(f.event.createdAtEpocMs, DAY_MS),
                     )
 
-                    const activeUsers = Array.from(channelContent.messages.values())
+                    const activeUsers = Array.from(channelContent.messages.state.values())
                         .filter((f) => isWithin(f.event.createdAtEpocMs, DAY_MS))
                         .reduce((acc, curr) => {
                             acc.add(curr.creatorUserId)

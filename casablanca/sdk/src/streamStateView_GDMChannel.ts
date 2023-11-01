@@ -9,20 +9,20 @@ import {
 import { EmittedEvents } from './client'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
-import { RiverEvent } from './event'
 import { ParsedEvent } from './types'
-import { userIdFromAddress } from './id'
 import { logNever } from './check'
+import { StreamStateView_Messages } from './streamStateView_Messages'
 
 export class StreamStateView_GDMChannel implements StreamStateView_IContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
-    readonly messages = new Map<string, ParsedEvent>()
+    readonly messages: StreamStateView_Messages
     readonly receipts = new Map<string, ParsedEvent>()
     lastEventCreatedAtEpocMs = 0n
 
     constructor(userId: string, inception: GdmChannelPayload_Inception) {
         this.memberships = new StreamStateView_Membership(userId, inception.streamId)
+        this.messages = new StreamStateView_Messages(inception.streamId)
         this.streamId = inception.streamId
     }
 
@@ -47,7 +47,7 @@ export class StreamStateView_GDMChannel implements StreamStateView_IContent {
             case 'inception':
                 break
             case 'message':
-                this.addChannelMessage(event, emitter)
+                this.messages.addChannelMessage(event, emitter)
                 break
             case 'membership':
                 // nothing to do, membership was conveyed in the snapshot
@@ -71,7 +71,8 @@ export class StreamStateView_GDMChannel implements StreamStateView_IContent {
             case 'inception':
                 break
             case 'message':
-                this.addChannelMessage(event, emitter)
+                this.messages.addChannelMessage(event, emitter)
+                this.updateLastEvent(event)
                 break
             case 'membership':
                 this.memberships.appendMembershipEvent(
@@ -90,30 +91,12 @@ export class StreamStateView_GDMChannel implements StreamStateView_IContent {
         }
     }
 
-    private addChannelMessage(
-        event: ParsedEvent,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ) {
+    private updateLastEvent(event: ParsedEvent) {
         const createdAtEpocMs = event.event.createdAtEpocMs
         this.lastEventCreatedAtEpocMs =
             createdAtEpocMs > this.lastEventCreatedAtEpocMs
                 ? createdAtEpocMs
                 : this.lastEventCreatedAtEpocMs
-        this.messages.set(event.hashStr, event)
-        const riverEvent = new RiverEvent(
-            {
-                channel_id: this.streamId,
-                payload: {
-                    parsed_event: event.event.payload,
-                    creator_user_id: userIdFromAddress(event.event.creatorAddress),
-                    hash_str: event.hashStr,
-                    stream_id: this.streamId,
-                },
-            },
-            emitter,
-            event,
-        )
-        emitter?.emit('channelNewMessage', this.streamId, riverEvent)
     }
 
     participants(): Set<string> {
