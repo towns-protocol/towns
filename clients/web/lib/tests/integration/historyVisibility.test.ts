@@ -107,7 +107,6 @@ describe('historyVisibility', () => {
 
         await alice2.loginWalletAndStartClient()
 
-        expect(alice2.auth?.deviceId).not.toEqual(alice.auth?.deviceId)
         await waitFor(() => expect(alice2.matrixClient?.getRoom(roomId.networkId)).toBeTruthy())
 
         await waitFor(
@@ -127,8 +126,6 @@ describe('historyVisibility', () => {
         const alice3 = new ZionTestClient(alice.chainId, 'alice3', alice.props, alice.wallet)
 
         await alice3.loginWalletAndStartClient()
-
-        expect(alice3.auth?.deviceId).not.toEqual(alice.auth?.deviceId)
 
         await waitFor(() => expect(alice3.matrixClient?.getRoom(roomId.networkId)).toBeTruthy())
 

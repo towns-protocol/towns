@@ -18,12 +18,6 @@ export interface ZionOpts {
     verbose?: boolean
 }
 
-export interface MatrixAuth {
-    userId: string
-    accessToken: string
-    deviceId: string
-}
-
 export interface ZionOnboardingOpts {
     skipUsername?: boolean
     skipAvatar?: boolean

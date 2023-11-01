@@ -8,10 +8,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { registerAndStartClients } from './helpers/TestUtils'
 import { LoginStatus } from '../../src/hooks/login'
-import { MatrixAuth } from '../../src/client/ZionClientTypes'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { createUserIdFromEthereumAddress } from '../../src/types/user-identifier'
 import { TestConstants } from './helpers/TestConstants'
+import { SignerContext } from '@river/sdk'
 
 /// Test that the login hook returns the correct status when the token is invalid
 /// disabled beause the matrix js sdk doesn't correctly catch errors in DeviceLists.doKeyDownload
@@ -30,17 +30,19 @@ describe('invalidTokenHooks', () => {
         // create a new client and sign in
         const xxx = createUserIdFromEthereumAddress(provider.wallet.address, chainId)
         // make a bad auth
-        const badAliceAuth: MatrixAuth = {
-            userId: `@${xxx.matrixUserIdLocalpart}:localhost`,
-            accessToken: '5678',
-            deviceId: '9111',
+
+        const badAliceAuth: SignerContext = {
+            creatorAddress: Uint8Array.from([]),
+            signerPrivateKey: () => {
+                return 'foo'
+            },
         }
         // build a view for alice to render
         const TestComponent = () => {
             return (
                 <>
                     <LoginWithAuth
-                        auth={badAliceAuth}
+                        signerContext={badAliceAuth}
                         walletAddress={xxx.accountAddress ?? '0x000'}
                     />
                 </>
@@ -65,15 +67,17 @@ describe('invalidTokenHooks', () => {
     test.skip('test logging out from second source resets browser state', async () => {
         // create a new client and sign in
         const { alice } = await registerAndStartClients(['alice'])
-        // grab the auth
-        const aliceAuth = alice.auth!
+        const aliceAuth = alice.signerContext!
         // stop alice
         await alice.stopClients()
         // build a view for alice to render
         const TestComponent = () => {
             return (
                 <>
-                    <LoginWithAuth auth={aliceAuth} walletAddress={alice.provider.wallet.address} />
+                    <LoginWithAuth
+                        signerContext={aliceAuth}
+                        walletAddress={alice.provider.wallet.address}
+                    />
                 </>
             )
         }

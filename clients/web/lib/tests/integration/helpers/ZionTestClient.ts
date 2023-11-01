@@ -163,7 +163,7 @@ export class ZionTestClient extends ZionClient {
         const addressLength = accountAddress.length
         const pre = accountAddress.substring(0, dx)
         const post = accountAddress.substring(addressLength - dx)
-        return `${this.name}${pre}_${post}@${this.auth?.deviceId ?? 'unset'}`
+        return `${this.name}${pre}_${post}`
     }
 
     /// return a unique name sutable for a space or channel name

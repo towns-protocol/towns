@@ -45,9 +45,9 @@ describe('signInFromGlobalStorageHooks', () => {
         // create a new client and sign in
         const { alice } = await registerAndStartClients(['alice'])
         // grab the auth
-        const aliceAuth = alice.auth!
+        const aliceAuth = alice.signerContext!
         // assign device id for later use
-        deviceId = alice.auth!.deviceId
+        deviceId = '1'
         provider = alice.provider
         // stop alice
         await alice.stopClients()
@@ -56,7 +56,10 @@ describe('signInFromGlobalStorageHooks', () => {
         const TestComponent = () => {
             return (
                 <>
-                    <LoginWithAuth auth={aliceAuth} walletAddress={alice.provider.wallet.address} />
+                    <LoginWithAuth
+                        signerContext={aliceAuth}
+                        walletAddress={alice.provider.wallet.address}
+                    />
                 </>
             )
         }

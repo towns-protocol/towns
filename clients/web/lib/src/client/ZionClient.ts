@@ -15,7 +15,6 @@ import {
     ChannelUpdateTransactionContext,
     CreateSpaceTransactionContext,
     IZionServerVersions,
-    MatrixAuth,
     RoleTransactionContext,
     TransactionContext,
     TransactionStatus,
@@ -92,7 +91,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
     protected casablancaClient?: CasablancaClient
     public riverDecryptionExtension?: RiverDecryptionExtension
     private riverDbManager: RiverDbManager
-    private _auth?: MatrixAuth
     private _signerContext?: SignerContext
     protected _eventHandlers?: ZionClientEventHandlers
     private pushNotificationClient?: PushNotificationClient
@@ -111,10 +109,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
                 authToken: opts.pushNotificationAuthToken,
             })
         }
-    }
-
-    public get auth(): MatrixAuth | undefined {
-        return this._auth
     }
 
     public get signerContext(): SignerContext | undefined {

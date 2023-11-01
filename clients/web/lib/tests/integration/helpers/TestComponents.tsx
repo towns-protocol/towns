@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
-import { MatrixAuth } from '../../../src/client/ZionClientTypes'
 import { useMatrixStore } from '../../../src/store/use-matrix-store'
 import { useCasablancaCredentials } from '../../../src/hooks/use-casablanca-credentials'
 import { useMyMembership } from '../../../src/hooks/use-my-membership'
@@ -15,6 +14,7 @@ import { useCreateRoleTransaction } from '../../../src/hooks/use-create-role-tra
 import { useDeleteRoleTransaction } from '../../../src/hooks/use-delete-role-transaction'
 import { useUpdateRoleTransaction } from '../../../src/hooks/use-update-role-transaction'
 import { useUpdateSpaceNameTransaction } from '../../../src/hooks/use-update-space-name-transaction'
+import { SignerContext } from '@river/sdk'
 
 export const RegisterWallet = () => {
     const { walletStatus, isConnected } = useWeb3Context()
@@ -78,7 +78,7 @@ export const LoginWithWallet = () => {
 }
 
 interface LoginWithAuthProps {
-    auth: MatrixAuth
+    signerContext: SignerContext
     walletAddress: string
 }
 
