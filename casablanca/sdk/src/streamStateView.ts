@@ -21,6 +21,7 @@ import { StreamStateView_UserSettings } from './streamStateView_UserSettings'
 import { StreamStateView_UserDeviceKeys } from './streamStateView_UserDeviceKey'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { StreamStateView_Media } from './streamStateView_Media'
+import { StreamStateView_GDMChannel } from './streamStateView_GDMChannel'
 import {
     StreamStateView_IContent,
     StreamStateView_UnknownContent,
@@ -66,6 +67,16 @@ export class StreamStateView {
             `dmChannelContent not defined for ${this.contentKind}`,
         )
         return this._dmChannelContent
+    }
+
+    // GDM Channel Content
+    private readonly _gdmChannelContent?: StreamStateView_GDMChannel
+    get gdmChannelContent(): StreamStateView_GDMChannel {
+        check(
+            isDefined(this._gdmChannelContent),
+            `dmChannelContent not defined for ${this.contentKind}`,
+        )
+        return this._gdmChannelContent
     }
 
     // User Content
@@ -131,6 +142,12 @@ export class StreamStateView {
                     snapshot.content.value.inception,
                 )
                 break
+            case 'gdmChannelContent':
+                this._gdmChannelContent = new StreamStateView_GDMChannel(
+                    userId,
+                    snapshot.content.value.inception,
+                )
+                break
             case 'spaceContent':
                 this._spaceContent = new StreamStateView_Space(
                     userId,
@@ -171,6 +188,9 @@ export class StreamStateView {
                 break
             case 'dmChannelContent':
                 this.dmChannelContent.initialize(snapshot, snapshot.content.value, emitter)
+                break
+            case 'gdmChannelContent':
+                this.gdmChannelContent.initialize(snapshot, snapshot.content.value, emitter)
                 break
             case 'spaceContent':
                 this.spaceContent.initialize(snapshot, snapshot.content.value, emitter)
@@ -242,6 +262,9 @@ export class StreamStateView {
                 case 'dmChannelPayload':
                     this.dmChannelContent?.appendEvent(event, payload.value, emitter)
                     break
+                case 'gdmChannelPayload':
+                    this.gdmChannelContent.appendEvent(event, payload.value, emitter)
+                    break
                 case 'spacePayload':
                     this.spaceContent?.appendEvent(event, payload.value, emitter)
                     break
@@ -299,6 +322,9 @@ export class StreamStateView {
                     break
                 case 'dmChannelPayload':
                     this.dmChannelContent?.prependEvent(event, payload.value, emitter)
+                    break
+                case 'gdmChannelPayload':
+                    this.gdmChannelContent.prependEvent(event, payload.value, emitter)
                     break
                 case 'spacePayload':
                     this.spaceContent?.prependEvent(event, payload.value, emitter)
@@ -449,6 +475,8 @@ export class StreamStateView {
                 return this.channelContent.memberships
             case 'dmChannelContent':
                 return this.dmChannelContent.memberships
+            case 'gdmChannelContent':
+                return this.gdmChannelContent.memberships
             case 'spaceContent':
                 return this.spaceContent.memberships
             case 'userContent':
@@ -473,6 +501,8 @@ export class StreamStateView {
                 return this.channelContent
             case 'dmChannelContent':
                 return this.dmChannelContent
+            case 'gdmChannelContent':
+                return this.gdmChannelContent
             case 'spaceContent':
                 return this.spaceContent
             case 'userContent':

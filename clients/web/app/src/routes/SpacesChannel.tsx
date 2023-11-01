@@ -14,7 +14,7 @@ import {
     useSpaceMembers,
     useZionClient,
 } from 'use-zion-client'
-import { isDMChannelStreamId } from '@river/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { ChannelHeader } from '@components/ChannelHeader/ChannelHeader'
 import { ChannelIntro } from '@components/ChannelIntro'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
@@ -169,10 +169,10 @@ const SpacesChannelComponent = (props: Props) => {
         })
     }, [channel, channelId, displayDecryptionProgress, myMembership])
 
-    const showJoinChannel =
-        myMembership !== Membership.Join && !isDMChannelStreamId(channelId.networkId)
-    const showDMAcceptInvitation =
-        myMembership === Membership.Invite && isDMChannelStreamId(channelId.networkId)
+    const isDmOrGDM =
+        isDMChannelStreamId(channelId.networkId) || isGDMChannelStreamId(channelId.networkId)
+    const showJoinChannel = myMembership !== Membership.Join && !isDmOrGDM
+    const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM
     return (
         <CentralPanelLayout>
             {!isTouch && <RegisterChannelShortcuts />}

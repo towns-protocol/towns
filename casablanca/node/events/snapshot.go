@@ -58,6 +58,12 @@ func make_SnapshotContent(iPayload IsInceptionPayload) (IsSnapshot_Content, erro
 				Inception: payload,
 			},
 		}, nil
+	case *GdmChannelPayload_Inception:
+		return &Snapshot_GdmChannelContent{
+			GdmChannelContent: &GdmChannelPayload_Snapshot{
+				Inception: payload,
+			},
+		}, nil
 	case *UserPayload_Inception:
 		return &Snapshot_UserContent{
 			UserContent: &UserPayload_Snapshot{
@@ -100,6 +106,8 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, eventNumOffset int
 		return update_Snapshot_Channel(iSnapshot, payload.ChannelPayload)
 	case *StreamEvent_DmChannelPayload:
 		return update_Snapshot_DmChannel(iSnapshot, payload.DmChannelPayload)
+	case *StreamEvent_GdmChannelPayload:
+		return update_Snapshot_GdmChannel(iSnapshot, payload.GdmChannelPayload)
 	case *StreamEvent_UserPayload:
 		return update_Snapshot_User(iSnapshot, payload.UserPayload)
 	case *StreamEvent_UserSettingsPayload:
@@ -189,6 +197,28 @@ func update_Snapshot_DmChannel(iSnapshot *Snapshot, dmChannelPayload *DmChannelP
 		return nil
 	default:
 		return fmt.Errorf("unknown dm channel payload type %T", dmChannelPayload.Content)
+	}
+}
+
+func update_Snapshot_GdmChannel(iSnapshot *Snapshot, channelPayload *GdmChannelPayload) error {
+	snapshot := iSnapshot.Content.(*Snapshot_GdmChannelContent)
+	if snapshot == nil {
+		return errors.New("blockheader snapshot is not a channel snapshot")
+	}
+
+	switch content := channelPayload.Content.(type) {
+	case *GdmChannelPayload_Inception_:
+		return errors.New("cannot update blockheader with inception event")
+	case *GdmChannelPayload_Message:
+		return nil
+	case *GdmChannelPayload_Membership:
+		if snapshot.GdmChannelContent.Memberships == nil {
+			snapshot.GdmChannelContent.Memberships = make(map[string]*Membership)
+		}
+		snapshot.GdmChannelContent.Memberships[content.Membership.UserId] = content.Membership
+		return nil
+	default:
+		return fmt.Errorf("unknown channel payload type %T", channelPayload.Content)
 	}
 }
 

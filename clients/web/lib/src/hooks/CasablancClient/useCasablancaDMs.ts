@@ -18,7 +18,7 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
         }
 
         const updateChannels = () => {
-            const channels = Array.from(casablancaClient.streams.values())
+            const dmChannels = Array.from(casablancaClient.streams.values())
                 .filter((stream: Stream) => stream.view.contentKind === 'dmChannelContent')
                 .map(
                     (stream: Stream) =>
@@ -32,9 +32,24 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                                 stream.view.dmChannelContent.lastEventCreatedAtEpocMs,
                         } satisfies DMChannelIdentifier),
                 )
-                .sort((a, b) => {
-                    return a.lastEventCreatedAtEpocMs > b.lastEventCreatedAtEpocMs ? -1 : 1
-                })
+
+            const gdmChannels = Array.from(casablancaClient.streams.values())
+                .filter((stream: Stream) => stream.view.contentKind === 'gdmChannelContent')
+                .map(
+                    (stream: Stream) =>
+                        ({
+                            id: makeRoomIdentifier(stream.view.streamId),
+                            joined: stream.view.getMemberships().isMemberJoined(),
+                            userIds: Array.from(
+                                stream.view.gdmChannelContent.participants(),
+                            ).filter((memberUserId) => memberUserId !== userId),
+                            lastEventCreatedAtEpocMs:
+                                stream.view.gdmChannelContent.lastEventCreatedAtEpocMs,
+                        } satisfies DMChannelIdentifier),
+                )
+            const channels = [...dmChannels, ...gdmChannels].sort((a, b) => {
+                return a.lastEventCreatedAtEpocMs > b.lastEventCreatedAtEpocMs ? -1 : 1
+            })
 
             setChannels((prev) => {
                 if (isEqual(prev, channels)) {
@@ -45,7 +60,7 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
         }
 
         const onStreamChange = (_streamId: string, kind: SnapshotCaseType) => {
-            if (kind === 'dmChannelContent') {
+            if (kind === 'dmChannelContent' || kind === 'gdmChannelContent') {
                 updateChannels()
             }
         }

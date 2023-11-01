@@ -5,6 +5,7 @@ import {
     check,
     isChannelStreamId,
     isDMChannelStreamId,
+    isGDMChannelStreamId,
 } from '@river/sdk'
 import { TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
@@ -316,5 +317,9 @@ function maxBigint(x: bigint, y: bigint): bigint {
 }
 
 function isDiffableStreamTimeline(streamId: string): boolean {
-    return isChannelStreamId(streamId) || isDMChannelStreamId(streamId)
+    return (
+        isChannelStreamId(streamId) ||
+        isDMChannelStreamId(streamId) ||
+        isGDMChannelStreamId(streamId)
+    )
 }

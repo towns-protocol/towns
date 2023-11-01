@@ -25,19 +25,28 @@ export const CreateDirectMessage = (props: Props) => {
     const [searchTerm, setSearchTerm] = useState('')
     const { onDirectMessageCreated } = props
     const { users } = useAllKnownUsers()
-    const { createDMChannel } = useZionClient()
+    const { createDMChannel, createGDMChannel } = useZionClient()
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
     const navigate = useNavigate()
     const userId = useMyProfile()?.userId
 
     const onCreateButtonClicked = useCallback(async () => {
-        const first = Array.from(selectedUserIds)[0]
-        const streamId = await createDMChannel(first)
-        if (streamId) {
-            navigate(`/messages/${streamId.slug}`)
-            onDirectMessageCreated()
+        if (selectedUserIds.size === 1) {
+            const first = Array.from(selectedUserIds)[0]
+            const streamId = await createDMChannel(first)
+            if (streamId) {
+                navigate(`/messages/${streamId.slug}`)
+                onDirectMessageCreated()
+            }
+        } else {
+            const userIds = Array.from(selectedUserIds)
+            const streamId = await createGDMChannel(userIds)
+            if (streamId) {
+                navigate(`/messages/${streamId.slug}`)
+                onDirectMessageCreated()
+            }
         }
-    }, [selectedUserIds, createDMChannel, navigate, onDirectMessageCreated])
+    }, [selectedUserIds, createDMChannel, createGDMChannel, navigate, onDirectMessageCreated])
 
     const toggleMember = useCallback((id: string) => {
         setSelectedUserIds((prev) => {
@@ -113,7 +122,7 @@ export const CreateDirectMessage = (props: Props) => {
                 right="none"
             >
                 <Button
-                    disabled={selectedUserIds.size !== 1}
+                    disabled={selectedUserIds.size === 0}
                     tone="cta1"
                     onClick={onCreateButtonClicked}
                 >

@@ -100,6 +100,7 @@ message StreamEvent {
         UserDeviceKeyPayload user_device_key_payload = 105;
         MediaPayload media_payload = 106;
         DmChannelPayload dm_channel_payload = 107;
+        GdmChannelPayload gdm_channel_payload = 108;
     }
 }
 
@@ -244,6 +245,29 @@ message DmChannelPayload {
 }
 
 /**
+* GdmChannelPayload
+*/
+message GdmChannelPayload {
+    message Snapshot {
+        Inception inception = 1;
+        map<string, Membership> memberships = 2;
+    }
+
+    message Inception {
+        string stream_id = 1;
+        EncryptedData channel_properties = 2;
+        StreamSettings settings = 3;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        Membership membership = 2;
+        EncryptedData message = 3;
+        ChannelPayload.Receipt receipt = 4;
+    }
+}
+
+/**
 * UserPayload
 */
 message UserPayload {
@@ -376,6 +400,7 @@ message Snapshot {
         UserDeviceKeyPayload.Snapshot user_device_key_content = 105;
         MediaPayload.Snapshot media_content = 106;
         DmChannelPayload.Snapshot dm_channel_content = 107;
+        GdmChannelPayload.Snapshot gdm_channel_content = 108;
     }
 }
 

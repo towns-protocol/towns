@@ -1,6 +1,7 @@
 import { RoomIdentifier } from 'use-zion-client'
-import { isDMChannelStreamId } from '@river/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 
 export const useChannelType = (roomIdentifier: RoomIdentifier): 'dm' | 'channel' => {
-    return isDMChannelStreamId(roomIdentifier?.networkId ?? '') ? 'dm' : 'channel'
+    const streamId = roomIdentifier?.networkId ?? ''
+    return isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId) ? 'dm' : 'channel'
 }

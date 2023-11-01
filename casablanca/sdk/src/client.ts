@@ -28,6 +28,7 @@ import {
     ChannelMessage_Post_Content_EmbeddedMedia,
     FullyReadMarkers,
     FullyReadMarker,
+    Envelope,
 } from '@river/proto'
 
 import {
@@ -46,9 +47,11 @@ import { check, hasElements, isDefined, throwWithCode } from './check'
 import {
     isChannelStreamId,
     isDMChannelStreamId,
+    isGDMChannelStreamId,
     isSpaceStreamId,
     makeDMStreamId,
     makeUniqueChannelStreamId,
+    makeUniqueGDMChannelStreamId,
     makeUniqueMediaStreamId,
     makeUniqueSpaceStreamId,
     makeUserDeviceKeyStreamId,
@@ -82,6 +85,9 @@ import {
     make_DMChannelPayload_Inception,
     make_DMChannelPayload_Membership,
     make_DMChannelPayload_Message,
+    make_GDMChannelPayload_Inception,
+    make_GDMChannelPayload_Message,
+    make_GDMChannelPayload_Membership,
 } from './types'
 import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
@@ -224,8 +230,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         const streamIds = [
             ...Array.from(stream.view.userContent.userJoinedStreams),
-            ...Array.from(stream.view.userContent.userInvitedStreams).filter((streamId) =>
-                isDMChannelStreamId(streamId),
+            ...Array.from(stream.view.userContent.userInvitedStreams).filter(
+                (streamId) => isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId),
             ),
         ]
 
@@ -492,6 +498,52 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return { streamId: channelId }
     }
 
+    async createGDMChannel(
+        userIds: string[],
+        channelProperties?: EncryptedData,
+        streamSettings?: PlainMessage<StreamSettings>,
+    ): Promise<{ streamId: string }> {
+        const channelId = makeUniqueGDMChannelStreamId()
+
+        const events: Envelope[] = []
+        const inceptionEvent = await makeEvent(
+            this.signerContext,
+            make_GDMChannelPayload_Inception({
+                streamId: channelId,
+                channelProperties: channelProperties,
+                settings: streamSettings,
+            }),
+        )
+        events.push(inceptionEvent)
+        const joinEvent = await makeEvent(
+            this.signerContext,
+            make_GDMChannelPayload_Membership({
+                userId: this.userId,
+                op: MembershipOp.SO_JOIN,
+            }),
+            [events[events.length - 1].hash],
+        )
+        events.push(joinEvent)
+
+        for (const userId of userIds) {
+            const inviteEvent = await makeEvent(
+                this.signerContext,
+                make_GDMChannelPayload_Membership({
+                    userId: userId,
+                    op: MembershipOp.SO_INVITE,
+                }),
+                [events[events.length - 1].hash],
+            )
+            events.push(inviteEvent)
+        }
+
+        await this.rpcClient.createStream({
+            events: events,
+            streamId: channelId,
+        })
+        return { streamId: channelId }
+    }
+
     async createMediaStream(
         channelId: string,
         chunkCount: number,
@@ -502,7 +554,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logCall('createMedia', channelId, streamId)
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
         assert(
-            isChannelStreamId(channelId) || isDMChannelStreamId(channelId),
+            isChannelStreamId(channelId) ||
+                isDMChannelStreamId(channelId) ||
+                isGDMChannelStreamId(channelId),
             'channelId must be a valid streamId',
         )
 
@@ -683,7 +737,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     private onInvitedToStream = async (streamId: string): Promise<void> => {
         this.logEvent('onInvitedToStream', streamId)
-        if (isDMChannelStreamId(streamId)) {
+        if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
             await this.initStream(streamId)
         }
     }
@@ -878,6 +932,12 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             return this.makeEventAndAddToStream(
                 streamId,
                 make_DMChannelPayload_Message(message),
+                'sendMessage',
+            )
+        } else if (isGDMChannelStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_GDMChannelPayload_Message(message),
                 'sendMessage',
             )
         }
@@ -1105,6 +1165,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 }),
                 'inviteUser',
             )
+        } else if (isGDMChannelStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_GDMChannelPayload_Membership({
+                    op: MembershipOp.SO_INVITE,
+                    userId,
+                }),
+            )
         } else {
             throw new Error('invalid streamId')
         }
@@ -1142,6 +1210,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     userId: this.userId,
                 }),
             )
+        } else if (isGDMChannelStreamId(streamId)) {
+            await this.makeEventAndAddToStream(
+                streamId,
+                make_GDMChannelPayload_Membership({
+                    op: MembershipOp.SO_JOIN,
+                    userId: this.userId,
+                }),
+            )
         } else {
             throw new Error('invalid streamId')
         }
@@ -1170,6 +1246,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     userId: this.userId,
                 }),
                 'leaveDMChannel',
+            )
+        } else if (isGDMChannelStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_GDMChannelPayload_Membership({
+                    op: MembershipOp.SO_LEAVE,
+                    userId: this.userId,
+                }),
             )
         } else if (isSpaceStreamId(streamId)) {
             const channelIds =

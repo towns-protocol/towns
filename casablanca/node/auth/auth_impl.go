@@ -119,6 +119,8 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, stre
 		return isEntitled, err
 	case common.DMChannel:
 		fallthrough
+	case common.GDMChannel:
+		fallthrough
 	case common.User:
 		fallthrough
 	case common.UserSettings:

@@ -23,6 +23,11 @@ func StreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string,
 			ChannelId:  inception.StreamId,
 			StreamType: common.Channel,
 		}, nil
+	case *GdmChannelPayload_Inception:
+		return &common.StreamInfo{
+			SpaceId:    inception.StreamId,
+			StreamType: common.GDMChannel,
+		}, nil
 	case *DmChannelPayload_Inception:
 		return &common.StreamInfo{
 			SpaceId:    inception.StreamId,

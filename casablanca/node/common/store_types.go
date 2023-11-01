@@ -11,6 +11,7 @@ const (
 	Space StreamType = iota
 	Channel
 	DMChannel
+	GDMChannel
 	User
 	UserSettings
 	Unknown
@@ -24,6 +25,8 @@ func (r StreamType) String() string {
 		return "channel"
 	case DMChannel:
 		return "dm_channel"
+	case GDMChannel:
+		return "gdm_channel"
 	case User:
 		return "user"
 	case UserSettings:

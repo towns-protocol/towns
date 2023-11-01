@@ -77,6 +77,7 @@ interface ZionClientImpl {
         signer: ethers.Signer | undefined,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
     createDMChannel: (userId: string) => Promise<RoomIdentifier | undefined>
+    createGDMChannel: (userIds: string[]) => Promise<RoomIdentifier | undefined>
     waitForUpdateChannelTransaction: (
         context: ChannelUpdateTransactionContext | undefined,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
@@ -217,6 +218,7 @@ export function useZionClient(): ZionClientImpl {
             ZionClientEvent.UpdatedChannel,
         ),
         createDMChannel: useWithCatch(client?.createDMChannel),
+        createGDMChannel: useWithCatch(client?.createGDMChannel),
         createRoleTransaction: useWithCatch(client?.createRoleTransaction),
         waitForCreateRoleTransaction: useWithCatch(client?.waitForCreateRoleTransaction),
         addRoleToChannelTransaction: useWithCatch(client?.addRoleToChannelTransaction),

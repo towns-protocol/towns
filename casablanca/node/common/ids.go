@@ -37,6 +37,9 @@ const (
 
 	STREAM_DM_CHANNEL_PREFIX      = "66"
 	STREAM_DM_CHANNEL_PREFIX_DASH = "66-"
+
+	STREAM_GDM_CHANNEL_PREFIX      = "77"
+	STREAM_GDM_CHANNEL_PREFIX_DASH = "77-"
 )
 
 func AddressHex(address []byte) (string, error) {
@@ -157,4 +160,8 @@ func ValidDMChannelStreamId(id string, userIdA []byte, userIdB []byte) bool {
 	joined := strings.Join(ids, "-")
 	streamId := STREAM_DM_CHANNEL_PREFIX_DASH + hashString(joined)
 	return id == streamId
+}
+
+func ValidGDMChannelStreamId(id string) bool {
+	return strings.HasPrefix(id, STREAM_GDM_CHANNEL_PREFIX_DASH)
 }

@@ -9,6 +9,7 @@ import (
 type JoinableStreamView interface {
 	StreamView
 	IsUserJoined(userId string) (bool, error)
+	IsUserInvited(userId string) (bool, error)
 	GetChannelMembers() (*mapset.Set[string], error)
 }
 
@@ -18,6 +19,15 @@ func (r *streamViewImpl) IsUserJoined(userId string) (bool, error) {
 		return false, err
 	}
 	exists := (*members).Contains(userId)
+	return exists, nil
+}
+
+func (r *streamViewImpl) IsUserInvited(userId string) (bool, error) {
+	invites, err := r.getInvites()
+	if err != nil {
+		return false, err
+	}
+	exists := (*invites).Contains(userId)
 	return exists, nil
 }
 
@@ -41,6 +51,14 @@ func (r *streamViewImpl) getMembers() (*mapset.Set[string], error) {
 				members.Add(user.UserId)
 			}
 		}
+
+	case *protocol.Snapshot_GdmChannelContent:
+		for _, user := range snapshotContent.GdmChannelContent.GetMemberships() {
+			if user.GetOp() == protocol.MembershipOp_SO_JOIN {
+				members.Add(user.UserId)
+			}
+		}
+
 	case *protocol.Snapshot_DmChannelContent:
 		for _, user := range snapshotContent.DmChannelContent.GetMemberships() {
 			if user.GetOp() == protocol.MembershipOp_SO_JOIN {
@@ -77,6 +95,21 @@ func (r *streamViewImpl) getMembers() (*mapset.Set[string], error) {
 			default:
 				break
 			}
+
+		case *protocol.StreamEvent_GdmChannelPayload:
+			switch gdmChannelPayload := payload.GdmChannelPayload.Content.(type) {
+			case *protocol.GdmChannelPayload_Membership:
+				user := gdmChannelPayload.Membership.UserId
+				if gdmChannelPayload.Membership.GetOp() == protocol.MembershipOp_SO_JOIN {
+					members.Add(user)
+				} else if gdmChannelPayload.Membership.GetOp() == protocol.MembershipOp_SO_LEAVE {
+					members.Remove(user)
+				}
+
+			default:
+				break
+			}
+
 		case *protocol.StreamEvent_DmChannelPayload:
 			switch dmChannelPayload := payload.DmChannelPayload.Content.(type) {
 			case *protocol.DmChannelPayload_Membership:
@@ -98,4 +131,48 @@ func (r *streamViewImpl) getMembers() (*mapset.Set[string], error) {
 	}
 
 	return &members, nil
+}
+
+func (r *streamViewImpl) getInvites() (*mapset.Set[string], error) {
+	invites := mapset.NewSet[string]()
+	switch snapshotContent := r.snapshot.Content.(type) {
+	case *protocol.Snapshot_GdmChannelContent:
+
+		for _, user := range snapshotContent.GdmChannelContent.GetMemberships() {
+			if user.GetOp() == protocol.MembershipOp_SO_INVITE {
+				invites.Add(user.UserId)
+			}
+		}
+
+	default:
+		break
+	}
+
+	err := r.forEachEvent(r.snapshotIndex+1, func(e *ParsedEvent) (bool, error) {
+		switch payload := e.Event.Payload.(type) {
+		case *protocol.StreamEvent_GdmChannelPayload:
+			switch gdmChannelPayload := payload.GdmChannelPayload.Content.(type) {
+			case *protocol.GdmChannelPayload_Membership:
+
+				user := gdmChannelPayload.Membership.UserId
+
+				// If a user leaves, they will need to be re-invited to the channel.
+				if gdmChannelPayload.Membership.GetOp() == protocol.MembershipOp_SO_INVITE {
+					invites.Add(user)
+				} else if gdmChannelPayload.Membership.GetOp() == protocol.MembershipOp_SO_LEAVE {
+					invites.Remove(user)
+				}
+
+			default:
+				break
+			}
+		}
+		return true, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &invites, nil
 }

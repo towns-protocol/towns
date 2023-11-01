@@ -28,6 +28,7 @@ export enum StreamPrefix {
     UserSettings = '44-',
     Media = '55-',
     DM = '66-',
+    GDM = '77-',
 }
 
 export const allowedStreamPrefixes = (): string[] => Object.values(StreamPrefix)
@@ -66,6 +67,7 @@ export const makeChannelStreamId = (identity: string): string =>
 
 export const makeUniqueSpaceStreamId = (): string => makeStreamId(StreamPrefix.Space, genId())
 export const makeUniqueChannelStreamId = (): string => makeStreamId(StreamPrefix.Channel, genId())
+export const makeUniqueGDMChannelStreamId = (): string => makeStreamId(StreamPrefix.GDM, genId())
 export const makeUniqueMediaStreamId = (): string => makeStreamId(StreamPrefix.Media, genId())
 
 export const makeDMStreamId = (userIdA: string, userIdB: string): string => {
@@ -84,6 +86,8 @@ export const isChannelStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.Channel)
 export const isDMChannelStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.DM)
+export const isGDMChannelStreamId = (streamId: string): boolean =>
+    streamId.startsWith(StreamPrefix.GDM)
 export const isValidStreamId = (streamId: string): boolean =>
     allowedStreamPrefixes().some((prefix) => streamId.startsWith(prefix))
 

@@ -7,6 +7,7 @@ type IsMiniblockHeader_Content = isMiniblockHeader_Content
 type IsSpacePayload_Content = isSpacePayload_Content
 type IsChannelPayload_Content = isChannelPayload_Content
 type IsDmChannelPayload_Content = isDmChannelPayload_Content
+type IsGdmChannelPayload_Content = isGdmChannelPayload_Content
 type IsUserPayload_Content = isUserPayload_Content
 type IsUserSettingsPayload_Content = isUserSettingsPayload_Content
 type IsUserDeviceKeyPayload_Content = isUserDeviceKeyPayload_Content
@@ -21,6 +22,7 @@ type IsInceptionPayload interface {
 func (*SpacePayload_Inception) isInceptionPayload() {}
 func (*ChannelPayload_Inception) isInceptionPayload() {}
 func (*DmChannelPayload_Inception) isInceptionPayload() {}
+func (*GdmChannelPayload_Inception) isInceptionPayload() {}
 func (*UserPayload_Inception) isInceptionPayload() {}
 func (*UserSettingsPayload_Inception) isInceptionPayload() {}
 func (*UserDeviceKeyPayload_Inception) isInceptionPayload() {}
@@ -42,6 +44,12 @@ func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
 		return r
 	case *Snapshot_DmChannelContent:
 		r := e.Content.(*Snapshot_DmChannelContent).DmChannelContent.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
+	case *Snapshot_GdmChannelContent:
+		r := e.Content.(*Snapshot_GdmChannelContent).GdmChannelContent.GetInception()
 		if r == nil {
 			return nil
 		}
@@ -95,6 +103,12 @@ func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 			return nil
 		}
 		return r
+	case *StreamEvent_GdmChannelPayload:
+		r := e.Payload.(*StreamEvent_GdmChannelPayload).GdmChannelPayload.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
 	case *StreamEvent_UserPayload:
 		r := e.Payload.(*StreamEvent_UserPayload).UserPayload.GetInception()
 		if r == nil {
@@ -140,6 +154,11 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 		_, ok := i.(*DmChannelPayload_Inception)
 		if !ok {
 			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_DmChannelPayload::%T vs %T", e.GetDmChannelPayload().Content, i)
+		}
+	case *StreamEvent_GdmChannelPayload:
+		_, ok := i.(*GdmChannelPayload_Inception)
+		if !ok {
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_GdmChannelPayload::%T vs %T", e.GetGdmChannelPayload().Content, i)
 		}
 	case *StreamEvent_UserPayload:
 		_, ok := i.(*UserPayload_Inception)

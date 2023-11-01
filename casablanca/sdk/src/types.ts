@@ -27,6 +27,7 @@ import {
     MediaPayload_Inception,
     MediaPayload_Chunk,
     DmChannelPayload_Inception,
+    GdmChannelPayload_Inception,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
@@ -297,6 +298,34 @@ export const make_DMChannelPayload_Membership = (
     }
 }
 
+export const make_GDMChannelPayload_Inception = (
+    value: PlainMessage<GdmChannelPayload_Inception>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'gdmChannelPayload',
+        value: {
+            content: {
+                case: 'inception',
+                value,
+            },
+        },
+    }
+}
+
+export const make_GDMChannelPayload_Membership = (
+    value: PlainMessage<Membership>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'gdmChannelPayload',
+        value: {
+            content: {
+                case: 'membership',
+                value,
+            },
+        },
+    }
+}
+
 export const make_UserSettingsPayload_Inception = (
     value: PlainMessage<UserSettingsPayload_Inception>,
 ): PlainMessage<StreamEvent>['payload'] => {
@@ -479,6 +508,20 @@ export const make_DMChannelPayload_Message = (
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
         case: 'dmChannelPayload',
+        value: {
+            content: {
+                case: 'message',
+                value,
+            },
+        },
+    }
+}
+
+export const make_GDMChannelPayload_Message = (
+    value: PlainMessage<EncryptedData>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'gdmChannelPayload',
         value: {
             content: {
                 case: 'message',

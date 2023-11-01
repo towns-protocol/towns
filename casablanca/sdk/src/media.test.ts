@@ -105,6 +105,26 @@ describe('mediaTests', () => {
         await alicesClient.stop()
     })
 
+    test('userCanUploadMediaToGdmIfMember', async () => {
+        const alicesClient = await makeTestClient()
+        await alicesClient.createNewUser()
+        await alicesClient.initCrypto()
+        await alicesClient.startSync()
+
+        const charliesClient = await makeTestClient()
+        await charliesClient.createNewUser()
+        await charliesClient.initCrypto()
+        await charliesClient.startSync()
+
+        const { streamId } = await bobsClient.createGDMChannel([
+            alicesClient.userId,
+            charliesClient.userId,
+        ])
+        await expect(bobsClient.createMediaStream(streamId, 10)).toResolve()
+        await alicesClient.stop()
+        await charliesClient.stop()
+    })
+
     test('userCannotUploadMediaToDmUnlessMember', async () => {
         const alicesClient = await makeTestClient()
         await alicesClient.createNewUser()

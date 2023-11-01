@@ -585,6 +585,19 @@ export class ZionClient implements DecryptionExtensionDelegate {
     }
 
     /************************************************
+     * GDMs
+     *************************************************/
+
+    public async createGDMChannel(userIds: string[]): Promise<RoomIdentifier | undefined> {
+        const client = this.casablancaClient
+        if (!client) {
+            throw new Error('No casablanca client')
+        }
+        const { streamId } = await client.createGDMChannel(userIds)
+        return makeRoomIdentifier(streamId)
+    }
+
+    /************************************************
      * Media
      *************************************************/
     public async createMediaStream(channelId: string, chunkCount: number): Promise<string> {

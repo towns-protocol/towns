@@ -87,6 +87,9 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	case *StreamEvent_DmChannelPayload:
 		return s.addDmChannelPayload(ctx, payload, stream, streamView, parsedEvent)
 
+	case *StreamEvent_GdmChannelPayload:
+		return s.addGdmChannelPayload(ctx, payload, stream, streamView, parsedEvent)
+
 	case *StreamEvent_SpacePayload:
 		return s.addSpacePayload(ctx, payload, stream, streamView, parsedEvent)
 
@@ -137,6 +140,21 @@ func (s *Service) addDmChannelPayload(ctx context.Context, payload *StreamEvent_
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
+}
+
+func (s *Service) addGdmChannelPayload(ctx context.Context, payload *StreamEvent_GdmChannelPayload, stream Stream, streamView StreamView, parsedEvent *ParsedEvent) error {
+
+	switch content := payload.GdmChannelPayload.Content.(type) {
+	case *GdmChannelPayload_Inception_:
+		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
+	case *GdmChannelPayload_Membership:
+		return s.addGDMMembershipEvent(ctx, stream, streamView, parsedEvent, content.Membership)
+	case *GdmChannelPayload_Message:
+		return s.addGDMChannelMessage(ctx, stream, streamView, parsedEvent)
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
+	}
+
 }
 
 func (s *Service) addSpacePayload(ctx context.Context, payload *StreamEvent_SpacePayload, stream Stream, streamView StreamView, parsedEvent *ParsedEvent) error {
@@ -350,12 +368,53 @@ func (s *Service) addDMChannelMessage(ctx context.Context, stream Stream, view S
 	return nil
 }
 
+func (s *Service) addGDMChannelMessage(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+	streamId := view.StreamId()
+	userId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+	member, err := s.checkMembership(ctx, view, userId)
+	if err != nil {
+		return err
+	}
+
+	if !member {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of gdm channel", "user", userId)
+	}
+
+	err = stream.AddEvent(ctx, parsedEvent)
+	if err != nil {
+		return err
+	}
+	// send push notification if it is enabled. fire-and-forget.
+	if s.notification != nil {
+		info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, userId)
+		if err != nil {
+			return err
+		}
+		// Client connection session may be closed while the node is sending the
+		// notification request. It causes random context cancellation. Using
+		// context.Background() to avoid this issue.
+		s.notification.SendPushNotification(context.Background(), info, &view, userId)
+	}
+	return nil
+}
+
 func (s *Service) checkMembership(ctx context.Context, streamView StreamView, userId string) (bool, error) {
 	view := streamView.(JoinableStreamView)
 	if view == nil {
 		return false, RiverError(Err_INTERNAL, "stream is not joinable")
 	}
 	return view.IsUserJoined(userId)
+}
+
+func (s *Service) checkInvited(ctx context.Context, streamView StreamView, userId string) (bool, error) {
+	view := streamView.(JoinableStreamView)
+	if view == nil {
+		return false, RiverError(Err_INTERNAL, "stream is not joinable")
+	}
+	return view.IsUserInvited(userId)
 }
 
 func (s *Service) checkCreatedByValidNode(ctx context.Context, parsedEvent *ParsedEvent) error {
@@ -510,6 +569,67 @@ func (s *Service) addDMMembershipEvent(ctx context.Context, stream Stream, view 
 	if err != nil {
 		return err
 	}
+	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op)
+}
+
+func (s *Service) addGDMMembershipEvent(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
+
+	streamId := view.StreamId()
+	creatorUserId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+
+	switch membership.Op {
+	case MembershipOp_SO_INVITE, MembershipOp_SO_LEAVE:
+		member, err := s.checkMembership(ctx, view, creatorUserId)
+		if err != nil {
+			return err
+		}
+		if !member {
+			return RiverError(Err_PERMISSION_DENIED, "user is not a member of gdm channel", "user", creatorUserId)
+		}
+		if membership.Op == MembershipOp_SO_LEAVE && creatorUserId != membership.UserId {
+			return RiverError(Err_PERMISSION_DENIED, "user must leave themselves", "user", membership.UserId)
+		}
+
+	case MembershipOp_SO_JOIN:
+		member, err := s.checkMembership(ctx, view, membership.UserId)
+		if err != nil {
+			return err
+		}
+		if member {
+			return RiverError(Err_FAILED_PRECONDITION, "user is already a member of the channel", "user", membership.UserId)
+		}
+
+		invited, err := s.checkInvited(ctx, view, membership.UserId)
+		if err != nil {
+			return err
+		}
+		if !invited {
+			return RiverError(Err_FAILED_PRECONDITION, "user is not invited to the channel", "user", membership.UserId)
+		}
+
+	case MembershipOp_SO_UNSPECIFIED:
+		return RiverError(Err_BAD_EVENT, "invalid membership op")
+	}
+
+	userStreamId, err := common.UserStreamIdFromId(membership.UserId)
+	if err != nil {
+		return err
+	}
+
+	// Check if user stream exists
+	userStream, userStreamView, err := s.loadStream(ctx, userStreamId)
+	if err != nil {
+		return err
+	}
+
+	err = stream.AddEvent(ctx, parsedEvent)
+	if err != nil {
+		return err
+	}
+
 	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op)
 }
 

@@ -10,6 +10,7 @@ import {
     isChannelStreamId,
     Stream,
     isDMChannelStreamId,
+    isGDMChannelStreamId,
 } from '@river/sdk'
 import { SpaceInfo } from '@river/web3'
 
@@ -77,7 +78,8 @@ export function toZionCasablancaRoom(
     if (
         !isSpaceStreamId(streamId) &&
         !isChannelStreamId(streamId) &&
-        !isDMChannelStreamId(streamId)
+        !isDMChannelStreamId(streamId) &&
+        !isGDMChannelStreamId(streamId)
     ) {
         throw new Error('Invalid streamId: ' + streamId)
     }
@@ -151,7 +153,8 @@ function getMembersWithMembership(membership: Membership, stream: Stream): RoomM
     if (
         !isSpaceStreamId(streamId) &&
         !isChannelStreamId(streamId) &&
-        !isDMChannelStreamId(streamId)
+        !isDMChannelStreamId(streamId) &&
+        !isGDMChannelStreamId(streamId)
     ) {
         throw new Error('Invalid streamId: ' + streamId)
     }

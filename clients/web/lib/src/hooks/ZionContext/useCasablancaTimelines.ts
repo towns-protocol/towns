@@ -11,6 +11,7 @@ import {
     MiniblockHeader,
     SnapshotCaseType,
     DmChannelPayload,
+    GdmChannelPayload,
 } from '@river/proto'
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
@@ -328,6 +329,13 @@ function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResu
                 message.event.payload.value,
                 description,
             )
+        case 'gdmChannelPayload':
+            return toTownsContent_ChannelPayload(
+                eventId,
+                message,
+                message.event.payload.value,
+                description,
+            )
         case 'spacePayload':
             return toTownsContent_SpacePayload(
                 eventId,
@@ -436,7 +444,7 @@ function toTownsContent_UserPayload(
 function toTownsContent_ChannelPayload(
     eventId: string,
     message: ParsedEvent,
-    value: ChannelPayload | DmChannelPayload,
+    value: ChannelPayload | DmChannelPayload | GdmChannelPayload,
     description: string,
 ): TownsContentResult {
     switch (value.content.case) {
@@ -768,5 +776,10 @@ function toMembership(op: MembershipOp): Membership {
 }
 
 function hasTimelineContent(kind: SnapshotCaseType): boolean {
-    return kind === 'channelContent' || kind === 'spaceContent' || kind === 'dmChannelContent'
+    return (
+        kind === 'channelContent' ||
+        kind === 'spaceContent' ||
+        kind === 'dmChannelContent' ||
+        kind === 'gdmChannelContent'
+    )
 }

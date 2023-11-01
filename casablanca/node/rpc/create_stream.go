@@ -92,6 +92,8 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	case *DmChannelPayload_Inception:
 		streamView, err = s.createStream_DMChannel(ctx, log, parsedEvents, inception)
+	case *GdmChannelPayload_Inception:
+		streamView, err = s.createStream_GDMChannel(ctx, log, parsedEvents, inception)
 
 	default:
 		err = RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream kind")
@@ -273,6 +275,97 @@ func (s *Service) createStream_DMChannel(
 	err = s.addDerivedMembershipEventToUserStream(ctx, otherUserStream, otherUserView, streamId, inviteEvent, MembershipOp_SO_INVITE)
 	if err != nil {
 		return nil, err
+	}
+	return streamView, nil
+}
+
+func (s *Service) createStream_GDMChannel(
+	ctx context.Context,
+	log *slog.Logger,
+	parsedEvents []*ParsedEvent,
+	inception *GdmChannelPayload_Inception,
+) (StreamView, error) {
+
+	// GDMs require 3+ users. The 4 required events are:
+	// 1. Inception
+	// 2. Join event for creator
+	// 3. Invite event for user 2
+	// 4. Invite event for user 3
+	// Followed by optional invite events for more users.
+
+	if len(parsedEvents) < 4 {
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "gdm channel stream must have four or more events")
+	}
+
+	if !ValidGDMChannelStreamId(inception.StreamId) {
+		return nil, RiverError(Err_BAD_STREAM_ID, "invalid gdm channel stream id")
+	}
+
+	inceptionEvent := parsedEvents[0]
+	joinEvent := parsedEvents[1]
+	if err := validateGDMChannelMembershipEvent(joinEvent, MembershipOp_SO_JOIN); err != nil {
+		return nil, err
+	}
+
+	creatorUserStreamId, err := UserStreamIdFromAddress(inceptionEvent.Event.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	userStream, userView, err := s.loadStream(ctx, creatorUserStreamId)
+	if err != nil {
+		return nil, err
+	}
+
+	type invitationInfo struct {
+		stream     Stream
+		streamView StreamView
+		event      *ParsedEvent
+	}
+	var invitations []invitationInfo
+
+	// Check that all invite events belong to a real user, store in slice to avoid fetching twice.
+	for _, event := range parsedEvents[2:] {
+		if err := validateGDMChannelMembershipEvent(event, MembershipOp_SO_INVITE); err != nil {
+			return nil, err
+		}
+
+		address, err := AddressFromUserId(event.Event.GetGdmChannelPayload().GetMembership().UserId)
+		if err != nil {
+			return nil, err
+		}
+		userStreamId, err := UserStreamIdFromAddress(address)
+		if err != nil {
+			return nil, err
+		}
+		stream, streamView, err := s.loadStream(ctx, userStreamId)
+		if err != nil {
+			return nil, err
+		}
+		invitations = append(invitations, invitationInfo{stream, streamView, event})
+	}
+
+	streamId := inception.GetStreamId()
+	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, joinEvent, MembershipOp_SO_JOIN)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, invitation := range invitations {
+		err = s.addDerivedMembershipEventToUserStream(ctx,
+			invitation.stream,
+			invitation.streamView,
+			streamId,
+			invitation.event,
+			MembershipOp_SO_INVITE)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return streamView, nil
 }
@@ -493,6 +586,18 @@ func (s *Service) createStream_Media(
 		if user != info.FirstPartyId && user != info.SecondPartyId {
 			return nil, RiverError(Err_PERMISSION_DENIED, "user is not a member of DM", "user", user)
 		}
+	} else if ValidGDMChannelStreamId(inception.GetChannelId()) {
+		_, streamView, err := s.loadStream(ctx, inception.GetChannelId())
+		if err != nil {
+			return nil, err
+		}
+		member, err := s.checkMembership(ctx, streamView, user)
+		if err != nil {
+			return nil, err
+		}
+		if !member {
+			return nil, RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+		}
 	} else {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel stream does not support media")
 	}
@@ -559,6 +664,23 @@ func validateChannelJoinEvent(event *ParsedEvent) error {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "second event is not a channel join event")
 	}
 	return validateJoinEventPayload(event, membershipPayload.Membership)
+}
+
+func validateGDMChannelMembershipEvent(event *ParsedEvent, op MembershipOp) error {
+
+	payload, ok := event.Event.GetPayload().(*StreamEvent_GdmChannelPayload)
+	if !ok {
+		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "event is not a gdm channel payload")
+	}
+	membershipPayload, ok := payload.GdmChannelPayload.GetContent().(*GdmChannelPayload_Membership)
+	if !ok {
+		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "event is not a gdm channel membership event")
+	}
+
+	if membershipPayload.Membership.GetOp() != op {
+		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "membership op does not match", "op", membershipPayload.Membership.GetOp(), "expected", op)
+	}
+	return nil
 }
 
 func validateSpaceJoinEvent(event *ParsedEvent) error {
