@@ -105,7 +105,7 @@ const messagesPaths: Path[] = [
 
 const messagesThreadPaths: Path[] = [
     {
-        path: `/${PATHS.MESSAGES}`,
+        path: `/${PATHS.MESSAGES}/*`,
         replace: `/${PATHS.MESSAGES}/:messageId`,
     },
     {
