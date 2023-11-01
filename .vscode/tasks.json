@@ -12,7 +12,7 @@
       // start local dev:
       //
       // 1. yarn install
-      // 2. start anvil
+      // 2. start blockchains
       // 3. deploy contracts
       // 4. starts all servers and clients
       //
@@ -34,7 +34,8 @@
     {
       "label": "Stage 1",
       "dependsOn": [
-        "Anvil",
+        "BaseChain",
+        "RiverChain",
         "Stage 2"
       ],
       "group": {
@@ -225,9 +226,19 @@
       "problemMatcher": [],
     },
     {
-      "label": "Anvil",
+      "label": "BaseChain",
       "type": "shell",
       "command": "./scripts/foundry-up.sh && ./scripts/start-local-blockchain.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
+      "label": "RiverChain",
+      "type": "shell",
+      "command": "./scripts/foundry-up.sh && ./scripts/start-local-riverchain.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
