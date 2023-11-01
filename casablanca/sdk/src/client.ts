@@ -97,7 +97,8 @@ import debug from 'debug'
 import { MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { Stream } from './stream'
 import { RiverEventV2 } from './eventV2'
-import { Code, ConnectError } from '@connectrpc/connect'
+import { Code } from '@connectrpc/connect'
+import { isIConnectError } from './utils'
 
 const log = dlog('csb:client')
 
@@ -502,7 +503,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         } catch (err) {
             // Two users can only have a single DM stream between them.
             // Return the stream id if it already exists.
-            if (err instanceof ConnectError && err.code == Code.AlreadyExists) {
+            if (isIConnectError(err) && err.code == Code.AlreadyExists) {
                 return { streamId: channelId }
             }
             throw err

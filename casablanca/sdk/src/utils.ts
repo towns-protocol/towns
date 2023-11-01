@@ -30,3 +30,14 @@ export function hashString(string: string): string {
 export function isJest(): boolean {
     return process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined
 }
+
+/**
+ * IConnectError contains a subset of the properties in ConnectError
+ */
+export type IConnectError = {
+    code: number
+}
+
+export function isIConnectError(obj: unknown): obj is { code: number } {
+    return obj !== null && typeof obj === 'object' && 'code' in obj && typeof obj.code === 'number'
+}
