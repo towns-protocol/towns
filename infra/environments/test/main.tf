@@ -7,7 +7,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.13.1"
+      version = "~> 5"
     }
   }
 
@@ -55,8 +55,8 @@ resource "aws_ecs_cluster" "river_ecs_cluster" {
   tags = module.global_constants.tags
 }
 
-module "river_alb" {
-  source = "../../modules/river-alb"
+module "river_nlb" {
+  source = "../../modules/river-nlb"
 
   subnets = module.vpc.public_subnets
   vpc_id  = module.vpc.vpc_id
@@ -68,7 +68,7 @@ module "river_node" {
 
   depends_on = [
     module.vpc,
-    module.river_alb
+    module.river_nlb
   ]
 
   ecs_cluster_id   = aws_ecs_cluster.river_ecs_cluster.id
@@ -78,10 +78,10 @@ module "river_node" {
   vpc_id                         = module.vpc.vpc_id
   node_name                      = local.river_node_name
 
-  alb_security_group_id             = module.river_alb.security_group_id
-  river_https_listener_arn          = module.river_alb.river_https_listener_arn
-  river_node_blue_target_group_arn  = module.river_alb.river_node_blue_target_group_arn
-  river_node_green_target_group_arn = module.river_alb.river_node_green_target_group_arn
+  nlb_security_group_id             = module.river_nlb.security_group_id
+  river_tls_listener_arn          = module.river_nlb.river_tls_listener_arn
+  river_node_blue_target_group_arn  = module.river_nlb.river_node_blue_target_group_arn
+  river_node_green_target_group_arn = module.river_nlb.river_node_green_target_group_arn
 
   database_allowed_cidr_blocks = module.vpc.private_subnets_cidr_blocks
   database_subnets             = module.vpc.database_subnets

@@ -28,13 +28,13 @@ module "river_internal_sg" {
   ingress_with_source_security_group_id = [
     {
       rule                     = "http-80-tcp"
-      source_security_group_id = var.alb_security_group_id
+      source_security_group_id = var.nlb_security_group_id
     },
     {
       protocol                 = "tcp"
       from_port                = 5157
       to_port                  = 5157
-      source_security_group_id = var.alb_security_group_id
+      source_security_group_id = var.nlb_security_group_id
     },
   ]
 
@@ -170,11 +170,6 @@ data "aws_alb_target_group" "green" {
   arn = var.river_node_green_target_group_arn
 }
 
-resource "aws_codedeploy_app" "river-node-code-deploy-app" {
-  compute_platform = "ECS"
-  name             = "${module.global_constants.environment}-river-${var.node_name}-codedeploy-app"
-}
-
 resource "aws_iam_role" "ecs_code_deploy_role" {
   name                = "${module.global_constants.environment}-river-${var.node_name}-ecs-code-deploy-role"
   managed_policy_arns = ["arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"]
@@ -195,6 +190,11 @@ resource "aws_iam_role" "ecs_code_deploy_role" {
   })
 
   tags = module.global_constants.tags
+}
+
+resource "aws_codedeploy_app" "river-node-code-deploy-app" {
+  compute_platform = "ECS"
+  name             = "${module.global_constants.environment}-river-${var.node_name}-codedeploy-app"
 }
 
 resource "aws_ecs_service" "river-ecs-service" {
@@ -283,7 +283,7 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
       }
 
       prod_traffic_route {
-        listener_arns = [var.river_https_listener_arn]
+        listener_arns = [var.river_tls_listener_arn]
       }
     }
   }
