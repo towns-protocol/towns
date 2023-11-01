@@ -51,7 +51,6 @@ const envSchema = z.object({
     VITE_WEB_PUSH_WORKER_URL: z.string().optional(), // url to the web push worker
     VITE_AMP_WORKER_URL: z.string().url().optional(),
     VITE_TOWNS_TOKEN_URL: z.string().url().optional(),
-    VITE_WALLET_CONNECT_PROJECT_ID: z.string().default('stringtopreventerror'),
 
     VITE_DD_CLIENT_TOKEN: z.string().optional(), // used for datadog client side monitoring
     VITE_PRIVY_ID: z.string(),

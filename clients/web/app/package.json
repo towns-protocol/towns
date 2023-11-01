@@ -36,7 +36,6 @@
         "@ngneat/falso": "^6.1.0",
         "@privy-io/react-auth": "^1.44.0",
         "@privy-io/wagmi-connector": "^0.1.5",
-        "@rainbow-me/rainbowkit": "^1.0.4",
         "@react-hook/resize-observer": "^1.2.6",
         "@river/proto": "workspace:^",
         "@river/web3": "workspace:^",

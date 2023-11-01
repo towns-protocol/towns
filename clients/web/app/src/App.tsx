@@ -23,6 +23,7 @@ import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { AuthContextProvider } from 'hooks/useAuth'
 import { WatchPrivyAndSetSigner } from 'WatchPrivyAndSetSigner'
+import { ClearStaleWagmiStorage } from 'ClearStaleWagmiStorage'
 
 const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
@@ -73,6 +74,7 @@ export const App = () => {
                     <AppNotifications />
                     <RegisterPushSubscription />
                     <WatchPrivyAndSetSigner chainId={environment.chainId} />
+                    <ClearStaleWagmiStorage />
                     <Helmet>
                         <meta
                             name="theme-color"

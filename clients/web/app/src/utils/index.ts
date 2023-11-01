@@ -26,3 +26,26 @@ export function waitFor<T>(
         checkPredicate()
     })
 }
+
+export function findLocalStorageKeys(pattern: RegExp | string): string[] {
+    const keys = Object.keys(localStorage)
+    const matchingKeys: string[] = []
+
+    if (pattern instanceof RegExp) {
+        for (const key of keys) {
+            if (pattern.test(key)) {
+                matchingKeys.push(key)
+            }
+        }
+    } else if (typeof pattern === 'string') {
+        for (const key of keys) {
+            if (key.includes(pattern)) {
+                matchingKeys.push(key)
+            }
+        }
+    } else {
+        throw new Error('Invalid input. Please provide a valid RegExp or string.')
+    }
+
+    return matchingKeys
+}
