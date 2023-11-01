@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { matchRoutes, useLocation, useNavigate, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
-import { getAccountAddress, useMyProfile, useSpaceMembers } from 'use-zion-client'
+import { getAccountAddress, useMyProfile, useSpaceMembers, useZionClient } from 'use-zion-client'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
@@ -30,6 +30,8 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const [search] = useSearchParams()
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
     const { profileId = 'me' } = useParams()
+    const { createDMChannel } = useZionClient()
+
     const { requestPushPermission, simplifiedPermissionState } = usePushNotifications()
 
     const navigate = useNavigate()
@@ -43,6 +45,13 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const onLogoutClick = useEvent(() => {
         logout()
     })
+
+    const onMessageClick = useCallback(async () => {
+        const streamId = await createDMChannel(profileId)
+        if (streamId) {
+            navigate(`/messages/${streamId.networkId}`)
+        }
+    }, [createDMChannel, profileId, navigate])
 
     const profileUser = useMyProfile()
     const { membersMap } = useSpaceMembers()
@@ -81,6 +90,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const onThemeClick = () => {
         setTheme(theme === 'light' ? 'dark' : 'light')
     }
+    const isCurrentUser = user?.userId === profileUser?.userId
 
     return (
         <Stack gap>
@@ -115,7 +125,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                     </Button>
                 </Box>
             )}
-            {user?.userId === profileUser?.userId ? (
+            {isCurrentUser && (
                 <Stack padding gap paddingBottom="lg">
                     {simplifiedPermissionState === 'soft-denied' && (
                         <>
@@ -174,7 +184,16 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                         <Paragraph>Logout</Paragraph>
                     </PanelButton>
                 </Stack>
-            ) : undefined}
+            )}
+
+            {!isCurrentUser && (
+                <Stack padding gap>
+                    <PanelButton onClick={onMessageClick}>
+                        <Icon type="message" size="square_sm" color="gray2" />
+                        <Paragraph color="default">Send Message</Paragraph>
+                    </PanelButton>
+                </Stack>
+            )}
         </Stack>
     )
 }
