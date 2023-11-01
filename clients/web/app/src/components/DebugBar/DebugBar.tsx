@@ -5,7 +5,7 @@ import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
 import { mintMockNFT, useConnectivity, useWeb3Context } from 'use-zion-client'
 import { debug } from 'debug'
-import { Box, Button, Divider, Stack, Text } from '@ui'
+import { Box, Button, Divider, Icon, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
 import { isTouch } from 'hooks/useDevice'
@@ -315,22 +315,22 @@ const DebugBar = ({
 
     const serverName = casablancaUrl?.replaceAll('https://', '').replaceAll('http://', '')
 
-    const platform = !chain?.name
-        ? `Not connected | server:${serverName}`
-        : `wallet: ${chain.name} | server:${serverName}`
+    const platform = !chain?.name ? ` ${serverName}` : `w: ${chain.id} | ${serverName}`
 
     const onClear = useCallback(() => {
         clearEnvironment()
     }, [clearEnvironment])
 
     const touch = isTouch()
+    const { isConnected } = useAuth()
 
     return (
         <Box
             position="fixed"
             zIndex="tooltips"
             width="100%"
-            paddingX="md"
+            paddingX="lg"
+            paddingRight="x8"
             bottom="none"
             paddingY="xs"
             flexDirection="row"
@@ -394,16 +394,15 @@ const DebugBar = ({
                                 </Box>
                             )}
                         </Box>
-
-                        <Text strong as="span" size="sm">
-                            {platform}&nbsp; | app using: {destinationChainName}
+                        <Text strong as="span" size="xs">
+                            {platform}&nbsp; | app: {destinationChainId} | Connected: &nbsp;
+                            <Icon
+                                display="inline-block"
+                                size="square_xxs"
+                                type={isConnected ? 'check' : 'alert'}
+                                color={isConnected ? 'cta1' : 'error'}
+                            />
                         </Text>
-
-                        {environment && (
-                            <Text as="span" size="sm" color="negative">
-                                Local Storage
-                            </Text>
-                        )}
                     </>
                 )}
             </Box>
