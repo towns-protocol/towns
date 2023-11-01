@@ -3,6 +3,7 @@ import LocalhostTownOwnerAddress from '@towns/generated/localhost/addresses/town
 import LocalhostMockNFTAddress from '@towns/generated/localhost/addresses/mockNFT.json' assert { type: 'json' }
 import LocalhostMemberAddress from '@towns/generated/localhost/addresses/member.json' assert { type: 'json' }
 import LocalhostPioneerAddress from '@towns/generated/localhost/addresses/pioneerToken.json' assert { type: 'json' }
+import WalletLinkAddress from '@towns/generated/localhost/addresses/walletLink.json' assert { type: 'json' }
 
 import BaseGoerliTownFactoryAddress from '@towns/generated/base_goerli/addresses/townFactory.json' assert { type: 'json' }
 import BaseGoerliTownOwnerAddress from '@towns/generated/base_goerli/addresses/townOwner.json' assert { type: 'json' }
@@ -14,6 +15,7 @@ export interface IStaticContractsInfoV3 {
     mockErc721aAddress: string
     memberTokenAddress?: string
     pioneerTokenAddress: string
+    walletLinkAddress: string
 }
 
 const localhostContractsInfo: IStaticContractsInfoV3 = {
@@ -22,6 +24,7 @@ const localhostContractsInfo: IStaticContractsInfoV3 = {
     mockErc721aAddress: LocalhostMockNFTAddress.address,
     memberTokenAddress: LocalhostMemberAddress.address,
     pioneerTokenAddress: LocalhostPioneerAddress.address,
+    walletLinkAddress: WalletLinkAddress.address,
 }
 
 const baseGoerliContractsInfo: IStaticContractsInfoV3 = {
@@ -29,6 +32,7 @@ const baseGoerliContractsInfo: IStaticContractsInfoV3 = {
     townOwnerAddress: BaseGoerliTownOwnerAddress.address,
     mockErc721aAddress: '',
     pioneerTokenAddress: BaseGoerliPioneerAddress.address,
+    walletLinkAddress: WalletLinkAddress.address,
 }
 
 /// get contract info for a given chain id

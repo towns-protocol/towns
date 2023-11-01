@@ -1,62 +1,50 @@
-import { ContractTransaction, ethers } from 'ethers'
+import { BigNumber, ContractTransaction, ethers } from 'ethers'
+import { IWalletLinkShim } from './WalletLinkShim'
+import { IStaticContractsInfoV3 } from './IStaticContractsInfoV3'
 
 export class WalletLink {
+    private readonly walletLinkShim: IWalletLinkShim
+
+    constructor(
+        contractInfo: IStaticContractsInfoV3,
+        chainId: number,
+        provider: ethers.providers.Provider | undefined,
+    ) {
+        this.walletLinkShim = new IWalletLinkShim(contractInfo.walletLinkAddress, chainId, provider)
+    }
+
     public async linkWallet(
         rootKey: ethers.Wallet,
         wallet: ethers.Signer,
     ): Promise<ContractTransaction> {
         const rootKeyAddress = await rootKey.getAddress()
         const walletAddress = await wallet.getAddress()
-        const isLinkedAlready = await this.checkIfLinked(rootKeyAddress, await wallet.getAddress())
+        const isLinkedAlready = await this.walletLinkShim.read.checkIfLinked(
+            rootKeyAddress,
+            await wallet.getAddress(),
+        )
         if (isLinkedAlready) {
             throw new Error('Wallet is already linked')
         }
 
-        const nonce = (await this.getLatestNonceForRootKey(rootKeyAddress)) + 1
+        const currentNonce = await this.walletLinkShim.read.getLatestNonceForRootKey(rootKeyAddress)
+        const nonce = currentNonce.add(1)
         const rootKeySignature = await rootKey.signMessage(
             packAddressWithNonce(walletAddress, nonce),
         )
 
-        return await this.linkWalletToRootKey(rootKeyAddress, rootKeySignature, wallet)
-    }
-
-    private linkWalletToRootKey(
-        _rootKeyAddress: string,
-        /* proof of rootKey authorization */
-        _rootKeySignature: string,
-        /* signed by the wallet */
-        _wallet: ethers.Signer,
-    ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
-    }
-    public async removeLinkViaRootKey(
-        _walletAddress: string,
-        /* signed by rootKey */
-        _rootKey: ethers.Signer,
-    ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
-    }
-    public async removeLinkViaWallet(
-        _rootKeyAddress: string,
-        /* signed by wallet */
-        _wallet: ethers.Signer,
-    ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
-    }
-    public async getWalletsByRootKey(_rootKeyAddress: string): Promise<string[]> {
-        throw new Error('Method not implemented.')
-    }
-    public async checkIfLinked(_walletAddress: string, _rootKeyAddress: string): Promise<boolean> {
-        throw new Error('Method not implemented.')
-    }
-    public async getLatestNonceForRootKey(_rootKeyAddress: string): Promise<number> {
-        throw new Error('Method not implemented.')
+        return (
+            this.walletLinkShim
+                .write(wallet)
+                // TODO-HNT-3102 - change  once wallet link contract is on Base
+                .linkWalletToRootKey(walletAddress, [], rootKeyAddress, rootKeySignature, nonce)
+        )
     }
 }
 
-function packAddressWithNonce(address: string, nonce: number): string {
+function packAddressWithNonce(address: string, nonce: BigNumber): string {
     const abi = ethers.utils.defaultAbiCoder
-    const packed = abi.encode(['address', 'uint256'], [address, nonce])
+    const packed = abi.encode(['address', 'uint256'], [address, nonce.toNumber()])
     const hash = ethers.utils.keccak256(packed)
     return hash
 }

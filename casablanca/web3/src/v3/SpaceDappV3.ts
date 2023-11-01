@@ -32,7 +32,7 @@ export class SpaceDappV3 implements ISpaceDapp {
         this.provider = provider
         const contractsInfo = getContractsInfoV3(chainId)
         this.townRegistrar = new TownRegistrar(contractsInfo, chainId, provider)
-        this.walletLink = new WalletLink()
+        this.walletLink = new WalletLink(contractsInfo, chainId, provider)
     }
 
     public async addRoleToChannel(
