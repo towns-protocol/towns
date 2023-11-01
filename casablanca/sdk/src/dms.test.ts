@@ -74,7 +74,7 @@ describe('dmsTests', () => {
         await expect(bobsClient.inviteUser(streamId, charliesClient.userId)).toReject()
     })
 
-    test.skip('creatingDMChannelTwiceReturnsStreamId', async () => {
+    test('creatingDMChannelTwiceReturnsStreamId', async () => {
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         await expect(bobsClient.waitForStream(streamId)).toResolve()
 

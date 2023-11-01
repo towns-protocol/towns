@@ -21,6 +21,8 @@ import (
 // error with "http: suspiciously long trailer after chunked body".
 const CONNECT_ERROR_MESSAGE_LIMIT = 1500
 
+const RIVER_ERROR_HEADER = "X-River-Error"
+
 var isDebugCallStack bool
 
 func init() {
@@ -179,6 +181,23 @@ func AsRiverError(err error) *RiverErrorImpl {
 	if ok {
 		return e
 	}
+	ce, ok := err.(*connect_go.Error)
+	if ok {
+		code := protocol.Err_UNKNOWN
+		if value, ok := ce.Meta()[RIVER_ERROR_HEADER]; ok && len(value) > 0 {
+			v, ok := protocol.Err_value[value[0]]
+			if ok {
+				code = protocol.Err(v)
+			}
+		}
+		if code == protocol.Err_UNKNOWN {
+			code = protocol.Err(ce.Code())
+		}
+		return &RiverErrorImpl{
+			Code: code,
+			Base: err,
+		}
+	}
 	if err != nil {
 		code := protocol.Err_UNKNOWN
 		if err == context.Canceled {
@@ -212,7 +231,11 @@ func ErrToConnectCode(err protocol.Err) connect_go.Code {
 }
 
 func (e *RiverErrorImpl) AsConnectError() *connect_go.Error {
-	return connect_go.NewError(ErrToConnectCode(e.Code), TruncateErrorToConnectLimit(e))
+	err := connect_go.NewError(ErrToConnectCode(e.Code), TruncateErrorToConnectLimit(e))
+	if str, ok := protocol.Err_name[int32(e.Code)]; ok {
+		err.Meta()[RIVER_ERROR_HEADER] = []string{str}
+	}
+	return err
 }
 
 func (e *RiverErrorImpl) ForEachTag(f func(name string, value any) bool) {
