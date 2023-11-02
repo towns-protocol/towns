@@ -8,7 +8,7 @@ import {
     IRolesInterface as BaseGoerliInterface,
 } from '@towns/generated/base_goerli/v3/typings/IRoles'
 
-import { BaseContractShimV3 } from './BaseContractShimV3'
+import { BaseContractShim } from './BaseContractShim'
 
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/Roles.abi.json' assert { type: 'json' }
 
@@ -18,7 +18,7 @@ import { ethers } from 'ethers'
 
 export type { LocalhostIRolesBase as IRolesBase }
 
-export class IRolesShim extends BaseContractShimV3<
+export class IRolesShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,

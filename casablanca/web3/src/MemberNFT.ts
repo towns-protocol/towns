@@ -1,5 +1,5 @@
 import { ethers, BigNumber } from 'ethers'
-import { IStaticContractsInfoV3, getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
+import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 
 import { MemberNFTShim } from './v3/MemberNFTShim'
 
@@ -12,13 +12,13 @@ export interface MemberNFTContractState {
 // jterzis note 10/2023: Member.sol contract has been deprecated and so this class is no longer used
 // in new network environments.
 export class MemberNFT {
-    private readonly contractsInfo: IStaticContractsInfoV3
+    private readonly contractsInfo: IStaticContractsInfo
     public readonly memberNFTShim: MemberNFTShim
     private readonly signer: ethers.Signer
 
     constructor(chainId: number, provider: ethers.providers.Provider, signer: ethers.Signer) {
         this.signer = signer
-        this.contractsInfo = getContractsInfoV3(chainId)
+        this.contractsInfo = getContractsInfo(chainId)
         this.memberNFTShim = new MemberNFTShim(
             this.contractsInfo.memberTokenAddress ?? '',
             chainId,

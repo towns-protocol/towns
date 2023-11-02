@@ -3,7 +3,7 @@ import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { BasicRoleInfo, Permission } from './ContractTypes'
 import { MockERC721AShim } from './v3/MockERC721AShim'
 import { TokenEntitlementDataTypes } from './v3/TokenEntitlementShim'
-import { getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
+import { getContractsInfo } from './IStaticContractsInfo'
 import { ISpaceDapp } from './ISpaceDapp'
 import { IMembershipBase, ITownArchitectBase } from './v3/ITownArchitectShim'
 
@@ -14,7 +14,7 @@ export function mintMockNFT(
     toAddress: string,
 ): Promise<ethers.ContractTransaction> {
     if (chainId === 31337) {
-        const mockNFTAddress = getContractsInfoV3(chainId).mockErc721aAddress
+        const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
         const mockNFT = new MockERC721AShim(mockNFTAddress, chainId, provider)
         return mockNFT.write(fromWallet).mintTo(toAddress)
     }
@@ -22,7 +22,7 @@ export function mintMockNFT(
 }
 
 export function getMemberNftAddress(chainId: number): string | null {
-    const contractInfo = getContractsInfoV3(chainId)
+    const contractInfo = getContractsInfo(chainId)
     if (!contractInfo) {
         throw new Error(`Contract info for chainId ${chainId} is not found.`)
     }
@@ -30,7 +30,7 @@ export function getMemberNftAddress(chainId: number): string | null {
 }
 
 export function getPioneerNftAddress(chainId: number): string {
-    const contractInfo = getContractsInfoV3(chainId)
+    const contractInfo = getContractsInfo(chainId)
     if (!contractInfo) {
         throw new Error(`Contract info for chainId ${chainId} is not found.`)
     }

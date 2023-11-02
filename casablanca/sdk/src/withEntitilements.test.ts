@@ -2,7 +2,7 @@
  * @group with-entitilements
  */
 
-import { LocalhostWeb3Provider, ITownArchitectBase, Permission, SpaceDappV3 } from '@river/web3'
+import { LocalhostWeb3Provider, ITownArchitectBase, Permission, createSpaceDapp } from '@river/web3'
 import { dlog } from './dlog'
 import { makeRandomUserContextWithOldDelegate, TEST_URL_WITH_ENTITILEMENTS } from './util.test'
 import {
@@ -35,7 +35,7 @@ describe('withEntitlements', () => {
         await bobProvider.fundWallet()
         const mintReceipt = await bobProvider.mintMockNFT()
         log('mintReceipt', mintReceipt)
-        const spaceDapp = new SpaceDappV3(chainId, bobProvider)
+        const spaceDapp = createSpaceDapp(chainId, bobProvider)
 
         // create a user stream
         const bob = new Client(bobsContext, makeStreamRpcClientWithEntitlements())
@@ -114,7 +114,7 @@ describe('withEntitlements', () => {
         log('Alice created user, about to join space', { alicesUserId: alice.userId })
 
         // first join the space on chain
-        const aliceSpaceDapp = new SpaceDappV3(chainId, aliceProvider)
+        const aliceSpaceDapp = createSpaceDapp(chainId, aliceProvider)
         const transaction2 = await aliceSpaceDapp.joinTown(
             spaceId,
             alicesWallet.address,

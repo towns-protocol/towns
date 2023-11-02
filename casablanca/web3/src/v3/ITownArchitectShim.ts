@@ -13,13 +13,13 @@ import LocalhostAbi from '@towns/generated/localhost/v3/abis/TownArchitect.abi.j
 
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TownArchitect.abi.json' assert { type: 'json' }
 
-import { BaseContractShimV3 } from './BaseContractShimV3'
+import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'
 
 export type { LocalhostIMembershipBase as IMembershipBase }
 export type { LocalhostITownArchitectBase as ITownArchitectBase }
 
-export class ITownArchitectShim extends BaseContractShimV3<
+export class ITownArchitectShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,

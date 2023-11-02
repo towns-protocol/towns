@@ -11,7 +11,7 @@ import {
     isStringArray,
     isTokenEntitlement,
     isUserEntitlement,
-} from './ContractTypesV4'
+} from './ContractTypes'
 import { IChannelShim } from './IChannelShim'
 import { IRolesShim } from './IRolesShim'
 import { ITownOwnerShim } from './ITownOwnerShim'
@@ -22,9 +22,9 @@ import { IEntitlementsShim } from './IEntitlementsShim'
 import { IMulticallShim } from './IMulticallShim'
 import { OwnableFacetShim } from './OwnableFacetShim'
 import { TokenPausableFacetShim } from './TokenPausableFacetShim'
-import { UNKNOWN_ERROR } from './BaseContractShimV4'
+import { UNKNOWN_ERROR } from './BaseContractShim'
 import { UserEntitlementShim } from './UserEntitlementShim'
-import { isRoleIdInArray } from './ContractHelpersV4'
+import { isRoleIdInArray } from './ContractHelpers'
 import { toPermissions } from './ConvertersRoles'
 import { IMembershipShim } from './IMembershipShim'
 import { Address, PublicClient } from 'viem'

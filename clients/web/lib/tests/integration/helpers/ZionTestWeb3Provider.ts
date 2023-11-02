@@ -3,7 +3,7 @@
 import { Wallet, ethers } from 'ethers'
 
 import { fundWallet } from './TestUtils'
-import { getContractsInfoV3, MockERC721AShim } from '@river/web3'
+import { getContractsInfo, MockERC721AShim } from '@river/web3'
 
 export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
@@ -31,7 +31,7 @@ export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     public async mintMockNFT() {
         await this.ready
         const chainId = this.network.chainId
-        const mockNFTAddress = getContractsInfoV3(chainId).mockErc721aAddress
+        const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
         const mockNFT = new MockERC721AShim(mockNFTAddress, chainId, this)
         return mockNFT.write(this.wallet).mintTo(this.wallet.address)
     }

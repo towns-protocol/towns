@@ -1,6 +1,6 @@
-import { BasicRoleInfo, Permission } from './ContractTypesV4'
+import { BasicRoleInfo, Permission } from './ContractTypes'
 import { MockERC721AShim } from './MockERC721AShim'
-import { getContractsInfoV4 } from './IStaticContractsInfoV4'
+import { getContractsInfo } from '../IStaticContractsInfo'
 import { ISpaceDapp } from './ISpaceDapp'
 import { Address, PublicClient, WalletClient, zeroAddress } from 'viem'
 import { ITownArchitectBase, SpaceDappTransaction, TokenEntitlementDataTypes } from './types'
@@ -12,7 +12,7 @@ export function mintMockNFT(
     toAddress: Address,
 ): Promise<SpaceDappTransaction> {
     if (chainId === 31337) {
-        const mockNFTAddress = getContractsInfoV4(chainId).mockErc721aAddress
+        const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
         const mockNFT = new MockERC721AShim(mockNFTAddress, chainId, publicClient)
         return mockNFT.write({
             functionName: 'mintTo',
@@ -24,7 +24,7 @@ export function mintMockNFT(
 }
 
 export function getMemberNftAddress(chainId: number): string | null {
-    const contractInfo = getContractsInfoV4(chainId)
+    const contractInfo = getContractsInfo(chainId)
     if (!contractInfo) {
         throw new Error(`Contract info for chainId ${chainId} is not found.`)
     }
@@ -32,7 +32,7 @@ export function getMemberNftAddress(chainId: number): string | null {
 }
 
 export function getPioneerNftAddress(chainId: number): string {
-    const contractInfo = getContractsInfoV4(chainId)
+    const contractInfo = getContractsInfo(chainId)
     if (!contractInfo) {
         throw new Error(`Contract info for chainId ${chainId} is not found.`)
     }

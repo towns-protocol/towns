@@ -1,4 +1,4 @@
-import { IStaticContractsInfoV3 } from './IStaticContractsInfoV3'
+import { IStaticContractsInfo } from '../IStaticContractsInfo'
 import { ITownArchitectShim } from './ITownArchitectShim'
 import { Town } from './Town'
 import { ethers } from 'ethers'
@@ -15,7 +15,7 @@ export class TownRegistrar {
     private readonly towns: TownRegistry = {}
 
     constructor(
-        contractsInfo: IStaticContractsInfoV3,
+        contractsInfo: IStaticContractsInfo,
         chainId: number,
         provider: ethers.providers.Provider | undefined,
     ) {

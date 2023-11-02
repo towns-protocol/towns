@@ -1,4 +1,4 @@
-import { EntitlementModuleType, Permission } from './ContractTypesV4'
+import { EntitlementModuleType, Permission } from './ContractTypes'
 import { createTokenEntitlementStruct, createUserEntitlementStruct } from './ConvertersEntitlements'
 
 import { Town } from './Town'

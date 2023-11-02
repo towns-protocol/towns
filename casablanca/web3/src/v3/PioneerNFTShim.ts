@@ -10,10 +10,10 @@ import {
 import LocalhostAbi from '@towns/generated/localhost/abis/Pioneer.abi.json' assert { type: 'json' }
 import BaseGoerliAbi from '@towns/generated/base_goerli/abis/Pioneer.abi.json' assert { type: 'json' }
 
-import { BaseContractShimV3 } from '../v3/BaseContractShimV3'
+import { BaseContractShim } from '../v3/BaseContractShim'
 import { ethers } from 'ethers'
 
-export class PioneerNFTShim extends BaseContractShimV3<
+export class PioneerNFTShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,

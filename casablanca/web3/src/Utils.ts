@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
+import { getContractsInfo } from './IStaticContractsInfo'
 import { MockERC721AShim } from './v3/MockERC721AShim'
 
 export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
@@ -35,7 +35,7 @@ export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
     public async mintMockNFT() {
         await this.ready
         const chainId = this.network.chainId
-        const mockNFTAddress = getContractsInfoV3(chainId).mockErc721aAddress
+        const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
         const mockNFT = new MockERC721AShim(mockNFTAddress, chainId, this)
         return mockNFT.write(this.wallet).mintTo(this.wallet.address)
     }

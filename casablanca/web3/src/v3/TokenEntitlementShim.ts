@@ -13,14 +13,14 @@ import LocalhostAbi from '@towns/generated/localhost/v3/abis/TokenEntitlement.ab
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TokenEntitlement.abi.json' assert { type: 'json' }
 import { BigNumberish, ethers } from 'ethers'
 
-import { BaseContractShimV3 } from './BaseContractShimV3'
+import { BaseContractShim } from './BaseContractShim'
 import { decodeExternalTokens } from './ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
 
 export type { LocalhostDataTypes as TokenEntitlementDataTypes }
 
 export class TokenEntitlementShim
-    extends BaseContractShimV3<
+    extends BaseContractShim<
         LocalhostContract,
         LocalhostInterface,
         BaseGoerliContract,

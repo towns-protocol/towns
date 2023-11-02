@@ -12,9 +12,9 @@ import LocalhostAbi from '@towns/generated/localhost/v3/abis/TokenPausableFacet.
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TokenPausableFacet.abi.json' assert { type: 'json' }
 import { ethers } from 'ethers'
 
-import { BaseContractShimV3 } from './BaseContractShimV3'
+import { BaseContractShim } from './BaseContractShim'
 
-export class TokenPausableFacetShim extends BaseContractShimV3<
+export class TokenPausableFacetShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,

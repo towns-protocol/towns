@@ -4,7 +4,7 @@ import {
     ChannelMetadata,
     Permission,
     RoleDetails,
-} from './ContractTypesV4'
+} from './ContractTypes'
 
 import { SpaceInfo } from '../SpaceInfo'
 

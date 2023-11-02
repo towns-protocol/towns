@@ -1,7 +1,7 @@
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/MembershipFacet.abi'
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/MembershipFacet.abi'
 
-import { BaseContractShimV4 } from './BaseContractShimV4'
+import { BaseContractShim } from './BaseContractShim'
 import { Address, PublicClient } from 'viem'
 
 const abis = {
@@ -9,7 +9,7 @@ const abis = {
     testnetAbi: BaseGoerliAbi,
 } as const
 
-export class IMembershipShim extends BaseContractShimV4<typeof abis> {
+export class IMembershipShim extends BaseContractShim<typeof abis> {
     constructor(address: Address, chainId: number, client: PublicClient | undefined) {
         super(address, chainId, client, abis)
     }

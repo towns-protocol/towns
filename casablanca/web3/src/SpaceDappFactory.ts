@@ -1,5 +1,5 @@
 import { ISpaceDapp } from './ISpaceDapp'
-import { SpaceDappV3 } from './v3/SpaceDappV3'
+import { SpaceDapp as SpaceDappV3 } from './v3/SpaceDapp'
 import { ethers } from 'ethers'
 
 export function createSpaceDapp(

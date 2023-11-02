@@ -22,7 +22,7 @@ type Abis = {
     readonly testnetAbi: Abi
 }
 
-export class BaseContractShimV4<TAbis extends Abis> {
+export class BaseContractShim<TAbis extends Abis> {
     public readonly address: Address
     public readonly chainId: number
     public readonly abi: TAbis['localhostAbi'] | TAbis['testnetAbi']

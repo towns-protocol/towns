@@ -13,11 +13,11 @@ import LocalhostAbi from '@towns/generated/localhost/v3/abis/Channels.abi.json' 
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/Channels.abi.json' assert { type: 'json' }
 import { ethers } from 'ethers'
 
-import { BaseContractShimV3 } from './BaseContractShimV3'
+import { BaseContractShim } from './BaseContractShim'
 
 export type { LocalhostIChannelBase as IChannelBase }
 
-export class IChannelShim extends BaseContractShimV3<
+export class IChannelShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,

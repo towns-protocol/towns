@@ -1,0 +1,4 @@
+{
+    "type": "module",
+    "main": "../dist/v3/index.js"
+}

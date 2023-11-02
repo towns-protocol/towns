@@ -1,10 +1,10 @@
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/TokenEntitlement.abi'
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TokenEntitlement.abi'
 
-import { BaseContractShimV4 } from './BaseContractShimV4'
+import { BaseContractShim } from './BaseContractShim'
 import { Address, PublicClient } from 'viem'
 import { decodeExternalTokens } from './ConvertersEntitlements'
-import { EntitlementModuleType, EntitlementModule } from './ContractTypesV4'
+import { EntitlementModuleType, EntitlementModule } from './ContractTypes'
 import { TokenEntitlementDataTypes } from './types'
 
 const abis = {
@@ -13,7 +13,7 @@ const abis = {
 } as const
 
 export class TokenEntitlementShim
-    extends BaseContractShimV4<typeof abis>
+    extends BaseContractShim<typeof abis>
     implements EntitlementModule
 {
     constructor(address: Address, chainId: number, client: PublicClient | undefined) {

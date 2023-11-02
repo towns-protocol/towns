@@ -16,12 +16,11 @@ import { SpaceInfo } from '../SpaceInfo'
 import { Town } from './Town'
 import { TownRegistrar } from './TownRegistrar'
 import { createEntitlementStruct } from './ConvertersRoles'
-import { getContractsInfoV3 } from './IStaticContractsInfoV3'
+import { getContractsInfo } from '../IStaticContractsInfo'
 import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
 import { WalletLink } from './WalletLink'
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-export class SpaceDappV3 implements ISpaceDapp {
+export class SpaceDapp implements ISpaceDapp {
     private readonly chainId: number
     private readonly provider: ethers.providers.Provider | undefined
     private readonly townRegistrar: TownRegistrar
@@ -30,7 +29,7 @@ export class SpaceDappV3 implements ISpaceDapp {
     constructor(chainId: number, provider: ethers.providers.Provider | undefined) {
         this.chainId = chainId
         this.provider = provider
-        const contractsInfo = getContractsInfoV3(chainId)
+        const contractsInfo = getContractsInfo(chainId)
         this.townRegistrar = new TownRegistrar(contractsInfo, chainId, provider)
         this.walletLink = new WalletLink(contractsInfo, chainId, provider)
     }

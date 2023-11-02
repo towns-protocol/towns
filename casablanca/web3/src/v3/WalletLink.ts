@@ -1,12 +1,12 @@
 import { BigNumber, ContractTransaction, ethers } from 'ethers'
 import { IWalletLinkShim } from './WalletLinkShim'
-import { IStaticContractsInfoV3 } from './IStaticContractsInfoV3'
+import { IStaticContractsInfo } from '../IStaticContractsInfo'
 
 export class WalletLink {
     private readonly walletLinkShim: IWalletLinkShim
 
     constructor(
-        contractInfo: IStaticContractsInfoV3,
+        contractInfo: IStaticContractsInfo,
         chainId: number,
         provider: ethers.providers.Provider | undefined,
     ) {

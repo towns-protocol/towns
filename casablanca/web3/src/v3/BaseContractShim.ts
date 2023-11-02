@@ -12,7 +12,7 @@ interface Abis {
 
 // V2 smart contract shim
 // todo: replace BaseContractShim with this when refactoring is done
-export class BaseContractShimV3<
+export class BaseContractShim<
     T_LOCALHOST_CONTRACT extends ethers.Contract,
     T_LOCALHOST_INTERFACE extends ethers.utils.Interface,
     T_BASE_GOERLI_CONTRACT extends ethers.Contract,

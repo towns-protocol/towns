@@ -7,7 +7,7 @@ import {
     UserEntitlementInterface as BaseGoerliInterface,
 } from '@towns/generated/base_goerli/v3/typings/UserEntitlement'
 
-import { BaseContractShimV3 } from './BaseContractShimV3'
+import { BaseContractShim } from './BaseContractShim'
 
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/UserEntitlement.abi.json' assert { type: 'json' }
 
@@ -18,7 +18,7 @@ import { decodeUsers } from './ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
 
 export class UserEntitlementShim
-    extends BaseContractShimV3<
+    extends BaseContractShim<
         LocalhostContract,
         LocalhostInterface,
         BaseGoerliContract,

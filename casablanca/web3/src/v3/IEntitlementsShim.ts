@@ -8,7 +8,7 @@ import {
     IEntitlementsManagerInterface as BaseGoerliInterface,
 } from '@towns/generated/base_goerli/v3/typings/IEntitlementsManager'
 
-import { BaseContractShimV3 } from './BaseContractShimV3'
+import { BaseContractShim } from './BaseContractShim'
 
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/EntitlementsManager.abi.json' assert { type: 'json' }
 
@@ -17,7 +17,7 @@ import { ethers } from 'ethers'
 
 export type { LocalhostIEntitlementsBase as IEntitlementsBase }
 
-export class IEntitlementsShim extends BaseContractShimV3<
+export class IEntitlementsShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,

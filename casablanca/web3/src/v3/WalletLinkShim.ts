@@ -9,10 +9,10 @@ import {
 
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/WalletLink.abi.json' assert { type: 'json' }
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/WalletLink.abi.json' assert { type: 'json' }
-import { BaseContractShimV3 } from './BaseContractShimV3'
+import { BaseContractShim } from './BaseContractShim'
 import { ethers } from 'ethers'
 
-export class IWalletLinkShim extends BaseContractShimV3<
+export class IWalletLinkShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,

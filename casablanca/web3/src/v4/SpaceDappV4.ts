@@ -3,7 +3,7 @@ import { PublicClient, WalletClient, Address, Hex } from 'viem'
 import { Town } from './Town'
 import { TownRegistrar } from './TownRegistrar'
 import { createEntitlementStruct } from './ConvertersRoles'
-import { getContractsInfoV4 } from './IStaticContractsInfoV4'
+import { getContractsInfo } from '../IStaticContractsInfo'
 import {
     IRolesBase,
     ITownArchitectBase,
@@ -17,15 +17,15 @@ import {
     RoleDetails,
     BasicRoleInfo,
     EntitlementModuleType,
-} from './ContractTypesV4'
+} from './ContractTypes'
 import { SpaceInfo } from '../SpaceInfo'
 import { createTokenEntitlementStruct, createUserEntitlementStruct } from './ConvertersEntitlements'
 
-export class SpaceDappV4 implements ISpaceDapp {
+export class SpaceDapp implements ISpaceDapp {
     private readonly townRegistrar: TownRegistrar
 
     constructor(chainId: number, client: PublicClient | undefined) {
-        const contractsInfo = getContractsInfoV4(chainId)
+        const contractsInfo = getContractsInfo(chainId)
         this.townRegistrar = new TownRegistrar(contractsInfo, chainId, client)
     }
 

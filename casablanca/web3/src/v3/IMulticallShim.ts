@@ -12,9 +12,9 @@ import LocalhostAbi from '@towns/generated/localhost/v3/abis/Multicall.abi.json'
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/Multicall.abi.json' assert { type: 'json' }
 import { ethers } from 'ethers'
 
-import { BaseContractShimV3 } from './BaseContractShimV3'
+import { BaseContractShim } from './BaseContractShim'
 
-export class IMulticallShim extends BaseContractShimV3<
+export class IMulticallShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,

@@ -3,7 +3,7 @@
  */
 
 import { SignerContext } from './sign'
-import { LocalhostWeb3Provider, ITownArchitectBase, Permission, SpaceDappV3 } from '@river/web3'
+import { LocalhostWeb3Provider, ITownArchitectBase, Permission, createSpaceDapp } from '@river/web3'
 import {
     makeRandomUserContextWithOldDelegate,
     makeTestClient,
@@ -53,7 +53,7 @@ describe('mediaWithEntitlementsTests', () => {
         const chainId = (await provider.getNetwork()).chainId
         await provider.fundWallet()
         await provider.mintMockNFT()
-        const spaceDapp = new SpaceDappV3(chainId, provider)
+        const spaceDapp = createSpaceDapp(chainId, provider)
 
         // create a space stream,
         const membershipInfo: ITownArchitectBase.MembershipStruct = {

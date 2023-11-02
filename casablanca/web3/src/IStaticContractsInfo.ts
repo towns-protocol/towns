@@ -8,35 +8,36 @@ import WalletLinkAddress from '@towns/generated/localhost/addresses/walletLink.j
 import BaseGoerliTownFactoryAddress from '@towns/generated/base_goerli/addresses/townFactory.json' assert { type: 'json' }
 import BaseGoerliTownOwnerAddress from '@towns/generated/base_goerli/addresses/townOwner.json' assert { type: 'json' }
 import BaseGoerliPioneerAddress from '@towns/generated/base_goerli/addresses/pioneerToken.json' assert { type: 'json' }
+import { Address } from 'viem'
 
-export interface IStaticContractsInfoV3 {
-    townFactoryAddress: string
-    townOwnerAddress: string
-    mockErc721aAddress: string
-    memberTokenAddress?: string
-    pioneerTokenAddress: string
-    walletLinkAddress: string
+export interface IStaticContractsInfo {
+    townFactoryAddress: Address
+    townOwnerAddress: Address
+    mockErc721aAddress: Address
+    memberTokenAddress?: Address
+    pioneerTokenAddress: Address
+    walletLinkAddress: Address
 }
 
-const localhostContractsInfo: IStaticContractsInfoV3 = {
-    townFactoryAddress: LocalhostTownFactoryAddress.address,
-    townOwnerAddress: LocalhostTownOwnerAddress.address,
-    mockErc721aAddress: LocalhostMockNFTAddress.address,
-    memberTokenAddress: LocalhostMemberAddress.address,
-    pioneerTokenAddress: LocalhostPioneerAddress.address,
-    walletLinkAddress: WalletLinkAddress.address,
+const localhostContractsInfo: IStaticContractsInfo = {
+    townFactoryAddress: LocalhostTownFactoryAddress.address as Address,
+    townOwnerAddress: LocalhostTownOwnerAddress.address as Address,
+    mockErc721aAddress: LocalhostMockNFTAddress.address as Address,
+    memberTokenAddress: LocalhostMemberAddress.address as Address,
+    pioneerTokenAddress: LocalhostPioneerAddress.address as Address,
+    walletLinkAddress: WalletLinkAddress.address as Address,
 }
 
-const baseGoerliContractsInfo: IStaticContractsInfoV3 = {
-    townFactoryAddress: BaseGoerliTownFactoryAddress.address,
-    townOwnerAddress: BaseGoerliTownOwnerAddress.address,
-    mockErc721aAddress: '',
-    pioneerTokenAddress: BaseGoerliPioneerAddress.address,
-    walletLinkAddress: WalletLinkAddress.address,
+const baseGoerliContractsInfo: IStaticContractsInfo = {
+    townFactoryAddress: BaseGoerliTownFactoryAddress.address as Address,
+    townOwnerAddress: BaseGoerliTownOwnerAddress.address as Address,
+    mockErc721aAddress: '' as Address,
+    pioneerTokenAddress: BaseGoerliPioneerAddress.address as Address,
+    walletLinkAddress: WalletLinkAddress.address as Address,
 }
 
 /// get contract info for a given chain id
-export function getContractsInfoV3(chainId: number): IStaticContractsInfoV3 {
+export function getContractsInfo(chainId: number): IStaticContractsInfo {
     switch (chainId) {
         case 0:
         case 31337:

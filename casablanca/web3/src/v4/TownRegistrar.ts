@@ -1,4 +1,4 @@
-import { IStaticContractsInfoV4 } from './IStaticContractsInfoV4'
+import { IStaticContractsInfo } from '../IStaticContractsInfo'
 import { ITownArchitectShim } from './ITownArchitectShim'
 import { Address, PublicClient, zeroAddress } from 'viem'
 import { Town } from './Town'
@@ -15,7 +15,7 @@ export class TownRegistrar {
     private readonly towns: TownRegistry = {}
 
     constructor(
-        contractsInfo: IStaticContractsInfoV4,
+        contractsInfo: IStaticContractsInfo,
         chainId: number,
         publicClient: PublicClient | undefined,
     ) {

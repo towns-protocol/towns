@@ -8,13 +8,13 @@ import {
     MembershipFacetInterface as BaseGoerliInterface,
 } from '@towns/generated/base_goerli/v3/typings/MembershipFacet'
 
-import { BaseContractShimV3 } from '../v3/BaseContractShimV3'
+import { BaseContractShim } from '../v3/BaseContractShim'
 import { ethers } from 'ethers'
 
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/MembershipFacet.abi.json' assert { type: 'json' }
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/MembershipFacet.abi.json' assert { type: 'json' }
 
-export class IMembershipShim extends BaseContractShimV3<
+export class IMembershipShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,

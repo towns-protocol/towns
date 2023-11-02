@@ -8,7 +8,7 @@ import {
     ITownOwnerInterface as BaseGoerliInterface,
 } from '@towns/generated/base_goerli/v3/typings/ITownOwner'
 
-import { BaseContractShimV3 } from './BaseContractShimV3'
+import { BaseContractShim } from './BaseContractShim'
 
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/TownOwner.abi.json' assert { type: 'json' }
 
@@ -17,7 +17,7 @@ import { ethers } from 'ethers'
 
 export type { LocalhostITownOwnerBase as ITownOwnerBase }
 
-export class ITownOwnerShim extends BaseContractShimV3<
+export class ITownOwnerShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,
