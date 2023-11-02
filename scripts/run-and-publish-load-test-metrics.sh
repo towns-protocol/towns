@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# If any command fails, stop executing this script and return its exit code
-set -eo pipefail
-
 LOAD_TEST_PATH="./clients/web/lib"
 
 # exit if DATADOG_API_KEY is not set
