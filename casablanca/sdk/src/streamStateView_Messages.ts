@@ -15,8 +15,12 @@ export class StreamStateView_Messages {
     addChannelMessage(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined) {
         this.state.set(event.hashStr, event)
         if (
-            event?.event?.payload.case != 'channelPayload' ||
-            event.event.payload.value.content.case != 'message'
+            (event?.event?.payload.case !== 'channelPayload' ||
+                event.event.payload.value.content.case !== 'message') &&
+            (event?.event?.payload.case !== 'gdmChannelPayload' ||
+                event.event.payload.value.content.case !== 'message') &&
+            (event?.event?.payload.case !== 'dmChannelPayload' ||
+                event.event.payload.value.content.case !== 'message')
         ) {
             throw new Error(`addChannelMessage: event is not a channel message`)
         }

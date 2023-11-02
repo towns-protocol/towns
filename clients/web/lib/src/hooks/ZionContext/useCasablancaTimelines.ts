@@ -5,6 +5,8 @@ import {
     getStreamPayloadCase,
     isChannelStreamId,
     isCiphertext,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
 } from '@river/sdk'
 import {
     MembershipOp,
@@ -120,7 +122,11 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
                 console.error('$$$ useCasablancaTimelines onEventDecrypted no streamId')
                 return
             }
-            if (isChannelStreamId(streamId)) {
+            if (
+                isChannelStreamId(streamId) ||
+                isDMChannelStreamId(streamId) ||
+                isGDMChannelStreamId(streamId)
+            ) {
                 const timelineEvent = toEvent_FromRiverEvent(message, userId)
 
                 // get replace Id and remove/replace state or if redaction delete, or
@@ -149,9 +155,10 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
                             stream.view.channelContent.spaceId,
                             event,
                         )
-                    }
-
-                    if (stream.view.contentKind === 'dmChannelContent') {
+                    } else if (
+                        stream.view.contentKind === 'dmChannelContent' ||
+                        stream.view.contentKind === 'gdmChannelContent'
+                    ) {
                         casablancaClient.emit('channelTimelineEvent', stream.streamId, '', event)
                     }
                     const parsedEvent = toEvent(event, casablancaClient.userId)
@@ -289,6 +296,8 @@ function toTownsContent_fromRiverEvent(eventId: string, message: RiverEventV2): 
     const payloadCase = getStreamPayloadCase(message.getStreamId())
     switch (payloadCase) {
         case 'channelPayload':
+        case 'dmChannelPayload':
+        case 'gdmChannelPayload':
             return toTownsContent_ChanelPayload_Message_fromRiverEventV2(message, description)
         case 'userPayload':
             return {

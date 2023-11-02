@@ -107,6 +107,8 @@ export const getStreamPayloadCase = (streamId: string): string | undefined => {
         return 'channelPayload'
     } else if (isDMChannelStreamId(streamId)) {
         return 'dmChannelPayload'
+    } else if (isGDMChannelStreamId(streamId)) {
+        return 'gdmChannelPayload'
     } else if (isSpaceStreamId(streamId)) {
         return 'spacePayload'
     } else if (isMediaStreamId(streamId)) {

@@ -220,7 +220,9 @@ export class RiverDecryptionExtension {
                 return
             }
             const stream = await this.client.getStream(streamId)
-            const spaceId = stream.channelContent.spaceId
+            const spaceId =
+                stream.contentKind === 'channelContent' ? stream.channelContent.spaceId : undefined
+
             const channelId = event.getChannelId()
             if (!channelId) {
                 console.log(
@@ -269,8 +271,12 @@ export class RiverDecryptionExtension {
     private onChannelTimelineEvent = (streamId: string, _spaceId: string, event: ParsedEvent) => {
         ;(async () => {
             if (
-                event?.event?.payload.case != 'channelPayload' ||
-                event.event.payload.value.content.case !== 'message'
+                (event?.event?.payload.case !== 'channelPayload' ||
+                    event.event.payload.value.content.case !== 'message') &&
+                (event?.event?.payload.case !== 'gdmChannelPayload' ||
+                    event.event.payload.value.content.case !== 'message') &&
+                (event?.event?.payload.case !== 'dmChannelPayload' ||
+                    event.event.payload.value.content.case !== 'message')
             ) {
                 console.log(
                     'CDE::onChannelTimelineEvent - not a message, not attempting to decrypt',
@@ -725,11 +731,21 @@ export class RiverDecryptionExtension {
         // todo: allow for sending key requests for multiple sessionIds at once
         const { streamId, sessionId, knownSessionIds } = clear_content.payload.value
 
-        // todo: support multiple stream types not just channel streams
-        const spaceId = this.client.streams.get(streamId)?.view.channelContent.spaceId
-        if (!spaceId) {
+        const stream = this.client.streams.get(streamId)
+        if (!stream) {
+            console.error('CDE::onKeyRequest - no stream found for streamId', { streamId })
+            return
+        }
+
+        const spaceId =
+            stream.view.contentKind === 'channelContent'
+                ? stream.view.channelContent.spaceId
+                : undefined
+
+        if (!spaceId && stream.view.contentKind === 'channelContent') {
             console.log('CDE::onKeyRequest - no spaceId found for streamId', { streamId })
         }
+
         if (senderKey === this.client.olmDevice.deviceCurve25519Key) {
             // todo: in production we should ignore key requests from ourself
             console.log('CDE::onKeyRequest: request from self.')
