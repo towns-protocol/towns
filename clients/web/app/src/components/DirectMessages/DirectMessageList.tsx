@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef } from 'react'
 import { useMatch, useNavigate } from 'react-router'
 import { useDMLatestMessage, useZionContext } from 'use-zion-client'
 import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
+import { MostRecentMessageInfo_OneOf } from 'use-zion-client/dist/hooks/use-dm-latest-message'
 import { useDevice } from 'hooks/useDevice'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Avatar, Box, MotionStack, Paragraph, Stack, Text } from '@ui'
@@ -66,6 +67,19 @@ const DirectMessageThread = (props: {
 }) => {
     const { channel, onClick, highlighted, unread } = props
     const latest = useDMLatestMessage(channel.id)
+
+    const latestMessageRender = (info: MostRecentMessageInfo_OneOf) => {
+        switch (info.kind) {
+            case 'media':
+                return '📷'
+            case 'text':
+                return info.text
+            case 'encrypted':
+                return '🔒'
+            default:
+                return ''
+        }
+    }
 
     return (
         <MotionStack
@@ -136,7 +150,7 @@ const DirectMessageThread = (props: {
                                     display: '-webkit-box',
                                 }}
                             >
-                                {latest?.body}
+                                {latestMessageRender(latest.info)}
                             </Text>
                         </Text>
                     </Box>
