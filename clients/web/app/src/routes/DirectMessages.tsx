@@ -1,16 +1,16 @@
 import React from 'react'
 import { Outlet, useOutlet } from 'react-router'
+import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { DirectMessages } from './DirectMessages'
 
-export const DirectMessageIndex = () => {
+export const DirectMessages = () => {
     const { isTouch } = useDevice()
     const outlet = useOutlet()
     return isTouch ? (
         <>
             <Box absoluteFill background="level1">
-                <DirectMessages />
+                <DirectMessagesPanel />
                 <Outlet />
             </Box>
         </>

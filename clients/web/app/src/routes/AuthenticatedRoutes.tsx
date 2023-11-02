@@ -10,7 +10,6 @@ import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
 import { env } from 'utils'
 import { SpaceContextRoute } from 'routes/SpaceContextRoute'
 import { useDevice } from 'hooks/useDevice'
-import { DirectMessageIndex } from '@components/DirectMessages/DirectMessageIndex'
 import { DirectMessageThread } from '@components/DirectMessages/DirectMessageThread'
 import { CreateSpaceFormV2 } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2'
 import { ChannelSettings } from './ChannelSettings'
@@ -33,6 +32,7 @@ import { SpacesChannelAnimated } from './SpacesChannelAnimated'
 import { AppPanelLayout } from './layouts/AppPanelLayout'
 import { TouchSearchTab } from './TouchSearchTab'
 import { ValidateMembership } from './ValidateMembership'
+import { DirectMessages } from './DirectMessages'
 import { DMInfoPanelWrapper } from './DMInfoPanel'
 
 const CheckRedirect = () => {
@@ -133,7 +133,7 @@ export const AuthenticatedRoutes = () => {
     )
 }
 const messages = (
-    <Route path="messages" element={<DirectMessageIndex />}>
+    <Route path="messages" element={<DirectMessages />}>
         <Route path=":channelSlug" element={<DirectMessageThread />}>
             <Route path="replies/:messageId" element={<SpacesChannelReplies parentRoute="../" />} />
             <Route path="profile/:profileId" element={<SpaceProfilePanel />} />

@@ -1,196 +1,111 @@
-import { formatDistance } from 'date-fns'
-import React, { useCallback, useEffect, useRef } from 'react'
-import { useMatch, useNavigate } from 'react-router'
-import { useDMLatestMessage, useZionContext } from 'use-zion-client'
-import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
+import React, { useCallback, useState } from 'react'
+import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
+import { Box, BoxProps, Icon, IconButton, IconName, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { useCreateLink } from 'hooks/useCreateLink'
-import { Avatar, Box, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
+import { ModalContainer } from '@components/Modals/ModalContainer'
 import { CreateDirectMessage } from './CreateDIrectMessage'
+import { DirectMessageList } from './DirectMessageList'
 
-type Props = {
+type DirectMessagesPanelProps = {
     hideNavigation?: boolean
 }
-export const DirectMessages = (props: Props) => {
-    const { isTouch } = useDevice()
-    const [showCreateDirectMessage, setShowCreateDirectMessage] = React.useState(false)
-    const hideNavigation = props.hideNavigation ?? false
-    const navigate = useNavigate()
-    const backButtonPressed = useCallback(() => {
-        navigate('/')
-    }, [navigate])
-    const onDirectMessageCreated = useCallback(() => {
-        setShowCreateDirectMessage(false)
-    }, [setShowCreateDirectMessage])
 
+export const DirectMessagesModal = (props: { onHide: () => void }) => {
+    return (
+        <ModalContainer
+            touchTitle="Direct Messages"
+            rightBarButton={<Icon type="compose" color="gray2" />}
+            onHide={props.onHide}
+        >
+            <DirectMessagesPanel hideNavigation />
+        </ModalContainer>
+    )
+}
+
+export const DirectMessagesPanel = (props: DirectMessagesPanelProps) => {
+    const { hideNavigation = false } = props
+    const [panelMode, setPanelMode] = useState<'list' | 'create'>('list')
+
+    const onDisplayList = useCallback(() => {
+        setPanelMode('list')
+    }, [])
+
+    const onDisplayCreate = useCallback(() => {
+        setPanelMode('create')
+    }, [])
+
+    return panelMode === 'list' ? (
+        <MessageListPanel hideNavigation={hideNavigation} onNavAction={onDisplayCreate} />
+    ) : (
+        <NewMessagePanel hideNavigation={hideNavigation} onNavAction={onDisplayList} />
+    )
+}
+
+const MessageListPanel = ({
+    onNavAction,
+    hideNavigation,
+}: {
+    onNavAction: () => void
+    hideNavigation: boolean
+}) => {
     return (
         <Stack height="100%">
             {!hideNavigation && (
-                <Box borderBottom>
-                    <Stack horizontal padding gap="lg" alignItems="center">
-                        {isTouch && <Icon type="back" onClick={backButtonPressed} />}
-
-                        <Text color="default" fontWeight="strong">
-                            {showCreateDirectMessage ? 'New Message' : 'Direct Messages'}
-                        </Text>
-                        <Stack grow />
-                        <IconButton
-                            icon={showCreateDirectMessage ? 'close' : 'compose'}
-                            size="square_md"
-                            color="gray2"
-                            insetRight="xs"
-                            onClick={() => setShowCreateDirectMessage(!showCreateDirectMessage)}
-                        />
-                    </Stack>
-                </Box>
+                <HybridPanelHeader label="Direct Messages" icon="compose" onAction={onNavAction} />
             )}
-
-            {showCreateDirectMessage ? (
-                <CreateDirectMessage onDirectMessageCreated={onDirectMessageCreated} />
-            ) : (
-                <Threads />
-            )}
+            <DirectMessageList />
         </Stack>
     )
 }
 
-const Threads = () => {
-    const navigate = useNavigate()
-    const { dmChannels } = useZionContext()
-    const messageId = useMatch('messages/:messageId')?.params.messageId
-    const { dmUnreadChannelIds } = useZionContext()
-
-    const { isTouch } = useDevice()
-
-    const hasInitRef = useRef(false)
-
-    const { createLink } = useCreateLink()
-
-    useEffect(() => {
-        if (!hasInitRef.current && !isTouch && !messageId && dmChannels.length > 0) {
-            const link = createLink({ messageId: dmChannels[0].id.slug })
-            if (link) {
-                navigate(link)
-            }
-        }
-        hasInitRef.current = true
-    }, [messageId, dmChannels, navigate, isTouch, createLink])
-
-    const onThreadClick = useCallback(
-        (id: string) => {
-            const link = createLink({ messageId: id })
-            if (link) {
-                navigate(link)
-            }
-        },
-        [createLink, navigate],
-    )
-
-    return (
-        <Stack scroll>
-            <Stack padding minHeight="100svh" paddingBottom="safeAreaInsetBottom" gap="xxs">
-                {dmChannels.map((channel) => {
-                    return (
-                        <DirectMessageThread
-                            key={channel.id.slug}
-                            channel={channel}
-                            highlighted={messageId === channel.id.slug}
-                            unread={dmUnreadChannelIds.has(channel.id.slug)}
-                            onClick={() => onThreadClick(channel.id.slug)}
-                        />
-                    )
-                })}
-            </Stack>
-        </Stack>
-    )
-}
-
-const DirectMessageThread = (props: {
-    channel: DMChannelIdentifier
-    onClick: () => void
-    highlighted: boolean
-    unread: boolean
+const NewMessagePanel = ({
+    onNavAction,
+    hideNavigation,
+}: {
+    onNavAction: () => void
+    hideNavigation: boolean
 }) => {
-    const { channel, onClick, highlighted, unread } = props
-    const latest = useDMLatestMessage(channel.id)
-
     return (
-        <MotionStack
-            key={channel.id.slug}
-            layout="position"
-            transition={{ type: 'spring', damping: 25, stiffness: 120 }}
-            cursor="pointer"
-            onClick={onClick}
-        >
-            <Box
-                gap
-                horizontal
-                hoverable={!highlighted}
-                background={highlighted ? 'level2' : 'level1'}
-                alignItems="start"
-                paddingX="sm"
-                paddingY="md"
-                borderRadius="sm"
-            >
-                {channel.userIds.map((userId) => (
-                    <Avatar key={userId} userId={userId} insetRight="xs" />
-                ))}
-                {latest ? (
-                    <Box gap="sm" width="100%" overflow="hidden">
-                        {/* first line: title and date */}
-                        <Stack horizontal gap>
-                            {/* text on the left */}
-                            <Box grow overflow="hidden" paddingY="sm" insetY="xs">
-                                <Text
-                                    truncate
-                                    color={unread ? 'default' : 'gray2'}
-                                    fontWeight={unread ? 'medium' : 'normal'}
-                                >
-                                    {channel.id.networkId}
-                                </Text>
-                            </Box>
-                            {/* date on the right */}
-                            <Box justifyContent="end">
-                                {latest ? (
-                                    <Paragraph
-                                        size="xs"
-                                        style={{ whiteSpace: 'nowrap' }}
-                                        color="gray2"
-                                    >
-                                        {formatDistance(latest.createdAtEpocMs, Date.now(), {
-                                            addSuffix: false,
-                                        })}
-                                    </Paragraph>
-                                ) : (
-                                    <></>
-                                )}
-                            </Box>
-                        </Stack>
-                        {/* truncated message body */}
-                        <Text>
-                            {/* nested text hack to get cap-size vertical margins right */}
-                            <Text
-                                color={unread ? 'default' : 'gray2'}
-                                size="sm"
-                                style={{
-                                    // todo: experiment with this, may not keep
-                                    // and if we keep it will move into the Text component
-                                    padding: '4px 0',
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: 'vertical',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    display: '-webkit-box',
-                                }}
-                            >
-                                {latest?.body}
-                            </Text>
-                        </Text>
-                    </Box>
-                ) : (
-                    <></>
-                )}
-            </Box>
-        </MotionStack>
+        <Stack height="100%">
+            {!hideNavigation && (
+                <HybridPanelHeader label="New Message" icon="close" onClose={onNavAction} />
+            )}
+            <CreateDirectMessage onDirectMessageCreated={onNavAction} />
+        </Stack>
     )
+}
+
+const HybridPanelHeader = (props: {
+    label: string
+    icon: IconName
+    onClose?: () => void
+    onAction?: () => void
+}) => {
+    const { isTouch } = useDevice()
+    const { label, icon, onClose } = props
+    return isTouch ? (
+        <TouchPanelNavigationBar
+            rightBarButton={
+                props.onAction ? (
+                    <PanelHeaderButton icon={icon} onClick={props.onAction} />
+                ) : undefined
+            }
+            title={label}
+            onBack={props.onClose}
+        />
+    ) : (
+        <Box borderBottom>
+            <Stack horizontal padding gap="lg" alignItems="center">
+                <Text color="default" fontWeight="strong">
+                    {props.label}
+                </Text>
+                <Stack grow />
+                <PanelHeaderButton icon={props.icon} onClick={props.onClose} />
+            </Stack>
+        </Box>
+    )
+}
+
+const PanelHeaderButton = ({ icon, ...boxProps }: { icon: IconName } & Omit<BoxProps, 'size'>) => {
+    return <IconButton icon={icon} size="square_md" color="gray2" insetRight="xs" {...boxProps} />
 }

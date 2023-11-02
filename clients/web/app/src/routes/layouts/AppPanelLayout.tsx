@@ -1,7 +1,7 @@
 import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useMemo, useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
-import { DirectMessages } from '@components/DirectMessages/DirectMessages'
+import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
 import { PotentiallyUnusedSuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { usePrepopulateChannels } from 'hooks/usePrepopulateChannels'
 import { ShortcutModal } from '@components/Shortcuts/ShortcutModal'
@@ -66,7 +66,7 @@ export const AppPanelLayout = () => {
                         visible={displaySpacePanel || isMessagesRoute}
                     >
                         {isMessagesRoute ? (
-                            <DirectMessages />
+                            <DirectMessagesPanel />
                         ) : space ? (
                             <SpaceSideBar
                                 space={space}

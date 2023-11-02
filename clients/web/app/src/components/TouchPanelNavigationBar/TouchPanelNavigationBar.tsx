@@ -11,7 +11,14 @@ export const TouchPanelNavigationBar = (props: Props) => {
     return (
         <TouchNavBar
             contentLeft={
-                <IconButton icon="back" size="square_md" color="default" onClick={props.onBack} />
+                props.onBack ? (
+                    <IconButton
+                        icon="back"
+                        size="square_md"
+                        color="default"
+                        onClick={props.onBack}
+                    />
+                ) : undefined
             }
             contentRight={props.rightBarButton}
         >
