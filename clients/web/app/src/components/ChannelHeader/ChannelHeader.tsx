@@ -9,6 +9,7 @@ import { useMuteSettings } from 'api/lib/notificationSettings'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useChannelType } from 'hooks/useChannelType'
+import { shortAddress } from 'ui/utils/utils'
 
 type Props = {
     channel: Channel
@@ -89,6 +90,8 @@ const DesktopChannelHeader = (props: Props) => {
                             </>
                         ) : channelType === 'dm' ? (
                             <DMTitleContent roomIdentifier={channel.id} />
+                        ) : channelType === 'gdm' ? (
+                            <GDMTitleContent roomIdentifier={channel.id} />
                         ) : (
                             <></>
                         )}
@@ -117,6 +120,19 @@ const DMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
             <Avatar userId={counterParty} size="avatar_sm" />
             <Text fontSize="md" fontWeight="medium" color="default">
                 {counterParty}
+            </Text>
+        </>
+    )
+}
+
+const GDMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
+    const { data } = useDMData(props.roomIdentifier)
+    const title = data?.userIds.map((userId) => shortAddress(userId)).join(', ') ?? ''
+
+    return (
+        <>
+            <Text fontSize="md" fontWeight="medium" color="default">
+                {title}
             </Text>
         </>
     )
