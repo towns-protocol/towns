@@ -32,7 +32,7 @@ import { SpacesChannelAnimated } from './SpacesChannelAnimated'
 import { AppPanelLayout } from './layouts/AppPanelLayout'
 import { TouchSearchTab } from './TouchSearchTab'
 import { ValidateMembership } from './ValidateMembership'
-import { DirectMessages } from './DirectMessages'
+import { DirectMessages } from './DMRoute'
 import { DMInfoPanelWrapper } from './DMInfoPanel'
 
 const CheckRedirect = () => {

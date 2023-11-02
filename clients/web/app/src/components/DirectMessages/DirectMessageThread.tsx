@@ -2,7 +2,6 @@ import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { SpaceContextProvider } from 'use-zion-client'
 import { Stack } from '@ui'
-import { PATHS } from 'routes'
 import { SpacesChannel } from 'routes/SpacesChannel'
 import { useCreateLink } from 'hooks/useCreateLink'
 
