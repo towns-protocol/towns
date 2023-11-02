@@ -33,6 +33,7 @@ import { SpacesChannelAnimated } from './SpacesChannelAnimated'
 import { AppPanelLayout } from './layouts/AppPanelLayout'
 import { TouchSearchTab } from './TouchSearchTab'
 import { ValidateMembership } from './ValidateMembership'
+import { DMInfoPanelWrapper } from './DMInfoPanel'
 
 const CheckRedirect = () => {
     const { state } = useLocation()
@@ -136,6 +137,7 @@ const messages = (
         <Route path=":channelSlug" element={<DirectMessageThread />}>
             <Route path="replies/:messageId" element={<SpacesChannelReplies parentRoute="../" />} />
             <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+            <Route path="info" element={<DMInfoPanelWrapper />} />
         </Route>
     </Route>
 )

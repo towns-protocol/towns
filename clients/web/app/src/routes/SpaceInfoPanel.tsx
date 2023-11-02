@@ -24,7 +24,6 @@ import {
     Avatar,
     Box,
     BoxProps,
-    Button,
     FormRender,
     Icon,
     IconButton,
@@ -49,6 +48,7 @@ import { PATHS } from 'routes'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { getInviteUrl, shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { env } from '../utils/environment'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
@@ -426,8 +426,8 @@ export const SpaceInfoPanel = () => {
             )}
 
             {activeModal === 'confirm-leave' && (
-                <ConfirmLeaveTownModal
-                    spaceName={space?.name}
+                <ConfirmLeaveModal
+                    text={space?.name ? `Leave ${space.name}?` : 'Leave town?'}
                     onConfirm={leaveTown}
                     onCancel={() => setActiveModal(undefined)}
                 />
@@ -466,30 +466,5 @@ const TownContractOpener = (props: { children?: React.ReactNode }) => {
                 <Box inset="md">{props.children}</Box>
             </Box>
         </Box>
-    )
-}
-
-const ConfirmLeaveTownModal = (props: {
-    onConfirm: () => void
-    onCancel: () => void
-    spaceName?: string
-}) => {
-    const { onConfirm, onCancel, spaceName } = props
-    const text = spaceName ? `Leave ${spaceName}?` : 'Leave town?'
-    return (
-        <ModalContainer minWidth="auto" onHide={onCancel}>
-            <Stack padding="sm" gap="lg" alignItems="center">
-                <Text fontWeight="strong">{text}</Text>
-                <Text>Are you sure you want to leave?</Text>
-                <Stack horizontal gap>
-                    <Button tone="level2" onClick={onCancel}>
-                        Cancel
-                    </Button>
-                    <Button tone="negative" onClick={onConfirm}>
-                        Confirm
-                    </Button>
-                </Stack>
-            </Stack>
-        </ModalContainer>
     )
 }

@@ -1,4 +1,10 @@
-import { Client as CasablancaClient, isSpaceStreamId, isChannelStreamId } from '@river/sdk'
+import {
+    Client as CasablancaClient,
+    isSpaceStreamId,
+    isChannelStreamId,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+} from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { toZionCasablancaRoom } from '../../store/use-casablanca-store'
 import { Room } from '../../types/zion-types'
@@ -32,7 +38,12 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
             setRooms({})
             const allChannelsAndSpaces = Array.from(client.streams.keys())
                 .filter((stream) => {
-                    return isSpaceStreamId(stream) || isChannelStreamId(stream)
+                    return (
+                        isSpaceStreamId(stream) ||
+                        isChannelStreamId(stream) ||
+                        isDMChannelStreamId(stream) ||
+                        isGDMChannelStreamId(stream)
+                    )
                 })
                 .reduce((acc: Record<string, Room | undefined>, stream: string) => {
                     acc[stream] = toZionCasablancaRoom(stream, client, spaceInfo)
