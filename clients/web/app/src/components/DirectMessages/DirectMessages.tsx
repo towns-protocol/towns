@@ -51,7 +51,7 @@ const MessageListPanel = ({
     return (
         <Stack height="100%">
             {!hideNavigation && (
-                <HybridPanelHeader label="Direct Messages" icon="compose" onAction={onNavAction} />
+                <PanelHeader label="Direct Messages" actionIcon="compose" onAction={onNavAction} />
             )}
             <DirectMessageList />
         </Stack>
@@ -67,40 +67,41 @@ const NewMessagePanel = ({
 }) => {
     return (
         <Stack height="100%">
-            {!hideNavigation && (
-                <HybridPanelHeader label="New Message" icon="close" onClose={onNavAction} />
-            )}
+            {!hideNavigation && <PanelHeader label="New Message" onClose={onNavAction} />}
             <CreateDirectMessage onDirectMessageCreated={onNavAction} />
         </Stack>
     )
 }
 
-const HybridPanelHeader = (props: {
+const PanelHeader = (props: {
     label: string
-    icon: IconName
+    actionIcon?: IconName
     onClose?: () => void
     onAction?: () => void
 }) => {
     const { isTouch } = useDevice()
-    const { label, icon, onClose } = props
+    const { label, actionIcon, onClose, onAction } = props
     return isTouch ? (
         <TouchPanelNavigationBar
             rightBarButton={
-                props.onAction ? (
-                    <PanelHeaderButton icon={icon} onClick={props.onAction} />
+                actionIcon && props.onAction ? (
+                    <PanelHeaderButton icon={actionIcon} onClick={onAction} />
                 ) : undefined
             }
             title={label}
-            onBack={props.onClose}
+            onBack={onClose}
         />
     ) : (
         <Box borderBottom>
             <Stack horizontal padding gap="lg" alignItems="center">
                 <Text color="default" fontWeight="strong">
-                    {props.label}
+                    {label}
                 </Text>
                 <Stack grow />
-                <PanelHeaderButton icon={props.icon} onClick={props.onClose} />
+                {actionIcon && onAction && (
+                    <PanelHeaderButton icon={actionIcon} onClick={onAction} />
+                )}
+                {onClose && <PanelHeaderButton icon="close" onClick={onClose} />}
             </Stack>
         </Box>
     )

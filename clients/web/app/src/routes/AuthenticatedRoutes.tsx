@@ -60,7 +60,7 @@ export const AuthenticatedRoutes = () => {
                             <Route path={`${PATHS.SPACES}/:spaceSlug`}>
                                 <Route path="" element={<TouchHome />}>
                                     <Route path="info" element={<InfoPanelWrapper />} />
-                                    {messages}
+                                    {messageRoutes}
                                     <Route
                                         path="channels/:channelSlug"
                                         element={<SpacesChannelAnimated />}
@@ -132,7 +132,7 @@ export const AuthenticatedRoutes = () => {
         </Routes>
     )
 }
-const messages = (
+const messageRoutes = (
     <Route path="messages" element={<DirectMessages />}>
         <Route path=":channelSlug" element={<DirectMessageThread />}>
             <Route path="replies/:messageId" element={<SpacesChannelReplies parentRoute="../" />} />
@@ -149,7 +149,7 @@ const OutsideTownRoutes = () => {
     return (
         <Routes>
             <Route path="invites/:inviteSlug" element={<InvitesIndex />} />
-            {messages}
+            {messageRoutes}
 
             {/* catch all */}
             <Route element={<CheckRedirect />}>
