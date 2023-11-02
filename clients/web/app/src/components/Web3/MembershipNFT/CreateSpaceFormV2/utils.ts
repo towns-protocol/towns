@@ -15,6 +15,13 @@ export function mapToErrorMessage(error: Error | undefined) {
     const errorName = error?.name ?? ''
 
     switch (true) {
+        case isLimitReachedError(error):
+            errorText = 'This town has reached its member limit.'
+            break
+        case isMaybeFundsError(error):
+            errorText =
+                'You may have insufficient funds in your wallet. Please check your wallet and try again.'
+            break
         case errorName === ERROR_NAME_CONTAINS_INVALID_CHARACTERS:
             errorText =
                 'Space name contains invalid characters. Please update the space name and try again.'
@@ -47,4 +54,12 @@ export function mapToErrorMessage(error: Error | undefined) {
     const fullErrorText = `Transaction error: ${errorText}`
 
     return fullErrorText
+}
+
+export function isLimitReachedError(error: Error | undefined) {
+    return error?.message?.includes?.('has exceeded the member cap')
+}
+
+export function isMaybeFundsError(error: Error | undefined) {
+    return error?.message?.toString()?.includes('cannot estimate gas')
 }

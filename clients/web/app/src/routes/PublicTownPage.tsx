@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useMyProfile } from 'use-zion-client'
 import { isAddress } from 'viem'
+import { useBalance } from 'wagmi'
 import { LoginComponent } from '@components/Login/LoginComponent'
 import { PageLogo } from '@components/Logo/Logo'
 import { Spinner } from '@components/Spinner'
@@ -33,6 +34,8 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { NoFundsModal } from '@components/VisualViewportContext/NoFundsModal'
 
 const log = debug('app:public-town')
 log.enabled = true
@@ -42,13 +45,17 @@ export const PublicTownPage = () => {
     // TEMPORARY joining state until hook is built for minting
     const [isJoining, setIsJoining] = useState(false)
 
+    const balance = useBalance()
+
     const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceSlug)
     const { data: townBio } = useGetSpaceTopic(spaceSlug)
     const { isConnected, isAuthenticatedAndConnected } = useAuth()
 
     const { data: meetsMembershipRequirements, isLoading: isLoadingMeetsMembership } =
         useMeetsMembershipNftRequirements(spaceInfo?.networkId, isConnected)
-    const { joinSpace, errorMessage } = useJoinTown(spaceInfo?.networkId)
+    const { joinSpace, errorMessage, isNoFundsError, clearErrors } = useJoinTown(
+        spaceInfo?.networkId,
+    )
 
     const onJoinClick = useCallback(async () => {
         setIsJoining(true)
@@ -56,11 +63,12 @@ export const PublicTownPage = () => {
         setIsJoining(false)
     }, [joinSpace])
 
-    useErrorToast({ errorMessage })
+    useErrorToast({ errorMessage: isNoFundsError ? undefined : errorMessage })
 
     return spaceInfo ? (
         <>
             <AbsoluteBackground networkId={spaceInfo.networkId} />
+            Balance: {balance.data?.formatted} {balance.data?.symbol}
             <Box horizontal centerContent width="100%" padding="lg">
                 <Box horizontal width="wide" justifyContent="spaceBetween">
                     <PageLogo />
@@ -109,6 +117,11 @@ export const PublicTownPage = () => {
                 owner={isAddress(spaceInfo.owner) ? spaceInfo.owner : undefined}
                 bio={townBio}
             />
+            {isNoFundsError && (
+                <ModalContainer padding="none" minWidth="350" onHide={clearErrors}>
+                    <NoFundsModal onHide={clearErrors} />
+                </ModalContainer>
+            )}
         </>
     ) : isLoading ? (
         <MessageBox>

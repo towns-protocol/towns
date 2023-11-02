@@ -4,9 +4,10 @@ import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { TextProps } from 'ui/components/Text/Text'
 
 type Props = {
-    label: string
+    label?: string
     clipboardContent?: string
     color?: TextProps['color']
+    children?: React.ReactNode
 }
 
 export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
@@ -31,7 +32,7 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
     const onCopy = useCallback(
         (e: React.MouseEvent) => {
             const asyncCopy = async () => {
-                const copied = await copy(props.clipboardContent ?? props.label)
+                const copied = await copy(props.clipboardContent ?? props.label ?? '')
                 setCopied(copied)
             }
             asyncCopy()
@@ -60,7 +61,7 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
                 onClick={onCopy}
             >
                 <Text truncate size="md" color={color}>
-                    {props.label}
+                    {props.children || props.label}
                 </Text>
                 <Box ref={iconRef} pointerEvents="none">
                     {!copied ? (

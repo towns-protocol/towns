@@ -26,6 +26,7 @@ import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadIma
 import { vars } from 'ui/styles/vars.css'
 import { transitions } from 'ui/transitions/transitions'
 import { ExportWalletButton } from '@components/Web3/ExportPrivy'
+import { formatEthDisplay } from '@components/Web3/utils'
 
 type Props = {
     displayName: string
@@ -441,11 +442,4 @@ export const EditModeContainer = (props: EditRowProps) => {
             </Stack>
         </>
     )
-}
-
-function formatEthDisplay(num: number) {
-    let formatted = num.toFixed(5)
-    formatted = formatted.replace(/(\.\d*?[1-9])0+$/, '$1')
-    formatted = formatted.replace(/(\.0*?)$/, '')
-    return formatted
 }
