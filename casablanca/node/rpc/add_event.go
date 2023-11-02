@@ -3,7 +3,6 @@ package rpc
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
@@ -11,12 +10,10 @@ import (
 	"casablanca/node/auth"
 	. "casablanca/node/base"
 	"casablanca/node/common"
-	"casablanca/node/crypto"
 	"casablanca/node/dlog"
 	. "casablanca/node/events"
 	"casablanca/node/infra"
 	. "casablanca/node/protocol"
-	"casablanca/node/storage"
 )
 
 var (
@@ -45,14 +42,6 @@ func (s *Service) localAddEvent(ctx context.Context, req *connect.Request[AddEve
 }
 
 func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEvent *ParsedEvent) error {
-	var err error
-	if !s.skipDelegateCheck {
-		err = s.checkStaleDelegate(ctx, []*ParsedEvent{parsedEvent})
-		if err != nil {
-			return err
-		}
-	}
-
 	if len(parsedEvent.Event.PrevEvents) == 0 {
 		return RiverError(Err_INVALID_ARGUMENT, "event has no prev events")
 	}
@@ -244,11 +233,6 @@ func (s *Service) addUserDeviceKeyPayload(ctx context.Context, payload *StreamEv
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
 
 	case *UserDeviceKeyPayload_UserDeviceKey_:
-		if payload.UserDeviceKey.RiverKeyOp != nil {
-			if len(parsedEvent.Event.DelegateSig) > 0 {
-				return RiverError(Err_INVALID_ARGUMENT, "RiverDeviceKey event cannot be delegated")
-			}
-		}
 		return s.addUserDeviceKeyEvent(ctx, stream, streamView, parsedEvent, payload.UserDeviceKey)
 
 	default:
@@ -683,79 +667,12 @@ func (s *Service) checkUserDeviceKeyEvent(ctx context.Context,
 	return nil
 }
 
-func (s *Service) checkRiverKeyManagementEvent(ctx context.Context, stream Stream, streamView StreamView, parsedEvent *ParsedEvent, payload *UserDeviceKeyPayload_UserDeviceKey) error {
-	if payload.RiverKeyOp == nil {
-		return nil
-	}
-
-	if payload.DeviceKeys == nil {
-		return RiverError(Err_INVALID_ARGUMENT, "river key op requires device keys")
-	}
-
-	deviceId := payload.GetDeviceKeys().DeviceId
-	rdkId, err := hex.DecodeString(deviceId)
-	if err != nil {
-		return err
-	}
-
-	if len(rdkId) != crypto.TOWNS_HASH_SIZE {
-		return RiverError(Err_INVALID_ARGUMENT, "invalid river device key id")
-	}
-
-	return nil
-}
-
 func (s *Service) addUserDeviceKeyEvent(ctx context.Context, stream Stream, streamView StreamView, parsedEvent *ParsedEvent, payload *UserDeviceKeyPayload_UserDeviceKey) error {
 	err := s.checkUserDeviceKeyEvent(ctx, stream, streamView, parsedEvent)
 	if err != nil {
 		return err
 	}
-	err = s.checkRiverKeyManagementEvent(ctx, stream, streamView, parsedEvent, payload)
-	if err != nil {
-		return err
-	}
 	return stream.AddEvent(ctx, parsedEvent)
-}
-
-func (s *Service) checkStaleDelegate(ctx context.Context, parsedEvents []*ParsedEvent) error {
-	for _, parsedEvent := range parsedEvents {
-		if len(parsedEvent.Event.DelegateSig) == 0 {
-			continue
-		}
-
-		creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
-		if err != nil {
-			return err
-		}
-		userDeviceStreamId, err := common.UserDeviceKeyStreamIdFromId(creator)
-		if err != nil {
-			return err
-		}
-		_, userDeviceKeyStreamView, err := s.loadStream(ctx, userDeviceStreamId)
-		if err != nil {
-			if _, ok := err.(*storage.ErrNotFound); ok {
-				// no stale delegates yet
-				return nil
-			}
-			return err
-		}
-		view := userDeviceKeyStreamView.(UserDeviceStreamView)
-
-		signerPubKey := parsedEvent.SignerPubKey
-
-		rdkId, err := crypto.RdkIdFromPubKey(signerPubKey)
-		if err != nil {
-			return err
-		}
-		isRevoked, err := view.IsDeviceIdRevoked(rdkId)
-		if err != nil {
-			return err
-		}
-		if isRevoked {
-			return RiverError(Err_STALE_DELEGATE, "stale delegate").Func("AddEvent.checkStaleDelegate")
-		}
-	}
-	return nil
 }
 
 func (s *Service) addMediaChunk(ctx context.Context, stream Stream, streamView StreamView, chunk *MediaPayload_Chunk, parsedEvent *ParsedEvent) error {

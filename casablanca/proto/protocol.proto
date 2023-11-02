@@ -350,9 +350,8 @@ message UserDeviceKeyPayload {
 
     message UserDeviceKey {
         string user_id = 1;
-        optional DeviceKeys device_keys = 2;
-        optional FallbackKeys fallback_keys = 3;
-        optional RiverKeyOp river_key_op = 4;
+        DeviceKeys device_keys = 2;
+        FallbackKeys fallback_keys = 3;
     }
 
     oneof content {
@@ -633,10 +632,6 @@ enum ToDeviceOp {
     TDO_UNSPECIFIED = 0;
     TDO_KEY_REQUEST = 1;
     TDO_KEY_RESPONSE = 2;
-}
-
-enum RiverKeyOp {
-    RDKO_KEY_REVOKE = 0;
 }
 
 // Codes from 1 to 16 match gRPC/Connect codes.

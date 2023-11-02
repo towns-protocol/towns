@@ -176,7 +176,6 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		townsContract:      townsContract,
 		walletLinkContract: walletLinkContract,
 		wallet:             wallet,
-		skipDelegateCheck:  cfg.SkipDelegateCheck,
 		exitSignal:         exitSignal,
 		nodeRegistry:       nodeRegistry,
 		streamRegistry:     nodes.NewStreamRegistry(nodeRegistry),

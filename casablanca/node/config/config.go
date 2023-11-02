@@ -6,17 +6,15 @@ import (
 
 // Viper uses mapstructure module to marshal settings into config struct.
 type Config struct {
-	Port        int
-	Address     string
-	DbUrl       string
-	StorageType string
-	Metrics     infra.MetricsConfig
-	Chain       ChainConfig
-	TopChain    ChainConfig
-	UseContract bool
-	Log         infra.LogConfig
-	// TODO HNT-2048 remove once RDK registration/revoke is implemented in the client
-	SkipDelegateCheck   bool
+	Port                int
+	Address             string
+	DbUrl               string
+	StorageType         string
+	Metrics             infra.MetricsConfig
+	Chain               ChainConfig
+	TopChain            ChainConfig
+	UseContract         bool
+	Log                 infra.LogConfig
 	PerformanceTracking PerformanceTrackingConfig
 	PushNotification    PushNotificationConfig
 	Stream              StreamConfig

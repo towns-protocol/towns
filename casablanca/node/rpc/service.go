@@ -18,7 +18,6 @@ type Service struct {
 	townsContract      auth.TownsContract
 	walletLinkContract auth.WalletLinkContract
 	wallet             *crypto.Wallet
-	skipDelegateCheck  bool
 	exitSignal         chan error
 	nodeRegistry       nodes.NodeRegistry
 	streamRegistry     nodes.StreamRegistry

@@ -274,12 +274,7 @@ func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userDeviceKeyPayload *Us
 		if snapshot.UserDeviceKeyContent.UserDeviceKeys == nil {
 			snapshot.UserDeviceKeyContent.UserDeviceKeys = make(map[string]*UserDeviceKeyPayload_UserDeviceKey)
 		}
-		// Keeping only revoke events for now
-		if content.UserDeviceKey.GetRiverKeyOp() == RiverKeyOp_RDKO_KEY_REVOKE {
-			snapshot.UserDeviceKeyContent.UserDeviceKeys[content.UserDeviceKey.DeviceKeys.DeviceId] = content.UserDeviceKey
-		} else {
-			return fmt.Errorf("unknown river key op %T", content.UserDeviceKey.GetRiverKeyOp())
-		}
+		snapshot.UserDeviceKeyContent.UserDeviceKeys[content.UserDeviceKey.DeviceKeys.DeviceId] = content.UserDeviceKey
 		return nil
 	default:
 		return fmt.Errorf("unknown user device key payload type %T", userDeviceKeyPayload.Content)

@@ -20,10 +20,9 @@ func TestServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 			ChainId:    31337,
 			NetworkUrl: "http://localhost:8545",
 		},
-		Address:           "localhost",
-		Port:              1234,
-		DbUrl:             dbUrl,
-		SkipDelegateCheck: false,
+		Address: "localhost",
+		Port:    1234,
+		DbUrl:   dbUrl,
 	}
 
 	wallet, err := crypto.NewWallet(ctx)

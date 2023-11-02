@@ -48,13 +48,6 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	log.Debug("localCreateStream", "parsedEvents", parsedEvents)
 
-	if !s.skipDelegateCheck {
-		err = s.checkStaleDelegate(ctx, parsedEvents)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	inceptionEvent := parsedEvents[0]
 	inceptionPayload := inceptionEvent.Event.GetInceptionPayload()
 

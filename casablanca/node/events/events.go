@@ -230,22 +230,6 @@ func Make_UserDeviceKeyPayload_Inception(streamId string, userId string, setting
 	}
 }
 
-func Make_UserDeviceKeyPayload_RevokeUserDeviceKey(userId string, deviceId string) *StreamEvent_UserDeviceKeyPayload {
-	return &StreamEvent_UserDeviceKeyPayload{
-		UserDeviceKeyPayload: &UserDeviceKeyPayload{
-			Content: &UserDeviceKeyPayload_UserDeviceKey_{
-				UserDeviceKey: &UserDeviceKeyPayload_UserDeviceKey{
-					UserId: userId,
-					DeviceKeys: &DeviceKeys{
-						DeviceId: deviceId,
-					},
-					RiverKeyOp: RiverKeyOp_RDKO_KEY_REVOKE.Enum(),
-				},
-			},
-		},
-	}
-}
-
 func Make_UserPayload_Membership(op protocol.MembershipOp, inviterId string, streamId string, originEvent *protocol.EventRef) *StreamEvent_UserPayload {
 	return &StreamEvent_UserPayload{
 		UserPayload: &UserPayload{

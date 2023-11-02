@@ -113,22 +113,22 @@ func UserDeviceKeyStreamIdFromId(id string) (string, error) {
 	if len(id) != 42 {
 		return "", RiverError(Err_BAD_STREAM_ID, "invalid id length", "id", id)
 	}
-	return STREAM_USER_DEVICE_KEY_PREFIX + "-" + id, nil
+	return STREAM_USER_DEVICE_KEY_PREFIX_DASH + id, nil
 }
 
 func UserStreamIdFromId(id string) (string, error) {
 	if len(id) != 42 {
 		return "", RiverError(Err_BAD_STREAM_ID, "invalid id length", "id", id)
 	}
-	return STREAM_USER_PREFIX + "-" + id, nil
+	return STREAM_USER_PREFIX_DASH + id, nil
 }
 
 func SpaceStreamIdFromName(space string) string {
-	return STREAM_SPACE_PREFIX + "-" + space
+	return STREAM_SPACE_PREFIX_DASH + space
 }
 
 func ChannelStreamIdFromName(channel string) string {
-	return STREAM_CHANNEL_PREFIX + "-" + channel
+	return STREAM_CHANNEL_PREFIX_DASH + channel
 }
 
 func ValidSpaceStreamId(id string) bool {
