@@ -4,12 +4,18 @@ import { SpaceContextProvider } from 'use-zion-client'
 import { Stack } from '@ui'
 import { PATHS } from 'routes'
 import { SpacesChannel } from 'routes/SpacesChannel'
+import { useCreateLink } from 'hooks/useCreateLink'
 
 export const DirectMessageThread = () => {
+    const { createLink } = useCreateLink()
     const navigate = useNavigate()
+
     const onBack = useCallback(() => {
-        navigate(`/${PATHS.MESSAGES}`)
-    }, [navigate])
+        const link = createLink({ route: 'messages' })
+        if (link) {
+            navigate(link)
+        }
+    }, [createLink, navigate])
 
     return (
         <Stack height="100%" width="100%">
