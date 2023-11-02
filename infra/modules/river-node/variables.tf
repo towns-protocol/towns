@@ -35,8 +35,8 @@ variable "database_allowed_cidr_blocks" {
   default     = []
 }
 
-variable "nlb_security_group_id" {
-  description = "The security group id of the nlb"
+variable "alb_security_group_id" {
+  description = "The security group id of the alb"
   type        = string
 }
 
@@ -50,8 +50,8 @@ variable "river_node_green_target_group_arn" {
   type        = string
 }
 
-variable "river_tls_listener_arn" {
-  description = "The arn for the tls listener"
+variable "river_https_listener_arn" {
+  description = "The arn for the https listener"
   type        = string
 }
 
