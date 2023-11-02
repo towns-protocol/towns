@@ -37,17 +37,6 @@ const interceptor: Interceptor = (next) => async (req) => {
         const res: UnaryResponse<AnyMessage, AnyMessage> | StreamResponse<AnyMessage, AnyMessage> =
             await next(localReq)
 
-        let version = ''
-        for (const [key, value] of res.header.entries()) {
-            if (key === 'x-http-version') {
-                version = value
-                break
-            }
-        }
-        if (version !== 'HTTP/2.0') {
-            logError(req.method.name, 'BAD HTTP VERSION', id, version)
-        }
-
         if (res.stream) {
             // to intercept streaming response messages, we wrap
             // the AsynchronousIterable with a generator function
