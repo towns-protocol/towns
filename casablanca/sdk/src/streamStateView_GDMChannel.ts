@@ -45,6 +45,7 @@ export class StreamStateView_GDMChannel implements StreamStateView_IContent {
     ): void {
         switch (payload.content.case) {
             case 'inception':
+                this.updateLastEvent(event)
                 break
             case 'message':
                 this.messages.addChannelMessage(event, emitter)
@@ -69,6 +70,7 @@ export class StreamStateView_GDMChannel implements StreamStateView_IContent {
     ): void {
         switch (payload.content.case) {
             case 'inception':
+                this.updateLastEvent(event)
                 break
             case 'message':
                 this.messages.addChannelMessage(event, emitter)

@@ -49,6 +49,7 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
     ): void {
         switch (payload.content.case) {
             case 'inception':
+                this.updateLastEvent(event)
                 break
 
             case 'message':
@@ -72,6 +73,7 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
                 logNever(payload.content)
         }
     }
+
     prependEvent(
         event: ParsedEvent,
         payload: DmChannelPayload,
@@ -79,6 +81,7 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
     ): void {
         switch (payload.content.case) {
             case 'inception':
+                this.updateLastEvent(event)
                 break
             case 'message':
                 this.messages.addChannelMessage(event, emitter)
