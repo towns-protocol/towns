@@ -101,7 +101,9 @@ const DirectMessageThread = (props: {
                 borderRadius="sm"
             >
                 {channel.isGroup ? (
-                    <GroupDMIcon roomIdentifier={channel.id} />
+                    <Box insetRight="xs">
+                        <GroupDMIcon roomIdentifier={channel.id} />
+                    </Box>
                 ) : (
                     channel.userIds.map((userId) => (
                         <Avatar key={userId} userId={userId} insetRight="xs" />
