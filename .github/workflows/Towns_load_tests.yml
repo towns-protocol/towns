@@ -9,7 +9,7 @@ on:
 jobs:
     run_load_tests:
         runs-on: load-testing-runner
-        timeout-minutes: 60
+        timeout-minutes: 240
         services:
             postgres-casablanca:
                 image: postgres:latest
