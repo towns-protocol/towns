@@ -1,11 +1,12 @@
 import React from 'react'
 import { useCurrentWalletEqualsSignedInAccount } from 'use-zion-client'
-import { Box, Button, MotionStack, Stack } from '@ui'
+import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { TransactionButton } from '@components/TransactionButton'
+import { Box, BoxProps, Button, MotionStack, Stack } from '@ui'
 import { TransactionUIState } from 'hooks/TransactionUIState'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
-import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
+import { useDevice } from 'hooks/useDevice'
 
 type Props = {
     onClick?: () => void
@@ -95,17 +96,25 @@ export function BottomBar({
     )
 }
 
-export const BottomBarLayout = (props: {
+export const BottomBarLayout = ({
+    messageContent,
+    buttonContent,
+    sentryButton: leftContent,
+    ...boxProps
+}: {
+    sentryButton?: React.ReactNode
     messageContent?: React.ReactNode
     buttonContent?: React.ReactNode
-}) => {
+} & BoxProps) => {
+    const { isTouch } = useDevice()
     return (
         <Stack
             centerContent
             width="100%"
             borderTop="default"
-            paddingX="lg"
             background="backdropBlur"
+            paddingX={{ default: 'lg', mobile: 'md' }}
+            {...boxProps}
         >
             <Stack
                 direction={{ default: 'row', mobile: 'column' }}
@@ -113,26 +122,36 @@ export const BottomBarLayout = (props: {
                 maxWidth="1200"
                 position="relative"
             >
-                <Box grow>{props.messageContent}</Box>
-                {props.buttonContent && (
-                    <Stack
+                {buttonContent && !isTouch && <ButtonContainer>{leftContent}</ButtonContainer>}
+                <Box grow>{messageContent}</Box>
+                {buttonContent && (
+                    <ButtonContainer
+                        horizontal
+                        gap
                         minWidth={{ desktop: '300', mobile: undefined }}
-                        paddingY={{
-                            mobile: 'md',
-                            desktop: 'lg',
-                        }}
-                        height={{
-                            desktop: 'x12',
-                            mobile: 'x10',
-                        }}
-                        paddingX={{
-                            mobile: 'sm',
-                        }}
                     >
-                        {props.buttonContent}
-                    </Stack>
+                        {isTouch && !!leftContent && <Box>{leftContent}</Box>}
+                        {buttonContent}
+                    </ButtonContainer>
                 )}
             </Stack>
         </Stack>
     )
 }
+
+const ButtonContainer = (boxProps: BoxProps) => (
+    <Stack
+        paddingY={{
+            mobile: 'md',
+            desktop: 'lg',
+        }}
+        height={{
+            desktop: 'x12',
+            mobile: 'x10',
+        }}
+        paddingX={{
+            mobile: 'sm',
+        }}
+        {...boxProps}
+    />
+)

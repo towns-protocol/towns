@@ -4,7 +4,7 @@ import { TransitionLogo } from '@components/Logo/Logo'
 import { MotionBox, Stack } from '@ui'
 
 export const WelcomeLayout = (props: { children?: React.ReactNode }) => (
-    <Stack centerContent scroll height="100vh" background="level1">
+    <Stack centerContent scroll height="100vh" background="level1" width="100vw">
         <Stack padding justifyContent="end">
             <TransitionLogo />
         </Stack>

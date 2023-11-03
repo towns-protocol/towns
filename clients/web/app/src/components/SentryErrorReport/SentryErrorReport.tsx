@@ -84,7 +84,7 @@ async function postCustomError(data: FormState) {
     return postCustom
 }
 
-export const SentryReportModal = () => {
+export const SentryReportModal = (props: { minimal?: boolean }) => {
     const [modal, setModal] = useState(false)
     const onHide = useEvent(() => {
         setModal(false)
@@ -98,7 +98,7 @@ export const SentryReportModal = () => {
         <>
             <PanelButton centerContent background="level2" onClick={onShow}>
                 <Icon type="help" size="square_sm" />
-                <Paragraph>Report a bug</Paragraph>
+                {!props.minimal && <Paragraph>Report a bug</Paragraph>}
             </PanelButton>
 
             {modal && (

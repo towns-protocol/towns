@@ -3,7 +3,6 @@ import React, { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useMyProfile } from 'use-zion-client'
 import { isAddress } from 'viem'
-import { useBalance } from 'wagmi'
 import { LoginComponent } from '@components/Login/LoginComponent'
 import { PageLogo } from '@components/Logo/Logo'
 import { Spinner } from '@components/Spinner'
@@ -36,6 +35,8 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { NoFundsModal } from '@components/VisualViewportContext/NoFundsModal'
+import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
+import { useDevice } from 'hooks/useDevice'
 
 const log = debug('app:public-town')
 log.enabled = true
@@ -44,8 +45,6 @@ export const PublicTownPage = () => {
     const { spaceSlug } = useParams()
     // TEMPORARY joining state until hook is built for minting
     const [isJoining, setIsJoining] = useState(false)
-
-    const balance = useBalance()
 
     const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceSlug)
     const { data: townBio } = useGetSpaceTopic(spaceSlug)
@@ -63,60 +62,76 @@ export const PublicTownPage = () => {
         setIsJoining(false)
     }, [joinSpace])
 
+    const { isTouch } = useDevice()
+
     useErrorToast({ errorMessage: isNoFundsError ? undefined : errorMessage })
 
     return spaceInfo ? (
         <>
             <AbsoluteBackground networkId={spaceInfo.networkId} />
-            Balance: {balance.data?.formatted} {balance.data?.symbol}
-            <Box horizontal centerContent width="100%" padding="lg">
-                <Box horizontal width="wide" justifyContent="spaceBetween">
-                    <PageLogo />
-                    <LoggedUserAvatar />
-                </Box>
+            <Box height="100dvh" paddingTop="safeAreaInsetTop">
+                <TownPageLayout
+                    headerContent={
+                        <Box horizontal centerContent width="100%" padding="lg">
+                            <Box
+                                horizontal
+                                width="wide"
+                                justifyContent="spaceBetween"
+                                paddingY="md"
+                            >
+                                <PageLogo />
+                                <LoggedUserAvatar />
+                            </Box>
+                        </Box>
+                    }
+                    activityContent={<Activity townId={spaceInfo.networkId} />}
+                    bottomContent={
+                        <BottomBarLayout
+                            position="fixed"
+                            bottom="none"
+                            zIndex="above"
+                            sentryButton={<SentryReportModal minimal={isTouch} />}
+                            buttonContent={
+                                <Box grow>
+                                    {isAuthenticatedAndConnected ? (
+                                        isLoadingMeetsMembership ? (
+                                            <MembershipStatusMessage
+                                                spinner
+                                                background="level3"
+                                                message="Checking requirements"
+                                            />
+                                        ) : meetsMembershipRequirements ? (
+                                            <Button
+                                                tone="cta1"
+                                                width="100%"
+                                                type="button"
+                                                disabled={isJoining}
+                                                onClick={onJoinClick}
+                                            >
+                                                {isJoining && <ButtonSpinner />}
+                                                Join {spaceInfo.name}
+                                            </Button>
+                                        ) : (
+                                            <MembershipStatusMessage
+                                                background="error"
+                                                icon="alert"
+                                                message={`You don't have the required digital assets to join this town.`}
+                                            />
+                                        )
+                                    ) : (
+                                        <LoginComponent />
+                                    )}
+                                </Box>
+                            }
+                        />
+                    }
+                    networkId={spaceInfo.networkId}
+                    address={isAddress(spaceInfo.address) ? spaceInfo.address : undefined}
+                    name={spaceInfo.name}
+                    owner={isAddress(spaceInfo.owner) ? spaceInfo.owner : undefined}
+                    bio={townBio}
+                />
             </Box>
-            <TownPageLayout
-                activityContent={<Activity townId={spaceInfo.networkId} />}
-                bottomContent={
-                    <BottomBarLayout
-                        buttonContent={
-                            isAuthenticatedAndConnected ? (
-                                isLoadingMeetsMembership ? (
-                                    <MembershipStatusMessage
-                                        spinner
-                                        background="level3"
-                                        message="Checking requirements"
-                                    />
-                                ) : meetsMembershipRequirements ? (
-                                    <Button
-                                        tone="cta1"
-                                        width="100%"
-                                        type="button"
-                                        disabled={isJoining}
-                                        onClick={onJoinClick}
-                                    >
-                                        {isJoining && <ButtonSpinner />}
-                                        Join {spaceInfo.name}
-                                    </Button>
-                                ) : (
-                                    <MembershipStatusMessage
-                                        background="error"
-                                        icon="alert"
-                                        message={`You don't have the required digital assets to join this town.`}
-                                    />
-                                )
-                            ) : (
-                                <LoginComponent />
-                            )
-                        }
-                    />
-                }
-                networkId={spaceInfo.networkId}
-                address={isAddress(spaceInfo.address) ? spaceInfo.address : undefined}
-                name={spaceInfo.name}
-                owner={isAddress(spaceInfo.owner) ? spaceInfo.owner : undefined}
-                bio={townBio}
-            />
             {isNoFundsError && (
                 <ModalContainer padding="none" minWidth="350" onHide={clearErrors}>
                     <NoFundsModal onHide={clearErrors} />

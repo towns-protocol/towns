@@ -4,9 +4,10 @@ import { AnimatePresence } from 'framer-motion'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Spinner } from '@components/Spinner'
 import { FadeInBox } from '@components/Transitions'
-import { Avatar, Box, Heading, Icon, IconName, Paragraph, Stack } from '@ui'
+import { Avatar, Box, Heading, Icon, IconName, Paragraph, Stack, Text } from '@ui'
 import { DAY_MS, WEEK_MS } from 'data/constants'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { useDevice } from 'hooks/useDevice'
 
 export const Activity = (props: { townId: string }) => {
     const { members, townStats, channelStats, isLoading } = useFetchUnauthenticatedActivity(
@@ -46,6 +47,8 @@ export const Activity = (props: { townId: string }) => {
         return activities
     }, [channelStats, townStats])
 
+    const { isTouch } = useDevice()
+
     return (
         <AnimatePresence>
             {!!members && (
@@ -63,9 +66,10 @@ export const Activity = (props: { townId: string }) => {
             )}
 
             <Box gap="lg" key="activities">
-                <Heading level={3}>Activity</Heading>
-
-                {isLoading && <Spinner />}
+                <Stack horizontal gap alignItems="center">
+                    <Heading level={3}>Activity</Heading>
+                    {isLoading && <Spinner width="height_sm" display="inline-block" />}
+                </Stack>
 
                 {activities.map((a) => (
                     <Stack horizontal gap key={a.title + a.body} alignItems="center">
@@ -76,9 +80,9 @@ export const Activity = (props: { townId: string }) => {
                             <Paragraph size="md" color="gray2">
                                 {a.title}
                             </Paragraph>
-                            <Paragraph size="lg" color="gray1">
+                            <Text fontSize={isTouch ? 'md' : 'lg'} color="gray1">
                                 {a.body}
-                            </Paragraph>
+                            </Text>
                         </Box>
                     </Stack>
                 ))}
