@@ -54,7 +54,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http2Requests.Inc()
 	} else {
 		http1Requests.Inc()
-		log.Warn("Non HTTP/2.0 request received", "method", r.Method, "path", r.URL.Path, "protocol", r.Proto)
+		log.Debug("Non HTTP/2.0 request received", "method", r.Method, "path", r.URL.Path, "protocol", r.Proto)
 	}
 
 	w.Header().Add("X-Http-Version", r.Proto)
