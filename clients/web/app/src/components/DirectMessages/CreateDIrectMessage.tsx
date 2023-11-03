@@ -155,6 +155,7 @@ const Participant = (props: ParticipantProps & { selected: boolean }) => {
             width="100%"
             alignItems="center"
             layout="position"
+            cursor="pointer"
             onClick={onClick}
         >
             <Avatar userId={userId} size="avatar_x4" />
