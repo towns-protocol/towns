@@ -6,7 +6,7 @@ import { Spinner } from '@components/Spinner'
 import { FadeInBox } from '@components/Transitions'
 import { Avatar, Box, Heading, Icon, IconName, Paragraph, Stack } from '@ui'
 import { DAY_MS, WEEK_MS } from 'data/constants'
-import { env } from 'utils'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 
 export const Activity = (props: { townId: string }) => {
     const { members, townStats, channelStats, isLoading } = useFetchUnauthenticatedActivity(
@@ -95,9 +95,8 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
         numActiveUsers: number
     }>()
     const [townStats, setTownStats] = useState<{ numJoinedUsers: number }>()
-
+    const rpcUrl = useEnvironment().casablancaUrl
     useEffect(() => {
-        const rpcUrl = env.VITE_CASABLANCA_HOMESERVER_URL
         if (!rpcUrl) {
             return
         }
@@ -154,7 +153,7 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
         }
 
         fetch()
-    }, [townId])
+    }, [rpcUrl, townId])
 
     return {
         isLoading,
