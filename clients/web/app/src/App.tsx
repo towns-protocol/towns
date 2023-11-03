@@ -5,6 +5,7 @@ import { InitialSyncSortPredicate, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
 
 import { usePrivy } from '@privy-io/react-auth'
+import { useEthersSigner } from 'use-zion-client/dist/hooks/Web3Context/useEthersSigner'
 import { Notifications } from '@components/Notifications/Notifications'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
@@ -22,7 +23,6 @@ import { AllRoutes } from 'AllRoutes'
 import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { AuthContextProvider } from 'hooks/useAuth'
-import { WatchPrivyAndSetSigner } from 'WatchPrivyAndSetSigner'
 import { ClearStaleWagmiStorage } from 'ClearStaleWagmiStorage'
 
 const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
@@ -57,7 +57,13 @@ export const App = () => {
         return 1
     }, [])
 
-    return privyReady ? (
+    const signer = useEthersSigner({ chainId: environment.chainId })
+
+    if (!privyReady) {
+        return <WelcomeLayout />
+    }
+
+    return (
         <ZionContextProvider
             casablancaServerUrl={environment.casablancaUrl}
             onboardingOpts={{ skipAvatar: true }}
@@ -66,6 +72,7 @@ export const App = () => {
             initalSyncSortPredicate={initalSyncSortPredicate}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
+            web3Signer={signer}
         >
             <AuthContextProvider>
                 <>
@@ -73,8 +80,6 @@ export const App = () => {
                     <AppBadge />
                     <AppNotifications />
                     <RegisterPushSubscription />
-                    <WatchPrivyAndSetSigner chainId={environment.chainId} />
-                    <ClearStaleWagmiStorage />
                     <Helmet>
                         <meta
                             name="theme-color"
@@ -109,8 +114,6 @@ export const App = () => {
                 </>
             </AuthContextProvider>
         </ZionContextProvider>
-    ) : (
-        <WelcomeLayout />
     )
 }
 

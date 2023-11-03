@@ -77,15 +77,17 @@ function useAppSigner(appChainId: number, web3Signer?: ethers.Signer) {
         chainId: appChainId,
     })
 
-    // once wagmi signer is set, we're good to go
     useEffect(() => {
         if (signer) {
             return
         }
-        if (wagmiSigner) {
+        // web3Signer should be the same as wagmiSigner, so it shouldn't matter which one comes first, but we can add an equality check if needed
+        if (web3Signer) {
+            _setSigner(web3Signer)
+        } else if (wagmiSigner) {
             _setSigner(wagmiSigner)
         }
-    }, [wagmiSigner, signer])
+    }, [signer, web3Signer, wagmiSigner])
 
     // but there might be cases where a wallet is set after this hook is called, and for some unknown reason the wagmiSigner is not updated properly
     // in this case, the app can set the signer manually

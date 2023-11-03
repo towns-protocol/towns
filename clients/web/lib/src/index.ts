@@ -11,7 +11,7 @@ export {
     type InitialSyncSortPredicate,
 } from './components/ZionContextProvider'
 export { useWeb3Context } from './components/Web3ContextProvider'
-export { walletClientToSigner } from './hooks/Web3Context/useEthersSigner'
+export { walletClientToSigner, useEthersSigner } from './hooks/Web3Context/useEthersSigner'
 export { AutojoinChannels } from './components/AutojoinChannels'
 
 export { LoginStatus } from './hooks/login'

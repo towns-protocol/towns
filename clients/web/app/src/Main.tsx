@@ -6,6 +6,7 @@ import { LoadingScreen } from 'routes/LoadingScreen'
 import { ZLayerProvider } from '@ui'
 import { useRootTheme } from 'hooks/useRootTheme'
 import { PrivyProvider } from 'PrivyProvider'
+import { ClearStaleWagmiStorage } from 'ClearStaleWagmiStorage'
 
 const App = React.lazy(() => import('App'))
 
@@ -17,6 +18,7 @@ export const Main = () => {
 
     return (
         <ErrorBoundary fallback={(props) => <AppErrorFallback {...props} />}>
+            <ClearStaleWagmiStorage />
             <PrivyProvider>
                 <BrowserRouter>
                     <Suspense fallback={<LoadingScreen />}>

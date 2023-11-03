@@ -25,6 +25,8 @@ export type AuthContext = Omit<UseConnectivtyReturnValue, 'login' | 'logout' | '
     login: () => Promise<void>
     // logout of both privy and river
     logout: () => Promise<void>
+    // logged in status for river
+    libLoginStatus: UseConnectivtyReturnValue['loginStatus']
 }
 
 const AuthContext = createContext<AuthContext | undefined>(undefined)
@@ -52,6 +54,7 @@ function useAuthContext(): AuthContext {
         isAuthenticated: libIsAuthenticated,
         loginError,
         userOnWrongNetworkForSignIn,
+        loginStatus: libLoginStatus,
         getIsWalletRegistered,
     } = useConnectivity()
     const { signer } = useWeb3Context()
@@ -96,6 +99,7 @@ function useAuthContext(): AuthContext {
             logout,
             getIsWalletRegistered,
             register,
+            libLoginStatus,
             activeWalletAddress,
             loggedInWalletAddress,
             isAuthenticated: libIsAuthenticated,
@@ -110,6 +114,7 @@ function useAuthContext(): AuthContext {
             getIsWalletRegistered,
             isAuthenticatedAndConnected,
             isConnected,
+            libLoginStatus,
             libIsAuthenticated,
             loggedInWalletAddress,
             login,
