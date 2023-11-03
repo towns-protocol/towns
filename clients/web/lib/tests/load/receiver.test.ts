@@ -54,7 +54,7 @@ describe('loadtest1', () => {
         }, TestConstants.DoubleDefaultWaitForTimeout)
 
         const endTime = Date.now()
-        console.log(endTime - startTime)
+        console.log('Join channel time:', endTime - startTime)
 
         const myQueue = new Queue('shutdownqueue', { connection: connectionOptions })
 

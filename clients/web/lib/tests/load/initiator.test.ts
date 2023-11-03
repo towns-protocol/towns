@@ -73,7 +73,14 @@ describe('loadtest1', () => {
         }
 
         await Promise.all(joinRoomPromises)
-
+        const startTime = Date.now()
+        console.log(
+            'Start populating channal that has ',
+            numClientsConfig,
+            ' users with ',
+            numberOfMessagesConfig,
+            ' messages per user',
+        )
         // Each of numClients users sends numberOfMessages message to the channel to prepare test data
         for (let i = 0; i < numClientsConfig; i++) {
             const client = clients[`client_${i}`]
@@ -81,6 +88,12 @@ describe('loadtest1', () => {
                 await client.sendMessage(channelId, `Message m_${j} from ${i} with number `)
                 console.log(`send message ${j} from ${i}`)
             }
+            console.log(
+                'Sending Message Progress',
+                (((i + 1) * 100) / numClientsConfig).toFixed(2),
+                '%',
+            )
+            console.log('Time elapsed: ', Date.now() - startTime, 'ms')
         }
 
         const spaceAndChannel = {
