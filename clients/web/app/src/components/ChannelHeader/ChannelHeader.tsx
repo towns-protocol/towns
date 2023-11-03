@@ -2,7 +2,7 @@ import React, { useCallback } from 'react'
 import { Channel, RoomIdentifier, useChannelMembers, useDMData, useRoom } from 'use-zion-client'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
-import { Avatar, Box, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
+import { Avatar, Box, Button, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { useMuteSettings } from 'api/lib/notificationSettings'
@@ -119,7 +119,7 @@ const DMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
     return (
         <>
             <Avatar userId={counterParty} size="avatar_sm" />
-            <Text fontSize="md" fontWeight="medium" color="default">
+            <Text truncate fontSize="md" fontWeight="medium" color="default">
                 {counterParty}
             </Text>
         </>
@@ -147,6 +147,7 @@ const TouchChannelHeader = (props: Props) => {
     const { members } = useChannelMembers()
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
+    const channelType = useChannelType(channel.id)
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
         spaceId: spaceId,
         channelId: channel?.id.networkId,
@@ -179,19 +180,39 @@ const TouchChannelHeader = (props: Props) => {
                     />
                 }
             >
-                <Stack gap="sm" onClick={infoButtonPressed}>
-                    <Stack horizontal gap="sm" alignContent="center">
-                        <Paragraph truncate strong color="default" size="lg">
-                            #{channel.label}
-                        </Paragraph>
-                        {isMuted && <Icon type="muteActive" size="square_xxs" color="gray2" />}
-                    </Stack>
+                <MotionStack
+                    hoverable
+                    gap="sm"
+                    whileTap={{ opacity: '0.7' }}
+                    onClick={infoButtonPressed}
+                >
+                    {channelType === 'channel' ? (
+                        <>
+                            <Stack horizontal gap="sm" alignContent="center">
+                                <Paragraph truncate strong color="default" size="lg">
+                                    #{channel.label}
+                                </Paragraph>
+                                {isMuted && (
+                                    <Icon type="muteActive" size="square_xxs" color="gray2" />
+                                )}
+                            </Stack>
 
-                    <Paragraph truncate color="gray2" size="sm">
-                        {`${members.length} member${members.length > 1 ? `s` : ``}`}
-                        {channel.topic ? ` · ${channel.topic.toLocaleLowerCase()}` : ``}
-                    </Paragraph>
-                </Stack>
+                            <Paragraph truncate color="gray2" size="sm">
+                                {`${members.length} member${members.length > 1 ? `s` : ``}`}
+                                {channel.topic ? ` · ${channel.topic.toLocaleLowerCase()}` : ``}
+                            </Paragraph>
+                        </>
+                    ) : (
+                        <Stack horizontal gap="sm" alignItems="center" overflow="hidden">
+                            {channelType === 'dm' ? (
+                                <DMTitleContent roomIdentifier={channel.id} />
+                            ) : (
+                                <GDMTitleContent roomIdentifier={channel.id} />
+                            )}
+                            {isMuted && <Icon type="muteActive" size="square_xxs" color="gray2" />}
+                        </Stack>
+                    )}
+                </MotionStack>
             </TouchNavBar>
             {displayNotificationBanner && (
                 <Box paddingX="md">

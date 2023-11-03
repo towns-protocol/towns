@@ -18,7 +18,7 @@ export const GroupDMIcon = (props: {
             centerContent
             background="level4"
             width={width}
-            aspectRatio="1/1"
+            height={width}
             shrink={false}
             rounded="full"
             color="default"
