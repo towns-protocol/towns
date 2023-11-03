@@ -5,6 +5,7 @@ import { Box, Icon, Paragraph, Stack, Text } from '@ui'
 import { useChannelType } from 'hooks/useChannelType'
 import { shortAddress } from 'ui/utils/utils'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
+import { GroupDMIcon } from '@components/DirectMessages/GroupDMIcon'
 
 type Props = {
     roomIdentifier: RoomIdentifier
@@ -91,9 +92,7 @@ export const ChannelGDMIntro = (props: { roomIdentifier: RoomIdentifier }) => {
     return (
         <Stack gap="md" paddingX="lg" paddingY="sm">
             <Stack horizontal gap>
-                <Box centerContent rounded="sm" background="level2" aspectRatio="1/1" height="x7">
-                    <Icon type="tag" color="gray2" size="square_lg" />
-                </Box>
+                <GroupDMIcon roomIdentifier={props.roomIdentifier} />
                 <Stack justifyContent="spaceBetween" paddingY="sm" overflow="hidden">
                     <Paragraph color="gray2">
                         <Text as="span" color="gray1" fontWeight="medium" display="inline">

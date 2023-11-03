@@ -5,4 +5,5 @@ export type DMChannelIdentifier = {
     joined: boolean
     userIds: string[]
     lastEventCreatedAtEpocMs: bigint
+    isGroup: boolean
 }

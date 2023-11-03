@@ -7,6 +7,7 @@ import { MostRecentMessageInfo_OneOf } from 'use-zion-client/dist/hooks/use-dm-l
 import { useDevice } from 'hooks/useDevice'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Avatar, Box, MotionStack, Paragraph, Stack, Text } from '@ui'
+import { GroupDMIcon } from './GroupDMIcon'
 
 export const DirectMessageList = () => {
     const navigate = useNavigate()
@@ -99,9 +100,14 @@ const DirectMessageThread = (props: {
                 paddingY="md"
                 borderRadius="sm"
             >
-                {channel.userIds.map((userId) => (
-                    <Avatar key={userId} userId={userId} insetRight="xs" />
-                ))}
+                {channel.isGroup ? (
+                    <GroupDMIcon roomIdentifier={channel.id} />
+                ) : (
+                    channel.userIds.map((userId) => (
+                        <Avatar key={userId} userId={userId} insetRight="xs" />
+                    ))
+                )}
+
                 {latest ? (
                     <Box gap="sm" width="100%" overflow="hidden">
                         {/* first line: title and date */}

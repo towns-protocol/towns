@@ -30,6 +30,7 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                             ),
                             lastEventCreatedAtEpocMs:
                                 stream.view.dmChannelContent.lastEventCreatedAtEpocMs,
+                            isGroup: false,
                         } satisfies DMChannelIdentifier),
                 )
 
@@ -45,6 +46,7 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                             ).filter((memberUserId) => memberUserId !== userId),
                             lastEventCreatedAtEpocMs:
                                 stream.view.gdmChannelContent.lastEventCreatedAtEpocMs,
+                            isGroup: true,
                         } satisfies DMChannelIdentifier),
                 )
             const channels = [...dmChannels, ...gdmChannels].sort((a, b) => {

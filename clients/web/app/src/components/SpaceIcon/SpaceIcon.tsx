@@ -1,10 +1,11 @@
 import React from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { Box, BoxProps, Heading, MotionBox } from '@ui'
+import { Box, BoxProps, MotionBox } from '@ui'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { TownsTokenProps } from '@components/TownsToken/TownsToken'
 import { ImageVariant, ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
-import { LetterStyles, LetterStylesVariantProps } from './SpaceIcon.css'
+import { LetterStylesVariantProps } from '@components/IconInitials/IconInitials.css'
+import { IconInitials } from '@components/IconInitials/IconInitials'
 
 type Props = {
     spaceId: string
@@ -46,9 +47,9 @@ export const SpaceIcon = (props: Props) => {
                 {...boxProps}
             >
                 {imageError && (
-                    <SpaceIconInitials letterFontSize={letterFontSize}>
+                    <IconInitials letterFontSize={letterFontSize}>
                         {firstLetterOfSpaceName}
-                    </SpaceIconInitials>
+                    </IconInitials>
                 )}
                 {!imageError && (
                     <AnimatePresence mode="wait">
@@ -89,16 +90,3 @@ export const InteractiveSpaceIcon = (
         />
     )
 }
-
-const SpaceIconInitials = (props: {
-    letterFontSize?: LetterStylesVariantProps
-    children?: React.ReactNode
-}) => (
-    <Heading
-        strong
-        textTransform="uppercase"
-        className={LetterStyles(props.letterFontSize ? { fontSize: props.letterFontSize } : {})}
-    >
-        {props.children}
-    </Heading>
-)
