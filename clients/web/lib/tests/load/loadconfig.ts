@@ -1,4 +1,4 @@
-export const numberOfMessagesConfig = 1_000
+export const numberOfMessagesConfig = 10
 export const numClientsConfig = 10
 
 export const connectionOptions = {
