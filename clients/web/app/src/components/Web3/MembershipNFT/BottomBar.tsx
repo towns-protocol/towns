@@ -1,7 +1,6 @@
 import React from 'react'
 import { useCurrentWalletEqualsSignedInAccount } from 'use-zion-client'
 import { Box, Button, MotionStack, Stack } from '@ui'
-import { useStore } from 'store/store'
 import { TransactionButton } from '@components/TransactionButton'
 import { TransactionUIState } from 'hooks/TransactionUIState'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
@@ -100,14 +99,13 @@ export const BottomBarLayout = (props: {
     messageContent?: React.ReactNode
     buttonContent?: React.ReactNode
 }) => {
-    const theme = useStore((state) => state.theme)
     return (
         <Stack
             centerContent
             width="100%"
             borderTop="default"
             paddingX="lg"
-            background={theme === 'dark' ? 'transparentDark' : 'transparentBright'}
+            background="backdropBlur"
         >
             <Stack
                 direction={{ default: 'row', mobile: 'column' }}

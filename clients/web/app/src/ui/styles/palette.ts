@@ -1,6 +1,7 @@
 export const Figma = {
     LightMode: {
         Level1: 'hsl(255, 33%, 100%)',
+        Level1Transparent: 'hsla(255, 33%, 100%, var(--bg-opacity,1))',
         Level1Hover: 'hsl(255, 33%, 98%)',
 
         Level2: 'hsl(260, 21%, 96%)',
@@ -24,6 +25,7 @@ export const Figma = {
     },
     DarkMode: {
         Level1: 'hsla(255, 9%, 9%, 1)',
+        Level1Transparent: 'hsla(255, 9%, 9%, var(--bg-opacity,1))',
         Level1Hover: 'hsla(255, 9%, 13%, 1)',
 
         Level2: 'hsla(260, 9%, 14%, 1)',

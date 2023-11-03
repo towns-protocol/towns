@@ -15,6 +15,7 @@ const responsiveProperties = defineProperties({
         fontSize: vars.fontSize,
         textAlign: vars.textAlign,
         textTransform: vars.textTransform,
+        whiteSpace: vars.whiteSpace,
     },
     shorthands: {
         size: ['fontSize'],

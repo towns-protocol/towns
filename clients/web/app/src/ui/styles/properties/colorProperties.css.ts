@@ -1,7 +1,8 @@
 import { style } from '@vanilla-extract/css'
 import { defineProperties } from '@vanilla-extract/sprinkles'
 import { ToneName } from 'ui/styles/themes'
-import { darkTheme, vars } from 'ui/styles/vars.css'
+import { darkTheme, lightTheme, vars } from 'ui/styles/vars.css'
+import { Figma } from '../palette'
 
 export const hoverableClass = style({
     transition: 'background 120ms ease',
@@ -149,19 +150,27 @@ export const colorProperties = defineProperties({
                 },
             },
 
-            transparentBright: {
-                background: vars.color.overlay.transparentBright,
-                color: vars.color.overlay.black,
+            backdropBlur: {
                 vars: {
-                    '--background': vars.color.overlay.transparentBright,
+                    '--bg-opacity': '0.5',
                 },
-            },
-
-            transparentDark: {
-                background: vars.color.overlay.transparentDark,
-                color: vars.color.overlay.white,
-                vars: {
-                    '--background': vars.color.overlay.transparentDark,
+                WebkitBackdropFilter: 'blur(10px)',
+                backdropFilter: 'blur(10px)',
+                selectors: {
+                    [`${darkTheme} &`]: {
+                        background: Figma.DarkMode.Level1Transparent,
+                        color: vars.color.overlay.black,
+                        vars: {
+                            '--background': Figma.DarkMode.Level1Transparent,
+                        },
+                    },
+                    [`${lightTheme} &`]: {
+                        background: Figma.LightMode.Level1Transparent,
+                        color: vars.color.overlay.black,
+                        vars: {
+                            '--background': Figma.LightMode.Level1Transparent,
+                        },
+                    },
                 },
             },
             hover: {

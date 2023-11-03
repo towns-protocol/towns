@@ -21,7 +21,7 @@ export function WalletCommsFailureNotification({
                 right="none"
                 bottom="none"
                 left="none"
-                background="transparentDark"
+                background="backdropBlur"
             />
             <Box position="relative">
                 <Box horizontal gap width="300">

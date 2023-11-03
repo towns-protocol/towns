@@ -21,7 +21,7 @@ type Props = (ParagraphProps | LabelProps) & {
     size?: BoxProps['fontSize']
 
     truncate?: boolean
-
+    noWrap?: boolean
     strong?: boolean
 
     display?: BoxProps['display']
@@ -40,6 +40,8 @@ export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {
         textTransform = 'none',
         textAlign = 'left',
         truncate,
+        noWrap,
+        whiteSpace,
         children,
         className,
         ...boxProps
@@ -48,6 +50,7 @@ export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {
     const textProps = {
         fontSize: size,
         fontWeight: fontWeight ?? (strong ? 'strong' : undefined),
+        whiteSpace: whiteSpace ?? (noWrap ? 'nowrap' : undefined),
         textTransform,
         textAlign,
     }

@@ -341,6 +341,14 @@ const root = createGlobalTheme(':root', {
         none: 'normal',
     } as const,
 
+    whiteSpace: {
+        normal: 'normal',
+        nowrap: 'nowrap',
+        pre: 'pre',
+        preLine: 'pre-line',
+        preWrap: 'pre-wrap',
+    } as const,
+
     colSpan: {
         1: `span 1`,
         2: `span 2`,
