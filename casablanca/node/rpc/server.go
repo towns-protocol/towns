@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"casablanca/node/auth"
+	. "casablanca/node/base"
 	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/dlog"
@@ -75,14 +76,14 @@ func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAdd
 	return nodes.LoadNodeRegistry(ctx, nodeRegistryPath, localNodeAddress)
 }
 
-func createStore(ctx context.Context, dbUrl string, storageType string, address string, exitSignal chan error) (storage.StreamStorage, Cleanup, error) {
+func createStore(ctx context.Context, dbUrl string, storageType string, address string, instanceId string, exitSignal chan error) (storage.StreamStorage, Cleanup, error) {
 	log := dlog.CtxLog(ctx)
 	if storageType == "in-memory" {
 		log.Warn("Using in-memory storage")
 		return storage.NewMemStorage(), nil, nil
 	} else {
 		schema := storage.DbSchemaNameFromAddress(address)
-		store, err := storage.NewPostgresEventStore(ctx, dbUrl, schema, false, exitSignal)
+		store, err := storage.NewPostgresEventStore(ctx, dbUrl, schema, instanceId, false, exitSignal)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -114,15 +115,18 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		}
 	}
 
-	if cfg.LogInstance {
-		log = log.With("instance", fmt.Sprintf("%s on %d", wallet.AddressStr, cfg.Port))
-		slog.SetDefault(log)
-		ctx = dlog.CtxWithLog(ctx, log)
-	}
+	instanceId := GenShortNanoid()
+	log = log.With(
+		"nodeAddress", wallet.AddressStr,
+		"port", cfg.Port,
+		"instanceId", instanceId,
+	)
+	ctx = dlog.CtxWithLog(ctx, log)
+	slog.SetDefault(log)
 
 	exitSignal := make(chan error, 1)
 
-	store, storageCleaner, err := createStore(ctx, cfg.DbUrl, cfg.StorageType, wallet.AddressStr, exitSignal)
+	store, storageCleaner, err := createStore(ctx, cfg.DbUrl, cfg.StorageType, wallet.AddressStr, instanceId, exitSignal)
 	if err != nil {
 		return nil, 0, nil, err
 	}

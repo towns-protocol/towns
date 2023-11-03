@@ -20,7 +20,6 @@ type Config struct {
 	Stream              StreamConfig
 	NodeRegistry        string
 	WalletPrivateKey    string
-	LogInstance         bool
 }
 
 type ChainConfig struct {

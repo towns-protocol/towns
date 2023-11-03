@@ -17,7 +17,8 @@ var pgEventStore *PostgresEventStore
 var exitSignal chan error
 
 func setupTest() func() {
-	store, err := NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, true, exitSignal)
+	instanceId := GenShortNanoid()
+	store, err := NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, instanceId, true, exitSignal)
 	if err != nil {
 		panic("Can't create event store: " + err.Error())
 	}
@@ -333,7 +334,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 	teardownTest := setupTest()
 	defer teardownTest()
 	ctx := context.Background()
-	_, err := NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, true, exitSignal)
+	_, err := NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, GenShortNanoid(), true, exitSignal)
 	if err != nil {
 		t.Fatal("Error creating new storage instance", err)
 	}
