@@ -10,6 +10,7 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useChannelType } from 'hooks/useChannelType'
 import { shortAddress } from 'ui/utils/utils'
+import { GroupDMIcon } from '@components/DirectMessages/GroupDMIcon'
 
 type Props = {
     channel: Channel
@@ -131,6 +132,7 @@ const GDMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
 
     return (
         <>
+            <GroupDMIcon roomIdentifier={props.roomIdentifier} width="x3" letterFontSize="sm" />
             <Text fontSize="md" fontWeight="medium" color="default">
                 {title}
             </Text>
