@@ -1,20 +1,24 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useChannelData, useMembers, useMyUserId, useZionClient } from 'use-zion-client'
+import { useChannelData, useDMData, useMembers, useMyUserId, useZionClient } from 'use-zion-client'
 import { Icon, Stack, Text } from '@ui'
 import { Panel, PanelButton } from '@components/Panel/Panel'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
 import { useDevice } from 'hooks/useDevice'
+import { CHANNEL_INFO_PARAMS } from 'routes'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
+import { GDMChannelPermissionsModal } from './GDMChannelPermissions'
 
 export const DMChannelInfoPanel = () => {
-    const [activeModal, setActiveModal] = useState<'members' | 'confirm-leave' | undefined>(
-        undefined,
-    )
+    const [activeModal, setActiveModal] = useState<
+        'members' | 'permissions' | 'confirm-leave' | undefined
+    >(undefined)
     const { leaveRoom } = useZionClient()
     const { isTouch } = useDevice()
     const { channel } = useChannelData()
+    const { data } = useDMData(channel?.id)
+
     const members = useMembers(channel?.id)
     const myUserId = useMyUserId()
 
@@ -39,7 +43,15 @@ export const DMChannelInfoPanel = () => {
         if (isTouch) {
             setActiveModal('members')
         } else {
-            navigate('../info?directory')
+            navigate(`../${CHANNEL_INFO_PARAMS.INFO}?${CHANNEL_INFO_PARAMS.DIRECTORY}`)
+        }
+    }, [navigate, isTouch])
+
+    const onPermissionsClick = useCallback(() => {
+        if (isTouch) {
+            setActiveModal('permissions')
+        } else {
+            navigate(`../${CHANNEL_INFO_PARAMS.INFO}?${CHANNEL_INFO_PARAMS.PERMISSIONS}`)
         }
     }, [navigate, isTouch])
 
@@ -69,14 +81,23 @@ export const DMChannelInfoPanel = () => {
 
                 <PanelButton onClick={onMembersClick}>
                     <Icon type="people" size="square_sm" color="gray2" />
-                    <Text>
+                    <Text color="default" fontWeight="medium">
                         {memberCount} {memberCount === 1 ? 'member' : 'members'}{' '}
                     </Text>
                 </PanelButton>
-
+                {data?.isGroup && (
+                    <PanelButton onClick={onPermissionsClick}>
+                        <Icon type="people" size="square_sm" color="gray2" />
+                        <Text color="default" fontWeight="medium">
+                            Manage member permissions
+                        </Text>
+                    </PanelButton>
+                )}
                 <PanelButton onClick={onLeaveClick}>
                     <Icon type="logout" color="error" size="square_sm" />
-                    <Text color="error">Leave group</Text>
+                    <Text color="error" fontWeight="medium">
+                        Leave group
+                    </Text>
                 </PanelButton>
             </Stack>
             {activeModal === 'confirm-leave' && (
@@ -88,6 +109,9 @@ export const DMChannelInfoPanel = () => {
             )}
             {activeModal === 'members' && (
                 <ChannelMembersModal onHide={() => setActiveModal(undefined)} />
+            )}
+            {activeModal === 'permissions' && (
+                <GDMChannelPermissionsModal onHide={() => setActiveModal(undefined)} />
             )}
         </Panel>
     )

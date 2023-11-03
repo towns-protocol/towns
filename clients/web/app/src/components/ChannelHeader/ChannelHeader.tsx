@@ -11,6 +11,7 @@ import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useChannelType } from 'hooks/useChannelType'
 import { shortAddress } from 'ui/utils/utils'
 import { GroupDMIcon } from '@components/DirectMessages/GroupDMIcon'
+import { CHANNEL_INFO_PARAMS } from 'routes'
 
 type Props = {
     channel: Channel
@@ -70,7 +71,7 @@ const DesktopChannelHeader = (props: Props) => {
                 overflow="hidden"
                 shrink={false}
             >
-                <Link to="info?channel">
+                <Link to={`${CHANNEL_INFO_PARAMS.INFO}?${CHANNEL_INFO_PARAMS.CHANNEL}`}>
                     <Stack
                         horizontal
                         border

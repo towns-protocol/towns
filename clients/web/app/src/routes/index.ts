@@ -20,3 +20,10 @@ export const QUERY_PARAMS = {
     GALLERY_ID: 'galleryId',
     GALLERY_THREAD_ID: 'galleryThreadId',
 } as const
+
+export const CHANNEL_INFO_PARAMS = {
+    INFO: 'info',
+    CHANNEL: 'channel',
+    PERMISSIONS: 'permissions',
+    DIRECTORY: 'directory',
+} as const
