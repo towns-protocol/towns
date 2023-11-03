@@ -23,7 +23,6 @@ import { AllRoutes } from 'AllRoutes'
 import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { AuthContextProvider } from 'hooks/useAuth'
-import { ClearStaleWagmiStorage } from 'ClearStaleWagmiStorage'
 
 const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
