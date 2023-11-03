@@ -202,21 +202,12 @@ message ChannelPayload {
         StreamSettings settings = 5;
     }
 
-    /**
-    * Receipt is used to acknowledge that the event depicted by origin_op and hash 
-    * was responded to by a device. Used to prevent spurious processing of to-device events
-    * by multiple requested users' devices.
-    */
-    message Receipt {
-        ToDeviceOp origin_op = 1;
-        bytes origin_hash = 2;
-    }
-
     oneof content {
         Inception inception = 1;
         EncryptedData message = 2;
         Membership membership = 3;
-        Receipt receipt = 4;
+        Fulfillment fulfillment = 4;
+        KeySolicitation key_solicitation = 5;
     }
 }
 
@@ -240,7 +231,8 @@ message DmChannelPayload {
         Inception inception = 1;
         Membership membership = 2;
         EncryptedData message = 3;
-        ChannelPayload.Receipt receipt = 4;
+        Fulfillment fulfillment = 4;
+        KeySolicitation key_solicitation = 5;
     }
 }
 
@@ -263,7 +255,8 @@ message GdmChannelPayload {
         Inception inception = 1;
         Membership membership = 2;
         EncryptedData message = 3;
-        ChannelPayload.Receipt receipt = 4;
+        Fulfillment fulfillment = 4;
+        KeySolicitation key_solicitation = 5;
     }
 }
 
@@ -302,6 +295,31 @@ message UserPayload {
         UserMembership user_membership = 2;
         ToDevice to_device = 3;
     }
+}
+
+/**
+* KeySolicitation messages are used to request keys pertaining to a given session,
+* stream and optional algorithm. For now, algorithm is megolm, but this can change.
+*/
+message KeySolicitation {
+    string session_id = 1;
+    string algorithm = 2;
+    // known session ids
+    repeated string known_session_ids = 3;
+    string sender_key = 4;
+}
+
+/**
+* Fulfillment is used to acknowledge that the event depicted by event hash
+* was responded to by a device over secure to device communication
+* with the requested session.
+* Used to prevent spurious processing of key requests
+* by multiple requested users' devices.
+*/
+message Fulfillment {
+    bytes origin_hash = 1; // origin KeySolicitation event hash
+    string session_id = 2;
+    optional string algorithm = 3;
 }
 
 /**

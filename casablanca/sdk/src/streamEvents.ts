@@ -4,6 +4,7 @@ import {
     SnapshotCaseType,
     FullyReadMarker,
     UserPayload_ToDevice,
+    KeySolicitation,
 } from '@river/proto'
 import { ParsedEvent } from './types'
 import { RiverEventV2 } from './eventV2'
@@ -38,6 +39,12 @@ export type StreamEvents = {
         fullyReadMarkers: Record<string, FullyReadMarker>,
     ) => void
     toDeviceMessage: (streamId: string, event: UserPayload_ToDevice, senderUserId: string) => void
+    keySolicitationMessage: (
+        streamId: string,
+        event: KeySolicitation,
+        eventHash: string,
+        senderUserId: string,
+    ) => void
     userDeviceKeyMessage: (
         streamId: string,
         userId: string,

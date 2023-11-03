@@ -1265,6 +1265,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
                     })
                 } catch (e) {
                     // don't die if something goes wrong
+                    this.logError(`Error retrying decryption: ${(<Error>e).message}`)
                 }
             }),
         )

@@ -28,6 +28,8 @@ import {
     MediaPayload_Chunk,
     DmChannelPayload_Inception,
     GdmChannelPayload_Inception,
+    KeySolicitation,
+    Fulfillment,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
@@ -497,6 +499,90 @@ export const make_ChannelPayload_Message = (
         value: {
             content: {
                 case: 'message',
+                value,
+            },
+        },
+    }
+}
+
+export const make_ChannelPayload_KeySolicitation = (
+    value: PlainMessage<KeySolicitation>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'channelPayload',
+        value: {
+            content: {
+                case: 'keySolicitation',
+                value,
+            },
+        },
+    }
+}
+
+export const make_DmChannelPayload_KeySolicitation = (
+    value: PlainMessage<KeySolicitation>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'dmChannelPayload',
+        value: {
+            content: {
+                case: 'keySolicitation',
+                value,
+            },
+        },
+    }
+}
+
+export const make_GdmChannelPayload_KeySolicitation = (
+    value: PlainMessage<KeySolicitation>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'gdmChannelPayload',
+        value: {
+            content: {
+                case: 'keySolicitation',
+                value,
+            },
+        },
+    }
+}
+
+export const make_ChannelPayload_Fulfillment = (
+    value: PlainMessage<Fulfillment>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'channelPayload',
+        value: {
+            content: {
+                case: 'fulfillment',
+                value,
+            },
+        },
+    }
+}
+
+export const make_DmChannelPayload_Fulfillment = (
+    value: PlainMessage<Fulfillment>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'dmChannelPayload',
+        value: {
+            content: {
+                case: 'fulfillment',
+                value,
+            },
+        },
+    }
+}
+
+export const make_GdmChannelPayload_Fulfillment = (
+    value: PlainMessage<Fulfillment>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'gdmChannelPayload',
+        value: {
+            content: {
+                case: 'fulfillment',
                 value,
             },
         },

@@ -33,7 +33,8 @@ export enum ZTEvent {
     MiniblockHeader = 'm.miniblockheader',
     Notice = 'm.notice',
     Reaction = 'm.reaction',
-    Receipt = 'm.receipt',
+    Fulfillment = 'm.fulfillment',
+    KeySolicitation = 'm.key_solicitation',
     RedactedEvent = 'm.redacted_event',
     RedactionActionEvent = 'm.redaction_action',
     RoomAvatar = 'm.room.avatar',
@@ -59,7 +60,8 @@ export type TimelineEvent_OneOf =
     | MiniblockHeaderEvent
     | NoticeEvent
     | ReactionEvent
-    | ReceiptEvent
+    | FulfillmentEvent
+    | KeySolicitationEvent
     | RedactedEvent
     | RedactionActionEvent
     | RoomCanonicalAliasEvent
@@ -87,10 +89,17 @@ export interface MiniblockHeaderEvent {
     message: MiniblockHeader
 }
 
-export interface ReceiptEvent {
-    kind: ZTEvent.Receipt
-    originOp: string
+export interface FulfillmentEvent {
+    kind: ZTEvent.Fulfillment
+    sessionId: string
     originEventHash: string
+    algorithm?: string
+}
+
+export interface KeySolicitationEvent {
+    kind: ZTEvent.KeySolicitation
+    sessionId: string
+    senderKey: string
 }
 
 export interface ReactionEvent {
@@ -355,8 +364,10 @@ export function getFallbackContent(
             return `Notice: { msgType: ${content.contentKind ?? 'unknown'}, message: ${
                 content.message
             } }`
-        case ZTEvent.Receipt:
-            return `Receipt: { originOp: ${content.originOp}, originEventHash: ${content.originEventHash} }`
+        case ZTEvent.Fulfillment:
+            return `Fulfillment: { sessionId: ${content.sessionId}, originEventHash: ${content.originEventHash} }`
+        case ZTEvent.KeySolicitation:
+            return `KeySolicitation { sessionId: ${content.sessionId}, senderKey: ${content.senderKey} }`
         default:
             staticAssertNever(content)
     }

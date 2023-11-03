@@ -17,7 +17,12 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
     readonly messages: StreamStateView_Messages
-    readonly receipts = new Map<string, ParsedEvent>()
+    readonly keySolicitations = new Set<{
+        senderKey: string
+        sessionId: string
+        streamId: string
+    }>()
+    readonly fulfillments = new Map<string, ParsedEvent>()
     readonly firstPartyId: string
     readonly secondPartyId: string
     lastEventCreatedAtEpocMs = 0n
@@ -42,6 +47,31 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
         this.memberships.onMiniblockHeader(blockHeader, emitter)
     }
 
+    private addKeySolicitationMessage(
+        event: ParsedEvent,
+        payload: DmChannelPayload,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ) {
+        if (payload.content.value === undefined || payload.content.case !== 'keySolicitation') {
+            return
+        }
+        if (this.fulfillments.has(event.hashStr)) {
+            return
+        }
+        emitter?.emit(
+            'keySolicitationMessage',
+            this.streamId,
+            payload.content.value,
+            event.hashStr,
+            event.creatorUserId,
+        )
+        this.keySolicitations.add({
+            senderKey: payload.content.value.senderKey,
+            sessionId: payload.content.value.sessionId,
+            streamId: this.streamId,
+        })
+    }
+
     appendEvent(
         event: ParsedEvent,
         payload: DmChannelPayload,
@@ -64,8 +94,11 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
                     emitter,
                 )
                 break
-            case 'receipt':
-                this.receipts.set(event.hashStr, event)
+            case 'fulfillment':
+                this.fulfillments.set(event.hashStr, event)
+                break
+            case 'keySolicitation':
+                this.addKeySolicitationMessage(event, payload, emitter)
                 break
             case undefined:
                 break
@@ -89,8 +122,11 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
             case 'membership':
                 // nothing to do, membership was conveyed in the snapshot
                 break
-            case 'receipt':
-                this.receipts.set(event.hashStr, event)
+            case 'fulfillment':
+                this.fulfillments.set(event.hashStr, event)
+                break
+            case 'keySolicitation':
+                // todo jterzis - HNT-2868
                 break
             case undefined:
                 break

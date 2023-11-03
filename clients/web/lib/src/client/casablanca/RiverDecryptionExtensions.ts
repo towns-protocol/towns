@@ -2,14 +2,23 @@ import {
     Client as CasablancaClient,
     RiverEventV2,
     ParsedEvent,
-    DeviceInfo,
     make_ToDevice_KeyResponse,
-    make_ToDevice_KeyRequest,
     IndexedDBCryptoStore,
     MEGOLM_ALGORITHM,
     IEventOlmDecryptionResult,
     isUserStreamId,
+    make_ChannelPayload_KeySolicitation,
+    make_ChannelPayload_Fulfillment,
+    bin_fromString,
+    isChannelStreamId,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+    make_DmChannelPayload_KeySolicitation,
+    make_GdmChannelPayload_KeySolicitation,
+    make_DmChannelPayload_Fulfillment,
+    make_GdmChannelPayload_Fulfillment,
 } from '@river/sdk'
+import { PlainMessage } from '@bufbuild/protobuf'
 import { Permission } from '@river/web3'
 import {
     ToDeviceOp,
@@ -18,24 +27,23 @@ import {
     ToDeviceMessage,
     UserPayload_ToDevice,
     OlmMessage,
+    KeySolicitation,
+    StreamEvent,
 } from '@river/proto'
 import { Room } from '../../types/zion-types'
 import { RoomIdentifier } from '../../types/room-identifier'
 import throttle from 'lodash/throttle'
 // eslint-disable-next-line lodash/import-scope
 import type { DebouncedFunc } from 'lodash'
-import uniq from 'lodash/uniq'
 
 /// control the number of outgoing room key requests for events that failed to decrypt
 const MAX_CONCURRENT_ROOM_KEY_REQUESTS = 2
 /// how long to wait for a response to a room key request
-const KEY_REQUEST_TIMEOUT_MS = 3000
+const KEY_SOLICITATION_TIMEOUT_MS = 300
 /// how many events to include in the same to-device message
 const MAX_EVENTS_PER_REQUEST = 64
 /// time betwen debounced calls to look for keys
 const TIME_BETWEEN_LOOKING_FOR_KEYS_MS = 500
-/// time before we bug a user again for keys
-const TIME_BETWEEN_USER_KEY_REQUESTS_MS = 1000 * 30
 /// time between processing to-device events
 const DELAY_BETWEEN_PROCESSING_TO_DEVICE_EVENTS_MS = 10
 
@@ -75,9 +83,8 @@ type KeyResponsePayload =
 
 interface KeyRequestRecord {
     timestamp: number
-    toDeviceIds: string[]
     error?: Error
-    response?: KeyResponsePayload
+    response: KeyResponsePayload[]
 }
 
 interface RoomRecord {
@@ -88,23 +95,39 @@ interface RoomRecord {
     timer?: NodeJS.Timeout
     lastRequestAt?: number
     requestingFrom?: string
-    requests?: Record<string, KeyRequestRecord>
+    requests: Record<string, KeyRequestRecord>
 }
 
 interface EventOlmDecryptionResult extends IEventOlmDecryptionResult {
     senderUserId: string
 }
+
+interface EventKeySolicitation {
+    event: KeySolicitation
+    eventHash: string
+    streamId: string
+    senderUserId: string
+}
+
 export class RiverDecryptionExtension {
     roomRecords: Record<string, RoomRecord> = {}
     private client: CasablancaClient
     private delegate: DecryptionExtensionDelegate
     private userId: string
     private accountAddress: string
+    // todo: remove processor map related to to-device events HNT-2868
     private receivedToDeviceEventQueue: ProcessingQueue<EventOlmDecryptionResult>
     private receivedToDeviceProcessorMap: Record<
         string,
         (event: OlmDecryptedMessage, senderId: string, senderCurve25519Key: string) => Promise<void>
     >
+    private receivedKeySolicitationEventQueue: ProcessingQueue<EventKeySolicitation>
+    private receivedKeySolicitationProcessor: (
+        event: KeySolicitation,
+        fromUserId: string,
+        streamId: string,
+        eventHash: string,
+    ) => Promise<void>
     private throttledStartLookingForKeys: DebouncedFunc<() => void> | null = null
     private clientRunning = true
 
@@ -118,9 +141,6 @@ export class RiverDecryptionExtension {
 
         // mapping of event type to processors
         this.receivedToDeviceProcessorMap = {
-            [ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST]]: (e, s, t) => {
-                return this.onKeyRequest(e, s, t)
-            },
             [ToDeviceOp[ToDeviceOp.TDO_KEY_RESPONSE]]: (e, s) => {
                 return this.onKeyResponse(e, s)
             },
@@ -129,6 +149,17 @@ export class RiverDecryptionExtension {
         this.receivedToDeviceEventQueue = new ProcessingQueue<EventOlmDecryptionResult>({
             process: (event) => {
                 return this.processToDeviceEvent(event)
+            },
+            delayMs: DELAY_BETWEEN_PROCESSING_TO_DEVICE_EVENTS_MS,
+        })
+
+        this.receivedKeySolicitationProcessor = (e, s, t, u) => {
+            return this.onKeySolicitation(e, s, t, u)
+        }
+
+        this.receivedKeySolicitationEventQueue = new ProcessingQueue<EventKeySolicitation>({
+            process: (event) => {
+                return this.processKeySolicitationEvent(event)
             },
             delayMs: DELAY_BETWEEN_PROCESSING_TO_DEVICE_EVENTS_MS,
         })
@@ -146,8 +177,11 @@ export class RiverDecryptionExtension {
             throw new Error('CDE::constructor - client crypto not initialized')
         }
 
-        // listen for key requests
+        // listen for key responses
         client.on('toDeviceMessage', this.onToDeviceEvent)
+
+        // listen for key solicitations for streams
+        client.on('keySolicitationMessage', this.onKeySolicitationEvent)
 
         // listen for channel timeline events
         client.on('channelTimelineEvent', this.onChannelTimelineEvent)
@@ -170,11 +204,46 @@ export class RiverDecryptionExtension {
         // stop listening for key requests
         this.client.off('toDeviceMessage', this.onToDeviceEvent)
         this.client.off('channelTimelineEvent', this.onChannelTimelineEvent)
+        this.client.off('keySolicitationMessage', this.onKeySolicitationEvent)
         this.client.off('channelNewMessage', this.onChannelEvent)
         this.client.off('streamNewUserJoined', this.onNewUserJoinedEvent)
         this.client.off('eventDecrypted', this.onDecryptedEvent)
         this.receivedToDeviceProcessorMap = {}
         this.receivedToDeviceEventQueue.stop()
+        this.receivedKeySolicitationEventQueue.stop()
+    }
+
+    private async processKeySolicitationEvent(event: EventKeySolicitation): Promise<void> {
+        let fulfillments: Map<string, ParsedEvent> | undefined
+        if (isChannelStreamId(event.streamId)) {
+            fulfillments = this.client.streams.get(event.streamId)?.view.channelContent.fulfillments
+        } else if (isDMChannelStreamId(event.streamId)) {
+            fulfillments = this.client.streams.get(event.streamId)?.view.dmChannelContent
+                .fulfillments
+        } else if (isGDMChannelStreamId(event.streamId)) {
+            fulfillments = this.client.streams.get(event.streamId)?.view.gdmChannelContent
+                .fulfillments
+        } else {
+            throw new Error('CDE::_onKeySolicitation - unknown stream type')
+        }
+        // check that event has not already been fulfilled by someone else
+        if (fulfillments?.has(event.eventHash)) {
+            const fulfilledByUser = fulfillments.get(event.eventHash)?.creatorUserId
+            console.log(
+                `CDE::processKeySolicitationEvent - event already fulfilled by ${
+                    fulfilledByUser ?? ''
+                }`,
+            )
+            return
+        }
+        // call processor
+        const processor = this.receivedKeySolicitationProcessor
+        if (!processor) {
+            throw new Error(
+                `CDE::processKeySolicitationEvent - no processor found for event ${event.eventHash}`,
+            )
+        }
+        await processor(event.event, event.senderUserId, event.streamId, event.eventHash)
     }
 
     private async processToDeviceEvent(event: EventOlmDecryptionResult): Promise<void> {
@@ -219,6 +288,18 @@ export class RiverDecryptionExtension {
                 this.client.updateDecryptedStream(streamId, event)
                 return
             }
+            if (isUserStreamId(streamId)) {
+                console.log(
+                    'CDE::onDecryptionFailure - decryption failure for user stream event, not going to start looking for keys',
+                    {
+                        eventId: event.getId() ?? '',
+                        sender: event.getSender(),
+                        err: err,
+                        streamId,
+                    },
+                )
+                return
+            }
             const stream = await this.client.getStream(streamId)
             const spaceId =
                 stream.contentKind === 'channelContent' ? stream.channelContent.spaceId : undefined
@@ -236,24 +317,13 @@ export class RiverDecryptionExtension {
                 )
                 return
             }
-            if (isUserStreamId(streamId)) {
-                console.log(
-                    'CDE::onDecryptionFailure - decryption failure for to-device event, not going to start looking for keys',
-                    {
-                        eventId: event.getId() ?? '',
-                        sender: event.getSender(),
-                        err: err,
-                        channelId: channelId,
-                        spaceId: spaceId,
-                    },
-                )
-                return
-            }
+
             if (!this.roomRecords[channelId]) {
                 this.roomRecords[channelId] = {
                     decryptionFailures: [],
                     channelId,
                     spaceId,
+                    requests: {},
                 }
             }
             const roomRecord = this.roomRecords[channelId]
@@ -336,6 +406,24 @@ export class RiverDecryptionExtension {
         })
     }
 
+    private onKeySolicitationEvent = (
+        streamId: string,
+        event: KeySolicitation,
+        eventHash: string,
+        senderUserId: string,
+    ) => {
+        if (!eventHash) {
+            throw new Error('CDE::onKeySolicitationEvent - no event hash found')
+        }
+        const keySolicitationEvent: EventKeySolicitation = {
+            event,
+            eventHash,
+            streamId,
+            senderUserId,
+        }
+        this.receivedKeySolicitationEventQueue.enqueue(keySolicitationEvent)
+    }
+
     private onToDeviceEvent = (
         _streamId: string,
         event: UserPayload_ToDevice,
@@ -414,7 +502,9 @@ export class RiverDecryptionExtension {
                 console.log('CDE::startLookingForKeys - max concurrent requests')
                 break
             }
-            await this._startLookingForKeys(room.channelId)
+            // todo: HNT-2868 remove _startLookingForkeys in favor of _askStreamForKeys which is more efficient
+            // since the request happens against the stream not every members' devices.
+            await this._askStreamForKeys(room.channelId)
         }
     }
 
@@ -458,279 +548,151 @@ export class RiverDecryptionExtension {
         })
     }
 
-    private async _startLookingForKeys(channelId: string) {
-        const roomRecord = this.roomRecords[channelId]
+    private async _askStreamForKeys(streamId: string) {
+        const roomRecord = this.roomRecords[streamId]
         if (!roomRecord) {
-            throw new Error('CDE::_startLookingForKeys - room record not found')
+            throw new Error('CDE::_askStreamForKeys - room record not found')
         }
         let room: Room | undefined = undefined
         try {
             room = this.delegate.getRoomData({
                 slug: '',
-                networkId: channelId,
+                networkId: streamId,
             })
         } catch (e) {
             // even though we are stopping looking for keys when the client shuts down,
             // occasionally, this function debouncer will execute a last time hence
             // this short-circuit check.
             if ((<Error>e).message.includes('client is undefined')) {
-                console.error('CDE::_startLookingForKeys - error getting room', e)
+                console.error('CDE::_askRoomForKeys - error getting room', e)
                 return
             }
             // if it's something else, re-throw the exception.
             throw new Error(`${(<Error>e).message}}`)
         }
         if (!room) {
-            throw new Error('CDE::_startLookingForKeys - room not found')
+            throw new Error('CDE::_askRoomForKeys - room not found')
         }
-
         if (!roomRecord.decryptionFailures.length) {
-            console.log(`CDE::_startLookingForKeys - no decryption failures for`, { channelId })
+            console.log(`CDE::_askRoomForKeys - no decryption failures for`, { streamId })
             return
         }
-
-        const myDevices = await this.client.getStoredDevicesForUser(this.userId ?? '')
-
-        // todo: ideally we should be filtering for online members with devices here
-        // but we can assume current members have devices.
-        const roomMembers = room.members
-            .filter(
-                (member) =>
-                    // filter out ourselves unless we have more than one device onlien
-                    member.userId !== this.userId || myDevices.size > 1,
-            )
-            .map((member) => member.userId)
-        if (!roomMembers.length) {
-            console.log(`CDE::_startLookingForKeys - no room members found`, { channelId })
-            return
-        }
-
         const now = Date.now()
-        // toss a coin to give other members that may be online a chance to process keys
-        const roomMembersRandomized = roomMembers.sort(() => Math.random() - 0.5)
-        const eligibleMemberIds = roomMembersRandomized.filter((memberId) => {
-            // find someone we haven't sent a request to in a while
-            return (
-                now - (roomRecord.requests?.[memberId]?.timestamp ?? 0) >
-                TIME_BETWEEN_USER_KEY_REQUESTS_MS
-            )
-        })
-        console.log(
-            `CDE:_startLookingForKeys - original eligible member length`,
-            eligibleMemberIds.length,
-        )
-        if (!eligibleMemberIds.length) {
-            const userWithNewDevices = (
-                await Promise.all(
-                    roomMembersRandomized.map(async (memberId) => {
-                        const seenDeviceIds = roomRecord.requests?.[memberId]?.toDeviceIds ?? []
-                        const currentDeviceIdMap = await this.client.getStoredDevicesForUser(
-                            memberId,
-                        )
-                        const currentDeviceIds: string[] = []
-                        for (const innerMap of currentDeviceIdMap.values()) {
-                            for (const deviceInfo of innerMap.values()) {
-                                if (this.client.deviceId !== deviceInfo.deviceId) {
-                                    // don't search for our current devices deviceId
-                                    currentDeviceIds.push(deviceInfo.deviceId)
-                                }
-                            }
-                        }
-                        const found = currentDeviceIds.some(
-                            (deviceId) => !seenDeviceIds.includes(deviceId),
-                        )
-                        console.log('CDE::_startLookingForKeys - seen device ids for user', {
-                            seenDeviceIds: seenDeviceIds,
-                            currentDeviceIds: currentDeviceIds,
-                            userId: memberId,
-                            foundDeviceIds: found,
-                        })
-                        return found ? memberId : null
-                    }),
-                )
-            ).find((memberId) => memberId !== null)
-            if (userWithNewDevices) {
-                console.log('CDE::_startLookingForKeys - found user with new devices online', {
-                    channelId,
-                    userWithNewDevices,
-                    eligibleMemberIds,
-                })
-                eligibleMemberIds.push(userWithNewDevices)
-            } else {
-                console.log('CDE::_startLookingForKeys - no eligible members')
-                roomRecord.lastRequestAt = now
-                roomRecord.timer = setTimeout(() => {
-                    console.log(
-                        'CDE::_startLookingForKeys - key request timed out after finding no eligible members',
-                        {
-                            from: this.userId,
-                            channelId,
-                        },
-                    )
-                    if (this.throttledStartLookingForKeys) {
-                        clearTimeout(roomRecord.timer)
-                        roomRecord.timer = undefined
-                        this.throttledStartLookingForKeys()
-                    }
-                }, KEY_REQUEST_TIMEOUT_MS)
-                return
-            }
+        roomRecord.lastRequestAt = now
+        roomRecord.requests = {
+            ...(roomRecord.requests ?? {}),
+            [streamId]: { timestamp: now, response: [] },
         }
+        roomRecord.timer = setTimeout(() => {
+            console.log('CDE::_askStreamForKeys - key request timed out', {
+                from: this.userId,
+                streamId,
+            })
+            if (this.throttledStartLookingForKeys) {
+                clearTimeout(roomRecord.timer)
+                roomRecord.timer = undefined
+                this.throttledStartLookingForKeys()
+            }
+        }, KEY_SOLICITATION_TIMEOUT_MS)
 
         const unknownSessionIds: [senderKey: string, sessionId: string][] =
             roomRecord.decryptionFailures.map((event) => {
-                // note: we're obtaining narrowest concrete type here with assumption
-                // were looking for session_ids for megolm
-                // decryption failures, which for now are limited to Channel messages
                 const wireContent = event.getWireContent()
                 return [wireContent.senderKey ?? '', wireContent.sessionId ?? '']
             })
-
-        const decryptionFailureSenders = new Set(
-            roomRecord.decryptionFailures.map((event) => event.getSender()),
-        )
-
-        // sort eligaile members to prioritize senders of decryption failures
-        const sortedMembers = eligibleMemberIds.sort((a, b) => {
-            if (decryptionFailureSenders.has(a)) {
-                return -1
-            }
-            if (decryptionFailureSenders.has(b)) {
-                return 1
-            }
-            return 0
-        })
-
-        const { memberId: requesteeId, deviceMap: requesteeDeviceMap } =
-            (
-                await Promise.all(
-                    sortedMembers.map(async (memberId) => ({
-                        memberId,
-                        deviceMap: await this.client.getStoredDevicesForUser(memberId),
-                    })),
-                )
-            )?.find(({ deviceMap }) => deviceMap.size) ?? {}
-
-        if (!requesteeId || !requesteeDeviceMap) {
-            console.log('CDE::_startLookingForKeys - no eligible members with devices', {
-                channelId,
-            })
-            return
-        }
-
-        const spaceId = roomRecord.spaceId
-        console.log(
-            `CDE::_startLookingForKeys found ${eligibleMemberIds.length} eligible members, sending key request`,
-            {
-                to: requesteeId,
-                from: this.userId,
-                channelId,
-                spaceId,
-            },
-        )
-
-        // Get the users devices,
-        // todo: we should figure out which devices are online
-        const devicesMap = requesteeDeviceMap
-        if (!devicesMap.size) {
-            throw new Error('error, we filtered for devices but none found')
-        }
-        const devices: DeviceInfo[] = []
-        for (const innerMap of devicesMap.values()) {
-            for (const deviceInfo of innerMap.values()) {
-                devices.push(deviceInfo)
-            }
-        }
-
-        const seenDeviceIds = roomRecord.requests?.[requesteeId]?.toDeviceIds ?? []
-
-        const requestRecord: KeyRequestRecord = {
-            timestamp: now,
-            toDeviceIds: uniq([...seenDeviceIds, ...devices.map((d) => d.deviceId)]),
-        }
-
-        // todo: implement getSharedHistoryInboundGroupSessions for Megolm algorithm
         const allSharedHistorySessions: [senderKey: string, sessionId: string][] | undefined =
             await this.client.cryptoBackend?.olmDevice?.getSharedHistoryInboundGroupSessions(
-                channelId,
+                streamId,
             )
 
+        const ourDeviceKey = this.client.olmDevice.deviceCurve25519Key
+        if (!ourDeviceKey) {
+            throw new Error('CDE::_askRoomForKeys - our device key not found')
+        }
         const knownSessions =
             allSharedHistorySessions?.map(([_senderKey, sessionId]) => sessionId) ?? []
 
-        // if the number of known sessions is small, pass them in the request so clients can
-        // send everything but those sessions in the response, otherwise, just pass the unknown
-        /*
-        const request: KeyRequestPayload = {
-            knownSessionIds:
-                knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : undefined,
-            requestedSessions: unknownSessionIds.slice(0, MAX_EVENTS_PER_REQUEST),
-            spaceId,
-            channelId: spaceId === channelId ? undefined : channelId,
+        let request: PlainMessage<StreamEvent>['payload']
+        const unknownSessionRequested = unknownSessionIds.slice(0, MAX_EVENTS_PER_REQUEST)[0][1]
+        const alreadySolicitatedKey = (
+            currentKeySolicitations:
+                | Set<{ senderKey: string; sessionId: string; streamId: string }>
+                | undefined,
+        ): boolean => {
+            if (
+                currentKeySolicitations?.has({
+                    senderKey: ourDeviceKey,
+                    sessionId: unknownSessionRequested,
+                    streamId,
+                })
+            ) {
+                console.log(
+                    `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
+                )
+                return true
+            }
+            return false
         }
-        */
-        const request = make_ToDevice_KeyRequest({
-            streamId: channelId,
-            algorithm: MEGOLM_ALGORITHM,
-            senderKey: this.client.olmDevice.deviceCurve25519Key ?? '',
-            // todo: perhaps we should associate sender_key of desired session_id in payload for verification
-            sessionId: unknownSessionIds.slice(0, MAX_EVENTS_PER_REQUEST)[0][1],
-            content:
-                knownSessions.length < MAX_EVENTS_PER_REQUEST
-                    ? JSON.stringify(knownSessions)
-                    : undefined,
-            knownSessionIds:
-                knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : undefined,
-        })
-
-        roomRecord.lastRequestAt = now
-        roomRecord.requestingFrom = requesteeId
-        roomRecord.requests = {
-            ...(roomRecord.requests ?? {}),
-            [requesteeId]: requestRecord,
-        }
-        roomRecord.timer = setTimeout(() => {
-            console.log('CDE::_startLookingForKeys - key request timed out', {
-                from: this.userId,
-                to: requesteeId,
-                channelId,
+        if (isChannelStreamId(streamId)) {
+            const currentKeySolicitations =
+                this.client.streams.get(streamId)?.view.channelContent.keySolicitations
+            // todo jterzis: add restart criteria based on eventNum returned from miniblock in the case that
+            // a fulfillment didn't return the correct session key
+            if (alreadySolicitatedKey(currentKeySolicitations)) {
+                return
+            }
+            request = make_ChannelPayload_KeySolicitation({
+                sessionId: unknownSessionRequested,
+                algorithm: MEGOLM_ALGORITHM,
+                senderKey: ourDeviceKey,
+                knownSessionIds: knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
             })
-            this.clearKeyRequest(channelId, requesteeId)
-        }, KEY_REQUEST_TIMEOUT_MS)
-
-        const devicesInfo = devices.map((d) => ({ userId: requesteeId, deviceInfo: d }))
-        try {
-            await this.client.encryptAndSendToDevices(devicesInfo, new ToDeviceMessage(request))
-            console.log('CDE::_startLookingForKeys - key request sent')
-            console.log('CDE::_startLookingForKeys - key request sent to devices', {
-                deviceInfo: devicesInfo,
-                thisDeviceKey: this.client.olmDevice.deviceCurve25519Key,
-                thisDeviceid: this.client.deviceId,
+        } else if (isDMChannelStreamId(streamId)) {
+            const currentKeySolicitations =
+                this.client.streams.get(streamId)?.view.dmChannelContent.keySolicitations
+            if (alreadySolicitatedKey(currentKeySolicitations)) {
+                return
+            }
+            request = make_DmChannelPayload_KeySolicitation({
+                sessionId: unknownSessionRequested,
+                algorithm: MEGOLM_ALGORITHM,
+                senderKey: ourDeviceKey,
+                knownSessionIds: knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
             })
-        } catch (e) {
-            console.error('CDE::_startLookingForKeys - error sending request', e)
-            this.clearKeyRequest(channelId, requesteeId, <Error>e)
+        } else if (isGDMChannelStreamId(streamId)) {
+            const currentKeySolicitations =
+                this.client.streams.get(streamId)?.view.gdmChannelContent.keySolicitations
+            if (alreadySolicitatedKey(currentKeySolicitations)) {
+                return
+            }
+            request = make_GdmChannelPayload_KeySolicitation({
+                sessionId: unknownSessionRequested,
+                algorithm: MEGOLM_ALGORITHM,
+                senderKey: ourDeviceKey,
+                knownSessionIds: knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
+            })
+        } else {
+            throw new Error('CDE::_askRoomForKeys - unknown stream type')
         }
+        await this.client.makeEventAndAddToStream(streamId, request)
     }
 
-    private async onKeyRequest(event: OlmDecryptedMessage, fromUserId: string, senderKey: string) {
-        // note jterzis 10/30/23: senderKey will not be needed over to device messages
-        // once Olm Encryption Keys are unified across devices.
-        // https://linear.app/hnt-labs/issue/HNT-3263/singleton-devicekey-remove-sender-key-on-todevice-keyresponse
-        const clear_content = event?.content
-        if (!clear_content) {
-            console.error(
-                'CDE::onKeyRequest - no clear content found in event, did decryption fail?',
-            )
-            return
-        }
-        if (clear_content?.payload.case !== 'request') {
-            console.error('CDE::onKeyRequest - not a key request')
-            return
-        }
+    private async onKeySolicitation(
+        event: KeySolicitation,
+        fromUserId: string,
+        streamId: string,
+        eventHash: string,
+    ) {
         // todo: allow for sending key requests for multiple sessionIds at once
-        const { streamId, sessionId, knownSessionIds } = clear_content.payload.value
+        const { sessionId, knownSessionIds, senderKey } = event
 
+        // don't process key solicitations from our device
+        if (senderKey == this.client.olmDevice.deviceCurve25519Key) {
+            console.log('CDE::onKeySolicitation: request from our own device, skipping.')
+            return
+        }
+
+        // todo: support multiple stream types not just channel streams
         const stream = this.client.streams.get(streamId)
         if (!stream) {
             console.error('CDE::onKeyRequest - no stream found for streamId', { streamId })
@@ -748,18 +710,50 @@ export class RiverDecryptionExtension {
 
         if (senderKey === this.client.olmDevice.deviceCurve25519Key) {
             // todo: in production we should ignore key requests from ourself
-            console.log('CDE::onKeyRequest: request from self.')
+            console.log('CDE::onKeySolicitation: request from self.')
         }
         const requestedSessions: [streamId: string, sessionId: string][] = [[streamId, sessionId]]
-        console.log('CDE::onKeyRequest recieved', {
+        console.log('CDE::onKeySolicitation recieved', {
             spaceId,
             streamId,
             fromUserId,
             senderKey,
             sessionId,
         })
+
+        let room: Room | undefined = undefined
+        try {
+            room = this.delegate.getRoomData({
+                slug: '',
+                networkId: streamId,
+            })
+        } catch (e) {
+            // even though we are stopping looking for keys when the client shuts down,
+            // occasionally, this function debouncer will execute a last time hence
+            // this short-circuit check.
+            if ((<Error>e).message.includes('client is undefined')) {
+                console.error('CDE::_onKeySolicitation - error getting room', e)
+                return
+            }
+            // if it's something else, re-throw the exception.
+            throw new Error(`${(<Error>e).message}}`)
+        }
+        if (!room) {
+            throw new Error('CDE::_onKeySolicitation - room not found')
+        }
+        const roomMembers = room.members.filter(
+            (member) =>
+                // filter out non members of the stream
+                member.userId === fromUserId,
+        )
+        if (!roomMembers.length) {
+            console.log(`CDE::_onKeySolicitation - not a room member asking for keys`, {
+                streamId,
+                fromUserId,
+            })
+            return
+        }
         // check with the space contract to see if this user is entitled
-        // jterzis note: userId in Casablanca for now equals ethereum identitifying address
         const isEntitled = await this.delegate.isEntitled(
             spaceId,
             streamId,
@@ -768,17 +762,17 @@ export class RiverDecryptionExtension {
         )
 
         if (!isEntitled) {
-            console.warn('CDE::onKeyRequest - key sharing request from unentitled user', {
+            console.warn('CDE::onKeySolicitation - key sharing request from unentitled user', {
                 spaceId,
                 streamId,
                 from: fromUserId,
             })
             return
         }
-        // todo: check channel stream to see if this request has already been processed
-        // as evidenced by a receipt message
         if (!senderKey) {
-            console.warn('CDE::onKeyRequest - got key sharing request with no sender key found')
+            console.warn(
+                'CDE::onKeySolicitation - got key sharing request with no sender key found',
+            )
             return
         }
 
@@ -791,7 +785,9 @@ export class RiverDecryptionExtension {
         )
 
         if (!deviceInfo) {
-            console.warn('CDE::onKeyRequest - got key sharing request with no device info found')
+            console.warn(
+                'CDE::onKeySolicitation - got key sharing request with no device info found',
+            )
             return
         }
 
@@ -817,7 +813,7 @@ export class RiverDecryptionExtension {
 
         const sharedHistorySessions = await getUniqueUnknownSharedHistorySessions(streamId)
 
-        console.log('CDE::onKeyRequest requested', {
+        console.log('CDE::onKeySolicitation requested', {
             streamId,
             requestedSessions: requestedSessions?.length,
             knownSessionIds: knownSessionIds?.length,
@@ -829,7 +825,7 @@ export class RiverDecryptionExtension {
         )
 
         const allRequestedSessions = sharedHistorySessions.concat(uniqueRequestedSessions)
-        console.log('CDE::onKeyRequest all requested sessions', { allRequestedSessions })
+        console.log('CDE::onKeySolicitation all requested sessions', { allRequestedSessions })
 
         const exportedSessions: MegolmSessionData[] = []
         try {
@@ -868,7 +864,7 @@ export class RiverDecryptionExtension {
                                     )
                                 } else {
                                     console.error(
-                                        'CDE::onKeyRequest got key sharing request for wrong room',
+                                        'CDE::onKeySolicitation got key sharing request for wrong room',
                                         { streamId, fromUserId, sessionId },
                                     )
                                 }
@@ -882,7 +878,7 @@ export class RiverDecryptionExtension {
             return
         }
 
-        console.info('CDE::onKeyRequest responding to key request', {
+        console.info('CDE::onKeySolicitation responding to key request', {
             fromUserId,
             toUserId: fromUserId,
             streamId,
@@ -893,7 +889,7 @@ export class RiverDecryptionExtension {
         })
 
         if (!exportedSessions.length) {
-            console.info('CDE::onKeyRequest got key sharing request for unknown room', {
+            console.info('CDE::onKeySolicitation got key sharing request for unknown room', {
                 streamId,
             })
             const response = new ToDeviceMessage(
@@ -914,7 +910,30 @@ export class RiverDecryptionExtension {
             }),
         )
         await encryptAndRespondWith(response)
-        // todo: send receipt to channel stream
+        let fulfillment: PlainMessage<StreamEvent>['payload']
+        if (isChannelStreamId(streamId)) {
+            fulfillment = make_ChannelPayload_Fulfillment({
+                originHash: bin_fromString(eventHash),
+                sessionId: sessionId,
+                algorithm: event.algorithm,
+            })
+        } else if (isDMChannelStreamId(streamId)) {
+            fulfillment = make_DmChannelPayload_Fulfillment({
+                originHash: bin_fromString(eventHash),
+                sessionId: sessionId,
+                algorithm: event.algorithm,
+            })
+        } else if (isGDMChannelStreamId(streamId)) {
+            fulfillment = make_GdmChannelPayload_Fulfillment({
+                originHash: bin_fromString(eventHash),
+                sessionId: sessionId,
+                algorithm: event.algorithm,
+            })
+        } else {
+            throw new Error('CDE::_onKeySolicitation - unknown stream type')
+        }
+        // send fulfillment to channel stream
+        await this.client.makeEventAndAddToStream(streamId, fulfillment)
     }
 
     private async onKeyResponse(event: OlmDecryptedMessage, senderId: string) {
@@ -947,18 +966,19 @@ export class RiverDecryptionExtension {
                         console.warn('CDE::onKeyResponse - room record not found', { streamId })
                         return
                     }
-                    if (!streamRecord.requests?.[senderId]) {
-                        console.warn('CDE::onKeyResponse - no request found for sender', {
+                    if (!streamRecord.requests?.[streamId]) {
+                        console.warn('CDE::onKeyResponse - no request found for streamId', {
                             senderId,
                             streamId,
                         })
                         return
                     }
-                    streamRecord.requests[senderId].response = {
+                    streamRecord.requests[streamId].response?.push({
                         kind: clear_content.payload.value.kind,
                         sessions: responseSessions,
                         streamId,
-                    }
+                    })
+
                     // great, the sender had keys for us
                     if (responseSessions) {
                         const sessions: MegolmSession[] = []
@@ -1008,7 +1028,7 @@ export class RiverDecryptionExtension {
                         senderId,
                         streamId,
                     })
-                    this.clearKeyRequest(streamId, senderId)
+                    this.clearKeyRequest(streamId)
                 }
                 break
             default:
@@ -1018,25 +1038,18 @@ export class RiverDecryptionExtension {
         }
     }
 
-    private clearKeyRequest(channelId: string, requesteeId: string, error?: Error): void {
-        console.log('CDE:clearKeyRequest', { channelId, requesteeId, error })
-        const streamRecord = this.roomRecords[channelId]
+    private clearKeyRequest(streamId: string, error?: Error): void {
+        console.log('CDE:clearKeyRequest', { streamId, error })
+        const streamRecord = this.roomRecords[streamId]
         if (!streamRecord) {
-            console.error('CDE:clearKeyRequest - channel record not found', { channelId })
+            console.error('CDE:clearKeyRequest - channel record not found', { streamId })
             return
         }
-        if (!streamRecord.requests?.[requesteeId]) {
-            console.error('CDE:clearKeyRequest - no record for requestee')
+        if (!streamRecord.requests?.[streamId]) {
+            console.error('CDE:clearKeyRequest - no record for stream')
             return
         }
-        if (streamRecord.requestingFrom == requesteeId) {
-            clearTimeout(streamRecord.timer)
-            streamRecord.timer = undefined
-            streamRecord.requestingFrom = undefined
-        } else {
-            // ignore, probably timed out from a previous request
-            console.log('CDE:clearKeyRequest - ignoring clear request', { channelId, requesteeId })
-        }
+
         if (this.throttledStartLookingForKeys) {
             this.throttledStartLookingForKeys()
         }

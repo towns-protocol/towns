@@ -11,7 +11,6 @@ import {
 import {
     MembershipOp,
     ChannelMessage_Post,
-    ToDeviceOp,
     UserPayload,
     ChannelPayload,
     EncryptedData,
@@ -33,7 +32,7 @@ import {
     getFallbackContent,
     MiniblockHeaderEvent,
     ReactionEvent,
-    ReceiptEvent,
+    FulfillmentEvent,
     RedactionActionEvent,
     RoomCreateEvent,
     RoomMemberEvent,
@@ -45,6 +44,7 @@ import {
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
+    KeySolicitationEvent,
 } from '../../types/timeline-types'
 import { staticAssertNever } from '../../utils/zion-utils'
 import { RiverEventV2 } from '@river/sdk'
@@ -461,13 +461,22 @@ function toTownsContent_ChannelPayload(
     description: string,
 ): TownsContentResult {
     switch (value.content.case) {
-        case 'receipt': {
+        case 'fulfillment': {
             return {
                 content: {
-                    kind: ZTEvent.Receipt,
-                    originOp: ToDeviceOp[value.content.value.originOp],
+                    kind: ZTEvent.Fulfillment,
+                    sessionId: value.content.value.sessionId,
                     originEventHash: '0x' + value.content.value.originHash.toString(),
-                } satisfies ReceiptEvent,
+                } satisfies FulfillmentEvent,
+            }
+        }
+        case 'keySolicitation': {
+            return {
+                content: {
+                    kind: ZTEvent.KeySolicitation,
+                    sessionId: value.content.value.sessionId,
+                    senderKey: value.content.value.senderKey,
+                } satisfies KeySolicitationEvent,
             }
         }
         case 'inception': {
@@ -582,7 +591,7 @@ function toTownsContent_ChannelPayload_Message(
 ): TownsContentResult {
     if (isCiphertext(payload.text)) {
         console.log(
-            `$$$ useCasablancaTimelines toTownsContent_ChannelPayload_Message decryption failure`,
+            `$$$ useCasablancaTimelines toTownsContent_ChannelPayload_Message ciphertext`,
             payload.sessionId,
         )
         return {

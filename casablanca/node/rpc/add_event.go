@@ -109,6 +109,12 @@ func (s *Service) addChannelPayload(ctx context.Context, payload *StreamEvent_Ch
 
 	case *ChannelPayload_Message:
 		return s.addChannelMessage(ctx, stream, streamView, parsedEvent)
+	
+	case *ChannelPayload_KeySolicitation:
+		return s.addChannelKeySolicitation(ctx, stream, streamView, parsedEvent)
+	
+	case *ChannelPayload_Fulfillment:
+		return s.addChannelFulfillment(ctx, stream, streamView, parsedEvent)
 
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
@@ -125,6 +131,12 @@ func (s *Service) addDmChannelPayload(ctx context.Context, payload *StreamEvent_
 
 	case *DmChannelPayload_Message:
 		return s.addDMChannelMessage(ctx, stream, streamView, parsedEvent)
+	
+	case *DmChannelPayload_KeySolicitation:
+		return s.addChannelKeySolicitation(ctx, stream, streamView, parsedEvent)
+	
+	case *DmChannelPayload_Fulfillment:
+		return s.addChannelFulfillment(ctx, stream, streamView, parsedEvent)
 
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
@@ -140,6 +152,10 @@ func (s *Service) addGdmChannelPayload(ctx context.Context, payload *StreamEvent
 		return s.addGDMMembershipEvent(ctx, stream, streamView, parsedEvent, content.Membership)
 	case *GdmChannelPayload_Message:
 		return s.addGDMChannelMessage(ctx, stream, streamView, parsedEvent)
+	case *GdmChannelPayload_KeySolicitation:
+		return s.addChannelKeySolicitation(ctx, stream, streamView, parsedEvent)
+	case *GdmChannelPayload_Fulfillment:
+		return s.addChannelFulfillment(ctx, stream, streamView, parsedEvent)
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
@@ -314,6 +330,96 @@ func (s *Service) addChannelMessage(ctx context.Context, stream Stream, view Str
 		// context.Background() to avoid this issue.
 		s.notification.SendPushNotification(context.Background(), info, &view, user)
 	}
+	return nil
+}
+
+func (s *Service) addChannelKeySolicitation(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+	streamId := view.StreamId()
+	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+
+	info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, user)
+	if err != nil {
+		return err
+	}
+
+	allowed, err := s.townsContract.IsAllowed(
+		ctx,
+		auth.AuthorizationArgs{
+			StreamId:   streamId,
+			UserId:     user,
+			Permission: auth.PermissionRead,
+		},
+		info,
+	)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return RiverError(Err_PERMISSION_DENIED, "user is not allowed to write to stream", "user", user)
+	}
+
+	// check if user is a member of the channel
+	member, err := s.checkMembership(ctx, view, user)
+	if err != nil {
+		return err
+	}
+	if !member {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+	}
+
+	err = stream.AddEvent(ctx, parsedEvent)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) addChannelFulfillment(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+	streamId := view.StreamId()
+	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+
+	info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, user)
+	if err != nil {
+		return err
+	}
+
+	allowed, err := s.townsContract.IsAllowed(
+		ctx,
+		auth.AuthorizationArgs{
+			StreamId:   streamId,
+			UserId:     user,
+			Permission: auth.PermissionRead,
+		},
+		info,
+	)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return RiverError(Err_PERMISSION_DENIED, "user is not allowed to write to stream", "user", user)
+	}
+
+	// check if user is a member of the channel
+	member, err := s.checkMembership(ctx, view, user)
+	if err != nil {
+		return err
+	}
+	if !member {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+	}
+
+	err = stream.AddEvent(ctx, parsedEvent)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
