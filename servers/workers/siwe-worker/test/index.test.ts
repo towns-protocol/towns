@@ -1,18 +1,23 @@
-import { Env, worker } from '../src/index'
+import { jest } from '@jest/globals'
 import { Permission } from '@river/web3'
 
 const mockIsEntitled = jest.fn()
 
-jest.mock('@river/web3', () => {
+jest.unstable_mockModule('@river/web3', async () => {
 	return {
 		createSpaceDapp() {
 			return {
 				isEntitledToSpace: mockIsEntitled,
 			}
 		},
-		Permission: jest.requireActual('@river/web3').Permission,
+		// yes, jest sucks with esm and we can't do jest.requireActual, or import('@river/web3') from w/in the mock
+		Permission,
 	}
 })
+
+import { Env } from '../src/index'
+const workerImport = await import('../src/index')
+const worker = workerImport.worker
 
 const FAKE_SERVER_URL = 'http://localhost'
 const AUTH_TOKEN = 'Zm9v'

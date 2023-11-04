@@ -4,6 +4,7 @@
 	"version": "1.0.0",
 	"author": "author",
 	"license": "MIT OR Apache-2.0",
+	"type": "module",
 	"scripts": {
 		"dev": "echo use dev:local for now - see wrangler.toml",
 		"dev:local": "wrangler dev",

@@ -23,4 +23,5 @@ export default {
         scriptPath: './test/index.test.ts',
         modules: true,
     },
+    extensionsToTreatAsEsm: ['.ts'],
 }

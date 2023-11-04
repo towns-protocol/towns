@@ -6,6 +6,7 @@ import { createTestMocks, mockPreparedStatements } from './mock-utils'
 
 import { NotificationType } from '../src/types'
 import { handleRequest } from '../src'
+import { jest } from '@jest/globals'
 
 describe('tag-handlers', () => {
   test('/api/tag-mention-users', async () => {

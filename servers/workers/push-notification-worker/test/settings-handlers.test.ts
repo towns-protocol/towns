@@ -13,6 +13,7 @@ import {
 import { createTestMocks, mockPreparedStatements } from './mock-utils'
 
 import { handleRequest } from '../src'
+import { jest } from '@jest/globals'
 
 describe('settings-handlers', () => {
   test('PUT /api/notification-settings -> saveSettings', async () => {

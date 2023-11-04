@@ -22,4 +22,5 @@ export default {
         wranglerConfigPath: './wrangler.test.toml',
         modules: true,
     },
+    extensionsToTreatAsEsm: ['.ts'],
 }

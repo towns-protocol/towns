@@ -4,6 +4,7 @@
     "version": "1.0.0",
     "author": "john@hntlabs.com",
     "license": "MIT OR Apache-2.0",
+    "type": "module",
     "scripts": {
         "dev": "echo use dev:local for now - see wrangler.toml",
         "dev:local": "wrangler dev",
@@ -15,7 +16,7 @@
         "publish:test": "wrangler deploy --env test",
         "publish:test-beta": "wrangler deploy --env test-beta",
         "test": "yarn test:unit",
-        "test:jest": "jest --coverage",
+        "test:jest": "yarn node --experimental-vm-modules $(yarn bin jest)",
         "test:unit": "concurrently \"yarn test:jest\"",
         "test:wrangler": "concurrently --success command-1 --kill-others --kill-signal=SIGINT \"wrangler dev --local --port 8787\" \"wait-on --timeout 5000 http-get://localhost:8787/health\""
     },

@@ -7,6 +7,7 @@ import {
   createTestMocks,
   mockPreparedStatements,
 } from './mock-utils'
+import { jest } from '@jest/globals'
 
 import { MockProxy } from 'jest-mock-extended'
 import { NotificationType } from '../src/types'

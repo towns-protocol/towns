@@ -1,5 +1,7 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
+import { Caches } from 'worker-common'
 import { Env } from '.'
+declare let caches: Caches
 
 export const upsertImage = async (getUrl: URL, apiUrl: URL, request: any, env: Env) => {
     const getRequestInit = {

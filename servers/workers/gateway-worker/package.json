@@ -4,6 +4,7 @@
     "version": "1.0.0",
     "author": "john@hntlabs.com",
     "license": "MIT OR Apache-2.0",
+    "type": "module",
     "scripts": {
         "dev": "echo use dev:local for now - see wrangler.toml",
         "dev:local": "wrangler dev",
@@ -15,7 +16,7 @@
         "publish:test": "wrangler deploy --env test",
         "publish:test-beta": "wrangler deploy --env test-beta",
         "test": "yarn test:unit",
-        "test:unit": "jest"
+        "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
     },
     "dependencies": {
         "@aws-sdk/client-sns": "^3.295.0",

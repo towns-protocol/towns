@@ -144,7 +144,7 @@ router.post('/space-icon/:id', async (request: WorkerRequest, env) => {
         }
     }
 
-    const formId: string | null = formData.get('id')
+    const formId: FormDataEntryValue | null = formData.get('id')
     if ((formId as string) !== spaceId) {
         return new Response(JSON.stringify({ error: 'id mismatch' }), {
             status: 400,
@@ -200,7 +200,7 @@ router.post('/user/:id/avatar', async (request: WorkerRequest, env) => {
 
     const copyRequest: Request = request.clone()
     const formData = await copyRequest.formData()
-    const formId: string | null = formData.get('id')
+    const formId: FormDataEntryValue | null = formData.get('id')
     if ((formId as string) !== userId) {
         return new Response(JSON.stringify({ error: 'id mismatch' }), {
             status: 400,

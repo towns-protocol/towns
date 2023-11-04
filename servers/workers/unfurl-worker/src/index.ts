@@ -5,6 +5,7 @@ import {
     isOptionsRequest,
     getOptionsResponse,
     Environment,
+    Caches,
 } from 'worker-common'
 
 import { isUrl } from './utils/isUrl'
@@ -12,8 +13,7 @@ import { checkForTweetIdFromUrl, getTweet } from './twitter'
 import { TwitterUnfurl, UnfurlData } from './types'
 import { formattedUnfurlJSData } from './unfurler'
 
-// These initial Types are based on bindings that don't exist in the project yet,
-// you can follow the links to learn how to implement them.
+declare let caches: Caches
 
 export interface Env extends AuthEnv {
     ENVIRONMENT: Environment

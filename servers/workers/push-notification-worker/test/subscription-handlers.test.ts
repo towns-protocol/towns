@@ -3,6 +3,7 @@ import { createTestMocks, mockPreparedStatements } from './mock-utils'
 import { AddSubscriptionRequestParams } from '../src/request-interfaces'
 import { createFakeWebPushSubscription } from './fake-data'
 import { handleRequest } from '../src'
+import { jest } from '@jest/globals'
 
 describe('subscription-handlers', () => {
   test('/api/add-subscription', async () => {

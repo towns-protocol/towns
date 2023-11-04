@@ -1,4 +1,3 @@
-import unfurlDefaultExport, { Env, worker } from '../src/index'
 import { queryParams } from '../src/twitter'
 import { UnfurlData } from '../src/types'
 import { interceptResponseWithMock } from './interceptRequest'
@@ -8,20 +7,38 @@ import {
     imgur as imgurMock,
     noContent as noContentMock,
 } from './mocks'
-import * as unfurlJs from 'unfurl.js'
 import giphyJSON from './mocks/giphyJSON'
 import imgurJSON from './mocks/imgurJSON'
 
-jest.mock('unfurl.js')
+import { jest } from '@jest/globals'
 
-jest.mock('image-size', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            width: 100,
-            height: 100,
-        }
-    })
+jest.unstable_mockModule('unfurl.js', () => {
+    return {
+        unfurl: jest.fn().mockImplementation(() => {
+            return {
+                title: 'Linear',
+            }
+        }),
+    }
 })
+
+jest.unstable_mockModule('image-size', () => {
+    return {
+        default: () => {
+            return {
+                width: 100,
+                height: 100,
+            }
+        },
+    }
+})
+
+import { Env } from '../src/index'
+
+const unfurlJs = await import('unfurl.js')
+const unfurlImport = await import('../src/index')
+const unfurlDefaultExport = unfurlImport.default
+const worker = unfurlImport.worker
 
 const TWITTER_URL = 'https://twitter.com/twitter/status/1589417294794752000'
 const TWITTER_URL_WWW = 'https://www.twitter.com/twitter/status/1589417294794752000'
@@ -157,7 +174,7 @@ describe('unfurl handler', () => {
         const spy = jest.spyOn(unfurlJs, 'unfurl').mockReturnValueOnce(
             Promise.resolve({
                 title: 'Linear',
-            } as unknown as unfurlJs.Metadata),
+            } as any),
         )
 
         const response = await worker.fetch(
@@ -191,7 +208,7 @@ describe('unfurl handler', () => {
     test('gets giphy data', async () => {
         const spy = jest
             .spyOn(unfurlJs, 'unfurl')
-            .mockReturnValueOnce(Promise.resolve(giphyJSON as unfurlJs.Metadata))
+            .mockReturnValueOnce(Promise.resolve(giphyJSON as any))
 
         const response = await worker.fetch(
             ...generateRequest([`${GIPHY_URL.host}${GIPHY_URL.path}`]),
@@ -207,7 +224,7 @@ describe('unfurl handler', () => {
     test('gets imgur data', async () => {
         const spy = jest
             .spyOn(unfurlJs, 'unfurl')
-            .mockReturnValueOnce(Promise.resolve(imgurJSON as unknown as unfurlJs.Metadata))
+            .mockReturnValueOnce(Promise.resolve(imgurJSON as unknown as any))
 
         const response = await worker.fetch(
             ...generateRequest([`${IMGUR_URL.host}${IMGUR_URL.path}`]),
@@ -245,7 +262,7 @@ describe('unfurl handler', () => {
     test('returns content from various sources together', async () => {
         const spy = jest
             .spyOn(unfurlJs, 'unfurl')
-            .mockReturnValueOnce(Promise.resolve(giphyJSON as unfurlJs.Metadata))
+            .mockReturnValueOnce(Promise.resolve(giphyJSON as any))
 
         const response = await worker.fetch(
             ...generateRequest([`${IMGUR_URL.host}${IMGUR_URL.path}`, TWITTER_URL]),
