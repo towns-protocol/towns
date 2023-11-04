@@ -72,7 +72,7 @@ export async function createDevTown(client: ZionTestClient): Promise<RoomIdentif
             currency: ethers.constants.AddressZero,
             feeRecipient: client.walletAddress,
         },
-        permissions: [Permission.Read, Permission.Write],
+        permissions: [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
         requirements: {
             everyone: true,
             tokens: [],
