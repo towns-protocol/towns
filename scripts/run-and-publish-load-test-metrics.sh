@@ -10,6 +10,11 @@ fi
 
 pushd $LOAD_TEST_PATH
     yarn run test:load:all
+    
+    # Save the exit code of the test, so we can exit with it at the end,
+    # but still post load test durations if available
+    
+    LOAD_TEST_EXIT_CODE=$?  
 
     METRICS_FILE_PATH="loadtestMetrics.json"
 
@@ -34,3 +39,5 @@ pushd $LOAD_TEST_PATH
 
     echo "Metrics sent to Datadog"
 popd
+
+exit $LOAD_TEST_EXIT_CODE
