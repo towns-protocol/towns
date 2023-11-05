@@ -13,7 +13,7 @@ import {Validator__InvalidStringLength, Validator__InvalidByteLength, Validator_
 import {TownOwnerSetup} from "./TownOwnerSetup.sol";
 
 contract TownOwnerTest is ITownOwnerBase, IOwnableBase, TownOwnerSetup {
-  string name = "Town Name";
+  string name = "Awesome Town";
   string uri = "ipfs://town-name";
   string networkId = "1";
 
@@ -23,7 +23,7 @@ contract TownOwnerTest is ITownOwnerBase, IOwnableBase, TownOwnerSetup {
     address owner = _randomAddress();
 
     vm.prank(deployer);
-    uint256 tokenId = townOwner.mintTown(name, "", networkId, townAddress);
+    uint256 tokenId = townOwner.mintTown(name, uri, networkId, townAddress);
 
     vm.prank(deployer);
     IGuardian(diamond).disableGuardian();

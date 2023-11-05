@@ -12,7 +12,6 @@ import {Migration} from "../common/Migration.s.sol";
 
 import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
 import {TownOwnerHelper} from "contracts/test/towns/owner/TownOwnerSetup.sol";
-import {TownOwnerInit} from "contracts/src/towns/facets/owner/TownOwnerInit.sol";
 
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {VotesHelper} from "contracts/test/governance/votes/VotesSetup.sol";
@@ -27,39 +26,21 @@ contract MigrateTownOwner is Migration {
 
     vm.startBroadcast(deployerPK);
     address townOwner = address(new TownOwner());
-    address townOwnerInit = address(new TownOwnerInit());
     vm.stopBroadcast();
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](3);
+    townOwnerHelper.addSelectors(erc721aHelper.selectors());
+    townOwnerHelper.addSelectors(votesHelper.selectors());
+
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
 
     cuts[0] = IDiamond.FacetCut({
-      facetAddress: townOwner,
-      action: IDiamond.FacetCutAction.Add,
-      functionSelectors: votesHelper.selectors()
-    });
-
-    cuts[1] = IDiamond.FacetCut({
-      facetAddress: townOwner,
-      action: IDiamond.FacetCutAction.Replace,
-      functionSelectors: erc721aHelper.selectors()
-    });
-
-    cuts[2] = IDiamond.FacetCut({
       facetAddress: townOwner,
       action: IDiamond.FacetCutAction.Replace,
       functionSelectors: townOwnerHelper.selectors()
     });
 
     vm.startBroadcast(deployerPK);
-    IDiamondCut(diamond).diamondCut(
-      cuts,
-      townOwnerInit,
-      abi.encodeWithSelector(
-        TownOwnerInit.__TownOwnerInit_init.selector,
-        "TownOwner",
-        "1"
-      )
-    );
+    IDiamondCut(diamond).diamondCut(cuts, address(0), "");
     vm.stopBroadcast();
   }
 }

@@ -28,3 +28,6 @@
 	path = lib/prb-test
 	url = https://github.com/PaulRBerg/prb-test
 	branch = release-v0
+[submodule "lib/base64"]
+	path = lib/base64
+	url = https://github.com/Brechtpd/base64

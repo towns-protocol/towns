@@ -9,3 +9,4 @@ openzeppelin-contracts/=lib/openzeppelin-contracts/
 operator-filter-registry/=lib/operator-filter-registry/
 @openzeppelin/=lib/openzeppelin-contracts/
 @prb/test/=lib/prb-test/src/
+base64-sol/=lib/base64

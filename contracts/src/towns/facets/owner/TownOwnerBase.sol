@@ -46,6 +46,7 @@ abstract contract TownOwnerBase is ITownOwnerBase {
 
     TownOwnerStorage.Layout storage ds = TownOwnerStorage.layout();
 
+    ds.townByTokenId[tokenId] = townAddress;
     ds.townByAddress[townAddress] = Town({
       name: name,
       uri: uri,

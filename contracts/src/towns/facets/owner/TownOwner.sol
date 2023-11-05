@@ -13,10 +13,12 @@ import {TownOwnerBase} from "./TownOwnerBase.sol";
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 import {GuardianBase} from "contracts/src/towns/facets/guardian/GuardianBase.sol";
 import {VotesBase} from "contracts/src/diamond/facets/governance/votes/VotesBase.sol";
+import {TownOwnerUriBase} from "./uri/TownOwnerUriBase.sol";
 
 contract TownOwner is
   ITownOwner,
   TownOwnerBase,
+  TownOwnerUriBase,
   OwnableBase,
   GuardianBase,
   VotesBase,
@@ -92,6 +94,14 @@ contract TownOwner is
     }
 
     super.setApprovalForAll(operator, approved);
+  }
+
+  function tokenURI(
+    uint256 tokenId
+  ) public view virtual override returns (string memory) {
+    if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
+
+    return _render(tokenId);
   }
 
   function _beforeTokenTransfers(
