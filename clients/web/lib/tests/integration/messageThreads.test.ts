@@ -13,7 +13,6 @@ import { Permission } from '@river/web3'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
-import { RoomVisibility } from '../../src/types/zion-types'
 
 describe('messageThreads', () => {
     test('send a threaded message', async () => {
@@ -32,7 +31,6 @@ describe('messageThreads', () => {
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         }))!
 

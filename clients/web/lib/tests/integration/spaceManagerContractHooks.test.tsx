@@ -12,7 +12,6 @@ import {
     RegisterWallet,
     TransactionInfo,
 } from 'use-zion-client/tests/integration/helpers/TestComponents'
-import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from 'use-zion-client/tests/integration/helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from 'use-zion-client/tests/integration/helpers/ZionTestWeb3Provider'
@@ -52,7 +51,6 @@ describe('spaceManagerContractHooks', () => {
                     await createSpaceTransactionWithRole(
                         {
                             name: spaceName,
-                            visibility: RoomVisibility.Public,
                         },
                         createMembershipStruct({
                             name: 'Test Role',
@@ -78,7 +76,6 @@ describe('spaceManagerContractHooks', () => {
                     await createSpaceTransactionWithRole(
                         {
                             name: tokenGatedSpaceName,
-                            visibility: RoomVisibility.Public,
                         },
                         createMembershipStruct({
                             name: 'Zion Role',

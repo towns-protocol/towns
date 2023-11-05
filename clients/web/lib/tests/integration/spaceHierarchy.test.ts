@@ -13,7 +13,6 @@ import {
 
 import { Permission } from '@river/web3'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 import { toSpaceHierarchy } from '../../src/hooks/ZionContext/useCasablancaSpaceHierarchies'
@@ -37,7 +36,6 @@ describe('spaceHierarchy', () => {
         const roomId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })) as RoomIdentifier
 
@@ -73,7 +71,6 @@ describe('spaceHierarchy', () => {
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('bobs space'),
-                visibility: RoomVisibility.Private,
             },
         )) as RoomIdentifier
 
@@ -81,7 +78,6 @@ describe('spaceHierarchy', () => {
         const roomId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })) as RoomIdentifier
 

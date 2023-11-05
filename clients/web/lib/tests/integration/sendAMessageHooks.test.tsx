@@ -7,7 +7,7 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import { Membership, RoomVisibility } from '../../src/types/zion-types'
+import { Membership } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import React, { useCallback, useMemo } from 'react'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
@@ -49,7 +49,6 @@ describe('sendMessageHooks', () => {
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('janes space'),
-                visibility: RoomVisibility.Public,
             },
         )) as RoomIdentifier
         // create a space
@@ -59,7 +58,6 @@ describe('sendMessageHooks', () => {
             janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
                 name: 'janes channel',
                 parentSpaceId: janesSpaceId,
-                visibility: RoomVisibility.Public,
                 roleIds: [],
             })) as RoomIdentifier
         }

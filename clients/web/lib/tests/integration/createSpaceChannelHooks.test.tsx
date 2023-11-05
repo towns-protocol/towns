@@ -12,7 +12,7 @@ import { useSpaceData } from '../../src/hooks/use-space-data'
 import { useMyChannels } from '../../src/hooks/use-my-channels'
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
-import { CreateChannelInfo, RoomVisibility } from '../../src/types/zion-types'
+import { CreateChannelInfo } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
@@ -44,7 +44,6 @@ describe('createSpaceChannelHooks', () => {
                     const result = await createSpaceTransactionWithRole(
                         {
                             name: name,
-                            visibility: RoomVisibility.Public,
                         },
                         createMembershipStruct({
                             name: 'Test Role',
@@ -65,7 +64,6 @@ describe('createSpaceChannelHooks', () => {
                 void (async () => {
                     const createRoomInfo: CreateChannelInfo = {
                         name,
-                        visibility: RoomVisibility.Public,
                         parentSpaceId,
                         roleIds: [],
                     }

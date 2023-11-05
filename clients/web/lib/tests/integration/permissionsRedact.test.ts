@@ -9,7 +9,6 @@ import {
     waitForWithRetries,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { RoomVisibility } from '../../src/types/zion-types'
 import { ZTEvent } from '../../src/types/timeline-types'
 import { waitFor } from '@testing-library/dom'
 import { getFilteredRolesFromSpace, Permission } from '@river/web3'
@@ -34,7 +33,6 @@ describe.skip('redact messages', () => {
         const channelId = await alice.createChannel(
             {
                 name: 'test channel',
-                visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
                 roleIds: [roles[0].roleId],
             },
@@ -87,7 +85,6 @@ describe.skip('redact messages', () => {
         const channelId = await alice.createChannel(
             {
                 name: 'test channel',
-                visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
                 roleIds: [roles[0].roleId],
             },
@@ -163,7 +160,6 @@ describe.skip('redact messages', () => {
         const channelId = await alice.createChannel(
             {
                 name: 'test channel',
-                visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
                 // add the space role and the moderator role to the channel
                 roleIds: [roles[0].roleId, moderatorRoleId.roleId],

@@ -4,7 +4,6 @@
 /**
  * @group casablanca
  */
-import { RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import React, { useCallback } from 'react'
 import {
@@ -47,7 +46,6 @@ describe('mentionsHooks', () => {
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })) as RoomIdentifier
         expect(spaceId).toBeDefined()

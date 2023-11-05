@@ -2,7 +2,6 @@
 /**
  * @group casablanca
  */
-import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     createTestChannelWithSpaceRoles,
@@ -38,7 +37,6 @@ describe('channel with roles and permissions', () => {
         // create a channel with the same roles and permissions as the space
         const channelId = (await createTestChannelWithSpaceRoles(alice, {
             name: 'alice channel',
-            visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
             roleIds: [],
         })) as RoomIdentifier
@@ -68,7 +66,6 @@ describe('channel with roles and permissions', () => {
         // create a channel with the same roles and permissions as the space
         const channelId = (await createTestChannelWithSpaceRoles(alice, {
             name: 'alice channel',
-            visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
             roleIds: [],
         })) as RoomIdentifier
@@ -110,7 +107,6 @@ describe('channel with roles and permissions', () => {
 
         const channelId = (await createTestChannelWithSpaceRoles(alice, {
             name: 'alice channel',
-            visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
             roleIds: [roleIdentifier.roleId],
         })) as RoomIdentifier

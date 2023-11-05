@@ -1,7 +1,6 @@
 import {
     Permission,
     RoomIdentifier,
-    RoomVisibility,
     SignerUndefinedError,
     TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
@@ -165,7 +164,6 @@ export const CreateChannelForm = (props: Props) => {
             onSubmit={async ({ name, roleIds }) => {
                 const channelInfo = {
                     name: name,
-                    visibility: RoomVisibility.Public,
                     parentSpaceId: props.spaceId,
                     roleIds: roleIds.map((roleId) => Number(roleId)),
                 }

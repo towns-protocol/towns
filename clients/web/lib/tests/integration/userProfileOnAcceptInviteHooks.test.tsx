@@ -2,7 +2,7 @@
 /**
  * @group dendrite
  */
-import { Membership, RoomVisibility } from '../../src/types/zion-types'
+import { Membership } from '../../src/types/zion-types'
 import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
@@ -76,7 +76,6 @@ describe('userProfileOnAcceptInviteHooks', () => {
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Private,
             },
         )) as RoomIdentifier
         // bob invites alice to the room

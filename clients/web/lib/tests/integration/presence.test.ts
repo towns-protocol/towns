@@ -9,7 +9,6 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 import { Permission } from '@river/web3'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { waitFor } from '@testing-library/dom'
 
 describe('presence', () => {
@@ -25,14 +24,12 @@ describe('presence', () => {
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Public,
             },
         ))!
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         }))!
 

@@ -15,7 +15,6 @@ import {
 import { Permission } from '@river/web3'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { FullyReadMarker } from '@river/proto'
 
 // we store fully read markers in the room account data
@@ -36,7 +35,6 @@ describe('roomAccountData', () => {
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         }))!
 

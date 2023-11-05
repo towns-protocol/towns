@@ -1,11 +1,7 @@
 /**
  * @group dendrite
  */
-import {
-    CreateChannelInfo,
-    RoomVisibility,
-    UpdateChannelInfo,
-} from 'use-zion-client/src/types/zion-types'
+import { CreateChannelInfo, UpdateChannelInfo } from 'use-zion-client/src/types/zion-types'
 import React, { useCallback, useMemo } from 'react'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -186,7 +182,6 @@ function TestComponent(args: {
             await createSpaceTransactionWithRole(
                 {
                     name: args.spaceName,
-                    visibility: RoomVisibility.Public,
                 },
                 createMembershipStruct({
                     name: args.spaceRoleName,
@@ -209,7 +204,6 @@ function TestComponent(args: {
             if (spaceId) {
                 const createRoomInfo: CreateChannelInfo = {
                     name: args.channelName,
-                    visibility: RoomVisibility.Public,
                     parentSpaceId: spaceId,
                     roleIds,
                     topic: args.channelTopic,

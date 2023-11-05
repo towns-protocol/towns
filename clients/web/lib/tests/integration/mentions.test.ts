@@ -4,7 +4,6 @@
  */
 import { waitFor } from '@testing-library/dom'
 import { Permission } from '@river/web3'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
@@ -25,14 +24,12 @@ describe('mentions', () => {
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Public,
             },
         ))!
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         }))!
 

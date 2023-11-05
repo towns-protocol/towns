@@ -2,7 +2,7 @@
 /**
  * @group casablanca
  */
-import { CreateChannelInfo, RoomVisibility } from 'use-zion-client/src/types/zion-types'
+import { CreateChannelInfo } from 'use-zion-client/src/types/zion-types'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
@@ -142,7 +142,6 @@ describe('useCreateChannelTransactionHook', () => {
                     await createSpaceTransactionWithRole(
                         {
                             name: spaceName,
-                            visibility: RoomVisibility.Public,
                         },
                         createMembershipStruct({
                             name: 'Test Role',
@@ -164,7 +163,6 @@ describe('useCreateChannelTransactionHook', () => {
                 const handleClick = async (parentSpaceId: RoomIdentifier) => {
                     const createRoomInfo: CreateChannelInfo = {
                         name: channelName,
-                        visibility: RoomVisibility.Public,
                         parentSpaceId,
                         roleIds,
                     }

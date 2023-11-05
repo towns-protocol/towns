@@ -31,7 +31,6 @@ import {
     MessageType,
     Room,
     RoomMember,
-    RoomVisibility,
     SendMessageOptions,
     SendTextMessageOptions,
     UpdateChannelInfo,
@@ -384,7 +383,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
     ): Promise<RoomIdentifier> {
         const channelInfo: CreateChannelInfo = {
             name: channelName ?? 'general',
-            visibility: RoomVisibility.Public,
             parentSpaceId,
             roleIds: [],
         }

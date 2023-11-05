@@ -7,7 +7,6 @@ import {
 
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { getAccountAddress } from '../../src/types/user-identifier'
 import { createExternalTokenStruct, getMemberNftAddress, Permission } from '@river/web3'
@@ -90,7 +89,6 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const channelId = (await alice.createChannel(
             {
                 name: `aliceChannel${Date.now()}`,
-                visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
                 roleIds: [roleId.roleId],
             },
@@ -128,7 +126,6 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const channelId = (await alice.createChannel(
             {
                 name: `aliceChannel${Date.now()}`,
-                visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
                 roleIds: [roleId.roleId],
             },
@@ -233,7 +230,6 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const channelId = (await alice.createChannel(
             {
                 name: `aliceChannel${Date.now()}`,
-                visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
                 roleIds: [roleId.roleId],
             },
@@ -281,7 +277,6 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const channelId = (await alice.createChannel(
             {
                 name: `aliceChannel${Date.now()}`,
-                visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
                 roleIds: [roleId.roleId],
             },

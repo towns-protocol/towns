@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { ITownArchitectBase, Permission } from '@river/web3'
-import { RoomVisibility } from '../src/types/zion-types'
 import { RoomIdentifier } from '../src/types/room-identifier'
 import ethers from 'ethers'
 import { ZionTestClient } from '../tests/integration/helpers/ZionTestClient'
@@ -84,7 +83,6 @@ export async function createDevTown(client: ZionTestClient): Promise<RoomIdentif
     return client.createSpace(
         {
             name: `Dev Town - ${monthAndDay}`,
-            visibility: RoomVisibility.Public,
         },
         membershipInfo,
     )

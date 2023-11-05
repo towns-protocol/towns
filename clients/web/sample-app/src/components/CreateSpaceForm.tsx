@@ -1,24 +1,10 @@
-import {
-    Box,
-    Button,
-    Chip,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    Paper,
-    Select,
-    SelectChangeEvent,
-    TextField,
-    Theme,
-    Typography,
-} from '@mui/material'
+import { Box, Button, Chip, Paper, TextField, Theme, Typography } from '@mui/material'
 import { Address, useBalance, useNetwork } from 'wagmi'
 import { foundry, hardhat, localhost } from 'wagmi/chains'
 import {
     CreateSpaceInfo,
     Membership,
     RoomIdentifier,
-    RoomVisibility,
     TransactionStatus,
     useCasablancaStore,
     useCreateSpaceTransaction,
@@ -42,7 +28,6 @@ type FormValues = {
     price: number
     limit: number
     membershipRequirement: MembershipRequirement
-    visibility: RoomVisibility
 }
 
 export const CreateSpaceForm = (props: Props) => {
@@ -58,7 +43,6 @@ export const CreateSpaceForm = (props: Props) => {
         price: 0,
         limit: 1000,
         membershipRequirement: MembershipRequirement.Everyone,
-        visibility: RoomVisibility.Public,
     })
 
     function updateFormValue<P extends keyof FormValues>(property: P, value: FormValues[P]) {
@@ -82,10 +66,6 @@ export const CreateSpaceForm = (props: Props) => {
 
     function updateMembershipRequirement(membershipRequirement: MembershipRequirement) {
         updateFormValue('membershipRequirement', membershipRequirement)
-    }
-
-    function updateVisibility(event: SelectChangeEvent<RoomVisibility>) {
-        updateFormValue('visibility', event.target.value as RoomVisibility)
     }
 
     const {
@@ -142,7 +122,6 @@ export const CreateSpaceForm = (props: Props) => {
 
         const createSpaceInfo: CreateSpaceInfo = {
             name: formValue.spaceName,
-            visibility: formValue.visibility,
         }
         if (!signer) {
             console.error('Cannot create space. No signer.')
@@ -263,31 +242,6 @@ export const CreateSpaceForm = (props: Props) => {
                         defaultValue={formValue.limit}
                         onChange={updateLimit}
                     />
-                </Box>
-
-                <Box
-                    display="grid"
-                    alignItems="center"
-                    gridTemplateColumns="repeat(2, 1fr)"
-                    marginTop="20px"
-                >
-                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
-                        Visibility:
-                    </Typography>
-                    <Box minWidth="120px">
-                        <FormControl fullWidth>
-                            <InputLabel id="visibility-select-label" />
-                            <Select
-                                labelId="visibility-select-label"
-                                id="visibility-select"
-                                value={formValue.visibility}
-                                onChange={updateVisibility}
-                            >
-                                <MenuItem value={RoomVisibility.Public}>public</MenuItem>
-                                <MenuItem value={RoomVisibility.Private}>private</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Box>
                 </Box>
                 <Box
                     display="grid"

@@ -15,7 +15,6 @@ import { useMyProfile } from '../../src/hooks/use-my-profile'
 import { Permission } from '@river/web3'
 import React, { useCallback, useEffect } from 'react'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -39,14 +38,12 @@ describe('useSpaceDataHook', () => {
             [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
             {
                 name: makeUniqueName('bobs space'),
-                visibility: RoomVisibility.Public,
             },
         )) as RoomIdentifier
         // and a channel
         await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })
 

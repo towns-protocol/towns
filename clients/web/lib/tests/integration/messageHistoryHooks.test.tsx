@@ -2,7 +2,7 @@
 /**
  * @group casablanca
  */
-import { Membership, RoomVisibility } from '../../src/types/zion-types'
+import { Membership } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import React, { useCallback } from 'react'
 import {
@@ -45,7 +45,6 @@ describe('messageHistoryHooks', () => {
             const channelId = (await createTestChannelWithSpaceRoles(bob, {
                 name: 'bobs channel',
                 parentSpaceId: spaceId,
-                visibility: RoomVisibility.Public,
                 roleIds: [],
                 streamSettings: { miniblockTimeMs: 1000n, minEventsPerSnapshot: 5 },
             })) as RoomIdentifier

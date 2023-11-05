@@ -2,7 +2,7 @@
 /**
  * @group dendrite
  */
-import { Membership, RoomMember, RoomVisibility } from '../../src/types/zion-types'
+import { Membership, RoomMember } from '../../src/types/zion-types'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
@@ -45,14 +45,12 @@ describe('userProfileHooks', () => {
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('alices space'),
-                visibility: RoomVisibility.Public,
             },
         )) as RoomIdentifier
         //
         const alicesChannelId = (await createTestChannelWithSpaceRoles(alice, {
             name: 'alices channel',
             parentSpaceId: alicesSpaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })) as RoomIdentifier
         // create a veiw for bob

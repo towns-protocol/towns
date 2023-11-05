@@ -1,19 +1,8 @@
-import {
-    Box,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    Select,
-    SelectChangeEvent,
-    TextField,
-    Theme,
-    Typography,
-} from '@mui/material'
+import { Box, TextField, Theme, Typography } from '@mui/material'
 import {
     CreateChannelInfo,
     Membership,
     RoomIdentifier,
-    RoomVisibility,
     TransactionStatus,
     useCreateChannelTransaction,
     useRoles,
@@ -32,7 +21,6 @@ interface Props {
 
 export function CreateChannelForm(props: Props): JSX.Element {
     const [channelName, setChannelName] = useState<string>('')
-    const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Private)
     const [roles, setRoles] = useState<RolesSettings>({})
     const { spaceRoles } = useRoles(props.parentSpaceId.networkId)
     const { onClick, parentSpaceId } = props
@@ -51,10 +39,6 @@ export function CreateChannelForm(props: Props): JSX.Element {
         setChannelName(event.target.value)
     }, [])
 
-    const onChangeVisibility = useCallback((event: SelectChangeEvent) => {
-        setVisibility(event.target.value as RoomVisibility)
-    }, [])
-
     const onChangeRoles = useCallback((roles: RolesSettings) => {
         setRoles(roles)
     }, [])
@@ -62,7 +46,6 @@ export function CreateChannelForm(props: Props): JSX.Element {
     const onClickCreateChannel = useAsyncButtonCallback(async () => {
         const createRoomInfo: CreateChannelInfo = {
             name: channelName,
-            visibility,
             parentSpaceId: parentSpaceId,
             roleIds: [],
         }
@@ -78,7 +61,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
         }
 
         await createChannelTransaction(createRoomInfo)
-    }, [createChannelTransaction, onClick, parentSpaceId, channelName, visibility])
+    }, [createChannelTransaction, onClick, parentSpaceId, channelName])
 
     useEffect(() => {
         if (transactionStatus === TransactionStatus.Success && roomId) {
@@ -123,30 +106,6 @@ export function CreateChannelForm(props: Props): JSX.Element {
                         variant="filled"
                         onChange={onChangeChannelName}
                     />
-                </Box>
-                <Box
-                    display="grid"
-                    alignItems="center"
-                    gridTemplateColumns="repeat(2, 1fr)"
-                    marginTop="20px"
-                >
-                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
-                        Visibility:
-                    </Typography>
-                    <Box minWidth="120px">
-                        <FormControl fullWidth>
-                            <InputLabel id="visibility-select-label" />
-                            <Select
-                                labelId="visibility-select-label"
-                                id="visibility-select"
-                                value={visibility}
-                                onChange={onChangeVisibility}
-                            >
-                                <MenuItem value={RoomVisibility.Public}>public</MenuItem>
-                                <MenuItem value={RoomVisibility.Private}>private</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Box>
                 </Box>
                 <Box
                     display="grid"

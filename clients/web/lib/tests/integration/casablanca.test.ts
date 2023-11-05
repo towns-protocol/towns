@@ -10,7 +10,6 @@ import {
 } from '@river/sdk'
 import { bin_fromHexString, SignerContext } from '@river/sdk'
 import { ethers } from 'ethers'
-import { RoomVisibility } from '../../src/types/zion-types'
 import {
     RoomMessageEncryptedEvent,
     RoomMessageEvent,
@@ -60,7 +59,6 @@ describe('casablanca', () => {
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Public,
             },
         ))!
 
@@ -68,7 +66,6 @@ describe('casablanca', () => {
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         }))!
 
@@ -100,7 +97,6 @@ describe('casablanca', () => {
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Public,
             },
         ))!
 
@@ -108,7 +104,6 @@ describe('casablanca', () => {
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         }))!
 
@@ -155,7 +150,6 @@ describe('casablanca', () => {
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Public,
             },
         ))!
 
@@ -163,7 +157,6 @@ describe('casablanca', () => {
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         }))!
 

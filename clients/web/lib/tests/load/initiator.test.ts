@@ -14,7 +14,6 @@ import {
 import { waitFor } from '@testing-library/react'
 
 import { Permission } from '@river/web3'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 
 import { numberOfMessagesConfig, numClientsConfig, connectionOptions } from './loadconfig'
@@ -41,7 +40,6 @@ describe('loadtest1', () => {
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Public,
             },
         ))!
 
@@ -49,7 +47,6 @@ describe('loadtest1', () => {
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })) as RoomIdentifier
 

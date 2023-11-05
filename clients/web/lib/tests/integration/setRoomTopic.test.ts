@@ -8,7 +8,6 @@ import {
 } from './helpers/TestUtils'
 
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { getFilteredRolesFromSpace, Permission } from '@river/web3'
 
@@ -51,7 +50,6 @@ describe('On-chain channel creation tests', () => {
         const channel = (await alice.createChannel(
             {
                 name: 'test_channel',
-                visibility: RoomVisibility.Public,
                 parentSpaceId: roomId,
                 roleIds,
             },

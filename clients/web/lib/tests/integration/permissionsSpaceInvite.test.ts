@@ -12,7 +12,7 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from '@river/web3'
-import { Room, RoomVisibility } from 'use-zion-client/src/types/zion-types'
+import { Room } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestClient } from './helpers/ZionTestClient'
 import { RoomIdentifier } from '../../src/types/room-identifier'
@@ -232,7 +232,6 @@ describe('space invite', () => {
         // create a space with everyone entitlement
         const spaceId = await createTestSpaceGatedByTownNft(bob, [Permission.Read], {
             name: 'test',
-            visibility: RoomVisibility.Public,
         })
 
         // invite users to join the space.
@@ -285,13 +284,11 @@ describe('space invite', () => {
         // create a space with everyone entitlement
         const spaceId = await createTestSpaceGatedByTownNft(bob, [Permission.Read], {
             name: 'test',
-            visibility: RoomVisibility.Public,
         })
 
         // create a channel with the same roles and permissions as the space
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'alice channel',
-            visibility: RoomVisibility.Public,
             parentSpaceId: spaceId as RoomIdentifier,
             roleIds: [],
         })

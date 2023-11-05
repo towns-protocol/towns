@@ -5,7 +5,6 @@
  */
 import { waitFor } from '@testing-library/react'
 import { Permission } from '@river/web3'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import {
     createTestChannelWithSpaceRoles,
@@ -29,7 +28,6 @@ describe('historyVisibility', () => {
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('bobsroom'),
-                visibility: RoomVisibility.Public,
             },
         )
 
@@ -40,7 +38,6 @@ describe('historyVisibility', () => {
         const roomId = await createTestChannelWithSpaceRoles(bob, {
             parentSpaceId: spaceId,
             name: 'bobs channel',
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })
 

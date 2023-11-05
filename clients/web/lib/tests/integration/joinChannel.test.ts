@@ -7,7 +7,6 @@ import {
 
 import { Permission, createExternalTokenStruct, getMemberNftAddress } from '@river/web3'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { RoleIdentifier } from '../../src/types/web3-types'
 
@@ -42,7 +41,6 @@ test('create a public space and a public room, and have user join', async () => 
     const channelId = await bob.createChannel(
         {
             name: 'test_channel',
-            visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
             roleIds: [roleIdentifier.roleId],
         },

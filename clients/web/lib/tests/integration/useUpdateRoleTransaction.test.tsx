@@ -9,7 +9,6 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 
 import { BigNumber } from 'ethers'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
-import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
@@ -179,7 +178,6 @@ function TestComponent(args: {
             await createSpaceTransactionWithRole(
                 {
                     name: args.spaceName,
-                    visibility: RoomVisibility.Public,
                 },
                 createMembershipStruct({
                     name: args.roleName,

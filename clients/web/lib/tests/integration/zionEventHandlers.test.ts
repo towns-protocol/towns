@@ -8,8 +8,6 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { RoomVisibility } from '../../src/types/zion-types'
-
 import { waitFor } from '@testing-library/dom'
 import { sleep } from '../../src/utils/zion-utils'
 import {
@@ -40,7 +38,6 @@ describe('Zion event handlers test', () => {
         await alice.fundWallet()
         const createSpaceInfo = {
             name: alice.makeUniqueName(),
-            visibility: RoomVisibility.Public,
         }
         const memberNftAddress = getMemberNftAddress(alice.chainId)
         if (!memberNftAddress) {
@@ -99,7 +96,6 @@ describe('Zion event handlers test', () => {
             [Permission.Read, Permission.Write],
             {
                 name: alice.makeUniqueName(),
-                visibility: RoomVisibility.Public,
             },
         )
 
@@ -148,7 +144,6 @@ describe('Zion event handlers test', () => {
             [Permission.Read, Permission.Write],
             {
                 name: alice.makeUniqueName(),
-                visibility: RoomVisibility.Private,
             },
         )
 
@@ -159,7 +154,6 @@ describe('Zion event handlers test', () => {
         const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: alice.makeUniqueName(),
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Private,
             roleIds: [],
         })
 
@@ -252,7 +246,6 @@ describe('Zion event handlers test', () => {
             [Permission.Read, Permission.Write],
             {
                 name: alice.makeUniqueName(),
-                visibility: RoomVisibility.Private,
             },
         )
 
@@ -263,7 +256,6 @@ describe('Zion event handlers test', () => {
         const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: alice.makeUniqueName(),
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Private,
             roleIds: [],
         })
 

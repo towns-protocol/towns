@@ -9,7 +9,7 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useZionClient } from '../../src/hooks/use-zion-client'
-import { Membership, RoomVisibility } from '../../src/types/zion-types'
+import { Membership } from '../../src/types/zion-types'
 import { TimelineEvent } from '../../src/types/timeline-types'
 import { LoginWithWallet, RegisterAndJoinSpace } from './helpers/TestComponents'
 import {
@@ -36,13 +36,11 @@ describe('encryptionDecrypt', () => {
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('janes_space'),
-                visibility: RoomVisibility.Public,
             },
         ))!
         //
         const janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
             name: 'janes_channel',
-            visibility: RoomVisibility.Public,
             parentSpaceId: janesSpaceId,
             roleIds: [],
         }))!

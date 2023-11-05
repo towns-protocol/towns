@@ -2,7 +2,7 @@
 /**
  * @group dendrite
  */
-import { Membership, RoomVisibility, SpaceItem } from '../../src/types/zion-types'
+import { Membership, SpaceItem } from '../../src/types/zion-types'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
@@ -40,7 +40,6 @@ describe.skip('inviteToSpace', () => {
             [Permission.Read, Permission.Write],
             {
                 name: janes_space_1,
-                visibility: RoomVisibility.Private,
             },
         )) as RoomIdentifier
         // create a second space
@@ -50,13 +49,11 @@ describe.skip('inviteToSpace', () => {
             [Permission.Read, Permission.Write],
             {
                 name: janes_space_2,
-                visibility: RoomVisibility.Private,
             },
         )) as RoomIdentifier
         // and channel
         const janesChannelId_2 = (await createTestChannelWithSpaceRoles(jane, {
             name: 'janes_channel',
-            visibility: RoomVisibility.Private,
             parentSpaceId: janesSpaceId_2,
             roleIds: [],
         })) as RoomIdentifier

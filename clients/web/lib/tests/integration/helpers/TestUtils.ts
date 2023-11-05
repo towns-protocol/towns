@@ -1,8 +1,4 @@
-import {
-    CreateChannelInfo,
-    CreateSpaceInfo,
-    RoomVisibility,
-} from 'use-zion-client/src/types/zion-types'
+import { CreateChannelInfo, CreateSpaceInfo } from 'use-zion-client/src/types/zion-types'
 import { BigNumber, Wallet, ethers } from 'ethers'
 import { ZionTestClient, ZionTestClientProps } from './ZionTestClient'
 
@@ -143,7 +139,6 @@ export async function createTestSpaceGatedByTownAndZionNfts(
     if (!createSpaceInfo) {
         createSpaceInfo = {
             name: client.makeUniqueName(),
-            visibility: RoomVisibility.Public,
         }
     }
 
@@ -188,7 +183,6 @@ export async function createTestSpaceGatedByTownNft(
     if (!createSpaceInfo) {
         createSpaceInfo = {
             name: client.makeUniqueName(),
-            visibility: RoomVisibility.Public,
         }
     }
 

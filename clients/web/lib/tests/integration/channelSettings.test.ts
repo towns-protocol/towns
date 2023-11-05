@@ -8,7 +8,6 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { RoleIdentifier } from '../../src/types/web3-types'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { createExternalTokenStruct, Permission, RoleEntitlements } from '@river/web3'
 
 describe('channel settings', () => {
@@ -71,7 +70,6 @@ describe('channel settings', () => {
         const channelId = await alice.createChannel(
             {
                 name: channelName,
-                visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
                 roleIds: [memberRoleDetails.id, moderatorRoleId],
                 topic: channelTopic,

@@ -9,7 +9,6 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 
-import { RoomVisibility } from '../../src/types/zion-types'
 import { waitFor } from '@testing-library/dom'
 import { RoomMessageEvent } from '../../src/types/timeline-types'
 import { Permission } from '@river/web3'
@@ -27,14 +26,12 @@ describe('editMessage', () => {
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Public,
             },
         ))!
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         }))!
 

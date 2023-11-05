@@ -2,7 +2,6 @@
 /**
  * @group casablanca
  */
-import { RoomVisibility } from '../../src/types/zion-types'
 import React, { useCallback } from 'react'
 import { RoomMessageEvent, TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
@@ -43,7 +42,6 @@ describe('unreadMessageCountEdgeCases', () => {
         const channelId = (await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })) as RoomIdentifier
 

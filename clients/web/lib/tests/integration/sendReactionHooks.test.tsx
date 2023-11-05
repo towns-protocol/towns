@@ -7,7 +7,7 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import { Membership, RoomVisibility } from '../../src/types/zion-types'
+import { Membership } from '../../src/types/zion-types'
 import React, { useCallback } from 'react'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
@@ -49,14 +49,12 @@ describe('sendReactionHooks', () => {
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('janes space'),
-                visibility: RoomVisibility.Public,
             },
         )) as RoomIdentifier
         //
         const janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: janesSpaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })) as RoomIdentifier
         // create a veiw for bob

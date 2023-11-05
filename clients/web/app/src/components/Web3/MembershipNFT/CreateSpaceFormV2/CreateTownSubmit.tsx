@@ -3,7 +3,6 @@ import { UseFormReturn } from 'react-hook-form'
 import {
     CreateSpaceInfo,
     Permission,
-    RoomVisibility,
     makeRoomIdentifier,
     useCreateSpaceTransaction,
     useWeb3Context,
@@ -114,7 +113,6 @@ export function CreateTownSubmit({
 
                 const createSpaceInfo: CreateSpaceInfo = {
                     name: spaceName ?? '',
-                    visibility: RoomVisibility.Public,
                 }
                 if (!signer) {
                     console.error('Cannot create space. No signer.')

@@ -12,7 +12,6 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '@river/web3'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { waitFor } from '@testing-library/dom'
 import { RoomMessageEvent } from '../../src/types/timeline-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
@@ -32,14 +31,12 @@ describe('sendThreadedMessage', () => {
             [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
             {
                 name: makeUniqueName('bobs space'),
-                visibility: RoomVisibility.Public,
             },
         )) as RoomIdentifier
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         }))!
 

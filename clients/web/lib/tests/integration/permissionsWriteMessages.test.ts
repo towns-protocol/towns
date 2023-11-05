@@ -14,7 +14,6 @@ import {
 import { Permission, createExternalTokenStruct, getMemberNftAddress } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
-import { RoomVisibility } from '../../src/types/zion-types'
 
 describe('write messages', () => {
     test('Channel member cant write messages without permission', async () => {
@@ -73,7 +72,6 @@ describe('write messages', () => {
         const roomId = await createTestChannelWithSpaceRoles(bob, {
             name: 'main channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })
 
@@ -133,7 +131,6 @@ describe('write messages', () => {
         const roomId = await createTestChannelWithSpaceRoles(bob, {
             name: 'main channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })
 
@@ -185,7 +182,6 @@ describe('write messages', () => {
         const roomId = await createTestChannelWithSpaceRoles(bob, {
             name: 'main channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })
 

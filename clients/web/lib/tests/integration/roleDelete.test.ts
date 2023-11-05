@@ -3,7 +3,7 @@
  * @group casablanca
  */
 import { MAXTRIX_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
-import { Room, RoomVisibility } from '../../src/types/zion-types'
+import { Room } from '../../src/types/zion-types'
 import {
     createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClient,
@@ -68,7 +68,6 @@ describe('delete role', () => {
         const channel = await alice.createChannel(
             {
                 name: 'test_channel',
-                visibility: RoomVisibility.Public,
                 parentSpaceId: roomId,
                 roleIds: [roleId],
             },
@@ -191,7 +190,6 @@ describe('delete role', () => {
         const channel = await alice.createChannel(
             {
                 name: 'test_channel',
-                visibility: RoomVisibility.Public,
                 parentSpaceId: roomId,
                 roleIds: [roleId],
             },

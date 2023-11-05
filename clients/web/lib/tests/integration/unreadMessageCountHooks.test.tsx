@@ -2,7 +2,7 @@
 /**
  * @group casablanca
  */
-import { Membership, RoomVisibility } from '../../src/types/zion-types'
+import { Membership } from '../../src/types/zion-types'
 import React, { useCallback } from 'react'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
@@ -44,7 +44,6 @@ describe('unreadMessageCountHooks', () => {
         const janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: janesSpaceId,
-            visibility: RoomVisibility.Private,
             roleIds: [],
         })) as RoomIdentifier
         // send 20 messages to the space after we make the channel
@@ -220,7 +219,6 @@ describe('unreadMessageCountHooks', () => {
         const newRoomId = await jane.createChannel(
             {
                 name: 'janes channel',
-                visibility: RoomVisibility.Private,
                 parentSpaceId: janesSpaceId,
                 roleIds: [],
             },

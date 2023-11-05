@@ -4,11 +4,6 @@ import { RoomIdentifier } from './room-identifier'
 import { StreamSettings } from '@river/proto'
 import { Stream } from '@river/sdk'
 
-export enum RoomVisibility {
-    Private = 'private',
-    Public = 'public',
-}
-
 export enum Membership {
     Join = 'join',
     Invite = 'invite',
@@ -122,7 +117,6 @@ export interface UserIdToMember {
 
 export interface CreateSpaceInfo {
     name: string
-    visibility: RoomVisibility
     spaceMetadata?: string
     disableEncryption?: boolean
     defaultChannelName?: string
@@ -130,7 +124,6 @@ export interface CreateSpaceInfo {
 
 export interface CreateChannelInfo {
     name: string
-    visibility: RoomVisibility
     parentSpaceId: RoomIdentifier
     historyVisibility?: HistoryVisibility
     roleIds: number[]

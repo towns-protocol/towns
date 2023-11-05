@@ -18,7 +18,6 @@ import {
 
 import { Permission } from '@river/web3'
 import { ReactionEvent, RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
-import { RoomVisibility } from '../../src/types/zion-types'
 
 describe('sendReaction', () => {
     // test:
@@ -33,14 +32,12 @@ describe('sendReaction', () => {
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Public,
             },
         ))!
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         }))!
 

@@ -2,7 +2,7 @@
  * @group dendrite
  */
 import { MAXTRIX_ERROR, MatrixError, NoThrownError, getError } from './helpers/ErrorUtils'
-import { Room, RoomVisibility } from '../../src/types/zion-types'
+import { Room } from '../../src/types/zion-types'
 import {
     createTestSpaceGatedByTownAndZionNfts,
     findRoleByName,
@@ -38,7 +38,6 @@ describe.skip('channel update', () => {
         const channelId = await alice.createChannel(
             {
                 name: channelName,
-                visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
                 roleIds: [roleDetails.id],
             },
@@ -128,7 +127,6 @@ describe.skip('channel update', () => {
         const channelId = await alice.createChannel(
             {
                 name: channelName,
-                visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
                 roleIds: [memberRole.id],
             },

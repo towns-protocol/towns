@@ -6,7 +6,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
-import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
@@ -145,7 +144,6 @@ function TestComponentMultiple(args: {
             await createSpaceTransactionWithRole(
                 {
                     name: args.spaceNames[0],
-                    visibility: RoomVisibility.Public,
                 },
                 createMembershipStruct({
                     name: args.roleName[0],
@@ -157,7 +155,6 @@ function TestComponentMultiple(args: {
             await createSpaceTransactionWithRole(
                 {
                     name: args.spaceNames[1],
-                    visibility: RoomVisibility.Public,
                 },
                 createMembershipStruct({
                     name: args.roleName[1],

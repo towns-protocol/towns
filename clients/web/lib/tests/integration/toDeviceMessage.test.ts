@@ -5,7 +5,6 @@
 import { waitFor } from '@testing-library/dom'
 import { MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from '@river/web3'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
 import { OLM_ALGORITHM, make_ToDevice_KeyRequest } from '@river/sdk'
 import { setTimeout } from 'timers/promises'
@@ -21,7 +20,6 @@ describe('toDeviceMessage', () => {
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Public,
             },
         ))!
 

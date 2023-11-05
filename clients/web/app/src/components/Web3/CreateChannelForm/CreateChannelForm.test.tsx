@@ -257,7 +257,6 @@ describe('CreateChannelForm', () => {
                     slug: '',
                 },
                 roleIds: [7, 8],
-                visibility: 'public',
             })
         })
     })

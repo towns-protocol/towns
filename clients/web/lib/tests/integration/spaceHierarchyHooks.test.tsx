@@ -15,7 +15,6 @@ import { LoginStatus } from '../../src/hooks/login'
 import { Permission } from '@river/web3'
 import React from 'react'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -38,14 +37,12 @@ describe('spaceHierarchyHooks', () => {
             [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
             {
                 name: makeUniqueName('bobs space'),
-                visibility: RoomVisibility.Public,
             },
         )) as RoomIdentifier
         // and a channel
         await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })
         // set the space child prop on the room to 0 so that anyone can make channels
@@ -101,7 +98,6 @@ describe('spaceHierarchyHooks', () => {
         await createTestChannelWithSpaceRoles(alice, {
             name: 'alices channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })
         await waitFor(

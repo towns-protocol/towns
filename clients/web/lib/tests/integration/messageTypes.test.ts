@@ -5,7 +5,6 @@
 import {
     ImageMessageContent,
     MessageType,
-    RoomVisibility,
     SendImageMessageOptions,
 } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
@@ -36,14 +35,12 @@ describe('messageTypes', () => {
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('bobs room'),
-                visibility: RoomVisibility.Public,
             },
         )) as RoomIdentifier
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         }))!
 
@@ -96,14 +93,12 @@ describe('messageTypes', () => {
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('bobs room'),
-                visibility: RoomVisibility.Public,
             },
         )) as RoomIdentifier
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         }))!
 

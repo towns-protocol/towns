@@ -9,7 +9,6 @@ import React, { useCallback, useEffect } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
-import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
@@ -106,7 +105,6 @@ function TestComponent(args: { originalSpaceName: string; newSpaceName: string }
             await createSpaceTransactionWithRole(
                 {
                     name: args.originalSpaceName,
-                    visibility: RoomVisibility.Public,
                 },
                 createMembershipStruct({
                     name: 'Test Role',

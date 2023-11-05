@@ -14,7 +14,6 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '@river/web3'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
 import { RiverEventV2, getStreamPayloadCase } from '@river/sdk'
@@ -39,14 +38,12 @@ describe('sendAMessage', () => {
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Public,
             },
         ))!
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })) as RoomIdentifier
 

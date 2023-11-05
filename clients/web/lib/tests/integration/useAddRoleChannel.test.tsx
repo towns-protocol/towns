@@ -8,7 +8,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { BigNumber } from 'ethers'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
-import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
@@ -184,7 +183,6 @@ function TestComponent(args: {
             await createSpaceTransactionWithRole(
                 {
                     name: args.spaceName,
-                    visibility: RoomVisibility.Public,
                 },
                 createMembershipStruct({
                     name: args.roleName,
@@ -207,7 +205,6 @@ function TestComponent(args: {
             if (spaceId) {
                 await createChannelTransaction({
                     name: args.channelName,
-                    visibility: RoomVisibility.Public,
                     parentSpaceId: spaceId,
                     roleIds: [],
                 })

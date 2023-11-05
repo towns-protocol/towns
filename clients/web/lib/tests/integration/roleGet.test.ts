@@ -11,7 +11,6 @@ import {
 
 import { BigNumber } from 'ethers'
 import { RoleIdentifier } from '../../src/types/web3-types'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import {
     createExternalTokenStruct,
@@ -91,7 +90,6 @@ describe('get role details', () => {
         const channel = await alice.createChannel(
             {
                 name: channelName,
-                visibility: RoomVisibility.Public,
                 parentSpaceId: roomId,
                 roleIds: [roleIdentifier.roleId],
             },

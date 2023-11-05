@@ -6,7 +6,6 @@ import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helper
 
 import { Permission } from '@river/web3'
 import { waitFor } from '@testing-library/dom'
-import { RoomVisibility } from '../../src/types/zion-types'
 
 describe('inviteUser', () => {
     // test:
@@ -21,7 +20,6 @@ describe('inviteUser', () => {
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Public,
             },
         ))!
         // bob invites alice to the room

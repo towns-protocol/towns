@@ -21,7 +21,6 @@ import {
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { RegisterAndJoin } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
@@ -69,20 +68,17 @@ describe('sendThreadedMessageHooks', () => {
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('janes space'),
-                visibility: RoomVisibility.Public,
             },
         )) as RoomIdentifier
         // create channels
         const channel_1 = (await createTestChannelWithSpaceRoles(jane, {
             name: 'channel_1',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })) as RoomIdentifier
         const channel_2 = (await createTestChannelWithSpaceRoles(jane, {
             name: 'channel_2',
             parentSpaceId: spaceId,
-            visibility: RoomVisibility.Public,
             roleIds: [],
         })) as RoomIdentifier
 

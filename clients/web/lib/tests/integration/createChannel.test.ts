@@ -5,7 +5,6 @@ import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import { createTestSpaceGatedByTownAndZionNfts, registerAndStartClients } from './helpers/TestUtils'
 
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { RoomVisibility } from '../../src/types/zion-types'
 import { getFilteredRolesFromSpace, Permission } from '@river/web3'
 
 describe('On-chain channel creation tests', () => {
@@ -27,7 +26,6 @@ describe('On-chain channel creation tests', () => {
             channel = await alice.createChannel(
                 {
                     name: 'test_channel',
-                    visibility: RoomVisibility.Public,
                     parentSpaceId: roomId,
                     roleIds: [],
                 },
@@ -60,7 +58,6 @@ describe('On-chain channel creation tests', () => {
         const channel = (await alice.createChannel(
             {
                 name: 'test_channel',
-                visibility: RoomVisibility.Public,
                 parentSpaceId: roomId,
                 roleIds,
             },
@@ -96,7 +93,6 @@ describe('On-chain channel creation tests', () => {
             await alice.createChannel(
                 {
                     name: 'test_channel',
-                    visibility: RoomVisibility.Public,
                     parentSpaceId: roomId,
                     roleIds,
                 },
