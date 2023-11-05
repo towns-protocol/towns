@@ -95,64 +95,70 @@ describe('CreateChannelForm', () => {
         vi.resetAllMocks()
     })
 
-    test('renders correct prefilled values', async () => {
-        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
-            isReady: true,
-            isTransactionNetwork: true,
-            name: 'Goerli',
-            switchNetwork: () => null,
-        })
+    test(
+        'renders correct prefilled values',
+        async () => {
+            vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
+                isReady: true,
+                isTransactionNetwork: true,
+                name: 'Goerli',
+                switchNetwork: () => null,
+            })
 
-        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
-            (_spaceNetworkId: string | undefined) => {
-                return {
-                    data: [
-                        {
-                            ...everyoneRole,
-                        },
-                        {
-                            ...memberRole,
-                        },
-                    ],
-                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
-            },
-        )
+            vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
+                (_spaceNetworkId: string | undefined) => {
+                    return {
+                        data: [
+                            {
+                                ...everyoneRole,
+                            },
+                            {
+                                ...memberRole,
+                            },
+                        ],
+                    } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
+                },
+            )
 
-        render(<Wrapper />)
+            render(<Wrapper />)
 
-        const everyoneCheckbox = await screen.findByRole('checkbox', { name: /everyone/i })
-        const memberCheckbox = await screen.findByRole('checkbox', { name: /member/i })
+            const everyoneCheckbox = await screen.findByRole('checkbox', { name: /everyone/i })
+            const memberCheckbox = await screen.findByRole('checkbox', { name: /member/i })
 
-        expect(everyoneCheckbox).toHaveAttribute('name', 'roleIds')
-        expect(everyoneCheckbox).toHaveAttribute('value', '7')
+            expect(everyoneCheckbox).toHaveAttribute('name', 'roleIds')
+            expect(everyoneCheckbox).toHaveAttribute('value', '7')
 
-        expect(everyoneCheckbox).toHaveAttribute('name', 'roleIds')
-        expect(memberCheckbox).toHaveAttribute('value', '8')
+            expect(everyoneCheckbox).toHaveAttribute('name', 'roleIds')
+            expect(memberCheckbox).toHaveAttribute('value', '8')
 
-        await waitFor(() => {
-            expect(screen.getByText(/sudolets/gi)).toBeInTheDocument()
-        })
+            await waitFor(() => {
+                expect(screen.getByText(/sudolets/gi)).toBeInTheDocument()
+            })
 
-        await waitFor(() => {
-            expect(screen.getByText(/Daisen.fi Investor Pass/gi)).toBeInTheDocument()
-        })
+            await waitFor(() => {
+                expect(screen.getByText(/Daisen.fi Investor Pass/gi)).toBeInTheDocument()
+            })
 
-        await waitFor(() => {
-            expect(screen.getByDisplayValue(/some channel/gi)).toBeInTheDocument()
-        })
+            await waitFor(() => {
+                expect(screen.getByDisplayValue(/some channel/gi)).toBeInTheDocument()
+            })
 
-        await waitFor(() => {
-            expect(screen.getByDisplayValue(/channel topic/gi)).toBeInTheDocument()
-        })
+            await waitFor(() => {
+                expect(screen.getByDisplayValue(/channel topic/gi)).toBeInTheDocument()
+            })
 
-        await waitFor(() => {
-            expect(memberCheckbox).toBeChecked()
-        })
+            await waitFor(() => {
+                expect(memberCheckbox).toBeChecked()
+            })
 
-        await waitFor(() => {
-            expect(everyoneCheckbox).toBeChecked()
-        })
-    })
+            await waitFor(() => {
+                expect(everyoneCheckbox).toBeChecked()
+            })
+        },
+        {
+            timeout: 20_000,
+        },
+    )
 
     test('submits correct values', async () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({

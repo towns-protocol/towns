@@ -17,7 +17,7 @@ import {
     RoleDetails,
     BasicRoleInfo,
     EntitlementModuleType,
-} from './ContractTypes'
+} from '../ContractTypes'
 import { SpaceInfo } from '../SpaceInfo'
 import { createTokenEntitlementStruct, createUserEntitlementStruct } from './ConvertersEntitlements'
 
@@ -134,7 +134,7 @@ export class SpaceDapp implements ISpaceDapp {
     public async getChannelDetails(
         spaceId: string,
         channelId: string,
-    ): Promise<ChannelDetails | null> {
+    ): Promise<ChannelDetails<'v4'> | null> {
         const town = await this.getTown(spaceId)
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
@@ -150,7 +150,7 @@ export class SpaceDapp implements ISpaceDapp {
         return town.getPermissionsByRoleId(roleId)
     }
 
-    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails | null> {
+    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails<'v4'> | null> {
         const town = await this.getTown(spaceId)
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)

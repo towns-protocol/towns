@@ -11,7 +11,7 @@ import {
     isStringArray,
     isTokenEntitlement,
     isUserEntitlement,
-} from './ContractTypes'
+} from '../ContractTypes'
 import { IChannelShim } from './IChannelShim'
 import { IRolesShim } from './IRolesShim'
 import { ITownOwnerShim } from './ITownOwnerShim'
@@ -24,13 +24,13 @@ import { OwnableFacetShim } from './OwnableFacetShim'
 import { TokenPausableFacetShim } from './TokenPausableFacetShim'
 import { UNKNOWN_ERROR } from './BaseContractShim'
 import { UserEntitlementShim } from './UserEntitlementShim'
-import { isRoleIdInArray } from './ContractHelpers'
+import { isRoleIdInArray } from '../ContractHelpers'
 import { toPermissions } from './ConvertersRoles'
 import { IMembershipShim } from './IMembershipShim'
 import { Address, PublicClient } from 'viem'
 
 interface AddressToEntitlement {
-    [address: Address]: EntitlementShim
+    [address: Address]: EntitlementShim<'v4'>
 }
 
 interface TownConstructorArgs {
@@ -124,7 +124,7 @@ export class Town {
         })
     }
 
-    public async getRole(roleId: bigint): Promise<RoleDetails | null> {
+    public async getRole(roleId: bigint): Promise<RoleDetails<'v4'> | null> {
         // get all the entitlements for the town
         const entitlementShims = await this.getEntitlementShims()
         // get the various pieces of details
@@ -146,7 +146,7 @@ export class Town {
         }
     }
 
-    public async getChannel(channelId: string): Promise<ChannelDetails | null> {
+    public async getChannel(channelId: string): Promise<ChannelDetails<'v4'> | null> {
         // get most of the channel details except the roles which
         // require a separate call to get each role's details
         const channelInfo = await this.Channels.read({
@@ -198,21 +198,21 @@ export class Town {
 
     private async getChannelRoleEntitlements(
         channelInfo: IChannelBase['ChannelStructOutput'],
-    ): Promise<RoleEntitlements[]> {
+    ): Promise<RoleEntitlements<'v4'>[]> {
         // get all the entitlements for the town
         const entitlementShims = await this.getEntitlementShims()
-        const getRoleEntitlementsAsync: Promise<RoleEntitlements | null>[] = []
+        const getRoleEntitlementsAsync: Promise<RoleEntitlements<'v4'> | null>[] = []
         for (const roleId of channelInfo.roleIds) {
             getRoleEntitlementsAsync.push(this.getRoleEntitlements(entitlementShims, roleId))
         }
         // get all the role info
         const allRoleEntitlements = await Promise.all(getRoleEntitlementsAsync)
-        return allRoleEntitlements.filter((r) => r !== null) as RoleEntitlements[]
+        return allRoleEntitlements.filter((r) => r !== null) as RoleEntitlements<'v4'>[]
     }
 
     public async findEntitlementByType(
         entitlementType: EntitlementModuleType,
-    ): Promise<EntitlementShim | null> {
+    ): Promise<EntitlementShim<'v4'> | null> {
         const entitlements = await this.getEntitlementShims()
         for (const entitlement of entitlements) {
             if (entitlement.moduleType === entitlementType) {
@@ -247,7 +247,7 @@ export class Town {
         return err
     }
 
-    private async getEntitlementByAddress(address: Address): Promise<EntitlementShim> {
+    private async getEntitlementByAddress(address: Address): Promise<EntitlementShim<'v4'>> {
         if (!this.addressToEntitlement[address]) {
             const entitlement = await this.entitlements.read({
                 functionName: 'getEntitlement',
@@ -290,12 +290,12 @@ export class Town {
         }
     }
 
-    public async getEntitlementShims(): Promise<EntitlementShim[]> {
+    public async getEntitlementShims(): Promise<EntitlementShim<'v4'>[]> {
         // get all the entitlement addresses supported in the town
         const entitlementInfo = await this.entitlements.read({
             functionName: 'getEntitlements',
         })
-        const getEntitlementShims: Promise<EntitlementShim>[] = []
+        const getEntitlementShims: Promise<EntitlementShim<'v4'>>[] = []
         // with the addresses, get the entitlement shims
         for (const info of entitlementInfo) {
             getEntitlementShims.push(this.getEntitlementByAddress(info.moduleAddress))
@@ -304,9 +304,9 @@ export class Town {
     }
 
     private async getEntitlementDetails(
-        entitlementShims: EntitlementShim[],
+        entitlementShims: EntitlementShim<'v4'>[],
         roleId: bigint,
-    ): Promise<EntitlementDetails> {
+    ): Promise<EntitlementDetails<'v4'>> {
         let tokens: TokenEntitlementDataTypes['ExternalTokenStruct'][] = []
         let users: string[] = []
         // with the shims, get the role details for each entitlement
@@ -314,15 +314,15 @@ export class Town {
             TokenEntitlementDataTypes['ExternalTokenStruct'][] | string[]
         >[] = []
         for (const entitlement of entitlementShims) {
-            if (isTokenEntitlement(entitlement)) {
+            if (isTokenEntitlement<'v4'>(entitlement)) {
                 getEntitlements.push(entitlement.getRoleEntitlement(roleId))
-            } else if (isUserEntitlement(entitlement)) {
+            } else if (isUserEntitlement<'v4'>(entitlement)) {
                 getEntitlements.push(entitlement.getRoleEntitlement(roleId))
             }
         }
         const entitlements = await Promise.all(getEntitlements)
         for (const entitlment of entitlements) {
-            if (isExternalTokenStructArray(entitlment)) {
+            if (isExternalTokenStructArray<'v4'>(entitlment)) {
                 tokens = tokens.concat(entitlment)
             } else if (isStringArray(entitlment)) {
                 users = users.concat(entitlment)
@@ -341,8 +341,7 @@ export class Town {
         // for each channel, check with each entitlement if the role is in the channel
         // add the channel to the list if it is not already added
         for (const c of allChannels) {
-            // TODO: EVAN don't pass an empty array, just doing this so types compile
-            if (!channelMetadatas.has(c.id) && isRoleIdInArray([], roleId)) {
+            if (!channelMetadatas.has(c.id) && isRoleIdInArray(c.roleIds, roleId)) {
                 channelMetadatas.set(c.id, {
                     channelNetworkId: c.id,
                     name: c.metadata,
@@ -374,9 +373,9 @@ export class Town {
     }
 
     private async getRoleEntitlements(
-        entitlementShims: EntitlementShim[],
+        entitlementShims: EntitlementShim<'v4'>[],
         roleId: bigint,
-    ): Promise<RoleEntitlements | null> {
+    ): Promise<RoleEntitlements<'v4'> | null> {
         const [roleInfo, entitlementDetails] = await Promise.all([
             this.getRoleInfo(roleId),
             this.getEntitlementDetails(entitlementShims, roleId),

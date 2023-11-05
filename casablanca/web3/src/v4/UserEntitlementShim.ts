@@ -2,7 +2,7 @@ import LocalhostAbi from '@towns/generated/localhost/v3/abis/UserEntitlement.abi
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/UserEntitlement.abi'
 
 import { decodeUsers } from './ConvertersEntitlements'
-import { EntitlementModuleType, EntitlementModule } from './ContractTypes'
+import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
 import { Address, Hex, PublicClient } from 'viem'
 import { BaseContractShim } from './BaseContractShim'
 

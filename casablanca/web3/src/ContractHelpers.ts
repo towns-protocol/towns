@@ -1,22 +1,41 @@
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 
 import { BasicRoleInfo, Permission } from './ContractTypes'
-import { MockERC721AShim } from './v3/MockERC721AShim'
-import { TokenEntitlementDataTypes } from './v3/TokenEntitlementShim'
 import { getContractsInfo } from './IStaticContractsInfo'
 import { ISpaceDapp } from './ISpaceDapp'
-import { IMembershipBase, ITownArchitectBase } from './v3/ITownArchitectShim'
+import { Address, PublicClient, WalletClient, zeroAddress } from 'viem'
+import {
+    ITownArchitectBase as ITownArchitectBaseV3,
+    MockERC721AShim as MockERC721AShimV3,
+    TokenEntitlementDataTypes,
+    IMembershipBase as IMembershipBaseV3,
+} from './v3'
+import {
+    SpaceDappTransaction,
+    MockERC721AShim as MockERC721AShimV4,
+    ITownArchitectBase as ITownArchitectBaseV4,
+} from './v4'
+import { isEthersProvider } from './Utils'
 
 export function mintMockNFT(
     chainId: number,
-    provider: ethers.providers.Provider,
-    fromWallet: ethers.Wallet,
-    toAddress: string,
-): Promise<ethers.ContractTransaction> {
+    provider: ethers.providers.Provider | PublicClient,
+    fromWallet: ethers.Wallet | WalletClient,
+    toAddress: string | Address,
+): Promise<ethers.ContractTransaction | SpaceDappTransaction> {
     if (chainId === 31337) {
         const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
-        const mockNFT = new MockERC721AShim(mockNFTAddress, chainId, provider)
-        return mockNFT.write(fromWallet).mintTo(toAddress)
+        if (isEthersProvider(provider)) {
+            const mockNFT = new MockERC721AShimV3(mockNFTAddress, chainId, provider)
+            return mockNFT.write(fromWallet as ethers.Wallet).mintTo(toAddress)
+        } else {
+            const mockNFT = new MockERC721AShimV4(mockNFTAddress, chainId, provider)
+            return mockNFT.write({
+                functionName: 'mintTo',
+                args: [toAddress as Address],
+                wallet: fromWallet as WalletClient,
+            })
+        }
     }
     throw new Error(`Unsupported chainId ${chainId}, only 31337 is supported.`)
 }
@@ -37,51 +56,6 @@ export function getPioneerNftAddress(chainId: number): string {
     return contractInfo.pioneerTokenAddress
 }
 
-export function createExternalTokenStruct(
-    tokenAddresses: string[],
-): TokenEntitlementDataTypes.ExternalTokenStruct[] {
-    const tokenStruct: TokenEntitlementDataTypes.ExternalTokenStruct[] = tokenAddresses.map(
-        (address) => ({
-            contractAddress: address,
-            isSingleToken: false,
-            quantity: 1,
-            tokenIds: [],
-        }),
-    )
-    return tokenStruct
-}
-
-//
-export function createMembershipStruct({
-    name,
-    permissions,
-    tokenAddresses,
-}: {
-    permissions: Permission[]
-    tokenAddresses: string[]
-} & Omit<
-    IMembershipBase.MembershipInfoStruct,
-    'symbol' | 'price' | 'limit' | 'duration' | 'currency' | 'feeRecipient'
->): ITownArchitectBase.MembershipStruct {
-    return {
-        settings: {
-            name,
-            symbol: 'MEMBER',
-            price: 0,
-            limit: 1000,
-            duration: 0,
-            currency: ethers.constants.AddressZero,
-            feeRecipient: ethers.constants.AddressZero,
-        },
-        permissions,
-        requirements: {
-            everyone: tokenAddresses.length === 0,
-            tokens: createExternalTokenStruct(tokenAddresses),
-            users: [],
-        },
-    }
-}
-
 export async function getFilteredRolesFromSpace(
     spaceDapp: ISpaceDapp,
     spaceNetworkId: string,
@@ -98,11 +72,119 @@ export async function getFilteredRolesFromSpace(
     return filteredRoles
 }
 
-export function isRoleIdInArray(roleIds: BigNumber[], roleId: BigNumberish): boolean {
-    for (const r of roleIds) {
-        if (r.eq(roleId)) {
-            return true
+export function isRoleIdInArray(
+    roleIds: BigNumber[] | readonly bigint[],
+    roleId: BigNumberish | bigint,
+    version = 'v3',
+): boolean {
+    if (version === 'v3') {
+        for (const r of roleIds as BigNumber[]) {
+            if (r.eq(roleId)) {
+                return true
+            }
+        }
+    } else {
+        for (const r of roleIds) {
+            if (r === roleId) {
+                return true
+            }
         }
     }
+
     return false
+}
+
+/**
+ * TODO: these are only used in tests, should move them to different file?
+ */
+
+function isMembershipStructV3(
+    returnValue: ITownArchitectBaseV3.MembershipStruct | ITownArchitectBaseV4['MembershipStruct'],
+): returnValue is ITownArchitectBaseV3.MembershipStruct {
+    return typeof returnValue.settings.price === 'number'
+}
+
+type CreateMembershipStructArgs = {
+    name: string
+    permissions: Permission[]
+    tokenAddresses: string[]
+    version?: 'v3' | 'v4'
+} & (
+    | Omit<
+          IMembershipBaseV3.MembershipInfoStruct,
+          'symbol' | 'price' | 'limit' | 'duration' | 'currency' | 'feeRecipient'
+      >
+    | Omit<
+          ITownArchitectBaseV4['MembershipInfoStruct'],
+          'symbol' | 'price' | 'limit' | 'duration' | 'currency' | 'feeRecipient'
+      >
+)
+function _createMembershipStruct({
+    name,
+    permissions,
+    tokenAddresses,
+    version = 'v3',
+}: CreateMembershipStructArgs):
+    | ITownArchitectBaseV3.MembershipStruct
+    | ITownArchitectBaseV4['MembershipStruct'] {
+    if (version === 'v3') {
+        return {
+            settings: {
+                name,
+                symbol: 'MEMBER',
+                price: 0,
+                limit: 1000,
+                duration: 0,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: ethers.constants.AddressZero,
+            },
+            permissions,
+            requirements: {
+                everyone: tokenAddresses.length === 0,
+                tokens: createExternalTokenStruct(tokenAddresses),
+                users: [],
+            },
+        }
+    } else {
+        return {
+            settings: {
+                name,
+                symbol: 'MEMBER',
+                price: BigInt(0),
+                limit: BigInt(1000),
+                duration: BigInt(0),
+                currency: zeroAddress,
+                feeRecipient: zeroAddress,
+            },
+            permissions,
+            requirements: {
+                everyone: tokenAddresses.length === 0,
+                tokens: createExternalTokenStruct(tokenAddresses),
+                users: [],
+            },
+        }
+    }
+}
+
+export function createMembershipStruct(args: CreateMembershipStructArgs) {
+    const result = _createMembershipStruct(args)
+    if (isMembershipStructV3(result)) {
+        return result
+    } else {
+        throw new Error("createMembershipStruct: version is not 'v3'")
+    }
+}
+
+export function createExternalTokenStruct(
+    tokenAddresses: string[],
+): TokenEntitlementDataTypes.ExternalTokenStruct[] {
+    const tokenStruct: TokenEntitlementDataTypes.ExternalTokenStruct[] = tokenAddresses.map(
+        (address) => ({
+            contractAddress: address,
+            isSingleToken: false,
+            quantity: 1,
+            tokenIds: [],
+        }),
+    )
+    return tokenStruct
 }

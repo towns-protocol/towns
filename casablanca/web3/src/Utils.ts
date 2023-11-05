@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 import { getContractsInfo } from './IStaticContractsInfo'
 import { MockERC721AShim } from './v3/MockERC721AShim'
+import { PublicClient } from 'viem'
 
 export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
@@ -66,4 +67,15 @@ export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
             return this.send(method, params)
         }
     }
+}
+
+export function isEthersProvider(
+    provider: ethers.providers.Provider | PublicClient,
+): provider is ethers.providers.Provider {
+    return (
+        typeof provider === 'object' &&
+        provider !== null &&
+        'getNetwork' in provider &&
+        typeof provider.getNetwork === 'function'
+    )
 }

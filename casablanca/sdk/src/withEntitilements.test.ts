@@ -2,7 +2,6 @@
  * @group with-entitilements
  */
 
-import { LocalhostWeb3Provider, ITownArchitectBase, Permission, createSpaceDapp } from '@river/web3'
 import { dlog } from './dlog'
 import { makeRandomUserContextWithOldDelegate, TEST_URL_WITH_ENTITILEMENTS } from './util.test'
 import {
@@ -15,6 +14,24 @@ import {
 import { makeStreamRpcClient } from './makeStreamRpcClient'
 import { ethers } from 'ethers'
 import { Client } from './client'
+import { jest } from '@jest/globals'
+
+// This is a temporary hack because importing viem via SpaceDapp causes a jest error
+// specifically the code in ConvertersEntitlements.ts - decodeAbiParameters and encodeAbiParameters functions have an import that can't be found
+// Need to use the new space dapp in an actual browser to see if this is a problem there too before digging in further
+jest.unstable_mockModule('viem', async () => {
+    return {
+        BaseError: class extends Error {},
+        hexToString: jest.fn(),
+        encodeFunctionData: jest.fn(),
+        decodeAbiParameters: jest.fn(),
+        encodeAbiParameters: jest.fn(),
+        parseAbiParameters: jest.fn(),
+        zeroAddress: `0x${'0'.repeat(40)}`,
+    }
+})
+
+const { LocalhostWeb3Provider, createSpaceDapp, Permission } = await import('@river/web3')
 
 const base_log = dlog('csb:test:withEntitlements')
 
@@ -49,7 +66,7 @@ describe('withEntitlements', () => {
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
         log('Bob created user, about to create space', { spaceId, channelId })
         // first on the blockchain
-        const membershipInfo: ITownArchitectBase.MembershipStruct = {
+        const membershipInfo = {
             settings: {
                 name: 'Everyone',
                 symbol: 'MEMBER',

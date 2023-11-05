@@ -4,7 +4,7 @@ import {
     ChannelMetadata,
     Permission,
     RoleDetails,
-} from './ContractTypes'
+} from '../ContractTypes'
 
 import { SpaceInfo } from '../SpaceInfo'
 
@@ -67,9 +67,9 @@ export interface ISpaceDapp {
     ): Promise<SpaceDappTransaction>
     deleteRole(spaceId: string, roleId: number, wallet: WalletClient): Promise<SpaceDappTransaction>
     getChannels: (spaceId: string) => Promise<ChannelMetadata[]>
-    getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails | null>
+    getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails<'v4'> | null>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
-    getRole: (spaceId: string, roleId: number) => Promise<RoleDetails | null>
+    getRole: (spaceId: string, roleId: number) => Promise<RoleDetails<'v4'> | null>
     getRoles: (spaceId: string) => Promise<BasicRoleInfo[]>
     getSpaceInfo: (spaceId: string) => Promise<SpaceInfo | undefined>
     isEntitledToSpace: (spaceId: string, user: Address, permission: Permission) => Promise<boolean>

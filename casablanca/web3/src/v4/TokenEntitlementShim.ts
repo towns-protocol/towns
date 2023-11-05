@@ -4,7 +4,7 @@ import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TokenEntitlement
 import { BaseContractShim } from './BaseContractShim'
 import { Address, PublicClient } from 'viem'
 import { decodeExternalTokens } from './ConvertersEntitlements'
-import { EntitlementModuleType, EntitlementModule } from './ContractTypes'
+import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
 import { TokenEntitlementDataTypes } from './types'
 
 const abis = {
