@@ -29,6 +29,8 @@ import {
 import { StreamStateView_DMChannel } from './streamStateView_DMChannel'
 
 const log = dlog('csb:streams')
+const logError = dlog('csb:streams:error')
+logError.enabled = true
 
 export class StreamStateView {
     readonly streamId: string
@@ -291,7 +293,7 @@ export class StreamStateView {
                     logNever(payload)
             }
         } catch (e) {
-            log(`Error processing event ${event.hashStr}`, e)
+            logError(`StreamStateView::Error appending event ${event.hashStr}`, e)
         }
     }
 
@@ -351,7 +353,7 @@ export class StreamStateView {
                     logNever(payload)
             }
         } catch (e) {
-            log(`Error processing event ${event.hashStr}`, e)
+            logError(`StreamStateView::Error prepending event ${event.hashStr}`, e)
         }
     }
 
