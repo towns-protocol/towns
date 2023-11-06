@@ -38,9 +38,8 @@ export function useTokensGatingMembership(spaceId: string | undefined) {
 
 // checks if user has any balances for any of the tokens assigned to the minter role
 export function useMeetsMembershipNftRequirements(spaceId: string | undefined, connected: boolean) {
-    // TODO: current invite flow requires login first, then shows the join page. That probably needs to be ported to the new join page, TBD the exact flow
-    const { loggedInWalletAddress, activeWalletAddress } = useAuth()
-    const _walletAddress = (loggedInWalletAddress ?? activeWalletAddress) as Address | undefined
+    const { loggedInWalletAddress } = useAuth()
+    const _walletAddress = loggedInWalletAddress as Address | undefined
     const { roleDetails: minterRoleDetails } = useRoleDetails(spaceId ?? '', 1)
 
     const checkUserHasToken = useCallback(async () => {
