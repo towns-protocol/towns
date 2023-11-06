@@ -5,7 +5,7 @@ import { IndexedDBCryptoStore } from './crypto/store/indexeddb-crypto-store'
 const log = dlog('csb:riverDbManager')
 
 export class RiverDbManager {
-    public getCryptoDb(userId: string): CryptoStore {
+    public static getCryptoDb(userId: string): CryptoStore {
         const name = `${userId}`
         let indexedDB: IDBFactory | undefined
         try {

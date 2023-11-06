@@ -89,7 +89,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
     public pioneerNFT: PioneerNFT
     protected casablancaClient?: CasablancaClient
     public riverDecryptionExtension?: RiverDecryptionExtension
-    private riverDbManager: RiverDbManager
     private _signerContext?: SignerContext
     protected _eventHandlers?: ZionClientEventHandlers
     private pushNotificationClient?: PushNotificationClient
@@ -98,7 +97,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
         this.opts = opts
         this.name = name || ''
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
-        this.riverDbManager = new RiverDbManager()
         this.spaceDapp = createSpaceDapp(opts.chainId, opts.web3Provider)
         this.pioneerNFT = new PioneerNFT(opts.chainId, opts.web3Provider)
         this._eventHandlers = opts.eventHandlers
@@ -199,7 +197,7 @@ export class ZionClient implements DecryptionExtensionDelegate {
         // todo jterzis 06/15/23: add client store here
         // crypto store
         const userId = userIdFromAddress(context.creatorAddress)
-        const cryptoStore = this.riverDbManager.getCryptoDb(userId)
+        const cryptoStore = RiverDbManager.getCryptoDb(userId)
         this.casablancaClient = new CasablancaClient(
             context,
             rpcClient,
