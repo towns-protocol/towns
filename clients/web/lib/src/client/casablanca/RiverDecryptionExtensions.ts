@@ -761,6 +761,7 @@ export class RiverDecryptionExtension {
                     streamId,
                     fromUserId,
                 })
+                return
             }
         } else if (isGDMChannelStreamId(streamId)) {
             const participants = stream.view.gdmChannelContent.joinedOrInvitedParticipants()
@@ -769,7 +770,14 @@ export class RiverDecryptionExtension {
                     streamId,
                     fromUserId,
                 })
+                return
             }
+        } else {
+            console.log(`CDE::_onKeySolicitation - key request for unknown stream type`, {
+                streamId,
+                fromUserId,
+            })
+            return
         }
         // check with the space contract to see if this user is entitled
         const isEntitled = await this.delegate.isEntitled(
