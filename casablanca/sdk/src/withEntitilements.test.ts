@@ -3,17 +3,9 @@
  */
 
 import { dlog } from './dlog'
-import { makeUserContextFromWallet, TEST_URL_WITH_ENTITILEMENTS } from './util.test'
-import {
-    genId,
-    makeChannelStreamId,
-    makeSpaceStreamId,
-    makeUserStreamId,
-    userIdFromAddress,
-} from './id'
-import { makeStreamRpcClient } from './makeStreamRpcClient'
+import { makeUserContextFromWallet, makeTestClient, TEST_URL_WITH_ENTITILEMENTS } from './util.test'
+import { genId, makeChannelStreamId, makeSpaceStreamId, makeUserStreamId } from './id'
 import { ethers } from 'ethers'
-import { Client } from './client'
 import { jest } from '@jest/globals'
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error
@@ -34,8 +26,6 @@ jest.unstable_mockModule('viem', async () => {
 const { LocalhostWeb3Provider, createSpaceDapp, Permission } = await import('@river/web3')
 
 const base_log = dlog('csb:test:withEntitlements')
-
-const makeStreamRpcClientWithEntitlements = () => makeStreamRpcClient(TEST_URL_WITH_ENTITILEMENTS)
 const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
 describe('withEntitlements', () => {
@@ -55,11 +45,11 @@ describe('withEntitlements', () => {
         const spaceDapp = createSpaceDapp(chainId, bobProvider)
 
         // create a user stream
-        const bob = new Client(bobsContext, makeStreamRpcClientWithEntitlements())
-        const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
-        const bobsUserStreamId = makeUserStreamId(bobsUserId)
-        await bob.createNewUser()
-        bob.startSync()
+        const bob = await makeTestClient(TEST_URL_WITH_ENTITILEMENTS, bobsContext)
+        const bobsUserStreamId = makeUserStreamId(bob.userId)
+        await expect(bob.createNewUser()).toResolve()
+        await expect(bob.initCrypto()).toResolve()
+        await bob.startSync()
 
         // create a space stream,
         const spaceId = makeSpaceStreamId('bobs-space-' + genId())
@@ -74,7 +64,7 @@ describe('withEntitlements', () => {
                 limit: 1000,
                 duration: 0,
                 currency: ETH_ADDRESS,
-                feeRecipient: bobsUserId,
+                feeRecipient: bob.userId,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {
@@ -109,7 +99,7 @@ describe('withEntitlements', () => {
         const channelProperties = 'Bobs channel properties'
         const channelReturnVal = await bob.createChannel(
             spaceId,
-            "Bob's channel",
+            'general',
             channelProperties,
             channelId,
         )
@@ -120,13 +110,16 @@ describe('withEntitlements', () => {
         expect(bobUserStreamView).toBeDefined()
         expect(bobUserStreamView.userContent.userJoinedStreams).toContain(channelId)
 
+        await expect(bob.sendMessage(channelId, 'Hello, world from Bob!')).toResolve()
+
         // join alice
         const alicesWallet = ethers.Wallet.createRandom()
         const alicesContext = await makeUserContextFromWallet(alicesWallet)
         const aliceProvider = new LocalhostWeb3Provider(alicesWallet)
         await aliceProvider.fundWallet()
-        const alice = new Client(alicesContext, makeStreamRpcClientWithEntitlements())
+        const alice = await makeTestClient(TEST_URL_WITH_ENTITILEMENTS, alicesContext)
         await alice.createNewUser()
+        await alice.initCrypto()
         alice.startSync()
         log('Alice created user, about to join space', { alicesUserId: alice.userId })
 
@@ -140,9 +133,9 @@ describe('withEntitlements', () => {
         const receipt2 = await transaction2.wait()
         log('receipt for alice joining town', receipt2)
 
-        const aliceSpaceResponse = await alice.joinStream(spaceId)
-        expect(aliceSpaceResponse).toBeDefined()
-        log('response', aliceSpaceResponse)
+        await expect(alice.joinStream(spaceId)).toResolve()
+        await expect(alice.joinStream(channelId)).toResolve()
+        await expect(alice.sendMessage(channelId, 'Hello, world from Alice!')).toResolve()
 
         // kill the clients
         bob.stopSync()
