@@ -24,6 +24,7 @@ import { useDevice } from 'hooks/useDevice'
 import { VList } from 'ui/components/VList2/VList'
 import { useThrottledValue } from 'hooks/useThrottledValue'
 import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
+import { SECOND_MS } from 'data/constants'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
@@ -52,6 +53,8 @@ type Props = {
 
 const emptyTimeline: TimelineEvent[] = []
 
+const unhandledEventKinds = [ZTEvent.MiniblockHeader, ZTEvent.Fulfillment, ZTEvent.KeySolicitation]
+
 export const MessageTimeline = (props: Props) => {
     const { groupByUser = true, displayAsSimpleList: displaySimpleList = false } = props
     const timelineContext = useContext(MessageTimelineContext)
@@ -66,8 +69,34 @@ export const MessageTimeline = (props: Props) => {
         setCollapsed(false)
     }, [])
 
+    const stableEventsRef = useRef<TimelineEvent[]>([])
+
     const _events = useMemo(() => {
-        return uniqBy(timelineContext?.events ?? emptyTimeline, (t) => t.eventId)
+        // remove unneeded events
+        const filtered = (timelineContext?.events ?? [])
+            // strip out unsolicited events (e.g. key solicitations)
+            .filter((e) => e.content?.kind && !unhandledEventKinds.includes(e.content?.kind))
+            // strip out fresh encrypted events. Optimistically we want to show
+            // the decrypted content when ready. However, the bar will appear if
+            // it takes to long.
+            .filter(
+                (e) =>
+                    e.content?.kind !== ZTEvent.RoomMessageEncrypted ||
+                    e.createdAtEpocMs < Date.now() - SECOND_MS * 30,
+            )
+
+        // remove duplicates - NOTE: this shouldn't happen - but it does
+        const result = uniqBy(filtered ?? emptyTimeline, (t) => t.eventId)
+
+        if (!result.some((t, index) => t.eventId !== stableEventsRef.current[index]?.eventId)) {
+            // no need to update to mutate and update the UI if the events are the same
+            stableEventsRef.current
+            return result
+        }
+
+        stableEventsRef.current = result
+
+        return stableEventsRef.current
     }, [timelineContext?.events])
 
     const isStartupRef = useRef(true)
