@@ -109,10 +109,10 @@ func (s *Service) addChannelPayload(ctx context.Context, payload *StreamEvent_Ch
 
 	case *ChannelPayload_Message:
 		return s.addChannelMessage(ctx, stream, streamView, parsedEvent)
-	
+
 	case *ChannelPayload_KeySolicitation:
 		return s.addChannelKeySolicitation(ctx, stream, streamView, parsedEvent)
-	
+
 	case *ChannelPayload_Fulfillment:
 		return s.addChannelFulfillment(ctx, stream, streamView, parsedEvent)
 
@@ -131,10 +131,10 @@ func (s *Service) addDmChannelPayload(ctx context.Context, payload *StreamEvent_
 
 	case *DmChannelPayload_Message:
 		return s.addDMChannelMessage(ctx, stream, streamView, parsedEvent)
-	
+
 	case *DmChannelPayload_KeySolicitation:
-		return s.addChannelKeySolicitation(ctx, stream, streamView, parsedEvent)
-	
+		return s.addDMChannelKeySolicitation(ctx, stream, streamView, parsedEvent)
+
 	case *DmChannelPayload_Fulfillment:
 		return s.addChannelFulfillment(ctx, stream, streamView, parsedEvent)
 
@@ -153,9 +153,9 @@ func (s *Service) addGdmChannelPayload(ctx context.Context, payload *StreamEvent
 	case *GdmChannelPayload_Message:
 		return s.addGDMChannelMessage(ctx, stream, streamView, parsedEvent)
 	case *GdmChannelPayload_KeySolicitation:
-		return s.addChannelKeySolicitation(ctx, stream, streamView, parsedEvent)
+		return s.addGDMChannelKeySolicitation(ctx, stream, streamView, parsedEvent)
 	case *GdmChannelPayload_Fulfillment:
-		return s.addChannelFulfillment(ctx, stream, streamView, parsedEvent)
+		return s.addGDMChannelFulfillment(ctx, stream, streamView, parsedEvent)
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
@@ -378,6 +378,54 @@ func (s *Service) addChannelKeySolicitation(ctx context.Context, stream Stream, 
 	return nil
 }
 
+func (s *Service) addDMChannelKeySolicitation(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+
+	// Users should be able to decrypt the channel messages
+	// before joining, but not after leaving.
+	member, err := s.checkJoinedOrInvited(ctx, view, user)
+	if err != nil {
+		return err
+	}
+	if !member {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+	}
+
+	err = stream.AddEvent(ctx, parsedEvent)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) addGDMChannelKeySolicitation(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+
+	// Users should be able to decrypt the channel messages
+	// before joining, but not after leaving.
+	member, err := s.checkJoinedOrInvited(ctx, view, user)
+	if err != nil {
+		return err
+	}
+	if !member {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+	}
+
+	err = stream.AddEvent(ctx, parsedEvent)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Service) addChannelFulfillment(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
 	streamId := view.StreamId()
 	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
@@ -408,6 +456,56 @@ func (s *Service) addChannelFulfillment(ctx context.Context, stream Stream, view
 
 	// check if user is a member of the channel
 	member, err := s.checkMembership(ctx, view, user)
+	if err != nil {
+		return err
+	}
+	if !member {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+	}
+
+	err = stream.AddEvent(ctx, parsedEvent)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) addDMChannelFulfillment(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+
+	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+
+	// Users should be able to decrypt the channel messages
+	// before joining, but not after leaving.
+	member, err := s.checkJoinedOrInvited(ctx, view, user)
+	if err != nil {
+		return err
+	}
+	if !member {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+	}
+
+	err = stream.AddEvent(ctx, parsedEvent)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) addGDMChannelFulfillment(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+
+	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+
+	// Users should be able to decrypt the channel messages
+	// before joining, but not after leaving.
+	member, err := s.checkJoinedOrInvited(ctx, view, user)
 	if err != nil {
 		return err
 	}
@@ -805,4 +903,25 @@ func (s *Service) addMediaChunk(ctx context.Context, stream Stream, streamView S
 
 	err = stream.AddEvent(ctx, parsedEvent)
 	return err
+}
+
+func (s *Service) checkJoinedOrInvited(ctx context.Context, streamView StreamView, userId string) (bool, error) {
+	view := streamView.(JoinableStreamView)
+	if view == nil {
+		return false, RiverError(Err_INTERNAL, "stream is not joinable")
+	}
+	joined, err := view.IsUserJoined(userId)
+	if err != nil {
+		return false, err
+	}
+
+	if joined {
+		return true, nil
+	}
+
+	invited, err := view.IsUserInvited(userId)
+	if err != nil {
+		return false, err
+	}
+	return invited, nil
 }
