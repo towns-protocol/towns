@@ -13,7 +13,6 @@ import { IRoomKeyRequestBody } from '../crypto'
 import { IOlmDevice } from '../deviceList'
 import { InboundGroupSessionData } from '../olmDevice'
 import { safeSet, promiseTry } from '../../utils'
-import { RDK, RK } from '../rk'
 import isEqual from 'lodash/isEqual'
 import { dlog } from '../../dlog'
 
@@ -42,8 +41,6 @@ export class MemoryCryptoStore implements CryptoStore {
     private sharedHistoryInboundGroupSessions: {
         [streamId: string]: [senderKey: string, sessionId: string][]
     } = {}
-    private rk: RK | null = null
-    private rdk: RDK | null = null
 
     /**
      * Ensure the database exists and is up-to-date.
