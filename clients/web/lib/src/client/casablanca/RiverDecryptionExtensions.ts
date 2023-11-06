@@ -741,17 +741,35 @@ export class RiverDecryptionExtension {
         if (!room) {
             throw new Error('CDE::_onKeySolicitation - room not found')
         }
-        const roomMembers = room.members.filter(
-            (member) =>
-                // filter out non members of the stream
-                member.userId === fromUserId,
-        )
-        if (!roomMembers.length) {
-            console.log(`CDE::_onKeySolicitation - not a room member asking for keys`, {
-                streamId,
-                fromUserId,
-            })
-            return
+        if (isChannelStreamId(streamId)) {
+            const roomMembers = room.members.filter(
+                (member) =>
+                    // filter out non members of the stream
+                    member.userId === fromUserId,
+            )
+            if (!roomMembers.length) {
+                console.log(`CDE::_onKeySolicitation - not a room member asking for keys`, {
+                    streamId,
+                    fromUserId,
+                })
+                return
+            }
+        } else if (isDMChannelStreamId(streamId)) {
+            const participants = stream.view.dmChannelContent.participants()
+            if (!participants.has(fromUserId)) {
+                console.log(`CDE::_onKeySolicitation - not a DM member asking for keys`, {
+                    streamId,
+                    fromUserId,
+                })
+            }
+        } else if (isGDMChannelStreamId(streamId)) {
+            const participants = stream.view.gdmChannelContent.joinedOrInvitedParticipants()
+            if (!participants.has(fromUserId)) {
+                console.log(`CDE::_onKeySolicitation - not a GDM member asking for keys`, {
+                    streamId,
+                    fromUserId,
+                })
+            }
         }
         // check with the space contract to see if this user is entitled
         const isEntitled = await this.delegate.isEntitled(

@@ -144,4 +144,10 @@ export class StreamStateView_GDMChannel implements StreamStateView_IContent {
             ...this.memberships.leftUsers,
         ])
     }
+
+    // For DMs and GDMs, users must be able to see the messages before joining,
+    // but not after leaving.
+    joinedOrInvitedParticipants(): Set<string> {
+        return new Set([...this.memberships.joinedUsers, ...this.memberships.invitedUsers])
+    }
 }
