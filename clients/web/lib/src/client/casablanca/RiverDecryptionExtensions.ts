@@ -38,8 +38,6 @@ import type { DebouncedFunc } from 'lodash'
 
 /// control the number of outgoing room key requests for events that failed to decrypt
 const MAX_CONCURRENT_ROOM_KEY_REQUESTS = 2
-/// how long to wait for a response to a room key request
-const KEY_SOLICITATION_TIMEOUT_MS = 300
 /// how many events to include in the same to-device message
 const MAX_EVENTS_PER_REQUEST = 64
 /// time betwen debounced calls to look for keys
@@ -92,7 +90,6 @@ interface RoomRecord {
     isEntitled?: boolean
     spaceId?: string
     channelId?: string
-    timer?: NodeJS.Timeout
     lastRequestAt?: number
     requestingFrom?: string
     requests: Record<string, KeyRequestRecord>
@@ -484,8 +481,6 @@ export class RiverDecryptionExtension {
             })
             // filter out rooms that we're not entitled to
             .filter((roomRecord) => roomRecord.isEntitled === true)
-            // filter out rooms that are wait for something
-            .filter((roomRecord) => roomRecord.timer === undefined)
             // filter out rooms that have no events to look for keys for
             .filter((roomRecord) => roomRecord.decryptionFailures.length > 0)
             // sort by priority
@@ -584,17 +579,6 @@ export class RiverDecryptionExtension {
             ...(roomRecord.requests ?? {}),
             [streamId]: { timestamp: now, response: [] },
         }
-        roomRecord.timer = setTimeout(() => {
-            console.log('CDE::_askStreamForKeys - key request timed out', {
-                from: this.userId,
-                streamId,
-            })
-            if (this.throttledStartLookingForKeys) {
-                clearTimeout(roomRecord.timer)
-                roomRecord.timer = undefined
-                this.throttledStartLookingForKeys()
-            }
-        }, KEY_SOLICITATION_TIMEOUT_MS)
 
         const unknownSessionIds: [senderKey: string, sessionId: string][] =
             roomRecord.decryptionFailures.map((event) => {
@@ -614,60 +598,65 @@ export class RiverDecryptionExtension {
             allSharedHistorySessions?.map(([_senderKey, sessionId]) => sessionId) ?? []
 
         let request: PlainMessage<StreamEvent>['payload']
-        const unknownSessionRequested = unknownSessionIds.slice(0, MAX_EVENTS_PER_REQUEST)[0][1]
+        // for each room, ask for all missing sessionIds sequentially to stream
+        for (const unknownSessionAndSender of unknownSessionIds) {
+            const unknownSessionRequested = unknownSessionAndSender[1]
+            if (isChannelStreamId(streamId)) {
+                const keySolicitations =
+                    this.client.streams.get(streamId)?.view.channelContent.keySolicitations
+                // todo jterzis: add restart criteria based on eventNum returned from miniblock in the case that
+                // a fulfillment didn't return the correct session key
+                if (keySolicitations?.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
+                    console.log(
+                        `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
+                    )
+                    return
+                }
 
-        if (isChannelStreamId(streamId)) {
-            const keySolicitations =
-                this.client.streams.get(streamId)?.view.channelContent.keySolicitations
-            // todo jterzis: add restart criteria based on eventNum returned from miniblock in the case that
-            // a fulfillment didn't return the correct session key
-            if (keySolicitations?.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
-                console.log(
-                    `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
-                )
-                return
+                request = make_ChannelPayload_KeySolicitation({
+                    sessionId: unknownSessionRequested,
+                    algorithm: MEGOLM_ALGORITHM,
+                    senderKey: ourDeviceKey,
+                    knownSessionIds:
+                        knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
+                })
+            } else if (isDMChannelStreamId(streamId)) {
+                const keySolicitations =
+                    this.client.streams.get(streamId)?.view.dmChannelContent.keySolicitations
+                if (keySolicitations?.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
+                    console.log(
+                        `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
+                    )
+                    return
+                }
+                request = make_DmChannelPayload_KeySolicitation({
+                    sessionId: unknownSessionRequested,
+                    algorithm: MEGOLM_ALGORITHM,
+                    senderKey: ourDeviceKey,
+                    knownSessionIds:
+                        knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
+                })
+            } else if (isGDMChannelStreamId(streamId)) {
+                const keySolicitations =
+                    this.client.streams.get(streamId)?.view.gdmChannelContent.keySolicitations
+                if (keySolicitations?.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
+                    console.log(
+                        `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
+                    )
+                    return
+                }
+                request = make_GdmChannelPayload_KeySolicitation({
+                    sessionId: unknownSessionRequested,
+                    algorithm: MEGOLM_ALGORITHM,
+                    senderKey: ourDeviceKey,
+                    knownSessionIds:
+                        knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
+                })
+            } else {
+                throw new Error('CDE::_askRoomForKeys - unknown stream type')
             }
-
-            request = make_ChannelPayload_KeySolicitation({
-                sessionId: unknownSessionRequested,
-                algorithm: MEGOLM_ALGORITHM,
-                senderKey: ourDeviceKey,
-                knownSessionIds: knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
-            })
-        } else if (isDMChannelStreamId(streamId)) {
-            const keySolicitations =
-                this.client.streams.get(streamId)?.view.dmChannelContent.keySolicitations
-            if (keySolicitations?.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
-                console.log(
-                    `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
-                )
-                return
-            }
-            request = make_DmChannelPayload_KeySolicitation({
-                sessionId: unknownSessionRequested,
-                algorithm: MEGOLM_ALGORITHM,
-                senderKey: ourDeviceKey,
-                knownSessionIds: knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
-            })
-        } else if (isGDMChannelStreamId(streamId)) {
-            const keySolicitations =
-                this.client.streams.get(streamId)?.view.gdmChannelContent.keySolicitations
-            if (keySolicitations?.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
-                console.log(
-                    `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
-                )
-                return
-            }
-            request = make_GdmChannelPayload_KeySolicitation({
-                sessionId: unknownSessionRequested,
-                algorithm: MEGOLM_ALGORITHM,
-                senderKey: ourDeviceKey,
-                knownSessionIds: knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
-            })
-        } else {
-            throw new Error('CDE::_askRoomForKeys - unknown stream type')
+            await this.client.makeEventAndAddToStream(streamId, request)
         }
-        await this.client.makeEventAndAddToStream(streamId, request)
     }
 
     private async onKeySolicitation(
