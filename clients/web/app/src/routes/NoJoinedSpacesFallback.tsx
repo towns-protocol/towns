@@ -9,13 +9,15 @@ import { env } from 'utils'
 
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
+import { useAuth } from 'hooks/useAuth'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
     const { spaces } = useZionContext()
-    const { client, logout } = useZionClient()
+    const { client } = useZionClient()
+    const { logout } = useAuth()
     const initialSyncComplete = useWaitForInitialSync()
     const spaceIdBookmark = useStore((s) => {
         return s.spaceIdBookmark

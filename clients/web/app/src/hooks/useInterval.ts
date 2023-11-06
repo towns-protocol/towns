@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 
-export function useInterval(callback: () => void, delay: number | null) {
-    const savedCallback = useRef(callback)
+type Callback = () => void | Promise<void>
+export function useInterval(callback: Callback, delay: number | null) {
+    const savedCallback = useRef<Callback>(callback)
 
     // Remember the latest callback if it changes.
     useLayoutEffect(() => {
@@ -17,7 +18,11 @@ export function useInterval(callback: () => void, delay: number | null) {
             return
         }
 
-        const id = setInterval(() => savedCallback.current(), delay)
+        const id = setInterval(async () => {
+            if (savedCallback.current) {
+                await savedCallback.current()
+            }
+        }, delay)
 
         return () => clearInterval(id)
     }, [delay])

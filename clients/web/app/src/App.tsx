@@ -5,7 +5,8 @@ import { InitialSyncSortPredicate, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
 
 import { usePrivy } from '@privy-io/react-auth'
-import { useEthersSigner } from 'use-zion-client/dist/hooks/Web3Context/useEthersSigner'
+import { usePrivyWagmi } from '@privy-io/wagmi-connector'
+import { SetSignerFromWalletClient } from 'SetSignerFromWalletClient'
 import { Notifications } from '@components/Notifications/Notifications'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
@@ -22,7 +23,7 @@ import { RegisterPushSubscription } from '@components/RegisterPushSubscription/R
 import { AllRoutes } from 'AllRoutes'
 import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
-import { AuthContextProvider } from 'hooks/useAuth'
+import { AuthContextProvider, useIsConnected } from 'hooks/useAuth'
 
 const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
@@ -34,6 +35,7 @@ export const App = () => {
     }))
 
     const { ready: privyReady } = usePrivy()
+    const { ready: privyWagmiReady } = usePrivyWagmi()
 
     useWindowListener()
 
@@ -56,9 +58,9 @@ export const App = () => {
         return 1
     }, [])
 
-    const signer = useEthersSigner({ chainId: environment.chainId })
+    const isConnected = useIsConnected()
 
-    if (!privyReady) {
+    if (!privyReady || (isConnected && !privyWagmiReady)) {
         return <WelcomeLayout />
     }
 
@@ -71,10 +73,10 @@ export const App = () => {
             initalSyncSortPredicate={initalSyncSortPredicate}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
-            web3Signer={signer}
         >
-            <AuthContextProvider>
-                <>
+            <>
+                <SetSignerFromWalletClient chainId={environment.chainId} />
+                <AuthContextProvider>
                     <FaviconBadge />
                     <AppBadge />
                     <AppNotifications />
@@ -110,8 +112,8 @@ export const App = () => {
                         (!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && <ReloadPrompt />
                     }
                     <ServiceWorkerSpacesSyncer />
-                </>
-            </AuthContextProvider>
+                </AuthContextProvider>
+            </>
         </ZionContextProvider>
     )
 }

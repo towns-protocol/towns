@@ -1,13 +1,22 @@
 import { useConnectivity, useWeb3Context } from 'use-zion-client'
-import React, { createContext, useCallback, useContext, useMemo } from 'react'
+import React, {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
 import { toast } from 'react-hot-toast/headless'
 
 import { keccak256 } from 'ethers/lib/utils.js'
-import { useLogin, usePrivy, useWallets } from '@privy-io/react-auth'
-import { waitFor } from 'utils'
+import { useLogin, usePrivy } from '@privy-io/react-auth'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
-import { waitForWalletClientMs } from 'WatchPrivyAndSetSigner'
 import { useAnalytics } from './useAnalytics'
+import { useEmbeddedWallet } from './useEmbeddedWallet'
+import { useRetryUntilResolved } from './useRetryUntilResolved'
+import { useErrorToast } from './useErrorToast'
 
 export const registerWalletMsgToSign = `Click to register and accept the Towns Terms of Service.`
 
@@ -17,21 +26,41 @@ export type LoginError = UseConnectivtyReturnValue['loginError']
 export type AuthContext = Omit<UseConnectivtyReturnValue, 'login' | 'logout' | 'loginStatus'> & {
     // privy sdk is ready to use
     privyReady: boolean
-    // is the user logged in to privy, have they created an account, and has the lib's Web3Context signer been set
+    isSignerReady: boolean
+    /**
+     * true after the callback from logging in to privy is called, while the signer is being set and the user is logging in to river
+     */
+    isLoggingInPostPrivySuccess: boolean
+    /**
+     * the user is logged in to privy and has an embedded wallet
+     */
     isConnected: boolean
-    // the user isConnected + logged in to river
+    /**
+     * the user is logged in to privy and has an embedded wallet
+     * and is logged into river
+     */
     isAuthenticatedAndConnected: boolean
-    // login to privy or river depending on privy state
+    /**
+     * login to privy if not connected, otherwise login to river
+     */
     login: () => Promise<void>
-    // logout of both privy and river
+    /**
+     * logout of both privy and river
+     */
     logout: () => Promise<void>
-    // logged in status for river
-    libLoginStatus: UseConnectivtyReturnValue['loginStatus']
+    /**
+     * login status for river
+     */
+    riverLoginStatus: UseConnectivtyReturnValue['loginStatus']
 }
 
 const AuthContext = createContext<AuthContext | undefined>(undefined)
 
-export function AuthContextProvider({ children }: { children: JSX.Element }) {
+export function AuthContextProvider({
+    children,
+}: {
+    children: React.ReactNode | React.ReactNode[]
+}) {
     const auth = useAuthContext()
     return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>
 }
@@ -46,52 +75,46 @@ export function useAuth() {
 
 function useAuthContext(): AuthContext {
     const {
-        login: libLogin,
-        logout: libLogout,
+        login: riverLogin,
+        logout: riverLogout,
         register,
         activeWalletAddress,
         loggedInWalletAddress,
-        isAuthenticated: libIsAuthenticated,
+        isAuthenticated: riverIsAuthenticated,
         loginError,
         userOnWrongNetworkForSignIn,
-        loginStatus: libLoginStatus,
+        loginStatus: riverLoginStatus,
         getIsWalletRegistered,
     } = useConnectivity()
-    const { signer } = useWeb3Context()
-    const { ready: privyReady, authenticated: privyAuthenticated, logout: privyLogout } = usePrivy()
-    const { wallets: privyWallets } = useWallets()
-    const privyLogin = usePrivyLogin({
-        isAuthenticated: libIsAuthenticated,
-        login: libLogin,
-        signer,
+    const { ready: privyReady, logout: privyLogout } = usePrivy()
+    const { privyLogin, isLoggingInPostPrivySuccess } = usePrivyLogin({
+        isAuthenticated: riverIsAuthenticated,
+        login: riverLogin,
         loggedInWalletAddress,
     })
 
-    const isConnected = useMemo(() => {
-        return privyReady && privyAuthenticated && !!privyWallets?.length && !!signer
-    }, [privyReady, privyAuthenticated, privyWallets?.length, signer])
-
-    const isAuthenticatedAndConnected = useMemo(() => {
-        return isConnected && libIsAuthenticated
-    }, [isConnected, libIsAuthenticated])
+    const isSignerReady = !!useWeb3Context().signer
+    const isConnected = useIsConnected()
+    const isAuthenticatedAndConnected = isConnected && riverIsAuthenticated
 
     const login = useCallback(async () => {
         if (isConnected) {
-            await libLogin()
+            await riverLogin()
         } else {
             // login to privy, after which the useLogin.onComplete will be called to log in user river backend
             privyLogin()
         }
-    }, [libLogin, isConnected, privyLogin])
+    }, [riverLogin, isConnected, privyLogin])
 
     const logout = useCallback(async () => {
         try {
-            await libLogout()
+            await riverLogout()
         } catch (error) {
+            console.error('Error logging out of river', error)
             return
         }
         await privyLogout()
-    }, [libLogout, privyLogout])
+    }, [riverLogout, privyLogout])
 
     return useMemo(
         () => ({
@@ -99,23 +122,25 @@ function useAuthContext(): AuthContext {
             logout,
             getIsWalletRegistered,
             register,
-            libLoginStatus,
+            riverLoginStatus,
             activeWalletAddress,
             loggedInWalletAddress,
-            isAuthenticated: libIsAuthenticated,
+            isAuthenticated: riverIsAuthenticated,
             isAuthenticatedAndConnected, // csb + wallet
             isConnected, // isConnected means privy account is created and logged in
             loginError,
             userOnWrongNetworkForSignIn, // TODO: remove this
             privyReady,
+            isSignerReady,
+            isLoggingInPostPrivySuccess,
         }),
         [
             activeWalletAddress,
             getIsWalletRegistered,
             isAuthenticatedAndConnected,
             isConnected,
-            libLoginStatus,
-            libIsAuthenticated,
+            riverLoginStatus,
+            riverIsAuthenticated,
             loggedInWalletAddress,
             login,
             loginError,
@@ -123,58 +148,43 @@ function useAuthContext(): AuthContext {
             privyReady,
             register,
             userOnWrongNetworkForSignIn,
+            isSignerReady,
+            isLoggingInPostPrivySuccess,
         ],
     )
+}
+
+/**
+ * the user is logged in to privy and has an embedded wallet
+ * This hook can be used outside of auth context provider
+ */
+export function useIsConnected(): AuthContext['isConnected'] {
+    const { ready: privyReady, authenticated: privyAuthenticated } = usePrivy()
+    const embeddedWallet = useEmbeddedWallet()
+    return privyReady && privyAuthenticated && !!embeddedWallet
 }
 
 function usePrivyLogin({
     isAuthenticated: libIsAuthenticated,
     login: libLogin,
-    signer,
     loggedInWalletAddress,
-}: Pick<AuthContext, 'isAuthenticated' | 'login' | 'loggedInWalletAddress'> & {
-    signer: ReturnType<typeof useWeb3Context>['signer']
-}) {
+}: Pick<AuthContext, 'isAuthenticated' | 'login' | 'loggedInWalletAddress'>) {
     const { track, setUserId, getUserId } = useAnalytics()
+    const [hasLoggedInToPrivy, setHasLoggedInToPrivy] = useState(false)
+
+    const isLoggingInPostPrivySuccess = usePostPrivyLogin({
+        hasLoggedInToPrivy,
+        libLogin,
+    })
 
     const { login: privyLogin } = useLogin({
         // don't get confused, this cb only fires after you call privyLogin(), not on page load!
-        onComplete: async (user, isNewUser, wasAlreadyAuthenticated) => {
-            let libLoginError
+        onComplete: (user, isNewUser, wasAlreadyAuthenticated) => {
+            // we can't wait for signer and login w/in this callback b/c
+            // the references aren't updated and are stale by the time the callback fires
+            // therefore, we need to set a flag that we can listen to in usePostPrivyLogin
             if (!libIsAuthenticated) {
-                // this callback can happen quickly, before the privy wallet state reaches the lib's Web3Context signer
-                // therefore, wait for the signer to be set before trying to login!
-                try {
-                    await waitFor(
-                        () => Promise.resolve(signer !== undefined),
-                        waitForWalletClientMs + 500,
-                    )
-                    try {
-                        await libLogin()
-                    } catch (error) {
-                        libLoginError = error
-                    }
-                } catch (error) {
-                    let errorMessage = `No signer was set after Privy login.`
-                    if (libLoginError) {
-                        errorMessage = JSON.stringify(libLoginError)
-                    }
-                    toast.custom(
-                        (t) => {
-                            return (
-                                <ErrorNotification
-                                    toast={t}
-                                    errorMessage="There was an error logging in to Towns servers."
-                                    contextMessage={errorMessage}
-                                />
-                            )
-                        },
-                        {
-                            duration: Infinity,
-                        },
-                    )
-                    return
-                }
+                setHasLoggedInToPrivy(true)
             }
         },
         onError: (error) => {
@@ -202,5 +212,52 @@ function usePrivyLogin({
         },
     })
 
-    return privyLogin
+    return { privyLogin, isLoggingInPostPrivySuccess }
+}
+
+// once the user has logged in to privy, we need to login to river
+function usePostPrivyLogin({
+    hasLoggedInToPrivy,
+    libLogin,
+}: {
+    hasLoggedInToPrivy: boolean
+    libLogin: () => Promise<void>
+}) {
+    const { signer } = useWeb3Context()
+    const isLogginIng = useRef(false)
+    const [isLoggingInPostPrivySuccess, setisLoggingInPostPrivySuccess] = useState(false)
+
+    const hasResolved = useRetryUntilResolved(
+        () => {
+            setisLoggingInPostPrivySuccess(true)
+            if (signer && !isLogginIng.current) {
+                console.log(`usePostPrivyLogin: signer set`, signer)
+                isLogginIng.current = true
+                // try to login to river as usual
+                // login errors for river are already caputured in LoginComponent
+                libLogin().finally(() => setisLoggingInPostPrivySuccess(false))
+                return true
+            }
+            return false
+        },
+        // if null, or the callback resolves, the retry stops
+        !hasLoggedInToPrivy ? null : 100,
+        5_000,
+    )
+
+    const errorMessage = hasResolved && !signer ? `Didn't attempt to login to River.` : undefined
+
+    useErrorToast({
+        errorMessage,
+        contextMessage: 'Signer was never set.',
+    })
+
+    useEffect(() => {
+        if (hasResolved && !signer) {
+            console.log(`usePostPrivyLogin: signer was never set`)
+            setisLoggingInPostPrivySuccess(false)
+        }
+    }, [hasResolved, signer])
+
+    return isLoggingInPostPrivySuccess
 }

@@ -48,7 +48,7 @@ export const PublicTownPage = () => {
 
     const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceSlug)
     const { data: townBio } = useGetSpaceTopic(spaceSlug)
-    const { isConnected, isAuthenticatedAndConnected } = useAuth()
+    const { isConnected, isAuthenticatedAndConnected, isSignerReady } = useAuth()
 
     const { data: meetsMembershipRequirements, isLoading: isLoadingMeetsMembership } =
         useMeetsMembershipNftRequirements(spaceInfo?.networkId, isConnected)
@@ -94,7 +94,7 @@ export const PublicTownPage = () => {
                             buttonContent={
                                 <Box grow>
                                     {isAuthenticatedAndConnected ? (
-                                        isLoadingMeetsMembership ? (
+                                        isLoadingMeetsMembership || !isSignerReady ? (
                                             <MembershipStatusMessage
                                                 spinner
                                                 background="level3"

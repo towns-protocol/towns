@@ -280,6 +280,7 @@ const DebugBar = ({
     const { chain } = useNetwork()
     const { logout } = useAuth()
     const [modal, setModal] = useState(false)
+    const { signer } = useWeb3Context()
 
     const switchNetwork = useAsyncSwitchNetwork()
 
@@ -401,6 +402,13 @@ const DebugBar = ({
                                 size="square_xxs"
                                 type={isConnected ? 'check' : 'alert'}
                                 color={isConnected ? 'cta1' : 'error'}
+                            />
+                            | Signer: &nbsp;
+                            <Icon
+                                display="inline-block"
+                                size="square_xxs"
+                                type={signer ? 'check' : 'alert'}
+                                color={signer ? 'cta1' : 'error'}
                             />
                         </Text>
                     </>

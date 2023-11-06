@@ -6,7 +6,12 @@ import { useSwitchNetworkToast } from 'hooks/useSwitchNetworkToast'
 import { useErrorToast } from 'hooks/useErrorToast'
 
 export function LoginComponent() {
-    const { login, loginError, libLoginStatus } = useAuth()
+    const {
+        login,
+        loginError,
+        riverLoginStatus: libLoginStatus,
+        isLoggingInPostPrivySuccess,
+    } = useAuth()
 
     const isSwitchNetworkToastVisible = useSwitchNetworkToast({
         postCta: 'to create a town.',
@@ -14,7 +19,9 @@ export function LoginComponent() {
     const errorMessage = loginError ? loginError.message : undefined
 
     const isBusy =
-        libLoginStatus === LoginStatus.LoggingIn || libLoginStatus === LoginStatus.Registering
+        libLoginStatus === LoginStatus.LoggingIn ||
+        libLoginStatus === LoginStatus.Registering ||
+        isLoggingInPostPrivySuccess
 
     useErrorToast({
         errorMessage,
