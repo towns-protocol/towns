@@ -43,9 +43,17 @@ export function useMeetsMembershipNftRequirements(spaceId: string | undefined, c
     const { roleDetails: minterRoleDetails } = useRoleDetails(spaceId ?? '', 1)
 
     const checkUserHasToken = useCallback(async () => {
+        console.log('useMeetsMembershipNftRequirements::startingRequest', {
+            minterRoleDetails: !!minterRoleDetails,
+            walletAddress: !!_walletAddress,
+        })
         if (!minterRoleDetails || !_walletAddress) {
             return false
         }
+
+        console.log('useMeetsMembershipNftRequirements::token length', {
+            tokenLength: minterRoleDetails.tokens.length,
+        })
 
         if (minterRoleDetails.tokens.length === 0) {
             return true
@@ -100,6 +108,14 @@ export function useMeetsMembershipNftRequirements(spaceId: string | undefined, c
         return false
     }, [_walletAddress, minterRoleDetails])
 
+    console.log('useMeetsMembershipNftRequirements', {
+        spaceId,
+        walletAddress: _walletAddress,
+        minterRoleDetails,
+        connected,
+        query: ['meetsMembershipNftRequirements', spaceId, minterRoleDetails, { connected }],
+        enabledCheck: Boolean(minterRoleDetails) && connected,
+    })
     return useQuery(
         ['meetsMembershipNftRequirements', spaceId, minterRoleDetails, { connected }],
         checkUserHasToken,
