@@ -216,13 +216,14 @@ export class RiverDecryptionExtension {
     private async processKeySolicitationEvent(event: EventKeySolicitation): Promise<void> {
         let fulfillments: Map<string, ParsedEvent> | undefined
         if (isChannelStreamId(event.streamId)) {
-            fulfillments = this.client.streams.get(event.streamId)?.view.channelContent.fulfillments
+            fulfillments = this.client.streams.get(event.streamId)?.view.channelContent
+                .keySolicitations.fulfillments
         } else if (isDMChannelStreamId(event.streamId)) {
             fulfillments = this.client.streams.get(event.streamId)?.view.dmChannelContent
-                .fulfillments
+                .keySolicitations.fulfillments
         } else if (isGDMChannelStreamId(event.streamId)) {
             fulfillments = this.client.streams.get(event.streamId)?.view.gdmChannelContent
-                .fulfillments
+                .keySolicitations.fulfillments
         } else {
             throw new Error('CDE::_onKeySolicitation - unknown stream type')
         }
@@ -614,33 +615,19 @@ export class RiverDecryptionExtension {
 
         let request: PlainMessage<StreamEvent>['payload']
         const unknownSessionRequested = unknownSessionIds.slice(0, MAX_EVENTS_PER_REQUEST)[0][1]
-        const alreadySolicitatedKey = (
-            currentKeySolicitations:
-                | Set<{ senderKey: string; sessionId: string; streamId: string }>
-                | undefined,
-        ): boolean => {
-            if (
-                currentKeySolicitations?.has({
-                    senderKey: ourDeviceKey,
-                    sessionId: unknownSessionRequested,
-                    streamId,
-                })
-            ) {
-                console.log(
-                    `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
-                )
-                return true
-            }
-            return false
-        }
+
         if (isChannelStreamId(streamId)) {
-            const currentKeySolicitations =
+            const keySolicitations =
                 this.client.streams.get(streamId)?.view.channelContent.keySolicitations
             // todo jterzis: add restart criteria based on eventNum returned from miniblock in the case that
             // a fulfillment didn't return the correct session key
-            if (alreadySolicitatedKey(currentKeySolicitations)) {
+            if (keySolicitations?.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
+                console.log(
+                    `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
+                )
                 return
             }
+
             request = make_ChannelPayload_KeySolicitation({
                 sessionId: unknownSessionRequested,
                 algorithm: MEGOLM_ALGORITHM,
@@ -648,9 +635,12 @@ export class RiverDecryptionExtension {
                 knownSessionIds: knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
             })
         } else if (isDMChannelStreamId(streamId)) {
-            const currentKeySolicitations =
+            const keySolicitations =
                 this.client.streams.get(streamId)?.view.dmChannelContent.keySolicitations
-            if (alreadySolicitatedKey(currentKeySolicitations)) {
+            if (keySolicitations?.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
+                console.log(
+                    `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
+                )
                 return
             }
             request = make_DmChannelPayload_KeySolicitation({
@@ -660,9 +650,12 @@ export class RiverDecryptionExtension {
                 knownSessionIds: knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
             })
         } else if (isGDMChannelStreamId(streamId)) {
-            const currentKeySolicitations =
+            const keySolicitations =
                 this.client.streams.get(streamId)?.view.gdmChannelContent.keySolicitations
-            if (alreadySolicitatedKey(currentKeySolicitations)) {
+            if (keySolicitations?.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
+                console.log(
+                    `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
+                )
                 return
             }
             request = make_GdmChannelPayload_KeySolicitation({

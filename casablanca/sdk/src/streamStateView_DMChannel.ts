@@ -12,17 +12,13 @@ import { StreamStateView_Membership } from './streamStateView_Membership'
 import { StreamStateView_Messages } from './streamStateView_Messages'
 import { ParsedEvent } from './types'
 import { logNever } from './check'
+import { StreamStateView_KeySolicitations } from './streamStateView_KeySolicitations'
 
 export class StreamStateView_DMChannel implements StreamStateView_IContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
     readonly messages: StreamStateView_Messages
-    readonly keySolicitations = new Set<{
-        senderKey: string
-        sessionId: string
-        streamId: string
-    }>()
-    readonly fulfillments = new Map<string, ParsedEvent>()
+    readonly keySolicitations: StreamStateView_KeySolicitations
     readonly firstPartyId: string
     readonly secondPartyId: string
     lastEventCreatedAtEpocMs = 0n
@@ -30,6 +26,7 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
     constructor(userId: string, inception: DmChannelPayload_Inception) {
         this.memberships = new StreamStateView_Membership(userId, inception.streamId)
         this.messages = new StreamStateView_Messages(inception.streamId)
+        this.keySolicitations = new StreamStateView_KeySolicitations(inception.streamId)
         this.streamId = inception.streamId
         this.firstPartyId = inception.firstPartyId
         this.secondPartyId = inception.secondPartyId
@@ -45,31 +42,6 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
 
     onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
         this.memberships.onMiniblockHeader(blockHeader, emitter)
-    }
-
-    private addKeySolicitationMessage(
-        event: ParsedEvent,
-        payload: DmChannelPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ) {
-        if (payload.content.value === undefined || payload.content.case !== 'keySolicitation') {
-            return
-        }
-        if (this.fulfillments.has(event.hashStr)) {
-            return
-        }
-        emitter?.emit(
-            'keySolicitationMessage',
-            this.streamId,
-            payload.content.value,
-            event.hashStr,
-            event.creatorUserId,
-        )
-        this.keySolicitations.add({
-            senderKey: payload.content.value.senderKey,
-            sessionId: payload.content.value.sessionId,
-            streamId: this.streamId,
-        })
     }
 
     appendEvent(
@@ -95,10 +67,10 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
                 )
                 break
             case 'fulfillment':
-                this.fulfillments.set(event.hashStr, event)
+                this.keySolicitations.addKeyFulfillmentMessage(event, payload, emitter)
                 break
             case 'keySolicitation':
-                this.addKeySolicitationMessage(event, payload, emitter)
+                this.keySolicitations.addKeySolicitationMessage(event, payload, emitter)
                 break
             case undefined:
                 break
@@ -123,10 +95,10 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
                 // nothing to do, membership was conveyed in the snapshot
                 break
             case 'fulfillment':
-                this.fulfillments.set(event.hashStr, event)
+                this.keySolicitations.addKeyFulfillmentMessage(event, payload, emitter)
                 break
             case 'keySolicitation':
-                // todo jterzis - HNT-2868
+                this.keySolicitations.addKeySolicitationMessage(event, payload, emitter)
                 break
             case undefined:
                 break
