@@ -136,7 +136,7 @@ func (s *Service) addDmChannelPayload(ctx context.Context, payload *StreamEvent_
 		return s.addDMChannelKeySolicitation(ctx, stream, streamView, parsedEvent)
 
 	case *DmChannelPayload_Fulfillment:
-		return s.addChannelFulfillment(ctx, stream, streamView, parsedEvent)
+		return s.addDMChannelFulfillment(ctx, stream, streamView, parsedEvent)
 
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
