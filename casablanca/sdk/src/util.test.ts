@@ -56,11 +56,8 @@ export const makeRandomUserContext = async (): Promise<SignerContext> => {
     return ret
 }
 
-// TODO(HNT-1380): remove
-export const makeRandomUserContextWithOldDelegate = async (
-    wallet?: ethers.Wallet,
-): Promise<SignerContext> => {
-    const userPrimaryWallet = wallet ?? ethers.Wallet.createRandom()
+export const makeUserContextFromWallet = async (wallet: ethers.Wallet): Promise<SignerContext> => {
+    const userPrimaryWallet = wallet
     const devicePrivateKey = utils.randomPrivateKey()
     const devicePrivateKeyStr = bin_toHexString(devicePrivateKey)
 
@@ -73,6 +70,7 @@ export const makeRandomUserContextWithOldDelegate = async (
             userPrimaryWallet,
             getPublicKey(devicePrivateKeyStr, false),
         ),
+        deviceId: takeKeccakFingerprintInHex(creatorAddress, 16),
     }
 }
 

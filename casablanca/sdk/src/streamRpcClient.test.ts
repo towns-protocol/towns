@@ -4,7 +4,7 @@ import { dlog } from './dlog'
 import {
     makeEvent_test,
     makeRandomUserContext,
-    makeRandomUserContextWithOldDelegate,
+    makeUserContextFromWallet,
     makeTestRpcClient,
     TEST_URL,
     timeoutIterable,
@@ -28,6 +28,7 @@ import {
 } from './types'
 import { makeStreamRpcClient } from './makeStreamRpcClient'
 import { bobTalksToHimself } from './bob.test_util'
+import { ethers } from 'ethers'
 
 const log = dlog('csb:test:streamRpcClient')
 
@@ -91,8 +92,9 @@ describe('streamRpcClient', () => {
         )
     })
 
-    test('charlieUsesOldDelegate', async () => {
-        const charliesContext = await makeRandomUserContextWithOldDelegate()
+    test('charlieUsesRegularOldWallet', async () => {
+        const wallet = ethers.Wallet.createRandom()
+        const charliesContext = await makeUserContextFromWallet(wallet)
 
         const charlie = makeTestRpcClient()
         const userId = userIdFromAddress(charliesContext.creatorAddress)

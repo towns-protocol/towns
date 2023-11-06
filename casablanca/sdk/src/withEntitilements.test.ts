@@ -3,7 +3,7 @@
  */
 
 import { dlog } from './dlog'
-import { makeRandomUserContextWithOldDelegate, TEST_URL_WITH_ENTITILEMENTS } from './util.test'
+import { makeUserContextFromWallet, TEST_URL_WITH_ENTITILEMENTS } from './util.test'
 import {
     genId,
     makeChannelStreamId,
@@ -46,7 +46,7 @@ describe('withEntitlements', () => {
 
         // set up the web3 provider and spacedap
         const bobsWallet = ethers.Wallet.createRandom()
-        const bobsContext = await makeRandomUserContextWithOldDelegate(bobsWallet)
+        const bobsContext = await makeUserContextFromWallet(bobsWallet)
         const bobProvider = new LocalhostWeb3Provider(bobsWallet)
         const chainId = (await bobProvider.getNetwork()).chainId
         await bobProvider.fundWallet()
@@ -122,7 +122,7 @@ describe('withEntitlements', () => {
 
         // join alice
         const alicesWallet = ethers.Wallet.createRandom()
-        const alicesContext = await makeRandomUserContextWithOldDelegate(alicesWallet)
+        const alicesContext = await makeUserContextFromWallet(alicesWallet)
         const aliceProvider = new LocalhostWeb3Provider(alicesWallet)
         await aliceProvider.fundWallet()
         const alice = new Client(alicesContext, makeStreamRpcClientWithEntitlements())
