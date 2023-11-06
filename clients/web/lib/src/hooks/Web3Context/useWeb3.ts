@@ -91,16 +91,9 @@ function useAppSigner(appChainId: number, web3Signer?: ethers.Signer) {
 
     // but there might be cases where a wallet is set after this hook is called, and for some unknown reason the wagmiSigner is not updated properly
     // in this case, the app can set the signer manually
-    const setSigner = useCallback(
-        (signerInput: ethers.Signer) => {
-            if (signer) {
-                console.log('Signer already set, not setting again.')
-                return
-            }
-            _setSigner(signerInput)
-        },
-        [signer],
-    )
+    const setSigner = useCallback((signerInput: ethers.Signer) => {
+        _setSigner(signerInput)
+    }, [])
 
     return { signer, setSigner }
 }

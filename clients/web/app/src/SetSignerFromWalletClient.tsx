@@ -5,20 +5,36 @@ import { getConfig } from '@wagmi/core'
 import { PrivyConnector } from '@privy-io/wagmi-connector'
 import { useRetryUntilResolved } from 'hooks/useRetryUntilResolved'
 import { Box, Icon } from '@ui'
+import { useEmbeddedWallet } from 'hooks/useEmbeddedWallet'
 
 export async function setSignerFromWalletClient({
     chainId,
     setSigner,
+    embeddedWallet,
 }: {
     chainId: number
     setSigner: IWeb3Context['setSigner']
+    embeddedWallet: ReturnType<typeof useEmbeddedWallet>
 }) {
     const config = getConfig()
     const privyConnector = config.connectors.find((c) => c.id === 'privy') as
         | PrivyConnector
         | undefined
 
-    if (!privyConnector || !privyConnector.getActiveWallet()) {
+    if (!privyConnector) {
+        return false
+    }
+
+    // if you load the app w/ another connected wallet, i.e. MM, then that's the activeWallet before you are logged in to Privy
+    const activeWallet = await privyConnector.getActiveWallet()
+
+    // privy should be switching over to the embedded wallet as soon as it's ready, but just in case it doesn't
+    if (embeddedWallet && activeWallet?.address !== embeddedWallet.address) {
+        privyConnector.setActiveWallet(embeddedWallet)
+    }
+
+    // once privy is signed in, the activeWallet will be the privy wallet
+    if (!activeWallet || activeWallet.walletClientType !== 'privy') {
         return false
     }
 
@@ -42,12 +58,14 @@ export async function setSignerFromWalletClient({
 // this component wathches for the privy wallet to be connected and then sets the signer
 export function SetSignerFromWalletClient({ chainId }: { chainId: number }) {
     const { signer, setSigner } = useWeb3Context()
+    const embeddedWallet = useEmbeddedWallet()
 
     useRetryUntilResolved(
         () =>
             setSignerFromWalletClient({
                 chainId,
                 setSigner,
+                embeddedWallet,
             }),
         100,
     )

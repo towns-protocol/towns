@@ -1,6 +1,7 @@
 import { Chain, useNetwork } from 'wagmi'
 import { useSwitchNetwork } from '@privy-io/wagmi-connector'
 import { useEnvironment } from './useEnvironmnet'
+import { useAuth } from './useAuth'
 
 type Props = {
     onSuccess?: (chain: Chain) => void
@@ -12,6 +13,7 @@ type Props = {
 // However, in DEV, we may be on the wrong network, and things will still fail, so we need to check
 // devs can still switch networks via the DebugBar
 export const useRequireTransactionNetwork = ({ onSuccess, onError }: Props = {}) => {
+    const { isConnected } = useAuth()
     const { chain } = useNetwork()
     const { chainId: targetChainId, chainName: targetChainName } = useEnvironment()
     const { switchNetwork } = useSwitchNetwork({
@@ -21,7 +23,7 @@ export const useRequireTransactionNetwork = ({ onSuccess, onError }: Props = {})
     })
 
     return {
-        isReady: chain !== undefined,
+        isReady: isConnected && chain !== undefined,
         isTransactionNetwork: chain?.id === targetChainId,
         name: targetChainName,
         switchNetwork,

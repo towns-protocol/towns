@@ -14,7 +14,7 @@ export function LoginComponent() {
     } = useAuth()
 
     const isSwitchNetworkToastVisible = useSwitchNetworkToast({
-        postCta: 'to create a town.',
+        postCta: 'to login.',
     })
     const errorMessage = loginError ? loginError.message : undefined
 
