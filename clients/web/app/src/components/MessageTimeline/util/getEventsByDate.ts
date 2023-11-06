@@ -132,6 +132,7 @@ const isRoomMember = (event: TimelineEvent): event is ZRoomMemberEvent => {
 }
 
 export type DateGroup = {
+    key: string
     date: {
         // date (at midnight)
         date: Date
@@ -195,7 +196,13 @@ export const getEventsByDate = (
             const humanDate = getRelativeDays(date)
 
             if (humanDate !== prevDate) {
+                // workaround to avoid duplicate keys caused by misordered events.
+                const numDupes = dateGroups.filter((d) => d.date.humanDate === humanDate).length
+
+                const key = numDupes ? `${humanDate}(${numDupes})` : humanDate
+
                 group = {
+                    key,
                     date: {
                         humanDate,
                         date,

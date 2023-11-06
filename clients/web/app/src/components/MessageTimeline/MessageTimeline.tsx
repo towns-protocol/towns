@@ -170,7 +170,7 @@ export const MessageTimeline = (props: Props) => {
                         type: 'group',
                         date: f.date.humanDate,
                         isNew: f.isNew,
-                        key: f.date.humanDate,
+                        key: f.key,
                     } as const,
                     ...f.events,
                 ]
