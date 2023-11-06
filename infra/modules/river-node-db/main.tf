@@ -165,4 +165,7 @@ module "rds_aurora_postgresql" {
   instances = {
     one = {}
   }
+
+  # true if the current terraform workspace=test, false otherwise
+  publicly_accessible = terraform.workspace == "test"
 }

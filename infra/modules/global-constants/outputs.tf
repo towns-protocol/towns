@@ -20,6 +20,8 @@ output "environment" {
 
 locals {
   Environment = "${terraform.workspace == "test" ? "test-beta" : terraform.workspace == "staging" ? "staging-beta" : terraform.workspace}"
+  sre_goalie_slack_handle = "<@kerem>"
+  sre_slack_channel = "@slack-Here_Not_There_Labs-sre-alerts"
 }
 
 output "tags" {
@@ -36,4 +38,9 @@ output "tags" {
 output "region" {
   value = "us-east-1"
   sensitive = true
+}
+
+output "sre_slack_identifier" {
+  value = "${local.sre_slack_channel} ${local.sre_goalie_slack_handle}"
+  sensitive = false
 }

@@ -6,6 +6,27 @@ data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
 
+locals {
+  service_name = "river-node"
+}
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.13.1"
+    }
+    datadog = {
+      source = "DataDog/datadog"
+      version = "3.32.0"
+    }
+  }
+
+  backend "s3" {}
+
+  required_version = ">= 1.0.3"
+}
+
 module "river_node_db" {
   source = "../../modules/river-node-db"
 
@@ -52,9 +73,9 @@ resource "aws_cloudwatch_log_group" "river_log_group" {
   tags = merge(
     module.global_constants.tags,
     {
-      Service_Name = "river-node",
+      Service_Name = local.service_name,
       Node_Name    = var.node_name
-      Service = "river-node"
+      Service = local.service_name
       Instance = var.node_name
     }
   )
@@ -287,4 +308,46 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
       }
     }
   }
+}
+
+### MONITORING
+
+resource "datadog_monitor" "river_node_cpu_monitor" {
+  name    = "${var.node_name} - CPU Usage"
+  type    = "metric alert"
+  message = "River Node CPU Usage is high on ${var.node_name} ${module.global_constants.sre_slack_identifier}"
+  query   = "avg(last_5m):avg:aws.ecs.service.cpuutilization.maximum{instance:${var.node_name}} > 70"
+  monitor_thresholds {
+    critical          = 70
+    critical_recovery = 30
+  }
+
+  notify_no_data    = false
+  renotify_interval = 60
+
+  tags = [
+    "env:${module.global_constants.tags.Environment}",
+    "service:${local.service_name}",
+    "instance:${var.node_name}"
+  ]
+}
+
+resource "datadog_monitor" "river_node_memory_monitor" {
+  name    = "${var.node_name} - Memory Usage"
+  type    = "metric alert"
+  message = "River Node Memory Usage is high on ${var.node_name} ${module.global_constants.sre_slack_identifier}"
+  query   = "avg(last_5m):avg:aws.ecs.service.memory_utilization.maximum{instance:${var.node_name}} > 70"
+  monitor_thresholds {
+    critical          = 70
+    critical_recovery = 30
+  }
+
+  notify_no_data    = false
+  renotify_interval = 60
+
+  tags = [
+    "env:${module.global_constants.tags.Environment}",
+    "service:${local.service_name}",
+    "instance:${var.node_name}"
+  ]
 }

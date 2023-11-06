@@ -3,11 +3,20 @@ provider "aws" {
   profile = "harmony-github-actions"
 }
 
+provider "datadog" {
+  api_key = var.datadog_api_key
+  app_key = var.datadog_app_key
+}
+
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.13.1"
+    }
+    datadog = {
+      source = "DataDog/datadog"
+      version = "3.32.0"
     }
   }
 
