@@ -166,13 +166,13 @@ func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload
 	switch content := channelPayload.Content.(type) {
 	case *ChannelPayload_Inception_:
 		return errors.New("cannot update blockheader with inception event")
-	case *ChannelPayload_Message:
-		return nil
 	case *ChannelPayload_Membership:
 		if snapshot.ChannelContent.Memberships == nil {
 			snapshot.ChannelContent.Memberships = make(map[string]*Membership)
 		}
 		snapshot.ChannelContent.Memberships[content.Membership.UserId] = content.Membership
+		return nil
+	case *ChannelPayload_Message, *ChannelPayload_KeySolicitation, *ChannelPayload_Fulfillment:
 		return nil
 	default:
 		return fmt.Errorf("unknown channel payload type %T", channelPayload.Content)
@@ -187,13 +187,13 @@ func update_Snapshot_DmChannel(iSnapshot *Snapshot, dmChannelPayload *DmChannelP
 	switch content := dmChannelPayload.Content.(type) {
 	case *DmChannelPayload_Inception_:
 		return errors.New("cannot update blockheader with inception event")
-	case *DmChannelPayload_Message:
-		return nil
 	case *DmChannelPayload_Membership:
 		if snapshot.DmChannelContent.Memberships == nil {
 			snapshot.DmChannelContent.Memberships = make(map[string]*Membership)
 		}
 		snapshot.DmChannelContent.Memberships[content.Membership.UserId] = content.Membership
+		return nil
+	case *DmChannelPayload_Message, *DmChannelPayload_KeySolicitation, *DmChannelPayload_Fulfillment:
 		return nil
 	default:
 		return fmt.Errorf("unknown dm channel payload type %T", dmChannelPayload.Content)
@@ -209,13 +209,13 @@ func update_Snapshot_GdmChannel(iSnapshot *Snapshot, channelPayload *GdmChannelP
 	switch content := channelPayload.Content.(type) {
 	case *GdmChannelPayload_Inception_:
 		return errors.New("cannot update blockheader with inception event")
-	case *GdmChannelPayload_Message:
-		return nil
 	case *GdmChannelPayload_Membership:
 		if snapshot.GdmChannelContent.Memberships == nil {
 			snapshot.GdmChannelContent.Memberships = make(map[string]*Membership)
 		}
 		snapshot.GdmChannelContent.Memberships[content.Membership.UserId] = content.Membership
+		return nil
+	case *GdmChannelPayload_Message, *GdmChannelPayload_KeySolicitation, *GdmChannelPayload_Fulfillment:
 		return nil
 	default:
 		return fmt.Errorf("unknown channel payload type %T", channelPayload.Content)
