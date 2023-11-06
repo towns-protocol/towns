@@ -1,8 +1,11 @@
 import { style } from '@vanilla-extract/css'
 import { fontSettings } from 'ui/utils/FontLoader'
 
+export const grow = style({
+    lineHeight: fontSettings[0].capSize.lineHeight,
+})
+
 export const input = style({
-    // prevent overflow
     minWidth: 40,
     appearance: 'none',
     outline: 0,

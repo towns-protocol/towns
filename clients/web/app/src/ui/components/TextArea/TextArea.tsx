@@ -1,5 +1,6 @@
 import { clsx } from 'clsx'
 import React, { InputHTMLAttributes, forwardRef, useCallback, useState } from 'react'
+import { BoxProps } from '@ui'
 import { Box } from '../Box/Box'
 import { Text, TextProps } from '../Text/Text'
 import { Field, FieldBaseProps } from '../_internal/Field/Field'
@@ -14,9 +15,13 @@ type InputCallbackProps = {
     onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>
 }
 
-type Props = {
+export type Props = {
     placeholder?: string
     fontSize?: TextProps['size']
+    counterOffset?: {
+        right?: BoxProps['right']
+        bottom?: BoxProps['bottom']
+    }
 } & FieldBaseProps &
     InputCallbackProps &
     Omit<InputHTMLAttributes<HTMLTextAreaElement>, 'color'>
@@ -56,11 +61,15 @@ export const TextArea = forwardRef<HTMLTextAreaElement, Props>((props, ref) => {
                         onFocus={onFocus}
                     />
                     {overlays}
-                    {inputProps.maxLength && (
-                        <Box position="absolute" right="md" bottom="md">
+                    {inputProps.maxLength && length ? (
+                        <Box
+                            position="absolute"
+                            right={props.counterOffset?.right ?? 'md'}
+                            bottom={props.counterOffset?.bottom ?? 'md'}
+                        >
                             <Text size="sm">{inputProps.maxLength - length}</Text>
                         </Box>
-                    )}
+                    ) : null}
                 </>
             )}
         </Field>

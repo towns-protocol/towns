@@ -15,20 +15,19 @@ import {
     MotionStack,
     Stack,
     Text,
-    TextField,
 } from '@ui'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { UploadImageRequestConfig } from 'api/lib/uploadImage'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
-import { TextArea } from 'ui/components/TextArea/TextArea'
 import { useAuth } from 'hooks/useAuth'
 import { AvatarTextHorizontal } from 'ui/components/Avatar/AvatarTextHorizontal'
 import { shortAddress } from 'ui/utils/utils'
 import { FadeInBox } from '@components/Transitions'
 import { TEMPORARY_SPACE_ICON_URL } from '@components/Web3/CreateSpaceForm/constants'
 import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
+import { AutoGrowTextArea } from 'ui/components/TextArea/AutoGrowTextArea'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
@@ -84,14 +83,21 @@ export function CreateSpaceFormV2() {
                 {(hookForm) => {
                     const _form = hookForm as unknown as UseFormReturn<CreateSpaceFormV2SchemaType>
 
-                    const [spaceNameValue, price, limit, tokensGatingMembership, membershipType] =
-                        _form.watch([
-                            'spaceName',
-                            'membershipCost',
-                            'membershipLimit',
-                            'tokensGatingMembership',
-                            'membershipType',
-                        ])
+                    const [
+                        spaceNameValue,
+                        price,
+                        limit,
+                        tokensGatingMembership,
+                        membershipType,
+                        spaceBioValue,
+                    ] = _form.watch([
+                        'spaceName',
+                        'membershipCost',
+                        'membershipLimit',
+                        'tokensGatingMembership',
+                        'membershipType',
+                        'spaceBio',
+                    ])
 
                     if (spaceNameValue && !hasReached2Chars.current && spaceNameValue.length > 1) {
                         hasReached2Chars.current = true
@@ -111,7 +117,7 @@ export function CreateSpaceFormV2() {
 
                     return (
                         <FormProvider {..._form}>
-                            <Stack grow>
+                            <Stack grow overflow="auto">
                                 {/* columns */}
                                 <Stack grow alignItems="center" paddingX="lg" width="100%">
                                     <Stack
@@ -126,20 +132,27 @@ export function CreateSpaceFormV2() {
                                         <Stack grow>
                                             <Stack>
                                                 <Stack paddingY="x4" gap="sm">
-                                                    <TextField
-                                                        paddingY="none"
-                                                        paddingX="none"
+                                                    <AutoGrowTextArea
+                                                        text={spaceNameValue}
                                                         style={{
                                                             fontFamily: 'TitleFont',
                                                             textTransform: 'uppercase',
                                                         }}
                                                         fontSize="h1"
-                                                        placeholder="town name"
                                                         maxWidth="500"
+                                                        paddingY="none"
+                                                        paddingX="none"
+                                                        placeholder="town name"
                                                         tone="none"
                                                         autoComplete="one-time-code"
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault()
+                                                            }
+                                                        }}
                                                         {..._form.register('spaceName')}
                                                     />
+
                                                     {_form.formState.errors['spaceName'] &&
                                                         showSpaceNameError() && (
                                                             <FadeInBox key="spaceNameError">
@@ -237,13 +250,18 @@ export function CreateSpaceFormV2() {
                                                         </>
                                                     </FormFieldEdit>
                                                 </Box>
-                                                <TextArea
+                                                <AutoGrowTextArea
+                                                    text={spaceBioValue ?? undefined}
                                                     maxWidth="420"
+                                                    fontSize="lg"
                                                     paddingX="none"
                                                     paddingY="md"
                                                     placeholder="Add town bio"
                                                     tone="none"
-                                                    fontSize="lg"
+                                                    maxLength={400}
+                                                    counterOffset={{
+                                                        bottom: 'none',
+                                                    }}
                                                     {..._form.register('spaceBio')}
                                                 />
                                             </Stack>
