@@ -277,7 +277,7 @@ export class RiverDecryptionExtension {
     }
 
     private onDecryptedEvent = (event: RiverEventV2, err: Error | undefined) => {
-        ;(async () => {
+        try {
             const streamId = event.getStreamId()
             if (!streamId) {
                 throw new Error('CDE::onDecryptionSuccess- no streamId found')
@@ -298,7 +298,11 @@ export class RiverDecryptionExtension {
                 )
                 return
             }
-            const stream = await this.client.getStream(streamId)
+
+            const stream = this.client.stream(streamId)?.view
+            if (!stream) {
+                throw new Error(`CDE::onDecryptionFailure - stream not found locally ${streamId}`)
+            }
             const spaceId =
                 stream.contentKind === 'channelContent' ? stream.channelContent.spaceId : undefined
 
@@ -331,9 +335,9 @@ export class RiverDecryptionExtension {
             if (this.throttledStartLookingForKeys) {
                 this.throttledStartLookingForKeys()
             }
-        })().catch((e) => {
+        } catch (e) {
             console.error('CDE::onDecryptedEvent - error decrypting event', e)
-        })
+        }
     }
 
     private onChannelTimelineEvent = (streamId: string, _spaceId: string, event: ParsedEvent) => {
