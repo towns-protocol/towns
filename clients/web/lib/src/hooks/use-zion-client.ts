@@ -9,7 +9,6 @@ import {
     IZionServerVersions,
     RoleTransactionContext,
     TransactionContext,
-    ZionClientEvent,
 } from '../client/ZionClientTypes'
 import {
     CreateChannelInfo,
@@ -24,7 +23,6 @@ import { RoomMessageEvent } from '../types/timeline-types'
 import { RoomIdentifier } from '../types/room-identifier'
 import { ZionClient } from '../client/ZionClient'
 import { useLogout } from '../hooks/use-logout'
-import { useMatrixStore } from '../store/use-matrix-store'
 import { useMatrixWalletSignIn } from './use-matrix-wallet-sign-in'
 import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers'
 import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
@@ -201,22 +199,13 @@ export function useZionClient(): ZionClientImpl {
         spaceDapp: client?.spaceDapp,
         blip: blip,
         createSpaceTransaction: useWithCatch(client?.createSpaceTransaction),
-        waitForCreateSpaceTransaction: useWithCatch(
-            client?.waitForCreateSpaceTransaction,
-            ZionClientEvent.NewSpace,
-        ),
+        waitForCreateSpaceTransaction: useWithCatch(client?.waitForCreateSpaceTransaction),
         createMediaStream: useWithCatch(client?.createMediaStream),
 
         createChannelTransaction: useWithCatch(client?.createChannelTransaction),
-        waitForCreateChannelTransaction: useWithCatch(
-            client?.waitForCreateChannelTransaction,
-            ZionClientEvent.NewChannel,
-        ),
+        waitForCreateChannelTransaction: useWithCatch(client?.waitForCreateChannelTransaction),
         updateChannelTransaction: useWithCatch(client?.updateChannelTransaction),
-        waitForUpdateChannelTransaction: useWithCatch(
-            client?.waitForUpdateChannelTransaction,
-            ZionClientEvent.UpdatedChannel,
-        ),
+        waitForUpdateChannelTransaction: useWithCatch(client?.waitForUpdateChannelTransaction),
         createDMChannel: useWithCatch(client?.createDMChannel),
         createGDMChannel: useWithCatch(client?.createGDMChannel),
         createRoleTransaction: useWithCatch(client?.createRoleTransaction),
@@ -271,9 +260,7 @@ const dummyMatrixEvent = new MatrixEvent()
 
 const useWithCatch = <T extends Array<unknown>, U>(
     fn?: (...args: T) => Promise<U | undefined>,
-    event: ZionClientEvent | undefined = undefined,
 ): ((...args: T) => Promise<U | undefined>) => {
-    const { triggerZionClientEvent } = useMatrixStore()
     const { appendError } = useZionErrorStore()
     const client = useZionContext().client
     return useMemo(
@@ -287,9 +274,6 @@ const useWithCatch = <T extends Array<unknown>, U>(
                     while (true) {
                         try {
                             const value = await fn.apply(client, args)
-                            if (event) {
-                                triggerZionClientEvent(event)
-                            }
                             if (retryCount > 0) {
                                 console.log(`useWithCatch succeeded after ${retryCount} retries`)
                             }
@@ -335,7 +319,7 @@ const useWithCatch = <T extends Array<unknown>, U>(
                     console.log('useZionClient: Not logged in')
                 }
             },
-        [fn, client, event, triggerZionClientEvent, appendError],
+        [fn, client, appendError],
     )
 }
 

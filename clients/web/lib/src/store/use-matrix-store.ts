@@ -5,15 +5,12 @@ import { create } from 'zustand'
 
 import { EventType, Room as MatrixRoom, User as MatrixUser } from 'matrix-js-sdk'
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces'
-import { ZionClientEvent } from '../client/ZionClientTypes'
 
 export type MatrixStoreStates = {
     loginStatus: LoginStatus
     setLoginStatus: (loginStatus: LoginStatus) => void
     loginError: AuthenticationError | null
     setLoginError: (error: AuthenticationError | undefined) => void
-    zionClientEvents: { [event in ZionClientEvent]?: number }
-    triggerZionClientEvent: (event: ZionClientEvent) => void
 }
 
 export const useMatrixStore = create<MatrixStoreStates>((set) => ({
@@ -33,16 +30,7 @@ export const useMatrixStore = create<MatrixStoreStates>((set) => ({
               }),
     loginError: null,
     setLoginError: (error: AuthenticationError | undefined) => set({ loginError: error ?? null }),
-    zionClientEvents: {},
-    triggerZionClientEvent: (event: ZionClientEvent) =>
-        set((state: MatrixStoreStates) => triggerZionClientEvent(state, event)),
 }))
-
-function triggerZionClientEvent(state: MatrixStoreStates, event: ZionClientEvent) {
-    const changed = { ...state.zionClientEvents }
-    changed[event] = Date.now()
-    return { zionClientEvents: changed }
-}
 
 export function toZionRoom(r: MatrixRoom): Room {
     const { members, membersMap } = toZionMembers(r)

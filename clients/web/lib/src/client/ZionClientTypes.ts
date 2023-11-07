@@ -40,12 +40,6 @@ export interface Space {
     ownerAddress: string
 }
 
-export enum ZionClientEvent {
-    NewChannel = 'ZionClient.NewChannel',
-    NewSpace = 'ZionClient.NewSpace',
-    UpdatedChannel = 'ZionClient.UpdatedChannel',
-}
-
 export enum ZionAccountDataType {
     FullyRead = 'zion.fullyRead',
     Membership = 'zion.membership',
