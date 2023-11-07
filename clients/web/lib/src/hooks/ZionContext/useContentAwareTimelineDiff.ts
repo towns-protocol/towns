@@ -155,7 +155,7 @@ function diffReplaced(
                 beginUnreadWindow: channelMarker.beginUnreadWindow,
                 endUnreadWindow: channelMarker.endUnreadWindow,
                 isUnread: isCountedAsUnread(event.newEvent, userId),
-                markedReadAtTs: 0,
+                markedReadAtTs: 0n,
                 mentions: event.newEvent.isMentioned ? 1 : 0,
             }
             continue
@@ -244,7 +244,7 @@ function diffAdded(
             beginUnreadWindow: beginUnreadWindow,
             endUnreadWindow: endUnreadWindow,
             isUnread: firstUnread !== undefined,
-            markedReadAtTs: prevMarker?.markedReadAtTs ?? 0,
+            markedReadAtTs: prevMarker?.markedReadAtTs ?? 0n,
             mentions: mentions,
         }
     })

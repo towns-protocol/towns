@@ -116,7 +116,7 @@ message FullyReadMarkers {
         int64 begin_unread_window = 5; // begining of the unread window, on marking as read, number is set to end+1
         int64 end_unread_window = 6; // latest event seen by the code
         bool is_unread = 7;
-        int32 markedReadAtTs = 8; // timestamp when the event was marked as read
+        int64 markedReadAtTs = 8; // timestamp when the event was marked as read
         int32 mentions = 9;
     }
     // map of ThreadId to Content

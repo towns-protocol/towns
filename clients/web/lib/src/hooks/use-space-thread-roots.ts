@@ -64,5 +64,5 @@ function isNew(marker?: FullyReadMarker) {
         return false
     }
     const now = Date.now()
-    return marker.isUnread || (!marker.isUnread && now - marker.markedReadAtTs < 4000)
+    return marker.isUnread || (!marker.isUnread && BigInt(now) - marker.markedReadAtTs < 4000)
 }

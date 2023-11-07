@@ -22,9 +22,9 @@ export function useSendReadReceipt(client: ZionClient | undefined) {
                                 ...state.markers[markerId],
                                 isUnread: false,
                                 beginUnreadWindow: state.markers[markerId].endUnreadWindow + 1n,
-                                markedReadAtTs: Date.now(),
+                                markedReadAtTs: BigInt(Date.now()),
                                 mentions: 0,
-                            },
+                            } satisfies FullyReadMarker,
                         },
                     }
                 } else {

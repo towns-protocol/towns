@@ -63,7 +63,7 @@ describe('roomAccountData', () => {
                 beginUnreadWindow: event.eventNum - 1n,
                 endUnreadWindow: event.eventNum + 1n,
                 isUnread: false,
-                markedReadAtTs: Date.now(),
+                markedReadAtTs: BigInt(Date.now()),
                 mentions: 0,
             } satisfies FullyReadMarker,
         }
