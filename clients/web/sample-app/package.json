@@ -11,7 +11,7 @@
         "lint:fix": "yarn lint --fix",
         "preview": "vite preview",
         "test": "yarn test:unit",
-        "test:unit": "vitest"
+        "test:unit": "VITE_PRIVY_ID=imustbe25charslong_______ vitest"
     },
     "dependencies": {
         "@emotion/react": "^11.10.4",
@@ -19,6 +19,8 @@
         "@mui/icons-material": "^5.10.9",
         "@mui/material": "^5.10.10",
         "@mui/styles": "^5.10.10",
+        "@privy-io/react-auth": "^1.44.0",
+        "@privy-io/wagmi-connector": "^0.1.5",
         "@river/web3": "workspace:^",
         "@towns/generated": "workspace:^",
         "@types/node": "^20.5.0",

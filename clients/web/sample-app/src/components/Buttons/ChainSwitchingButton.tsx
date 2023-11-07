@@ -1,6 +1,7 @@
 import React, { ComponentPropsWithRef, useCallback } from 'react'
 import { Button } from '@mui/material'
 import { useNetwork, useSwitchNetwork } from 'wagmi'
+import { usePrivy } from '@privy-io/react-auth'
 import { useEnvironment } from 'hooks/use-environment'
 
 type Props = ComponentPropsWithRef<typeof Button> & {
@@ -10,6 +11,7 @@ type Props = ComponentPropsWithRef<typeof Button> & {
 export function ChainSwitchingButton(props: Props) {
     const { chainName, chainId } = useEnvironment()
     const { chain: walletChain } = useNetwork()
+    const { authenticated: privyAuthenticated } = usePrivy()
 
     const { switchNetwork } = useSwitchNetwork({
         onSuccess: (chain) => {
@@ -21,7 +23,7 @@ export function ChainSwitchingButton(props: Props) {
         switchNetwork?.(chainId)
     }, [chainId, switchNetwork])
 
-    if (chainId !== walletChain?.id) {
+    if (!privyAuthenticated && chainId !== walletChain?.id) {
         const { disabled: _disabled, ...rest } = props
         return (
             <Button {...rest} variant="contained" color="error" onClick={onSwitchToAppChain}>

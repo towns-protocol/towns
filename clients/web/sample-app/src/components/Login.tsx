@@ -9,19 +9,17 @@ import {
     Theme,
     Typography,
 } from '@mui/material'
-import { LoginStatus, useCasablancaStore, useWeb3Context, useZionClient } from 'use-zion-client'
+import {
+    LoginStatus,
+    useCasablancaStore,
+    useConnectivity,
+    useWeb3Context,
+    useZionClient,
+} from 'use-zion-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { makeStyles } from '@mui/styles'
-import {
-    useAccount,
-    useConnect,
-    useDisconnect,
-    useEnsAvatar,
-    useEnsName,
-    useNetwork,
-    useSwitchNetwork,
-} from 'wagmi'
+import { usePrivy } from '@privy-io/react-auth'
 import { useEnvironment } from 'hooks/use-environment'
 import { EnvironmentSelect } from './EnvironmentSelect'
 import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
@@ -32,6 +30,7 @@ export function Login(): JSX.Element {
     const styles = useStyles()
     const [showError, setShowError] = useState<string | undefined>(undefined)
     const { loginError: casablancaLoginError } = useCasablancaStore()
+    const { authenticated: privyAuthenticated } = usePrivy()
     const { isConnected } = useWeb3Context()
 
     const onCloseAlert = useCallback(function () {
@@ -50,8 +49,8 @@ export function Login(): JSX.Element {
         <div className={styles.container}>
             <Box sx={{ display: 'grid' }}>
                 <EnvironmentSelect />
-                <WalletInfo />
-                {isConnected && <NetworkInfo />}
+                <PrivyInfo />
+                {(isConnected || privyAuthenticated) && <NetworkInfo />}
             </Box>
             <Snackbar
                 open={showError ? true : false}
@@ -67,7 +66,6 @@ export function Login(): JSX.Element {
 }
 
 function NetworkInfo() {
-    const { isConnected } = useWeb3Context()
     const { loginWithWalletToCasablanca } = useZionClient()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
     const { casablancaUrl } = useEnvironment()
@@ -80,30 +78,27 @@ function NetworkInfo() {
     )
 
     const casablancaButton = useMemo(() => {
-        if (isConnected) {
-            if (casablancaLoginStatus === LoginStatus.LoggingIn) {
-                return <CircularProgress size={56} />
-            } else if (casablancaLoginStatus === LoginStatus.LoggedOut) {
-                return (
-                    <ChainSwitchingButton
-                        variant="contained"
-                        color="primary"
-                        sx={{ margin: '20px' }}
-                        onClick={onLoginCasablanca}
-                    >
-                        Login (casablanca)
-                    </ChainSwitchingButton>
-                )
-            } else {
-                return (
-                    <Typography variant="h6" component="span">
-                        Casablanca Login Status: {casablancaLoginStatus}
-                    </Typography>
-                )
-            }
+        if (casablancaLoginStatus === LoginStatus.LoggingIn) {
+            return <CircularProgress size={56} />
+        } else if (casablancaLoginStatus === LoginStatus.LoggedOut) {
+            return (
+                <ChainSwitchingButton
+                    variant="contained"
+                    color="primary"
+                    sx={{ margin: '20px' }}
+                    onClick={onLoginCasablanca}
+                >
+                    Login (casablanca)
+                </ChainSwitchingButton>
+            )
+        } else {
+            return (
+                <Typography variant="h6" component="span">
+                    Casablanca Login Status: {casablancaLoginStatus}
+                </Typography>
+            )
         }
-        return undefined
-    }, [casablancaLoginStatus, isConnected, onLoginCasablanca])
+    }, [casablancaLoginStatus, onLoginCasablanca])
 
     return (
         <>
@@ -131,162 +126,100 @@ function NetworkInfo() {
     )
 }
 
-function WalletInfo() {
-    const onConnnectCb = useCallback(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (params: { address: any; connector: any; isReconnected: any }) => {
-            console.log(
-                'Login.tsx::onConnected',
-                params.address,
-                params.connector,
-                params.isReconnected,
-            )
-        },
-        [],
-    )
-    const onDisconnectCb = useCallback(() => {
-        console.log('Login.tsx::onDisconnected')
-    }, [])
-    const { address, connector, isConnected } = useAccount({
-        onConnect: onConnnectCb,
-        onDisconnect: onDisconnectCb,
-    })
-
-    const { chainId: appChainId, chainName: appChainName } = useEnvironment()
-    const { chain: walletChain } = useNetwork()
-    const { connect, connectors, error, isLoading, pendingConnector } = useConnect()
-    const { disconnect } = useDisconnect()
-
-    const { switchNetwork } = useSwitchNetwork({
-        onSuccess: (chain) => {
-            console.log('switched to network', chain)
-        },
-    })
-
-    const onSwitchToAppChain = useCallback(() => {
-        switchNetwork?.(appChainId)
-    }, [appChainId, switchNetwork])
+function PrivyInfo() {
+    const {
+        ready: privyReady,
+        authenticated: privyAuthenticated,
+        logout: privyLogout,
+        login: privyLogin,
+    } = usePrivy()
+    const {
+        //login: riverLogin,
+        //logout: riverLogout,
+        activeWalletAddress,
+        loggedInWalletAddress,
+        isAuthenticated: riverIsAuthenticated,
+        loginError,
+        userOnWrongNetworkForSignIn,
+        loginStatus: riverLoginStatus,
+    } = useConnectivity()
 
     useEffect(() => {
-        console.log('Profile', {
-            address,
-            connector,
-            isConnected,
-            appChainName,
-            walletChain,
+        console.log('Login.tsx::useConnectivity', {
+            privyReady,
+            privyAuthenticated,
+            riverLoginStatus,
+            activeWalletAddress,
+            loggedInWalletAddress,
+            riverIsAuthenticated,
+            loginError,
+            userOnWrongNetworkForSignIn,
         })
-    }, [address, connector, isConnected, appChainName, walletChain])
+    }, [
+        activeWalletAddress,
+        loggedInWalletAddress,
+        loginError,
+        privyAuthenticated,
+        privyReady,
+        riverIsAuthenticated,
+        riverLoginStatus,
+        userOnWrongNetworkForSignIn,
+    ])
 
-    if (isConnected) {
+    if (!privyReady) {
         return (
-            <>
-                {walletChain?.id !== appChainId && (
-                    <Box
-                        display="grid"
-                        alignItems="center"
-                        gridTemplateColumns="repeat(2, 1fr)"
-                        marginTop="20px"
-                    >
-                        <Typography variant="h6" component="span">
-                            You are on the wrong chain. This environment requires you to be on{' '}
-                            <b>{appChainName}</b>
-                        </Typography>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            sx={{ margin: '20px' }}
-                            onClick={onSwitchToAppChain}
-                        >
-                            Switch to {appChainName}
-                        </Button>
-                    </Box>
-                )}
-                <Box sx={{ display: 'grid', marginTop: '20px', alignItems: 'Center' }}>
-                    <Chip
-                        label="Wallet"
-                        sx={{
-                            borderRadius: 0,
-                        }}
-                    />
-
-                    <Paper elevation={3} sx={{ padding: '20px' }}>
-                        {walletChain?.id === 1 && <ENSInfo address={address} />}
-
-                        <Typography variant="h6" component="p">
-                            {`Current Chain: ${walletChain?.name}`}
-                        </Typography>
-                        <Typography variant="h6" component="p" sx={{ marginTop: '20px' }}>
-                            {`Address: ${address}`}
-                        </Typography>
-                        <Typography variant="h6" component="p" sx={{ marginTop: '20px' }}>
-                            Wallet Status: Connected to {connector?.name}
-                        </Typography>
-
-                        <Button
-                            variant="outlined"
-                            color="primary"
-                            sx={{ margin: '20px' }}
-                            onClick={() => disconnect()}
-                        >
-                            Disconnect Wallet
-                        </Button>
-                    </Paper>
-                </Box>
-            </>
+            <Box
+                display="grid"
+                alignItems="center"
+                gridTemplateColumns="repeat(2, 1fr)"
+                marginTop="20px"
+            >
+                <Typography variant="h6">Privy not ready</Typography>
+            </Box>
         )
-    }
-    return (
-        <Box
-            display="grid"
-            alignItems="center"
-            gridTemplateColumns="repeat(2, 1fr)"
-            marginTop="20px"
-        >
-            <Typography variant="h6" component="span">
-                Connect with:
-            </Typography>
-            {connectors.map((connector) => (
+    } else if (!privyAuthenticated) {
+        return (
+            <Box
+                display="grid"
+                alignItems="center"
+                gridTemplateColumns="repeat(2, 1fr)"
+                marginTop="20px"
+            >
+                <Typography variant="h6" component="span">
+                    Privy:
+                </Typography>
                 <Button
                     variant="contained"
                     color="primary"
                     sx={{ margin: '10px' }}
-                    disabled={!connector.ready}
-                    key={connector.id}
-                    onClick={() => connect({ connector })}
+                    onClick={() => privyLogin()}
                 >
-                    {connector.name}
-                    {!connector.ready && ' (unsupported)'}
-                    {isLoading && connector.id === pendingConnector?.id && ' (connecting)'}
+                    Login
                 </Button>
-            ))}
-            {error && <div>{error.message}</div>}
-        </Box>
-    )
-}
-
-function ENSInfo(props: { address: `0x${string}` | undefined }): JSX.Element {
-    const { address } = props
-    const { data: ensName } = useEnsName({ address })
-    const { data: ensAvatar } = useEnsAvatar({ name: ensName })
-
-    return (
-        <>
-            {ensAvatar && (
-                <Box sx={{ display: 'grid', marginTop: '20px', alignItems: 'Center' }}>
-                    <Typography variant="h6" component="span">
-                        {`ENS Avatar: ${ensAvatar}`}
-                    </Typography>
-                </Box>
-            )}
-            {ensName && (
-                <Box sx={{ display: 'grid', marginTop: '20px', alignItems: 'Center' }}>
-                    <Typography variant="h6" component="span">
-                        {`ENS Name: ${ensName}`}
-                    </Typography>
-                </Box>
-            )}
-        </>
-    )
+            </Box>
+        )
+    } else {
+        return (
+            <Box
+                display="grid"
+                alignItems="center"
+                gridTemplateColumns="repeat(2, 1fr)"
+                marginTop="20px"
+            >
+                <Typography variant="h6" component="span">
+                    Privy:
+                </Typography>
+                <Button
+                    variant="contained"
+                    color="secondary"
+                    sx={{ margin: '10px' }}
+                    onClick={() => privyLogout()}
+                >
+                    logout
+                </Button>
+            </Box>
+        )
+    }
 }
 
 const useStyles = makeStyles((theme: Theme) => ({

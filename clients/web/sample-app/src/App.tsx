@@ -3,11 +3,6 @@ import { Route, Routes } from 'react-router-dom'
 import { Container } from '@mui/material'
 import { ZionContextProvider } from 'use-zion-client'
 import { ThemeProvider } from '@mui/material/styles'
-import { baseGoerli, foundry, goerli, localhost, sepolia } from 'wagmi/chains'
-import { WagmiConfig, configureChains, createConfig } from 'wagmi'
-import { alchemyProvider } from 'wagmi/providers/alchemy'
-import { publicProvider } from 'wagmi/providers/public'
-import { InjectedConnector } from 'wagmi/connectors/injected'
 import { Thread } from 'routes/Thread'
 import { Threads } from 'routes/Threads'
 import { Mentions } from 'routes/Mentions'
@@ -15,6 +10,8 @@ import { AlphaAccessMainPage } from 'routes/AlphaAccess'
 import { Login } from '@components/Login'
 import { VersionsPage } from 'routes/VersionsPage'
 import { useEnvironment } from 'hooks/use-environment'
+import { PrivyProvider } from 'context/PrivyProvider'
+import { SetSignerFromWalletClient } from 'context/SetSignerFromWalletClient'
 import { Home } from './routes/Home'
 import { MainLayout } from './components/MainLayout'
 import { NotFound } from './routes/NotFound'
@@ -30,27 +27,10 @@ import { ChannelsIndex } from './routes/ChannelsIndex'
 import { Channels } from './routes/Channels'
 import { AuthenticatedContent } from './routes/AuthenticatedContent'
 
-const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_API_KEY ?? ''
-
-const SUPPORTED_CHAINS = [goerli, sepolia, foundry, baseGoerli, localhost]
-
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-    SUPPORTED_CHAINS,
-    ALCHEMY_KEY ? [alchemyProvider({ apiKey: ALCHEMY_KEY }), publicProvider()] : [publicProvider()],
-    { retryCount: 5 },
-)
-
-export const wagmiConfig = createConfig({
-    autoConnect: true,
-    connectors: [new InjectedConnector({ chains })],
-    publicClient,
-    webSocketPublicClient,
-})
-
 export const App = () => {
     const { casablancaUrl, chainId } = useEnvironment()
     return (
-        <WagmiConfig config={wagmiConfig}>
+        <PrivyProvider>
             <ThemeProvider theme={theme}>
                 <Container maxWidth="md">
                     <ZionContextProvider
@@ -61,39 +41,48 @@ export const App = () => {
                         onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
                         initialSyncLimit={100}
                     >
-                        <Routes>
-                            <Route path="/alpha-access" element={<AlphaAccessMainPage />} />
-                            <Route path="/versions" element={<VersionsPage />} />
-                            <Route element={<MainLayout />}>
-                                <Route element={<AuthenticatedContent />}>
-                                    <Route index element={<Home />} />
-                                    <Route path="spaces/new" element={<SpacesNew />} />
-                                    <Route path="spaces/:spaceSlug" element={<Spaces />}>
-                                        <Route index element={<SpacesIndex />} />
-                                        <Route path="settings" element={<RoomSettings />} />
-                                        <Route path="invite" element={<SpaceInvite />} />
-                                        <Route path="channels/new" element={<SpacesNewChannel />} />
-                                        <Route path="channels/:channelSlug" element={<Channels />}>
-                                            <Route index element={<ChannelsIndex />} />
+                        <>
+                            <SetSignerFromWalletClient chainId={chainId} />
+                            <Routes>
+                                <Route path="/alpha-access" element={<AlphaAccessMainPage />} />
+                                <Route path="/versions" element={<VersionsPage />} />
+                                <Route element={<MainLayout />}>
+                                    <Route element={<AuthenticatedContent />}>
+                                        <Route index element={<Home />} />
+                                        <Route path="spaces/new" element={<SpacesNew />} />
+                                        <Route path="spaces/:spaceSlug" element={<Spaces />}>
+                                            <Route index element={<SpacesIndex />} />
                                             <Route path="settings" element={<RoomSettings />} />
+                                            <Route path="invite" element={<SpaceInvite />} />
+                                            <Route
+                                                path="channels/new"
+                                                element={<SpacesNewChannel />}
+                                            />
+                                            <Route
+                                                path="channels/:channelSlug"
+                                                element={<Channels />}
+                                            >
+                                                <Route index element={<ChannelsIndex />} />
+                                                <Route path="settings" element={<RoomSettings />} />
+                                            </Route>
+                                            <Route path="threads" element={<Threads />} />
+                                            <Route
+                                                path="threads/:channelSlug/:threadParentId"
+                                                element={<Thread />}
+                                            />
+                                            <Route path="mentions" element={<Mentions />} />
                                         </Route>
-                                        <Route path="threads" element={<Threads />} />
-                                        <Route
-                                            path="threads/:channelSlug/:threadParentId"
-                                            element={<Thread />}
-                                        />
-                                        <Route path="mentions" element={<Mentions />} />
+                                        <Route path="web3" element={<Web3 />} />
+                                        <Route path="logins" element={<Login />} />
+                                        <Route path="*" element={<NotFound />} />
                                     </Route>
-                                    <Route path="web3" element={<Web3 />} />
-                                    <Route path="logins" element={<Login />} />
-                                    <Route path="*" element={<NotFound />} />
                                 </Route>
-                            </Route>
-                        </Routes>
+                            </Routes>
+                        </>
                     </ZionContextProvider>
                 </Container>
             </ThemeProvider>
-        </WagmiConfig>
+        </PrivyProvider>
     )
 }
 
