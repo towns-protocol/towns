@@ -16,6 +16,7 @@ import { PATHS } from 'routes'
 import { atoms } from 'ui/styles/atoms.css'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
+import { useDmChannels } from 'hooks/useDMChannels'
 
 const createMessageLink = (
     spaceId: string,
@@ -45,6 +46,8 @@ export const IsolatedMessageItem = (
 
     const { membersMap, members } = useSpaceMembers()
     const channels = useSpaceChannels()
+    const dmChannels = useDmChannels()
+
     const sender = membersMap[result.event.sender.id]
     const ref = React.useRef<HTMLAnchorElement>(null)
 
@@ -70,9 +73,13 @@ export const IsolatedMessageItem = (
         return null
     }
 
+    const sourceAnnotation =
+        result.channel.label.length > 0
+            ? `${result.thread ? `Thread in` : ``} #${result.channel.label.toLowerCase()}`
+            : ''
+
     const item = (
         <Box
-            hoverable
             overflow="hidden"
             background={isTouch ? 'inherit' : props.selected ? 'level3' : 'level2'}
             elevate={!isTouch}
@@ -84,9 +91,7 @@ export const IsolatedMessageItem = (
                 avatarSize={isTouch ? 'avatar_x4' : 'avatar_md'}
                 padding={padding}
                 key={result.event.eventId}
-                messageSourceAnnotation={`${
-                    result.thread ? `Thread in` : ``
-                } #${result.channel.label.toLowerCase()}`}
+                messageSourceAnnotation={sourceAnnotation}
                 timestamp={result.event.createdAtEpocMs}
                 userId={sender?.userId}
                 senderId={sender?.userId}
@@ -96,7 +101,7 @@ export const IsolatedMessageItem = (
                     key={props.highligtTerms?.join('')}
                     highlightTerms={props.highligtTerms}
                     members={members}
-                    channels={channels}
+                    channels={[...channels, ...dmChannels]}
                     content={getMessageBody(result.event.eventId, content)}
                     statusAnnotation={
                         content.replacedMsgId !== undefined

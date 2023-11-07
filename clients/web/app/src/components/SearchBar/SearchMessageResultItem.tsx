@@ -8,6 +8,7 @@ import {
     useSpaceMembers,
 } from 'use-zion-client'
 import { formatDistance } from 'date-fns'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Avatar, Box, BoxProps, Stack, Text } from '@ui'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
@@ -17,11 +18,18 @@ import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 const createMessageLink = (
-    spaceId: string,
     channelId: RoomIdentifier,
     eventId: string,
     threadId?: string,
+    spaceId?: string,
 ) => {
+    if (isDMChannelStreamId(channelId.networkId) || isGDMChannelStreamId(channelId.networkId)) {
+        return `/${PATHS.MESSAGES}/${channelId.networkId}/#${eventId}`
+    }
+
+    if (!spaceId) {
+        return undefined
+    }
     const channelSegment = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId.networkId}/`
     const threadSegment = threadId ? `${PATHS.REPLIES}/${threadId}/` : ``
     const eventSegment = `#${eventId}`
@@ -37,8 +45,6 @@ export const SearchMessagesResultItem = (
 ) => {
     const { result } = props
     const { slug: spaceSlug } = useSpaceId() ?? {}
-    const { slug: channelSlug } = result.channel.id
-
     const content = getIsRoomMessageContent(result.event)
 
     const { membersMap, members } = useSpaceMembers()
@@ -49,16 +55,13 @@ export const SearchMessagesResultItem = (
     const displayName = getPrettyDisplayName(sender).name
 
     const link = useMemo(() => {
-        if (!spaceSlug || !channelSlug) {
-            return undefined
-        }
         return createMessageLink(
-            spaceSlug,
             result.channel.id,
             result.event.eventId,
             result.thread?.eventId,
+            spaceSlug,
         )
-    }, [channelSlug, result.channel.id, result.event.eventId, result.thread, spaceSlug])
+    }, [result.channel.id, result.event.eventId, result.thread, spaceSlug])
 
     useEffect(() => {
         if (props.selected && ref.current) {
@@ -70,9 +73,10 @@ export const SearchMessagesResultItem = (
         return null
     }
 
-    const channelLabel = `${
-        result.thread ? `Thread in` : ``
-    } #${result.channel.label.toLowerCase()}`
+    const channelLabel =
+        result.channel.label.length > 0
+            ? `${result.thread ? `Thread in` : ``} #${result.channel.label.toLowerCase()}`
+            : ''
 
     const timestamp = result.event.createdAtEpocMs
 

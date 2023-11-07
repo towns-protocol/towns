@@ -7,6 +7,7 @@ import { useSearch } from 'hooks/useSearch'
 import { useShortcut } from 'hooks/useShortcut'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { getSectionTitle } from 'routes/TouchSearchTab'
+import { useDmChannels } from 'hooks/useDMChannels'
 import { ResultItem } from './SearchResultItem'
 import { CombinedResult } from './types'
 
@@ -142,14 +143,15 @@ const SearchResults = (props: { onHide: () => void; searchResults: CombinedResul
 
     const spaceId = useSpaceId()
     const channels = useSpaceChannels()
+    const dmChannels = useDmChannels()
     const { members } = useSpaceMembers()
     const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
         threadsStats,
     }))
 
     const miscProps = useMemo(
-        () => ({ channels, members, threadsStats, spaceId }),
-        [channels, members, threadsStats, spaceId],
+        () => ({ channels: [...channels, ...dmChannels], members, threadsStats, spaceId }),
+        [channels, members, threadsStats, spaceId, dmChannels],
     )
 
     return (

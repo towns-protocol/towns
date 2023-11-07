@@ -3,10 +3,22 @@ import { SearchResult } from 'minisearch'
 import { ZRoomMessageEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { useChannelsWithMentionCountsAndUnread } from 'hooks/useChannelsWithMentionCountsAndUnread'
 
-export type EventDocument = MessageEventDocument | ChannelEventDocument | UserEventDocument
+export type EventDocument =
+    | MessageEventDocument
+    | ChannelEventDocument
+    | UserEventDocument
+    | DMMessageEventDocument
 
 export type MessageEventDocument = {
     type: 'message'
+    key: string
+    channelId: string
+    body: string
+    source: ZRoomMessageEvent
+}
+
+export type DMMessageEventDocument = {
+    type: 'dmMessage'
     key: string
     channelId: string
     body: string

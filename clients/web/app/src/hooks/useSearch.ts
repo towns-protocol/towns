@@ -9,7 +9,7 @@ import { useChannelsWithMentionCountsAndUnread } from './useChannelsWithMentionC
 
 export const useSearch = (searchTerms: string) => {
     const { members } = useSpaceMembers()
-    const { messages: indexedMessages } = useIndexMessages()
+    const { messages: indexedMessages, dmMessages: indexedDMMessages } = useIndexMessages()
 
     const { channelsWithMentionCountsAndUnread } = useChannelsWithMentionCountsAndUnread()
 
@@ -36,11 +36,11 @@ export const useSearch = (searchTerms: string) => {
     )
 
     const searchItems = useMemo(
-        () => [...indexedMembers, ...indexedChannels, ...indexedMessages],
-        [indexedChannels, indexedMessages, indexedMembers],
+        () => [...indexedMembers, ...indexedChannels, ...indexedMessages, ...indexedDMMessages],
+        [indexedChannels, indexedMessages, indexedMembers, indexedDMMessages],
     )
 
-    const order = ['user', 'channel', 'message']
+    const order = ['user', 'channel', 'dmMessage', 'message']
 
     const searchResults = useMiniSearch(searchItems, searchTerms)
         .map((r) => r)

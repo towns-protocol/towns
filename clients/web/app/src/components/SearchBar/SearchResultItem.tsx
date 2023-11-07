@@ -80,6 +80,18 @@ export const ResultItem = (props: {
             ) : null
         }
 
+        case 'dmMessage': {
+            return (
+                <ItemContainer paddingY="md">
+                    <MessageResultItem
+                        event={item.source}
+                        channelId={item.channelId}
+                        misc={props.misc}
+                        highlightedTerms={props.result.searchResult.terms}
+                    />
+                </ItemContainer>
+            )
+        }
         case 'message': {
             return (
                 <ItemContainer paddingY="md">

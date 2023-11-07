@@ -7,15 +7,18 @@ import { useSearch } from 'hooks/useSearch'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useStore } from 'store/store'
 import { atoms } from 'ui/styles/atoms.css'
+import { useDmChannels } from 'hooks/useDMChannels'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 const sectionTypeNameMap = {
     user: 'Persons',
     message: 'Messages',
     channel: 'Channels',
+    dmMessage: 'Direct Messages',
 } as const
 
-export const getSectionTitle = (type: 'user' | 'message' | 'channel') => sectionTypeNameMap[type]
+export const getSectionTitle = (type: 'user' | 'message' | 'channel' | 'dmMessage') =>
+    sectionTypeNameMap[type]
 
 export const TouchSearchTab = () => {
     const { setSearchTerms, searchTerms } = useStore(({ setSearchTerms, searchTerms }) => ({
@@ -47,14 +50,15 @@ export const TouchSearchTab = () => {
 
     const spaceId = useSpaceId()
     const channels = useSpaceChannels()
+    const dmChannels = useDmChannels()
     const { members } = useSpaceMembers()
     const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
         threadsStats,
     }))
 
     const miscProps = useMemo(
-        () => ({ channels, members, threadsStats, spaceId }),
-        [channels, members, threadsStats, spaceId],
+        () => ({ channels: [...channels, ...dmChannels], members, threadsStats, spaceId }),
+        [channels, members, threadsStats, spaceId, dmChannels],
     )
     const onScroll = useCallback(() => {
         if (document.activeElement instanceof HTMLElement) {
