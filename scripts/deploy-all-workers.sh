@@ -53,7 +53,7 @@ SIWE_WORKER_PATH="servers/workers/siwe-worker"
 TOKEN_WORKER_PATH="servers/workers/token-worker"
 UNFURL_WORKER_PATH="servers/workers/unfurl-worker"
 JWT_WORKER_PATH="servers/workers/jwt-worker"
-RPC_PROXY_WORKER_PATH="servers/workers/nexus-rpc-worker
+RPC_PROXY_WORKER_PATH="servers/workers/nexus-rpc-worker"
 
 declare -a WORKER_PATHS=(
     $JWT_WORKER_PATH
