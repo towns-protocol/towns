@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { Address, Chain, useAccount, useNetwork, usePublicClient } from 'wagmi'
 import { ethers } from 'ethers'
-import { TProvider, WalletStatus } from '../types/web3-types'
+import { TProvider } from '../types/web3-types'
 import { useEthersSigner } from '../hooks/Web3Context/useEthersSigner'
 import { useEthersProvider } from '../hooks/Web3Context/useEthersProvider'
 
@@ -15,7 +15,6 @@ export interface IWeb3Context {
     }
     chains: Chain[]
     isConnected: boolean
-    walletStatus: WalletStatus
     setSigner: (signer: ethers.Signer) => void
 }
 
@@ -61,7 +60,7 @@ type Web3ContextOptions = {
 
 /// web3 components, pass chain to lock to a specific chain, pass signer to override the default signer (usefull for tests)
 function useWeb3({ chain, chainId, web3Signer }: Web3ContextOptions): IWeb3Context {
-    const { address: activeWalletAddress, connector, isConnected, status } = useAccount()
+    const { address: activeWalletAddress, isConnected } = useAccount()
     const { chain: walletChain, chains } = useNetwork()
     const accounts = useMemo(
         () => (activeWalletAddress ? [activeWalletAddress] : []),
@@ -77,16 +76,14 @@ function useWeb3({ chain, chainId, web3Signer }: Web3ContextOptions): IWeb3Conte
 
     useEffect(() => {
         console.log('use web3 ##', {
-            connector,
             activeWalletAddress,
             activeChain,
             chains,
             rpc: activeChain?.rpcUrls,
             def: activeChain?.rpcUrls?.default,
-            status,
             signer,
         })
-    }, [activeChain, activeWalletAddress, chains, connector, status, signer])
+    }, [activeChain, activeWalletAddress, chains, signer])
 
     return useMemo(
         () => ({
@@ -97,7 +94,6 @@ function useWeb3({ chain, chainId, web3Signer }: Web3ContextOptions): IWeb3Conte
             chain: activeChain,
             chains: chains,
             isConnected: isConnected,
-            walletStatus: status as WalletStatus,
             setSigner,
         }),
         [
@@ -109,7 +105,6 @@ function useWeb3({ chain, chainId, web3Signer }: Web3ContextOptions): IWeb3Conte
             provider,
             setSigner,
             signer,
-            status,
         ],
     )
 }
@@ -142,4 +137,8 @@ function useAppSigner(appChainId: number, web3Signer?: ethers.Signer) {
     }, [])
 
     return { signer, setSigner }
+}
+
+export function useWalletStatus() {
+    return useAccount().status
 }

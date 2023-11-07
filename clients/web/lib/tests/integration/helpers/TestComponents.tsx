@@ -4,7 +4,7 @@ import { useMatrixStore } from '../../../src/store/use-matrix-store'
 import { useCasablancaCredentials } from '../../../src/hooks/use-casablanca-credentials'
 import { useMyMembership } from '../../../src/hooks/use-my-membership'
 import { useZionClient } from '../../../src/hooks/use-zion-client'
-import { useWeb3Context } from '../../../src/components/Web3ContextProvider'
+import { useWalletStatus, useWeb3Context } from '../../../src/components/Web3ContextProvider'
 import { WalletStatus } from '../../../src/types/web3-types'
 import { useCreateSpaceTransaction } from '../../../src/hooks/use-create-space-transaction'
 import { useCreateChannelTransaction } from '../../../src/hooks/use-create-channel-transaction'
@@ -17,7 +17,8 @@ import { useUpdateSpaceNameTransaction } from '../../../src/hooks/use-update-spa
 import { SignerContext } from '@river/sdk'
 
 export const RegisterWallet = () => {
-    const { walletStatus, isConnected } = useWeb3Context()
+    const { isConnected } = useWeb3Context()
+    const walletStatus = useWalletStatus()
     const riverCridentials = useCasablancaCredentials()
     const loginStatus = riverCridentials.loginStatus
     const loginError = riverCridentials.loginError
@@ -50,7 +51,8 @@ export const RegisterWallet = () => {
 }
 
 export const LoginWithWallet = () => {
-    const { walletStatus, isConnected } = useWeb3Context()
+    const { isConnected } = useWeb3Context()
+    const walletStatus = useWalletStatus()
     const riverCridentials = useCasablancaCredentials()
     const loginStatus = riverCridentials.loginStatus
     const loginError = riverCridentials.loginError
@@ -83,7 +85,8 @@ interface LoginWithAuthProps {
 }
 
 export const LoginWithAuth = (_props: LoginWithAuthProps) => {
-    const { walletStatus, isConnected } = useWeb3Context()
+    const { isConnected } = useWeb3Context()
+    const walletStatus = useWalletStatus()
     const { loginStatus, loginError } = useMatrixStore()
     const { clientRunning } = useZionClient()
     useEffect(() => {
