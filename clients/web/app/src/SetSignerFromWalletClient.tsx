@@ -1,13 +1,21 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useWeb3Context, walletClientToSigner } from 'use-zion-client'
 import { IWeb3Context } from 'use-zion-client/dist/components/Web3ContextProvider'
 import { getConfig } from '@wagmi/core'
-import { PrivyConnector } from '@privy-io/wagmi-connector'
-import { useRetryUntilResolved } from 'hooks/useRetryUntilResolved'
-import { Box, Icon } from '@ui'
+import { PrivyConnector, usePrivyWagmi } from '@privy-io/wagmi-connector'
+import { Box, Icon, Text } from '@ui'
 import { useEmbeddedWallet } from 'hooks/useEmbeddedWallet'
+import { shortAddress } from 'ui/utils/utils'
 
-export async function setSignerFromWalletClient({
+function getPrivyConnector() {
+    const config = getConfig()
+    const privyConnector = config.connectors.find((c) => c.id === 'privy') as
+        | PrivyConnector
+        | undefined
+    return privyConnector
+}
+
+async function setSignerFromWalletClient({
     chainId,
     setSigner,
     embeddedWallet,
@@ -16,13 +24,11 @@ export async function setSignerFromWalletClient({
     setSigner: IWeb3Context['setSigner']
     embeddedWallet: ReturnType<typeof useEmbeddedWallet>
 }) {
-    const config = getConfig()
-    const privyConnector = config.connectors.find((c) => c.id === 'privy') as
-        | PrivyConnector
-        | undefined
+    const privyConnector = getPrivyConnector()
 
     if (!privyConnector) {
-        return false
+        console.warn('setSignerFromWalletClient: privy connector not found')
+        return
     }
 
     // if you load the app w/ another connected wallet, i.e. MM, then that's the activeWallet before you are logged in to Privy
@@ -36,62 +42,110 @@ export async function setSignerFromWalletClient({
 
     // once privy is signed in, the activeWallet will be the privy wallet
     if (!activeWallet || activeWallet.walletClientType !== 'privy') {
-        return false
+        console.warn('setSignerFromWalletClient: active wallet is not privy wallet')
+        return
     }
 
     try {
         // make sure the connector is ready https://github.com/wagmi-dev/references/issues/167#issuecomment-1470698087
         await privyConnector.getProvider()
     } catch (error) {
-        return false
+        console.error(
+            'setSignerFromWalletClient: error getting provider from privy connector',
+            error,
+        )
+        return
     }
 
     const wc = await privyConnector.getWalletClient({ chainId })
-
-    if (wc) {
-        setSigner(walletClientToSigner(wc))
-        return true
-    }
-    return false
+    setSigner(walletClientToSigner(wc))
 }
 
 // in the case that the app loads and privy for some reason is late to set the Web3Context signer (or doesn't set it at all)
 // this component wathches for the privy wallet to be connected and then sets the signer
 export function SetSignerFromWalletClient({ chainId }: { chainId: number }) {
-    const { signer, setSigner } = useWeb3Context()
-    const embeddedWallet = useEmbeddedWallet()
+    const { signer } = useWeb3Context()
+    const [signerAddress, setSignerAddress] = React.useState<string | undefined>()
+    const { wallet: activeWallet } = usePrivyWagmi()
 
-    useRetryUntilResolved(
-        () =>
-            setSignerFromWalletClient({
-                chainId,
-                setSigner,
-                embeddedWallet,
-            }),
-        100,
-    )
+    useEffect(() => {
+        if (signer) {
+            signer.getAddress().then(setSignerAddress)
+        } else {
+            setSignerAddress(undefined)
+        }
+    }, [signer])
+
+    usePrivyConnectorEventListener({
+        chainId,
+    })
 
     return (
         <Box
             horizontal
+            gap="sm"
             position="fixed"
-            bottom="none"
+            top="none"
             left="none"
-            right="none"
-            width="100"
-            style={{
-                margin: 'auto',
-            }}
             fontSize="xs"
             zIndex="tooltipsAbove"
+            rounded="sm"
+            background="readability"
+            pointerEvents="none"
         >
-            Signer
-            <Icon
-                display="inline-block"
-                size="square_xxs"
-                type={signer ? 'check' : 'alert'}
-                color={signer ? 'cta1' : 'error'}
-            />
+            <Box horizontal>
+                <Text size="xs">
+                    Signer: {shortAddress(signerAddress ?? '')} <br />
+                </Text>
+                <Icon
+                    display="inline-block"
+                    size="square_xxs"
+                    type={signer ? 'check' : 'alert'}
+                    color={signer ? 'cta1' : 'error'}
+                />
+            </Box>
+            <Text size="xs">Active wallet: {shortAddress(activeWallet?.address ?? '')}</Text>
         </Box>
     )
+}
+
+function usePrivyConnectorEventListener({ chainId }: { chainId: number }) {
+    const privyConnector = getPrivyConnector()
+    const embeddedWallet = useEmbeddedWallet()
+    const { setSigner } = useWeb3Context()
+    const initialSet = useRef(false)
+
+    useEffect(() => {
+        if (!privyConnector) {
+            return
+        }
+
+        function onChange() {
+            setSignerFromWalletClient({
+                chainId,
+                setSigner,
+                embeddedWallet,
+            })
+        }
+        // just in case app loads with non privy wallet connected,
+        // and privy for some reason doesn't fire the change event to switch to the embedded wallet
+        if (embeddedWallet && !initialSet.current) {
+            initialSet.current = true
+            setSignerFromWalletClient({
+                chainId,
+                setSigner,
+                embeddedWallet,
+            })
+        }
+
+        privyConnector.on('change', onChange)
+        // Other methods available
+        // privyConnector.on('connect', onConnect)
+        // privyConnector.on('disconnect', onDisconnect)
+        // privyConnector.on('error', onError)
+        // privyConnector.on('message', onMessage)
+        return () => {
+            privyConnector.off('change', onChange)
+        }
+    }, [privyConnector, embeddedWallet, chainId, setSigner])
 }
