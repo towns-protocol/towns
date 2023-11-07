@@ -95,7 +95,7 @@ jobs:
               with:
                   payload: |
                       {
-                          "environment": "${{ github.event.inputs.environment }}",
+                          "environment": "${{ github.event_name == 'schedule' && 'test-beta' || github.event.inputs.environment }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
                           "actor": "${{ github.actor }}"
                       }
