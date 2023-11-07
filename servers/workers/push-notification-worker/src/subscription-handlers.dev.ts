@@ -63,7 +63,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     default: {
       console.error(
         '[getDefaultRouteDev] Dev function is not allowed for environment',
-        env,
+        env.ENVIRONMENT,
       )
       return new Response('Forbidden', { status: 403 })
     }
