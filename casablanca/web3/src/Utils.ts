@@ -23,10 +23,10 @@ export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
 
         const result = this.send('anvil_setBalance', [this.wallet.address, amountInWei])
 
-        console.log('fundWallet tx', result, amountInWei, this.wallet.address)
+        // console.log('fundWallet tx', result, amountInWei, this.wallet.address)
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const receipt = await result
-        console.log('fundWallet receipt', receipt)
+        await result
+        // console.log('fundWallet receipt', receipt)
     }
 
     /**
