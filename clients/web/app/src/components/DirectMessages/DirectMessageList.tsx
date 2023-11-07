@@ -6,7 +6,7 @@ import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-ident
 import { MostRecentMessageInfo_OneOf } from 'use-zion-client/dist/hooks/use-dm-latest-message'
 import { useDevice } from 'hooks/useDevice'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { Avatar, Box, MotionStack, Paragraph, Stack, Text } from '@ui'
+import { Avatar, Box, Icon, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { GroupDMIcon } from './GroupDMIcon'
 
 export const DirectMessageList = () => {
@@ -44,17 +44,34 @@ export const DirectMessageList = () => {
     return (
         <Stack scroll>
             <Stack padding minHeight="100svh" paddingBottom="safeAreaInsetBottom" gap="xxs">
-                {dmChannels.map((channel) => {
-                    return (
-                        <DirectMessageThread
-                            key={channel.id.slug}
-                            channel={channel}
-                            highlighted={messageId === channel.id.slug}
-                            unread={dmUnreadChannelIds.has(channel.id.slug)}
-                            onClick={() => onThreadClick(channel.id.slug)}
-                        />
-                    )
-                })}
+                {dmChannels.length > 0 ? (
+                    dmChannels.map((channel) => {
+                        return (
+                            <DirectMessageThread
+                                key={channel.id.slug}
+                                channel={channel}
+                                highlighted={messageId === channel.id.slug}
+                                unread={dmUnreadChannelIds.has(channel.id.slug)}
+                                onClick={() => onThreadClick(channel.id.slug)}
+                            />
+                        )
+                    })
+                ) : (
+                    <Box centerContent absoluteFill padding="md" pointerEvents="none">
+                        <Paragraph color="gray2" textAlign="center">
+                            Click the compose button above{' '}
+                            <Box
+                                display="inline-block"
+                                style={{ verticalAlign: 'middle' }}
+                                paddingBottom="xxs"
+                            >
+                                <Icon type="compose" size="square_sm" />
+                            </Box>
+                            <br />
+                            to write your first message
+                        </Paragraph>
+                    </Box>
+                )}
             </Stack>
         </Stack>
     )
