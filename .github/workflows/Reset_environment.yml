@@ -3,6 +3,9 @@ env:
     FOUNDRY_VERSION: nightly-ca67d15f4abd46394b324c50e21e66f306a1162d
 
 on:
+    schedule:
+        # At 4:40 PM UTC (11:40 AM EST) - 20 minutes before bug bash
+        - cron: '40 16 * * *'
     workflow_dispatch:
         inputs:
             environment:
@@ -21,7 +24,7 @@ on:
                 description: 'Reset DB'
                 required: true
                 type: choice
-                default: 'false'
+                default: 'true'
                 options:
                     - 'true'
                     - 'false'
@@ -44,7 +47,7 @@ jobs:
         runs-on: ubuntu-latest
 
         environment:
-            name: ${{ github.event.inputs.environment }}
+            name: ${{ github.event_name == 'schedule' && 'test-beta' || github.event.inputs.environment }}
 
         permissions:
             contents: write
@@ -87,7 +90,7 @@ jobs:
 
             # We notify via Slack that the reset is starting
             - name: Slack notification
-              if: ${{ github.event.inputs.skip_slack_notification != 'true' }}
+              if: ${{ github.event.inputs.skip_slack_notification != 'true' || github.event_name == 'schedule' }}
               uses: slackapi/slack-github-action@v1.24.0
               with:
                   payload: |
@@ -100,4 +103,17 @@ jobs:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RESET_ENV_WORKFLOW_WEBHOOK_URL }}
 
             - name: Reset environment
-              run: ETHERS_NETWORK=${{ secrets.ETHERS_NETWORK }} RIVER_NODE_NAME=${{ vars.PRIMARY_NODE_NAME }} ENVIRONMENT=${{ vars.ENVIRONMENT }} WALLET_PRIVATE_KEY=${{ secrets.HARMONY_HOT_WALLET_PRIVATE_KEY }} CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} DB_URL=${{ secrets.DB_URL }} CLUSTER_NAME=${{ vars.CLUSTER_NAME }} RESET_DB=${{ github.event.inputs.reset_db }} CREATE_NEW_DEV_TOWN=${{ github.event.inputs.create_new_dev_town }} CLOUDFLARE_ENVIRONMENT=${{ vars.CLOUDFLARE_ENVIRONMENT }} CASABLANCA_SERVER_URL=${{ vars.CASABLANCA_SERVER_URL }} CHAIN_ID=${{ vars.CHAIN_ID }} ./scripts/reset-environment.sh
+              env:
+                  RESET_DB: ${{ github.event_name == 'schedule' && 'true' || github.event.inputs.reset_db }}
+                  CREATE_NEW_DEV_TOWN: ${{ github.event_name == 'schedule' && 'true' || github.event.inputs.create_new_dev_town }}
+                  ETHERS_NETWORK: ${{ secrets.ETHERS_NETWORK }}
+                  RIVER_NODE_NAME: ${{ vars.PRIMARY_NODE_NAME }}
+                  ENVIRONMENT: ${{ vars.ENVIRONMENT }}
+                  WALLET_PRIVATE_KEY: ${{ secrets.HARMONY_HOT_WALLET_PRIVATE_KEY }}
+                  CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+                  DB_URL: ${{ secrets.DB_URL }}
+                  CLUSTER_NAME: ${{ vars.CLUSTER_NAME }}
+                  CLOUDFLARE_ENVIRONMENT: ${{ vars.CLOUDFLARE_ENVIRONMENT }}
+                  CASABLANCA_SERVER_URL: ${{ vars.CASABLANCA_SERVER_URL }}
+                  CHAIN_ID: ${{ vars.CHAIN_ID }}
+              run: ./scripts/reset-environment.sh
