@@ -113,14 +113,24 @@ export function useMeetsMembershipNftRequirements(spaceId: string | undefined, c
         walletAddress: _walletAddress,
         minterRoleDetails,
         connected,
-        query: ['meetsMembershipNftRequirements', spaceId, minterRoleDetails, { connected }],
-        enabledCheck: Boolean(minterRoleDetails) && connected,
+        query: [
+            'meetsMembershipNftRequirements',
+            spaceId,
+            minterRoleDetails,
+            { connected, walletAddress: _walletAddress },
+        ],
+        enabledCheck: Boolean(minterRoleDetails) && connected && !!_walletAddress,
     })
     return useQuery(
-        ['meetsMembershipNftRequirements', spaceId, minterRoleDetails, { connected }],
+        [
+            'meetsMembershipNftRequirements',
+            spaceId,
+            minterRoleDetails,
+            { connected, walletAddress: _walletAddress },
+        ],
         checkUserHasToken,
         {
-            enabled: Boolean(minterRoleDetails) && connected,
+            enabled: Boolean(minterRoleDetails) && connected && !!_walletAddress,
             staleTime: Infinity, // never refetch, TBD if we need to
             refetchOnMount: false,
             refetchOnWindowFocus: false,
