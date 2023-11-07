@@ -58,12 +58,7 @@
     {
       "label": "Stage 3",
       "dependsOn": [
-        "WatchWorkersCommon",
-        "WatchSharedLib",
-        "WatchCasablancaSdk",
-        "WatchCasablancaMechOlm",
-        "WatchCasablancaProto",
-        "WatchCasablancaWeb3",
+        "StartWatches",
         "App",
         "SampleApp",
         "Casablanca DebugApp",
@@ -74,6 +69,35 @@
         "Casablanca",
         "Casablanca-No-Entitlements"
       ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Watches",
+      "dependsOn": [
+        "WatchWorkersCommon",
+        "WatchSharedLib",
+        "WatchCasablancaSdk",
+        "WatchCasablancaMechOlm",
+        "WatchCasablancaProto",
+        "WatchCasablancaWeb3",
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Restart Watches",
+      "dependsOn": [
+        "Kill Watches",
+        "Start Watches",
+      ],
+      "dependsOrder": "sequence",
       "group": {
         "kind": "build",
         "isDefault": false
@@ -420,6 +444,16 @@
       "type": "shell",
       "command": "./scripts/kill-all-local-dev.sh -y",
       "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
+      }
+    },
+    {
+      "label": "Kill Watches",
+      "type": "shell",
+      "command": "echo 'killing watches' && kill $(ps -ax | grep 'yarn watch' | awk '{print $1}') && return 0",
+      "isBackground": false,
       "problemMatcher": [],
       "presentation": {
         "group": "ephemeral"
