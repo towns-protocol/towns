@@ -26,11 +26,12 @@ export async function setSignerFromWalletClient({
     }
 
     // if you load the app w/ another connected wallet, i.e. MM, then that's the activeWallet before you are logged in to Privy
-    const activeWallet = await privyConnector.getActiveWallet()
+    let activeWallet = privyConnector.getActiveWallet()
 
     // privy should be switching over to the embedded wallet as soon as it's ready, but just in case it doesn't
     if (embeddedWallet && activeWallet?.address !== embeddedWallet.address) {
-        privyConnector.setActiveWallet(embeddedWallet)
+        await privyConnector.setActiveWallet(embeddedWallet)
+        activeWallet = privyConnector.getActiveWallet() // refetch the active wallet, probably not necessary just make sure it worked
     }
 
     // once privy is signed in, the activeWallet will be the privy wallet
