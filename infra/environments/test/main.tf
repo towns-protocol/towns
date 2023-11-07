@@ -30,6 +30,7 @@ module "global_constants" {
 }
 
 locals {
+  river_ecs_cluster_name = "${module.global_constants.environment}-river-ecs-cluster"
   river_node_name = "river-1-${module.global_constants.environment}"
 }
 
@@ -53,10 +54,6 @@ module "vpc" {
   tags = module.global_constants.tags
 
   enable_dns_hostnames = true
-}
-
-locals {
-  river_ecs_cluster_name = "${module.global_constants.environment}-river-ecs-cluster"
 }
 
 resource "aws_ecs_cluster" "river_ecs_cluster" {
@@ -94,4 +91,7 @@ module "river_node" {
 
   database_allowed_cidr_blocks = module.vpc.private_subnets_cidr_blocks
   database_subnets             = module.vpc.database_subnets
+
+  l1_chain_id = 84531
+  push_notification_worker_url = "https://push-notification-worker-${module.global_constants.tags.Env}.towns.com"
 }

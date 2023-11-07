@@ -55,3 +55,12 @@ variable "river_https_listener_arn" {
   type        = string
 }
 
+variable "l1_chain_id" {
+  description = "The chain id of the L1 chain"
+  type       = string
+}
+
+variable "push_notification_worker_url" {
+  description = "The url of the push notification worker"
+  type        = string
+}

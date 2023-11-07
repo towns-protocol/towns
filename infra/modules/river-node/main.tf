@@ -8,6 +8,15 @@ data "aws_vpc" "vpc" {
 
 locals {
   service_name = "river-node"
+  tags = merge(
+    module.global_constants.tags,
+    {
+      Service_Name = local.service_name,
+      Node_Name    = var.node_name
+      Service = local.service_name
+      Instance = var.node_name
+    }
+  )
 }
 
 terraform {
@@ -21,8 +30,6 @@ terraform {
       version = "3.32.0"
     }
   }
-
-  backend "s3" {}
 
   required_version = ">= 1.0.3"
 }
@@ -70,23 +77,165 @@ data "aws_iam_role" "ecs_task_execution_role" {
 resource "aws_cloudwatch_log_group" "river_log_group" {
   name = "/${module.global_constants.environment}/ecs/river/${var.node_name}"
 
-  tags = merge(
-    module.global_constants.tags,
-    {
-      Service_Name = local.service_name,
-      Node_Name    = var.node_name
-      Service = local.service_name
-      Instance = var.node_name
-    }
-  )
+  tags = local.tags
+}
+
+resource "aws_cloudwatch_log_group" "dd_agent_log_group" {
+  name = "/${module.global_constants.environment}/ecs/dd-agent/${var.node_name}"
+
+  tags = local.tags
+}
+
+resource "aws_secretsmanager_secret" "river_node_wallet_credentials" {
+  name = "${module.global_constants.environment}-river-${var.node_name}-wallet-credentials"
+  tags = local.tags
+}
+
+resource "aws_secretsmanager_secret_version" "river_node_wallet_credentials" {
+  secret_id     = aws_secretsmanager_secret.river_node_wallet_credentials.id
+  secret_string = <<EOF
+{
+  "walletPathPrivateKey": "DUMMY"
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "ecs-to-wallet-secret-policy" {
+  name = "${module.global_constants.environment}-ecs-to-wallet-credentials-policy"
+  role = data.aws_iam_role.ecs_task_execution_role.id
+
+  depends_on = [
+    aws_secretsmanager_secret_version.river_node_wallet_credentials
+  ]
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${aws_secretsmanager_secret.river_node_wallet_credentials.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
+resource "aws_secretsmanager_secret" "river_node_push_notification_auth_token" {
+  name = "${module.global_constants.environment}-river-${var.node_name}-push-notification-auth-token"
+  tags = local.tags
+}
+
+resource "aws_secretsmanager_secret_version" "river_node_push_notification_auth_token" {
+  secret_id     = aws_secretsmanager_secret.river_node_push_notification_auth_token.id
+  secret_string = "DUMMY"
+}
+
+resource "aws_iam_role_policy" "ecs-to-push_notification_auth_token" {
+  name = "${module.global_constants.environment}-ecs-to-push-notification-auth-token-policy"
+  role = data.aws_iam_role.ecs_task_execution_role.id
+
+  depends_on = [
+    aws_secretsmanager_secret_version.river_node_push_notification_auth_token
+  ]
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${aws_secretsmanager_secret.river_node_push_notification_auth_token.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
+resource "aws_secretsmanager_secret" "river_node_l1_network_url" {
+  name = "${module.global_constants.environment}-river-${var.node_name}-l1-network-url"
+  tags = local.tags
+}
+
+resource "aws_secretsmanager_secret_version" "river_node_l1_network_url" {
+  secret_id     = aws_secretsmanager_secret.river_node_l1_network_url.id
+  secret_string = "DUMMY"
+}
+
+resource "aws_iam_role_policy" "ecs-to-l1-network-url-secret-policy" {
+  name = "${module.global_constants.environment}-ecs-to-l1-network-url-secret-policy"
+  role = data.aws_iam_role.ecs_task_execution_role.id
+
+  depends_on = [
+    aws_secretsmanager_secret_version.river_node_l1_network_url
+  ]
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${aws_secretsmanager_secret.river_node_l1_network_url.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
+resource "aws_secretsmanager_secret" "dd_agent_api_key" {
+  name = "${module.global_constants.environment}-datadog-agent-api-key"
+  tags = local.tags
+}
+
+resource "aws_secretsmanager_secret_version" "dd_agent_api_key" {
+  secret_id     = aws_secretsmanager_secret.dd_agent_api_key.id
+  secret_string = "DUMMY"
+}
+
+resource "aws_iam_role_policy" "dd_agent_api_key" {
+  name = "${module.global_constants.environment}-datadog-agent-api-key-policy"
+  role = data.aws_iam_role.ecs_task_execution_role.id
+
+  depends_on = [
+    aws_secretsmanager_secret_version.dd_agent_api_key
+  ]
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${aws_secretsmanager_secret.dd_agent_api_key.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
 }
 
 resource "aws_ecs_task_definition" "river-fargate" {
   family = "${module.global_constants.environment}-river-fargate"
-
-  lifecycle {
-    ignore_changes = all
-  }
 
   network_mode = "awsvpc"
 
@@ -123,18 +272,22 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name      = "WALLETPRIVATEKEY"
-        valueFrom = "${module.river_node_db.river_node_wallet_credentials_arn}:walletPathPrivateKey::"
-      }
+        valueFrom = "${aws_secretsmanager_secret.river_node_wallet_credentials.arn}:walletPathPrivateKey::"
+      },
+      {
+        name = "CHAIN__NETWORKURL"
+        valueFrom = aws_secretsmanager_secret.river_node_l1_network_url.arn
+      },
+      {
+        name = "PUSHNOTIFICATION__AUTHTOKEN",
+        valueFrom = aws_secretsmanager_secret.river_node_push_notification_auth_token.arn
+      },
     ]
 
     environment = [
       {
         name  = "CHAIN__CHAINID",
-        value = ""
-      },
-      {
-        name  = "CHAIN__NETWORKURL",
-        value = ""
+        value = var.l1_chain_id
       },
       {
         name  = "METRICS__ENABLED",
@@ -161,21 +314,66 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "true"
       },
       {
-        name = "PUSHNOTIFICATION__AUTHTOKEN",
-        value = ""
+        name = "PUSHNOTIFICATION__URL",
+        value = var.push_notification_worker_url
       },
       {
-        name = "PUSHNOTIFICATION__URL",
-        value = ""
+        name = "DD_SERVICE",
+        value = local.service_name
+      },
+      {
+        name = "DD_ENV"
+        value = module.global_constants.tags.Env
+      },
+      # {
+      #   name = "DD_VERSION"
+      #   value = 
+      # },
+      {
+        name = "DD_TAGS",
+        value = "instance:${var.node_name}"
+      },
+      {
+        name = "PERFORMANCETRACKING__PROFILINGENABLED",
+        value = "true"
       }
     ]
-
     logConfiguration = {
       logDriver = "awslogs"
       options = {
         "awslogs-group"         = aws_cloudwatch_log_group.river_log_group.name
         "awslogs-region"        = "us-east-1"
         "awslogs-stream-prefix" = var.node_name
+      }
+    }
+  },
+  {
+    name      = "dd-agent"
+    image     = "docker.io/datadog/agent:7"
+    essential = true
+
+    secrets = [{
+      name      = "DD_API_KEY"
+      valueFrom = aws_secretsmanager_secret.dd_agent_api_key.arn
+    }]
+
+    environment = [
+      {
+        name = "DD_SITE",
+        value = "datadoghq.com"
+      },
+      {
+        name = "ECS_FARGATE",
+        value = "true"
+      }
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.dd_agent_log_group.name
+        "awslogs-region"        = "us-east-1"
+        "awslogs-stream-prefix" = "dd-agent-${var.node_name}"
       }
     }
   }])
