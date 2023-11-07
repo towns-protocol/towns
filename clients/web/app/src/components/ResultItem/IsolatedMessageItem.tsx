@@ -7,6 +7,7 @@ import {
     useSpaceId,
     useSpaceMembers,
 } from 'use-zion-client'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { MessageLayout } from '@components/MessageLayout'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Box, BoxProps } from '@ui'
@@ -22,8 +23,14 @@ const createMessageLink = (
     spaceId: string,
     channelId: RoomIdentifier,
     eventId: string,
+    isTouch: boolean,
     threadId?: string,
 ) => {
+    if (isTouch) {
+        if (isDMChannelStreamId(channelId.networkId) || isGDMChannelStreamId(channelId.networkId)) {
+            return `/${PATHS.SPACES}/${spaceId}/${PATHS.MESSAGES}/${channelId.networkId}/#${eventId}`
+        }
+    }
     const channelSegment = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId.networkId}/`
     const threadSegment = threadId ? `${PATHS.REPLIES}/${threadId}/` : ``
     const eventSegment = `#${eventId}`
@@ -59,9 +66,10 @@ export const IsolatedMessageItem = (
             spaceSlug,
             result.channel.id,
             result.event.eventId,
+            isTouch,
             result.thread?.eventId,
         )
-    }, [channelSlug, result.channel.id, result.event.eventId, result.thread, spaceSlug])
+    }, [channelSlug, result.channel.id, result.event.eventId, result.thread, spaceSlug, isTouch])
 
     useEffect(() => {
         if (props.selected && ref.current) {
