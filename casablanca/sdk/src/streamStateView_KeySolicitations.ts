@@ -2,6 +2,7 @@ import TypedEmitter from 'typed-emitter'
 import { ParsedEvent } from './types'
 import { ChannelPayload, DmChannelPayload, GdmChannelPayload } from '@river/proto'
 import { EmittedEvents } from './client'
+import { bin_toString } from './binary'
 
 export class StreamStateView_KeySolicitations {
     readonly streamId: string
@@ -44,10 +45,14 @@ export class StreamStateView_KeySolicitations {
 
     addKeyFulfillmentMessage(
         event: ParsedEvent,
-        _payload: ChannelPayload | DmChannelPayload | GdmChannelPayload,
+        payload: ChannelPayload | DmChannelPayload | GdmChannelPayload,
         _emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
-        this.fulfillments.set(event.hashStr, event)
+        if (payload.content.value === undefined || payload.content.case !== 'fulfillment') {
+            return
+        }
+        const key = bin_toString(payload.content.value.originHash)
+        this.fulfillments.set(key, event)
     }
 
     hasKeySolicitation(senderKey: string, sessionId: string) {
