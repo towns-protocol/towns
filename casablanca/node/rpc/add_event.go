@@ -379,19 +379,20 @@ func (s *Service) addChannelKeySolicitation(ctx context.Context, stream Stream, 
 }
 
 func (s *Service) addDMChannelKeySolicitation(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
-	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	streamId := view.StreamId()
+	userId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
 
-	// Users should be able to decrypt the channel messages
-	// before joining, but not after leaving.
-	member, err := s.checkJoinedOrInvited(ctx, view, user)
+	inceptionPayload := view.InceptionPayload()
+	info, err := DMStreamInfoFromInceptionPayload(inceptionPayload, streamId)
 	if err != nil {
 		return err
 	}
-	if !member {
-		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+
+	if userId != info.FirstPartyId && userId != info.SecondPartyId {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of DM", "user", userId)
 	}
 
 	err = stream.AddEvent(ctx, parsedEvent)
@@ -473,19 +474,20 @@ func (s *Service) addChannelFulfillment(ctx context.Context, stream Stream, view
 
 func (s *Service) addDMChannelFulfillment(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
 
-	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	streamId := view.StreamId()
+	userId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
 
-	// Users should be able to decrypt the channel messages
-	// before joining, but not after leaving.
-	member, err := s.checkJoinedOrInvited(ctx, view, user)
+	inceptionPayload := view.InceptionPayload()
+	info, err := DMStreamInfoFromInceptionPayload(inceptionPayload, streamId)
 	if err != nil {
 		return err
 	}
-	if !member {
-		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+
+	if userId != info.FirstPartyId && userId != info.SecondPartyId {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of DM", "user", userId)
 	}
 
 	err = stream.AddEvent(ctx, parsedEvent)
