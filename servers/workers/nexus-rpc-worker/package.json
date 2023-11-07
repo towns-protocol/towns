@@ -1,0 +1,36 @@
+{
+	"name": "nexus-rpc-worker",
+	"description": "RPC Proxy Worker",
+	"version": "1.0.0",
+	"author": "author",
+	"license": "MIT OR Apache-2.0",
+	"scripts": {
+		"dev": "echo use dev:local for now - see wrangler.toml",
+		"dev:local": "wrangler dev",
+		"dev:remote": "wrangler dev --remote",
+		"lint": "eslint .",
+		"publish:prod": "wrangler deploy --env production",
+		"publish:prod-beta": "wrangler deploy --env production-beta",
+		"publish:test": "wrangler deploy --env test",
+		"publish:test-beta": "wrangler deploy --env test-beta",
+		"publish:staging-beta": "wrangler deploy --env staging-beta",
+		"test": "jest"
+	},
+	"dependencies": {
+		"@whatsgood/nexus": "0.0.5"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20230710.1",
+		"@types/jest": "^29.5.3",
+		"@typescript-eslint/eslint-plugin": "^5.61.0",
+		"@typescript-eslint/parser": "^5.61.0",
+		"eslint": "^8.42.0",
+		"jest": "^29.6.2",
+		"jest-environment-miniflare": "^2.14.0",
+		"miniflare": "^3.20230710.0",
+		"prettier": "^2.8.8",
+		"ts-jest": "^29.1.1",
+		"typescript": "^5.1.6",
+		"wrangler": "^3.2.0"
+	}
+}

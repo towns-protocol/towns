@@ -1,0 +1,21 @@
+main = "./src/index.ts"
+name = "nexus-rpc-worker"
+compatibility_date = "2022-07-26"
+logpush = true
+
+# this is for tests, so it gets used even though wrangler CLI says otherwise
+[miniflare]
+cache_persist = false
+
+[env.production-beta]
+routes = [{ pattern = "nexus-rpc-worker-beta.towns.com", custom_domain = true }]
+
+[env.test-beta]
+routes = [
+    { pattern = "nexus-rpc-worker-test-beta.towns.com", custom_domain = true },
+]
+
+[env.staging-beta]
+routes = [
+    { pattern = "nexus-rpc-worker-staging-beta.towns.com", custom_domain = true },
+]
