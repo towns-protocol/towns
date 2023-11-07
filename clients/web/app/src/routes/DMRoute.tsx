@@ -21,7 +21,7 @@ export const DirectMessages = () => {
                     <Box padding="md" color="gray2" background="level2" rounded="sm">
                         <Icon type="message" size="square_sm" />
                     </Box>
-                    <Heading level={3}>No message thread selected</Heading>
+                    <Heading level={3}>Welcome to your DMs</Heading>
                     <Paragraph textAlign="center" color="gray2">
                         Direct messages are end to end encrypted conversations between you and other
                         users
