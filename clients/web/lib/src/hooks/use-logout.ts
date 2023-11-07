@@ -1,12 +1,12 @@
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCallback } from 'react'
 import { useCredentialStore } from '../store/use-credential-store'
-import { useMatrixStore } from '../store/use-matrix-store'
+import { useCasablancaStore } from '../store/use-casablanca-store'
 import { LoginStatus } from './login'
 
 export const useLogout = () => {
     const { casablancaServerUrl } = useZionContext()
-    const { setLoginStatus } = useMatrixStore()
+    const { setLoginStatus } = useCasablancaStore()
     const { setCasablancaCredentials } = useCredentialStore()
 
     const { client } = useZionContext()
