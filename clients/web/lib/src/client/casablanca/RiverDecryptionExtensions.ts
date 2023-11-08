@@ -46,7 +46,7 @@ const TIME_BETWEEN_LOOKING_FOR_KEYS_MS = 500
 /// time between processing to-device events
 const DELAY_BETWEEN_PROCESSING_TO_DEVICE_EVENTS_MS = 10
 // max time to wait before sending a key fulfillment
-const MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS = 10000
+const MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS = 5000
 
 type MegolmSessionData = MegolmSession
 type OlmDecryptedMessage = OlmMessage
