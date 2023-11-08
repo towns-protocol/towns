@@ -364,11 +364,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     async loadExistingForeignUser(userId: string): Promise<void> {
         // loads user stream for a foreign user without listeners
         this.logCall('loadExistingForeignUser', userId)
-        assert(this.userId !== userId, 'userId must be different from current user')
+
         const streamId = makeUserStreamId(userId)
         if (this.streams.has(streamId)) {
             return
         }
+
+        assert(this.userId !== userId, 'userId must be different from current user')
 
         const response = await this.rpcClient.getStream({ streamId })
         const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
@@ -1320,7 +1322,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const deviceInfoMap = await this.getStoredDevicesForUser(userId)
         // encrypt event contents and encode ciphertext
         const envelope = event
-        const promiseArray = Array.from(deviceInfoMap.keys()).map((userId) => {
+        const deviceIds = Array.from(deviceInfoMap.keys()).filter(
+            (deviceId) => deviceId !== this.deviceId,
+        )
+
+        const promiseArray = deviceIds.map((userId) => {
             const devicesForUser = deviceInfoMap.get(userId)
             if (!devicesForUser) {
                 this.logCall(`no devices for user ${userId}`)
