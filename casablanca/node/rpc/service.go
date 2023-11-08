@@ -16,7 +16,6 @@ var (
 type Service struct {
 	cache              events.StreamCache
 	townsContract      auth.TownsContract
-	walletLinkContract auth.WalletLinkContract
 	wallet             *crypto.Wallet
 	exitSignal         chan error
 	nodeRegistry       nodes.NodeRegistry

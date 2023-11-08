@@ -144,18 +144,6 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		townsContract = auth.NewTownsPassThrough()
 	}
 
-	var walletLinkContract auth.WalletLinkContract
-	if cfg.UseContract {
-		log.Info("Using wallet link contract on", "chain_config", cfg.TopChain)
-		walletLinkContract, err = auth.NewTownsWalletLink(&cfg.TopChain, wallet)
-		if err != nil {
-			log.Error("failed to create wallet link contract", "error", err)
-			return nil, 0, nil, err
-		}
-	} else {
-		log.Warn("Using no-op wallet linking contract")
-	}
-
 	notification := nodes.MakePushNotification(
 		ctx,
 		&cfg.PushNotification,
@@ -186,7 +174,6 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	streamService := &Service{
 		cache:              cache,
 		townsContract:      townsContract,
-		walletLinkContract: walletLinkContract,
 		wallet:             wallet,
 		exitSignal:         exitSignal,
 		nodeRegistry:       nodeRegistry,
@@ -248,7 +235,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		log.Info("Server stopped", "reason", err)
 	}()
 	closer := func() {
-		log.Info("closing server")
+		log.Info("closing server")        
 
 		//if there is a cleaner, run it
 		if storageCleaner != nil {
