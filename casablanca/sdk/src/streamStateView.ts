@@ -43,6 +43,7 @@ export class StreamStateView {
     readonly leafEventHashes = new Map<string, Uint8Array>()
 
     lastEventNum = 0n
+    prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
 
@@ -112,7 +113,12 @@ export class StreamStateView {
         return this._mediaContent
     }
 
-    constructor(userId: string, streamId: string, snapshot: Snapshot | undefined) {
+    constructor(
+        userId: string,
+        streamId: string,
+        snapshot: Snapshot,
+        prevSnapshotMiniblockNum: bigint,
+    ) {
         check(isDefined(snapshot), `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
 
         check(
@@ -129,6 +135,7 @@ export class StreamStateView {
 
         this.streamId = streamId
         this.contentKind = snapshot.content.case
+        this.prevSnapshotMiniblockNum = prevSnapshotMiniblockNum
 
         switch (snapshot.content.case) {
             case 'channelContent':
@@ -344,6 +351,7 @@ export class StreamStateView {
                     break
                 case 'miniblockHeader':
                     this.updateMiniblockInfo(payload.value, { min: payload.value.miniblockNum })
+                    this.prevSnapshotMiniblockNum = payload.value.prevSnapshotMiniblockNum
                     break
 
                 case undefined:

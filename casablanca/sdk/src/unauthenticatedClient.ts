@@ -41,8 +41,14 @@ export class UnauthenticatedClient extends (EventEmitter as new () => TypedEmitt
             const response = await this.rpcClient.getStream({ streamId })
             this.logCall('getStream', response.stream)
             check(isDefined(response.stream) && hasElements(response.miniblocks), 'got bad stream')
-            const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
-            const streamView = new StreamStateView(this.userId, streamId, snapshot)
+            const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
+                unpackStreamResponse(response)
+            const streamView = new StreamStateView(
+                this.userId,
+                streamId,
+                snapshot,
+                prevSnapshotMiniblockNum,
+            )
             streamView.initialize(streamAndCookie, snapshot, miniblocks, undefined)
             return streamView
         } catch (err) {

@@ -18,6 +18,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         userId: string,
         streamId: string,
         snapshot: Snapshot,
+        prevSnapshotMiniblockNum: bigint,
         clientEmitter: TypedEmitter<EmittedEvents>,
         logEmitFromStream: DLogger,
         foreignUserStream?: boolean,
@@ -25,7 +26,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         super()
         this.clientEmitter = clientEmitter
         this.logEmitFromStream = logEmitFromStream
-        this.view = new StreamStateView(userId, streamId, snapshot)
+        this.view = new StreamStateView(userId, streamId, snapshot, prevSnapshotMiniblockNum)
         this.foreignUserStream = foreignUserStream ?? false
     }
 

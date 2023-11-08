@@ -209,9 +209,17 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     ): Promise<void> {
         assert(this.userStreamId === undefined, 'streamId must not be set')
         this.userStreamId = userStreamId
-        const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
+        const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
+            unpackStreamResponse(response)
 
-        const stream = new Stream(this.userId, userStreamId, snapshot, this, this.logEmitFromStream)
+        const stream = new Stream(
+            this.userId,
+            userStreamId,
+            snapshot,
+            prevSnapshotMiniblockNum,
+            this,
+            this.logEmitFromStream,
+        )
         this.streams.set(userStreamId, stream)
         stream.initialize(streamAndCookie, snapshot, miniblocks)
 
@@ -235,12 +243,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     ): Promise<void> {
         assert(this.userSettingsStreamId === undefined, 'streamId must not be set')
         this.userSettingsStreamId = userSettingsStreamId
-        const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
+        const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
+            unpackStreamResponse(response)
 
         const stream = new Stream(
             this.userId,
             userSettingsStreamId,
             snapshot,
+            prevSnapshotMiniblockNum,
             this,
             this.logEmitFromStream,
         )
@@ -254,12 +264,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     ): Promise<void> {
         assert(this.userDeviceKeyStreamId === undefined, 'streamId must not be set')
         this.userDeviceKeyStreamId = userDeviceKeyStreamId
-        const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
+        const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
+            unpackStreamResponse(response)
 
         const stream = new Stream(
             this.userId,
             userDeviceKeyStreamId,
             snapshot,
+            prevSnapshotMiniblockNum,
             this,
             this.logEmitFromStream,
         )
@@ -363,11 +375,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         assert(this.userId !== userId, 'userId must be different from current user')
 
         const response = await this.rpcClient.getStream({ streamId })
-        const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
+        const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
+            unpackStreamResponse(response)
         const stream = new Stream(
             this.userId,
             streamId,
             snapshot,
+            prevSnapshotMiniblockNum,
             this,
             this.logEmitFromStream,
             true,
@@ -578,8 +592,16 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             events: [inceptionEvent],
             streamId: streamId,
         })
-        const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
-        const stream = new Stream(this.userId, streamId, snapshot, this, this.logEmitFromStream)
+        const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
+            unpackStreamResponse(response)
+        const stream = new Stream(
+            this.userId,
+            streamId,
+            snapshot,
+            prevSnapshotMiniblockNum,
+            this,
+            this.logEmitFromStream,
+        )
 
         // TODO: add support for creating/getting a stream without syncing (HNT-2686)
         this.streams.set(streamId, stream)
@@ -687,8 +709,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             const response = await this.rpcClient.getStream({ streamId })
             this.logCall('getStream', response.stream)
             check(isDefined(response.stream) && hasElements(response.miniblocks), 'got bad stream')
-            const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
-            const streamView = new StreamStateView(this.userId, streamId, snapshot)
+            const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
+                unpackStreamResponse(response)
+            const streamView = new StreamStateView(
+                this.userId,
+                streamId,
+                snapshot,
+                prevSnapshotMiniblockNum,
+            )
             streamView.initialize(streamAndCookie, snapshot, miniblocks, undefined)
             return streamView
         } catch (err) {
@@ -711,12 +739,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     this.logCall('initStream', streamId, 'RACE: already initialized')
                     return previousStream
                 } else {
-                    const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
+                    const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
+                        unpackStreamResponse(response)
                     this.logCall('initStream', streamAndCookie)
                     const stream = new Stream(
                         this.userId,
                         streamId,
                         snapshot,
+                        prevSnapshotMiniblockNum,
                         this,
                         this.logEmitFromStream,
                     )
@@ -1274,7 +1304,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     }
 
     async scrollback(streamId: string): Promise<{ terminus: boolean; firstEvent?: ParsedEvent }> {
-        this.logCall('scrollback', streamId)
         const stream = this.stream(streamId)
         check(isDefined(stream), `stream not found: ${streamId}`)
         check(isDefined(stream.view.miniblockInfo), `stream not initialized: ${streamId}`)
@@ -1282,9 +1311,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             this.logCall('scrollback', streamId, 'terminus reached')
             return { terminus: true, firstEvent: stream.view.timeline.at(0) }
         }
-        const step = 2n // todo better step amount? https://linear.app/hnt-labs/issue/HNT-2242/pagination-step-amount
+        check(stream.view.miniblockInfo.min >= stream.view.prevSnapshotMiniblockNum)
+        this.logCall('scrollback', {
+            streamId,
+            miniblockInfo: stream.view.miniblockInfo,
+            prevSnapshotMiniblockNum: stream.view.prevSnapshotMiniblockNum,
+        })
         const toExclusive = stream.view.miniblockInfo.min
-        const fromInclusive = toExclusive - step > 0 ? toExclusive - step : 0n
+        const fromInclusive = stream.view.prevSnapshotMiniblockNum
         const response = await this.rpcClient.getMiniblocks({
             streamId,
             fromInclusive,

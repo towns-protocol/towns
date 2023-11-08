@@ -174,7 +174,12 @@ export const checkDelegateSig = (
 
 export const unpackStreamResponse = (
     response: CreateStreamResponse | GetStreamResponse,
-): { snapshot: Snapshot; streamAndCookie: StreamAndCookie; miniblocks: ParsedMiniblock[] } => {
+): {
+    snapshot: Snapshot
+    streamAndCookie: StreamAndCookie
+    miniblocks: ParsedMiniblock[]
+    prevSnapshotMiniblockNum: bigint
+} => {
     const streamAndCookie = response.stream
     assert(streamAndCookie !== undefined, 'bad stream')
     assert(streamAndCookie.nextSyncCookie !== undefined, 'bad stream: no cookie')
@@ -184,6 +189,7 @@ export const unpackStreamResponse = (
     )
     const miniblocks = response.miniblocks.map((mb) => unpackMiniblock(mb))
     const snapshot = miniblocks[0].header.snapshot
+    const prevSnapshotMiniblockNum = miniblocks[0].header.prevSnapshotMiniblockNum
     assert(
         snapshot !== undefined,
         `bad block: snapshot is undefined ${streamAndCookie.nextSyncCookie.streamId}`,
@@ -193,6 +199,7 @@ export const unpackStreamResponse = (
         streamAndCookie,
         snapshot,
         miniblocks,
+        prevSnapshotMiniblockNum,
     }
 }
 
