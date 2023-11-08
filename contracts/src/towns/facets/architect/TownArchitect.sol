@@ -37,6 +37,10 @@ contract TownArchitect is
     _setTrustedForwarder(trustedForwarder);
   }
 
+  // =============================================================
+  //                           Token Gating
+  // =============================================================
+
   function isTokenGated(address token) external view returns (bool) {
     return _isTokenGated(token);
   }
@@ -48,6 +52,28 @@ contract TownArchitect is
 
   function ungateByToken(address token) external onlyOwner {
     _ungateByToken(token);
+  }
+
+  // =============================================================
+  //                            Town
+  // =============================================================
+
+  function getTownById(string memory townId) external view returns (address) {
+    return _getTownById(townId);
+  }
+
+  function getTokenIdByTownId(
+    string memory townId
+  ) external view returns (uint256) {
+    return _getTokenIdByTownId(townId);
+  }
+
+  function getTokenIdByTown(address town) external view returns (uint256) {
+    return _getTokenIdByTown(town);
+  }
+
+  function isTown(address town) external view returns (bool) {
+    return _isValidTown(town);
   }
 
   function createTown(
@@ -66,15 +92,20 @@ contract TownArchitect is
     return _getTownDeploymentAddress(townId, tokenId, membership);
   }
 
-  // get town address
-  function getTownById(string memory townId) external view returns (address) {
-    return _getTownById(townId);
-  }
+  // =============================================================
+  //                         Implementations
+  // =============================================================
 
-  function getTokenIdByTownId(
-    string memory townId
-  ) external view returns (uint256) {
-    return _getTokenIdByTownId(townId);
+  function setTownArchitectImplementations(
+    address townToken,
+    address userEntitlementImplementation,
+    address tokenEntitlementImplementation
+  ) external onlyOwner {
+    _setImplementations(
+      townToken,
+      userEntitlementImplementation,
+      tokenEntitlementImplementation
+    );
   }
 
   function getTownArchitectImplementations()
@@ -87,17 +118,5 @@ contract TownArchitect is
     )
   {
     return _getImplementations();
-  }
-
-  function setTownArchitectImplementations(
-    address townToken,
-    address userEntitlementImplementation,
-    address tokenEntitlementImplementation
-  ) external onlyOwner {
-    _setImplementations(
-      townToken,
-      userEntitlementImplementation,
-      tokenEntitlementImplementation
-    );
   }
 }

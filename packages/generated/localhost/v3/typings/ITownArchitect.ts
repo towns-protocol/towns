@@ -149,10 +149,12 @@ export interface ITownArchitectInterface extends utils.Interface {
     "computeTown(string,((string,string,uint256,uint256,uint64,address,address),(bool,(address,uint256,bool,uint256[])[],address[]),string[]))": FunctionFragment;
     "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address),(bool,(address,uint256,bool,uint256[])[],address[]),string[]),(string,string)))": FunctionFragment;
     "gateByToken(address,uint256)": FunctionFragment;
+    "getTokenIdByTown(address)": FunctionFragment;
     "getTokenIdByTownId(string)": FunctionFragment;
     "getTownArchitectImplementations()": FunctionFragment;
     "getTownById(string)": FunctionFragment;
     "isTokenGated(address)": FunctionFragment;
+    "isTown(address)": FunctionFragment;
     "setTownArchitectImplementations(address,address,address)": FunctionFragment;
     "ungateByToken(address)": FunctionFragment;
   };
@@ -162,10 +164,12 @@ export interface ITownArchitectInterface extends utils.Interface {
       | "computeTown"
       | "createTown"
       | "gateByToken"
+      | "getTokenIdByTown"
       | "getTokenIdByTownId"
       | "getTownArchitectImplementations"
       | "getTownById"
       | "isTokenGated"
+      | "isTown"
       | "setTownArchitectImplementations"
       | "ungateByToken"
   ): FunctionFragment;
@@ -183,6 +187,10 @@ export interface ITownArchitectInterface extends utils.Interface {
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
+    functionFragment: "getTokenIdByTown",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getTokenIdByTownId",
     values: [PromiseOrValue<string>]
   ): string;
@@ -196,6 +204,10 @@ export interface ITownArchitectInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "isTokenGated",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "isTown",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -221,6 +233,10 @@ export interface ITownArchitectInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getTokenIdByTown",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getTokenIdByTownId",
     data: BytesLike
   ): Result;
@@ -236,6 +252,7 @@ export interface ITownArchitectInterface extends utils.Interface {
     functionFragment: "isTokenGated",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "isTown", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setTownArchitectImplementations",
     data: BytesLike
@@ -308,6 +325,11 @@ export interface ITownArchitect extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    getTokenIdByTown(
+      town: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     getTokenIdByTownId(
       townId: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -330,6 +352,11 @@ export interface ITownArchitect extends BaseContract {
 
     isTokenGated(
       token: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
+    isTown(
+      town: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
@@ -363,6 +390,11 @@ export interface ITownArchitect extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  getTokenIdByTown(
+    town: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   getTokenIdByTownId(
     townId: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -385,6 +417,11 @@ export interface ITownArchitect extends BaseContract {
 
   isTokenGated(
     token: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
+
+  isTown(
+    town: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<boolean>;
 
@@ -418,6 +455,11 @@ export interface ITownArchitect extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    getTokenIdByTown(
+      town: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getTokenIdByTownId(
       townId: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -440,6 +482,11 @@ export interface ITownArchitect extends BaseContract {
 
     isTokenGated(
       token: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    isTown(
+      town: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
@@ -487,6 +534,11 @@ export interface ITownArchitect extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    getTokenIdByTown(
+      town: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getTokenIdByTownId(
       townId: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -503,6 +555,11 @@ export interface ITownArchitect extends BaseContract {
 
     isTokenGated(
       token: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    isTown(
+      town: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -537,6 +594,11 @@ export interface ITownArchitect extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    getTokenIdByTown(
+      town: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getTokenIdByTownId(
       townId: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -553,6 +615,11 @@ export interface ITownArchitect extends BaseContract {
 
     isTokenGated(
       token: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    isTown(
+      town: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

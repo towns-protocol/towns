@@ -43,6 +43,7 @@ interface IEntitlementRule {
     uint8 leftOperationIndex;
     uint8 rightOperationIndex;
   }
+
   // Redefined Operation struct
   enum CombinedOperationType {
     NONE,

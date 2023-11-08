@@ -40,6 +40,8 @@ contract TownArchitectTest is
 
     assertEq(townAddress, townInstance, "Town address mismatch");
 
+    assertTrue(townArchitect.isTown(townAddress), "Town not registered");
+
     // expect owner to be founder
     assertTrue(
       IEntitlementsManager(townAddress).isEntitledToTown(founder, "Read")

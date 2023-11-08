@@ -247,11 +247,11 @@
   },
   "sources": {
     "contracts/src/crosschain/IEntitlementRule.sol": {
-      "keccak256": "0x56b75268b73e41bb2be5f3e89d02336df27e19e178956d4fb6ffa1ebd70c57ff",
+      "keccak256": "0x90178615f20403ed92b5a4b4446bbaec9803df9ce52b92a225f9b7fa9bbc61ff",
       "license": "MIT",
       "urls": [
-        "bzz-raw://a98f763f2dd6ac991db363901e495e51d82e20a888b9223418b7109b7fcf8663",
-        "dweb:/ipfs/QmPjdxRMaL2A9eYdKC7ub1MqkCrh69thC5sK1v2WAjQEkT"
+        "bzz-raw://f58a5647f065997a426d39d51528fd1435ac0ed68c513c88fe7deb926ad70e6c",
+        "dweb:/ipfs/QmfYy5Aus9JThaPtnskXhNckzeVKKXB3KriBtw8XVYPUfp"
       ]
     }
   },

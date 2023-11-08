@@ -58,6 +58,28 @@ interface ITownArchitectBase {
 }
 
 interface ITownArchitect is ITownArchitectBase {
+  // =============================================================
+  //                           Token Gating
+  // =============================================================
+  function isTokenGated(address token) external view returns (bool);
+
+  function gateByToken(address token, uint256 quantity) external;
+
+  function ungateByToken(address token) external;
+
+  // =============================================================
+  //                            Town
+  // =============================================================
+  function getTownById(string memory townId) external view returns (address);
+
+  function getTokenIdByTownId(
+    string memory townId
+  ) external view returns (uint256);
+
+  function getTokenIdByTown(address town) external view returns (uint256);
+
+  function isTown(address town) external view returns (bool);
+
   /// @notice Creates a new town
   /// @param townInfo Town information
   function createTown(TownInfo memory townInfo) external returns (address);
@@ -66,6 +88,10 @@ interface ITownArchitect is ITownArchitectBase {
     string memory townId,
     Membership memory membership
   ) external view returns (address);
+
+  // =============================================================
+  //                         Implementations
+  // =============================================================
 
   function getTownArchitectImplementations()
     external
@@ -81,16 +107,4 @@ interface ITownArchitect is ITownArchitectBase {
     address userEntitlementImplementation,
     address tokenEntitlementImplementation
   ) external;
-
-  function getTownById(string memory townId) external view returns (address);
-
-  function getTokenIdByTownId(
-    string memory townId
-  ) external view returns (uint256);
-
-  function isTokenGated(address token) external view returns (bool);
-
-  function gateByToken(address token, uint256 quantity) external;
-
-  function ungateByToken(address token) external;
 }

@@ -14,6 +14,7 @@ import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedPro
 import {IMembershipBase} from "contracts/src/towns/facets/membership/IMembership.sol";
 
 // libraries
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {StringSet} from "contracts/src/utils/StringSet.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
@@ -30,9 +31,25 @@ import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC19
 
 abstract contract TownArchitectBase is Factory, ITownArchitectBase {
   using StringSet for StringSet.Set;
+  using EnumerableSet for EnumerableSet.AddressSet;
 
   address internal constant EVERYONE_ADDRESS = address(1);
   string internal constant MINTER_ROLE = "Minter";
+
+  // =============================================================
+  //                           Forwarder
+  // =============================================================
+  function _setTrustedForwarder(address trustedForwarder) internal {
+    TownArchitectStorage.layout().trustedForwarder = trustedForwarder;
+  }
+
+  function _getTrustedForwarder() internal view returns (address) {
+    return TownArchitectStorage.layout().trustedForwarder;
+  }
+
+  // =============================================================
+  //                           Towns
+  // =============================================================
 
   function _getTownById(string memory townId) internal view returns (address) {
     TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
@@ -46,45 +63,9 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     return ds.tokenIdByTownId[townId];
   }
 
-  function _setTrustedForwarder(address trustedForwarder) internal {
-    TownArchitectStorage.layout().trustedForwarder = trustedForwarder;
-  }
-
-  function _getTrustedForwarder() internal view returns (address) {
-    return TownArchitectStorage.layout().trustedForwarder;
-  }
-
-  function _setImplementations(
-    address townToken,
-    address userEntitlement,
-    address tokenEntitlement
-  ) internal {
-    if (!Address.isContract(townToken)) revert TownArchitect__NotContract();
-    if (!Address.isContract(userEntitlement))
-      revert TownArchitect__NotContract();
-    if (!Address.isContract(tokenEntitlement))
-      revert TownArchitect__NotContract();
-
+  function _getTokenIdByTown(address town) internal view returns (uint256) {
     TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
-    ds.townToken = townToken;
-    ds.userEntitlement = userEntitlement;
-    ds.tokenEntitlement = tokenEntitlement;
-  }
-
-  function _getImplementations()
-    internal
-    view
-    returns (
-      address townToken,
-      address userEntitlementImplementation,
-      address tokenEntitlementImplementation
-    )
-  {
-    return (
-      TownArchitectStorage.layout().townToken,
-      TownArchitectStorage.layout().userEntitlement,
-      TownArchitectStorage.layout().tokenEntitlement
-    );
+    return ds.tokenIdByTown[town];
   }
 
   function _createTown(
@@ -107,8 +88,12 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
 
     // save town info to storage
     ds.townIds.add(townInfo.id);
+    ds.towns.add(townAddress);
+
+    // save to mappings
     ds.tokenIdByTownId[townInfo.id] = tokenId;
     ds.townById[townInfo.id] = townAddress;
+    ds.tokenIdByTown[townAddress] = tokenId;
 
     // mint token to and transfer to TownArchitect
     TownOwner(ds.townToken).mintTown(
@@ -168,7 +153,44 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
   }
 
   // =============================================================
-  //                       Channel Helpers
+  //                           Implementations
+  // =============================================================
+
+  function _setImplementations(
+    address townToken,
+    address userEntitlement,
+    address tokenEntitlement
+  ) internal {
+    if (!Address.isContract(townToken)) revert TownArchitect__NotContract();
+    if (!Address.isContract(userEntitlement))
+      revert TownArchitect__NotContract();
+    if (!Address.isContract(tokenEntitlement))
+      revert TownArchitect__NotContract();
+
+    TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
+    ds.townToken = townToken;
+    ds.userEntitlement = userEntitlement;
+    ds.tokenEntitlement = tokenEntitlement;
+  }
+
+  function _getImplementations()
+    internal
+    view
+    returns (
+      address townToken,
+      address userEntitlementImplementation,
+      address tokenEntitlementImplementation
+    )
+  {
+    return (
+      TownArchitectStorage.layout().townToken,
+      TownArchitectStorage.layout().userEntitlement,
+      TownArchitectStorage.layout().tokenEntitlement
+    );
+  }
+
+  // =============================================================
+  //                  Internal Channel Helpers
   // =============================================================
 
   function _createChannel(
@@ -182,7 +204,7 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
   }
 
   // =============================================================
-  //                     Entitlement Helpers
+  //                  Internal Entitlement Helpers
   // =============================================================
 
   function _createMinterEntitlement(
@@ -372,6 +394,19 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
     tokenId = TownOwner(ds.townToken).nextTokenId();
   }
+
+  // =============================================================
+  //                           Validation
+  // =============================================================
+
+  function _isValidTown(address townAddress) internal view returns (bool) {
+    TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
+    return ds.towns.contains(townAddress);
+  }
+
+  // =============================================================
+  //                           Overrides
+  // =============================================================
 
   function _msgSenderTownArchitect() internal view virtual returns (address) {
     return msg.sender;

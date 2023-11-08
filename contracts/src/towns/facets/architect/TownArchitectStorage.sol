@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 
 // libraries
 import {StringSet} from "contracts/src/utils/StringSet.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // contracts
 
@@ -21,6 +22,8 @@ library TownArchitectStorage {
     address userEntitlement;
     address tokenEntitlement;
     address trustedForwarder;
+    EnumerableSet.AddressSet towns;
+    mapping(address => uint256) tokenIdByTown;
   }
 
   function layout() internal pure returns (Layout storage ds) {

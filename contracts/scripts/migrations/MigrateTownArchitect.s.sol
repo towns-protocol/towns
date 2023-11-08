@@ -24,9 +24,19 @@ contract MigrateTownArchitect is Migration {
     address townArchitect = address(new TownArchitect());
     vm.stopBroadcast();
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
+
+    bytes4[] memory selectors = new bytes4[](2);
+    selectors[0] = TownArchitect.getTokenIdByTown.selector;
+    selectors[1] = TownArchitect.isTown.selector;
 
     cuts[0] = IDiamond.FacetCut({
+      facetAddress: townArchitect,
+      action: IDiamond.FacetCutAction.Add,
+      functionSelectors: selectors
+    });
+
+    cuts[1] = IDiamond.FacetCut({
       facetAddress: townArchitect,
       action: IDiamond.FacetCutAction.Replace,
       functionSelectors: townArchitectHelper.selectors()

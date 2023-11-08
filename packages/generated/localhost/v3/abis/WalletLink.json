@@ -1095,26 +1095,26 @@
   },
   "ast": {
     "absolutePath": "contracts/src/river/wallet-link/WalletLink.sol",
-    "id": 17460,
+    "id": 17500,
     "exportedSymbols": {
       "Facet": [
-        7152
+        7192
       ],
       "IWalletLink": [
-        17289
+        17329
       ],
       "WalletLink": [
-        17459
+        17499
       ],
       "WalletLinkBase": [
-        18136
+        18176
       ]
     },
     "nodeType": "SourceUnit",
     "src": "39:2259:122",
     "nodes": [
       {
-        "id": 17291,
+        "id": 17331,
         "nodeType": "PragmaDirective",
         "src": "39:24:122",
         "nodes": [],
@@ -1126,23 +1126,23 @@
         ]
       },
       {
-        "id": 17293,
+        "id": 17333,
         "nodeType": "ImportDirective",
         "src": "79:46:122",
         "nodes": [],
         "absolutePath": "contracts/src/river/wallet-link/IWalletLink.sol",
         "file": "./IWalletLink.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 17460,
-        "sourceUnit": 17290,
+        "scope": 17500,
+        "sourceUnit": 17330,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 17292,
+              "id": 17332,
               "name": "IWalletLink",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 17289,
+              "referencedDeclaration": 17329,
               "src": "87:11:122",
               "typeDescriptions": {}
             },
@@ -1152,23 +1152,23 @@
         "unitAlias": ""
       },
       {
-        "id": 17295,
+        "id": 17335,
         "nodeType": "ImportDirective",
         "src": "154:61:122",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/Facet.sol",
         "file": "contracts/src/diamond/facets/Facet.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 17460,
-        "sourceUnit": 7153,
+        "scope": 17500,
+        "sourceUnit": 7193,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 17294,
+              "id": 17334,
               "name": "Facet",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 7152,
+              "referencedDeclaration": 7192,
               "src": "162:5:122",
               "typeDescriptions": {}
             },
@@ -1178,23 +1178,23 @@
         "unitAlias": ""
       },
       {
-        "id": 17297,
+        "id": 17337,
         "nodeType": "ImportDirective",
         "src": "216:52:122",
         "nodes": [],
         "absolutePath": "contracts/src/river/wallet-link/WalletLinkBase.sol",
         "file": "./WalletLinkBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 17460,
-        "sourceUnit": 18137,
+        "scope": 17500,
+        "sourceUnit": 18177,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 17296,
+              "id": 17336,
               "name": "WalletLinkBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 18136,
+              "referencedDeclaration": 18176,
               "src": "224:14:122",
               "typeDescriptions": {}
             },
@@ -1204,17 +1204,17 @@
         "unitAlias": ""
       },
       {
-        "id": 17459,
+        "id": 17499,
         "nodeType": "ContractDefinition",
         "src": "270:2027:122",
         "nodes": [
           {
-            "id": 17316,
+            "id": 17356,
             "nodeType": "FunctionDefinition",
             "src": "332:110:122",
             "nodes": [],
             "body": {
-              "id": 17315,
+              "id": 17355,
               "nodeType": "Block",
               "src": "387:55:122",
               "nodes": [],
@@ -1226,14 +1226,14 @@
                         "expression": {
                           "arguments": [
                             {
-                              "id": 17310,
+                              "id": 17350,
                               "name": "IWalletLink",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 17289,
+                              "referencedDeclaration": 17329,
                               "src": "412:11:122",
                               "typeDescriptions": {
-                                "typeIdentifier": "t_type$_t_contract$_IWalletLink_$17289_$",
+                                "typeIdentifier": "t_type$_t_contract$_IWalletLink_$17329_$",
                                 "typeString": "type(contract IWalletLink)"
                               }
                             }
@@ -1241,11 +1241,11 @@
                           "expression": {
                             "argumentTypes": [
                               {
-                                "typeIdentifier": "t_type$_t_contract$_IWalletLink_$17289_$",
+                                "typeIdentifier": "t_type$_t_contract$_IWalletLink_$17329_$",
                                 "typeString": "type(contract IWalletLink)"
                               }
                             ],
-                            "id": 17309,
+                            "id": 17349,
                             "name": "type",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
@@ -1256,7 +1256,7 @@
                               "typeString": "function () pure"
                             }
                           },
-                          "id": 17311,
+                          "id": 17351,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -1268,11 +1268,11 @@
                           "src": "407:17:122",
                           "tryCall": false,
                           "typeDescriptions": {
-                            "typeIdentifier": "t_magic_meta_type_t_contract$_IWalletLink_$17289",
+                            "typeIdentifier": "t_magic_meta_type_t_contract$_IWalletLink_$17329",
                             "typeString": "type(contract IWalletLink)"
                           }
                         },
-                        "id": 17312,
+                        "id": 17352,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -1294,18 +1294,18 @@
                           "typeString": "bytes4"
                         }
                       ],
-                      "id": 17308,
+                      "id": 17348,
                       "name": "_addInterface",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 10457,
+                      "referencedDeclaration": 10497,
                       "src": "393:13:122",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_bytes4_$returns$__$",
                         "typeString": "function (bytes4)"
                       }
                     },
-                    "id": 17313,
+                    "id": 17353,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1321,7 +1321,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 17314,
+                  "id": 17354,
                   "nodeType": "ExpressionStatement",
                   "src": "393:44:122"
                 }
@@ -1332,16 +1332,16 @@
             "kind": "function",
             "modifiers": [
               {
-                "id": 17306,
+                "id": 17346,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 17305,
+                  "id": 17345,
                   "name": "onlyInitializing",
                   "nameLocations": [
                     "370:16:122"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 10264,
+                  "referencedDeclaration": 10304,
                   "src": "370:16:122"
                 },
                 "nodeType": "ModifierInvocation",
@@ -1351,29 +1351,29 @@
             "name": "__WalletLink_init",
             "nameLocation": "341:17:122",
             "parameters": {
-              "id": 17304,
+              "id": 17344,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "358:2:122"
             },
             "returnParameters": {
-              "id": 17307,
+              "id": 17347,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "387:0:122"
             },
-            "scope": 17459,
+            "scope": 17499,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 17339,
+            "id": 17379,
             "nodeType": "FunctionDefinition",
             "src": "487:300:122",
             "nodes": [],
             "body": {
-              "id": 17338,
+              "id": 17378,
               "nodeType": "Block",
               "src": "661:126:122",
               "nodes": [],
@@ -1382,11 +1382,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 17331,
+                        "id": 17371,
                         "name": "wallet",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17319,
+                        "referencedDeclaration": 17359,
                         "src": "695:6:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -1394,11 +1394,11 @@
                         }
                       },
                       {
-                        "id": 17332,
+                        "id": 17372,
                         "name": "walletSignature",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17321,
+                        "referencedDeclaration": 17361,
                         "src": "709:15:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes_calldata_ptr",
@@ -1406,11 +1406,11 @@
                         }
                       },
                       {
-                        "id": 17333,
+                        "id": 17373,
                         "name": "rootKey",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17323,
+                        "referencedDeclaration": 17363,
                         "src": "732:7:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -1418,11 +1418,11 @@
                         }
                       },
                       {
-                        "id": 17334,
+                        "id": 17374,
                         "name": "rootKeySignature",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17325,
+                        "referencedDeclaration": 17365,
                         "src": "747:16:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes_calldata_ptr",
@@ -1430,11 +1430,11 @@
                         }
                       },
                       {
-                        "id": 17335,
+                        "id": 17375,
                         "name": "nonce",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17327,
+                        "referencedDeclaration": 17367,
                         "src": "771:5:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint64",
@@ -1465,18 +1465,18 @@
                           "typeString": "uint64"
                         }
                       ],
-                      "id": 17330,
+                      "id": 17370,
                       "name": "_linkWalletToRootKey",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17505,
+                      "referencedDeclaration": 17545,
                       "src": "667:20:122",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_bytes_calldata_ptr_$_t_address_$_t_bytes_calldata_ptr_$_t_uint64_$returns$__$",
                         "typeString": "function (address,bytes calldata,address,bytes calldata,uint64)"
                       }
                     },
-                    "id": 17336,
+                    "id": 17376,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1492,17 +1492,17 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 17337,
+                  "id": 17377,
                   "nodeType": "ExpressionStatement",
                   "src": "667:115:122"
                 }
               ]
             },
             "baseFunctions": [
-              17213
+              17253
             ],
             "documentation": {
-              "id": 17317,
+              "id": 17357,
               "nodeType": "StructuredDocumentation",
               "src": "446:38:122",
               "text": " @inheritdoc IWalletLink"
@@ -1514,17 +1514,17 @@
             "name": "linkWalletToRootKey",
             "nameLocation": "496:19:122",
             "parameters": {
-              "id": 17328,
+              "id": 17368,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17319,
+                  "id": 17359,
                   "mutability": "mutable",
                   "name": "wallet",
                   "nameLocation": "529:6:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17339,
+                  "scope": 17379,
                   "src": "521:14:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1533,7 +1533,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17318,
+                    "id": 17358,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "521:7:122",
@@ -1547,12 +1547,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 17321,
+                  "id": 17361,
                   "mutability": "mutable",
                   "name": "walletSignature",
                   "nameLocation": "556:15:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17339,
+                  "scope": 17379,
                   "src": "541:30:122",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -1561,7 +1561,7 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 17320,
+                    "id": 17360,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
                     "src": "541:5:122",
@@ -1574,12 +1574,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 17323,
+                  "id": 17363,
                   "mutability": "mutable",
                   "name": "rootKey",
                   "nameLocation": "585:7:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17339,
+                  "scope": 17379,
                   "src": "577:15:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1588,7 +1588,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17322,
+                    "id": 17362,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "577:7:122",
@@ -1602,12 +1602,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 17325,
+                  "id": 17365,
                   "mutability": "mutable",
                   "name": "rootKeySignature",
                   "nameLocation": "613:16:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17339,
+                  "scope": 17379,
                   "src": "598:31:122",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -1616,7 +1616,7 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 17324,
+                    "id": 17364,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
                     "src": "598:5:122",
@@ -1629,12 +1629,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 17327,
+                  "id": 17367,
                   "mutability": "mutable",
                   "name": "nonce",
                   "nameLocation": "642:5:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17339,
+                  "scope": 17379,
                   "src": "635:12:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1643,7 +1643,7 @@
                     "typeString": "uint64"
                   },
                   "typeName": {
-                    "id": 17326,
+                    "id": 17366,
                     "name": "uint64",
                     "nodeType": "ElementaryTypeName",
                     "src": "635:6:122",
@@ -1658,23 +1658,23 @@
               "src": "515:136:122"
             },
             "returnParameters": {
-              "id": 17329,
+              "id": 17369,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "661:0:122"
             },
-            "scope": 17459,
+            "scope": 17499,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 17358,
+            "id": 17398,
             "nodeType": "FunctionDefinition",
             "src": "791:225:122",
             "nodes": [],
             "body": {
-              "id": 17357,
+              "id": 17397,
               "nodeType": "Block",
               "src": "936:80:122",
               "nodes": [],
@@ -1683,11 +1683,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 17351,
+                        "id": 17391,
                         "name": "rootKey",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17341,
+                        "referencedDeclaration": 17381,
                         "src": "964:7:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -1695,11 +1695,11 @@
                         }
                       },
                       {
-                        "id": 17352,
+                        "id": 17392,
                         "name": "rootKeySignature",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17343,
+                        "referencedDeclaration": 17383,
                         "src": "973:16:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes_calldata_ptr",
@@ -1707,11 +1707,11 @@
                         }
                       },
                       {
-                        "id": 17353,
+                        "id": 17393,
                         "name": "wallet",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17345,
+                        "referencedDeclaration": 17385,
                         "src": "991:6:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -1719,11 +1719,11 @@
                         }
                       },
                       {
-                        "id": 17354,
+                        "id": 17394,
                         "name": "removeNonce",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17347,
+                        "referencedDeclaration": 17387,
                         "src": "999:11:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint64",
@@ -1750,18 +1750,18 @@
                           "typeString": "uint64"
                         }
                       ],
-                      "id": 17350,
+                      "id": 17390,
                       "name": "_removeLinkViaRootKey",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17529,
+                      "referencedDeclaration": 17569,
                       "src": "942:21:122",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_bytes_calldata_ptr_$_t_address_$_t_uint64_$returns$__$",
                         "typeString": "function (address,bytes calldata,address,uint64)"
                       }
                     },
-                    "id": 17355,
+                    "id": 17395,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1777,14 +1777,14 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 17356,
+                  "id": 17396,
                   "nodeType": "ExpressionStatement",
                   "src": "942:69:122"
                 }
               ]
             },
             "baseFunctions": [
-              17225
+              17265
             ],
             "functionSelector": "5cdbbbef",
             "implemented": true,
@@ -1793,17 +1793,17 @@
             "name": "removeLinkViaRootKey",
             "nameLocation": "800:20:122",
             "parameters": {
-              "id": 17348,
+              "id": 17388,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17341,
+                  "id": 17381,
                   "mutability": "mutable",
                   "name": "rootKey",
                   "nameLocation": "834:7:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17358,
+                  "scope": 17398,
                   "src": "826:15:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1812,7 +1812,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17340,
+                    "id": 17380,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "826:7:122",
@@ -1826,12 +1826,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 17343,
+                  "id": 17383,
                   "mutability": "mutable",
                   "name": "rootKeySignature",
                   "nameLocation": "862:16:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17358,
+                  "scope": 17398,
                   "src": "847:31:122",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -1840,7 +1840,7 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 17342,
+                    "id": 17382,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
                     "src": "847:5:122",
@@ -1853,12 +1853,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 17345,
+                  "id": 17385,
                   "mutability": "mutable",
                   "name": "wallet",
                   "nameLocation": "892:6:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17358,
+                  "scope": 17398,
                   "src": "884:14:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1867,7 +1867,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17344,
+                    "id": 17384,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "884:7:122",
@@ -1881,12 +1881,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 17347,
+                  "id": 17387,
                   "mutability": "mutable",
                   "name": "removeNonce",
                   "nameLocation": "911:11:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17358,
+                  "scope": 17398,
                   "src": "904:18:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1895,7 +1895,7 @@
                     "typeString": "uint64"
                   },
                   "typeName": {
-                    "id": 17346,
+                    "id": 17386,
                     "name": "uint64",
                     "nodeType": "ElementaryTypeName",
                     "src": "904:6:122",
@@ -1910,23 +1910,23 @@
               "src": "820:106:122"
             },
             "returnParameters": {
-              "id": 17349,
+              "id": 17389,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "936:0:122"
             },
-            "scope": 17459,
+            "scope": 17499,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 17377,
+            "id": 17417,
             "nodeType": "FunctionDefinition",
             "src": "1020:221:122",
             "nodes": [],
             "body": {
-              "id": 17376,
+              "id": 17416,
               "nodeType": "Block",
               "src": "1163:78:122",
               "nodes": [],
@@ -1935,11 +1935,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 17370,
+                        "id": 17410,
                         "name": "wallet",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17360,
+                        "referencedDeclaration": 17400,
                         "src": "1190:6:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -1947,11 +1947,11 @@
                         }
                       },
                       {
-                        "id": 17371,
+                        "id": 17411,
                         "name": "walletSignature",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17362,
+                        "referencedDeclaration": 17402,
                         "src": "1198:15:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes_calldata_ptr",
@@ -1959,11 +1959,11 @@
                         }
                       },
                       {
-                        "id": 17372,
+                        "id": 17412,
                         "name": "rootKey",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17364,
+                        "referencedDeclaration": 17404,
                         "src": "1215:7:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -1971,11 +1971,11 @@
                         }
                       },
                       {
-                        "id": 17373,
+                        "id": 17413,
                         "name": "removeNonce",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17366,
+                        "referencedDeclaration": 17406,
                         "src": "1224:11:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint64",
@@ -2002,18 +2002,18 @@
                           "typeString": "uint64"
                         }
                       ],
-                      "id": 17369,
+                      "id": 17409,
                       "name": "_removeLinkViaWallet",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17553,
+                      "referencedDeclaration": 17593,
                       "src": "1169:20:122",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_bytes_calldata_ptr_$_t_address_$_t_uint64_$returns$__$",
                         "typeString": "function (address,bytes calldata,address,uint64)"
                       }
                     },
-                    "id": 17374,
+                    "id": 17414,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2029,14 +2029,14 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 17375,
+                  "id": 17415,
                   "nodeType": "ExpressionStatement",
                   "src": "1169:67:122"
                 }
               ]
             },
             "baseFunctions": [
-              17237
+              17277
             ],
             "functionSelector": "6b8ca397",
             "implemented": true,
@@ -2045,17 +2045,17 @@
             "name": "removeLinkViaWallet",
             "nameLocation": "1029:19:122",
             "parameters": {
-              "id": 17367,
+              "id": 17407,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17360,
+                  "id": 17400,
                   "mutability": "mutable",
                   "name": "wallet",
                   "nameLocation": "1062:6:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17377,
+                  "scope": 17417,
                   "src": "1054:14:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2064,7 +2064,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17359,
+                    "id": 17399,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1054:7:122",
@@ -2078,12 +2078,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 17362,
+                  "id": 17402,
                   "mutability": "mutable",
                   "name": "walletSignature",
                   "nameLocation": "1089:15:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17377,
+                  "scope": 17417,
                   "src": "1074:30:122",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -2092,7 +2092,7 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 17361,
+                    "id": 17401,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
                     "src": "1074:5:122",
@@ -2105,12 +2105,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 17364,
+                  "id": 17404,
                   "mutability": "mutable",
                   "name": "rootKey",
                   "nameLocation": "1118:7:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17377,
+                  "scope": 17417,
                   "src": "1110:15:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2119,7 +2119,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17363,
+                    "id": 17403,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1110:7:122",
@@ -2133,12 +2133,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 17366,
+                  "id": 17406,
                   "mutability": "mutable",
                   "name": "removeNonce",
                   "nameLocation": "1138:11:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17377,
+                  "scope": 17417,
                   "src": "1131:18:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2147,7 +2147,7 @@
                     "typeString": "uint64"
                   },
                   "typeName": {
-                    "id": 17365,
+                    "id": 17405,
                     "name": "uint64",
                     "nodeType": "ElementaryTypeName",
                     "src": "1131:6:122",
@@ -2162,23 +2162,23 @@
               "src": "1048:105:122"
             },
             "returnParameters": {
-              "id": 17368,
+              "id": 17408,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1163:0:122"
             },
-            "scope": 17459,
+            "scope": 17499,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 17390,
+            "id": 17430,
             "nodeType": "FunctionDefinition",
             "src": "1285:150:122",
             "nodes": [],
             "body": {
-              "id": 17389,
+              "id": 17429,
               "nodeType": "Block",
               "src": "1388:47:122",
               "nodes": [],
@@ -2187,11 +2187,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 17386,
+                        "id": 17426,
                         "name": "rootKey",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17379,
+                        "referencedDeclaration": 17419,
                         "src": "1422:7:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2206,18 +2206,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 17385,
+                      "id": 17425,
                       "name": "_getWalletsByRootKey",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17576,
+                      "referencedDeclaration": 17616,
                       "src": "1401:20:122",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_address_$returns$_t_array$_t_address_$dyn_memory_ptr_$",
                         "typeString": "function (address) view returns (address[] memory)"
                       }
                     },
-                    "id": 17387,
+                    "id": 17427,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2233,15 +2233,15 @@
                       "typeString": "address[] memory"
                     }
                   },
-                  "functionReturnParameters": 17384,
-                  "id": 17388,
+                  "functionReturnParameters": 17424,
+                  "id": 17428,
                   "nodeType": "Return",
                   "src": "1394:36:122"
                 }
               ]
             },
             "baseFunctions": [
-              17246
+              17286
             ],
             "functionSelector": "02345b98",
             "implemented": true,
@@ -2250,17 +2250,17 @@
             "name": "getWalletsByRootKey",
             "nameLocation": "1294:19:122",
             "parameters": {
-              "id": 17380,
+              "id": 17420,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17379,
+                  "id": 17419,
                   "mutability": "mutable",
                   "name": "rootKey",
                   "nameLocation": "1327:7:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17390,
+                  "scope": 17430,
                   "src": "1319:15:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2269,7 +2269,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17378,
+                    "id": 17418,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1319:7:122",
@@ -2285,17 +2285,17 @@
               "src": "1313:25:122"
             },
             "returnParameters": {
-              "id": 17384,
+              "id": 17424,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17383,
+                  "id": 17423,
                   "mutability": "mutable",
                   "name": "wallets",
                   "nameLocation": "1379:7:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17390,
+                  "scope": 17430,
                   "src": "1362:24:122",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -2305,7 +2305,7 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 17381,
+                      "id": 17421,
                       "name": "address",
                       "nodeType": "ElementaryTypeName",
                       "src": "1362:7:122",
@@ -2315,7 +2315,7 @@
                         "typeString": "address"
                       }
                     },
-                    "id": 17382,
+                    "id": 17422,
                     "nodeType": "ArrayTypeName",
                     "src": "1362:9:122",
                     "typeDescriptions": {
@@ -2328,18 +2328,18 @@
               ],
               "src": "1361:26:122"
             },
-            "scope": 17459,
+            "scope": 17499,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 17403,
+            "id": 17443,
             "nodeType": "FunctionDefinition",
             "src": "1480:139:122",
             "nodes": [],
             "body": {
-              "id": 17402,
+              "id": 17442,
               "nodeType": "Block",
               "src": "1573:46:122",
               "nodes": [],
@@ -2348,11 +2348,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 17399,
+                        "id": 17439,
                         "name": "wallet",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17393,
+                        "referencedDeclaration": 17433,
                         "src": "1607:6:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2367,18 +2367,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 17398,
+                      "id": 17438,
                       "name": "_getRootKeyForWallet",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17598,
+                      "referencedDeclaration": 17638,
                       "src": "1586:20:122",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_address_$returns$_t_address_$",
                         "typeString": "function (address) view returns (address)"
                       }
                     },
-                    "id": 17400,
+                    "id": 17440,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2394,18 +2394,18 @@
                       "typeString": "address"
                     }
                   },
-                  "functionReturnParameters": 17397,
-                  "id": 17401,
+                  "functionReturnParameters": 17437,
+                  "id": 17441,
                   "nodeType": "Return",
                   "src": "1579:35:122"
                 }
               ]
             },
             "baseFunctions": [
-              17254
+              17294
             ],
             "documentation": {
-              "id": 17391,
+              "id": 17431,
               "nodeType": "StructuredDocumentation",
               "src": "1439:38:122",
               "text": " @inheritdoc IWalletLink"
@@ -2417,17 +2417,17 @@
             "name": "getRootKeyForWallet",
             "nameLocation": "1489:19:122",
             "parameters": {
-              "id": 17394,
+              "id": 17434,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17393,
+                  "id": 17433,
                   "mutability": "mutable",
                   "name": "wallet",
                   "nameLocation": "1522:6:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17403,
+                  "scope": 17443,
                   "src": "1514:14:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2436,7 +2436,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17392,
+                    "id": 17432,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1514:7:122",
@@ -2452,17 +2452,17 @@
               "src": "1508:24:122"
             },
             "returnParameters": {
-              "id": 17397,
+              "id": 17437,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17396,
+                  "id": 17436,
                   "mutability": "mutable",
                   "name": "rootKey",
                   "nameLocation": "1564:7:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17403,
+                  "scope": 17443,
                   "src": "1556:15:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2471,7 +2471,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17395,
+                    "id": 17435,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1556:7:122",
@@ -2486,18 +2486,18 @@
               ],
               "src": "1555:17:122"
             },
-            "scope": 17459,
+            "scope": 17499,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 17419,
+            "id": 17459,
             "nodeType": "FunctionDefinition",
             "src": "1664:146:122",
             "nodes": [],
             "body": {
-              "id": 17418,
+              "id": 17458,
               "nodeType": "Block",
               "src": "1761:49:122",
               "nodes": [],
@@ -2506,11 +2506,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 17414,
+                        "id": 17454,
                         "name": "rootKey",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17406,
+                        "referencedDeclaration": 17446,
                         "src": "1789:7:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2518,11 +2518,11 @@
                         }
                       },
                       {
-                        "id": 17415,
+                        "id": 17455,
                         "name": "wallet",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17408,
+                        "referencedDeclaration": 17448,
                         "src": "1798:6:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2541,18 +2541,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 17413,
+                      "id": 17453,
                       "name": "_checkIfLinked",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17629,
+                      "referencedDeclaration": 17669,
                       "src": "1774:14:122",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_address_$_t_address_$returns$_t_bool_$",
                         "typeString": "function (address,address) view returns (bool)"
                       }
                     },
-                    "id": 17416,
+                    "id": 17456,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2568,18 +2568,18 @@
                       "typeString": "bool"
                     }
                   },
-                  "functionReturnParameters": 17412,
-                  "id": 17417,
+                  "functionReturnParameters": 17452,
+                  "id": 17457,
                   "nodeType": "Return",
                   "src": "1767:38:122"
                 }
               ]
             },
             "baseFunctions": [
-              17264
+              17304
             ],
             "documentation": {
-              "id": 17404,
+              "id": 17444,
               "nodeType": "StructuredDocumentation",
               "src": "1623:38:122",
               "text": " @inheritdoc IWalletLink"
@@ -2591,17 +2591,17 @@
             "name": "checkIfLinked",
             "nameLocation": "1673:13:122",
             "parameters": {
-              "id": 17409,
+              "id": 17449,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17406,
+                  "id": 17446,
                   "mutability": "mutable",
                   "name": "rootKey",
                   "nameLocation": "1700:7:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17419,
+                  "scope": 17459,
                   "src": "1692:15:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2610,7 +2610,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17405,
+                    "id": 17445,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1692:7:122",
@@ -2624,12 +2624,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 17408,
+                  "id": 17448,
                   "mutability": "mutable",
                   "name": "wallet",
                   "nameLocation": "1721:6:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17419,
+                  "scope": 17459,
                   "src": "1713:14:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2638,7 +2638,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17407,
+                    "id": 17447,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1713:7:122",
@@ -2654,17 +2654,17 @@
               "src": "1686:45:122"
             },
             "returnParameters": {
-              "id": 17412,
+              "id": 17452,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17411,
+                  "id": 17451,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17419,
+                  "scope": 17459,
                   "src": "1755:4:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2673,7 +2673,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 17410,
+                    "id": 17450,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "1755:4:122",
@@ -2687,18 +2687,18 @@
               ],
               "src": "1754:6:122"
             },
-            "scope": 17459,
+            "scope": 17499,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 17432,
+            "id": 17472,
             "nodeType": "FunctionDefinition",
             "src": "1814:151:122",
             "nodes": [],
             "body": {
-              "id": 17431,
+              "id": 17471,
               "nodeType": "Block",
               "src": "1913:52:122",
               "nodes": [],
@@ -2707,11 +2707,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 17428,
+                        "id": 17468,
                         "name": "rootKey",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17421,
+                        "referencedDeclaration": 17461,
                         "src": "1952:7:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2726,18 +2726,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 17427,
+                      "id": 17467,
                       "name": "_getLatestNonceForRootKey",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17651,
+                      "referencedDeclaration": 17691,
                       "src": "1926:25:122",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_address_$returns$_t_uint64_$",
                         "typeString": "function (address) view returns (uint64)"
                       }
                     },
-                    "id": 17429,
+                    "id": 17469,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2753,15 +2753,15 @@
                       "typeString": "uint64"
                     }
                   },
-                  "functionReturnParameters": 17426,
-                  "id": 17430,
+                  "functionReturnParameters": 17466,
+                  "id": 17470,
                   "nodeType": "Return",
                   "src": "1919:41:122"
                 }
               ]
             },
             "baseFunctions": [
-              17272
+              17312
             ],
             "functionSelector": "20a00ac8",
             "implemented": true,
@@ -2770,23 +2770,23 @@
             "name": "getLatestNonceForRootKey",
             "nameLocation": "1823:24:122",
             "overrides": {
-              "id": 17423,
+              "id": 17463,
               "nodeType": "OverrideSpecifier",
               "overrides": [],
               "src": "1887:8:122"
             },
             "parameters": {
-              "id": 17422,
+              "id": 17462,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17421,
+                  "id": 17461,
                   "mutability": "mutable",
                   "name": "rootKey",
                   "nameLocation": "1861:7:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17432,
+                  "scope": 17472,
                   "src": "1853:15:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2795,7 +2795,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17420,
+                    "id": 17460,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1853:7:122",
@@ -2811,17 +2811,17 @@
               "src": "1847:25:122"
             },
             "returnParameters": {
-              "id": 17426,
+              "id": 17466,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17425,
+                  "id": 17465,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17432,
+                  "scope": 17472,
                   "src": "1905:6:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2830,7 +2830,7 @@
                     "typeString": "uint64"
                   },
                   "typeName": {
-                    "id": 17424,
+                    "id": 17464,
                     "name": "uint64",
                     "nodeType": "ElementaryTypeName",
                     "src": "1905:6:122",
@@ -2844,18 +2844,18 @@
               ],
               "src": "1904:8:122"
             },
-            "scope": 17459,
+            "scope": 17499,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 17445,
+            "id": 17485,
             "nodeType": "FunctionDefinition",
             "src": "1969:159:122",
             "nodes": [],
             "body": {
-              "id": 17444,
+              "id": 17484,
               "nodeType": "Block",
               "src": "2072:56:122",
               "nodes": [],
@@ -2864,11 +2864,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 17441,
+                        "id": 17481,
                         "name": "wallet",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17434,
+                        "referencedDeclaration": 17474,
                         "src": "2116:6:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2883,18 +2883,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 17440,
+                      "id": 17480,
                       "name": "_getLatestRemoveNonceForWallet",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17695,
+                      "referencedDeclaration": 17735,
                       "src": "2085:30:122",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_address_$returns$_t_uint64_$",
                         "typeString": "function (address) view returns (uint64)"
                       }
                     },
-                    "id": 17442,
+                    "id": 17482,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2910,15 +2910,15 @@
                       "typeString": "uint64"
                     }
                   },
-                  "functionReturnParameters": 17439,
-                  "id": 17443,
+                  "functionReturnParameters": 17479,
+                  "id": 17483,
                   "nodeType": "Return",
                   "src": "2078:45:122"
                 }
               ]
             },
             "baseFunctions": [
-              17280
+              17320
             ],
             "functionSelector": "ee5752bc",
             "implemented": true,
@@ -2927,23 +2927,23 @@
             "name": "getLatestRemoveNonceForWallet",
             "nameLocation": "1978:29:122",
             "overrides": {
-              "id": 17436,
+              "id": 17476,
               "nodeType": "OverrideSpecifier",
               "overrides": [],
               "src": "2046:8:122"
             },
             "parameters": {
-              "id": 17435,
+              "id": 17475,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17434,
+                  "id": 17474,
                   "mutability": "mutable",
                   "name": "wallet",
                   "nameLocation": "2021:6:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17445,
+                  "scope": 17485,
                   "src": "2013:14:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2952,7 +2952,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17433,
+                    "id": 17473,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2013:7:122",
@@ -2968,17 +2968,17 @@
               "src": "2007:24:122"
             },
             "returnParameters": {
-              "id": 17439,
+              "id": 17479,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17438,
+                  "id": 17478,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17445,
+                  "scope": 17485,
                   "src": "2064:6:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2987,7 +2987,7 @@
                     "typeString": "uint64"
                   },
                   "typeName": {
-                    "id": 17437,
+                    "id": 17477,
                     "name": "uint64",
                     "nodeType": "ElementaryTypeName",
                     "src": "2064:6:122",
@@ -3001,18 +3001,18 @@
               ],
               "src": "2063:8:122"
             },
-            "scope": 17459,
+            "scope": 17499,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 17458,
+            "id": 17498,
             "nodeType": "FunctionDefinition",
             "src": "2132:163:122",
             "nodes": [],
             "body": {
-              "id": 17457,
+              "id": 17497,
               "nodeType": "Block",
               "src": "2237:58:122",
               "nodes": [],
@@ -3021,11 +3021,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 17454,
+                        "id": 17494,
                         "name": "rootKey",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17447,
+                        "referencedDeclaration": 17487,
                         "src": "2282:7:122",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -3040,18 +3040,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 17453,
+                      "id": 17493,
                       "name": "_getLatestRemoveNonceForRootKey",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17673,
+                      "referencedDeclaration": 17713,
                       "src": "2250:31:122",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_address_$returns$_t_uint64_$",
                         "typeString": "function (address) view returns (uint64)"
                       }
                     },
-                    "id": 17455,
+                    "id": 17495,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3067,15 +3067,15 @@
                       "typeString": "uint64"
                     }
                   },
-                  "functionReturnParameters": 17452,
-                  "id": 17456,
+                  "functionReturnParameters": 17492,
+                  "id": 17496,
                   "nodeType": "Return",
                   "src": "2243:47:122"
                 }
               ]
             },
             "baseFunctions": [
-              17288
+              17328
             ],
             "functionSelector": "d48458f8",
             "implemented": true,
@@ -3084,23 +3084,23 @@
             "name": "getLatestRemoveNonceForRootKey",
             "nameLocation": "2141:30:122",
             "overrides": {
-              "id": 17449,
+              "id": 17489,
               "nodeType": "OverrideSpecifier",
               "overrides": [],
               "src": "2211:8:122"
             },
             "parameters": {
-              "id": 17448,
+              "id": 17488,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17447,
+                  "id": 17487,
                   "mutability": "mutable",
                   "name": "rootKey",
                   "nameLocation": "2185:7:122",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17458,
+                  "scope": 17498,
                   "src": "2177:15:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3109,7 +3109,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17446,
+                    "id": 17486,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2177:7:122",
@@ -3125,17 +3125,17 @@
               "src": "2171:25:122"
             },
             "returnParameters": {
-              "id": 17452,
+              "id": 17492,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17451,
+                  "id": 17491,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17458,
+                  "scope": 17498,
                   "src": "2229:6:122",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3144,7 +3144,7 @@
                     "typeString": "uint64"
                   },
                   "typeName": {
-                    "id": 17450,
+                    "id": 17490,
                     "name": "uint64",
                     "nodeType": "ElementaryTypeName",
                     "src": "2229:6:122",
@@ -3158,7 +3158,7 @@
               ],
               "src": "2228:8:122"
             },
-            "scope": 17459,
+            "scope": 17499,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
@@ -3168,46 +3168,46 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 17298,
+              "id": 17338,
               "name": "IWalletLink",
               "nameLocations": [
                 "293:11:122"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 17289,
+              "referencedDeclaration": 17329,
               "src": "293:11:122"
             },
-            "id": 17299,
+            "id": 17339,
             "nodeType": "InheritanceSpecifier",
             "src": "293:11:122"
           },
           {
             "baseName": {
-              "id": 17300,
+              "id": 17340,
               "name": "WalletLinkBase",
               "nameLocations": [
                 "306:14:122"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 18136,
+              "referencedDeclaration": 18176,
               "src": "306:14:122"
             },
-            "id": 17301,
+            "id": 17341,
             "nodeType": "InheritanceSpecifier",
             "src": "306:14:122"
           },
           {
             "baseName": {
-              "id": 17302,
+              "id": 17342,
               "name": "Facet",
               "nameLocations": [
                 "322:5:122"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 7152,
+              "referencedDeclaration": 7192,
               "src": "322:5:122"
             },
-            "id": 17303,
+            "id": 17343,
             "nodeType": "InheritanceSpecifier",
             "src": "322:5:122"
           }
@@ -3217,32 +3217,32 @@
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          17459,
-          7152,
-          10504,
-          10394,
-          10352,
-          18136,
-          17289,
-          17197
+          17499,
+          7192,
+          10544,
+          10434,
+          10392,
+          18176,
+          17329,
+          17237
         ],
         "name": "WalletLink",
         "nameLocation": "279:10:122",
-        "scope": 17460,
+        "scope": 17500,
         "usedErrors": [
-          10132,
-          10134,
-          10381,
-          10383,
-          17196
+          10172,
+          10174,
+          10421,
+          10423,
+          17236
         ],
         "usedEvents": [
-          10138,
-          10388,
-          10393,
-          17176,
-          17183,
-          17190
+          10178,
+          10428,
+          10433,
+          17216,
+          17223,
+          17230
         ]
       }
     ],

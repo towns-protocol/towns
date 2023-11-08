@@ -138,7 +138,7 @@ contract TownArchitectHelper is FacetHelper {
     override
     returns (bytes4[] memory selectors_)
   {
-    selectors_ = new bytes4[](9);
+    selectors_ = new bytes4[](11);
 
     uint256 index;
     selectors_[index++] = ITownArchitect.createTown.selector;
@@ -154,5 +154,7 @@ contract TownArchitectHelper is FacetHelper {
     selectors_[index++] = ITownArchitect.gateByToken.selector;
     selectors_[index++] = ITownArchitect.ungateByToken.selector;
     selectors_[index++] = ITownArchitect.isTokenGated.selector;
+    selectors_[index++] = ITownArchitect.getTokenIdByTown.selector;
+    selectors_[index++] = ITownArchitect.isTown.selector;
   }
 }

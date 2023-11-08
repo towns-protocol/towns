@@ -516,6 +516,25 @@ export default [
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "town",
+        "type": "address"
+      }
+    ],
+    "name": "getTokenIdByTown",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "string",
         "name": "townId",
         "type": "string"
@@ -583,6 +602,25 @@ export default [
       }
     ],
     "name": "isTokenGated",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "town",
+        "type": "address"
+      }
+    ],
+    "name": "isTown",
     "outputs": [
       {
         "internalType": "bool",
