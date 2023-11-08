@@ -70,6 +70,11 @@ export class BaseContractShim<
         // lazy create an instance if it is not already cached
         if (!this.writeContract) {
             this.writeContract = this.createWriteContractInstance(signer)
+        } else {
+            // update the signer if it has changed
+            if (this.writeContract.signer !== signer) {
+                this.writeContract = this.createWriteContractInstance(signer)
+            }
         }
         switch (this.chainId) {
             case LOCALHOST_CHAIN_ID:
