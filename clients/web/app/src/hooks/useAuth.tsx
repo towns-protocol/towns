@@ -15,8 +15,6 @@ import { useLogin, usePrivy } from '@privy-io/react-auth'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
 import { useAnalytics } from './useAnalytics'
 import { useEmbeddedWallet } from './useEmbeddedWallet'
-import { useRetryUntilResolved } from './useRetryUntilResolved'
-import { useErrorToast } from './useErrorToast'
 
 export const registerWalletMsgToSign = `Click to register and accept the Towns Terms of Service.`
 
@@ -88,8 +86,9 @@ function useAuthContext(): AuthContext {
     } = useConnectivity()
     const { ready: privyReady, logout: privyLogout } = usePrivy()
     const { privyLogin, isLoggingInPostPrivySuccess } = usePrivyLogin({
-        isAuthenticated: riverIsAuthenticated,
-        login: riverLogin,
+        riverIsAuthenticated,
+        riverLogin,
+        riverLoginError: loginError,
         loggedInWalletAddress,
     })
 
@@ -165,26 +164,33 @@ export function useIsConnected(): AuthContext['isConnected'] {
 }
 
 function usePrivyLogin({
-    isAuthenticated: libIsAuthenticated,
-    login: libLogin,
+    riverIsAuthenticated,
+    riverLogin,
     loggedInWalletAddress,
-}: Pick<AuthContext, 'isAuthenticated' | 'login' | 'loggedInWalletAddress'>) {
+    riverLoginError,
+}: {
+    riverIsAuthenticated: UseConnectivtyReturnValue['isAuthenticated']
+    riverLogin: UseConnectivtyReturnValue['login']
+    loggedInWalletAddress: AuthContext['loggedInWalletAddress']
+    riverLoginError: AuthContext['loginError']
+}) {
     const { track, setUserId, getUserId } = useAnalytics()
-    const [hasLoggedInToPrivy, setHasLoggedInToPrivy] = useState(false)
-
-    const isLoggingInPostPrivySuccess = usePostPrivyLogin({
-        hasLoggedInToPrivy,
-        libLogin,
-    })
+    const [isLoggingInPostPrivySuccess, setisLoggingInPostPrivySuccess] = useState(false) // flag to watch for when privy login callback is called and start logging in to river
+    const isLoggingInGuard = useRef(false) // flag to prevent multiple logins to river
+    const { signer } = useWeb3Context()
+    const embeddedWallet = useEmbeddedWallet()
 
     const { login: privyLogin } = useLogin({
         // don't get confused, this cb only fires after you call privyLogin(), not on page load!
+        // it fires a single time for every call to privyLogin()
         onComplete: (user, isNewUser, wasAlreadyAuthenticated) => {
-            // we can't wait for signer and login w/in this callback b/c
-            // the references aren't updated and are stale by the time the callback fires
-            // therefore, we need to set a flag that we can listen to in usePostPrivyLogin
-            if (!libIsAuthenticated) {
-                setHasLoggedInToPrivy(true)
+            // if river is not logged in, then we need to login to river
+            // we can't wait for signer and login w/in this callback b/c the references aren't updated and are stale by the time the callback fires
+            // therefore, we need to set a flag that we can watch
+            // if river is (somehow) already logged in, we don't need to do anything
+            if (!riverIsAuthenticated) {
+                isLoggingInGuard.current = false
+                setisLoggingInPostPrivySuccess(true)
             }
         },
         onError: (error) => {
@@ -212,52 +218,50 @@ function usePrivyLogin({
         },
     })
 
-    return { privyLogin, isLoggingInPostPrivySuccess }
-}
-
-// once the user has logged in to privy, we need to login to river
-function usePostPrivyLogin({
-    hasLoggedInToPrivy,
-    libLogin,
-}: {
-    hasLoggedInToPrivy: boolean
-    libLogin: () => Promise<void>
-}) {
-    const { signer } = useWeb3Context()
-    const isLogginIng = useRef(false)
-    const [isLoggingInPostPrivySuccess, setisLoggingInPostPrivySuccess] = useState(false)
-
-    const hasResolved = useRetryUntilResolved(
-        () => {
-            setisLoggingInPostPrivySuccess(true)
-            if (signer && !isLogginIng.current) {
-                console.log(`usePostPrivyLogin: signer set`, signer)
-                isLogginIng.current = true
-                // try to login to river as usual
-                // login errors for river are already caputured in LoginComponent
-                libLogin().finally(() => setisLoggingInPostPrivySuccess(false))
-                return true
-            }
-            return false
-        },
-        // if null, or the callback resolves, the retry stops
-        !hasLoggedInToPrivy ? null : 100,
-        5_000,
-    )
-
-    const errorMessage = hasResolved && !signer ? `Didn't attempt to login to River.` : undefined
-
-    useErrorToast({
-        errorMessage,
-        contextMessage: 'Signer was never set.',
-    })
-
     useEffect(() => {
-        if (hasResolved && !signer) {
-            console.log(`usePostPrivyLogin: signer was never set`)
-            setisLoggingInPostPrivySuccess(false)
+        // don't do anything unless flag is set
+        if (!isLoggingInPostPrivySuccess) {
+            return
         }
-    }, [hasResolved, signer])
 
-    return isLoggingInPostPrivySuccess
+        if (riverLoginError) {
+            console.error('Error logging in to river', riverLoginError)
+            // there were errors, stop running the effect
+            // in this case, user is in a state where they are logged in to privy, but not river. clicking "login" again will try to login to river, not use privyLogin or this effect
+            // but if they somehow log out of privy in this state, we want to reset these flags, and clicking "login" will run this all over again
+            isLoggingInGuard.current = false
+            setisLoggingInPostPrivySuccess(false)
+            return
+        }
+
+        async function loginOnceSignerIsSet() {
+            if (!signer || isLoggingInGuard.current) {
+                return
+            }
+
+            const signerAddress = await signer.getAddress()
+            const embeddedWalletAddress = embeddedWallet?.address
+            // signer can already exist if user has a wallet extension connected to the site (it's picked up in useWeb3Context)
+            // so we should make sure it's the privy signer
+            if (embeddedWalletAddress?.toLowerCase() !== signerAddress.toLowerCase()) {
+                return
+            }
+            console.log(`usePostPrivyLogin: logging in`, {
+                signerAddress,
+                embeddedWalletAddress,
+            })
+            isLoggingInGuard.current = true
+            // try to login to river as usual
+            // login errors for river are already caputured in LoginComponent
+            await riverLogin()
+            // we logged in, stop running the effect
+            // we want to reset these flags in case the user logs out of their session, then clicks "login" again, kicking off this effect
+            setisLoggingInPostPrivySuccess(false)
+            isLoggingInGuard.current = false
+        }
+
+        loginOnceSignerIsSet()
+    }, [embeddedWallet?.address, isLoggingInPostPrivySuccess, riverLogin, signer, riverLoginError])
+
+    return { privyLogin, isLoggingInPostPrivySuccess, setisLoggingInPostPrivySuccess }
 }
