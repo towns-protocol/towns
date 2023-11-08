@@ -165,6 +165,10 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHea
 	var snapshot *Snapshot
 	last := r.lastBlock()
 	eventNumOffset := last.header().EventNumOffset + int64(len(last.events)) + 1 // +1 for header
+	miniblockNumOfPrevSnapshot := last.header().PrevSnapshotMiniblockNum
+	if last.header().Snapshot != nil {
+		miniblockNumOfPrevSnapshot = last.header().MiniblockNum
+	}
 	if r.shouldSnapshot() {
 		snapshot = proto.Clone(r.snapshot).(*Snapshot)
 		events := r.eventsSinceLastSnapshot()
@@ -180,12 +184,13 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHea
 		}
 	}
 	return &MiniblockHeader{
-		MiniblockNum:      last.header().MiniblockNum + 1,
-		Timestamp:         NextMiniblockTimestamp(last.header().Timestamp),
-		EventHashes:       hashes,
-		PrevMiniblockHash: last.headerEvent.Hash,
-		Snapshot:          snapshot,
-		EventNumOffset:    eventNumOffset,
+		MiniblockNum:             last.header().MiniblockNum + 1,
+		Timestamp:                NextMiniblockTimestamp(last.header().Timestamp),
+		EventHashes:              hashes,
+		PrevMiniblockHash:        last.headerEvent.Hash,
+		Snapshot:                 snapshot,
+		EventNumOffset:           eventNumOffset,
+		PrevSnapshotMiniblockNum: miniblockNumOfPrevSnapshot,
 		Content: &MiniblockHeader_None{
 			None: &emptypb.Empty{},
 		},
