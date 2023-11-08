@@ -47,6 +47,7 @@
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
         "publish:local": "turbo publish:local",
+        "sampleapp:build": "turbo build --filter sample-app",
         "syncpack:check": "syncpack list-mismatches",
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
         "test": "turbo test",

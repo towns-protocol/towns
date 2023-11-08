@@ -7,7 +7,7 @@ set -v
 #
 
 export VITE_APP_RELEASE_VERSION=$RENDER_GIT_COMMIT
-export NODE_OPTIONS=--max_old_space_size=32768
+export NODE_OPTIONS="--max-old-space-size=32768 --max_semi_space_size=128 --use-largepages=on"
+
 yarn install
-yarn workspace use-zion-client build
-yarn workspace sample-app build
+yarn sampleapp:build
