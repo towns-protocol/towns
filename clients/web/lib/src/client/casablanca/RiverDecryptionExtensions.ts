@@ -35,6 +35,7 @@ import { RoomIdentifier } from '../../types/room-identifier'
 import throttle from 'lodash/throttle'
 // eslint-disable-next-line lodash/import-scope
 import type { DebouncedFunc } from 'lodash'
+import { sleep } from '../../utils/zion-utils'
 
 /// control the number of outgoing room key requests for events that failed to decrypt
 const MAX_CONCURRENT_ROOM_KEY_REQUESTS = 2
@@ -44,6 +45,8 @@ const MAX_EVENTS_PER_REQUEST = 64
 const TIME_BETWEEN_LOOKING_FOR_KEYS_MS = 500
 /// time between processing to-device events
 const DELAY_BETWEEN_PROCESSING_TO_DEVICE_EVENTS_MS = 10
+// max time to wait before sending a key fulfillment
+const MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS = 10000
 
 type MegolmSessionData = MegolmSession
 type OlmDecryptedMessage = OlmMessage
@@ -211,26 +214,12 @@ export class RiverDecryptionExtension {
     }
 
     private async processKeySolicitationEvent(event: EventKeySolicitation): Promise<void> {
-        let fulfillments: Map<string, ParsedEvent> | undefined
-        if (isChannelStreamId(event.streamId)) {
-            fulfillments = this.client.streams.get(event.streamId)?.view.channelContent
-                .keySolicitations.fulfillments
-        } else if (isDMChannelStreamId(event.streamId)) {
-            fulfillments = this.client.streams.get(event.streamId)?.view.dmChannelContent
-                .keySolicitations.fulfillments
-        } else if (isGDMChannelStreamId(event.streamId)) {
-            fulfillments = this.client.streams.get(event.streamId)?.view.gdmChannelContent
-                .keySolicitations.fulfillments
-        } else {
-            throw new Error('CDE::_onKeySolicitation - unknown stream type')
-        }
         // check that event has not already been fulfilled by someone else
-        if (fulfillments?.has(event.eventHash)) {
-            const fulfilledByUser = fulfillments.get(event.eventHash)?.creatorUserId
+        if (this.keyRequestFulfilled(event.streamId, event.eventHash)) {
             console.log(
-                `CDE::processKeySolicitationEvent - event already fulfilled by ${
-                    fulfilledByUser ?? ''
-                }`,
+                `CDE::processKeySolicitationEvent - event already fulfilled`,
+                event.streamId,
+                event.eventHash,
             )
             return
         }
@@ -823,6 +812,21 @@ export class RiverDecryptionExtension {
             return []
         }
 
+        // Set a timeout — we don't want all channel members to simultaneously respond to the key request
+        const waitTime = Math.random() * MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS
+        console.log('CDE::onKeySolicitation waiting for', waitTime, 'ms')
+        await sleep(waitTime)
+
+        // Last minute check to make sure noone else has responded to the key solicitation
+        const fulfilled = await this.keyRequestFulfilled(streamId, eventHash)
+        if (fulfilled) {
+            console.log('CDE::onKeySolicitation - key request already fulfilled', {
+                streamId,
+                eventHash,
+            })
+            return
+        }
+
         const sharedHistorySessions = await getUniqueUnknownSharedHistorySessions(streamId)
 
         console.log('CDE::onKeySolicitation requested', {
@@ -1047,6 +1051,25 @@ export class RiverDecryptionExtension {
                 console.log(
                     `CDE::onKeyResponse - unknown response kind', ${clear_content.payload.value.kind}, ${senderId}`,
                 )
+        }
+    }
+
+    keyRequestFulfilled(streamId: string, originHash: string): boolean {
+        // We should already be subscribing to this stream — it's the only way
+        // we could've gotten the key solicitation event in the first place.
+        const stream = this.client.streams.get(streamId)
+        if (!stream) {
+            throw new Error('CDE::keyRequestFulfilled - stream not found')
+        }
+
+        if (isChannelStreamId(streamId)) {
+            return stream.view.channelContent.keySolicitations.fulfillments.has(originHash)
+        } else if (isDMChannelStreamId(streamId)) {
+            return stream.view.dmChannelContent.keySolicitations.fulfillments.has(originHash)
+        } else if (isGDMChannelStreamId(streamId)) {
+            return stream.view.gdmChannelContent.keySolicitations.fulfillments.has(originHash)
+        } else {
+            throw new Error('CDE::keyRequestFulfilled - unknown stream type')
         }
     }
 
