@@ -619,7 +619,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 channelId: channelId,
                 channelProperties: channelPropertiesToUpdate,
             }),
-            'updateChannel',
+            { method: 'updateChannel' },
         )
     }
 
@@ -645,7 +645,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     text: fullyReadMarkersContent.toJsonString(),
                 },
             }),
-            'sendFullyReadMarker',
+            { method: 'sendFullyReadMarker' },
         )
     }
 
@@ -934,23 +934,17 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             throw new Error('failed to encrypt message')
         }
         if (isChannelStreamId(streamId)) {
-            return this.makeEventAndAddToStream(
-                streamId,
-                make_ChannelPayload_Message(message),
-                'sendMessage',
-            )
+            return this.makeEventAndAddToStream(streamId, make_ChannelPayload_Message(message), {
+                method: 'sendMessage',
+            })
         } else if (isDMChannelStreamId(streamId)) {
-            return this.makeEventAndAddToStream(
-                streamId,
-                make_DMChannelPayload_Message(message),
-                'sendMessage',
-            )
+            return this.makeEventAndAddToStream(streamId, make_DMChannelPayload_Message(message), {
+                method: 'sendMessageDM',
+            })
         } else if (isGDMChannelStreamId(streamId)) {
-            return this.makeEventAndAddToStream(
-                streamId,
-                make_GDMChannelPayload_Message(message),
-                'sendMessage',
-            )
+            return this.makeEventAndAddToStream(streamId, make_GDMChannelPayload_Message(message), {
+                method: 'sendMessageGDM',
+            })
         }
     }
 
@@ -1079,7 +1073,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             data: data,
             chunkIndex: chunkIndex,
         })
-        return this.makeEventAndAddToStream(streamId, payload, 'sendMedia')
+        return this.makeEventAndAddToStream(streamId, payload, { method: 'sendMedia' })
     }
 
     async sendChannelMessage_Reaction(
@@ -1165,7 +1159,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     op: MembershipOp.SO_INVITE,
                     userId, // TODO: USER_ID: other encoding?
                 }),
-                'inviteUser',
+                { method: 'inviteUser' },
             )
         } else if (isChannelStreamId(streamId)) {
             return this.makeEventAndAddToStream(
@@ -1174,7 +1168,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     op: MembershipOp.SO_INVITE,
                     userId, // TODO: USER_ID: other encoding?
                 }),
-                'inviteUser',
+                { method: 'inviteUser' },
             )
         } else if (isGDMChannelStreamId(streamId)) {
             return this.makeEventAndAddToStream(
@@ -1202,7 +1196,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     op: MembershipOp.SO_JOIN,
                     userId: this.userId,
                 }),
-                'joinChannel',
+                { method: 'joinChannel' },
             )
         } else if (isSpaceStreamId(streamId)) {
             await this.makeEventAndAddToStream(
@@ -1211,7 +1205,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     op: MembershipOp.SO_JOIN,
                     userId: this.userId,
                 }),
-                'joinSpace',
+                { method: 'joinSpace' },
             )
         } else if (isDMChannelStreamId(streamId)) {
             await this.makeEventAndAddToStream(
@@ -1247,7 +1241,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     op: MembershipOp.SO_LEAVE,
                     userId: this.userId,
                 }),
-                'leaveChannel',
+                { method: 'leaveChannel' },
             )
         } else if (isDMChannelStreamId(streamId)) {
             return this.makeEventAndAddToStream(
@@ -1256,7 +1250,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     op: MembershipOp.SO_LEAVE,
                     userId: this.userId,
                 }),
-                'leaveDMChannel',
+                { method: 'leaveDMChannel' },
             )
         } else if (isGDMChannelStreamId(streamId)) {
             return this.makeEventAndAddToStream(
@@ -1280,7 +1274,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     op: MembershipOp.SO_LEAVE,
                     userId: this.userId,
                 }),
-                'leaveSpace',
+                { method: 'leaveSpace' },
             )
         } else {
             throw new Error('invalid streamId')
@@ -1356,7 +1350,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                         // senderKey is curve25519 id key of sender device
                         senderKey: senderKey ?? '',
                     }),
-                    'toDevice',
+                    { method: 'toDevice' },
                 )
             })
         })
@@ -1411,7 +1405,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                         // senderKey is curve25519 id key of sender device
                         senderKey: senderKey ?? '',
                     }),
-                    'toDevice',
+                    { method: 'toDevice' },
                 )
             })
         })
@@ -1454,7 +1448,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 senderKey: senderKey ?? '',
                 // todo: point to origin event for key responses
             }),
-            'toDevice',
+            { method: 'toDevice' },
         )
     }
 
@@ -1494,7 +1488,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 senderKey: senderKey ?? '',
                 // todo: point to origin event for key responses
             }),
-            'toDevice',
+            { method: 'toDevice' },
         )
     }
 
@@ -1530,7 +1524,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 },
                 fallbackKeys: { algoKeyId: fallbackKeys },
             }),
-            'userDeviceKey',
+            { method: 'userDeviceKey' },
         )
     }
 
@@ -1632,10 +1626,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     async makeEventAndAddToStream(
         streamId: string,
         payload: PlainMessage<StreamEvent>['payload'],
-        method?: string,
+        options: { method?: string } = {},
     ): Promise<void> {
         // TODO: filter this.logged payload for PII reasons
-        this.logCall('await makeEventAndAddToStream', method, streamId, payload)
+        this.logCall('await makeEventAndAddToStream', options.method, streamId, payload)
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
 
         const stream = this.streams.get(streamId)
