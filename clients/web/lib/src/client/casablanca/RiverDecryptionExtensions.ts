@@ -29,6 +29,7 @@ import {
     OlmMessage,
     KeySolicitation,
     StreamEvent,
+    MembershipOp,
 } from '@river/proto'
 import { Room } from '../../types/zion-types'
 import { RoomIdentifier } from '../../types/room-identifier'
@@ -594,12 +595,22 @@ export class RiverDecryptionExtension {
         // for each room, ask for all missing sessionIds sequentially to stream
         for (const unknownSessionAndSender of unknownSessionIds) {
             const unknownSessionRequested = unknownSessionAndSender[1]
+            const stream = this.client.streams.get(streamId)
+            if (!stream) {
+                console.log("CDE::_askRoomForKeys - stream doesn't exist")
+                return
+            }
+            if (!stream?.view.getMemberships().isMember(MembershipOp.SO_JOIN)) {
+                console.log(
+                    'CDE::_askForRoomKeys - user is not a memeber of the room and cannot request keys',
+                )
+                return
+            }
             if (isChannelStreamId(streamId)) {
-                const keySolicitations =
-                    this.client.streams.get(streamId)?.view.channelContent.keySolicitations
+                const keySolicitations = stream.view.channelContent.keySolicitations
                 // todo jterzis: add restart criteria based on eventNum returned from miniblock in the case that
                 // a fulfillment didn't return the correct session key
-                if (keySolicitations?.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
+                if (keySolicitations.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
                     console.log(
                         `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
                     )
@@ -614,9 +625,8 @@ export class RiverDecryptionExtension {
                         knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
                 })
             } else if (isDMChannelStreamId(streamId)) {
-                const keySolicitations =
-                    this.client.streams.get(streamId)?.view.dmChannelContent.keySolicitations
-                if (keySolicitations?.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
+                const keySolicitations = stream.view.dmChannelContent.keySolicitations
+                if (keySolicitations.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
                     console.log(
                         `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
                     )
@@ -630,9 +640,8 @@ export class RiverDecryptionExtension {
                         knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
                 })
             } else if (isGDMChannelStreamId(streamId)) {
-                const keySolicitations =
-                    this.client.streams.get(streamId)?.view.gdmChannelContent.keySolicitations
-                if (keySolicitations?.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
+                const keySolicitations = stream.view.gdmChannelContent.keySolicitations
+                if (keySolicitations.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
                     console.log(
                         `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
                     )
