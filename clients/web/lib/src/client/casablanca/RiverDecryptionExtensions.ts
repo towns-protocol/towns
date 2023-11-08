@@ -812,13 +812,13 @@ export class RiverDecryptionExtension {
             return []
         }
 
-        // Set a timeout — we don't want all channel members to simultaneously respond to the key request
+        // Set a timeout — we don't want all channel members to simultaneously respond to the key request
         const waitTime = Math.random() * MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS
         console.log('CDE::onKeySolicitation waiting for', waitTime, 'ms')
         await sleep(waitTime)
 
         // Last minute check to make sure noone else has responded to the key solicitation
-        const fulfilled = await this.keyRequestFulfilled(streamId, eventHash)
+        const fulfilled = this.keyRequestFulfilled(streamId, eventHash)
         if (fulfilled) {
             console.log('CDE::onKeySolicitation - key request already fulfilled', {
                 streamId,
