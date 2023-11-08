@@ -116,4 +116,4 @@ jobs:
                   SLACK_USERNAME: 'Load Tests'
                   SLACK_ICON_EMOJI: ':test_tube:'
                   SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'Load Test Failure'
+                  SLACK_MESSAGE: 'Load Test Failure <@Artem Vorobyev>'
