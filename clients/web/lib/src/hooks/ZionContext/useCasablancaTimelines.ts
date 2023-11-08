@@ -19,6 +19,7 @@ import {
     SnapshotCaseType,
     DmChannelPayload,
     GdmChannelPayload,
+    ChannelMessage,
 } from '@river/proto'
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
@@ -519,30 +520,15 @@ function toTownsContent_ChannelPayload(
     }
 }
 
-function toTownsContent_ChanelPayload_Message_fromRiverEventV2(
-    payload: RiverEventV2,
+function toTownsContent_FromChannelMessage(
+    channelMessage: ChannelMessage,
     description: string,
 ): TownsContentResult {
     try {
-        const channelMessage = payload.getContent()
-        if (!channelMessage) {
-            // if we don't have clear content available, we either have a decryption failure or we should attempt decryption
-            if (payload.shouldAttemptDecryption() || payload.isDecryptionFailure()) {
-                return {
-                    content: {
-                        kind: ZTEvent.RoomMessageEncrypted,
-                    } satisfies RoomMessageEncryptedEvent,
-                }
-            }
-            return { error: `${description} no clear text in message` }
-        }
-
-        switch (channelMessage.content?.payload?.case) {
+        switch (channelMessage?.payload?.case) {
             case 'post':
                 return (
-                    toTownsContent_ChannelPayload_Message_Post(
-                        channelMessage.content.payload.value,
-                    ) ?? {
+                    toTownsContent_ChannelPayload_Message_Post(channelMessage.payload.value) ?? {
                         error: `${description} unknown message type`,
                     }
                 )
@@ -550,25 +536,25 @@ function toTownsContent_ChanelPayload_Message_fromRiverEventV2(
                 return {
                     content: {
                         kind: ZTEvent.Reaction,
-                        reaction: channelMessage.content.payload.value.reaction,
-                        targetEventId: channelMessage.content.payload.value.refEventId,
+                        reaction: channelMessage.payload.value.reaction,
+                        targetEventId: channelMessage.payload.value.refEventId,
                     } satisfies ReactionEvent,
                 }
             case 'redaction':
                 return {
                     content: {
                         kind: ZTEvent.RedactionActionEvent,
-                        refEventId: channelMessage.content.payload.value.refEventId,
+                        refEventId: channelMessage.payload.value.refEventId,
                     } satisfies RedactionActionEvent,
                 }
             case 'edit': {
-                const newPost = channelMessage.content.payload.value.post
+                const newPost = channelMessage.payload.value.post
                 if (!newPost) {
                     return { error: `${description} no post in edit` }
                 }
                 const newContent = toTownsContent_ChannelPayload_Message_Post(
                     newPost,
-                    channelMessage.content.payload.value.refEventId,
+                    channelMessage.payload.value.refEventId,
                 )
                 return newContent ?? { error: `${description} no content in edit` }
             }
@@ -583,6 +569,30 @@ function toTownsContent_ChanelPayload_Message_fromRiverEventV2(
     } catch (e) {
         return { error: `${description} message text invalid channel message` }
     }
+}
+
+function toTownsContent_ChanelPayload_Message_fromRiverEventV2(
+    payload: RiverEventV2,
+    description: string,
+): TownsContentResult {
+    const channelMessage = payload.getContent()
+    if (!channelMessage) {
+        // if we don't have clear content available, we either have a decryption failure or we should attempt decryption
+        if (payload.shouldAttemptDecryption() || payload.isDecryptionFailure()) {
+            return {
+                content: {
+                    kind: ZTEvent.RoomMessageEncrypted,
+                } satisfies RoomMessageEncryptedEvent,
+            }
+        }
+        return { error: `${description} no clear text in message` }
+    }
+
+    if (!channelMessage.content) {
+        return { error: `${description} no content in clear text in message` }
+    }
+
+    return toTownsContent_FromChannelMessage(channelMessage.content, description)
 }
 
 function toTownsContent_ChannelPayload_Message(
