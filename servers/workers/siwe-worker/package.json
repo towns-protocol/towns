@@ -29,9 +29,9 @@
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20230710.1",
 		"@types/jest": "^29.5.3",
-		"@typescript-eslint/eslint-plugin": "^5.61.0",
-		"@typescript-eslint/parser": "^5.61.0",
-		"eslint": "^8.42.0",
+		"@typescript-eslint/eslint-plugin": "^6.10.0",
+		"@typescript-eslint/parser": "^6.10.0",
+		"eslint": "^8.53.0",
 		"jest": "^29.6.2",
 		"jest-environment-miniflare": "^2.14.0",
 		"miniflare": "^3.20230710.0",
