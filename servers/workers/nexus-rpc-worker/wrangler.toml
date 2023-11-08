@@ -1,6 +1,7 @@
 main = "./src/index.ts"
 name = "nexus-rpc-worker"
 compatibility_date = "2022-07-26"
+account_id = "9840f8a36a817b103e00e29a0e2bad6f"
 logpush = true
 
 # this is for tests, so it gets used even though wrangler CLI says otherwise
