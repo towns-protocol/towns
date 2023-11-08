@@ -21,9 +21,6 @@ import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-tran
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useTransactionStore } from '../../src/store/use-transactions-store'
-import { ZTEvent } from '../../src/types/timeline-types'
-import { MatrixEvent, MsgType as MatrixMsgType, RoomEvent } from 'matrix-js-sdk'
-import { useZionContext } from '../../src/components/ZionContextProvider'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { createMembershipStruct, getMemberNftAddress, Permission } from '@river/web3'
 
@@ -72,7 +69,6 @@ describe('useCreateChannelTransactionHook', () => {
         }
 
         const TestComponent = () => {
-            const { matrixClient } = useZionContext()
             const spaceTransaction = useCreateSpaceTransaction()
             const {
                 createSpaceTransactionWithRole,
@@ -95,8 +91,6 @@ describe('useCreateChannelTransactionHook', () => {
             const transactions = useTransactionStore((state) => state.transactions)
 
             const [seenTransactions, setSeenTransactions] = useState<Record<string, undefined>>({})
-            const [numberOfChannelBlockchainEvents, setNumberOfChannelBlockchainEvents] =
-                useState(0)
 
             useEffect(() => {
                 setSeenTransactions((t) => {
@@ -107,23 +101,6 @@ describe('useCreateChannelTransactionHook', () => {
                     return newState
                 })
             }, [transactions])
-
-            useEffect(() => {
-                function onBlockchainTransaction(event: MatrixEvent) {
-                    const content = event.getContent()
-                    if (
-                        event.getType() === MatrixMsgType.Notice &&
-                        content.kind === ZTEvent.BlockchainTransaction
-                    ) {
-                        setNumberOfChannelBlockchainEvents((t) => t + 1)
-                    }
-                }
-                matrixClient?.on(RoomEvent.Timeline, onBlockchainTransaction)
-
-                return () => {
-                    matrixClient?.off(RoomEvent.Timeline, onBlockchainTransaction)
-                }
-            }, [matrixClient])
 
             const roleIds = useMemo(() => {
                 const roleIds: number[] = []
@@ -218,9 +195,6 @@ describe('useCreateChannelTransactionHook', () => {
                                 </div>
                                 <div data-testid="seen-transactions">
                                     {Object.keys(seenTransactions).length}
-                                </div>
-                                <div data-testid="channel-blockchain-events">
-                                    {numberOfChannelBlockchainEvents}
                                 </div>
                             </>
                         </SpaceContextProvider>

@@ -194,7 +194,7 @@ export async function* timeoutIterable<T>(
 //    )
 //
 // to get user memebrship payload from a last event containing it, or undefined if not found.
-export const lastEventFiltered = <T extends (a: ParsedEvent) => any | undefined>(
+export const lastEventFiltered = <T extends (a: ParsedEvent) => any>(
     events: ParsedEvent[],
     f: T,
 ): ReturnType<T> | undefined => {
@@ -220,7 +220,7 @@ export function waitFor<T>(
     return new Promise((resolve, reject) => {
         const timeoutMS = options.timeoutMS ?? 1000
         const pollIntervalMS = Math.min(timeoutMS / 2, 100)
-        let lastError: any | undefined = undefined
+        let lastError: any = undefined
         let promiseStatus: 'none' | 'pending' | 'resolved' | 'rejected' = 'none'
         const intervalId = setInterval(checkCallback, pollIntervalMS)
         const timeoutId = setInterval(onTimeout, timeoutMS)

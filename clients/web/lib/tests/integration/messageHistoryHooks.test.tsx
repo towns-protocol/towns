@@ -22,6 +22,7 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 import { TestConstants } from './helpers/TestConstants'
 import { sleep } from '../../src/utils/zion-utils'
 import { Permission } from '@river/web3'
+import { ZTEvent } from '../../src/types/timeline-types'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -64,7 +65,7 @@ describe('messageHistoryHooks', () => {
             const TestComponent = () => {
                 const { scrollback } = useZionClient()
                 const { timeline } = useChannelTimeline()
-                const messages = timeline.filter((x) => x.content?.kind === 'm.room.message')
+                const messages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
                 const onClickScrollback = useCallback(() => {
                     void scrollback(channelId, 30)
                 }, [scrollback])

@@ -59,7 +59,7 @@ describe('messageTypes', () => {
         expect(
             bob
                 .getEvents_TypedRoomMessage(channelId)
-                .find((event) => event.content.msgType === MessageType.GM),
+                .find((event) => event.content.msgType === (MessageType.GM as string)),
         ).toBeDefined()
     }) // end test
 
@@ -112,7 +112,7 @@ describe('messageTypes', () => {
             expect(bob.getMessages(channelId)).toContain('what.jpg')
             const imageMessage = bob
                 .getEvents_TypedRoomMessage(channelId)
-                .find((event) => event.content?.msgType === MessageType.Image)
+                .find((event) => event.content?.msgType === (MessageType.Image as string))
 
             expect(imageMessage).toBeDefined()
             expect((imageMessage?.content.content as ImageMessageContent).info.url).toBe(

@@ -73,7 +73,7 @@ export function useMatrixRooms(client?: MatrixClient): Record<string, Room | und
             if (!eventRoomId) {
                 return
             }
-            const eventType = event.getType()
+            const eventType = event.getType() as EventType
             if (
                 eventType === EventType.RoomCreate ||
                 eventType === EventType.RoomName ||

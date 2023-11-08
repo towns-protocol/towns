@@ -141,7 +141,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     public pickleKey?: string
     public cryptoStore?: CryptoStore
     public cryptoBackend?: Crypto
-    private syncLoop?: Promise<undefined | unknown>
+    private syncLoop?: Promise<unknown>
     private syncAbort?: AbortController
 
     constructor(
@@ -504,7 +504,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         } catch (err) {
             // Two users can only have a single DM stream between them.
             // Return the stream id if it already exists.
-            if (isIConnectError(err) && err.code == Code.AlreadyExists) {
+            if (isIConnectError(err) && err.code == (Code.AlreadyExists as number)) {
                 return { streamId: channelId }
             }
             throw err
@@ -765,7 +765,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logSync('sync START')
         assert(this.userStreamId !== undefined, 'streamId must be set')
 
-        this.syncLoop = (async (): Promise<undefined | unknown> => {
+        this.syncLoop = (async (): Promise<unknown> => {
             this.logSync('sync syncLoop started')
             try {
                 let iteration = 0
@@ -886,7 +886,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logSync('sync END')
     }
 
-    async stopSync(): Promise<unknown | undefined> {
+    async stopSync(): Promise<unknown> {
         let err: unknown = undefined
         this.logSync('sync STOP CALLED')
         if (this.syncAbort) {

@@ -77,7 +77,7 @@ describe('userProfileHooks', () => {
                         {alicesMemberInfo?.avatarUrl ?? 'unknown'}
                     </div>
                     <div data-testid="messageSender">
-                        {roomMessages[0]?.content?.kind === 'm.room.message'
+                        {roomMessages[0]?.content?.kind === ZTEvent.RoomMessage
                             ? roomMessages[0].sender.displayName
                             : 'none'}
                     </div>

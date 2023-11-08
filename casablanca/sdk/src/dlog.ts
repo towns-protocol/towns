@@ -7,7 +7,7 @@ const hasOwnProperty = <Y extends PropertyKey>(obj: object, prop: Y): obj is Rec
     return Object.prototype.hasOwnProperty.call(obj, prop)
 }
 
-const cloneAndFormat = (obj: unknown, depth = 0, seen = new WeakSet()): unknown | unknown[] => {
+const cloneAndFormat = (obj: unknown, depth = 0, seen = new WeakSet()): unknown => {
     if (depth > MAX_CALL_STACK_SZ) {
         return 'MAX_CALL_STACK_SZ exceeded'
     }

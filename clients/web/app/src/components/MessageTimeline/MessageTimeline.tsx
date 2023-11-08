@@ -347,7 +347,7 @@ export const MessageTimeline = (props: Props) => {
                         )
                         if (
                             // count first chunk
-                            typeof prev.collapseEndIndex === undefined ||
+                            typeof prev.collapseEndIndex === 'undefined' ||
                             // count if user changed
                             userId !== prev.lastUserId ||
                             date !== prev.lastDate ||

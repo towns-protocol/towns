@@ -9,7 +9,7 @@ import {
     OutgoingRoomKeyRequest,
     IRoomEncryption,
 } from './base'
-import { IRoomKeyRequestBody } from '../crypto'
+import { IRoomKeyRequestBody, RoomKeyRequestState } from '../crypto'
 import { IOlmDevice } from '../deviceList'
 import { InboundGroupSessionData } from '../olmDevice'
 import { safeSet, promiseTry } from '../../utils'
@@ -134,7 +134,7 @@ export class MemoryCryptoStore implements CryptoStore {
      *    there are no pending requests in those states
      */
     public getOutgoingRoomKeyRequestByState(
-        wantedStates: number[],
+        wantedStates: RoomKeyRequestState[],
     ): Promise<OutgoingRoomKeyRequest | null> {
         for (const req of this.outgoingRoomKeyRequests) {
             for (const state of wantedStates) {
@@ -151,7 +151,7 @@ export class MemoryCryptoStore implements CryptoStore {
      * @returns All OutgoingRoomKeyRequests in state
      */
     public getAllOutgoingRoomKeyRequestsByState(
-        wantedState: number,
+        wantedState: RoomKeyRequestState,
     ): Promise<OutgoingRoomKeyRequest[]> {
         return Promise.resolve(this.outgoingRoomKeyRequests.filter((r) => r.state == wantedState))
     }
@@ -159,7 +159,7 @@ export class MemoryCryptoStore implements CryptoStore {
     public getOutgoingRoomKeyRequestsByTarget(
         userId: string,
         deviceId: string,
-        wantedStates: number[],
+        wantedStates: RoomKeyRequestState[],
     ): Promise<OutgoingRoomKeyRequest[]> {
         const results: OutgoingRoomKeyRequest[] = []
 
@@ -186,7 +186,7 @@ export class MemoryCryptoStore implements CryptoStore {
      */
     public updateOutgoingRoomKeyRequest(
         requestId: string,
-        expectedState: number,
+        expectedState: RoomKeyRequestState,
         updates: Partial<OutgoingRoomKeyRequest>,
     ): Promise<OutgoingRoomKeyRequest | null> {
         for (const req of this.outgoingRoomKeyRequests) {
@@ -215,7 +215,7 @@ export class MemoryCryptoStore implements CryptoStore {
      */
     public deleteOutgoingRoomKeyRequest(
         requestId: string,
-        expectedState: number,
+        expectedState: RoomKeyRequestState,
     ): Promise<OutgoingRoomKeyRequest | null> {
         for (let i = 0; i < this.outgoingRoomKeyRequests.length; i++) {
             const req = this.outgoingRoomKeyRequests[i]

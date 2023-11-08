@@ -144,7 +144,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         _removed: boolean,
         _data: IRoomTimelineData,
     ) => {
-        if (event.getType() === MatrixEventType.RoomMessageEncrypted) {
+        if (event.getType() === (MatrixEventType.RoomMessageEncrypted as string)) {
             if (event.shouldAttemptDecryption()) {
                 // not sure why matrix isn't always doing this for us, but sometimes it gets skipped
                 // it's okay to call multiple times, the underlying logic returns an existing promise

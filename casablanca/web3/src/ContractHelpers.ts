@@ -21,7 +21,7 @@ export function mintMockNFT(
     chainId: number,
     provider: ethers.providers.Provider | PublicClient,
     fromWallet: ethers.Wallet | WalletClient,
-    toAddress: string | Address,
+    toAddress: string,
 ): Promise<ethers.ContractTransaction | SpaceDappTransaction> {
     if (chainId === 31337) {
         const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress

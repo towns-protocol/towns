@@ -170,7 +170,7 @@ export class IndexedDBCryptoStore implements CryptoStore {
             }
 
             req.onerror = (e) => {
-                log(`error deleting indexeddb instance ${this.dbName}: ${e}`)
+                log(`error deleting indexeddb instance ${this.dbName}`, e)
                 reject(req.error)
             }
 
@@ -179,7 +179,7 @@ export class IndexedDBCryptoStore implements CryptoStore {
                 resolve()
             }
         }).catch((e) => {
-            log(`unable to delete indexeddb instance ${this.dbName}: ${e}`)
+            log(`unable to delete indexeddb instance ${this.dbName}`, e)
         })
     }
 

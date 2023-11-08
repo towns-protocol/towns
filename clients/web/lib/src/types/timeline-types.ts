@@ -124,7 +124,7 @@ export interface RoomCreateEvent {
     kind: ZTEvent.RoomCreate
     creator: string
     predecessor?: { event_id: string; room_id: string }
-    type?: string | PayloadCaseType
+    type?: PayloadCaseType
     spaceId?: string // valid on casablanca channel streams
 }
 

@@ -220,7 +220,7 @@ export class DeviceList extends (EventEmitter as new () => TypedEmitter<CryptoEv
      * Get a user ID by one of their device's curve25519 identity key.
      */
     public getUserByIdentityKey(algorithm: string, senderKey: string): string | undefined {
-        if (algorithm !== OLM_ALGORITHM && algorithm !== MEGOLM_ALGORITHM) {
+        if (algorithm !== (OLM_ALGORITHM as string) && algorithm !== (MEGOLM_ALGORITHM as string)) {
             log('getUserByIdentityKey: unsupported key algorithm', algorithm)
             return undefined
         }
