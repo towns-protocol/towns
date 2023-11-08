@@ -7,6 +7,7 @@ import {
     isCiphertext,
     isDMChannelStreamId,
     isGDMChannelStreamId,
+    logNever,
 } from '@river/sdk'
 import {
     MembershipOp,
@@ -47,7 +48,6 @@ import {
     ZTEvent,
     KeySolicitationEvent,
 } from '../../types/timeline-types'
-import { staticAssertNever } from '../../utils/zion-utils'
 import { RiverEventV2 } from '@river/sdk'
 
 type SuccessResult = {
@@ -376,18 +376,11 @@ function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResu
             return {
                 error: `${description} mediaPayload not supported?`,
             }
+        case undefined:
+            return { error: `${description} undefined payload case` }
         default:
-            try {
-                if (message.event.payload && message.event.payload.value) {
-                    staticAssertNever(message.event.payload)
-                }
-            } catch (e) {
-                console.error('$$$ useCasablancaTimelines unknown case', {
-                    payload: message.event.payload,
-                })
-            }
-            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-            return { error: `unknown payload case ${message.event.payload.case}` }
+            logNever(message.event.payload)
+            return { error: `unknown payload case ${description}` }
     }
 }
 
@@ -443,13 +436,10 @@ function toTownsContent_UserPayload(
             return { error: `${description} unknown message kind` }
         }
         default: {
-            try {
-                staticAssertNever(value.content)
-            } catch (e) {
-                return {
-                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                    error: `${description} unknown message kind`,
-                }
+            logNever(value.content)
+            return {
+                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                error: `${description} unknown message kind`,
             }
         }
     }
@@ -512,11 +502,8 @@ function toTownsContent_ChannelPayload(
             return { error: `${description} undefined message kind` }
         }
         default:
-            try {
-                staticAssertNever(value.content)
-            } catch (e) {
-                return { error: `${description} unknown payload case` }
-            }
+            logNever(value.content)
+            return { error: `${description} unknown payload case` }
     }
 }
 
@@ -524,50 +511,47 @@ function toTownsContent_FromChannelMessage(
     channelMessage: ChannelMessage,
     description: string,
 ): TownsContentResult {
-    try {
-        switch (channelMessage?.payload?.case) {
-            case 'post':
-                return (
-                    toTownsContent_ChannelPayload_Message_Post(channelMessage.payload.value) ?? {
-                        error: `${description} unknown message type`,
-                    }
-                )
-            case 'reaction':
-                return {
-                    content: {
-                        kind: ZTEvent.Reaction,
-                        reaction: channelMessage.payload.value.reaction,
-                        targetEventId: channelMessage.payload.value.refEventId,
-                    } satisfies ReactionEvent,
+    switch (channelMessage.payload?.case) {
+        case 'post':
+            return (
+                toTownsContent_ChannelPayload_Message_Post(channelMessage.payload.value) ?? {
+                    error: `${description} unknown message type`,
                 }
-            case 'redaction':
-                return {
-                    content: {
-                        kind: ZTEvent.RedactionActionEvent,
-                        refEventId: channelMessage.payload.value.refEventId,
-                    } satisfies RedactionActionEvent,
-                }
-            case 'edit': {
-                const newPost = channelMessage.payload.value.post
-                if (!newPost) {
-                    return { error: `${description} no post in edit` }
-                }
-                const newContent = toTownsContent_ChannelPayload_Message_Post(
-                    newPost,
-                    channelMessage.payload.value.refEventId,
-                )
-                return newContent ?? { error: `${description} no content in edit` }
+            )
+        case 'reaction':
+            return {
+                content: {
+                    kind: ZTEvent.Reaction,
+                    reaction: channelMessage.payload.value.reaction,
+                    targetEventId: channelMessage.payload.value.refEventId,
+                } satisfies ReactionEvent,
             }
-            case undefined:
-                return { error: `${description} undefined message kind` }
-            default: {
-                return {
-                    error: `${description} unknown message kind`,
-                }
+        case 'redaction':
+            return {
+                content: {
+                    kind: ZTEvent.RedactionActionEvent,
+                    refEventId: channelMessage.payload.value.refEventId,
+                } satisfies RedactionActionEvent,
+            }
+        case 'edit': {
+            const newPost = channelMessage.payload.value.post
+            if (!newPost) {
+                return { error: `${description} no post in edit` }
+            }
+            const newContent = toTownsContent_ChannelPayload_Message_Post(
+                newPost,
+                channelMessage.payload.value.refEventId,
+            )
+            return newContent ?? { error: `${description} no content in edit` }
+        }
+        case undefined:
+            return { error: `${description} undefined message kind` }
+        default: {
+            logNever(channelMessage.payload)
+            return {
+                error: `${description} unknown message kind`,
             }
         }
-    } catch (e) {
-        return { error: `${description} message text invalid channel message` }
     }
 }
 
@@ -710,8 +694,10 @@ function toTownsContent_ChannelPayload_Message_Post(
                     wireContent: {},
                 } satisfies RoomMessageEvent,
             }
-
+        case undefined:
+            return undefined
         default:
+            logNever(value.content)
             return undefined
     }
 }
@@ -785,11 +771,8 @@ function toTownsContent_SpacePayload(
         case undefined:
             return { error: `${description} undefined payload case` }
         default:
-            try {
-                staticAssertNever(value.content)
-            } catch (e) {
-                return { error: `${description} unknown payload case` }
-            }
+            logNever(value.content)
+            return { error: `${description} unknown payload case` }
     }
 }
 
