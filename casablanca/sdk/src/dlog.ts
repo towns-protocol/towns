@@ -1,5 +1,6 @@
 import debug, { Debugger } from 'debug'
 import { isHexString, shortenHexString, bin_toHexString } from './binary'
+import { isNode } from 'browser-or-node'
 
 const MAX_CALL_STACK_SZ = 18
 
@@ -32,6 +33,10 @@ const cloneAndFormat = (obj: unknown, depth = 0, seen = new WeakSet()): unknown 
     }
 
     if (typeof obj === 'object' && obj !== null) {
+        if (obj instanceof Error) {
+            return obj.stack || obj.message
+        }
+
         const newObj: Record<PropertyKey, unknown> = {}
         for (const key in obj) {
             let newKey = key
@@ -69,6 +74,7 @@ const makeDlog = (d: Debugger): DLogger => {
 
         const fmt: string[] = []
         const newArgs: unknown[] = []
+        const tailArgs: unknown[] = []
 
         for (let i = 0; i < args.length; i++) {
             let c = args[i]
@@ -80,15 +86,20 @@ const makeDlog = (d: Debugger): DLogger => {
                 }
                 newArgs.push(c)
             } else if (typeof c === 'object' && c !== null) {
-                fmt.push('%O\n')
-                newArgs.push(cloneAndFormat(c))
+                if (c instanceof Error) {
+                    tailArgs.push('\n')
+                    tailArgs.push(c)
+                } else {
+                    fmt.push('%O\n')
+                    newArgs.push(cloneAndFormat(c))
+                }
             } else {
                 fmt.push('%O ')
                 newArgs.push(c)
             }
         }
 
-        d(fmt.join(''), ...newArgs)
+        d(fmt.join(''), ...newArgs, ...tailArgs)
     }
 
     dlog.baseDebug = d
@@ -108,6 +119,10 @@ const makeDlog = (d: Debugger): DLogger => {
     return dlog as DLogger
 }
 
+export function isJest(): boolean {
+    return isNode && (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined)
+}
+
 /**
  * Create a new logger with namespace `ns`.
  * It's based on the `debug` package logger with custom formatter:
@@ -119,4 +134,19 @@ const makeDlog = (d: Debugger): DLogger => {
  */
 export const dlog = (ns: string): DLogger => {
     return makeDlog(debug(ns))
+}
+
+/**
+ * Same as dlog, but logger is bound to console.error so clicking on it expands log site callstack (in addition to printed error callstack).
+ * Also, logger is enabled by default, except if running in jest.
+ *
+ * @param ns Namespace for the logger.
+ * @returns New logger with namespace `ns`.
+ */
+export const dlogError = (ns: string): DLogger => {
+    const l = makeDlog(debug(ns))
+    l.enabled = l.enabled || !isJest()
+    // eslint-disable-next-line no-console
+    l.baseDebug.log = console.error.bind(console)
+    return l
 }

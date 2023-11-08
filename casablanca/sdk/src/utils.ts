@@ -27,10 +27,6 @@ export function hashString(string: string): string {
     return bin_toHexString(buffer)
 }
 
-export function isJest(): boolean {
-    return process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined
-}
-
 /**
  * IConnectError contains a subset of the properties in ConnectError
  */

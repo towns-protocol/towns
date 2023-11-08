@@ -1,4 +1,4 @@
-import { dlog } from './dlog'
+import { dlog, dlogError } from './dlog'
 import { bin_fromHexString } from './binary'
 
 describe('dlogTest', () => {
@@ -98,5 +98,27 @@ describe('dlogTest', () => {
     test('numbers', () => {
         const log = dlog('test:dlog')
         log('test same number:', { a: 1, b: 1, c: 1, d: 2 })
+    })
+
+    test('error', () => {
+        const log = dlogError('test:dlog:error')
+        log('test same number:', { a: 1, b: 1, c: 1, d: 2 })
+        log(new Error('test error'))
+
+        function funcThatThrows() {
+            throw new Error('test error 2')
+        }
+
+        try {
+            funcThatThrows()
+        } catch (e) {
+            log(e)
+        }
+
+        try {
+            funcThatThrows()
+        } catch (e) {
+            log('test error 3', e, 123, 'more text')
+        }
     })
 })

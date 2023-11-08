@@ -1,7 +1,7 @@
 import { Err } from '@river/proto'
-import { dlog } from './dlog'
+import { dlogError } from './dlog'
 
-const log = dlog('csb:error')
+const log = dlogError('csb:error')
 
 export class CodeException extends Error {
     code: number
@@ -75,4 +75,12 @@ interface Lengthwise {
 
 export function hasElements<T extends Lengthwise>(value: T | undefined | null): value is T {
     return isDefined(value) && value.length > 0
+}
+
+export function assert(condition: boolean, message: string): asserts condition {
+    if (!condition) {
+        const e = new Error(message)
+        log('assertion failed: ', e)
+        throw e
+    }
 }

@@ -10,7 +10,7 @@ import {
     StreamAndCookie,
     Snapshot,
 } from '@river/proto'
-import { check, hasElements, isDefined } from './check'
+import { assert, check, hasElements, isDefined } from './check'
 import {
     townsHash,
     townsRecoverPubKey,
@@ -22,7 +22,6 @@ import { genIdBlob, userIdFromAddress } from './id'
 import { ParsedEvent, ParsedMiniblock } from './types'
 import { bin_equal, bin_fromHexString, bin_toHexString } from './binary'
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
-import assert from 'assert'
 
 /**
  * SignerContext is a context used for signing events.

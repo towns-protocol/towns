@@ -9,13 +9,11 @@ import {
 import { AnyMessage } from '@bufbuild/protobuf'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { StreamService } from '@river/proto'
-import { dlog } from './dlog'
+import { dlog, dlogError } from './dlog'
 import { genShortId } from './id'
-import { isJest } from './utils'
 
 const logProtos = dlog('csb:rpc:protos')
-const logError = dlog('csb:rpc:error')
-logError.enabled = logError.enabled || !isJest()
+const logError = dlogError('csb:rpc:error')
 
 const interceptor: Interceptor = (next) => async (req) => {
     let localReq = req

@@ -1,4 +1,4 @@
-import { dlog } from './dlog'
+import { dlog, dlogError } from './dlog'
 import {
     Err,
     SnapshotCaseType,
@@ -29,8 +29,7 @@ import {
 import { StreamStateView_DMChannel } from './streamStateView_DMChannel'
 
 const log = dlog('csb:streams')
-const logError = dlog('csb:streams:error')
-logError.enabled = true
+const logError = dlogError('csb:streams:error')
 
 export class StreamStateView {
     readonly streamId: string

@@ -19,8 +19,11 @@
 
     <button id="callButton">Call Info on RPC service</button>
 
+    <br />
+
     <script type="module">
       import { fetchData, fetchRpcInfo } from "/fetcher.ts";
+      import { logInfo, logError, testLogError } from "/log.ts";
 
       const fetchButton = document.getElementById("fetchButton");
       const callButton = document.getElementById("callButton");
@@ -58,6 +61,32 @@
       }
 
       callButton.addEventListener("click", callButtonPressed);
+
+      function funcThatThrows() {
+        throw new Error("Hello from the browser");
+      }
+
+      function throwAndCatch() {
+        try {
+          funcThatThrows();
+        } catch (error) {
+          testLogError(error);
+        }
+      }
+
+      window.addEventListener("load", () => {
+        window.logInfo = logInfo;
+        window.logError = logError;
+        window.throwAndCatch = throwAndCatch;
+      });
     </script>
+
+    <button onclick="logInfo.enabled = true">Enable Info</button>
+    <button onclick="logInfo.enabled = false">Disable Info</button>
+    <button onclick="logInfo('Hello from the browser')">Log Info</button>
+    <br />
+    <button onclick="logError.enabled = true">Enable Error</button>
+    <button onclick="logError.enabled = false">Disable Error</button>
+    <button onclick="throwAndCatch()">Log Error</button>
   </body>
 </html>

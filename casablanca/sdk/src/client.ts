@@ -30,7 +30,6 @@ import {
     FullyReadMarker,
     Envelope,
 } from '@river/proto'
-
 import {
     Crypto,
     EncryptionInput,
@@ -43,7 +42,7 @@ import { DLogger, dlog } from './dlog'
 import { StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { check, hasElements, isDefined, throwWithCode } from './check'
+import { assert, check, hasElements, isDefined, throwWithCode } from './check'
 import {
     isChannelStreamId,
     isDMChannelStreamId,
@@ -98,15 +97,6 @@ import { MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { Stream } from './stream'
 import { Code } from '@connectrpc/connect'
 import { isIConnectError } from './utils'
-
-const log = dlog('csb:client')
-
-function assert(condition: boolean, message: string): asserts condition {
-    if (!condition) {
-        log('assertion failed: ', message)
-        throw new Error(message)
-    }
-}
 
 const enum AbortReason {
     SHUTDOWN = 'SHUTDOWN',
