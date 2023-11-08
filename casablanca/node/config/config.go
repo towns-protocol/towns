@@ -20,6 +20,7 @@ type Config struct {
 	Stream              StreamConfig
 	NodeRegistry        string
 	WalletPrivateKey    string
+	SyncVersion         int
 }
 
 type ChainConfig struct {

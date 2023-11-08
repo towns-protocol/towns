@@ -2,8 +2,10 @@ package rpc
 
 import (
 	. "casablanca/node/base"
+	"casablanca/node/crypto"
 	"casablanca/node/dlog"
-	. "casablanca/node/events"
+	"casablanca/node/events"
+	"casablanca/node/nodes"
 	. "casablanca/node/protocol"
 	. "casablanca/node/protocol/protocolconnect"
 	"context"
@@ -24,6 +26,54 @@ import (
 // 	}
 // }
 
+func NewSyncHandler(
+	syncVersion int,
+	wallet *crypto.Wallet,
+	cache events.StreamCache,
+	nodeRegistry nodes.NodeRegistry,
+) SyncHandler {
+	if syncVersion == 2 {
+		return &SyncHandlerV2{
+			wallet:       wallet,
+			cache:        cache,
+			nodeRegistry: nodeRegistry,
+		}
+	}
+	return &SyncHandlerV1{
+		wallet:       wallet,
+		cache:        cache,
+		nodeRegistry: nodeRegistry,
+	}
+}
+
+type SyncHandler interface {
+	SyncStreams(
+		ctx context.Context,
+		req *connect_go.Request[SyncStreamsRequest],
+		res *connect_go.ServerStream[SyncStreamsResponse],
+	) error
+	AddStreamToSync(
+		ctx context.Context,
+		req *connect_go.Request[AddStreamToSyncRequest],
+	) (*connect_go.Response[AddStreamToSyncResponse], error)
+	RemoveStreamFromSync(
+		ctx context.Context,
+		req *connect_go.Request[RemoveStreamFromSyncRequest],
+	) (*connect_go.Response[RemoveStreamFromSyncResponse], error)
+}
+
+type SyncHandlerV1 struct {
+	wallet       *crypto.Wallet
+	cache        events.StreamCache
+	nodeRegistry nodes.NodeRegistry
+}
+
+type SyncHandlerV2 struct {
+	wallet       *crypto.Wallet
+	cache        events.StreamCache
+	nodeRegistry nodes.NodeRegistry
+}
+
 type syncNode struct {
 	syncPos []*SyncCookie
 	stub    StreamServiceClient
@@ -34,6 +84,50 @@ type syncNode struct {
 }
 
 func (s *Service) SyncStreams(
+	ctx context.Context,
+	req *connect_go.Request[SyncStreamsRequest],
+	res *connect_go.ServerStream[SyncStreamsResponse],
+) error {
+	return s.syncHandler.SyncStreams(ctx, req, res)
+}
+
+func (s *Service) AddStreamToSync(
+	ctx context.Context,
+	req *connect_go.Request[AddStreamToSyncRequest],
+) (*connect_go.Response[AddStreamToSyncResponse], error) {
+	return s.syncHandler.AddStreamToSync(ctx, req)
+}
+
+func (s *Service) RemoveStreamFromSync(
+	ctx context.Context,
+	req *connect_go.Request[RemoveStreamFromSyncRequest],
+) (*connect_go.Response[RemoveStreamFromSyncResponse], error) {
+	return s.syncHandler.RemoveStreamFromSync(ctx, req)
+}
+
+func (s *SyncHandlerV2) SyncStreams(
+	ctx context.Context,
+	req *connect_go.Request[SyncStreamsRequest],
+	res *connect_go.ServerStream[SyncStreamsResponse],
+) error {
+	return nil
+}
+
+func (s *SyncHandlerV2) AddStreamToSync(
+	ctx context.Context,
+	req *connect_go.Request[AddStreamToSyncRequest],
+) (*connect_go.Response[AddStreamToSyncResponse], error) {
+	return nil, RiverError(Err_UNIMPLEMENTED, "Not Implemented").Func("AddStreamToSync")
+}
+
+func (s *SyncHandlerV2) RemoveStreamFromSync(
+	ctx context.Context,
+	req *connect_go.Request[RemoveStreamFromSyncRequest],
+) (*connect_go.Response[RemoveStreamFromSyncResponse], error) {
+	return nil, RiverError(Err_UNIMPLEMENTED, "Not Implemented").Func("RemoveStreamFromSync")
+}
+
+func (s *SyncHandlerV1) SyncStreams(
 	ctx context.Context,
 	req *connect_go.Request[SyncStreamsRequest],
 	res *connect_go.ServerStream[SyncStreamsResponse],
@@ -55,15 +149,21 @@ func (s *Service) SyncStreams(
 	return nil
 }
 
-func (s *Service) AddStreamToSync(ctx context.Context, req *connect_go.Request[AddStreamToSyncRequest]) (*connect_go.Response[AddStreamToSyncResponse], error) {
+func (s *SyncHandlerV1) AddStreamToSync(
+	ctx context.Context,
+	req *connect_go.Request[AddStreamToSyncRequest],
+) (*connect_go.Response[AddStreamToSyncResponse], error) {
 	return nil, RiverError(Err_UNIMPLEMENTED, "Not Implemented").Func("AddStreamToSync")
 }
 
-func (s *Service) RemoveStreamFromSync(ctx context.Context, req *connect_go.Request[RemoveStreamFromSyncRequest]) (*connect_go.Response[RemoveStreamFromSyncResponse], error) {
+func (s *SyncHandlerV1) RemoveStreamFromSync(
+	ctx context.Context,
+	req *connect_go.Request[RemoveStreamFromSyncRequest],
+) (*connect_go.Response[RemoveStreamFromSyncResponse], error) {
 	return nil, RiverError(Err_UNIMPLEMENTED, "Not Implemented").Func("RemoveStreamFromSync")
 }
 
-func (s *Service) syncStreamsImpl(
+func (s *SyncHandlerV1) syncStreamsImpl(
 	ctx context.Context,
 	req *connect_go.Request[SyncStreamsRequest],
 	res *connect_go.ServerStream[SyncStreamsResponse],
@@ -134,12 +234,12 @@ func (s *Service) syncStreamsImpl(
 	return nil
 }
 
-func (s *Service) syncLocalStreamsImpl(ctx context.Context, syncPos []*SyncCookie, receiver SyncResultReceiver) error {
+func (s *SyncHandlerV1) syncLocalStreamsImpl(ctx context.Context, syncPos []*SyncCookie, receiver events.SyncResultReceiver) error {
 	if len(syncPos) <= 0 {
 		return nil
 	}
 
-	subs := make([]SyncStream, 0, len(syncPos))
+	subs := make([]events.SyncStream, 0, len(syncPos))
 	defer func() {
 		for _, sub := range subs {
 			sub.Unsub(receiver)
@@ -151,7 +251,7 @@ func (s *Service) syncLocalStreamsImpl(ctx context.Context, syncPos []*SyncCooki
 			return ctx.Err()
 		}
 
-		err := SyncCookieValidate(pos)
+		err := events.SyncCookieValidate(pos)
 		if err != nil {
 			return nil
 		}
@@ -173,7 +273,7 @@ func (s *Service) syncLocalStreamsImpl(ctx context.Context, syncPos []*SyncCooki
 	return nil
 }
 
-func (s *Service) syncLocalNode(ctx context.Context, syncPos []*SyncCookie, receiver SyncResultReceiver) {
+func (s *SyncHandlerV1) syncLocalNode(ctx context.Context, syncPos []*SyncCookie, receiver events.SyncResultReceiver) {
 	log := dlog.CtxLog(ctx)
 
 	if ctx.Err() != nil {
@@ -193,7 +293,7 @@ func (s *Service) syncLocalNode(ctx context.Context, syncPos []*SyncCookie, rece
 // Which in turn means that we need to close all outstanding streams to remote nodes.
 // Without control signals there is no clean way to do so, so for now both ctx is canceled and Close is called
 // async hoping this will trigger Receive to abort.
-func (n *syncNode) syncRemoteNode(ctx context.Context, receiver SyncResultReceiver) {
+func (n *syncNode) syncRemoteNode(ctx context.Context, receiver events.SyncResultReceiver) {
 	log := dlog.CtxLog(ctx)
 	if ctx.Err() != nil || n.isClosed() {
 		log.Debug("SyncStreams: syncRemoteNode not starting", "context_error", ctx.Err())

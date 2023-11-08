@@ -168,15 +168,22 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	if err != nil {
 		return nil, 0, nil, err
 	}
+	cache := events.NewStreamCache(
+		&events.StreamCacheParams{
+			Storage:    store,
+			Wallet:     wallet,
+			DefaultCtx: ctx,
+		},
+	)
+	syncHandler := NewSyncHandler(
+		cfg.SyncVersion,
+		wallet,
+		cache,
+		nodeRegistry,
+	)
 
 	streamService := &Service{
-		cache: events.NewStreamCache(
-			&events.StreamCacheParams{
-				Storage:    store,
-				Wallet:     wallet,
-				DefaultCtx: ctx,
-			},
-		),
+		cache:              cache,
 		townsContract:      townsContract,
 		walletLinkContract: walletLinkContract,
 		wallet:             wallet,
@@ -185,6 +192,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		streamRegistry:     nodes.NewStreamRegistry(nodeRegistry),
 		streamConfig:       cfg.Stream,
 		notification:       notification,
+		syncHandler:        syncHandler,
 	}
 
 	pattern, handler := protocolconnect.NewStreamServiceHandler(streamService)

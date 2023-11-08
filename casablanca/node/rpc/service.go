@@ -23,4 +23,5 @@ type Service struct {
 	streamRegistry     nodes.StreamRegistry
 	streamConfig       config.StreamConfig
 	notification       nodes.PushNotification
+	syncHandler        SyncHandler
 }
