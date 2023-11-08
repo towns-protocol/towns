@@ -58,7 +58,7 @@
     {
       "label": "Stage 3",
       "dependsOn": [
-        "StartWatches",
+        "Start Watches",
         "App",
         "SampleApp",
         "Casablanca DebugApp",
