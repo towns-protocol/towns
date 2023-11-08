@@ -215,7 +215,7 @@ export class RiverDecryptionExtension {
 
     private async processKeySolicitationEvent(event: EventKeySolicitation): Promise<void> {
         // check that event has not already been fulfilled by someone else
-        if (this.keyRequestFulfilled(event.streamId, event.eventHash)) {
+        if (this.keySolicitationFulfilled(event.streamId, event.eventHash)) {
             console.log(
                 `CDE::processKeySolicitationEvent - event already fulfilled`,
                 event.streamId,
@@ -818,7 +818,7 @@ export class RiverDecryptionExtension {
         await sleep(waitTime)
 
         // Last minute check to make sure noone else has responded to the key solicitation
-        const fulfilled = this.keyRequestFulfilled(streamId, eventHash)
+        const fulfilled = this.keySolicitationFulfilled(streamId, eventHash)
         if (fulfilled) {
             console.log('CDE::onKeySolicitation - key request already fulfilled', {
                 streamId,
@@ -1054,12 +1054,12 @@ export class RiverDecryptionExtension {
         }
     }
 
-    keyRequestFulfilled(streamId: string, originHash: string): boolean {
+    keySolicitationFulfilled(streamId: string, originHash: string): boolean {
         // We should already be subscribing to this stream — it's the only way
         // we could've gotten the key solicitation event in the first place.
         const stream = this.client.streams.get(streamId)
         if (!stream) {
-            throw new Error('CDE::keyRequestFulfilled - stream not found')
+            throw new Error('CDE::keySolicitationFulfilled - stream not found')
         }
 
         if (isChannelStreamId(streamId)) {
@@ -1069,7 +1069,7 @@ export class RiverDecryptionExtension {
         } else if (isGDMChannelStreamId(streamId)) {
             return stream.view.gdmChannelContent.keySolicitations.fulfillments.has(originHash)
         } else {
-            throw new Error('CDE::keyRequestFulfilled - unknown stream type')
+            throw new Error('CDE::keySolicitationFulfilled - unknown stream type')
         }
     }
 
