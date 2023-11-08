@@ -308,8 +308,8 @@ func (s *PostgresEventStore) addEvent(ctx context.Context, streamId string, mini
 // TODO: Do we want to check that if we get miniblocks an toIndex is greater or equal block with latest snapshot, than in results we will have at least
 // miniblock with latest snapshot?
 // This functional is not transactional as it consists of only one SELECT query
-func (s *PostgresEventStore) GetMiniblocks(ctx context.Context, streamId string, fromIndex int, toIndex int) ([][]byte, error) {
-	miniblocksRow, err := s.pool.Query(ctx, "SELECT blockdata, seq_num FROM miniblocks WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num", fromIndex, toIndex, streamId)
+func (s *PostgresEventStore) GetMiniblocks(ctx context.Context, streamId string, fromInclusive int64, toExclusive int64) ([][]byte, error) {
+	miniblocksRow, err := s.pool.Query(ctx, "SELECT blockdata, seq_num FROM miniblocks WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num", fromInclusive, toExclusive, streamId)
 	if err != nil {
 		return nil, s.enrichErrorWithNodeInfo(WrapRiverError(Err_DB_OPERATION_FAILURE, err).
 			Func("pg.GetMiniblocks").Message("Error reading blocks").Tag("streamId", streamId))

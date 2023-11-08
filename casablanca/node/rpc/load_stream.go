@@ -51,11 +51,11 @@ func (s *Service) loadStream(ctx context.Context, streamID string) (Stream, Stre
 	}, streamView, nil
 }
 
-func (s *remoteStream) GetMiniblocks(ctx context.Context, fromIndex int, toIndex int) ([]*Miniblock, bool, error) {
+func (s *remoteStream) GetMiniblocks(ctx context.Context, fromInclusive int64, toExclusive int64) ([]*Miniblock, bool, error) {
 	res, err := s.stub.GetMiniblocks(ctx, connect.NewRequest(&GetMiniblocksRequest{
 		StreamId:      s.streamID,
-		FromInclusive: int64(fromIndex),
-		ToExclusive:   int64(toIndex),
+		FromInclusive: fromInclusive,
+		ToExclusive:   toExclusive,
 	}))
 	if err != nil {
 		return nil, false, err

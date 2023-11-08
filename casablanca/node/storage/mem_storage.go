@@ -48,7 +48,7 @@ func (m *memStorage) GetStreamFromLastSnapshot(ctx context.Context, streamId str
 	}, nil
 }
 
-func (m *memStorage) GetMiniblocks(ctx context.Context, streamId string, fromIndex int, toIndex int) ([][]byte, error) {
+func (m *memStorage) GetMiniblocks(ctx context.Context, streamId string, fromInclusive int64, toExclusive int64) ([][]byte, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -56,10 +56,10 @@ func (m *memStorage) GetMiniblocks(ctx context.Context, streamId string, fromInd
 	if !ok {
 		return nil, RiverError(Err_NOT_FOUND, "Stream not found")
 	}
-	if fromIndex < 0 || fromIndex >= len(stream.miniblocks) || toIndex <= fromIndex || toIndex > len(stream.miniblocks) {
+	if fromInclusive < 0 || fromInclusive >= int64(len(stream.miniblocks)) || toExclusive <= fromInclusive || toExclusive > int64(len(stream.miniblocks)) {
 		return nil, RiverError(Err_BAD_BLOCK_NUMBER, "Invalid miniblock index")
 	}
-	return stream.miniblocks[fromIndex:toIndex], nil
+	return stream.miniblocks[fromInclusive:toExclusive], nil
 }
 
 func (m *memStorage) AddEvent(ctx context.Context, streamId string, minipoolGeneration int64, minipoolSlot int, envelope []byte) error {

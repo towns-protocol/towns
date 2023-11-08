@@ -21,8 +21,8 @@ type StreamStorage interface {
 	// Returns all stream blocks starting from last snapshot miniblock index and all envelopes in the given minipool.
 	GetStreamFromLastSnapshot(ctx context.Context, streamId string) (*GetStreamFromLastSnapshotResult, error)
 
-	// Returns miniblocks with indexes from fromIndex inclusive, to toIndex exlusive.
-	GetMiniblocks(ctx context.Context, streamId string, fromIndex int, toIndex int) ([][]byte, error)
+	// Returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
+	GetMiniblocks(ctx context.Context, streamId string, fromInclusive int64, toExclusive int64) ([][]byte, error)
 
 	// Adds event to the given minipool.
 	// Current generation of minipool should match minipoolGeneration,

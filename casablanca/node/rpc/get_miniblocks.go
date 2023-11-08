@@ -32,7 +32,7 @@ func (s *Service) getMiniblocks(ctx context.Context, req *connect_go.Request[Get
 		return nil, err
 	}
 
-	miniblocks, terminus, err := stream.GetMiniblocks(ctx, int(req.Msg.FromInclusive), int(req.Msg.ToExclusive))
+	miniblocks, terminus, err := stream.GetMiniblocks(ctx, req.Msg.FromInclusive, req.Msg.ToExclusive)
 
 	if err != nil {
 		return nil, err

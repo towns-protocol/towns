@@ -15,7 +15,7 @@ import (
 )
 
 type Stream interface {
-	GetMiniblocks(ctx context.Context, fromIndex int, toIndex int) ([]*Miniblock, bool, error)
+	GetMiniblocks(ctx context.Context, fromInclusive int64, ToExclusive int64) ([]*Miniblock, bool, error)
 	AddEvent(ctx context.Context, event *ParsedEvent) error
 }
 
@@ -227,8 +227,8 @@ func (s *streamImpl) GetView(ctx context.Context) (StreamView, error) {
 // Returns
 // miniblocks: with indexes from fromIndex inclusive, to toIndex exlusive
 // terminus: true if fromIndex is 0, or if there are no more blocks because they've been garbage collected
-func (s *streamImpl) GetMiniblocks(ctx context.Context, fromIndex int, toIndex int) ([]*Miniblock, bool, error) {
-	blocks, err := s.params.Storage.GetMiniblocks(ctx, s.streamId, fromIndex, toIndex)
+func (s *streamImpl) GetMiniblocks(ctx context.Context, fromInclusive int64, toExclusive int64) ([]*Miniblock, bool, error) {
+	blocks, err := s.params.Storage.GetMiniblocks(ctx, s.streamId, fromInclusive, toExclusive)
 	if err != nil {
 		return nil, false, err
 	}
@@ -246,7 +246,7 @@ func (s *streamImpl) GetMiniblocks(ctx context.Context, fromIndex int, toIndex i
 		miniblocks[i] = miniblock.proto
 	}
 
-	terminus := fromIndex == 0
+	terminus := fromInclusive == 0
 	return miniblocks, terminus, nil
 }
 
