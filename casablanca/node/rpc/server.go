@@ -176,6 +176,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		},
 	)
 	syncHandler := NewSyncHandler(
+		ctx,
 		cfg.SyncVersion,
 		wallet,
 		cache,

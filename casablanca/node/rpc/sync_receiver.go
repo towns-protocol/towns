@@ -62,11 +62,7 @@ func (s *syncReceiver) getError() error {
 	return s.firstError
 }
 
-type syncSender interface {
-	Send(msg *SyncStreamsResponse) error
-}
-
-func (s *syncReceiver) dispatch(sender syncSender) {
+func (s *syncReceiver) Dispatch(sender syncResponse) {
 	log := dlog.CtxLog(s.ctx)
 
 	for {

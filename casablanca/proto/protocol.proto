@@ -599,18 +599,18 @@ message SyncStreamsResponse {
     string sync_id = 2;
 }
 
-message AddStreamToSyncRequest {
+message AddStreamsToSyncRequest {
     repeated SyncCookie sync_pos = 1;
     string sync_id = 2;
 }
 
-message AddStreamToSyncResponse {}
+message AddStreamsToSyncResponse {}
 
-message RemoveStreamFromSyncRequest {
+message RemoveStreamsFromSyncRequest {
     repeated string stream_id = 1;
 }
 
-message RemoveStreamFromSyncResponse {}
+message RemoveStreamsFromSyncResponse {}
 
 message InfoRequest {
     string debug = 1;
@@ -626,8 +626,8 @@ service StreamService {
     rpc GetMiniblocks(GetMiniblocksRequest) returns (GetMiniblocksResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
-    rpc AddStreamToSync(AddStreamToSyncRequest) returns (AddStreamToSyncResponse);
-    rpc RemoveStreamFromSync(RemoveStreamFromSyncRequest) returns (RemoveStreamFromSyncResponse);
+    rpc AddStreamsToSync(AddStreamsToSyncRequest) returns (AddStreamsToSyncResponse);
+    rpc RemoveStreamsFromSync(RemoveStreamsFromSyncRequest) returns (RemoveStreamsFromSyncResponse);
     rpc Info(InfoRequest) returns (InfoResponse);
 }
 
