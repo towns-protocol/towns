@@ -35,7 +35,7 @@ import { RoomIdentifier } from '../../types/room-identifier'
 import throttle from 'lodash/throttle'
 // eslint-disable-next-line lodash/import-scope
 import type { DebouncedFunc } from 'lodash'
-import { sleep } from '../../utils/zion-utils'
+import { isTestEnv, sleep } from '../../utils/zion-utils'
 
 /// control the number of outgoing room key requests for events that failed to decrypt
 const MAX_CONCURRENT_ROOM_KEY_REQUESTS = 2
@@ -813,7 +813,7 @@ export class RiverDecryptionExtension {
         }
 
         // Set a timeout — we don't want all channel members to simultaneously respond to the key request
-        const waitTime = Math.random() * MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS
+        const waitTime = isTestEnv() ? 100 : Math.random() * MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS
         console.log('CDE::onKeySolicitation waiting for', waitTime, 'ms')
         await sleep(waitTime)
 
