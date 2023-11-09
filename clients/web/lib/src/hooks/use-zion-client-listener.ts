@@ -131,12 +131,12 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
             // console.log('$$$ tick: no transition needed')
             return
         }
-        logTick(this.state, transition)
+        logTick(this.client, this.state, transition)
         const currentSituation = this.state
         this.state = transition
         this.emit('onStateUpdated', this.state)
         this.state = await this.execute(currentSituation, transition)
-        logTick(this.state)
+        logTick(this.client, this.state)
         this.emit('onStateUpdated', this.state)
         void this.tick() // call ourself again to pick up any pending next state
     }
@@ -200,8 +200,9 @@ function getTransition(current: Situations, next: Next): Transitions | undefined
     return undefined
 }
 
-function logTick(situation: Situations, transition?: Transitions) {
+function logTick(client: ZionClient, situation: Situations, transition?: Transitions) {
     console.log('$$$ tick update', {
+        client: client.name,
         current: situation.loginStatus,
         transition: transition?.loginStatus,
     })
