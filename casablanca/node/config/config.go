@@ -15,7 +15,6 @@ type Config struct {
 	TopChain    ChainConfig
 	UseContract bool
 	Log         infra.LogConfig
-	Tracing     TracingConfig
 	// TODO HNT-2048 remove once RDK registration/revoke is implemented in the client
 	SkipDelegateCheck           bool
 	PerformanceTracking         PerformanceTrackingConfig
@@ -35,10 +34,7 @@ type ChainConfig struct {
 
 type PerformanceTrackingConfig struct {
 	ProfilingEnabled bool
-}
-
-type TracingConfig struct {
-	Enabled bool
+	TracingEnabled   bool
 }
 
 type PushNotificationConfig struct {

@@ -385,9 +385,9 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "true"
       },
       {
-        name = "TRACING__ENABLED",
+        name = "PERFORMANCETRACKING__TRACINGENABLED",
         value = "true"
-      }
+      },
     ]
     logConfiguration = {
       logDriver = "awslogs"
