@@ -3,14 +3,20 @@ output "security_group_id" {
   value       = module.river_alb_sg.security_group_id
 }
 
-output "river_node_blue_target_group_arn" {
-  description = "The blue target group arn for the river node"
-  value       = module.river_alb.target_group_arns[0]
+output "river_node_blue_target_group" {
+  description = "Name and arn of the blue target group"
+  value      = {
+    arn = module.river_alb.target_group_arns[0]
+    name = module.river_alb.target_group_names[0]
+  }
 }
 
-output "river_node_green_target_group_arn" {
-  description = "The green target group arn for the river node"
-  value       = module.river_alb.target_group_arns[1]
+output "river_node_green_target_group" {
+  description = "Name and arn of the green target group"
+  value      = {
+    arn = module.river_alb.target_group_arns[1]
+    name = module.river_alb.target_group_names[1]
+  }
 }
 
 output "river_https_listener_arn" {

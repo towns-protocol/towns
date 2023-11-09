@@ -3,18 +3,8 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "ecs_cluster_id" {
-  description = "The id of the ecs cluster"
-  type        = string
-}
-
 variable "node_name" {
   description = "The name of the river node"
-  type        = string
-}
-
-variable "ecs_cluster_name" {
-  description = "The name of the ecs cluster"
   type        = string
 }
 
@@ -40,14 +30,14 @@ variable "alb_security_group_id" {
   type        = string
 }
 
-variable "river_node_blue_target_group_arn" {
-  description = "The arn for the blue river node target group"
-  type        = string
+variable "river_node_blue_target_group" {
+  description = "Name and arn of the blue target group"
+  type       = map(string)
 }
 
-variable "river_node_green_target_group_arn" {
-  description = "The arn for the green river node target group"
-  type        = string
+variable "river_node_green_target_group" {
+  description = "Name and arn of the green target group"
+  type      = map(string)
 }
 
 variable "river_https_listener_arn" {

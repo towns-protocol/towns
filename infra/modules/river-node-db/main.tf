@@ -39,18 +39,10 @@ resource "aws_secretsmanager_secret_version" "rds_river_node_credentials" {
 EOF
 }
 
-data "aws_iam_role" "ecs_task_execution_role" {
-  name = "ecsTaskExecutionRole"
-}
-
 # allow ecs_task_execution_role to read the secret but not write it
 resource "aws_iam_role_policy" "ecs-to-river-postgres-secret-policy" {
   name = "${module.global_constants.environment}-ecs-to-river-postgres-secret-policy"
-  role = data.aws_iam_role.ecs_task_execution_role.id
-
-  lifecycle {
-    ignore_changes = all
-  }
+  role = var.ecs_task_execution_role_id
 
   depends_on = [
     aws_secretsmanager_secret_version.rds_river_node_credentials

@@ -30,7 +30,6 @@ module "global_constants" {
 }
 
 locals {
-  river_ecs_cluster_name = "${module.global_constants.environment}-river-ecs-cluster"
   river_node_name = "river-1-${module.global_constants.environment}"
 }
 
@@ -56,10 +55,6 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
-resource "aws_ecs_cluster" "river_ecs_cluster" {
-  name = local.river_ecs_cluster_name
-  tags = module.global_constants.tags
-}
 
 module "river_alb" {
   source = "../../modules/river-alb"
@@ -77,17 +72,15 @@ module "river_node" {
     module.river_alb
   ]
 
-  ecs_cluster_id   = aws_ecs_cluster.river_ecs_cluster.id
-  ecs_cluster_name = local.river_ecs_cluster_name
-
   node_subnets                   = module.vpc.private_subnets
   vpc_id                         = module.vpc.vpc_id
   node_name                      = local.river_node_name
 
   alb_security_group_id             = module.river_alb.security_group_id
   river_https_listener_arn          = module.river_alb.river_https_listener_arn
-  river_node_blue_target_group_arn  = module.river_alb.river_node_blue_target_group_arn
-  river_node_green_target_group_arn = module.river_alb.river_node_green_target_group_arn
+
+  river_node_blue_target_group  = module.river_alb.river_node_blue_target_group
+  river_node_green_target_group = module.river_alb.river_node_green_target_group
 
   database_allowed_cidr_blocks = module.vpc.private_subnets_cidr_blocks
   database_subnets             = module.vpc.database_subnets

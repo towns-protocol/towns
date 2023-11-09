@@ -7,6 +7,9 @@ data "aws_vpc" "vpc" {
 }
 
 locals {
+  # TODO: cluster name should include the node name to prevent conflicts
+  # with other nodes in the same environment
+  ecs_cluster_name = "${module.global_constants.environment}-river-ecs-cluster"
   service_name = "river-node"
   tags = merge(
     module.global_constants.tags,
@@ -34,6 +37,31 @@ terraform {
   required_version = ">= 1.0.3"
 }
 
+resource "aws_ecs_cluster" "river_ecs_cluster" {
+  name = local.ecs_cluster_name
+  tags = module.global_constants.tags
+}
+
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name = "${var.node_name}-ecsTaskExecutionRole"
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "",
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "ecs-tasks.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = module.global_constants.tags
+}
+
 module "river_node_db" {
   source = "../../modules/river-node-db"
 
@@ -41,6 +69,7 @@ module "river_node_db" {
   allowed_cidr_blocks = var.database_allowed_cidr_blocks
   vpc_id              = var.vpc_id
   river_node_name     = var.node_name
+  ecs_task_execution_role_id = aws_iam_role.ecs_task_execution_role.id
 }
 
 # Behind the load balancer
@@ -68,10 +97,6 @@ module "river_internal_sg" {
 
   egress_cidr_blocks = ["0.0.0.0/0"] # public internet
   egress_rules       = ["all-all"]
-}
-
-data "aws_iam_role" "ecs_task_execution_role" {
-  name = "ecsTaskExecutionRole"
 }
 
 resource "aws_cloudwatch_log_group" "river_log_group" {
@@ -102,7 +127,7 @@ EOF
 
 resource "aws_iam_role_policy" "ecs-to-wallet-secret-policy" {
   name = "${module.global_constants.environment}-ecs-to-wallet-credentials-policy"
-  role = data.aws_iam_role.ecs_task_execution_role.id
+  role = aws_iam_role.ecs_task_execution_role.id
 
   depends_on = [
     aws_secretsmanager_secret_version.river_node_wallet_credentials
@@ -138,7 +163,7 @@ resource "aws_secretsmanager_secret_version" "river_node_push_notification_auth_
 
 resource "aws_iam_role_policy" "ecs-to-push_notification_auth_token" {
   name = "${module.global_constants.environment}-ecs-to-push-notification-auth-token-policy"
-  role = data.aws_iam_role.ecs_task_execution_role.id
+  role = aws_iam_role.ecs_task_execution_role.id
 
   depends_on = [
     aws_secretsmanager_secret_version.river_node_push_notification_auth_token
@@ -174,7 +199,7 @@ resource "aws_secretsmanager_secret_version" "river_node_l1_network_url" {
 
 resource "aws_iam_role_policy" "ecs-to-l1-network-url-secret-policy" {
   name = "${module.global_constants.environment}-ecs-to-l1-network-url-secret-policy"
-  role = data.aws_iam_role.ecs_task_execution_role.id
+  role = aws_iam_role.ecs_task_execution_role.id
 
   depends_on = [
     aws_secretsmanager_secret_version.river_node_l1_network_url
@@ -210,7 +235,7 @@ resource "aws_secretsmanager_secret_version" "dd_agent_api_key" {
 
 resource "aws_iam_role_policy" "dd_agent_api_key" {
   name = "${module.global_constants.environment}-datadog-agent-api-key-policy"
-  role = data.aws_iam_role.ecs_task_execution_role.id
+  role = aws_iam_role.ecs_task_execution_role.id
 
   depends_on = [
     aws_secretsmanager_secret_version.dd_agent_api_key
@@ -234,13 +259,39 @@ resource "aws_iam_role_policy" "dd_agent_api_key" {
   EOF
 }
 
+data "aws_secretsmanager_secret" "hnt_dockerhub_access_key" {
+  name = "hnt_dockerhub_access_key"
+}
+
+resource "aws_iam_role_policy" "hnt_dockerhub_access_key" {
+  name = "${module.global_constants.environment}-hnt-dockerhub-access-key-policy"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${data.aws_secretsmanager_secret.hnt_dockerhub_access_key.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
 resource "aws_ecs_task_definition" "river-fargate" {
   family = "${module.global_constants.environment}-river-fargate"
 
   network_mode = "awsvpc"
 
-  task_role_arn      = data.aws_iam_role.ecs_task_execution_role.arn
-  execution_role_arn = data.aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
   cpu    = 2048
   memory = 4096
@@ -262,7 +313,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
     }]
 
     repositoryCredentials = {
-        credentialsParameter = "arn:aws:secretsmanager:us-east-1:211286738967:secret:dockerhub-QpT8Jf"
+        credentialsParameter = data.aws_secretsmanager_secret.hnt_dockerhub_access_key.arn
     },
 
     secrets = [
@@ -325,16 +376,16 @@ resource "aws_ecs_task_definition" "river-fargate" {
         name = "DD_ENV"
         value = module.global_constants.tags.Env
       },
-      # {
-      #   name = "DD_VERSION"
-      #   value = 
-      # },
       {
         name = "DD_TAGS",
         value = "instance:${var.node_name}"
       },
       {
         name = "PERFORMANCETRACKING__PROFILINGENABLED",
+        value = "true"
+      },
+      {
+        name = "TRACING__ENABLED",
         value = "true"
       }
     ]
@@ -365,6 +416,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         name = "ECS_FARGATE",
         value = "true"
+      },
+      {
+        name = "DD_APM_ENABLED",
+        value = "true"
       }
     ]
 
@@ -379,14 +434,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
   }])
 
   tags = module.global_constants.tags
-}
-
-data "aws_alb_target_group" "blue" {
-  arn = var.river_node_blue_target_group_arn
-}
-
-data "aws_alb_target_group" "green" {
-  arn = var.river_node_green_target_group_arn
 }
 
 resource "aws_codedeploy_app" "river-node-code-deploy-app" {
@@ -418,7 +465,7 @@ resource "aws_iam_role" "ecs_code_deploy_role" {
 
 resource "aws_ecs_service" "river-ecs-service" {
   name                               = "${module.global_constants.environment}-river-${var.node_name}-fargate-service"
-  cluster                            = var.ecs_cluster_id
+  cluster                            = aws_ecs_cluster.river_ecs_cluster.id
   task_definition                    = aws_ecs_task_definition.river-fargate.arn
   desired_count                      = 1
   deployment_minimum_healthy_percent = 0
@@ -436,7 +483,7 @@ resource "aws_ecs_service" "river-ecs-service" {
   }
 
   load_balancer {
-    target_group_arn = var.river_node_blue_target_group_arn
+    target_group_arn = var.river_node_blue_target_group.arn
     container_name   = "river-node"
     container_port   = 5157
   }
@@ -465,7 +512,7 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   depends_on = [aws_ecs_service.river-ecs-service]
 
   ecs_service {
-    cluster_name = var.ecs_cluster_name
+    cluster_name = aws_ecs_cluster.river_ecs_cluster.name
     service_name = aws_ecs_service.river-ecs-service.name
   }
 
@@ -494,11 +541,11 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   load_balancer_info {
     target_group_pair_info {
       target_group {
-        name = data.aws_alb_target_group.blue.name
+        name = var.river_node_blue_target_group.name
       }
 
       target_group {
-        name = data.aws_alb_target_group.green.name
+        name = var.river_node_green_target_group.name
       }
 
       prod_traffic_route {

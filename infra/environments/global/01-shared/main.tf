@@ -54,3 +54,18 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 
   tags = module.global_constants.tags
 }
+
+resource "aws_secretsmanager_secret" "hnt_dockerhub_access_key" {
+  name = "hnt_dockerhub_access_key"
+  tags = module.global_constants.tags
+}
+
+resource "aws_secretsmanager_secret_version" "hnt_dockerhub_access_key" {
+  secret_id     = aws_secretsmanager_secret.hnt_dockerhub_access_key.id
+  secret_string = <<EOF
+{
+  "username": "DUMMY",
+  "password": "DUMMY"
+}
+EOF
+}
