@@ -7,6 +7,7 @@ import {
 
 import { env } from '../utils/environment'
 import { handleNotifications } from './notifications'
+import { interceptPrivyRequests } from './middleware'
 
 declare let self: ServiceWorkerGlobalScope
 
@@ -31,6 +32,8 @@ cleanupOutdatedCaches()
 // to allow work offline
 console.log('main-sw: enabling offline precaching')
 registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')))
+
+interceptPrivyRequests(self)
 
 if (env.VITE_PUSH_NOTIFICATION_ENABLED) {
     console.log('main-sw: notifications enabled')

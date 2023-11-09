@@ -24,6 +24,7 @@ import { AllRoutes } from 'AllRoutes'
 import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { AuthContextProvider, useIsConnected } from 'hooks/useAuth'
+import { useWatchForPrivyRequestErrors } from 'hooks/useWatchForPrivyRequestErrors'
 
 const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
@@ -38,6 +39,7 @@ export const App = () => {
     const { ready: privyWagmiReady } = usePrivyWagmi()
 
     useWindowListener()
+    useWatchForPrivyRequestErrors()
 
     // aellis april 2023, the two server urls and the chain id should all be considered
     // a single piece of state, PROD, TEST, and LOCAL each should have {matrixUrl, casablancaUrl, chainId}
