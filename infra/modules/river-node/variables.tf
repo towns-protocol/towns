@@ -54,3 +54,13 @@ variable "push_notification_worker_url" {
   description = "The url of the push notification worker"
   type        = string
 }
+
+variable "lb_dns_name" {
+  description = "Loadbalancer DNS name for river node"
+  type = string
+}
+
+variable "subdomain_name" {
+  description = "The subdomain name for the river node"
+  type        = string
+}

@@ -8,6 +8,10 @@ provider "datadog" {
   app_key = var.datadog_app_key
 }
 
+provider "cloudflare" {
+  api_token = var.cloudflare_terraform_api_token
+}
+
 terraform {
   required_providers {
     aws = {
@@ -17,6 +21,10 @@ terraform {
     datadog = {
       source = "DataDog/datadog"
       version = "3.32.0"
+    }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
     }
   }
 
@@ -31,6 +39,7 @@ module "global_constants" {
 
 locals {
   river_node_name = "river-1-${module.global_constants.environment}"
+  river_node_subdomain_name = "river1-${module.global_constants.environment}"
 }
 
 module "vpc" {
@@ -87,4 +96,19 @@ module "river_node" {
 
   l1_chain_id = 84531
   push_notification_worker_url = "https://push-notification-worker-${module.global_constants.tags.Env}.towns.com"
+  lb_dns_name                  = module.river_alb.river_node_lb_dns_name
+
+  subdomain_name               = local.river_node_subdomain_name
+}
+
+data "cloudflare_zone" "zone" {
+  name = module.global_constants.primary_hosted_zone_name
+}
+
+resource "cloudflare_record" "app_dns" {
+  zone_id = data.cloudflare_zone.zone.id
+  name    = "app-${module.global_constants.tags.Environment}" 
+  value   = "test-beta-ij4p.onrender.com"
+  type    = "CNAME"
+  ttl     = 60
 }

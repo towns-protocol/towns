@@ -23,3 +23,9 @@ output "river_https_listener_arn" {
   description = "The arn for the https listener"
   value       = module.river_alb.https_listener_arns[0]
 }
+
+output "river_node_lb_dns_name" {
+  description = "DNS Name of the load balancer"
+  value       = module.river_alb.lb_dns_name
+}
+

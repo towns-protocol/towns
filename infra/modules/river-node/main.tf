@@ -32,6 +32,10 @@ terraform {
       source = "DataDog/datadog"
       version = "3.32.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
   }
 
   required_version = ">= 1.0.3"
@@ -402,6 +406,11 @@ resource "aws_ecs_task_definition" "river-fargate" {
     name      = "dd-agent"
     image     = "docker.io/datadog/agent:7"
     essential = true
+    portMappings = [{
+        "containerPort": 8126,
+        "hostPort": 8126,
+        "protocol": "tcp"
+    }]
 
     secrets = [{
       name      = "DD_API_KEY"
@@ -494,7 +503,7 @@ resource "aws_ecs_service" "river-ecs-service" {
     assign_public_ip = true
   }
 
-  tags = merge(module.global_constants.tags, { 
+  tags = merge(module.global_constants.tags, {
     Instance = var.node_name
     Service = "river-node"
   })
@@ -595,4 +604,16 @@ resource "datadog_monitor" "river_node_memory_monitor" {
     "service:${local.service_name}",
     "instance:${var.node_name}"
   ]
+}
+
+data "cloudflare_zone" "zone" {
+  name = module.global_constants.primary_hosted_zone_name
+}
+
+resource "cloudflare_record" "alb_dns" {
+  zone_id = data.cloudflare_zone.zone.id
+  name    = var.subdomain_name
+  value   = var.lb_dns_name
+  type    = "CNAME"
+  ttl     = 60
 }

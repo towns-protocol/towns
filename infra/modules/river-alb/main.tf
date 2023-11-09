@@ -113,4 +113,3 @@ module "river_alb" {
   # setting it to 30 minutes because river context keeps getting cancelled
   idle_timeout = 1800
 }
-

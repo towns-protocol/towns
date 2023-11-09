@@ -1,16 +1,16 @@
 output "backend_bucket_name" {
   value = "here-not-there-terraform-state" 
-  sensitive = true
+  sensitive = false
 }
 
 output "backend_state_lock_table_name" {
   value = "here-not-there-terraform-state-lock" 
-  sensitive = true
+  sensitive = false 
 }
 
 output "primary_hosted_zone_name" {
   value = "towns.com" 
-  sensitive = true
+  sensitive = false
 }
 
 output "environment" {

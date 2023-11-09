@@ -5,6 +5,7 @@ Once you acquire your datadog api key and app key, make sure you export them to 
 ```
 export TF_VAR_datadog_api_key="XXXXXXXXXXXXXXXXX"
 export TF_VAR_datadog_app_key="XXXXXXXXXXXXXXXXX"
+export TF_VAR_cloudflare_api_token="XXXXXXXXXXXX"
 ```
 
 `terraform apply` will automatically resolve these for you.
