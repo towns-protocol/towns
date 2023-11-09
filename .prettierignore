@@ -15,7 +15,8 @@ servers/workers/**/.keys/*
 casablanca/**/gen/*
 casablanca/**/coverage/*
 casablanca/**/run_files/*
-casablanca/node/auth/contracts/*
+casablanca/node/auth/contracts/*.json
+casablanca/node/registries/contracts/*.json
 contracts/cache/*
 contracts/lib/*
 contracts/**/out/*
