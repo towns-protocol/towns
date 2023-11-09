@@ -4,6 +4,8 @@ import (
 	. "casablanca/node/base"
 	"casablanca/node/dlog"
 	. "casablanca/node/protocol"
+	"math/rand"
+	"time"
 
 	"context"
 
@@ -39,4 +41,17 @@ func ParseEthereumAddress(address string) (common.Address, error) {
 		return common.Address{}, RiverError(Err_BAD_ADDRESS, "invalid address prefix")
 	}
 	return common.HexToAddress(address), nil
+}
+
+const alphanumerics = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+// RandomString generates a pseudo-random string of length n.
+func RandomString(n int) string {
+	source := rand.NewSource(time.Now().UnixNano())
+	rng := rand.New(source)
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = alphanumerics[rng.Int63()%int64(len(alphanumerics))]
+	}
+	return string(b)
 }
