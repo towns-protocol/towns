@@ -93,7 +93,8 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, 0, len(view.minipool.events.Values))
 
 	// check snapshot generation
-	assert.Equal(t, minEventsPerSnapshot, view.getMinEventsPerSnapshot())
+	num, _ := view.getMinEventsPerSnapshot()
+	assert.Equal(t, minEventsPerSnapshot, num)
 	assert.Equal(t, false, view.shouldSnapshot())
 
 	// add one more event (just join again)
