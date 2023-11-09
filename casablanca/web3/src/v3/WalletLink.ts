@@ -11,7 +11,6 @@ export class WalletLink {
         chainId: number,
         provider: ethers.providers.Provider | undefined,
     ) {
-        console.log('provider is', provider)
         this.walletLinkShim = new IWalletLinkShim(contractInfo.walletLinkAddress, chainId, provider)
     }
 

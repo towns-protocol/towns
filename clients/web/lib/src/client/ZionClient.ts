@@ -1411,7 +1411,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
         try {
             transaction = await walletLink.removeLink(rootKey, walletAddress)
         } catch (err) {
-            console.error('[removeLink]', err)
             const parsedError = walletLink.parseError(err)
             error = {
                 name: UNKNOWN_ERROR,
@@ -1419,8 +1418,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
                 message: parsedError.message,
             }
         }
-
-        console.log('tx removeLink', transaction)
 
         return {
             transaction,
