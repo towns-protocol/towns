@@ -9,6 +9,7 @@ import (
 	"casablanca/node/events"
 	"casablanca/node/nodes"
 	"casablanca/node/protocol/protocolconnect"
+	"casablanca/node/registries"
 	"casablanca/node/storage"
 	"html"
 	"runtime"
@@ -171,13 +172,19 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		nodeRegistry,
 	)
 
+	streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, &cfg.TopChain, wallet)
+
+	if err != nil {
+		log.Error("NewStreamRegistryContract", "error", err)
+	}
+
 	streamService := &Service{
 		cache:              cache,
 		townsContract:      townsContract,
 		wallet:             wallet,
 		exitSignal:         exitSignal,
 		nodeRegistry:       nodeRegistry,
-		streamRegistry:     nodes.NewStreamRegistry(nodeRegistry),
+		streamRegistry:     nodes.NewStreamRegistry(nodeRegistry, cfg.UseBlockChainStreamRegistry, streamRegistryContract),
 		streamConfig:       cfg.Stream,
 		notification:       notification,
 		syncHandler:        syncHandler,

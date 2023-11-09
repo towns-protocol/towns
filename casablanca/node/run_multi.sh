@@ -6,6 +6,7 @@ METRICS_ENABLED=true
 RPC_PORT=5170
 METRICS_PORT=8010
 DB_PORT=5433
+USE_BLOCKCHAIN_STREAM_REGISTRY=false
 
 # Default number of instances
 NUM_INSTANCES=3
@@ -64,7 +65,8 @@ if [ "$CONFIG" == "true" ]; then
             METRICS_PORT ${I_METRICS_PORT} \
             NODE_REGISTRY ../node_registry.json \
             LOG_NOCOLOR false \
-            LOG_LEVEL info
+            LOG_LEVEL info \
+            USE_BLOCKCHAIN_STREAM_REGISTRY $USE_BLOCKCHAIN_STREAM_REGISTRY
 
         NODE_ADDRESS=$(cat ./run_files/$INSTANCE/wallet/node_address)
         echo "    { \"name\": \"$INSTANCE\", \"address\": \"$NODE_ADDRESS\", \"url\": \"http://localhost:$I_RPC_PORT\", \"port\": $I_RPC_PORT }," >> ./run_files/node_registry.json

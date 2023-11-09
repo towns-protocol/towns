@@ -10,8 +10,8 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/node/main.go",
-            "args": ["run", "--config", "dev-entitlements.yaml"],
-            "cwd": "${workspaceFolder}"
+            "args": ["run"],
+            "cwd": "${workspaceFolder}/run_files/single"
         }
     ]
 }

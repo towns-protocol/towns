@@ -8,9 +8,9 @@ RIVER_TOWNS_ARCHITECT_DIR="${RIVER_DIR}/${CHAIN}_towns_architect"
 RIVER_TOWNS_CHANNELS_DIR="${RIVER_DIR}/${CHAIN}_towns_channels"
 RIVER_TOWNS_ENTITLEMENTS_DIR="${RIVER_DIR}/${CHAIN}_towns_entitlements"
 RIVER_TOWNS_PAUSABLE_DIR="${RIVER_DIR}/${CHAIN}_towns_pausable"
-
 RIVER_TOWNS_DELEGATION_DIR="${RIVER_DIR}/${CHAIN}_towns_delegation"
 RIVER_TOWNS_WALLET_LINK_DIR="${RIVER_DIR}/${CHAIN}_towns_wallet_link"
+RIVER_TOWNS_STREAM_REGISTRY_DIR="${RIVER_DIR}/${CHAIN}_towns_stream_registry"
 
 XCHAIN_DIR="servers/xchain/contracts"
 XCHAIN_PACKAGE="_xchain"
@@ -18,9 +18,9 @@ XCHAIN_PACKAGE="_xchain"
 forge clean
 forge build --extra-output-files metadata --extra-output-files abi --force
 
-yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|OwnableFacet|TokenPausableFacet|UserEntitlement|ITownOwner|MockERC721A|MembershipFacet|Member|PioneerFacet).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
+yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|StreamRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|ITownOwner|MockERC721A|MembershipFacet|Member|PioneerFacet).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
 
-mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,TownArchitect,ProxyManager,Pausable,EntitlementsManager,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,WalletLink,TokenPausableFacet,UserEntitlement,TownOwner,MockERC721A,MembershipFacet,Member,PioneerFacet,IEntitlementRule}.sol/* "$ABI_DIR"
+mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,TownArchitect,ProxyManager,Pausable,EntitlementsManager,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,WalletLink,StreamRegistry,TokenPausableFacet,UserEntitlement,TownOwner,MockERC721A,MembershipFacet,Member,PioneerFacet,IEntitlementRule}.sol/* "$ABI_DIR"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do
@@ -42,6 +42,8 @@ go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IE
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementRule.sol/IEntitlementRule.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementRule" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementRule.go"
 # Towns WalletLink Registry
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/WalletLink.sol/WalletLink.abi.json --pkg "${CHAIN}_towns_wallet_link" --type "${CHAIN}_towns_wallet_link" --out "${RIVER_TOWNS_WALLET_LINK_DIR}/${CHAIN}_towns_wallet_link.go"
+# Towns Stream Registry
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/StreamRegistry.sol/StreamRegistry.abi.json --pkg "${CHAIN}_towns_stream_registry" --type "${CHAIN}_towns_stream_registry" --out "${RIVER_TOWNS_STREAM_REGISTRY_DIR}/${CHAIN}_towns_stream_registry.go"
 
 # Using the $FROZEN flag and git diff, we can check if this script generates any new files
 # under the $ABI_DIR directory.

@@ -4,6 +4,7 @@ import (
 	"casablanca/node/common"
 	"casablanca/node/config"
 	"casablanca/node/dlog"
+	"casablanca/node/utils"
 	"context"
 	_ "embed"
 	"errors"
@@ -47,7 +48,7 @@ func NewTownsContract(cfg *config.ChainConfig) (TownsContract, error) {
 		slog.Error("No blockchain network url specified in config")
 		return nil, fmt.Errorf("no blockchain network url specified in config")
 	}
-	ethClient, err := GetEthClient(cfg.NetworkUrl)
+	ethClient, err := utils.GetEthClient(cfg.NetworkUrl)
 	if err != nil {
 		slog.Error("Cannot connect to eth client", "url", cfg.NetworkUrl, "error", err)
 		return nil, err

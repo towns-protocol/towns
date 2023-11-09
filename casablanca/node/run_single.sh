@@ -7,6 +7,7 @@ METRICS_ENABLED=true
 RPC_PORT=5157
 LOG_NOCOLOR=false
 LOG_LEVEL=info
+USE_BLOCKCHAIN_STREAM_REGISTRY=true
 
 # Parse command-line options
 args=() # Collect arguments to pass to the last command
@@ -18,6 +19,7 @@ while [[ "$#" -gt 0 ]]; do
             USE_CONTRACT=false
             METRICS_ENABLED=false
             METRICS_PORT=8082
+            USE_BLOCKCHAIN_STREAM_REGISTRY=true
             shift
             ;;
         *)
@@ -35,7 +37,8 @@ done
     METRICS_PORT 8081 \
     NODE_REGISTRY "''" \
     LOG_NOCOLOR ${LOG_NOCOLOR} \
-    LOG_LEVEL ${LOG_LEVEL}
+    LOG_LEVEL ${LOG_LEVEL} \
+    USE_BLOCKCHAIN_STREAM_REGISTRY $USE_BLOCKCHAIN_STREAM_REGISTRY
 
 cd ./run_files/$INSTANCE
 echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
