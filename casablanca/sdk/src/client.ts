@@ -38,7 +38,7 @@ import {
 } from './crypto/crypto'
 import { OlmDevice, IExportedDevice as IExportedOlmDevice } from './crypto/olmDevice'
 import { DeviceInfoMap, DeviceList, IOlmDevice } from './crypto/deviceList'
-import { DLogger, dlog } from './dlog'
+import { DLogger, dlog, dlogError } from './dlog'
 import { StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -126,6 +126,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     private readonly logEmitFromStream: DLogger
     private readonly logEmitFromClient: DLogger
     private readonly logEvent: DLogger
+    private readonly logError: DLogger
 
     protected exportedOlmDeviceToImport?: IExportedOlmDevice
     public pickleKey?: string
@@ -178,6 +179,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logEmitFromStream = dlog('csb:cl:stream').extend(shortId)
         this.logEmitFromClient = dlog('csb:cl:emit').extend(shortId)
         this.logEvent = dlog('csb:cl:event').extend(shortId)
+        this.logError = dlogError('csb:cl:error').extend(shortId)
 
         this.cryptoStore = cryptoStore
         this.logCall('new Client')
@@ -1211,6 +1213,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     ): Promise<Stream> {
         this.logCall('joinStream', streamId)
         const stream = await this.initStream(streamId)
+        if (stream.view.getMemberships().isMemberJoined(this.userId)) {
+            this.logError('joinStream: user already a member', streamId)
+            return stream
+        }
         if (isChannelStreamId(streamId)) {
             await this.makeEventAndAddToStream(
                 streamId,
