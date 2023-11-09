@@ -455,6 +455,7 @@ function toTownsContent_ChannelPayload(
         case 'fulfillment': {
             return {
                 content: {
+                    from: message.creatorUserId,
                     kind: ZTEvent.Fulfillment,
                     sessionId: value.content.value.sessionId,
                     originEventHash: '0x' + value.content.value.originHash.toString(),

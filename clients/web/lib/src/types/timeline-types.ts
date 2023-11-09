@@ -94,6 +94,7 @@ export interface FulfillmentEvent {
     sessionId: string
     originEventHash: string
     algorithm?: string
+    from: string
 }
 
 export interface KeySolicitationEvent {
@@ -361,13 +362,13 @@ export function getFallbackContent(
         case ZTEvent.BlockchainTransaction:
             return `blockchainTransaction: ${content.content.hash}`
         case ZTEvent.Notice:
-            return `Notice: { msgType: ${content.contentKind ?? 'unknown'}, message: ${
+            return `Notice: msgType: ${content.contentKind ?? 'unknown'}, message: ${
                 content.message
-            } }`
+            }`
         case ZTEvent.Fulfillment:
-            return `Fulfillment: { sessionId: ${content.sessionId}, originEventHash: ${content.originEventHash} }`
+            return `Fulfillment sessionId: ${content.sessionId}, from: ${content.from}`
         case ZTEvent.KeySolicitation:
-            return `KeySolicitation { sessionId: ${content.sessionId}, senderKey: ${content.senderKey} }`
+            return `KeySolicitation sessionId: ${content.sessionId}, senderKey: ${content.senderKey}`
         default:
             staticAssertNever(content)
     }
