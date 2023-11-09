@@ -46,7 +46,7 @@
     {
       "label": "Stage 2",
       "dependsOn": [
-        "DeployZionGovernance",
+        "Deploy Smart Contracts",
         "Stage 3"
       ],
       "group": {
@@ -111,22 +111,11 @@
         "Casablanca",
         "Casablanca-No-Entitlements",
         "Anvil",
-        "DeployZionGovernance",
+        "Deploy Smart Contracts",
         "WatchCasablancaSdk",
         "WatchCasablancaMechOlm"
       ],
       "problemMatcher": [],
-    },
-    {
-      "label": "Start Anvil, Deploy Contracts",
-      "dependsOn": [
-        "DeployZionGovernance",
-        "Anvil"
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": false
-      }
     },
     {
       // Optional worker that's only required if testing the gateway worker with siwe verification
@@ -268,6 +257,28 @@
       "problemMatcher": [],
       "presentation": {
         "group": "local-servers"
+      }
+    },
+    {
+      "label": "Deploy Smart Contracts",
+      "dependsOn": [
+        "DeployStreamRegistry",
+        "DeployZionGovernance",
+      ],
+      "group": {
+        "kind": "build",
+      },
+      "problemMatcher": [],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "DeployStreamRegistry",
+      "type": "shell",
+      "command": "./scripts/wait-for-riverchain.sh && ./scripts/deploy-stream-registry.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
       }
     },
     {
