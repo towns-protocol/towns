@@ -1,7 +1,7 @@
 name = "push-notification-worker"
 main = "src/index.ts"
 account_id = "9840f8a36a817b103e00e29a0e2bad6f"
-compatibility_date = "2023-05-18"
+compatibility_date = "2023-10-30"
 node_compat = true
 logpush = true
 
@@ -44,7 +44,7 @@ vars = { ENVIRONMENT = "production", VAPID_SUBJECT = "mailto:support@towns.com" 
 [env.test-beta]
 name = "push-notification-worker-test-beta"
 d1_databases = [
-  { binding = "DB", database_name = "PushSubscription_test_beta", database_id = "8fb0bf52-07ca-4247-b0ec-a0ccb79ebdab" },
+  { binding = "DB", database_name = "PushSubscription_test_beta", database_id = "d4a9236f-58ee-4e34-99d4-0cef0d2afd4d" },
 ]
 routes = [
   { pattern = "push-notification-worker-test-beta.towns.com", custom_domain = true },
