@@ -26,6 +26,11 @@
         "type": "error"
       },
       {
+        "inputs": [],
+        "name": "InvalidSignature",
+        "type": "error"
+      },
+      {
         "inputs": [
           {
             "internalType": "address",
@@ -39,6 +44,17 @@
           }
         ],
         "name": "LinkAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint64",
+            "name": "nonce",
+            "type": "uint64"
+          }
+        ],
+        "name": "NonceAlreadyUsed",
         "type": "error"
       },
       {
@@ -111,30 +127,11 @@
           {
             "indexed": false,
             "internalType": "address",
-            "name": "rootKey",
+            "name": "secondWallet",
             "type": "address"
           }
         ],
-        "name": "RemoveLinkViaRootKey",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": false,
-            "internalType": "address",
-            "name": "wallet",
-            "type": "address"
-          },
-          {
-            "indexed": false,
-            "internalType": "address",
-            "name": "rootKey",
-            "type": "address"
-          }
-        ],
-        "name": "RemoveLinkViaWallet",
+        "name": "RemoveLink",
         "type": "event"
       },
       {
@@ -191,44 +188,6 @@
         "inputs": [
           {
             "internalType": "address",
-            "name": "rootKey",
-            "type": "address"
-          }
-        ],
-        "name": "getLatestRemoveNonceForRootKey",
-        "outputs": [
-          {
-            "internalType": "uint64",
-            "name": "",
-            "type": "uint64"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "wallet",
-            "type": "address"
-          }
-        ],
-        "name": "getLatestRemoveNonceForWallet",
-        "outputs": [
-          {
-            "internalType": "uint64",
-            "name": "",
-            "type": "uint64"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
             "name": "wallet",
             "type": "address"
           }
@@ -265,16 +224,6 @@
       },
       {
         "inputs": [
-          {
-            "internalType": "address",
-            "name": "wallet",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes",
-            "name": "walletSignature",
-            "type": "bytes"
-          },
           {
             "internalType": "address",
             "name": "rootKey",
@@ -324,54 +273,11 @@
         "inputs": [
           {
             "internalType": "address",
-            "name": "rootKey",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes",
-            "name": "rootKeySignature",
-            "type": "bytes"
-          },
-          {
-            "internalType": "address",
             "name": "wallet",
             "type": "address"
-          },
-          {
-            "internalType": "uint64",
-            "name": "removeNonce",
-            "type": "uint64"
           }
         ],
-        "name": "removeLinkViaRootKey",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "wallet",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes",
-            "name": "walletSignature",
-            "type": "bytes"
-          },
-          {
-            "internalType": "address",
-            "name": "rootKey",
-            "type": "address"
-          },
-          {
-            "internalType": "uint64",
-            "name": "removeNonce",
-            "type": "uint64"
-          }
-        ],
-        "name": "removeLinkViaWallet",
+        "name": "removeLink",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -423,16 +329,6 @@
             "rootKey": "the public key of the users rootkey to check"
           }
         },
-        "getLatestRemoveNonceForRootKey(address)": {
-          "params": {
-            "rootKey": "the public key of the users rootkey to get the nonce for"
-          }
-        },
-        "getLatestRemoveNonceForWallet(address)": {
-          "params": {
-            "wallet": "the ethereum wallet to get the nonce for"
-          }
-        },
         "getRootKeyForWallet(address)": {
           "params": {
             "wallet": "the ethereum wallet to find associated root key for"
@@ -449,29 +345,15 @@
             "wallets": "an array of ethereum wallets linked to this root key"
           }
         },
-        "linkWalletToRootKey(address,bytes,address,bytes,uint64)": {
+        "linkWalletToRootKey(address,bytes,uint64)": {
           "params": {
             "nonce": "a nonce used to prevent replay attacks, nonce must always be higher than previous nonce",
-            "rootKey": "the public key of the users rootkey used as an ethereum address",
-            "rootKeySignature": "a signature signing the has of the wallet address with the rootKey's private key",
-            "wallet": "an ethereum wallet address",
-            "walletSignature": "A signature signing the hash of the rootKey's public key with the wallet's private key"
+            "rootKeySignature": "a signature signing the hash of the wallet address with the rootKey's private key"
           }
         },
-        "removeLinkViaRootKey(address,bytes,address,uint64)": {
+        "removeLink(address)": {
           "params": {
-            "removeNonce": "a nonce used to prevent replay attacks, nonce must always be higher than previous nonce",
-            "rootKey": "the public key of the users rootkey used as an ethereum address",
-            "rootKeySignature": "A signature signing the hash of the wallet's public key with the root keys's private key",
-            "wallet": "the ethereum wallet to remove from the root key"
-          }
-        },
-        "removeLinkViaWallet(address,bytes,address,uint64)": {
-          "params": {
-            "removeNonce": "a nonce used to prevent replay attacks, nonce must always be higher than previous nonce",
-            "rootKey": "the public key of the users rootkey used as an ethereum address",
-            "wallet": "the ethereum wallet to remove from the root key",
-            "walletSignature": "A signature signing the hash of the rootKey's public key with the wallet's private key"
+            "wallet": "the wallet being unlinked from the sending wallet"
           }
         }
       },
@@ -488,11 +370,8 @@
         "LinkWalletToRootKey(address,address)": {
           "notice": "Emitted when a user links their wallet to a rootKey"
         },
-        "RemoveLinkViaRootKey(address,address)": {
-          "notice": "Emitted when a user removes a wallet from a rootKey, via the rootkey"
-        },
-        "RemoveLinkViaWallet(address,address)": {
-          "notice": "Emitted when a user removes a wallet from a rootKey, via the wallet"
+        "RemoveLink(address,address)": {
+          "notice": "Emitted when two wallets are unlinked"
         }
       },
       "kind": "user",
@@ -503,23 +382,14 @@
         "getLatestNonceForRootKey(address)": {
           "notice": "gets the latest nonce for a rootkey to use a higher one for next link action"
         },
-        "getLatestRemoveNonceForRootKey(address)": {
-          "notice": "gets the latest Remove nonce for a rootkey to use a higher one for next remove action"
-        },
-        "getLatestRemoveNonceForWallet(address)": {
-          "notice": "gets the latest Remove nonce for a wallet to use a higher one for next remove action"
-        },
         "getRootKeyForWallet(address)": {
           "notice": "Returns the root key for a given wallet"
         },
         "getWalletsByRootKey(address)": {
           "notice": "Returns all wallets linked to a root key"
         },
-        "removeLinkViaRootKey(address,bytes,address,uint64)": {
+        "removeLink(address)": {
           "notice": "Called via the rootkey signing a message to a remove a wallet from itself"
-        },
-        "removeLinkViaWallet(address,bytes,address,uint64)": {
-          "notice": "Called via a wallet to remove itself from a root key"
         }
       },
       "version": 1
@@ -543,6 +413,8 @@
       ":@openzeppelin/=lib/openzeppelin-contracts/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
+      ":base64-sol/=lib/base64/",
+      ":base64/=lib/base64/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -603,35 +475,35 @@
       ]
     },
     "contracts/src/river/wallet-link/IWalletLink.sol": {
-      "keccak256": "0xd6cfc638c2fee77908b065c0373410c1b6eddcda70914f287d841e35895c2b15",
+      "keccak256": "0x25aa941ea878e5c1c14647d0d1c09a51417f872c617b3244bce965af00846ed6",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3c3cdde127cac9347082781a2770a5f5ca6ee6b6434f88e4a477ae6bc0f3a4e8",
-        "dweb:/ipfs/QmZ3PeAKs4YSW7aBJGcGRaaWuzdgCtKF8S8B8wnx9ws31L"
+        "bzz-raw://8c7554d384645ebac2ed8a9a797f1036fb149a959e333fb540a339fcbb76f5f6",
+        "dweb:/ipfs/QmNY4XYjorKoAp7Lw8ibu2aqzthPRgkNKHUWqXZ8bgQJZi"
       ]
     },
     "contracts/src/river/wallet-link/WalletLink.sol": {
-      "keccak256": "0xb4a874375a48f244909f455a028d33e3342c5df7b4d1e5f1b3af66444c996017",
+      "keccak256": "0x9c7c90a8d320251e8def32d944203e7e0497e2fdd7c20f2da7da02257b7d1335",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://89a64d86caaef37985124874073ff3696485306602983e01100bddc31b33dcbf",
-        "dweb:/ipfs/QmfTNfYcr2GLCjB6SRQurpJB2U8BRtR6nbw16UMSTKxeXi"
+        "bzz-raw://1d63005e546c02a8cd8640da445f18654dc95d5f42fcd9b9b4a2e09e9fc22311",
+        "dweb:/ipfs/QmecZ56hECZgZPiRoWf6p32xywMS5P9hQydc8222spAV5h"
       ]
     },
     "contracts/src/river/wallet-link/WalletLinkBase.sol": {
-      "keccak256": "0xd5343b250965878528b0d961a92cb518e6fade06012c6fbc08b955edeed2f2d5",
+      "keccak256": "0xfc4d8db48b9f3b7b8d4edd675c38da62f50dedd70c396d88c86d1cd61693ec4c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1b4622efd5011d34c8ea3b726e3c7dcf0a87da49797861db5dcf59922316e609",
-        "dweb:/ipfs/QmUDufgBC7UJ4Qs4APjGdcCZYB3xWfeqZ841J3y314G7NB"
+        "bzz-raw://a8fcb9d43e1ef08caf9460594affbc000da1be9ef4e73c0dd51355a8a10f98b1",
+        "dweb:/ipfs/QmVyMYMfqDwD4dzXnZTpNGfN7VWYWCmzmZrBMwDr3jUWxW"
       ]
     },
     "contracts/src/river/wallet-link/WalletLinkStorage.sol": {
-      "keccak256": "0x3a94c2d004b60250f9c964ee995f7fd1a040a090028647dbfafca87b46d8cdbf",
+      "keccak256": "0xdc35739e66e2fcb74d0029121d80f17a9acaa2d377bbf454661a6dc2a10f2b48",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8d53ba45ff971252aa0c02d58c80e373e62cf6cb20337cf65b3906a3ed55ad1b",
-        "dweb:/ipfs/QmUeJrjYGX2RDiNgQ2o7LR5vyJPG74U3dEAQsX9su2cHcV"
+        "bzz-raw://c897d772ebd42c1fc61c158f437f63d4f087a869cd4ac8fb485195ec89e77594",
+        "dweb:/ipfs/QmW1GbyNrd2u84Nu3XidCtHMWQsTE5mML5tXNQgRCRahPy"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/Address.sol": {

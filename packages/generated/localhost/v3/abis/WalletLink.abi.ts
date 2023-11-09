@@ -20,6 +20,11 @@ export default [
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "InvalidSignature",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -33,6 +38,17 @@ export default [
       }
     ],
     "name": "LinkAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint64",
+        "name": "nonce",
+        "type": "uint64"
+      }
+    ],
+    "name": "NonceAlreadyUsed",
     "type": "error"
   },
   {
@@ -105,30 +121,11 @@ export default [
       {
         "indexed": false,
         "internalType": "address",
-        "name": "rootKey",
+        "name": "secondWallet",
         "type": "address"
       }
     ],
-    "name": "RemoveLinkViaRootKey",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "wallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "rootKey",
-        "type": "address"
-      }
-    ],
-    "name": "RemoveLinkViaWallet",
+    "name": "RemoveLink",
     "type": "event"
   },
   {
@@ -185,44 +182,6 @@ export default [
     "inputs": [
       {
         "internalType": "address",
-        "name": "rootKey",
-        "type": "address"
-      }
-    ],
-    "name": "getLatestRemoveNonceForRootKey",
-    "outputs": [
-      {
-        "internalType": "uint64",
-        "name": "",
-        "type": "uint64"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "wallet",
-        "type": "address"
-      }
-    ],
-    "name": "getLatestRemoveNonceForWallet",
-    "outputs": [
-      {
-        "internalType": "uint64",
-        "name": "",
-        "type": "uint64"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "wallet",
         "type": "address"
       }
@@ -259,16 +218,6 @@ export default [
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "wallet",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "walletSignature",
-        "type": "bytes"
-      },
       {
         "internalType": "address",
         "name": "rootKey",
@@ -318,54 +267,11 @@ export default [
     "inputs": [
       {
         "internalType": "address",
-        "name": "rootKey",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "rootKeySignature",
-        "type": "bytes"
-      },
-      {
-        "internalType": "address",
         "name": "wallet",
         "type": "address"
-      },
-      {
-        "internalType": "uint64",
-        "name": "removeNonce",
-        "type": "uint64"
       }
     ],
-    "name": "removeLinkViaRootKey",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "wallet",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "walletSignature",
-        "type": "bytes"
-      },
-      {
-        "internalType": "address",
-        "name": "rootKey",
-        "type": "address"
-      },
-      {
-        "internalType": "uint64",
-        "name": "removeNonce",
-        "type": "uint64"
-      }
-    ],
-    "name": "removeLinkViaWallet",
+    "name": "removeLink",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

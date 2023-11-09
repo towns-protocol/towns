@@ -19,37 +19,15 @@ contract WalletLink is IWalletLink, WalletLinkBase, Facet {
    * @inheritdoc IWalletLink
    */
   function linkWalletToRootKey(
-    address wallet,
-    bytes calldata walletSignature,
     address rootKey,
     bytes calldata rootKeySignature,
     uint64 nonce
   ) external {
-    _linkWalletToRootKey(
-      wallet,
-      walletSignature,
-      rootKey,
-      rootKeySignature,
-      nonce
-    );
+    _linkWalletToRootKey(rootKey, rootKeySignature, nonce);
   }
 
-  function removeLinkViaRootKey(
-    address rootKey,
-    bytes calldata rootKeySignature,
-    address wallet,
-    uint64 removeNonce
-  ) external {
-    _removeLinkViaRootKey(rootKey, rootKeySignature, wallet, removeNonce);
-  }
-
-  function removeLinkViaWallet(
-    address wallet,
-    bytes calldata walletSignature,
-    address rootKey,
-    uint64 removeNonce
-  ) external {
-    _removeLinkViaWallet(wallet, walletSignature, rootKey, removeNonce);
+  function removeLink(address wallet) external {
+    _removeLink(wallet);
   }
 
   /*
@@ -84,17 +62,5 @@ contract WalletLink is IWalletLink, WalletLinkBase, Facet {
     address rootKey
   ) external view override returns (uint64) {
     return _getLatestNonceForRootKey(rootKey);
-  }
-
-  function getLatestRemoveNonceForWallet(
-    address wallet
-  ) external view override returns (uint64) {
-    return _getLatestRemoveNonceForWallet(wallet);
-  }
-
-  function getLatestRemoveNonceForRootKey(
-    address rootKey
-  ) external view override returns (uint64) {
-    return _getLatestRemoveNonceForRootKey(rootKey);
   }
 }

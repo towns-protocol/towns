@@ -159,11 +159,11 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		return nil, 0, nil, err
 	}
 	cache := events.NewStreamCache(
-		&events.StreamCacheParams{
-			Storage:    store,
-			Wallet:     wallet,
-			DefaultCtx: ctx,
-		},
+			&events.StreamCacheParams{
+				Storage:    store,
+				Wallet:     wallet,
+				DefaultCtx: ctx,
+			},
 	)
 	syncHandler := NewSyncHandler(
 		ctx,

@@ -1,0 +1,158 @@
+{
+  "compiler": {
+    "version": "0.8.20+commit.a1b79de6"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "streamIdHash",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "newNodeId",
+            "type": "string"
+          }
+        ],
+        "name": "addNodeToStream",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "streamIdHash",
+            "type": "string"
+          },
+          {
+            "internalType": "string[]",
+            "name": "newNodeIds",
+            "type": "string[]"
+          }
+        ],
+        "name": "addNodesToStream",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "streamIdHash",
+            "type": "string"
+          }
+        ],
+        "name": "getStreamNodes",
+        "outputs": [
+          {
+            "internalType": "string[]",
+            "name": "",
+            "type": "string[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "streamIdHash",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "nodeId",
+            "type": "string"
+          }
+        ],
+        "name": "removeNodeFromStream",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "streamIdHash",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "nodeId",
+            "type": "string"
+          }
+        ],
+        "name": "valueExists",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/river/registry/StreamRegistry.sol": "StreamRegistry"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/test/=lib/prb-test/src/",
+      ":ERC721A/=lib/ERC721A/contracts/",
+      ":base64-sol/=lib/base64/",
+      ":base64/=lib/base64/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-test/=lib/prb-test/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/river/registry/StreamRegistry.sol": {
+      "keccak256": "0xb8a1e176cb4cf84f58a5bbb8b0a144bcc7e2b9721936b14c758023351587da4b",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://cff191b9c758ce62e583af1ac74707c4563c877f07b5aa94da80a4a377eb76b5",
+        "dweb:/ipfs/QmbQq5r8AHWaA1qqSxXrf4Pkh4dYLDLH99DedSeU2KFQgw"
+      ]
+    }
+  },
+  "version": 1
+}

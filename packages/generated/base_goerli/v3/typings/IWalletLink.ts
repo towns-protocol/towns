@@ -31,26 +31,20 @@ export interface IWalletLinkInterface extends utils.Interface {
   functions: {
     "checkIfLinked(address,address)": FunctionFragment;
     "getLatestNonceForRootKey(address)": FunctionFragment;
-    "getLatestRemoveNonceForRootKey(address)": FunctionFragment;
-    "getLatestRemoveNonceForWallet(address)": FunctionFragment;
     "getRootKeyForWallet(address)": FunctionFragment;
     "getWalletsByRootKey(address)": FunctionFragment;
-    "linkWalletToRootKey(address,bytes,address,bytes,uint64)": FunctionFragment;
-    "removeLinkViaRootKey(address,bytes,address,uint64)": FunctionFragment;
-    "removeLinkViaWallet(address,bytes,address,uint64)": FunctionFragment;
+    "linkWalletToRootKey(address,bytes,uint64)": FunctionFragment;
+    "removeLink(address)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
       | "checkIfLinked"
       | "getLatestNonceForRootKey"
-      | "getLatestRemoveNonceForRootKey"
-      | "getLatestRemoveNonceForWallet"
       | "getRootKeyForWallet"
       | "getWalletsByRootKey"
       | "linkWalletToRootKey"
-      | "removeLinkViaRootKey"
-      | "removeLinkViaWallet"
+      | "removeLink"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -62,14 +56,6 @@ export interface IWalletLinkInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getLatestRemoveNonceForRootKey",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getLatestRemoveNonceForWallet",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getRootKeyForWallet",
     values: [PromiseOrValue<string>]
   ): string;
@@ -82,28 +68,12 @@ export interface IWalletLinkInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>,
       PromiseOrValue<BigNumberish>
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "removeLinkViaRootKey",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "removeLinkViaWallet",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
+    functionFragment: "removeLink",
+    values: [PromiseOrValue<string>]
   ): string;
 
   decodeFunctionResult(
@@ -115,14 +85,6 @@ export interface IWalletLinkInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getLatestRemoveNonceForRootKey",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLatestRemoveNonceForWallet",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "getRootKeyForWallet",
     data: BytesLike
   ): Result;
@@ -134,24 +96,15 @@ export interface IWalletLinkInterface extends utils.Interface {
     functionFragment: "linkWalletToRootKey",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "removeLinkViaRootKey",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "removeLinkViaWallet",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "removeLink", data: BytesLike): Result;
 
   events: {
     "LinkWalletToRootKey(address,address)": EventFragment;
-    "RemoveLinkViaRootKey(address,address)": EventFragment;
-    "RemoveLinkViaWallet(address,address)": EventFragment;
+    "RemoveLink(address,address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "LinkWalletToRootKey"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RemoveLinkViaRootKey"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RemoveLinkViaWallet"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RemoveLink"): EventFragment;
 }
 
 export interface LinkWalletToRootKeyEventObject {
@@ -166,29 +119,16 @@ export type LinkWalletToRootKeyEvent = TypedEvent<
 export type LinkWalletToRootKeyEventFilter =
   TypedEventFilter<LinkWalletToRootKeyEvent>;
 
-export interface RemoveLinkViaRootKeyEventObject {
+export interface RemoveLinkEventObject {
   wallet: string;
-  rootKey: string;
+  secondWallet: string;
 }
-export type RemoveLinkViaRootKeyEvent = TypedEvent<
+export type RemoveLinkEvent = TypedEvent<
   [string, string],
-  RemoveLinkViaRootKeyEventObject
+  RemoveLinkEventObject
 >;
 
-export type RemoveLinkViaRootKeyEventFilter =
-  TypedEventFilter<RemoveLinkViaRootKeyEvent>;
-
-export interface RemoveLinkViaWalletEventObject {
-  wallet: string;
-  rootKey: string;
-}
-export type RemoveLinkViaWalletEvent = TypedEvent<
-  [string, string],
-  RemoveLinkViaWalletEventObject
->;
-
-export type RemoveLinkViaWalletEventFilter =
-  TypedEventFilter<RemoveLinkViaWalletEvent>;
+export type RemoveLinkEventFilter = TypedEventFilter<RemoveLinkEvent>;
 
 export interface IWalletLink extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -228,16 +168,6 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    getLatestRemoveNonceForRootKey(
-      rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    getLatestRemoveNonceForWallet(
-      wallet: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
     getRootKeyForWallet(
       wallet: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -249,27 +179,14 @@ export interface IWalletLink extends BaseContract {
     ): Promise<[string[]] & { wallets: string[] }>;
 
     linkWalletToRootKey(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
       rootKey: PromiseOrValue<string>,
       rootKeySignature: PromiseOrValue<BytesLike>,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    removeLinkViaRootKey(
-      rootKey: PromiseOrValue<string>,
-      rootKeySignature: PromiseOrValue<BytesLike>,
+    removeLink(
       wallet: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    removeLinkViaWallet(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
-      rootKey: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -285,16 +202,6 @@ export interface IWalletLink extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
-  getLatestRemoveNonceForRootKey(
-    rootKey: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getLatestRemoveNonceForWallet(
-    wallet: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   getRootKeyForWallet(
     wallet: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -306,27 +213,14 @@ export interface IWalletLink extends BaseContract {
   ): Promise<string[]>;
 
   linkWalletToRootKey(
-    wallet: PromiseOrValue<string>,
-    walletSignature: PromiseOrValue<BytesLike>,
     rootKey: PromiseOrValue<string>,
     rootKeySignature: PromiseOrValue<BytesLike>,
     nonce: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  removeLinkViaRootKey(
-    rootKey: PromiseOrValue<string>,
-    rootKeySignature: PromiseOrValue<BytesLike>,
+  removeLink(
     wallet: PromiseOrValue<string>,
-    removeNonce: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  removeLinkViaWallet(
-    wallet: PromiseOrValue<string>,
-    walletSignature: PromiseOrValue<BytesLike>,
-    rootKey: PromiseOrValue<string>,
-    removeNonce: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -342,16 +236,6 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getLatestRemoveNonceForRootKey(
-      rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getLatestRemoveNonceForWallet(
-      wallet: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getRootKeyForWallet(
       wallet: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -363,27 +247,14 @@ export interface IWalletLink extends BaseContract {
     ): Promise<string[]>;
 
     linkWalletToRootKey(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
       rootKey: PromiseOrValue<string>,
       rootKeySignature: PromiseOrValue<BytesLike>,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    removeLinkViaRootKey(
-      rootKey: PromiseOrValue<string>,
-      rootKeySignature: PromiseOrValue<BytesLike>,
+    removeLink(
       wallet: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    removeLinkViaWallet(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
-      rootKey: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -398,23 +269,11 @@ export interface IWalletLink extends BaseContract {
       rootKey?: null
     ): LinkWalletToRootKeyEventFilter;
 
-    "RemoveLinkViaRootKey(address,address)"(
+    "RemoveLink(address,address)"(
       wallet?: null,
-      rootKey?: null
-    ): RemoveLinkViaRootKeyEventFilter;
-    RemoveLinkViaRootKey(
-      wallet?: null,
-      rootKey?: null
-    ): RemoveLinkViaRootKeyEventFilter;
-
-    "RemoveLinkViaWallet(address,address)"(
-      wallet?: null,
-      rootKey?: null
-    ): RemoveLinkViaWalletEventFilter;
-    RemoveLinkViaWallet(
-      wallet?: null,
-      rootKey?: null
-    ): RemoveLinkViaWalletEventFilter;
+      secondWallet?: null
+    ): RemoveLinkEventFilter;
+    RemoveLink(wallet?: null, secondWallet?: null): RemoveLinkEventFilter;
   };
 
   estimateGas: {
@@ -429,16 +288,6 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getLatestRemoveNonceForRootKey(
-      rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getLatestRemoveNonceForWallet(
-      wallet: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getRootKeyForWallet(
       wallet: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -450,27 +299,14 @@ export interface IWalletLink extends BaseContract {
     ): Promise<BigNumber>;
 
     linkWalletToRootKey(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
       rootKey: PromiseOrValue<string>,
       rootKeySignature: PromiseOrValue<BytesLike>,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    removeLinkViaRootKey(
-      rootKey: PromiseOrValue<string>,
-      rootKeySignature: PromiseOrValue<BytesLike>,
+    removeLink(
       wallet: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    removeLinkViaWallet(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
-      rootKey: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -487,16 +323,6 @@ export interface IWalletLink extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getLatestRemoveNonceForRootKey(
-      rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getLatestRemoveNonceForWallet(
-      wallet: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     getRootKeyForWallet(
       wallet: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -508,27 +334,14 @@ export interface IWalletLink extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     linkWalletToRootKey(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
       rootKey: PromiseOrValue<string>,
       rootKeySignature: PromiseOrValue<BytesLike>,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    removeLinkViaRootKey(
-      rootKey: PromiseOrValue<string>,
-      rootKeySignature: PromiseOrValue<BytesLike>,
+    removeLink(
       wallet: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    removeLinkViaWallet(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
-      rootKey: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

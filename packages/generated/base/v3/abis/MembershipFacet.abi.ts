@@ -103,6 +103,11 @@ export default [
   },
   {
     "inputs": [],
+    "name": "Membership__InvalidDuration",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "Membership__InvalidFeeRecipient",
     "type": "error"
   },
@@ -491,36 +496,6 @@ export default [
       {
         "components": [
           {
-            "internalType": "uint256",
-            "name": "membershipPrice",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "membershipLimit",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "membershipCurrency",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "membershipFeeRecipient",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "townFactory",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "forwarder",
-            "type": "address"
-          },
-          {
             "internalType": "string",
             "name": "name",
             "type": "string"
@@ -529,11 +504,46 @@ export default [
             "internalType": "string",
             "name": "symbol",
             "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "price",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "limit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint64",
+            "name": "duration",
+            "type": "uint64"
+          },
+          {
+            "internalType": "address",
+            "name": "currency",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "feeRecipient",
+            "type": "address"
           }
         ],
         "internalType": "struct IMembershipBase.MembershipInfo",
         "name": "info",
         "type": "tuple"
+      },
+      {
+        "internalType": "address",
+        "name": "townFactory",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "forwarder",
+        "type": "address"
       }
     ],
     "name": "__Membership_init",
@@ -754,6 +764,19 @@ export default [
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMembershipDuration",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
       }
     ],
     "stateMutability": "view",
@@ -996,6 +1019,19 @@ export default [
       }
     ],
     "name": "setMembershipCurrency",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint64",
+        "name": "newDuration",
+        "type": "uint64"
+      }
+    ],
+    "name": "setMembershipDuration",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -536,6 +536,9 @@ jobs:
             - name: Deploy local zion governance contracts
               run: ./scripts/deploy-zion-governance-contracts.sh
 
+            - name: Deploy registry contracts
+              run: ./scripts/deploy-registry.sh
+
             - name: Deploy stream registry contracts
               run: ./scripts/deploy-stream-registry.sh
 

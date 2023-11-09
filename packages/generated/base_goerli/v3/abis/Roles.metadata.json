@@ -553,6 +553,8 @@
       ":@openzeppelin/=lib/openzeppelin-contracts/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
+      ":base64-sol/=lib/base64/",
+      ":base64/=lib/base64/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",

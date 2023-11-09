@@ -20,34 +20,17 @@ abstract contract WalletLinkBase is IWalletLinkBase {
   // =============================================================
 
   function _linkWalletToRootKey(
-    address wallet,
-    bytes calldata walletSignature,
     address rootKey,
     bytes calldata rootKeySignature,
     uint64 nonce
   ) internal {
-    _addLink(wallet, walletSignature, rootKey, rootKeySignature, nonce);
-    emit LinkWalletToRootKey(wallet, rootKey);
+    _addLink(rootKey, rootKeySignature, nonce);
+    emit LinkWalletToRootKey(msg.sender, rootKey);
   }
 
-  function _removeLinkViaRootKey(
-    address rootKey,
-    bytes calldata rootKeySignature,
-    address wallet,
-    uint64 removeNonce
-  ) internal {
-    _removeWalletLinkViaRootKey(rootKey, rootKeySignature, wallet, removeNonce);
-    emit RemoveLinkViaRootKey(wallet, rootKey);
-  }
-
-  function _removeLinkViaWallet(
-    address wallet,
-    bytes calldata walletSignature,
-    address rootKey,
-    uint64 removeNonce
-  ) internal {
-    _removeWalletLinkViaWallet(wallet, walletSignature, rootKey, removeNonce);
-    emit RemoveLinkViaWallet(wallet, rootKey);
+  function _removeLink(address wallet) internal {
+    _removeWalletLink(wallet);
+    emit RemoveLink(wallet, msg.sender);
   }
 
   // =============================================================
@@ -67,7 +50,7 @@ abstract contract WalletLinkBase is IWalletLinkBase {
   ) internal view returns (address rootKey) {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
 
-    return ds.walletsToRootKeys[wallet];
+    return ds.walletsToRootKey[wallet];
   }
 
   function _checkIfLinked(
@@ -76,7 +59,7 @@ abstract contract WalletLinkBase is IWalletLinkBase {
   ) internal view returns (bool) {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
 
-    if (ds.walletsToRootKeys[wallet] == rootKey) {
+    if (ds.walletsToRootKey[wallet] == rootKey) {
       return true;
     }
     return false;
@@ -90,22 +73,6 @@ abstract contract WalletLinkBase is IWalletLinkBase {
     return ds.rootKeysToHighestNonce[rootKey];
   }
 
-  function _getLatestRemoveNonceForRootKey(
-    address rootKey
-  ) internal view returns (uint64) {
-    WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
-
-    return ds.rootKeysToHighestRemoveNonce[rootKey];
-  }
-
-  function _getLatestRemoveNonceForWallet(
-    address wallet
-  ) internal view returns (uint64) {
-    WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
-
-    return ds.walletsToHighestRemoveNonce[wallet];
-  }
-
   // =============================================================
   //                           Internal
   // =============================================================
@@ -114,129 +81,59 @@ abstract contract WalletLinkBase is IWalletLinkBase {
    * @dev Helper function to set rootKey for a wallet
    */
   function _addLink(
-    address wallet,
-    bytes calldata walletSignature,
     address rootKey,
     bytes calldata rootKeySignature,
     uint64 nonce
   ) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
-
     //Check that the nonce being used is higher than the last nonce used
-    require(
-      nonce > ds.rootKeysToHighestNonce[rootKey],
-      "WalletLink: nonce already used"
-    );
+    if (nonce <= ds.rootKeysToHighestNonce[rootKey]) {
+      revert NonceAlreadyUsed(nonce);
+    }
     //Set the new nonce for this rootkey
     ds.rootKeysToHighestNonce[rootKey] = nonce;
 
+    address linkingWallet = msg.sender;
+
     //Check that this wallet is not already linked to a rootkey
-    require(
-      ds.walletsToRootKeys[wallet] == address(0),
-      "WalletLink: wallet already linked"
-    );
-
-    //Verify that the wallet signature contains the correct none and the correct root key
-    bytes32 messageHash = keccak256(abi.encode(rootKey, nonce))
-      .toEthSignedMessageHash();
-
-    require(
-      recoverSigner(messageHash, walletSignature) == wallet,
-      "WalletLink: invalid wallet signature"
-    );
-
+    if (ds.walletsToRootKey[linkingWallet] != address(0)) {
+      revert LinkAlreadyExists(linkingWallet, rootKey);
+    }
     //Verify that the root key signature contains the correct nonce and the correct wallet
-    bytes32 rootKeyMessageHash = keccak256(abi.encode(wallet, nonce))
+    bytes32 rootKeyMessageHash = keccak256(abi.encode(linkingWallet, nonce))
       .toEthSignedMessageHash();
 
-    require(
-      recoverSigner(rootKeyMessageHash, rootKeySignature) == rootKey,
-      "WalletLink: invalid rootKey signature"
-    );
-
+    if (recoverSigner(rootKeyMessageHash, rootKeySignature) != rootKey) {
+      revert InvalidSignature();
+    }
     //set link in mapping
-    ds.rootKeysToWallets[rootKey].push(wallet);
-    ds.walletsToRootKeys[wallet] = rootKey;
+    ds.rootKeysToWallets[rootKey].push(linkingWallet);
+    ds.walletsToRootKey[linkingWallet] = rootKey;
   }
 
-  function _removeWalletLinkViaWallet(
-    address wallet,
-    bytes calldata walletSignature,
-    address rootKey,
-    uint64 removeNonce
-  ) internal {
+  function _removeWalletLink(address linkedWallet) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
 
-    require(
-      removeNonce > ds.walletsToHighestRemoveNonce[wallet],
-      "WalletLink: remove nonce already used"
-    );
-
-    require(
-      ds.walletsToRootKeys[wallet] == rootKey,
-      "WalletLink: wallet not linked to root key"
-    );
-
-    ds.walletsToHighestRemoveNonce[wallet] = removeNonce;
-
-    //Verify that the wallet signature contains the correct none and the correct root key
-    bytes32 walletMessage = keccak256(abi.encode(rootKey, removeNonce));
-    require(
-      recoverSigner(walletMessage.toEthSignedMessageHash(), walletSignature) ==
-        wallet,
-      "WalletLink: invalid wallet signature"
-    );
-
-    //remove the link in the wallet to root keys map
-    ds.walletsToRootKeys[wallet] = address(0);
-
-    //remove the link in the root keys to wallets[]  map
-    for (uint64 i = 0; i < ds.rootKeysToWallets[rootKey].length; i++) {
-      if (ds.rootKeysToWallets[rootKey][i] == wallet) {
-        ds.rootKeysToWallets[rootKey][i] = ds.rootKeysToWallets[rootKey][
-          ds.rootKeysToWallets[rootKey].length - 1
-        ];
-        ds.rootKeysToWallets[rootKey].pop();
-        break;
-      }
+    address originatingWallet = msg.sender;
+    //if this is called from an originating wallet
+    if (ds.walletsToRootKey[originatingWallet] == linkedWallet) {
+      removeLink(linkedWallet, originatingWallet);
+      //if this is called from the root key wallet
+    } else if (ds.walletsToRootKey[linkedWallet] == originatingWallet) {
+      removeLink(originatingWallet, linkedWallet);
+    } else {
+      revert("WalletLink: wallet not linked to root key");
     }
   }
 
-  function _removeWalletLinkViaRootKey(
-    address rootKey,
-    bytes calldata rootKeySignature,
-    address wallet,
-    uint64 removeNonce
-  ) internal {
+  function removeLink(address rootKey, address externalWallet) internal {
     WalletLinkStorage.Layout storage ds = WalletLinkStorage.layout();
-
-    require(
-      removeNonce > ds.rootKeysToHighestRemoveNonce[rootKey],
-      "WalletLink: remove nonce already used"
-    );
-
-    require(
-      ds.walletsToRootKeys[wallet] == rootKey,
-      "WalletLink: wallet not linked to root key"
-    );
-
-    ds.rootKeysToHighestRemoveNonce[rootKey] = removeNonce;
-
-    //Verify that the wallet signature contains the correct none and the correct root key
-    bytes32 rootKeyMessageHash = keccak256(abi.encode(wallet, removeNonce))
-      .toEthSignedMessageHash();
-
-    require(
-      recoverSigner(rootKeyMessageHash, rootKeySignature) == rootKey,
-      "WalletLink: invalid root key signature"
-    );
-
     //remove the link in the wallet to root keys map
-    ds.walletsToRootKeys[wallet] = address(0);
+    ds.walletsToRootKey[externalWallet] = address(0);
 
     //remove the link in the root keys to wallets[]  map
     for (uint64 i = 0; i < ds.rootKeysToWallets[rootKey].length; i++) {
-      if (ds.rootKeysToWallets[rootKey][i] == wallet) {
+      if (ds.rootKeysToWallets[rootKey][i] == externalWallet) {
         ds.rootKeysToWallets[rootKey][i] = ds.rootKeysToWallets[rootKey][
           ds.rootKeysToWallets[rootKey].length - 1
         ];
@@ -257,7 +154,9 @@ abstract contract WalletLinkBase is IWalletLinkBase {
   function splitSignature(
     bytes memory sig
   ) public pure returns (bytes32 r, bytes32 s, uint8 v) {
-    require(sig.length == 65, "invalid signature length");
+    if (sig.length != 65) {
+      revert InvalidSignature();
+    }
 
     assembly {
       /*

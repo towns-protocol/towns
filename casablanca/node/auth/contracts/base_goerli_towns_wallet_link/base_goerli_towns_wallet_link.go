@@ -31,7 +31,7 @@ var (
 
 // BaseGoerliTownsWalletLinkMetaData contains all meta data concerning the BaseGoerliTownsWalletLink contract.
 var BaseGoerliTownsWalletLinkMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[],\"name\":\"Initializable_InInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Initializable_NotInInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_AlreadySupported\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_NotSupported\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"LinkAlreadyExists\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"version\",\"type\":\"uint32\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"LinkWalletToRootKey\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"RemoveLinkViaRootKey\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"RemoveLinkViaWallet\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"__WalletLink_init\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"}],\"name\":\"checkIfLinked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"getLatestNonceForRootKey\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"getLatestRemoveNonceForRootKey\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"}],\"name\":\"getLatestRemoveNonceForWallet\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"}],\"name\":\"getRootKeyForWallet\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"getWalletsByRootKey\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"wallets\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"walletSignature\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"rootKeySignature\",\"type\":\"bytes\"},{\"internalType\":\"uint64\",\"name\":\"nonce\",\"type\":\"uint64\"}],\"name\":\"linkWalletToRootKey\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_ethSignedMessageHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_signature\",\"type\":\"bytes\"}],\"name\":\"recoverSigner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"rootKeySignature\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"removeNonce\",\"type\":\"uint64\"}],\"name\":\"removeLinkViaRootKey\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"walletSignature\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"removeNonce\",\"type\":\"uint64\"}],\"name\":\"removeLinkViaWallet\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"sig\",\"type\":\"bytes\"}],\"name\":\"splitSignature\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"},{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[],\"name\":\"Initializable_InInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Initializable_NotInInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_AlreadySupported\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_NotSupported\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidSignature\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"LinkAlreadyExists\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"nonce\",\"type\":\"uint64\"}],\"name\":\"NonceAlreadyUsed\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"version\",\"type\":\"uint32\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"LinkWalletToRootKey\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"secondWallet\",\"type\":\"address\"}],\"name\":\"RemoveLink\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"__WalletLink_init\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"}],\"name\":\"checkIfLinked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"getLatestNonceForRootKey\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"}],\"name\":\"getRootKeyForWallet\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"getWalletsByRootKey\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"wallets\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"rootKeySignature\",\"type\":\"bytes\"},{\"internalType\":\"uint64\",\"name\":\"nonce\",\"type\":\"uint64\"}],\"name\":\"linkWalletToRootKey\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_ethSignedMessageHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_signature\",\"type\":\"bytes\"}],\"name\":\"recoverSigner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"}],\"name\":\"removeLink\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"sig\",\"type\":\"bytes\"}],\"name\":\"splitSignature\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"},{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}]",
 }
 
 // BaseGoerliTownsWalletLinkABI is the input ABI used to generate the binding from.
@@ -242,68 +242,6 @@ func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkCallerSession) GetLat
 	return _BaseGoerliTownsWalletLink.Contract.GetLatestNonceForRootKey(&_BaseGoerliTownsWalletLink.CallOpts, rootKey)
 }
 
-// GetLatestRemoveNonceForRootKey is a free data retrieval call binding the contract method 0xd48458f8.
-//
-// Solidity: function getLatestRemoveNonceForRootKey(address rootKey) view returns(uint64)
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkCaller) GetLatestRemoveNonceForRootKey(opts *bind.CallOpts, rootKey common.Address) (uint64, error) {
-	var out []interface{}
-	err := _BaseGoerliTownsWalletLink.contract.Call(opts, &out, "getLatestRemoveNonceForRootKey", rootKey)
-
-	if err != nil {
-		return *new(uint64), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
-
-	return out0, err
-
-}
-
-// GetLatestRemoveNonceForRootKey is a free data retrieval call binding the contract method 0xd48458f8.
-//
-// Solidity: function getLatestRemoveNonceForRootKey(address rootKey) view returns(uint64)
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkSession) GetLatestRemoveNonceForRootKey(rootKey common.Address) (uint64, error) {
-	return _BaseGoerliTownsWalletLink.Contract.GetLatestRemoveNonceForRootKey(&_BaseGoerliTownsWalletLink.CallOpts, rootKey)
-}
-
-// GetLatestRemoveNonceForRootKey is a free data retrieval call binding the contract method 0xd48458f8.
-//
-// Solidity: function getLatestRemoveNonceForRootKey(address rootKey) view returns(uint64)
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkCallerSession) GetLatestRemoveNonceForRootKey(rootKey common.Address) (uint64, error) {
-	return _BaseGoerliTownsWalletLink.Contract.GetLatestRemoveNonceForRootKey(&_BaseGoerliTownsWalletLink.CallOpts, rootKey)
-}
-
-// GetLatestRemoveNonceForWallet is a free data retrieval call binding the contract method 0xee5752bc.
-//
-// Solidity: function getLatestRemoveNonceForWallet(address wallet) view returns(uint64)
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkCaller) GetLatestRemoveNonceForWallet(opts *bind.CallOpts, wallet common.Address) (uint64, error) {
-	var out []interface{}
-	err := _BaseGoerliTownsWalletLink.contract.Call(opts, &out, "getLatestRemoveNonceForWallet", wallet)
-
-	if err != nil {
-		return *new(uint64), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
-
-	return out0, err
-
-}
-
-// GetLatestRemoveNonceForWallet is a free data retrieval call binding the contract method 0xee5752bc.
-//
-// Solidity: function getLatestRemoveNonceForWallet(address wallet) view returns(uint64)
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkSession) GetLatestRemoveNonceForWallet(wallet common.Address) (uint64, error) {
-	return _BaseGoerliTownsWalletLink.Contract.GetLatestRemoveNonceForWallet(&_BaseGoerliTownsWalletLink.CallOpts, wallet)
-}
-
-// GetLatestRemoveNonceForWallet is a free data retrieval call binding the contract method 0xee5752bc.
-//
-// Solidity: function getLatestRemoveNonceForWallet(address wallet) view returns(uint64)
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkCallerSession) GetLatestRemoveNonceForWallet(wallet common.Address) (uint64, error) {
-	return _BaseGoerliTownsWalletLink.Contract.GetLatestRemoveNonceForWallet(&_BaseGoerliTownsWalletLink.CallOpts, wallet)
-}
-
 // GetRootKeyForWallet is a free data retrieval call binding the contract method 0xf8210398.
 //
 // Solidity: function getRootKeyForWallet(address wallet) view returns(address rootKey)
@@ -468,67 +406,46 @@ func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkTransactorSession) Wa
 	return _BaseGoerliTownsWalletLink.Contract.WalletLinkInit(&_BaseGoerliTownsWalletLink.TransactOpts)
 }
 
-// LinkWalletToRootKey is a paid mutator transaction binding the contract method 0xccf480f7.
+// LinkWalletToRootKey is a paid mutator transaction binding the contract method 0xf5158913.
 //
-// Solidity: function linkWalletToRootKey(address wallet, bytes walletSignature, address rootKey, bytes rootKeySignature, uint64 nonce) returns()
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkTransactor) LinkWalletToRootKey(opts *bind.TransactOpts, wallet common.Address, walletSignature []byte, rootKey common.Address, rootKeySignature []byte, nonce uint64) (*types.Transaction, error) {
-	return _BaseGoerliTownsWalletLink.contract.Transact(opts, "linkWalletToRootKey", wallet, walletSignature, rootKey, rootKeySignature, nonce)
+// Solidity: function linkWalletToRootKey(address rootKey, bytes rootKeySignature, uint64 nonce) returns()
+func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkTransactor) LinkWalletToRootKey(opts *bind.TransactOpts, rootKey common.Address, rootKeySignature []byte, nonce uint64) (*types.Transaction, error) {
+	return _BaseGoerliTownsWalletLink.contract.Transact(opts, "linkWalletToRootKey", rootKey, rootKeySignature, nonce)
 }
 
-// LinkWalletToRootKey is a paid mutator transaction binding the contract method 0xccf480f7.
+// LinkWalletToRootKey is a paid mutator transaction binding the contract method 0xf5158913.
 //
-// Solidity: function linkWalletToRootKey(address wallet, bytes walletSignature, address rootKey, bytes rootKeySignature, uint64 nonce) returns()
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkSession) LinkWalletToRootKey(wallet common.Address, walletSignature []byte, rootKey common.Address, rootKeySignature []byte, nonce uint64) (*types.Transaction, error) {
-	return _BaseGoerliTownsWalletLink.Contract.LinkWalletToRootKey(&_BaseGoerliTownsWalletLink.TransactOpts, wallet, walletSignature, rootKey, rootKeySignature, nonce)
+// Solidity: function linkWalletToRootKey(address rootKey, bytes rootKeySignature, uint64 nonce) returns()
+func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkSession) LinkWalletToRootKey(rootKey common.Address, rootKeySignature []byte, nonce uint64) (*types.Transaction, error) {
+	return _BaseGoerliTownsWalletLink.Contract.LinkWalletToRootKey(&_BaseGoerliTownsWalletLink.TransactOpts, rootKey, rootKeySignature, nonce)
 }
 
-// LinkWalletToRootKey is a paid mutator transaction binding the contract method 0xccf480f7.
+// LinkWalletToRootKey is a paid mutator transaction binding the contract method 0xf5158913.
 //
-// Solidity: function linkWalletToRootKey(address wallet, bytes walletSignature, address rootKey, bytes rootKeySignature, uint64 nonce) returns()
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkTransactorSession) LinkWalletToRootKey(wallet common.Address, walletSignature []byte, rootKey common.Address, rootKeySignature []byte, nonce uint64) (*types.Transaction, error) {
-	return _BaseGoerliTownsWalletLink.Contract.LinkWalletToRootKey(&_BaseGoerliTownsWalletLink.TransactOpts, wallet, walletSignature, rootKey, rootKeySignature, nonce)
+// Solidity: function linkWalletToRootKey(address rootKey, bytes rootKeySignature, uint64 nonce) returns()
+func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkTransactorSession) LinkWalletToRootKey(rootKey common.Address, rootKeySignature []byte, nonce uint64) (*types.Transaction, error) {
+	return _BaseGoerliTownsWalletLink.Contract.LinkWalletToRootKey(&_BaseGoerliTownsWalletLink.TransactOpts, rootKey, rootKeySignature, nonce)
 }
 
-// RemoveLinkViaRootKey is a paid mutator transaction binding the contract method 0x5cdbbbef.
+// RemoveLink is a paid mutator transaction binding the contract method 0x27a04d85.
 //
-// Solidity: function removeLinkViaRootKey(address rootKey, bytes rootKeySignature, address wallet, uint64 removeNonce) returns()
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkTransactor) RemoveLinkViaRootKey(opts *bind.TransactOpts, rootKey common.Address, rootKeySignature []byte, wallet common.Address, removeNonce uint64) (*types.Transaction, error) {
-	return _BaseGoerliTownsWalletLink.contract.Transact(opts, "removeLinkViaRootKey", rootKey, rootKeySignature, wallet, removeNonce)
+// Solidity: function removeLink(address wallet) returns()
+func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkTransactor) RemoveLink(opts *bind.TransactOpts, wallet common.Address) (*types.Transaction, error) {
+	return _BaseGoerliTownsWalletLink.contract.Transact(opts, "removeLink", wallet)
 }
 
-// RemoveLinkViaRootKey is a paid mutator transaction binding the contract method 0x5cdbbbef.
+// RemoveLink is a paid mutator transaction binding the contract method 0x27a04d85.
 //
-// Solidity: function removeLinkViaRootKey(address rootKey, bytes rootKeySignature, address wallet, uint64 removeNonce) returns()
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkSession) RemoveLinkViaRootKey(rootKey common.Address, rootKeySignature []byte, wallet common.Address, removeNonce uint64) (*types.Transaction, error) {
-	return _BaseGoerliTownsWalletLink.Contract.RemoveLinkViaRootKey(&_BaseGoerliTownsWalletLink.TransactOpts, rootKey, rootKeySignature, wallet, removeNonce)
+// Solidity: function removeLink(address wallet) returns()
+func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkSession) RemoveLink(wallet common.Address) (*types.Transaction, error) {
+	return _BaseGoerliTownsWalletLink.Contract.RemoveLink(&_BaseGoerliTownsWalletLink.TransactOpts, wallet)
 }
 
-// RemoveLinkViaRootKey is a paid mutator transaction binding the contract method 0x5cdbbbef.
+// RemoveLink is a paid mutator transaction binding the contract method 0x27a04d85.
 //
-// Solidity: function removeLinkViaRootKey(address rootKey, bytes rootKeySignature, address wallet, uint64 removeNonce) returns()
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkTransactorSession) RemoveLinkViaRootKey(rootKey common.Address, rootKeySignature []byte, wallet common.Address, removeNonce uint64) (*types.Transaction, error) {
-	return _BaseGoerliTownsWalletLink.Contract.RemoveLinkViaRootKey(&_BaseGoerliTownsWalletLink.TransactOpts, rootKey, rootKeySignature, wallet, removeNonce)
-}
-
-// RemoveLinkViaWallet is a paid mutator transaction binding the contract method 0x6b8ca397.
-//
-// Solidity: function removeLinkViaWallet(address wallet, bytes walletSignature, address rootKey, uint64 removeNonce) returns()
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkTransactor) RemoveLinkViaWallet(opts *bind.TransactOpts, wallet common.Address, walletSignature []byte, rootKey common.Address, removeNonce uint64) (*types.Transaction, error) {
-	return _BaseGoerliTownsWalletLink.contract.Transact(opts, "removeLinkViaWallet", wallet, walletSignature, rootKey, removeNonce)
-}
-
-// RemoveLinkViaWallet is a paid mutator transaction binding the contract method 0x6b8ca397.
-//
-// Solidity: function removeLinkViaWallet(address wallet, bytes walletSignature, address rootKey, uint64 removeNonce) returns()
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkSession) RemoveLinkViaWallet(wallet common.Address, walletSignature []byte, rootKey common.Address, removeNonce uint64) (*types.Transaction, error) {
-	return _BaseGoerliTownsWalletLink.Contract.RemoveLinkViaWallet(&_BaseGoerliTownsWalletLink.TransactOpts, wallet, walletSignature, rootKey, removeNonce)
-}
-
-// RemoveLinkViaWallet is a paid mutator transaction binding the contract method 0x6b8ca397.
-//
-// Solidity: function removeLinkViaWallet(address wallet, bytes walletSignature, address rootKey, uint64 removeNonce) returns()
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkTransactorSession) RemoveLinkViaWallet(wallet common.Address, walletSignature []byte, rootKey common.Address, removeNonce uint64) (*types.Transaction, error) {
-	return _BaseGoerliTownsWalletLink.Contract.RemoveLinkViaWallet(&_BaseGoerliTownsWalletLink.TransactOpts, wallet, walletSignature, rootKey, removeNonce)
+// Solidity: function removeLink(address wallet) returns()
+func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkTransactorSession) RemoveLink(wallet common.Address) (*types.Transaction, error) {
+	return _BaseGoerliTownsWalletLink.Contract.RemoveLink(&_BaseGoerliTownsWalletLink.TransactOpts, wallet)
 }
 
 // BaseGoerliTownsWalletLinkInitializedIterator is returned from FilterInitialized and is used to iterate over the raw logs and unpacked data for Initialized events raised by the BaseGoerliTownsWalletLink contract.
@@ -1088,9 +1005,9 @@ func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkFilterer) ParseLinkWa
 	return event, nil
 }
 
-// BaseGoerliTownsWalletLinkRemoveLinkViaRootKeyIterator is returned from FilterRemoveLinkViaRootKey and is used to iterate over the raw logs and unpacked data for RemoveLinkViaRootKey events raised by the BaseGoerliTownsWalletLink contract.
-type BaseGoerliTownsWalletLinkRemoveLinkViaRootKeyIterator struct {
-	Event *BaseGoerliTownsWalletLinkRemoveLinkViaRootKey // Event containing the contract specifics and raw log
+// BaseGoerliTownsWalletLinkRemoveLinkIterator is returned from FilterRemoveLink and is used to iterate over the raw logs and unpacked data for RemoveLink events raised by the BaseGoerliTownsWalletLink contract.
+type BaseGoerliTownsWalletLinkRemoveLinkIterator struct {
+	Event *BaseGoerliTownsWalletLinkRemoveLink // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1104,7 +1021,7 @@ type BaseGoerliTownsWalletLinkRemoveLinkViaRootKeyIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *BaseGoerliTownsWalletLinkRemoveLinkViaRootKeyIterator) Next() bool {
+func (it *BaseGoerliTownsWalletLinkRemoveLinkIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1113,7 +1030,7 @@ func (it *BaseGoerliTownsWalletLinkRemoveLinkViaRootKeyIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(BaseGoerliTownsWalletLinkRemoveLinkViaRootKey)
+			it.Event = new(BaseGoerliTownsWalletLinkRemoveLink)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1128,7 +1045,7 @@ func (it *BaseGoerliTownsWalletLinkRemoveLinkViaRootKeyIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(BaseGoerliTownsWalletLinkRemoveLinkViaRootKey)
+		it.Event = new(BaseGoerliTownsWalletLinkRemoveLink)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1144,42 +1061,42 @@ func (it *BaseGoerliTownsWalletLinkRemoveLinkViaRootKeyIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *BaseGoerliTownsWalletLinkRemoveLinkViaRootKeyIterator) Error() error {
+func (it *BaseGoerliTownsWalletLinkRemoveLinkIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *BaseGoerliTownsWalletLinkRemoveLinkViaRootKeyIterator) Close() error {
+func (it *BaseGoerliTownsWalletLinkRemoveLinkIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// BaseGoerliTownsWalletLinkRemoveLinkViaRootKey represents a RemoveLinkViaRootKey event raised by the BaseGoerliTownsWalletLink contract.
-type BaseGoerliTownsWalletLinkRemoveLinkViaRootKey struct {
-	Wallet  common.Address
-	RootKey common.Address
-	Raw     types.Log // Blockchain specific contextual infos
+// BaseGoerliTownsWalletLinkRemoveLink represents a RemoveLink event raised by the BaseGoerliTownsWalletLink contract.
+type BaseGoerliTownsWalletLinkRemoveLink struct {
+	Wallet       common.Address
+	SecondWallet common.Address
+	Raw          types.Log // Blockchain specific contextual infos
 }
 
-// FilterRemoveLinkViaRootKey is a free log retrieval operation binding the contract event 0x65050554da593f4acb6a5d325b1eea7a353aaaf294fd92e4c464da529f339d1d.
+// FilterRemoveLink is a free log retrieval operation binding the contract event 0x9a9d98629b39adf596077fc95a0712ba55c38f40a354e99d366a10f9c3e27da2.
 //
-// Solidity: event RemoveLinkViaRootKey(address wallet, address rootKey)
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkFilterer) FilterRemoveLinkViaRootKey(opts *bind.FilterOpts) (*BaseGoerliTownsWalletLinkRemoveLinkViaRootKeyIterator, error) {
+// Solidity: event RemoveLink(address wallet, address secondWallet)
+func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkFilterer) FilterRemoveLink(opts *bind.FilterOpts) (*BaseGoerliTownsWalletLinkRemoveLinkIterator, error) {
 
-	logs, sub, err := _BaseGoerliTownsWalletLink.contract.FilterLogs(opts, "RemoveLinkViaRootKey")
+	logs, sub, err := _BaseGoerliTownsWalletLink.contract.FilterLogs(opts, "RemoveLink")
 	if err != nil {
 		return nil, err
 	}
-	return &BaseGoerliTownsWalletLinkRemoveLinkViaRootKeyIterator{contract: _BaseGoerliTownsWalletLink.contract, event: "RemoveLinkViaRootKey", logs: logs, sub: sub}, nil
+	return &BaseGoerliTownsWalletLinkRemoveLinkIterator{contract: _BaseGoerliTownsWalletLink.contract, event: "RemoveLink", logs: logs, sub: sub}, nil
 }
 
-// WatchRemoveLinkViaRootKey is a free log subscription operation binding the contract event 0x65050554da593f4acb6a5d325b1eea7a353aaaf294fd92e4c464da529f339d1d.
+// WatchRemoveLink is a free log subscription operation binding the contract event 0x9a9d98629b39adf596077fc95a0712ba55c38f40a354e99d366a10f9c3e27da2.
 //
-// Solidity: event RemoveLinkViaRootKey(address wallet, address rootKey)
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkFilterer) WatchRemoveLinkViaRootKey(opts *bind.WatchOpts, sink chan<- *BaseGoerliTownsWalletLinkRemoveLinkViaRootKey) (event.Subscription, error) {
+// Solidity: event RemoveLink(address wallet, address secondWallet)
+func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkFilterer) WatchRemoveLink(opts *bind.WatchOpts, sink chan<- *BaseGoerliTownsWalletLinkRemoveLink) (event.Subscription, error) {
 
-	logs, sub, err := _BaseGoerliTownsWalletLink.contract.WatchLogs(opts, "RemoveLinkViaRootKey")
+	logs, sub, err := _BaseGoerliTownsWalletLink.contract.WatchLogs(opts, "RemoveLink")
 	if err != nil {
 		return nil, err
 	}
@@ -1189,8 +1106,8 @@ func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkFilterer) WatchRemove
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(BaseGoerliTownsWalletLinkRemoveLinkViaRootKey)
-				if err := _BaseGoerliTownsWalletLink.contract.UnpackLog(event, "RemoveLinkViaRootKey", log); err != nil {
+				event := new(BaseGoerliTownsWalletLinkRemoveLink)
+				if err := _BaseGoerliTownsWalletLink.contract.UnpackLog(event, "RemoveLink", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1211,147 +1128,12 @@ func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkFilterer) WatchRemove
 	}), nil
 }
 
-// ParseRemoveLinkViaRootKey is a log parse operation binding the contract event 0x65050554da593f4acb6a5d325b1eea7a353aaaf294fd92e4c464da529f339d1d.
+// ParseRemoveLink is a log parse operation binding the contract event 0x9a9d98629b39adf596077fc95a0712ba55c38f40a354e99d366a10f9c3e27da2.
 //
-// Solidity: event RemoveLinkViaRootKey(address wallet, address rootKey)
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkFilterer) ParseRemoveLinkViaRootKey(log types.Log) (*BaseGoerliTownsWalletLinkRemoveLinkViaRootKey, error) {
-	event := new(BaseGoerliTownsWalletLinkRemoveLinkViaRootKey)
-	if err := _BaseGoerliTownsWalletLink.contract.UnpackLog(event, "RemoveLinkViaRootKey", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// BaseGoerliTownsWalletLinkRemoveLinkViaWalletIterator is returned from FilterRemoveLinkViaWallet and is used to iterate over the raw logs and unpacked data for RemoveLinkViaWallet events raised by the BaseGoerliTownsWalletLink contract.
-type BaseGoerliTownsWalletLinkRemoveLinkViaWalletIterator struct {
-	Event *BaseGoerliTownsWalletLinkRemoveLinkViaWallet // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *BaseGoerliTownsWalletLinkRemoveLinkViaWalletIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(BaseGoerliTownsWalletLinkRemoveLinkViaWallet)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(BaseGoerliTownsWalletLinkRemoveLinkViaWallet)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *BaseGoerliTownsWalletLinkRemoveLinkViaWalletIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *BaseGoerliTownsWalletLinkRemoveLinkViaWalletIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// BaseGoerliTownsWalletLinkRemoveLinkViaWallet represents a RemoveLinkViaWallet event raised by the BaseGoerliTownsWalletLink contract.
-type BaseGoerliTownsWalletLinkRemoveLinkViaWallet struct {
-	Wallet  common.Address
-	RootKey common.Address
-	Raw     types.Log // Blockchain specific contextual infos
-}
-
-// FilterRemoveLinkViaWallet is a free log retrieval operation binding the contract event 0x97d1080066ca40b1c31422ce6cc29d77d1b2dba92eee009587fcf351b556ba25.
-//
-// Solidity: event RemoveLinkViaWallet(address wallet, address rootKey)
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkFilterer) FilterRemoveLinkViaWallet(opts *bind.FilterOpts) (*BaseGoerliTownsWalletLinkRemoveLinkViaWalletIterator, error) {
-
-	logs, sub, err := _BaseGoerliTownsWalletLink.contract.FilterLogs(opts, "RemoveLinkViaWallet")
-	if err != nil {
-		return nil, err
-	}
-	return &BaseGoerliTownsWalletLinkRemoveLinkViaWalletIterator{contract: _BaseGoerliTownsWalletLink.contract, event: "RemoveLinkViaWallet", logs: logs, sub: sub}, nil
-}
-
-// WatchRemoveLinkViaWallet is a free log subscription operation binding the contract event 0x97d1080066ca40b1c31422ce6cc29d77d1b2dba92eee009587fcf351b556ba25.
-//
-// Solidity: event RemoveLinkViaWallet(address wallet, address rootKey)
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkFilterer) WatchRemoveLinkViaWallet(opts *bind.WatchOpts, sink chan<- *BaseGoerliTownsWalletLinkRemoveLinkViaWallet) (event.Subscription, error) {
-
-	logs, sub, err := _BaseGoerliTownsWalletLink.contract.WatchLogs(opts, "RemoveLinkViaWallet")
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(BaseGoerliTownsWalletLinkRemoveLinkViaWallet)
-				if err := _BaseGoerliTownsWalletLink.contract.UnpackLog(event, "RemoveLinkViaWallet", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseRemoveLinkViaWallet is a log parse operation binding the contract event 0x97d1080066ca40b1c31422ce6cc29d77d1b2dba92eee009587fcf351b556ba25.
-//
-// Solidity: event RemoveLinkViaWallet(address wallet, address rootKey)
-func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkFilterer) ParseRemoveLinkViaWallet(log types.Log) (*BaseGoerliTownsWalletLinkRemoveLinkViaWallet, error) {
-	event := new(BaseGoerliTownsWalletLinkRemoveLinkViaWallet)
-	if err := _BaseGoerliTownsWalletLink.contract.UnpackLog(event, "RemoveLinkViaWallet", log); err != nil {
+// Solidity: event RemoveLink(address wallet, address secondWallet)
+func (_BaseGoerliTownsWalletLink *BaseGoerliTownsWalletLinkFilterer) ParseRemoveLink(log types.Log) (*BaseGoerliTownsWalletLinkRemoveLink, error) {
+	event := new(BaseGoerliTownsWalletLinkRemoveLink)
+	if err := _BaseGoerliTownsWalletLink.contract.UnpackLog(event, "RemoveLink", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

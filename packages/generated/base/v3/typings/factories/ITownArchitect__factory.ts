@@ -65,34 +65,46 @@ const _abi = [
       {
         components: [
           {
-            internalType: "string",
-            name: "name",
-            type: "string",
-          },
-          {
-            internalType: "uint256",
-            name: "price",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "limit",
-            type: "uint256",
-          },
-          {
-            internalType: "address",
-            name: "currency",
-            type: "address",
-          },
-          {
-            internalType: "address",
-            name: "feeRecipient",
-            type: "address",
-          },
-          {
-            internalType: "string[]",
-            name: "permissions",
-            type: "string[]",
+            components: [
+              {
+                internalType: "string",
+                name: "name",
+                type: "string",
+              },
+              {
+                internalType: "string",
+                name: "symbol",
+                type: "string",
+              },
+              {
+                internalType: "uint256",
+                name: "price",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "limit",
+                type: "uint256",
+              },
+              {
+                internalType: "uint64",
+                name: "duration",
+                type: "uint64",
+              },
+              {
+                internalType: "address",
+                name: "currency",
+                type: "address",
+              },
+              {
+                internalType: "address",
+                name: "feeRecipient",
+                type: "address",
+              },
+            ],
+            internalType: "struct IMembershipBase.MembershipInfo",
+            name: "settings",
+            type: "tuple",
           },
           {
             components: [
@@ -138,6 +150,11 @@ const _abi = [
             name: "requirements",
             type: "tuple",
           },
+          {
+            internalType: "string[]",
+            name: "permissions",
+            type: "string[]",
+          },
         ],
         internalType: "struct ITownArchitectBase.Membership",
         name: "membership",
@@ -177,34 +194,46 @@ const _abi = [
           {
             components: [
               {
-                internalType: "string",
-                name: "name",
-                type: "string",
-              },
-              {
-                internalType: "uint256",
-                name: "price",
-                type: "uint256",
-              },
-              {
-                internalType: "uint256",
-                name: "limit",
-                type: "uint256",
-              },
-              {
-                internalType: "address",
-                name: "currency",
-                type: "address",
-              },
-              {
-                internalType: "address",
-                name: "feeRecipient",
-                type: "address",
-              },
-              {
-                internalType: "string[]",
-                name: "permissions",
-                type: "string[]",
+                components: [
+                  {
+                    internalType: "string",
+                    name: "name",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "symbol",
+                    type: "string",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "price",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "limit",
+                    type: "uint256",
+                  },
+                  {
+                    internalType: "uint64",
+                    name: "duration",
+                    type: "uint64",
+                  },
+                  {
+                    internalType: "address",
+                    name: "currency",
+                    type: "address",
+                  },
+                  {
+                    internalType: "address",
+                    name: "feeRecipient",
+                    type: "address",
+                  },
+                ],
+                internalType: "struct IMembershipBase.MembershipInfo",
+                name: "settings",
+                type: "tuple",
               },
               {
                 components: [
@@ -250,6 +279,11 @@ const _abi = [
                   "struct ITownArchitectBase.MembershipRequirements",
                 name: "requirements",
                 type: "tuple",
+              },
+              {
+                internalType: "string[]",
+                name: "permissions",
+                type: "string[]",
               },
             ],
             internalType: "struct ITownArchitectBase.Membership",
@@ -306,6 +340,25 @@ const _abi = [
     name: "gateByToken",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "town",
+        type: "address",
+      },
+    ],
+    name: "getTokenIdByTown",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -378,6 +431,25 @@ const _abi = [
       },
     ],
     name: "isTokenGated",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "town",
+        type: "address",
+      },
+    ],
+    name: "isTown",
     outputs: [
       {
         internalType: "bool",

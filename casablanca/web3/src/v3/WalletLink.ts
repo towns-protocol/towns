@@ -1,6 +1,7 @@
 import { BigNumber, ContractTransaction, ethers } from 'ethers'
 import { IWalletLinkShim } from './WalletLinkShim'
 import { IStaticContractsInfo } from '../IStaticContractsInfo'
+import { arrayify } from 'ethers/lib/utils'
 
 export class WalletLink {
     private readonly walletLinkShim: IWalletLinkShim
@@ -10,6 +11,7 @@ export class WalletLink {
         chainId: number,
         provider: ethers.providers.Provider | undefined,
     ) {
+        console.log('provider is', provider)
         this.walletLinkShim = new IWalletLinkShim(contractInfo.walletLinkAddress, chainId, provider)
     }
 
@@ -21,7 +23,7 @@ export class WalletLink {
         const walletAddress = await wallet.getAddress()
         const isLinkedAlready = await this.walletLinkShim.read.checkIfLinked(
             rootKeyAddress,
-            await wallet.getAddress(),
+            walletAddress,
         )
         if (isLinkedAlready) {
             throw new Error('Wallet is already linked')
@@ -33,18 +35,39 @@ export class WalletLink {
             packAddressWithNonce(walletAddress, nonce),
         )
 
-        return (
-            this.walletLinkShim
-                .write(wallet)
-                // TODO-HNT-3102 - change  once wallet link contract is on Base
-                .linkWalletToRootKey(walletAddress, [], rootKeyAddress, rootKeySignature, nonce)
+        return this.walletLinkShim
+            .write(wallet)
+            .linkWalletToRootKey(rootKeyAddress, rootKeySignature, nonce)
+    }
+
+    public parseError(error: any): Error {
+        return this.walletLinkShim.parseError(error)
+    }
+
+    public async getLinkedWallets(rootKey: string): Promise<string[]> {
+        return this.walletLinkShim.read.getWalletsByRootKey(rootKey)
+    }
+
+    public async removeLink(
+        rootKey: ethers.Signer,
+        walletAddress: string,
+    ): Promise<ContractTransaction> {
+        const rootKeyAddress = await rootKey.getAddress()
+        const isLinkedAlready = await this.walletLinkShim.read.checkIfLinked(
+            rootKeyAddress,
+            walletAddress,
         )
+        if (!isLinkedAlready) {
+            throw new Error('Wallet is not linked')
+        }
+
+        return await this.walletLinkShim.write(rootKey).removeLink(walletAddress)
     }
 }
 
-function packAddressWithNonce(address: string, nonce: BigNumber): string {
+function packAddressWithNonce(address: string, nonce: BigNumber): Uint8Array {
     const abi = ethers.utils.defaultAbiCoder
-    const packed = abi.encode(['address', 'uint256'], [address, nonce.toNumber()])
+    const packed = abi.encode(['address', 'uint64'], [address, nonce.toNumber()])
     const hash = ethers.utils.keccak256(packed)
-    return hash
+    return arrayify(hash)
 }

@@ -60,7 +60,7 @@ contract WalletLinkTest is IWalletLinkBase, WalletLinkSetup {
     linkWalletToRootKey(wallet1, rootKey, nonce);
 
     //this should fail
-    vm.expectRevert("WalletLink: nonce already used");
+    vm.expectRevert(abi.encodeWithSelector(NonceAlreadyUsed.selector, nonce));
     linkWalletToRootKey(wallet2, rootKey, nonce);
 
     address[] memory info = walletLink.getWalletsByRootKey(rootKey.addr);
@@ -74,15 +74,9 @@ contract WalletLinkTest is IWalletLinkBase, WalletLinkSetup {
 
     assertTrue(info.length == 1);
 
-    uint64 removeNonce = 1;
-
-    walletLink.removeLinkViaWallet(
-      wallet.addr,
-      generateSignedLinkMessage(wallet, rootKey, removeNonce),
-      rootKey.addr,
-      removeNonce
-    );
-
+    vm.startPrank(wallet.addr);
+    walletLink.removeLink(rootKey.addr);
+    vm.stopPrank();
     info = walletLink.getWalletsByRootKey(rootKey.addr);
     assertTrue(info.length == 0);
   }
@@ -94,15 +88,9 @@ contract WalletLinkTest is IWalletLinkBase, WalletLinkSetup {
 
     assertTrue(info.length == 1);
 
-    uint64 removeNonce = 1;
-
-    walletLink.removeLinkViaRootKey(
-      rootKey.addr,
-      generateSignedLinkMessage(rootKey, wallet, removeNonce),
-      wallet.addr,
-      removeNonce
-    );
-
+    vm.startPrank(rootKey.addr);
+    walletLink.removeLink(wallet.addr);
+    vm.stopPrank();
     info = walletLink.getWalletsByRootKey(rootKey.addr);
     assertTrue(info.length == 0);
   }
@@ -115,7 +103,6 @@ contract WalletLinkTest is IWalletLinkBase, WalletLinkSetup {
     Wallet memory rootKey = generateWallet(bytes("rootKey"));
 
     uint64 nonce = 1;
-
     linkWalletToRootKey(wallet, rootKey, nonce);
     return (wallet, rootKey, nonce);
   }
@@ -125,12 +112,6 @@ contract WalletLinkTest is IWalletLinkBase, WalletLinkSetup {
     Wallet memory rootKey,
     uint64 nonce
   ) internal {
-    bytes memory walletSignature = generateSignedLinkMessage(
-      wallet,
-      rootKey,
-      nonce
-    );
-
     bytes memory rootKeySignature = generateSignedLinkMessage(
       rootKey,
       wallet,
@@ -138,13 +119,9 @@ contract WalletLinkTest is IWalletLinkBase, WalletLinkSetup {
     );
 
     // delegate to rootKey
-    walletLink.linkWalletToRootKey(
-      wallet.addr,
-      walletSignature,
-      rootKey.addr,
-      rootKeySignature,
-      nonce
-    );
+    vm.startPrank(wallet.addr);
+    walletLink.linkWalletToRootKey(rootKey.addr, rootKeySignature, nonce);
+    vm.stopPrank();
   }
 
   function generateSignedLinkMessage(

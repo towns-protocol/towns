@@ -16,14 +16,10 @@ library WalletLinkStorage {
   struct Layout {
     // mapping RootKeys to Ethereum Wallets is a 1 to many relationship, a root key can have many wallets
     mapping(address => address[]) rootKeysToWallets;
-    // mapping Ethereum Wallets to RootKeys is a 1 to 1 relationship, a wallet can only be linked to 1 root key
-    mapping(address => address) walletsToRootKeys;
+    // mapping Ethereum Wallets to RootKey is a 1 to 1 relationship, a wallet can only be linked to 1 root key
+    mapping(address => address) walletsToRootKey;
     //mapping that stores all nonces used by a given root key
     mapping(address => uint64) rootKeysToHighestNonce;
-    //mapping that stores all nonces used by a wallet for removing from a root key
-    mapping(address => uint64) walletsToHighestRemoveNonce;
-    //mapping that stores all nonces used by a rootkey for removing a wallet from it
-    mapping(address => uint64) rootKeysToHighestRemoveNonce;
   }
 
   function layout() internal pure returns (Layout storage s) {

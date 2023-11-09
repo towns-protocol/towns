@@ -30,41 +30,38 @@ import type {
 
 export declare namespace IMembershipBase {
   export type MembershipInfoStruct = {
-    membershipPrice: PromiseOrValue<BigNumberish>;
-    membershipLimit: PromiseOrValue<BigNumberish>;
-    membershipCurrency: PromiseOrValue<string>;
-    membershipFeeRecipient: PromiseOrValue<string>;
-    townFactory: PromiseOrValue<string>;
-    forwarder: PromiseOrValue<string>;
     name: PromiseOrValue<string>;
     symbol: PromiseOrValue<string>;
+    price: PromiseOrValue<BigNumberish>;
+    limit: PromiseOrValue<BigNumberish>;
+    duration: PromiseOrValue<BigNumberish>;
+    currency: PromiseOrValue<string>;
+    feeRecipient: PromiseOrValue<string>;
   };
 
   export type MembershipInfoStructOutput = [
+    string,
+    string,
     BigNumber,
     BigNumber,
-    string,
-    string,
-    string,
-    string,
+    BigNumber,
     string,
     string
   ] & {
-    membershipPrice: BigNumber;
-    membershipLimit: BigNumber;
-    membershipCurrency: string;
-    membershipFeeRecipient: string;
-    townFactory: string;
-    forwarder: string;
     name: string;
     symbol: string;
+    price: BigNumber;
+    limit: BigNumber;
+    duration: BigNumber;
+    currency: string;
+    feeRecipient: string;
   };
 }
 
 export interface MembershipFacetInterface extends utils.Interface {
   functions: {
     "__ERC721A_init(string,string)": FunctionFragment;
-    "__Membership_init((uint256,uint256,address,address,address,address,string,string))": FunctionFragment;
+    "__Membership_init((string,string,uint256,uint256,uint64,address,address),address,address)": FunctionFragment;
     "_getMembershipCurrency()": FunctionFragment;
     "_getMembershipFeeRecipient()": FunctionFragment;
     "_getMembershipLimit()": FunctionFragment;
@@ -80,6 +77,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "expiresAt(uint256)": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "getMembershipCurrency()": FunctionFragment;
+    "getMembershipDuration()": FunctionFragment;
     "getMembershipFeeRecipient()": FunctionFragment;
     "getMembershipLimit()": FunctionFragment;
     "getMembershipPrice()": FunctionFragment;
@@ -94,6 +92,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "safeTransferFrom(address,address,uint256,bytes)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
     "setMembershipCurrency(address)": FunctionFragment;
+    "setMembershipDuration(uint64)": FunctionFragment;
     "setMembershipFeeRecipient(address)": FunctionFragment;
     "setMembershipLimit(uint256)": FunctionFragment;
     "setMembershipPrice(uint256)": FunctionFragment;
@@ -122,6 +121,7 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "expiresAt"
       | "getApproved"
       | "getMembershipCurrency"
+      | "getMembershipDuration"
       | "getMembershipFeeRecipient"
       | "getMembershipLimit"
       | "getMembershipPrice"
@@ -136,6 +136,7 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "safeTransferFrom(address,address,uint256,bytes)"
       | "setApprovalForAll"
       | "setMembershipCurrency"
+      | "setMembershipDuration"
       | "setMembershipFeeRecipient"
       | "setMembershipLimit"
       | "setMembershipPrice"
@@ -151,7 +152,11 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "__Membership_init",
-    values: [IMembershipBase.MembershipInfoStruct]
+    values: [
+      IMembershipBase.MembershipInfoStruct,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "_getMembershipCurrency",
@@ -211,6 +216,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getMembershipCurrency",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getMembershipDuration",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -274,6 +283,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "setMembershipCurrency",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setMembershipDuration",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "setMembershipFeeRecipient",
@@ -365,6 +378,10 @@ export interface MembershipFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getMembershipDuration",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getMembershipFeeRecipient",
     data: BytesLike
   ): Result;
@@ -409,6 +426,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setMembershipCurrency",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setMembershipDuration",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -666,6 +687,8 @@ export interface MembershipFacet extends BaseContract {
 
     __Membership_init(
       info: IMembershipBase.MembershipInfoStruct,
+      townFactory: PromiseOrValue<string>,
+      forwarder: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -726,6 +749,8 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<[string]>;
 
     getMembershipCurrency(overrides?: CallOverrides): Promise<[string]>;
+
+    getMembershipDuration(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getMembershipFeeRecipient(overrides?: CallOverrides): Promise<[string]>;
 
@@ -789,6 +814,11 @@ export interface MembershipFacet extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    setMembershipDuration(
+      newDuration: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     setMembershipFeeRecipient(
       newRecipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -829,6 +859,8 @@ export interface MembershipFacet extends BaseContract {
 
   __Membership_init(
     info: IMembershipBase.MembershipInfoStruct,
+    townFactory: PromiseOrValue<string>,
+    forwarder: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -889,6 +921,8 @@ export interface MembershipFacet extends BaseContract {
   ): Promise<string>;
 
   getMembershipCurrency(overrides?: CallOverrides): Promise<string>;
+
+  getMembershipDuration(overrides?: CallOverrides): Promise<BigNumber>;
 
   getMembershipFeeRecipient(overrides?: CallOverrides): Promise<string>;
 
@@ -952,6 +986,11 @@ export interface MembershipFacet extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setMembershipDuration(
+    newDuration: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   setMembershipFeeRecipient(
     newRecipient: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -992,6 +1031,8 @@ export interface MembershipFacet extends BaseContract {
 
     __Membership_init(
       info: IMembershipBase.MembershipInfoStruct,
+      townFactory: PromiseOrValue<string>,
+      forwarder: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1053,6 +1094,8 @@ export interface MembershipFacet extends BaseContract {
 
     getMembershipCurrency(overrides?: CallOverrides): Promise<string>;
 
+    getMembershipDuration(overrides?: CallOverrides): Promise<BigNumber>;
+
     getMembershipFeeRecipient(overrides?: CallOverrides): Promise<string>;
 
     getMembershipLimit(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1112,6 +1155,11 @@ export interface MembershipFacet extends BaseContract {
 
     setMembershipCurrency(
       newCurrency: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setMembershipDuration(
+      newDuration: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1273,6 +1321,8 @@ export interface MembershipFacet extends BaseContract {
 
     __Membership_init(
       info: IMembershipBase.MembershipInfoStruct,
+      townFactory: PromiseOrValue<string>,
+      forwarder: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1333,6 +1383,8 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     getMembershipCurrency(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getMembershipDuration(overrides?: CallOverrides): Promise<BigNumber>;
 
     getMembershipFeeRecipient(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1396,6 +1448,11 @@ export interface MembershipFacet extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    setMembershipDuration(
+      newDuration: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     setMembershipFeeRecipient(
       newRecipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1437,6 +1494,8 @@ export interface MembershipFacet extends BaseContract {
 
     __Membership_init(
       info: IMembershipBase.MembershipInfoStruct,
+      townFactory: PromiseOrValue<string>,
+      forwarder: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1508,6 +1567,10 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getMembershipDuration(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getMembershipFeeRecipient(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -1573,6 +1636,11 @@ export interface MembershipFacet extends BaseContract {
 
     setMembershipCurrency(
       newCurrency: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setMembershipDuration(
+      newDuration: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

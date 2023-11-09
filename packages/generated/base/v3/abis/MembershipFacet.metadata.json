@@ -109,6 +109,11 @@
       },
       {
         "inputs": [],
+        "name": "Membership__InvalidDuration",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "Membership__InvalidFeeRecipient",
         "type": "error"
       },
@@ -497,36 +502,6 @@
           {
             "components": [
               {
-                "internalType": "uint256",
-                "name": "membershipPrice",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "membershipLimit",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "membershipCurrency",
-                "type": "address"
-              },
-              {
-                "internalType": "address",
-                "name": "membershipFeeRecipient",
-                "type": "address"
-              },
-              {
-                "internalType": "address",
-                "name": "townFactory",
-                "type": "address"
-              },
-              {
-                "internalType": "address",
-                "name": "forwarder",
-                "type": "address"
-              },
-              {
                 "internalType": "string",
                 "name": "name",
                 "type": "string"
@@ -535,11 +510,46 @@
                 "internalType": "string",
                 "name": "symbol",
                 "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "price",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "limit",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint64",
+                "name": "duration",
+                "type": "uint64"
+              },
+              {
+                "internalType": "address",
+                "name": "currency",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "feeRecipient",
+                "type": "address"
               }
             ],
             "internalType": "struct IMembershipBase.MembershipInfo",
             "name": "info",
             "type": "tuple"
+          },
+          {
+            "internalType": "address",
+            "name": "townFactory",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "forwarder",
+            "type": "address"
           }
         ],
         "name": "__Membership_init",
@@ -760,6 +770,19 @@
             "internalType": "address",
             "name": "",
             "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMembershipDuration",
+        "outputs": [
+          {
+            "internalType": "uint64",
+            "name": "",
+            "type": "uint64"
           }
         ],
         "stateMutability": "view",
@@ -1009,6 +1032,19 @@
       {
         "inputs": [
           {
+            "internalType": "uint64",
+            "name": "newDuration",
+            "type": "uint64"
+          }
+        ],
+        "name": "setMembershipDuration",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address",
             "name": "newRecipient",
             "type": "address"
@@ -1161,6 +1197,11 @@
             "_0": "The membership currency"
           }
         },
+        "getMembershipDuration()": {
+          "returns": {
+            "_0": "The membership duration"
+          }
+        },
         "getMembershipFeeRecipient()": {
           "returns": {
             "_0": "The membership fee recipient"
@@ -1223,6 +1264,11 @@
         "setMembershipCurrency(address)": {
           "params": {
             "newCurrency": "The new membership currency"
+          }
+        },
+        "setMembershipDuration(uint64)": {
+          "params": {
+            "newDuration": "The new membership duration"
           }
         },
         "setMembershipFeeRecipient(address)": {
@@ -1345,6 +1391,9 @@
         "getMembershipCurrency()": {
           "notice": "Get the membership currency"
         },
+        "getMembershipDuration()": {
+          "notice": "Get the membership duration"
+        },
         "getMembershipFeeRecipient()": {
           "notice": "Get the membership fee recipient"
         },
@@ -1368,6 +1417,9 @@
         },
         "setMembershipCurrency(address)": {
           "notice": "Set the membership currency"
+        },
+        "setMembershipDuration(uint64)": {
+          "notice": "Set the membership duration"
         },
         "setMembershipFeeRecipient(address)": {
           "notice": "Set the membership fee recipient"
@@ -1400,6 +1452,8 @@
       ":@openzeppelin/=lib/openzeppelin-contracts/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
+      ":base64-sol/=lib/base64/",
+      ":base64/=lib/base64/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -1644,35 +1698,35 @@
       ]
     },
     "contracts/src/towns/facets/membership/IMembership.sol": {
-      "keccak256": "0x3850a57d0605852c08b500c4ac18a097ac81295b3ba4c3a65061ba31454dc963",
+      "keccak256": "0xc64548c072b4c161657208537d77feb443ff46ed08427b0017a5e83aeffb5e71",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f2f8ee5df52e748adb0f0ecbb6b49eef1616deb07c271d8fea2c991d225f6d26",
-        "dweb:/ipfs/QmcbL9Wf8R9YxzFj8LZZUJq3D2XtndpTwaqLBsZqM9NBtz"
+        "bzz-raw://30bf8a01f1cd1bfca9b4bc0d61c39b3db29ecaa572b57729348c9386d62c808a",
+        "dweb:/ipfs/QmVuaaeYbW2MTmPNPqqzJHzZ5gKusewUEWus1C16RuRN6j"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x5decd0ae4cdf5b3959734524dc203d8f01ba581230eaa3a98a822570c81e02a8",
+      "keccak256": "0x86f05ea7a71f4b73ff3bcdc360b8b794636008c7d8ea0a013f142d323c77b010",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://418c51270a7b238bc7469759c89f38e314d4caa8e5d1045551c7bf9177d4c1a0",
-        "dweb:/ipfs/QmdPbCv6KhA7ax4GbfdvDZbFELLaJVmUiLNed1FwmQJMSc"
+        "bzz-raw://ab9183a801c1953a566670fb6636f85bc251227e7c0ad9e78755d401587be9a8",
+        "dweb:/ipfs/QmTyfmdiqXu3DTkTWKF94iiZtnYW5CvXXY3CzQBbFrWwW1"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0xa2922b7f0cad888d5d57ba3138ab4820ee131c56bd3fdbd772030c41746c3d21",
+      "keccak256": "0xe5c755e777cad4d4d51e025a0749cad82e85a4ad463765d3bb36cd5e8f555d12",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e592bcc2b14915efb2d1dbd9235dad00ec136b2b7295f7e49e1dc0e32582d3d6",
-        "dweb:/ipfs/QmcTghy91NdZ8kYvs7KUq5UPFU1va2dLcs1tdve8BcK9Yy"
+        "bzz-raw://08a7c390ef3ef7b925a9a7529d51795ce4c1436484464f25604eaffb6bdd92d1",
+        "dweb:/ipfs/QmY1k4e3Frqh3nHM9utkmCmU8Jmp93GcxRiQ7VHF5H3dMM"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipStorage.sol": {
-      "keccak256": "0xf61c275fd438990e41184171964bf5438ff347a1e654162b2c12bfe6f4973833",
+      "keccak256": "0x7df0f192c9b7f5416e05efea20ca1fe4f05e0263ccd5f87ab34ac5bd2d639e23",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8ed7a0fc30e464a98a8c9876855066ecad26147bb055cee6e33a7f6a2ecec691",
-        "dweb:/ipfs/QmSU45tU2HrDxbqY4Zj4JqQQnao3KS4yf89XxeqbmeDF64"
+        "bzz-raw://7ebcacd7dcb0463f25f645b357449371c13923f346e76d759ed8e66c23ee8cae",
+        "dweb:/ipfs/Qmei24qJC4pmTGJJ972jYpC9NSCvtXi1rTh8nVKF7e9WSB"
       ]
     },
     "contracts/src/towns/facets/platform/requirements/IPlatformRequirements.sol": {

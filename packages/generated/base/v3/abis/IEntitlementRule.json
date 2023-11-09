@@ -1,0 +1,1651 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "limit",
+          "type": "uint256"
+        }
+      ],
+      "name": "CheckOperationsLimitReaced",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint8",
+          "name": "operationIndex",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "checkOperationsLength",
+          "type": "uint8"
+        }
+      ],
+      "name": "InvalidCheckOperationIndex",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint8",
+          "name": "leftOperationIndex",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "currentOperationIndex",
+          "type": "uint8"
+        }
+      ],
+      "name": "InvalidLeftOperationIndex",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint8",
+          "name": "operationIndex",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "logicalOperationsLength",
+          "type": "uint8"
+        }
+      ],
+      "name": "InvalidLogicalOperationIndex",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum IEntitlementRule.CombinedOperationType",
+          "name": "opType",
+          "type": "uint8"
+        }
+      ],
+      "name": "InvalidOperationType",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint8",
+          "name": "rightOperationIndex",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "currentOperationIndex",
+          "type": "uint8"
+        }
+      ],
+      "name": "InvalidRightOperationIndex",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "limit",
+          "type": "uint256"
+        }
+      ],
+      "name": "LogicalOperationLimitReached",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "limit",
+          "type": "uint256"
+        }
+      ],
+      "name": "OperationsLimitReached",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "getCheckOperations",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum IEntitlementRule.CheckOperationType",
+              "name": "opType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "contractAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "threshold",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct IEntitlementRule.CheckOperation[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getLogicalOperations",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum IEntitlementRule.LogicalOperationType",
+              "name": "logOpType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "leftOperationIndex",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "rightOperationIndex",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct IEntitlementRule.LogicalOperation[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getOperations",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum IEntitlementRule.CombinedOperationType",
+              "name": "opType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "index",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct IEntitlementRule.Operation[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "getCheckOperations()": "c95a3041",
+    "getLogicalOperations()": "c0331a26",
+    "getOperations()": "f948e50a"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"limit\",\"type\":\"uint256\"}],\"name\":\"CheckOperationsLimitReaced\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"operationIndex\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"checkOperationsLength\",\"type\":\"uint8\"}],\"name\":\"InvalidCheckOperationIndex\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"leftOperationIndex\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"currentOperationIndex\",\"type\":\"uint8\"}],\"name\":\"InvalidLeftOperationIndex\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"operationIndex\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"logicalOperationsLength\",\"type\":\"uint8\"}],\"name\":\"InvalidLogicalOperationIndex\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"enum IEntitlementRule.CombinedOperationType\",\"name\":\"opType\",\"type\":\"uint8\"}],\"name\":\"InvalidOperationType\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"rightOperationIndex\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"currentOperationIndex\",\"type\":\"uint8\"}],\"name\":\"InvalidRightOperationIndex\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"limit\",\"type\":\"uint256\"}],\"name\":\"LogicalOperationLimitReached\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"limit\",\"type\":\"uint256\"}],\"name\":\"OperationsLimitReached\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"getCheckOperations\",\"outputs\":[{\"components\":[{\"internalType\":\"enum IEntitlementRule.CheckOperationType\",\"name\":\"opType\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"contractAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"threshold\",\"type\":\"uint256\"}],\"internalType\":\"struct IEntitlementRule.CheckOperation[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getLogicalOperations\",\"outputs\":[{\"components\":[{\"internalType\":\"enum IEntitlementRule.LogicalOperationType\",\"name\":\"logOpType\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"leftOperationIndex\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"rightOperationIndex\",\"type\":\"uint8\"}],\"internalType\":\"struct IEntitlementRule.LogicalOperation[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getOperations\",\"outputs\":[{\"components\":[{\"internalType\":\"enum IEntitlementRule.CombinedOperationType\",\"name\":\"opType\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"index\",\"type\":\"uint8\"}],\"internalType\":\"struct IEntitlementRule.Operation[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/crosschain/IEntitlementRule.sol\":\"IEntitlementRule\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":ERC721A/=lib/ERC721A/contracts/\",\":base64-sol/=lib/base64/\",\":base64/=lib/base64/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"contracts/src/crosschain/IEntitlementRule.sol\":{\"keccak256\":\"0x90178615f20403ed92b5a4b4446bbaec9803df9ce52b92a225f9b7fa9bbc61ff\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f58a5647f065997a426d39d51528fd1435ac0ed68c513c88fe7deb926ad70e6c\",\"dweb:/ipfs/QmfYy5Aus9JThaPtnskXhNckzeVKKXB3KriBtw8XVYPUfp\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.20+commit.a1b79de6"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "limit",
+              "type": "uint256"
+            }
+          ],
+          "type": "error",
+          "name": "CheckOperationsLimitReaced"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint8",
+              "name": "operationIndex",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "checkOperationsLength",
+              "type": "uint8"
+            }
+          ],
+          "type": "error",
+          "name": "InvalidCheckOperationIndex"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint8",
+              "name": "leftOperationIndex",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "currentOperationIndex",
+              "type": "uint8"
+            }
+          ],
+          "type": "error",
+          "name": "InvalidLeftOperationIndex"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint8",
+              "name": "operationIndex",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "logicalOperationsLength",
+              "type": "uint8"
+            }
+          ],
+          "type": "error",
+          "name": "InvalidLogicalOperationIndex"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "enum IEntitlementRule.CombinedOperationType",
+              "name": "opType",
+              "type": "uint8"
+            }
+          ],
+          "type": "error",
+          "name": "InvalidOperationType"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint8",
+              "name": "rightOperationIndex",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "currentOperationIndex",
+              "type": "uint8"
+            }
+          ],
+          "type": "error",
+          "name": "InvalidRightOperationIndex"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "limit",
+              "type": "uint256"
+            }
+          ],
+          "type": "error",
+          "name": "LogicalOperationLimitReached"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "limit",
+              "type": "uint256"
+            }
+          ],
+          "type": "error",
+          "name": "OperationsLimitReached"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getCheckOperations",
+          "outputs": [
+            {
+              "internalType": "struct IEntitlementRule.CheckOperation[]",
+              "name": "",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "enum IEntitlementRule.CheckOperationType",
+                  "name": "opType",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "chainId",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "contractAddress",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "threshold",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getLogicalOperations",
+          "outputs": [
+            {
+              "internalType": "struct IEntitlementRule.LogicalOperation[]",
+              "name": "",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "enum IEntitlementRule.LogicalOperationType",
+                  "name": "logOpType",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "uint8",
+                  "name": "leftOperationIndex",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "uint8",
+                  "name": "rightOperationIndex",
+                  "type": "uint8"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getOperations",
+          "outputs": [
+            {
+              "internalType": "struct IEntitlementRule.Operation[]",
+              "name": "",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "enum IEntitlementRule.CombinedOperationType",
+                  "name": "opType",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "uint8",
+                  "name": "index",
+                  "type": "uint8"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@prb/test/=lib/prb-test/src/",
+        "ERC721A/=lib/ERC721A/contracts/",
+        "base64-sol/=lib/base64/",
+        "base64/=lib/base64/",
+        "council/=lib/council/contracts/",
+        "ds-test/=lib/ds-test/src/",
+        "erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "operator-filter-registry/=lib/operator-filter-registry/",
+        "prb-test/=lib/prb-test/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "none",
+        "appendCBOR": false
+      },
+      "compilationTarget": {
+        "contracts/src/crosschain/IEntitlementRule.sol": "IEntitlementRule"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "contracts/src/crosschain/IEntitlementRule.sol": {
+        "keccak256": "0x90178615f20403ed92b5a4b4446bbaec9803df9ce52b92a225f9b7fa9bbc61ff",
+        "urls": [
+          "bzz-raw://f58a5647f065997a426d39d51528fd1435ac0ed68c513c88fe7deb926ad70e6c",
+          "dweb:/ipfs/QmfYy5Aus9JThaPtnskXhNckzeVKKXB3KriBtw8XVYPUfp"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "contracts/src/crosschain/IEntitlementRule.sol",
+    "id": 6716,
+    "exportedSymbols": {
+      "IEntitlementRule": [
+        6715
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "733:1662:33",
+    "nodes": [
+      {
+        "id": 6613,
+        "nodeType": "PragmaDirective",
+        "src": "733:23:33",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 6715,
+        "nodeType": "ContractDefinition",
+        "src": "758:1636:33",
+        "nodes": [
+          {
+            "id": 6620,
+            "nodeType": "EnumDefinition",
+            "src": "789:100:33",
+            "nodes": [],
+            "canonicalName": "IEntitlementRule.CheckOperationType",
+            "members": [
+              {
+                "id": 6614,
+                "name": "NONE",
+                "nameLocation": "819:4:33",
+                "nodeType": "EnumValue",
+                "src": "819:4:33"
+              },
+              {
+                "id": 6615,
+                "name": "MOCK",
+                "nameLocation": "829:4:33",
+                "nodeType": "EnumValue",
+                "src": "829:4:33"
+              },
+              {
+                "id": 6616,
+                "name": "ERC20",
+                "nameLocation": "839:5:33",
+                "nodeType": "EnumValue",
+                "src": "839:5:33"
+              },
+              {
+                "id": 6617,
+                "name": "ERC721",
+                "nameLocation": "850:6:33",
+                "nodeType": "EnumValue",
+                "src": "850:6:33"
+              },
+              {
+                "id": 6618,
+                "name": "ERC1155",
+                "nameLocation": "862:7:33",
+                "nodeType": "EnumValue",
+                "src": "862:7:33"
+              },
+              {
+                "id": 6619,
+                "name": "ISENTITLED",
+                "nameLocation": "875:10:33",
+                "nodeType": "EnumValue",
+                "src": "875:10:33"
+              }
+            ],
+            "name": "CheckOperationType",
+            "nameLocation": "794:18:33"
+          },
+          {
+            "id": 6630,
+            "nodeType": "StructDefinition",
+            "src": "893:131:33",
+            "nodes": [],
+            "canonicalName": "IEntitlementRule.CheckOperation",
+            "members": [
+              {
+                "constant": false,
+                "id": 6623,
+                "mutability": "mutable",
+                "name": "opType",
+                "nameLocation": "940:6:33",
+                "nodeType": "VariableDeclaration",
+                "scope": 6630,
+                "src": "921:25:33",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_enum$_CheckOperationType_$6620",
+                  "typeString": "enum IEntitlementRule.CheckOperationType"
+                },
+                "typeName": {
+                  "id": 6622,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 6621,
+                    "name": "CheckOperationType",
+                    "nameLocations": [
+                      "921:18:33"
+                    ],
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 6620,
+                    "src": "921:18:33"
+                  },
+                  "referencedDeclaration": 6620,
+                  "src": "921:18:33",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_CheckOperationType_$6620",
+                    "typeString": "enum IEntitlementRule.CheckOperationType"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 6625,
+                "mutability": "mutable",
+                "name": "chainId",
+                "nameLocation": "960:7:33",
+                "nodeType": "VariableDeclaration",
+                "scope": 6630,
+                "src": "952:15:33",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 6624,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "952:7:33",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 6627,
+                "mutability": "mutable",
+                "name": "contractAddress",
+                "nameLocation": "981:15:33",
+                "nodeType": "VariableDeclaration",
+                "scope": 6630,
+                "src": "973:23:33",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 6626,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "973:7:33",
+                  "stateMutability": "nonpayable",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 6629,
+                "mutability": "mutable",
+                "name": "threshold",
+                "nameLocation": "1010:9:33",
+                "nodeType": "VariableDeclaration",
+                "scope": 6630,
+                "src": "1002:17:33",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 6628,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1002:7:33",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "CheckOperation",
+            "nameLocation": "900:14:33",
+            "scope": 6715,
+            "visibility": "public"
+          },
+          {
+            "id": 6634,
+            "nodeType": "EnumDefinition",
+            "src": "1075:57:33",
+            "nodes": [],
+            "canonicalName": "IEntitlementRule.LogicalOperationType",
+            "members": [
+              {
+                "id": 6631,
+                "name": "NONE",
+                "nameLocation": "1107:4:33",
+                "nodeType": "EnumValue",
+                "src": "1107:4:33"
+              },
+              {
+                "id": 6632,
+                "name": "AND",
+                "nameLocation": "1117:3:33",
+                "nodeType": "EnumValue",
+                "src": "1117:3:33"
+              },
+              {
+                "id": 6633,
+                "name": "OR",
+                "nameLocation": "1126:2:33",
+                "nodeType": "EnumValue",
+                "src": "1126:2:33"
+              }
+            ],
+            "name": "LogicalOperationType",
+            "nameLocation": "1080:20:33"
+          },
+          {
+            "id": 6642,
+            "nodeType": "StructDefinition",
+            "src": "1136:126:33",
+            "nodes": [],
+            "canonicalName": "IEntitlementRule.LogicalOperation",
+            "members": [
+              {
+                "constant": false,
+                "id": 6637,
+                "mutability": "mutable",
+                "name": "logOpType",
+                "nameLocation": "1187:9:33",
+                "nodeType": "VariableDeclaration",
+                "scope": 6642,
+                "src": "1166:30:33",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_enum$_LogicalOperationType_$6634",
+                  "typeString": "enum IEntitlementRule.LogicalOperationType"
+                },
+                "typeName": {
+                  "id": 6636,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 6635,
+                    "name": "LogicalOperationType",
+                    "nameLocations": [
+                      "1166:20:33"
+                    ],
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 6634,
+                    "src": "1166:20:33"
+                  },
+                  "referencedDeclaration": 6634,
+                  "src": "1166:20:33",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_LogicalOperationType_$6634",
+                    "typeString": "enum IEntitlementRule.LogicalOperationType"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 6639,
+                "mutability": "mutable",
+                "name": "leftOperationIndex",
+                "nameLocation": "1208:18:33",
+                "nodeType": "VariableDeclaration",
+                "scope": 6642,
+                "src": "1202:24:33",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint8",
+                  "typeString": "uint8"
+                },
+                "typeName": {
+                  "id": 6638,
+                  "name": "uint8",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1202:5:33",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 6641,
+                "mutability": "mutable",
+                "name": "rightOperationIndex",
+                "nameLocation": "1238:19:33",
+                "nodeType": "VariableDeclaration",
+                "scope": 6642,
+                "src": "1232:25:33",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint8",
+                  "typeString": "uint8"
+                },
+                "typeName": {
+                  "id": 6640,
+                  "name": "uint8",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1232:5:33",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "LogicalOperation",
+            "nameLocation": "1143:16:33",
+            "scope": 6715,
+            "visibility": "public"
+          },
+          {
+            "id": 6646,
+            "nodeType": "EnumDefinition",
+            "src": "1298:65:33",
+            "nodes": [],
+            "canonicalName": "IEntitlementRule.CombinedOperationType",
+            "members": [
+              {
+                "id": 6643,
+                "name": "NONE",
+                "nameLocation": "1331:4:33",
+                "nodeType": "EnumValue",
+                "src": "1331:4:33"
+              },
+              {
+                "id": 6644,
+                "name": "CHECK",
+                "nameLocation": "1341:5:33",
+                "nodeType": "EnumValue",
+                "src": "1341:5:33"
+              },
+              {
+                "id": 6645,
+                "name": "LOGICAL",
+                "nameLocation": "1352:7:33",
+                "nodeType": "EnumValue",
+                "src": "1352:7:33"
+              }
+            ],
+            "name": "CombinedOperationType",
+            "nameLocation": "1303:21:33"
+          },
+          {
+            "id": 6652,
+            "nodeType": "StructDefinition",
+            "src": "1367:136:33",
+            "nodes": [],
+            "canonicalName": "IEntitlementRule.Operation",
+            "members": [
+              {
+                "constant": false,
+                "id": 6649,
+                "mutability": "mutable",
+                "name": "opType",
+                "nameLocation": "1412:6:33",
+                "nodeType": "VariableDeclaration",
+                "scope": 6652,
+                "src": "1390:28:33",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_enum$_CombinedOperationType_$6646",
+                  "typeString": "enum IEntitlementRule.CombinedOperationType"
+                },
+                "typeName": {
+                  "id": 6648,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 6647,
+                    "name": "CombinedOperationType",
+                    "nameLocations": [
+                      "1390:21:33"
+                    ],
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 6646,
+                    "src": "1390:21:33"
+                  },
+                  "referencedDeclaration": 6646,
+                  "src": "1390:21:33",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_CombinedOperationType_$6646",
+                    "typeString": "enum IEntitlementRule.CombinedOperationType"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 6651,
+                "mutability": "mutable",
+                "name": "index",
+                "nameLocation": "1430:5:33",
+                "nodeType": "VariableDeclaration",
+                "scope": 6652,
+                "src": "1424:11:33",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint8",
+                  "typeString": "uint8"
+                },
+                "typeName": {
+                  "id": 6650,
+                  "name": "uint8",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "1424:5:33",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "Operation",
+            "nameLocation": "1374:9:33",
+            "scope": 6715,
+            "visibility": "public"
+          },
+          {
+            "id": 6659,
+            "nodeType": "FunctionDefinition",
+            "src": "1507:68:33",
+            "nodes": [],
+            "functionSelector": "f948e50a",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getOperations",
+            "nameLocation": "1516:13:33",
+            "parameters": {
+              "id": 6653,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1529:2:33"
+            },
+            "returnParameters": {
+              "id": 6658,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6657,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6659,
+                  "src": "1555:18:33",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Operation_$6652_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct IEntitlementRule.Operation[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 6655,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 6654,
+                        "name": "Operation",
+                        "nameLocations": [
+                          "1555:9:33"
+                        ],
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 6652,
+                        "src": "1555:9:33"
+                      },
+                      "referencedDeclaration": 6652,
+                      "src": "1555:9:33",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Operation_$6652_storage_ptr",
+                        "typeString": "struct IEntitlementRule.Operation"
+                      }
+                    },
+                    "id": 6656,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1555:11:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Operation_$6652_storage_$dyn_storage_ptr",
+                      "typeString": "struct IEntitlementRule.Operation[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1554:20:33"
+            },
+            "scope": 6715,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 6666,
+            "nodeType": "FunctionDefinition",
+            "src": "1579:94:33",
+            "nodes": [],
+            "functionSelector": "c0331a26",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getLogicalOperations",
+            "nameLocation": "1588:20:33",
+            "parameters": {
+              "id": 6660,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1608:2:33"
+            },
+            "returnParameters": {
+              "id": 6665,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6664,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6666,
+                  "src": "1646:25:33",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_LogicalOperation_$6642_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct IEntitlementRule.LogicalOperation[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 6662,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 6661,
+                        "name": "LogicalOperation",
+                        "nameLocations": [
+                          "1646:16:33"
+                        ],
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 6642,
+                        "src": "1646:16:33"
+                      },
+                      "referencedDeclaration": 6642,
+                      "src": "1646:16:33",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_LogicalOperation_$6642_storage_ptr",
+                        "typeString": "struct IEntitlementRule.LogicalOperation"
+                      }
+                    },
+                    "id": 6663,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1646:18:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_LogicalOperation_$6642_storage_$dyn_storage_ptr",
+                      "typeString": "struct IEntitlementRule.LogicalOperation[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1645:27:33"
+            },
+            "scope": 6715,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 6673,
+            "nodeType": "FunctionDefinition",
+            "src": "1677:78:33",
+            "nodes": [],
+            "functionSelector": "c95a3041",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getCheckOperations",
+            "nameLocation": "1686:18:33",
+            "parameters": {
+              "id": 6667,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1704:2:33"
+            },
+            "returnParameters": {
+              "id": 6672,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6671,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6673,
+                  "src": "1730:23:33",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_CheckOperation_$6630_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "struct IEntitlementRule.CheckOperation[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 6669,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 6668,
+                        "name": "CheckOperation",
+                        "nameLocations": [
+                          "1730:14:33"
+                        ],
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 6630,
+                        "src": "1730:14:33"
+                      },
+                      "referencedDeclaration": 6630,
+                      "src": "1730:14:33",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_CheckOperation_$6630_storage_ptr",
+                        "typeString": "struct IEntitlementRule.CheckOperation"
+                      }
+                    },
+                    "id": 6670,
+                    "nodeType": "ArrayTypeName",
+                    "src": "1730:16:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_CheckOperation_$6630_storage_$dyn_storage_ptr",
+                      "typeString": "struct IEntitlementRule.CheckOperation[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1729:25:33"
+            },
+            "scope": 6715,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 6677,
+            "nodeType": "ErrorDefinition",
+            "src": "1759:48:33",
+            "nodes": [],
+            "errorSelector": "dc5f489a",
+            "name": "CheckOperationsLimitReaced",
+            "nameLocation": "1765:26:33",
+            "parameters": {
+              "id": 6676,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6675,
+                  "mutability": "mutable",
+                  "name": "limit",
+                  "nameLocation": "1800:5:33",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6677,
+                  "src": "1792:13:33",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 6674,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1792:7:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1791:15:33"
+            }
+          },
+          {
+            "id": 6681,
+            "nodeType": "ErrorDefinition",
+            "src": "1810:44:33",
+            "nodes": [],
+            "errorSelector": "5a5bcfbd",
+            "name": "OperationsLimitReached",
+            "nameLocation": "1816:22:33",
+            "parameters": {
+              "id": 6680,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6679,
+                  "mutability": "mutable",
+                  "name": "limit",
+                  "nameLocation": "1847:5:33",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6681,
+                  "src": "1839:13:33",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 6678,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1839:7:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1838:15:33"
+            }
+          },
+          {
+            "id": 6685,
+            "nodeType": "ErrorDefinition",
+            "src": "1857:50:33",
+            "nodes": [],
+            "errorSelector": "ee1a7b43",
+            "name": "LogicalOperationLimitReached",
+            "nameLocation": "1863:28:33",
+            "parameters": {
+              "id": 6684,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6683,
+                  "mutability": "mutable",
+                  "name": "limit",
+                  "nameLocation": "1900:5:33",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6685,
+                  "src": "1892:13:33",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 6682,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1892:7:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1891:15:33"
+            }
+          },
+          {
+            "id": 6691,
+            "nodeType": "ErrorDefinition",
+            "src": "1910:96:33",
+            "nodes": [],
+            "errorSelector": "6b0eb2a3",
+            "name": "InvalidCheckOperationIndex",
+            "nameLocation": "1916:26:33",
+            "parameters": {
+              "id": 6690,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6687,
+                  "mutability": "mutable",
+                  "name": "operationIndex",
+                  "nameLocation": "1954:14:33",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6691,
+                  "src": "1948:20:33",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 6686,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1948:5:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 6689,
+                  "mutability": "mutable",
+                  "name": "checkOperationsLength",
+                  "nameLocation": "1980:21:33",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6691,
+                  "src": "1974:27:33",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 6688,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1974:5:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1942:63:33"
+            }
+          },
+          {
+            "id": 6697,
+            "nodeType": "ErrorDefinition",
+            "src": "2009:100:33",
+            "nodes": [],
+            "errorSelector": "84fc44fc",
+            "name": "InvalidLogicalOperationIndex",
+            "nameLocation": "2015:28:33",
+            "parameters": {
+              "id": 6696,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6693,
+                  "mutability": "mutable",
+                  "name": "operationIndex",
+                  "nameLocation": "2055:14:33",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6697,
+                  "src": "2049:20:33",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 6692,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2049:5:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 6695,
+                  "mutability": "mutable",
+                  "name": "logicalOperationsLength",
+                  "nameLocation": "2081:23:33",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6697,
+                  "src": "2075:29:33",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 6694,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2075:5:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2043:65:33"
+            }
+          },
+          {
+            "id": 6702,
+            "nodeType": "ErrorDefinition",
+            "src": "2112:74:33",
+            "nodes": [],
+            "errorSelector": "6b1b4adc",
+            "name": "InvalidOperationType",
+            "nameLocation": "2118:20:33",
+            "parameters": {
+              "id": 6701,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6700,
+                  "mutability": "mutable",
+                  "name": "opType",
+                  "nameLocation": "2178:6:33",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6702,
+                  "src": "2139:45:33",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_CombinedOperationType_$6646",
+                    "typeString": "enum IEntitlementRule.CombinedOperationType"
+                  },
+                  "typeName": {
+                    "id": 6699,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 6698,
+                      "name": "IEntitlementRule.CombinedOperationType",
+                      "nameLocations": [
+                        "2139:16:33",
+                        "2156:21:33"
+                      ],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 6646,
+                      "src": "2139:38:33"
+                    },
+                    "referencedDeclaration": 6646,
+                    "src": "2139:38:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_enum$_CombinedOperationType_$6646",
+                      "typeString": "enum IEntitlementRule.CombinedOperationType"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2138:47:33"
+            }
+          },
+          {
+            "id": 6708,
+            "nodeType": "ErrorDefinition",
+            "src": "2189:99:33",
+            "nodes": [],
+            "errorSelector": "447334e3",
+            "name": "InvalidLeftOperationIndex",
+            "nameLocation": "2195:25:33",
+            "parameters": {
+              "id": 6707,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6704,
+                  "mutability": "mutable",
+                  "name": "leftOperationIndex",
+                  "nameLocation": "2232:18:33",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6708,
+                  "src": "2226:24:33",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 6703,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2226:5:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 6706,
+                  "mutability": "mutable",
+                  "name": "currentOperationIndex",
+                  "nameLocation": "2262:21:33",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6708,
+                  "src": "2256:27:33",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 6705,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2256:5:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2220:67:33"
+            }
+          },
+          {
+            "id": 6714,
+            "nodeType": "ErrorDefinition",
+            "src": "2291:101:33",
+            "nodes": [],
+            "errorSelector": "858dd017",
+            "name": "InvalidRightOperationIndex",
+            "nameLocation": "2297:26:33",
+            "parameters": {
+              "id": 6713,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6710,
+                  "mutability": "mutable",
+                  "name": "rightOperationIndex",
+                  "nameLocation": "2335:19:33",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6714,
+                  "src": "2329:25:33",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 6709,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2329:5:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 6712,
+                  "mutability": "mutable",
+                  "name": "currentOperationIndex",
+                  "nameLocation": "2366:21:33",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6714,
+                  "src": "2360:27:33",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 6711,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2360:5:33",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2323:68:33"
+            }
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IEntitlementRule",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          6715
+        ],
+        "name": "IEntitlementRule",
+        "nameLocation": "768:16:33",
+        "scope": 6716,
+        "usedErrors": [
+          6677,
+          6681,
+          6685,
+          6691,
+          6697,
+          6702,
+          6708,
+          6714
+        ],
+        "usedEvents": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 33
+}

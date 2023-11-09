@@ -1381,12 +1381,8 @@ export class ZionClient implements DecryptionExtensionDelegate {
             transaction = await walletLink.linkWallet(rootKey, wallet)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
-            // TODO-HNT-3222 implement error parsing for wallet linking errors
-            error = {
-                name: UNKNOWN_ERROR,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                message: err.message,
-            }
+            const parsedError = walletLink.parseError(err)
+            error = parsedError
         }
 
         return {
@@ -1401,6 +1397,48 @@ export class ZionClient implements DecryptionExtensionDelegate {
                 : undefined,
             error,
         }
+    }
+
+    public async removeLink(
+        rootKey: ethers.Signer,
+        walletAddress: string,
+    ): Promise<WalletLinkTransactionContext> {
+        const walletLink = this.spaceDapp.getWalletLink()
+
+        let transaction: ContractTransaction | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            transaction = await walletLink.removeLink(rootKey, walletAddress)
+        } catch (err) {
+            console.error('[removeLink]', err)
+            const parsedError = walletLink.parseError(err)
+            error = {
+                name: UNKNOWN_ERROR,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                message: parsedError.message,
+            }
+        }
+
+        console.log('tx removeLink', transaction)
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: transaction
+                ? {
+                      rootKeyAddress: await rootKey.getAddress(),
+                      walletAddress,
+                  }
+                : undefined,
+            error,
+        }
+    }
+
+    public async getLinkedWallets(walletAddress: string): Promise<string[]> {
+        const walletLink = this.spaceDapp.getWalletLink()
+        return await walletLink.getLinkedWallets(walletAddress)
     }
 
     /************************************************
