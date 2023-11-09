@@ -48,6 +48,10 @@ describe('useSpaceDataHook', () => {
         })
 
         // going to use alice in react component
+        const aliceUserId = alice.getUserId()
+        if (!aliceUserId) {
+            throw new Error('alice needs a userId')
+        }
         await alice.stopClients()
 
         const LoginAndJoin = () => {
@@ -128,7 +132,7 @@ describe('useSpaceDataHook', () => {
         // wait for registration
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
         // sanity check, we need to be logged in as alice
-        await waitFor(() => expect(userIdContent).toHaveTextContent(alice.getUserId() ?? ''))
+        await waitFor(() => expect(userIdContent).toHaveTextContent(aliceUserId))
         // extra sanity check, need client running
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
 

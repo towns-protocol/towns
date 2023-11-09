@@ -17,6 +17,31 @@ beforeAll(() => {
     globalThis.ResizeObserver = ResizeObserver
 })
 
+describe('<AllRoutes />', () => {
+    test('renders register form when user needs onboarding', async () => {
+        render(<Wrapper />)
+        await waitFor(() => {
+            expect(screen.getByTestId('register-form')).toBeInTheDocument()
+        })
+    })
+})
+
+vi.mock('use-zion-client', async () => {
+    const actual = (await vi.importActual('use-zion-client')) as typeof import('use-zion-client')
+
+    return {
+        ...actual,
+        useZionContext: () => ({
+            ...actual.useZionContext(),
+            matrixOnboardingState: {
+                kind: 'update-profile',
+                bNeedsDisplayName: true,
+                bNeedsAvatar: true,
+            },
+        }),
+    }
+})
+
 vi.mock('hooks/useAuth', async () => {
     const actual = (await vi.importActual('hooks/useAuth')) as typeof import('hooks/useAuth')
 

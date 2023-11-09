@@ -1,85 +1,222 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { bin_fromHexString, Client as CasablancaClient, SignerContext } from '@river/sdk'
+import { MutableRefObject, useEffect, useRef, useState } from 'react'
+import { bin_fromHexString, Client as CasablancaClient, check, SignerContext } from '@river/sdk'
 import { LoginStatus } from './login'
 import { ZionClient } from '../client/ZionClient'
 import { ZionOpts } from '../client/ZionClientTypes'
-import { useCredentialStore } from '../store/use-credential-store'
+import { CasablancaCredentials, useCredentialStore } from '../store/use-credential-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
+import EventEmitter from 'events'
+import TypedEmitter from 'typed-emitter'
+import { staticAssertNever } from '../utils/zion-utils'
 
 export const useZionClientListener = (opts: ZionOpts) => {
     const { provider } = useWeb3Context()
     const { setLoginStatus: setCasablancaLoginStatus } = useCasablancaStore()
-    const { casablancaCredentialsMap, setCasablancaCredentials } = useCredentialStore()
+    const { casablancaCredentialsMap, clearCasablancaCredentials } = useCredentialStore()
     const casablancaCredentials = casablancaCredentialsMap[opts.casablancaServerUrl ?? '']
     const [casablancaClient, setCasablancaClient] = useState<CasablancaClient>()
-    const clientSingleton = useRef<ZionClient>()
+    const clientSingleton = useRef<ClientStateMachine>()
 
     if (!clientSingleton.current) {
-        clientSingleton.current = new ZionClient({
+        const zionClient = new ZionClient({
             ...opts,
             web3Provider: provider,
         })
+        clientSingleton.current = new ClientStateMachine(zionClient)
     }
 
-    const startCasablancaClient = useCallback(async () => {
-        if (!clientSingleton.current || !casablancaCredentials) {
-            console.log('casablanca client listener not yet started:', {
-                singleton: clientSingleton.current !== undefined,
-                casablancaCredentials: casablancaCredentials !== null,
-            })
-            setCasablancaClient(undefined)
+    logServerUrlMismatch(opts, clientSingleton)
+
+    useEffect(() => {
+        const stateMachine = clientSingleton.current
+        if (!stateMachine) {
             return
         }
 
-        const client = clientSingleton.current
-        const pk = casablancaCredentials.privateKey.slice(2)
-        if (pk === client.signerContext?.signerPrivateKey()) {
-            console.log('startCasablancaClient: called again with same access token')
-            return
+        const onStateMachineUpdated = (state: States) => {
+            setCasablancaClient(state.casablancaClient)
+            setCasablancaLoginStatus(state.loginStatus)
         }
-        console.log('******* start casablanca client *******')
-        // unset the client ref if it's not already, we need to cycle the ui
-        setCasablancaClient(undefined)
-        // start it up!
-        // TODO(HNT-1380): transition to final signing model
-        try {
-            const context: SignerContext = {
-                signerPrivateKey: () => pk,
-                creatorAddress: bin_fromHexString(casablancaCredentials.creatorAddress),
-                delegateSig: casablancaCredentials.delegateSig
-                    ? bin_fromHexString(casablancaCredentials.delegateSig)
-                    : undefined,
-                deviceId: casablancaCredentials.deviceId,
-            }
-            const casablancaClient = await client.startCasablancaClient(context)
-            setCasablancaClient(casablancaClient)
-            setCasablancaLoginStatus(LoginStatus.LoggedIn)
-            console.log('******* Casablanca client listener started *******')
-        } catch (e) {
-            console.log('******* casablanca client encountered exception *******', e)
-            try {
-                await client.logoutFromCasablanca()
-            } catch (e) {
-                console.log('error while logging out', e)
-            }
-            setCasablancaLoginStatus(LoginStatus.LoggedOut)
-            setCasablancaCredentials(opts.casablancaServerUrl ?? '', null)
+
+        const onClearCredentials = (oldCredendials: CasablancaCredentials) => {
+            clearCasablancaCredentials(opts.casablancaServerUrl ?? '', oldCredendials)
+        }
+
+        stateMachine.on('onStateUpdated', onStateMachineUpdated)
+        stateMachine.on('onClearCredentials', onClearCredentials)
+        stateMachine.update(casablancaCredentials ?? undefined)
+        onStateMachineUpdated(stateMachine.state)
+        return () => {
+            stateMachine.off('onStateUpdated', onStateMachineUpdated)
+            stateMachine.off('onClearCredentials', onClearCredentials)
         }
     }, [
         casablancaCredentials,
         opts.casablancaServerUrl,
-        setCasablancaCredentials,
+        setCasablancaClient,
         setCasablancaLoginStatus,
+        clearCasablancaCredentials,
     ])
 
-    useEffect(() => {
-        void (async () => await startCasablancaClient())()
-    }, [startCasablancaClient])
-
     return {
-        client: casablancaClient ? clientSingleton.current : undefined,
-        clientSingleton: clientSingleton.current,
+        client: casablancaClient ? clientSingleton.current.client : undefined,
+        clientSingleton: clientSingleton.current.client,
         casablancaClient,
+    }
+}
+
+class LoggedIn {
+    readonly loginStatus = LoginStatus.LoggedIn
+    constructor(
+        readonly credentials: CasablancaCredentials,
+        readonly casablancaClient: CasablancaClient,
+    ) {}
+}
+
+class LoggedOut {
+    readonly loginStatus = LoginStatus.LoggedOut
+    readonly credentials = undefined
+    readonly casablancaClient = undefined
+}
+
+class LoggingIn {
+    readonly loginStatus = LoginStatus.LoggingIn
+    readonly casablancaClient = undefined
+    constructor(readonly credentials: CasablancaCredentials) {}
+}
+
+class LoggingOut {
+    readonly loginStatus = LoginStatus.LoggingOut
+    readonly credentials = undefined
+    constructor(readonly casablancaClient: CasablancaClient) {}
+}
+
+type Next = { credentials?: CasablancaCredentials }
+type Transitions = LoggingIn | LoggingOut
+type Situations = LoggedIn | LoggedOut
+type States = Transitions | Situations
+
+function isSituation(state: States): state is Situations {
+    return state.loginStatus === LoginStatus.LoggedIn || state.loginStatus === LoginStatus.LoggedOut
+}
+
+type ClientStateMachineEvents = {
+    onStateUpdated: (state: States) => void
+    onClearCredentials: (oldCredendials: CasablancaCredentials) => void
+}
+
+class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientStateMachineEvents>) {
+    state: States = new LoggedOut()
+    client: ZionClient
+    private next: Next = {}
+
+    constructor(client: ZionClient) {
+        super()
+        this.client = client
+    }
+
+    update(nextCredentials?: CasablancaCredentials) {
+        this.next = { credentials: nextCredentials }
+        void this.tick()
+    }
+
+    private async tick() {
+        if (!isSituation(this.state)) {
+            // console.log('$$$ tick: ignoring re-entry')
+            return
+        }
+        const transition = getTransition(this.state, this.next)
+        if (!transition) {
+            // console.log('$$$ tick: no transition needed')
+            return
+        }
+        logTick(this.state, transition)
+        const currentSituation = this.state
+        this.state = transition
+        this.emit('onStateUpdated', this.state)
+        this.state = await this.execute(currentSituation, transition)
+        logTick(this.state)
+        this.emit('onStateUpdated', this.state)
+        void this.tick() // call ourself again to pick up any pending next state
+    }
+
+    private async execute(
+        currentSituation: Situations,
+        transition: Transitions,
+    ): Promise<Situations> {
+        switch (transition.loginStatus) {
+            case LoginStatus.LoggingOut:
+                check(currentSituation instanceof LoggedIn)
+                await this.client.stopCasablancaClient()
+                return new LoggedOut()
+            case LoginStatus.LoggingIn: {
+                check(currentSituation instanceof LoggedOut)
+                const { credentials } = transition
+                const pk = credentials.privateKey.slice(2)
+                try {
+                    const context: SignerContext = {
+                        signerPrivateKey: () => pk,
+                        creatorAddress: bin_fromHexString(credentials.creatorAddress),
+                        delegateSig: credentials.delegateSig
+                            ? bin_fromHexString(credentials.delegateSig)
+                            : undefined,
+                        deviceId: credentials.deviceId,
+                    }
+                    const casablancaClient = await this.client.startCasablancaClient(context)
+                    return new LoggedIn(credentials, casablancaClient)
+                } catch (e) {
+                    console.log('******* casablanca client encountered exception *******', e)
+                    try {
+                        await this.client.logoutFromCasablanca()
+                    } catch (e) {
+                        console.log('error while logging out', e)
+                    }
+                    this.emit('onClearCredentials', credentials)
+                    return new LoggedOut()
+                }
+            }
+            default:
+                staticAssertNever(transition)
+        }
+    }
+}
+
+function getTransition(current: Situations, next: Next): Transitions | undefined {
+    switch (current.loginStatus) {
+        case LoginStatus.LoggedOut:
+            if (next.credentials !== undefined) {
+                return new LoggingIn(next.credentials)
+            }
+            break
+        case LoginStatus.LoggedIn:
+            if (next.credentials !== current.credentials) {
+                return new LoggingOut(current.casablancaClient)
+            }
+            break
+        default:
+            staticAssertNever(current)
+    }
+    return undefined
+}
+
+function logTick(situation: Situations, transition?: Transitions) {
+    console.log('$$$ tick update', {
+        current: situation.loginStatus,
+        transition: transition?.loginStatus,
+    })
+}
+
+function logServerUrlMismatch(
+    opts: ZionOpts,
+    clientSingleton: MutableRefObject<ClientStateMachine | undefined>,
+) {
+    if (opts.casablancaServerUrl !== clientSingleton.current?.client.opts.casablancaServerUrl) {
+        // aellis there is an assumption in this code that the casablanca server url never changes
+        // if it does change, we need to refresh the page to recreate the client
+        console.error("$$$ use zion client listener: casablancaServerUrl doesn't match", {
+            opts: opts.casablancaServerUrl,
+            client: clientSingleton.current?.client.opts.casablancaServerUrl,
+        })
     }
 }

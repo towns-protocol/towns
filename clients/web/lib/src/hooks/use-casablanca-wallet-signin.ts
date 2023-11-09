@@ -29,7 +29,6 @@ export function useCasablancaWalletSignIn() {
             if (!clientSingleton.opts.casablancaServerUrl) {
                 throw new Error('Casablanca server url not set')
             }
-            setLoginStatus(LoginStatus.LoggingIn)
             const delegateWallet = ethers.Wallet.createRandom()
             try {
                 const casablancaContext = await clientSingleton.signCasablancaDelegate(
@@ -47,7 +46,6 @@ export function useCasablancaWalletSignIn() {
                     loggedInWalletAddress: activeWalletAddress,
                     deviceId: casablancaContext.deviceId,
                 })
-                setLoginStatus(LoginStatus.LoggedIn)
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
                 console.error('loginWithWalletToCasablanca error', e)

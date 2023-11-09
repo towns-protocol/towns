@@ -1,3 +1,4 @@
+import isEqual from 'lodash/isEqual'
 import { Address } from 'wagmi'
 import { create, StateCreator } from 'zustand'
 import { createJSONStorage, persist, PersistOptions } from 'zustand/middleware'
@@ -33,6 +34,7 @@ export type CredentialStoreStates = {
         homeServerUrl: string,
         casablancaCredentials: CasablancaCredentials | null,
     ) => void
+    clearCasablancaCredentials: (homeServerUrl: string, old: CasablancaCredentials | null) => void
 }
 
 type MyPersist = (
@@ -88,6 +90,17 @@ export const useCredentialStore = create<CredentialStoreStates>(
                         [homeServerUrl]: casablancaCredentials,
                     },
                 })),
+            clearCasablancaCredentials: (
+                homeServerUrl: string,
+                old: CasablancaCredentials | null,
+            ) => {
+                set((state) => {
+                    if (isEqual(state.casablancaCredentialsMap[homeServerUrl], old)) {
+                        state.casablancaCredentialsMap[homeServerUrl] = null
+                    }
+                    return state
+                })
+            },
         }),
         {
             name: CREDENTIAL_STORE_NAME,
