@@ -95,7 +95,7 @@ export class ZionClient implements DecryptionExtensionDelegate {
 
     constructor(opts: ZionOpts, name?: string) {
         this.opts = opts
-        this.name = name || ''
+        this.name = name || Math.random().toString(36).substring(7)
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.spaceDapp = createSpaceDapp(opts.chainId, opts.web3Provider)
         this.pioneerNFT = new PioneerNFT(opts.chainId, opts.web3Provider)
