@@ -1,10 +1,12 @@
 import React from 'react'
 import { Outlet } from 'react-router'
 import { Membership } from 'use-zion-client'
+import { Link } from 'react-router-dom'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
-import { Box, Icon, Paragraph, Text } from '@ui'
+import { Box, Button, Heading, Icon, Paragraph } from '@ui'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
+import { FadeInBox } from '@components/Transitions'
 import { PublicTownPage } from './PublicTownPage'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
@@ -17,7 +19,7 @@ export const ValidateMembership = () => {
         return <Outlet />
     }
 
-    if (chainSpaceLoading || !chainSpace || !initialSyncComplete) {
+    if (chainSpaceLoading || !initialSyncComplete) {
         return (
             <WelcomeLayout>
                 <Box padding position="bottomRight">
@@ -29,9 +31,21 @@ export const ValidateMembership = () => {
 
     if (!chainSpace && !space) {
         return (
-            <Box absoluteFill centerContent gap="lg">
-                <Icon color="error" type="alert" size="square_xl" />
-                <Text size="lg">Town not found</Text>
+            <Box absoluteFill centerContent>
+                <FadeInBox centerContent gap="lg" maxWidth="400">
+                    <Box padding background="error" borderRadius="sm">
+                        <Icon color="default" type="alert" size="square_md" />
+                    </Box>
+                    <Heading level={3}>Town not found</Heading>
+                    <Paragraph color="gray2" textAlign="center">
+                        The town is currently unreachable, please try again later.
+                    </Paragraph>
+                    <Box>
+                        <Link to="/">
+                            <Button size="button_md">Back to index</Button>
+                        </Link>
+                    </Box>
+                </FadeInBox>
             </Box>
         )
     }
