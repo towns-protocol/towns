@@ -95,6 +95,7 @@
       "label": "Restart Watches",
       "dependsOn": [
         "Kill Watches",
+        "DummyTask",
         "Start Watches",
       ],
       "dependsOrder": "sequence",
@@ -158,7 +159,7 @@
     {
       "label": "DummyTask",
       "type": "shell",
-      "command": "echo 'Dummy task... sometimes this is just needed.'",
+      "command": "sleep 1 && echo 'Dummy task... sometimes this is just needed.'",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
