@@ -467,14 +467,22 @@ export async function getExistingOlmSessions(
                     if (sessionId === null) {
                         const devicesMap = devicesWithoutSessions.get(userId)
                         if (devicesMap !== undefined) {
-                            devicesMap.push(deviceInfo)
+                            devicesWithoutSessions.set(userId, [...devicesMap, deviceInfo])
+                        } else {
+                            devicesWithoutSessions.set(userId, [deviceInfo])
                         }
                     } else {
                         const sessionsMap = devicesWithSessions.get(userId)
                         if (sessionsMap !== undefined) {
-                            sessionsMap.set(deviceId, {
+                            devicesWithSessions.set(
+                                userId,
+                                sessionsMap.set(deviceId, { device: deviceInfo, sessionId }),
+                            )
+                        } else {
+                            devicesWithSessions.set(userId, new Map())
+                            devicesWithSessions.get(userId)?.set(deviceId, {
                                 device: deviceInfo,
-                                sessionId: sessionId,
+                                sessionId,
                             })
                         }
                     }

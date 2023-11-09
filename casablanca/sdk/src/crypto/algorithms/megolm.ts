@@ -28,6 +28,7 @@ import {
 import * as olmLib from '../olmLib'
 import { ClearContent, RiverEventV2 } from '../../eventV2'
 import { make_ToDevice_KeyResponse } from '../../types'
+import { StreamStateView } from '../../streamStateView'
 
 export interface IOutboundGroupSessionKey {
     chain_index: number
@@ -902,12 +903,16 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         channel_id: string,
         isCancelled?: () => boolean,
     ): Promise<null | [DeviceInfoMap]> {
-        const stream = this.baseApis.stream(channel_id)
+        let stream: StreamStateView | undefined
+        stream = this.baseApis.stream(channel_id)?.view
+        if (!stream) {
+            stream = await this.baseApis.getStream(channel_id)
+        }
         if (!stream) {
             this.logError(`stream for room ${channel_id} not found`)
             return null
         }
-        const members: string[] = Array.from(stream.view.getMemberships().joinedUsers)
+        const members: string[] = Array.from(stream.getMemberships().joinedUsers)
         this.logCall(
             `Encrypting for users (shouldEncryptForInvitedMembers:`,
             members.map((u) => `${u} (${MembershipOp[MembershipOp.SO_JOIN]})`),
