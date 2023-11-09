@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 )
 
@@ -18,6 +19,15 @@ func run(cfg *config.Config) error {
 	ctx := context.Background()
 	if cfg.Metrics.Enabled {
 		go infra.StartMetricsService(ctx, cfg.Metrics)
+	}
+	if cfg.Tracing.Enabled {
+		if os.Getenv("DD_ENV") != "" {
+			fmt.Println("Starting Datadog tracer")
+			tracer.Start()
+			defer tracer.Stop()
+		} else {
+			fmt.Println("Tracing was enabled, but DD_ENV was not set. Tracing will not be enabled.")
+		}
 	}
 	if cfg.PerformanceTracking.ProfilingEnabled {
 		if os.Getenv("DD_ENV") != "" {

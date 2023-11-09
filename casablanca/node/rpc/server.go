@@ -27,6 +27,7 @@ import (
 	"golang.org/x/exp/slog"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
 
 type Cleanup func(context.Context) error
@@ -179,20 +180,20 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	}
 
 	streamService := &Service{
-		cache:              cache,
-		townsContract:      townsContract,
-		wallet:             wallet,
-		exitSignal:         exitSignal,
-		nodeRegistry:       nodeRegistry,
-		streamRegistry:     nodes.NewStreamRegistry(nodeRegistry, cfg.UseBlockChainStreamRegistry, streamRegistryContract),
-		streamConfig:       cfg.Stream,
-		notification:       notification,
-		syncHandler:        syncHandler,
+		cache:          cache,
+		townsContract:  townsContract,
+		wallet:         wallet,
+		exitSignal:     exitSignal,
+		nodeRegistry:   nodeRegistry,
+		streamRegistry: nodes.NewStreamRegistry(nodeRegistry, cfg.UseBlockChainStreamRegistry, streamRegistryContract),
+		streamConfig:   cfg.Stream,
+		notification:   notification,
+		syncHandler:    syncHandler,
 	}
 
 	pattern, handler := protocolconnect.NewStreamServiceHandler(streamService)
 
-	mux := http.NewServeMux()
+	mux := httptrace.NewServeMux()
 	log.Info("Registering handler", "pattern", pattern)
 	mux.Handle(pattern, newHttpHandler(handler, log))
 
@@ -242,7 +243,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		log.Info("Server stopped", "reason", err)
 	}()
 	closer := func() {
-		log.Info("closing server")        
+		log.Info("closing server")
 
 		//if there is a cleaner, run it
 		if storageCleaner != nil {
