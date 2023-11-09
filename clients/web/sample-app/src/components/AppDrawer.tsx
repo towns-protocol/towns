@@ -68,6 +68,10 @@ export function AppDrawer(props: Props): JSX.Element {
         navigate('/web3')
     }
 
+    const onLinkedWalletsClick = () => {
+        navigate('/wallet-linking')
+    }
+
     const onLoginsClick = () => {
         navigate('/logins')
     }
@@ -87,6 +91,7 @@ export function AppDrawer(props: Props): JSX.Element {
             <Divider />
             <Invites title="Invites" onClickInvite={onClickInvite} />
             <SidebarItemButton label="Web 3" onClick={onWeb3Click} />
+            <SidebarItemButton label="Linked Wallets" onClick={onLinkedWalletsClick} />
             <SidebarItemButton label="Logins" onClick={onLoginsClick} />
             <SidebarItemButton label="Me" onClick={onMeClick} />
             <Divider />

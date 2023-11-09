@@ -12,6 +12,7 @@ import { VersionsPage } from 'routes/VersionsPage'
 import { useEnvironment } from 'hooks/use-environment'
 import { PrivyProvider } from 'context/PrivyProvider'
 import { SetSignerFromWalletClient } from 'context/SetSignerFromWalletClient'
+import { WalletLinking } from 'routes/WalletLinking'
 import { Home } from './routes/Home'
 import { MainLayout } from './components/MainLayout'
 import { NotFound } from './routes/NotFound'
@@ -73,6 +74,7 @@ export const App = () => {
                                             <Route path="mentions" element={<Mentions />} />
                                         </Route>
                                         <Route path="web3" element={<Web3 />} />
+                                        <Route path="wallet-linking" element={<WalletLinking />} />
                                         <Route path="logins" element={<Login />} />
                                         <Route path="*" element={<NotFound />} />
                                     </Route>
