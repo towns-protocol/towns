@@ -321,7 +321,7 @@ message KeySolicitation {
 */
 message Fulfillment {
     bytes origin_hash = 1; // origin KeySolicitation event hash
-    string session_id = 2;
+    repeated string session_ids = 2;
     optional string algorithm = 3;
 }
 

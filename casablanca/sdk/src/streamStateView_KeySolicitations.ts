@@ -4,10 +4,11 @@ import { ChannelPayload, DmChannelPayload, GdmChannelPayload } from '@river/prot
 import { EmittedEvents } from './client'
 import { bin_toString } from './binary'
 
+type KeySolicitationPayloadTypes = ChannelPayload | DmChannelPayload | GdmChannelPayload
 export class StreamStateView_KeySolicitations {
     readonly streamId: string
     readonly keySolicitations = new Set<string>()
-    readonly fulfillments = new Map<string, ParsedEvent>()
+    readonly fulfillments = new Map<string, KeySolicitationPayloadTypes>()
 
     constructor(streamId: string) {
         this.streamId = streamId
@@ -25,8 +26,19 @@ export class StreamStateView_KeySolicitations {
         if (payload.content.value === undefined || payload.content.case !== 'keySolicitation') {
             return
         }
+        // only refrain from emitting a keySolicitation message if that message has been fulfilled
+        // with the requested sessionId.
         if (this.fulfillments.has(event.hashStr)) {
-            return
+            const fulfillmentPayload = this.fulfillments.get(event.hashStr)
+            if (
+                fulfillmentPayload &&
+                fulfillmentPayload.content.case == 'fulfillment' &&
+                fulfillmentPayload.content.value.sessionIds.includes(
+                    payload.content.value.sessionId,
+                )
+            ) {
+                return
+            }
         }
         emitter?.emit(
             'keySolicitationMessage',
@@ -45,18 +57,26 @@ export class StreamStateView_KeySolicitations {
 
     addKeyFulfillmentMessage(
         event: ParsedEvent,
-        payload: ChannelPayload | DmChannelPayload | GdmChannelPayload,
+        payload: KeySolicitationPayloadTypes,
         _emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
         if (payload.content.value === undefined || payload.content.case !== 'fulfillment') {
             return
         }
         const key = bin_toString(payload.content.value.originHash)
-        this.fulfillments.set(key, event)
+        this.fulfillments.set(key, payload)
     }
 
     hasKeySolicitation(senderKey: string, sessionId: string) {
         const key = this.generateKey(senderKey, sessionId)
         return this.keySolicitations.has(key)
+    }
+
+    fulfilledSessions(originHash: string): string[] | undefined {
+        const payload = this.fulfillments.get(originHash)
+        if (!payload || payload.content.case !== 'fulfillment') {
+            return undefined
+        }
+        return payload.content.value.sessionIds
     }
 }

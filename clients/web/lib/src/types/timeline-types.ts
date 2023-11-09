@@ -91,7 +91,7 @@ export interface MiniblockHeaderEvent {
 
 export interface FulfillmentEvent {
     kind: ZTEvent.Fulfillment
-    sessionId: string
+    sessionIds: string[]
     originEventHash: string
     algorithm?: string
     from: string
@@ -366,7 +366,9 @@ export function getFallbackContent(
                 content.message
             }`
         case ZTEvent.Fulfillment:
-            return `Fulfillment sessionId: ${content.sessionId}, from: ${content.from}`
+            return `Fulfillment: { sessionIds: ${content.sessionIds.join(',')}, originEventHash: ${
+                content.originEventHash
+            } }`
         case ZTEvent.KeySolicitation:
             return `KeySolicitation sessionId: ${content.sessionId}, senderKey: ${content.senderKey}`
         default:

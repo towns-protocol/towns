@@ -216,7 +216,7 @@ export class RiverDecryptionExtension {
 
     private async processKeySolicitationEvent(event: EventKeySolicitation): Promise<void> {
         // check that event has not already been fulfilled by someone else
-        if (this.keySolicitationFulfilled(event.streamId, event.eventHash)) {
+        if (this.keySolicitationFulfilled(event.streamId, event.eventHash, event.event.sessionId)) {
             console.log(
                 `CDE::processKeySolicitationEvent - event already fulfilled`,
                 event.streamId,
@@ -611,9 +611,6 @@ export class RiverDecryptionExtension {
                 // todo jterzis: add restart criteria based on eventNum returned from miniblock in the case that
                 // a fulfillment didn't return the correct session key
                 if (keySolicitations.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
-                    console.log(
-                        `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
-                    )
                     return
                 }
 
@@ -627,9 +624,6 @@ export class RiverDecryptionExtension {
             } else if (isDMChannelStreamId(streamId)) {
                 const keySolicitations = stream.view.dmChannelContent.keySolicitations
                 if (keySolicitations.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
-                    console.log(
-                        `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
-                    )
                     return
                 }
                 request = make_DmChannelPayload_KeySolicitation({
@@ -642,9 +636,6 @@ export class RiverDecryptionExtension {
             } else if (isGDMChannelStreamId(streamId)) {
                 const keySolicitations = stream.view.gdmChannelContent.keySolicitations
                 if (keySolicitations.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
-                    console.log(
-                        `CDE::_askRoomForKeys - not requesting for same senderKey and streamId ${streamId} sessionId ${unknownSessionRequested}`,
-                    )
                     return
                 }
                 request = make_GdmChannelPayload_KeySolicitation({
@@ -827,9 +818,10 @@ export class RiverDecryptionExtension {
         await sleep(waitTime)
 
         // Last minute check to make sure noone else has responded to the key solicitation
-        const fulfilled = this.keySolicitationFulfilled(streamId, eventHash)
+        const fulfilled = this.keySolicitationFulfilled(streamId, eventHash, sessionId)
         if (fulfilled) {
-            console.log('CDE::onKeySolicitation - key request already fulfilled', {
+            console.log('CDE::onKeySolicitation - key request already fulfilled for session', {
+                sessionId,
                 streamId,
                 eventHash,
             })
@@ -939,19 +931,19 @@ export class RiverDecryptionExtension {
         if (isChannelStreamId(streamId)) {
             fulfillment = make_ChannelPayload_Fulfillment({
                 originHash: bin_fromString(eventHash),
-                sessionId: sessionId,
+                sessionIds: exportedSessions.map((s) => s.sessionId),
                 algorithm: event.algorithm,
             })
         } else if (isDMChannelStreamId(streamId)) {
             fulfillment = make_DmChannelPayload_Fulfillment({
                 originHash: bin_fromString(eventHash),
-                sessionId: sessionId,
+                sessionIds: exportedSessions.map((s) => s.sessionId),
                 algorithm: event.algorithm,
             })
         } else if (isGDMChannelStreamId(streamId)) {
             fulfillment = make_GdmChannelPayload_Fulfillment({
                 originHash: bin_fromString(eventHash),
-                sessionId: sessionId,
+                sessionIds: exportedSessions.map((s) => s.sessionId),
                 algorithm: event.algorithm,
             })
         } else {
@@ -1063,7 +1055,7 @@ export class RiverDecryptionExtension {
         }
     }
 
-    keySolicitationFulfilled(streamId: string, originHash: string): boolean {
+    keySolicitationFulfilled(streamId: string, originHash: string, sessionId: string): boolean {
         // We should already be subscribing to this stream — it's the only way
         // we could've gotten the key solicitation event in the first place.
         const stream = this.client.streams.get(streamId)
@@ -1072,11 +1064,17 @@ export class RiverDecryptionExtension {
         }
 
         if (isChannelStreamId(streamId)) {
-            return stream.view.channelContent.keySolicitations.fulfillments.has(originHash)
+            const sessions =
+                stream.view.channelContent.keySolicitations.fulfilledSessions(originHash)
+            return sessions?.includes(sessionId) ?? false
         } else if (isDMChannelStreamId(streamId)) {
-            return stream.view.dmChannelContent.keySolicitations.fulfillments.has(originHash)
+            const sessions =
+                stream.view.dmChannelContent.keySolicitations.fulfilledSessions(originHash)
+            return sessions?.includes(sessionId) ?? false
         } else if (isGDMChannelStreamId(streamId)) {
-            return stream.view.gdmChannelContent.keySolicitations.fulfillments.has(originHash)
+            const sessions =
+                stream.view.gdmChannelContent.keySolicitations.fulfilledSessions(originHash)
+            return sessions?.includes(sessionId) ?? false
         } else {
             throw new Error('CDE::keySolicitationFulfilled - unknown stream type')
         }
