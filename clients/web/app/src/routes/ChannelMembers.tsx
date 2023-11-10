@@ -4,5 +4,6 @@ import { MembersPage } from '@components/MembersPage/MembersPage'
 
 export const ChannelMembers = () => {
     const { members } = useChannelMembers()
+
     return <MembersPage members={members} />
 }

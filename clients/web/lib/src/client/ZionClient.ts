@@ -1274,9 +1274,11 @@ export class ZionClient implements DecryptionExtensionDelegate {
      * setDisplayName
      ************************************************/
     // eslint-disable-next-line @typescript-eslint/require-await
-    public async setDisplayName(name: string): Promise<void> {
-        // todo casablanca display name
-        console.error('not implemented for casablanca', name)
+    public async setDisplayName(streamId: string, displayName: string): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('No casablanca client')
+        }
+        await this.casablancaClient.setDisplayName(streamId, displayName)
     }
 
     /************************************************

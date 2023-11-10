@@ -62,9 +62,9 @@ describe('#RichTextEditor mention nodes', () => {
                     members={[
                         {
                             name: 'ben',
+                            displayName: 'ben',
                             userId: '1',
                             membership: Membership.Join,
-                            rawDisplayName: '',
                             disambiguate: false,
                         },
                     ]}
@@ -78,18 +78,18 @@ describe('#RichTextEditor mention nodes', () => {
     })
 
     test('it should create a mention node even when the user has RegExp characters included', async () => {
-        const name = 'ben****'
+        const displayName = 'ben****'
         render(
             <Wrapper>
                 <RichTextEditor
-                    initialValue={`welcome! @${name}`}
+                    initialValue={`welcome! @${displayName}`}
                     channels={[]}
                     members={[
                         {
-                            name,
+                            name: 'user1',
+                            displayName,
                             userId: '1',
                             membership: Membership.Join,
-                            rawDisplayName: '',
                             disambiguate: false,
                         },
                     ]}
@@ -97,24 +97,24 @@ describe('#RichTextEditor mention nodes', () => {
             </Wrapper>,
         )
         const node = await screen.findByTestId('mention-node')
-        expect(node).toHaveTextContent(name)
-        expect(node.getAttribute('data-mention-name')).toEqual(`@${name}`)
+        expect(node).toHaveTextContent(displayName)
+        expect(node.getAttribute('data-mention-name')).toEqual(`@${displayName}`)
         expect(node.getAttribute('data-user-id')).toEqual('1')
     })
 
     test('it should create a mention instead of markdown', async () => {
-        const name = '[ben](https://ben)'
+        const displayName = '[ben](https://ben)'
         render(
             <Wrapper>
                 <RichTextEditor
-                    initialValue={`welcome! @${name}`}
+                    initialValue={`welcome! @${displayName}`}
                     channels={[]}
                     members={[
                         {
-                            name,
+                            displayName,
                             userId: '1',
                             membership: Membership.Join,
-                            rawDisplayName: '',
+                            name: 'name1',
                             disambiguate: false,
                         },
                     ]}
@@ -122,8 +122,8 @@ describe('#RichTextEditor mention nodes', () => {
             </Wrapper>,
         )
         const node = await screen.findByTestId('mention-node')
-        expect(node).toHaveTextContent(name)
-        expect(node.getAttribute('data-mention-name')).toEqual(`@${name}`)
+        expect(node).toHaveTextContent(displayName)
+        expect(node.getAttribute('data-mention-name')).toEqual(`@${displayName}`)
         expect(node.getAttribute('data-user-id')).toEqual('1')
     })
 })

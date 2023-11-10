@@ -35,7 +35,7 @@ export function MemberList({
             const address = getAccountAddress(m.userId) ?? ''
             return {
                 userId: m.userId,
-                name: getPrettyDisplayName(m).name,
+                name: getPrettyDisplayName(m).displayName,
                 address,
                 id: m.userId,
             }

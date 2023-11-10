@@ -73,7 +73,7 @@ export const MessageThread = (props: {
         const names = Object.values(involvedUsers)
             .map((u) => {
                 const isYou = u.userId === profile?.userId
-                const displayName = isYou ? 'you' : getPrettyDisplayName(u).name
+                const displayName = isYou ? 'you' : getPrettyDisplayName(u).displayName
                 return displayName
             })
             .sort(firstBy((n) => n === 'you'))

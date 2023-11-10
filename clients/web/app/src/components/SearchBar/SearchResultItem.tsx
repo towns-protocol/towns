@@ -39,7 +39,9 @@ export const ResultItem = (props: {
                     <ItemContainer>
                         <Avatar userId={item.source.userId} size="avatar_x4" />
                         <Box centerContent>
-                            <Paragraph strong>{getPrettyDisplayName(item.source).name}</Paragraph>
+                            <Paragraph strong>
+                                {getPrettyDisplayName(item.source).displayName}
+                            </Paragraph>
                         </Box>
                     </ItemContainer>
                 </Link>

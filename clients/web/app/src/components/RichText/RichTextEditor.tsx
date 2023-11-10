@@ -112,8 +112,8 @@ const filteredDefaultTransforms = TRANSFORMERS.filter((t) => !isEqual(t, HEADING
 const useTransformers = ({ members, channels, highlightTerms }: IUseTransformers) => {
     const transformers = useMemo(() => {
         const names = members
-            .filter((m) => notUndefined(m.name))
-            .map((m) => ({ displayName: m.name, userId: m.userId }))
+            .filter((m) => notUndefined(m.displayName))
+            .map((m) => ({ displayName: m.displayName, userId: m.userId }))
         const channelHashtags = channels.filter(notUndefined)
         return [
             createMentionTransformer(names),

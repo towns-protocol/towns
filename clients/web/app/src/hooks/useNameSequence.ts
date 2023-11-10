@@ -11,7 +11,7 @@ export const useNameSequence = (users: Record<string, { eventId: string }>) => {
     return useMemo(() => {
         return Array.from(Object.keys(users))
             .map((u) => {
-                const name = getPrettyDisplayName(membersMap[u]).name
+                const name = getPrettyDisplayName(membersMap[u]).displayName
                 if (!name) {
                     return undefined
                 } else if (name === displayName) {

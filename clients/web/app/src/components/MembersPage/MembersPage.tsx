@@ -68,6 +68,7 @@ const GridProfile = ({ member }: { member: RoomMember }) => {
                             imageVariant="thumbnail300"
                         />
                     </Box>
+
                     <Box tooltip={getPrettyDisplayName(member).initialName}>
                         <Paragraph truncate textAlign="center">
                             {getPrettyDisplayName(member).initialName}

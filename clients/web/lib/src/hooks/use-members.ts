@@ -1,20 +1,17 @@
-import { useMemo } from 'react'
 import { useRoom } from './use-room'
-import { RoomMember, UserIdToMember } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
+import { useMemo } from 'react'
 
 /**
  * Returns all members from all rooms
  */
-export function useMembers(roomId?: RoomIdentifier): {
-    members: RoomMember[]
-    membersMap: UserIdToMember
-} {
+export function useMembers(roomId?: RoomIdentifier) {
     const room = useRoom(roomId)
-    return useMemo(() => {
-        return {
+    return useMemo(
+        () => ({
             members: room?.members ?? [],
             membersMap: room?.membersMap ?? {},
-        }
-    }, [room?.members, room?.membersMap])
+        }),
+        [room],
+    )
 }

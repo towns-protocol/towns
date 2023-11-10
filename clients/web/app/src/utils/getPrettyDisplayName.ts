@@ -7,23 +7,14 @@ interface UserWithDisplayName {
     displayName: string
 }
 
-interface UserWithName {
-    userId: string
-    name: string
-}
-
-const isUserWithName = (user: { name: string } | { displayName: string }): user is UserWithName => {
-    return typeof (user as UserWithName).name === 'string'
-}
-
 /**
  * matrix will suffix displayNames that collides like the following:
  * user_name (@eip155=3a5=3a0x2fff60b7bccec9b234a2f07448d3b2c045d60022:node1-test.towns.com)
  * this method will return the display name with a cleaner suffix
  */
 
-export function getPrettyDisplayName(user: UserWithDisplayName | UserWithName | undefined) {
-    const name = !user ? undefined : isUserWithName(user) ? user.name : user.displayName
+export function getPrettyDisplayName(user: UserWithDisplayName | undefined) {
+    const name = !user ? undefined : user.displayName
     // memoized result
     return _getPrettyDisplayName(name, user?.userId)
 }
@@ -31,7 +22,7 @@ export function getPrettyDisplayName(user: UserWithDisplayName | UserWithName | 
 export const _getPrettyDisplayName = memoize((name?: string, userId?: string) => {
     if (!name) {
         return {
-            name: 'Unknown User',
+            displayName: 'Unknown User',
             initialName: 'Unknown User',
             suffix: undefined,
         }
@@ -50,7 +41,7 @@ export const _getPrettyDisplayName = memoize((name?: string, userId?: string) =>
         }
 
         return {
-            name: shortenedName,
+            displayName: shortenedName,
             initialName: name,
             suffix: undefined,
         }
@@ -66,7 +57,7 @@ export const _getPrettyDisplayName = memoize((name?: string, userId?: string) =>
     const suffix = address ? ` (${shortAddress(address)})` : undefined
 
     return {
-        name: initialName + (suffix ? ` ${suffix}` : ''),
+        displayName: initialName + (suffix ? ` ${suffix}` : ''),
         initialName: initialName,
         suffix: suffix,
     }

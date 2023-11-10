@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { matchPath, useNavigate } from 'react-router'
-import { LoginStatus, useMyProfile, useZionClient } from 'use-zion-client'
+import { LoginStatus, useMyProfile } from 'use-zion-client'
 import { Button, ErrorMessage, Icon, MotionBox, Paragraph, Stack, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { PATHS } from 'routes'
@@ -23,7 +23,7 @@ export const RegisterForm = () => {
         register: registerWallet,
         riverLoginStatus: loginStatus,
     } = useAuth()
-    const { setDisplayName } = useZionClient()
+    // const { setDisplayName } = useZionClient()
     const navigate = useNavigate()
     const myProfile = useMyProfile()
 
@@ -98,9 +98,12 @@ export const RegisterForm = () => {
                     if (loginStatus === LoginStatus.LoggedOut) {
                         await registerWallet()
                     }
-                    if (data.displayName !== myProfile?.displayName) {
-                        await setDisplayName(data.displayName)
-                    }
+
+                    // TODO: displayNames can only be set on a towns-level at the moment
+
+                    // if (data.displayName !== myProfile?.displayName) {
+                    //     await setDisplayName(data.displayName)
+                    // }
                 } catch (e: unknown) {
                     console.warn(e)
                 }
@@ -119,10 +122,10 @@ export const RegisterForm = () => {
             isConnected,
             loggedInWalletAddress,
             loginStatus,
-            myProfile?.displayName,
+            // myProfile?.displayName,
             navigate,
             registerWallet,
-            setDisplayName,
+            // setDisplayName,
             upload,
         ],
     )

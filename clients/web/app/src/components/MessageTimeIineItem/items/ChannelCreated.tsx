@@ -16,7 +16,7 @@ export const TimelineChannelCreateEvent = (props: {
     const name = creator
         ? creator.userId === user?.userId
             ? 'You'
-            : getPrettyDisplayName(creator).name
+            : getPrettyDisplayName(creator).displayName
         : ''
 
     return (

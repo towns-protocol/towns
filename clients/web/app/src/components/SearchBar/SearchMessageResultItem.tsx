@@ -52,7 +52,7 @@ export const SearchMessagesResultItem = (
     const sender = membersMap[result.event.sender.id]
     const ref = React.useRef<HTMLAnchorElement>(null)
 
-    const displayName = getPrettyDisplayName(sender).name
+    const displayName = getPrettyDisplayName(sender).displayName
 
     const link = useMemo(() => {
         return createMessageLink(

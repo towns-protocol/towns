@@ -1,5 +1,5 @@
 import { Box, Button, TextField, Theme, Typography } from '@mui/material'
-import { useZionClient } from 'use-zion-client'
+import { useSpaceContext, useZionClient } from 'use-zion-client'
 import React, { useCallback, useMemo, useState } from 'react'
 
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
@@ -7,7 +7,7 @@ import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 export function UserDisplayNameForm(): JSX.Element {
     const [displayNameEdit, setDisplayNameEdit] = useState<string>('')
     const { setDisplayName } = useZionClient()
-
+    const { spaceId } = useSpaceContext()
     const disableButton = useMemo(() => displayNameEdit.length < 3, [displayNameEdit.length])
 
     const onChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -15,8 +15,12 @@ export function UserDisplayNameForm(): JSX.Element {
     }, [])
 
     const onClickSave = useAsyncButtonCallback(async () => {
-        void setDisplayName(displayNameEdit)
-        setDisplayNameEdit('')
+        if (spaceId) {
+            void setDisplayName(spaceId.networkId, displayNameEdit)
+            setDisplayNameEdit('')
+        } else {
+            console.error('spaceId is required to set a display name')
+        }
     }, [])
 
     return (

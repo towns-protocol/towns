@@ -299,7 +299,7 @@ export const MessageLayout = (props: Props) => {
 }
 
 const UserName = ({ name }: { name: string }) => {
-    const { name: displayName } = getPrettyDisplayName({ displayName: name, userId: '' })
+    const { displayName } = getPrettyDisplayName({ displayName: name, userId: '' })
 
     return (
         <Text truncate fontWeight="strong" color="default" as="span">

@@ -15,11 +15,15 @@ export class StreamStateView_UserMetadata {
     readonly usernames = new Map<string, WrappedEncryptedData>()
     // userId -> WrappedEncryptedData
     readonly displayNames = new Map<string, WrappedEncryptedData>()
+    // userId -> plaintext displayName (for convenience, tbd)
+    readonly plaintextDisplayNames = new Map<string, string>()
+
     // eventId -> EncryptedData
     readonly pendingUsernameEvents = new Map<
         string,
         { payload: EncryptedData; eventId: string; userId: string }
     >()
+
     // eventId -> EncryptedData
     readonly pendingDisplayNameEvents = new Map<
         string,
@@ -99,6 +103,7 @@ export class StreamStateView_UserMetadata {
                 break
             case 'displayName':
                 this.pendingDisplayNameEvents.set(eventId, { eventId, payload, userId })
+                this.plaintextDisplayNames.set(userId, payload.text)
                 emitter?.emit('streamPendingDisplayNameUpdated', this.streamId, userId)
                 break
             default:
@@ -119,16 +124,24 @@ export class StreamStateView_UserMetadata {
         emitter?: TypedEmitter<EmittedEvents>,
     ) {
         switch (type) {
-            case 'username':
+            case 'username': {
                 this.usernames.set(userId, payload)
                 emitter?.emit('streamUsernameUpdated', this.streamId, userId)
                 break
-            case 'displayName':
+            }
+            case 'displayName': {
                 this.displayNames.set(userId, payload)
                 emitter?.emit('streamDisplayNameUpdated', this.streamId, userId)
+
+                const displayName = payload.data?.text
+                if (displayName) {
+                    this.plaintextDisplayNames.set(userId, displayName)
+                }
                 break
-            default:
+            }
+            default: {
                 logNever(type)
+            }
         }
     }
 }

@@ -111,6 +111,20 @@ export const make_SpacePayload_Inception = (
     }
 }
 
+export const make_SpacePayload_DisplayName = (
+    value: PlainMessage<EncryptedData>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'spacePayload',
+        value: {
+            content: {
+                case: 'displayName',
+                value: value,
+            },
+        },
+    }
+}
+
 export const make_ChannelMessage_Post_Content_Text = (
     body: string,
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[],

@@ -165,7 +165,7 @@ interface ZionClientImpl {
     sendMediaPayload: (streamId: string, data: Uint8Array, chunkIndex: number) => Promise<void>
     sendReadReceipt: (marker: FullyReadMarker) => Promise<void>
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
-    setDisplayName: (displayName: string) => Promise<void>
+    setDisplayName: (streamId: string, displayName: string) => Promise<void>
     setRoomName: (roomId: RoomIdentifier, roomName: string) => Promise<void>
     setRoomTopic: (roomId: RoomIdentifier, roomTopic: string) => Promise<void>
     getRoomTopic: (roomId: RoomIdentifier) => Promise<string | undefined>

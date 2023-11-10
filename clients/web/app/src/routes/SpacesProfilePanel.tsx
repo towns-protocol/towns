@@ -64,7 +64,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                 ? {
                       ...profileUser,
                       userId: profileUser?.userId ?? '',
-                      name: profileUser?.displayName ?? '',
+                      displayName: profileUser?.displayName ?? '',
                   }
                 : profileId
                 ? membersMap[profileId]
@@ -99,7 +99,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                     center
                     key={user.userId}
                     userId={user.userId}
-                    displayName={getPrettyDisplayName(user).name}
+                    displayName={getPrettyDisplayName(user).displayName}
                     userAddress={userAddress}
                     userBio={userBio}
                     canEdit={canEdit}

@@ -37,8 +37,8 @@ export const MentionsPlugin = (props: Props) => {
     const options = useMemo(() => {
         return props.members
             .map((m) =>
-                m.name
-                    ? new MentionTypeaheadOption(m.name, m.userId, m.userId === props.userId)
+                m.displayName
+                    ? new MentionTypeaheadOption(m.displayName, m.userId, m.userId === props.userId)
                     : undefined,
             )
             .filter(notUndefined)
@@ -48,7 +48,7 @@ export const MentionsPlugin = (props: Props) => {
         () =>
             fuzzysort
                 .go(queryString || '', options, {
-                    key: 'name',
+                    key: 'displayName',
                     all: true,
                 })
                 .map((r) => r.obj)
@@ -63,7 +63,7 @@ export const MentionsPlugin = (props: Props) => {
                     return
                 }
                 const mentionNode = $createMentionNode(
-                    `@${selectedOption.name}`,
+                    `@${selectedOption.displayName}`,
                     selectedOption.userId,
                 )
                 const spaceNode = $createTextNode(' ')
@@ -242,15 +242,13 @@ const getPossibleQueryMatch = (text: string): MenuTextMatch | null => {
 }
 
 class MentionTypeaheadOption extends MenuOption {
-    name: string
     displayName: string
     userId: string
     isSelf: boolean
 
-    constructor(name: string, userId: string, isSelf = false) {
-        super(name)
-        this.name = name
-        this.displayName = getPrettyDisplayName({ name, userId }).name
+    constructor(displayName: string, userId: string, isSelf = false) {
+        super(displayName)
+        this.displayName = getPrettyDisplayName({ displayName, userId }).displayName
         this.userId = userId
         this.isSelf = isSelf
     }

@@ -7,8 +7,7 @@ import { RoomMember } from 'types/zion-types'
  */
 
 export function useAllKnownUsers() {
-    const { spaces } = useZionContext()
-    const { rooms } = useZionContext()
+    const { spaces, rooms } = useZionContext()
 
     const users = useMemo(() => {
         const spaceIds = spaces.map((space) => space.id.networkId)

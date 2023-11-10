@@ -87,6 +87,7 @@ import {
     make_GDMChannelPayload_Inception,
     make_GDMChannelPayload_Message,
     make_GDMChannelPayload_Membership,
+    make_SpacePayload_DisplayName,
 } from './types'
 import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/cryptoStore'
@@ -663,6 +664,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             }),
             { method: 'sendFullyReadMarker' },
         )
+    }
+
+    async setDisplayName(streamId: string, displayName: string) {
+        const payload = make_SpacePayload_DisplayName({ text: displayName })
+        await this.makeEventAndAddToStream(streamId, payload, { method: 'displayName' })
     }
 
     async waitForStream(streamId: string): Promise<Stream> {

@@ -217,7 +217,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     } = timelineContext
 
     const user = membersMap[sender.id]
-    const displayName = getPrettyDisplayName(user).name
+    const displayName = getPrettyDisplayName(user).displayName
 
     const isOwn = event.content?.kind == ZTEvent.RoomMessage && sender.id === userId
 

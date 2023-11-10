@@ -112,7 +112,7 @@ export class StreamStateView_Space implements StreamStateView_IContent {
                     event.hashStr,
                     event.creatorUserId,
                     payload.content.value,
-                    'username',
+                    'displayName',
                     emitter,
                 )
                 break

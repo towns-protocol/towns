@@ -9,6 +9,7 @@ import {
     useSpaceData,
     useSpaceId,
     useSpaceMembers,
+    useUser,
     useZionClient,
 } from 'use-zion-client'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -41,7 +42,6 @@ import {
 import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
-import { useGetUserFromAddress } from 'hooks/useGetUserFromAddress'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useGetSpaceTopic, useSetSpaceTopic } from 'hooks/useSpaceTopic'
 import { PATHS } from 'routes'
@@ -84,7 +84,7 @@ export const SpaceInfoPanel = () => {
 
     const { mutate, isLoading: isSettingSpaceTopic } = useSetSpaceTopic(space?.id)
 
-    const spaceOwner = useGetUserFromAddress(data?.owner)
+    const spaceOwner = useUser(data?.owner)
 
     const { members } = useSpaceMembers()
     const [activeModal, setActiveModal] = useState<
@@ -340,14 +340,24 @@ export const SpaceInfoPanel = () => {
                                         {spaceOwner && (
                                             <Avatar size="avatar_x4" userId={spaceOwner.userId} />
                                         )}
-                                        <Box justifyContent="spaceBetween" overflow="hidden">
-                                            <Paragraph truncate>
+                                        <Box
+                                            justifyContent="spaceBetween"
+                                            overflow="hidden"
+                                            paddingY="xs"
+                                            insetY="xxs"
+                                            gap="paragraph"
+                                        >
+                                            <Paragraph truncate data-testid="owner">
                                                 {spaceOwner &&
-                                                    getPrettyDisplayName(spaceOwner).name}
+                                                    getPrettyDisplayName(spaceOwner).displayName}
                                             </Paragraph>
-                                            <Paragraph color="gray2">
-                                                {data?.owner ? shortAddress(data.owner) : ''}
-                                            </Paragraph>
+
+                                            {data?.owner && (
+                                                <ClipboardCopy
+                                                    label={shortAddress(data.owner)}
+                                                    clipboardContent={address}
+                                                />
+                                            )}
                                         </Box>
                                     </Box>
                                 </Link>

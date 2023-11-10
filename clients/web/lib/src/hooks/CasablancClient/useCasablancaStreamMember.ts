@@ -18,8 +18,8 @@ export function useCasablancaStreamMember(
         const updateMember = () => {
             setRoomMember({
                 userId,
-                name: 'TODO. Get from casablanca stream',
-                rawDisplayName: '',
+                name: userId,
+                displayName: 'TODO. Get from casablanca stream',
                 membership: getCasablancaMembership(channelStream, userId),
                 disambiguate: false,
                 avatarUrl: undefined,

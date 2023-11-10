@@ -58,7 +58,7 @@ export const DMChannelInfoPanel = () => {
     const memberNamesExludingSelf = useMemo(() => {
         return members.members
             ?.filter((member) => member.userId !== myUserId)
-            .map((member) => getPrettyDisplayName(member).name)
+            .map((member) => getPrettyDisplayName(member).displayName)
     }, [members, myUserId])
 
     const membersText =

@@ -132,7 +132,13 @@ function toZionMembers(stream: Stream): {
 } {
     const members: RoomMember[] = getMembersWithMembership(Membership.Join, stream)
 
+    const displayNames =
+        stream.view.contentKind === 'spaceContent'
+            ? stream.view.spaceContent.userMetadata.plaintextDisplayNames
+            : undefined
+
     const membersMap = members.reduce((result, x) => {
+        x.displayName = displayNames?.get(x.userId) ?? (x.displayName || x.name)
         result[x.userId] = x
         return result
     }, {} as { [userId: string]: RoomMember })
@@ -159,6 +165,11 @@ function getMembersWithMembership(membership: Membership, stream: Stream): RoomM
         throw new Error('Invalid streamId: ' + streamId)
     }
 
+    const displayNames =
+        stream.view.contentKind === 'spaceContent'
+            ? stream.view.spaceContent.userMetadata.plaintextDisplayNames
+            : undefined
+
     const members: RoomMember[] = []
 
     let users: Set<string>
@@ -182,7 +193,7 @@ function getMembersWithMembership(membership: Membership, stream: Stream): RoomM
         members.push({
             userId: userId,
             name: userId,
-            rawDisplayName: userId,
+            displayName: displayNames?.get(userId) ?? userId,
             membership: membership,
             disambiguate: false,
             avatarUrl: '',

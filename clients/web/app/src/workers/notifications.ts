@@ -370,7 +370,7 @@ async function addUsersToIdb(membersMap: { [userId: string]: RoomMember | undefi
         await Promise.all([
             ...missingMembers.map(async (member) => {
                 await store.put?.({
-                    name: member.name,
+                    name: member.displayName,
                     id: member.userId,
                 })
             }),

@@ -103,7 +103,7 @@ export const IsolatedMessageItem = (
                 timestamp={result.event.createdAtEpocMs}
                 userId={sender?.userId}
                 senderId={sender?.userId}
-                name={getPrettyDisplayName(sender).name}
+                name={getPrettyDisplayName(sender).displayName}
             >
                 <RichTextPreview
                     key={props.highligtTerms?.join('')}

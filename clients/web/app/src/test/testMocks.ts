@@ -93,7 +93,7 @@ export const mockMembers: zionClient.RoomMember[] = [
             zionClient.createUserIdFromEthereumAddress(address1, 5).matrixUserIdLocalpart
         }:localhost`,
         name: 'User 1',
-        rawDisplayName: 'User 1',
+        displayName: 'User 1',
         membership: zionClient.Membership.Join,
         disambiguate: false,
     },
@@ -102,7 +102,8 @@ export const mockMembers: zionClient.RoomMember[] = [
             zionClient.createUserIdFromEthereumAddress(address2, 5).matrixUserIdLocalpart
         }:localhost`,
         name: 'User 2',
-        rawDisplayName: 'User 2',
+        displayName: 'User 2',
+
         membership: zionClient.Membership.Join,
         disambiguate: false,
     },

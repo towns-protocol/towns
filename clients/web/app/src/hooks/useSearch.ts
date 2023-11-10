@@ -29,7 +29,7 @@ export const useSearch = (searchTerms: string) => {
             members.map((m) => ({
                 key: `user-${m.userId}`,
                 type: 'user' as const,
-                body: m.name,
+                body: m.displayName,
                 source: m,
             })),
         [members],

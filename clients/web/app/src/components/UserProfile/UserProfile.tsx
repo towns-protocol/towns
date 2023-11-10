@@ -1,4 +1,4 @@
-import { getAccountAddress, useZionClient } from 'use-zion-client'
+import { getAccountAddress, useSpaceId, useZionClient } from 'use-zion-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
@@ -47,6 +47,8 @@ export const UserProfile = (props: Props) => {
     const { userId, canEdit, center, displayName, info, userAddress, userBio } = props
     const { loggedInWalletAddress } = useAuth()
     const { setDisplayName } = useZionClient()
+    const spaceId = useSpaceId()
+
     const { mutateAsync: mutateAsyncBio } = useSetUserBio(userAddress)
     const balance = useBalance({ address: loggedInWalletAddress, watch: true })
 
@@ -63,7 +65,10 @@ export const UserProfile = (props: Props) => {
                 if (content.length >= 25) {
                     throw new Error('Display name must have less than 25 characters')
                 }
-                return setDisplayName(content)
+                if (!spaceId?.networkId) {
+                    return
+                }
+                return setDisplayName(spaceId.networkId, content)
             }
             case InputId.Bio: {
                 if (!userAddress) {

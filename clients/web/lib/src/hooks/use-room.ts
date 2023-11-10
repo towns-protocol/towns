@@ -6,9 +6,7 @@ import isEqual from 'lodash/isEqual'
 
 export function useRoom(roomId?: RoomIdentifier): Room | undefined {
     const { rooms } = useZionContext()
-    const room = useMemo(() => (roomId ? rooms[roomId.networkId] : undefined), [roomId, rooms])
-    // todo, figure out if a double useMemo is necessary or even helpful
-    return useMemo(() => room, [room])
+    return useMemo(() => (roomId ? rooms[roomId.networkId] : undefined), [roomId, rooms])
 }
 
 export function useRoomNames(roomIds: RoomIdentifier[]): Record<string, string> {

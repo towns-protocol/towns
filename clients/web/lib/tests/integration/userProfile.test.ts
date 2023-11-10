@@ -48,7 +48,7 @@ describe('userProfile', () => {
         console.log('alice sees bob as', {
             name: alicesViewOfBob?.name,
             disambiguate: alicesViewOfBob?.disambiguate,
-            rawDisplayName: alicesViewOfBob?.rawDisplayName,
+            displayName: alicesViewOfBob?.displayName,
             avatarUrl: alicesViewOfBob?.avatarUrl,
         })
         // log bob's view of alice
@@ -56,12 +56,12 @@ describe('userProfile', () => {
         console.log('bob sees alice as', {
             name: bobsViewOfAlice?.name,
             disambiguate: bobsViewOfAlice?.disambiguate,
-            rawDisplayName: bobsViewOfAlice?.rawDisplayName,
+            displayName: bobsViewOfAlice?.displayName,
             avatarUrl: bobsViewOfAlice?.avatarUrl,
         })
         // alice updates her profile
         await act(async () => {
-            await alice.setDisplayName("Alice's your aunt")
+            await alice.setDisplayName(spaceId.networkId, "Alice's your aunt")
             await alice.setAvatarUrl('https://example.com/alice.png')
         })
         // bob should see alices new user name

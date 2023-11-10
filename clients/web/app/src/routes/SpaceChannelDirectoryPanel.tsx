@@ -88,7 +88,7 @@ const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
                 </Box>
                 <Stack grow paddingX gap="paragraph" overflow="hidden">
                     <Paragraph truncate color="default">
-                        {user.name}
+                        {user.displayName}
                     </Paragraph>
                     {userAddress && (
                         <ClipboardCopy

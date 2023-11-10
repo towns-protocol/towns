@@ -46,8 +46,8 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
                             {
                                 getPrettyDisplayName({
                                     userId: e.content.userId,
-                                    name: e.content.displayName ?? '',
-                                }).name
+                                    displayName: e.content.displayName ?? '',
+                                }).displayName
                             }
                         </Link>
                     )

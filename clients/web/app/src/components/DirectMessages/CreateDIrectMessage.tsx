@@ -62,7 +62,7 @@ export const CreateDirectMessage = (props: Props) => {
 
     const filteredUserIds = fuzzysort
         .go(searchTerm, users, {
-            key: 'name',
+            key: 'displayName',
             all: true,
         })
         .map((r) => r.obj.userId)
@@ -160,7 +160,7 @@ const Participant = (props: ParticipantProps & { selected: boolean }) => {
         >
             <Avatar userId={userId} size="avatar_x4" />
             <Text truncate fontWeight="medium">
-                {getPrettyDisplayName(profile).name}
+                {getPrettyDisplayName(profile).displayName}
             </Text>
             <Box grow />
             <Checkbox name="" checked={selected} onChange={onClick} />
@@ -198,7 +198,7 @@ const SelectedParticipant = (props: ParticipantProps) => {
                 />
             </Box>
             <Text truncate fontWeight="medium" fontSize="sm">
-                {getPrettyDisplayName(profile).name}
+                {getPrettyDisplayName(profile).displayName}
             </Text>
         </MotionStack>
     )

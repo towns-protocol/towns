@@ -8,10 +8,11 @@ import * as Lib from 'use-zion-client'
 import * as Router from 'react-router'
 import { TestApp, getWalletAddress } from 'test/testUtils'
 import * as useContractSpaceInfoHook from 'hooks/useContractSpaceInfo'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { SpaceInfoPanel } from './SpaceInfoPanel'
 
 const ownerUser = {
-    userId: 'gto',
+    userId: getWalletAddress(),
     displayName: 'beavis',
     avatarUrl: 'https://example.com',
     presence: 'online',
@@ -38,7 +39,7 @@ const generateSpaceData = (networkId: string) => {
         address: getWalletAddress(),
         networkId: roomIdentifier.networkId,
         name: spaceData.name,
-        owner: getWalletAddress(),
+        owner: ownerUser.userId,
         disabled: false,
     }
 
@@ -56,9 +57,16 @@ vi.mock('react-router', async () => {
 })
 
 vi.mock('use-zion-client', async () => {
+    const actual = (await vi.importActual('use-zion-client')) as typeof Lib
     return {
-        ...((await vi.importActual('use-zion-client')) as typeof Lib),
+        ...actual,
         useSpaceMembers: () => ({ members: [ownerUser] }),
+        useAllKnownUsers: () => ({ users: [ownerUser] }),
+        useUser: (userId: string) => {
+            const u = actual.useUser(userId)
+            // can't seem to add owner to mocked members, workaround:
+            return userId === ownerUser.userId ? ownerUser : u
+        },
     }
 })
 
@@ -98,7 +106,11 @@ describe('<SpaceHome />', () => {
         render(<Wrapper roomIdentifier={roomIdentifier} />)
         await screen.findByTestId('upload-image-container')
         screen.getByText(spaceData.name)
-        screen.getByText(/beavis/gi)
+
+        expect(screen.getByTestId('owner')).toHaveTextContent(
+            getPrettyDisplayName(ownerUser).displayName,
+        )
+
         screen.getByText(/1 member/gi)
     })
 
