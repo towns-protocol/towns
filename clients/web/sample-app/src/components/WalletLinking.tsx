@@ -1,4 +1,4 @@
-import { Box, Button, Stack, Typography } from '@mui/material'
+import { Button, Stack, Typography } from '@mui/material'
 import { ConnectedWallet, usePrivy, useWallets } from '@privy-io/react-auth'
 import React from 'react'
 import { Link } from 'react-router-dom'
