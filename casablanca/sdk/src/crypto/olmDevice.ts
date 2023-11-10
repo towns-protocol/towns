@@ -2,8 +2,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument*/
 
 import { dlog } from '../dlog'
-import { IndexedDBCryptoStore } from './store/indexeddb-crypto-store'
-import { CryptoStore, CryptoTxn, ISessionInfo, IWithheld } from './store/base'
+import { ISessionInfo, IWithheld } from './store/types'
+import { CryptoStore } from './store/cryptoStore'
 import {
     OlmMegolmDelegate,
     Account,
@@ -143,8 +143,8 @@ export class OlmDevice {
         {}
 
     public constructor(
-        private readonly cryptoStore: CryptoStore,
         private olmDelegate: OlmMegolmDelegate,
+        private readonly cryptoStore: CryptoStore,
     ) {}
 
     /**
@@ -227,43 +227,33 @@ export class OlmDevice {
         exportedData: IExportedDevice,
         account: Account,
     ): Promise<void> {
-        await this.cryptoStore.doTxn(
-            'readwrite',
-            [IndexedDBCryptoStore.STORE_ACCOUNT, IndexedDBCryptoStore.STORE_SESSIONS],
-            (txn) => {
-                this.cryptoStore.storeAccount(txn, exportedData.pickledAccount)
-                exportedData.sessions.forEach((session) => {
-                    const { deviceKey, sessionId } = session
-                    const sessionInfo = {
-                        session: session.session,
-                        lastReceivedMessageTs: session.lastReceivedMessageTs,
-                    }
-                    if (deviceKey && sessionId) {
-                        this.cryptoStore.storeEndToEndSession(
-                            deviceKey,
-                            sessionId,
-                            sessionInfo,
-                            txn,
-                        )
-                    }
-                })
-            },
-        )
+        await this.cryptoStore.storeAccount(exportedData.pickledAccount)
+        for (const session of exportedData.sessions) {
+            const { deviceKey, sessionId } = session
+            if (!deviceKey || !sessionId) {
+                continue
+            }
+            const sessionInfo = {
+                sessionId,
+                deviceKey,
+                session: session.session,
+                lastReceivedMessageTs: session.lastReceivedMessageTs,
+            }
+
+            await this.cryptoStore.storeEndToEndSession(sessionInfo)
+        }
         account.unpickle(this.pickleKey, exportedData.pickledAccount)
     }
 
     private async initializeAccount(account: Account): Promise<void> {
-        await this.cryptoStore.doTxn('readwrite', [IndexedDBCryptoStore.STORE_ACCOUNT], (txn) => {
-            this.cryptoStore.getAccount(txn, (pickledAccount) => {
-                if (pickledAccount !== null) {
-                    account.unpickle(this.pickleKey, pickledAccount)
-                } else {
-                    account.create()
-                    pickledAccount = account.pickle(this.pickleKey)
-                    this.cryptoStore.storeAccount(txn, pickledAccount)
-                }
-            })
-        })
+        try {
+            const pickledAccount = await this.cryptoStore.getAccount()
+            account.unpickle(this.pickleKey, pickledAccount)
+        } catch {
+            account.create()
+            const pickledAccount = account.pickle(this.pickleKey)
+            await this.cryptoStore.storeAccount(pickledAccount)
+        }
     }
 
     /**
@@ -278,16 +268,11 @@ export class OlmDevice {
      * @param txn - Opaque transaction object from cryptoStore.doTxn()
      * @internal
      */
-    private getAccount(txn: CryptoTxn, func: (account: Account) => void): void {
-        this.cryptoStore.getAccount(txn, (pickledAccount: string | null) => {
-            const account = this.olmDelegate.createAccount()
-            try {
-                account.unpickle(this.pickleKey, pickledAccount!)
-                func(account)
-            } finally {
-                account.free()
-            }
-        })
+    private async getAccount(): Promise<Account> {
+        const pickledAccount = await this.cryptoStore.getAccount()
+        const account = this.olmDelegate.createAccount()
+        account.unpickle(this.pickleKey, pickledAccount)
+        return account
     }
 
     /**
@@ -299,8 +284,8 @@ export class OlmDevice {
      * @param Olm.Account object
      * @internal
      */
-    private storeAccount(txn: CryptoTxn, account: Account): void {
-        this.cryptoStore.storeAccount(txn, account.pickle(this.pickleKey))
+    private async storeAccount(account: Account): Promise<void> {
+        await this.cryptoStore.storeAccount(account.pickle(this.pickleKey))
     }
 
     /**
@@ -314,22 +299,9 @@ export class OlmDevice {
             pickleKey: this.pickleKey,
         }
 
-        await this.cryptoStore.doTxn(
-            'readonly',
-            [IndexedDBCryptoStore.STORE_ACCOUNT, IndexedDBCryptoStore.STORE_SESSIONS],
-            (txn) => {
-                this.cryptoStore.getAccount(txn, (pickledAccount: string | null) => {
-                    result.pickledAccount = pickledAccount!
-                })
-                result.sessions = []
-                // Note that the pickledSession object we get in the callback
-                // is not exactly the same thing you get in method _getSession
-                // see documentation of IndexedDBCryptoStore.getAllEndToEndSessions
-                this.cryptoStore.getAllEndToEndSessions(txn, (pickledSession) => {
-                    result.sessions!.push(pickledSession!)
-                })
-            },
-        )
+        const account = await this.getAccount()
+        result.pickledAccount = account.pickle(this.pickleKey)
+        result.sessions = await this.cryptoStore.getAllEndToEndSessions()
         return result as IExportedDevice
     }
 
@@ -342,20 +314,10 @@ export class OlmDevice {
      * @param txn - Opaque transaction object from cryptoStore.doTxn()
      * @internal
      */
-    private getSession(
-        deviceKey: string,
-        sessionId: string,
-        txn: CryptoTxn,
-        func: (unpickledSessionInfo: IUnpickledSessionInfo) => void,
-    ): void {
-        this.cryptoStore.getEndToEndSession(
-            deviceKey,
-            sessionId,
-            txn,
-            (sessionInfo: ISessionInfo | null) => {
-                this.unpickleSession(sessionInfo!, func)
-            },
-        )
+    private async getSession(deviceKey: string, sessionId: string): Promise<IUnpickledSessionInfo> {
+        const sessionInfo = await this.cryptoStore.getEndToEndSession(deviceKey, sessionId)
+        const unpickled = await this.unpickleSession(sessionInfo)
+        return unpickled
     }
 
     /**
@@ -365,21 +327,13 @@ export class OlmDevice {
      *
      * @internal
      */
-    private unpickleSession(
-        sessionInfo: ISessionInfo,
-        func: (unpickledSessionInfo: IUnpickledSessionInfo) => void,
-    ): void {
+    private async unpickleSession(sessionInfo: ISessionInfo): Promise<IUnpickledSessionInfo> {
         const session = this.olmDelegate.createSession()
-        try {
-            session.unpickle(this.pickleKey, sessionInfo.session!)
-            const unpickledSessInfo: IUnpickledSessionInfo = Object.assign({}, sessionInfo, {
-                session,
-            })
-
-            func(unpickledSessInfo)
-        } finally {
-            session.free()
-        }
+        session.unpickle(this.pickleKey, sessionInfo.session)
+        const unpickledSessInfo: IUnpickledSessionInfo = Object.assign({}, sessionInfo, {
+            session,
+        })
+        return unpickledSessInfo
     }
 
     /**
@@ -389,11 +343,10 @@ export class OlmDevice {
      * @param txn - Opaque transaction object from cryptoStore.doTxn()
      * @internal
      */
-    private saveSession(
+    private async saveSession(
         deviceKey: string,
         sessionInfo: IUnpickledSessionInfo,
-        txn: CryptoTxn,
-    ): void {
+    ): Promise<void> {
         const sessionId = sessionInfo.session.session_id()
         log(
             `Saving Olm session ${sessionId} with device ${deviceKey}: ${sessionInfo.session.describe()}`,
@@ -405,7 +358,8 @@ export class OlmDevice {
         const pickledSessionInfo = Object.assign(sessionInfo, {
             session: sessionInfo.session.pickle(this.pickleKey),
         })
-        this.cryptoStore.storeEndToEndSession(deviceKey, sessionId, pickledSessionInfo, txn)
+
+        await this.cryptoStore.storeEndToEndSession(pickledSessionInfo)
     }
 
     /**
@@ -430,25 +384,17 @@ export class OlmDevice {
      * @returns base64-encoded signature
      */
     public async sign(message: string): Promise<string> {
-        let result: string
-        await this.cryptoStore.doTxn('readonly', [IndexedDBCryptoStore.STORE_ACCOUNT], (txn) => {
-            this.getAccount(txn, (account: Account) => {
-                result = account.sign(message)
-            })
-        })
-        return result!
+        const account = await this.getAccount()
+        return account.sign(message)
     }
 
     /**
      * Marks all of the fallback keys as published.
      */
     public async markKeysAsPublished(): Promise<void> {
-        await this.cryptoStore.doTxn('readwrite', [IndexedDBCryptoStore.STORE_ACCOUNT], (txn) => {
-            this.getAccount(txn, (account: Account) => {
-                account.mark_keys_as_published()
-                this.storeAccount(txn, account)
-            })
-        })
+        const account = await this.getAccount()
+        account.mark_keys_as_published()
+        await this.storeAccount(account)
     }
 
     /**
@@ -457,31 +403,20 @@ export class OlmDevice {
      * @returns Resolved once the account is saved back having generated the key
      */
     public async generateFallbackKey(): Promise<void> {
-        await this.cryptoStore.doTxn('readwrite', [IndexedDBCryptoStore.STORE_ACCOUNT], (txn) => {
-            this.getAccount(txn, (account) => {
-                account.generate_fallback_key()
-                this.storeAccount(txn, account)
-            })
-        })
+        const account = await this.getAccount()
+        account.generate_fallback_key()
+        await this.storeAccount(account)
     }
 
     public async getFallbackKey(): Promise<Record<string, Record<string, string>>> {
-        let result: Record<string, Record<string, string>> = {}
-        await this.cryptoStore.doTxn('readonly', [IndexedDBCryptoStore.STORE_ACCOUNT], (txn) => {
-            this.getAccount(txn, (account: Account) => {
-                result = JSON.parse(account.unpublished_fallback_key())
-            })
-        })
-        return result
+        const account = await this.getAccount()
+        return JSON.parse(account.unpublished_fallback_key())
     }
 
     public async forgetOldFallbackKey(): Promise<void> {
-        await this.cryptoStore.doTxn('readwrite', [IndexedDBCryptoStore.STORE_ACCOUNT], (txn) => {
-            this.getAccount(txn, (account: Account) => {
-                account.forget_old_fallback_key()
-                this.storeAccount(txn, account)
-            })
-        })
+        const account = await this.getAccount()
+        account.forget_old_fallback_key()
+        await this.storeAccount(account)
     }
 
     // Outbound group session
@@ -491,29 +426,22 @@ export class OlmDevice {
      * Store an OutboundGroupSession in outboundSessionStore
      *
      */
-    private saveOutboundGroupSession(session: OutboundGroupSession): void {
+    private async saveOutboundGroupSession(session: OutboundGroupSession): Promise<void> {
         this.outboundGroupSessionStore[session.session_id()] = session.pickle(this.pickleKey)
     }
 
     /**
      * Extract OutboundGroupSession from the session store and call given fn.
      */
-    private getOutboundGroupSession<T>(
-        sessionId: string,
-        func: (session: OutboundGroupSession) => T,
-    ): T {
+    private async getOutboundGroupSession(sessionId: string): Promise<OutboundGroupSession> {
         const pickled = this.outboundGroupSessionStore[sessionId]
         if (!pickled) {
             throw new Error(`Unknown outbound group session ${sessionId}`)
         }
 
         const session = this.olmDelegate.createOutboundGroupSession()
-        try {
-            session.unpickle(this.pickleKey, pickled)
-            return func(session)
-        } finally {
-            session.free()
-        }
+        session.unpickle(this.pickleKey, pickled)
+        return session
     }
 
     /**
@@ -524,24 +452,23 @@ export class OlmDevice {
      * @returns current chain index, and
      *     base64-encoded secret key.
      */
-    public getOutboundGroupSessionKey(sessionId: string): IOutboundGroupSessionKey {
-        return this.getOutboundGroupSession(sessionId, function (session: OutboundGroupSession) {
-            return {
-                chain_index: session.message_index(),
-                key: session.session_key(),
-            }
-        })
+    public async getOutboundGroupSessionKey(sessionId: string): Promise<IOutboundGroupSessionKey> {
+        const session = await this.getOutboundGroupSession(sessionId)
+        const chain_index = session.message_index()
+        const key = session.session_key()
+        session.free()
+        return { chain_index, key }
     }
 
     /**
      * Generate a new outbound group session
      *
      */
-    public createOutboundGroupSession(): string {
+    public async createOutboundGroupSession(): Promise<string> {
         const session = this.olmDelegate.createOutboundGroupSession()
         try {
             session.create()
-            this.saveOutboundGroupSession(session)
+            await this.saveOutboundGroupSession(session)
             return session.session_id()
         } finally {
             session.free()
@@ -561,15 +488,10 @@ export class OlmDevice {
      */
     private unpickleInboundGroupSession<T>(
         sessionData: InboundGroupSessionData,
-        func: (session: InboundGroupSession) => T,
-    ): T {
+    ): InboundGroupSession {
         const session = this.olmDelegate.createInboundGroupSession()
-        try {
-            session.unpickle(this.pickleKey, sessionData.session)
-            return func(session)
-        } finally {
-            session.free()
-        }
+        session.unpickle(this.pickleKey, sessionData.session)
+        return session
     }
 
     /**
@@ -582,43 +504,29 @@ export class OlmDevice {
      *
      * @internal
      */
-    private getInboundGroupSession(
+    private async getInboundGroupSession(
         streamId: string,
         sessionId: string,
-        txn: CryptoTxn,
-        func: (
-            session: InboundGroupSession | null,
-            data: InboundGroupSessionData | null,
-            withheld: IWithheld | null,
-        ) => void,
-    ): void {
-        this.cryptoStore.getEndToEndInboundGroupSession(
+    ): Promise<{
+        session: InboundGroupSession | undefined
+        data: InboundGroupSessionData | undefined
+        withheld: IWithheld | undefined
+    }> {
+        const sessionInfo = await this.cryptoStore.getEndToEndInboundGroupSession(
             streamId,
             sessionId,
-            txn,
-            (sessionData: InboundGroupSessionData | null, withheld: IWithheld | null) => {
-                if (sessionData === null) {
-                    func(null, null, withheld)
-                    return
-                }
-
-                // if we were given a room ID, check that the it matches the original one for the session. This stops
-                // the HS pretending a message was targeting a different room.
-                if (streamId !== null && streamId !== sessionData.stream_id) {
-                    throw new Error(
-                        'Mismatched stream_id for inbound group session (expected ' +
-                            sessionData.stream_id +
-                            ', was ' +
-                            streamId +
-                            ')',
-                    )
-                }
-
-                this.unpickleInboundGroupSession(sessionData, (session: InboundGroupSession) => {
-                    func(session, sessionData, withheld)
-                })
-            },
         )
+        const withheld = await this.cryptoStore.getEndToEndInboundGroupSessionWithheld(
+            streamId,
+            sessionId,
+        )
+        const session = sessionInfo ? this.unpickleInboundGroupSession(sessionInfo) : undefined
+
+        return {
+            session: session,
+            data: sessionInfo,
+            withheld,
+        }
     }
 
     /**
@@ -641,125 +549,84 @@ export class OlmDevice {
         exportFormat: boolean,
         extraSessionData: OlmGroupSessionExtraData = {},
     ): Promise<void> {
-        await this.cryptoStore.doTxn(
-            'readwrite',
-            [
-                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS,
-                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
-                IndexedDBCryptoStore.STORE_SHARED_HISTORY_INBOUND_GROUP_SESSIONS,
-            ],
-            (txn) => {
-                /* if we already have this session, consider updating it */
-                this.getInboundGroupSession(
-                    streamId,
-                    sessionId,
-                    txn,
-                    (
-                        existingSession: InboundGroupSession | null,
-                        existingSessionData: InboundGroupSessionData | null,
-                    ) => {
-                        // new session.
-                        const session = new global.Olm.InboundGroupSession()
-                        try {
-                            if (exportFormat) {
-                                session.import_session(sessionKey)
-                            } else {
-                                session.create(sessionKey)
-                            }
-                            if (sessionId != session.session_id()) {
-                                throw new Error(
-                                    'Mismatched group session ID from streamId: ' + streamId,
-                                )
-                            }
+        const { session: existingSession, data: existingSessionData } =
+            await this.getInboundGroupSession(streamId, sessionId)
 
-                            if (existingSession) {
-                                log(`Update for megolm session ${streamId}|${sessionId}`)
-                                if (
-                                    existingSession.first_known_index() <=
-                                    session.first_known_index()
-                                ) {
-                                    if (
-                                        !existingSessionData!.untrusted ||
-                                        extraSessionData.untrusted
-                                    ) {
-                                        // existing session has less-than-or-equal index
-                                        // (i.e. can decrypt at least as much), and the
-                                        // new session's trust does not win over the old
-                                        // session's trust, so keep it
-                                        log(
-                                            `Keeping existing megolm session ${streamId}|${sessionId}`,
-                                        )
-                                        return
-                                    }
-                                    if (
-                                        existingSession.first_known_index() <
-                                        session.first_known_index()
-                                    ) {
-                                        // We want to upgrade the existing session's trust,
-                                        // but we can't just use the new session because we'll
-                                        // lose the lower index. Check that the sessions connect
-                                        // properly, and then manually set the existing session
-                                        // as trusted.
-                                        if (
-                                            existingSession.export_session(
-                                                session.first_known_index(),
-                                            ) ===
-                                            session.export_session(session.first_known_index())
-                                        ) {
-                                            log(
-                                                'Upgrading trust of existing megolm session ' +
-                                                    `${streamId}|${sessionId} based on newly-received trusted session`,
-                                            )
-                                            existingSessionData!.untrusted = false
-                                            this.cryptoStore.storeEndToEndInboundGroupSession(
-                                                streamId,
-                                                sessionId,
-                                                existingSessionData!,
-                                                txn,
-                                            )
-                                        } else {
-                                            log(
-                                                `Newly-received megolm session ${streamId}|$sessionId}` +
-                                                    ' does not match existing session! Keeping existing session',
-                                            )
-                                        }
-                                        return
-                                    }
-                                    // If the sessions have the same index, go ahead and store the new trusted one.
-                                }
-                            }
+        const session = new global.Olm.InboundGroupSession()
+        try {
+            if (exportFormat) {
+                session.import_session(sessionKey)
+            } else {
+                session.create(sessionKey)
+            }
+            if (sessionId != session.session_id()) {
+                throw new Error('Mismatched group session ID from streamId: ' + streamId)
+            }
 
+            if (existingSession && existingSessionData) {
+                log(`Update for megolm session ${streamId}|${sessionId}`)
+                if (existingSession.first_known_index() <= session.first_known_index()) {
+                    if (!existingSessionData.untrusted || extraSessionData.untrusted) {
+                        // existing session has less-than-or-equal index
+                        // (i.e. can decrypt at least as much), and the
+                        // new session's trust does not win over the old
+                        // session's trust, so keep it
+                        log(`Keeping existing megolm session ${streamId}|${sessionId}`)
+                        return
+                    }
+                    if (existingSession.first_known_index() < session.first_known_index()) {
+                        // We want to upgrade the existing session's trust,
+                        // but we can't just use the new session because we'll
+                        // lose the lower index. Check that the sessions connect
+                        // properly, and then manually set the existing session
+                        // as trusted.
+                        if (
+                            existingSession.export_session(session.first_known_index()) ===
+                            session.export_session(session.first_known_index())
+                        ) {
                             log(
-                                `Storing megolm session ${streamId}|${sessionId} with first index ${session.first_known_index()}`,
+                                'Upgrading trust of existing megolm session ' +
+                                    `${streamId}|${sessionId} based on newly-received trusted session`,
                             )
-
-                            const sessionData = Object.assign({}, extraSessionData, {
-                                stream_id: streamId,
-                                session: session.pickle(this.pickleKey),
-                                keysClaimed: keysClaimed,
-                            })
-
-                            this.cryptoStore.storeEndToEndInboundGroupSession(
+                            existingSessionData.untrusted = false
+                            await this.cryptoStore.storeEndToEndInboundGroupSession(
                                 streamId,
                                 sessionId,
-                                sessionData,
-                                txn,
+                                existingSessionData,
                             )
-
-                            if (!existingSession) {
-                                this.cryptoStore.addSharedHistoryInboundGroupSession(
-                                    streamId,
-                                    sessionId,
-                                    txn,
-                                )
-                            }
-                        } finally {
-                            session.free()
+                        } else {
+                            log(
+                                `Newly-received megolm session ${streamId}|$sessionId}` +
+                                    ' does not match existing session! Keeping existing session',
+                            )
                         }
-                    },
-                )
-            },
-        )
+                        return
+                    }
+                    // If the sessions have the same index, go ahead and store the new trusted one.
+                }
+            }
+            log(
+                `Storing megolm session ${streamId}|${sessionId} with first index ${session.first_known_index()}`,
+            )
+
+            const sessionData = Object.assign({}, extraSessionData, {
+                stream_id: streamId,
+                session: session.pickle(this.pickleKey),
+                keysClaimed: keysClaimed,
+            })
+
+            await this.cryptoStore.storeEndToEndInboundGroupSession(
+                streamId,
+                sessionId,
+                sessionData,
+            )
+
+            if (!existingSession) {
+                await this.cryptoStore.addSharedHistoryInboundGroupSession(streamId, sessionId)
+            }
+        } finally {
+            session.free()
+        }
     }
 
     /**
@@ -778,22 +645,12 @@ export class OlmDevice {
         code: string,
         reason: string,
     ): Promise<void> {
-        await this.cryptoStore.doTxn(
-            'readwrite',
-            [IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD],
-            (txn) => {
-                this.cryptoStore.storeEndToEndInboundGroupSessionWithheld(
-                    senderKey,
-                    sessionId,
-                    {
-                        stream_id: streamId,
-                        code: code,
-                        reason: reason,
-                    },
-                    txn,
-                )
-            },
-        )
+        // FIXME: IS THIS CORRECT? senderKey vs streamId??
+        await this.cryptoStore.storeEndToEndInboundGroupSessionWithheld(senderKey, sessionId, {
+            stream_id: streamId,
+            code: code,
+            reason: reason,
+        })
     }
 
     /**
@@ -820,98 +677,75 @@ export class OlmDevice {
         // exceptions thrown from within the inner function are not passed through
         // to the top level, so we store exceptions in a variable and raise them at
         // the end
-        let error: Error
 
-        await this.cryptoStore.doTxn(
-            'readwrite',
-            [
-                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS,
-                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
-            ],
-            (txn) => {
-                this.getInboundGroupSession(
-                    streamId,
-                    sessionId,
-                    txn,
-                    (session, sessionData, withheld) => {
-                        if (session === null || sessionData === null) {
-                            if (withheld) {
-                                error = new DecryptionError(
-                                    'MEGOLM_UNKNOWN_INBOUND_SESSION_ID',
-                                    calculateWithheldMessage(withheld),
-                                    {
-                                        session: streamId + '|' + sessionId,
-                                    },
-                                )
-                            }
-                            result = null
-                            return
-                        }
-                        let res: ReturnType<InboundGroupSession['decrypt']>
-                        try {
-                            res = session.decrypt(body)
-                        } catch (e) {
-                            if ((<Error>e)?.message === 'OLM.UNKNOWN_MESSAGE_INDEX' && withheld) {
-                                error = new DecryptionError(
-                                    'MEGOLM_UNKNOWN_INBOUND_SESSION_ID',
-                                    calculateWithheldMessage(withheld),
-                                    {
-                                        session: streamId + '|' + sessionId,
-                                    },
-                                )
-                            } else {
-                                error = <Error>e
-                            }
-                            return
-                        }
-
-                        let plaintext: string = res.plaintext
-                        if (plaintext === undefined) {
-                            // @ts-ignore - Compatibility for older olm versions.
-                            plaintext = res as string
-                        } else {
-                            // Check if we have seen this message index before to detect replay attacks.
-                            // If the event ID and timestamp are specified, and the match the event ID
-                            // and timestamp from the last time we used this message index, then we
-                            // don't consider it a replay attack.
-                            const messageIndexKey = `${streamId}|${sessionId}|${res.message_index}`
-                            if (messageIndexKey in this.inboundGroupSessionMessageIndexes) {
-                                const msgInfo =
-                                    this.inboundGroupSessionMessageIndexes[messageIndexKey]
-                                if (msgInfo.id !== eventId || msgInfo.timestamp !== timestamp) {
-                                    error = new Error(
-                                        'Duplicate message index, possible replay attack: ' +
-                                            messageIndexKey,
-                                    )
-                                    return
-                                }
-                            }
-                            this.inboundGroupSessionMessageIndexes[messageIndexKey] = {
-                                id: eventId,
-                                timestamp: timestamp!,
-                            }
-                        }
-
-                        sessionData.session = session.pickle(this.pickleKey)
-                        this.cryptoStore.storeEndToEndInboundGroupSession(
-                            streamId,
-                            sessionId,
-                            sessionData,
-                            txn,
-                        )
-                        result = {
-                            result: plaintext,
-                            keysClaimed: sessionData.keysClaimed || {},
-                            streamId: streamId,
-                            untrusted: !!sessionData.untrusted,
-                        }
+        const {
+            session,
+            data: sessionData,
+            withheld,
+        } = await this.getInboundGroupSession(streamId, sessionId)
+        if (!session || !sessionData) {
+            if (withheld) {
+                throw new DecryptionError(
+                    'MEGOLM_UNKNOWN_INBOUND_SESSION_ID',
+                    calculateWithheldMessage(withheld),
+                    {
+                        session: streamId + '|' + sessionId,
                     },
                 )
-            },
-        )
+            }
+            return null
+        }
 
-        if (error!) {
-            throw error
+        let res: ReturnType<InboundGroupSession['decrypt']>
+        try {
+            res = session.decrypt(body)
+        } catch (e) {
+            if ((<Error>e)?.message === 'OLM.UNKNOWN_MESSAGE_INDEX' && withheld) {
+                throw new DecryptionError(
+                    'MEGOLM_UNKNOWN_INBOUND_SESSION_ID',
+                    calculateWithheldMessage(withheld),
+                    {
+                        session: streamId + '|' + sessionId,
+                    },
+                )
+            } else {
+                throw <Error>e
+            }
+        }
+
+        let plaintext: string = res.plaintext
+        if (plaintext === undefined) {
+            // @ts-ignore - Compatibility for older olm versions.
+            plaintext = res as string
+        } else {
+            // Check if we have seen this message index before to detect replay attacks.
+            // If the event ID and timestamp are specified, and the match the event ID
+            // and timestamp from the last time we used this message index, then we
+            // don't consider it a replay attack.
+            const messageIndexKey = `${streamId}|${sessionId}|${res.message_index}`
+            if (messageIndexKey in this.inboundGroupSessionMessageIndexes) {
+                const msgInfo = this.inboundGroupSessionMessageIndexes[messageIndexKey]
+                if (msgInfo.id !== eventId || msgInfo.timestamp !== timestamp) {
+                    throw new Error(
+                        'Duplicate message index, possible replay attack: ' + messageIndexKey,
+                    )
+                    return null
+                }
+            }
+            this.inboundGroupSessionMessageIndexes[messageIndexKey] = {
+                id: eventId,
+                timestamp: timestamp!,
+            }
+        }
+
+        sessionData.session = session.pickle(this.pickleKey)
+        await this.cryptoStore.storeEndToEndInboundGroupSession(streamId, sessionId, sessionData)
+
+        result = {
+            result: plaintext,
+            keysClaimed: sessionData.keysClaimed || {},
+            streamId: streamId,
+            untrusted: !!sessionData.untrusted,
         }
         return result
     }
@@ -924,16 +758,15 @@ export class OlmDevice {
      *
      * @returns ciphertext
      */
-    public encryptGroupMessage(sessionId: string, payloadString: string): string {
+    public async encryptGroupMessage(sessionId: string, payloadString: string): Promise<string> {
         log(`encrypting msg with megolm session ${sessionId}`)
 
         checkPayloadLength(payloadString)
-
-        return this.getOutboundGroupSession(sessionId, (session: OutboundGroupSession) => {
-            const res = session.encrypt(payloadString)
-            this.saveOutboundGroupSession(session)
-            return res
-        })
+        const session = await this.getOutboundGroupSession(sessionId)
+        const res = session.encrypt(payloadString)
+        await this.saveOutboundGroupSession(session)
+        session.free()
+        return res
     }
 
     /**
@@ -949,33 +782,19 @@ export class OlmDevice {
         theirIdentityKey: string,
         theirOneTimeKey: string,
     ): Promise<string> {
-        let newSessionId: string
-        await this.cryptoStore.doTxn(
-            'readwrite',
-            [IndexedDBCryptoStore.STORE_ACCOUNT, IndexedDBCryptoStore.STORE_SESSIONS],
-            (txn) => {
-                this.getAccount(txn, (account: Account) => {
-                    const session = this.olmDelegate.createSession()
-                    try {
-                        session.create_outbound(account, theirIdentityKey, theirOneTimeKey)
-                        newSessionId = session.session_id()
-                        this.storeAccount(txn, account)
-                        const sessionInfo: IUnpickledSessionInfo = {
-                            session,
-                            // Pretend we've received a message at this point, otherwise
-                            // if we try to send a message to the device, it won't use
-                            // this session
-                            lastReceivedMessageTs: Date.now(),
-                        }
-                        this.saveSession(theirIdentityKey, sessionInfo, txn)
-                    } finally {
-                        session.free()
-                    }
-                })
-            },
-            undefined,
-        )
-        return newSessionId!
+        const account = await this.getAccount()
+        const session = this.olmDelegate.createSession()
+        session.create_outbound(account, theirIdentityKey, theirOneTimeKey)
+        const newSessionId = session.session_id()
+        const sessionInfo: IUnpickledSessionInfo = {
+            sessionId: session.session_id(),
+            deviceKey: theirIdentityKey,
+            session,
+            lastReceivedMessageTs: Date.now(),
+        }
+        await this.storeAccount(account)
+        await this.saveSession(theirIdentityKey, sessionInfo)
+        return newSessionId
     }
 
     /**
@@ -999,40 +818,29 @@ export class OlmDevice {
             throw new Error('Need messageType == 0 to create inbound session')
         }
 
-        let result: { payload: string; session_id: string } // eslint-disable-line camelcase
-        await this.cryptoStore.doTxn(
-            'readwrite',
-            [IndexedDBCryptoStore.STORE_ACCOUNT, IndexedDBCryptoStore.STORE_SESSIONS],
-            (txn) => {
-                this.getAccount(txn, (account: Account) => {
-                    const session = this.olmDelegate.createSession()
-                    try {
-                        session.create_inbound_from(account, theirDeviceIdentityKey, ciphertext)
-                        this.storeAccount(txn, account)
+        const account = await this.getAccount()
+        const session = this.olmDelegate.createSession()
+        try {
+            session.create_inbound_from(account, theirDeviceIdentityKey, ciphertext)
+            await this.storeAccount(account)
 
-                        const payloadString = session.decrypt(messageType, ciphertext)
-
-                        const sessionInfo: IUnpickledSessionInfo = {
-                            session,
-                            // this counts as a received message: set last received message time
-                            // to now
-                            lastReceivedMessageTs: Date.now(),
-                        }
-                        this.saveSession(theirDeviceIdentityKey, sessionInfo, txn)
-
-                        result = {
-                            payload: payloadString,
-                            session_id: session.session_id(),
-                        }
-                    } finally {
-                        session.free()
-                    }
-                })
-            },
-            undefined,
-        )
-
-        return result!
+            const payloadString = session.decrypt(messageType, ciphertext)
+            const sessionInfo: IUnpickledSessionInfo = {
+                session,
+                sessionId: session.session_id(),
+                deviceKey: theirDeviceIdentityKey,
+                // this counts as a received message: set last received message time
+                // to now
+                lastReceivedMessageTs: Date.now(),
+            }
+            await this.saveSession(theirDeviceIdentityKey, sessionInfo)
+            return {
+                payload: payloadString,
+                session_id: session.session_id(),
+            }
+        } finally {
+            session.free()
+        }
     }
 
     /**
@@ -1052,19 +860,8 @@ export class OlmDevice {
                 // return an empty result
             }
         }
-        let sessionIds: string[]
-        await this.cryptoStore.doTxn(
-            'readonly',
-            [IndexedDBCryptoStore.STORE_SESSIONS],
-            (txn) => {
-                this.cryptoStore.getEndToEndSessions(theirDeviceIdentityKey, txn, (sessions) => {
-                    sessionIds = Object.keys(sessions)
-                })
-            },
-            undefined,
-        )
-
-        return sessionIds!
+        const sessionIds = await this.cryptoStore.getEndToEndSessions(theirDeviceIdentityKey)
+        return sessionIds.map((info) => info.sessionId)
     }
 
     /**
@@ -1145,29 +942,17 @@ export class OlmDevice {
             sessionId: string
         }[] = []
 
-        await this.cryptoStore.doTxn(
-            'readonly',
-            [IndexedDBCryptoStore.STORE_SESSIONS],
-            (txn) => {
-                this.cryptoStore.getEndToEndSessions(deviceIdentityKey, txn, (sessions) => {
-                    const sessionIds = Object.keys(sessions).sort()
-                    for (const sessionId of sessionIds) {
-                        this.unpickleSession(
-                            sessions[sessionId],
-                            (sessInfo: IUnpickledSessionInfo) => {
-                                info.push({
-                                    lastReceivedMessageTs: sessInfo.lastReceivedMessageTs!,
-                                    hasReceivedMessage: sessInfo.session.has_received_message(),
-                                    sessionId,
-                                })
-                            },
-                        )
-                    }
-                })
-            },
-            undefined,
-        )
+        const sessions = await this.cryptoStore.getEndToEndSessions(deviceIdentityKey)
 
+        for (const session of sessions) {
+            const sessInfo = await this.unpickleSession(session)
+            const sessionInfo = {
+                lastReceivedMessageTs: sessInfo.lastReceivedMessageTs,
+                hasReceivedMessage: sessInfo.session.has_received_message(),
+                sessionId: session.sessionId,
+            }
+            info.push(sessionInfo)
+        }
         return info
     }
 
@@ -1188,28 +973,13 @@ export class OlmDevice {
     ): Promise<EncryptedMessageEnvelope> {
         checkPayloadLength(payloadString)
         const res = new EncryptedMessageEnvelope()
-        await this.cryptoStore.doTxn(
-            'readwrite',
-            [IndexedDBCryptoStore.STORE_SESSIONS],
-            (txn) => {
-                this.getSession(theirDeviceIdentityKey, sessionId, txn, (sessionInfo) => {
-                    const sessionDesc = sessionInfo.session.describe()
-                    log(
-                        'Olm Session ID ' +
-                            sessionId +
-                            ' to ' +
-                            theirDeviceIdentityKey +
-                            ': ' +
-                            sessionDesc,
-                    )
-                    const encoded = sessionInfo.session.encrypt(payloadString)
-                    res.body = encoded.body
-                    res.type = encoded.type
-                    this.saveSession(theirDeviceIdentityKey, sessionInfo, txn)
-                })
-            },
-            undefined,
-        )
+        const sessionInfo = await this.getSession(theirDeviceIdentityKey, sessionId)
+        const sessionDesc = sessionInfo.session.describe()
+        log('Olm Session ID ' + sessionId + ' to ' + theirDeviceIdentityKey + ': ' + sessionDesc)
+        const encoded = sessionInfo.session.encrypt(payloadString)
+        res.body = encoded.body
+        res.type = encoded.type
+        await this.saveSession(theirDeviceIdentityKey, sessionInfo)
         return res
     }
 
@@ -1230,34 +1000,13 @@ export class OlmDevice {
         messageType: number,
         ciphertext: string,
     ): Promise<string> {
-        let payloadString: string
-        await this.cryptoStore.doTxn(
-            'readwrite',
-            [IndexedDBCryptoStore.STORE_SESSIONS],
-            (txn) => {
-                this.getSession(
-                    theirDeviceIdentityKey,
-                    sessionId,
-                    txn,
-                    (sessionInfo: IUnpickledSessionInfo) => {
-                        const sessionDesc = sessionInfo.session.describe()
-                        log(
-                            'Olm Session ID ' +
-                                sessionId +
-                                ' from ' +
-                                theirDeviceIdentityKey +
-                                ': ' +
-                                sessionDesc,
-                        )
-                        payloadString = sessionInfo.session.decrypt(messageType, ciphertext)
-                        sessionInfo.lastReceivedMessageTs = Date.now()
-                        this.saveSession(theirDeviceIdentityKey, sessionInfo, txn)
-                    },
-                )
-            },
-            undefined,
-        )
-        return payloadString!
+        const sessionInfo = await this.getSession(theirDeviceIdentityKey, sessionId)
+        const sessionDesc = sessionInfo.session.describe()
+        log('Olm Session ID ' + sessionId + ' from ' + theirDeviceIdentityKey + ': ' + sessionDesc)
+        const payloadString = sessionInfo.session.decrypt(messageType, ciphertext)
+        sessionInfo.lastReceivedMessageTs = Date.now()
+        await this.saveSession(theirDeviceIdentityKey, sessionInfo)
+        return payloadString
     }
 
     /**
@@ -1281,19 +1030,8 @@ export class OlmDevice {
         if (messageType !== 0) {
             return false
         }
-
-        let matches: boolean
-        await this.cryptoStore.doTxn(
-            'readonly',
-            [IndexedDBCryptoStore.STORE_SESSIONS],
-            (txn) => {
-                this.getSession(theirDeviceIdentityKey, sessionId, txn, (sessionInfo) => {
-                    matches = sessionInfo.session.matches_inbound(ciphertext)
-                })
-            },
-            undefined,
-        )
-        return matches!
+        const sessionInfo = await this.getSession(theirDeviceIdentityKey, sessionId)
+        return sessionInfo.session.matches_inbound(ciphertext)
     }
 
     // Utilities
@@ -1321,15 +1059,7 @@ export class OlmDevice {
     public async getSharedHistoryInboundGroupSessions(
         streamId: string,
     ): Promise<[streamId: string, sessionId: string][]> {
-        let result: Promise<[streamId: string, sessionId: string][]>
-        await this.cryptoStore.doTxn(
-            'readonly',
-            [IndexedDBCryptoStore.STORE_SHARED_HISTORY_INBOUND_GROUP_SESSIONS],
-            (txn) => {
-                result = this.cryptoStore.getSharedHistoryInboundGroupSessions(streamId, txn)
-            },
-        )
-        return result!
+        return await this.cryptoStore.getSharedHistoryInboundGroupSessions(streamId)
     }
 
     /**
@@ -1340,41 +1070,25 @@ export class OlmDevice {
      * @param sessionId - session identifier
      */
     public async hasInboundSessionKeys(streamId: string, sessionId: string): Promise<boolean> {
-        let result: boolean
-        await this.cryptoStore.doTxn(
-            'readonly',
-            [
-                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS,
-                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
-            ],
-            (txn) => {
-                this.cryptoStore.getEndToEndInboundGroupSession(
-                    streamId,
-                    sessionId,
-                    txn,
-                    (sessionData) => {
-                        if (sessionData === null) {
-                            result = false
-                            return
-                        }
-
-                        if (streamId !== sessionData.stream_id) {
-                            log(
-                                `[hasInboundSessionKey]: requested keys for inbound group session` +
-                                    `${sessionId}, with incorrect stream id ` +
-                                    `(expected ${sessionData.stream_id}, ` +
-                                    `was ${streamId})`,
-                            )
-                            result = false
-                        } else {
-                            result = true
-                        }
-                    },
-                )
-            },
+        const sessionData = await this.cryptoStore.getEndToEndInboundGroupSession(
+            streamId,
+            sessionId,
         )
 
-        return result!
+        if (!sessionData) {
+            return false
+        }
+        if (streamId !== sessionData.stream_id) {
+            log(
+                `[hasInboundSessionKey]: requested keys for inbound group session` +
+                    `${sessionId}, with incorrect stream id ` +
+                    `(expected ${sessionData.stream_id}, ` +
+                    `was ${streamId})`,
+            )
+            return false
+        } else {
+            return true
+        }
     }
 
     /**
@@ -1394,50 +1108,40 @@ export class OlmDevice {
         sessionId: string,
         chainIndex?: number,
     ): Promise<IInboundGroupSessionKey | null> {
-        let result: IInboundGroupSessionKey | null = null
-        await this.cryptoStore.doTxn(
-            'readonly',
-            [
-                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS,
-                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
-            ],
-            (txn) => {
-                this.getInboundGroupSession(streamId, sessionId, txn, (session, sessionData) => {
-                    if (session === null || sessionData === null) {
-                        result = null
-                        return
-                    }
-
-                    if (chainIndex === undefined) {
-                        chainIndex = session.first_known_index()
-                    }
-
-                    const exportedSession = session.export_session(chainIndex)
-
-                    const claimedKeys = sessionData.keysClaimed || {}
-                    const senderEd25519Key = claimedKeys.ed25519 || null
-
-                    // older forwarded keys didn't set the "untrusted"
-                    // property, but can be identified by having a
-                    // non-empty forwarding key chain.  These keys should
-                    // be marked as untrusted since we don't know that they
-                    // can be trusted
-                    // todo jterzis 07/23: trusted check on forwarding keys not yet implemented
-                    // as trust model is not yet defined
-
-                    result = {
-                        chain_index: chainIndex,
-                        key: exportedSession,
-                        forwarding_curve25519_key_chain: [],
-                        sender_claimed_ed25519_key: senderEd25519Key,
-                        shared_history: false,
-                        untrusted: false,
-                    }
-                })
-            },
+        const { session, data: sessionData } = await this.getInboundGroupSession(
+            streamId,
+            sessionId,
         )
 
-        return result
+        if (!session || !sessionData) {
+            return null
+        }
+
+        if (chainIndex === undefined) {
+            chainIndex = session.first_known_index()
+        }
+
+        const exportedSession = session.export_session(chainIndex)
+
+        const claimedKeys = sessionData.keysClaimed || {}
+        const senderEd25519Key = claimedKeys.ed25519 || null
+
+        // older forwarded keys didn't set the "untrusted"
+        // property, but can be identified by having a
+        // non-empty forwarding key chain.  These keys should
+        // be marked as untrusted since we don't know that they
+        // can be trusted
+        // todo jterzis 07/23: trusted check on forwarding keys not yet implemented
+        // as trust model is not yet defined
+
+        return {
+            chain_index: chainIndex,
+            key: exportedSession,
+            forwarding_curve25519_key_chain: [],
+            sender_claimed_ed25519_key: senderEd25519Key,
+            shared_history: false,
+            untrusted: false,
+        }
     }
 
     /**
@@ -1452,18 +1156,21 @@ export class OlmDevice {
         sessionId: string,
         sessionData: InboundGroupSessionData,
     ): IMegolmSessionData {
-        return this.unpickleInboundGroupSession(sessionData, (session) => {
-            const messageIndex = session.first_known_index()
+        const session = this.unpickleInboundGroupSession(sessionData)
+        const messageIndex = session.first_known_index()
 
-            return {
-                sender_key: streamId,
-                sender_claimed_keys: sessionData.keysClaimed,
-                stream_id: sessionData.stream_id,
-                session_id: sessionId,
-                session_key: session.export_session(messageIndex),
-                first_known_index: session.first_known_index(),
-            }
-        })
+        const sessionKey = session.export_session(messageIndex)
+        const firstKnownIndex = session.first_known_index()
+        session.free()
+
+        return {
+            sender_key: streamId,
+            sender_claimed_keys: sessionData.keysClaimed,
+            stream_id: sessionData.stream_id,
+            session_id: sessionId,
+            session_key: sessionKey,
+            first_known_index: firstKnownIndex,
+        }
     }
 }
 

@@ -309,7 +309,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             }
         }
 
-        const key = this.olmDevice.getOutboundGroupSessionKey(session.sessionId)
+        const key = await this.olmDevice.getOutboundGroupSessionKey(session.sessionId)
         const payload = new MegolmSession({
             streamId: streamId,
             sessionId: session.sessionId,
@@ -454,9 +454,9 @@ export class MegolmEncryption extends EncryptionAlgorithm {
      * @returns session
      */
     private async prepareNewSession(streamId: string): Promise<OutboundSessionInfo> {
-        const sessionId = this.olmDevice.createOutboundGroupSession()
+        const sessionId = await this.olmDevice.createOutboundGroupSession()
         // session key
-        const key = this.olmDevice.getOutboundGroupSessionKey(sessionId)
+        const key = await this.olmDevice.getOutboundGroupSessionKey(sessionId)
 
         await this.olmDevice.addInboundGroupSession(
             streamId,
@@ -702,7 +702,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         }
 
         const unnotifiedFailedDevices =
-            await this.baseApis.cryptoStore!.filterOutNotifiedErrorDevices(failedDevices)
+            await this.baseApis.cryptoStore.filterOutNotifiedErrorDevices(failedDevices)
         this.logCall(
             `Need to notify ${unnotifiedFailedDevices.length} failed devices which haven't been notified before`,
         )
@@ -852,7 +852,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         if (session === null) {
             throw new Error(`No session found for room ${streamId}`)
         }
-        const ciphertext = this.olmDevice.encryptGroupMessage(
+        const ciphertext = await this.olmDevice.encryptGroupMessage(
             session.sessionId,
             JSON.stringify(payloadJson),
         )

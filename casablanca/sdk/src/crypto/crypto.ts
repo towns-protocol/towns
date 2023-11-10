@@ -36,7 +36,7 @@ import { IFallbackKey, recursiveMapToObject } from '../types'
 import { bin_fromHexString } from '../binary'
 import { DeviceList, IOlmDevice } from './deviceList'
 import { ethers } from 'ethers'
-import { CryptoStore } from './store/base'
+import { CryptoStore } from './store/cryptoStore'
 import { OlmDecryption, OlmEncryption } from './algorithms/olm'
 import { MegolmDecryption, MegolmEncryption } from './algorithms/megolm'
 import { ClearContent, RiverEventV2 } from '../eventV2'
@@ -340,7 +340,7 @@ export class Crypto
             log('error initializing olm', e)
             throw e
         })
-        this.olmDevice = new OlmDevice(cryptoStore, this.olmDelegate)
+        this.olmDevice = new OlmDevice(this.olmDelegate, cryptoStore)
         this.deviceList = new DeviceList(this.client, cryptoStore, this.olmDevice)
         this.supportedAlgorithms = [OLM_ALGORITHM, MEGOLM_ALGORITHM]
         this.olmEncryption = new OlmEncryption({

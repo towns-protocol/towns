@@ -8,8 +8,7 @@ import { IDownloadKeyRequest, IDownloadKeyResponse } from '../client'
 import { OLM_ALGORITHM, MEGOLM_ALGORITHM } from './olmLib'
 import { IDevice, DeviceInfo } from './deviceInfo'
 import { OlmDevice } from './olmDevice'
-import { CryptoStore } from './store/base'
-import { IndexedDBCryptoStore } from './store/indexeddb-crypto-store'
+import { CryptoStore } from './store/cryptoStore'
 import { IDeviceKeys } from '../types'
 
 const log = dlog('csb:deviceList')
@@ -340,22 +339,15 @@ export class DeviceList extends (EventEmitter as new () => TypedEmitter<CryptoEv
                 this.saveTimer = null
                 this.savePromise = null
                 this.resolveSavePromise = null
+
                 try {
                     // jterzis 06/14/23: converted from .then() to await to avoid orphaned callbacks
-                    await this.cryptoStore.doTxn(
-                        'readwrite',
-                        [IndexedDBCryptoStore.STORE_DEVICE_DATA],
-                        (txn) => {
-                            this.cryptoStore.storeEndToEndDeviceData(
-                                {
-                                    devices: this.devices,
-                                    trackingStatus: this.deviceTrackingStatus,
-                                    syncToken: this.syncToken ?? undefined,
-                                },
-                                txn,
-                            )
-                        },
-                    )
+                    await this.cryptoStore.storeEndToEndDeviceData({
+                        devices: this.devices,
+                        trackingStatus: this.deviceTrackingStatus,
+                        syncToken: this.syncToken ?? undefined,
+                    })
+
                     this.dirty = false
                     resolveSavePromise?.(true)
                 } catch (e) {
@@ -372,28 +364,21 @@ export class DeviceList extends (EventEmitter as new () => TypedEmitter<CryptoEv
      * Load the device tracking state from storage
      */
     public async load(): Promise<void> {
-        await this.cryptoStore.doTxn(
-            'readonly',
-            [IndexedDBCryptoStore.STORE_DEVICE_DATA],
-            (txn) => {
-                this.cryptoStore.getEndToEndDeviceData(txn, (deviceData) => {
-                    this.hasFetched = Boolean(deviceData && deviceData.devices)
-                    this.devices = deviceData ? deviceData.devices : {}
-                    //this.crossSigningInfo = deviceData ? deviceData.crossSigningInfo || {} : {};
-                    this.deviceTrackingStatus = deviceData ? deviceData.trackingStatus : {}
-                    this.syncToken = deviceData?.syncToken ?? null
-                    this.userByIdentityKey = {}
-                    for (const user of Object.keys(this.devices)) {
-                        const userDevices = this.devices[user]
-                        for (const device of Object.keys(userDevices)) {
-                            const idKey = userDevices[device].keys['curve25519:' + device]
-                            if (idKey !== undefined) {
-                                this.userByIdentityKey[idKey] = user
-                            }
-                        }
-                    }
-                })
-            },
-        )
+        const deviceData = await this.cryptoStore.getEndToEndDeviceData()
+        this.hasFetched = Boolean(deviceData && deviceData.devices)
+        this.devices = deviceData ? deviceData.devices : {}
+        //this.crossSigningInfo = deviceData ? deviceData.crossSigningInfo || {} : {};
+        this.deviceTrackingStatus = deviceData ? deviceData.trackingStatus : {}
+        this.syncToken = deviceData?.syncToken ?? null
+        this.userByIdentityKey = {}
+        for (const user of Object.keys(this.devices)) {
+            const userDevices = this.devices[user]
+            for (const device of Object.keys(userDevices)) {
+                const idKey = userDevices[device].keys['curve25519:' + device]
+                if (idKey !== undefined) {
+                    this.userByIdentityKey[idKey] = user
+                }
+            }
+        }
     }
 }

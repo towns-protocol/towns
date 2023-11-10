@@ -196,12 +196,13 @@ export class ZionClient implements DecryptionExtensionDelegate {
         // todo jterzis 06/15/23: add client store here
         // crypto store
         const userId = userIdFromAddress(context.creatorAddress)
+
         const cryptoStore = RiverDbManager.getCryptoDb(userId)
         this.casablancaClient = new CasablancaClient(
             context,
             rpcClient,
-            this.opts.logNamespaceFilter,
             cryptoStore,
+            this.opts.logNamespaceFilter,
         )
         this.casablancaClient.setMaxListeners(100)
         // TODO HNT-1829 - long-term the app should already know if user exists

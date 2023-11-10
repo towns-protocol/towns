@@ -8,8 +8,6 @@ import Olm from '@matrix-org/olm'
 import { configure } from '@testing-library/dom'
 import 'jest-canvas-mock'
 import { queryClient } from './src/query/queryClient'
-import 'fake-indexeddb/auto'
-import { IDBFactory } from 'fake-indexeddb'
 
 process.env.NODE_ENV = 'test'
 process.env.CASABLANCA_SERVER_URL = process.env.CASABLANCA_SERVER_URL || 'http://localhost:5157'

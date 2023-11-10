@@ -13,12 +13,10 @@ import { ZionTestApp } from './helpers/ZionTestApp'
 import { registerAndStartClients } from './helpers/TestUtils'
 import { useWeb3Context } from '../../src/components/Web3ContextProvider'
 import { LoginStatus } from '../../src/hooks/login'
-
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { sleep } from '../../src/utils/zion-utils'
 import { CREDENTIAL_STORE_NAME, useCredentialStore } from '../../src/store/use-credential-store'
-import 'fake-indexeddb/auto'
 import { useCasablancaStore } from '../../src/store/use-casablanca-store'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 

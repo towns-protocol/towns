@@ -13,6 +13,7 @@ const config: JestConfigWithTsJest = {
     modulePathIgnorePatterns: ['/dist/'],
     testPathIgnorePatterns: ['/dist/', '/node_modules/', 'util.test.ts'],
     setupFilesAfterEnv: ['jest-extended/all', './../jest.matchers.ts'],
+    setupFiles: ['fake-indexeddb/auto'],
     extensionsToTreatAsEsm: ['.ts'],
     transform: {
         '^.+\\.tsx?$': [

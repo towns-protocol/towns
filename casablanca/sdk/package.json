@@ -31,6 +31,7 @@
         "@river/web3": "workspace:^",
         "browser-or-node": "^2.1.1",
         "debug": "^4.3.4",
+        "dexie": "^3.2.4",
         "ethereum-cryptography": "1.2.0",
         "ethers": "^5.7.2",
         "lodash": "^4.17.21",

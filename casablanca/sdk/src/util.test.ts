@@ -82,8 +82,9 @@ export const makeTestClient = async (url?: string, context?: SignerContext): Pro
         context = await makeRandomUserContext()
     }
     // create a new client with store(s)
+
     const cryptoStore = RiverDbManager.getCryptoDb(userIdFromAddress(context.creatorAddress))
-    return new Client(context, makeStreamRpcClient(url), undefined, cryptoStore)
+    return new Client(context, makeStreamRpcClient(url), cryptoStore, undefined)
 }
 
 class DonePromise {

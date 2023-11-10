@@ -20,6 +20,7 @@ const config: JestConfigWithTsJest = {
         '\\.(wasm)$': require.resolve('./tests/mocks/file-mock.js'),
         msgpackr: '<rootDir>/../../../node_modules/msgpackr/dist/node.cjs',
     },
+    setupFiles: ['fake-indexeddb/auto'],
     modulePathIgnorePatterns: ['/dist/'],
     testPathIgnorePatterns: ['/dist/', '/node_modules/'],
     testTimeout: 60000,

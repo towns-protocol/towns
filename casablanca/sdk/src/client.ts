@@ -89,7 +89,7 @@ import {
     make_GDMChannelPayload_Membership,
 } from './types'
 import { shortenHexString } from './binary'
-import { CryptoStore } from './crypto/store/base'
+import { CryptoStore } from './crypto/store/cryptoStore'
 import { DeviceInfo } from './crypto/deviceInfo'
 import { IDecryptOptions, RiverEventsV2, RiverEventV2 } from './eventV2'
 import debug from 'debug'
@@ -130,16 +130,17 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     protected exportedOlmDeviceToImport?: IExportedOlmDevice
     public pickleKey?: string
-    public cryptoStore?: CryptoStore
     public cryptoBackend?: Crypto
+    public cryptoStore: CryptoStore
+
     private syncLoop?: Promise<unknown>
     private syncAbort?: AbortController
 
     constructor(
         signerContext: SignerContext,
         rpcClient: StreamRpcClientType,
+        cryptoStore: CryptoStore,
         logNamespaceFilter?: string,
-        cryptoStore?: CryptoStore,
         olmDeviceToImport?: IExportedDevice,
         pickleKey?: string,
     ) {
@@ -180,7 +181,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logEmitFromClient = dlog('csb:cl:emit').extend(shortId)
         this.logEvent = dlog('csb:cl:event').extend(shortId)
         this.logError = dlogError('csb:cl:error').extend(shortId)
-
         this.cryptoStore = cryptoStore
         this.logCall('new Client')
     }
@@ -1688,13 +1688,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             this.logCall('Attempt to re-init crypto backend, ignoring')
             return
         }
-
-        if (!this.cryptoStore) {
-            throw new Error('cryptoStore must be set to init crypto')
-        }
-
-        this.logCall('Crypto: starting up crypto store.')
-        await this.cryptoStore.startup()
 
         if (this.userId == undefined) {
             throw new Error('userId must be set to init crypto')

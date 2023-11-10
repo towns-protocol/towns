@@ -3,7 +3,6 @@ import {
     RiverEventV2,
     ParsedEvent,
     make_ToDevice_KeyResponse,
-    IndexedDBCryptoStore,
     MEGOLM_ALGORITHM,
     IEventOlmDecryptionResult,
     isUserStreamId,
@@ -816,54 +815,39 @@ export class RiverDecryptionExtension {
         console.log('CDE::onKeySolicitation all requested sessions', { allRequestedSessions })
 
         const exportedSessions: MegolmSessionData[] = []
-        try {
-            await this.client.cryptoBackend?.cryptoStore.doTxn(
-                'readonly',
-                [
-                    IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS,
-                    IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
-                ],
-                (txn) => {
-                    allRequestedSessions.forEach(([streamId, sessionId]) => {
-                        this.client.cryptoBackend?.cryptoStore.getEndToEndInboundGroupSession(
-                            streamId,
-                            sessionId,
-                            txn,
-                            (sessionData, _groupSessionWitheld) => {
-                                if (!sessionData || !this.client.cryptoBackend) {
-                                    return
-                                }
-                                if (sessionData.stream_id === streamId) {
-                                    const sess =
-                                        this.client.cryptoBackend?.olmDevice.exportInboundGroupSession(
-                                            streamId,
-                                            sessionId,
-                                            sessionData,
-                                        )
-                                    delete sess.first_known_index
-                                    sess.algorithm = MEGOLM_ALGORITHM
-                                    exportedSessions.push(
-                                        new MegolmSession({
-                                            streamId: sess.stream_id,
-                                            sessionId: sess.session_id,
-                                            sessionKey: sess.session_key,
-                                            algorithm: sess.algorithm,
-                                        }),
-                                    )
-                                } else {
-                                    console.error(
-                                        'CDE::onKeySolicitation got key sharing request for wrong room',
-                                        { streamId, fromUserId, sessionId },
-                                    )
-                                }
-                            },
-                        )
-                    })
-                },
+
+        for (const [streamId, sessionId] of allRequestedSessions) {
+            const sessionData = await this.client.cryptoStore.getEndToEndInboundGroupSession(
+                streamId,
+                sessionId,
             )
-        } catch (error) {
-            console.error(error)
-            return
+            if (!sessionData || !this.client.cryptoBackend) {
+                continue
+            }
+
+            if (sessionData.stream_id === streamId) {
+                const sess = this.client.cryptoBackend?.olmDevice.exportInboundGroupSession(
+                    streamId,
+                    sessionId,
+                    sessionData,
+                )
+                delete sess.first_known_index
+                sess.algorithm = MEGOLM_ALGORITHM
+                exportedSessions.push(
+                    new MegolmSession({
+                        streamId: sess.stream_id,
+                        sessionId: sess.session_id,
+                        sessionKey: sess.session_key,
+                        algorithm: sess.algorithm,
+                    }),
+                )
+            } else {
+                console.error('CDE::onKeySolicitation got key sharing request for wrong room', {
+                    streamId,
+                    fromUserId,
+                    sessionId,
+                })
+            }
         }
 
         console.info('CDE::onKeySolicitation responding to key request', {

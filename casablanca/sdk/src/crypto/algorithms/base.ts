@@ -3,7 +3,7 @@ import { OlmDevice } from '../olmDevice'
 import { Crypto } from '../crypto'
 import { DeviceInfo } from '../deviceInfo'
 import { DeviceInfoMap } from '../deviceList'
-import { IRoomEncryption } from '../store/base'
+import { IRoomEncryption } from '../store/types'
 import { RiverEventV2 } from '../../eventV2'
 import { MegolmSession } from '@river/proto'
 

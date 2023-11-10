@@ -5,6 +5,7 @@
 import { waitFor } from '@testing-library/dom'
 import {
     Client as CasablancaClient,
+    RiverDbManager,
     makeOldTownsDelegateSig,
     makeStreamRpcClient,
 } from '@river/sdk'
@@ -41,7 +42,8 @@ describe('casablanca', () => {
         const csurl: string = process.env.CASABLANCA_SERVER_URL!
         log('new CasablancaClient', csurl)
         const rpcClient = makeStreamRpcClient(csurl)
-        const client = new CasablancaClient(context, rpcClient)
+        const cryptoStore = RiverDbManager.getCryptoDb('abc')
+        const client = new CasablancaClient(context, rpcClient, cryptoStore)
         await client.createNewUser()
         log('Finished', client)
     })

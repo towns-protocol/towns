@@ -186,7 +186,7 @@ export class OlmDecryption extends DecryptionAlgorithm {
      *
      * @returns payload, if decrypted successfully.
      */
-    private decryptMessage(
+    private async decryptMessage(
         theirDeviceIdentityKey: string,
         message: EncryptedMessageEnvelope,
     ): Promise<string> {
@@ -195,7 +195,7 @@ export class OlmDecryption extends DecryptionAlgorithm {
         // and creating a new one, which we can only do once because it removes the OTK.
         if (message.type !== 0) {
             // not a prekey message: we can safely just try & decrypt it
-            return this.reallyDecryptMessage(theirDeviceIdentityKey, message)
+            return await this.reallyDecryptMessage(theirDeviceIdentityKey, message)
         } else {
             // todo: refactor to use await..async versus callback chaining
             const myPromise = this.olmDevice.olmPrekeyPromise.then(() => {

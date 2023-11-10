@@ -1,21 +1,19 @@
-import { dlog } from './dlog'
-import { CryptoStore } from './crypto/store/base'
-import { LocalStorageCryptoStore } from './crypto/store/local-storage-crypto-store'
-import { IndexedDBCryptoStore } from './crypto/store/indexeddb-crypto-store'
-const log = dlog('csb:riverDbManager')
+import { CryptoStore } from './crypto/store/cryptoStore'
+import { isTestEnv } from './utils'
 
 export class RiverDbManager {
     public static getCryptoDb(userId: string): CryptoStore {
-        const name = `${userId}`
-        let indexedDB: IDBFactory | undefined
-        try {
-            indexedDB = global.indexedDB
-        } catch (e) {
-            log('indexedb store doesnt exist yet', e)
+        if (isTestEnv()) {
+            /**
+             * TODO: HNT-3569
+             * We're using the _same_ database for every user during tests.
+             * This is on purpose, or else the tests do not pass. We need to make sure that
+             * we have real e2e tests in the sdk. Right now we're relying on sessions being
+             * available in the local database, instead of decrypting and parsing toDeviceMessage
+             * containing the session info we need.
+             */
+            return new CryptoStore(`database-`, userId)
         }
-        const store = indexedDB
-            ? new IndexedDBCryptoStore(global.indexedDB, `river-sdk:crypto:${name}`, userId)
-            : new LocalStorageCryptoStore(global.localStorage, userId) // note, local storage doesn't support key sharing
-        return store
+        return new CryptoStore(`database-${userId}`, userId)
     }
 }
