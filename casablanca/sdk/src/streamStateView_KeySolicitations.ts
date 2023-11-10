@@ -8,7 +8,8 @@ type KeySolicitationPayloadTypes = ChannelPayload | DmChannelPayload | GdmChanne
 export class StreamStateView_KeySolicitations {
     readonly streamId: string
     readonly keySolicitations = new Set<string>()
-    readonly fulfillments = new Map<string, KeySolicitationPayloadTypes>()
+    // origin event hash -> set of sessionIds fulfilled
+    readonly fulfillments = new Map<string, Set<string>>()
 
     constructor(streamId: string) {
         this.streamId = streamId
@@ -29,14 +30,8 @@ export class StreamStateView_KeySolicitations {
         // only refrain from emitting a keySolicitation message if that message has been fulfilled
         // with the requested sessionId.
         if (this.fulfillments.has(event.hashStr)) {
-            const fulfillmentPayload = this.fulfillments.get(event.hashStr)
-            if (
-                fulfillmentPayload &&
-                fulfillmentPayload.content.case == 'fulfillment' &&
-                fulfillmentPayload.content.value.sessionIds.includes(
-                    payload.content.value.sessionId,
-                )
-            ) {
+            const fulfillmentSet = this.fulfillments.get(event.hashStr)
+            if (fulfillmentSet && fulfillmentSet.has(payload.content.value.sessionId)) {
                 return
             }
         }
@@ -64,7 +59,12 @@ export class StreamStateView_KeySolicitations {
             return
         }
         const key = bin_toString(payload.content.value.originHash)
-        this.fulfillments.set(key, payload)
+        if (this.fulfillments.has(key)) {
+            const fulfillmentSet = this.fulfillments.get(key)
+            payload.content.value.sessionIds.map((s) => fulfillmentSet?.add(s))
+        } else {
+            this.fulfillments.set(key, new Set(payload.content.value.sessionIds))
+        }
     }
 
     hasKeySolicitation(senderKey: string, sessionId: string) {
@@ -74,9 +74,6 @@ export class StreamStateView_KeySolicitations {
 
     fulfilledSessions(originHash: string): string[] | undefined {
         const payload = this.fulfillments.get(originHash)
-        if (!payload || payload.content.case !== 'fulfillment') {
-            return undefined
-        }
-        return payload.content.value.sessionIds
+        return payload ? Array.from(payload) : undefined
     }
 }
