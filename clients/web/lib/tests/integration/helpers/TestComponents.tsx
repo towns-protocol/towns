@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
-import { useMatrixStore } from '../../../src/store/use-matrix-store'
 import { useCasablancaCredentials } from '../../../src/hooks/use-casablanca-credentials'
 import { useMyMembership } from '../../../src/hooks/use-my-membership'
 import { useZionClient } from '../../../src/hooks/use-zion-client'
@@ -14,7 +13,6 @@ import { useCreateRoleTransaction } from '../../../src/hooks/use-create-role-tra
 import { useDeleteRoleTransaction } from '../../../src/hooks/use-delete-role-transaction'
 import { useUpdateRoleTransaction } from '../../../src/hooks/use-update-role-transaction'
 import { useUpdateSpaceNameTransaction } from '../../../src/hooks/use-update-space-name-transaction'
-import { SignerContext } from '@river/sdk'
 
 export const RegisterWallet = () => {
     const { isConnected } = useWeb3Context()
@@ -68,32 +66,6 @@ export const LoginWithWallet = () => {
             })()
         }
     }, [loginWithWalletToCasablanca, walletStatus])
-    return (
-        <>
-            <div data-testid="isConnected">{isConnected.toString()}</div>
-            <div data-testid="walletStatus">{walletStatus}</div>
-            <div data-testid="loginStatus">{loginStatus}</div>
-            <div data-testid="loginError">{loginError?.message ?? ''}</div>
-            <div data-testid="clientRunning">{clientRunning ? 'true' : 'false'}</div>
-        </>
-    )
-}
-
-interface LoginWithAuthProps {
-    signerContext: SignerContext
-    walletAddress: string
-}
-
-export const LoginWithAuth = (_props: LoginWithAuthProps) => {
-    const { isConnected } = useWeb3Context()
-    const walletStatus = useWalletStatus()
-    const { loginStatus, loginError } = useMatrixStore()
-    const { clientRunning } = useZionClient()
-    useEffect(() => {
-        if (walletStatus === WalletStatus.Connected) {
-            throw new Error('Not implemented')
-        }
-    }, [walletStatus])
     return (
         <>
             <div data-testid="isConnected">{isConnected.toString()}</div>

@@ -7,14 +7,11 @@ import { LargeToast } from '../components/LargeToast'
 
 export function AuthenticatedContent(): JSX.Element {
     const spaceRoute = useMatch({ path: '/spaces/:spaceSlug', end: false })
-    const { matrixOnboardingState, casablancaOnboardingState } = useZionContext()
+    const { casablancaOnboardingState } = useZionContext()
 
-    const matrixOnboarding = getOnboardingState(matrixOnboardingState)
     const casablancaOnboarding = getOnboardingState(casablancaOnboardingState)
 
-    if (matrixOnboarding) {
-        return matrixOnboarding
-    } else if (casablancaOnboarding) {
+    if (casablancaOnboarding) {
         return casablancaOnboarding
     } else {
         return (

@@ -33,7 +33,7 @@ vi.mock('use-zion-client', async () => {
         ...actual,
         useZionContext: () => ({
             ...actual.useZionContext(),
-            matrixOnboardingState: {
+            casablancaOnboardingState: {
                 kind: 'update-profile',
                 bNeedsDisplayName: true,
                 bNeedsAvatar: true,
@@ -61,7 +61,7 @@ describe('<AllRoutes />', () => {
         vi.spyOn(Lib, 'useZionContext').mockImplementationOnce(() => {
             return {
                 ...Lib.useZionContext(),
-                matrixOnboardingState: {
+                casablancaOnboardingState: {
                     kind: 'update-profile',
                     bNeedsDisplayName: true,
                     bNeedsAvatar: true,

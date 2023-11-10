@@ -3,15 +3,11 @@ import { ZionClient } from '../client/ZionClient'
 import { ZionOpts } from '../client/ZionClientTypes'
 import { useContentAwareTimelineDiffCasablanca } from '../hooks/ZionContext/useContentAwareTimelineDiff'
 import { IOnboardingState } from '../hooks/ZionContext/onboarding/IOnboardingState'
-import {
-    useOnboardingState_Casablanca,
-    useOnboardingState_Matrix,
-} from '../hooks/ZionContext/useOnboardingState'
+import { useOnboardingState_Casablanca } from '../hooks/ZionContext/useOnboardingState'
 import { useSpacesIds } from '../hooks/ZionContext/useSpaceIds'
 import { useSpaceUnreads } from '../hooks/ZionContext/useSpaceUnreads'
 import { useSpaces } from '../hooks/ZionContext/useSpaces'
 import { useCasablancaSpaceHierarchies } from '../hooks/ZionContext/useCasablancaSpaceHierarchies'
-import { useMatrixRooms } from '../hooks/ZionContext/useMatrixRooms'
 import { useZionClientListener } from '../hooks/use-zion-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
@@ -45,7 +41,6 @@ export interface IZionContext {
     spaceHierarchies: SpaceHierarchies
     dmChannels: DMChannelIdentifier[]
     dmUnreadChannelIds: Set<string> // dmChannelId -> set of channelIds with unreads
-    matrixOnboardingState: IOnboardingState
     casablancaOnboardingState: IOnboardingState
 }
 
@@ -102,15 +97,9 @@ const ContextImpl = (props: Props): JSX.Element => {
 
     const { dmUnreadChannelIds } = useDMUnreads(casablancaClient, dmChannels)
 
-    const matrixRooms = useMatrixRooms(undefined)
-    const casablancaRooms = useCasablancaRooms(casablancaClient)
-    const rooms: Record<string, Room | undefined> = {
-        ...matrixRooms,
-        ...casablancaRooms,
-    }
+    const rooms = useCasablancaRooms(casablancaClient)
 
     useCasablancaTimelines(casablancaClient)
-    const matrixOnboardingState = useOnboardingState_Matrix(client, undefined)
     const casablancaOnboardingState = useOnboardingState_Casablanca(client, casablancaClient)
 
     useTransactionListener(client, casablancaServerUrl)
@@ -131,7 +120,6 @@ const ContextImpl = (props: Props): JSX.Element => {
                 spaceHierarchies,
                 dmChannels,
                 dmUnreadChannelIds,
-                matrixOnboardingState,
                 casablancaOnboardingState,
                 casablancaServerUrl: casablancaServerUrl,
             }}

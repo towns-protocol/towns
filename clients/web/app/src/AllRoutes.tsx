@@ -98,10 +98,10 @@ const ResponsiveOutlet = () => {
 }
 
 function useNeedsOnboarding(): boolean {
-    const { matrixOnboardingState } = useZionContext()
-    switch (matrixOnboardingState.kind) {
+    const { casablancaOnboardingState } = useZionContext()
+    switch (casablancaOnboardingState.kind) {
         case 'update-profile':
-            return matrixOnboardingState.bNeedsDisplayName
+            return casablancaOnboardingState.bNeedsDisplayName
         default:
             return false
     }

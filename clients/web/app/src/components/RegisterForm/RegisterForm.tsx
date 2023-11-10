@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { matchPath, useNavigate } from 'react-router'
-import { LoginStatus, useMatrixStore, useMyProfile, useZionClient } from 'use-zion-client'
+import { LoginStatus, useMyProfile, useZionClient } from 'use-zion-client'
 import { Button, ErrorMessage, Icon, MotionBox, Paragraph, Stack, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { PATHS } from 'routes'
@@ -17,10 +17,14 @@ type RegisterFormFieldValues = {
 }
 
 export const RegisterForm = () => {
-    const { loggedInWalletAddress, isConnected, register: registerWallet } = useAuth()
+    const {
+        loggedInWalletAddress,
+        isConnected,
+        register: registerWallet,
+        riverLoginStatus: loginStatus,
+    } = useAuth()
     const { setDisplayName } = useZionClient()
     const navigate = useNavigate()
-    const { loginStatus } = useMatrixStore()
     const myProfile = useMyProfile()
 
     const defaultValues = useMemo(
