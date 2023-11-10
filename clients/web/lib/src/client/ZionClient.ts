@@ -27,7 +27,6 @@ import {
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
-    Membership,
     MessageType,
     Room,
     RoomMember,
@@ -1209,49 +1208,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
             throw new Error('Casablanca client is undefined')
         }
         await this.casablancaClient.sendFullyReadMarkers(channelId.networkId, content)
-    }
-
-    private getAllChannelMembershipsFromSpace(roomId: RoomIdentifier): Record<string, Membership> {
-        const userStreamId = this.casablancaClient?.userStreamId
-        if (!userStreamId) {
-            throw new Error('User stream is not defined')
-        }
-
-        const memberships: Record<string, Membership> = {}
-
-        const userStreamRollup = this.casablancaClient?.streams.get(userStreamId)?.view
-
-        if (userStreamRollup === undefined) {
-            return memberships
-        }
-
-        const spaceStream = this.casablancaClient?.streams.get(roomId.networkId)
-        const spaceChannels = Array.from(
-            spaceStream?.view?.spaceContent.spaceChannelsMetadata.keys() || [],
-        )
-
-        //We go through all the channels in the space and check if the user is invited or joined
-        spaceChannels?.forEach((channel) => {
-            if (userStreamRollup?.userContent.userInvitedStreams.has(channel)) {
-                memberships[channel] = Membership.Invite
-            }
-            if (userStreamRollup?.userContent.userJoinedStreams.has(channel)) {
-                memberships[channel] = Membership.Join
-            }
-        })
-
-        return memberships
-    }
-
-    /************************************************
-     * getAccountDataRoomMembership
-     * gets membership status for room even if user is not current member of room
-     * ************************************************/
-    public getChannelMembershipFromSpace(
-        spaceId: RoomIdentifier,
-        channelNetworkId: string,
-    ): Membership | undefined {
-        return this.getAllChannelMembershipsFromSpace(spaceId)[channelNetworkId]
     }
 
     /************************************************

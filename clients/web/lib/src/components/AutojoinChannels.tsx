@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Channel } from '../types/zion-types'
 import { useZionContext } from './ZionContextProvider'
 import { useSpaceData } from '../hooks/use-space-data'
@@ -9,10 +9,12 @@ import { useZionClient } from '../hooks/use-zion-client'
 export const AutojoinChannels = () => {
     const space = useSpaceData()
     const channels = useMemo(() => space?.channelGroups.flatMap((cg) => cg.channels) || [], [space])
-    const { client } = useZionContext()
+    const { casablancaClient } = useZionContext()
     const { joinRoom } = useZionClient()
     const { enqueueTask } = useAsyncTaskQueue()
     const checkedChannels = useRef<Record<string, boolean>>({})
+    const userId = casablancaClient?.userId
+    const [channelsToJoin, setChannelsToJoin] = useState<Channel[]>([])
 
     const _joinRoom = useCallback(
         (channel: Channel) => {
@@ -20,8 +22,8 @@ export const AutojoinChannels = () => {
                 try {
                     await joinRoom(channel.id, space?.id.networkId)
                 } catch (error) {
-                    console.warn(
-                        '[AutoJoinChannels] cannot auto join channel',
+                    console.error(
+                        '[AutoJoinChannels] joining channel failed',
                         channel.id.networkId,
                         error,
                     )
@@ -31,25 +33,32 @@ export const AutojoinChannels = () => {
         [joinRoom, space?.id.networkId],
     )
 
-    // we want a list of only brand new channels user has never joined before
-    const channelsToJoin = useMemo(() => {
-        if (!client || !space?.id) {
-            return []
+    useEffect(() => {
+        async function update() {
+            if (!userId) {
+                return
+            }
+            // channels that are not joined and have no history of leaving
+            const _channelsToJoin = await asyncFilter(channels, async (c) => {
+                try {
+                    const streamStateView = await casablancaClient.getStream(c.id.networkId)
+                    return streamStateView
+                        ? !streamStateView.getMemberships().leftUsers.has(userId)
+                        : false
+                } catch (error) {
+                    console.error(
+                        '[AutoJoinChannels] fetching stream failed',
+                        c.id.networkId,
+                        error,
+                    )
+                }
+                return false
+            })
+            setChannelsToJoin(_channelsToJoin)
         }
-        return channels.filter((channel) => {
-            // TODO: what does channel.private mean?
-            // we create channels w/ PUBLIC visibility by default, but this is always true
-            // if (channel.private) {
-            //     return
-            // }
 
-            // Why not check matrixClient?.getRoom(channel.id.networkId).getMyMembership?
-            // Because it always returns null if the user's status is not "join". We have no way of knowing if the user has left the room or not, or if they're banned
-            // So we're checking against against our custom record of room memberships
-            // anything besides nullish signifies we have a record for this room, and we don't need to worry about auto joining
-            return client.getChannelMembershipFromSpace(space?.id, channel.id.networkId) == null
-        })
-    }, [channels, client, space?.id])
+        void update()
+    }, [casablancaClient, channels, userId])
 
     // watch eligible channels to join
     useEffect(() => {
@@ -63,4 +72,9 @@ export const AutojoinChannels = () => {
     }, [_joinRoom, enqueueTask, channelsToJoin])
 
     return null
+}
+
+async function asyncFilter<T>(arr: T[], predicate: (item: T) => Promise<boolean>): Promise<T[]> {
+    const results = await Promise.all(arr.map(predicate))
+    return arr.filter((_v, index) => results[index])
 }
