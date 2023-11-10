@@ -1,0 +1,61 @@
+name: Deprovision Transient Environment
+on:
+    pull_request:
+        types: [closed]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
+    # TODO: how can we make sure there's only one per environment running at the same time?
+    # TODO: make this wait for any ongoing Provision Transient Environment workflow to finish
+
+jobs:
+    deprovision_transient_environment:
+        permissions: write-all
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 20
+
+        env:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            ENV: 'transient'
+            TF_VAR_cloudflare_terraform_api_token: ${{ secrets.CLOUDFLARE_TERRAFORM_API_TOKEN }}
+            GIT_BRANCH_NAME: ${{ github.head_ref }}
+            GIT_PR_NUMBER: ${{ github.event.pull_request.number}}
+
+        steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Terraform init
+              working-directory: ./infra
+              run: make init
+
+            - name: Terraform destroy
+              working-directory: ./infra
+              env:
+                  CI_AUTOAPPROVE: true
+              run: make destroy
+
+            # If action failed, we send a slack notification
+            - name: Slack notification
+              if: failure()
+              uses: slackapi/slack-github-action@v1.24.0
+              with:
+                  payload: |
+                      {
+                          "step": "Deprovision Transient Environment",
+                          "environment": "Transient-${{ github.event.pull_request.number }}",
+                          "branch": "${{ github.ref }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
+                      }
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}

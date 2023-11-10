@@ -31,6 +31,9 @@ output "tags" {
     Environment = local.Environment
     Env = local.Environment
     Terraform_Workspace = terraform.workspace
+    
+    # TODO: tag resources by whether they are transient or not
+    # Is_Transient_Environment = strcontains(terraform.workspace, "transient")
   }
   sensitive = true
 }
