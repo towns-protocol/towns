@@ -22,7 +22,7 @@ const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
 	// NodeToNodeName is the fully-qualified name of the NodeToNode service.
-	NodeToNodeName = "casablanca.NodeToNode"
+	NodeToNodeName = "river.NodeToNode"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -35,20 +35,20 @@ const (
 const (
 	// NodeToNodeNewEventReceivedProcedure is the fully-qualified name of the NodeToNode's
 	// NewEventReceived RPC.
-	NodeToNodeNewEventReceivedProcedure = "/casablanca.NodeToNode/NewEventReceived"
+	NodeToNodeNewEventReceivedProcedure = "/river.NodeToNode/NewEventReceived"
 	// NodeToNodeNewEventInPoolProcedure is the fully-qualified name of the NodeToNode's NewEventInPool
 	// RPC.
-	NodeToNodeNewEventInPoolProcedure = "/casablanca.NodeToNode/NewEventInPool"
+	NodeToNodeNewEventInPoolProcedure = "/river.NodeToNode/NewEventInPool"
 )
 
-// NodeToNodeClient is a client for the casablanca.NodeToNode service.
+// NodeToNodeClient is a client for the river.NodeToNode service.
 type NodeToNodeClient interface {
 	NewEventReceived(context.Context, *connect_go.Request[protocol.NewEventReceivedRequest]) (*connect_go.Response[protocol.NewEventReceivedResponse], error)
 	NewEventInPool(context.Context, *connect_go.Request[protocol.NewEventInPoolRequest]) (*connect_go.Response[protocol.NewEventInPoolResponse], error)
 }
 
-// NewNodeToNodeClient constructs a client for the casablanca.NodeToNode service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// NewNodeToNodeClient constructs a client for the river.NodeToNode service. By default, it uses the
+// Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
 // uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
 // connect.WithGRPCWeb() options.
 //
@@ -76,17 +76,17 @@ type nodeToNodeClient struct {
 	newEventInPool   *connect_go.Client[protocol.NewEventInPoolRequest, protocol.NewEventInPoolResponse]
 }
 
-// NewEventReceived calls casablanca.NodeToNode.NewEventReceived.
+// NewEventReceived calls river.NodeToNode.NewEventReceived.
 func (c *nodeToNodeClient) NewEventReceived(ctx context.Context, req *connect_go.Request[protocol.NewEventReceivedRequest]) (*connect_go.Response[protocol.NewEventReceivedResponse], error) {
 	return c.newEventReceived.CallUnary(ctx, req)
 }
 
-// NewEventInPool calls casablanca.NodeToNode.NewEventInPool.
+// NewEventInPool calls river.NodeToNode.NewEventInPool.
 func (c *nodeToNodeClient) NewEventInPool(ctx context.Context, req *connect_go.Request[protocol.NewEventInPoolRequest]) (*connect_go.Response[protocol.NewEventInPoolResponse], error) {
 	return c.newEventInPool.CallUnary(ctx, req)
 }
 
-// NodeToNodeHandler is an implementation of the casablanca.NodeToNode service.
+// NodeToNodeHandler is an implementation of the river.NodeToNode service.
 type NodeToNodeHandler interface {
 	NewEventReceived(context.Context, *connect_go.Request[protocol.NewEventReceivedRequest]) (*connect_go.Response[protocol.NewEventReceivedResponse], error)
 	NewEventInPool(context.Context, *connect_go.Request[protocol.NewEventInPoolRequest]) (*connect_go.Response[protocol.NewEventInPoolResponse], error)
@@ -108,7 +108,7 @@ func NewNodeToNodeHandler(svc NodeToNodeHandler, opts ...connect_go.HandlerOptio
 		svc.NewEventInPool,
 		opts...,
 	)
-	return "/casablanca.NodeToNode/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/river.NodeToNode/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case NodeToNodeNewEventReceivedProcedure:
 			nodeToNodeNewEventReceivedHandler.ServeHTTP(w, r)
@@ -124,9 +124,9 @@ func NewNodeToNodeHandler(svc NodeToNodeHandler, opts ...connect_go.HandlerOptio
 type UnimplementedNodeToNodeHandler struct{}
 
 func (UnimplementedNodeToNodeHandler) NewEventReceived(context.Context, *connect_go.Request[protocol.NewEventReceivedRequest]) (*connect_go.Response[protocol.NewEventReceivedResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.NodeToNode.NewEventReceived is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.NodeToNode.NewEventReceived is not implemented"))
 }
 
 func (UnimplementedNodeToNodeHandler) NewEventInPool(context.Context, *connect_go.Request[protocol.NewEventInPoolRequest]) (*connect_go.Response[protocol.NewEventInPoolResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.NodeToNode.NewEventInPool is not implemented"))
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.NodeToNode.NewEventInPool is not implemented"))
 }
