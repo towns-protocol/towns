@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import {
+    ChannelContextProvider,
     Membership,
     SpaceData,
     makeRoomIdentifier,
@@ -15,7 +16,8 @@ import { PATHS } from 'routes'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
-import { useContractChannelsWithJoinedStatus } from 'hooks/useContractChannelsWithJoinedStatus'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { useChannelMembership } from 'hooks/useChannelMembership'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -24,11 +26,11 @@ export const AllChannelsList = ({
 }) => {
     const space = useSpaceData()
     const { isTouch } = useDevice()
-    const { contractChannelsWithJoinedStatus } = useContractChannelsWithJoinedStatus()
+    const channels = useSpaceChannels()
 
     return (
         <Stack height="100%">
-            {space && !space?.isLoadingChannels && contractChannelsWithJoinedStatus.length > 0 ? (
+            {space && !space?.isLoadingChannels && channels.length > 0 ? (
                 <>
                     {!isTouch && (
                         <Stack
@@ -61,15 +63,19 @@ export const AllChannelsList = ({
                         minHeight={isTouch ? 'forceScroll' : undefined}
                         padding="sm"
                     >
-                        {contractChannelsWithJoinedStatus?.map((channel) => (
-                            <Stack key={channel.channelNetworkId}>
-                                <ChannelItem
-                                    space={space}
-                                    name={channel.name}
-                                    isJoined={channel.isJoined}
-                                    channelNetworkId={channel.channelNetworkId}
-                                />
-                            </Stack>
+                        {channels?.map((channel) => (
+                            <ChannelContextProvider
+                                key={channel.id.networkId}
+                                channelId={channel.id.networkId}
+                            >
+                                <Stack>
+                                    <ChannelItem
+                                        space={space}
+                                        name={channel.label}
+                                        channelNetworkId={channel.id.networkId}
+                                    />
+                                </Stack>
+                            </ChannelContextProvider>
                         ))}
                     </Stack>
                 </>
@@ -86,18 +92,17 @@ export const AllChannelsList = ({
 export const ChannelItem = ({
     name,
     channelNetworkId,
-    isJoined,
     space,
 }: {
     name: string
     channelNetworkId: string
-    isJoined: boolean
     space: SpaceData
 }) => {
     const navigate = useNavigate()
     const { client, leaveRoom } = useZionClient()
     const channelIdentifier = makeRoomIdentifier(channelNetworkId)
     const currentChannelId = useChannelIdFromPathname()
+    const isJoined = useChannelMembership() === Membership.Join
 
     useEffect(() => {
         // quick fix, leave events result in a faster rerender than the join event

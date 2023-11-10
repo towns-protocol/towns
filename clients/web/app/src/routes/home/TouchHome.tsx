@@ -358,7 +358,6 @@ const ChannelList = (props: {
                             key={c.channelNetworkId}
                             space={space}
                             channelNetworkId={c.channelNetworkId}
-                            isJoined={c.isJoined}
                             name={c.name}
                         />
                     </Box>
