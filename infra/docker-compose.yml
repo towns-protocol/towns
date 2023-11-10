@@ -1,0 +1,10 @@
+version: '3'
+services:
+  terraform:
+    build:
+      context: .
+    volumes:
+    - .:/mnt/
+    - ~/.aws/:/root/.aws
+    working_dir: /mnt
+    env_file: .env

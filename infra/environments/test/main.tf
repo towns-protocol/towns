@@ -1,6 +1,5 @@
 provider "aws" {
   region  = "us-east-1"
-  profile = "harmony-github-actions"
 }
 
 provider "datadog" {
@@ -107,7 +106,7 @@ data "cloudflare_zone" "zone" {
 
 resource "cloudflare_record" "app_dns" {
   zone_id = data.cloudflare_zone.zone.id
-  name    = "app-${module.global_constants.tags.Environment}" 
+  name    = "app-${module.global_constants.tags.Environment}"
   value   = "test-beta-ij4p.onrender.com"
   type    = "CNAME"
   ttl     = 60
