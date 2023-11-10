@@ -7,6 +7,7 @@ import {
     Snapshot,
     Miniblock,
     MiniblockHeader,
+    MembershipOp,
 } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, logNever, isDefined, throwWithCode } from './check'
@@ -527,6 +528,25 @@ export class StreamStateView {
             default:
                 logNever(this.contentKind)
                 return new StreamStateView_UnknownContent()
+        }
+    }
+
+    /**
+     * Streams behave slightly differently.
+     * Regular channels: the user needs to be an active member. SO_JOIN
+     * DMs: always open for key exchange for any of the two participants
+     * GDMs: open for key exchange while the membership state is either SO_JOIN or SO_INVITE
+     */
+    userIsEntitledToKeyExchange(userId: string): boolean {
+        switch (this.contentKind) {
+            case 'channelContent':
+                return this.getMemberships().isMember(MembershipOp.SO_JOIN, userId)
+            case 'dmChannelContent':
+                return this.dmChannelContent.participants().has(userId)
+            case 'gdmChannelContent':
+                return this.gdmChannelContent.joinedOrInvitedParticipants().has(userId)
+            default:
+                throw new Error('Stream does not support key exchange')
         }
     }
 }

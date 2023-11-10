@@ -29,7 +29,6 @@ import {
     OlmMessage,
     KeySolicitation,
     StreamEvent,
-    MembershipOp,
 } from '@river/proto'
 import { Room } from '../../types/zion-types'
 import { RoomIdentifier } from '../../types/room-identifier'
@@ -600,12 +599,13 @@ export class RiverDecryptionExtension {
                 console.log("CDE::_askRoomForKeys - stream doesn't exist")
                 return
             }
-            if (!stream?.view.getMemberships().isMember(MembershipOp.SO_JOIN)) {
+            if (!stream?.view.userIsEntitledToKeyExchange(this.client.userId)) {
                 console.log(
                     'CDE::_askForRoomKeys - user is not a memeber of the room and cannot request keys',
                 )
                 return
             }
+
             if (isChannelStreamId(streamId)) {
                 const keySolicitations = stream.view.channelContent.keySolicitations
                 // todo jterzis: add restart criteria based on eventNum returned from miniblock in the case that
@@ -716,44 +716,15 @@ export class RiverDecryptionExtension {
         if (!room) {
             throw new Error('CDE::_onKeySolicitation - room not found')
         }
-        if (isChannelStreamId(streamId)) {
-            const roomMembers = room.members.filter(
-                (member) =>
-                    // filter out non members of the stream
-                    member.userId === fromUserId,
-            )
-            if (!roomMembers.length) {
-                console.log(`CDE::_onKeySolicitation - not a room member asking for keys`, {
-                    streamId,
-                    fromUserId,
-                })
-                return
-            }
-        } else if (isDMChannelStreamId(streamId)) {
-            const participants = stream.view.dmChannelContent.participants()
-            if (!participants.has(fromUserId)) {
-                console.log(`CDE::_onKeySolicitation - not a DM member asking for keys`, {
-                    streamId,
-                    fromUserId,
-                })
-                return
-            }
-        } else if (isGDMChannelStreamId(streamId)) {
-            const participants = stream.view.gdmChannelContent.joinedOrInvitedParticipants()
-            if (!participants.has(fromUserId)) {
-                console.log(`CDE::_onKeySolicitation - not a GDM member asking for keys`, {
-                    streamId,
-                    fromUserId,
-                })
-                return
-            }
-        } else {
-            console.log(`CDE::_onKeySolicitation - key request for unknown stream type`, {
+
+        if (!stream?.view.userIsEntitledToKeyExchange(fromUserId)) {
+            console.log(`CDE::_onKeySolicitation - not a stream member asking for keys`, {
                 streamId,
                 fromUserId,
             })
             return
         }
+
         // check with the space contract to see if this user is entitled
         const isEntitled = await this.delegate.isEntitled(
             spaceId,
