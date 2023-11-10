@@ -159,11 +159,11 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		return nil, 0, nil, err
 	}
 	cache := events.NewStreamCache(
-			&events.StreamCacheParams{
-				Storage:    store,
-				Wallet:     wallet,
-				DefaultCtx: ctx,
-			},
+		&events.StreamCacheParams{
+			Storage:    store,
+			Wallet:     wallet,
+			DefaultCtx: ctx,
+		},
 	)
 	syncHandler := NewSyncHandler(
 		ctx,
@@ -193,7 +193,13 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	pattern, handler := protocolconnect.NewStreamServiceHandler(streamService)
 
-	mux := httptrace.NewServeMux()
+	mux := httptrace.NewServeMux(
+		httptrace.WithResourceNamer(
+			func(r *http.Request) string {
+				return r.Method + " " + r.URL.Path
+			},
+		),
+	)
 	log.Info("Registering handler", "pattern", pattern)
 	mux.Handle(pattern, newHttpHandler(handler, log))
 
