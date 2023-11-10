@@ -7,7 +7,7 @@ import {
 } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { toZionCasablancaRoom } from '../../store/use-casablanca-store'
-import { Room } from '../../types/zion-types'
+import { Membership, Room } from '../../types/zion-types'
 import isEqual from 'lodash/isEqual'
 import { useSpaceNames } from '../use-space-data'
 
@@ -23,15 +23,18 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
 
         // helpers
         const updateState = (streamId: string) => {
-            const stream = client.streams.get(streamId)
-            const memberships = stream?.view.getMemberships()
-            if (!memberships?.isMemberJoined()) {
-                return
-            }
             const newRoom = streamId ? toZionCasablancaRoom(streamId, client, spaceInfo) : undefined
-            setRooms((prev) =>
-                isEqual(prev[streamId], newRoom) ? prev : { ...prev, [streamId]: newRoom },
-            )
+            setRooms((prev) => {
+                const prevRoom = prev[streamId]
+                const prevMember = prevRoom?.membership === Membership.Join
+                const newMember = newRoom?.membership === Membership.Join
+                // in the case of a user leaving a room, they should still get the latest update
+                // if they were not a member before and still aren't, then don't update
+                if (!prevMember && !newMember) {
+                    return prev
+                }
+                return isEqual(prevRoom, newRoom) ? prev : { ...prev, [streamId]: newRoom }
+            })
         }
 
         const setInitialState = () => {
