@@ -23,15 +23,7 @@ export function useTimelineThread(
                               dummyThreadStatCache,
                               state.timelines[roomId.networkId]?.find((e) => e.eventId === eventId),
                           ),
-                      // TODO: Remove or revisit when removing Matrix / Dendrite
-                      // something's wrong with the message order in threads, this sort is a quick fix for Aug 7
-                      // https://linear.app/hnt-labs/issue/HNT-1873/message-ordering-in-threads-is-inconsistent
-                      // https://hntlabs.slack.com/archives/CNY71GGSH/p1690363051419779
-                      messages:
-                          state.threads[roomId.networkId]?.[eventId]
-                              ?.slice()
-                              .sort((a, b) => a.createdAtEpocMs - b.createdAtEpocMs) ??
-                          EMPTY_TIMELINE,
+                      messages: state.threads[roomId.networkId]?.[eventId] ?? EMPTY_TIMELINE,
                   }
                 : { parent: undefined, messages: EMPTY_TIMELINE },
         [eventId, roomId.networkId],
