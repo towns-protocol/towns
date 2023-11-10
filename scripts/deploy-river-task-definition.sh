@@ -82,7 +82,15 @@ echo "Deploy id: ${DEPLOYMENT_ID}"
 
 echo "Waiting for successful deploy on Deployment Id: ${DEPLOYMENT_ID} for ${SERVICE_NAME}..."
 
-# Wait for the deploy to succeed
-aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
+# Wait for the deploy to succeed with a timeout of 5 minutes (300 seconds)
+TIMEOUT_SECONDS=300
+
+if ! timeout $TIMEOUT_SECONDS aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}; then
+    echo "Deployment was not successful in ${TIMEOUT_SECONDS} seconds. Stopping deployment..."
+    aws deploy stop-deployment --deployment-id ${DEPLOYMENT_ID}
+    exit 1
+else
+    echo "Deployment successful"
+fi
 
 echo "Exiting"
