@@ -596,10 +596,30 @@ export class ZionClient implements DecryptionExtensionDelegate {
     /************************************************
      * isEntitled
      *************************************************/
+
     public async isEntitled(
         spaceId: string | undefined,
         channelId: string | undefined,
         user: string,
+        permission: Permission,
+    ): Promise<boolean> {
+        const rootKeyPromise = this.isWalletEntitled(spaceId, channelId, user, permission)
+
+        const walletsPromise = this.getLinkedWallets(user).then((wallets) =>
+            Promise.race(
+                wallets.map((wallet) =>
+                    this.isWalletEntitled(spaceId, channelId, wallet, permission),
+                ),
+            ),
+        )
+
+        return await Promise.race([rootKeyPromise, walletsPromise])
+    }
+
+    private async isWalletEntitled(
+        spaceId: string | undefined,
+        channelId: string | undefined,
+        wallet: string,
         permission: Permission,
     ): Promise<boolean> {
         let isEntitled = false
@@ -607,11 +627,11 @@ export class ZionClient implements DecryptionExtensionDelegate {
             isEntitled = await this.spaceDapp.isEntitledToChannel(
                 spaceId,
                 channelId,
-                user,
+                wallet,
                 permission,
             )
         } else if (spaceId) {
-            isEntitled = await this.spaceDapp.isEntitledToSpace(spaceId, user, permission)
+            isEntitled = await this.spaceDapp.isEntitledToSpace(spaceId, wallet, permission)
         } else {
             // TODO: Implement entitlement checks for DMs (channels without a space)
             // https://linear.app/hnt-labs/issue/HNT-3112/implement-entitlement-checks
@@ -621,7 +641,7 @@ export class ZionClient implements DecryptionExtensionDelegate {
             '[isEntitled] is user entitlted for channel and space for permission',
             isEntitled,
             {
-                user: user,
+                user: wallet,
                 spaceId: spaceId,
                 channelId: channelId,
                 permission: permission,
