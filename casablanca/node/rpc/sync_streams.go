@@ -166,7 +166,7 @@ func (s *SyncHandlerV2) handleSyncRequest(
 	localNodeAddress := s.wallet.AddressStr
 
 	defer func() {
-		subscription.close()
+		s.RemoveSubscription(ctx, syncId)
 	}()
 
 	for _, cookie := range req.Msg.SyncPos {
@@ -203,6 +203,7 @@ func (s *SyncHandlerV2) handleSyncRequest(
 		go remote.syncRemoteNode(ctx, subscription)
 	}
 
+	// start the sync loop
 	subscription.Dispatch(res)
 
 	err = subscription.getError()

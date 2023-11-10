@@ -1,6 +1,8 @@
 package rpc
 
 import (
+	"casablanca/node/base"
+	"casablanca/node/dlog"
 	"casablanca/node/events"
 	"casablanca/node/protocol"
 	"context"
@@ -96,16 +98,64 @@ func (s *syncSubscriptionImpl) close() {
 	s.closeAllRemoteNodes()
 }
 
+func (s *syncSubscriptionImpl) setErrorAndCancel(err error) {
+	s.syncLock.Lock()
+	if s.firstError == nil {
+		s.firstError = err
+	}
+	s.syncLock.Unlock()
+
+	s.cancel()
+}
+
 func (s *syncSubscriptionImpl) OnSyncError(err error) {
-	// todo
+	if s.ctx.Err() != nil {
+		return
+	}
+	s.setErrorAndCancel(err)
+	dlog.CtxLog(s.ctx).Warn("OnSyncError: cancelling sync", "error", err)
 }
 
 func (s *syncSubscriptionImpl) OnUpdate(r *protocol.SyncStreamsResponse) {
-	// todo
+	// cancel if context is done
+	if s.ctx.Err() != nil {
+		return
+	}
+
+	// send response
+	select {
+	case s.channel <- r:
+		return
+	default:
+		// end the update stream if the channel is full
+		err :=
+			base.RiverError(protocol.Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.Streams[0].NextSyncCookie.StreamId).
+				Func("OnUpdate").
+				LogWarn(dlog.CtxLog(s.ctx))
+		s.setErrorAndCancel(err)
+		return
+	}
 }
 
 func (s *syncSubscriptionImpl) Dispatch(resp syncResponse) {
-	// todo
+	log := dlog.CtxLog(s.ctx)
+
+	for {
+		select {
+		case <-s.ctx.Done():
+			err := s.ctx.Err()
+			s.setErrorAndCancel(err)
+			log.Debug("SyncStreams: context done", "err", err)
+			return
+		case data := <-s.channel:
+			log.Debug("SyncStreams: received response in dispatch loop", "syncId", s.SyncId, "data", data)
+			if err := resp.Send(data); err != nil {
+				log.Debug("SyncStreams: error sending response", "syncId", s.SyncId, "err", err)
+				s.setErrorAndCancel(err)
+				return
+			}
+		}
+	}
 }
 
 func (s *syncSubscriptionImpl) getError() error {
