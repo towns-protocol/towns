@@ -29,7 +29,7 @@ describe('clientFlushes', () => {
         const done = makeDonePromise()
 
         const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
-            log('channelNewMessage', channelId)
+            log('onChannelNewMessage', channelId)
             done.runAndDoneAsync(async () => {
                 const content = event.getWireContent()
                 expect(content).toBeDefined()
@@ -107,7 +107,7 @@ describe('clientFlushes', () => {
         const done = makeDonePromise()
 
         const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
-            log('channelNewMessage', channelId)
+            log('onChannelNewMessage', channelId)
             done.runAndDoneAsync(async () => {
                 const content = event.getWireContent()
                 expect(content).toBeDefined()

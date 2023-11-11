@@ -60,7 +60,7 @@ describe('clientTest', () => {
         await bobsClient.startSync()
 
         const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
-            log('channelNewMessage', channelId)
+            log('onChannelNewMessage', channelId)
             done.runAndDoneAsync(async () => {
                 const content = event.getWireContent()
                 expect(content).toBeDefined()
@@ -316,7 +316,7 @@ describe('clientTest', () => {
         const done = makeDonePromise()
 
         const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
-            log('channelNewMessage', channelId)
+            log('onChannelNewMessage', channelId)
             log(event)
 
             done.runAndDoneAsync(async () => {
@@ -393,7 +393,7 @@ describe('clientTest', () => {
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
         bobsClient.once('channelNewMessage', (channelId: string, event: RiverEventV2): void => {
-            log('channelNewMessage', 'Bob Initial Message', channelId)
+            log('onChannelNewMessage', 'Bob Initial Message', channelId)
             bobSelfHello.runAndDoneAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
                 await bobsClient.decryptEventIfNeeded(event)
@@ -444,7 +444,7 @@ describe('clientTest', () => {
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
         bobsClient.once('channelNewMessage', (channelId: string, event: RiverEventV2): void => {
-            log('channelNewMessage', 'Bob Initial Message', channelId)
+            log('onChannelNewMessage', 'Bob Initial Message', channelId)
             bobSelfHello.runAndDoneAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
                 await bobsClient.decryptEventIfNeeded(event)
@@ -500,7 +500,7 @@ describe('clientTest', () => {
         alicesClient.on('channelNewMessage', (channelId: string, event: RiverEventV2): void => {
             const content = event.getWireContent()
             expect(content).toBeDefined()
-            log('channelNewMessage', 'Alice', channelId)
+            log('onChannelNewMessage', 'Alice', channelId)
             aliceGetsMessage.runAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
                 await alicesClient.decryptEventIfNeeded(event)
@@ -528,7 +528,7 @@ describe('clientTest', () => {
         bobsClient.on('channelNewMessage', (channelId: string, event: RiverEventV2): void => {
             const content = event.getWireContent()
             expect(content).toBeDefined()
-            log('channelNewMessage', 'Bob', channelId)
+            log('onChannelNewMessage', 'Bob', channelId)
             bobGetsMessage.runAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
                 await bobsClient.decryptEventIfNeeded(event)

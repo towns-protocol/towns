@@ -820,7 +820,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
             const content = event.getWireContent()
             const senderKey = content.senderKey
             const sessionId = content.sessionId
-            log('channelNewMessage', streamId, senderKey, sessionId, content)
+            log('onChannelNewMessage', streamId, senderKey, sessionId, content)
             if (streamId == bobsChannelId) {
                 bobSelfToDevice.runAndDoneAsync(async () => {
                     expect(content).toBeDefined()

@@ -26,7 +26,7 @@ describe('riverEventTest', () => {
         const done = makeDonePromise()
 
         const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
-            log('channelNewMessage', channelId)
+            log('onChannelNewMessage', channelId)
             done.runAndDone(() => {
                 // event is unencrypted so clear shouldn't be set
                 const content = event.getContent()
