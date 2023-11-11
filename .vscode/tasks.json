@@ -260,10 +260,23 @@
       }
     },
     {
+      "label": "Start Blockchains & Deploy Smart Contracts",
+      "dependsOn": [
+        "BaseChain",
+        "RiverChain",
+        "Deploy Smart Contracts",
+      ],
+      "group": {
+        "kind": "build",
+      },
+      "problemMatcher": [],
+    },
+    {
       "label": "Deploy Smart Contracts",
       "dependsOn": [
         "DeployStreamRegistry",
         "DeployZionGovernance",
+        "DeployWalletLink",
       ],
       "group": {
         "kind": "build",
@@ -274,7 +287,17 @@
     {
       "label": "DeployStreamRegistry",
       "type": "shell",
-      "command": "./scripts/wait-for-riverchain.sh && ./scripts/deploy-stream-registry.sh",
+      "command": "./scripts/wait-for-blockchain.sh && ./scripts/deploy-stream-registry.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
+      }
+    },
+    {
+      "label": "DeployWalletLink",
+      "type": "shell",
+      "command": "./scripts/wait-for-blockchain.sh && ./scripts/deploy-wallet-link-contracts.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

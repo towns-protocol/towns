@@ -537,7 +537,7 @@ jobs:
               run: ./scripts/deploy-zion-governance-contracts.sh
 
             - name: Deploy registry contracts
-              run: ./scripts/deploy-registry.sh
+              run: ./scripts/deploy-wallet-link-contracts.sh
 
             - name: Deploy stream registry contracts
               run: ./scripts/deploy-stream-registry.sh
