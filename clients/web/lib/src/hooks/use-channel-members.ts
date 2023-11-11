@@ -14,5 +14,5 @@ export function useChannelMembers() {
         return {
             members: members.map((u) => membersMap[u.userId] ?? u),
         }
-    }, [])
+    }, [members, membersMap])
 }
