@@ -121,4 +121,52 @@ describe('dlogTest', () => {
             log('test error 3', e, 123, 'more text')
         }
     })
+
+    test('set', () => {
+        const s = new Set([111, 222, { aaa: 333 }])
+        dlog('test:dlog')(s)
+
+        const log = dlog('test:dlog')
+        log.enabled = true
+
+        let output: string = ''
+        log.baseDebug.log = (...args: any[]) => {
+            for (const arg of args) {
+                output += `${arg}`
+            }
+        }
+
+        log(s)
+        expect(output).toContain('111')
+        expect(output).toContain('222')
+        expect(output).toContain('333')
+        expect(output).toContain('aaa')
+    })
+
+    test('map', () => {
+        const s = new Map<string, any>([
+            ['aaa', 111],
+            ['bbb', 222],
+            ['ccc', { a: 333 }],
+        ])
+        dlog('test:dlog')(s)
+
+        const log = dlog('test:dlog')
+        log.enabled = true
+
+        let output: string = ''
+        log.baseDebug.log = (...args: any[]) => {
+            for (const arg of args) {
+                output += `${arg}`
+            }
+        }
+
+        log(s)
+        expect(output).toContain('111')
+        expect(output).toContain('aaa')
+        expect(output).toContain('222')
+        expect(output).toContain('bbb')
+        expect(output).toContain('333')
+        expect(output).toContain('ccc')
+    })
 })

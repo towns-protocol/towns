@@ -37,13 +37,22 @@ const cloneAndFormat = (obj: unknown, depth = 0, seen = new WeakSet()): unknown 
             return obj.stack || obj.message
         }
 
+        if (typeof (obj as Iterable<unknown>)[Symbol.iterator] === 'function') {
+            // Iterate over values of Map, Set, etc.
+            const newObj = []
+            for (const e of obj as any) {
+                newObj.push(cloneAndFormat(e, depth + 1, seen))
+            }
+            return newObj
+        }
+
         const newObj: Record<PropertyKey, unknown> = {}
         for (const key in obj) {
-            let newKey = key
-            if (typeof key === 'string' && isHexString(key)) {
-                newKey = shortenHexString(key)
-            }
             if (hasOwnProperty(obj, key)) {
+                let newKey = key
+                if (typeof key === 'string' && isHexString(key)) {
+                    newKey = shortenHexString(key)
+                }
                 if (key == 'emitter') {
                     newObj[newKey] = '[emitter]'
                 } else {
