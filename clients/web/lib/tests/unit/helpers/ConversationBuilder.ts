@@ -138,7 +138,7 @@ export class ConversationBuilder {
 
 function makeMessage(params: {
     body: string
-    replacesMsgId?: string
+    editsEventId?: string
     threadId?: string
     mentions?: OTWMention[]
 }): RoomMessageEvent {
@@ -149,7 +149,7 @@ function makeMessage(params: {
         inReplyTo: params.threadId,
         threadPreview: undefined,
         mentions: [],
-        replacedMsgId: params.replacesMsgId,
+        editsEventId: params.editsEventId,
         content: {},
         wireContent: {},
     }
@@ -163,7 +163,7 @@ function makeEdit(params: {
 }): RoomMessageEvent {
     return makeMessage({
         body: params.body,
-        replacesMsgId: params.edits,
+        editsEventId: params.edits,
         threadId: params.threadId,
         mentions: params.mentions,
     })

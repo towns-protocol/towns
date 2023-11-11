@@ -510,14 +510,14 @@ describe('sendThreadedMessageHooks', () => {
         event = await jane.getLatestEvent<RoomMessageEvent>(channel_2)
         expect(event?.threadParentId).toBe(channel_2_message_1.eventId)
         expect(event?.content.body).toContain('Im a turtle!')
-        expect(event?.content.replacedMsgId).toBe(ogEventId)
+        expect(event?.content.editsEventId).toBe(ogEventId)
 
         // can we delete it?
         await act(async () => {
-            if (!event || !event.content.replacedMsgId) {
+            if (!event || !event.content.editsEventId) {
                 throw new Error('no event')
             }
-            await jane.redactEvent(channel_2, event.content.replacedMsgId)
+            await jane.redactEvent(channel_2, event.content.editsEventId)
         })
         // what does bob see?
         await waitFor(() => expect(channel2ThreadMessages).not.toHaveTextContent('Im a turtle!'))

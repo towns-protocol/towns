@@ -112,7 +112,7 @@ export const IsolatedMessageItem = (
                     channels={[...channels, ...dmChannels]}
                     content={getMessageBody(result.event.eventId, content)}
                     statusAnnotation={
-                        content.replacedMsgId !== undefined
+                        content.editsEventId !== undefined
                             ? 'edited'
                             : result.event.status === EventStatus.NOT_SENT
                             ? 'not-sent'

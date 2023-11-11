@@ -65,7 +65,7 @@ export const MessageBody = ({
     const invalidContent = isError || !Array.isArray(unfurledContent)
 
     let statusAnnotation: MessageStatusAnnotation | undefined = undefined
-    if (eventContent.replacedMsgId !== undefined) {
+    if (eventContent.editsEventId !== undefined) {
         statusAnnotation = 'edited' as const
     } else if (event.status === EventStatus.NOT_SENT) {
         statusAnnotation = 'not-sent' as const

@@ -187,7 +187,7 @@ export interface RoomMessageEvent {
     body: string
     msgType: string
     mentions: OTWMention[]
-    replacedMsgId?: string
+    editsEventId?: string
     content: IContent // room messages have lots of representations
     wireContent: IContent
 }

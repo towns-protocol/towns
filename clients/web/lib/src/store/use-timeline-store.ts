@@ -37,7 +37,7 @@ export interface TimelineStoreInterface {
         event: TimelineEvent,
         userId: string,
         streamId: string,
-        decryptedFromEventId?: string,
+        updatingEventId?: string,
     ) => void
     processEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
     prependEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
@@ -268,27 +268,27 @@ function makeTimelineStoreInterface(
         event: TimelineEvent,
         userId: string,
         streamId: string,
-        decryptedFromEventId?: string,
+        updatingEventId?: string,
     ) {
-        const replacedEventId = getReplacedId(event.content)
+        const editsEventId = getEditsId(event.content)
         const redactsEventId = getRedactsId(event.content)
         if (redactsEventId) {
-            if (decryptedFromEventId) {
+            if (updatingEventId) {
                 // remove the formerly encrypted event
-                removeEvent(streamId, decryptedFromEventId)
+                removeEvent(streamId, updatingEventId)
             }
             const redactedEvent = makeRedactionEvent(event)
             replaceEvent(userId, streamId, redactsEventId, redactedEvent)
             appendEvent(userId, streamId, event)
-        } else if (replacedEventId) {
-            if (decryptedFromEventId) {
-                removeEvent(streamId, decryptedFromEventId)
+        } else if (editsEventId) {
+            if (updatingEventId) {
+                removeEvent(streamId, updatingEventId)
             }
-            replaceEvent(userId, streamId, replacedEventId, event)
+            replaceEvent(userId, streamId, editsEventId, event)
         } else {
-            if (decryptedFromEventId) {
+            if (updatingEventId) {
                 // replace the formerly encrypted event
-                replaceEvent(userId, streamId, decryptedFromEventId, event)
+                replaceEvent(userId, streamId, updatingEventId, event)
             } else {
                 appendEvent(userId, streamId, event)
             }
@@ -303,14 +303,14 @@ function makeTimelineStoreInterface(
 
     function prependEvents(events: TimelineEvent[], userId: string, streamId: string) {
         for (const event of reverse(events)) {
-            const replacedEventId = getReplacedId(event.content)
+            const editsEventId = getEditsId(event.content)
             const redactsEventId = getRedactsId(event.content)
             if (redactsEventId) {
                 const redactedEvent = makeRedactionEvent(event)
                 prependEvent(userId, streamId, event)
                 replaceEvent(userId, streamId, redactsEventId, redactedEvent)
-            } else if (replacedEventId) {
-                replaceEvent(userId, streamId, replacedEventId, event)
+            } else if (editsEventId) {
+                replaceEvent(userId, streamId, editsEventId, event)
             } else {
                 prependEvent(userId, streamId, event)
             }
@@ -720,8 +720,8 @@ function getMessageSenderId(event: TimelineEvent): string | undefined {
     return event.sender.id
 }
 
-export function getReplacedId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === ZTEvent.RoomMessage ? content.replacedMsgId : undefined
+export function getEditsId(content: TimelineEvent_OneOf | undefined): string | undefined {
+    return content?.kind === ZTEvent.RoomMessage ? content.editsEventId : undefined
 }
 
 export function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {

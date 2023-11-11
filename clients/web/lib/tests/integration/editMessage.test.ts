@@ -69,14 +69,14 @@ describe('editMessage', () => {
         await waitFor(async () => {
             const e = await bob.getLatestEvent<RoomMessageEvent>(channelId)
             expect(e?.content?.body).toEqual('Hello Alice!')
-            expect(e?.content?.replacedMsgId).toEqual(event?.eventId)
+            expect(e?.content?.editsEventId).toEqual(event?.eventId)
         })
 
         // wait for alice to receive the edited message
         await waitFor(async () => {
             const e = await alice.getLatestEvent<RoomMessageEvent>(channelId)
             expect(e?.content?.body).toEqual('Hello Alice!')
-            expect(e?.content?.replacedMsgId).toEqual(event?.eventId)
+            expect(e?.content?.editsEventId).toEqual(event?.eventId)
         })
     }) // end test
 }) // end describe

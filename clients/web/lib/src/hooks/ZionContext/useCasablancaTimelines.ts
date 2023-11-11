@@ -601,7 +601,7 @@ function toTownsContent_ChannelPayload_Message(
 
 function toTownsContent_ChannelPayload_Message_Post(
     value: ChannelMessage_Post | PlainMessage<ChannelMessage_Post>,
-    replacedMsgId?: string,
+    editsEventId?: string,
 ) {
     switch (value.content.case) {
         case 'text':
@@ -613,7 +613,7 @@ function toTownsContent_ChannelPayload_Message_Post(
                     inReplyTo: value.threadId,
                     threadPreview: value.threadPreview,
                     mentions: value.content.value.mentions,
-                    replacedMsgId: replacedMsgId,
+                    editsEventId: editsEventId,
                     content: {},
                     wireContent: {},
                 } satisfies RoomMessageEvent,
@@ -627,7 +627,7 @@ function toTownsContent_ChannelPayload_Message_Post(
                     inReplyTo: value.threadId,
                     threadPreview: value.threadPreview,
                     mentions: [],
-                    replacedMsgId: replacedMsgId,
+                    editsEventId: editsEventId,
                     content: {
                         info: value.content.value.info,
                         thumbnail: value.content.value.thumbnail,
@@ -645,7 +645,7 @@ function toTownsContent_ChannelPayload_Message_Post(
                     inReplyTo: value.threadId,
                     threadPreview: value.threadPreview,
                     mentions: [],
-                    replacedMsgId: replacedMsgId,
+                    editsEventId: editsEventId,
                     content: {
                         data: value.content.value.value,
                     },
@@ -661,7 +661,7 @@ function toTownsContent_ChannelPayload_Message_Post(
                     inReplyTo: value.threadId,
                     threadPreview: value.threadPreview,
                     mentions: [],
-                    replacedMsgId: replacedMsgId,
+                    editsEventId: editsEventId,
                     content: {
                         content: value.content.value.content,
                         mimetype: value.content.value.info?.mimetype,
@@ -681,7 +681,7 @@ function toTownsContent_ChannelPayload_Message_Post(
                     inReplyTo: value.threadId,
                     threadPreview: value.threadPreview,
                     mentions: [],
-                    replacedMsgId: replacedMsgId,
+                    editsEventId: editsEventId,
                     content: {
                         streamId: value.content.value.streamId,
                         mimetype: value.content.value.info?.mimetype,
