@@ -2,6 +2,43 @@ import debug, { Debugger } from 'debug'
 import { isHexString, shortenHexString, bin_toHexString } from './binary'
 import { isNode } from 'browser-or-node'
 
+// Works as debug.enabled, but falls back on options if not explicitly set in env instead of returning false.
+debug.enabled = (ns: string): boolean => {
+    if (ns.length > 0 && ns[ns.length - 1] === '*') {
+        return true
+    }
+
+    for (const s of debug.skips) {
+        if (s.test(ns)) {
+            return false
+        }
+    }
+
+    for (const s of debug.names) {
+        if (s.test(ns)) {
+            return true
+        }
+    }
+
+    const opts = allDlogs.get(ns)?.opts
+    if (opts !== undefined) {
+        if (!opts.allowJest && isJest()) {
+            return false
+        } else {
+            return opts.defaultEnabled ?? false
+        }
+    }
+
+    return false
+}
+
+// Set namespaces to empty string if not set so debug.enabled() is called and can retireve defaultEnabled from options.
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+if ((debug as any).namespaces === undefined) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    ;(debug as any).namespaces = ''
+}
+
 const MAX_CALL_STACK_SZ = 18
 
 const hasOwnProperty = <Y extends PropertyKey>(obj: object, prop: Y): obj is Record<Y, unknown> => {
@@ -73,9 +110,28 @@ export interface DLogger {
     namespace: string
     extend: (namespace: string, delimiter?: string) => DLogger
     baseDebug: Debugger
+    opts?: DLogOpts
 }
 
-const makeDlog = (d: Debugger): DLogger => {
+export interface DLogOpts {
+    // If true, logger is enabled by default, unless explicitly disabled by DEBUG=-logger_name.
+    defaultEnabled?: boolean
+
+    // If true, defaultEnabled is used under jest. Otherwise defaults to false.
+    allowJest?: boolean
+
+    // If true, binds to console.error so callstack is printed.
+    printStack?: boolean
+}
+
+const allDlogs: Map<string, DLogger> = new Map()
+
+const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
+    if (opts?.printStack) {
+        // eslint-disable-next-line no-console
+        d.log = console.error.bind(console)
+    }
+
     const dlog = (...args: unknown[]): void => {
         if (!d.enabled || args.length === 0) {
             return
@@ -113,6 +169,7 @@ const makeDlog = (d: Debugger): DLogger => {
 
     dlog.baseDebug = d
     dlog.namespace = d.namespace
+    dlog.opts = opts
 
     dlog.extend = (sub: string, delimiter?: string): DLogger => {
         return makeDlog(d.extend(sub, delimiter))
@@ -125,6 +182,7 @@ const makeDlog = (d: Debugger): DLogger => {
         set: (v: boolean) => (d.enabled = v),
     })
 
+    allDlogs.set(d.namespace, dlog as DLogger)
     return dlog as DLogger
 }
 
@@ -141,8 +199,8 @@ export function isJest(): boolean {
  * @param ns Namespace for the logger.
  * @returns New logger with namespace `ns`.
  */
-export const dlog = (ns: string): DLogger => {
-    return makeDlog(debug(ns))
+export const dlog = (ns: string, opts?: DLogOpts): DLogger => {
+    return makeDlog(debug(ns), opts)
 }
 
 /**
@@ -153,9 +211,6 @@ export const dlog = (ns: string): DLogger => {
  * @returns New logger with namespace `ns`.
  */
 export const dlogError = (ns: string): DLogger => {
-    const l = makeDlog(debug(ns))
-    l.enabled = l.enabled || !isJest()
-    // eslint-disable-next-line no-console
-    l.baseDebug.log = console.error.bind(console)
+    const l = makeDlog(debug(ns), { defaultEnabled: true, printStack: true })
     return l
 }

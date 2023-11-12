@@ -1,4 +1,5 @@
 import { dlog, dlogError } from './dlog'
+import debug from 'debug'
 import { bin_fromHexString } from './binary'
 
 describe('dlogTest', () => {
@@ -62,7 +63,7 @@ describe('dlogTest', () => {
         log('gonna print more', '44 =', 44)
     })
 
-    test('enabled', () => {
+    test('enabled1', () => {
         const log = dlog('test:dlog')
         if (log.enabled) {
             log('enabled', log.enabled)
@@ -168,5 +169,42 @@ describe('dlogTest', () => {
         expect(output).toContain('bbb')
         expect(output).toContain('333')
         expect(output).toContain('ccc')
+    })
+
+    test('enabled2', () => {
+        const ns = 'uniqueLogName'
+
+        // Override
+        let log = dlog(ns)
+        expect(log.enabled).toBeFalsy()
+        log.enabled = true
+        expect(log.enabled).toBeTruthy()
+        log.enabled = false
+        expect(log.enabled).toBeFalsy()
+
+        // Default
+        log = dlog(ns, { defaultEnabled: true, allowJest: true })
+        expect(log.enabled).toBeTruthy()
+        log.enabled = false
+        expect(log.enabled).toBeFalsy()
+
+        // Default under Jest
+        log = dlog(ns, { defaultEnabled: true })
+        expect(log.enabled).toBeFalsy()
+        log.enabled = true
+        expect(log.enabled).toBeTruthy()
+
+        // Enabled explicitly by settings
+        debug.enable(ns)
+        log = dlog(ns)
+        expect(log.enabled).toBeTruthy()
+
+        // Disabled explicitly by settings
+        debug.enable('-' + ns)
+        expect(log.enabled).toBeFalsy()
+
+        // Disabled explicitly by settings, default ignored
+        log = dlog(ns, { defaultEnabled: true, allowJest: true })
+        expect(log.enabled).toBeFalsy()
     })
 })
