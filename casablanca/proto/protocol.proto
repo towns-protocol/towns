@@ -586,6 +586,15 @@ message GetMiniblocksResponse {
     bool terminus = 2;
 }
 
+message GetLastMiniblockHashRequest {
+    string stream_id = 1;
+}
+
+message GetLastMiniblockHashResponse {
+    bytes hash = 1;
+    int64 miniblock_num = 2;
+}
+
 message AddEventRequest {
     string stream_id = 1;
     Envelope event = 2;
@@ -627,6 +636,7 @@ service StreamService {
     rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
     rpc GetStream(GetStreamRequest) returns (GetStreamResponse);
     rpc GetMiniblocks(GetMiniblocksRequest) returns (GetMiniblocksResponse);
+    rpc GetLastMiniblockHash(GetLastMiniblockHashRequest) returns (GetLastMiniblockHashResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
     rpc AddStreamsToSync(AddStreamsToSyncRequest) returns (AddStreamsToSyncResponse);

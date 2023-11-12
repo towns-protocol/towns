@@ -20,6 +20,7 @@ type StreamView interface {
 	MinipoolEnvelopes() []*Envelope
 	MiniblocksFromLastSnapshot() []*Miniblock
 	SyncCookie(localNodeAddress string) *SyncCookie
+	LastBlockHashAndNum() ([]byte, int64)
 }
 
 func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
@@ -323,20 +324,7 @@ func (r *streamViewImpl) MinipoolEnvelopes() []*Envelope {
 func (r *streamViewImpl) MiniblocksFromLastSnapshot() []*Miniblock {
 	miniblocks := make([]*Miniblock, 0, len(r.blocks)-r.snapshotIndex)
 	for i := r.snapshotIndex; i < len(r.blocks); i++ {
-		// grab the block
-		block := r.blocks[i]
-		// start copying events
-		envelopes := make([]*Envelope, 0, len(block.events))
-		// copy all the events (but not the header)
-		for _, event := range block.events {
-			envelopes = append(envelopes, event.Envelope)
-		}
-		// make the block
-		miniblock := Miniblock{
-			Events: envelopes,
-			Header: block.headerEvent.Envelope,
-		}
-		miniblocks = append(miniblocks, &miniblock)
+		miniblocks = append(miniblocks, r.blocks[i].proto)
 	}
 	return miniblocks
 }
@@ -402,4 +390,8 @@ func (r *streamViewImpl) eventsSinceLastSnapshot() []*ParsedEvent {
 	// add the minipool
 	returnVal = append(returnVal, r.minipool.events.Values...)
 	return returnVal
+}
+
+func (r *streamViewImpl) LastBlockHashAndNum() ([]byte, int64) {
+	return r.lastBlock().headerEvent.Hash, r.lastBlock().header().MiniblockNum
 }

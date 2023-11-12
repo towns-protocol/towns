@@ -41,6 +41,9 @@ const (
 	// StreamServiceGetMiniblocksProcedure is the fully-qualified name of the StreamService's
 	// GetMiniblocks RPC.
 	StreamServiceGetMiniblocksProcedure = "/river.StreamService/GetMiniblocks"
+	// StreamServiceGetLastMiniblockHashProcedure is the fully-qualified name of the StreamService's
+	// GetLastMiniblockHash RPC.
+	StreamServiceGetLastMiniblockHashProcedure = "/river.StreamService/GetLastMiniblockHash"
 	// StreamServiceAddEventProcedure is the fully-qualified name of the StreamService's AddEvent RPC.
 	StreamServiceAddEventProcedure = "/river.StreamService/AddEvent"
 	// StreamServiceSyncStreamsProcedure is the fully-qualified name of the StreamService's SyncStreams
@@ -61,6 +64,7 @@ type StreamServiceClient interface {
 	CreateStream(context.Context, *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error)
 	GetStream(context.Context, *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error)
 	GetMiniblocks(context.Context, *connect_go.Request[protocol.GetMiniblocksRequest]) (*connect_go.Response[protocol.GetMiniblocksResponse], error)
+	GetLastMiniblockHash(context.Context, *connect_go.Request[protocol.GetLastMiniblockHashRequest]) (*connect_go.Response[protocol.GetLastMiniblockHashResponse], error)
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
 	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.ServerStreamForClient[protocol.SyncStreamsResponse], error)
 	AddStreamsToSync(context.Context, *connect_go.Request[protocol.AddStreamsToSyncRequest]) (*connect_go.Response[protocol.AddStreamsToSyncResponse], error)
@@ -91,6 +95,11 @@ func NewStreamServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 		getMiniblocks: connect_go.NewClient[protocol.GetMiniblocksRequest, protocol.GetMiniblocksResponse](
 			httpClient,
 			baseURL+StreamServiceGetMiniblocksProcedure,
+			opts...,
+		),
+		getLastMiniblockHash: connect_go.NewClient[protocol.GetLastMiniblockHashRequest, protocol.GetLastMiniblockHashResponse](
+			httpClient,
+			baseURL+StreamServiceGetLastMiniblockHashProcedure,
 			opts...,
 		),
 		addEvent: connect_go.NewClient[protocol.AddEventRequest, protocol.AddEventResponse](
@@ -126,6 +135,7 @@ type streamServiceClient struct {
 	createStream          *connect_go.Client[protocol.CreateStreamRequest, protocol.CreateStreamResponse]
 	getStream             *connect_go.Client[protocol.GetStreamRequest, protocol.GetStreamResponse]
 	getMiniblocks         *connect_go.Client[protocol.GetMiniblocksRequest, protocol.GetMiniblocksResponse]
+	getLastMiniblockHash  *connect_go.Client[protocol.GetLastMiniblockHashRequest, protocol.GetLastMiniblockHashResponse]
 	addEvent              *connect_go.Client[protocol.AddEventRequest, protocol.AddEventResponse]
 	syncStreams           *connect_go.Client[protocol.SyncStreamsRequest, protocol.SyncStreamsResponse]
 	addStreamsToSync      *connect_go.Client[protocol.AddStreamsToSyncRequest, protocol.AddStreamsToSyncResponse]
@@ -146,6 +156,11 @@ func (c *streamServiceClient) GetStream(ctx context.Context, req *connect_go.Req
 // GetMiniblocks calls river.StreamService.GetMiniblocks.
 func (c *streamServiceClient) GetMiniblocks(ctx context.Context, req *connect_go.Request[protocol.GetMiniblocksRequest]) (*connect_go.Response[protocol.GetMiniblocksResponse], error) {
 	return c.getMiniblocks.CallUnary(ctx, req)
+}
+
+// GetLastMiniblockHash calls river.StreamService.GetLastMiniblockHash.
+func (c *streamServiceClient) GetLastMiniblockHash(ctx context.Context, req *connect_go.Request[protocol.GetLastMiniblockHashRequest]) (*connect_go.Response[protocol.GetLastMiniblockHashResponse], error) {
+	return c.getLastMiniblockHash.CallUnary(ctx, req)
 }
 
 // AddEvent calls river.StreamService.AddEvent.
@@ -178,6 +193,7 @@ type StreamServiceHandler interface {
 	CreateStream(context.Context, *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error)
 	GetStream(context.Context, *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error)
 	GetMiniblocks(context.Context, *connect_go.Request[protocol.GetMiniblocksRequest]) (*connect_go.Response[protocol.GetMiniblocksResponse], error)
+	GetLastMiniblockHash(context.Context, *connect_go.Request[protocol.GetLastMiniblockHashRequest]) (*connect_go.Response[protocol.GetLastMiniblockHashResponse], error)
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
 	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest], *connect_go.ServerStream[protocol.SyncStreamsResponse]) error
 	AddStreamsToSync(context.Context, *connect_go.Request[protocol.AddStreamsToSyncRequest]) (*connect_go.Response[protocol.AddStreamsToSyncResponse], error)
@@ -204,6 +220,11 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.Handle
 	streamServiceGetMiniblocksHandler := connect_go.NewUnaryHandler(
 		StreamServiceGetMiniblocksProcedure,
 		svc.GetMiniblocks,
+		opts...,
+	)
+	streamServiceGetLastMiniblockHashHandler := connect_go.NewUnaryHandler(
+		StreamServiceGetLastMiniblockHashProcedure,
+		svc.GetLastMiniblockHash,
 		opts...,
 	)
 	streamServiceAddEventHandler := connect_go.NewUnaryHandler(
@@ -239,6 +260,8 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.Handle
 			streamServiceGetStreamHandler.ServeHTTP(w, r)
 		case StreamServiceGetMiniblocksProcedure:
 			streamServiceGetMiniblocksHandler.ServeHTTP(w, r)
+		case StreamServiceGetLastMiniblockHashProcedure:
+			streamServiceGetLastMiniblockHashHandler.ServeHTTP(w, r)
 		case StreamServiceAddEventProcedure:
 			streamServiceAddEventHandler.ServeHTTP(w, r)
 		case StreamServiceSyncStreamsProcedure:
@@ -268,6 +291,10 @@ func (UnimplementedStreamServiceHandler) GetStream(context.Context, *connect_go.
 
 func (UnimplementedStreamServiceHandler) GetMiniblocks(context.Context, *connect_go.Request[protocol.GetMiniblocksRequest]) (*connect_go.Response[protocol.GetMiniblocksResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.GetMiniblocks is not implemented"))
+}
+
+func (UnimplementedStreamServiceHandler) GetLastMiniblockHash(context.Context, *connect_go.Request[protocol.GetLastMiniblockHashRequest]) (*connect_go.Response[protocol.GetLastMiniblockHashResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.GetLastMiniblockHash is not implemented"))
 }
 
 func (UnimplementedStreamServiceHandler) AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {

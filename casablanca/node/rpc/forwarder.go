@@ -108,6 +108,36 @@ func (s *Service) getMiniblocksImpl(ctx context.Context, req *connect_go.Request
 	}
 }
 
+func (s *Service) GetLastMiniblockHash(
+	ctx context.Context,
+	req *connect_go.Request[GetLastMiniblockHashRequest],
+) (*connect_go.Response[GetLastMiniblockHashResponse], error) {
+	ctx, log := ctxAndLogForRequest(ctx, req)
+	log.Debug("GetLastMiniblockHash ENTER", "req", req.Msg)
+	r, e := s.getLastMiniblockHashImpl(ctx, req)
+	if e != nil {
+		return nil, AsRiverError(e).Func("GetLastMiniblockHash").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+	}
+	log.Debug("GetLastMiniblockHash LEAVE", "response", r.Msg)
+	return r, nil
+}
+
+func (s *Service) getLastMiniblockHashImpl(
+	ctx context.Context,
+	req *connect_go.Request[GetLastMiniblockHashRequest],
+) (*connect_go.Response[GetLastMiniblockHashResponse], error) {
+	stub, err := s.getStubForStream(ctx, req.Msg.StreamId)
+	if err != nil {
+		return nil, err
+	}
+
+	if stub != nil {
+		return stub.GetLastMiniblockHash(ctx, req)
+	} else {
+		return s.localGetLastMiniblockHash(ctx, req)
+	}
+}
+
 func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 	log.Debug("AddEvent ENTER", "req", req.Msg)

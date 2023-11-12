@@ -366,34 +366,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return this.initUserStream(userStreamId, userStream)
     }
 
-    async loadExistingForeignUser(userId: string): Promise<void> {
-        // loads user stream for a foreign user without listeners
-        this.logCall('loadExistingForeignUser', userId)
-
-        const streamId = makeUserStreamId(userId)
-        if (this.streams.has(streamId)) {
-            return
-        }
-
-        assert(this.userId !== userId, 'userId must be different from current user')
-
-        const response = await this.rpcClient.getStream({ streamId })
-        const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
-            unpackStreamResponse(response)
-        const stream = new Stream(
-            this.userId,
-            streamId,
-            snapshot,
-            prevSnapshotMiniblockNum,
-            this,
-            this.logEmitFromStream,
-            true,
-        )
-        this.streams.set(streamId, stream)
-        // add init events
-        stream.initialize(streamAndCookie, snapshot, miniblocks)
-    }
-
     async createSpace(spaceId: string | undefined): Promise<{ streamId: string }> {
         spaceId = spaceId ?? makeUniqueSpaceStreamId()
         this.logCall('createSpace', spaceId)
@@ -1353,7 +1325,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             this.logCall('no sender key')
         }
         const streamId: string = makeUserStreamId(userId)
-        await this.loadExistingForeignUser(userId)
+        const miniblockHash = await this.getStreamLastMiniblockHash(streamId)
         // retrieve all device keys of a user
         const deviceInfoMap = await this.getStoredDevicesForUser(userId)
         // encrypt event contents and encode ciphertext
@@ -1380,7 +1352,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     return
                 }
                 this.logCall(`toDevice ${deviceId}, streamId ${streamId}, userId ${userId}`)
-                return this.makeEventAndAddToStream(
+                return this.makeEventWithHashAndAddToStream(
                     streamId,
                     make_UserPayload_ToDevice({
                         // key request or response
@@ -1392,7 +1364,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                         // senderKey is curve25519 id key of sender device
                         senderKey: senderKey ?? '',
                     }),
-                    { method: 'toDevice' },
+                    miniblockHash,
                 )
             })
         })
@@ -1412,7 +1384,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             this.logCall('no sender key')
         }
         const streamId: string = makeUserStreamId(userId)
-        await this.loadExistingForeignUser(userId)
+        const miniblockHash = await this.getStreamLastMiniblockHash(streamId)
         // retrieve all device keys of a user
         const deviceInfoMap = await this.getStoredDevicesForUser(userId)
         // encrypt event contents and encode ciphertext
@@ -1435,7 +1407,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     return
                 }
                 this.logCall(`toDevice ${deviceId}, streamId ${streamId}, userId ${userId}`)
-                return this.makeEventAndAddToStream(
+                return this.makeEventWithHashAndAddToStream(
                     streamId,
                     make_UserPayload_ToDevice({
                         // key request or response
@@ -1447,7 +1419,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                         // senderKey is curve25519 id key of sender device
                         senderKey: senderKey ?? '',
                     }),
-                    { method: 'toDevice' },
+                    miniblockHash,
                 )
             })
         })
@@ -1464,7 +1436,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
         assert(senderKey !== undefined, 'no sender key')
         const streamId: string = makeUserStreamId(userId)
-        await this.loadExistingForeignUser(userId)
+        const miniblockHash = await this.getStreamLastMiniblockHash(streamId)
         const deviceInfoMap = await this.getStoredDevicesForUser(userId)
         const envelope = await this.createOlmEncryptedEvent(event, userId)
         const deviceKeyArr = DeviceInfo.getCurve25519KeyFromUserId(userId, deviceInfoMap)
@@ -1478,7 +1450,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const deviceKey = deviceKeyArr[0]
         this.logCall(`toDevice ${deviceKey.deviceId}, streamId ${streamId}, userId ${userId}`)
         // encrypt event contents and encode ciphertext
-        return this.makeEventAndAddToStream(
+        return this.makeEventWithHashAndAddToStream(
             streamId,
             make_UserPayload_ToDevice({
                 // key request or response
@@ -1490,7 +1462,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 senderKey: senderKey ?? '',
                 // todo: point to origin event for key responses
             }),
-            { method: 'toDevice' },
+            miniblockHash,
         )
     }
 
@@ -1504,7 +1476,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
         assert(senderKey !== undefined, 'no sender key')
         const streamId: string = makeUserStreamId(userId)
-        await this.loadExistingForeignUser(userId)
+        const miniblockHash = await this.getStreamLastMiniblockHash(streamId)
         // assert device_id belongs to user
         const deviceInfoMap = await this.getStoredDevicesForUser(userId)
         const deviceKeyArr = DeviceInfo.getCurve25519KeyFromUserId(userId, deviceInfoMap)
@@ -1518,7 +1490,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const deviceKey = deviceKeyArr[0]
         this.logCall(`toDevice ${deviceKey.deviceId}, streamId ${streamId}, userId ${userId}`)
         // encrypt event contents and encode ciphertext
-        return this.makeEventAndAddToStream(
+        return this.makeEventWithHashAndAddToStream(
             streamId,
             make_UserPayload_ToDevice({
                 // key request or response
@@ -1530,7 +1502,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 senderKey: senderKey ?? '',
                 // todo: point to origin event for key responses
             }),
-            { method: 'toDevice' },
+            miniblockHash,
         )
     }
 
@@ -1677,15 +1649,27 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const stream = this.streams.get(streamId)
         assert(stream !== undefined, 'unknown stream ' + streamId)
 
-        const prevHashes = Array.from(stream.view.leafEventHashes.values())
-        assert(prevHashes.length > 0, 'no prev hashes for stream ' + streamId)
-        // TODO: should rollup now reference this event's hash?
-        const event = await makeEvent(this.signerContext, payload, prevHashes)
+        const prevHash = stream.view.leafEventHashes.values().next()
+        assert(!prevHash.done, 'no prev hashes for stream ' + streamId)
 
+        await this.makeEventWithHashAndAddToStream(streamId, payload, prevHash.value)
+    }
+
+    async makeEventWithHashAndAddToStream(
+        streamId: string,
+        payload: PlainMessage<StreamEvent>['payload'],
+        prevBlockHash: Uint8Array,
+    ): Promise<void> {
+        const event = await makeEvent(this.signerContext, payload, [prevBlockHash])
         await this.rpcClient.addEvent({
             streamId,
             event,
         })
+    }
+
+    async getStreamLastMiniblockHash(streamId: string): Promise<Uint8Array> {
+        const r = await this.rpcClient.getLastMiniblockHash({ streamId })
+        return r.hash
     }
 
     async initCrypto(): Promise<void> {

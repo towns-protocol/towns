@@ -7,6 +7,7 @@ import (
 	"casablanca/node/events"
 	"casablanca/node/infra"
 	"casablanca/node/nodes"
+	. "casablanca/node/protocol/protocolconnect"
 )
 
 var (
@@ -14,13 +15,15 @@ var (
 )
 
 type Service struct {
-	cache              events.StreamCache
-	townsContract      auth.TownsContract
-	wallet             *crypto.Wallet
-	exitSignal         chan error
-	nodeRegistry       nodes.NodeRegistry
-	streamRegistry     nodes.StreamRegistry
-	streamConfig       config.StreamConfig
-	notification       nodes.PushNotification
-	syncHandler        SyncHandler
+	cache          events.StreamCache
+	townsContract  auth.TownsContract
+	wallet         *crypto.Wallet
+	exitSignal     chan error
+	nodeRegistry   nodes.NodeRegistry
+	streamRegistry nodes.StreamRegistry
+	streamConfig   config.StreamConfig
+	notification   nodes.PushNotification
+	syncHandler    SyncHandler
 }
+
+var _ StreamServiceHandler = (*Service)(nil)
