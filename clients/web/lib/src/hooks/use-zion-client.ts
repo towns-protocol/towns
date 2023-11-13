@@ -9,6 +9,7 @@ import {
     IZionServerVersions,
     RoleTransactionContext,
     TransactionContext,
+    WalletLinkTransactionContext,
 } from '../client/ZionClientTypes'
 import {
     CreateChannelInfo,
@@ -175,6 +176,15 @@ interface ZionClientImpl {
         signer: ethers.Signer | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     blip: () => void
+    linkWallet: (
+        rootKey: ethers.Signer,
+        wallet: ethers.Signer,
+    ) => Promise<WalletLinkTransactionContext | undefined>
+    removeLink: (
+        rootKey: ethers.Signer,
+        walletAddress: string,
+    ) => Promise<WalletLinkTransactionContext | undefined>
+    getLinkedWallets: (rootKey: string) => Promise<string[] | undefined>
     userOnWrongNetworkForSignIn: boolean
 }
 
@@ -242,6 +252,9 @@ export function useZionClient(): ZionClientImpl {
         setRoomTopic: useWithCatch(client?.setRoomTopic),
         getRoomTopic: useWithCatch(client?.getRoomTopic),
         setAvatarUrl: useWithCatch(client?.setAvatarUrl),
+        linkWallet: useWithCatch(client?.linkWallet),
+        removeLink: useWithCatch(client?.removeLink),
+        getLinkedWallets: useWithCatch(client?.getLinkedWallets),
         userOnWrongNetworkForSignIn,
     }
 }

@@ -1346,7 +1346,7 @@ export class ZionClient implements DecryptionExtensionDelegate {
      * Wallet linking
      */
     public async linkWallet(
-        rootKey: ethers.Wallet,
+        rootKey: ethers.Signer,
         wallet: ethers.Signer,
     ): Promise<WalletLinkTransactionContext> {
         const rootKeyAddress = await rootKey.getAddress()

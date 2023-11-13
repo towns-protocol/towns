@@ -15,7 +15,7 @@ export class WalletLink {
     }
 
     public async linkWallet(
-        rootKey: ethers.Wallet,
+        rootKey: ethers.Signer,
         wallet: ethers.Signer,
     ): Promise<ContractTransaction> {
         const rootKeyAddress = await rootKey.getAddress()
