@@ -111,3 +111,11 @@ resource "cloudflare_record" "app_dns" {
   type    = "CNAME"
   ttl     = 60
 }
+
+resource "cloudflare_record" "sample_app_dns" {
+  zone_id = data.cloudflare_zone.zone.id
+  name    = "sample-app-${module.global_constants.tags.Environment}"
+  value   = "sample-app-b0wc.onrender.com"
+  type    = "CNAME"
+  ttl     = 60
+}

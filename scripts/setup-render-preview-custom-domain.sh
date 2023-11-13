@@ -39,9 +39,13 @@ if [ "$IS_PULL_REQUEST" = true ]; then
         exit 1
     fi
 
-    domain_suffix="app-preview.towns.com"
+    if [ -z "PREVIEW_DOMAIN_SUFFIX" ]; then
+        echo "Must set PREVIEW_DOMAIN_SUFFIX environment variable!"
+        exit 1
+    fi
+
     pr_number=$(get_pr_number_of_preview)
-    domain="$pr_number.$domain_suffix"
+    domain="$pr_number.$PREVIEW_DOMAIN_SUFFIX"
 
     echo "Setting service $RENDER_SERVICE_ID domain to $domain"
 

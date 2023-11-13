@@ -18,7 +18,6 @@ jobs:
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             ENV: 'transient'
             TF_VAR_cloudflare_terraform_api_token: ${{ secrets.CLOUDFLARE_TERRAFORM_API_TOKEN }}
-            GIT_BRANCH_NAME: ${{ github.head_ref }}
             GIT_PR_NUMBER: ${{ github.event.pull_request.number}}
 
         steps:

@@ -4,7 +4,6 @@ CI_AUTOAPPROVE          ?= false
 terraform_folder		= environments/${ENV}
 backend_folder			= backends
 terraform_workspace_name = $(ENV)
-reference_webapp_name    = test-beta
 
 override CI_AUTOAPPROVE := $(if $(filter true,$(CI_AUTOAPPROVE)),-auto-approve,)
 
@@ -23,8 +22,7 @@ endif
 	@echo TF_VAR_datadog_app_key=$(value TF_VAR_datadog_app_key) >> .env
 	@echo TF_VAR_cloudflare_terraform_api_token=$(value TF_VAR_cloudflare_terraform_api_token) >> .env
 ifeq ($(ENV), transient)
-	@echo TF_VAR_preview_app_cname_record_name=$(value GIT_PR_NUMBER).app-preview >> .env
-	@echo TF_VAR_preview_app_cname_record_value=$(value reference_webapp_name)-pr-$(value GIT_PR_NUMBER).onrender.com >> .env
+	@echo TF_VAR_git_pr_number=$(value GIT_PR_NUMBER) >> .env
 endif
 
 
