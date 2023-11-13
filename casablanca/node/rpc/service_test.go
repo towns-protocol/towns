@@ -224,7 +224,13 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 	return reschannel.Msg.Stream.NextSyncCookie, joinChannel.Hash, nil
 }
 
-func testServerAndClient(ctx context.Context, dbUrl string, dbSchemaName string, useContract bool) (protocolconnect.StreamServiceClient, func()) {
+func testServerAndClient(
+	ctx context.Context,
+	dbUrl string,
+	dbSchemaName string,
+	useContract bool,
+	syncVersion int,
+) (client protocolconnect.StreamServiceClient, port int, closer func()) {
 	cfg := &config.Config{
 		UseContract: useContract,
 		Chain: config.ChainConfig{
@@ -239,6 +245,7 @@ func testServerAndClient(ctx context.Context, dbUrl string, dbSchemaName string,
 		Port:        1234,
 		DbUrl:       dbUrl,
 		StorageType: "postgres",
+		SyncVersion: syncVersion,
 	}
 
 	wallet, err := crypto.NewWallet(ctx)
@@ -253,22 +260,22 @@ func testServerAndClient(ctx context.Context, dbUrl string, dbSchemaName string,
 		}
 	}
 
-	closer, port, _, err := rpc.StartServer(ctx, cfg, wallet)
+	closer, port, _, err = rpc.StartServer(ctx, cfg, wallet)
 	if err != nil {
 		panic(err)
 	}
 
-	client := protocolconnect.NewStreamServiceClient(
+	client = protocolconnect.NewStreamServiceClient(
 		http.DefaultClient,
 		fmt.Sprintf("http://localhost:%d", port),
 	)
 
-	return client, closer
+	return client, port, closer
 }
 
 func TestMethods(t *testing.T) {
 	ctx := context.Background()
-	client, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 0)
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
 	defer closer()
@@ -454,7 +461,7 @@ func TestMethods(t *testing.T) {
 
 func TestRiverDeviceId(t *testing.T) {
 	ctx := context.Background()
-	client, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 0)
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
 	defer closer()
@@ -540,10 +547,228 @@ func TestRiverDeviceId(t *testing.T) {
 	}
 }
 
+func TestSyncStreams(t *testing.T) {
+	/**
+	Arrange
+	*/
+	// create the test client and server
+	ctx := context.Background()
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 2)
+	defer closer()
+	// create the streams for a user
+	wallet, _ := crypto.NewWallet(ctx)
+	user, _, err := createUser(ctx, wallet, client)
+	if err != nil {
+		t.Fatalf("error calling CreateStream: %v", err)
+	}
+	if user == nil {
+		t.Errorf("nil sync cookie")
+	}
+	_, _, err = createUserDeviceKeyStream(ctx, wallet, client)
+	if err != nil {
+		t.Fatalf("error calling CreateStream: %v", err)
+	}
+	// create space
+	space1, _, err := createSpace(ctx, wallet, client, "space1")
+	if err != nil {
+		t.Fatalf("error calling CreateStream: %v", err)
+	}
+	if space1 == nil {
+		t.Fatalf("nil sync cookie")
+	}
+	// create channel
+	channel1, channelHash, err := createChannel(ctx, wallet, client, common.SpaceStreamIdFromName("space1"), "channel1", nil)
+	if err != nil {
+		t.Fatalf("error calling CreateStream: %v", err)
+	}
+	if channel1 == nil {
+		t.Errorf("nil sync cookie")
+	}
+
+	/**
+	Act
+	*/
+	// sync streams
+	syncCtx, syncCancel := context.WithCancel(context.Background())
+	syncRes, err := client.SyncStreams(
+		syncCtx,
+		connect.NewRequest(
+			&protocol.SyncStreamsRequest{
+				SyncPos: []*protocol.SyncCookie{
+					channel1,
+				},
+			},
+		),
+	)
+	if err != nil {
+		t.Fatalf("error calling SyncStreams: %v", err)
+	}
+	// get the syncId for asserts later
+	syncRes.Receive()
+	syncId := syncRes.Msg().SyncId
+	// add an event to verify that sync is working
+	message, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.Make_ChannelPayload_Message("hello"),
+		[][]byte{channelHash},
+	)
+	if err != nil {
+		t.Errorf("error creating message event: %v", err)
+	}
+	_, err = client.AddEvent(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddEventRequest{
+				StreamId: common.ChannelStreamIdFromName("channel1"),
+				Event:    message,
+			},
+		),
+	)
+	if err != nil {
+		t.Fatalf("error calling AddEvent: %v", err)
+	}
+	// wait for the sync
+	syncRes.Receive()
+	msg := syncRes.Msg()
+	// stop the sync loop
+	syncCancel()
+
+	/**
+	Asserts
+	*/
+	assert.NotEmpty(t, syncId, "expected non-empty sync id")
+	assert.Equal(t, 1, len(msg.Streams), "expected 1 stream")
+	assert.Equal(t, syncId, msg.SyncId, "expected sync id to match")
+}
+
+func TestAddStreamsToSync(t *testing.T) {
+	/**
+	Arrange
+	*/
+	// create the test client and server
+	ctx := context.Background()
+	aliceClient, port, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 2)
+	defer closer()
+	// create alice's wallet and streams
+	aliceWallet, _ := crypto.NewWallet(ctx)
+	alice, _, err := createUser(ctx, aliceWallet, aliceClient)
+	if err != nil {
+		t.Fatalf("error calling CreateStream: %v", err)
+	}
+	if alice == nil {
+		t.Errorf("nil sync cookie")
+	}
+	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
+	if err != nil {
+		t.Fatalf("error calling CreateStream: %v", err)
+	}
+	// create bob's client, wallet, and streams
+	bobClient := protocolconnect.NewStreamServiceClient(
+		http.DefaultClient,
+		fmt.Sprintf("http://localhost:%d", port),
+	)
+	bobWallet, _ := crypto.NewWallet(ctx)
+	bob, _, err := createUser(ctx, bobWallet, bobClient)
+	if err != nil {
+		t.Fatalf("error calling CreateStream: %v", err)
+	}
+	if bob == nil {
+		t.Errorf("nil sync cookie")
+	}
+	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient)
+	if err != nil {
+		t.Fatalf("error calling CreateStream: %v", err)
+	}
+	// alice creates a space
+	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, "space1")
+	if err != nil {
+		t.Fatalf("error calling CreateStream: %v", err)
+	}
+	if space1 == nil {
+		t.Fatalf("nil sync cookie")
+	}
+	// alice creates a channel
+	channel1, channelHash, err := createChannel(ctx, aliceWallet, aliceClient, common.SpaceStreamIdFromName("space1"), "channel1", nil)
+	if err != nil {
+		t.Fatalf("error calling CreateStream: %v", err)
+	}
+	if channel1 == nil {
+		t.Errorf("nil sync cookie")
+	}
+
+	/**
+	Act
+	*/
+	// bob sync streams
+	syncCtx, syncCancel := context.WithCancel(context.Background())
+	syncRes, err := bobClient.SyncStreams(
+		syncCtx,
+		connect.NewRequest(
+			&protocol.SyncStreamsRequest{
+				SyncPos: []*protocol.SyncCookie{},
+			},
+		),
+	)
+	if err != nil {
+		t.Fatalf("error calling SyncStreams: %v", err)
+	}
+	// get the syncId for asserts later
+	syncRes.Receive()
+	syncId := syncRes.Msg().SyncId
+	// add an event to verify that sync is working
+	message, err := events.MakeEnvelopeWithPayload(
+		aliceWallet,
+		events.Make_ChannelPayload_Message("hello"),
+		[][]byte{channelHash},
+	)
+	if err != nil {
+		t.Errorf("error creating message event: %v", err)
+	}
+	_, err = aliceClient.AddEvent(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddEventRequest{
+				StreamId: common.ChannelStreamIdFromName("channel1"),
+				Event:    message,
+			},
+		),
+	)
+	if err != nil {
+		t.Fatalf("error calling AddEvent: %v", err)
+	}
+	// bob adds alice's stream to sync
+	_, err = bobClient.AddStreamsToSync(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddStreamsToSyncRequest{
+				SyncId: syncId,
+				SyncPos: []*protocol.SyncCookie{
+					channel1,
+				},
+			},
+		),
+	)
+	if err != nil {
+		t.Fatalf("error calling AddStreamsToSync: %v", err)
+	}
+	// wait for the sync
+	syncRes.Receive()
+	msg := syncRes.Msg()
+	// stop the sync loop
+	syncCancel()
+
+	/**
+	Asserts
+	*/
+	assert.NotEmpty(t, syncId, "expected non-empty sync id")
+	assert.Equal(t, 1, len(msg.Streams), "expected 1 stream")
+	assert.Equal(t, syncId, msg.SyncId, "expected sync id to match")
+}
+
 // TODO: revamp with block support
 func DisableTestManyUsers(t *testing.T) {
 	ctx := context.Background()
-	client, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
+	client, _, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 0)
 	defer closer()
 
 	totalUsers := 14

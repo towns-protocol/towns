@@ -18,7 +18,6 @@ type syncSubscriptionImpl struct {
 	localStreams map[string]*events.SyncStream
 	remoteNodes  map[string]*syncNode
 	syncLock     sync.Mutex
-	syncHandler  SyncHandler
 	syncResponse syncResponse
 }
 
@@ -26,14 +25,9 @@ type syncResponse interface {
 	Send(msg *protocol.SyncStreamsResponse) error
 }
 
-func (s *syncSubscriptionImpl) addLocalStreamIdIfNew(streamId string) bool {
-	s.syncLock.Lock()
-	defer s.syncLock.Unlock()
-	if _, ok := s.localStreams[streamId]; !ok {
-		s.localStreams[streamId] = nil
-		return true // added
-	}
-	return false // not added
+func (s *syncSubscriptionImpl) existsLocalStreamId(streamId string) bool {
+	_, exists := s.localStreams[streamId]
+	return exists
 }
 
 func (s *syncSubscriptionImpl) addLocalStream(
@@ -43,7 +37,8 @@ func (s *syncSubscriptionImpl) addLocalStream(
 ) error {
 	s.syncLock.Lock()
 	defer s.syncLock.Unlock()
-	if _, ok := s.localStreams[syncCookie.StreamId]; !ok {
+	// only add the stream if it doesn't already exist in the subscription
+	if _, exists := s.localStreams[syncCookie.StreamId]; !exists {
 		s.localStreams[syncCookie.StreamId] = stream
 		err := (*stream).Sub(ctx, syncCookie, s)
 		if err != nil {
@@ -63,25 +58,23 @@ func (s *syncSubscriptionImpl) unsubAllLocalStreams() {
 	}
 }
 
-func (s *syncSubscriptionImpl) addRemoteAddressIfNew(address string) bool {
-	s.syncLock.Lock()
-	defer s.syncLock.Unlock()
-	if _, ok := s.remoteNodes[address]; !ok {
-		s.remoteNodes[address] = nil
-		return true // added
-	}
-	return false // not added
+func (s *syncSubscriptionImpl) existsRemoteAddress(address string) bool {
+	_, exists := s.remoteNodes[address]
+	return exists
 }
 
 func (s *syncSubscriptionImpl) addRemoteNode(
 	address string,
 	node *syncNode,
-) {
+) bool {
 	s.syncLock.Lock()
 	defer s.syncLock.Unlock()
-	if _, ok := s.remoteNodes[address]; !ok {
+	// only add the node if it doesn't already exist in the subscription
+	if _, exists := s.remoteNodes[address]; !exists {
 		s.remoteNodes[address] = node
+		return true // added
 	}
+	return false // not added
 }
 
 func (s *syncSubscriptionImpl) closeAllRemoteNodes() {
@@ -123,6 +116,7 @@ func (s *syncSubscriptionImpl) OnUpdate(r *protocol.SyncStreamsResponse) {
 	}
 
 	// send response
+	r.SyncId = s.SyncId
 	select {
 	case s.channel <- r:
 		return
