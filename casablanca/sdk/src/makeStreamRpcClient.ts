@@ -5,6 +5,8 @@ import {
     PromiseClient,
     Transport,
     createPromiseClient,
+    UnaryRequest,
+    StreamRequest,
 } from '@connectrpc/connect'
 import { AnyMessage } from '@bufbuild/protobuf'
 import { createConnectTransport } from '@connectrpc/connect-web'
@@ -12,50 +14,76 @@ import { StreamService } from '@river/proto'
 import { dlog, dlogError } from './dlog'
 import { genShortId } from './id'
 
+const logCalls = dlog('csb:rpc:calls', { defaultEnabled: true })
 const logProtos = dlog('csb:rpc:protos')
 const logError = dlogError('csb:rpc:error')
 
-const interceptor: Interceptor = (next) => async (req) => {
-    let localReq = req
-    const id = genShortId()
-    localReq.header.set('x-river-request-id', id)
+const interceptor: Interceptor =
+    (next) =>
+    async (req: UnaryRequest<AnyMessage, AnyMessage> | StreamRequest<AnyMessage, AnyMessage>) => {
+        let localReq = req
+        const id = genShortId()
+        localReq.header.set('x-river-request-id', id)
 
-    if (req.stream) {
-        // to intercept streaming request messages, we wrap
-        // the AsynchronousIterable with a generator function
-        localReq = {
-            ...req,
-            message: logEachRequest(req.method.name, id, req.message),
-        }
-    } else {
-        logProtos(req.method.name, 'REQUEST', id, req.message)
-    }
-
-    try {
-        const res: UnaryResponse<AnyMessage, AnyMessage> | StreamResponse<AnyMessage, AnyMessage> =
-            await next(localReq)
-
-        if (res.stream) {
-            // to intercept streaming response messages, we wrap
+        if (req.stream) {
+            // to intercept streaming request messages, we wrap
             // the AsynchronousIterable with a generator function
-            return {
-                ...res,
-                message: logEachResponse(res.method.name, id, res.message),
+            localReq = {
+                ...req,
+                message: logEachRequest(req.method.name, id, req.message),
             }
         } else {
-            logProtos(res.method.name, 'RESPONSE', id, res.message)
+            const streamId = req.message['streamId']
+            if (streamId !== undefined) {
+                logCalls(req.method.name, streamId, id)
+            } else {
+                logCalls(req.method.name, id)
+            }
+            logProtos(req.method.name, 'REQUEST', id, req.message)
         }
-        return res
-    } catch (e) {
-        logProtos(req.method.name, 'ERROR', id, e)
-        throw e
+
+        try {
+            const res:
+                | UnaryResponse<AnyMessage, AnyMessage>
+                | StreamResponse<AnyMessage, AnyMessage> = await next(localReq)
+
+            if (res.stream) {
+                // to intercept streaming response messages, we wrap
+                // the AsynchronousIterable with a generator function
+                return {
+                    ...res,
+                    message: logEachResponse(res.method.name, id, res.message),
+                }
+            } else {
+                logProtos(res.method.name, 'RESPONSE', id, res.message)
+            }
+            return res
+        } catch (e) {
+            logError(req.method.name, 'ERROR', id, e)
+            throw e
+        }
     }
-}
 
 async function* logEachRequest(name: string, id: string, stream: AsyncIterable<any>) {
     try {
         for await (const m of stream) {
             try {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                const syncPos = m['syncPos']
+                if (syncPos !== undefined) {
+                    const args = []
+                    for (const p of syncPos) {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        const s = p['streamId']
+                        if (s !== undefined) {
+                            args.push(s)
+                        }
+                    }
+                    logCalls(name, 'num=', args.length, id, args)
+                } else {
+                    logCalls(name, id)
+                }
+
                 logProtos(name, 'STREAMING REQUEST', id, m)
                 yield m
             } catch (err) {
