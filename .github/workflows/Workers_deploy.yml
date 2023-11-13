@@ -73,7 +73,7 @@ jobs:
               run: yarn workers:build
 
             - name: Deploy All CF Workers
-              run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} ./scripts/deploy-all-workers.sh --environment ${{ env.ENV_NAME }}
+              run: CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }} ./scripts/deploy-all-workers.sh --environment ${{ env.ENV_NAME }}
 
             # If action failed, we send a slack notification
             - name: Slack notification

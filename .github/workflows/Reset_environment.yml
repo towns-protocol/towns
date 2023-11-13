@@ -110,7 +110,7 @@ jobs:
                   RIVER_NODE_NAME: ${{ vars.PRIMARY_NODE_NAME }}
                   ENVIRONMENT: ${{ vars.ENVIRONMENT }}
                   WALLET_PRIVATE_KEY: ${{ secrets.HARMONY_HOT_WALLET_PRIVATE_KEY }}
-                  CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+                  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
                   DB_URL: ${{ secrets.DB_URL }}
                   CLUSTER_NAME: ${{ vars.CLUSTER_NAME }}
                   CLOUDFLARE_ENVIRONMENT: ${{ vars.CLOUDFLARE_ENVIRONMENT }}
