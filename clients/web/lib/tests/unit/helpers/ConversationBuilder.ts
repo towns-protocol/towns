@@ -127,6 +127,7 @@ export class ConversationBuilder {
             content: params.content,
             fallbackContent: getFallbackContent(oUserId, params.content),
             isLocalPending: eventId.startsWith('~'),
+            isEncrypting: false,
             threadParentId: getThreadParentId(params.content),
             reactionParentId: getReactionParentId(params.content),
             isMentioned: getIsMentioned(params.content, oUserId),

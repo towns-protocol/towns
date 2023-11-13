@@ -157,7 +157,7 @@ describe('syncWithBlocks', () => {
         try {
             for await (const res of timeoutIterable(syncStream, 5000)) {
                 expect(res.streams).toHaveLength(1)
-                const parsed = unpackEnvelopes(res.streams[0].events, 0n)
+                const parsed = unpackEnvelopes(res.streams[0].events)
                 log('===================sunk===================', { parsed })
                 for (const p of parsed) {
                     if (knownHashes.has(p.hashStr)) {

@@ -2,12 +2,17 @@ import { PlainMessage } from '@bufbuild/protobuf'
 import {
     Client as CasablancaClient,
     ParsedEvent,
+    StreamTimelineEvent,
     getStreamPayloadCase,
-    isChannelStreamId,
     isCiphertext,
-    isDMChannelStreamId,
-    isGDMChannelStreamId,
+    isRemoteEvent,
     logNever,
+    RiverEventV2,
+    bin_toString,
+    isDecryptedEvent,
+    isLocalEvent,
+    LocalTimelineEvent,
+    StreamChange,
 } from '@river/sdk'
 import {
     MembershipOp,
@@ -48,7 +53,6 @@ import {
     ZTEvent,
     KeySolicitationEvent,
 } from '../../types/timeline-types'
-import { RiverEventV2 } from '@river/sdk'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -72,71 +76,55 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
         const streamIds = new Set<string>()
 
-        const onStreamEvents = (streamId: string, timelineEvents: TimelineEvent[]) => {
-            setState.processEvents(timelineEvents, userId, streamId)
-        }
-
         const onStreamInitialized = (streamId: string, kind: SnapshotCaseType) => {
             if (hasTimelineContent(kind)) {
                 streamIds.add(streamId)
                 const messages = casablancaClient.stream(streamId)?.view.timeline ?? []
-                const timelineEvents = messages.map((message) => toEvent(message, userId))
+                const timelineEvents = messages.map((event) => toEvent(event, userId))
                 setState.initializeRoom(userId, streamId, [])
-                onStreamEvents(streamId, timelineEvents)
+                setState.processEvents(timelineEvents, userId, streamId)
             }
         }
 
         const onStreamUpdated = (
             streamId: string,
             kind: SnapshotCaseType,
-            messages: ParsedEvent[],
+            change: StreamChange,
         ) => {
             if (hasTimelineContent(kind)) {
+                const { prepended, appended, updated } = change
                 streamIds.add(streamId)
-                const timelineEvents = messages.map((message) => toEvent(message, userId))
-                onStreamEvents(streamId, timelineEvents)
+                if (prepended) {
+                    const events = prepended.map((event) => toEvent(event, userId))
+                    setState.prependEvents(events, userId, streamId)
+                }
+                if (appended) {
+                    const events = appended.map((event) => toEvent(event, userId))
+                    setState.processEvents(events, userId, streamId)
+                }
+                if (updated) {
+                    const events = updated.map((event) => toEvent(event, userId))
+                    events.map((event) =>
+                        setState.processEvent(event, userId, streamId, event.eventId),
+                    )
+                }
             }
         }
 
-        const onStreamEventsPrepended = (
+        const onStreamLocalEventIdReplaced = (
             streamId: string,
             kind: SnapshotCaseType,
-            messages: ParsedEvent[],
+            localEventId: string,
+            localEvent: LocalTimelineEvent,
         ) => {
             if (hasTimelineContent(kind)) {
                 streamIds.add(streamId)
-                const timelineEvents = messages.map((message) => toEvent(message, userId))
-                setState.prependEvents(timelineEvents, userId, streamId)
+                const event = toEvent(localEvent, userId)
+                setState.processEvent(event, userId, streamId, localEventId)
             }
         }
 
-        const onEventDecrypted = (message: RiverEventV2, err: Error | undefined) => {
-            if (err) {
-                console.log('$$$ useCasablancaTimelines onEventDecrypted', err)
-                console.log(
-                    '$$$ useCasablancaTimelines onEventDecrypted this device key',
-                    casablancaClient?.cryptoBackend?.olmDevice?.deviceCurve25519Key,
-                )
-            }
-            const streamId: string | undefined = message.getStreamId()
-            if (!streamId) {
-                console.error('$$$ useCasablancaTimelines onEventDecrypted no streamId')
-                return
-            }
-            if (
-                isChannelStreamId(streamId) ||
-                isDMChannelStreamId(streamId) ||
-                isGDMChannelStreamId(streamId)
-            ) {
-                const timelineEvent = toEvent_FromRiverEvent(message, userId)
-
-                // get replace Id and remove/replace state or if redaction delete, or
-                // just replace if no replaceId.
-                setState.processEvent(timelineEvent, userId, streamId, timelineEvent.eventId)
-            }
-        }
-
-        //TODO: this should be discussed with the team - if there is a chance for duplicates/lost events
+        //Initialize events that already exist in the client before the listeners started
         const timelineEvents: Map<string, TimelineEvent[]> = new Map()
         //Step 1: get all the events which are already in the river before listeners started
         casablancaClient?.streams.forEach((stream) => {
@@ -160,58 +148,60 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
         casablancaClient.on('streamInitialized', onStreamInitialized)
         casablancaClient.on('streamUpdated', onStreamUpdated)
-        casablancaClient.on('streamEventsPrepended', onStreamEventsPrepended)
-        casablancaClient.on('eventDecrypted', onEventDecrypted)
+        casablancaClient.on('streamLocalEventIdReplaced', onStreamLocalEventIdReplaced)
 
         return () => {
             casablancaClient.off('streamInitialized', onStreamInitialized)
             casablancaClient.off('streamUpdated', onStreamUpdated)
-            casablancaClient.off('streamEventsPrepended', onStreamEventsPrepended)
-            casablancaClient.off('eventDecrypted', onEventDecrypted)
+            casablancaClient.off('streamLocalEventIdReplaced', onStreamLocalEventIdReplaced)
             setState.reset(Array.from(streamIds))
         }
     }, [casablancaClient, setState])
 }
 
-export function toEvent_FromRiverEvent(message: RiverEventV2, userId: string): TimelineEvent {
-    if (!message.wireEvent) {
-        throw new Error('Implementation error, river events should have a wireEvent')
-    }
-    const eventId = message.wireEvent.hashStr
-    const decryptedContent = toTownsContent_fromRiverEvent(eventId, message)
-    return toEvent(message.wireEvent, userId, decryptedContent)
-}
-
-export function toEvent(
-    message: ParsedEvent,
-    userId: string,
-    decryptedContent?: TownsContentResult,
-): TimelineEvent {
-    const eventId = message.hashStr
-    const creatorUserId = message.creatorUserId
+export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {
+    const eventId = timelineEvent.hashStr
+    const creatorUserId = timelineEvent.creatorUserId
     const sender = {
         id: creatorUserId,
         displayName: creatorUserId, // todo displayName
         avatarUrl: undefined, // todo avatarUrl
     }
-    const { content, error } = decryptedContent ?? toTownsContent(eventId, message)
 
+    const { content, error } = toTownsContent(timelineEvent)
     const isSender = sender.id === userId
     const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.displayName, content, error)}`
+
     return {
         eventId: eventId,
-        eventNum: message.eventNum,
+        eventNum: timelineEvent.eventNum,
         status: isSender ? undefined : undefined, // todo: set status for events this user sent
-        createdAtEpocMs: Number(message.event.createdAtEpocMs),
+        createdAtEpocMs: Number(timelineEvent.createdAtEpocMs),
         updatedAtEpocMs: undefined,
         content: content,
         fallbackContent: fbc,
-        isLocalPending: eventId.startsWith('~'),
+        isEncrypting: eventId.startsWith('~'),
+        isLocalPending: timelineEvent.remoteEvent === undefined,
         threadParentId: getThreadParentId(content),
         reactionParentId: getReactionParentId(content),
         isMentioned: getIsMentioned(content, userId),
         isRedacted: false, // redacted is handled in use timeline store when the redaction event is received
         sender,
+    }
+}
+
+function toTownsContent(timelineEvent: StreamTimelineEvent): TownsContentResult {
+    if (isLocalEvent(timelineEvent)) {
+        return toTownsContent_FromChannelMessage(
+            timelineEvent.localEvent.channelMessage,
+            'local event',
+        )
+    } else if (isDecryptedEvent(timelineEvent)) {
+        return toTownsContent_fromRiverEvent(timelineEvent.hashStr, timelineEvent.decryptedContent)
+    } else if (isRemoteEvent(timelineEvent)) {
+        return toTownsContent_fromParsedEvent(timelineEvent.hashStr, timelineEvent.remoteEvent)
+    } else {
+        return { error: 'unknown event content type' }
     }
 }
 
@@ -295,7 +285,7 @@ function toTownsContent_fromRiverEvent(eventId: string, message: RiverEventV2): 
     }
 }
 
-function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResult {
+function toTownsContent_fromParsedEvent(eventId: string, message: ParsedEvent): TownsContentResult {
     const { error, description } = validateEvent(eventId, message)
     if (error) {
         return { error }
@@ -441,7 +431,7 @@ function toTownsContent_ChannelPayload(
                     from: message.creatorUserId,
                     kind: ZTEvent.Fulfillment,
                     sessionIds: value.content.value.sessionIds,
-                    originEventHash: '0x' + value.content.value.originHash.toString(),
+                    originEventHash: bin_toString(value.content.value.originHash),
                 } satisfies FulfillmentEvent,
             }
         }

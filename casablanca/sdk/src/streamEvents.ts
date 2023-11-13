@@ -6,8 +6,15 @@ import {
     UserPayload_ToDevice,
     KeySolicitation,
 } from '@river/proto'
-import { ParsedEvent } from './types'
+import { LocalTimelineEvent, RemoteTimelineEvent, StreamTimelineEvent } from './types'
 import { RiverEventV2 } from './eventV2'
+
+export type StreamChange = {
+    prepended?: RemoteTimelineEvent[]
+    appended?: StreamTimelineEvent[]
+    updated?: StreamTimelineEvent[]
+}
+
 export type StreamEvents = {
     streamNewUserJoined: (streamId: string, userId: string) => void
     streamNewUserInvited: (streamId: string, userId: string) => void
@@ -51,11 +58,12 @@ export type StreamEvents = {
         fallbackKeys: object | undefined,
     ) => void
     streamInitialized: (streamId: string, contentKind: SnapshotCaseType) => void
-    streamUpdated: (streamId: string, contentKind: SnapshotCaseType, events: ParsedEvent[]) => void
-    streamEventsPrepended: (
+    streamUpdated: (streamId: string, contentKind: SnapshotCaseType, change: StreamChange) => void
+    streamLocalEventIdReplaced: (
         streamId: string,
         contentKind: SnapshotCaseType,
-        events: ParsedEvent[],
+        localEventId: string,
+        event: LocalTimelineEvent,
     ) => void
     streamUsernameUpdated: (streamId: string, userId: string) => void
     streamDisplayNameUpdated: (streamId: string, userId: string) => void

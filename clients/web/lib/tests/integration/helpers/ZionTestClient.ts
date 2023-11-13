@@ -16,10 +16,7 @@ import { ZionClient } from '../../../src/client/ZionClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ethers } from 'ethers'
 import { makeUniqueName } from './TestUtils'
-import {
-    toEvent as toEventFromCasablancaEvent,
-    toEvent_FromRiverEvent,
-} from '../../../src/hooks/ZionContext/useCasablancaTimelines'
+import { toEvent } from '../../../src/hooks/ZionContext/useCasablancaTimelines'
 import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@river/sdk'
 import { TokenEntitlementDataTypes, Permission, ITownArchitectBase } from '@river/web3'
@@ -227,11 +224,7 @@ export class ZionTestClient extends ZionClient {
             throw new Error('stream is undefined')
         }
         const events = stream.view.timeline.map((event) => {
-            const decryptedEvent = stream.view.decryptedEvents.get(event.hashStr)
-            if (decryptedEvent) {
-                return toEvent_FromRiverEvent(decryptedEvent, userId)
-            }
-            return toEventFromCasablancaEvent(event, userId)
+            return toEvent(event, userId)
         })
         if (options?.excludeMiniblockHeaders === true) {
             return events.filter((x) => x.content?.kind !== ZTEvent.MiniblockHeader)

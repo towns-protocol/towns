@@ -1,5 +1,6 @@
 import { dlog, dlogError } from './dlog'
 import {
+    ChannelMessage,
     Err,
     SnapshotCaseType,
     SyncCookie,
@@ -10,10 +11,16 @@ import {
     MembershipOp,
 } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
-import { check, logNever, isDefined, throwWithCode } from './check'
-import { ParsedEvent, ParsedMiniblock } from './types'
+import { check, logNever, isDefined } from './check'
+import {
+    ParsedMiniblock,
+    RemoteTimelineEvent,
+    StreamTimelineEvent,
+    isLocalEvent,
+    makeRemoteTimelineEvent,
+} from './types'
 import { RiverEventV2 } from './eventV2'
-import { unpackEnvelopes, unpackMiniblock } from './sign'
+import { unpackEnvelope, unpackMiniblock } from './sign'
 import { EmittedEvents } from './client'
 import { StreamStateView_Space } from './streamStateView_Space'
 import { StreamStateView_Channel } from './streamStateView_Channel'
@@ -28,19 +35,17 @@ import {
     StreamStateView_UnknownContent,
 } from './streamStateView_IContent'
 import { StreamStateView_DMChannel } from './streamStateView_DMChannel'
+import { genLocalId } from './id'
 
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
 
 export class StreamStateView {
     readonly streamId: string
+    readonly userId: string
     readonly contentKind: SnapshotCaseType
-    readonly timeline: ParsedEvent[] = []
-    readonly events = new Map<string, ParsedEvent>()
-
-    // todo: remove this additional map in favor of events map once RiverEvent decrypts to ParsedEvents
-    // https://linear.app/hnt-labs/issue/HNT-2049/refactor-riverevent-to-input-and-output-streamevents
-    readonly decryptedEvents = new Map<string, RiverEventV2>()
+    readonly timeline: StreamTimelineEvent[] = []
+    readonly events = new Map<string, StreamTimelineEvent>()
     readonly leafEventHashes = new Map<string, Uint8Array>()
 
     lastEventNum = 0n
@@ -134,6 +139,7 @@ export class StreamStateView {
             Err.STREAM_BAD_EVENT,
         )
 
+        this.userId = userId
         this.streamId = streamId
         this.contentKind = snapshot.content.case
         this.prevSnapshotMiniblockNum = prevSnapshotMiniblockNum
@@ -227,34 +233,42 @@ export class StreamStateView {
     private appendStreamAndCookie(
         streamAndCookie: StreamAndCookie,
         emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): ParsedEvent[] {
-        const events = unpackEnvelopes(streamAndCookie.events, this.lastEventNum)
-        for (const event of events) {
-            this.appendEvent(event, emitter)
-            this.lastEventNum++
+    ): { appended: StreamTimelineEvent[]; updated: StreamTimelineEvent[] } {
+        const appended: StreamTimelineEvent[] = []
+        const updated: StreamTimelineEvent[] = []
+        for (const unparsedEvent of streamAndCookie.events) {
+            const parsedEvent = unpackEnvelope(unparsedEvent)
+            const existingEvent = this.events.get(parsedEvent.hashStr)
+            if (existingEvent) {
+                existingEvent.remoteEvent = parsedEvent
+                updated.push(existingEvent)
+            } else {
+                const event = makeRemoteTimelineEvent(parsedEvent, this.lastEventNum++)
+                this.timeline.push(event)
+                this.processAppendedEvent(event, emitter)
+                appended.push(event)
+            }
         }
         this.syncCookie = streamAndCookie.nextSyncCookie
-        return events
+        return { appended, updated }
     }
 
-    private appendEvent(
-        event: ParsedEvent,
+    private processAppendedEvent(
+        timelineEvent: RemoteTimelineEvent,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
-        if (this.events.has(event.hashStr)) {
-            return
-        }
+        check(!this.events.has(timelineEvent.hashStr))
+        this.events.set(timelineEvent.hashStr, timelineEvent)
 
+        const event = timelineEvent.remoteEvent
         for (const prev of event.prevEventsStrs ?? []) {
             if (!this.events.has(prev)) {
                 log(
-                    `Adding event with unknown prevEvent ${prev}, hash=${event.hashStr}, stream=${this.streamId}`,
+                    `Added event with unknown prevEvent ${prev}, hash=${event.hashStr}, stream=${this.streamId}`,
                 )
             }
         }
 
-        this.timeline.push(event)
-        this.events.set(event.hashStr, event)
         this.leafEventHashes.set(event.hashStr, event.envelope.hash)
         for (const prev of event.prevEventsStrs ?? []) {
             this.leafEventHashes.delete(prev)
@@ -304,23 +318,14 @@ export class StreamStateView {
         }
     }
 
-    private prependEvent(
-        event: ParsedEvent,
+    private processPrependedEvent(
+        timelineEvent: RemoteTimelineEvent,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
-        if (this.events.has(event.hashStr)) {
-            return
-        }
+        check(!this.events.has(timelineEvent.hashStr))
+        this.events.set(timelineEvent.hashStr, timelineEvent)
 
-        // not exactly a hack, but if this is the first event, we need to
-        // save the hash so that we can submit new events to this stream
-        if (this.timeline.length === 0) {
-            this.leafEventHashes.set(event.hashStr, event.envelope.hash)
-        }
-
-        this.timeline.unshift(event)
-        this.events.set(event.hashStr, event)
-
+        const event = timelineEvent.remoteEvent
         const payload = event.event.payload
         check(isDefined(payload), `Event has no payload ${event.hashStr}`, Err.STREAM_BAD_EVENT)
 
@@ -389,7 +394,7 @@ export class StreamStateView {
     }
 
     // update streeam state with successfully decrypted events by hashStr event id
-    updateDecrypted(event: RiverEventV2): void {
+    updateDecrypted(event: RiverEventV2, emitter: TypedEmitter<EmittedEvents>): void {
         const hashStr = event.getId()
         if (!hashStr) {
             log(`Ignoring decrypted event with no hash id`)
@@ -400,24 +405,26 @@ export class StreamStateView {
             return
         }
 
-        if (this.decryptedEvents.has(hashStr)) {
-            const isDecryptionFailure = event.isDecryptionFailure()
-            const existingDecrypted = this.decryptedEvents.get(hashStr)
-            if (isDecryptionFailure == existingDecrypted?.isDecryptionFailure()) {
-                log(
-                    `Ignoring duplicate decrypted event with unchanged decryption status ${hashStr}`,
-                )
-                return
-            }
-        }
-        if (event.getStreamId() !== this.streamId) {
-            throwWithCode(
-                `Event does not exist on stream for decrypted event, hash=${hashStr}, stream=${this.streamId}`,
-                Err.STREAM_BAD_EVENT,
-            )
+        const timelineEvent = this.events.get(hashStr)
+        if (!timelineEvent) {
+            logError(`Ignoring decrypted event that is not in timeline, hash=${hashStr}`)
+            return
         }
 
-        this.decryptedEvents.set(hashStr, event)
+        if (timelineEvent.decryptedContent === event) {
+            log(`Ignoring duplicate decrypted event ${hashStr}`)
+            return
+        }
+
+        if (timelineEvent.decryptedContent !== undefined) {
+            logError(`timeline event was decrypted twice? ${hashStr}`)
+        }
+
+        timelineEvent.decryptedContent = event
+
+        emitter.emit('streamUpdated', this.streamId, this.contentKind, {
+            updated: [timelineEvent],
+        })
     }
 
     initialize(
@@ -431,17 +438,34 @@ export class StreamStateView {
         // initialize from snapshot data, this gets all memberships and channel data, etc
         this.initializeFromSnapshot(snapshot, emitter)
         // initialize from miniblocks, the first minblock is the snapshot block, it's events are accounted for
-        const block0 = miniblocks[0]
+        const block0 = miniblocks[0].events.map((e, i) =>
+            makeRemoteTimelineEvent(e, miniblocks[0].header.eventNumOffset + BigInt(i)),
+        )
         // the rest need to be added to the timeline
-        const rest = miniblocks.slice(1)
+        const rest = miniblocks
+            .slice(1)
+            .flatMap((mb) =>
+                mb.events.map((e, i) =>
+                    makeRemoteTimelineEvent(e, mb.header.eventNumOffset + BigInt(i)),
+                ),
+            )
+        // initialize our event hashes
+        check(block0.length > 0)
+        // save the hash so that we can submit new events to this stream
+        this.leafEventHashes.set(
+            block0[block0.length - 1].remoteEvent.hashStr,
+            block0[block0.length - 1].remoteEvent.envelope.hash,
+        )
         // prepend the snapshotted block in reverse order
-        for (let i = block0.events.length - 1; i >= 0; i--) {
-            const event = block0.events[i]
-            this.prependEvent(event, emitter)
+        this.timeline.push(...block0)
+        for (let i = block0.length - 1; i >= 0; i--) {
+            const event = block0[i]
+            this.processPrependedEvent(event, emitter)
         }
         // append the new block events
-        for (const event of rest.flatMap((mb) => mb.events)) {
-            this.appendEvent(event, emitter)
+        this.timeline.push(...rest)
+        for (const event of rest) {
+            this.processAppendedEvent(event, emitter)
         }
         // initialize the lastEventNum
         const lastBlock = miniblocks[miniblocks.length - 1]
@@ -456,8 +480,8 @@ export class StreamStateView {
         streamAndCookie: StreamAndCookie,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
-        const events = this.appendStreamAndCookie(streamAndCookie, emitter)
-        emitter?.emit('streamUpdated', this.streamId, this.contentKind, events)
+        const { appended, updated } = this.appendStreamAndCookie(streamAndCookie, emitter)
+        emitter?.emit('streamUpdated', this.streamId, this.contentKind, { appended, updated })
     }
 
     prependEvents(
@@ -465,18 +489,62 @@ export class StreamStateView {
         terminus: boolean,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
-        const events = miniblocks.flatMap((mb) => unpackMiniblock(mb).events)
+        const unpackedMiniblocks = miniblocks.map((mb) => unpackMiniblock(mb))
+        const prepended = unpackedMiniblocks.flatMap((mb) =>
+            mb.events.map((e, i) =>
+                makeRemoteTimelineEvent(e, mb.header.eventNumOffset + BigInt(i)),
+            ),
+        )
+        this.timeline.unshift(...prepended)
         // prepend the new block events in reverse order
-        for (let i = events.length - 1; i >= 0; i--) {
-            const event = events[i]
-            this.prependEvent(event, emitter)
+        for (let i = prepended.length - 1; i >= 0; i--) {
+            this.processPrependedEvent(prepended[i], emitter)
         }
 
         if (this.miniblockInfo && terminus) {
             this.miniblockInfo.terminusReached = true
         }
 
-        emitter?.emit('streamEventsPrepended', this.streamId, this.contentKind, events)
+        emitter?.emit('streamUpdated', this.streamId, this.contentKind, { prepended })
+    }
+
+    appendLocalEvent(
+        channelMessage: ChannelMessage,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ) {
+        const localId = genLocalId()
+        const timelineEvent = {
+            hashStr: localId,
+            creatorUserId: this.userId,
+            eventNum: this.lastEventNum++,
+            localEvent: { localId, channelMessage },
+            createdAtEpocMs: BigInt(Date.now()),
+        } satisfies StreamTimelineEvent
+        this.events.set(localId, timelineEvent)
+        this.timeline.push(timelineEvent)
+        emitter?.emit('streamUpdated', this.streamId, this.contentKind, {
+            appended: [timelineEvent],
+        })
+        return localId
+    }
+
+    updateLocalEvent(
+        localId: string,
+        parsedEventHash: string,
+        emitter: TypedEmitter<EmittedEvents>,
+    ) {
+        const timelineEvent = this.events.get(localId)
+        check(isDefined(timelineEvent), `Local event not found ${localId}`)
+        check(isLocalEvent(timelineEvent), `Event is not local ${localId}`)
+        timelineEvent.hashStr = parsedEventHash
+        this.events.set(parsedEventHash, timelineEvent)
+        emitter?.emit(
+            'streamLocalEventIdReplaced',
+            this.streamId,
+            this.contentKind,
+            localId,
+            timelineEvent,
+        )
     }
 
     getMemberships(): StreamStateView_Membership {

@@ -33,6 +33,7 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
             createdAtEpocMs: 0,
             fallbackContent: '',
             isLocalPending: false,
+            isEncrypting: false,
             isMentioned: false,
             isRedacted: false,
             content: generateRoomMessageEvent(messageContent),

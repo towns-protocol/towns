@@ -1,5 +1,10 @@
 import { MembershipOp } from '@river/proto'
-import { UnauthenticatedClient, makeStreamRpcClient } from '@river/sdk'
+import {
+    RemoteTimelineEvent,
+    UnauthenticatedClient,
+    isRemoteEvent,
+    makeStreamRpcClient,
+} from '@river/sdk'
 import { AnimatePresence } from 'framer-motion'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Spinner } from '@components/Spinner'
@@ -8,6 +13,7 @@ import { Avatar, Box, Heading, Icon, IconName, Paragraph, Stack, Text } from '@u
 import { DAY_MS, WEEK_MS } from 'data/constants'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useDevice } from 'hooks/useDevice'
+import { notUndefined } from 'ui/utils/utils'
 
 export const Activity = (props: { townId: string }) => {
     const { members, townStats, channelStats, isLoading } = useFetchUnauthenticatedActivity(
@@ -113,15 +119,19 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                 const { spaceContent, timeline: spaceTimeline } = stream
 
                 setMembers(Array.from(spaceContent.memberships.joinedUsers))
-
-                const numJoinedUsers = spaceTimeline
-                    .filter((s) => isWithin(s.event.createdAtEpocMs, WEEK_MS))
+                const remoteEvents: RemoteTimelineEvent[] = spaceTimeline
+                    .flatMap((e) => (isRemoteEvent(e) ? e : undefined))
+                    .filter(notUndefined)
+                const numJoinedUsers = remoteEvents
+                    .filter((s) => isWithin(s.createdAtEpocMs, WEEK_MS))
                     .filter(
                         (s) =>
-                            s.event.payload.value?.content.case === 'membership' &&
-                            s.event.payload.value?.content.value?.op === MembershipOp.SO_JOIN,
+                            s.remoteEvent.event.payload.value?.content.case === 'membership' &&
+                            s.remoteEvent.event.payload.value?.content.value?.op ===
+                                MembershipOp.SO_JOIN,
                     )
-                    .reduce((acc, s) => acc.add(s.creatorUserId), new Set())
+
+                    .reduce((acc, s) => acc.add(s!.creatorUserId), new Set())
 
                 setTownStats({
                     numJoinedUsers: Array.from(numJoinedUsers).length,

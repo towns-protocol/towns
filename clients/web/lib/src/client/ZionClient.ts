@@ -1337,7 +1337,7 @@ export class ZionClient implements DecryptionExtensionDelegate {
             eventCount: this.casablancaClient?.stream(roomId.networkId)?.view?.timeline.length ?? 0,
             firstEventId: result.firstEvent?.hashStr,
             firstEventTimestamp: result.firstEvent
-                ? Number(result.firstEvent.event.createdAtEpocMs)
+                ? Number(result.firstEvent.createdAtEpocMs)
                 : undefined,
         }
     }

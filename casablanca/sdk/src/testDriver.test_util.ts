@@ -68,7 +68,10 @@ class TestDriver {
                 throw new Error(`channelNewMessage is not a post`)
             }
             content = payload?.content?.payload?.value.content.value.body
-            this.log(`channelNewMessage channelId=${channelId} message=${content}`, this.expected)
+            this.log(
+                `channelNewMessage channelId=${channelId} message=${content}`,
+                this.expected ? [...this.expected] : undefined,
+            )
             if (this.expected?.delete(content)) {
                 this.log(`channelNewMessage expected message Received, text=${content}`)
 
@@ -123,7 +126,9 @@ class TestDriver {
             this.log(`step sending channelId=${channelId} message=${message}`)
             await this.client.sendMessage(channelId, message)
         }
-        await ret
+        if (expected.size > 0) {
+            await ret
+        }
 
         this.allExpectedReceived = undefined
         this.badMessageReceived = undefined
@@ -183,7 +188,7 @@ export const converse = async (conversation: string[][], testName: string): Prom
         )
         await Promise.all(
             others.map(async (d) => {
-                log(`${testName} inviting other to space`, d.client.userId)
+                log(`${testName} ${alice.client.userId} inviting other to space`, d.client.userId)
                 await alice.client.inviteUser(spaceId, d.client.userId)
                 log(`${testName} invited other to space`, d.client.userId)
             }),
@@ -229,15 +234,21 @@ export const converse = async (conversation: string[][], testName: string): Prom
         log(`${testName} all joined`)
 
         for (const [conv_idx, conv] of conversation.entries()) {
-            const expected = new Set(conv.filter((s) => s !== ''))
-            log(`${testName} conversation stepping start ${conv_idx}`, expected, conv)
+            log(`${testName} conversation stepping start ${conv_idx}`, conv)
             await Promise.all(
                 conv.map(async (msg, msg_idx) => {
                     log(
                         `${testName} conversation step before send conv: ${conv_idx} msg: ${msg_idx}`,
                         msg,
                     )
-                    await drivers[msg_idx].step(channelId, conv_idx, new Set(expected), msg)
+                    // expect to recieve everyone elses messages (don't worry about your own, they render locally)
+                    const expected = new Set(
+                        [...conv.slice(0, msg_idx), ...conv.slice(msg_idx + 1)].filter(
+                            (s) => s !== '',
+                        ),
+                    )
+                    log(`${testName} conversation step execute ${msg_idx}`, msg, [...expected])
+                    await drivers[msg_idx].step(channelId, conv_idx, expected, msg)
                     log(
                         `${testName} conversation step after send conv: ${conv_idx} msg: ${msg_idx}`,
                         msg,

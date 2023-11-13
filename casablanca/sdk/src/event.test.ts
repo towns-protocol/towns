@@ -2,11 +2,10 @@ import { dlog } from './dlog'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { Client } from './client'
 import { RiverEventV2 } from './eventV2'
-import { SnapshotCaseType } from '@river/proto'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { isCiphertext } from './types'
 
-const log = dlog('test')
+const log = dlog('csb:test')
 
 describe('riverEventTest', () => {
     let bobsClient: Client
@@ -41,44 +40,33 @@ describe('riverEventTest', () => {
             })
         }
 
-        const onStreamInitialized = (streamId: string, streamKind: SnapshotCaseType) => {
-            log('streamInitialized', streamId, streamKind)
-            done.run(() => {
-                if (streamKind === 'channelContent') {
-                    const channel = bobsClient.stream(streamId)!
-                    log('channel content')
-                    log(channel.view)
-
-                    channel.on('channelNewMessage', onChannelNewMessage)
-                    bobsClient.sendMessage(streamId, 'Hello, world!')
-                }
-            })
-        }
-
-        bobsClient.on('streamInitialized', onStreamInitialized)
         await expect(bobsClient.createNewUser()).toResolve()
         await expect(bobsClient.initCrypto()).toResolve()
-
         await bobsClient.startSync()
+        bobsClient.on('channelNewMessage', onChannelNewMessage)
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'
         const bobsChannelTopic = 'Bobs channel topic'
-        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
         await expect(
-            bobsClient.createChannel(
-                bobsSpaceId,
-                bobsChannelName,
-                bobsChannelTopic,
-                makeChannelStreamId('bobs-channel-' + genId()),
-            ),
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
         ).toResolve()
+        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
+
+        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initCrypto()).toResolve()
+        await alicesClient.startSync()
+
+        await expect(alicesClient.joinStream(bobsSpaceId)).toResolve()
+        await expect(alicesClient.joinStream(bobsChannelId)).toResolve()
+
+        await alicesClient.sendMessage(bobsChannelId, 'hello from alice')
 
         await done.expectToSucceed()
-
         await bobsClient.stopSync()
-
-        log('done with river event')
+        log('done with river event test')
     })
 })

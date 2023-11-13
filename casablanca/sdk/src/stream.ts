@@ -5,7 +5,6 @@ import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView } from './streamStateView'
 import { EmittedEvents } from './client'
-import { RiverEventV2 } from './eventV2'
 import { ParsedMiniblock } from './types'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
@@ -34,9 +33,6 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return this.view.streamId
     }
 
-    updateDecrypted(event: RiverEventV2): void {
-        this.view.updateDecrypted(event)
-    }
     /**
      * NOTE: Separating initial rollup from the constructor allows consumer to subscribe to events
      * on the new stream event and still access this object through Client.streams.

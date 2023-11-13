@@ -331,12 +331,12 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
     if (next.content?.kind === ZTEvent.RoomMessage && prev.content?.kind === ZTEvent.RoomMessage) {
         // when we replace an event, we copy the content up to the root event
         // so we keep the prev id, but use the next content
-        const eventId = !prev.isLocalPending ? prev.eventId : next.eventId
-        const eventNum = !prev.isLocalPending ? prev.eventNum : next.eventNum
+        const isLocalId = prev.eventId.startsWith('~')
+        const eventId = !isLocalId ? prev.eventId : next.eventId
 
         return {
             eventId: eventId,
-            eventNum: eventNum,
+            eventNum: prev.eventNum,
             status: next.status,
             createdAtEpocMs: prev.createdAtEpocMs,
             updatedAtEpocMs: next.createdAtEpocMs,
@@ -345,7 +345,8 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
                 inReplyTo: prev.content.inReplyTo,
             },
             fallbackContent: next.fallbackContent,
-            isLocalPending: eventId.startsWith('~'),
+            isLocalPending: next.isLocalPending,
+            isEncrypting: next.isEncrypting,
             threadParentId: prev.threadParentId,
             reactionParentId: prev.reactionParentId,
             isMentioned: next.isMentioned,

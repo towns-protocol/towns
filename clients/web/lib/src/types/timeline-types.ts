@@ -236,6 +236,7 @@ export interface TimelineEvent {
     updatedAtEpocMs?: number // updated at times are generated client side, do not trust them
     content?: TimelineEvent_OneOf
     fallbackContent: string
+    isEncrypting: boolean // local only, isLocalPending should also be true
     isLocalPending: boolean /// true if we're waiting for the event to get sent back from the server
     threadParentId?: string
     reactionParentId?: string
@@ -366,9 +367,7 @@ export function getFallbackContent(
                 content.message
             }`
         case ZTEvent.Fulfillment:
-            return `Fulfillment: { sessionIds: ${content.sessionIds.join(',')}, originEventHash: ${
-                content.originEventHash
-            } }`
+            return `Fulfillment sessionIds: ${content.sessionIds.join(',')}, from: ${content.from}`
         case ZTEvent.KeySolicitation:
             return `KeySolicitation sessionId: ${content.sessionId}, senderKey: ${content.senderKey}`
         default:

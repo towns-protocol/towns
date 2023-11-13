@@ -128,5 +128,9 @@ export const genShortId = (): string => {
     return nanoid(12)
 }
 
+export const genLocalId = (): string => {
+    return '~' + nanoid(11)
+}
+
 const textEncoder = new TextEncoder()
 export const genIdBlob = (): Uint8Array => textEncoder.encode(genId())

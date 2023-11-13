@@ -79,7 +79,6 @@ import {
     make_UserSettingsPayload_FullyReadMarkers,
     make_UserSettingsPayload_Inception,
     make_MediaPayload_Inception,
-    ParsedEvent,
     make_MediaPayload_Chunk,
     make_DMChannelPayload_Inception,
     make_DMChannelPayload_Membership,
@@ -88,8 +87,9 @@ import {
     make_GDMChannelPayload_Message,
     make_GDMChannelPayload_Membership,
     make_SpacePayload_DisplayName,
+    StreamTimelineEvent,
 } from './types'
-import { shortenHexString } from './binary'
+import { bin_toHexString, shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/cryptoStore'
 import { DeviceInfo } from './crypto/deviceInfo'
 import { IDecryptOptions, RiverEventsV2, RiverEventV2 } from './eventV2'
@@ -680,7 +680,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         if (stream === undefined) {
             throw new Error(`Stream ${streamId} not found`)
         }
-        stream.updateDecrypted(event)
+        stream.view.updateDecrypted(event, this)
     }
 
     async getStream(streamId: string): Promise<StreamStateView> {
@@ -931,6 +931,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     }
 
     async sendChannelMessage(streamId: string, payload: ChannelMessage): Promise<void> {
+        const stream = this.stream(streamId)
+        check(stream !== undefined, 'stream not found')
+        const localId = stream.view.appendLocalEvent(payload, this)
         const message = await this.createMegolmEncryptedEvent(payload, streamId)
         if (!message) {
             throw new Error('failed to encrypt message')
@@ -938,14 +941,17 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         if (isChannelStreamId(streamId)) {
             return this.makeEventAndAddToStream(streamId, make_ChannelPayload_Message(message), {
                 method: 'sendMessage',
+                localId,
             })
         } else if (isDMChannelStreamId(streamId)) {
             return this.makeEventAndAddToStream(streamId, make_DMChannelPayload_Message(message), {
                 method: 'sendMessageDM',
+                localId,
             })
         } else if (isGDMChannelStreamId(streamId)) {
             return this.makeEventAndAddToStream(streamId, make_GDMChannelPayload_Message(message), {
                 method: 'sendMessageGDM',
+                localId,
             })
         }
     }
@@ -1101,8 +1107,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         if (!stream) {
             throw new Error(`stream not found: ${streamId}`)
         }
-        const ref = stream.view.events.get(payload.refEventId)
-        if (!ref) {
+        if (!stream.view.events.has(payload.refEventId)) {
             throw new Error(`ref event not found: ${payload.refEventId}`)
         }
         return this.sendChannelMessage(
@@ -1287,7 +1292,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
     }
 
-    async scrollback(streamId: string): Promise<{ terminus: boolean; firstEvent?: ParsedEvent }> {
+    async scrollback(
+        streamId: string,
+    ): Promise<{ terminus: boolean; firstEvent?: StreamTimelineEvent }> {
         const stream = this.stream(streamId)
         check(isDefined(stream), `stream not found: ${streamId}`)
         check(isDefined(stream.view.miniblockInfo), `stream not initialized: ${streamId}`)
@@ -1640,10 +1647,16 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     async makeEventAndAddToStream(
         streamId: string,
         payload: PlainMessage<StreamEvent>['payload'],
-        options: { method?: string } = {},
+        options: { method?: string; localId?: string } = {},
     ): Promise<void> {
         // TODO: filter this.logged payload for PII reasons
-        this.logCall('await makeEventAndAddToStream', options.method, streamId, payload)
+        this.logCall(
+            'await makeEventAndAddToStream',
+            options.method,
+            streamId,
+            payload,
+            options.localId,
+        )
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
 
         const stream = this.streams.get(streamId)
@@ -1651,8 +1664,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         const prevHash = stream.view.leafEventHashes.values().next()
         assert(!prevHash.done, 'no prev hashes for stream ' + streamId)
-
-        await this.makeEventWithHashAndAddToStream(streamId, payload, prevHash.value)
+        const event = await makeEvent(this.signerContext, payload, [prevHash.value])
+        if (options.localId) {
+            stream.view.updateLocalEvent(options.localId, bin_toHexString(event.hash), this)
+        }
+        await this.rpcClient.addEvent({
+            streamId,
+            event,
+        })
     }
 
     async makeEventWithHashAndAddToStream(

@@ -35,14 +35,72 @@ import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
 import { ISignatures } from './crypto/deviceInfo'
 import { bin_toHexString } from './binary'
+import { RiverEventV2 } from './eventV2'
+
+export interface LocalEvent {
+    localId: string
+    channelMessage: ChannelMessage
+}
 
 export interface ParsedEvent {
     event: StreamEvent
     envelope: Envelope
-    eventNum: bigint
     hashStr: string
     prevEventsStrs: string[]
     creatorUserId: string
+}
+
+export interface StreamTimelineEvent {
+    hashStr: string
+    creatorUserId: string
+    eventNum: bigint
+    createdAtEpocMs: bigint
+    localEvent?: LocalEvent
+    remoteEvent?: ParsedEvent
+    decryptedContent?: RiverEventV2
+    localEventNum?: bigint
+    confirmedEventNum?: bigint
+}
+
+export type RemoteTimelineEvent = Omit<StreamTimelineEvent, 'remoteEvent'> & {
+    remoteEvent: ParsedEvent
+}
+
+export type LocalTimelineEvent = Omit<StreamTimelineEvent, 'localEvent'> & {
+    localEvent: LocalEvent
+}
+
+export type DecryptedTimelineEvent = Omit<
+    StreamTimelineEvent,
+    'decryptedContent' | 'remoteEvent'
+> & {
+    remoteEvent: ParsedEvent
+    decryptedContent: RiverEventV2
+}
+
+export function isLocalEvent(event: StreamTimelineEvent): event is LocalTimelineEvent {
+    return event.localEvent !== undefined
+}
+
+export function isRemoteEvent(event: StreamTimelineEvent): event is RemoteTimelineEvent {
+    return event.remoteEvent !== undefined
+}
+
+export function isDecryptedEvent(event: StreamTimelineEvent): event is DecryptedTimelineEvent {
+    return event.decryptedContent !== undefined && event.remoteEvent !== undefined
+}
+
+export function makeRemoteTimelineEvent(
+    parsedEvent: ParsedEvent,
+    eventNum: bigint,
+): RemoteTimelineEvent {
+    return {
+        hashStr: parsedEvent.hashStr,
+        creatorUserId: parsedEvent.creatorUserId,
+        eventNum,
+        createdAtEpocMs: parsedEvent.event.createdAtEpocMs,
+        remoteEvent: parsedEvent,
+    }
 }
 
 export interface ParsedMiniblock {

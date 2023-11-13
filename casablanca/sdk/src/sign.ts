@@ -206,24 +206,19 @@ export const unpackStreamResponse = (
 // returns all events + the header event and pointer to header content
 export const unpackMiniblock = (miniblock: Miniblock): ParsedMiniblock => {
     check(isDefined(miniblock.header), 'Miniblock header is not set')
-    const headerPartial = unpackEnvelope(miniblock.header)
+    const header = unpackEnvelope(miniblock.header)
     check(
-        headerPartial.event.payload.case === 'miniblockHeader',
-        `bad miniblock header: wrong case received: ${headerPartial.event.payload.case}`,
+        header.event.payload.case === 'miniblockHeader',
+        `bad miniblock header: wrong case received: ${header.event.payload.case}`,
     )
-    const eventNumOffset = headerPartial.event.payload.value.eventNumOffset
-    const events = unpackEnvelopes(miniblock.events, eventNumOffset)
-    const headerEvent = { ...headerPartial, eventNum: eventNumOffset + BigInt(events.length) }
+    const events = unpackEnvelopes(miniblock.events)
     return {
-        header: headerPartial.event.payload.value,
-        events: [...events, headerEvent],
+        header: header.event.payload.value,
+        events: [...events, header],
     }
 }
 
-export const unpackEnvelope = (
-    envelope: Envelope,
-    _prevEventHash?: Uint8Array,
-): Omit<ParsedEvent, 'eventNum'> => {
+export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array): ParsedEvent => {
     check(hasElements(envelope.event), 'Event base is not set', Err.BAD_EVENT)
     check(hasElements(envelope.hash), 'Event hash is not set', Err.BAD_EVENT)
     check(hasElements(envelope.signature), 'Event signature is not set', Err.BAD_EVENT)
@@ -264,24 +259,13 @@ export const unpackEnvelope = (
     }
 }
 
-const unpackEnvelopeWithNum = (
-    envelope: Envelope,
-    eventNum: bigint,
-    prevEventHash?: Uint8Array,
-): ParsedEvent => {
-    return {
-        ...unpackEnvelope(envelope, prevEventHash),
-        eventNum,
-    }
-}
-
-export const unpackEnvelopes = (event: Envelope[], eventNumOffset: bigint): ParsedEvent[] => {
+export const unpackEnvelopes = (event: Envelope[]): ParsedEvent[] => {
     const ret: ParsedEvent[] = []
     //let prevEventHash: Uint8Array | undefined = undefined
     for (const e of event) {
         // TODO: this handling of prevEventHash is not correct,
         // hashes should be checked against all preceding events in the stream.
-        ret.push(unpackEnvelopeWithNum(e, eventNumOffset++ /*, prevEventHash*/))
+        ret.push(unpackEnvelope(e))
         //prevEventHash = e.hash!
     }
     return ret
