@@ -424,6 +424,11 @@ export class RiverDecryptionExtension {
             if (!op) {
                 throw new Error('CDE::onToDeviceEvent - no event type found')
             }
+            if (!Object.keys(this.receivedToDeviceProcessorMap).includes(ToDeviceOp[op])) {
+                throw new Error(
+                    `CDE::onToDeviceEvent - no processor found for event with op ${ToDeviceOp[op]}`,
+                )
+            }
             const intendedDeviceKey = event.deviceKey
             if (intendedDeviceKey !== this.client.olmDevice.deviceCurve25519Key) {
                 // not intended for this device, not attempting to decrypt',
@@ -432,16 +437,17 @@ export class RiverDecryptionExtension {
             try {
                 const clear = await this.client.decryptOlmEvent(event, senderUserId)
                 const senderCurve25519Key = event.senderKey
-                if (Object.keys(this.receivedToDeviceProcessorMap).includes(ToDeviceOp[op])) {
-                    this.receivedToDeviceEventQueue.enqueue({
-                        ...clear,
-                        senderUserId,
-                        senderCurve25519Key,
-                    })
-                }
+                this.receivedToDeviceEventQueue.enqueue({
+                    ...clear,
+                    senderUserId,
+                    senderCurve25519Key,
+                })
             } catch (e) {
-                console.error('error decrypting to-device event', e)
-                // todo: we should send a failure response here to sender
+                console.error(
+                    `CDE::onToDeviceEvent error decrypting to-device event for device key ${event.deviceKey}, 
+                    current device key ${this.client.olmDevice.deviceCurve25519Key}`,
+                    e,
+                )
                 return
             }
         })().catch((e) => {
@@ -591,6 +597,7 @@ export class RiverDecryptionExtension {
 
         let request: PlainMessage<StreamEvent>['payload']
         // for each room, ask for all missing sessionIds sequentially to stream
+        const requests: Promise<void>[] = []
         for (const unknownSessionAndSender of unknownSessionIds) {
             const unknownSessionRequested = unknownSessionAndSender[1]
             const stream = this.client.streams.get(streamId)
@@ -647,8 +654,9 @@ export class RiverDecryptionExtension {
             } else {
                 throw new Error('CDE::_askRoomForKeys - unknown stream type')
             }
-            await this.client.makeEventAndAddToStream(streamId, request)
+            requests.push(this.client.makeEventAndAddToStream(streamId, request))
         }
+        await Promise.all(requests)
     }
 
     private async onKeySolicitation(
@@ -783,7 +791,12 @@ export class RiverDecryptionExtension {
         }
 
         // Set a timeout — we don't want all channel members to simultaneously respond to the key request
-        const waitTime = isTestEnv() ? 100 : Math.random() * MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS
+        const waitTime =
+            isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
+                ? 0
+                : isTestEnv()
+                ? 100
+                : Math.random() * MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS
         console.log('CDE::onKeySolicitation waiting for', waitTime, 'ms')
         await sleep(waitTime)
 
