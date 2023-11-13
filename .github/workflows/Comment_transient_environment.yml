@@ -1,0 +1,56 @@
+name: Comment Transient Environment
+on:
+    pull_request:
+        types: [opened]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
+
+jobs:
+    comment_transient_environment:
+        permissions: write-all
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 20
+
+        env:
+            GIT_PR_NUMBER: ${{ github.event.pull_request.number }}
+
+        steps:
+            - name: Comment on PR
+              uses: actions/github-script@v6
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      const gitPrNumber = process.env.GIT_PR_NUMBER;
+                      const webAppUrl = `https://${gitPrNumber}.app-preview.towns.com`;
+                      const sampleAppUrl = `https://${gitPrNumber}.sample-app-preview.towns.com`;
+                      const message = `
+                      This PR is configured to trigger a transient environment. You can find the URLs for the newly provisioned resources below. The URLs will be live as soon as the apps are built and deployed. They will be deprovisioned as soon as the PR is merged or closed. Our current bottleneck is the build time for the web app, so please give it 10-15 minutes before checking the links.
+
+                      Web App: [${webAppUrl}](${webAppUrl})
+                      Sample App: [${sampleAppUrl}](${sampleAppUrl})
+                      `;
+
+                      github.rest.issues.createComment({
+                          issue_number: context.issue.number,
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          body: message
+                      })
+
+            - name: Slack notification
+              if: failure()
+              uses: slackapi/slack-github-action@v1.24.0
+              with:
+                  payload: |
+                      {
+                          "step": "Comment Transient Environment",
+                          "environment": "Transient-${{ github.event.pull_request.number }}",
+                          "branch": "${{ github.ref }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
+                      }
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
