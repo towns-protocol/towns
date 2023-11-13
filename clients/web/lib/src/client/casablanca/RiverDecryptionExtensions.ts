@@ -1,7 +1,6 @@
 import {
     Client as CasablancaClient,
     RiverEventV2,
-    ParsedEvent,
     make_ToDevice_KeyResponse,
     MEGOLM_ALGORITHM,
     IEventOlmDecryptionResult,
@@ -182,9 +181,6 @@ export class RiverDecryptionExtension {
         // listen for key solicitations for streams
         client.on('keySolicitationMessage', this.onKeySolicitationEvent)
 
-        // listen for channel timeline events
-        client.on('channelTimelineEvent', this.onChannelTimelineEvent)
-
         // listen for new channel message events
         client.on('channelNewMessage', this.onChannelEvent)
 
@@ -202,7 +198,6 @@ export class RiverDecryptionExtension {
         this.throttledStartLookingForKeys = null
         // stop listening for key requests
         this.client.off('toDeviceMessage', this.onToDeviceEvent)
-        this.client.off('channelTimelineEvent', this.onChannelTimelineEvent)
         this.client.off('keySolicitationMessage', this.onKeySolicitationEvent)
         this.client.off('channelNewMessage', this.onChannelEvent)
         this.client.off('streamNewUserJoined', this.onNewUserJoinedEvent)
@@ -326,59 +321,6 @@ export class RiverDecryptionExtension {
         } catch (e) {
             console.error('CDE::onDecryptedEvent - error decrypting event', e)
         }
-    }
-
-    private onChannelTimelineEvent = (streamId: string, _spaceId: string, event: ParsedEvent) => {
-        ;(async () => {
-            if (
-                (event?.event?.payload.case !== 'channelPayload' ||
-                    event.event.payload.value.content.case !== 'message') &&
-                (event?.event?.payload.case !== 'gdmChannelPayload' ||
-                    event.event.payload.value.content.case !== 'message') &&
-                (event?.event?.payload.case !== 'dmChannelPayload' ||
-                    event.event.payload.value.content.case !== 'message')
-            ) {
-                console.log(
-                    'CDE::onChannelTimelineEvent - not a message, not attempting to decrypt',
-                )
-                return
-            }
-            const content = event?.event?.payload?.value?.content.value
-            const riverEvent = new RiverEventV2(
-                {
-                    channel_id: streamId,
-                    event_id: event.hashStr,
-                    stream_id: streamId,
-                    content: content,
-                },
-                this.client,
-                event,
-            )
-
-            const wire = riverEvent.getWireContent()
-            if (wire === undefined) {
-                console.log(
-                    'CDE::onChannelTimelineEvent - wire content channel undefined, not attempting to decrypt',
-                )
-                return
-            }
-
-            if (riverEvent.shouldAttemptDecryption()) {
-                try {
-                    await this.client.decryptEventIfNeeded(riverEvent)
-                    if (riverEvent.isDecryptionFailure()) {
-                        console.log(
-                            'CDE::onChannelTimelineEvent - decryption failure',
-                            riverEvent.getContent(),
-                        )
-                    }
-                } catch (e) {
-                    console.error('error decrypting channel timeline event', e)
-                }
-            }
-        })().catch((e) => {
-            console.error('CDE::onChannelTimelineEvent - error decrypting event', e)
-        })
     }
 
     private onChannelEvent = (_streamId: string, event: RiverEventV2) => {

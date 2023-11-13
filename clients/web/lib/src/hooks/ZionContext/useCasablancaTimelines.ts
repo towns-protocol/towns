@@ -145,23 +145,6 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
                 timelineEvents.set(stream.streamId, [])
                 console.log('$$$ useCasablancaTimelines load streamId', stream.streamId)
                 stream.view.timeline.forEach((event) => {
-                    if (
-                        stream.view.contentKind === 'channelContent' &&
-                        stream.view.channelContent.spaceId !== undefined
-                    ) {
-                        casablancaClient.emit(
-                            // TODO erik for DM GDM this needs to be fixed, we shouldn't be emitting this event from this location, total violation of separation of concerns
-                            'channelTimelineEvent',
-                            stream.streamId,
-                            stream.view.channelContent.spaceId,
-                            event,
-                        )
-                    } else if (
-                        stream.view.contentKind === 'dmChannelContent' ||
-                        stream.view.contentKind === 'gdmChannelContent'
-                    ) {
-                        casablancaClient.emit('channelTimelineEvent', stream.streamId, '', event)
-                    }
                     const parsedEvent = toEvent(event, casablancaClient.userId)
                     timelineEvents.get(stream.streamId)?.push(parsedEvent)
                 })
