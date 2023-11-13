@@ -53,6 +53,7 @@ import {
     ZTEvent,
     KeySolicitationEvent,
 } from '../../types/timeline-types'
+import { EventStatus } from 'matrix-js-sdk'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -174,8 +175,9 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
 
     return {
         eventId: eventId,
+        localEventId: timelineEvent.localEvent?.localId,
         eventNum: timelineEvent.eventNum,
-        status: isSender ? undefined : undefined, // todo: set status for events this user sent
+        status: isSender ? getEventStatus(timelineEvent) : undefined, // todo: set status for events this user sent
         createdAtEpocMs: Number(timelineEvent.createdAtEpocMs),
         updatedAtEpocMs: undefined,
         content: content,
@@ -747,6 +749,19 @@ function toTownsContent_SpacePayload(
         default:
             logNever(value.content)
             return { error: `${description} unknown payload case` }
+    }
+}
+
+function getEventStatus(timelineEvent: StreamTimelineEvent): EventStatus {
+    if (timelineEvent.remoteEvent) {
+        return EventStatus.SENT
+    } else if (timelineEvent.localEvent && timelineEvent.hashStr.startsWith('~')) {
+        return EventStatus.ENCRYPTING
+    } else if (timelineEvent.localEvent) {
+        return EventStatus.SENDING
+    } else {
+        console.error('$$$ useCasablancaTimelines unknown event status', { timelineEvent })
+        return EventStatus.NOT_SENT
     }
 }
 

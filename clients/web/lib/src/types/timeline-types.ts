@@ -230,6 +230,7 @@ export interface SpaceParentEvent {
 
 export interface TimelineEvent {
     eventId: string
+    localEventId?: string // if this event was created locally and appended before addEvent, this will be set
     eventNum: bigint
     status?: EventStatus
     createdAtEpocMs: number // created at times are generated client side, do not trust them

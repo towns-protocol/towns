@@ -335,22 +335,17 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
         const eventId = !isLocalId ? prev.eventId : next.eventId
 
         return {
+            ...next,
             eventId: eventId,
             eventNum: prev.eventNum,
-            status: next.status,
             createdAtEpocMs: prev.createdAtEpocMs,
             updatedAtEpocMs: next.createdAtEpocMs,
             content: {
                 ...next.content,
                 inReplyTo: prev.content.inReplyTo,
             },
-            fallbackContent: next.fallbackContent,
-            isLocalPending: next.isLocalPending,
-            isEncrypting: next.isEncrypting,
             threadParentId: prev.threadParentId,
             reactionParentId: prev.reactionParentId,
-            isMentioned: next.isMentioned,
-            isRedacted: next.isRedacted,
             sender: prev.sender,
         }
     } else if (next.content?.kind === ZTEvent.RedactedEvent) {
