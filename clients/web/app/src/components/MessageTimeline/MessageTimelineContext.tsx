@@ -4,6 +4,7 @@ import {
     Channel,
     RoomIdentifier,
     TimelineEvent,
+    useAllKnownUsers,
     useMyProfile,
     useSpaceMembers,
     useTimelineReactions,
@@ -62,7 +63,14 @@ export const MessageTimelineWrapper = (props: {
     const handleReaction = useHandleReaction(channelId)
     const isChannelEncrypted = true
 
-    const { membersMap, members } = useSpaceMembers()
+    let { membersMap, members } = useSpaceMembers()
+    const { users: globalMembers, usersMap: globalMembersMap } = useAllKnownUsers()
+
+    if (!spaceId) {
+        // lookup on for members globally if spaceId isn't specificed (DMs)
+        members = globalMembers
+        membersMap = globalMembersMap
+    }
 
     const navigate = useNavigate()
     const { createLink } = useCreateLink()

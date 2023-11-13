@@ -25,5 +25,11 @@ export function useAllKnownUsers() {
         return [...users.values()]
     }, [spaces, rooms])
 
-    return { users }
+    // in order to mimick useSpaceMembers
+    const usersMap = users.reduce((acc, member) => {
+        acc[member.userId] = member
+        return acc
+    }, {} as { [userId: string]: RoomMember })
+
+    return { users, usersMap }
 }
