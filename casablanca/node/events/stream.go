@@ -33,7 +33,7 @@ type SyncStream interface {
 
 func SyncStreamsResponseFromStreamAndCookie(result *StreamAndCookie) *SyncStreamsResponse {
 	return &SyncStreamsResponse{
-		Streams: []*StreamAndCookie{result},
+		Stream: result,
 	}
 }
 

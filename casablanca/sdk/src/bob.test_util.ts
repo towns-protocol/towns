@@ -165,26 +165,26 @@ export const bobTalksToHimself = async (
 
         const syncResult = syncResultI.value as SyncStreamsResponse
         expect(syncResult).toBeDefined()
-        expect(syncResult.streams).toHaveLength(1)
-        expect(syncResult.streams[0].nextSyncCookie?.streamId).toEqual(channelId)
+        expect(syncResult.stream).toBeDefined()
+        expect(syncResult.stream?.nextSyncCookie?.streamId).toEqual(channelId)
 
         // If we flushed, the sync cookie instance is different,
         // and first two events in the channel are returned immediately.
         // If presync event is posted as well, it is returned as well.
         if (flush) {
-            expect(syncResult.streams[0].startSyncCookie?.minipoolGen).not.toEqual(
+            expect(syncResult.stream?.startSyncCookie?.minipoolGen).not.toEqual(
                 syncCookie.minipoolGen,
             )
 
-            expect(syncResult.streams[0].events).toEqual(
+            expect(syncResult.stream?.events).toEqual(
                 presync ? [...channelEvents, presyncEvent] : channelEvents,
             )
         } else {
-            expect(syncResult.streams[0].startSyncCookie).toEqual(syncCookie)
-            expect(syncResult.streams[0].events).toEqual([presyncEvent])
+            expect(syncResult.stream?.startSyncCookie).toEqual(syncCookie)
+            expect(syncResult.stream?.events).toEqual([presyncEvent])
         }
 
-        syncCookie = syncResult.streams[0].nextSyncCookie!
+        syncCookie = syncResult.stream!.nextSyncCookie!
         syncResultPromise = bobSyncStream.next()
     }
 
@@ -210,10 +210,10 @@ export const bobTalksToHimself = async (
 
     const syncResult = syncResultI.value as SyncStreamsResponse
     expect(syncResult).toBeDefined()
-    expect(syncResult.streams).toHaveLength(1)
-    expect(syncResult.streams[0].nextSyncCookie?.streamId).toEqual(channelId)
-    expect(syncResult.streams[0].startSyncCookie).toEqual(syncCookie)
-    expect(syncResult.streams[0].events).toEqual([helloEvent])
+    expect(syncResult.stream).toBeDefined()
+    expect(syncResult.stream?.nextSyncCookie?.streamId).toEqual(channelId)
+    expect(syncResult.stream?.startSyncCookie).toEqual(syncCookie)
+    expect(syncResult.stream?.events).toEqual([helloEvent])
 
     log('stopping sync')
     abortController.abort()

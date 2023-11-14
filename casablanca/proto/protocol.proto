@@ -545,7 +545,6 @@ message SyncCookie  {
 }
 
 message StreamAndCookie {
-    // events in the current minipool
     repeated Envelope events = 1;
     SyncCookie next_sync_cookie = 2;
     SyncCookie start_sync_cookie = 3;
@@ -607,7 +606,7 @@ message SyncStreamsRequest {
 }
 
 message SyncStreamsResponse {
-    repeated StreamAndCookie streams = 1;
+    StreamAndCookie stream = 1;
     string sync_id = 2;
 }
 

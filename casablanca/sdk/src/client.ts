@@ -809,7 +809,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                         this.logSync('called syncStreams', { syncPos, sync })
                         for await (const syncedStream of sync) {
                             this.logSync('got syncStreams', syncedStream)
-                            syncedStream.streams.forEach((streamAndCookie) => {
+                            const streamAndCookie = syncedStream.stream
+                            if (streamAndCookie !== undefined) {
                                 const streamId = streamAndCookie.nextSyncCookie?.streamId || ''
                                 this.logSync(
                                     'sync RESULTS for stream',
@@ -827,7 +828,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                                     throwWithCode("Sync got stream that wasn't requested")
                                 }
                                 stream.appendEvents(streamAndCookie)
-                            })
+                            } else {
+                                this.logSync('sync RESULTS no stream', streamAndCookie)
+                            }
                         }
                         this.logSync('finished syncStreams', syncPos)
                         // On sucessful sync, reset retryCount

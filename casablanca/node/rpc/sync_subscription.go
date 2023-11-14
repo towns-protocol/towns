@@ -123,7 +123,7 @@ func (s *syncSubscriptionImpl) OnUpdate(r *protocol.SyncStreamsResponse) {
 	default:
 		// end the update stream if the channel is full
 		err :=
-			base.RiverError(protocol.Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.Streams[0].NextSyncCookie.StreamId).
+			base.RiverError(protocol.Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.Stream.NextSyncCookie.StreamId).
 				Func("OnUpdate").
 				LogWarn(dlog.CtxLog(s.ctx))
 		s.setErrorAndCancel(err)

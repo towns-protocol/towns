@@ -668,13 +668,12 @@ const waitForEvent = async (
     matcher: (e: ParsedEvent) => boolean,
 ): Promise<SyncCookie> => {
     for await (const res of timeoutIterable(syncStream, 2000)) {
-        for (const stream of res.streams) {
-            if (stream.nextSyncCookie?.streamId === streamId) {
-                const events = unpackEnvelopes(stream.events)
-                for (const e of events) {
-                    if (matcher(e)) {
-                        return stream.nextSyncCookie
-                    }
+        const stream = res.stream!
+        if (stream.nextSyncCookie?.streamId === streamId) {
+            const events = unpackEnvelopes(stream.events)
+            for (const e of events) {
+                if (matcher(e)) {
+                    return stream.nextSyncCookie
                 }
             }
         }

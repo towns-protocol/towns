@@ -431,16 +431,16 @@ func TestMethods(t *testing.T) {
 		msg := syncRes.Msg()
 		syncCancel()
 
-		if len(msg.Streams) != 1 {
-			t.Errorf("expected 1 stream, got %d", len(msg.Streams))
+		if msg.Stream == nil {
+			t.Errorf("expected a stream")
 		}
 		// join, miniblock, message, miniblock
-		if len(msg.Streams[0].Events) != 4 {
-			t.Errorf("expected 4 events, got %d", len(msg.Streams[0].Events))
+		if len(msg.Stream.Events) != 4 {
+			t.Errorf("expected 4 events, got %d", len(msg.Stream.Events))
 		}
 
 		var payload protocol.StreamEvent
-		err = proto.Unmarshal(msg.Streams[0].Events[len(msg.Streams[0].Events)-2].Event, &payload)
+		err = proto.Unmarshal(msg.Stream.Events[len(msg.Stream.Events)-2].Event, &payload)
 		if err != nil {
 			t.Errorf("error unmarshaling event: %v", err)
 		}
@@ -637,7 +637,7 @@ func TestSyncStreams(t *testing.T) {
 	Asserts
 	*/
 	assert.NotEmpty(t, syncId, "expected non-empty sync id")
-	assert.Equal(t, 1, len(msg.Streams), "expected 1 stream")
+	assert.NotNil(t, 1, msg.Stream, "expected 1 stream")
 	assert.Equal(t, syncId, msg.SyncId, "expected sync id to match")
 }
 
@@ -761,7 +761,7 @@ func TestAddStreamsToSync(t *testing.T) {
 	Asserts
 	*/
 	assert.NotEmpty(t, syncId, "expected non-empty sync id")
-	assert.Equal(t, 1, len(msg.Streams), "expected 1 stream")
+	assert.NotNil(t, msg.Stream, "expected 1 stream")
 	assert.Equal(t, syncId, msg.SyncId, "expected sync id to match")
 }
 
@@ -882,7 +882,7 @@ func DisableTestManyUsers(t *testing.T) {
 	streams := make([]*protocol.StreamAndCookie, 0)
 	for syncRes.Receive() {
 		msg := syncRes.Msg()
-		streams = append(streams, msg.Streams...)
+		streams = append(streams, msg.Stream)
 		if len(streams) == totalChannels {
 			syncCancel()
 		}
@@ -949,7 +949,6 @@ func DisableTestManyUsers(t *testing.T) {
 
 	updateSyncPos := func() {
 		msgTable := make([]int, selectedUsers*selectedChannels)
-		stats := make(map[int]int)
 
 		syncCtx, syncCancel := context.WithCancel(ctx)
 		defer syncCancel()
@@ -963,27 +962,26 @@ func DisableTestManyUsers(t *testing.T) {
 			err := syncRes.Err()
 			msg := syncRes.Msg()
 			assert.NoError(t, err)
-			stats[len(msg.Streams)]++
-			for streamIdx := range msg.Streams {
-				for syncPosStrem := range channels {
-					if channels[syncPosStrem].StreamId == msg.Streams[streamIdx].NextSyncCookie.StreamId {
-						channels[syncPosStrem] = msg.Streams[streamIdx].NextSyncCookie
-					}
-				}
-				received += len(msg.Streams[streamIdx].Events)
-				for _, event := range msg.Streams[streamIdx].Events {
-					e, err := events.ParseEvent(event)
-					assert.NoError(t, err)
-					msg := e.GetChannelMessage()
-					assert.NotNil(t, msg)
-					tokens := strings.Split(msg.Message.Text, " ")
-					assert.Equal(t, 4, len(tokens))
-					id, err := strconv.Atoi(tokens[0])
-					assert.NoError(t, err)
-					msgTable[id]++
-					assert.Equal(t, 1, msgTable[id])
+
+			for syncPosStrem := range channels {
+				if channels[syncPosStrem].StreamId == msg.Stream.NextSyncCookie.StreamId {
+					channels[syncPosStrem] = msg.Stream.NextSyncCookie
 				}
 			}
+			received += len(msg.Stream.Events)
+			for _, event := range msg.Stream.Events {
+				e, err := events.ParseEvent(event)
+				assert.NoError(t, err)
+				msg := e.GetChannelMessage()
+				assert.NotNil(t, msg)
+				tokens := strings.Split(msg.Message.Text, " ")
+				assert.Equal(t, 4, len(tokens))
+				id, err := strconv.Atoi(tokens[0])
+				assert.NoError(t, err)
+				msgTable[id]++
+				assert.Equal(t, 1, msgTable[id])
+			}
+
 			if received >= selectedUsers*selectedChannels {
 				syncCancel()
 			}

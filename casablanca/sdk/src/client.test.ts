@@ -34,7 +34,7 @@ function makeMockSyncResponses(count: number) {
                 const responses = []
                 for (let i = 0; i < count; i++) {
                     responses.push(
-                        Promise.resolve(new SyncStreamsResponse({ streams: [{ events: [] }] })),
+                        Promise.resolve(new SyncStreamsResponse({ stream: { events: [] } })),
                     )
                 }
                 while (responses.length) {
