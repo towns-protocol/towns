@@ -4,6 +4,7 @@ cd contracts/
 set -a
 . .env.localhost
 set +a
+make deploy-anvil contract=DeployMultiInit
 make deploy-anvil contract=DeployWalletLink
 
 cd ../
