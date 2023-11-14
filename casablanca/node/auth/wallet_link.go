@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"casablanca/node/auth/contracts/base_goerli_towns_wallet_link"
 	"casablanca/node/auth/contracts/localhost_towns_wallet_link"
+
 	. "casablanca/node/base"
 	"casablanca/node/protocol"
 
@@ -40,6 +42,8 @@ func NewTownsWalletLink(ethClient *ethclient.Client, chainId int) (*TownsWalletL
 	switch chainId {
 	case 31337:
 		wallet_link_contract, err = localhost_towns_wallet_link.NewLocalhostTownsWalletLink(address, ethClient)
+	case 84531:
+		wallet_link_contract, err = base_goerli_towns_wallet_link.NewBaseGoerliTownsWalletLink(address, ethClient)
 	default:
 		return nil, RiverError(protocol.Err_CANNOT_CONNECT, "unsupported chain", "chainId", chainId)
 	}

@@ -47,6 +47,8 @@ func loadWalletLinkContractAddress(chainId int) (string, error) {
 	switch chainId {
 	case 31337:
 		return unmarshalFromJson(localhostWalletLinkAddressJson)
+	case 84531:
+		return unmarshalFromJson(baseGoerliTownFactoryAddressJson)
 	default:
 		errMsg := fmt.Sprintf("unsupported chainId: %d", chainId)
 		log.Error("loadWalletLinkContractAddress", errMsg)
