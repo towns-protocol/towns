@@ -13,15 +13,14 @@ import (
 //go:embed contracts/localhost_town_factory.json
 var localhostTownFactoryAddressJson []byte
 
-//go:embed contracts/goerli_town_factory.json
-var goerliTownFactoryAddressJson []byte
+//go:embed contracts/base_goerli_town_factory.json
+var baseTownFactoryAddressJson []byte
 
 //go:embed contracts/base_goerli_town_factory.json
 var baseGoerliTownFactoryAddressJson []byte
 
-//go:embed contracts/sepolia_town_factory.json
-var sepoliaTownFactoryAddressJson []byte
-
+//go:embed contracts/localhost_wallet_link.json
+var localhostWalletLinkAddressJson []byte
 
 var EMPTY_ADDRESS = common.Address{}
 
@@ -33,15 +32,24 @@ func loadContractAddress(chainId int) (string, error) {
 	switch chainId {
 	case 31337:
 		return unmarshalFromJson(localhostTownFactoryAddressJson)
-	case 5:
-		return unmarshalFromJson(goerliTownFactoryAddressJson)
-	case 11155111:
-		return unmarshalFromJson(sepoliaTownFactoryAddressJson)
 	case 84531:
 		return unmarshalFromJson(baseGoerliTownFactoryAddressJson)
+	case 8453:
+		return unmarshalFromJson(baseTownFactoryAddressJson)
 	default:
 		errMsg := fmt.Sprintf("unsupported chainId: %d", chainId)
 		log.Error("loadContractAddress", errMsg)
+		return "", errors.New(errMsg)
+	}
+}
+
+func loadWalletLinkContractAddress(chainId int) (string, error) {
+	switch chainId {
+	case 31337:
+		return unmarshalFromJson(localhostWalletLinkAddressJson)
+	default:
+		errMsg := fmt.Sprintf("unsupported chainId: %d", chainId)
+		log.Error("loadWalletLinkContractAddress", errMsg)
 		return "", errors.New(errMsg)
 	}
 }

@@ -1,16 +1,16 @@
 package auth
 
 import (
+	. "casablanca/node/base"
 	"casablanca/node/common"
 	"casablanca/node/config"
 	"casablanca/node/dlog"
+	"casablanca/node/protocol"
 	"casablanca/node/utils"
 	"context"
 	_ "embed"
 	"errors"
 	"fmt"
-
-	"golang.org/x/exp/slog"
 
 	eth "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -32,26 +32,29 @@ var ErrChannelDisabled = errors.New("channel disabled")
 // TownsPassThrough is an authorization implementation that allows all requests.
 type TownsPassThrough struct{}
 type ChainAuth struct {
-	chainId       int
-	ethClient     *ethclient.Client
-	spaceContract SpaceContract
+	chainId            int
+	ethClient          *ethclient.Client
+	spaceContract      SpaceContract
+	walletLinkContract WalletLinkContract
 }
 
 func NewTownsPassThrough() TownsContract {
 	return &TownsPassThrough{}
 }
 
-func NewTownsContract(cfg *config.ChainConfig) (TownsContract, error) {
+func NewTownsContract(ctx context.Context, cfg *config.ChainConfig) (TownsContract, error) {
+	log := dlog.CtxLog(ctx)
+
 	chainId := cfg.ChainId
 	// initialise the eth client.
 	if cfg.NetworkUrl == "" {
-		slog.Error("No blockchain network url specified in config")
-		return nil, fmt.Errorf("no blockchain network url specified in config")
+		log.Error("No blockchain network url specified in config")
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "no blockchain network url specified in config")
 	}
 	ethClient, err := utils.GetEthClient(cfg.NetworkUrl)
 	if err != nil {
-		slog.Error("Cannot connect to eth client", "url", cfg.NetworkUrl, "error", err)
-		return nil, err
+		log.Error("Cannot connect to eth client", "url", cfg.NetworkUrl, "error", err)
+		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
 	}
 
 	za := &ChainAuth{
@@ -62,38 +65,45 @@ func NewTownsContract(cfg *config.ChainConfig) (TownsContract, error) {
 	case 1337, 31337:
 		localhost, err := NewSpaceContractLocalhost(za.ethClient)
 		if err != nil {
-			slog.Error("error instantiating SpaceContractLocalhost", "error", err)
-			return nil, err
+			log.Error("error instantiating SpaceContractLocalhost", "error", err)
+			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
 		}
 		za.spaceContract = localhost
+
+		walletLinkLocalhost, err := NewTownsWalletLink(za.ethClient, za.chainId)
+		if err != nil {
+			log.Error("error instantiating WalletLinkLocalhost", "error", err)
+			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
+		}
+		za.walletLinkContract = walletLinkLocalhost
 
 	case 5:
 		goerli, err := NewSpaceContractGoerli(za.ethClient)
 		if err != nil {
-			slog.Error("error instantiating SpaceContractGoerli", "error", err)
-			return nil, err
+			log.Error("error instantiating SpaceContractGoerli", "error", err)
+			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
 		}
 		za.spaceContract = goerli
 
 	case 11155111:
 		sepolia, err := NewSpaceContractSepolia(za.ethClient)
 		if err != nil {
-			slog.Error("error instantiating SpaceContractSepolia", "error", err)
-			return nil, err
+			log.Error("error instantiating SpaceContractSepolia", "error", err)
+			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
 		}
 		za.spaceContract = sepolia
 	case 84531:
 		baseGoerli, err := NewSpaceContractBaseGoerli(za.ethClient)
 		if err != nil {
-			slog.Error("error instantiating SpaceContractBaseGoerli", "error", err)
-			return nil, err
+			log.Error("error instantiating SpaceContractBaseGoerli", "error", err)
+			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
 		}
 		za.spaceContract = baseGoerli
 	default:
-		slog.Error("Bad chain id", "id", za.chainId)
-		return nil, fmt.Errorf("unsupported chain id: %d", za.chainId)
+		log.Error("Bad chain id", "id", za.chainId)
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "Unsupported chain id", "chainId", za.chainId)
 	}
-	slog.Info("Successfully initialised", "network", cfg.NetworkUrl, "id", za.chainId)
+	log.Info("Successfully initialised", "network", cfg.NetworkUrl, "id", za.chainId)
 	// no errors.
 	return za, nil
 }
@@ -108,14 +118,55 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, stre
 	userIdentifier := CreateUserIdentifier(args.UserId)
 	log.Debug("IsAllowed", "args", args, "user", userIdentifier.AccountAddress.Hex(), "streamInfo", streamInfo)
 
+	// naive version without racing - just iterate over all wallets
+	// and check if any of them is entitled to the stream.
+	// TODO-HNT-3590 - implement race
+	wallets, err := za.allRelevantWallets(ctx, userIdentifier.AccountAddress)
+	if err != nil {
+		log.Error("error getting all wallets", "error", err)
+		return false, WrapRiverError(protocol.Err_CANNOT_GET_LINKED_WALLETS, err)
+	}
+	log.Debug("IsAllowed", "wallets", wallets)
+	for _, wallet := range wallets {
+		result, err := za.isWalletAllowed(ctx, wallet, args.Permission, streamInfo)
+		if err != nil {
+			log.Error("error checking user entitlement", "error", err)
+			return false, WrapRiverError(protocol.Err_CANNOT_CHECK_ENTITLEMENTS, err)
+		}
+		if result {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (za *ChainAuth) allRelevantWallets(ctx context.Context, rootKey eth.Address) ([]eth.Address, error) {
+	log := dlog.CtxLog(ctx)
+
+	// get all the wallets for the root key.
+	wallets, err := za.walletLinkContract.GetWalletsByRootKey(rootKey)
+	if err != nil {
+		log.Error("error getting all wallets", "rootKey", rootKey.Hex(), "error", err)
+		return nil, err
+	}
+
+	wallets = append(wallets, rootKey)
+
+	log.Debug("allRelevantWallets", "wallets", wallets)
+	return wallets, nil
+}
+
+func (za *ChainAuth) isWalletAllowed(ctx context.Context, wallet eth.Address, permission Permission, streamInfo *common.StreamInfo) (bool, error) {
+	log := dlog.CtxLog(ctx)
+
 	// Check if user is entitled to space / channel.
 	switch streamInfo.StreamType {
 	case common.Space:
-		isEntitled, err := za.isEntitledToSpace(streamInfo, userIdentifier.AccountAddress, args.Permission)
+		isEntitled, err := za.isEntitledToSpace(streamInfo, wallet, permission)
 		log.Debug("IsAllowed result", "isEntitledToSpace", isEntitled, "err", err)
 		return isEntitled, err
 	case common.Channel:
-		isEntitled, err := za.isEntitledToChannel(streamInfo, userIdentifier.AccountAddress, args.Permission)
+		isEntitled, err := za.isEntitledToChannel(streamInfo, wallet, permission)
 		log.Debug("IsAllowed result", "isEntitledToChannel", isEntitled, "err", err)
 		return isEntitled, err
 	case common.DMChannel:
