@@ -24,6 +24,7 @@ import { useDevice } from 'hooks/useDevice'
 import { VList } from 'ui/components/VList2/VList'
 import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
 import { SECOND_MS } from 'data/constants'
+import { useStore } from 'store/store'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
@@ -109,11 +110,17 @@ export const MessageTimeline = (props: Props) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                                                  initialize variables
 
+    const isWindowActive = useStore((state) => state.isWindowFocused)
+
     const fullyPersistedRef = useRef<FullyReadMarker>()
     // if a marker is shown once it will keep displaying until timeline gets
     // unmounted despite the marker flipping to unread
     fullyPersistedRef.current =
-        !fullyPersistedRef.current && !fullyReadMarker?.isUnread ? undefined : fullyReadMarker
+        !fullyPersistedRef.current && !fullyReadMarker?.isUnread
+            ? undefined
+            : isWindowActive && fullyPersistedRef.current
+            ? fullyPersistedRef.current
+            : fullyReadMarker
 
     const fullyReadPersisted = fullyPersistedRef.current
 
