@@ -99,6 +99,14 @@ func NewTownsContract(ctx context.Context, cfg *config.ChainConfig) (TownsContra
 			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
 		}
 		za.spaceContract = baseGoerli
+
+		walletLinkBaseGoerli, err := NewTownsWalletLink(za.ethClient, za.chainId)
+		if err != nil {
+			log.Error("error instantiating WalletLinkBaseGoerli", "error", err)
+			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
+		}
+		za.walletLinkContract = walletLinkBaseGoerli
+
 	default:
 		log.Error("Bad chain id", "id", za.chainId)
 		return nil, RiverError(protocol.Err_BAD_CONFIG, "Unsupported chain id", "chainId", za.chainId)
@@ -142,6 +150,11 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, stre
 
 func (za *ChainAuth) allRelevantWallets(ctx context.Context, rootKey eth.Address) ([]eth.Address, error) {
 	log := dlog.CtxLog(ctx)
+
+	if za.walletLinkContract == nil {
+		log.Warn("Wallet link contract is not setup properly, returning root key only")
+		return []eth.Address{rootKey}, nil
+	}
 
 	// get all the wallets for the root key.
 	wallets, err := za.walletLinkContract.GetWalletsByRootKey(rootKey)
