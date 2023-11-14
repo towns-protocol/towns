@@ -15,6 +15,7 @@ import {
     make_GdmChannelPayload_KeySolicitation,
     make_DmChannelPayload_Fulfillment,
     make_GdmChannelPayload_Fulfillment,
+    isTestEnv,
 } from '@river/sdk'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Permission } from '@river/web3'
@@ -31,7 +32,7 @@ import {
 import throttle from 'lodash/throttle'
 // eslint-disable-next-line lodash/import-scope
 import type { DebouncedFunc } from 'lodash'
-import { isTestEnv, sleep } from '../../utils/zion-utils'
+import { sleep } from '../../utils/zion-utils'
 
 /// control the number of outgoing room key requests for events that failed to decrypt
 const MAX_CONCURRENT_ROOM_KEY_REQUESTS = 2

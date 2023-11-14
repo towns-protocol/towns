@@ -1,3 +1,4 @@
+import { isTestEnv } from '@river/sdk'
 // eslint-disable-next-line no-restricted-imports
 import {
     QueryClient,
@@ -9,7 +10,6 @@ import {
     useQueries,
     QueryClientProvider,
 } from '@tanstack/react-query'
-import { isTestEnv } from '../utils/zion-utils'
 
 // queryClient is imported in non React contexts (where we would normally useQueryClient)
 // test query client should be the same instance as the queryClient used in lib code, hence we export it here

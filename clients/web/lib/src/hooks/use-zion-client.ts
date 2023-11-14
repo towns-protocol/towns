@@ -29,10 +29,10 @@ import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers
 import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
-import { isTestEnv } from '../utils/zion-utils'
 import { ethers } from 'ethers'
 import { create } from 'zustand'
 import { ITownArchitectBase, ISpaceDapp, TokenEntitlementDataTypes, Permission } from '@river/web3'
+import { isTestEnv } from '@river/sdk'
 
 export type ZionErrorStoreState = {
     errors: string[]

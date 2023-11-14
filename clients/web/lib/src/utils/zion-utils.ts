@@ -44,7 +44,3 @@ export function getChainName(chainId: number): string {
     }
     throw new Error(`ChainId ${chainId} not found`)
 }
-
-export function isTestEnv(): boolean {
-    return Boolean(process.env.JEST_WORKER_ID)
-}
