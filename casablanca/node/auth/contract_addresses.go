@@ -22,6 +22,9 @@ var baseGoerliTownFactoryAddressJson []byte
 //go:embed contracts/localhost_wallet_link.json
 var localhostWalletLinkAddressJson []byte
 
+//go:embed contracts/base_goerli_wallet_link.json
+var baseGoerliWalletLinkAddressJson []byte
+
 var EMPTY_ADDRESS = common.Address{}
 
 type ContractAddress struct {
@@ -48,7 +51,7 @@ func loadWalletLinkContractAddress(chainId int) (string, error) {
 	case 31337:
 		return unmarshalFromJson(localhostWalletLinkAddressJson)
 	case 84531:
-		return unmarshalFromJson(baseGoerliTownFactoryAddressJson)
+		return unmarshalFromJson(baseGoerliWalletLinkAddressJson)
 	default:
 		errMsg := fmt.Sprintf("unsupported chainId: %d", chainId)
 		log.Error("loadWalletLinkContractAddress", errMsg)
