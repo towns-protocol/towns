@@ -102,6 +102,13 @@ async function* logEachResponse(name: string, id: string, stream: AsyncIterable<
     try {
         for await (const m of stream) {
             try {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                const streamId = m.stream?.nextSyncCookie?.streamId
+                if (streamId !== undefined) {
+                    logCalls(name, 'RECV', streamId, id)
+                } else {
+                    logCalls(name, 'RECV', id)
+                }
                 logProtos(name, 'STREAMING RESPONSE', id, m)
                 yield m
             } catch (err) {
