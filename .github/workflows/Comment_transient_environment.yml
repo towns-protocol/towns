@@ -26,8 +26,6 @@ jobs:
                       const webAppUrl = `https://${gitPrNumber}.app-preview.towns.com`;
                       const sampleAppUrl = `https://${gitPrNumber}.sample-app-preview.towns.com`;
                       const message = `
-                      This PR is configured to trigger a transient environment. You can find the URLs for the newly provisioned resources below. The URLs will be live as soon as the apps are built and deployed. They will be deprovisioned as soon as the PR is merged or closed. Our current bottleneck is the build time for the web app, so please give it 10-15 minutes before checking the links.
-
                       Web App: [${webAppUrl}](${webAppUrl})
                       Sample App: [${sampleAppUrl}](${sampleAppUrl})
                       `;
