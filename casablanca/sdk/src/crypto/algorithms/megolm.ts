@@ -85,7 +85,7 @@ class OutboundSessionInfo {
      *    other group members. Note jterzis: default to true as we don't have a concept
      *    of "shared history visibility settings" in River.
      */
-    public constructor(public readonly sessionId: string, public readonly channelId: string) {
+    public constructor(public readonly sessionId: string, public readonly streamId: string) {
         this.creationTime = new Date().getTime()
     }
 
@@ -113,39 +113,6 @@ class OutboundSessionInfo {
             new Map([[deviceId, { deviceKey, messageIndex: chain_index }]]),
         )
     }
-
-    /**
-     * Determine if this session has been shared with devices which it shouldn't
-     * have been.
-     *
-     * @param devicesInRoom - `userId -> {deviceId -> object}`
-     *   devices we should shared the session with.
-     *
-     * @returns true if we have shared the session with devices which aren't
-     * in devicesInRoom.
-     */
-    public sharedWithTooManyDevices(devicesInRoom: DeviceInfoMap): boolean {
-        for (const [userId, devices] of this.sharedWithDevices) {
-            if (!devicesInRoom.has(userId)) {
-                dlog('Starting new megolm session because we shared with ' + userId)
-                return true
-            }
-
-            for (const [deviceId] of devices) {
-                if (!devicesInRoom.get(userId)?.get(deviceId)) {
-                    dlog(
-                        'Starting new megolm session because we shared with ' +
-                            userId +
-                            ':' +
-                            deviceId,
-                    )
-                    return true
-                }
-            }
-        }
-
-        return false
-    }
 }
 
 /**
@@ -161,13 +128,9 @@ export class MegolmEncryption extends EncryptionAlgorithm {
     // room).
     private setupPromise = Promise.resolve<OutboundSessionInfo | null>(null)
 
-    // Map of outbound sessions by session ID. Used if we need a particular
-    // session (the session we're currently using to send is always obtained
-    // using setupPromise).
-    private outboundSessions: Record<string, OutboundSessionInfo> = {}
-    // Map of outbound sessions by channel ID. Used to find existing sessions
+    // Map of outbound sessions by stream ID. Used to find existing sessions
     // to use by channelId.
-    private outboundSessionsByChannelId: Map<string, OutboundSessionInfo> = new Map()
+    private outboundSessionsByStreamId: Map<string, OutboundSessionInfo> = new Map()
 
     private encryptionPreparation?: {
         promise: Promise<void>
@@ -213,7 +176,6 @@ export class MegolmEncryption extends EncryptionAlgorithm {
      */
     private async ensureOutboundSession(
         streamId: string,
-        devicesInRoom: DeviceInfoMap,
         singleOlmCreationPhase = false,
     ): Promise<OutboundSessionInfo | null> {
         // takes the previous OutboundSessionInfo, and considers whether to create
@@ -223,9 +185,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         const setup = async (
             oldSession: OutboundSessionInfo | null,
         ): Promise<OutboundSessionInfo> => {
-            const session = await this.prepareSession(streamId, devicesInRoom, oldSession)
-
-            await this.shareSession(streamId, devicesInRoom, singleOlmCreationPhase, session)
+            const session = await this.prepareSession(streamId, oldSession, singleOlmCreationPhase)
 
             return session
         }
@@ -249,9 +209,9 @@ export class MegolmEncryption extends EncryptionAlgorithm {
     }
 
     private async prepareSession(
-        channelId: string,
-        devicesInRoom: DeviceInfoMap,
+        streamId: string,
         session: OutboundSessionInfo | null,
+        singleOlmCreationPhase: boolean,
     ): Promise<OutboundSessionInfo> {
         // history visibility changes do not prompt a new session
 
@@ -259,26 +219,21 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         // https://linear.app/hnt-labs/issue/HNT-1830/session-rotation-megolm
 
         let existingSession = session
-        // if cached session is associated with a different channelId, don't use it
-        if (existingSession && existingSession.channelId !== channelId) {
-            existingSession = null
+        // if cached session is associated with a different streamId, don't use it
+        if (existingSession && existingSession.streamId == streamId) {
+            return existingSession
         }
         // try to use an existing session if we have one for the channel.
-        if (this.outboundSessionsByChannelId.get(channelId)) {
-            existingSession = this.outboundSessionsByChannelId.get(channelId)!
-        }
-
-        if (existingSession?.sharedWithTooManyDevices(devicesInRoom)) {
-            // determine if we have shared with anyone we shouldn't have
-            existingSession = null
-        }
-
-        // if we don't have a cached session at this point, create a new one
-        if (!existingSession) {
-            const newSession = await this.prepareNewSession(channelId)
+        if (this.outboundSessionsByStreamId.get(streamId)) {
+            existingSession = this.outboundSessionsByStreamId.get(streamId)!
+        } else {
+            // if we don't have a cached session at this point, create a new one
+            const newSession = await this.prepareNewSession(streamId)
             this.logCall(`Started new megolm session ${newSession.sessionId}`)
-            this.outboundSessions[newSession.sessionId] = newSession
-            this.outboundSessionsByChannelId.set(channelId, newSession)
+
+            this.outboundSessionsByStreamId.set(streamId, newSession)
+
+            await this.shareSession(streamId, singleOlmCreationPhase, newSession)
             return newSession
         }
 
@@ -287,16 +242,22 @@ export class MegolmEncryption extends EncryptionAlgorithm {
 
     private async shareSession(
         streamId: string,
-        devicesInRoom: DeviceInfoMap,
         singleOlmCreationPhase: boolean,
         session: OutboundSessionInfo,
     ): Promise<void> {
         // now check if we need to share with any devices
         const shareMap: Record<string, DeviceInfo[]> = {}
 
+        const devicesInRoom = await this.getDevicesInRoom(streamId, (): boolean => false)
+        if (devicesInRoom === null) {
+            this.logCall(`No devices in room to share session for stream ${streamId}`)
+            return
+        }
+
         for (const [userId, userDevices] of devicesInRoom) {
             for (const [deviceId, deviceInfo] of userDevices) {
                 const key = deviceInfo.getIdentityKey()
+
                 if (key == this.olmDevice.deviceCurve25519Key) {
                     // don't bother sending to ourself
                     continue
@@ -701,78 +662,14 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             )
         }
 
-        const unnotifiedFailedDevices =
-            await this.baseApis.cryptoStore.filterOutNotifiedErrorDevices(failedDevices)
         this.logCall(
-            `Need to notify ${unnotifiedFailedDevices.length} failed devices which haven't been notified before`,
+            `Need to notify ${failedDevices.length} failed devices which haven't been notified before`,
         )
 
         // send the notifications
         // note jterzis: do we need a differnt notification for failed olm sessions versus device blocks
         // which can occur in theory without a failure in session establishment ?
         //await this.notifyBlockedDevices(session, blockedMap)
-
-        this.logCall(
-            `Notified ${unnotifiedFailedDevices.length} devices we failed to create Olm sessions`,
-        )
-    }
-
-    /**
-     * Perform any background tasks that can be done before a message is ready to
-     * send, in order to speed up sending of the message.
-     *
-     * @param room - the room the event is in
-     * @returns A function that, when called, will stop the preparation
-     */
-    public prepareToEncrypt(channelId: string): () => void {
-        if (this.encryptionPreparation != null) {
-            // We're already preparing something, so don't do anything else.
-            const elapsedTime = Date.now() - this.encryptionPreparation.startTime
-            this.logCall(
-                `Already started preparing to encrypt for this room ${elapsedTime}ms ago, skipping`,
-            )
-            return this.encryptionPreparation.cancel
-        }
-
-        this.logCall('Preparing to encrypt events')
-
-        let cancelled = false
-        const isCancelled = (): boolean => cancelled
-
-        this.encryptionPreparation = {
-            startTime: Date.now(),
-            promise: (async (): Promise<void> => {
-                try {
-                    // Attempt to enumerate the devices in room, and gracefully
-                    // handle cancellation if it occurs.
-                    const getDevicesResult = await this.getDevicesInRoom(channelId, isCancelled)
-                    if (getDevicesResult === null) return
-                    const [devicesInRoom] = getDevicesResult
-
-                    // Todo implement: Drop unknown devices.  When the message gets sent, we'll
-                    // throw an error, but we'll still be prepared to send to the known
-                    // devices.
-
-                    this.logCall('Ensuring outbound megolm session')
-                    await this.ensureOutboundSession(channelId, devicesInRoom, true)
-
-                    this.logCall('Ready to encrypt events')
-                } catch (e) {
-                    this.logCall('Failed to prepare to encrypt events', e)
-                } finally {
-                    delete this.encryptionPreparation
-                }
-            })(),
-
-            cancel: (): void => {
-                // The caller has indicated that the process should be cancelled,
-                // so tell the promise that we'd like to halt, and reset the preparation state.
-                cancelled = true
-                delete this.encryptionPreparation
-            },
-        }
-
-        return this.encryptionPreparation.cancel
     }
 
     /**
@@ -796,20 +693,9 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             }
         }
 
-        /**
-         * When using in-room messages and the room has encryption enabled,
-         * clients should ensure that encryption does not hinder the verification.
-         */
-        const devicesInRoomList = await this.getDevicesInRoom(streamId, (): boolean => false)
-        if (devicesInRoomList === null) {
-            throw new Error(`Failed to get devices in room ${streamId}`)
-        }
-
         if (!content.payload.case || !content.payload.value) {
             throw new Error(`Megolm: No content found`)
         }
-
-        const [devicesInRoom] = devicesInRoomList
 
         // todo: check if any of these devices are not yet known to the user.
         // if so, warn the user so they can verify or ignore.
@@ -842,7 +728,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             }
         }
 
-        const session = await this.ensureOutboundSession(streamId, devicesInRoom, true)
+        const session = await this.ensureOutboundSession(streamId, true)
         const payloadJson = {
             channel_id: streamId,
             type: type,
@@ -902,7 +788,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
     private async getDevicesInRoom(
         channel_id: string,
         isCancelled?: () => boolean,
-    ): Promise<null | [DeviceInfoMap]> {
+    ): Promise<null | DeviceInfoMap> {
         let stream: StreamStateView | undefined
         stream = this.baseApis.stream(channel_id)?.view
         if (!stream) {
@@ -936,7 +822,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         //const blocked = new Map<string, Map<string, IBlockedDevice>>()
         // not implemented yet: remove any blocked devices
 
-        return [devices]
+        return devices
     }
 }
 

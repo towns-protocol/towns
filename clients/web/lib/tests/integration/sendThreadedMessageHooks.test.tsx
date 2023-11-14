@@ -3,6 +3,7 @@
  * @group casablanca
  */
 import React, { useCallback, useMemo } from 'react'
+import { setTimeout } from 'timers/promises'
 import { FullyReadMarker } from '@river/proto'
 import { Permission } from '@river/web3'
 import {
@@ -134,7 +135,6 @@ describe('sendThreadedMessageHooks', () => {
 
                     await sendMessage(channel_1, 'hello jane in channel_1')
                     await sendMessage(channel_2, 'hello jane in channel_2')
-
                     setSendInitialMessageInProgress((prev) => ({
                         ...prev,
                         semaphore: prev.semaphore - 1,
@@ -349,6 +349,8 @@ describe('sendThreadedMessageHooks', () => {
 
         // - bob sends a message in each channel
         fireEvent.click(sendInitialMessagesButton)
+        // add a delay to make sure the messages update in timeline
+        await setTimeout(10)
         // wait for bob's messages to appear in the timeline in the case that it took multiple retries
         await waitFor(
             () => expect(channelMessages).toHaveTextContent('hello jane in channel_1'),

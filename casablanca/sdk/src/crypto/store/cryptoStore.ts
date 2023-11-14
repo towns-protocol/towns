@@ -76,20 +76,6 @@ export class CryptoStore extends Dexie {
         await this.olmSessions.put(sessionInfo)
     }
 
-    async filterOutNotifiedErrorDevices(devices: IOlmDevice[]): Promise<IOlmDevice[]> {
-        const ret: IOlmDevice[] = []
-
-        for (const device of devices) {
-            const { userId, deviceInfo } = device
-            const get = await this.notifiedErrorDevices.get([userId, deviceInfo.deviceId])
-            if (!get) {
-                await this.notifiedErrorDevices.put({ userId, deviceInfo })
-                ret.push(device)
-            }
-        }
-        return ret
-    }
-
     async storeEndToEndOutboundGroupSession(
         sessionId: string,
         sessionData: string,

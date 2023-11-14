@@ -855,23 +855,32 @@ export class RiverDecryptionExtension {
                         console.warn('CDE::onKeyResponse - no streamId found', { streamId })
                         return
                     }
-                    const streamRecord = this.roomRecords[streamId]
+                    let streamRecord = this.roomRecords[streamId]
                     if (!streamRecord) {
+                        streamRecord = {
+                            decryptionFailures: [],
+                            channelId: streamId,
+                            spaceId: streamId,
+                            requests: {},
+                        }
                         console.warn('CDE::onKeyResponse - room record not found', { streamId })
-                        return
                     }
                     if (!streamRecord.requests?.[streamId]) {
                         console.warn('CDE::onKeyResponse - no request found for streamId', {
                             senderId,
                             streamId,
                         })
-                        return
+                        streamRecord.requests = {
+                            ...(streamRecord.requests ?? {}),
+                            [streamId]: { timestamp: Date.now(), response: [] },
+                        }
                     }
-                    streamRecord.requests[streamId].response?.push({
+                    streamRecord.requests[streamId].response.push({
                         kind: clear_content.payload.value.kind,
                         sessions: responseSessions,
                         streamId,
                     })
+                    this.roomRecords[streamId] = streamRecord
 
                     // great, the sender had keys for us
                     if (responseSessions) {
@@ -960,15 +969,9 @@ export class RiverDecryptionExtension {
     private clearKeyRequest(streamId: string, error?: Error): void {
         console.log('CDE:clearKeyRequest', { streamId, error })
         const streamRecord = this.roomRecords[streamId]
-        if (!streamRecord) {
-            console.error('CDE:clearKeyRequest - channel record not found', { streamId })
+        if (!streamRecord || !streamRecord.requests?.[streamId]) {
             return
         }
-        if (!streamRecord.requests?.[streamId]) {
-            console.error('CDE:clearKeyRequest - no record for stream')
-            return
-        }
-
         if (this.throttledStartLookingForKeys) {
             this.throttledStartLookingForKeys()
         }
