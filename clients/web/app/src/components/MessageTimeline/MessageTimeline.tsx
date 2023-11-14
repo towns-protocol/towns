@@ -15,14 +15,13 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { FullyReadMarker } from '@river/proto'
-import { uniqBy } from 'lodash'
+import { isEqual, uniqBy } from 'lodash'
 import { Box, Divider, Paragraph } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'
 import { notUndefined } from 'ui/utils/utils'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
 import { useDevice } from 'hooks/useDevice'
 import { VList } from 'ui/components/VList2/VList'
-import { useThrottledValue } from 'hooks/useThrottledValue'
 import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
 import { SECOND_MS } from 'data/constants'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
@@ -71,7 +70,7 @@ export const MessageTimeline = (props: Props) => {
 
     const stableEventsRef = useRef<TimelineEvent[]>([])
 
-    const _events = useMemo(() => {
+    const events = useMemo(() => {
         // remove unneeded events
         const filtered = (timelineContext?.events ?? [])
             // strip out unsolicited events (e.g. key solicitations)
@@ -88,9 +87,8 @@ export const MessageTimeline = (props: Props) => {
         // remove duplicates - NOTE: this shouldn't happen - but it does
         const result = uniqBy(filtered ?? emptyTimeline, (t) => t.eventId)
 
-        if (!result.some((t, index) => t.eventId !== stableEventsRef.current[index]?.eventId)) {
+        if (isEqual(result, stableEventsRef.current)) {
             // no need to update to mutate and update the UI if the events are the same
-            stableEventsRef.current
             return result
         }
 
@@ -100,8 +98,6 @@ export const MessageTimeline = (props: Props) => {
     }, [timelineContext?.events])
 
     const isStartupRef = useRef(true)
-
-    const events = useThrottledValue(_events, isStartupRef.current ? 0 : 500)
 
     if (events.length > 0) {
         isStartupRef.current = false
@@ -244,6 +240,7 @@ export const MessageTimeline = (props: Props) => {
 
                     return filtered
                         .map((event, index, events) => {
+                            const stableKey = event.localEventId ?? event.eventId
                             let item:
                                 | null
                                 | MessageRenderEvent
@@ -260,7 +257,7 @@ export const MessageTimeline = (props: Props) => {
                             if (isRoomMessage(event)) {
                                 item = {
                                     type: RenderEventType.Message,
-                                    key: event.eventId,
+                                    key: stableKey,
                                     event,
                                     displayEncrypted: displayEncrypted || messageDisplayEncrypted,
                                     displayContext: getMessageDisplayContext(index, events.length),
@@ -269,7 +266,7 @@ export const MessageTimeline = (props: Props) => {
                                 if (repliesMap?.[event.eventId]) {
                                     item = {
                                         type: RenderEventType.RedactedMessage,
-                                        key: event.eventId,
+                                        key: stableKey,
                                         event,
                                         displayEncrypted: false,
                                         displayContext: getMessageDisplayContext(
@@ -283,7 +280,7 @@ export const MessageTimeline = (props: Props) => {
                             } else {
                                 item = {
                                     type: RenderEventType.EncryptedMessage,
-                                    key: event.eventId,
+                                    key: stableKey,
                                     event,
                                     displayEncrypted: true,
                                     displayContext: getMessageDisplayContext(index, events.length),
@@ -292,7 +289,7 @@ export const MessageTimeline = (props: Props) => {
 
                             return item
                                 ? ({
-                                      id: event.eventId,
+                                      key: stableKey,
                                       type: 'message',
                                       item,
                                   } as const)
@@ -301,13 +298,13 @@ export const MessageTimeline = (props: Props) => {
                         .filter(notUndefined)
                 }
                 return e.type === 'group' && groupByDate
-                    ? ({ id: e.key, type: 'group', date: e.date, isNew: e.isNew } as const)
+                    ? ({ key: e.key, type: 'group', date: e.date, isNew: e.isNew } as const)
                     : e.type === RenderEventType.FullyRead
-                    ? ({ id: e.key, type: 'fully-read', item: e } as const)
+                    ? ({ key: e.key, type: 'fully-read', item: e } as const)
                     : e.type === RenderEventType.ThreadUpdate
-                    ? ({ id: e.key, type: 'thread-update', item: e } as const)
+                    ? ({ key: e.key, type: 'thread-update', item: e } as const)
                     : e.type !== 'group'
-                    ? ({ id: e.key, type: 'generic', item: e } as const)
+                    ? ({ key: e.key, type: 'generic', item: e } as const)
                     : []
             })
             .filter(notUndefined)
@@ -321,9 +318,9 @@ export const MessageTimeline = (props: Props) => {
 
         const listItems = [...allListItems]
         if (timelineContext?.type === MessageTimelineType.Channel) {
-            listItems.unshift({ id: 'header', type: 'header' } as const)
+            listItems.unshift({ key: 'header', type: 'header' } as const)
         } else if (isThreadOrigin && listItems.length > 1 && listItems[1]?.type !== 'fully-read') {
-            listItems.splice(1, 0, { id: 'divider', type: 'divider' } as const)
+            listItems.splice(1, 0, { key: 'divider', type: 'divider' } as const)
         }
 
         /*
@@ -335,7 +332,7 @@ export const MessageTimeline = (props: Props) => {
         if (!lastMessageOnInitIdRef.current && allListItems.length > 0) {
             // keep track of the last message when opening the timeline, this marker
             // enables us to figure which messages are to be considered as new
-            lastMessageOnInitIdRef.current = allListItems[allListItems.length - 1]?.id
+            lastMessageOnInitIdRef.current = allListItems[allListItems.length - 1]?.key
         }
         const collapseStats = allListItems.reduceRight(
             (prev, curr, index) => {
@@ -365,7 +362,7 @@ export const MessageTimeline = (props: Props) => {
                         // and I guess we want to show it, once the the last
                         // message has been reached we count count 2 messages
                         // and collapse
-                        if (curr.id === lastMessageOnInitIdRef.current) {
+                        if (curr.key === lastMessageOnInitIdRef.current) {
                             prev.isNewMessage = false
                         }
 
@@ -400,7 +397,7 @@ export const MessageTimeline = (props: Props) => {
         // no need to collapse if there's only 1 hidden message
         if (isCollapsed && collapseStats.collapseEndIndex && numHidden > 1) {
             listItems.splice(1, collapseStats.collapseEndIndex, {
-                id: 'expanded',
+                key: 'expanded',
                 type: 'expander',
             })
         }
@@ -426,7 +423,7 @@ export const MessageTimeline = (props: Props) => {
         () =>
             listItems.reduce((groupIds, item) => {
                 if (item.type === 'group') {
-                    groupIds.push(item.id)
+                    groupIds.push(item.key)
                 }
                 return groupIds
             }, [] as string[]),
@@ -471,7 +468,7 @@ export const MessageTimeline = (props: Props) => {
             ) : (
                 <MessageTimelineItem
                     itemData={r.item}
-                    highlight={r.id === props.highlightId}
+                    highlight={r.key === props.highlightId}
                     userId={userId}
                     channelName={channelName}
                     channelEncrypted={isChannelEncrypted}
@@ -503,7 +500,7 @@ export const MessageTimeline = (props: Props) => {
             padding={16}
             focusItem={focusItem}
             estimateHeight={estimateItemHeight}
-            getItemKey={(item) => item?.id}
+            getItemKey={(item) => item.key}
             getItemFocusable={(item) => item.type === 'user-messages' || item.type === 'message'}
             containerRef={props.containerRef}
             key={channelId?.networkId}

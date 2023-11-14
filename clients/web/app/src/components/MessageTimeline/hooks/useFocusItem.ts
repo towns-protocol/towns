@@ -8,7 +8,7 @@ export const useFocusMessage = (
 ) => {
     const last = listItems[listItems.length - 1]
 
-    const lastKey = last?.id
+    const lastKey = last?.key
 
     const [focusItem, setFocusItem] = useState<FocusOption | undefined>(() =>
         highlightId

@@ -9,20 +9,20 @@ import {
 } from './util/getEventsByDate'
 
 export type ListItem =
-    | { id: string; type: 'divider' }
-    | { id: string; type: 'expander' }
-    | { id: string; type: 'header' }
-    | { id: string; type: 'group'; date: string; isNew?: boolean }
-    | { id: string; type: 'user-messages'; item: UserMessagesRenderEvent }
-    | { id: string; type: 'fully-read'; item: FullyReadRenderEvent }
+    | { key: string; type: 'divider' }
+    | { key: string; type: 'expander' }
+    | { key: string; type: 'header' }
+    | { key: string; type: 'group'; date: string; isNew?: boolean }
+    | { key: string; type: 'user-messages'; item: UserMessagesRenderEvent }
+    | { key: string; type: 'fully-read'; item: FullyReadRenderEvent }
     | {
-          id: string
+          key: string
           type: 'message'
           item: MessageRenderEvent | EncryptedMessageRenderEvent | RedactedMessageRenderEvent
       }
-    | { id: string; type: 'thread-update'; item: ThreadUpdateRenderEvent }
+    | { key: string; type: 'thread-update'; item: ThreadUpdateRenderEvent }
     | {
-          id: string
+          key: string
           type: 'generic'
           item: RenderEvent
       }
