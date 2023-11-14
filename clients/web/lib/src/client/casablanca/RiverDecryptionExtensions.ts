@@ -28,8 +28,6 @@ import {
     KeySolicitation,
     StreamEvent,
 } from '@river/proto'
-import { Room } from '../../types/zion-types'
-import { RoomIdentifier } from '../../types/room-identifier'
 import throttle from 'lodash/throttle'
 // eslint-disable-next-line lodash/import-scope
 import type { DebouncedFunc } from 'lodash'
@@ -55,7 +53,7 @@ export interface DecryptionExtensionDelegate {
         user: string,
         permission: Permission,
     ): Promise<boolean>
-    getRoomData(roomId: RoomIdentifier): Room | undefined
+    hasStream(streamId: string): boolean
 }
 
 interface KeyResponseBase {
@@ -489,24 +487,8 @@ export class RiverDecryptionExtension {
         if (!roomRecord) {
             throw new Error('CDE::_askStreamForKeys - room record not found')
         }
-        let room: Room | undefined = undefined
-        try {
-            room = this.delegate.getRoomData({
-                slug: '',
-                networkId: streamId,
-            })
-        } catch (e) {
-            // even though we are stopping looking for keys when the client shuts down,
-            // occasionally, this function debouncer will execute a last time hence
-            // this short-circuit check.
-            if ((<Error>e).message.includes('client is undefined')) {
-                console.error('CDE::_askRoomForKeys - error getting room', e)
-                return
-            }
-            // if it's something else, re-throw the exception.
-            throw new Error(`${(<Error>e).message}}`)
-        }
-        if (!room) {
+        const hasStream = this.delegate.hasStream(streamId)
+        if (!hasStream) {
             throw new Error('CDE::_askRoomForKeys - room not found')
         }
         if (!roomRecord.decryptionFailures.length) {
@@ -645,24 +627,8 @@ export class RiverDecryptionExtension {
             sessionId,
         })
 
-        let room: Room | undefined = undefined
-        try {
-            room = this.delegate.getRoomData({
-                slug: '',
-                networkId: streamId,
-            })
-        } catch (e) {
-            // even though we are stopping looking for keys when the client shuts down,
-            // occasionally, this function debouncer will execute a last time hence
-            // this short-circuit check.
-            if ((<Error>e).message.includes('client is undefined')) {
-                console.error('CDE::_onKeySolicitation - error getting room', e)
-                return
-            }
-            // if it's something else, re-throw the exception.
-            throw new Error(`${(<Error>e).message}}`)
-        }
-        if (!room) {
+        const hasStream = this.delegate.hasStream(streamId)
+        if (!hasStream) {
             throw new Error('CDE::_onKeySolicitation - room not found')
         }
 

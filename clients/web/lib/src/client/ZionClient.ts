@@ -1243,6 +1243,13 @@ export class ZionClient implements DecryptionExtensionDelegate {
     }
 
     /************************************************
+     * hasStream
+     ************************************************/
+    public hasStream(streamId: string): boolean {
+        return this.casablancaClient?.stream(streamId) !== undefined
+    }
+
+    /************************************************
      * getRoomMember
      * **********************************************/
     public getRoomMember(roomId: RoomIdentifier, userId: string): RoomMember | undefined {
