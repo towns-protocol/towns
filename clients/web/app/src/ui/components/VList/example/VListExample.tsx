@@ -1,5 +1,5 @@
 import { randNumber, randParagraph, randUuid, seed } from '@ngneat/falso'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Box, Button, Paragraph, Stack, Toggle } from '@ui'
 import { VList } from 'ui/components/VList2/VList'
@@ -76,9 +76,30 @@ export const VListExample = () => {
 
     // console.table(list)
 
+    const [focus, setFocus] = useState(
+        () =>
+            ({
+                align: 'end',
+                key: list[list.length - 1].id,
+            } as const),
+    )
+
+    const resetRef = useRef(reset)
+
+    useEffect(() => {
+        if (reset !== resetRef.current) {
+            resetRef.current = reset
+            setFocus({
+                align: 'end',
+                key: list[list.length - 1].id,
+            } as const)
+        }
+    }, [list, reset])
+
     return (
         <Stack gap height="800">
             <VList
+                focusItem={focus}
                 getItemKey={(item) => item.id}
                 align="bottom"
                 debug={isDebug}
@@ -170,7 +191,7 @@ const TestItem = React.memo(
                             props.updateMessage(data.id, key)
                         }}
                     >
-                        <Stack gap>
+                        <Stack gap style={{ userSelect: 'none' }}>
                             <Paragraph size="sm" color="cta2">
                                 {data.id}
                             </Paragraph>

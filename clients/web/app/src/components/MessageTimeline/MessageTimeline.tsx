@@ -505,7 +505,7 @@ export const MessageTimeline = (props: Props) => {
             estimateHeight={estimateItemHeight}
             getItemKey={(item) => item?.id}
             getItemFocusable={(item) => item.type === 'user-messages' || item.type === 'message'}
-            scrollContainerRef={props.containerRef}
+            containerRef={props.containerRef}
             key={channelId?.networkId}
             groupIds={groupIds}
             pointerEvents={isTouch && tabBarHidden ? 'none' : undefined}
