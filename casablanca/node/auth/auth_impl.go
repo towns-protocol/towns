@@ -179,7 +179,7 @@ func (za *ChainAuth) isWalletAllowed(ctx context.Context, wallet eth.Address, pe
 		log.Debug("IsAllowed result", "isEntitledToSpace", isEntitled, "err", err)
 		return isEntitled, err
 	case common.Channel:
-		isEntitled, err := za.isEntitledToChannel(streamInfo, wallet, permission)
+		isEntitled, err := za.isEntitledToChannel(ctx, streamInfo, wallet, permission)
 		log.Debug("IsAllowed result", "isEntitledToChannel", isEntitled, "err", err)
 		return isEntitled, err
 	case common.DMChannel:
@@ -217,9 +217,14 @@ func (za *ChainAuth) isEntitledToSpace(streamInfo *common.StreamInfo, user eth.A
 	return isEntitled, err
 }
 
-func (za *ChainAuth) isEntitledToChannel(streamInfo *common.StreamInfo, user eth.Address, permission Permission) (bool, error) {
+func (za *ChainAuth) isEntitledToChannel(ctx context.Context, streamInfo *common.StreamInfo, user eth.Address, permission Permission) (bool, error) {
+	log := dlog.CtxLog(ctx)
+
+	log.Info("isEntitledToChannel", "streamInfo", streamInfo, "user", user.Hex(), "permission", permission)
+
 	// channel disabled check.
 	isDisabled, err := za.spaceContract.IsChannelDisabled(streamInfo.SpaceId, streamInfo.ChannelId)
+	log.Info("isEntitledToChannel", "isDisabled", isDisabled, "err", err)
 	if err != nil {
 		return false, err
 	} else if isDisabled {
@@ -233,5 +238,6 @@ func (za *ChainAuth) isEntitledToChannel(streamInfo *common.StreamInfo, user eth
 		user,
 		permission,
 	)
+	log.Info("isEntitledToChannel", "isEntitled", isEntitled, "err", err)
 	return isEntitled, err
 }

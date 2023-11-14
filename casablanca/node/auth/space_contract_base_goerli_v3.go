@@ -5,6 +5,8 @@ import (
 	"casablanca/node/auth/contracts/base_goerli_towns_channels"
 	"casablanca/node/auth/contracts/base_goerli_towns_entitlements"
 	"casablanca/node/auth/contracts/base_goerli_towns_pausable"
+	"casablanca/node/dlog"
+	"context"
 	"sync"
 
 	"golang.org/x/exp/slog"
@@ -30,6 +32,8 @@ type SpaceContractBaseGoerliV3 struct {
 }
 
 func NewSpaceContractBaseGoerliV3(ethClient *ethclient.Client) (SpaceContract, error) {
+	log := dlog.CtxLog(context.Background())
+
 	// get the space factory address from config
 	strAddress, err := loadContractAddress(84531)
 	if err != nil {
@@ -42,6 +46,9 @@ func NewSpaceContractBaseGoerliV3(ethClient *ethclient.Client) (SpaceContract, e
 		slog.Error("error fetching base goerli TownArchitect contract with address", "address", strAddress, "error", err)
 		return nil, err
 	}
+
+	log.Info("successfully fetched base goerli TownArchitect contract with address", "address", strAddress)
+
 	// no errors.
 	spaceContract := &SpaceContractBaseGoerliV3{
 		ethClient:      ethClient,
@@ -115,11 +122,13 @@ func (za *SpaceContractBaseGoerliV3) IsChannelDisabled(spaceNetworkId string, ch
 }
 
 func (za *SpaceContractBaseGoerliV3) getTown(networkId string) (*TownBaseGoerli, error) {
+	log := dlog.CtxLog(context.Background())
 	za.townsLock.Lock()
 	defer za.townsLock.Unlock()
 	if za.towns[networkId] == nil {
 		// use the networkId to fetch the town's contract address
 		townAddress, err := za.townsArchitect.GetTownById(nil, networkId)
+		log.Info("getTown", "townAddress", townAddress, "err", err, "networkId", networkId)
 		if err != nil || townAddress == EMPTY_ADDRESS {
 			return nil, err
 		}
@@ -143,7 +152,9 @@ func (za *SpaceContractBaseGoerliV3) getTown(networkId string) (*TownBaseGoerli,
 }
 
 func (za *SpaceContractBaseGoerliV3) getChannel(spaceNetworkId string, channelNetworkId string) (*base_goerli_towns_channels.BaseGoerliTownsChannels, error) {
+	log := dlog.CtxLog(context.Background())
 	town, err := za.getTown(spaceNetworkId)
+	log.Info("getChannel", "town", town, "err", err, "spaceNetworkId", spaceNetworkId, "channelNetworkId", channelNetworkId)
 	if err != nil || town == nil {
 		return nil, err
 	}
@@ -151,6 +162,7 @@ func (za *SpaceContractBaseGoerliV3) getChannel(spaceNetworkId string, channelNe
 	defer town.channelsLock.Unlock()
 	if town.channels[channelNetworkId] == nil {
 		channel, err := base_goerli_towns_channels.NewBaseGoerliTownsChannels(town.address, za.ethClient)
+		log.Info("getChannel", "channel", channel, "err", err)
 		if err != nil {
 			return nil, err
 		}
