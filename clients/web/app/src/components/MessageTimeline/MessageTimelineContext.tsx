@@ -44,6 +44,14 @@ export const MessageTimelineContext = createContext<{
     onMentionClick?: (mentionName: string) => void
 } | null>(null)
 
+export const useTimelineContext = () => {
+    const context = React.useContext(MessageTimelineContext)
+    if (!context) {
+        throw new Error('useTimelineContext must be used within a MessageTimelineWrapper')
+    }
+    return context
+}
+
 export const MessageTimelineWrapper = (props: {
     children: React.ReactNode
     spaceId: RoomIdentifier | undefined

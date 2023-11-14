@@ -18,6 +18,7 @@ import { ZRoomMessageRedactedEvent } from '@components/MessageTimeline/util/getE
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { MessageContextMenu } from './MessageContextMenu'
 import { MessageModalSheet } from './MessageModalSheet'
+import { SendStatus, SendStatusIndicator } from './SendStatusIndicator'
 
 type Props = {
     userId?: string | null
@@ -47,6 +48,7 @@ type Props = {
     background?: BoxProps['background']
     channelLabel?: string
     isChannelWritable?: boolean
+    sendStatus?: SendStatus
 } & BoxProps
 
 export type MessageLayoutProps = Props
@@ -259,6 +261,7 @@ export const MessageLayout = (props: Props) => {
                     ) : (
                         <></>
                     )}
+                    {props.sendStatus && <SendStatusIndicator status={props.sendStatus} />}
                 </Stack>
                 {!isTouch &&
                     isChannelWritable &&

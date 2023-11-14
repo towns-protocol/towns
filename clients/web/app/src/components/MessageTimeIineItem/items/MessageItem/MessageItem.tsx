@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useRef, useState } from 'react'
+import React, { useCallback, useContext, useMemo, useRef, useState } from 'react'
 import { MessageType, ThreadStats, TimelineEvent, ZTEvent } from 'use-zion-client'
 import { useNavigate } from 'react-router'
 import {
@@ -14,9 +14,11 @@ import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { ChunkedMedia } from '@components/ChunkedMedia/ChunkedMedia'
 import { EmbeddedMedia } from '@components/EmbeddedMedia/EmbeddedMedia'
 import { QUERY_PARAMS } from 'routes'
+import { SendStatus } from '@components/MessageLayout/SendStatusIndicator'
 import {
     MessageTimelineContext,
     MessageTimelineType,
+    useTimelineContext,
 } from '../../../MessageTimeline/MessageTimelineContext'
 import { TimelineMessageEditor } from '../MessageEditor'
 import {
@@ -196,14 +198,10 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     const { event, displayContext, selectable, replies } = props
     const { sender } = event
 
-    const timelineContext = useContext(MessageTimelineContext)
+    const timelineContext = useTimelineContext()
     const { isTouch } = useDevice()
 
     const body = event.content?.kind === ZTEvent.RoomMessage ? event.content.body : undefined
-
-    if (!timelineContext) {
-        return <></>
-    }
 
     const {
         membersMap,
@@ -225,6 +223,17 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
 
     const reactions = messageReactionsMap[event.eventId]
     const isEditing = event.eventId === timelineContext.timelineActions.editingMessageId
+
+    const sendStatus: undefined | SendStatus = useMemo(
+        () =>
+            event.localEventId
+                ? {
+                      isLocalPending: event.isLocalPending,
+                      isEncrypting: event.isEncrypting,
+                  }
+                : undefined,
+        [event.isEncrypting, event.isLocalPending, event.localEventId],
+    )
 
     return !event ? null : (
         <MessageLayout
@@ -251,6 +260,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             relativeDate={isRelativeDate}
             replies={replies}
             messageBody={body}
+            sendStatus={sendStatus}
             onReaction={handleReaction}
         >
             {props.children}
