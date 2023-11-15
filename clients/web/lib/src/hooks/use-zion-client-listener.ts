@@ -12,7 +12,8 @@ import { staticAssertNever } from '../utils/zion-utils'
 
 export const useZionClientListener = (opts: ZionOpts) => {
     const { provider } = useWeb3Context()
-    const { setLoginStatus: setCasablancaLoginStatus } = useCasablancaStore()
+    const { setLoginStatus: setCasablancaLoginStatus, setLoginError: setCasablancaLoginError } =
+        useCasablancaStore()
     const { casablancaCredentialsMap, clearCasablancaCredentials } = useCredentialStore()
     const casablancaCredentials = casablancaCredentialsMap[opts.casablancaServerUrl ?? '']
     const [casablancaClient, setCasablancaClient] = useState<CasablancaClient>()
@@ -43,13 +44,32 @@ export const useZionClientListener = (opts: ZionOpts) => {
             clearCasablancaCredentials(opts.casablancaServerUrl ?? '', oldCredendials)
         }
 
+        const onErrorUpdated = (e?: unknown) => {
+            if (!e) {
+                setCasablancaClient(undefined)
+                return
+            }
+            const _error = e as {
+                code: number
+                message: string
+                error: Error
+            }
+            setCasablancaLoginError({
+                code: _error?.code ?? 0,
+                message: _error?.message ?? `${JSON.stringify(e)}`,
+                error: e as Error,
+            })
+        }
+
         stateMachine.on('onStateUpdated', onStateMachineUpdated)
         stateMachine.on('onClearCredentials', onClearCredentials)
+        stateMachine.on('onErrorUpdated', onErrorUpdated)
         stateMachine.update(casablancaCredentials ?? undefined)
         onStateMachineUpdated(stateMachine.state)
         return () => {
             stateMachine.off('onStateUpdated', onStateMachineUpdated)
             stateMachine.off('onClearCredentials', onClearCredentials)
+            stateMachine.off('onErrorUpdated', onErrorUpdated)
         }
     }, [
         casablancaCredentials,
@@ -57,6 +77,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
         setCasablancaClient,
         setCasablancaLoginStatus,
         clearCasablancaCredentials,
+        setCasablancaLoginError,
     ])
 
     return {
@@ -104,6 +125,7 @@ function isSituation(state: States): state is Situations {
 type ClientStateMachineEvents = {
     onStateUpdated: (state: States) => void
     onClearCredentials: (oldCredendials: CasablancaCredentials) => void
+    onErrorUpdated: (e?: Error) => void
 }
 
 class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientStateMachineEvents>) {
@@ -152,6 +174,7 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
                 return new LoggedOut()
             case LoginStatus.LoggingIn: {
                 check(currentSituation instanceof LoggedOut)
+                this.emit('onErrorUpdated', undefined)
                 const { credentials } = transition
                 const pk = credentials.privateKey.slice(2)
                 try {
@@ -173,6 +196,7 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
                         console.log('error while logging out', e)
                     }
                     this.emit('onClearCredentials', credentials)
+                    this.emit('onErrorUpdated', e as Error)
                     return new LoggedOut()
                 }
             }

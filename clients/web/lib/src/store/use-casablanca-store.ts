@@ -23,21 +23,11 @@ export type CasablancaStoreStates = {
 
 export const useCasablancaStore = create<CasablancaStoreStates>((set) => ({
     loginStatus: LoginStatus.LoggedOut,
-    setLoginStatus: (loginStatus: LoginStatus) =>
-        loginStatus === LoginStatus.LoggedOut
-            ? set({
-                  loginStatus,
-              })
-            : loginStatus === LoginStatus.LoggingIn
-            ? set({
-                  loginError: null,
-                  loginStatus,
-              })
-            : set({
-                  loginStatus,
-              }),
+    setLoginStatus: (loginStatus: LoginStatus) => set({ loginStatus }),
     loginError: null,
-    setLoginError: (error: AuthenticationError | undefined) => set({ loginError: error ?? null }),
+    setLoginError: (error: AuthenticationError | undefined) => {
+        set({ loginError: error ?? null })
+    },
 }))
 
 //TODO: implement in a proper way with all fields assigned correctly
