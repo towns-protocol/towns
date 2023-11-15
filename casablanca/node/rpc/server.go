@@ -235,7 +235,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowCredentials: false,
-		Debug:            false,
+		Debug:            cfg.Log.Level == "debug",
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Origin", "X-Requested-With", "Accept", "Content-Type", "X-Grpc-Web", "X-User-Agent", "Connect-Protocol-Version", "x-river-request-id"},
