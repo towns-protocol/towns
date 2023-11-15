@@ -136,7 +136,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	var townsContract auth.TownsContract
 	if cfg.UseContract {
 		log.Info("Using casablanca auth", "chain_config", cfg.Chain)
-		townsContract, err = auth.NewTownsContract(ctx, &cfg.Chain)
+		townsContract, err = auth.NewTownsContract(&cfg.Chain)
 		if err != nil {
 			log.Error("failed to create auth", "error", err)
 			return nil, 0, nil, err
