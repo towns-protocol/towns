@@ -58,7 +58,12 @@ COPY --from=base /build/run_docker.sh /usr/bin/run_docker.sh
 
 # This allows us to set the release version to anything, such as a commit hash, at build time.
 ARG RELEASE_VERSION="Unreleased"
+ARG DD_GIT_REPOSITORY_URL="https://github.com/HereNotThere/harmony"
+ARG DD_GIT_COMMIT_SHA=${RELEASE_VERSION}
+
 ENV RELEASE_VERSION=${RELEASE_VERSION}
+ENV DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} 
+ENV DD_GIT_COMMIT_SHA=${DD_GIT_COMMIT_SHA}
 
 WORKDIR /usr/config/run_files/docker-single
 ENTRYPOINT [ "sh", "/usr/bin/run_docker.sh" ]
