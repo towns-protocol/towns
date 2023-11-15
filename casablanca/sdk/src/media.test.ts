@@ -7,8 +7,7 @@ describe('mediaTests', () => {
 
     beforeEach(async () => {
         bobsClient = await makeTestClient()
-        await bobsClient.createNewUser()
-        await bobsClient.initCrypto()
+        await bobsClient.initializeUser()
         await bobsClient.startSync()
     })
 
@@ -67,8 +66,7 @@ describe('mediaTests', () => {
         const chunk = new Uint8Array(100)
 
         const alicesClient = await makeTestClient()
-        await alicesClient.createNewUser()
-        await alicesClient.initCrypto()
+        await alicesClient.initializeUser()
         await alicesClient.startSync()
 
         // @ts-ignore
@@ -84,8 +82,7 @@ describe('mediaTests', () => {
 
     test('dmChannelNeedsToExistBeforeCreatingMediaStream', async () => {
         const alicesClient = await makeTestClient()
-        await alicesClient.createNewUser()
-        await alicesClient.initCrypto()
+        await alicesClient.initializeUser()
         await alicesClient.startSync()
 
         const nonExistentChannelId = makeDMStreamId(bobsClient.userId, alicesClient.userId)
@@ -95,8 +92,7 @@ describe('mediaTests', () => {
 
     test('userCanUploadMediaToDmIfMember', async () => {
         const alicesClient = await makeTestClient()
-        await alicesClient.createNewUser()
-        await alicesClient.initCrypto()
+        await alicesClient.initializeUser()
         await alicesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
@@ -107,13 +103,11 @@ describe('mediaTests', () => {
 
     test('userCanUploadMediaToGdmIfMember', async () => {
         const alicesClient = await makeTestClient()
-        await alicesClient.createNewUser()
-        await alicesClient.initCrypto()
+        await alicesClient.initializeUser()
         await alicesClient.startSync()
 
         const charliesClient = await makeTestClient()
-        await charliesClient.createNewUser()
-        await charliesClient.initCrypto()
+        await charliesClient.initializeUser()
         await charliesClient.startSync()
 
         const { streamId } = await bobsClient.createGDMChannel([
@@ -127,13 +121,11 @@ describe('mediaTests', () => {
 
     test('userCannotUploadMediaToDmUnlessMember', async () => {
         const alicesClient = await makeTestClient()
-        await alicesClient.createNewUser()
-        await alicesClient.initCrypto()
+        await alicesClient.initializeUser()
         await alicesClient.startSync()
 
         const charliesClient = await makeTestClient()
-        await charliesClient.createNewUser()
-        await charliesClient.initCrypto()
+        await charliesClient.initializeUser()
         await charliesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)

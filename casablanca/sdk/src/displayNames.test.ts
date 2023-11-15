@@ -16,8 +16,7 @@ describe('displayNames', () => {
     })
 
     test('clientCanSetDisplayNames', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
 
         const { streamId } = await bobsClient.createSpace(undefined)

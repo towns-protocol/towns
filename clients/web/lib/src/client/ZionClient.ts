@@ -202,14 +202,9 @@ export class ZionClient implements EntitlementsDelegate {
             this.opts.logNamespaceFilter,
         )
         this.casablancaClient.setMaxListeners(100)
-        // TODO HNT-1829 - long-term the app should already know if user exists
-        try {
-            await this.casablancaClient.loadExistingUser()
-        } catch (e) {
-            console.log('user does not exist, creating new user', (e as Error).message)
-            await this.casablancaClient.createNewUser()
-        }
-        await this.casablancaClient.initCrypto()
+
+        await this.casablancaClient.initializeUser()
+
         this._eventHandlers?.onRegister?.({
             userId: this.casablancaClient.userId,
         })

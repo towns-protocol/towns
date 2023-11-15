@@ -19,11 +19,9 @@ describe('clientCryptoTest', () => {
     })
 
     test('clientCanEncryptEvent', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
@@ -47,11 +45,9 @@ describe('clientCryptoTest', () => {
     })
 
     test('clientCanEncryptDecryptEvent', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
@@ -91,11 +87,9 @@ describe('clientCryptoTest', () => {
     })
 
     test('clientCanEncryptDecryptToDeviceMultipleEventObjects', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)

@@ -20,6 +20,7 @@ import {
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
+    makeUniqueName,
     registerAndStartClients,
 } from './helpers/TestUtils'
 import { setTimeout } from 'timers/promises'
@@ -39,6 +40,7 @@ describe('casablanca', () => {
             signerPrivateKey: () => pk,
             creatorAddress,
             delegateSig,
+            deviceId: makeUniqueName('bob'),
         }
         const csurl: string = process.env.CASABLANCA_SERVER_URL!
         log('new CasablancaClient', csurl)
@@ -46,7 +48,7 @@ describe('casablanca', () => {
         const cryptoStore = RiverDbManager.getCryptoDb('abc')
         const entitlementsDelegate = new MockEntitlementsDelegate()
         const client = new CasablancaClient(context, rpcClient, cryptoStore, entitlementsDelegate)
-        await client.createNewUser()
+        await client.initializeUser()
         log('Finished', client)
     })
 

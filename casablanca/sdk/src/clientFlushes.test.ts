@@ -63,8 +63,7 @@ describe('clientFlushes', () => {
         }
         bobsClient.on('streamInitialized', onStreamInitialized)
 
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
 
         await sendFlush(bobsClient.rpcClient)
 
@@ -135,11 +134,7 @@ describe('clientFlushes', () => {
 
                     const messages = Array.from(channel.view.channelContent.messages.state.values())
                     expect(messages).toHaveLength(1)
-                    if (!bobsAnotherClient.cryptoBackend) {
-                        // by the time this runs, the crypto backend should be initialized
-                        // but in case it is not, let's init it again
-                        await expect(bobsAnotherClient.initCrypto()).toResolve()
-                    }
+
                     channel.on('channelNewMessage', onChannelNewMessage)
                     bobsAnotherClient.sendMessage(streamId, 'Hello, again!')
                     await sendFlush(bobsClient.rpcClient)
@@ -149,8 +144,7 @@ describe('clientFlushes', () => {
 
         bobsAnotherClient.on('streamInitialized', onStreamInitialized)
 
-        await expect(bobsAnotherClient.loadExistingUser()).toResolve()
-        await expect(bobsAnotherClient.initCrypto()).toResolve()
+        await expect(bobsAnotherClient.initializeUser()).toResolve()
 
         await sendFlush(bobsClient.rpcClient)
 

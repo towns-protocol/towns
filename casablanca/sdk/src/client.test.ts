@@ -69,8 +69,7 @@ describe('clientTest', () => {
     })
 
     test('bobTalksToHimself-noflush', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
@@ -105,7 +104,7 @@ describe('clientTest', () => {
     test('clientsCanBeClosedNoSync', async () => {})
 
     test('clientsNotifiedOnSyncFailure', async () => {
-        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         const done = makeDonePromise()
 
         const testError = new Error('test error')
@@ -133,7 +132,7 @@ describe('clientTest', () => {
     })
 
     test('clientsRetryOnSyncError', async () => {
-        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         const done = makeDonePromise()
 
         let failureCount = 0
@@ -163,7 +162,7 @@ describe('clientTest', () => {
     })
 
     test('clientsGivesUpAfter5SyncError', async () => {
-        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         const done = makeDonePromise()
 
         let failureCount = 0
@@ -193,7 +192,7 @@ describe('clientTest', () => {
     })
 
     test('clientsResetsRetryCountAfterSyncSuccess', async () => {
-        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         const done = makeDonePromise()
 
         let failureCount = 0
@@ -225,7 +224,7 @@ describe('clientTest', () => {
     })
 
     test('clientsCanBeStoppedDuringErrorRetry', async () => {
-        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         const testError = new Error('test error')
         const done = makeDonePromise()
 
@@ -249,14 +248,14 @@ describe('clientTest', () => {
     })
 
     test('clientsCanBeClosedAfterSync', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         await alicesClient.startSync()
     })
 
     test('clientCreatesStreamsForNewUser', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         expect(bobsClient.streams.size).toEqual(3)
         expect(bobsClient.streams.get(makeUserSettingsStreamId(bobsClient.userId))).toBeDefined()
         expect(bobsClient.streams.get(makeUserStreamId(bobsClient.userId))).toBeDefined()
@@ -264,9 +263,9 @@ describe('clientTest', () => {
     })
 
     test('clientCreatesStreamsForExistingUser', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         const bobsAnotherClient = await makeTestClient(undefined, bobsClient.signerContext)
-        await expect(bobsAnotherClient.loadExistingUser()).toResolve()
+        await expect(bobsAnotherClient.initializeUser()).toResolve()
         expect(bobsAnotherClient.streams.size).toEqual(3)
         expect(
             bobsAnotherClient.streams.get(makeUserSettingsStreamId(bobsClient.userId)),
@@ -281,8 +280,7 @@ describe('clientTest', () => {
         log('bobCreatesUnamedSpace')
 
         // Bob gets created, creates a space without providing an ID, and a channel without providing an ID.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
 
         const spaceId = bobsClient.createSpace(undefined)
@@ -319,6 +317,7 @@ describe('clientTest', () => {
             })
         }
 
+        let channelWithContentId: string | undefined
         const onStreamInitialized = (streamId: string, streamKind: SnapshotCaseType) => {
             log('streamInitialized', streamId, streamKind)
             done.runAndDoneAsync(async () => {
@@ -326,26 +325,21 @@ describe('clientTest', () => {
                     const channel = bobsAnotherClient.stream(streamId)!
                     log('channel content')
                     log(channel.view)
-
-                    if (!bobsAnotherClient.cryptoBackend) {
-                        // by the time this runs, the crypto backend should be initialized
-                        // but in case it is not, let's init it again
-                        await expect(bobsAnotherClient.initCrypto()).toResolve()
-                    }
                     const messages = Array.from(
                         channel.view.channelContent.messages.state.values() ?? [],
                     )
                     expect(messages).toHaveLength(1)
                     channel.on('channelNewMessage', onChannelNewMessage)
-                    bobsAnotherClient.sendMessage(streamId, 'Hello, again!')
+                    channelWithContentId = streamId
                 }
             })
         }
         bobsAnotherClient.on('streamInitialized', onStreamInitialized)
 
-        await expect(bobsAnotherClient.loadExistingUser()).toResolve()
-        await expect(bobsAnotherClient.initCrypto()).toResolve()
+        await expect(bobsAnotherClient.initializeUser()).toResolve()
         await bobsAnotherClient.startSync()
+        expect(channelWithContentId).toBeDefined()
+        bobsAnotherClient.sendMessage(channelWithContentId!, 'Hello, again!')
 
         await done.expectToSucceed()
 
@@ -358,8 +352,7 @@ describe('clientTest', () => {
         log('bobSendsSingleMessage')
 
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
@@ -394,8 +387,7 @@ describe('clientTest', () => {
         log('bobAndAliceConverse')
 
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
@@ -411,8 +403,7 @@ describe('clientTest', () => {
         await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
 
         // Alice gest created.
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         await alicesClient.startSync()
 
         await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!')).toResolve()
@@ -517,8 +508,7 @@ describe('clientTest', () => {
     test('bobUploadsDeviceKeys', async () => {
         log('bobUploadsDeviceKeys')
         // Bob gets created, starts syncing, and uploads his device keys.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         const bobsUserId = bobsClient.userId
         const bobSelfToDevice = makeDonePromise()
@@ -540,8 +530,7 @@ describe('clientTest', () => {
     test('bobDownloadsOwnDeviceKeys', async () => {
         log('bobDownloadsOwnDeviceKeys')
         // Bob gets created, starts syncing, and uploads his device keys.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         const bobsUserId = bobsClient.userId
         const bobSelfToDevice = makeDonePromise()
@@ -567,10 +556,8 @@ describe('clientTest', () => {
     test('bobDownloadsAlicesDeviceKeys', async () => {
         log('bobDownloadsAlicesDeviceKeys')
         // Bob gets created, starts syncing, and uploads his device keys.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         await alicesClient.startSync()
         const alicesUserId = alicesClient.userId
@@ -596,10 +583,8 @@ describe('clientTest', () => {
     test('bobDownloadsAlicesAndOwnDeviceKeys', async () => {
         log('bobDownloadsAlicesAndOwnDeviceKeys')
         // Bob, Alice get created, starts syncing, and uploads respective device keys.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         await alicesClient.startSync()
         const bobsUserId = bobsClient.userId
@@ -634,10 +619,8 @@ describe('clientTest', () => {
         log('bobDownloadsAlicesAndOwnFallbackKeys')
         // Bob, Alice get created, starts syncing, and uploads respective device keys, including
         // fallback keys.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         await alicesClient.startSync()
         const bobsUserId = bobsClient.userId
@@ -674,10 +657,8 @@ describe('clientTest', () => {
         log('bobDownloadsAlicesFallbackKeys')
         // Bob, Alice get created, starts syncing, and uploads respective device keys, including
         // fallback keys.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         await alicesClient.startSync()
         const alicesUserId = alicesClient.userId
@@ -724,8 +705,7 @@ describe('clientTest', () => {
         log('aliceLeavesChannelsWhenLeavingSpace')
 
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
@@ -741,8 +721,7 @@ describe('clientTest', () => {
         await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
 
         // Alice gest created.
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         await alicesClient.startSync()
 
         await expect(alicesClient.joinStream(bobsSpaceId)).toResolve()

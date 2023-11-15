@@ -40,8 +40,7 @@ describe('riverEventTest', () => {
             })
         }
 
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         bobsClient.on('channelNewMessage', onChannelNewMessage)
 
@@ -56,8 +55,7 @@ describe('riverEventTest', () => {
         ).toResolve()
         await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
 
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         await alicesClient.startSync()
 
         await expect(alicesClient.joinStream(bobsSpaceId)).toResolve()

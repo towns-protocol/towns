@@ -31,8 +31,7 @@ describe('withEntitlements', () => {
         // create a user stream
         const bob = await makeTestClient(TEST_URL_WITH_ENTITILEMENTS, bobsContext)
         const bobsUserStreamId = makeUserStreamId(bob.userId)
-        await expect(bob.createNewUser()).toResolve()
-        await expect(bob.initCrypto()).toResolve()
+        await expect(bob.initializeUser()).toResolve()
         await bob.startSync()
 
         // create a space stream,
@@ -103,8 +102,7 @@ describe('withEntitlements', () => {
         const aliceProvider = new LocalhostWeb3Provider(alicesWallet)
         await aliceProvider.fundWallet()
         const alice = await makeTestClient(TEST_URL_WITH_ENTITILEMENTS, alicesContext)
-        await alice.createNewUser()
-        await alice.initCrypto()
+        await alice.initializeUser()
         alice.startSync()
         log('Alice created user, about to join space', { alicesUserId: alice.userId })
 

@@ -41,8 +41,7 @@ describe('mediaWithEntitlementsTests', () => {
         bobContext = await makeUserContextFromWallet(bobWallet)
         bobClient = await makeTestClient(TEST_URL_WITH_ENTITILEMENTS, bobContext)
 
-        await bobClient.createNewUser()
-        await bobClient.initCrypto()
+        await bobClient.initializeUser()
         await bobClient.startSync()
 
         aliceWallet = ethers.Wallet.createRandom()
@@ -107,8 +106,7 @@ describe('mediaWithEntitlementsTests', () => {
         await expect(bobClient.createMediaStream(channelId, 10)).toResolve()
         await bobClient.stop()
 
-        await aliceClient.createNewUser()
-        await aliceClient.initCrypto()
+        await aliceClient.initializeUser()
         await aliceClient.startSync()
 
         // Alice is NOT a member of the channel is prevented from creating a media stream

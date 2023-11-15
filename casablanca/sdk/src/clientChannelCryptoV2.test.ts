@@ -32,11 +32,9 @@ describe('clientCryptoTest_RiverEventV2', () => {
     })
 
     test('clientCanEncryptDecrypt_Redaction', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
@@ -107,11 +105,9 @@ describe('clientCryptoTest_RiverEventV2', () => {
     })
 
     test('clientCanEncryptDecrypt_Edit', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
@@ -194,11 +190,9 @@ describe('clientCryptoTest_RiverEventV2', () => {
     })
 
     test('clientCanEncryptDecrypt_Reaction', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
@@ -270,11 +264,9 @@ describe('clientCryptoTest_RiverEventV2', () => {
     })
 
     test('clientCanEncryptDecrypt_PostContentGM_Event', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
@@ -349,11 +341,9 @@ describe('clientCryptoTest_RiverEventV2', () => {
     })
 
     test('clientCanEncryptDecrypt_PostContentImage_Event', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
@@ -430,11 +420,9 @@ describe('clientCryptoTest_RiverEventV2', () => {
     })
 
     test('clientCanEncryptDecrypt_PostContentText_Event', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
@@ -507,11 +495,9 @@ describe('clientCryptoTest_RiverEventV2', () => {
     })
 
     test('clientCanEncryptDecryptMessageEvents', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
@@ -624,11 +610,9 @@ describe('clientCryptoTest_RiverEventV2', () => {
     })
 
     test('clientCannotDecryptRoomMessageEventWithoutSession', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
@@ -695,11 +679,9 @@ describe('clientCryptoTest_RiverEventV2', () => {
 
     // todo: run the following tests once RiverEventV2 replaces RiverEvent in client emitters.
     test.skip('encryptDecryptChannelMessageSentOverClient', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
@@ -774,11 +756,9 @@ describe('clientCryptoTest_RiverEventV2', () => {
     })
 
     test.skip('encryptedChannelMessageReturnsCiphertext', async () => {
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)

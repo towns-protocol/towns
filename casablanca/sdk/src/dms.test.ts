@@ -8,18 +8,15 @@ describe('dmsTests', () => {
 
     beforeEach(async () => {
         bobsClient = await makeTestClient()
-        await bobsClient.createNewUser()
-        await bobsClient.initCrypto()
+        await bobsClient.initializeUser()
         await bobsClient.startSync()
 
         alicesClient = await makeTestClient()
-        await alicesClient.createNewUser()
-        await alicesClient.initCrypto()
+        await alicesClient.initializeUser()
         await alicesClient.startSync()
 
         charliesClient = await makeTestClient()
-        await charliesClient.createNewUser()
-        await charliesClient.initCrypto()
+        await charliesClient.initializeUser()
         await charliesClient.startSync()
     })
 

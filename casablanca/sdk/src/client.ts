@@ -29,6 +29,7 @@ import {
     FullyReadMarkers,
     FullyReadMarker,
     Envelope,
+    Err,
 } from '@river/proto'
 import {
     Crypto,
@@ -288,13 +289,45 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         stream.initialize(streamAndCookie, snapshot, miniblocks)
     }
 
-    async createNewUser(): Promise<void> {
-        this.logCall('createNewUser')
-        assert(this.userStreamId === undefined, 'streamId must not be set')
+    async initializeUser(): Promise<void> {
+        this.logCall('initializeUser')
+        assert(this.userStreamId === undefined, 'already initialized')
         const userStreamId = makeUserStreamId(this.userId)
         const userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
         const userSettingsStreamId = makeUserSettingsStreamId(this.userId)
 
+        // todo as part of HNT-2826 we should check/create all these streamson the node
+        const userStream =
+            (await this.getUserStream(userStreamId)) ?? (await this.createUserStream(userStreamId))
+        const userDeviceKeyStream =
+            (await this.getUserStream(userDeviceKeyStreamId)) ??
+            (await this.createUserDeviceKeyStream(userDeviceKeyStreamId))
+        const userSettingResponse =
+            (await this.getUserStream(userSettingsStreamId)) ??
+            (await this.createUserSettingsStream(userSettingsStreamId))
+
+        await this.initUserDeviceKeyStream(userDeviceKeyStreamId, userDeviceKeyStream)
+        await this.initUserSettingsStream(userSettingsStreamId, userSettingResponse)
+        await this.initUserStream(userStreamId, userStream)
+        await this.initCrypto()
+        await this.uploadDeviceKeys()
+    }
+
+    // special wrapper around rpcClient.getStream which catches NOT_FOUND errors but re-throws everything else
+    private async getUserStream(streamId: string): Promise<GetStreamResponse | undefined> {
+        try {
+            const response = await this.rpcClient.getStream({ streamId })
+            return response
+        } catch (e) {
+            if (isIConnectError(e) && e.code === Number(Err.NOT_FOUND)) {
+                return undefined
+            } else {
+                throw e
+            }
+        }
+    }
+
+    private async createUserStream(userStreamId: string): Promise<CreateStreamResponse> {
         const userEvents = [
             await makeEvent(
                 this.signerContext,
@@ -304,11 +337,15 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 [],
             ),
         ]
-        const userResponse = await this.rpcClient.createStream({
+        return await this.rpcClient.createStream({
             events: userEvents,
             streamId: userStreamId,
         })
+    }
 
+    private async createUserDeviceKeyStream(
+        userDeviceKeyStreamId: string,
+    ): Promise<CreateStreamResponse> {
         const userDeviceKeyEvents = [
             await makeEvent(
                 this.signerContext,
@@ -320,11 +357,15 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             ),
         ]
 
-        const deviceResponse = await this.rpcClient.createStream({
+        return await this.rpcClient.createStream({
             events: userDeviceKeyEvents,
             streamId: userDeviceKeyStreamId,
         })
+    }
 
+    private async createUserSettingsStream(
+        userSettingsStreamId: string,
+    ): Promise<CreateStreamResponse> {
         const userSettingsEvents = [
             await makeEvent(
                 this.signerContext,
@@ -335,41 +376,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             ),
         ]
 
-        const userSettingResponse = await this.rpcClient.createStream({
+        return await this.rpcClient.createStream({
             events: userSettingsEvents,
             streamId: userSettingsStreamId,
         })
-
-        await this.initUserDeviceKeyStream(userDeviceKeyStreamId, deviceResponse)
-        await this.initUserSettingsStream(userSettingsStreamId, userSettingResponse)
-        await this.initUserStream(userStreamId, userResponse)
-    }
-
-    async loadExistingUser(): Promise<void> {
-        this.logCall('loadExistingUser')
-        assert(this.userStreamId === undefined, 'streamId must not be set')
-        const userStreamId = makeUserStreamId(this.userId)
-        const userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
-        const userSettingsStreamId = makeUserSettingsStreamId(this.userId)
-
-        // init userDeviceKeyStream
-        const userDeviceKeyStream = await this.rpcClient.getStream({
-            streamId: userDeviceKeyStreamId,
-        })
-        assert(userDeviceKeyStream.stream !== undefined, 'got bad user device key stream')
-        await this.initUserDeviceKeyStream(userDeviceKeyStreamId, userDeviceKeyStream)
-
-        // init userStream
-        const userStream = await this.rpcClient.getStream({ streamId: userStreamId })
-        assert(userStream.stream !== undefined, 'got bad user stream')
-
-        const userSettingsStream = await this.rpcClient.getStream({
-            streamId: userSettingsStreamId,
-        })
-        assert(userSettingsStream.stream !== undefined, 'got bad user settings stream')
-        await this.initUserSettingsStream(userSettingsStreamId, userSettingsStream)
-
-        return this.initUserStream(userStreamId, userStream)
     }
 
     async createSpace(spaceId: string | undefined): Promise<{ streamId: string }> {
@@ -1700,7 +1710,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return r.hash
     }
 
-    async initCrypto(): Promise<void> {
+    private async initCrypto(): Promise<void> {
         this.logCall('initCrypto')
         if (this.cryptoBackend) {
             this.logCall('Attempt to re-init crypto backend, ignoring')
@@ -1723,14 +1733,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             pickleKey: this.pickleKey,
         })
         delete this.exportedOlmDeviceToImport
-        // todo set olmVersion
-
-        // todo: register event handlers
-
         this.cryptoBackend = crypto
-        // TODO: register event handlers once crypto module is successfully initiatilized
-        this.logCall('initCrypto:: uploading device keys...')
         this.decryptionExtensions = new RiverDecryptionExtension(this, this.entitlementsDelegate)
+    }
+
+    private async uploadDeviceKeys() {
+        check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
+        this.logCall('initCrypto:: uploading device keys...')
         return this.cryptoBackend.uploadDeviceKeys()
     }
 

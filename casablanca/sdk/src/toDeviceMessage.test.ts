@@ -24,12 +24,10 @@ describe('toDeviceMessageTest', () => {
     test('bobSendsAliceToDeviceMessage', async () => {
         log('bobSendsAliceToDeviceMessage')
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         // Alice gets created.
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
         log('aliceUserStreamId', aliceUserStreamId)
         const aliceUserId = alicesClient.userId
@@ -73,12 +71,10 @@ describe('toDeviceMessageTest', () => {
     test('bobSendsTwoAliceToDeviceMessage', async () => {
         log('bobSendsTwoAliceToDeviceMessage')
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         // Alice gets created.
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
         log('aliceUserStreamId', aliceUserStreamId)
         const aliceUserId = alicesClient.userId
@@ -137,13 +133,11 @@ describe('toDeviceMessageTest', () => {
     test('bobSendsAliceToDevicesMessages', async () => {
         log('bobSendsAliceToDeviceMessages')
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
 
         // Alice gets created.
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
         log('aliceUserStreamId', aliceUserStreamId)
         const aliceUserId = alicesClient.userId
@@ -188,13 +182,11 @@ describe('toDeviceMessageTest', () => {
     test('bobAndAliceExchangeToDeviceMessages', async () => {
         log('bobAndAliceExchangeToDeviceMessages')
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.createNewUser()).toResolve()
-        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
 
         // Alice gets created.
-        await expect(alicesClient.createNewUser()).toResolve()
-        await expect(alicesClient.initCrypto()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
         const bobUserStreamId = bobsClient.userStreamId
         const aliceUserId = alicesClient.userId

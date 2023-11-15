@@ -26,8 +26,7 @@ class TestDriver {
     async start(): Promise<void> {
         this.log(`driver starting client`)
 
-        await this.client.createNewUser()
-        await this.client.initCrypto()
+        await this.client.initializeUser()
 
         this.client.on('userInvitedToStream', (s) => void this.userInvitedToStream.bind(this)(s))
         this.client.on('userJoinedStream', (s) => void this.userJoinedStream.bind(this)(s))
