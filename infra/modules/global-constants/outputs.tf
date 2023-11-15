@@ -19,7 +19,7 @@ output "environment" {
 }
 
 locals {
-  Environment             = terraform.workspace == "test" ? "test-beta" : terraform.workspace == "staging" ? "staging-beta" : terraform.workspace
+  Environment             = terraform.workspace == "test" ? "test-beta" : terraform.workspace
   sre_goalie_slack_handle = "<@kerem>"
   sre_slack_channel       = "@slack-Here_Not_There_Labs-sre-alerts"
 }
