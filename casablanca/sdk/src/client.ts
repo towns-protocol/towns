@@ -1605,28 +1605,39 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                         stream.userDeviceKeyContent.uploadedDeviceKeys.values(),
                     ).flatMap((value) => value)
 
-                    // return latest device key
-                    const payload = devicesFlat[devicesFlat.length - 1]
+                    // return latest 10 device keys until the below issue is complete
+                    // todo: https://linear.app/hnt-labs/issue/HNT-3647/devicekey-lifecycle-hardening
+                    const deviceLookback = 10
+                    let payloads
+                    if (devicesFlat.length > deviceLookback) {
+                        payloads = devicesFlat.slice(devicesFlat.length - deviceLookback)
+                    } else {
+                        payloads = devicesFlat
+                    }
 
                     if (!returnFallbackKeys) {
-                        if (isDefined(payload.deviceKeys)) {
-                            // push all known device keys for all devices of user
-                            if (!response.device_keys[userId]) {
-                                response.device_keys[userId] = []
+                        for (const payload of payloads) {
+                            if (isDefined(payload.deviceKeys)) {
+                                // push all known device keys for all devices of user
+                                if (!response.device_keys[userId]) {
+                                    response.device_keys[userId] = []
+                                }
+                                response.device_keys[userId].push(payload.deviceKeys)
                             }
-                            response.device_keys[userId].push(payload.deviceKeys)
                         }
                     } else {
-                        const fallbackKeys: FallbackKeyResponse[] = []
-                        if (payload.deviceKeys?.deviceId && payload.fallbackKeys) {
-                            fallbackKeys.push({
-                                [payload.deviceKeys.deviceId]: payload.fallbackKeys,
-                            })
+                        const fallbackKeysByDeviceId: FallbackKeyResponse[] = []
+                        for (const payload of payloads) {
+                            if (payload.deviceKeys?.deviceId && payload.fallbackKeys) {
+                                fallbackKeysByDeviceId.push({
+                                    [payload.deviceKeys.deviceId]: payload.fallbackKeys,
+                                })
+                            }
                         }
                         // push all known device keys for all devices of user
-                        if (fallbackKeys.length > 0) {
+                        if (fallbackKeysByDeviceId.length > 0) {
                             if (response.fallback_keys) {
-                                response.fallback_keys[userId] = fallbackKeys
+                                response.fallback_keys[userId] = fallbackKeysByDeviceId
                             }
                         }
                     }
@@ -1913,7 +1924,9 @@ export interface IDownloadKeyRequest {
 
 export interface IDownloadKeyResponse {
     failures?: Record<string, object>
+    // userId -> deviceKeys
     device_keys: Record<string, DeviceKeys[]>
+    // userId -> deviceId -> algo:deviceId -> FallbackKey
     fallback_keys?: Record<string, FallbackKeyResponse[]>
 }
 

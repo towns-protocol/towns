@@ -162,9 +162,9 @@ export class ZionClient implements EntitlementsDelegate {
             throw new SignerUndefinedError("can't sign without a web3 signer")
         }
         const creatorAddress = bin_fromHexString(await signer.getAddress())
-        // TODO: for now let's take 16 bytes of the keccak256 hash of creatorAddress as our device_id,
-        // but in the future let's ensure device_id is stable across addresses of the same "device".
-        const deviceId = takeKeccakFingerprintInHex(creatorAddress, 16)
+        // In the future, we shouldn't create a new deviceId every time the app refreshes / starts
+        // todo: https://linear.app/hnt-labs/issue/HNT-3647/devicekey-lifecycle-hardening
+        const deviceId = takeKeccakFingerprintInHex(crypto.getRandomValues(new Uint8Array(16)), 16)
         const delegateSig = await makeOldTownsDelegateSig(signer, delegateWallet.publicKey)
         const pk = delegateWallet.privateKey.slice(2)
         const context: SignerContext = {

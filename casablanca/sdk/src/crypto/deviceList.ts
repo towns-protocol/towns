@@ -133,8 +133,8 @@ export class DeviceList extends (EventEmitter as new () => TypedEmitter<CryptoEv
                     // todo jterzis: typescript doesn't infer the fields of deviceKey as
                     // IDeviceKeys members, so we have to cast here. Fix this by
                     // normalizing IDeviceKeys to protocol DeviceKey type.
-                    const deviceId = deviceKey.deviceId as unknown as string
-                    const { algorithms, keys, signatures } = deviceKey as unknown as IDeviceKeys
+                    const deviceId = deviceKey.deviceId
+                    const { algorithms, keys, signatures } = deviceKey
                     const deviceInfo: IDevice = {
                         algorithms: algorithms,
                         keys: keys,

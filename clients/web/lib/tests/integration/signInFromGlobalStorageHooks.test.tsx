@@ -192,7 +192,7 @@ describe('signInFromGlobalStorageHooks', () => {
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedOut))
         console.log('$$$$ stage 4 done')
     })
-    test('Stage 5 test logging back in after logout should have the same deviceId', async () => {
+    test('Stage 5 test logging back in after logout should have a different deviceId', async () => {
         console.log('$$$$ #5 test logging back in after logout should have the same deviceId')
         render(
             <ZionTestApp provider={provider}>
@@ -214,12 +214,16 @@ describe('signInFromGlobalStorageHooks', () => {
         // should not create an additional db
         expect(dbs.length).toEqual(1)
 
+        // todo 11/14/23: tie deviceId lifecycle to browser context for each user, which means
+        // the deviceId will not change on logout/login unless the browser context changes.
+        // https://linear.app/hnt-labs/issue/HNT-3647/devicekey-lifecycle-hardening
+
         // we already had a login, so we should have a deviceId
         // our first login deviceId should match the one from csb auth reponse
         await waitFor(() =>
-            expect(deviceId).toBe(
-                credentialStore.state.casablancaCredentialsMap[casablancaUrl].deviceId,
-            ),
+            expect(
+                deviceId == credentialStore.state.casablancaCredentialsMap[casablancaUrl].deviceId,
+            ).toEqual(false),
         )
     })
 }) // end describe
