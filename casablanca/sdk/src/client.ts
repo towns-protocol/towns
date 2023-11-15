@@ -232,7 +232,12 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         )
         this.streams.set(userStreamId, stream)
         stream.initialize(streamAndCookie, snapshot, miniblocks)
+    }
 
+    private async initUserJoinedStreams() {
+        assert(isDefined(this.userStreamId), 'userStreamId must be set')
+        const stream = this.stream(this.userStreamId)
+        assert(isDefined(stream), 'userStream must be set')
         stream.on('userJoinedStream', (s) => void this.onJoinedStream(s))
         stream.on('userInvitedToStream', (s) => void this.onInvitedToStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
@@ -292,6 +297,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     async initializeUser(): Promise<void> {
         this.logCall('initializeUser')
         assert(this.userStreamId === undefined, 'already initialized')
+        await this.initCrypto()
         const userStreamId = makeUserStreamId(this.userId)
         const userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
         const userSettingsStreamId = makeUserSettingsStreamId(this.userId)
@@ -309,8 +315,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         await this.initUserDeviceKeyStream(userDeviceKeyStreamId, userDeviceKeyStream)
         await this.initUserSettingsStream(userSettingsStreamId, userSettingResponse)
         await this.initUserStream(userStreamId, userStream)
-        await this.initCrypto()
         await this.uploadDeviceKeys()
+        await this.initUserJoinedStreams()
     }
 
     // special wrapper around rpcClient.getStream which catches NOT_FOUND errors but re-throws everything else
