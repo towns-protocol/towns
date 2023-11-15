@@ -62,9 +62,9 @@ if (env.VITE_DD_CLIENT_TOKEN) {
     datadogLogs.init({
         clientToken: env.VITE_DD_CLIENT_TOKEN,
         service: 'towns-webapp',
-        forwardConsoleLogs: ['error'],
+        forwardConsoleLogs: env.VITE_LOG_FORWARDING,
         forwardErrorsToLogs: true,
-        sessionSampleRate: 10,
+        sessionSampleRate: env.VITE_LOG_SAMPLING_RATE,
         telemetrySampleRate: 0,
         env: env.MODE,
     })

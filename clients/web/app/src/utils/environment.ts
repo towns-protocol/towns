@@ -20,6 +20,22 @@ const boolish = z
         return value === '1' || value === true || value === 'true' || value === 1
     })
 
+// checks if a string represents a valid integer, and transforms it into an integer
+const intString = z.string().transform((value) => {
+    const parsed = parseInt(value, 10)
+    if (isNaN(parsed)) {
+        throw new Error('Value cannot be parsed into an integer')
+    }
+    return parsed
+})
+
+// checks if a string represents an integer between min and max, and transforms it into an integer
+const intStringWithin = (min: number, max: number) => {
+    return intString.refine((value) => value >= min && value <= max, {
+        message: `Value must be between ${min} and ${max}`,
+    })
+}
+
 const envSchema = z.object({
     MODE: z.string(),
     DEV: boolish,
@@ -54,6 +70,22 @@ const envSchema = z.object({
 
     VITE_DD_CLIENT_TOKEN: z.string().optional(), // used for datadog client side monitoring
     VITE_PRIVY_ID: z.string(),
+
+    VITE_LOG_SAMPLING_RATE: intStringWithin(0, 100).optional(),
+    VITE_LOG_FORWARDING: z
+        .union([
+            z.literal('all'),
+            z.array(
+                z.union([
+                    z.literal('log'),
+                    z.literal('debug'),
+                    z.literal('info'),
+                    z.literal('warn'),
+                    z.literal('error'),
+                ]),
+            ),
+        ])
+        .optional(),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)
