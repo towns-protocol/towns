@@ -198,6 +198,18 @@ export async function* timeoutIterable<T>(
     }
 }
 
+export async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+    const controller = new AbortController()
+
+    const timeoutPromise = setTimeout(timeoutMs, 'timeout', { signal: controller.signal })
+
+    const result = await Promise.race([promise, timeoutPromise])
+    if (typeof result === 'string') {
+        throw new Error('promise timeout')
+    }
+    controller.abort()
+    return result
+}
 // For example, use like this:
 //
 //    joinPayload = lastEventFiltered(
