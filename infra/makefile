@@ -2,7 +2,6 @@ CMD                     ?= docker compose run --rm terraform
 NOCACHECMD              ?= docker compose build --no-cache terraform
 CI_AUTOAPPROVE          ?= false
 terraform_folder		= environments/${ENV}
-backend_folder			= backends
 terraform_workspace_name = $(ENV)
 
 override CI_AUTOAPPROVE := $(if $(filter true,$(CI_AUTOAPPROVE)),-auto-approve,)
@@ -49,17 +48,17 @@ shell: env check
 # This is clean setup after removing the .terraform folder and reinitialise the terraform
 clean: env check
 	$(CMD) /bin/bash -c 'rm -rf ${ENV}/.terraform'
-	$(CMD) terraform -chdir=${terraform_folder} init -backend-config=../../${backend_folder}/backend.conf --reconfigure
+	$(CMD) terraform -chdir=${terraform_folder} init -backend-config=../../backend.conf --reconfigure
 
 # This is to reinitialise terraform, including image rebuild from start
 clean_init: env check
 	$(NOCACHECMD)
 	$(CMD) /bin/bash -c 'rm -rf ${ENV}/.terraform'
-	$(CMD) terraform -chdir=${terraform_folder} init -backend-config=../../${backend_folder}/backend.conf --reconfigure
+	$(CMD) terraform -chdir=${terraform_folder} init -backend-config=../../backend.conf --reconfigure
 
 # This is for terraform init
 init: env check
-	$(CMD) terraform -chdir=${terraform_folder} init -backend-config=../../${backend_folder}/backend.conf --reconfigure
+	$(CMD) terraform -chdir=${terraform_folder} init -backend-config=../../backend.conf --reconfigure
 
 # This will format the whole terraform code
 fmt:
