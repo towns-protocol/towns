@@ -9037,15 +9037,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@whatsgood/nexus@npm:0.0.7":
-  version: 0.0.7
-  resolution: "@whatsgood/nexus@npm:0.0.7"
+"@whatsgood/nexus@npm:0.0.8":
+  version: 0.0.8
+  resolution: "@whatsgood/nexus@npm:0.0.8"
   dependencies:
     "@whatwg-node/server": ^0.9.16
     path-to-regexp: ^6.2.1
     vitest: 0.34.5
     zod: ^3.22.2
-  checksum: 396ede4311bf5d93f5d609c32394d18e4f3c4725868a7370d78e20bae798837a0462d3049ec3ea5db6f9ba69ff669241dd434cdeb005877167b48c06cc6ca27f
+  checksum: f2ab28832ecab559589536b0aab4f414036c9925f3beef2b0a2bb0fe8735a513307a5124bd2f160baa6124a7f819d8cdcc8ebc3ea5f66cb4e9ca47ce15300f42
   languageName: node
   linkType: hard
 
@@ -18895,7 +18895,7 @@ __metadata:
     "@types/jest": ^29.5.3
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^6.10.0
-    "@whatsgood/nexus": 0.0.7
+    "@whatsgood/nexus": 0.0.8
     eslint: ^8.53.0
     jest: ^29.6.2
     jest-environment-miniflare: ^2.14.0

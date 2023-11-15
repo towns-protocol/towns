@@ -17,7 +17,7 @@
 		"test": "jest"
 	},
 	"dependencies": {
-		"@whatsgood/nexus": "0.0.7"
+		"@whatsgood/nexus": "0.0.8"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20230710.1",

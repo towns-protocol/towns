@@ -5,18 +5,18 @@ import { Nexus } from '@whatsgood/nexus'
 // even if their keys are in the env.
 const server = Nexus.createServer({
 	providers: {
-		alchemy: {
-			disabled: true,
-		},
+		// alchemy: {
+		// 	disabled: true,
+		// },
 		infura: {
 			disabled: true,
 		},
 		ankr: {
 			disabled: true,
 		},
-		// base: {
-		// 	disabled: true,
-		// },
+		base: {
+			disabled: true,
+		},
 	},
 })
 
