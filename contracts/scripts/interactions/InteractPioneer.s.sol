@@ -12,7 +12,6 @@ import {PioneerFacet} from "contracts/src/tokens/pioneer/PioneerFacet.sol";
 contract InteractPioneer is Interaction {
   function __interact(uint256 deployerPK, address deployer) public override {
     address pioneer = getDeployment("pioneerToken");
-
     vm.broadcast(deployerPK);
     PioneerFacet(pioneer).mintTo(deployer);
   }
