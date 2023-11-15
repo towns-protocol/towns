@@ -268,7 +268,7 @@ jobs:
               with:
                   name: casablanca-node-log
                   path: |
-                      casablanca/node/logs/dev.log
+                      casablanca/node/run_files/single/logs/dev.log
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -415,7 +415,7 @@ jobs:
               with:
                   name: casablanca-node-log
                   path: |
-                      casablanca/node/logs/dev.log
+                      casablanca/node/run_files/single/logs/dev.log
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -567,7 +567,7 @@ jobs:
               with:
                   name: casablanca-node-log
                   path: |
-                      casablanca/node/logs/dev.log
+                      casablanca/node/run_files/single/logs/dev.log
 
             # If CI failed, we send a slack notification
             - name: Slack notification

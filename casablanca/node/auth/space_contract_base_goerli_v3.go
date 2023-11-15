@@ -84,9 +84,13 @@ func (za *SpaceContractBaseGoerliV3) IsEntitledToChannel(
 	user common.Address,
 	permission Permission,
 ) (bool, error) {
+	log := dlog.CtxLog(context.Background())
+
 	// get the town entitlements and check if user is entitled to the channel
 	town, err := za.getTown(spaceNetworkId)
+	log.Info("SpaceContractBaseGoerliV3::IsEntitledToChannel", "town", town.address, "err", err, "spaceNetworkId", spaceNetworkId, "channelNetworkId", channelNetworkId)
 	if err != nil || town == nil {
+		log.Error("IsEntitledToChannel za.getTown", "za", za, "err", err, "town", town, "spaceNetworkId", spaceNetworkId)
 		return false, err
 	}
 	// channel entitlement check
@@ -96,6 +100,10 @@ func (za *SpaceContractBaseGoerliV3) IsEntitledToChannel(
 		user,
 		permission.String(),
 	)
+	if err != nil {
+		log.Error("IsEntitledToChannel town.entitlements.IsEntitledToChannel", "town.entitlements", town.entitlements, "err", err, "isEntitled", isEntitled, "permission", permission.String(), "channelNetworkId", channelNetworkId, "user", user.Hex())
+		return false, err
+	}
 	return isEntitled, err
 }
 
@@ -133,10 +141,12 @@ func (za *SpaceContractBaseGoerliV3) getTown(networkId string) (*TownBaseGoerli,
 			return nil, err
 		}
 		entitlements, err := base_goerli_towns_entitlements.NewBaseGoerliTownsEntitlements(townAddress, za.ethClient)
+		log.Info("getTown::entitlements", "err", err)
 		if err != nil {
 			return nil, err
 		}
 		pausable, err := base_goerli_towns_pausable.NewBaseGoerliTownsPausable(townAddress, za.ethClient)
+		log.Info("getTown::pausable", "err", err)
 		if err != nil {
 			return nil, err
 		}
@@ -147,6 +157,8 @@ func (za *SpaceContractBaseGoerliV3) getTown(networkId string) (*TownBaseGoerli,
 			pausable:     pausable,
 			channels:     make(map[string]*base_goerli_towns_channels.BaseGoerliTownsChannels),
 		}
+	} else {
+		log.Info("getTown::town already cached", "netowrkId", networkId)
 	}
 	return za.towns[networkId], nil
 }
@@ -154,7 +166,7 @@ func (za *SpaceContractBaseGoerliV3) getTown(networkId string) (*TownBaseGoerli,
 func (za *SpaceContractBaseGoerliV3) getChannel(spaceNetworkId string, channelNetworkId string) (*base_goerli_towns_channels.BaseGoerliTownsChannels, error) {
 	log := dlog.CtxLog(context.Background())
 	town, err := za.getTown(spaceNetworkId)
-	log.Info("getChannel", "town", town, "err", err, "spaceNetworkId", spaceNetworkId, "channelNetworkId", channelNetworkId)
+	log.Info("getChannel", "town", town.address, "err", err, "spaceNetworkId", spaceNetworkId, "channelNetworkId", channelNetworkId)
 	if err != nil || town == nil {
 		return nil, err
 	}
@@ -166,6 +178,7 @@ func (za *SpaceContractBaseGoerliV3) getChannel(spaceNetworkId string, channelNe
 		if err != nil {
 			return nil, err
 		}
+		log.Info("getChannel success")
 		town.channels[channelNetworkId] = channel
 	}
 	return town.channels[channelNetworkId], nil
