@@ -1,6 +1,6 @@
 FROM python:3.11-alpine
 
-ENV AWSCLI_VERSION=2.10.0
+ENV AWSCLI_VERSION=2.13.35
 ENV TERRAFORM_VERSION=1.6.3
 
 # Update package list and install packages
