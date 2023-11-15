@@ -15,6 +15,8 @@ import { StreamRpcClientType, makeStreamRpcClient } from './makeStreamRpcClient'
 import assert from 'assert'
 import { setTimeout } from 'timers/promises'
 import _ from 'lodash'
+import { EntitlementsDelegate } from './riverDecryptionExtensions'
+import { MockEntitlementsDelegate } from './utils'
 
 const log = dlog('csb:test:util')
 
@@ -74,7 +76,11 @@ export const makeUserContextFromWallet = async (wallet: ethers.Wallet): Promise<
     }
 }
 
-export const makeTestClient = async (url?: string, context?: SignerContext): Promise<Client> => {
+export const makeTestClient = async (
+    url?: string,
+    context?: SignerContext,
+    entitlementsDelegate?: EntitlementsDelegate,
+): Promise<Client> => {
     if (url === undefined) {
         url = TEST_URL
     }
@@ -82,9 +88,14 @@ export const makeTestClient = async (url?: string, context?: SignerContext): Pro
         context = await makeRandomUserContext()
     }
     // create a new client with store(s)
-
     const cryptoStore = RiverDbManager.getCryptoDb(userIdFromAddress(context.creatorAddress))
-    return new Client(context, makeStreamRpcClient(url), cryptoStore, undefined)
+    return new Client(
+        context,
+        makeStreamRpcClient(url),
+        cryptoStore,
+        entitlementsDelegate ?? new MockEntitlementsDelegate(),
+        undefined,
+    )
 }
 
 class DonePromise {

@@ -1,5 +1,6 @@
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from './binary'
+import { Permission } from '@river/web3'
 
 export function unsafeProp<K extends keyof any | undefined>(prop: K): boolean {
     return prop === '__proto__' || prop === 'prototype' || prop === 'constructor'
@@ -40,4 +41,16 @@ export function isIConnectError(obj: unknown): obj is { code: number } {
 
 export function isTestEnv(): boolean {
     return Boolean(process.env.JEST_WORKER_ID)
+}
+
+export class MockEntitlementsDelegate {
+    async isEntitled(
+        _spaceId: string | undefined,
+        _channelId: string | undefined,
+        _user: string,
+        _permission: Permission,
+    ): Promise<boolean> {
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        return true
+    }
 }

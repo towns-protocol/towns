@@ -8,6 +8,7 @@ import {
     makeStreamRpcClient,
     takeKeccakFingerprintInHex,
     userIdFromAddress,
+    EntitlementsDelegate,
 } from '@river/sdk'
 import { EncryptedDeviceData, FullyReadMarker, ToDeviceMessage } from '@river/proto'
 import {
@@ -50,10 +51,6 @@ import { makeUniqueSpaceStreamId } from '@river/sdk'
 import { staticAssertNever } from '../utils/zion-utils'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
-import {
-    DecryptionExtensionDelegate,
-    RiverDecryptionExtension,
-} from './casablanca/RiverDecryptionExtensions'
 import { RoleIdentifier } from '../types/web3-types'
 import {
     createSpaceDapp,
@@ -81,13 +78,12 @@ import {
  * ensure correct protocol business logic
  */
 
-export class ZionClient implements DecryptionExtensionDelegate {
+export class ZionClient implements EntitlementsDelegate {
     public readonly opts: ZionOpts
     public readonly name: string
     public spaceDapp: ISpaceDapp
     public pioneerNFT: PioneerNFT
     protected casablancaClient?: CasablancaClient
-    public riverDecryptionExtension?: RiverDecryptionExtension
     private _signerContext?: SignerContext
     protected _eventHandlers?: ZionClientEventHandlers
     private pushNotificationClient?: PushNotificationClient
@@ -202,6 +198,7 @@ export class ZionClient implements DecryptionExtensionDelegate {
             context,
             rpcClient,
             cryptoStore,
+            this,
             this.opts.logNamespaceFilter,
         )
         this.casablancaClient.setMaxListeners(100)
@@ -213,7 +210,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
             await this.casablancaClient.createNewUser()
         }
         await this.casablancaClient.initCrypto()
-        this.riverDecryptionExtension = new RiverDecryptionExtension(this.casablancaClient, this)
         this._eventHandlers?.onRegister?.({
             userId: this.casablancaClient.userId,
         })
@@ -227,10 +223,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
      * stopCasablancaClient
      *************************************************/
     public async stopCasablancaClient() {
-        if (this.riverDecryptionExtension) {
-            this.riverDecryptionExtension?.stop()
-            this.riverDecryptionExtension = undefined
-        }
         if (this.casablancaClient) {
             this.log('Stopped casablanca client')
             await this.casablancaClient.stop()
@@ -1240,13 +1232,6 @@ export class ZionClient implements DecryptionExtensionDelegate {
         }
         const stream = this.casablancaClient.stream(roomId.networkId)
         return stream ? toZionRoomFromStream(stream, this.casablancaClient.userId) : undefined
-    }
-
-    /************************************************
-     * hasStream
-     ************************************************/
-    public hasStream(streamId: string): boolean {
-        return this.casablancaClient?.stream(streamId) !== undefined
     }
 
     /************************************************

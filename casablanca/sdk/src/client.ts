@@ -98,6 +98,7 @@ import { MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { Stream } from './stream'
 import { Code } from '@connectrpc/connect'
 import { isIConnectError } from './utils'
+import { EntitlementsDelegate, RiverDecryptionExtension } from './riverDecryptionExtensions'
 
 const enum AbortReason {
     SHUTDOWN = 'SHUTDOWN',
@@ -136,11 +137,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     private syncLoop?: Promise<unknown>
     private syncAbort?: AbortController
+    private entitlementsDelegate: EntitlementsDelegate
+    private decryptionExtensions?: RiverDecryptionExtension
 
     constructor(
         signerContext: SignerContext,
         rpcClient: StreamRpcClientType,
         cryptoStore: CryptoStore,
+        entitlementsDelegate: EntitlementsDelegate,
         logNamespaceFilter?: string,
         olmDeviceToImport?: IExportedDevice,
         pickleKey?: string,
@@ -158,6 +162,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 signerContext.signerPrivateKey().length === 64,
             'signerPrivateKey must be set',
         )
+        this.entitlementsDelegate = entitlementsDelegate
         this.signerContext = signerContext
         this.rpcClient = rpcClient
         if (olmDeviceToImport) {
@@ -199,6 +204,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     async stop(): Promise<void> {
         this.logCall('stop')
+        this.decryptionExtensions?.stop()
         await this.stopSync()
     }
 
@@ -1724,6 +1730,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.cryptoBackend = crypto
         // TODO: register event handlers once crypto module is successfully initiatilized
         this.logCall('initCrypto:: uploading device keys...')
+        this.decryptionExtensions = new RiverDecryptionExtension(this, this.entitlementsDelegate)
         return this.cryptoBackend.uploadDeviceKeys()
     }
 

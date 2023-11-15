@@ -1,22 +1,3 @@
-import {
-    Client as CasablancaClient,
-    RiverEventV2,
-    make_ToDevice_KeyResponse,
-    MEGOLM_ALGORITHM,
-    IEventOlmDecryptionResult,
-    isUserStreamId,
-    make_ChannelPayload_KeySolicitation,
-    make_ChannelPayload_Fulfillment,
-    bin_fromString,
-    isChannelStreamId,
-    isDMChannelStreamId,
-    isGDMChannelStreamId,
-    make_DmChannelPayload_KeySolicitation,
-    make_GdmChannelPayload_KeySolicitation,
-    make_DmChannelPayload_Fulfillment,
-    make_GdmChannelPayload_Fulfillment,
-    isTestEnv,
-} from '@river/sdk'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Permission } from '@river/web3'
 import {
@@ -30,9 +11,36 @@ import {
     StreamEvent,
 } from '@river/proto'
 import throttle from 'lodash/throttle'
-// eslint-disable-next-line lodash/import-scope
 import type { DebouncedFunc } from 'lodash'
-import { sleep } from '../../utils/zion-utils'
+import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId, isUserStreamId } from './id'
+import { MEGOLM_ALGORITHM } from './crypto/olmLib'
+import { RiverEventV2 } from './eventV2'
+import { Client } from './client'
+import { IEventOlmDecryptionResult } from './crypto/crypto'
+import {
+    make_ChannelPayload_KeySolicitation,
+    make_ChannelPayload_Fulfillment,
+    make_DmChannelPayload_KeySolicitation,
+    make_DmChannelPayload_Fulfillment,
+    make_GdmChannelPayload_KeySolicitation,
+    make_GdmChannelPayload_Fulfillment,
+    make_ToDevice_KeyResponse,
+} from './types'
+import { isTestEnv } from './utils'
+import { bin_fromString } from './binary'
+import { dlog, dlogError } from './dlog'
+
+const logLog = dlog('csb:rde:log', { defaultEnabled: isTestEnv() })
+const logInfo = dlog('csb:rde:info', { defaultEnabled: true })
+const logWarn = dlog('csb:rde:warn', { defaultEnabled: true })
+const logError = dlogError('csb:rde:error')
+
+const console = {
+    log: logLog,
+    info: logInfo,
+    warn: logWarn,
+    error: logError,
+}
 
 /// control the number of outgoing room key requests for events that failed to decrypt
 const MAX_CONCURRENT_ROOM_KEY_REQUESTS = 2
@@ -47,14 +55,13 @@ const MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS = 5000
 
 type MegolmSessionData = MegolmSession
 type OlmDecryptedMessage = OlmMessage
-export interface DecryptionExtensionDelegate {
+export interface EntitlementsDelegate {
     isEntitled(
         spaceId: string | undefined,
         channelId: string | undefined,
         user: string,
         permission: Permission,
     ): Promise<boolean>
-    hasStream(streamId: string): boolean
 }
 
 interface KeyResponseBase {
@@ -108,8 +115,8 @@ interface EventKeySolicitation {
 
 export class RiverDecryptionExtension {
     roomRecords: Record<string, RoomRecord> = {}
-    private client: CasablancaClient
-    private delegate: DecryptionExtensionDelegate
+    private client: Client
+    private delegate: EntitlementsDelegate
     private userId: string
     private accountAddress: string
     // todo: remove processor map related to to-device events HNT-2868
@@ -128,7 +135,7 @@ export class RiverDecryptionExtension {
     private throttledStartLookingForKeys: DebouncedFunc<() => void> | null = null
     private clientRunning = true
 
-    constructor(client: CasablancaClient, delegate: DecryptionExtensionDelegate) {
+    constructor(client: Client, delegate: EntitlementsDelegate) {
         this.client = client
         this.delegate = delegate
         this.userId = getOrThrow(this.client.userId, 'CDE::constructor - no userId')
@@ -488,7 +495,7 @@ export class RiverDecryptionExtension {
         if (!roomRecord) {
             throw new Error('CDE::_askStreamForKeys - room record not found')
         }
-        const hasStream = this.delegate.hasStream(streamId)
+        const hasStream = this.client.streams.has(streamId)
         if (!hasStream) {
             throw new Error('CDE::_askRoomForKeys - room not found')
         }
@@ -628,7 +635,7 @@ export class RiverDecryptionExtension {
             sessionId,
         })
 
-        const hasStream = this.delegate.hasStream(streamId)
+        const hasStream = this.client.streams.has(streamId)
         if (!hasStream) {
             throw new Error('CDE::_onKeySolicitation - room not found')
         }
@@ -707,7 +714,7 @@ export class RiverDecryptionExtension {
                 ? 100
                 : Math.random() * MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS
         console.log('CDE::onKeySolicitation waiting for', waitTime, 'ms')
-        await sleep(waitTime)
+        await new Promise((resolve) => setTimeout(resolve, waitTime))
 
         // Last minute check to make sure noone else has responded to the key solicitation
         const fulfilled = this.keySolicitationFulfilled(streamId, eventHash, sessionId)

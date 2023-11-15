@@ -8,6 +8,7 @@ import {
     RiverDbManager,
     makeOldTownsDelegateSig,
     makeStreamRpcClient,
+    MockEntitlementsDelegate,
 } from '@river/sdk'
 import { bin_fromHexString, SignerContext } from '@river/sdk'
 import { ethers } from 'ethers'
@@ -43,7 +44,8 @@ describe('casablanca', () => {
         log('new CasablancaClient', csurl)
         const rpcClient = makeStreamRpcClient(csurl)
         const cryptoStore = RiverDbManager.getCryptoDb('abc')
-        const client = new CasablancaClient(context, rpcClient, cryptoStore)
+        const entitlementsDelegate = new MockEntitlementsDelegate()
+        const client = new CasablancaClient(context, rpcClient, cryptoStore, entitlementsDelegate)
         await client.createNewUser()
         log('Finished', client)
     })
