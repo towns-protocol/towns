@@ -5,7 +5,9 @@
 		"outDir": "./dist" /* Specify an output folder for all emitted files. */,
 		"jsx": "react",
 		"noImplicitReturns": false,
-		"esModuleInterop": true
+		"esModuleInterop": true,
+		"moduleResolution": "NodeNext",
+		"module": "NodeNext"
 	},
 	"include": ["src/**/*"]
 }
