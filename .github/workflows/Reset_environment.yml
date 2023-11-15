@@ -5,7 +5,8 @@ env:
 on:
     schedule:
         # At 4:40 PM UTC (11:40 AM EST) - 20 minutes before bug bash
-        - cron: '40 16 * * *'
+        # Only run on weekdays
+        - cron: '40 16 * * 1-5'
     workflow_dispatch:
         inputs:
             environment:
