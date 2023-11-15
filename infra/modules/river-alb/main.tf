@@ -58,7 +58,7 @@ module "river_alb" {
   tags = merge(
     module.global_constants.tags,
     {
-      Service = "river-node-load-balancer"
+      Service  = "river-node-load-balancer"
       Instance = "${var.river_node_name}-load-balancer"
     }
   )

@@ -41,13 +41,13 @@ data "cloudflare_zone" "zone" {
 }
 
 locals {
-  reference_webapp_name = "test-beta"
+  reference_webapp_name     = "test-beta"
   reference_sample_app_name = "sample-app"
 
-  preview_app_cname_record_name = "${var.git_pr_number}.app-preview"
+  preview_app_cname_record_name  = "${var.git_pr_number}.app-preview"
   preview_app_cname_record_value = "${local.reference_webapp_name}-pr-${var.git_pr_number}.onrender.com"
 
-  preview_sample_app_cname_record_name = "${var.git_pr_number}.sample-app-preview"
+  preview_sample_app_cname_record_name  = "${var.git_pr_number}.sample-app-preview"
   preview_sample_app_cname_record_value = "${local.reference_sample_app_name}-pr-${var.git_pr_number}.onrender.com"
 }
 

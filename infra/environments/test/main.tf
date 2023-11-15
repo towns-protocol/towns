@@ -1,5 +1,5 @@
 provider "aws" {
-  region  = "us-east-1"
+  region = "us-east-1"
 }
 
 provider "datadog" {
@@ -18,7 +18,7 @@ terraform {
       version = "~> 5.13.1"
     }
     datadog = {
-      source = "DataDog/datadog"
+      source  = "DataDog/datadog"
       version = "3.32.0"
     }
     cloudflare = {
@@ -37,7 +37,7 @@ module "global_constants" {
 }
 
 locals {
-  river_node_name = "river-1-${module.global_constants.environment}"
+  river_node_name           = "river-1-${module.global_constants.environment}"
   river_node_subdomain_name = "river1-${module.global_constants.environment}"
 }
 
@@ -67,8 +67,8 @@ module "vpc" {
 module "river_alb" {
   source = "../../modules/river-alb"
 
-  subnets = module.vpc.public_subnets
-  vpc_id  = module.vpc.vpc_id
+  subnets         = module.vpc.public_subnets
+  vpc_id          = module.vpc.vpc_id
   river_node_name = local.river_node_name
 }
 
@@ -80,22 +80,21 @@ module "river_node" {
     module.river_alb
   ]
 
-  node_subnets                   = module.vpc.private_subnets
-  vpc_id                         = module.vpc.vpc_id
-  node_name                      = local.river_node_name
+  node_subnets = module.vpc.private_subnets
+  vpc_id       = module.vpc.vpc_id
+  node_name    = local.river_node_name
 
-  alb_security_group_id             = module.river_alb.security_group_id
-  alb_arn                           = module.river_alb.lb_arn
-  alb_dns_name                  = module.river_alb.lb_dns_name
-
+  alb_security_group_id = module.river_alb.security_group_id
+  alb_arn               = module.river_alb.lb_arn
+  alb_dns_name          = module.river_alb.lb_dns_name
 
   database_allowed_cidr_blocks = module.vpc.private_subnets_cidr_blocks
   database_subnets             = module.vpc.database_subnets
 
-  l1_chain_id = 84531
+  l1_chain_id                  = 84531
   push_notification_worker_url = "https://push-notification-worker-${module.global_constants.tags.Env}.towns.com"
 
-  subdomain_name               = local.river_node_subdomain_name
+  subdomain_name = local.river_node_subdomain_name
 }
 
 data "cloudflare_zone" "zone" {

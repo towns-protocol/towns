@@ -4,10 +4,10 @@ module "global_constants" {
 
 locals {
   tags = merge(
-    module.global_constants.tags, { 
-      Node_Name = "${var.river_node_name}", 
-      Service = "river-postgres-db"
-    })
+    module.global_constants.tags, {
+      Node_Name = "${var.river_node_name}",
+      Service   = "river-postgres-db"
+  })
 }
 
 resource "random_password" "rds_river_node_postgresql_password" {
@@ -21,7 +21,7 @@ resource "aws_secretsmanager_secret" "rds_river_node_credentials" {
 }
 
 resource "aws_secretsmanager_secret_version" "rds_river_node_credentials" {
-  secret_id     = aws_secretsmanager_secret.rds_river_node_credentials.id
+  secret_id = aws_secretsmanager_secret.rds_river_node_credentials.id
   lifecycle {
     ignore_changes = all
   }

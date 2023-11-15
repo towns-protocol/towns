@@ -10,14 +10,14 @@ locals {
   # TODO: cluster name should include the node name to prevent conflicts
   # with other nodes in the same environment
   ecs_cluster_name = "${module.global_constants.environment}-river-ecs-cluster"
-  service_name = "river-node"
+  service_name     = "river-node"
   tags = merge(
     module.global_constants.tags,
     {
       Service_Name = local.service_name,
       Node_Name    = var.node_name
-      Service = local.service_name
-      Instance = var.node_name
+      Service      = local.service_name
+      Instance     = var.node_name
     }
   )
 }
@@ -29,7 +29,7 @@ terraform {
       version = "~> 5.13.1"
     }
     datadog = {
-      source = "DataDog/datadog"
+      source  = "DataDog/datadog"
       version = "3.32.0"
     }
     cloudflare = {
@@ -47,7 +47,7 @@ resource "aws_ecs_cluster" "river_ecs_cluster" {
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "${var.node_name}-ecsTaskExecutionRole"
+  name                = "${var.node_name}-ecsTaskExecutionRole"
   managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
@@ -69,10 +69,10 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 module "river_node_db" {
   source = "../../modules/river-node-db"
 
-  database_subnets    = var.database_subnets
-  allowed_cidr_blocks = var.database_allowed_cidr_blocks
-  vpc_id              = var.vpc_id
-  river_node_name     = var.node_name
+  database_subnets           = var.database_subnets
+  allowed_cidr_blocks        = var.database_allowed_cidr_blocks
+  vpc_id                     = var.vpc_id
+  river_node_name            = var.node_name
   ecs_task_execution_role_id = aws_iam_role.ecs_task_execution_role.id
 }
 
@@ -300,6 +300,7 @@ resource "aws_lb_target_group" "blue" {
   target_type = "ip"
   vpc_id      = var.vpc_id
 
+
   health_check {
     path                = "/info"
     interval            = 30
@@ -374,7 +375,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
     }]
 
     repositoryCredentials = {
-        credentialsParameter = data.aws_secretsmanager_secret.hnt_dockerhub_access_key.arn
+      credentialsParameter = data.aws_secretsmanager_secret.hnt_dockerhub_access_key.arn
     },
 
     secrets = [
@@ -387,11 +388,11 @@ resource "aws_ecs_task_definition" "river-fargate" {
         valueFrom = "${aws_secretsmanager_secret.river_node_wallet_credentials.arn}:walletPathPrivateKey::"
       },
       {
-        name = "CHAIN__NETWORKURL"
+        name      = "CHAIN__NETWORKURL"
         valueFrom = aws_secretsmanager_secret.river_node_l1_network_url.arn
       },
       {
-        name = "PUSHNOTIFICATION__AUTHTOKEN",
+        name      = "PUSHNOTIFICATION__AUTHTOKEN",
         valueFrom = aws_secretsmanager_secret.river_node_push_notification_auth_token.arn
       },
     ]
@@ -406,47 +407,47 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "false"
       },
       {
-        name = "STORAGE_TYPE",
+        name  = "STORAGE_TYPE",
         value = "postgres"
       },
       {
-        name = "SKIP_GENKEY",
+        name  = "SKIP_GENKEY",
         value = "true"
       },
       {
-        name = "LOG__FORMAT",
+        name  = "LOG__FORMAT",
         value = "json"
       },
       {
-        name = "LOG__LEVEL",
+        name  = "LOG__LEVEL",
         value = "info"
       },
       {
-        name = "LOG__NOCOLOR",
+        name  = "LOG__NOCOLOR",
         value = "true"
       },
       {
-        name = "PUSHNOTIFICATION__URL",
+        name  = "PUSHNOTIFICATION__URL",
         value = var.push_notification_worker_url
       },
       {
-        name = "DD_SERVICE",
+        name  = "DD_SERVICE",
         value = local.service_name
       },
       {
-        name = "DD_ENV"
+        name  = "DD_ENV"
         value = module.global_constants.tags.Env
       },
       {
-        name = "DD_TAGS",
+        name  = "DD_TAGS",
         value = "instance:${var.node_name}"
       },
       {
-        name = "PERFORMANCETRACKING__PROFILINGENABLED",
+        name  = "PERFORMANCETRACKING__PROFILINGENABLED",
         value = "true"
       },
       {
-        name = "PERFORMANCETRACKING__TRACINGENABLED",
+        name  = "PERFORMANCETRACKING__TRACINGENABLED",
         value = "true"
       },
     ]
@@ -458,45 +459,45 @@ resource "aws_ecs_task_definition" "river-fargate" {
         "awslogs-stream-prefix" = var.node_name
       }
     }
-  },
-  {
-    name      = "dd-agent"
-    image     = "docker.io/datadog/agent:7"
-    essential = true
-    portMappings = [{
-        "containerPort": 8126,
-        "hostPort": 8126,
-        "protocol": "tcp"
-    }]
+    },
+    {
+      name      = "dd-agent"
+      image     = "docker.io/datadog/agent:7"
+      essential = true
+      portMappings = [{
+        "containerPort" : 8126,
+        "hostPort" : 8126,
+        "protocol" : "tcp"
+      }]
 
-    secrets = [{
-      name      = "DD_API_KEY"
-      valueFrom = aws_secretsmanager_secret.dd_agent_api_key.arn
-    }]
+      secrets = [{
+        name      = "DD_API_KEY"
+        valueFrom = aws_secretsmanager_secret.dd_agent_api_key.arn
+      }]
 
-    environment = [
-      {
-        name = "DD_SITE",
-        value = "datadoghq.com"
-      },
-      {
-        name = "ECS_FARGATE",
-        value = "true"
-      },
-      {
-        name = "DD_APM_ENABLED",
-        value = "true"
+      environment = [
+        {
+          name  = "DD_SITE",
+          value = "datadoghq.com"
+        },
+        {
+          name  = "ECS_FARGATE",
+          value = "true"
+        },
+        {
+          name  = "DD_APM_ENABLED",
+          value = "true"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.dd_agent_log_group.name
+          "awslogs-region"        = "us-east-1"
+          "awslogs-stream-prefix" = "dd-agent-${var.node_name}"
+        }
       }
-    ]
-
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.dd_agent_log_group.name
-        "awslogs-region"        = "us-east-1"
-        "awslogs-stream-prefix" = "dd-agent-${var.node_name}"
-      }
-    }
   }])
 
   tags = module.global_constants.tags
@@ -562,7 +563,7 @@ resource "aws_ecs_service" "river-ecs-service" {
 
   tags = merge(module.global_constants.tags, {
     Instance = var.node_name
-    Service = "river-node"
+    Service  = "river-node"
   })
 }
 

@@ -8,5 +8,5 @@ variable "datadog_app_key" {
 
 variable "cloudflare_terraform_api_token" {
   description = "Cloudflare API token"
-  type = string
+  type        = string
 }

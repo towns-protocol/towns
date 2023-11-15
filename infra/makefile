@@ -61,8 +61,11 @@ init: env check
 	$(CMD) terraform -chdir=${terraform_folder} init -backend-config=../../backend.conf --reconfigure
 
 # This will format the whole terraform code
-fmt:
+fmt: env
 	$(CMD) terraform fmt --recursive
+
+lint: env
+	$(CMD) terraform fmt --recursive --check
 
 # This will validate the terraform scripts
 validate: env

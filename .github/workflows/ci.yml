@@ -102,6 +102,10 @@ jobs:
             - name: Lint
               run: yarn lint
 
+            - name: Terraform Lint
+              run: make lint
+              working-directory: ./infra
+
             - name: Build town types
               run: ./scripts/build-town-types.sh localhost --frozen
 
