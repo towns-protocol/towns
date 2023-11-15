@@ -30,34 +30,24 @@ variable "alb_security_group_id" {
   type        = string
 }
 
-variable "river_node_blue_target_group" {
-  description = "Name and arn of the blue target group"
-  type       = map(string)
+variable "alb_arn" {
+  description = "The arn of the load balancer"
+  type        = string
 }
 
-variable "river_node_green_target_group" {
-  description = "Name and arn of the green target group"
-  type      = map(string)
-}
-
-variable "river_https_listener_arn" {
-  description = "The arn for the https listener"
+variable "alb_dns_name" {
+  description = "Loadbalancer DNS name for river node"
   type        = string
 }
 
 variable "l1_chain_id" {
   description = "The chain id of the L1 chain"
-  type       = string
+  type        = string
 }
 
 variable "push_notification_worker_url" {
   description = "The url of the push notification worker"
   type        = string
-}
-
-variable "lb_dns_name" {
-  description = "Loadbalancer DNS name for river node"
-  type = string
 }
 
 variable "subdomain_name" {

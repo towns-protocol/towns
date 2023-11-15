@@ -2,10 +2,6 @@ module "global_constants" {
   source = "../global-constants"
 }
 
-data "aws_acm_certificate" "primary_hosted_zone_cert" {
-  domain = module.global_constants.primary_hosted_zone_name
-}
-
 data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
@@ -58,51 +54,8 @@ module "river_alb" {
     }
   ]
 
-  https_listeners = [
-    {
-      port               = 443
-      protocol           = "HTTPS"
-      certificate_arn    = data.aws_acm_certificate.primary_hosted_zone_cert.arn
-      action_type        = "forward"
-      target_group_index = 0
-    },
 
-  ]
-
-  target_groups = [
-    {
-      name                 = "${module.global_constants.environment}-river-node-blue"
-      backend_protocol     = "HTTP"
-      backend_port         = 80
-      target_type          = "ip"
-      deregistration_delay = 30
-      health_check = {
-        # TODO: establish a healthcheck path
-        path                = "/info"
-        interval            = 30
-        timeout             = 6
-        healthy_threshold   = 2
-        unhealthy_threshold = 2
-      }
-    },
-    {
-      name                 = "${module.global_constants.environment}-river-node-green"
-      backend_protocol     = "HTTP"
-      backend_port         = 80
-      target_type          = "ip"
-      deregistration_delay = 30
-      health_check = {
-        # TODO: establish a healthcheck path
-        path                = "/info"
-        interval            = 30
-        timeout             = 6
-        healthy_threshold   = 2
-        unhealthy_threshold = 2
-      }
-    },
-  ]
-
-    tags = merge(
+  tags = merge(
     module.global_constants.tags,
     {
       Service = "river-node-load-balancer"

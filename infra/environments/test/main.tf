@@ -85,17 +85,15 @@ module "river_node" {
   node_name                      = local.river_node_name
 
   alb_security_group_id             = module.river_alb.security_group_id
-  river_https_listener_arn          = module.river_alb.river_https_listener_arn
+  alb_arn                           = module.river_alb.lb_arn
+  alb_dns_name                  = module.river_alb.lb_dns_name
 
-  river_node_blue_target_group  = module.river_alb.river_node_blue_target_group
-  river_node_green_target_group = module.river_alb.river_node_green_target_group
 
   database_allowed_cidr_blocks = module.vpc.private_subnets_cidr_blocks
   database_subnets             = module.vpc.database_subnets
 
   l1_chain_id = 84531
   push_notification_worker_url = "https://push-notification-worker-${module.global_constants.tags.Env}.towns.com"
-  lb_dns_name                  = module.river_alb.river_node_lb_dns_name
 
   subdomain_name               = local.river_node_subdomain_name
 }

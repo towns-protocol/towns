@@ -289,6 +289,63 @@ resource "aws_iam_role_policy" "hnt_dockerhub_access_key" {
   EOF
 }
 
+data "aws_acm_certificate" "primary_hosted_zone_cert" {
+  domain = module.global_constants.primary_hosted_zone_name
+}
+
+resource "aws_lb_target_group" "blue" {
+  name        = "${var.node_name}-blue"
+  protocol    = "HTTP"
+  port        = 80
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    path                = "/info"
+    interval            = 30
+    timeout             = 6
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+  tags = local.tags
+}
+
+resource "aws_lb_target_group" "green" {
+  name        = "${var.node_name}-green"
+  protocol    = "HTTP"
+  port        = 80
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    path                = "/info"
+    interval            = 30
+    timeout             = 6
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+  tags = local.tags
+}
+
+resource "aws_lb_listener" "https_listener" {
+  load_balancer_arn = var.alb_arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = data.aws_acm_certificate.primary_hosted_zone_cert.arn
+
+  lifecycle {
+    ignore_changes = [default_action]
+  }
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.blue.arn
+  }
+}
+
 resource "aws_ecs_task_definition" "river-fargate" {
   family = "${module.global_constants.environment}-river-fargate"
 
@@ -492,7 +549,7 @@ resource "aws_ecs_service" "river-ecs-service" {
   }
 
   load_balancer {
-    target_group_arn = var.river_node_blue_target_group.arn
+    target_group_arn = aws_lb_target_group.blue.arn
     container_name   = "river-node"
     container_port   = 5157
   }
@@ -550,15 +607,15 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   load_balancer_info {
     target_group_pair_info {
       target_group {
-        name = var.river_node_blue_target_group.name
+        name = aws_lb_target_group.blue.name
       }
 
       target_group {
-        name = var.river_node_green_target_group.name
+        name = aws_lb_target_group.green.name
       }
 
       prod_traffic_route {
-        listener_arns = [var.river_https_listener_arn]
+        listener_arns = [aws_lb_listener.https_listener.arn]
       }
     }
   }
@@ -613,7 +670,10 @@ data "cloudflare_zone" "zone" {
 resource "cloudflare_record" "alb_dns" {
   zone_id = data.cloudflare_zone.zone.id
   name    = var.subdomain_name
-  value   = var.lb_dns_name
+  value   = var.alb_dns_name
   type    = "CNAME"
   ttl     = 60
+  lifecycle {
+    ignore_changes = all
+  }
 }
