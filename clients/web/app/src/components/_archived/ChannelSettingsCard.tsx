@@ -8,7 +8,7 @@ import { Box, Card } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useStore } from 'store/store'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
-import { MenuItem } from './MenuItem'
+import { MenuItem } from '../Cards/MenuItem'
 
 type Props = {
     spaceId: RoomIdentifier

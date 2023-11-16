@@ -3,11 +3,9 @@ import { useParams } from 'react-router'
 import { Channel, SpaceData, useChannelNotificationCounts } from 'use-zion-client'
 import { useEvent } from 'react-use-event-hook'
 import { PATHS } from 'routes'
-import { Badge, ButtonText, CardOpener, Icon, Stack } from '@ui'
-import { ChannelSettingsCard } from '@components/Cards/ChannelSettingsCard'
+import { Badge, ButtonText, Icon, Stack } from '@ui'
 import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettingsModal'
 import { useMuteSettings } from 'api/lib/notificationSettings'
-import { useDevice } from 'hooks/useDevice'
 import { NavItem } from './_NavItem'
 
 type Props = {
@@ -27,10 +25,6 @@ export const ChannelNavItem = (props: Props) => {
     const link = `/${PATHS.SPACES}/${space.id.slug}/channels/${channel.id.slug}/`
     const isHighlight = channel.id.slug === channelSlug
 
-    const onShowChannelSettingsPopup = useEvent(() => {
-        setShowChannelSettings(true)
-    })
-
     const onHideChannelSettingsPopup = useEvent(() => {
         setShowChannelSettings(false)
     })
@@ -46,7 +40,6 @@ export const ChannelNavItem = (props: Props) => {
         channelId: channel.id.networkId,
     })
     const isMuted = channelIsMuted || spaceIsMuted
-    const { isTouch } = useDevice()
     const showUnread = notis.isUnread && !isMuted
 
     return (
@@ -59,55 +52,26 @@ export const ChannelNavItem = (props: Props) => {
                     onUpdatedChannel={onUpdatedChannel}
                 />
             )}
-            <CardOpener
-                trigger="contextmenu"
-                placement="pointer"
-                render={
-                    <ChannelSettingsCard
-                        spaceId={space.id}
-                        channelId={channel.id}
-                        channelName={channel.label}
-                        onShowChannelSettingsPopup={onShowChannelSettingsPopup}
-                    />
-                }
-                layoutId={id}
-            >
-                {({ triggerProps }) => {
-                    const props = isTouch ? {} : triggerProps
-                    return (
-                        <NavItem
-                            to={link}
-                            id={id}
-                            {...props}
-                            exact={false}
-                            paddingY="xxs"
-                            minHeight="x5"
-                        >
-                            <Icon
-                                type="tag"
-                                padding="line"
-                                background="level2"
-                                color={showUnread ? 'default' : 'gray2'}
-                                size="square_lg"
-                            />
-                            <ButtonText
-                                strong={showUnread}
-                                color={showUnread ? 'default' : isHighlight ? 'default' : undefined}
-                            >
-                                {channel.label}
-                            </ButtonText>
-                            <Stack horizontal grow gap justifyContent="end">
-                                {isMuted && (
-                                    <Icon size="square_xs" type="muteActive" color="gray2" />
-                                )}
-                                {!!mentionCount && (
-                                    <Badge value={mentionCount}>{mentionCount}</Badge>
-                                )}
-                            </Stack>
-                        </NavItem>
-                    )
-                }}
-            </CardOpener>
+
+            <NavItem to={link} id={id} exact={false} paddingY="xxs" minHeight="x5">
+                <Icon
+                    type="tag"
+                    padding="line"
+                    background="level2"
+                    color={showUnread ? 'default' : 'gray2'}
+                    size="square_lg"
+                />
+                <ButtonText
+                    strong={showUnread}
+                    color={showUnread ? 'default' : isHighlight ? 'default' : undefined}
+                >
+                    {channel.label}
+                </ButtonText>
+                <Stack horizontal grow gap justifyContent="end">
+                    {isMuted && <Icon size="square_xs" type="muteActive" color="gray2" />}
+                    {!!mentionCount && <Badge value={mentionCount}>{mentionCount}</Badge>}
+                </Stack>
+            </NavItem>
         </>
     )
 }
