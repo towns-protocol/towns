@@ -73,18 +73,22 @@ export const MessageTimeline = (props: Props) => {
 
     const events = useMemo(() => {
         // remove unneeded events
-        const filtered = (timelineContext?.events ?? [])
+        let filtered = (timelineContext?.events ?? [])
             // strip out unsolicited events (e.g. key solicitations)
             .filter((e) => e.content?.kind && !unhandledEventKinds.includes(e.content?.kind))
-            // strip out fresh encrypted events. Optimistically we want to show
-            // the decrypted content when ready. However, the bar will appear if
-            // it takes to long.
-            .filter(
-                (e) =>
-                    e.content?.kind !== ZTEvent.RoomMessageEncrypted ||
-                    e.createdAtEpocMs < Date.now() - SECOND_MS * 30,
-            )
 
+        // strip out fresh encrypted events. Optimistically we want to show
+        // the decrypted content when ready. However, the bar will appear if
+        // it takes to long or if newer messages are getting decrypted
+        const lastDecryptedIndex = filtered.findLastIndex(
+            (e) => e.content?.kind === ZTEvent.RoomMessage,
+        )
+        filtered = filtered.filter(
+            (e, index) =>
+                e.content?.kind !== ZTEvent.RoomMessageEncrypted ||
+                index < lastDecryptedIndex ||
+                e.createdAtEpocMs < Date.now() - SECOND_MS * 10,
+        )
         // remove duplicates - NOTE: this shouldn't happen - but it does
         const result = uniqBy(filtered ?? emptyTimeline, (t) => t.eventId)
 
