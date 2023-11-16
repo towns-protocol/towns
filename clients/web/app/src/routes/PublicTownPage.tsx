@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useMyProfile } from 'use-zion-client'
 import { isAddress } from 'viem'
+import { Link } from 'react-router-dom'
 import { LoginComponent } from '@components/Login/LoginComponent'
 import { PageLogo } from '@components/Logo/Logo'
 import { Spinner } from '@components/Spinner'
@@ -37,6 +38,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { NoFundsModal } from '@components/VisualViewportContext/NoFundsModal'
 import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { useDevice } from 'hooks/useDevice'
+import { FadeInBox } from '@components/Transitions'
 
 const log = debug('app:public-town')
 log.enabled = true
@@ -144,9 +146,8 @@ export const PublicTownPage = () => {
             <Heading level={4}>Fetching town data</Heading>
         </MessageBox>
     ) : (
-        <MessageBox color="error">
-            <Icon type="alert" />
-            <Heading level={4}>Town not found</Heading>
+        <MessageBox>
+            <TownNotFoundBox />
         </MessageBox>
     )
 }
@@ -296,3 +297,20 @@ const LoggedUserMenu = () => {
         </Card>
     )
 }
+
+export const TownNotFoundBox = () => (
+    <FadeInBox centerContent gap="lg" maxWidth="400">
+        <Box padding background="error" borderRadius="sm">
+            <Icon color="default" type="alert" size="square_md" />
+        </Box>
+        <Heading level={3}>Town not found</Heading>
+        <Paragraph color="gray2" textAlign="center">
+            The town is currently unreachable, please try again later.
+        </Paragraph>
+        <Box>
+            <Link to="/">
+                <Button size="button_md">Back to login</Button>
+            </Link>
+        </Box>
+    </FadeInBox>
+)
