@@ -45,11 +45,6 @@ jobs:
             - name: Build
               run: yarn build
 
-            - name: Sentry
-              run: make -C ./scripts setup_release
-              env:
-                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-
             # If CI failed, we send a slack notification
             - name: Slack notification
               if: failure()
