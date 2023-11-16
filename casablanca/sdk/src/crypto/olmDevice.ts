@@ -546,7 +546,7 @@ export class OlmDevice {
         sessionId: string,
         sessionKey: string,
         keysClaimed: Record<string, string>,
-        exportFormat: boolean,
+        _exportFormat: boolean,
         extraSessionData: OlmGroupSessionExtraData = {},
     ): Promise<void> {
         const { session: existingSession, data: existingSessionData } =
@@ -554,9 +554,10 @@ export class OlmDevice {
 
         const session = new global.Olm.InboundGroupSession()
         try {
-            if (exportFormat) {
+            log(`Adding megolm session ${streamId}|${sessionId}, session Key ${sessionKey}`)
+            try {
                 session.import_session(sessionKey)
-            } else {
+            } catch {
                 session.create(sessionKey)
             }
             if (sessionId != session.session_id()) {

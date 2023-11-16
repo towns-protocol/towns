@@ -392,8 +392,12 @@ export class RiverDecryptionExtension {
                 })
             } catch (e) {
                 console.error(
-                    `CDE::onToDeviceEvent error decrypting to-device event for device key ${event.deviceKey}, 
-                    current device key ${this.client.olmDevice.deviceCurve25519Key}`,
+                    `CDE::onToDeviceEvent error decrypting to-device event for device key ${
+                        event.deviceKey
+                    },
+                    current device key ${
+                        this.client.olmDevice.deviceCurve25519Key
+                    }, ciphertext: ${JSON.stringify(event.message)}`,
                     e,
                 )
                 return

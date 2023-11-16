@@ -1358,48 +1358,33 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
         const streamId: string = makeUserStreamId(userId)
         const miniblockHash = await this.getStreamLastMiniblockHash(streamId)
-        // retrieve all device keys of a user
-        const deviceInfoMap = await this.getStoredDevicesForUser(userId)
         // encrypt event contents and encode ciphertext
         const envelope = event
-        const deviceIds = Array.from(deviceInfoMap.keys()).filter(
-            (deviceId) => deviceId !== this.deviceId,
-        )
-
-        const promiseArray = deviceIds.map((userId) => {
-            const devicesForUser = deviceInfoMap.get(userId)
-            if (!devicesForUser) {
-                this.logCall(`no devices for user ${userId}`)
+        const targetDeviceKeys = Object.keys(event.ciphertext)
+        const promiseArray = targetDeviceKeys.map((deviceKey) => {
+            if (deviceKey == senderKey) {
+                this.logCall('dont send to own device')
                 return
             }
-            Array.from(devicesForUser.keys()).map((deviceId) => {
-                const curve25519deviceKeyArr = DeviceInfo.getCurve25519KeyFromUserId(
-                    userId,
-                    deviceInfoMap,
-                    false,
-                    deviceId,
-                )
-                if (!curve25519deviceKeyArr || curve25519deviceKeyArr?.length == 0) {
-                    this.logCall(`no device key for user ${userId}`)
-                    return
-                }
-                this.logCall(`toDevice ${deviceId}, streamId ${streamId}, userId ${userId}`)
-                return this.makeEventWithHashAndAddToStream(
-                    streamId,
-                    make_UserPayload_ToDevice({
-                        // key request or response
-                        op,
-                        // todo: this should be encrypted with olm session
-                        message: envelope,
-                        // deviceKey is curve25519 id key of recipient device
-                        deviceKey: curve25519deviceKeyArr[0].key,
-                        // senderKey is curve25519 id key of sender device
-                        senderKey: senderKey ?? '',
-                    }),
-                    miniblockHash,
-                )
-            })
+            this.logCall(
+                `sendToDevicesMessage:: toDevice streamId ${streamId}, userId ${userId}, devices ${deviceKey}`,
+            )
+            return this.makeEventWithHashAndAddToStream(
+                streamId,
+                make_UserPayload_ToDevice({
+                    // key request or response
+                    op,
+                    // todo: this should be encrypted with olm session
+                    message: envelope,
+                    // deviceKey is curve25519 id key of recipient device
+                    deviceKey,
+                    // senderKey is curve25519 id key of sender device
+                    senderKey: senderKey ?? '',
+                }),
+                miniblockHash,
+            )
         })
+
         return Promise.all(promiseArray.flat())
     }
 
@@ -1438,7 +1423,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     this.logCall(`no device key for user ${userId}`)
                     return
                 }
-                this.logCall(`toDevice ${deviceId}, streamId ${streamId}, userId ${userId}`)
+                this.logCall(
+                    `encryptAndSendToDevicesMessage:: toDevice ${deviceId}, streamId ${streamId}, userId ${userId}`,
+                )
                 return this.makeEventWithHashAndAddToStream(
                     streamId,
                     make_UserPayload_ToDevice({
@@ -1479,6 +1466,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         // of a user
         // todo: this will change when we support multiple devices per user
         // see: https://linear.app/hnt-labs/issue/HNT-1839/multi-device-support-in-todevice-transport
+
+        // todo: HNT-3661 fix this, we shouldn't be choosing any index
         const deviceKey = deviceKeyArr[0]
         this.logCall(`toDevice ${deviceKey.deviceId}, streamId ${streamId}, userId ${userId}`)
         // encrypt event contents and encode ciphertext
@@ -1519,6 +1508,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         // of a user
         // todo: this will change when we support multiple devices per user
         // see: https://linear.app/hnt-labs/issue/HNT-1839/multi-device-support-in-todevice-transport
+
+        // todo: HNT-3661 fix this, we shouldn't be choosing any index
         const deviceKey = deviceKeyArr[0]
         this.logCall(`toDevice ${deviceKey.deviceId}, streamId ${streamId}, userId ${userId}`)
         // encrypt event contents and encode ciphertext
