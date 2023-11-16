@@ -59,10 +59,10 @@ func InitLogFromConfig(c *config.LogConfig) {
 		}
 
 		if c.Format == "json" {
-			handler = dlog.NewPrettyJSONHandler(os.Stderr, prettyHandlerOptions)
+			handler = dlog.NewPrettyJSONHandler(dlog.DefaultLogOut, prettyHandlerOptions)
 		} else {
 			// c.Format == "text"
-			handler = dlog.NewPrettyTextHandler(os.Stderr, prettyHandlerOptions)
+			handler = dlog.NewPrettyTextHandler(dlog.DefaultLogOut, prettyHandlerOptions)
 		}
 		slogHandlers = append(
 			slogHandlers,
