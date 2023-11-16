@@ -6046,16 +6046,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@privy-io/wagmi-connector@npm:^0.1.5":
-  version: 0.1.5
-  resolution: "@privy-io/wagmi-connector@npm:0.1.5"
+"@privy-io/wagmi-connector@npm:0.1.7-beta.1":
+  version: 0.1.7-beta.1
+  resolution: "@privy-io/wagmi-connector@npm:0.1.7-beta.1"
   peerDependencies:
     "@privy-io/react-auth": ^1.33.0
     react: ^18
     react-dom: ^18
     viem: ">=0.3.35"
     wagmi: ">=1 <2"
-  checksum: 953b32dc013ef6b3300ed2f879fd6d9223449d339e9a132e9c29e8602f77755067b361420b8d8c244a6812462d9e7ec05eae35c9e693b49e5316fbce6b0893bf
+  checksum: 2a3922bfa68828e970273e4854dab237eb82ab947722b357981f9ce702367ffc7717642d0a28c7862388484faac8a704179ddf7849dbd37974ead897ddd510e9
   languageName: node
   linkType: hard
 
@@ -7011,6 +7011,29 @@ __metadata:
 "@towns/generated@workspace:^, @towns/generated@workspace:packages/generated":
   version: 0.0.0-use.local
   resolution: "@towns/generated@workspace:packages/generated"
+  languageName: unknown
+  linkType: soft
+
+"@towns/privy@workspace:^, @towns/privy@workspace:clients/web/privy":
+  version: 0.0.0-use.local
+  resolution: "@towns/privy@workspace:clients/web/privy"
+  dependencies:
+    "@harmony/prettier-config": "workspace:^"
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^6.10.0
+    eslint: ^8.53.0
+    eslint-plugin-import: ^2.27.5
+    eslint-plugin-react: ^7.32.2
+    typescript: ^5.1.6
+  peerDependencies:
+    "@privy-io/react-auth": ^1.44.0
+    "@privy-io/wagmi-connector": 0.1.7-beta.1
+    "@types/react": ^18.2.11
+    "@types/react-dom": ^18.2.4
+    react: ^18.2.0
+    react-dom: ^18.2.0
+    use-zion-client: "workspace:^"
+    wagmi: ^1.3.10
   languageName: unknown
   linkType: soft
 
@@ -14846,7 +14869,7 @@ __metadata:
     "@lexical/utils": ^0.12.0
     "@ngneat/falso": ^6.1.0
     "@privy-io/react-auth": ^1.44.0
-    "@privy-io/wagmi-connector": ^0.1.5
+    "@privy-io/wagmi-connector": 0.1.7-beta.1
     "@react-hook/resize-observer": ^1.2.6
     "@river/proto": "workspace:^"
     "@river/web3": "workspace:^"
@@ -14856,6 +14879,7 @@ __metadata:
     "@testing-library/react": ^14.0.0
     "@testing-library/user-event": ^14.4.3
     "@towns/generated": "workspace:^"
+    "@towns/privy": "workspace:^"
     "@types/emoji-mart": ^3.0.9
     "@types/react": ^18.2.11
     "@types/react-dom": ^18.2.4
@@ -21344,10 +21368,11 @@ __metadata:
     "@mui/material": ^5.10.10
     "@mui/styles": ^5.10.10
     "@privy-io/react-auth": ^1.44.0
-    "@privy-io/wagmi-connector": ^0.1.5
+    "@privy-io/wagmi-connector": 0.1.7-beta.1
     "@river/web3": "workspace:^"
     "@rollup/plugin-inject": ^5.0.3
     "@towns/generated": "workspace:^"
+    "@towns/privy": "workspace:^"
     "@types/node": ^20.5.0
     "@types/react": ^18.2.11
     "@types/react-dom": ^18.2.4

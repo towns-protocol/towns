@@ -12,9 +12,9 @@ import { toast } from 'react-hot-toast/headless'
 
 import { keccak256 } from 'ethers/lib/utils.js'
 import { useLogin, usePrivy } from '@privy-io/react-auth'
+import { useEmbeddedWallet } from '@towns/privy'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
 import { useAnalytics } from './useAnalytics'
-import { useEmbeddedWallet } from './useEmbeddedWallet'
 
 export const registerWalletMsgToSign = `Click to register and accept the Towns Terms of Service.`
 

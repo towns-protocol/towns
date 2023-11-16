@@ -6,7 +6,7 @@ import { Helmet } from 'react-helmet'
 
 import { usePrivy } from '@privy-io/react-auth'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
-import { SetSignerFromWalletClient } from 'SetSignerFromWalletClient'
+import { SetSignerFromWalletClient } from '@towns/privy'
 import { Notifications } from '@components/Notifications/Notifications'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
@@ -25,6 +25,7 @@ import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { AuthContextProvider, useIsConnected } from 'hooks/useAuth'
 import { useWatchForPrivyRequestErrors } from 'hooks/useWatchForPrivyRequestErrors'
+import { BetaDebugger } from './BetaDebugger'
 
 const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
@@ -77,6 +78,7 @@ export const App = () => {
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
         >
             <>
+                <BetaDebugger />
                 <SetSignerFromWalletClient chainId={environment.chainId} />
                 <AuthContextProvider>
                     <FaviconBadge />

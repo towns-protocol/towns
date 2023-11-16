@@ -3,8 +3,7 @@ import { configureChains } from 'wagmi'
 import { baseGoerli, localhost } from 'wagmi/chains'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
-import { PrivyProvider as _PrivyProvider } from '@privy-io/react-auth'
-import { PrivyWagmiConnector } from '@privy-io/wagmi-connector'
+import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
 import { env } from 'utils'
 import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
 import { foundryClone } from 'foundryChain'
@@ -25,13 +24,15 @@ if (env.VITE_CF_TUNNEL_PREFIX) {
 
 const SUPPORTED_CHAINS = [foundryClone, baseGoerli, localhost]
 
-const configureChainsConfig = configureChains(
+const wagmiChainsConfig = configureChains(
     SUPPORTED_CHAINS,
     env.VITE_ALCHEMY_API_KEY
         ? [alchemyProvider({ apiKey: env.VITE_ALCHEMY_API_KEY }), publicProvider()]
         : [publicProvider()],
     { retryCount: 5 },
 )
+
+const logo = '/towns_privy.svg'
 
 export function PrivyProvider({ children }: { children: JSX.Element }) {
     const { chainId } = useEnvironment()
@@ -42,34 +43,27 @@ export function PrivyProvider({ children }: { children: JSX.Element }) {
     }, [chainId])
 
     return chain ? (
-        <_PrivyProvider
+        <TownsPrivyProvider
+            wagmiChainsConfig={wagmiChainsConfig}
             appId={env.VITE_PRIVY_ID}
             config={{
+                defaultChain: chain,
+                supportedChains: SUPPORTED_CHAINS,
+                appearance: {
+                    theme: (theme === 'dark'
+                        ? Figma.DarkMode.Level2
+                        : Figma.LightMode.Level1) as `#${string}`,
+                    accentColor: Figma.Colors.Blue,
+                    logo,
+                },
                 embeddedWallets: {
                     createOnLogin: 'all-users',
                     noPromptOnSignature: true,
                 },
                 loginMethods: ['sms', 'google', 'twitter', 'apple'],
-                appearance: {
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    theme: theme === 'dark' ? Figma.DarkMode.Level2 : Figma.LightMode.Level1,
-                    accentColor: Figma.Colors.Blue,
-                    logo: '/towns_privy.svg',
-                },
-                // the primary network the app uses
-                // privy will init to this network such as when logging in and creating an embedded wallet
-                defaultChain: chain,
-                // networks that wallets are permitted to use in the app
-                // this is really only b/c we develop locally against both local and deployed nodes
-                // TODO: in production we could narrow this to only the defaultChain
-                supportedChains: SUPPORTED_CHAINS,
             }}
-            // onSuccess={handleLogin}
         >
-            <PrivyWagmiConnector wagmiChainsConfig={configureChainsConfig}>
-                {children}
-            </PrivyWagmiConnector>
-        </_PrivyProvider>
+            {children}
+        </TownsPrivyProvider>
     ) : null
 }

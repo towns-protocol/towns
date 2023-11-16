@@ -4,7 +4,7 @@ import { configureChains } from 'wagmi'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
 import { PrivyProvider as _PrivyProvider } from '@privy-io/react-auth'
-import { PrivyWagmiConnector } from '@privy-io/wagmi-connector'
+import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
 import { useEnvironment } from 'hooks/use-environment'
 import { ENVIRONMENTS } from 'utils/environment'
 
@@ -13,7 +13,7 @@ const PRIVY_ID = import.meta.env.VITE_PRIVY_ID ?? ''
 
 const SUPPORTED_CHAINS = [goerli, sepolia, foundry, baseGoerli, localhost]
 
-const configureChainsConfig = configureChains(
+const wagmiChainsConfig = configureChains(
     SUPPORTED_CHAINS,
     ALCHEMY_KEY ? [alchemyProvider({ apiKey: ALCHEMY_KEY }), publicProvider()] : [publicProvider()],
     { retryCount: 5 },
@@ -27,27 +27,20 @@ export function PrivyProvider({ children }: { children: JSX.Element }) {
     }, [chainId])
 
     return chain ? (
-        <_PrivyProvider
+        <TownsPrivyProvider
             appId={PRIVY_ID}
+            wagmiChainsConfig={wagmiChainsConfig}
             config={{
+                defaultChain: chain,
+                supportedChains: SUPPORTED_CHAINS,
                 embeddedWallets: {
                     createOnLogin: 'all-users',
                     noPromptOnSignature: true,
                 },
                 loginMethods: ['sms', 'google', 'twitter', 'apple'],
-                // the primary network the app uses
-                // privy will init to this network such as when logging in and creating an embedded wallet
-                defaultChain: chain,
-                // networks that wallets are permitted to use in the app
-                // this is really only b/c we develop locally against both local and deployed nodes
-                // TODO: in production we could narrow this to only the defaultChain
-                supportedChains: SUPPORTED_CHAINS,
             }}
-            // onSuccess={handleLogin}
         >
-            <PrivyWagmiConnector wagmiChainsConfig={configureChainsConfig}>
-                {children}
-            </PrivyWagmiConnector>
-        </_PrivyProvider>
+            {children}
+        </TownsPrivyProvider>
     ) : null
 }
