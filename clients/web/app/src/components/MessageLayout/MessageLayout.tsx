@@ -76,6 +76,7 @@ export const MessageLayout = (props: Props) => {
         relativeDate: isRelativeDate,
         replies,
         canReply,
+        sendStatus,
         timestamp,
         children,
         ...boxProps
@@ -261,7 +262,7 @@ export const MessageLayout = (props: Props) => {
                     ) : (
                         <></>
                     )}
-                    {props.sendStatus && <SendStatusIndicator status={props.sendStatus} />}
+                    {sendStatus && <SendStatusIndicator status={sendStatus} />}
                 </Stack>
                 {!isTouch &&
                     isChannelWritable &&
