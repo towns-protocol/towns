@@ -13,12 +13,16 @@ export function useAllKnownUsers() {
         const spaceIds = spaces.map((space) => space.id.networkId)
         // The same user can be a member of multiple spaces.
         // The Map makes sure we only return 1 instance of each user.
-        const users = new Map<string, RoomMember>()
+        const users = new Map<string, RoomMember & { memberOf: string[] }>()
         for (const spaceId of spaceIds) {
             const room = rooms[spaceId]
             if (room) {
                 for (const member of room.members) {
-                    users.set(member.userId, member)
+                    const existingMember = users.get(member.userId)
+                    const memberOf = existingMember
+                        ? [...existingMember.memberOf, room.name]
+                        : [spaceId]
+                    users.set(member.userId, { ...member, memberOf })
                 }
             }
         }
@@ -29,7 +33,7 @@ export function useAllKnownUsers() {
     const usersMap = users.reduce((acc, member) => {
         acc[member.userId] = member
         return acc
-    }, {} as { [userId: string]: RoomMember })
+    }, {} as { [userId: string]: RoomMember & { memberOf: string[] } })
 
     return { users, usersMap }
 }

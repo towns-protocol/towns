@@ -1,11 +1,18 @@
-import React from 'react'
-import { getAccountAddress, useSpaceData, useSpaceMembers } from 'use-zion-client'
-import { shortAddress } from 'ui/utils/utils'
+import React, { useMemo } from 'react'
+import {
+    RoomMember,
+    getAccountAddress,
+    useAllKnownUsers,
+    useSpaceData,
+    useSpaceMembers,
+    useZionContext,
+} from 'use-zion-client'
 import { useGetUserBio } from 'hooks/useUserBio'
-import { Paragraph } from 'ui/components/Text/Paragraph'
-import { Stack } from 'ui/components/Stack/Stack'
 import { Avatar } from 'ui/components/Avatar/Avatar'
+import { Stack } from 'ui/components/Stack/Stack'
+import { Paragraph } from 'ui/components/Text/Paragraph'
 import { Tooltip } from 'ui/components/Tooltip/Tooltip'
+import { shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 type Props = {
@@ -14,9 +21,16 @@ type Props = {
 
 export const ProfileHoverCard = (props: Props) => {
     const { userId } = props
+    const { spaces } = useZionContext()
+    const { usersMap } = useAllKnownUsers()
     const { membersMap } = useSpaceMembers()
+    const combinedUsers: { [userId: string]: RoomMember & { memberOf?: string[] } } = useMemo(
+        () => ({ ...usersMap, ...membersMap }),
+        [membersMap, usersMap],
+    )
     const space = useSpaceData()
-    const user = membersMap[userId]
+
+    const user = combinedUsers[userId]
     const userAddress = getAccountAddress(userId)
     const { data: userBio } = useGetUserBio(userAddress)
 
@@ -42,7 +56,12 @@ export const ProfileHoverCard = (props: Props) => {
 
             <Stack>
                 <Paragraph color="gray2" size="sm">
-                    Member of {space?.name}
+                    Member of{' '}
+                    {user?.memberOf?.length
+                        ? user.memberOf.map(
+                              (spaceId) => spaces.find((f) => f.id.networkId === spaceId)?.name,
+                          )
+                        : space?.name}
                 </Paragraph>
                 {userBio && (
                     <>
