@@ -67,7 +67,10 @@ type ErrorResult = {
 
 type TownsContentResult = SuccessResult | ErrorResult
 
-export function useCasablancaTimelines(casablancaClient: CasablancaClient | undefined) {
+export function useCasablancaTimelines(
+    casablancaClient: CasablancaClient | undefined,
+    eventFilter?: Set<ZTEvent>,
+) {
     const setState = useTimelineStore((s) => s.setState)
     useEffect(() => {
         if (!casablancaClient) {
@@ -77,11 +80,17 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
         const streamIds = new Set<string>()
 
+        const filterFn = (event: TimelineEvent) => {
+            return !eventFilter || !event.content?.kind || !eventFilter.has(event.content.kind)
+        }
+
         const onStreamInitialized = (streamId: string, kind: SnapshotCaseType) => {
             if (hasTimelineContent(kind)) {
                 streamIds.add(streamId)
                 const messages = casablancaClient.stream(streamId)?.view.timeline ?? []
-                const timelineEvents = messages.map((event) => toEvent(event, userId))
+                const timelineEvents = messages
+                    .map((event) => toEvent(event, userId))
+                    .filter(filterFn)
                 setState.initializeRoom(userId, streamId, [])
                 setState.processEvents(timelineEvents, userId, streamId)
             }
@@ -96,15 +105,15 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
                 const { prepended, appended, updated } = change
                 streamIds.add(streamId)
                 if (prepended) {
-                    const events = prepended.map((event) => toEvent(event, userId))
+                    const events = prepended.map((event) => toEvent(event, userId)).filter(filterFn)
                     setState.prependEvents(events, userId, streamId)
                 }
                 if (appended) {
-                    const events = appended.map((event) => toEvent(event, userId))
+                    const events = appended.map((event) => toEvent(event, userId)).filter(filterFn)
                     setState.processEvents(events, userId, streamId)
                 }
                 if (updated) {
-                    const events = updated.map((event) => toEvent(event, userId))
+                    const events = updated.map((event) => toEvent(event, userId)).filter(filterFn)
                     events.map((event) =>
                         setState.processEvent(event, userId, streamId, event.eventId),
                     )
@@ -121,7 +130,9 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
             if (hasTimelineContent(kind)) {
                 streamIds.add(streamId)
                 const event = toEvent(localEvent, userId)
-                setState.processEvent(event, userId, streamId, localEventId)
+                if (filterFn(event)) {
+                    setState.processEvent(event, userId, streamId, localEventId)
+                }
             }
         }
 
@@ -142,7 +153,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
         //Step 2: add them into the timeline
         timelineEvents.forEach((events, streamId) => {
-            events.forEach((event) => {
+            events.filter(filterFn).forEach((event) => {
                 setState.processEvent(event, userId, streamId)
             })
         })
@@ -157,7 +168,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
             casablancaClient.off('streamLocalEventIdReplaced', onStreamLocalEventIdReplaced)
             setState.reset(Array.from(streamIds))
         }
-    }, [casablancaClient, setState])
+    }, [casablancaClient, setState, eventFilter])
 }
 
 export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): TimelineEvent {

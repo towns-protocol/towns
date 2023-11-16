@@ -1,7 +1,7 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import React, { useCallback, useRef } from 'react'
 import { useLocation } from 'react-router'
-import { InitialSyncSortPredicate, ZionContextProvider } from 'use-zion-client'
+import { InitialSyncSortPredicate, ZTEvent, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
 
 import { usePrivy } from '@privy-io/react-auth'
@@ -74,6 +74,7 @@ export const App = () => {
             initialSyncLimit={20}
             chainId={environment.chainId}
             initalSyncSortPredicate={initalSyncSortPredicate}
+            timelineFilter={new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicitation])}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
         >

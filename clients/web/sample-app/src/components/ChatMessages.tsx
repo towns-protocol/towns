@@ -5,6 +5,8 @@ import {
     TimelineEvent,
     ZTEvent,
     useFullyReadMarker,
+    useTimelineFilter,
+    useTimelineStore,
     useZionClient,
 } from 'use-zion-client'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
@@ -30,11 +32,25 @@ export function ChatMessages(props: Props): JSX.Element {
     const [extremeMode, setExtremeMode] = useState<boolean>(false)
     const [scrollToBottom, setScrollToBottom] = useState<boolean>(true)
     const canLoadMore =
-        timeline.length > 1 &&
-        timeline[0].content?.kind !== ZTEvent.RoomCreate &&
-        !hasReachedTerminus
+        timeline.length === 0 ||
+        (timeline[0].content?.kind !== ZTEvent.RoomCreate && !hasReachedTerminus)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messagesStartRef = useRef<HTMLDivElement>(null)
+    const { eventFilter, filterEvent } = useTimelineFilter()
+    const eventFilterToggles = [
+        {
+            name: 'Fullfillments',
+            type: ZTEvent.Fulfillment,
+        },
+        {
+            name: 'Miniblocks',
+            type: ZTEvent.MiniblockHeader,
+        },
+        {
+            name: 'KeySolicitation',
+            type: ZTEvent.KeySolicitation,
+        },
+    ]
 
     // auto post effect
     useEffect(() => {
@@ -153,6 +169,21 @@ export function ChatMessages(props: Props): JSX.Element {
                             checked={scrollToBottom}
                             onChange={() => setScrollToBottom(!scrollToBottom)}
                         />
+                    </Box>
+                    <Box>
+                        <label>Filters:</label>
+                        {eventFilterToggles.map((f) => (
+                            <CheckyBox
+                                key={f.name}
+                                label={f.name}
+                                checked={!eventFilter || !eventFilter.has(f.type)}
+                                onChange={() =>
+                                    filterEvent(f.type, !eventFilter || !eventFilter.has(f.type))
+                                }
+                            />
+                        ))}
+                    </Box>
+                    <Box>
                         {canLoadMore && (
                             <Typography
                                 key="can-load-more"

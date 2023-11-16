@@ -22,6 +22,8 @@ import { ethers } from 'ethers'
 import { useCasablancaDMs } from '../hooks/CasablancClient/useCasablancaDMs'
 import { DMChannelIdentifier } from '../types/dm-channel-identifier'
 import { useDMUnreads } from '../hooks/ZionContext/useDMUnreads'
+import { useTimelineFilter } from '../store/use-timeline-filter'
+import { ZTEvent } from '../types/timeline-types'
 
 export type InitialSyncSortPredicate = (a: RoomIdentifier, b: RoomIdentifier) => number
 
@@ -59,6 +61,7 @@ export function useZionContext(): IZionContext {
 
 interface Props extends ZionOpts {
     enableSpaceRootUnreads?: boolean
+    timelineFilter?: Set<ZTEvent>
     children: JSX.Element
     web3Signer?: ethers.Signer
     initalSyncSortPredicate?: InitialSyncSortPredicate
@@ -81,7 +84,7 @@ export function ZionContextProvider({
 
 /// the zion client needs to be nested inside a Web3 provider, hence the need for this component
 const ContextImpl = (props: Props): JSX.Element => {
-    const { casablancaServerUrl, enableSpaceRootUnreads } = props
+    const { casablancaServerUrl, enableSpaceRootUnreads, timelineFilter } = props
 
     const { client, clientSingleton, casablancaClient } = useZionClientListener(props)
     const { invitedToIds } = useSpacesIds(casablancaClient)
@@ -98,8 +101,8 @@ const ContextImpl = (props: Props): JSX.Element => {
     const { dmUnreadChannelIds } = useDMUnreads(casablancaClient, dmChannels)
 
     const rooms = useCasablancaRooms(casablancaClient)
-
-    useCasablancaTimelines(casablancaClient)
+    const dynamicTimelineFilter = useTimelineFilter((state) => state.eventFilter)
+    useCasablancaTimelines(casablancaClient, dynamicTimelineFilter ?? timelineFilter)
     const casablancaOnboardingState = useOnboardingState_Casablanca(client, casablancaClient)
 
     useTransactionListener(client, casablancaServerUrl)
