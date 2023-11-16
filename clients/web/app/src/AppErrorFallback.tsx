@@ -29,9 +29,6 @@ function getWithExpiry(key: string) {
 
 type FallbackRender = {
     error: Error
-    componentStack: string
-    eventId: string
-    resetError(): void
 }
 
 export function AppErrorFallback({ error }: FallbackRender) {

@@ -16,11 +16,11 @@ import { HeadingNode, QuoteNode } from '@lexical/rich-text'
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary'
 import { clsx } from 'clsx'
 import isEqual from 'lodash/isEqual'
-import { ErrorBoundary } from '@sentry/react'
 import React, { useCallback, useMemo, useState } from 'react'
 import { Channel, Mention, RoomMember, SendTextMessageOptions } from 'use-zion-client'
 import { NodeEventPlugin } from '@lexical/react/LexicalNodeEventPlugin'
 import { toast } from 'react-hot-toast/headless'
+import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useStore } from 'store/store'
@@ -231,7 +231,7 @@ export const RichTextPreviewPlain = React.memo(
 
 export const RichTextEditor = (props: Props) => {
     return (
-        <ErrorBoundary fallback={RichTextEditorFallbackComponent}>
+        <ErrorBoundary FallbackComponent={RichTextEditorFallbackComponent}>
             <RichTextEditorWithoutBoundary {...props} />
         </ErrorBoundary>
     )

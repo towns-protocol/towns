@@ -54,13 +54,10 @@ const envSchema = z.object({
     VITE_GIPHY_API_KEY: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?
     VITE_ALCHEMY_API_KEY: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?
     VITE_APP_RELEASE_VERSION: z.string().optional(),
-    VITE_SENTRY_DSN: z.string().optional(),
-    VITE_SENTRY_BEARER_TOKEN: z.string().optional(),
     VITE_AMPLITUDE_KEY: z.string().nullish(), // making this optional since we want to allow local development without it
     VITE_GLEAP_API_KEY: z.string().optional(), // making this optional since we want to allow local development without it
 
     VITE_PUSH_NOTIFICATION_ENABLED: boolish.default(false), // making this optional since we want to allow local development with / without it
-    VITE_DISABLE_SENTRY: boolish.default(false), // making this optional since we want to allow local development with / without it
     VITE_DISABLE_DEBUG_BARS: boolish.default(false),
 
     VITE_WEB_PUSH_APPLICATION_SERVER_KEY: z.string().optional(), // making this optional since we want to allow local development without it

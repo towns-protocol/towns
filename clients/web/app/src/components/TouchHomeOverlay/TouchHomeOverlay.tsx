@@ -7,7 +7,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { Box, IconButton, MotionBox, MotionStack, Stack, Text } from '@ui'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { SentryErrorReportForm } from '@components/SentryErrorReport/SentryErrorReport'
+import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
 import { transitions } from 'ui/transitions/transitions'
 import { NavItem } from '@components/NavItem/_NavItem'
 import { PATHS } from 'routes'
@@ -23,9 +23,9 @@ export const TouchHomeOverlay = (props: Props) => {
     const { spaces } = useZionContext()
     const { spaceId } = useSpaceContext()
     const navigate = useNavigate()
-    const [isSentryModalVisible, setIsSentryModalVisible] = useState(false)
-    const showSentryModal = useEvent(() => setIsSentryModalVisible(true))
-    const hideSentryModal = useEvent(() => setIsSentryModalVisible(false))
+    const [isErrorReportModalVisible, setErrorReportModalVisible] = useState(false)
+    const showErrorReportModal = useEvent(() => setErrorReportModalVisible(true))
+    const hideErrorReportModal = useEvent(() => setErrorReportModalVisible(false))
 
     const profileClicked = useCallback(() => {
         const path = `/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.PROFILE}/me`
@@ -99,16 +99,16 @@ export const TouchHomeOverlay = (props: Props) => {
                             Towns {APP_VERSION} ({APP_COMMIT_HASH})
                         </Text>
                     </Box>
-                    <NavItem padding="none" onClick={showSentryModal}>
+                    <NavItem padding="none" onClick={showErrorReportModal}>
                         <Text textAlign="left" color="gray1" fontSize="sm">
                             Send us Feedback
                         </Text>
                     </NavItem>
                 </Stack>
 
-                {isSentryModalVisible && (
-                    <ModalContainer touchTitle="Report a bug" onHide={hideSentryModal}>
-                        <SentryErrorReportForm onHide={hideSentryModal} />
+                {isErrorReportModalVisible && (
+                    <ModalContainer touchTitle="Report a bug" onHide={hideErrorReportModal}>
+                        <ErrorReportForm onHide={hideErrorReportModal} />
                     </ModalContainer>
                 )}
             </MotionStack>

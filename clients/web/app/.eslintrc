@@ -90,6 +90,10 @@
             "message": "Please use Box from @ui"
           },
           {
+            "name": "react-error-boundary",
+            "message": "Use our dd-wrapped error boundary instead, via @components/ErrorBoundary/ErrorBoundary"
+          },
+          {
             "name": "wagmi",
             "importNames": [
               "useConnect",
@@ -126,6 +130,12 @@
         "import/no-unresolved": "off",
         "react/react-in-jsx-scope": "off",
         "react/jsx-no-undef": "off"
+      }
+    },
+    {
+      "files": ["src/components/ErrorBoundary/ErrorBoundary.tsx"],
+      "rules": {
+        "no-restricted-imports": "off"
       }
     }
   ],

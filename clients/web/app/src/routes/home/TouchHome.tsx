@@ -1,4 +1,3 @@
-import { ErrorBoundary } from '@sentry/react'
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
 import React, { useCallback, useMemo, useState } from 'react'
@@ -12,6 +11,7 @@ import {
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
 } from 'use-zion-client'
+import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { NavItem } from '@components/NavItem/_NavItem'
 import { usePrepopulateChannels } from 'hooks/usePrepopulateChannels'
@@ -161,7 +161,7 @@ export const TouchHome = () => {
         mentionsLink && (!isSearching || filteredMenuItems.some((f) => f.obj.value === 'mentions'))
 
     return (
-        <ErrorBoundary fallback={ErrorFallbackComponent}>
+        <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
             <VisualViewportContextProvider>
                 <TouchTabBarLayout>
                     <CheckValidSpaceOrInvite>

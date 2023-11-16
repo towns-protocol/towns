@@ -13,7 +13,7 @@ import {
 } from 'use-zion-client'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
-import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
+import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { Badge, Box, Button, Icon, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
@@ -188,7 +188,7 @@ export const SpaceSideBar = (props: Props) => {
                     <Text textAlign="center" color="gray2" fontSize="sm">
                         Towns {APP_VERSION} ({APP_COMMIT_HASH})
                     </Text>
-                    <SentryReportModal />
+                    <ErrorReportModal />
                 </Box>
             </FadeInBox>
             {isBrowseChannelsModalVisible ? (

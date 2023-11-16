@@ -1,10 +1,9 @@
 import 'allotment/dist/style.css'
 import 'index.css'
-import { init as SentryInit, Replay as SentryReplay } from '@sentry/react'
-import { BrowserTracing } from '@sentry/browser'
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { datadogLogs } from '@datadog/browser-logs'
+import { datadogRum } from '@datadog/browser-rum'
 import { Main } from 'Main'
 import { env } from 'utils'
 
@@ -38,35 +37,35 @@ if (env.DEV) {
     }
     window.addEventListener('error', showErrorOverlay)
     window.addEventListener('unhandledrejection', ({ reason }) => showErrorOverlay(reason))
-} else if (!env.VITE_DISABLE_SENTRY) {
-    SentryInit({
-        dsn:
-            env.VITE_SENTRY_DSN ||
-            'https://a5bc2df7099a4adbadd6ff1f87c7b66a@o327188.ingest.sentry.io/4504600696061952',
-        // Set tracesSampleRate to 1.0 to capture 100%
-        // of transactions for performance monitoring.
-        // We recommend adjusting this value in production
-        tracesSampleRate: 1.0,
-        // This sets the sample rate to be 10%. You may want this to be 100% while
-        // in development and sample at a lower rate in production
-        replaysSessionSampleRate: 1.0,
-        // If the entire session is not sampled, use the below sample rate to sample
-        // sessions when an error occurs.
-        replaysOnErrorSampleRate: 1.0,
-        integrations: [new SentryReplay(), new BrowserTracing()],
-        release: env.VITE_APP_RELEASE_VERSION,
-    })
 }
 
 if (env.VITE_DD_CLIENT_TOKEN) {
+    const service = 'towns-webapp'
+
     datadogLogs.init({
         clientToken: env.VITE_DD_CLIENT_TOKEN,
-        service: 'towns-webapp',
+        service,
         forwardConsoleLogs: env.VITE_LOG_FORWARDING,
         forwardErrorsToLogs: true,
         sessionSampleRate: env.VITE_LOG_SAMPLING_RATE,
         telemetrySampleRate: 0,
         env: env.MODE,
+        version: env.VITE_APP_RELEASE_VERSION,
+    })
+
+    datadogRum.init({
+        applicationId: 'c6afdc65-2431-48ff-b8f2-c4879fc75293',
+        clientToken: 'pub947b3cbe543e47b9a64b2abca5028974',
+        site: 'datadoghq.com',
+        service,
+        version: env.VITE_APP_RELEASE_VERSION,
+        env: env.MODE,
+        sessionSampleRate: 100,
+        sessionReplaySampleRate: 100,
+        trackUserInteractions: true,
+        trackResources: true,
+        trackLongTasks: true,
+        defaultPrivacyLevel: 'mask-user-input',
     })
 
     console.info(`datadogLogs initialized for env: ${env.MODE}`)

@@ -1,6 +1,6 @@
-import { ErrorBoundary } from '@sentry/react'
 import React, { Suspense } from 'react'
 import { BrowserRouter } from 'react-router-dom'
+import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { AppErrorFallback } from 'AppErrorFallback'
 import { LoadingScreen } from 'routes/LoadingScreen'
 import { ZLayerProvider } from '@ui'
@@ -17,7 +17,7 @@ export const Main = () => {
     })
 
     return (
-        <ErrorBoundary fallback={(props) => <AppErrorFallback {...props} />}>
+        <ErrorBoundary FallbackComponent={AppErrorFallback}>
             <ClearStaleWagmiStorage />
             <PrivyProvider>
                 <BrowserRouter>

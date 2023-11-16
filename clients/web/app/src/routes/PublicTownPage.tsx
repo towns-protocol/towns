@@ -35,7 +35,7 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { NoFundsModal } from '@components/VisualViewportContext/NoFundsModal'
-import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
+import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { useDevice } from 'hooks/useDevice'
 
 const log = debug('app:public-town')
@@ -90,7 +90,7 @@ export const PublicTownPage = () => {
                             position="fixed"
                             bottom="none"
                             zIndex="above"
-                            sentryButton={<SentryReportModal minimal={isTouch} />}
+                            errorReportButton={<ErrorReportModal minimal={isTouch} />}
                             buttonContent={
                                 <Box grow>
                                     {isAuthenticatedAndConnected ? (

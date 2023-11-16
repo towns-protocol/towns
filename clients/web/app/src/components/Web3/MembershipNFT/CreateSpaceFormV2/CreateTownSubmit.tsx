@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react'
 import { UseFormReturn } from 'react-hook-form'
 import {
     CreateSpaceInfo,
@@ -13,6 +12,7 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { ethers } from 'ethers'
 import headlessToast, { Toast, toast } from 'react-hot-toast/headless'
 import { Address } from 'wagmi'
+import { datadogRum } from '@datadog/browser-rum'
 import { Box, Icon, IconButton, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
 import { toTransactionUIStates } from 'hooks/TransactionUIState'
@@ -51,9 +51,7 @@ export function CreateTownSubmit({
 
     useEffect(() => {
         if (hasError) {
-            Sentry.captureException(
-                new Error(`Error creating town: ${error?.name} ${error?.message}`),
-            )
+            datadogRum.addError(new Error(`Error creating town: ${error?.name} ${error?.message}`))
         }
     }, [error, hasError])
 

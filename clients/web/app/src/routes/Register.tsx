@@ -1,7 +1,7 @@
 import React from 'react'
 import { Box, Stack, Text } from '@ui'
 import { SignupForm } from '@components/RegisterForm'
-import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
+import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { useDevice } from 'hooks/useDevice'
 
 export const Register = () => {
@@ -29,7 +29,7 @@ export const Register = () => {
                 bottom={offset}
                 padding="lg"
             >
-                <SentryReportModal />
+                <ErrorReportModal />
             </Box>
         </Stack>
     )

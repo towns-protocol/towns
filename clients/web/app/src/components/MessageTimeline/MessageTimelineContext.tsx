@@ -1,4 +1,3 @@
-import { ErrorBoundary } from '@sentry/react'
 import React, { createContext, useCallback, useMemo } from 'react'
 import {
     Channel,
@@ -12,6 +11,7 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { useNavigate } from 'react-router-dom'
+import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { Box } from '@ui'
 import { useHandleReaction } from 'hooks/useReactions'
@@ -140,7 +140,7 @@ export const MessageTimelineWrapper = (props: {
         membersMap,
     ])
     return (
-        <ErrorBoundary fallback={MessageTimelineFallbackComponent}>
+        <ErrorBoundary FallbackComponent={MessageTimelineFallbackComponent}>
             <MessageTimelineContext.Provider value={value}>
                 {props.children}
             </MessageTimelineContext.Provider>

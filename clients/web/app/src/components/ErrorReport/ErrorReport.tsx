@@ -1,10 +1,9 @@
-import * as Sentry from '@sentry/react'
 import React, { useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { z } from 'zod'
 import { hexlify, randomBytes } from 'ethers/lib/utils'
 import { useMutation } from 'wagmi'
-import { format } from 'date-fns'
+import { datadogRum } from '@datadog/browser-rum'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Button, ErrorMessage, FormRender, Icon, Paragraph, Stack, Text, TextField } from '@ui'
 import { TextArea } from 'ui/components/TextArea/TextArea'
@@ -38,34 +37,14 @@ const defaultValues = {
     [FormStateKeys.comments]: '',
 }
 
-async function postSentryError(data: FormState, id: string) {
-    const URL = 'https://sentry.io/api/0/projects/here-not-there/harmony-web/user-feedback/'
-    const message = `User feedback - ${window.location.href} - ${format(
-        Date.now(),
-        'M/d/yy h:mm a',
-    )} - id:${id}`
-    const event_id = Sentry.captureMessage(message, {
-        // not sure what is necessary here to make this unique and show up in Sentry, so some of this may be duplicated
+async function postCustomErrorToDatadog(data: FormState, id: string) {
+    datadogRum.addAction('user-feedback-custom-error', {
+        data,
+        id,
+        timestamp: Date.now().toString(),
+        location: window.location.href,
         fingerprint: [data.email, Date.now().toString(), id],
-        extra: {
-            timestamp: Date.now().toString(),
-            location: window.location.href,
-        },
     })
-
-    return axiosClient.post(
-        `${URL}`,
-        JSON.stringify({
-            event_id, // must be snake_case
-            ...data,
-        }),
-        {
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${env.VITE_SENTRY_BEARER_TOKEN}`,
-            },
-        },
-    )
 }
 
 async function postCustomError(data: FormState) {
@@ -73,18 +52,18 @@ async function postCustomError(data: FormState) {
     const url = `${GATEWAY_SERVER_URL}/user-feedback`
     // generate a uuid for the custom error
     const uuid = hexlify(randomBytes(16))
-    const postCustom = axiosClient.post(
+    const postCustom = await axiosClient.post(
         url,
         JSON.stringify({
             ...data,
             id: uuid,
         }),
     )
-    await postSentryError(data, uuid)
+    postCustomErrorToDatadog(data, uuid)
     return postCustom
 }
 
-export const SentryReportModal = (props: { minimal?: boolean }) => {
+export const ErrorReportModal = (props: { minimal?: boolean }) => {
     const [modal, setModal] = useState(false)
     const onHide = useEvent(() => {
         setModal(false)
@@ -103,14 +82,14 @@ export const SentryReportModal = (props: { minimal?: boolean }) => {
 
             {modal && (
                 <ModalContainer onHide={onHide}>
-                    <SentryErrorReportForm onHide={onHide} />
+                    <ErrorReportForm onHide={onHide} />
                 </ModalContainer>
             )}
         </>
     )
 }
 
-export const SentryErrorReportForm = (props: { onHide: () => void }) => {
+export const ErrorReportForm = (props: { onHide: () => void }) => {
     const [success, setSuccess] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
     const { isTouch } = useDevice()
@@ -132,7 +111,7 @@ export const SentryErrorReportForm = (props: { onHide: () => void }) => {
             <FormRender<FormState>
                 defaultValues={defaultValues}
                 schema={schema}
-                id="sentry-error-report-form"
+                id="error-report-form"
                 onSubmit={(data) => {
                     doCustomError(data, {
                         onSuccess: () => {

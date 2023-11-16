@@ -1,7 +1,7 @@
 import React from 'react'
 import { Channel, EventStatus, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
 import { UnfurlData } from '@unfurl-worker/types'
-import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
+import { ErrorBoundary, FallbackProps } from '@components/ErrorBoundary/ErrorBoundary'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { getMessageBody, getUrls } from 'utils/ztevent_util'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'

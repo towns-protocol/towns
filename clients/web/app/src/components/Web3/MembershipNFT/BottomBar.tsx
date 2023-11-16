@@ -99,10 +99,10 @@ export function BottomBar({
 export const BottomBarLayout = ({
     messageContent,
     buttonContent,
-    sentryButton: leftContent,
+    errorReportButton: leftContent,
     ...boxProps
 }: {
-    sentryButton?: React.ReactNode
+    errorReportButton?: React.ReactNode
     messageContent?: React.ReactNode
     buttonContent?: React.ReactNode
 } & BoxProps) => {

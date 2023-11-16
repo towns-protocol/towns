@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Membership, useZionClient, useZionContext } from 'use-zion-client'
-import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
+import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { Box, Button, Heading, Stack, Text } from '@ui'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { PATHS } from 'routes'
@@ -90,7 +90,7 @@ export const NoJoinedSpacesFallback = () => {
                     bottom="none"
                 >
                     <div>
-                        <SentryReportModal />
+                        <ErrorReportModal />
                     </div>
                 </Box>
             </Stack>
