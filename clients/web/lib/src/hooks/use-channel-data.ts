@@ -26,7 +26,7 @@ export function useChannelData(): ChannelData {
             ) {
                 return {
                     id: channelId,
-                    label: channelId.networkId,
+                    label: '',
                     private: true,
                     highlight: false,
                     topic: '',

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Channel, RoomIdentifier, useChannelMembers, useDMData, useRoom } from 'use-zion-client'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
@@ -9,9 +9,9 @@ import { useMuteSettings } from 'api/lib/notificationSettings'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useChannelType } from 'hooks/useChannelType'
-import { shortAddress } from 'ui/utils/utils'
 import { GroupDMIcon } from '@components/DirectMessages/GroupDMIcon'
 import { CHANNEL_INFO_PARAMS } from 'routes'
+import { useUserList } from '@components/UserList/UserList'
 
 type Props = {
     channel: Channel
@@ -114,6 +114,8 @@ const DesktopChannelHeader = (props: Props) => {
 
 const DMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
     const { counterParty } = useDMData(props.roomIdentifier)
+    const userIds = useMemo(() => (counterParty ? [counterParty] : []), [counterParty])
+    const title = useUserList({ userIds, excludeSelf: true }).join('')
     if (!counterParty) {
         return undefined
     }
@@ -121,7 +123,7 @@ const DMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
         <>
             <Avatar userId={counterParty} size="avatar_sm" />
             <Text truncate fontSize="md" fontWeight="medium" color="default">
-                {counterParty}
+                {title}
             </Text>
         </>
     )
@@ -129,7 +131,8 @@ const DMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
 
 const GDMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
     const { data } = useDMData(props.roomIdentifier)
-    const title = data?.userIds.map((userId) => shortAddress(userId)).join(', ') ?? ''
+    const userIds = useMemo(() => data?.userIds ?? [], [data?.userIds])
+    const title = useUserList({ userIds, excludeSelf: true }).join('')
 
     return (
         <>

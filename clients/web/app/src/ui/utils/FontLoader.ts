@@ -20,7 +20,7 @@ const fontConfig = {
             descent: -350,
             lineGap: 0,
             unitsPerEm: 1000,
-            capHeight: 670,
+            capHeight: 700,
         },
     },
     TitleFont: {

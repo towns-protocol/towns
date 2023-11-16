@@ -28,10 +28,12 @@ export function useDMLatestMessage(roomId: RoomIdentifier) {
         for (let i = timeline.length - 1; i >= 0; i--) {
             const message = timeline[i]
             const info = toMostRecentMessageInfo(message.content)
+
             if (info) {
                 return {
                     createdAtEpocMs: message.createdAtEpocMs,
                     info: info,
+                    sender: message.sender,
                 }
             }
         }

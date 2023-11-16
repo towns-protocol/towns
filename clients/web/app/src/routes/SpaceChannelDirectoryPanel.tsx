@@ -1,7 +1,13 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
-import { RoomMember, getAccountAddress, useChannelData, useChannelMembers } from 'use-zion-client'
+import {
+    RoomMember,
+    getAccountAddress,
+    useAllKnownUsers,
+    useChannelData,
+    useChannelMembers,
+} from 'use-zion-client'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { Avatar, Box, Paragraph, Stack } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
@@ -9,6 +15,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Panel } from '@components/Panel/Panel'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 export const ChannelDirectoryPanel = () => {
     const { channel } = useChannelData()
@@ -69,6 +76,10 @@ const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
             navigate(link)
         }
     }, [link, navigate])
+
+    const { usersMap } = useAllKnownUsers()
+    const globalUser = usersMap[user.userId] ?? user
+
     if (!userAddress) {
         return null
     }
@@ -86,9 +97,9 @@ const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
                 <Box centerContent>
                     <Avatar userId={user.userId} size="avatar_x4" />
                 </Box>
-                <Stack grow paddingX gap="paragraph" overflow="hidden">
+                <Stack grow gap="paragraph" overflow="hidden">
                     <Paragraph truncate color="default">
-                        {user.displayName}
+                        {getPrettyDisplayName(globalUser).displayName}
                     </Paragraph>
                     {userAddress && (
                         <ClipboardCopy

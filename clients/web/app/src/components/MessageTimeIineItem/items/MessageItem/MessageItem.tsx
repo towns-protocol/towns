@@ -109,7 +109,7 @@ export const MessageItem = (props: Props) => {
             key={`${event.eventId}${event.updatedAtEpocMs ?? event.createdAtEpocMs}${msgTypeKey}`}
         >
             {displayEncrypted ? (
-                <TimelineEncryptedContent event={event} displayContext={displayContext} />
+                <TimelineEncryptedContent event={event} />
             ) : event.content.kind === ZTEvent.RoomMessage ? (
                 isEditing ? (
                     <>

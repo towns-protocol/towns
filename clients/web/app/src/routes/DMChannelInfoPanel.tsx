@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router'
 import { useChannelData, useDMData, useMembers, useMyUserId, useZionClient } from 'use-zion-client'
 import { Icon, Stack, Text } from '@ui'
 import { Panel, PanelButton } from '@components/Panel/Panel'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
 import { useDevice } from 'hooks/useDevice'
 import { CHANNEL_INFO_PARAMS } from 'routes'
+import { useUserList } from '@components/UserList/UserList'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { GDMChannelPermissionsModal } from './GDMChannelPermissions'
 
@@ -56,17 +56,10 @@ export const DMChannelInfoPanel = () => {
     }, [navigate, isTouch])
 
     const memberNamesExludingSelf = useMemo(() => {
-        return members.members
-            ?.filter((member) => member.userId !== myUserId)
-            .map((member) => getPrettyDisplayName(member).displayName)
+        return members.members?.filter((member) => member.userId !== myUserId).map((m) => m.userId)
     }, [members, myUserId])
 
-    const membersText =
-        memberNamesExludingSelf.length === 0
-            ? 'You'
-            : memberNamesExludingSelf.length === 1
-            ? memberNamesExludingSelf[0] + ' and you'
-            : memberNamesExludingSelf.join(',') + ', you'
+    const membersText = useUserList({ userIds: memberNamesExludingSelf }).join('')
 
     const memberCount = members?.members.length ?? 0
 

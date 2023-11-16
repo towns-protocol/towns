@@ -9,6 +9,7 @@ import {
     ZTEvent,
     useChannelData,
     useChannelTimeline,
+    useDMData,
     useMyMembership,
     useMyProfile,
     useSpaceMembers,
@@ -32,6 +33,8 @@ import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelS
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
 import { QUERY_PARAMS } from 'routes'
+import { notUndefined } from 'ui/utils/utils'
+import { useUserList } from '@components/UserList/UserList'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 type Props = {
@@ -113,8 +116,24 @@ const SpacesChannelComponent = (props: Props) => {
 
     const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
 
+    const isDmOrGDM =
+        isDMChannelStreamId(channelId.networkId) || isGDMChannelStreamId(channelId.networkId)
+
+    const { counterParty, data } = useDMData(channelId)
+
+    const userIds = useMemo(
+        () => (data?.isGroup ? data.userIds : [counterParty].filter(notUndefined)),
+        [counterParty, data?.isGroup, data?.userIds],
+    )
+
+    const userList = useUserList({ excludeSelf: true, userIds }).join('')
+
+    const placeholderContent = isDmOrGDM
+        ? `Send a message to ${userList}`
+        : `Send a message to #${channel?.label}`
+
     const placeholder = isChannelWritable
-        ? `Send a message to #${channel?.label}`
+        ? placeholderContent
         : isChannelWritable === false
         ? `You don't have permission to send messages to this channel`
         : `Loading permissions`
@@ -169,8 +188,6 @@ const SpacesChannelComponent = (props: Props) => {
         })
     }, [channel, channelId, displayDecryptionProgress, myMembership])
 
-    const isDmOrGDM =
-        isDMChannelStreamId(channelId.networkId) || isGDMChannelStreamId(channelId.networkId)
     const showJoinChannel = myMembership !== Membership.Join && !isDmOrGDM
     const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM
     return (

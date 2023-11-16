@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react'
-import { RoomIdentifier, useDMData } from 'use-zion-client'
 import { Link } from 'react-router-dom'
-import { Box, Icon, Paragraph, Stack, Text } from '@ui'
-import { useChannelType } from 'hooks/useChannelType'
-import { shortAddress } from 'ui/utils/utils'
-import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
+import { RoomIdentifier, useDMData } from 'use-zion-client'
 import { GroupDMIcon } from '@components/DirectMessages/GroupDMIcon'
+import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
+import { UserList } from '@components/UserList/UserList'
+import { Box, Icon, Paragraph, Stack } from '@ui'
+import { useChannelType } from 'hooks/useChannelType'
+import { notUndefined } from 'ui/utils/utils'
 
 type Props = {
     roomIdentifier: RoomIdentifier
@@ -49,9 +50,13 @@ const RegularChannelIntro = (props: Props) => {
 
 export const ChannelDMIntro = (props: { roomIdentifier: RoomIdentifier }) => {
     const { counterParty } = useDMData(props.roomIdentifier)
-    if (!counterParty) {
+
+    const userIds = useMemo(() => [counterParty].filter(notUndefined), [counterParty])
+
+    if (!userIds.length) {
         return null
     }
+
     return (
         <Stack gap="md" paddingX="lg" paddingY="sm">
             <Stack horizontal gap>
@@ -62,10 +67,10 @@ export const ChannelDMIntro = (props: { roomIdentifier: RoomIdentifier }) => {
                     <Paragraph color="gray1">Direct Message</Paragraph>
                     <Paragraph color="gray2">
                         This end-to-end encrypted chat is just between{' '}
-                        <Text as="span" color="default" fontWeight="medium" display="inline">
-                            {shortAddress(counterParty)}
-                        </Text>{' '}
-                        and you
+                        <UserList
+                            userIds={userIds}
+                            renderUser={(props) => <UserWithTooltip {...props} />}
+                        />
                     </Paragraph>
                 </Stack>
             </Stack>
@@ -76,39 +81,35 @@ export const ChannelDMIntro = (props: { roomIdentifier: RoomIdentifier }) => {
 export const ChannelGDMIntro = (props: { roomIdentifier: RoomIdentifier }) => {
     const { data } = useDMData(props.roomIdentifier)
 
-    const memberLinks = useMemo(() => {
-        if (!data?.userIds) {
-            return []
-        }
-        return data.userIds.map((userId) => {
-            return (
-                <Box display="inline" key={userId} tooltip={<ProfileHoverCard userId={userId} />}>
-                    <Link to={`profile/${userId}`}>{shortAddress(userId)}</Link>
-                </Box>
-            )
-        })
-    }, [data?.userIds])
+    const userList = data?.userIds ? (
+        <UserList userIds={data?.userIds} renderUser={(props) => <UserWithTooltip {...props} />} />
+    ) : (
+        <></>
+    )
 
     return (
         <Stack gap="md" paddingX="lg" paddingY="sm">
             <Stack horizontal gap>
                 <GroupDMIcon roomIdentifier={props.roomIdentifier} />
                 <Stack justifyContent="spaceBetween" paddingY="sm" overflow="hidden">
+                    <Paragraph color="gray1">Group Message</Paragraph>
                     <Paragraph color="gray2">
-                        <Text as="span" color="gray1" fontWeight="medium" display="inline">
-                            {memberLinks.map((link, index) => [index > 0 && ', ', link])}
-                        </Text>{' '}
-                        and you
-                    </Paragraph>
-                    <Paragraph color="gray2">
-                        This end-to-end encrypted chat is just between{' '}
-                        <Text as="span" color="default" fontWeight="medium" display="inline">
-                            {memberLinks.map((link, index) => [index > 0 && ', ', link])}
-                        </Text>{' '}
-                        and you
+                        This end-to-end encrypted chat is just between {userList}
                     </Paragraph>
                 </Stack>
             </Stack>
         </Stack>
     )
 }
+
+const UserWithTooltip = ({ displayName, userId }: { displayName: string; userId: string }) => (
+    <Box
+        color="default"
+        display="inline"
+        key={userId}
+        fontWeight="medium"
+        tooltip={<ProfileHoverCard userId={userId} />}
+    >
+        <Link to={`profile/${userId}`}>{displayName}</Link>
+    </Box>
+)

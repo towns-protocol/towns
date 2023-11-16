@@ -1,10 +1,9 @@
 import React from 'react'
-import { TimelineEvent } from 'use-zion-client'
 import { Box, Icon, Stack, Tooltip } from '@ui'
 import * as styles from './EncryptedMessageBody.css'
 
 export const TimelineEncryptedContent = React.memo(
-    (props: { event: TimelineEvent; displayContext: 'tail' | 'body' | 'head' | 'single' }) => {
+    (props: { event: { createdAtEpocMs: number } }) => {
         const { event } = props
 
         const width = Math.min(

@@ -58,6 +58,9 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
         return names
     }, [channelName, event.events, event.membershipType, isChannelEncrypted, userId])
 
+    if (!channelName) {
+        return <></>
+    }
     return (
         <Stack centerContent horizontal gap="sm" paddingX="lg" paddingY="md" color="gray2">
             <AvatarStack users={avatarUsers} size="avatar_xs" />

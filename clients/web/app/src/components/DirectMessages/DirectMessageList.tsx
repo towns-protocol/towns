@@ -1,12 +1,23 @@
 import { formatDistance } from 'date-fns'
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useMatch, useNavigate } from 'react-router'
-import { useDMLatestMessage, useZionContext } from 'use-zion-client'
+import {
+    useDMData,
+    useDMLatestMessage,
+    useMyUserId,
+    useUser,
+    useZionContext,
+} from 'use-zion-client'
 import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
 import { MostRecentMessageInfo_OneOf } from 'use-zion-client/dist/hooks/use-dm-latest-message'
+import { Link } from 'react-router-dom'
 import { useDevice } from 'hooks/useDevice'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Avatar, Box, Icon, MotionStack, Paragraph, Stack, Text } from '@ui'
+import { UserList } from '@components/UserList/UserList'
+import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
+import { notUndefined } from 'ui/utils/utils'
+import { TimelineEncryptedContent } from '@components/MessageTimeIineItem/items/MessageItem/EncryptedMessageBody/EncryptedMessageBody'
 import { GroupDMIcon } from './GroupDMIcon'
 
 export const DirectMessageList = () => {
@@ -85,19 +96,59 @@ const DirectMessageThread = (props: {
 }) => {
     const { channel, onClick, highlighted, unread } = props
     const latest = useDMLatestMessage(channel.id)
+    const latestUser = useUser(latest?.sender.id)
+    const myUserId = useMyUserId()
 
-    const latestMessageRender = (info: MostRecentMessageInfo_OneOf) => {
-        switch (info.kind) {
+    const latestMessageRender = (info: undefined | MostRecentMessageInfo_OneOf) => {
+        switch (info?.kind) {
             case 'media':
                 return '📷'
             case 'text':
-                return info.text
+                return latestUser
+                    ? `${myUserId === latestUser.userId ? 'you' : latestUser.displayName}: ${
+                          info.text
+                      }`
+                    : info.text
             case 'encrypted':
-                return '🔒'
+                return (
+                    <Box paddingY="xs">
+                        <TimelineEncryptedContent event={{ createdAtEpocMs: 0 }} />
+                    </Box>
+                )
+
             default:
-                return ''
+                return (
+                    <Box horizontal>
+                        <Paragraph size="sm">New message</Paragraph>
+                    </Box>
+                )
         }
     }
+
+    const { counterParty, data } = useDMData(channel.id)
+    const userIds = useMemo(
+        () => (data?.isGroup ? data.userIds : [counterParty].filter(notUndefined)),
+        [counterParty, data?.isGroup, data?.userIds],
+    )
+
+    if (!latest && !highlighted) {
+        // skip empty threads unless they are selected (i.e. new message)
+        return <></>
+    }
+
+    const userList = userIds ? (
+        <UserList
+            excludeSelf
+            userIds={userIds}
+            renderUser={({ displayName, userId }) => (
+                <Box display="inline" key={userId} tooltip={<ProfileHoverCard userId={userId} />}>
+                    <Link to={`profile/${userId}`}>{displayName}</Link>
+                </Box>
+            )}
+        />
+    ) : (
+        <></>
+    )
 
     return (
         <MotionStack
@@ -113,8 +164,7 @@ const DirectMessageThread = (props: {
                 hoverable={!highlighted}
                 background={highlighted ? 'level2' : 'level1'}
                 alignItems="start"
-                paddingX="sm"
-                paddingY="md"
+                padding="sm"
                 borderRadius="sm"
             >
                 {channel.isGroup ? (
@@ -127,61 +177,48 @@ const DirectMessageThread = (props: {
                     ))
                 )}
 
-                {latest ? (
-                    <Box gap="sm" width="100%" overflow="hidden">
-                        {/* first line: title and date */}
-                        <Stack horizontal gap>
-                            {/* text on the left */}
-                            <Box grow overflow="hidden" paddingY="sm" insetY="xs">
-                                <Text
-                                    truncate
-                                    color={unread ? 'default' : 'gray2'}
-                                    fontWeight={unread ? 'medium' : 'normal'}
-                                >
-                                    {channel.id.networkId}
-                                </Text>
-                            </Box>
-                            {/* date on the right */}
-                            <Box justifyContent="end">
-                                {latest ? (
-                                    <Paragraph
-                                        size="xs"
-                                        style={{ whiteSpace: 'nowrap' }}
-                                        color="gray2"
-                                    >
-                                        {formatDistance(latest.createdAtEpocMs, Date.now(), {
-                                            addSuffix: false,
-                                        })}
-                                    </Paragraph>
-                                ) : (
-                                    <></>
-                                )}
-                            </Box>
-                        </Stack>
-                        {/* truncated message body */}
-                        <Text>
-                            {/* nested text hack to get cap-size vertical margins right */}
-                            <Text
-                                color={unread ? 'default' : 'gray2'}
-                                size="sm"
-                                style={{
-                                    // todo: experiment with this, may not keep
-                                    // and if we keep it will move into the Text component
-                                    padding: '4px 0',
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: 'vertical',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    display: '-webkit-box',
-                                }}
-                            >
-                                {latestMessageRender(latest.info)}
-                            </Text>
+                <Box grow gap="sm" width="100%" overflow="hidden" height="100%" paddingY="xxs">
+                    {/* first line: title and date */}
+                    <Stack horizontal gap>
+                        {/* text on the left */}
+                        <Text truncate color="default" fontWeight={unread ? 'medium' : 'normal'}>
+                            {/* {data?.isGroup ? 'GM' : 'DM'} */}
+                            {userList}
                         </Text>
-                    </Box>
-                ) : (
-                    <></>
-                )}
+                        {/* date on the right */}
+                        <Box grow justifyContent="end" alignItems="end">
+                            {latest ? (
+                                <Paragraph size="xs" style={{ whiteSpace: 'nowrap' }} color="gray2">
+                                    {formatDistance(latest.createdAtEpocMs, Date.now(), {
+                                        addSuffix: false,
+                                    })}
+                                </Paragraph>
+                            ) : (
+                                <></>
+                            )}
+                        </Box>
+                    </Stack>
+                    {/* truncated message body */}
+                    <Text>
+                        {/* nested text hack to get cap-size vertical margins right */}
+                        <Text
+                            color={unread ? 'default' : 'gray2'}
+                            size="sm"
+                            style={{
+                                // todo: experiment with this, may not keep
+                                // and if we keep it will move into the Text component
+                                padding: '4px 0',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                            }}
+                        >
+                            {latestMessageRender(latest?.info)}
+                        </Text>
+                    </Text>
+                </Box>
             </Box>
         </MotionStack>
     )
