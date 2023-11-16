@@ -14,30 +14,58 @@ import { StreamService } from '@river/proto'
 import { dlog, dlogError } from './dlog'
 import { genShortId } from './id'
 
-const logCallsHistogram = dlog('csb:rpc:callsHistogram', { defaultEnabled: true })
+const logCallsHistogram = dlog('csb:rpc:histogram', { defaultEnabled: true })
 const logCalls = dlog('csb:rpc:calls')
 const logProtos = dlog('csb:rpc:protos')
 const logError = dlogError('csb:rpc:error')
 
+let nextRpcClientNum = 0
+const histogramIntervalMs = 5000
+
+const sortObjectKey = (obj: Record<string, any>) => {
+    const sorted: Record<string, any> = {}
+    Object.keys(obj)
+        .sort()
+        .forEach((key) => {
+            sorted[key] = obj[key]
+        })
+    return sorted
+}
+
 const interceptor: (transportId: string) => Interceptor = (transportId: string) => {
     // Histogram data structure
-    let callHistogram: Record<string, number> = {}
+    const callHistogram: Record<string, { interval: number; total: number; error?: number }> = {}
 
     // Function to update histogram
-    const updateHistogram = (methodName: string) => {
-        if (!callHistogram[methodName]) {
-            callHistogram[methodName] = 0
+    const updateHistogram = (methodName: string, suffix?: string, error?: boolean) => {
+        const name = suffix ? `${methodName} ${suffix}` : methodName
+        let e = callHistogram[name]
+        if (!e) {
+            e = { interval: 0, total: 0 }
+            callHistogram[name] = e
         }
-        callHistogram[methodName]++
+        e.interval++
+        e.total++
+        if (error) {
+            e.error = (e.error ?? 0) + 1
+        }
     }
 
     // Periodic logging
     setInterval(() => {
         if (Object.keys(callHistogram).length !== 0) {
-            logCallsHistogram(`callHistogram for transportId: ${transportId}:`, callHistogram)
-            callHistogram = {}
+            logCallsHistogram(
+                'RPC stats for transportId=',
+                transportId,
+                'intervalMs=',
+                histogramIntervalMs,
+                sortObjectKey(callHistogram),
+            )
+            for (const key in callHistogram) {
+                callHistogram[key].interval = 0
+            }
         }
-    }, 5000) // 10 seconds
+    }, histogramIntervalMs)
 
     return (next) =>
         async (
@@ -47,6 +75,7 @@ const interceptor: (transportId: string) => Interceptor = (transportId: string) 
             const id = genShortId()
             localReq.header.set('x-river-request-id', id)
 
+            let streamId: string | undefined
             if (req.stream) {
                 // to intercept streaming request messages, we wrap
                 // the AsynchronousIterable with a generator function
@@ -55,16 +84,15 @@ const interceptor: (transportId: string) => Interceptor = (transportId: string) 
                     message: logEachRequest(req.method.name, id, req.message),
                 }
             } else {
-                const streamId = req.message['streamId']
+                streamId = req.message['streamId']
                 if (streamId !== undefined) {
-                    updateHistogram(`${req.method.name} ${streamId}`)
                     logCalls(req.method.name, streamId, id)
                 } else {
-                    updateHistogram(`${req.method.name} undefined`)
                     logCalls(req.method.name, id)
                 }
                 logProtos(req.method.name, 'REQUEST', id, req.message)
             }
+            updateHistogram(req.method.name, streamId)
 
             try {
                 const res:
@@ -84,6 +112,7 @@ const interceptor: (transportId: string) => Interceptor = (transportId: string) 
                 return res
             } catch (e) {
                 logError(req.method.name, 'ERROR', id, e)
+                updateHistogram(req.method.name, streamId, true)
                 throw e
             }
         }
@@ -102,23 +131,23 @@ const interceptor: (transportId: string) => Interceptor = (transportId: string) 
                                 args.push(s)
                             }
                         }
-
-                        updateHistogram(`${name} 'num=' ${args.length}`)
                         logCalls(name, 'num=', args.length, id, args)
                     } else {
-                        updateHistogram(`${name} 'num=' ${0}`)
                         logCalls(name, id)
                     }
+                    updateHistogram(name)
 
                     logProtos(name, 'STREAMING REQUEST', id, m)
                     yield m
                 } catch (err) {
                     logError(name, 'ERROR YIELDING REQUEST', id, err)
+                    updateHistogram(name, undefined, true)
                     throw err
                 }
             }
         } catch (err) {
             logError(name, 'ERROR STREAMING REQUEST', id, err)
+            updateHistogram(name, undefined, true)
             throw err
         }
         logProtos(name, 'STREAMING REQUEST DONE', id)
@@ -129,24 +158,31 @@ const interceptor: (transportId: string) => Interceptor = (transportId: string) 
             for await (const m of stream) {
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    const streamId = m.stream?.nextSyncCookie?.streamId
+                    const streamId: string | undefined = m.stream?.nextSyncCookie?.streamId
                     if (streamId !== undefined) {
-                        updateHistogram(`${name} ' RECV ' ${streamId}`)
                         logCalls(name, 'RECV', streamId, id)
                     } else {
-                        updateHistogram(`${name} ' RECV ' undefined`)
                         logCalls(name, 'RECV', id)
                     }
+                    updateHistogram(`${name} RECV`, streamId)
                     logProtos(name, 'STREAMING RESPONSE', id, m)
                     yield m
                 } catch (err) {
                     logError(name, 'ERROR YIELDING RESPONSE', id, err)
+                    updateHistogram(`${name} RECV`, undefined, true)
                 }
             }
         } catch (err) {
-            if (err !== 'BLIP' && err !== 'SHUTDOWN') {
+            if (err == 'BLIP') {
+                logCalls(name, 'BLIP', id)
+                updateHistogram(`${name} BLIP`)
+            } else if (err == 'SHUTDOWN') {
+                logCalls(name, 'SHUTDOWN', id)
+                updateHistogram(`${name} SHUTDOWN`)
+            } else {
                 const stack = err instanceof Error && 'stack' in err ? err.stack ?? '' : ''
                 logError(name, 'ERROR STREAMING RESPONSE', id, err, stack)
+                updateHistogram(`${name} RECV`, undefined, true)
             }
             throw err
         }
@@ -155,8 +191,8 @@ const interceptor: (transportId: string) => Interceptor = (transportId: string) 
 }
 
 export function makeStreamRpcClient(dest: Transport | string): PromiseClient<typeof StreamService> {
-    const transportId = genShortId()
-    logCallsHistogram(`makeStreamRpcClient: ${transportId}`)
+    const transportId = `${nextRpcClientNum++}`
+    logCallsHistogram('makeStreamRpcClient, transportId =', transportId)
     let transport: Transport
     if (typeof dest === 'string') {
         transport = createConnectTransport({
