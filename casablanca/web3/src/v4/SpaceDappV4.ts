@@ -2,7 +2,7 @@ import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } 
 import { PublicClient, WalletClient, Address, Hex } from 'viem'
 import { Town } from './Town'
 import { TownRegistrar } from './TownRegistrar'
-import { createEntitlementStruct } from './ConvertersRoles'
+import { createEntitlementStruct } from '../ConvertersRoles'
 import { getContractsInfo } from '../IStaticContractsInfo'
 import {
     IRolesBase,
@@ -17,9 +17,13 @@ import {
     RoleDetails,
     BasicRoleInfo,
     EntitlementModuleType,
+    EntitlementStruct,
 } from '../ContractTypes'
 import { SpaceInfo } from '../SpaceInfo'
-import { createTokenEntitlementStruct, createUserEntitlementStruct } from './ConvertersEntitlements'
+import {
+    createTokenEntitlementStruct,
+    createUserEntitlementStruct,
+} from '../ConvertersEntitlements'
 
 export class SpaceDapp implements ISpaceDapp {
     private readonly townRegistrar: TownRegistrar
@@ -98,7 +102,12 @@ export class SpaceDapp implements ISpaceDapp {
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
         }
-        const entitlements = await createEntitlementStruct(town, tokens, users)
+        const entitlements = (await createEntitlementStruct(
+            town,
+            tokens,
+            users,
+            'v4',
+        )) as EntitlementStruct<'v4'>[]
 
         return town.Roles.write({
             functionName: 'createRole',
@@ -416,14 +425,18 @@ export class SpaceDapp implements ISpaceDapp {
             const entitlementData = createTokenEntitlementStruct(
                 tokenEntitlement.address,
                 params.tokens,
-            )
+                'v4',
+            ) as IRolesBase['CreateEntitlementStruct']
+
             updatedEntitlements.push(entitlementData)
         }
         if (params.users.length > 0 && userEntitlement?.address) {
             const entitlementData = createUserEntitlementStruct(
                 userEntitlement.address,
                 params.users,
-            )
+                'v4',
+            ) as IRolesBase['CreateEntitlementStruct']
+
             updatedEntitlements.push(entitlementData)
         }
         return updatedEntitlements

@@ -14,7 +14,7 @@ import LocalhostAbi from '@towns/generated/localhost/v3/abis/UserEntitlement.abi
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/UserEntitlement.abi.json' assert { type: 'json' }
 
 import { BigNumberish, ethers } from 'ethers'
-import { decodeUsers } from './ConvertersEntitlements'
+import { decodeUsers } from '../ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
 
 export class UserEntitlementShim

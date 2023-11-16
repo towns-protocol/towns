@@ -14,8 +14,8 @@ import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TokenEntitlement
 import { BigNumberish, ethers } from 'ethers'
 
 import { BaseContractShim } from './BaseContractShim'
-import { decodeExternalTokens } from './ConvertersEntitlements'
-import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
+import { decodeExternalTokens } from '../ConvertersEntitlements'
+import { EntitlementModuleType, EntitlementModule, ExternalTokenStruct } from '../ContractTypes'
 
 export type { LocalhostDataTypes as TokenEntitlementDataTypes }
 
@@ -52,7 +52,7 @@ export class TokenEntitlementShim
             console.log('Error reading token entitlement data by role id', e)
         }
         for (const t of encodedTokens) {
-            const tokens = decodeExternalTokens(t)
+            const tokens = decodeExternalTokens(t) as ExternalTokenStruct<'v3'>[]
             rawTokenDetails.push(tokens)
         }
         // verify that we have only one token.

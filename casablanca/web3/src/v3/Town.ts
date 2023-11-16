@@ -25,7 +25,7 @@ import { TokenPausableFacetShim } from './TokenPausableFacetShim'
 import { UNKNOWN_ERROR } from './BaseContractShim'
 import { UserEntitlementShim } from './UserEntitlementShim'
 import { isRoleIdInArray } from '../ContractHelpers'
-import { toPermissions } from './ConvertersRoles'
+import { toPermissions } from '../ConvertersRoles'
 import { IMembershipShim } from './IMembershipShim'
 
 interface AddressToEntitlement {

@@ -4,11 +4,13 @@ import {
 } from './v3/TokenEntitlementShim'
 import { UserEntitlementShim as UserEntitlementShimV3 } from './v3/UserEntitlementShim'
 import { IMembershipBase as IMembershipBaseV3 } from './v3/ITownArchitectShim'
+import { IRolesBase as IRolesBaseV3 } from './v3/IRolesShim'
 import { TokenEntitlementShim as TokenEntitlementShimV4 } from './v4/TokenEntitlementShim'
 import { UserEntitlementShim as UserEntitlementShimV4 } from './v4/UserEntitlementShim'
 import {
     TokenEntitlementDataTypes as TokenEntitlementDataTypesV4,
     ITownArchitectBase as ITownArchitectBaseV4,
+    IRolesBase as IRolesBaseV4,
 } from './v4/types'
 
 export enum Permission {
@@ -32,9 +34,13 @@ export type EntitlementShim<Version = DefaultVersion> = Version extends DefaultV
     ? TokenEntitlementShimV3 | UserEntitlementShimV3
     : TokenEntitlementShimV4 | UserEntitlementShimV4
 
-type ExternalTokenStruct<Version = DefaultVersion> = Version extends DefaultVersion
+export type ExternalTokenStruct<Version = DefaultVersion> = Version extends DefaultVersion
     ? TokenEntitlementDataTypesV3.ExternalTokenStruct
     : TokenEntitlementDataTypesV4['ExternalTokenStruct']
+
+export type EntitlementStruct<Version = DefaultVersion> = Version extends DefaultVersion
+    ? IRolesBaseV3.CreateEntitlementStruct
+    : IRolesBaseV4['CreateEntitlementStruct']
 
 type TokenEntitlementShim<Version = DefaultVersion> = Version extends DefaultVersion
     ? TokenEntitlementShimV3

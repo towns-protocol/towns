@@ -1,6 +1,4 @@
 export * from './BaseContractShim'
-export * from './ConvertersEntitlements'
-export * from './ConvertersRoles'
 export * from './IChannelShim'
 export * from './IEntitlementsShim'
 export * from './IMulticallShim'

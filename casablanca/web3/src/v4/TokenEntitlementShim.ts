@@ -3,7 +3,7 @@ import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TokenEntitlement
 
 import { BaseContractShim } from './BaseContractShim'
 import { Address, PublicClient } from 'viem'
-import { decodeExternalTokens } from './ConvertersEntitlements'
+import { decodeExternalTokens } from '../ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
 import { TokenEntitlementDataTypes } from './types'
 
@@ -40,7 +40,10 @@ export class TokenEntitlementShim
             console.log('Error reading token entitlement data by role id', e)
         }
         for (const t of encodedTokens) {
-            const tokens = decodeExternalTokens(t)
+            const tokens = decodeExternalTokens(
+                t,
+                'v4',
+            ) as TokenEntitlementDataTypes['ExternalTokenStruct'][]
             rawTokenDetails.push(tokens)
         }
         // verify that we have only one token.

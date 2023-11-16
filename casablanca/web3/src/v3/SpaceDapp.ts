@@ -8,14 +8,17 @@ import {
 } from '../ContractTypes'
 import { BytesLike, ContractTransaction, ethers } from 'ethers'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
-import { createTokenEntitlementStruct, createUserEntitlementStruct } from './ConvertersEntitlements'
+import {
+    createTokenEntitlementStruct,
+    createUserEntitlementStruct,
+} from '../ConvertersEntitlements'
 
 import { IRolesBase } from './IRolesShim'
 import { ITownArchitectBase } from './ITownArchitectShim'
 import { SpaceInfo } from '../SpaceInfo'
 import { Town } from './Town'
 import { TownRegistrar } from './TownRegistrar'
-import { createEntitlementStruct } from './ConvertersRoles'
+import { createEntitlementStruct } from '../ConvertersRoles'
 import { getContractsInfo } from '../IStaticContractsInfo'
 import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
 import { WalletLink } from './WalletLink'
