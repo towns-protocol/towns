@@ -2,29 +2,36 @@ import {
     BasicRoleInfo,
     ChannelDetails,
     ChannelMetadata,
+    TDefaultVersion,
+    ExternalTokenStruct,
     MembershipInfo,
+    MembershipStruct,
     Permission,
     RoleDetails,
+    Versions,
 } from './ContractTypes'
-import { ContractTransaction, ethers } from 'ethers'
 
 import { SpaceInfo } from './SpaceInfo'
-import { TokenEntitlementDataTypes } from './v3/TokenEntitlementShim'
-import { ITownArchitectBase } from './v3/ITownArchitectShim'
 import { WalletLink } from './v3/WalletLink'
+import { WalletClient, Address } from 'viem'
+import { ContractTransaction, ethers } from 'ethers'
+import { SpaceDappTransaction } from './v4'
 
+export type SignerType<V extends Versions = TDefaultVersion> = V extends 'v3'
+    ? ethers.Signer
+    : WalletClient
 export interface EventsContractInfo {
     abi: ethers.ContractInterface
     address: string
 }
 
-export interface CreateSpaceParams {
+export interface CreateSpaceParams<V extends Versions = TDefaultVersion> {
     spaceId: string
     spaceName: string
     spaceMetadata: string
     channelId: string
     channelName: string
-    membership: ITownArchitectBase.MembershipStruct
+    membership: MembershipStruct<V>
 }
 
 export interface UpdateChannelParams {
@@ -35,83 +42,96 @@ export interface UpdateChannelParams {
     disabled?: boolean
 }
 
-export interface UpdateRoleParams {
+export interface UpdateRoleParams<V extends Versions = TDefaultVersion> {
     spaceNetworkId: string
     roleId: number
     roleName: string
     permissions: Permission[]
-    tokens: TokenEntitlementDataTypes.ExternalTokenStruct[]
+    tokens: ExternalTokenStruct<V>[]
     users: string[]
 }
 
-export interface ISpaceDapp {
+type TransactionType<V extends Versions> = V extends 'v3'
+    ? ContractTransaction
+    : SpaceDappTransaction
+
+type StringOrAddress<V extends Versions> = V extends 'v3' ? string : Address
+
+export interface ISpaceDapp<V extends Versions = TDefaultVersion> {
     addRoleToChannel: (
         spaceId: string,
         channelNetworkId: string,
         roleId: number,
-        signer: ethers.Signer,
-    ) => Promise<ContractTransaction>
-    createSpace: (params: CreateSpaceParams, signer: ethers.Signer) => Promise<ContractTransaction>
+        signer: SignerType<V>,
+    ) => Promise<TransactionType<V>>
+    createSpace: (
+        params: CreateSpaceParams<V>,
+        signer: SignerType<V>,
+    ) => Promise<TransactionType<V>>
     createChannel: (
         spaceId: string,
         channelName: string,
         channelNetworkId: string,
         roleIds: number[],
-        signer: ethers.Signer,
-    ) => Promise<ContractTransaction>
+        signer: SignerType<V>,
+    ) => Promise<TransactionType<V>>
     createRole(
         spaceId: string,
         roleName: string,
         permissions: Permission[],
-        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
+        tokens: ExternalTokenStruct<V>[],
         users: string[],
-        signer: ethers.Signer,
-    ): Promise<ContractTransaction>
-    deleteRole(spaceId: string, roleId: number, signer: ethers.Signer): Promise<ContractTransaction>
+        signer: SignerType<V>,
+    ): Promise<TransactionType<V>>
+    deleteRole(spaceId: string, roleId: number, signer: SignerType<V>): Promise<TransactionType<V>>
     getChannels: (spaceId: string) => Promise<ChannelMetadata[]>
-    getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails | null>
+    getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails<V> | null>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
-    getRole: (spaceId: string, roleId: number) => Promise<RoleDetails | null>
+    getRole: (spaceId: string, roleId: number) => Promise<RoleDetails<V> | null>
     getRoles: (spaceId: string) => Promise<BasicRoleInfo[]>
     getSpaceInfo: (spaceId: string) => Promise<SpaceInfo | undefined>
-    isEntitledToSpace: (spaceId: string, user: string, permission: Permission) => Promise<boolean>
+    isEntitledToSpace: (
+        spaceId: string,
+        user: StringOrAddress<V>,
+        permission: Permission,
+    ) => Promise<boolean>
     isEntitledToChannel: (
         spaceId: string,
         channelId: string,
-        user: string,
+        user: StringOrAddress<V>,
         permission: Permission,
     ) => Promise<boolean>
     parseSpaceFactoryError: (error: unknown) => Error
     parseSpaceError: (spaceId: string, error: unknown) => Promise<Error>
     updateChannel: (
         params: UpdateChannelParams,
-        signer: ethers.Signer,
-    ) => Promise<ContractTransaction>
-    updateRole: (params: UpdateRoleParams, signer: ethers.Signer) => Promise<ContractTransaction>
+        signer: SignerType<V>,
+    ) => Promise<TransactionType<V>>
+    updateRole: (params: UpdateRoleParams<V>, signer: SignerType<V>) => Promise<TransactionType<V>>
     updateSpaceName: (
         spaceId: string,
         name: string,
-        signer: ethers.Signer,
-    ) => Promise<ContractTransaction>
+        signer: SignerType<V>,
+    ) => Promise<TransactionType<V>>
     setSpaceAccess: (
         spaceId: string,
         disabled: boolean,
-        signer: ethers.Signer,
-    ) => Promise<ContractTransaction>
+        signer: SignerType<V>,
+    ) => Promise<TransactionType<V>>
     setChannelAccess: (
         spaceId: string,
         channelId: string,
         disabled: boolean,
-        signer: ethers.Signer,
-    ) => Promise<ContractTransaction>
+        signer: SignerType<V>,
+    ) => Promise<TransactionType<V>>
     getTownMembershipTokenAddress: (spaceId: string) => Promise<string>
     joinTown: (
         spaceId: string,
-        recipient: string,
-        signer: ethers.Signer,
-    ) => Promise<ContractTransaction>
-    hasTownMembership: (spaceId: string, wallet: string) => Promise<boolean>
-    getMembershipInfo: (spaceId: string) => Promise<MembershipInfo>
-
-    getWalletLink: () => WalletLink
+        recipient: StringOrAddress<V>,
+        signer: SignerType<V>,
+    ) => Promise<TransactionType<V>>
+    hasTownMembership: (spaceId: string, wallet: StringOrAddress<V>) => Promise<boolean>
+    getMembershipInfo: (spaceId: string) => Promise<MembershipInfo<V>>
+    // TODO: v4 wallet link
+    getWalletLink: () => V extends 'v3' ? WalletLink : void
 }

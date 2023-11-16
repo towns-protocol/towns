@@ -3,7 +3,10 @@ import {
     TokenEntitlementShim as TokenEntitlementShimV3,
 } from './v3/TokenEntitlementShim'
 import { UserEntitlementShim as UserEntitlementShimV3 } from './v3/UserEntitlementShim'
-import { IMembershipBase as IMembershipBaseV3 } from './v3/ITownArchitectShim'
+import {
+    IMembershipBase as IMembershipBaseV3,
+    ITownArchitectBase as ITownArchitectBaseV3,
+} from './v3/ITownArchitectShim'
 import { IRolesBase as IRolesBaseV3 } from './v3/IRolesShim'
 import { TokenEntitlementShim as TokenEntitlementShimV4 } from './v4/TokenEntitlementShim'
 import { UserEntitlementShim as UserEntitlementShimV4 } from './v4/UserEntitlementShim'
@@ -28,31 +31,37 @@ export enum Permission {
     JoinTown = 'JoinTown',
 }
 
-type DefaultVersion = 'v3'
+export type Versions = 'v3' | 'v4'
+export const defaultVersion: Versions = 'v3'
+export type TDefaultVersion = typeof defaultVersion
 
-export type EntitlementShim<Version = DefaultVersion> = Version extends DefaultVersion
+export type EntitlementShim<Version = TDefaultVersion> = Version extends 'v3'
     ? TokenEntitlementShimV3 | UserEntitlementShimV3
     : TokenEntitlementShimV4 | UserEntitlementShimV4
 
-export type ExternalTokenStruct<Version = DefaultVersion> = Version extends DefaultVersion
+export type ExternalTokenStruct<Version = TDefaultVersion> = Version extends 'v3'
     ? TokenEntitlementDataTypesV3.ExternalTokenStruct
     : TokenEntitlementDataTypesV4['ExternalTokenStruct']
 
-export type EntitlementStruct<Version = DefaultVersion> = Version extends DefaultVersion
+export type EntitlementStruct<Version = TDefaultVersion> = Version extends 'v3'
     ? IRolesBaseV3.CreateEntitlementStruct
     : IRolesBaseV4['CreateEntitlementStruct']
 
-type TokenEntitlementShim<Version = DefaultVersion> = Version extends DefaultVersion
+type TokenEntitlementShim<Version = TDefaultVersion> = Version extends 'v3'
     ? TokenEntitlementShimV3
     : TokenEntitlementShimV4
 
-type UserEntitlementShim<Version = DefaultVersion> = Version extends DefaultVersion
+type UserEntitlementShim<Version = TDefaultVersion> = Version extends 'v3'
     ? UserEntitlementShimV3
     : UserEntitlementShimV4
 
-type MembershipInfoStruct<Version = DefaultVersion> = Version extends DefaultVersion
+type MembershipInfoStruct<Version = TDefaultVersion> = Version extends 'v3'
     ? IMembershipBaseV3.MembershipInfoStruct
     : ITownArchitectBaseV4['MembershipInfoStruct']
+
+export type MembershipStruct<Version = TDefaultVersion> = Version extends 'v3'
+    ? ITownArchitectBaseV3.MembershipStruct
+    : ITownArchitectBaseV4['MembershipStruct']
 /**
  * Supported entitlement modules
  */
@@ -64,7 +73,7 @@ export enum EntitlementModuleType {
 /**
  * Role details from multiple contract sources
  */
-export interface RoleDetails<Version = DefaultVersion> {
+export interface RoleDetails<Version = TDefaultVersion> {
     id: number
     name: string
     permissions: Permission[]
@@ -85,7 +94,7 @@ export interface ChannelMetadata {
 /**
  * Channel details from multiple contract sources
  */
-export interface ChannelDetails<Version = DefaultVersion> {
+export interface ChannelDetails<Version = TDefaultVersion> {
     spaceNetworkId: string
     channelNetworkId: string
     name: string
@@ -97,7 +106,7 @@ export interface ChannelDetails<Version = DefaultVersion> {
 /**
  * Role details for a channel from multiple contract sources
  */
-export interface RoleEntitlements<Version = DefaultVersion> {
+export interface RoleEntitlements<Version = TDefaultVersion> {
     roleId: number
     name: string
     permissions: Permission[]
@@ -108,7 +117,7 @@ export interface RoleEntitlements<Version = DefaultVersion> {
 /*
     Decoded Token and User entitlenment details
 */
-export interface EntitlementDetails<Version = DefaultVersion> {
+export interface EntitlementDetails<Version = TDefaultVersion> {
     tokens: ExternalTokenStruct<Version>[]
     users: string[]
 }
@@ -122,13 +131,13 @@ export interface EntitlementModule {
     moduleType: EntitlementModuleType
 }
 
-export function isTokenEntitlement<Version = DefaultVersion>(
+export function isTokenEntitlement<Version = TDefaultVersion>(
     entitlement: EntitlementModule,
 ): entitlement is TokenEntitlementShim<Version> {
     return entitlement.moduleType === EntitlementModuleType.TokenEntitlement
 }
 
-export function isUserEntitlement<Version = DefaultVersion>(
+export function isUserEntitlement<Version = TDefaultVersion>(
     entitlement: EntitlementModule,
 ): entitlement is UserEntitlementShim<Version> {
     return entitlement.moduleType === EntitlementModuleType.UserEntitlement
@@ -150,7 +159,7 @@ export function isExternalTokenStruct(
     )
 }
 
-export function isExternalTokenStructArray<Version = DefaultVersion>(
+export function isExternalTokenStructArray<Version = TDefaultVersion>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     args: any,
 ): args is ExternalTokenStruct<Version>[] {
@@ -164,7 +173,7 @@ export function isStringArray(
     return Array.isArray(args) && args.length > 0 && args.every((arg) => typeof arg === 'string')
 }
 
-export type MembershipInfo = Pick<
-    MembershipInfoStruct,
+export type MembershipInfo<V extends Versions = TDefaultVersion> = Pick<
+    MembershipInfoStruct<V>,
     'limit' | 'currency' | 'feeRecipient' | 'price'
 >

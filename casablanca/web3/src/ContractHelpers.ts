@@ -1,6 +1,12 @@
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 
-import { BasicRoleInfo, Permission } from './ContractTypes'
+import {
+    Versions,
+    BasicRoleInfo,
+    Permission,
+    TDefaultVersion,
+    defaultVersion,
+} from './ContractTypes'
 import { getContractsInfo } from './IStaticContractsInfo'
 import { ISpaceDapp } from './ISpaceDapp'
 import { Address, PublicClient, WalletClient, zeroAddress } from 'viem'
@@ -56,8 +62,8 @@ export function getPioneerNftAddress(chainId: number): string {
     return contractInfo.pioneerTokenAddress
 }
 
-export async function getFilteredRolesFromSpace(
-    spaceDapp: ISpaceDapp,
+export async function getFilteredRolesFromSpace<V extends Versions = TDefaultVersion>(
+    spaceDapp: ISpaceDapp<V>,
     spaceNetworkId: string,
 ): Promise<BasicRoleInfo[]> {
     const spaceRoles = await spaceDapp.getRoles(spaceNetworkId)
@@ -75,7 +81,7 @@ export async function getFilteredRolesFromSpace(
 export function isRoleIdInArray(
     roleIds: BigNumber[] | readonly bigint[],
     roleId: BigNumberish | bigint,
-    version = 'v3',
+    version = defaultVersion,
 ): boolean {
     if (version === 'v3') {
         for (const r of roleIds as BigNumber[]) {
@@ -108,7 +114,7 @@ type CreateMembershipStructArgs = {
     name: string
     permissions: Permission[]
     tokenAddresses: string[]
-    version?: 'v3' | 'v4'
+    version?: Versions
 } & (
     | Omit<
           IMembershipBaseV3.MembershipInfoStruct,
@@ -123,7 +129,7 @@ function _createMembershipStruct({
     name,
     permissions,
     tokenAddresses,
-    version = 'v3',
+    version = defaultVersion,
 }: CreateMembershipStructArgs):
     | ITownArchitectBaseV3.MembershipStruct
     | ITownArchitectBaseV4['MembershipStruct'] {

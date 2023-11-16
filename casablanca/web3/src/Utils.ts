@@ -79,3 +79,14 @@ export function isEthersProvider(
         typeof provider.getNetwork === 'function'
     )
 }
+
+export function isPublicClient(
+    provider: ethers.providers.Provider | PublicClient,
+): provider is PublicClient {
+    return (
+        typeof provider === 'object' &&
+        provider !== null &&
+        'getNetwork' in provider &&
+        typeof provider.getNetwork !== 'function'
+    )
+}

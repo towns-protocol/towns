@@ -10,13 +10,13 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 import { ContractReceipt } from 'ethers'
 import { TestConstants } from './helpers/TestConstants'
+import { RoleDetails } from '../../src/types/web3-types'
 import {
     getFilteredRolesFromSpace,
     Permission,
     TokenEntitlementDataTypes,
     createExternalTokenStruct,
     getPioneerNftAddress,
-    RoleDetails,
 } from '@river/web3'
 
 describe('update role', () => {

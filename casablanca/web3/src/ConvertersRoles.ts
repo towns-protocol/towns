@@ -3,6 +3,8 @@ import {
     ExternalTokenStruct,
     Permission,
     EntitlementStruct,
+    defaultVersion,
+    Versions,
 } from './ContractTypes'
 import { createTokenEntitlementStruct, createUserEntitlementStruct } from './ConvertersEntitlements'
 
@@ -14,7 +16,7 @@ export async function createEntitlementStruct<Town extends TownV3 | TownV4>(
     townIn: Town,
     tokens: ExternalTokenStruct<typeof version>[],
     users: string[],
-    version: 'v3' | 'v4' = 'v3',
+    version: Versions = defaultVersion,
 ): Promise<EntitlementStruct<typeof version>[]> {
     switch (version) {
         case 'v3': {

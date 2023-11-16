@@ -1,5 +1,3 @@
-// TODO: export more once other package integration starts
-export * from './ISpaceDapp'
 export * from './ITownArchitectShim'
 export * from './ITownOwnerShim'
 // export * './MemberNFTShim'
@@ -12,3 +10,4 @@ export * from './Town'
 export * from './TownRegistrar'
 export * from './UserEntitlementShim'
 export * from './types'
+export { UNKNOWN_ERROR } from './BaseContractShim'

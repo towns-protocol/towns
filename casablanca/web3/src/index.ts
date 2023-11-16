@@ -1,6 +1,6 @@
 export * from './ContractHelpers'
-export * from './ContractTypes'
 export * from './ISpaceDapp'
+export * from './ContractTypes'
 export * from './MemberNFT'
 export * from './PioneerNFT'
 export * from './SpaceDappFactory'

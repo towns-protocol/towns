@@ -1,4 +1,4 @@
-import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from './ISpaceDapp'
+import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
 import { PublicClient, WalletClient, Address, Hex } from 'viem'
 import { Town } from './Town'
 import { TownRegistrar } from './TownRegistrar'
@@ -25,7 +25,7 @@ import {
     createUserEntitlementStruct,
 } from '../ConvertersEntitlements'
 
-export class SpaceDapp implements ISpaceDapp {
+export class SpaceDapp implements ISpaceDapp<'v4'> {
     private readonly townRegistrar: TownRegistrar
 
     constructor(chainId: number, client: PublicClient | undefined) {
@@ -51,7 +51,7 @@ export class SpaceDapp implements ISpaceDapp {
     }
 
     public async createSpace(
-        params: CreateSpaceParams,
+        params: CreateSpaceParams<'v4'>,
         wallet: WalletClient,
     ): Promise<SpaceDappTransaction> {
         const townInfo: ITownArchitectBase['TownStruct'] = {
@@ -204,6 +204,24 @@ export class SpaceDapp implements ISpaceDapp {
         }
     }
 
+    public async updateSpaceName(
+        spaceId: string,
+        name: string,
+        signer: WalletClient,
+    ): Promise<SpaceDappTransaction> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const townInfo = await town.getTownInfo()
+        // update the town name
+        return town.TownOwner.write({
+            functionName: 'updateTownInfo',
+            args: [town.Address, name, townInfo.uri],
+            wallet: signer,
+        })
+    }
+
     public async isEntitledToSpace(
         spaceId: string,
         user: Address,
@@ -288,7 +306,7 @@ export class SpaceDapp implements ISpaceDapp {
     }
 
     public async updateRole(
-        params: UpdateRoleParams,
+        params: UpdateRoleParams<'v4'>,
         wallet: WalletClient,
     ): Promise<SpaceDappTransaction> {
         const town = await this.getTown(params.spaceNetworkId)
@@ -340,6 +358,70 @@ export class SpaceDapp implements ISpaceDapp {
             args: [channelId, '', disabled],
             wallet,
         })
+    }
+
+    public async getTownMembershipTokenAddress(spaceId: string): Promise<string> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Membership.address
+    }
+
+    public async joinTown(
+        spaceId: string,
+        recipient: Address,
+        signer: WalletClient,
+    ): Promise<SpaceDappTransaction> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Membership.write({
+            functionName: 'joinTown',
+            args: [recipient],
+            wallet: signer,
+        })
+    }
+
+    public async hasTownMembership(spaceId: string, address: Address): Promise<boolean> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Membership.hasMembership(address)
+    }
+
+    public async getMembershipInfo(spaceId: string) {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const [price, limit, currency, feeRecipient] = await Promise.all([
+            town.Membership.read({
+                functionName: 'getMembershipPrice',
+            }),
+            town.Membership.read({
+                functionName: 'getMembershipLimit',
+            }),
+            town.Membership.read({
+                functionName: 'getMembershipCurrency',
+            }),
+            town.Membership.read({
+                functionName: 'getMembershipFeeRecipient',
+            }),
+        ])
+
+        return {
+            price: price,
+            limit: limit,
+            currency: currency,
+            feeRecipient: feeRecipient,
+        }
+    }
+
+    public getWalletLink() {
+        throw new Error('Wallet link not implemented on SpaceDappV4')
     }
 
     private async getTown(townId: string): Promise<Town | undefined> {
@@ -414,7 +496,7 @@ export class SpaceDapp implements ISpaceDapp {
 
     private async createUpdatedEntitlements(
         town: Town,
-        params: UpdateRoleParams,
+        params: UpdateRoleParams<'v4'>,
     ): Promise<IRolesBase['CreateEntitlementStruct'][]> {
         const updatedEntitlements: IRolesBase['CreateEntitlementStruct'][] = []
         const [tokenEntitlement, userEntitlement] = await Promise.all([

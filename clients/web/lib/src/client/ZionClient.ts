@@ -51,11 +51,10 @@ import { makeUniqueSpaceStreamId } from '@river/sdk'
 import { staticAssertNever } from '../utils/zion-utils'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
-import { RoleIdentifier } from '../types/web3-types'
+import { RoleIdentifier, ISpaceDapp } from '../types/web3-types'
 import {
     createSpaceDapp,
     ITownArchitectBase,
-    ISpaceDapp,
     Permission,
     PioneerNFT,
     TokenEntitlementDataTypes,

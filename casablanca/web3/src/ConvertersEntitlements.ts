@@ -1,13 +1,11 @@
 import { ethers } from 'ethers'
 
 import { Address, Hex, decodeAbiParameters, encodeAbiParameters, parseAbiParameters } from 'viem'
-import { EntitlementStruct, ExternalTokenStruct } from './ContractTypes'
+import { EntitlementStruct, ExternalTokenStruct, Versions, defaultVersion } from './ContractTypes'
 
 const UserAddressesEncoding = 'address[]'
-const ExternalTokenEncoding =
-    'tuple(address contractAddress, uint256 quantity, bool isSingleToken, uint256[] tokenIds)[]'
 
-function getExternalTokenEncoding(version = 'v3') {
+function getExternalTokenEncoding(version = defaultVersion) {
     if (version === 'v3') {
         return 'tuple(address contractAddress, uint256 quantity, bool isSingleToken, uint256[] tokenIds)[]'
     } else {
@@ -15,9 +13,7 @@ function getExternalTokenEncoding(version = 'v3') {
     }
 }
 
-type Versions = 'v3' | 'v4'
-
-export function encodeUsers(users: string[] | Address[], version: Versions = 'v3') {
+export function encodeUsers(users: string[] | Address[], version: Versions = defaultVersion) {
     switch (version) {
         case 'v3': {
             const abiCoder = ethers.utils.defaultAbiCoder
@@ -35,7 +31,7 @@ export function encodeUsers(users: string[] | Address[], version: Versions = 'v3
     }
 }
 
-export function decodeUsers(encodedData: string, version = 'v3'): string[] {
+export function decodeUsers(encodedData: string, version = defaultVersion): string[] {
     switch (version) {
         case 'v3': {
             const abiCoder = ethers.utils.defaultAbiCoder
@@ -68,7 +64,7 @@ export function decodeUsers(encodedData: string, version = 'v3'): string[] {
 export function createTokenEntitlementStruct(
     moduleAddress: string,
     tokens: ExternalTokenStruct<typeof version>[],
-    version: Versions = 'v3',
+    version: Versions = defaultVersion,
 ): EntitlementStruct<typeof version> {
     switch (version) {
         case 'v3': {
@@ -94,7 +90,7 @@ export function createTokenEntitlementStruct(
 export function createUserEntitlementStruct(
     moduleAddress: string,
     users: string[],
-    version: Versions = 'v3',
+    version: Versions = defaultVersion,
 ): EntitlementStruct<typeof version> {
     switch (version) {
         case 'v3':
@@ -114,7 +110,7 @@ export function createUserEntitlementStruct(
 
 export function encodeExternalTokens(
     tokens: ExternalTokenStruct<typeof version>[],
-    version: Versions = 'v3',
+    version: Versions = defaultVersion,
 ): string {
     const externalTokenConfig = getExternalTokenEncoding(version)
     switch (version) {
@@ -134,12 +130,14 @@ export function encodeExternalTokens(
     }
 }
 
-export function decodeExternalTokens(encodedData: string, version: Versions = 'v3') {
+export function decodeExternalTokens(encodedData: string, version: Versions = defaultVersion) {
+    const externalTokenConfig = getExternalTokenEncoding(version)
+
     switch (version) {
         case 'v3': {
             const abiCoder = ethers.utils.defaultAbiCoder
             const decodedData = abiCoder.decode(
-                [ExternalTokenEncoding],
+                [externalTokenConfig],
                 encodedData,
             ) as ExternalTokenStruct<'v3'>[][]
             let t: ExternalTokenStruct<'v3'>[] = []
@@ -151,7 +149,7 @@ export function decodeExternalTokens(encodedData: string, version: Versions = 'v
         }
         case 'v4': {
             const decodedData = decodeAbiParameters(
-                parseAbiParameters([ExternalTokenEncoding]),
+                parseAbiParameters([externalTokenConfig]),
                 encodedData as Hex,
             )
             let t: ExternalTokenStruct<'v4'>[] = []

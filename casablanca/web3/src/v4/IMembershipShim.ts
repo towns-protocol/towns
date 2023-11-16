@@ -13,4 +13,12 @@ export class IMembershipShim extends BaseContractShim<typeof abis> {
     constructor(address: Address, chainId: number, client: PublicClient | undefined) {
         super(address, chainId, client, abis)
     }
+
+    async hasMembership(wallet: Address) {
+        const balance = await this.read({
+            functionName: 'balanceOf',
+            args: [wallet],
+        })
+        return Number(balance) > 0
+    }
 }

@@ -23,7 +23,7 @@ import { getContractsInfo } from '../IStaticContractsInfo'
 import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
 import { WalletLink } from './WalletLink'
 
-export class SpaceDapp implements ISpaceDapp {
+export class SpaceDapp implements ISpaceDapp<'v3'> {
     private readonly chainId: number
     private readonly provider: ethers.providers.Provider | undefined
     private readonly townRegistrar: TownRegistrar
@@ -51,7 +51,7 @@ export class SpaceDapp implements ISpaceDapp {
     }
 
     public async createSpace(
-        params: CreateSpaceParams,
+        params: CreateSpaceParams<'v3'>,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         const townInfo: ITownArchitectBase.TownInfoStruct = {
@@ -120,7 +120,7 @@ export class SpaceDapp implements ISpaceDapp {
     public async getChannelDetails(
         spaceId: string,
         channelId: string,
-    ): Promise<ChannelDetails | null> {
+    ): Promise<ChannelDetails<'v3'> | null> {
         const town = await this.getTown(spaceId)
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
@@ -136,7 +136,7 @@ export class SpaceDapp implements ISpaceDapp {
         return town.getPermissionsByRoleId(roleId)
     }
 
-    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails | null> {
+    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails<'v3'> | null> {
         const town = await this.getTown(spaceId)
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
@@ -264,7 +264,7 @@ export class SpaceDapp implements ISpaceDapp {
     }
 
     public async updateRole(
-        params: UpdateRoleParams,
+        params: UpdateRoleParams<'v3'>,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         const town = await this.getTown(params.spaceNetworkId)
@@ -434,7 +434,7 @@ export class SpaceDapp implements ISpaceDapp {
 
     private async createUpdatedEntitlements(
         town: Town,
-        params: UpdateRoleParams,
+        params: UpdateRoleParams<'v3'>,
     ): Promise<IRolesBase.CreateEntitlementStruct[]> {
         const updatedEntitlements: IRolesBase.CreateEntitlementStruct[] = []
         const [tokenEntitlement, userEntitlement] = await Promise.all([

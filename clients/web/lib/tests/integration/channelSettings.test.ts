@@ -7,8 +7,8 @@ import {
     registerAndStartClients,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { RoleIdentifier } from '../../src/types/web3-types'
-import { createExternalTokenStruct, Permission, RoleEntitlements } from '@river/web3'
+import { RoleIdentifier, RoleEntitlements } from '../../src/types/web3-types'
+import { createExternalTokenStruct, Permission } from '@river/web3'
 
 describe('channel settings', () => {
     test('get channel settings', async () => {

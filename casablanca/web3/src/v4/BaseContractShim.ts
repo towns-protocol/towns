@@ -12,7 +12,6 @@ import {
     WalletClient,
     encodeFunctionData,
 } from 'viem'
-import { waitForTransaction } from './waitForTransactionReceipt'
 import { SpaceDappTransaction } from './types'
 
 export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
@@ -167,10 +166,9 @@ export class BaseContractShim<TAbis extends Abis> {
                     if (!this.publicClient) {
                         throw new Error('No provider')
                     }
-                    return waitForTransaction({
+                    return this.publicClient.waitForTransactionReceipt({
                         hash,
                         confirmations,
-                        publicClient: this.publicClient,
                     })
                 },
             }

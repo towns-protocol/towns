@@ -1,7 +1,12 @@
 import { Address, Chain, Connector } from 'wagmi'
 import { RoomIdentifier } from './room-identifier'
 import { useEthersProvider } from '../hooks/Web3Context/useEthersProvider'
-import { TokenEntitlementDataTypes } from '@river/web3'
+import {
+    TokenEntitlementDataTypes,
+    RoleEntitlements as R_RoleEntitlements,
+    RoleDetails as R_RoleDetails,
+    ISpaceDapp as R_ISpaceDapp,
+} from '@river/web3'
 
 export const NULL_ADDRESS: Address = '0x0000000000000000000000000000000000000000'
 
@@ -46,3 +51,8 @@ export type Connectors = (args: { chains: Chain[] }) => Connector[]
 
 // aliasing this type b/c we might change to viem and it's unclear if we're going to be removing typechain generated types
 export type TokenEntitlementStruct = TokenEntitlementDataTypes.ExternalTokenStruct
+
+// versioned types for easier reference/upgrade
+export type RoleEntitlements = R_RoleEntitlements<'v3'>
+export type RoleDetails = R_RoleDetails<'v3'>
+export type ISpaceDapp = R_ISpaceDapp<'v3'>

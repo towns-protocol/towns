@@ -10,11 +10,10 @@ import { ZionClient } from '../../../src/client/ZionClient'
 import { waitFor } from '@testing-library/dom'
 import { SignerUndefinedError } from '../../../src/types/error-types'
 import { useTransactionStore } from '../../../src/store/use-transactions-store'
-import { BlockchainTransactionType } from '../../../src/types/web3-types'
+import { BlockchainTransactionType, RoleDetails } from '../../../src/types/web3-types'
 import {
     BasicRoleInfo,
     Permission,
-    RoleDetails,
     createExternalTokenStruct,
     getFilteredRolesFromSpace,
     getMemberNftAddress,
