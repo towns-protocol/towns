@@ -185,6 +185,9 @@ interface ZionClientImpl {
         walletAddress: string,
     ) => Promise<WalletLinkTransactionContext | undefined>
     getLinkedWallets: (rootKey: string) => Promise<string[] | undefined>
+    waitWalletLinkTransaction: (
+        transactionContext: WalletLinkTransactionContext,
+    ) => Promise<WalletLinkTransactionContext | undefined>
     userOnWrongNetworkForSignIn: boolean
 }
 
@@ -255,6 +258,7 @@ export function useZionClient(): ZionClientImpl {
         linkWallet: useWithCatch(client?.linkWallet),
         removeLink: useWithCatch(client?.removeLink),
         getLinkedWallets: useWithCatch(client?.getLinkedWallets),
+        waitWalletLinkTransaction: useWithCatch(client?.waitWalletLinkTransaction),
         userOnWrongNetworkForSignIn,
     }
 }

@@ -24,6 +24,7 @@ export class WalletLink {
             rootKeyAddress,
             walletAddress,
         )
+
         if (isLinkedAlready) {
             throw new Error('Wallet is already linked')
         }

@@ -58,7 +58,6 @@ import {
     Permission,
     TokenEntitlementDataTypes,
     SpaceInfo,
-    UNKNOWN_ERROR,
     pioneerNftFactory,
     IPioneerNft,
 } from '@river/web3'
@@ -1359,11 +1358,7 @@ export class ZionClient implements EntitlementsDelegate {
             transaction = await walletLink.removeLink(rootKey, walletAddress)
         } catch (err) {
             const parsedError = walletLink.parseError(err)
-            error = {
-                name: UNKNOWN_ERROR,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                message: parsedError.message,
-            }
+            error = parsedError
         }
 
         return {
@@ -1383,6 +1378,12 @@ export class ZionClient implements EntitlementsDelegate {
     public async getLinkedWallets(walletAddress: string): Promise<string[]> {
         const walletLink = this.spaceDapp.getWalletLink()
         return await walletLink.getLinkedWallets(walletAddress)
+    }
+
+    public async waitWalletLinkTransaction(transactionContext: WalletLinkTransactionContext) {
+        const txnContext = await this._waitForBlockchainTransaction(transactionContext)
+        logTxnResult('waitWalletLinkTransaction', txnContext)
+        return txnContext
     }
 
     /************************************************
