@@ -67,7 +67,7 @@ export const CreateDirectMessage = (props: Props) => {
         })
         .map((r) => r.obj.userId)
         .filter((id) => id !== userId)
-        .slice(0, 10)
+        .slice(0, 25)
 
     return (
         <Stack gap grow paddingTop="md">
