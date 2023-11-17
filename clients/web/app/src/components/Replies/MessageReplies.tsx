@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo } from 'react'
 import { ThreadStats, useChannelId, useSpaceId, useSpaceMembers } from 'use-zion-client'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
-import { Avatar, Box, Paragraph, Pill, Stack } from '@ui'
+import { Box, Paragraph, Pill, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
+import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
     threadStats: ThreadStats

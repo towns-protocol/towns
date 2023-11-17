@@ -8,7 +8,7 @@ import {
     useZionContext,
 } from 'use-zion-client'
 import { useGetUserBio } from 'hooks/useUserBio'
-import { Avatar } from 'ui/components/Avatar/Avatar'
+import { Avatar } from '@components/Avatar/Avatar'
 import { Stack } from 'ui/components/Stack/Stack'
 import { Paragraph } from 'ui/components/Text/Paragraph'
 import { Tooltip } from 'ui/components/Tooltip/Tooltip'

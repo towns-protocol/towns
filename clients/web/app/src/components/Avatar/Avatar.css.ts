@@ -1,7 +1,7 @@
 import { style } from '@vanilla-extract/css'
 import { createSprinkles } from '@vanilla-extract/sprinkles'
 import { vcn } from 'vanilla-classnames'
-import { avatarProperties } from 'ui/components/Avatar/avatarProperties.css'
+import { avatarProperties } from 'components/Avatar/avatarProperties.css'
 import { vars } from 'ui/styles/vars.css'
 
 /**

@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { Channel, RoomIdentifier, useChannelMembers, useDMData, useRoom } from 'use-zion-client'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
-import { Avatar, Box, Button, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { useMuteSettings } from 'api/lib/notificationSettings'
@@ -12,6 +12,7 @@ import { useChannelType } from 'hooks/useChannelType'
 import { GroupDMIcon } from '@components/DirectMessages/GroupDMIcon'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useUserList } from '@components/UserList/UserList'
+import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
     channel: Channel

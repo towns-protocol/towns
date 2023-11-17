@@ -2,9 +2,10 @@ import React, { useContext, useMemo } from 'react'
 import { RoomIdentifier, ZTEvent, useChannelMembers } from 'use-zion-client'
 import { Link } from 'react-router-dom'
 import { uniq } from 'lodash'
-import { Avatar, Box, Paragraph, Stack } from '@ui'
+import { Box, Paragraph, Stack } from '@ui'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
+import { Avatar } from '@components/Avatar/Avatar'
 
 export const ChannelUsersPill = (props: {
     spaceId: RoomIdentifier | undefined

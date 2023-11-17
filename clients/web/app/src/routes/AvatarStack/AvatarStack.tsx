@@ -1,13 +1,12 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, LayoutGroup } from 'framer-motion'
-import { avatarSizes } from 'ui/components/Avatar/avatarProperties.css'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
-import { ProfileHoverCard } from '../../../components/ProfileHoverCard/ProfileHoverCard'
-import { Avatar } from '../Avatar/Avatar'
-import { Stack } from '../Stack/Stack'
-import { TooltipBox as Box } from '../Box/TooltipBox'
+import { avatarSizes } from 'components/Avatar/avatarProperties.css'
+import { ProfileHoverCard } from 'components/ProfileHoverCard/ProfileHoverCard'
+import { Avatar } from 'components/Avatar/Avatar'
+import { Box, Stack } from '@ui'
 
 type Props = {
     users: {

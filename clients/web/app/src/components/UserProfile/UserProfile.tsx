@@ -3,17 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
 import { useBalance } from 'wagmi'
-import {
-    Avatar,
-    Box,
-    FormRender,
-    MotionStack,
-    Paragraph,
-    Stack,
-    Text,
-    TextButton,
-    TextField,
-} from '@ui'
+import { Box, FormRender, MotionStack, Paragraph, Stack, Text, TextButton, TextField } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useSetUserBio } from 'hooks/useUserBio'
 import { shortAddress } from 'ui/utils/utils'
@@ -27,6 +17,7 @@ import { vars } from 'ui/styles/vars.css'
 import { transitions } from 'ui/transitions/transitions'
 import { ExportWalletButton } from '@components/Web3/ExportPrivy'
 import { formatEthDisplay } from '@components/Web3/utils'
+import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
     displayName: string

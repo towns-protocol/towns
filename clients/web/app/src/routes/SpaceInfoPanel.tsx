@@ -22,7 +22,6 @@ import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { SpaceNameModal } from '@components/SpaceNameModal/SpaceNameModal'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import {
-    Avatar,
     Box,
     BoxProps,
     FormRender,
@@ -49,6 +48,7 @@ import { TextArea } from 'ui/components/TextArea/TextArea'
 import { getInviteUrl, shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
+import { Avatar } from '@components/Avatar/Avatar'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { env } from '../utils/environment'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'

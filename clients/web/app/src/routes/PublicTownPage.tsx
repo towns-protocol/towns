@@ -1,10 +1,10 @@
 import debug from 'debug'
-import React, { useCallback, useState } from 'react'
+import React, { Suspense, useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useMyProfile } from 'use-zion-client'
 import { isAddress } from 'viem'
 import { Link } from 'react-router-dom'
-import { LoginComponent } from '@components/Login/LoginComponent'
+
 import { PageLogo } from '@components/Logo/Logo'
 import { Spinner } from '@components/Spinner'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
@@ -12,19 +12,7 @@ import { Activity } from '@components/TownPageLayout/TownPageActivity'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { BottomBarLayout } from '@components/Web3/MembershipNFT/BottomBar'
-import {
-    Avatar,
-    Box,
-    BoxProps,
-    Button,
-    Card,
-    Heading,
-    Icon,
-    IconProps,
-    Paragraph,
-    Stack,
-    Text,
-} from '@ui'
+import { Box, BoxProps, Button, Card, Heading, Icon, IconProps, Paragraph, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useJoinTown } from 'hooks/useJoinTown'
@@ -39,9 +27,12 @@ import { NoFundsModal } from '@components/VisualViewportContext/NoFundsModal'
 import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { useDevice } from 'hooks/useDevice'
 import { FadeInBox } from '@components/Transitions'
+import { Avatar } from '@components/Avatar/Avatar'
 
 const log = debug('app:public-town')
 log.enabled = true
+
+const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
 
 export const PublicTownPage = () => {
     const { spaceSlug } = useParams()
@@ -121,7 +112,9 @@ export const PublicTownPage = () => {
                                             />
                                         )
                                     ) : (
-                                        <LoginComponent />
+                                        <Suspense>
+                                            <LoginComponent />
+                                        </Suspense>
                                     )}
                                 </Box>
                             }

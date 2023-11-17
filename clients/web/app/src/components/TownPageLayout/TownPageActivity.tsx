@@ -9,11 +9,12 @@ import { AnimatePresence } from 'framer-motion'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Spinner } from '@components/Spinner'
 import { FadeInBox } from '@components/Transitions'
-import { Avatar, Box, Heading, Icon, IconName, Paragraph, Stack, Text } from '@ui'
+import { Box, Heading, Icon, IconName, Paragraph, Stack, Text } from '@ui'
 import { DAY_MS, WEEK_MS } from 'data/constants'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useDevice } from 'hooks/useDevice'
 import { notUndefined } from 'ui/utils/utils'
+import { Avatar } from '@components/Avatar/Avatar'
 
 export const Activity = (props: { townId: string }) => {
     const { members, townStats, channelStats, isLoading } = useFetchUnauthenticatedActivity(

@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from 'react'
 import { clsx } from 'clsx'
 import { Box, BoxProps, Icon, IconButton, Text, TooltipRenderer } from '@ui'
-import { AvatarProps } from 'ui/components/Avatar/Avatar'
+import { AvatarProps } from '@components/Avatar/Avatar'
 import {
     avatarAtoms,
     avatarBaseStyle,
     avatarImageStyle,
     avatarToggleClasses,
-} from 'ui/components/Avatar/Avatar.css'
+} from '@components/Avatar/Avatar.css'
 import { useGetPioneerNftAddress } from 'hooks/useGetPioneerNftAddress'
 import { shortAddress } from 'ui/utils/utils'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'

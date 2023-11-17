@@ -1,9 +1,9 @@
 import React from 'react'
 import { Address } from 'wagmi'
 import { shortAddress } from 'ui/utils/utils'
-import { Stack } from '../Stack/Stack'
+import { Stack } from '../../ui/components/Stack/Stack'
 import { Avatar } from './Avatar'
-import { Text } from '../Text/Text'
+import { Text } from '../../ui/components/Text/Text'
 
 type Props = {
     prepend?: React.ReactNode

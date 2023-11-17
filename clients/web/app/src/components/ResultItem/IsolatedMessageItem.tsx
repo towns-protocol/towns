@@ -1,7 +1,7 @@
-import { EventStatus } from 'matrix-js-sdk'
 import React, { useEffect, useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
+    EventStatus,
     MentionResult as MessageResult,
     RoomIdentifier,
     useSpaceId,

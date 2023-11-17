@@ -3,7 +3,7 @@ import React, { forwardRef, useCallback, useEffect, useMemo } from 'react'
 import { getAccountAddress } from 'use-zion-client'
 import { ImageVariant, useImageSource } from '@components/UploadImage/useImageSource'
 import { useImageStore } from '@components/UploadImage/useImageStore'
-import { TooltipBox as Box, TooltipBoxProps as BoxProps } from '../Box/TooltipBox'
+import { TooltipBox as Box, TooltipBoxProps as BoxProps } from '../../ui/components/Box/TooltipBox'
 import {
     AvatarAtoms,
     avatarAtoms,
@@ -11,8 +11,8 @@ import {
     avatarImageStyle,
     avatarToggleClasses,
 } from './Avatar.css'
-import { Icon, IconProps } from '../Icon'
-import { MotionBox } from '../Motion/MotionComponents'
+import { Icon, IconProps } from '../../ui/components/Icon'
+import { MotionBox } from '../../ui/components/Motion/MotionComponents'
 
 type Props = {
     src?: string

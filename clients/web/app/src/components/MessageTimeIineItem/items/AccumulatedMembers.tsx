@@ -2,10 +2,11 @@ import React, { useMemo } from 'react'
 import uniqBy from 'lodash/uniqBy'
 import { Link } from 'react-router-dom'
 import { firstBy } from 'thenby'
-import { AvatarStack, Card, Paragraph, Stack, TooltipRenderer } from '@ui'
+import { Card, Paragraph, Stack, TooltipRenderer } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { AvatarStack } from 'routes/AvatarStack'
 import { AccumulatedRoomMemberRenderEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 type Props = {

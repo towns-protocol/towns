@@ -21,7 +21,6 @@ import { TouchLayoutHeader } from '@components/TouchLayoutHeader/TouchLayoutHead
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { VisualViewportContextProvider } from '@components/VisualViewportContext/VisualViewportContext'
 import {
-    Avatar,
     Badge,
     Box,
     BoxProps,
@@ -48,6 +47,7 @@ import { ImageVariants, useImageSource } from '@components/UploadImage/useImageS
 import { shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useStore } from 'store/store'
+import { Avatar } from '@components/Avatar/Avatar'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'

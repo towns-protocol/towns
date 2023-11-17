@@ -1,10 +1,11 @@
 import { default as React, useCallback } from 'react'
 import { useMatch, useNavigate } from 'react-router'
 import { useMyProfile } from 'use-zion-client'
-import { Avatar, Box } from '@ui'
+import { Box } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { PATHS } from 'routes'
+import { Avatar } from '@components/Avatar/Avatar'
 
 export const ProfileCardButton = () => {
     const myProfile = useMyProfile()

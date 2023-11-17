@@ -1,7 +1,8 @@
 import React from 'react'
 import { Address } from 'wagmi'
-import { Avatar, Stack, Text } from '@ui'
+import { Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
+import { Avatar } from '@components/Avatar/Avatar'
 
 // TBD
 type Props = {

@@ -6,7 +6,6 @@ import { InvalidCookieNotification } from '@components/Notifications/InvalidCook
 import { TextFieldWithPill } from '@components/TextFieldWithPill'
 import { TownsTokenExample } from '@components/TownsToken/example/TownTokenExample'
 import {
-    Avatar,
     Box,
     Button,
     Checkbox,
@@ -29,6 +28,7 @@ import { Accordion, AccordionGroup } from 'ui/components/Accordion/Accordion'
 import { FormRender } from 'ui/components/Form/Form'
 import { vars } from 'ui/styles/vars.css'
 import { BottomBar } from '@components/Web3/MembershipNFT/BottomBar'
+import { Avatar } from '@components/Avatar/Avatar'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
 import { Container } from './components/PlaygroundContainer'
 import { PageColors } from './pages/PageColors'

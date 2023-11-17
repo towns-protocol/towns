@@ -14924,7 +14924,6 @@ __metadata:
     jsdom: ^22.1.0
     lexical: ^0.12.0
     lodash: ^4.17.21
-    matrix-js-sdk: 25.0.0-rc.1
     minisearch: ^6.1.0
     msw: ^1.0.1
     push-notification-worker: "workspace:^"

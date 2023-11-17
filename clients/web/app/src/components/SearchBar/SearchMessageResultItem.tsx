@@ -1,7 +1,7 @@
-import { EventStatus } from 'matrix-js-sdk'
 import React, { useEffect, useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
+    EventStatus,
     MentionResult as MessageResult,
     RoomIdentifier,
     useSpaceId,
@@ -10,12 +10,13 @@ import {
 import { formatDistance } from 'date-fns'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
-import { Avatar, Box, BoxProps, Stack, Text } from '@ui'
+import { Box, BoxProps, Stack, Text } from '@ui'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { PATHS } from 'routes'
 import { atoms } from 'ui/styles/atoms.css'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { Avatar } from '@components/Avatar/Avatar'
 
 const createMessageLink = (
     channelId: RoomIdentifier,

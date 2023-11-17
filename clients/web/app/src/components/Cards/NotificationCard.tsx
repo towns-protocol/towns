@@ -1,5 +1,6 @@
 import React from 'react'
-import { Avatar, Card, Heading, Stack, Text } from '@ui'
+import { Card, Heading, Stack, Text } from '@ui'
+import { Avatar } from '@components/Avatar/Avatar'
 
 export const NotificationCard = () => {
     return (

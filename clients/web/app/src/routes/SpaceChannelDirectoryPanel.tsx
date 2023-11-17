@@ -9,13 +9,14 @@ import {
     useChannelMembers,
 } from 'use-zion-client'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { Avatar, Box, Paragraph, Stack } from '@ui'
+import { Box, Paragraph, Stack } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Panel } from '@components/Panel/Panel'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { Avatar } from '@components/Avatar/Avatar'
 
 export const ChannelDirectoryPanel = () => {
     const { channel } = useChannelData()

@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react'
 import { format, formatDistance } from 'date-fns'
-import { Avatar, Box, BoxProps, Stack, Text } from '@ui'
+import { Box, BoxProps, Stack, Text } from '@ui'
+import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
     children: React.ReactNode

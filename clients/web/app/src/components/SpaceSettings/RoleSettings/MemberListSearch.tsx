@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react'
-import { RoomMember } from 'matrix-js-sdk'
-import { getAccountAddress, useSpaceMembers } from 'use-zion-client'
-import { Avatar, Box, Checkbox, IconButton, MotionBox, Text, TextField } from '@ui'
+import { RoomMember, getAccountAddress, useSpaceMembers } from 'use-zion-client'
+import { Box, Checkbox, IconButton, MotionBox, Text, TextField } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 
 import { EVERYONE_ADDRESS } from 'utils'
@@ -14,6 +13,7 @@ import {
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { TokenClickParameters } from '@components/Tokens/types'
 import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
+import { Avatar } from '@components/Avatar/Avatar'
 type MyRoomMember = Pick<RoomMember, 'userId' | 'name'>
 
 type ResultsWithIdForVList = {

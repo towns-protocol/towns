@@ -13,11 +13,12 @@ import { MostRecentMessageInfo_OneOf } from 'use-zion-client/dist/hooks/use-dm-l
 import { Link } from 'react-router-dom'
 import { useDevice } from 'hooks/useDevice'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { Avatar, Box, Icon, MotionStack, Paragraph, Stack, Text } from '@ui'
+import { Box, Icon, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { UserList } from '@components/UserList/UserList'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { notUndefined } from 'ui/utils/utils'
 import { TimelineEncryptedContent } from '@components/MessageTimeIineItem/items/MessageItem/EncryptedMessageBody/EncryptedMessageBody'
+import { Avatar } from '@components/Avatar/Avatar'
 import { GroupDMIcon } from './GroupDMIcon'
 
 export const DirectMessageList = () => {

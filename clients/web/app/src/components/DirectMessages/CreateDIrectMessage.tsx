@@ -4,7 +4,6 @@ import fuzzysort from 'fuzzysort'
 import { AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router'
 import {
-    Avatar,
     Box,
     Button,
     Checkbox,
@@ -16,6 +15,7 @@ import {
     TextField,
 } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
     onDirectMessageCreated: () => void

@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { MessageType, TimelineEvent, ZTEvent, useChunkedMedia, useUser } from 'use-zion-client'
 import { formatDistance } from 'date-fns'
-import { Avatar, Box, Stack, Text } from '@ui'
+import { Box, Stack, Text } from '@ui'
 import { darkTheme } from 'ui/styles/vars.css'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
     event: TimelineEvent

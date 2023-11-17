@@ -6,7 +6,7 @@ import { ImageVariants, useImageSource } from '@components/UploadImage/useImageS
 import { Box, Heading, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { checkAnyoneCanJoin, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
-import { AvatarTextHorizontal } from 'ui/components/Avatar/AvatarTextHorizontal'
+import { AvatarTextHorizontal } from '@components/Avatar/AvatarTextHorizontal'
 import { FadeInBox } from '@components/Transitions'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 

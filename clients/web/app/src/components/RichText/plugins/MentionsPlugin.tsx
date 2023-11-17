@@ -13,8 +13,9 @@ import { useCallback, useMemo, useState } from 'react'
 import * as ReactDOM from 'react-dom'
 import { RoomMember } from 'use-zion-client'
 import { notUndefined } from 'ui/utils/utils'
-import { Avatar, TypeaheadMenu, TypeaheadMenuItem } from '@ui'
+import { TypeaheadMenu, TypeaheadMenuItem } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { Avatar } from '@components/Avatar/Avatar'
 import { $createMentionNode } from '../nodes/MentionNode'
 
 // At most, 5 suggestions are shown in the popup.

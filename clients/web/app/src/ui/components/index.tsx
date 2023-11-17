@@ -1,5 +1,3 @@
-export { Avatar } from './Avatar/Avatar'
-export { AvatarStack } from './AvatarStack/AvatarStack'
 export { BackgroundImage } from './BackgroundImage'
 export { TooltipBox as Box } from './Box/TooltipBox'
 export type { TooltipBoxProps as BoxProps } from './Box/TooltipBox'

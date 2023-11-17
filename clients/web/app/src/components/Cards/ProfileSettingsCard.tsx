@@ -1,11 +1,12 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import { Avatar, Box, Card, Divider, Paragraph, Stack } from '@ui'
+import { Box, Card, Divider, Paragraph, Stack } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useStore } from 'store/store'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { shortAddress } from 'ui/utils/utils'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { Avatar } from '@components/Avatar/Avatar'
 import { MenuItem } from './MenuItem'
 
 type Props = {

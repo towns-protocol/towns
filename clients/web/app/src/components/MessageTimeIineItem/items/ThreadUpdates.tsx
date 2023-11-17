@@ -7,10 +7,11 @@ import {
     useSpaceMembers,
 } from 'use-zion-client'
 import { truncate } from 'lodash'
-import { Avatar, Box, Paragraph, Stack } from '@ui'
+import { Box, Paragraph, Stack } from '@ui'
 import { useHover } from 'hooks/useHover'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { notUndefined } from 'ui/utils/utils'
+import { Avatar } from '@components/Avatar/Avatar'
 import { ZRoomMessageEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 type Props = {

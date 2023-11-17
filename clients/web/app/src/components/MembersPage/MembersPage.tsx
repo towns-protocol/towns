@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom'
 import { RoomMember, getAccountAddress, useSpaceMembers } from 'use-zion-client'
 import { CentralPanelLayout } from 'routes/layouts/CentralPanelLayout'
 import { shortAddress } from 'ui/utils/utils'
-import { Avatar, Box, Grid, Paragraph, Stack } from '@ui'
+import { Box, Grid, Paragraph, Stack } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
     members?: RoomMember[]
