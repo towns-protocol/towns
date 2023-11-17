@@ -51,7 +51,7 @@ const TIME_BETWEEN_LOOKING_FOR_KEYS_MS = 500
 /// time between processing to-device events
 const DELAY_BETWEEN_PROCESSING_TO_DEVICE_EVENTS_MS = 10
 // max time to wait before sending a key fulfillment
-const MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS = 5000
+const MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS = 2000
 
 type MegolmSessionData = MegolmSession
 type OlmDecryptedMessage = OlmMessage
@@ -216,7 +216,7 @@ export class RiverDecryptionExtension {
     private async processKeySolicitationEvent(event: EventKeySolicitation): Promise<void> {
         // check that event has not already been fulfilled by someone else
         if (this.keySolicitationFulfilled(event.streamId, event.eventHash, event.event.sessionId)) {
-            console.log(
+            console.warn(
                 `CDE::processKeySolicitationEvent - event already fulfilled`,
                 event.streamId,
                 event.eventHash,
@@ -297,7 +297,7 @@ export class RiverDecryptionExtension {
 
             const channelId = event.getChannelId()
             if (!channelId) {
-                console.log(
+                console.warn(
                     'CDE::onDecryptionFailure - missing channelId, not going to start looking for keys',
                     {
                         eventId: event.getId() ?? '',
@@ -415,7 +415,7 @@ export class RiverDecryptionExtension {
 
     private async startLookingForKeys() {
         if (!this.clientRunning) {
-            console.log('CDE:startLookingForKeys client not running')
+            console.warn('CDE:startLookingForKeys client not running')
             return
         }
 
@@ -445,7 +445,7 @@ export class RiverDecryptionExtension {
 
         for (const room of rooms) {
             if (this.currentlyRequestingCount() >= MAX_CONCURRENT_ROOM_KEY_REQUESTS) {
-                console.log('CDE::startLookingForKeys - max concurrent requests')
+                console.warn('CDE::startLookingForKeys - max concurrent requests')
                 break
             }
             // todo: HNT-2868 remove _startLookingForkeys in favor of _askStreamForKeys which is more efficient
@@ -538,11 +538,11 @@ export class RiverDecryptionExtension {
             const unknownSessionRequested = unknownSessionAndSender[1]
             const stream = this.client.streams.get(streamId)
             if (!stream) {
-                console.log("CDE::_askRoomForKeys - stream doesn't exist")
+                console.warn("CDE::_askRoomForKeys - stream doesn't exist")
                 return
             }
             if (!stream?.view.userIsEntitledToKeyExchange(this.client.userId)) {
-                console.log(
+                console.warn(
                     'CDE::_askForRoomKeys - user is not a memeber of the room and cannot request keys',
                 )
                 return
@@ -590,6 +590,10 @@ export class RiverDecryptionExtension {
             } else {
                 throw new Error('CDE::_askRoomForKeys - unknown stream type')
             }
+            console.log('CDE::_askRoomForKeys - asking for keys', {
+                streamId,
+                unknownSessionRequested,
+            })
             requests.push(this.client.makeEventAndAddToStream(streamId, request))
         }
         await Promise.all(requests)
@@ -605,8 +609,8 @@ export class RiverDecryptionExtension {
         const { sessionId, knownSessionIds, senderKey } = event
 
         // don't process key solicitations from our device
-        if (senderKey == this.client.olmDevice.deviceCurve25519Key) {
-            console.log('CDE::onKeySolicitation: request from our own device, skipping.')
+        if (senderKey === this.client.olmDevice.deviceCurve25519Key) {
+            console.warn('CDE::onKeySolicitation: request from our own device, skipping.')
             return
         }
 
@@ -626,10 +630,6 @@ export class RiverDecryptionExtension {
             console.log('CDE::onKeyRequest - no spaceId found for streamId', { streamId })
         }
 
-        if (senderKey === this.client.olmDevice.deviceCurve25519Key) {
-            // todo: in production we should ignore key requests from ourself
-            console.log('CDE::onKeySolicitation: request from self.')
-        }
         const requestedSessions: [streamId: string, sessionId: string][] = [[streamId, sessionId]]
         console.log('CDE::onKeySolicitation recieved', {
             spaceId,
@@ -645,7 +645,7 @@ export class RiverDecryptionExtension {
         }
 
         if (!stream?.view.userIsEntitledToKeyExchange(fromUserId)) {
-            console.log(`CDE::_onKeySolicitation - not a stream member asking for keys`, {
+            console.warn(`CDE::_onKeySolicitation - not a stream member asking for keys`, {
                 streamId,
                 fromUserId,
             })
@@ -723,7 +723,7 @@ export class RiverDecryptionExtension {
         // Last minute check to make sure noone else has responded to the key solicitation
         const fulfilled = this.keySolicitationFulfilled(streamId, eventHash, sessionId)
         if (fulfilled) {
-            console.log('CDE::onKeySolicitation - key request already fulfilled for session', {
+            console.warn('CDE::onKeySolicitation - key request already fulfilled for session', {
                 sessionId,
                 streamId,
                 eventHash,
@@ -922,9 +922,9 @@ export class RiverDecryptionExtension {
 
                         // if we found some new keys, import them
                         if (!sessions.length) {
-                            console.log('CDE::onKeyResponse - no new keys needed')
+                            console.info('CDE::onKeyResponse - no new keys needed')
                         } else {
-                            console.log('CDE:importSessionKeys', {
+                            console.info('CDE:importSessionKeys', {
                                 inPayload: sessions.length,
                                 needed: sessions.length,
                                 senderId,
@@ -937,7 +937,7 @@ export class RiverDecryptionExtension {
                     ])
 
                     // clear any request to this user and start looking for keys again
-                    console.log('CDE::onKeyResponse - complete', {
+                    console.info('CDE::onKeyResponse - complete', {
                         kind: clear_content.payload.value.kind,
                         senderId,
                         streamId,
@@ -946,7 +946,7 @@ export class RiverDecryptionExtension {
                 }
                 break
             default:
-                console.log(
+                console.info(
                     `CDE::onKeyResponse - unknown response kind', ${clear_content.payload.value.kind}, ${senderId}`,
                 )
         }
