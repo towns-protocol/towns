@@ -12,7 +12,8 @@ import {
 } from './ContractTypes'
 
 import { SpaceInfo } from './SpaceInfo'
-import { WalletLink } from './v3/WalletLink'
+import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
+import { WalletLink as WalletLinkV4 } from './v4/WalletLink'
 import { WalletClient, Address } from 'viem'
 import { ContractTransaction, ethers } from 'ethers'
 import { SpaceDappTransaction } from './v4'
@@ -132,6 +133,5 @@ export interface ISpaceDapp<V extends Versions = TDefaultVersion> {
     ) => Promise<TransactionType<V>>
     hasTownMembership: (spaceId: string, wallet: StringOrAddress<V>) => Promise<boolean>
     getMembershipInfo: (spaceId: string) => Promise<MembershipInfo<V>>
-    // TODO: v4 wallet link
-    getWalletLink: () => V extends 'v3' ? WalletLink : void
+    getWalletLink: () => V extends 'v3' ? WalletLinkV3 : WalletLinkV4
 }

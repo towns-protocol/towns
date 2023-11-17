@@ -24,13 +24,16 @@ import {
     createTokenEntitlementStruct,
     createUserEntitlementStruct,
 } from '../ConvertersEntitlements'
+import { WalletLink } from './WalletLink'
 
 export class SpaceDapp implements ISpaceDapp<'v4'> {
     private readonly townRegistrar: TownRegistrar
+    public readonly walletLink: WalletLink
 
     constructor(chainId: number, client: PublicClient | undefined) {
         const contractsInfo = getContractsInfo(chainId)
         this.townRegistrar = new TownRegistrar(contractsInfo, chainId, client)
+        this.walletLink = new WalletLink(contractsInfo, chainId, client)
     }
 
     public async addRoleToChannel(
@@ -421,7 +424,7 @@ export class SpaceDapp implements ISpaceDapp<'v4'> {
     }
 
     public getWalletLink() {
-        throw new Error('Wallet link not implemented on SpaceDappV4')
+        return this.walletLink
     }
 
     private async getTown(townId: string): Promise<Town | undefined> {
