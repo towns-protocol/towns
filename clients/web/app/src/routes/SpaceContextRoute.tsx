@@ -42,6 +42,8 @@ const SpaceContext = () => {
         if (path.type === 'channel') {
             // bookmark channel and known routes
             setTownRouteBookmark(spaceSlug, location.pathname)
+        } else if (path.type === 'messages') {
+            // skip bookmarking outside of town
         } else if (path.type === 'generic') {
             // bookmark known routes (threads,mentions,etc)
             setTownRouteBookmark(spaceSlug, location.pathname)
@@ -79,7 +81,7 @@ const SpaceContext = () => {
     )
 }
 
-const { CHANNELS, SPACES, SETTINGS } = PATHS
+const { CHANNELS, MESSAGES, SPACES, SETTINGS } = PATHS
 
 const useSpaceRouteMatcher = (space: SpaceData | undefined) => {
     const location = useLocation()
@@ -107,6 +109,10 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined) => {
             if (locationSearch.includes('invite')) {
                 return {
                     type: 'invite',
+                } as const
+            } else if (pathname.includes(MESSAGES)) {
+                return {
+                    type: 'messages',
                 } as const
             } else if (pathname.includes(SETTINGS)) {
                 return {
