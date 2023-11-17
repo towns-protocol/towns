@@ -6,12 +6,11 @@ import { Box, Button, Card, Paragraph } from '@ui'
 import { FadeInBox } from '@components/Transitions'
 import { Spinner } from '@components/Spinner'
 import { env } from 'utils'
+import { MINUTE_MS, SECOND_MS } from 'data/constants'
 
-const UPDATE_STARTUP_MS = 10 * 1000
-const UPDATE_INTERVAL_MS = 5 * 60 * 1000
+const UPDATE_INTERVAL_MS = 1 * MINUTE_MS
 
 const log = debug('app:ReloadPrompt')
-
 log.enabled = true
 
 export const ReloadPrompt = () => {
@@ -62,16 +61,15 @@ export const ReloadPrompt = () => {
                     asyncUpdate()
                 }
                 setInterval(checkInterval, UPDATE_INTERVAL_MS)
-                setTimeout(checkInterval, UPDATE_STARTUP_MS)
             }
         },
 
         onNeedRefresh() {
-            log('need update...')
+            log('need update')
         },
 
         onOfflineReady() {
-            log('offline ready...', offlineReady)
+            log('offline ready:', offlineReady)
         },
 
         onRegisterError(error) {
@@ -90,7 +88,7 @@ export const ReloadPrompt = () => {
     useEffect(() => {
         const timeout = setTimeout(() => {
             setIsVersionHidden(true)
-        }, 3000)
+        }, SECOND_MS * 5)
         return () => {
             clearTimeout(timeout)
         }
@@ -110,16 +108,19 @@ export const ReloadPrompt = () => {
                 log('update failed, clearing workers and reloading...')
                 await clearAllWorkers()
                 window.location.reload()
-            }, 5000)
+            }, SECOND_MS * 5)
 
             // for safety, currently some of our URLs only work in SPA mode but
             // fail upon hard-refresh because of invalid chars
             const isCleanUrl = window.location.href.match(/\/$/)
+
             if (!isCleanUrl) {
                 log('cleaning url...', window.location.href)
                 window.location.replace(`${window.location.href}${isCleanUrl ? '' : '/'}`)
             }
+
             log('updateServiceWorker...')
+
             // triggers update and immediate reload
             await updateServiceWorker(true)
 
@@ -139,8 +140,21 @@ export const ReloadPrompt = () => {
             pointerEvents="none"
         >
             <AnimatePresence>
-                {needRefresh ? (
-                    <FadeInBox layout preset="fadeup">
+                {!isVersionHidden ? (
+                    <FadeInBox
+                        padding
+                        key="version"
+                        preset="fadeup"
+                        borderRadius="md"
+                        background="level2"
+                        rounded="sm"
+                    >
+                        <Paragraph>
+                            version {APP_VERSION} ({APP_COMMIT_HASH})
+                        </Paragraph>
+                    </FadeInBox>
+                ) : needRefresh ? (
+                    <FadeInBox layout preset="fadeup" key="card">
                         <Card
                             border
                             centerContent
@@ -178,12 +192,6 @@ export const ReloadPrompt = () => {
                                 </FadeInBox>
                             )}
                         </Card>
-                    </FadeInBox>
-                ) : !isVersionHidden ? (
-                    <FadeInBox padding borderRadius="md" background="level1" rounded="sm">
-                        <Paragraph>
-                            version {APP_VERSION} ({APP_COMMIT_HASH})
-                        </Paragraph>
                     </FadeInBox>
                 ) : (
                     <></>

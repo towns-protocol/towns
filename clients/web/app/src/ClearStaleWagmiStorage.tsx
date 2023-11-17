@@ -22,6 +22,7 @@ export function ClearStaleWagmiStorage() {
             results.forEach((key) => localStorage.removeItem(key))
 
         if (staleWagmiKeys.length) {
+            console.warn('ClearStaleWagmiStorage: deleting stale wagmi keys + reload')
             deleteResults(staleWagmiKeys)
             window.location.reload()
         }

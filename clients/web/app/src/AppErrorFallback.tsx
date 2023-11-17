@@ -40,6 +40,7 @@ export function AppErrorFallback({ error }: FallbackRender) {
         if (isDynamicImportError) {
             if (!getWithExpiry('isDynamicImportError')) {
                 setWithExpiry('isDynamicImportError', 'true', 1000 * 60 * 3)
+                console.warn('AppErrorFallback: isDynamicImportError, reloading...')
                 window.location.reload()
             }
         }
