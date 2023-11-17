@@ -84,9 +84,9 @@ module "river_node" {
   vpc_id       = module.vpc.vpc_id
   node_name    = local.river_node_name
 
-  alb_security_group_id = module.river_alb.security_group_id
-  alb_arn               = module.river_alb.lb_arn
-  alb_dns_name          = module.river_alb.lb_dns_name
+  alb_security_group_id  = module.river_alb.security_group_id
+  alb_dns_name           = module.river_alb.lb_dns_name
+  alb_https_listener_arn = module.river_alb.lb_https_listener_arn
 
   database_allowed_cidr_blocks = module.vpc.private_subnets_cidr_blocks
   database_subnets             = module.vpc.database_subnets

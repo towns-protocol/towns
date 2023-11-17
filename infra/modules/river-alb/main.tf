@@ -66,3 +66,24 @@ module "river_alb" {
   # setting it to 30 minutes because river context keeps getting cancelled
   idle_timeout = 1800
 }
+
+data "aws_acm_certificate" "primary_hosted_zone_cert" {
+  domain = module.global_constants.primary_hosted_zone_name
+}
+
+resource "aws_lb_listener" "https_listener" {
+  load_balancer_arn = module.river_alb.lb_arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = data.aws_acm_certificate.primary_hosted_zone_cert.arn
+
+  default_action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Unknown host"
+      status_code  = "503"
+    }
+  }
+}

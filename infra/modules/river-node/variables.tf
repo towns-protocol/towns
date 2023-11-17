@@ -30,8 +30,8 @@ variable "alb_security_group_id" {
   type        = string
 }
 
-variable "alb_arn" {
-  description = "The arn of the load balancer"
+variable "alb_https_listener_arn" {
+  description = "The arn of the alb https listener"
   type        = string
 }
 

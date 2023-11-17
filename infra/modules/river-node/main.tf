@@ -271,6 +271,10 @@ resource "aws_iam_role_policy" "hnt_dockerhub_access_key" {
   name = "${module.global_constants.environment}-hnt-dockerhub-access-key-policy"
   role = aws_iam_role.ecs_task_execution_role.id
 
+  lifecycle {
+    ignore_changes = all
+  }
+
   policy = <<-EOF
   {
     "Version": "2012-10-17",
@@ -287,10 +291,6 @@ resource "aws_iam_role_policy" "hnt_dockerhub_access_key" {
     ]
   }
   EOF
-}
-
-data "aws_acm_certificate" "primary_hosted_zone_cert" {
-  domain = module.global_constants.primary_hosted_zone_name
 }
 
 resource "aws_lb_target_group" "blue" {
@@ -330,25 +330,32 @@ resource "aws_lb_target_group" "green" {
   tags = local.tags
 }
 
-resource "aws_lb_listener" "https_listener" {
-  load_balancer_arn = var.alb_arn
-  port              = "443"
-  protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = data.aws_acm_certificate.primary_hosted_zone_cert.arn
+resource "aws_lb_listener_rule" "host_rule" {
+  listener_arn = var.alb_https_listener_arn
+  priority     = 1
 
   lifecycle {
-    ignore_changes = [default_action]
+    ignore_changes = [action]
   }
 
-  default_action {
+  action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.blue.arn
+  }
+
+  condition {
+    host_header {
+      values = ["${var.subdomain_name}.${module.global_constants.primary_hosted_zone_name}"]
+    }
   }
 }
 
 resource "aws_ecs_task_definition" "river-fargate" {
   family = "${module.global_constants.environment}-river-fargate"
+
+  lifecycle {
+    ignore_changes = [container_definitions]
+  }
 
   network_mode = "awsvpc"
 
@@ -568,9 +575,6 @@ resource "aws_ecs_service" "river-ecs-service" {
 }
 
 resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
-  lifecycle {
-    ignore_changes = all
-  }
   app_name               = aws_codedeploy_app.river-node-code-deploy-app.name
   deployment_group_name  = "${module.global_constants.environment}-river-${var.node_name}-codedeploy-deployment-group"
   service_role_arn       = aws_iam_role.ecs_code_deploy_role.arn
@@ -616,7 +620,7 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
       }
 
       prod_traffic_route {
-        listener_arns = [aws_lb_listener.https_listener.arn]
+        listener_arns = [var.alb_https_listener_arn]
       }
     }
   }
