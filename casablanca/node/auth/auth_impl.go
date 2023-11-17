@@ -11,6 +11,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"sync"
 
 	eth "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -126,47 +127,12 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, stre
 	userIdentifier := CreateUserIdentifier(args.UserId)
 	log.Debug("IsAllowed", "args", args, "user", userIdentifier.AccountAddress.Hex(), "streamInfo", streamInfo)
 
-	// naive version without racing - just iterate over all wallets
-	// and check if any of them is entitled to the stream.
-	// TODO-HNT-3590 - implement race
-	wallets, err := za.allRelevantWallets(ctx, userIdentifier.AccountAddress)
+	result, err := za.checkEntitiement(ctx, userIdentifier.AccountAddress, args.Permission, streamInfo)
 	if err != nil {
-		log.Error("error getting all wallets", "error", err)
-		return false, WrapRiverError(protocol.Err_CANNOT_GET_LINKED_WALLETS, err)
+		log.Error("error checking user entitlement", "error", err)
+		return false, WrapRiverError(protocol.Err_CANNOT_CHECK_ENTITLEMENTS, err)
 	}
-	log.Debug("IsAllowed", "wallets", wallets)
-	for _, wallet := range wallets {
-		result, err := za.isWalletAllowed(ctx, wallet, args.Permission, streamInfo)
-		if err != nil {
-			log.Error("error checking user entitlement", "error", err)
-			return false, WrapRiverError(protocol.Err_CANNOT_CHECK_ENTITLEMENTS, err)
-		}
-		if result {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func (za *ChainAuth) allRelevantWallets(ctx context.Context, rootKey eth.Address) ([]eth.Address, error) {
-	log := dlog.CtxLog(ctx)
-
-	if za.walletLinkContract == nil {
-		log.Warn("Wallet link contract is not setup properly, returning root key only")
-		return []eth.Address{rootKey}, nil
-	}
-
-	// get all the wallets for the root key.
-	wallets, err := za.walletLinkContract.GetWalletsByRootKey(rootKey)
-	if err != nil {
-		log.Error("error getting all wallets", "rootKey", rootKey.Hex(), "error", err)
-		return nil, err
-	}
-
-	wallets = append(wallets, rootKey)
-
-	log.Debug("allRelevantWallets", "wallets", wallets)
-	return wallets, nil
+	return result, nil
 }
 
 func (za *ChainAuth) isWalletAllowed(ctx context.Context, wallet eth.Address, permission Permission, streamInfo *common.StreamInfo) (bool, error) {
@@ -240,4 +206,88 @@ func (za *ChainAuth) isEntitledToChannel(ctx context.Context, streamInfo *common
 	)
 	log.Info("isEntitledToChannel", "isEntitled", isEntitled, "err", err)
 	return isEntitled, err
+}
+
+type EntitlementCheckResult struct {
+	Allowed bool
+	Err     error
+}
+
+func (za *ChainAuth) allRelevantWallets(ctx context.Context, rootKey eth.Address) ([]eth.Address, error) {
+	log := dlog.CtxLog(ctx)
+
+	if za.walletLinkContract == nil {
+		log.Warn("Wallet link contract is not setup properly, returning root key only")
+		return []eth.Address{rootKey}, nil
+	}
+
+	// get all the wallets for the root key.
+	wallets, err := za.walletLinkContract.GetWalletsByRootKey(rootKey)
+	if err != nil {
+		log.Error("error getting all wallets", "rootKey", rootKey.Hex(), "error", err)
+		return nil, err
+	}
+
+	wallets = append(wallets, rootKey)
+
+	log.Debug("allRelevantWallets", "wallets", wallets)
+	return wallets, nil
+}
+
+/** checkEntitiement checks if the user is entitled to the space / channel.
+ * It checks the entitlments for the root key and all the wallets linked to it in parallel.
+ * If any of the wallets is entitled, the user is entitled.
+ * If any of the operations fail before getting positive result, the whole operation fails.
+ */
+func (za *ChainAuth) checkEntitiement(ctx context.Context, rootKey eth.Address, permission Permission, streamInfo *common.StreamInfo) (bool, error) {
+	log := dlog.CtxLog(ctx)
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	resultsChan := make(chan EntitlementCheckResult)
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		wallets, err := za.allRelevantWallets(ctx, rootKey)
+		if err != nil {
+			log.Error("error getting all wallets", "rootKey", rootKey.Hex(), "error", err)
+			resultsChan <- EntitlementCheckResult{Allowed: false, Err: err}
+			return
+		}
+		for _, wallet := range wallets {
+			wg.Add(1)
+			go func(address eth.Address) {
+				defer wg.Done()
+				result, err := za.isWalletAllowed(ctx, address, permission, streamInfo)
+				resultsChan <- EntitlementCheckResult{Allowed: result, Err: err}
+			}(wallet)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		result, err := za.isWalletAllowed(ctx, rootKey, permission, streamInfo)
+		resultsChan <- EntitlementCheckResult{Allowed: result, Err: err}
+	}()
+
+	go func() {
+		wg.Wait()
+		close(resultsChan)
+	}()
+
+	for opResult := range resultsChan {
+		if opResult.Err != nil {
+			cancel()
+			return false, opResult.Err
+		}
+		if opResult.Allowed {
+			cancel()
+			return true, nil
+		}
+	}
+	return false, nil
 }
