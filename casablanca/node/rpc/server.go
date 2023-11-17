@@ -238,7 +238,8 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		Debug:            cfg.Log.Level == "debug",
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders:   []string{"Origin", "X-Requested-With", "Accept", "Content-Type", "X-Grpc-Web", "X-User-Agent", "Connect-Protocol-Version", "x-river-request-id"},
+		// AllowedHeaders: []string{"*"} also works for CORS issues w/ OPTIONS requests
+		AllowedHeaders:   []string{"Origin", "X-Requested-With", "Accept", "Content-Type", "X-Grpc-Web", "X-User-Agent", "User-Agent", "Connect-Protocol-Version", "x-river-request-id"},
 	})
 
 	// For gRPC clients, it's convenient to support HTTP/2 without TLS. You can
