@@ -4,7 +4,7 @@ import { WelcomeLayout } from './layouts/WelcomeLayout'
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
 
 export const WelcomeRoute = () => (
-    <WelcomeLayout>
+    <WelcomeLayout debugText="welcome route">
         <Suspense>
             <LoginComponent />
         </Suspense>

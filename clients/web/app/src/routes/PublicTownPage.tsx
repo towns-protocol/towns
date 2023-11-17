@@ -1,33 +1,33 @@
 import debug from 'debug'
 import React, { Suspense, useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import { Link } from 'react-router-dom'
 import { useMyProfile } from 'use-zion-client'
 import { isAddress } from 'viem'
-import { Link } from 'react-router-dom'
 
+import { Avatar } from '@components/Avatar/Avatar'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { PageLogo } from '@components/Logo/Logo'
-import { Spinner } from '@components/Spinner'
+import { ModalContainer } from '@components/Modals/ModalContainer'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { Activity } from '@components/TownPageLayout/TownPageActivity'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
+import { FadeInBox } from '@components/Transitions'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
+import { NoFundsModal } from '@components/VisualViewportContext/NoFundsModal'
 import { BottomBarLayout } from '@components/Web3/MembershipNFT/BottomBar'
 import { Box, BoxProps, Button, Card, Heading, Icon, IconProps, Paragraph, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
+import { useDevice } from 'hooks/useDevice'
+import { useErrorToast } from 'hooks/useErrorToast'
 import { useJoinTown } from 'hooks/useJoinTown'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { useMeetsMembershipNftRequirements } from 'hooks/useTokensGatingMembership'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { useErrorToast } from 'hooks/useErrorToast'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
-import { ModalContainer } from '@components/Modals/ModalContainer'
-import { NoFundsModal } from '@components/VisualViewportContext/NoFundsModal'
-import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
-import { useDevice } from 'hooks/useDevice'
-import { FadeInBox } from '@components/Transitions'
-import { Avatar } from '@components/Avatar/Avatar'
+import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 const log = debug('app:public-town')
 log.enabled = true
@@ -134,10 +134,7 @@ export const PublicTownPage = () => {
             )}
         </>
     ) : isLoading ? (
-        <MessageBox>
-            <Spinner />
-            <Heading level={4}>Fetching town data</Heading>
-        </MessageBox>
+        <WelcomeLayout debugText="fetching town data" />
     ) : (
         <MessageBox>
             <TownNotFoundBox />

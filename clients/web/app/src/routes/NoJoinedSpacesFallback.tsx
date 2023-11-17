@@ -44,7 +44,7 @@ export const NoJoinedSpacesFallback = () => {
     }, [spaces, navigate, initialSyncComplete, client, spaceIdBookmark])
 
     if (!initialSyncComplete || spaces.length) {
-        return isTouch ? <WelcomeLayout /> : <></>
+        return isTouch ? <WelcomeLayout debugText="no joined space fallback" /> : <></>
     }
 
     return (

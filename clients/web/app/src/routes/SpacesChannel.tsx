@@ -1,12 +1,11 @@
-import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
+import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { Outlet, useLocation, useParams } from 'react-router'
 import {
     ChannelContextProvider,
     Membership,
     SendMessageOptions,
-    TimelineEvent,
-    ZTEvent,
     useChannelData,
     useChannelTimeline,
     useDMData,
@@ -15,26 +14,23 @@ import {
     useSpaceMembers,
     useZionClient,
 } from 'use-zion-client'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { ChannelHeader } from '@components/ChannelHeader/ChannelHeader'
 import { ChannelIntro } from '@components/ChannelIntro'
+import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
+import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
-import { TimelineShimmer } from '@components/Shimmer'
-import { DecryptingCard } from '@components/Shimmer/DecryptingCard'
 import { ChannelHeaderShimmer } from '@components/Shimmer/TimelineShimmer'
+import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
+import { useUserList } from '@components/UserList/UserList'
 import { Box, Button, Stack, Text } from '@ui'
+import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { useAuth } from 'hooks/useAuth'
-import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
-import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
-import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
 import { QUERY_PARAMS } from 'routes'
 import { notUndefined } from 'ui/utils/utils'
-import { useUserList } from '@components/UserList/UserList'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 type Props = {
@@ -104,9 +100,6 @@ const SpacesChannelComponent = (props: Props) => {
     const eventHash = window.location.hash?.replace(/^#/, '')
     const highlightId = eventHash?.match(/^\$[a-z0-9_-]{16,128}/i) ? eventHash : undefined
 
-    const { displayDecryptionProgress, decryptionProgress } =
-        useDisplayEncryptionProgress(channelMessages)
-
     const { members } = useSpaceMembers()
 
     const { loggedInWalletAddress } = useAuth()
@@ -167,49 +160,18 @@ const SpacesChannelComponent = (props: Props) => {
         // load more when opening the channel
         onLoadMore()
     }, [onLoadMore])
-    const [debounceShimmer, setDebounceShimmer] = useState(true)
-
-    useEffect(() => {
-        const timeout = setTimeout(() => {
-            setDebounceShimmer(false)
-        }, 50)
-        return () => {
-            clearTimeout(timeout)
-        }
-    }, [])
-
-    // https://linear.app/hnt-labs/issue/HNT-1594/app-hanging-and-not-loading-on-desktop
-    useEffect(() => {
-        console.log('<SpacesChannel /> debug: ', {
-            channel,
-            channelId,
-            displayDecryptionProgress,
-            myMembership,
-        })
-    }, [channel, channelId, displayDecryptionProgress, myMembership])
 
     const showJoinChannel = myMembership !== Membership.Join && !isDmOrGDM
     const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM
     return (
         <CentralPanelLayout>
             {!isTouch && <RegisterChannelShortcuts />}
-            {!channel || !channelId || displayDecryptionProgress || !myMembership ? (
+            {!channel || !channelId || !myMembership ? (
                 <>
                     {channel ? (
                         <ChannelHeader channel={channel} spaceId={spaceId} />
                     ) : (
                         <ChannelHeaderShimmer />
-                    )}
-                    {debounceShimmer ? (
-                        <Box grow width="100%" />
-                    ) : (
-                        <TimelineShimmer>
-                            {displayDecryptionProgress && (
-                                <Stack absoluteFill centerContent>
-                                    <DecryptingCard progress={decryptionProgress} />
-                                </Stack>
-                            )}
-                        </TimelineShimmer>
                     )}
                 </>
             ) : showJoinChannel ? (
@@ -320,75 +282,4 @@ const ScrollbackMarker = (props: {
         onMarkerReached(watermark)
     }
     return <Box ref={ref} />
-}
-
-const encryptedMessageTypes = [ZTEvent.RoomMessageEncrypted, ZTEvent.RoomMessage]
-const useDisplayEncryptionProgress = (channelMessages: TimelineEvent[]) => {
-    const encryptedMessageStats = useMemo(
-        () =>
-            channelMessages.length > 0 &&
-            channelMessages.reduce(
-                (k, e) => {
-                    if (e.content?.kind && encryptedMessageTypes.includes(e.content?.kind)) {
-                        k.total++
-                        if (e.content?.kind === ZTEvent.RoomMessageEncrypted) {
-                            k.yetEncrypted++
-                        } else {
-                            k.readable++
-                        }
-                    }
-                    k.progress = 1 - k.yetEncrypted / k.total
-                    return k
-                },
-                { yetEncrypted: 0, total: 0, progress: 0, readable: 0 },
-            ),
-        [channelMessages],
-    )
-
-    // when the component is initially rendered, we only want to display the
-    // decryption overlay if it's decrypting all the messages from the scratch.
-    // Most of the times enterning a channel, first section of messages is
-    // already decrypted
-    const isInitiallyReadable =
-        encryptedMessageStats &&
-        (encryptedMessageStats.readable > 0 || encryptedMessageStats.total === 0)
-
-    const isDecrypting = encryptedMessageStats && encryptedMessageStats.yetEncrypted > 0
-
-    const [displayDecryptionProgress, setDisplayDecryptionProgress] = React.useState(
-        !isInitiallyReadable,
-    )
-
-    const hasDisplayedOnceRef = useRef(isInitiallyReadable)
-
-    useEffect(() => {
-        // display decryption progress once
-        if (isDecrypting) {
-            if (!hasDisplayedOnceRef.current) {
-                hasDisplayedOnceRef.current = true
-                setDisplayDecryptionProgress(true)
-            }
-        } else {
-            setDisplayDecryptionProgress(false)
-        }
-    }, [isDecrypting])
-
-    useEffect(() => {
-        // reset timeout on decryption progress
-        encryptedMessageStats && encryptedMessageStats.yetEncrypted
-        if (displayDecryptionProgress) {
-            // no progress after 3s, hide the popup for good
-            const timeout = setTimeout(() => {
-                setDisplayDecryptionProgress(false)
-            }, 1000 * 3)
-            return () => {
-                clearTimeout(timeout)
-            }
-        }
-    }, [displayDecryptionProgress, encryptedMessageStats])
-
-    return {
-        displayDecryptionProgress,
-        decryptionProgress: (encryptedMessageStats && encryptedMessageStats?.progress) || 0,
-    }
 }

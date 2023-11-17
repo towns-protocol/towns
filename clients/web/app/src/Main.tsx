@@ -2,11 +2,11 @@ import React, { Suspense } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { AppErrorFallback } from 'AppErrorFallback'
-import { LoadingScreen } from 'routes/LoadingScreen'
 import { ZLayerProvider } from '@ui'
 import { useRootTheme } from 'hooks/useRootTheme'
 import { PrivyProvider } from 'PrivyProvider'
 import { ClearStaleWagmiStorage } from 'ClearStaleWagmiStorage'
+import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 
 const App = React.lazy(() => import('App'))
 
@@ -21,7 +21,7 @@ export const Main = () => {
             <ClearStaleWagmiStorage />
             <PrivyProvider>
                 <BrowserRouter>
-                    <Suspense fallback={<LoadingScreen />}>
+                    <Suspense fallback={<WelcomeLayout debugText="lazy loading app" />}>
                         <ZLayerProvider>
                             <App />
                         </ZLayerProvider>

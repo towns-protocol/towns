@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useWeb3Context } from 'use-zion-client'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
-import { Box, Button, Icon, Text } from '@ui'
+import { Box, Button, Icon, Paragraph, Text, TextButton } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 
@@ -23,35 +23,37 @@ export function BetaDebugger() {
     }, [signer])
 
     return (
-        <Box
-            horizontal
-            paddingTop="xs"
-            gap="sm"
-            position="fixed"
-            top="none"
-            left="none"
-            fontSize="xs"
-            zIndex="tooltipsAbove"
-            rounded="sm"
-            background="readability"
-            pointerEvents="none"
-        >
-            <Box horizontal>
+        <Box paddingTop="safeAreaInsetTop" position="topLeft">
+            <Box
+                horizontal
+                paddingLeft="xs"
+                paddingTop="xs"
+                fontSize="xs"
+                zIndex="tooltipsAbove"
+                background="level1"
+                pointerEvents="none"
+                alignItems="center"
+                gap="sm"
+            >
                 <Text size="xs">
                     Signer: {shortAddress(signerAddress ?? '')} <br />
                 </Text>
-                <Icon
-                    display="inline-block"
-                    size="square_xxs"
-                    type={signer ? 'check' : 'alert'}
-                    color={signer ? 'cta1' : 'error'}
-                />
-            </Box>
-            <Text size="xs">Active wallet: {shortAddress(activeWallet?.address ?? '')}</Text>
-            <Box pointerEvents="all">
-                <Button size="inline" color="cta1" onClick={show}>
-                    Reset
-                </Button>
+                <Box position="relative" width="height_sm" aspectRatio="1/1">
+                    <Icon
+                        position="topLeft"
+                        display="inline-block"
+                        size="square_xxs"
+                        type={signer ? 'check' : 'alert'}
+                        color={signer ? 'cta1' : 'error'}
+                    />
+                </Box>
+
+                <Text size="xs">Active wallet: {shortAddress(activeWallet?.address ?? '')}</Text>
+                <Box pointerEvents="all">
+                    <TextButton color="error" onClick={show}>
+                        <Paragraph size="xs">Reset</Paragraph>
+                    </TextButton>
+                </Box>
             </Box>
 
             {isVisible && (

@@ -9,8 +9,8 @@ import { PATHS } from 'routes'
 import { Register } from 'routes/Register'
 import { WelcomeRoute } from 'routes/Welcome'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
-import { LoadingScreen } from 'routes/LoadingScreen'
 import { PublicTownPage } from 'routes/PublicTownPage'
+import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const VersionsPage = React.lazy(() => import('routes/VersionsPage'))
@@ -73,7 +73,7 @@ export const AuthenticatedOrRegister = () => {
     return needsOnboarding ? (
         <Register />
     ) : (
-        <Suspense fallback={<LoadingScreen />}>
+        <Suspense fallback={<WelcomeLayout debugText="suspense outlet" />}>
             <Outlet />
         </Suspense>
     )

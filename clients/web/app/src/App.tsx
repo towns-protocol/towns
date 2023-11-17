@@ -64,7 +64,7 @@ export const App = () => {
     const isConnected = useIsConnected()
 
     if (!privyReady || (isConnected && !privyWagmiReady)) {
-        return <WelcomeLayout />
+        return <WelcomeLayout debugText="waiting for privy and wagmi" />
     }
 
     return (

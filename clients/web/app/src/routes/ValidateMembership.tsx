@@ -1,7 +1,7 @@
 import React from 'react'
 import { Outlet } from 'react-router'
 import { Membership } from 'use-zion-client'
-import { Box, Paragraph } from '@ui'
+import { Box } from '@ui'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
@@ -18,13 +18,7 @@ export const ValidateMembership = () => {
     }
 
     if (chainSpaceLoading || !initialSyncComplete) {
-        return (
-            <WelcomeLayout>
-                <Box padding position="bottomRight">
-                    <Paragraph>Debug: ValideMembership - loading town data</Paragraph>
-                </Box>
-            </WelcomeLayout>
-        )
+        return <WelcomeLayout debugText="validate membership: loading town data" />
     }
 
     if (!chainSpace && !space) {
