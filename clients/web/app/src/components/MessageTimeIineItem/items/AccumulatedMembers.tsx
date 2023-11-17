@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import uniqBy from 'lodash/uniqBy'
 import { Link } from 'react-router-dom'
 import { firstBy } from 'thenby'
+import { Membership, useAllKnownUsers } from 'use-zion-client'
 import { Card, Paragraph, Stack, TooltipRenderer } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { notUndefined } from 'ui/utils/utils'
@@ -15,7 +16,15 @@ type Props = {
     channelEncrypted?: boolean
     userId?: string
 }
+
+const Verbs = {
+    [Membership.Join]: 'joined',
+    [Membership.Leave]: 'left',
+    [Membership.Invite]: 'was invited',
+} as const
+
 export const AccumulatedRoomMemberEvent = (props: Props) => {
+    const { usersMap } = useAllKnownUsers()
     const { event, channelName, userId, channelEncrypted: isChannelEncrypted } = props
     const avatarUsers = useMemo(
         () =>
@@ -31,9 +40,22 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
 
     const message = useMemo(() => {
         const includesUser = event.events.some((e) => e.content.userId === userId)
-        const verb = `${event.membershipType === 'join' ? 'joined' : 'left'} #${channelName}${
-            includesUser && isChannelEncrypted ? ', an end-to-end encrypted channel' : ''
-        }`
+
+        if (
+            event.membershipType !== Membership.Join &&
+            event.membershipType !== Membership.Leave &&
+            event.membershipType !== Membership.Invite
+        ) {
+            return
+        }
+
+        const verb = channelName
+            ? `${Verbs[event.membershipType]} #${channelName}${
+                  includesUser && isChannelEncrypted ? ', an end-to-end encrypted channel' : ''
+              }`
+            : // chats
+              `${Verbs[event.membershipType]}`
+
         const names = getNameListFromArray(
             event.events
                 .slice()
@@ -45,10 +67,12 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
                     return (
                         <Link key={e.content.userId} to={`profile/${e.content.userId}`}>
                             {
-                                getPrettyDisplayName({
-                                    userId: e.content.userId,
-                                    displayName: e.content.displayName ?? '',
-                                }).displayName
+                                getPrettyDisplayName(
+                                    usersMap[e.content.userId] ?? {
+                                        userId: e.content.userId,
+                                        displayName: e.content.displayName ?? '',
+                                    },
+                                ).displayName
                             }
                         </Link>
                     )
@@ -57,11 +81,8 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
             verb,
         )
         return names
-    }, [channelName, event.events, event.membershipType, isChannelEncrypted, userId])
+    }, [channelName, event.events, event.membershipType, isChannelEncrypted, userId, usersMap])
 
-    if (!channelName) {
-        return <></>
-    }
     return (
         <Stack centerContent horizontal gap="sm" paddingX="lg" paddingY="md" color="gray2">
             <AvatarStack users={avatarUsers} size="avatar_xs" />

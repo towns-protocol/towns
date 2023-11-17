@@ -304,6 +304,13 @@ export const getEventsByDate = (
                         e.events = e.events.filter((e) => e.content.userId !== event.content.userId)
                     }
                 })
+                renderEvents.sort((a, b) =>
+                    a.type === RenderEventType.AccumulatedRoomMembers
+                        ? a.membershipType === Membership.Invite
+                            ? -1
+                            : 0
+                        : 0,
+                )
 
                 accumulatedEvents.events.push(event)
             } else if (isRoomCreate(event)) {
