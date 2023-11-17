@@ -12,7 +12,7 @@ const config: JestConfigWithTsJest = {
     testTimeout: 120000,
     modulePathIgnorePatterns: ['/dist/'],
     testPathIgnorePatterns: ['/dist/', '/node_modules/', 'util.test.ts'],
-    setupFilesAfterEnv: ['jest-extended/all', './../jest.matchers.ts', './jest-setup.ts'],
+    setupFilesAfterEnv: ['jest-extended/all', './../jest.matchers.ts'],
     setupFiles: ['fake-indexeddb/auto'],
     extensionsToTreatAsEsm: ['.ts'],
     transform: {
@@ -25,7 +25,8 @@ const config: JestConfigWithTsJest = {
     },
     moduleNameMapper: {
         'bn.js': 'bn.js',
-        'hash.js': 'hash.js',
+        // match "hash.js" but not whateverHash.js - viem has many of these which should not be
+        '\\bhash\\.js\\b': 'hash.js',
         '(.+)\\.js': '$1',
         // need for mecholm/olm
         '\\.(wasm)$': require.resolve('./src/crypto/mocks/mock-wasm-file.js'),
