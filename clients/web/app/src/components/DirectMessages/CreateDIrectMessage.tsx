@@ -16,6 +16,7 @@ import {
 } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
+import { useCreateLink } from 'hooks/useCreateLink'
 
 type Props = {
     onDirectMessageCreated: () => void
@@ -30,13 +31,19 @@ export const CreateDirectMessage = (props: Props) => {
     const navigate = useNavigate()
     const userId = useMyProfile()?.userId
 
+    const { createLink } = useCreateLink()
+
     const onCreateButtonClicked = useCallback(async () => {
         if (selectedUserIds.size === 1) {
             const first = Array.from(selectedUserIds)[0]
             const streamId = await createDMChannel(first)
+
             if (streamId) {
-                navigate(`/messages/${streamId.slug}`)
-                onDirectMessageCreated()
+                const link = createLink({ messageId: streamId.slug })
+                if (link) {
+                    navigate(link)
+                    onDirectMessageCreated()
+                }
             }
         } else {
             const userIds = Array.from(selectedUserIds)
@@ -46,7 +53,14 @@ export const CreateDirectMessage = (props: Props) => {
                 onDirectMessageCreated()
             }
         }
-    }, [selectedUserIds, createDMChannel, createGDMChannel, navigate, onDirectMessageCreated])
+    }, [
+        selectedUserIds,
+        createDMChannel,
+        createLink,
+        navigate,
+        onDirectMessageCreated,
+        createGDMChannel,
+    ])
 
     const toggleMember = useCallback((id: string) => {
         setSelectedUserIds((prev) => {
