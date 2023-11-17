@@ -56,10 +56,11 @@ import {
     createSpaceDapp,
     ITownArchitectBase,
     Permission,
-    PioneerNFT,
     TokenEntitlementDataTypes,
     SpaceInfo,
     UNKNOWN_ERROR,
+    pioneerNftFactory,
+    IPioneerNft,
 } from '@river/web3'
 
 /***
@@ -81,7 +82,7 @@ export class ZionClient implements EntitlementsDelegate {
     public readonly opts: ZionOpts
     public readonly name: string
     public spaceDapp: ISpaceDapp
-    public pioneerNFT: PioneerNFT
+    public pioneerNFT: IPioneerNft
     protected casablancaClient?: CasablancaClient
     private _signerContext?: SignerContext
     protected _eventHandlers?: ZionClientEventHandlers
@@ -92,7 +93,7 @@ export class ZionClient implements EntitlementsDelegate {
         this.name = name || Math.random().toString(36).substring(7)
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.spaceDapp = createSpaceDapp(opts.chainId, opts.web3Provider)
-        this.pioneerNFT = new PioneerNFT(opts.chainId, opts.web3Provider)
+        this.pioneerNFT = pioneerNftFactory(opts.chainId, opts.web3Provider)
         this._eventHandlers = opts.eventHandlers
         if (opts.pushNotificationWorkerUrl && opts.pushNotificationAuthToken) {
             this.pushNotificationClient = new PushNotificationClient({

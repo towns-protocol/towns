@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useWeb3Context } from 'use-zion-client'
-import { PioneerNFT, PioneerNFTContractState } from '@river/web3'
+import { IPioneerNft, PioneerNFTContractState, pioneerNftFactory } from '@river/web3'
 import { ethers } from 'ethers'
 import { ContractState } from './ContractState'
 import { TransactionReport, TransactionReports } from './TransactionReports'
@@ -13,18 +13,22 @@ export const AlphaAccessMainPage = () => {
 
     const [loading, setLoading] = useState(false)
 
-    const pioneerNFT = useMemo(() => {
+    const pioneerNFT: IPioneerNft | null = useMemo(() => {
         if (!provider || !chain) {
             return null
         }
 
-        return new PioneerNFT(chain.id, provider)
+        return pioneerNftFactory(chain.id, provider)
     }, [provider, chain])
 
     const handleRefetchContractState = useCallback(async () => {
-        const refetched = await pioneerNFT?.getContractState()
-        if (refetched) {
-            setContractState(refetched)
+        try {
+            const refetched = await pioneerNFT?.getContractState()
+            if (refetched) {
+                setContractState(refetched)
+            }
+        } catch (error) {
+            console.log('AlphaAccessMainPage::Error fetching contract state', error)
         }
     }, [pioneerNFT])
 
