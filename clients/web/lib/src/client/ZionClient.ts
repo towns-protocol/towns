@@ -10,7 +10,7 @@ import {
     userIdFromAddress,
     EntitlementsDelegate,
 } from '@river/sdk'
-import { EncryptedDeviceData, FullyReadMarker, ToDeviceMessage } from '@river/proto'
+import { EncryptedDeviceData, FullyReadMarker } from '@river/proto'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -1134,25 +1134,6 @@ export class ZionClient implements EntitlementsDelegate {
         }
         const devices = await this.casablancaClient.getStoredDevicesForUser(userId)
         return devices.size > 0
-    }
-
-    /************************************************
-     * sendToDevice
-     *************************************************/
-    public async encryptAndSendToDeviceMessage(
-        userId: string,
-        type: string,
-        content: ToDeviceMessage,
-    ) {
-        // todo casablanca look for user in casablanca
-        if (!this.casablancaClient) {
-            throw new Error('Casablanca client not initialized')
-        }
-        const canSend = await this.canSendToDeviceMessage(userId)
-        if (!canSend) {
-            throw new Error('cannot send to device for user ' + userId)
-        }
-        await this.casablancaClient.encryptAndSendToDevicesMessage(userId, content, type)
     }
 
     /************************************************

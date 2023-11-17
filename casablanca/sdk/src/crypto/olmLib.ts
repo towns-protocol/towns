@@ -448,7 +448,7 @@ export async function encryptMessageForDevice(
  */
 export async function getExistingOlmSessions(
     olmDevice: OlmDevice,
-    devicesByUser: Record<string, DeviceInfo[]>,
+    devicesByUser: Map<string, DeviceInfo[]>,
 ): Promise<OlmSessionsAllByUserDevice> {
     // map user Id → DeviceInfo[]
     const devicesWithoutSessions: Map<string, DeviceInfo[]> = new Map()
@@ -457,7 +457,7 @@ export async function getExistingOlmSessions(
 
     const promises: Promise<void>[] = []
 
-    for (const [userId, devices] of Object.entries(devicesByUser)) {
+    for (const [userId, devices] of devicesByUser.entries()) {
         for (const deviceInfo of devices) {
             const deviceId = deviceInfo.deviceId
             const key = deviceInfo.getIdentityKey()

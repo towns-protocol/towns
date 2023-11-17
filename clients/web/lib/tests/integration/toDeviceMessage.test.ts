@@ -51,10 +51,10 @@ describe('toDeviceMessage', () => {
             sessionId: 'fakeSessionId',
             content: 'foo',
         })
-        await alice.encryptAndSendToDeviceMessage(
+        await alice.casablancaClient?.encryptAndSendToDevicesMessage(
             bobUserId,
-            ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST],
             new ToDeviceMessage(payload),
+            ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST],
         )
 
         await waitFor(

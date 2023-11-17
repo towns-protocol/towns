@@ -660,11 +660,14 @@ export class Crypto
                         payload: encryptedContent,
                     })
 
-                    // todo: fix this and tighten argument type for client
+                    // ensure Olm session for devices, forcing a new one
+                    // which means every message is a pre-key message
+                    // using the fallback key.
                     await ensureOlmSessionsForDevices(
                         this.olmDevice,
                         this.client,
                         new Map([[userId, [deviceInfo]]]),
+                        true,
                     )
 
                     const payloadFields = new OlmMessage({ content: payload })

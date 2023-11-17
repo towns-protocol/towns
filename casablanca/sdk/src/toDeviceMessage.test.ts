@@ -52,7 +52,7 @@ describe('toDeviceMessageTest', () => {
         )
         // bob sends a message to Alice's device.
         await expect(
-            bobsClient.encryptAndSendToDeviceMessage(
+            bobsClient.encryptAndSendToDevicesMessage(
                 aliceUserId,
                 new ToDeviceMessage(
                     make_ToDevice_KeyRequest({
@@ -100,7 +100,7 @@ describe('toDeviceMessageTest', () => {
         )
         // bob sends a message to Alice's device.
         await expect(
-            bobsClient.encryptAndSendToDeviceMessage(
+            bobsClient.encryptAndSendToDevicesMessage(
                 aliceUserId,
                 new ToDeviceMessage(
                     make_ToDevice_KeyRequest({
@@ -114,7 +114,7 @@ describe('toDeviceMessageTest', () => {
             ),
         ).toResolve()
         await expect(
-            bobsClient.encryptAndSendToDeviceMessage(
+            bobsClient.encryptAndSendToDevicesMessage(
                 aliceUserId,
                 new ToDeviceMessage(
                     make_ToDevice_KeyRequest({
@@ -163,7 +163,7 @@ describe('toDeviceMessageTest', () => {
         )
         // bob sends a message to all Alice's devices.
         await expect(
-            bobsClient.encryptAndSendToDeviceMessage(
+            bobsClient.encryptAndSendToDevicesMessage(
                 aliceUserId,
                 new ToDeviceMessage(
                     make_ToDevice_KeyRequest({

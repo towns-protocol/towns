@@ -1374,7 +1374,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 make_UserPayload_ToDevice({
                     // key request or response
                     op,
-                    // todo: this should be encrypted with olm session
                     message: envelope,
                     // deviceKey is curve25519 id key of recipient device
                     deviceKey,
@@ -1398,93 +1397,36 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         assert(op !== undefined, 'invalid to device op')
         const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
         if (!senderKey) {
-            this.logCall('no sender key')
+            throw new Error('no sender key')
         }
         const streamId: string = makeUserStreamId(userId)
         const miniblockHash = await this.getStreamLastMiniblockHash(streamId)
-        // retrieve all device keys of a user
-        const deviceInfoMap = await this.getStoredDevicesForUser(userId)
         // encrypt event contents and encode ciphertext
         const envelope = await this.createOlmEncryptedEvent(event, userId)
-        const promiseArray = Array.from(deviceInfoMap.keys()).map((userId) => {
-            const devicesForUser = deviceInfoMap.get(userId)
-            if (!devicesForUser) {
-                this.logCall(`no devices for user ${userId}`)
+        const targetDeviceKeys = Object.keys(envelope.ciphertext)
+        const promiseArray = targetDeviceKeys.map((deviceKey) => {
+            if (deviceKey === senderKey) {
+                this.logCall('dont send to own device')
                 return
             }
-            Array.from(devicesForUser.keys()).map((deviceId) => {
-                const curve25519deviceKeyArr = DeviceInfo.getCurve25519KeyFromUserId(
-                    userId,
-                    deviceInfoMap,
-                    false,
-                    deviceId,
-                )
-                if (!curve25519deviceKeyArr || curve25519deviceKeyArr?.length == 0) {
-                    this.logCall(`no device key for user ${userId}`)
-                    return
-                }
-                this.logCall(
-                    `encryptAndSendToDevicesMessage:: toDevice ${deviceId}, streamId ${streamId}, userId ${userId}`,
-                )
-                return this.makeEventWithHashAndAddToStream(
-                    streamId,
-                    make_UserPayload_ToDevice({
-                        // key request or response
-                        op,
-                        // todo: this should be encrypted with olm session
-                        message: envelope,
-                        // deviceKey is curve25519 id key of recipient device
-                        deviceKey: curve25519deviceKeyArr[0].key,
-                        // senderKey is curve25519 id key of sender device
-                        senderKey: senderKey ?? '',
-                    }),
-                    miniblockHash,
-                )
-            })
+            this.logCall(
+                `sendToDevicesMessage:: toDevice streamId ${streamId}, userId ${userId}, devices ${deviceKey}`,
+            )
+            return this.makeEventWithHashAndAddToStream(
+                streamId,
+                make_UserPayload_ToDevice({
+                    // key request or response
+                    op,
+                    message: envelope,
+                    // deviceKey is curve25519 id key of recipient device
+                    deviceKey,
+                    // senderKey is curve25519 id key of sender device
+                    senderKey: senderKey ?? '',
+                }),
+                miniblockHash,
+            )
         })
         return Promise.all(promiseArray.flat())
-    }
-
-    async encryptAndSendToDeviceMessage(
-        userId: string,
-        event: ToDeviceMessage,
-        type: ToDeviceOp | string,
-    ): Promise<void> {
-        const op: ToDeviceOp =
-            typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
-        const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
-        assert(senderKey !== undefined, 'no sender key')
-        const streamId: string = makeUserStreamId(userId)
-        const miniblockHash = await this.getStreamLastMiniblockHash(streamId)
-        const deviceInfoMap = await this.getStoredDevicesForUser(userId)
-        const envelope = await this.createOlmEncryptedEvent(event, userId)
-        const deviceKeyArr = DeviceInfo.getCurve25519KeyFromUserId(userId, deviceInfoMap)
-        if (!deviceKeyArr || deviceKeyArr.length == 0) {
-            throw new Error('no device keys found for target to-device user ' + userId)
-        }
-        // by default we retrieve the first curve25519 match when sending to a single device
-        // of a user
-        // todo: this will change when we support multiple devices per user
-        // see: https://linear.app/hnt-labs/issue/HNT-1839/multi-device-support-in-todevice-transport
-
-        // todo: HNT-3661 fix this, we shouldn't be choosing any index
-        const deviceKey = deviceKeyArr[0]
-        this.logCall(`toDevice ${deviceKey.deviceId}, streamId ${streamId}, userId ${userId}`)
-        // encrypt event contents and encode ciphertext
-        return this.makeEventWithHashAndAddToStream(
-            streamId,
-            make_UserPayload_ToDevice({
-                // key request or response
-                op,
-                message: envelope,
-                // deviceKey is curve25519 id key of recipient device
-                deviceKey: deviceKey.key,
-                // senderKey is curve25519 id key of sender device
-                senderKey: senderKey ?? '',
-                // todo: point to origin event for key responses
-            }),
-            miniblockHash,
-        )
     }
 
     async sendToDeviceMessage(

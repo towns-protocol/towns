@@ -11,7 +11,6 @@ import {
 import { DeviceInfo } from '../deviceInfo'
 import {
     ensureOlmSessionsForDevices,
-    getExistingOlmSessions,
     IEncryptedContent,
     IMegolmEncryptedContent,
     IOlmSessionResult,
@@ -246,9 +245,9 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         session: OutboundSessionInfo,
     ): Promise<void> {
         // now check if we need to share with any devices
-        const shareMap: Record<string, DeviceInfo[]> = {}
+        const shareMap: Map<string, DeviceInfo[]> = new Map()
 
-        const devicesInRoom = await this.getDevicesInRoom(streamId, (): boolean => false)
+        const devicesInRoom = await this.getDevicesInRoom(streamId)
         if (devicesInRoom === null) {
             this.logCall(`No devices in room to share session for stream ${streamId}`)
             return
@@ -256,33 +255,30 @@ export class MegolmEncryption extends EncryptionAlgorithm {
 
         for (const [userId, userDevices] of devicesInRoom) {
             for (const [deviceId, deviceInfo] of userDevices) {
-                const key = deviceInfo.getIdentityKey()
-
-                if (key == this.olmDevice.deviceCurve25519Key) {
+                if (deviceInfo.getIdentityKey() == this.olmDevice.deviceCurve25519Key) {
                     // don't bother sending to ourself
                     continue
                 }
 
                 if (!session.sharedWithDevices.get(userId)?.get(deviceId)) {
-                    shareMap[userId] = shareMap[userId] || []
-                    shareMap[userId].push(deviceInfo)
+                    shareMap.set(userId, shareMap.get(userId) || [])
+                    shareMap.get(userId)?.push(deviceInfo)
                 }
             }
         }
 
-        const key = await this.olmDevice.getOutboundGroupSessionKey(session.sessionId)
+        const sessionKey = await this.olmDevice.getOutboundGroupSessionKey(session.sessionId)
         const payload = new MegolmSession({
             streamId: streamId,
             sessionId: session.sessionId,
-            sessionKey: key.key,
+            sessionKey: sessionKey.key,
             algorithm: MEGOLM_ALGORITHM,
         })
-        const { devicesWithoutSessions, devicesWithSessions } = await getExistingOlmSessions(
-            this.olmDevice,
-            shareMap,
-        )
+        // share with all devicesInRoom so do not need to read existing Olm sessions.
+        //const { devicesWithoutSessions, devicesWithSessions } = await getExistingOlmSessions(this.olmDevice, shareMap)
         try {
             await Promise.all([
+                /*
                 (async (): Promise<void> => {
                     // share keys with devices that we already have a session for
                     const olmSessionList = Array.from(devicesWithSessions.entries())
@@ -306,8 +302,9 @@ export class MegolmEncryption extends EncryptionAlgorithm {
                     )
                     this.logCall('Shared keys with existing Olm sessions')
                 })(),
+                */
                 (async (): Promise<void> => {
-                    const deviceList = Array.from(devicesWithoutSessions.entries())
+                    const deviceList = Array.from(shareMap.entries())
                         .map(([userId, devicesByUser]) =>
                             devicesByUser.map((device) => `${userId}/${device.deviceId}`),
                         )
@@ -327,10 +324,10 @@ export class MegolmEncryption extends EncryptionAlgorithm {
                     const failedServers: string[] = []
                     await this.shareKeyWithDevices(
                         session,
-                        key,
+                        sessionKey,
                         streamId,
                         payload,
-                        devicesWithoutSessions,
+                        shareMap,
                         errorDevices,
                     )
                     this.logCall(
@@ -383,7 +380,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
                                 )
                                 await this.shareKeyWithDevices(
                                     session,
-                                    key,
+                                    sessionKey,
                                     streamId,
                                     payload,
                                     retryDevices,
@@ -394,10 +391,10 @@ export class MegolmEncryption extends EncryptionAlgorithm {
                                 )
                             }
 
-                            await this.notifyFailedOlmDevices(session, key, failedDevices)
+                            await this.notifyFailedOlmDevices(session, sessionKey, failedDevices)
                         })()
                     } else {
-                        await this.notifyFailedOlmDevices(session, key, errorDevices)
+                        await this.notifyFailedOlmDevices(session, sessionKey, errorDevices)
                     }
                 })(),
                 // todo implement: also, notify newly blocked devices that they're blocked
@@ -589,15 +586,17 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         streamId: string,
         payload: MegolmSession,
         devicesByUser: Map<string, DeviceInfo[]>,
-        errorDevices: IOlmDevice[],
+        _errorDevices: IOlmDevice[],
     ): Promise<void> {
+        // start a new olm session rather than using an existing one
         const devicemap = await ensureOlmSessionsForDevices(
             this.olmDevice,
             this.baseApis,
             devicesByUser,
-            false,
+            true,
         )
-        this.getDevicesWithoutSessions(devicemap, devicesByUser, errorDevices)
+        // we don't prune out errorDevices from devicemap so why call this ?
+        //this.getDevicesWithoutSessions(devicemap, devicesByUser, errorDevices)
         await this.shareKeyWithOlmSessions(session, key, streamId, payload, devicemap)
     }
 
@@ -771,31 +770,21 @@ export class MegolmEncryption extends EncryptionAlgorithm {
     /**
      * Get the list of active devices for all users in the room
      *
-     * @param forceDistributeToUnverified - if set to true will include the unverified devices
-     * even if setting is set to block them (useful for verification)
-     * @param isCancelled - will cause the procedure to abort early if and when it starts
-     * returning `true`. If omitted, cancellation won't happen.
      *
      * @returns Promise which resolves to `null`, or an array whose
      *     first element is a {@link DeviceInfoMap} indicating
      *     the devices that messages should be encrypted to, and whose second
      *     element is a map from userId to deviceId to data indicating the devices
      *     that are in the room but that have been blocked.
-     *     If `isCancelled` is provided and returns `true` while processing, `null`
-     *     will be returned.
-     *     If `isCancelled` is not provided, the Promise will never resolve to `null`.
      */
-    private async getDevicesInRoom(
-        channel_id: string,
-        isCancelled?: () => boolean,
-    ): Promise<null | DeviceInfoMap> {
+    private async getDevicesInRoom(stream_id: string): Promise<null | DeviceInfoMap> {
         let stream: StreamStateView | undefined
-        stream = this.baseApis.stream(channel_id)?.view
+        stream = this.baseApis.stream(stream_id)?.view
         if (!stream) {
-            stream = await this.baseApis.getStream(channel_id)
+            stream = await this.baseApis.getStream(stream_id)
         }
         if (!stream) {
-            this.logError(`stream for room ${channel_id} not found`)
+            this.logError(`stream for room ${stream_id} not found`)
             return null
         }
         const members: string[] = Array.from(stream.getMemberships().joinedUsers).filter(
@@ -806,23 +795,10 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             members.map((u) => `${u} (${MembershipOp[MembershipOp.SO_JOIN]})`),
         )
 
-        // We are happy to use a cached version here: we assume that if we already
-        // have a list of the user's devices, then we already share an e2e room
-        // with them, which means that they will have announced any new devices via
-        // device_lists in their /sync response.  This cache should then be maintained
-        // using all the device_lists changes and left fields.
-        // See https://github.com/vector-im/element-web/issues/2305 for details.
         const devices = await this.baseApis.downloadKeys(members)
         if (!devices) {
             return null
         }
-
-        if (isCancelled?.() === true) {
-            return null
-        }
-
-        //const blocked = new Map<string, Map<string, IBlockedDevice>>()
-        // not implemented yet: remove any blocked devices
 
         return devices
     }

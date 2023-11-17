@@ -156,7 +156,7 @@ export class OlmDecryption extends DecryptionAlgorithm {
         } catch (e) {
             throw new DecryptionError('OLM_BAD_ENCRYPTED_MESSAGE', 'Bad Encrypted Message', {
                 sender: deviceKey,
-                err: e as Error,
+                err: e instanceof Error ? e.message : 'unknown error',
             })
         }
 

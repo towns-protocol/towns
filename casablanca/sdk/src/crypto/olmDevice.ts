@@ -834,7 +834,6 @@ export class OlmDevice {
                 // to now
                 lastReceivedMessageTs: Date.now(),
             }
-            await this.saveSession(theirDeviceIdentityKey, sessionInfo)
             return {
                 payload: payloadString,
                 session_id: session.session_id(),
@@ -1006,7 +1005,6 @@ export class OlmDevice {
         log('Olm Session ID ' + sessionId + ' from ' + theirDeviceIdentityKey + ': ' + sessionDesc)
         const payloadString = sessionInfo.session.decrypt(messageType, ciphertext)
         sessionInfo.lastReceivedMessageTs = Date.now()
-        await this.saveSession(theirDeviceIdentityKey, sessionInfo)
         return payloadString
     }
 
