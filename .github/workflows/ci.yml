@@ -411,7 +411,7 @@ jobs:
               run: |
                   yarn run turbo run build
                   cd casablanca/sdk
-                  RIVER_TEST_URL=http://localhost:5174 yarn test
+                  RIVER_TEST_URL=http://localhost:5174 yarn test:ci
 
             - name: Archive Casablanca log
               if: always()
