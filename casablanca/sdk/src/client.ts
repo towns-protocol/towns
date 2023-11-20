@@ -136,6 +136,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     public cryptoBackend?: Crypto
     public cryptoStore: CryptoStore
 
+    private getStreamRequests: Map<string, Promise<StreamStateView>> = new Map()
     private syncLoop?: Promise<unknown>
     private syncAbort?: AbortController
     private entitlementsDelegate: EntitlementsDelegate
@@ -706,6 +707,20 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     }
 
     async getStream(streamId: string): Promise<StreamStateView> {
+        const existingRequest = this.getStreamRequests.get(streamId)
+        if (existingRequest) {
+            this.logCall(`had existing get request for ${streamId}, returning promise`)
+            return await existingRequest
+        }
+
+        const request = this._getStream(streamId)
+        this.getStreamRequests.set(streamId, request)
+        const streamView = await request
+        this.getStreamRequests.delete(streamId)
+        return streamView
+    }
+
+    private async _getStream(streamId: string): Promise<StreamStateView> {
         try {
             this.logCall('getStream', streamId)
             const response = await this.rpcClient.getStream({ streamId })
