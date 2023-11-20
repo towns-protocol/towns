@@ -63,9 +63,7 @@ export const App = () => {
 
     const isConnected = useIsConnected()
 
-    if (!privyReady || (isConnected && !privyWagmiReady)) {
-        return <WelcomeLayout debugText="waiting for privy and wagmi" />
-    }
+    const showWelcomeLayout = !privyReady || (isConnected && !privyWagmiReady)
 
     return (
         <ZionContextProvider
@@ -78,47 +76,51 @@ export const App = () => {
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
         >
-            <>
-                <BetaDebugger />
-                <SetSignerFromWalletClient chainId={environment.chainId} />
-                <AuthContextProvider>
-                    <FaviconBadge />
-                    <AppBadge />
-                    <AppNotifications />
-                    <RegisterPushSubscription />
-                    <Helmet>
-                        <meta
-                            name="theme-color"
-                            content={
-                                isTouch
-                                    ? theme === 'dark'
-                                        ? Figma.DarkMode.Level1
-                                        : Figma.LightMode.Level1
-                                    : theme === 'dark'
-                                    ? Figma.DarkMode.Readability
-                                    : Figma.LightMode.Readability
-                            }
-                        />
-                    </Helmet>
-                    <AnalyticsProvider>
-                        <>
-                            {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && (
-                                <DebugBar {...environment} />
-                            )}
-                        </>
-                        <AllRoutes />
-                    </AnalyticsProvider>
-                    {!env.VITE_DISABLE_DEBUG_BARS && (
-                        <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
-                    )}
-                    <Notifications />
-                    {
-                        // the service worker won't exist in dev-mode and there's not need to check for updates
-                        (!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && <ReloadPrompt />
-                    }
-                    <ServiceWorkerSpacesSyncer />
-                </AuthContextProvider>
-            </>
+            {showWelcomeLayout ? (
+                <WelcomeLayout debugText="waiting for privy and wagmi" />
+            ) : (
+                <>
+                    <BetaDebugger />
+                    <SetSignerFromWalletClient chainId={environment.chainId} />
+                    <AuthContextProvider>
+                        <FaviconBadge />
+                        <AppBadge />
+                        <AppNotifications />
+                        <RegisterPushSubscription />
+                        <Helmet>
+                            <meta
+                                name="theme-color"
+                                content={
+                                    isTouch
+                                        ? theme === 'dark'
+                                            ? Figma.DarkMode.Level1
+                                            : Figma.LightMode.Level1
+                                        : theme === 'dark'
+                                        ? Figma.DarkMode.Readability
+                                        : Figma.LightMode.Readability
+                                }
+                            />
+                        </Helmet>
+                        <AnalyticsProvider>
+                            <>
+                                {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && (
+                                    <DebugBar {...environment} />
+                                )}
+                            </>
+                            <AllRoutes />
+                        </AnalyticsProvider>
+                        {!env.VITE_DISABLE_DEBUG_BARS && (
+                            <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
+                        )}
+                        <Notifications />
+                        {
+                            // the service worker won't exist in dev-mode and there's not need to check for updates
+                            (!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && <ReloadPrompt />
+                        }
+                        <ServiceWorkerSpacesSyncer />
+                    </AuthContextProvider>
+                </>
+            )}
         </ZionContextProvider>
     )
 }
