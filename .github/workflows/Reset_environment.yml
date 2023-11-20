@@ -25,7 +25,7 @@ on:
                 description: 'Reset DB'
                 required: true
                 type: choice
-                default: 'true'
+                default: 'false'
                 options:
                     - 'true'
                     - 'false'
@@ -105,7 +105,7 @@ jobs:
 
             - name: Reset environment
               env:
-                  RESET_DB: ${{ github.event_name == 'schedule' && 'true' || github.event.inputs.reset_db }}
+                  RESET_DB: ${{ github.event.inputs.reset_db }}
                   CREATE_NEW_DEV_TOWN: ${{ github.event_name == 'schedule' && 'true' || github.event.inputs.create_new_dev_town }}
                   ETHERS_NETWORK: ${{ secrets.ETHERS_NETWORK }}
                   RIVER_NODE_NAME: ${{ vars.PRIMARY_NODE_NAME }}

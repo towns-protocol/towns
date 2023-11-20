@@ -49,6 +49,13 @@ function reset_db() {
 }
 
 function reset_ecs_containers() {
+    # if not restting the db, we don't need to reset
+    # the ECS containers
+    if [ "$RESET_DB" != "true" ]; then
+        echo "Skipping ECS container reset"
+        return
+    fi
+
     if [ -z "$CLUSTER_NAME" ]; then
         echo "CLUSTER_NAME is not set"
         exit 1
@@ -110,6 +117,11 @@ function reset_ecs_containers() {
 }
 
 function wait_for_river_to_stop() {
+    # if not restting the db, we don't need to wait 
+    if [ "$RESET_DB" != "true" ]; then
+        return
+    fi
+
     set +e
     # Wait for the river to stop
 
@@ -142,6 +154,11 @@ function wait_for_river_to_stop() {
 }
 
 function wait_for_river_to_start() {
+    # if not restting the db, we don't need to wait 
+    if [ "$RESET_DB" != "true" ]; then
+        return
+    fi
+
     set +e
 
     # Wait for the river to start
