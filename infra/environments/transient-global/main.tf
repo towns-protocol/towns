@@ -58,3 +58,10 @@ module "vpc" {
 
   enable_dns_hostnames = true
 }
+
+module "river_alb" {
+  source = "../../modules/river-alb"
+
+  subnets = module.vpc.public_subnets
+  vpc_id  = module.vpc.vpc_id
+}

@@ -36,11 +36,6 @@ module "global_constants" {
   source = "../../modules/global-constants"
 }
 
-locals {
-  river_node_name           = "river-1-${module.global_constants.environment}"
-  river_node_subdomain_name = "river1-${module.global_constants.environment}"
-}
-
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
@@ -67,9 +62,8 @@ module "vpc" {
 module "river_alb" {
   source = "../../modules/river-alb"
 
-  subnets         = module.vpc.public_subnets
-  vpc_id          = module.vpc.vpc_id
-  river_node_name = local.river_node_name
+  subnets = module.vpc.public_subnets
+  vpc_id  = module.vpc.vpc_id
 }
 
 module "river_node" {
@@ -82,7 +76,7 @@ module "river_node" {
 
   node_subnets = module.vpc.private_subnets
   vpc_id       = module.vpc.vpc_id
-  node_name    = local.river_node_name
+
 
   alb_security_group_id  = module.river_alb.security_group_id
   alb_dns_name           = module.river_alb.lb_dns_name
@@ -94,7 +88,9 @@ module "river_node" {
   l1_chain_id                  = 84531
   push_notification_worker_url = "https://push-notification-worker-${module.global_constants.tags.Env}.towns.com"
 
-  subdomain_name = local.river_node_subdomain_name
+
+  subdomain_name = "river1-${module.global_constants.environment}"
+  node_name      = "river-1-${module.global_constants.environment}"
 }
 
 data "cloudflare_zone" "zone" {

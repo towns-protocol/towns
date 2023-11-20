@@ -59,7 +59,7 @@ module "river_alb" {
     module.global_constants.tags,
     {
       Service  = "river-node-load-balancer"
-      Instance = "${var.river_node_name}-load-balancer"
+      Instance = "${module.global_constants.tags.Env}-load-balancer"
     }
   )
 
