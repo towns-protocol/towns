@@ -62,56 +62,22 @@ func NewTownsContract(ctx context.Context, cfg *config.ChainConfig) (TownsContra
 		chainId:   chainId,
 		ethClient: ethClient,
 	}
-	switch za.chainId {
-	case 1337, 31337:
-		localhost, err := NewSpaceContractLocalhost(za.ethClient)
-		if err != nil {
-			log.Error("error instantiating SpaceContractLocalhost", "error", err)
-			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
-		}
-		za.spaceContract = localhost
 
-		walletLinkLocalhost, err := NewTownsWalletLink(za.ethClient, za.chainId)
-		if err != nil {
-			log.Error("error instantiating WalletLinkLocalhost", "error", err)
-			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
-		}
-		za.walletLinkContract = walletLinkLocalhost
-
-	case 5:
-		goerli, err := NewSpaceContractGoerli(za.ethClient)
-		if err != nil {
-			log.Error("error instantiating SpaceContractGoerli", "error", err)
-			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
-		}
-		za.spaceContract = goerli
-
-	case 11155111:
-		sepolia, err := NewSpaceContractSepolia(za.ethClient)
-		if err != nil {
-			log.Error("error instantiating SpaceContractSepolia", "error", err)
-			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
-		}
-		za.spaceContract = sepolia
-	case 84531:
-		baseGoerli, err := NewSpaceContractBaseGoerli(za.ethClient)
-		if err != nil {
-			log.Error("error instantiating SpaceContractBaseGoerli", "error", err)
-			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
-		}
-		za.spaceContract = baseGoerli
-
-		walletLinkBaseGoerli, err := NewTownsWalletLink(za.ethClient, za.chainId)
-		if err != nil {
-			log.Error("error instantiating WalletLinkBaseGoerli", "error", err)
-			return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
-		}
-		za.walletLinkContract = walletLinkBaseGoerli
-
-	default:
-		log.Error("Bad chain id", "id", za.chainId)
-		return nil, RiverError(protocol.Err_BAD_CONFIG, "Unsupported chain id", "chainId", za.chainId)
+	space_contract, err := NewSpaceContractV3(ctx, ethClient, chainId)
+	if err != nil {
+		log.Error("error fetching SpaceContractV3", "error", err)
+		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
 	}
+	za.spaceContract = space_contract
+
+	// initialise the wallet link contract.
+	walletLinkContract, err := NewTownsWalletLink(za.ethClient, za.chainId)
+	if err != nil {
+		log.Error("error instantiating WalletLinkLocalhost", "error", err)
+		return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
+	}
+	za.walletLinkContract = walletLinkContract
+
 	log.Info("Successfully initialised", "network", cfg.NetworkUrl, "id", za.chainId)
 	// no errors.
 	return za, nil
