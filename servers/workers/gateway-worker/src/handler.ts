@@ -5,6 +5,7 @@ import { upsertImage } from './upsert'
 import { sendSnsTopic } from './snsClient'
 import { handleCookie, invalidCookieResponse } from './cookie'
 import { fetchLocalAuthz } from './fetchLocalAuthz'
+import { createLinearIssue } from './linearClient'
 
 const IMAGE_OPTIONS_REGEX = '(=|,)+'
 const DEFAULT_OPTIONS = 'width=1920,fit=scale-down'
@@ -403,15 +404,36 @@ router.get('/space/:id/bio', async (request: WorkerRequest, env) => {
 router.post('/user-feedback', async (request: WorkerRequest, env) => {
     const requestBody = JSON.parse(JSON.stringify(await request.json()))
     console.log(`requestBody: ${JSON.stringify(requestBody)}`)
-    const params = {
-        Message: JSON.stringify({
+    const promises = [
+        createLinearIssue({
+            apiKey: env.LINEAR_API_KEY,
+            id: requestBody.id,
             name: requestBody.name,
             email: requestBody.email,
             comments: requestBody.comments,
-        }), // MESSAGE_TEXT
-        TopicArn: USER_FEEDBACK_TOPIC_ARN, //TOPIC_ARN
+        }),
+        sendSnsTopic(
+            {
+                Message: JSON.stringify({
+                    name: requestBody.name,
+                    email: requestBody.email,
+                    comments: requestBody.comments,
+                }), // MESSAGE_TEXT
+                TopicArn: USER_FEEDBACK_TOPIC_ARN, //TOPIC_ARN
+            },
+            env.AWS_ACCESS_KEY_ID,
+            env.AWS_SECRET_ACCESS_KEY,
+        ),
+    ]
+    try {
+        await Promise.all(promises)
+        return new Response('ok', { status: 200 })
+    } catch (error) {
+        console.error(error)
+        return new Response(JSON.stringify({ error: (error as Error).message }), {
+            status: 500,
+        })
     }
-    return await sendSnsTopic(params, env.AWS_ACCESS_KEY_ID, env.AWS_SECRET_ACCESS_KEY)
 })
 
 router.post('/')
