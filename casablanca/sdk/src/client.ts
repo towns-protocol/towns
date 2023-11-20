@@ -1713,7 +1713,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
      * corresponding to a particular channel.
      *
      */
-    private async createMegolmEncryptedEvent(
+    async createMegolmEncryptedEvent(
         event: ChannelMessage,
         channelId: string,
     ): Promise<EncryptedData | undefined> {

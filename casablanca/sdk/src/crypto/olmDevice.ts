@@ -426,22 +426,33 @@ export class OlmDevice {
      * Store an OutboundGroupSession in outboundSessionStore
      *
      */
-    private async saveOutboundGroupSession(session: OutboundGroupSession): Promise<void> {
-        this.outboundGroupSessionStore[session.session_id()] = session.pickle(this.pickleKey)
+    private async saveOutboundGroupSession(
+        session: OutboundGroupSession,
+        streamId: string,
+    ): Promise<void> {
+        return this.cryptoStore.withOutboundGroupSessionsTx(async () => {
+            await this.cryptoStore.storeEndToEndOutboundGroupSession(
+                session.session_id(),
+                session.pickle(this.pickleKey),
+                streamId,
+            )
+        })
     }
 
     /**
      * Extract OutboundGroupSession from the session store and call given fn.
      */
-    private async getOutboundGroupSession(sessionId: string): Promise<OutboundGroupSession> {
-        const pickled = this.outboundGroupSessionStore[sessionId]
-        if (!pickled) {
-            throw new Error(`Unknown outbound group session ${sessionId}`)
-        }
+    private async getOutboundGroupSession(streamId: string): Promise<OutboundGroupSession> {
+        return this.cryptoStore.withOutboundGroupSessionsTx(async () => {
+            const pickled = await this.cryptoStore.getEndToEndOutboundGroupSession(streamId)
+            if (!pickled) {
+                throw new Error(`Unknown outbound group session ${streamId}`)
+            }
 
-        const session = this.olmDelegate.createOutboundGroupSession()
-        session.unpickle(this.pickleKey, pickled)
-        return session
+            const session = this.olmDelegate.createOutboundGroupSession()
+            session.unpickle(this.pickleKey, pickled)
+            return session
+        })
     }
 
     /**
@@ -452,8 +463,8 @@ export class OlmDevice {
      * @returns current chain index, and
      *     base64-encoded secret key.
      */
-    public async getOutboundGroupSessionKey(sessionId: string): Promise<IOutboundGroupSessionKey> {
-        const session = await this.getOutboundGroupSession(sessionId)
+    public async getOutboundGroupSessionKey(streamId: string): Promise<IOutboundGroupSessionKey> {
+        const session = await this.getOutboundGroupSession(streamId)
         const chain_index = session.message_index()
         const key = session.session_key()
         session.free()
@@ -464,11 +475,11 @@ export class OlmDevice {
      * Generate a new outbound group session
      *
      */
-    public async createOutboundGroupSession(): Promise<string> {
+    public async createOutboundGroupSession(streamId: string): Promise<string> {
         const session = this.olmDelegate.createOutboundGroupSession()
         try {
             session.create()
-            await this.saveOutboundGroupSession(session)
+            await this.saveOutboundGroupSession(session, streamId)
             return session.session_id()
         } finally {
             session.free()
@@ -759,15 +770,21 @@ export class OlmDevice {
      *
      * @returns ciphertext
      */
-    public async encryptGroupMessage(sessionId: string, payloadString: string): Promise<string> {
-        log(`encrypting msg with megolm session ${sessionId}`)
+    public async encryptGroupMessage(
+        payloadString: string,
+        streamId: string,
+    ): Promise<{ ciphertext: string; sessionId: string }> {
+        return await this.cryptoStore.withOutboundGroupSessionsTx(async () => {
+            log(`encrypting msg with megolm session for stream id ${streamId}`)
 
-        checkPayloadLength(payloadString)
-        const session = await this.getOutboundGroupSession(sessionId)
-        const res = session.encrypt(payloadString)
-        await this.saveOutboundGroupSession(session)
-        session.free()
-        return res
+            checkPayloadLength(payloadString)
+            const session = await this.getOutboundGroupSession(streamId)
+            const ciphertext = session.encrypt(payloadString)
+            const sessionId = session.session_id()
+            await this.saveOutboundGroupSession(session, streamId)
+            session.free()
+            return { ciphertext, sessionId }
+        })
     }
 
     /**
@@ -783,19 +800,21 @@ export class OlmDevice {
         theirIdentityKey: string,
         theirOneTimeKey: string,
     ): Promise<string> {
-        const account = await this.getAccount()
-        const session = this.olmDelegate.createSession()
-        session.create_outbound(account, theirIdentityKey, theirOneTimeKey)
-        const newSessionId = session.session_id()
-        const sessionInfo: IUnpickledSessionInfo = {
-            sessionId: session.session_id(),
-            deviceKey: theirIdentityKey,
-            session,
-            lastReceivedMessageTs: Date.now(),
-        }
-        await this.storeAccount(account)
-        await this.saveSession(theirIdentityKey, sessionInfo)
-        return newSessionId
+        return this.cryptoStore.withAccountAndOlmSessionsTx(async () => {
+            const account = await this.getAccount()
+            const session = this.olmDelegate.createSession()
+            session.create_outbound(account, theirIdentityKey, theirOneTimeKey)
+            const newSessionId = session.session_id()
+            const sessionInfo: IUnpickledSessionInfo = {
+                sessionId: session.session_id(),
+                deviceKey: theirIdentityKey,
+                session,
+                lastReceivedMessageTs: Date.now(),
+            }
+            await this.storeAccount(account)
+            await this.saveSession(theirIdentityKey, sessionInfo)
+            return newSessionId
+        })
     }
 
     /**
@@ -818,29 +837,31 @@ export class OlmDevice {
         if (messageType !== 0) {
             throw new Error('Need messageType == 0 to create inbound session')
         }
+        return await this.cryptoStore.withAccountAndOlmSessionsTx(async () => {
+            const account = await this.getAccount()
+            const session = this.olmDelegate.createSession()
+            try {
+                session.create_inbound_from(account, theirDeviceIdentityKey, ciphertext)
+                await this.storeAccount(account)
 
-        const account = await this.getAccount()
-        const session = this.olmDelegate.createSession()
-        try {
-            session.create_inbound_from(account, theirDeviceIdentityKey, ciphertext)
-            await this.storeAccount(account)
-
-            const payloadString = session.decrypt(messageType, ciphertext)
-            const sessionInfo: IUnpickledSessionInfo = {
-                session,
-                sessionId: session.session_id(),
-                deviceKey: theirDeviceIdentityKey,
-                // this counts as a received message: set last received message time
-                // to now
-                lastReceivedMessageTs: Date.now(),
+                const payloadString = session.decrypt(messageType, ciphertext)
+                const sessionInfo: IUnpickledSessionInfo = {
+                    session,
+                    sessionId: session.session_id(),
+                    deviceKey: theirDeviceIdentityKey,
+                    // this counts as a received message: set last received message time
+                    // to now
+                    lastReceivedMessageTs: Date.now(),
+                }
+                await this.saveSession(theirDeviceIdentityKey, sessionInfo)
+                return {
+                    payload: payloadString,
+                    session_id: session.session_id(),
+                }
+            } finally {
+                session.free()
             }
-            return {
-                payload: payloadString,
-                session_id: session.session_id(),
-            }
-        } finally {
-            session.free()
-        }
+        })
     }
 
     /**
@@ -972,15 +993,21 @@ export class OlmDevice {
         payloadString: string,
     ): Promise<EncryptedMessageEnvelope> {
         checkPayloadLength(payloadString)
-        const res = new EncryptedMessageEnvelope()
-        const sessionInfo = await this.getSession(theirDeviceIdentityKey, sessionId)
-        const sessionDesc = sessionInfo.session.describe()
-        log('Olm Session ID ' + sessionId + ' to ' + theirDeviceIdentityKey + ': ' + sessionDesc)
-        const encoded = sessionInfo.session.encrypt(payloadString)
-        res.body = encoded.body
-        res.type = encoded.type
-        await this.saveSession(theirDeviceIdentityKey, sessionInfo)
-        return res
+        return this.cryptoStore.withOlmSessionsTx(async () => {
+            const sessionInfo = await this.getSession(theirDeviceIdentityKey, sessionId)
+            const sessionDesc = sessionInfo.session.describe()
+            log(
+                'Olm Session ID ' +
+                    sessionId +
+                    ' to ' +
+                    theirDeviceIdentityKey +
+                    ': ' +
+                    sessionDesc,
+            )
+            const encrypted = sessionInfo.session.encrypt(payloadString)
+            await this.saveSession(theirDeviceIdentityKey, sessionInfo)
+            return new EncryptedMessageEnvelope({ body: encrypted.body, type: encrypted.type })
+        })
     }
 
     /**
@@ -1000,12 +1027,22 @@ export class OlmDevice {
         messageType: number,
         ciphertext: string,
     ): Promise<string> {
-        const sessionInfo = await this.getSession(theirDeviceIdentityKey, sessionId)
-        const sessionDesc = sessionInfo.session.describe()
-        log('Olm Session ID ' + sessionId + ' from ' + theirDeviceIdentityKey + ': ' + sessionDesc)
-        const payloadString = sessionInfo.session.decrypt(messageType, ciphertext)
-        sessionInfo.lastReceivedMessageTs = Date.now()
-        return payloadString
+        return this.cryptoStore.withOlmSessionsTx(async () => {
+            const sessionInfo = await this.getSession(theirDeviceIdentityKey, sessionId)
+            const sessionDesc = sessionInfo.session.describe()
+            log(
+                'Olm Session ID ' +
+                    sessionId +
+                    ' from ' +
+                    theirDeviceIdentityKey +
+                    ': ' +
+                    sessionDesc,
+            )
+            const payloadString = sessionInfo.session.decrypt(messageType, ciphertext)
+            sessionInfo.lastReceivedMessageTs = Date.now()
+            await this.saveSession(theirDeviceIdentityKey, sessionInfo)
+            return payloadString
+        })
     }
 
     /**

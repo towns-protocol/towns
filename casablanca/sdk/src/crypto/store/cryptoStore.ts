@@ -30,6 +30,7 @@ export class CryptoStore extends Dexie {
             olmSessions: '[deviceKey+sessionId], deviceKey, sessionId',
             inboundGroupSessions: '[streamId+sessionId]',
             inboundGroupSessionsWithheld: '[streamId+sessionId]',
+            outboundGroupSessions: 'streamId',
             sharedHistoryInboundSessions: '[streamId+sessionId]',
             deviceData: '',
             notifiedErrorDevices: '',
@@ -84,8 +85,8 @@ export class CryptoStore extends Dexie {
         await this.outboundGroupSessions.put({ sessionId, session: sessionData, streamId })
     }
 
-    async getEndToEndOutboundGroupSession(sessionId: string): Promise<string> {
-        const session = await this.outboundGroupSessions.get({ sessionId })
+    async getEndToEndOutboundGroupSession(streamId: string): Promise<string> {
+        const session = await this.outboundGroupSessions.get({ streamId })
         if (!session) {
             throw new Error('session not found')
         }
@@ -140,5 +141,23 @@ export class CryptoStore extends Dexie {
     ): Promise<[streamId: string, sessionId: string][]> {
         const sessions = await this.sharedHistoryInboundSessions.where({ streamId }).toArray()
         return sessions.map((s) => [s.streamId, s.sessionId])
+    }
+
+    async withOlmSessionsTx<T>(fn: () => Promise<T>): Promise<T> {
+        return await this.transaction('rw', this.olmSessions, async () => {
+            return await fn()
+        })
+    }
+
+    async withAccountAndOlmSessionsTx<T>(fn: () => Promise<T>): Promise<T> {
+        return await this.transaction('rw', this.account, this.olmSessions, async () => {
+            return await fn()
+        })
+    }
+
+    async withOutboundGroupSessionsTx<T>(fn: () => Promise<T>): Promise<T> {
+        return await this.transaction('rw', this.outboundGroupSessions, async () => {
+            return await fn()
+        })
     }
 }

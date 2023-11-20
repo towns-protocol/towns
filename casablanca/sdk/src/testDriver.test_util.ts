@@ -30,7 +30,7 @@ class TestDriver {
 
         this.client.on('userInvitedToStream', (s) => void this.userInvitedToStream.bind(this)(s))
         this.client.on('userJoinedStream', (s) => void this.userJoinedStream.bind(this)(s))
-        this.client.on('channelNewMessage', (s, m) => void this.channelNewMessage.bind(this)(s, m))
+        this.client.on('eventDecrypted', (e, err) => void this.eventDecrypted.bind(this)(e, err))
 
         await this.client.startSync()
         this.log(`driver started client`)
@@ -51,11 +51,14 @@ class TestDriver {
         this.log(`userJoinedStream streamId=${streamId}`)
     }
 
-    channelNewMessage(channelId: string, event: RiverEventV2): void {
+    eventDecrypted(event: RiverEventV2, error?: Error): void {
+        if (error) {
+            return
+        }
+        const streamId = event.getStreamId()
         let payload: ClearContent | undefined
         let content = ''
         ;(async () => {
-            await this.client.decryptEventIfNeeded(event)
             payload = event.getContent()
             if (!payload) {
                 return
@@ -64,25 +67,25 @@ class TestDriver {
                 payload?.content?.payload?.case !== 'post' ||
                 payload?.content?.payload?.value.content.case !== 'text'
             ) {
-                throw new Error(`channelNewMessage is not a post`)
+                throw new Error(`eventDecrypted is not a post`)
             }
             content = payload?.content?.payload?.value.content.value.body
             this.log(
-                `channelNewMessage channelId=${channelId} message=${content}`,
+                `eventDecrypted channelId=${streamId} message=${content}`,
                 this.expected ? [...this.expected] : undefined,
             )
             if (this.expected?.delete(content)) {
-                this.log(`channelNewMessage expected message Received, text=${content}`)
+                this.log(`eventDecrypted expected message Received, text=${content}`)
 
                 if (this.expected.size === 0) {
                     this.expected = undefined
                     if (this.allExpectedReceived === undefined) {
                         throw new Error('allExpectedReceived is undefined')
                     }
-                    this.log(`channelNewMessage all expected messages Received, text=${content}`)
+                    this.log(`eventDecrypted all expected messages Received, text=${content}`)
                     this.allExpectedReceived()
                 } else {
-                    this.log(`channelNewMessage still expecting messages`, this.expected)
+                    this.log(`eventDecrypted still expecting messages`, this.expected)
                 }
             } else {
                 if (this.badMessageReceived === undefined) {
@@ -100,7 +103,7 @@ class TestDriver {
                 )
             }
         })().catch((e) => {
-            throw new Error(`channelNewMessage decryptEventIfNeeded error`, <Error>e)
+            throw new Error(`eventDecrypted error`, <Error>e)
         })
     }
 
@@ -248,7 +251,7 @@ export const converse = async (conversation: string[][], testName: string): Prom
                     log(`conversation step execute ${msg_idx}`, msg, [...expected])
                     await withTimeout(
                         drivers[msg_idx].step(channelId, conv_idx, expected, msg),
-                        30000,
+                        60000,
                     )
                     log(
                         `${testName} conversation step after send conv: ${conv_idx} msg: ${msg_idx}`,

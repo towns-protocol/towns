@@ -127,10 +127,6 @@ export class MegolmEncryption extends EncryptionAlgorithm {
     // room).
     private setupPromise = Promise.resolve<OutboundSessionInfo | null>(null)
 
-    // Map of outbound sessions by stream ID. Used to find existing sessions
-    // to use by channelId.
-    private outboundSessionsByStreamId: Map<string, OutboundSessionInfo> = new Map()
-
     private encryptionPreparation?: {
         promise: Promise<void>
         startTime: number
@@ -146,97 +142,19 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         this.logError = dlog('csb:sdk:megolm').extend(`[encryption]:ERROR `)
     }
 
-    /**
-     * @internal
-     *
-     * @param devicesInRoom - The devices in this room, indexed by user ID
-     * @param singleOlmCreationPhase - Only perform one round of olm
-     *     session creation
-     *
-     * This method updates the setupPromise field of the class by chaining a new
-     * call on top of the existing promise, and then catching and discarding any
-     * errors that might happen while setting up the outbound group session. This
-     * is done to ensure that `setupPromise` always resolves to `null` or the
-     * `OutboundSessionInfo`.
-     *
-     * Using `>>=` to represent the promise chaining operation, it does the
-     * following:
-     *
-     * ```
-     * setupPromise = previousSetupPromise >>= setup >>= discardErrors
-     * ```
-     *
-     * The initial value for the `setupPromise` is a promise that resolves to
-     * `null`. The forceDiscardSession() resets setupPromise to this initial
-     * promise.
-     *
-     * @returns Promise which resolves to the
-     *    OutboundSessionInfo when setup is complete.
-     */
     private async ensureOutboundSession(
         streamId: string,
         singleOlmCreationPhase = false,
-    ): Promise<OutboundSessionInfo | null> {
-        // takes the previous OutboundSessionInfo, and considers whether to create
-        // a new one. Also shares the key with any (new) devices in the room.
-        //
-        // returns a promise which resolves once the keyshare is successful.
-        const setup = async (
-            oldSession: OutboundSessionInfo | null,
-        ): Promise<OutboundSessionInfo> => {
-            const session = await this.prepareSession(streamId, oldSession, singleOlmCreationPhase)
-
-            return session
-        }
-
-        // todo: jterzis modify to await..async syntax
-        // first wait for the previous share to complete
-        const fallible = this.setupPromise.then(setup)
-
-        // Ensure any failures are logged for debugging and make sure that the
-        // promise chain remains unbroken
-        //
-        // setupPromise resolves to `null` or the `OutboundSessionInfo` whether
-        // or not the share succeeds
-        this.setupPromise = fallible.catch((e) => {
-            this.logError(`Failed to setup outbound session`, e)
-            return null
-        })
-
-        // but we return a promise which only resolves if the share was successful.
-        return fallible
-    }
-
-    private async prepareSession(
-        streamId: string,
-        session: OutboundSessionInfo | null,
-        singleOlmCreationPhase: boolean,
-    ): Promise<OutboundSessionInfo> {
-        // history visibility changes do not prompt a new session
-
-        // todo: implement session rotation logic
-        // https://linear.app/hnt-labs/issue/HNT-1830/session-rotation-megolm
-
-        let existingSession = session
-        // if cached session is associated with a different streamId, don't use it
-        if (existingSession && existingSession.streamId == streamId) {
-            return existingSession
-        }
-        // try to use an existing session if we have one for the channel.
-        if (this.outboundSessionsByStreamId.get(streamId)) {
-            existingSession = this.outboundSessionsByStreamId.get(streamId)!
-        } else {
+    ): Promise<void> {
+        try {
+            await this.olmDevice.getOutboundGroupSessionKey(streamId)
+            return
+        } catch (error) {
             // if we don't have a cached session at this point, create a new one
             const newSession = await this.prepareNewSession(streamId)
             this.logCall(`Started new megolm session ${newSession.sessionId}`)
-
-            this.outboundSessionsByStreamId.set(streamId, newSession)
-
             await this.shareSession(streamId, singleOlmCreationPhase, newSession)
-            return newSession
         }
-
-        return existingSession
     }
 
     private async shareSession(
@@ -267,7 +185,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             }
         }
 
-        const sessionKey = await this.olmDevice.getOutboundGroupSessionKey(session.sessionId)
+        const sessionKey = await this.olmDevice.getOutboundGroupSessionKey(streamId)
         const payload = new MegolmSession({
             streamId: streamId,
             sessionId: session.sessionId,
@@ -412,9 +330,9 @@ export class MegolmEncryption extends EncryptionAlgorithm {
      * @returns session
      */
     private async prepareNewSession(streamId: string): Promise<OutboundSessionInfo> {
-        const sessionId = await this.olmDevice.createOutboundGroupSession()
+        const sessionId = await this.olmDevice.createOutboundGroupSession(streamId)
         // session key
-        const key = await this.olmDevice.getOutboundGroupSessionKey(sessionId)
+        const key = await this.olmDevice.getOutboundGroupSessionKey(streamId)
 
         await this.olmDevice.addInboundGroupSession(
             streamId,
@@ -727,25 +645,23 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             }
         }
 
-        const session = await this.ensureOutboundSession(streamId, true)
+        await this.ensureOutboundSession(streamId, true)
         const payloadJson = {
             channel_id: streamId,
             type: type,
             content: encoded,
         }
 
-        if (session === null) {
-            throw new Error(`No session found for room ${streamId}`)
-        }
-        const ciphertext = await this.olmDevice.encryptGroupMessage(
-            session.sessionId,
+        const result = await this.olmDevice.encryptGroupMessage(
             JSON.stringify(payloadJson),
+            streamId,
         )
+
         const encryptedContent: IEncryptedContent = {
             algorithm: MEGOLM_ALGORITHM,
             sender_key: this.olmDevice.deviceCurve25519Key!,
-            ciphertext: ciphertext,
-            session_id: session.sessionId,
+            ciphertext: result.ciphertext,
+            session_id: result.sessionId,
             // Include our device ID so that recipients can send us a
             // m.new_device message if they don't have our session key.
             // XXX: Do we still need this now that m.new_device messages
@@ -753,7 +669,6 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             device_id: this.deviceId,
         }
 
-        session.useCount++
         return encryptedContent
     }
 

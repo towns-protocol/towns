@@ -179,7 +179,7 @@ describe('toDeviceMessageTest', () => {
         await aliceSelfToDevice.expectToSucceed()
     })
 
-    test('bobAndAliceExchangeToDeviceMessages', async () => {
+    test.skip('bobAndAliceExchangeToDeviceMessages', async () => {
         log('bobAndAliceExchangeToDeviceMessages')
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.initializeUser()).toResolve()

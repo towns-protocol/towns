@@ -433,6 +433,7 @@ describe('clientTest', () => {
         const aliceGetsMessage = makeDonePromise()
         const bobGetsMessage = makeDonePromise()
         const conversation = [
+            'Hello, world from Bob!',
             'Hello, Alice!',
             'Hello, Bob!',
             'Weather nice?',
@@ -441,13 +442,16 @@ describe('clientTest', () => {
             'Both!',
         ]
 
-        alicesClient.on('channelNewMessage', (channelId: string, event: RiverEventV2): void => {
+        alicesClient.on('eventDecrypted', (event: RiverEventV2, error?: Error): void => {
+            if (error) {
+                return
+            }
+            const channelId = event.getStreamId()
             const content = event.getWireContent()
             expect(content).toBeDefined()
-            log('onChannelNewMessage', 'Alice', channelId)
+            log('eventDecrypted', 'Alice', channelId)
             aliceGetsMessage.runAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
-                await alicesClient.decryptEventIfNeeded(event)
                 const clearEvent = event.getContent()
                 expect(clearEvent?.content?.payload).toBeDefined()
                 if (
@@ -469,13 +473,16 @@ describe('clientTest', () => {
             })
         })
 
-        bobsClient.on('channelNewMessage', (channelId: string, event: RiverEventV2): void => {
+        bobsClient.on('eventDecrypted', (event: RiverEventV2, error?: Error): void => {
+            if (error) {
+                return
+            }
+            const channelId = event.getStreamId()
             const content = event.getWireContent()
             expect(content).toBeDefined()
-            log('onChannelNewMessage', 'Bob', channelId)
+            log('eventDecrypted', 'Bob', channelId)
             bobGetsMessage.runAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
-                await bobsClient.decryptEventIfNeeded(event)
                 const clearEvent = event.getContent()
                 expect(clearEvent?.content?.payload).toBeDefined()
                 if (
