@@ -82,9 +82,6 @@ export default ({ mode }: { mode: string }) => {
         define: {
             APP_VERSION: JSON.stringify(process.env.npm_package_version),
             APP_COMMIT_HASH: JSON.stringify(commitHash),
-            'process.env': {
-                NODE_ENV: JSON.stringify(mode),
-            },
         },
         assetsInclude: ['**/*.png', '**/*.svg'],
         plugins: [
