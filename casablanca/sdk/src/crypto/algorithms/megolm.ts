@@ -351,50 +351,6 @@ export class MegolmEncryption extends EncryptionAlgorithm {
     }
 
     /**
-     * Determines what devices in devicesByUser don't have an olm session as given
-     * in devicemap.
-     *
-     * @internal
-     *
-     * @param deviceMap - the devices that have olm sessions, as returned by
-     *     olmlib.ensureOlmSessionsForDevices.
-     * @param devicesByUser - a map of user IDs to array of deviceInfo
-     * @param noOlmDevices - an array to fill with devices that don't have
-     *     olm sessions
-     *
-     * @returns an array of devices that don't have olm sessions.  If
-     *     noOlmDevices is specified, then noOlmDevices will be returned.
-     */
-    private getDevicesWithoutSessions(
-        deviceMap: Map<string, Map<string, IOlmSessionResult>>,
-        devicesByUser: Map<string, DeviceInfo[]>,
-        noOlmDevices: IOlmDevice[] = [],
-    ): IOlmDevice[] {
-        for (const [userId, devicesToShareWith] of devicesByUser) {
-            const sessionResults = deviceMap.get(userId)
-
-            for (const deviceInfo of devicesToShareWith) {
-                const deviceId = deviceInfo.deviceId
-
-                const sessionResult = sessionResults?.get(deviceId)
-                if (!sessionResult?.sessionId) {
-                    // no session with this device, probably because there
-                    // were no one-time keys.
-
-                    noOlmDevices.push({ userId, deviceInfo })
-                    sessionResults?.delete(deviceId)
-
-                    // ensureOlmSessionsForUsers has already done the logging,
-                    // so just skip it.
-                    continue
-                }
-            }
-        }
-
-        return noOlmDevices
-    }
-
-    /**
      * Splits the user device map into multiple chunks to reduce the number of
      * devices we encrypt to per API call.
      *
