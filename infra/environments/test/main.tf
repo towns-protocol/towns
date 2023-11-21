@@ -66,6 +66,11 @@ module "river_alb" {
   vpc_id  = module.vpc.vpc_id
 }
 
+resource "aws_ecs_cluster" "river_ecs_cluster" {
+  name = "${module.global_constants.environment}-river-ecs-cluster"
+  tags = module.global_constants.tags
+}
+
 module "river_node" {
   source = "../../modules/river-node"
 
@@ -77,6 +82,10 @@ module "river_node" {
   node_subnets = module.vpc.private_subnets
   vpc_id       = module.vpc.vpc_id
 
+  ecs_cluster = {
+    id   = aws_ecs_cluster.river_ecs_cluster.id
+    name = aws_ecs_cluster.river_ecs_cluster.name
+  }
 
   alb_security_group_id  = module.river_alb.security_group_id
   alb_dns_name           = module.river_alb.lb_dns_name

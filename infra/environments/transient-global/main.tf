@@ -65,3 +65,8 @@ module "river_alb" {
   subnets = module.vpc.public_subnets
   vpc_id  = module.vpc.vpc_id
 }
+
+resource "aws_ecs_cluster" "river_ecs_cluster" {
+  name = "${module.global_constants.environment}-river-ecs-cluster"
+  tags = module.global_constants.tags
+}

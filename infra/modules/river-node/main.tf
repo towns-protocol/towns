@@ -7,10 +7,7 @@ data "aws_vpc" "vpc" {
 }
 
 locals {
-  # TODO: cluster name should include the node name to prevent conflicts
-  # with other nodes in the same environment
-  ecs_cluster_name = "${module.global_constants.environment}-river-ecs-cluster"
-  service_name     = "river-node"
+  service_name = "river-node"
   tags = merge(
     module.global_constants.tags,
     {
@@ -39,11 +36,6 @@ terraform {
   }
 
   required_version = ">= 1.0.3"
-}
-
-resource "aws_ecs_cluster" "river_ecs_cluster" {
-  name = local.ecs_cluster_name
-  tags = module.global_constants.tags
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
@@ -539,7 +531,7 @@ resource "aws_iam_role" "ecs_code_deploy_role" {
 
 resource "aws_ecs_service" "river-ecs-service" {
   name                               = "${module.global_constants.environment}-river-${var.node_name}-fargate-service"
-  cluster                            = aws_ecs_cluster.river_ecs_cluster.id
+  cluster                            = var.ecs_cluster.id
   task_definition                    = aws_ecs_task_definition.river-fargate.arn
   desired_count                      = 1
   deployment_minimum_healthy_percent = 0
@@ -583,7 +575,7 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   depends_on = [aws_ecs_service.river-ecs-service]
 
   ecs_service {
-    cluster_name = aws_ecs_cluster.river_ecs_cluster.name
+    cluster_name = var.ecs_cluster.name
     service_name = aws_ecs_service.river-ecs-service.name
   }
 
@@ -629,6 +621,7 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
 ### MONITORING
 
 resource "datadog_monitor" "river_node_cpu_monitor" {
+  count   = module.global_constants.environment == "test" ? 1 : 0
   name    = "${var.node_name} - CPU Usage"
   type    = "metric alert"
   message = "River Node CPU Usage is high on ${var.node_name} ${module.global_constants.sre_slack_identifier}"
@@ -649,6 +642,7 @@ resource "datadog_monitor" "river_node_cpu_monitor" {
 }
 
 resource "datadog_monitor" "river_node_memory_monitor" {
+  count   = module.global_constants.environment == "test" ? 1 : 0
   name    = "${var.node_name} - Memory Usage"
   type    = "metric alert"
   message = "River Node Memory Usage is high on ${var.node_name} ${module.global_constants.sre_slack_identifier}"

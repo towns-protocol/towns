@@ -8,6 +8,14 @@ variable "node_name" {
   type        = string
 }
 
+variable "ecs_cluster" {
+  description = "Name and id of the ecs cluster"
+  type = object({
+    name = string
+    id   = string
+  })
+}
+
 variable "node_subnets" {
   description = "A list of subnets to associate with the river nodes"
   type        = list(string)

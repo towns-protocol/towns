@@ -1,11 +1,11 @@
-# provider "aws" {
-#   region  = "us-east-1"
-# }
+provider "aws" {
+  region = "us-east-1"
+}
 
-# provider "datadog" {
-#   api_key = var.datadog_api_key
-#   app_key = var.datadog_app_key
-# }
+provider "datadog" {
+  api_key = var.datadog_api_key
+  app_key = var.datadog_app_key
+}
 
 provider "cloudflare" {
   api_token = var.cloudflare_terraform_api_token
@@ -17,10 +17,10 @@ terraform {
     #   source  = "hashicorp/aws"
     #   version = "~> 5.13.1"
     # }
-    # datadog = {
-    #   source = "DataDog/datadog"
-    #   version = "3.32.0"
-    # }
+    datadog = {
+      source  = "DataDog/datadog"
+      version = "3.32.0"
+    }
     cloudflare = {
       source  = "cloudflare/cloudflare"
       version = "~> 4.0"
@@ -66,3 +66,38 @@ resource "cloudflare_record" "sample_app_dns" {
   type    = "CNAME"
   ttl     = 60
 }
+
+# data "terraform_remote_state" "transient_global_remote_state" {
+#   backend = "s3"
+
+#   config = {
+#     region  = "us-east-1"
+#     profile = "harmony-github-actions"
+#     bucket  = "here-not-there-terraform-state"
+#     key     = "env:/transient-global/default"
+#   }
+# }
+
+
+# module "river_node" {
+#   source = "../../modules/river-node"
+
+#   node_subnets = data.terraform_remote_state.transient_global_remote_state.outputs.vpc.private_subnets
+#   vpc_id       = data.terraform_remote_state.transient_global_remote_state.outputs.vpc.vpc_id
+
+#   ecs_cluster = data.terraform_remote_state.transient_global_remote_state.outputs.river_ecs_cluster
+
+#   alb_security_group_id  = data.terraform_remote_state.transient_global_remote_state.outputs.river_alb.security_group_id
+#   alb_dns_name           = data.terraform_remote_state.transient_global_remote_state.outputs.river_alb.lb_dns_name
+#   alb_https_listener_arn = data.terraform_remote_state.transient_global_remote_state.outputs.river_alb.lb_https_listener_arn
+
+#   database_allowed_cidr_blocks = data.terraform_remote_state.transient_global_remote_state.outputs.vpc.private_subnets_cidr_blocks
+#   database_subnets             = data.terraform_remote_state.transient_global_remote_state.outputs.vpc.database_subnets
+
+#   l1_chain_id                  = 84531
+#   push_notification_worker_url = "https://push-notification-worker-${module.global_constants.environment}.towns.com"
+
+
+#   subdomain_name = "river1-${module.global_constants.environment}"
+#   node_name      = "river1-${module.global_constants.environment}"
+# }
