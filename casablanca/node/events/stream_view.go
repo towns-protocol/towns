@@ -198,14 +198,6 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHea
 	}, events
 }
 
-// In 1.21 there is built-in max! (facepalm)
-func MaxInt_(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamViewImpl, error) {
 	header := miniblock.headerEvent.Event.GetMiniblockHeader()
 	if header == nil {
@@ -220,7 +212,7 @@ func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamVie
 		return nil, RiverError(Err_BAD_BLOCK, "streamViewImpl: block hash mismatch", "expected", FormatHashFromString(string(lastBlock.headerEvent.Hash)), "actual", FormatHashFromString(string(header.PrevMiniblockHash)))
 	}
 
-	remaining := make(map[string]*ParsedEvent, MaxInt_(r.minipool.events.Len()-len(header.EventHashes), 0))
+	remaining := make(map[string]*ParsedEvent, max(r.minipool.events.Len()-len(header.EventHashes), 0))
 	for k, v := range r.minipool.events.Map {
 		remaining[k] = v
 	}
