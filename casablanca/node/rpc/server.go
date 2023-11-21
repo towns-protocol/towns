@@ -185,7 +185,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		wallet:         wallet,
 		exitSignal:     exitSignal,
 		nodeRegistry:   nodeRegistry,
-		streamRegistry: nodes.NewStreamRegistry(nodeRegistry, cfg.UseBlockChainStreamRegistry, streamRegistryContract),
+		streamRegistry: nodes.NewStreamRegistry(nodeRegistry, cfg.UseBlockChainStreamRegistry, streamRegistryContract, cfg.Stream.ReplicationFactor),
 		streamConfig:   cfg.Stream,
 		notification:   notification,
 		syncHandler:    syncHandler,

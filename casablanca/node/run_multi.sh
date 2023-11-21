@@ -10,6 +10,7 @@ USE_BLOCKCHAIN_STREAM_REGISTRY=false
 
 # Default number of instances
 NUM_INSTANCES=3
+REPL_FACTOR=1
 
 CONFIG=false
 RUN=false
@@ -22,6 +23,10 @@ while [[ "$#" -gt 0 ]]; do
             NUM_INSTANCES="$2"
             shift 2
             ;;
+        --repl)
+            REPL_FACTOR="$2"
+            shift 2
+            ;;            
         --disable_entitlements|--de)
             USE_CONTRACT=false
             METRICS_ENABLED=false
@@ -66,6 +71,7 @@ if [ "$CONFIG" == "true" ]; then
             NODE_REGISTRY ../node_registry.json \
             LOG_NOCOLOR false \
             LOG_LEVEL info \
+            REPL_FACTOR $REPL_FACTOR \
             USE_BLOCKCHAIN_STREAM_REGISTRY $USE_BLOCKCHAIN_STREAM_REGISTRY
 
         NODE_ADDRESS=$(cat ./run_files/$INSTANCE/wallet/node_address)

@@ -44,6 +44,7 @@ type PushNotificationConfig struct {
 
 type StreamConfig struct {
 	Media MediaStreamConfig
+	ReplicationFactor int
 }
 
 type MediaStreamConfig struct {

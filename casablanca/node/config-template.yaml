@@ -30,4 +30,5 @@ stream:
     media:
         maxChunkCount: 10 # max number of chunks in a media stream
         maxChunkSize: 500000 # max number of bytes in a single chunk
+    replicationFactor: <REPL_FACTOR>
 useBlockchainStreamRegistry: <USE_BLOCKCHAIN_STREAM_REGISTRY>

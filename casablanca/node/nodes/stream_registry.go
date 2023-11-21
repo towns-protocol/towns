@@ -16,15 +16,20 @@ type StreamRegistry interface {
 // TODO: replace with on-chain registry.
 type streamRegistryImpl struct {
 	nodeRegistry                NodeRegistry
+	streamReplicationFactor     int
 	streamRegistryContract      registries.StreamRegistryContract
 	useBlockChainStreamRegistry bool
 }
 
 var _ StreamRegistry = (*streamRegistryImpl)(nil)
 
-func NewStreamRegistry(nodeRegistry NodeRegistry, useBlockChainStreamRegistry bool, streamRegistryContract registries.StreamRegistryContract) *streamRegistryImpl {
+func NewStreamRegistry(nodeRegistry NodeRegistry, useBlockChainStreamRegistry bool, streamRegistryContract registries.StreamRegistryContract, streamReplicationFactor int) *streamRegistryImpl {
+	if streamReplicationFactor < 1 {
+		streamReplicationFactor = 1
+	}
 	return &streamRegistryImpl{
 		nodeRegistry:                nodeRegistry,
+		streamReplicationFactor:     streamReplicationFactor,
 		streamRegistryContract:      streamRegistryContract,
 		useBlockChainStreamRegistry: useBlockChainStreamRegistry,
 	}
