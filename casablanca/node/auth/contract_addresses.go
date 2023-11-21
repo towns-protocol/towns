@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"casablanca/node/infra"
 	_ "embed"
 	"encoding/json"
 	"errors"
@@ -30,9 +31,9 @@ type ContractAddress struct {
 
 func loadContractAddress(chainId int) (string, error) {
 	switch chainId {
-	case 31337:
+	case infra.CHAIN_ID_LOCALHOST:
 		return unmarshalFromJson(localhostTownFactoryAddressJson)
-	case 84531:
+	case infra.CHAIN_ID_BASE_GOERLI:
 		return unmarshalFromJson(baseGoerliTownFactoryAddressJson)
 	default:
 		errMsg := fmt.Sprintf("unsupported chainId: %d", chainId)
@@ -43,9 +44,9 @@ func loadContractAddress(chainId int) (string, error) {
 
 func loadWalletLinkContractAddress(chainId int) (string, error) {
 	switch chainId {
-	case 31337:
+	case infra.CHAIN_ID_LOCALHOST:
 		return unmarshalFromJson(localhostWalletLinkAddressJson)
-	case 84531:
+	case infra.CHAIN_ID_BASE_GOERLI:
 		return unmarshalFromJson(baseGoerliWalletLinkAddressJson)
 	default:
 		errMsg := fmt.Sprintf("unsupported chainId: %d", chainId)

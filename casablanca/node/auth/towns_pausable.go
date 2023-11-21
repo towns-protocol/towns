@@ -3,7 +3,10 @@ package auth
 import (
 	"casablanca/node/auth/contracts/base_goerli_towns_pausable"
 	"casablanca/node/auth/contracts/localhost_towns_pausable"
+	"casablanca/node/dlog"
+	"casablanca/node/infra"
 	"casablanca/node/protocol"
+	"context"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -16,13 +19,18 @@ type TownsPausable interface {
 	Paused(callOpts *bind.CallOpts) (bool, error)
 }
 
+type TownsPausableProxy struct {
+	address  common.Address
+	contract TownsPausable
+}
+
 func NewTownsPausable(address common.Address, ethClient *ethclient.Client, chainId int) (TownsPausable, error) {
 	var towns_pausable_contract TownsPausable
 	var err error
 	switch chainId {
-	case 31337:
+	case infra.CHAIN_ID_LOCALHOST:
 		towns_pausable_contract, err = localhost_towns_pausable.NewLocalhostTownsPausable(address, ethClient)
-	case 84531:
+	case infra.CHAIN_ID_BASE_GOERLI:
 		towns_pausable_contract, err = base_goerli_towns_pausable.NewBaseGoerliTownsPausable(address, ethClient)
 
 	default:
@@ -32,4 +40,23 @@ func NewTownsPausable(address common.Address, ethClient *ethclient.Client, chain
 		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
 	}
 	return towns_pausable_contract, nil
+}
+
+func NewTownsPausableProxy(contract TownsPausable, address common.Address) TownsPausable {
+	return &TownsPausableProxy{
+		contract: contract,
+		address:  address,
+	}
+}
+
+func (proxy *TownsPausableProxy) Paused(callOpts *bind.CallOpts) (bool, error) {
+	log := dlog.CtxLog(context.Background())
+	log.Debug("Paused", "address", proxy.address)
+	result, err := proxy.contract.Paused(callOpts)
+	if err != nil {
+		log.Error("Paused", "address", proxy.address, "error", err)
+		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
+	}
+	log.Debug("Paused", "address", proxy.address, "result", result)
+	return result, nil
 }

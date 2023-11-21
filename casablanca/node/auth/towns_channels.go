@@ -4,7 +4,10 @@ import (
 	"casablanca/node/auth/contracts/base_goerli_towns_channels"
 	"casablanca/node/auth/contracts/localhost_towns_channels"
 	. "casablanca/node/base"
+	"casablanca/node/dlog"
+	"casablanca/node/infra"
 	"casablanca/node/protocol"
+	"context"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -26,7 +29,7 @@ type TownsChannelsProxy[Contract GeneratedTownsChannels] struct {
 func NewTownsChannels(ethClient *ethclient.Client, chainId int, address common.Address) (TownsChannels, error) {
 	var towns_channels_contract TownsChannels
 	switch chainId {
-	case 31337:
+	case infra.CHAIN_ID_LOCALHOST:
 		localhost_contract, err := localhost_towns_channels.NewLocalhostTownsChannels(address, ethClient)
 		if err != nil {
 			return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
@@ -37,7 +40,7 @@ func NewTownsChannels(ethClient *ethclient.Client, chainId int, address common.A
 		if err != nil {
 			return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
 		}
-	case 84531:
+	case infra.CHAIN_ID_BASE_GOERLI:
 		base_goerli_contract, err := base_goerli_towns_channels.NewBaseGoerliTownsChannels(address, ethClient)
 		if err != nil {
 			return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
@@ -62,20 +65,29 @@ func NewTownsChannelsProxy[C GeneratedTownsChannels](contract *C) (TownsChannels
 }
 
 func (za *TownsChannelsProxy[GeneratedTownsChannels]) IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bool, error) {
+	log := dlog.CtxLog(context.Background())
+
+	var result bool
 	switch v := any(za.contract).(type) {
 	case *localhost_towns_channels.LocalhostTownsChannels:
+		log.Debug("IsDisabled", "channelNetworkId", channelNetworkId)
 		channelInfo, err := v.GetChannel(opts, channelNetworkId)
 		if err != nil {
+			log.Error("IsDisabled", "channelNetworkId", channelNetworkId, "error", err)
 			return false, err
 		}
-		return channelInfo.Disabled, nil
+		result = channelInfo.Disabled
 	case *base_goerli_towns_channels.BaseGoerliTownsChannels:
+		log.Debug("IsDisabled", "channelNetworkId", channelNetworkId)
 		channelInfo, err := v.GetChannel(opts, channelNetworkId)
 		if err != nil {
+			log.Error("IsDisabled", "channelNetworkId", channelNetworkId, "error", err)
 			return false, err
 		}
-		return channelInfo.Disabled, nil
+		result = channelInfo.Disabled
 	default:
 		return false, RiverError(protocol.Err_CANNOT_CONNECT, "unsupported chain")
 	}
+	log.Debug("IsDisabled", "channelNetworkId", channelNetworkId, "result", result)
+	return result, nil
 }

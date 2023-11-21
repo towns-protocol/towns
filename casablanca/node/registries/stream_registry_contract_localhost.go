@@ -2,6 +2,7 @@ package registries
 
 import (
 	"casablanca/node/auth/contracts/localhost_towns_stream_registry"
+	"casablanca/node/infra"
 	"context"
 	"math/big"
 
@@ -23,7 +24,7 @@ type StreamRegistryContractLocalhostV3 struct {
 
 func NewStreamRegistryContractLocalhostV3(ethClient *ethclient.Client, nodeWallet *crypto.Wallet) (*StreamRegistryContractLocalhostV3, error) {
 	// get the space factory address from config
-	strAddress, err := loadStreamRegistryContractAddress(31337)
+	strAddress, err := loadStreamRegistryContractAddress(infra.CHAIN_ID_LOCALHOST)
 	if err != nil {
 		slog.Error("error parsing localhost contract address", "address", strAddress, "error", err)
 		return nil, err

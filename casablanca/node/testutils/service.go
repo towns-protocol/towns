@@ -3,6 +3,7 @@ package testutils
 import (
 	"casablanca/node/config"
 	"casablanca/node/crypto"
+	"casablanca/node/infra"
 	"casablanca/node/protocol/protocolconnect"
 	"casablanca/node/rpc"
 	"context"
@@ -17,7 +18,7 @@ func TestServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 	cfg := &config.Config{
 		UseContract: false,
 		Chain: config.ChainConfig{
-			ChainId:    31337,
+			ChainId:    infra.CHAIN_ID_LOCALHOST,
 			NetworkUrl: "http://localhost:8545",
 		},
 		Address: "localhost",

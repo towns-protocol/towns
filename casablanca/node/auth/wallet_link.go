@@ -3,6 +3,9 @@ package auth
 import (
 	"casablanca/node/auth/contracts/base_goerli_towns_wallet_link"
 	"casablanca/node/auth/contracts/localhost_towns_wallet_link"
+	"casablanca/node/dlog"
+	"casablanca/node/infra"
+	"context"
 
 	. "casablanca/node/base"
 	"casablanca/node/protocol"
@@ -40,9 +43,9 @@ func NewTownsWalletLink(ethClient *ethclient.Client, chainId int) (*TownsWalletL
 
 	var wallet_link_contract GeneratedWalletLinkContract
 	switch chainId {
-	case 31337:
+	case infra.CHAIN_ID_LOCALHOST:
 		wallet_link_contract, err = localhost_towns_wallet_link.NewLocalhostTownsWalletLink(address, ethClient)
-	case 84531:
+	case infra.CHAIN_ID_BASE_GOERLI:
 		wallet_link_contract, err = base_goerli_towns_wallet_link.NewBaseGoerliTownsWalletLink(address, ethClient)
 	default:
 		return nil, RiverError(protocol.Err_CANNOT_CONNECT, "unsupported chain", "chainId", chainId)
@@ -59,17 +62,49 @@ func NewTownsWalletLink(ethClient *ethclient.Client, chainId int) (*TownsWalletL
 }
 
 func (za *TownsWalletLink) GetWalletsByRootKey(rootKey common.Address) ([]common.Address, error) {
-	return za.link.GetWalletsByRootKey(nil, rootKey)
+	log := dlog.CtxLog(context.Background())
+	log.Debug("GetWalletsByRootKey", "rootKey", rootKey)
+	result, err := za.link.GetWalletsByRootKey(nil, rootKey)
+	if err != nil {
+		log.Error("GetWalletsByRootKey", "rootKey", rootKey, "error", err)
+		return nil, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
+	}
+	log.Debug("GetWalletsByRootKey", "rootKey", rootKey, "result", result)
+	return result, nil
 }
 
 func (za *TownsWalletLink) GetRootKeyForWallet(wallet common.Address) (common.Address, error) {
-	return za.link.GetRootKeyForWallet(nil, wallet)
+	log := dlog.CtxLog(context.Background())
+	log.Debug("GetRootKeyForWallet", "wallet", wallet)
+	result, err := za.link.GetRootKeyForWallet(nil, wallet)
+	if err != nil {
+		log.Error("GetRootKeyForWallet", "wallet", wallet, "error", err)
+		return common.Address{}, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
+	}
+	log.Debug("GetRootKeyForWallet", "wallet", wallet, "result", result)
+	return result, nil
 }
 
 func (za *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (uint64, error) {
-	return za.link.GetLatestNonceForRootKey(nil, rootKey)
+	log := dlog.CtxLog(context.Background())
+	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey)
+	result, err := za.link.GetLatestNonceForRootKey(nil, rootKey)
+	if err != nil {
+		log.Error("GetLatestNonceForRootKey", "rootKey", rootKey, "error", err)
+		return 0, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
+	}
+	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey, "result", result)
+	return result, nil
 }
 
 func (za *TownsWalletLink) CheckIfLinked(rootKey common.Address, wallet common.Address) (bool, error) {
-	return za.link.CheckIfLinked(nil, rootKey, wallet)
+	log := dlog.CtxLog(context.Background())
+	log.Debug("CheckIfLinked", "rootKey", rootKey, "wallet", wallet)
+	result, err := za.link.CheckIfLinked(nil, rootKey, wallet)
+	if err != nil {
+		log.Error("CheckIfLinked", "rootKey", rootKey, "wallet", wallet, "error", err)
+		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
+	}
+	log.Debug("CheckIfLinked", "rootKey", rootKey, "wallet", wallet, "result", result)
+	return result, nil
 }

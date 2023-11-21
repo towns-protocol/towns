@@ -150,13 +150,8 @@ func (za *ChainAuth) isEntitledToSpace(streamInfo *common.StreamInfo, user eth.A
 }
 
 func (za *ChainAuth) isEntitledToChannel(ctx context.Context, streamInfo *common.StreamInfo, user eth.Address, permission Permission) (bool, error) {
-	log := dlog.CtxLog(ctx)
-
-	log.Info("isEntitledToChannel", "streamInfo", streamInfo, "user", user.Hex(), "permission", permission)
-
 	// channel disabled check.
 	isDisabled, err := za.spaceContract.IsChannelDisabled(streamInfo.SpaceId, streamInfo.ChannelId)
-	log.Info("isEntitledToChannel", "isDisabled", isDisabled, "err", err)
 	if err != nil {
 		return false, err
 	} else if isDisabled {
@@ -170,7 +165,6 @@ func (za *ChainAuth) isEntitledToChannel(ctx context.Context, streamInfo *common
 		user,
 		permission,
 	)
-	log.Info("isEntitledToChannel", "isEntitled", isEntitled, "err", err)
 	return isEntitled, err
 }
 

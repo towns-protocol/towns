@@ -17,6 +17,7 @@ import (
 	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/events"
+	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"casablanca/node/protocol/protocolconnect"
 	"casablanca/node/rpc"
@@ -234,11 +235,11 @@ func testServerAndClient(
 	cfg := &config.Config{
 		UseContract: useContract,
 		Chain: config.ChainConfig{
-			ChainId:    31337,
+			ChainId:    infra.CHAIN_ID_LOCALHOST,
 			NetworkUrl: "http://localhost:8545",
 		},
 		TopChain: config.ChainConfig{
-			ChainId:    31337,
+			ChainId:    infra.CHAIN_ID_LOCALHOST,
 			NetworkUrl: "http://localhost:8545",
 		},
 		Address:     "localhost",

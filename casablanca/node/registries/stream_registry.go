@@ -4,6 +4,7 @@ import (
 	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/dlog"
+	"casablanca/node/infra"
 	"casablanca/node/utils"
 	"context"
 	"errors"
@@ -25,7 +26,7 @@ func NewStreamRegistryContract(ctx context.Context, cfg *config.ChainConfig, nod
 	}
 
 	switch chainId {
-	case 31337:
+	case infra.CHAIN_ID_LOCALHOST:
 		contract, err := NewStreamRegistryContractLocalhostV3(ethClient, nodeWallet)
 		if err != nil {
 			return nil, err
