@@ -45,6 +45,10 @@ export class CryptoStore extends Dexie {
         await this.inboundGroupSessions.where({ streamId, sessionId }).delete()
     }
 
+    async deleteAccount(userId: string): Promise<void> {
+        await this.account.where({ id: userId }).delete()
+    }
+
     async getAccount(): Promise<string> {
         const account = await this.account.get({ id: this.userId })
         if (!account) {

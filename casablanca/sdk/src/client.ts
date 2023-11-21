@@ -1549,9 +1549,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     // we return the latest UserDeviceKey event for each user from their stream. This won't hold in the future
                     // as user's will eventually have multiple devices per user, each with a different deviceId.
 
-                    const devicesFlat = Array.from(
-                        stream.userDeviceKeyContent.uploadedDeviceKeys.values(),
-                    ).flatMap((value) => value)
+                    const devicesFlat = stream.userDeviceKeyContent.uploadedDeviceKeys.get(userId)
+                    if (devicesFlat === undefined) {
+                        throw new Error('no device keys found for user ' + userId)
+                    }
 
                     // return latest 10 device keys until the below issue is complete
                     // todo: https://linear.app/hnt-labs/issue/HNT-3647/devicekey-lifecycle-hardening
@@ -1702,7 +1703,24 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.decryptionExtensions = new RiverDecryptionExtension(this, this.entitlementsDelegate)
     }
 
-    private async uploadDeviceKeys() {
+    /**
+     * Resets crypto backend and creates a new Olm account, uploading device keys to UserDeviceKey stream.
+     */
+    async resetCrypto(): Promise<void> {
+        this.logCall('resetCrypto')
+        if (this.userId == undefined) {
+            throw new Error('userId must be set to reset crypto')
+        }
+        if (this.deviceId === undefined) {
+            throw new Error('deviceId must be set to reset crypto')
+        }
+        this.cryptoBackend = undefined
+        await this.cryptoStore.deleteAccount(this.userId)
+        await this.initCrypto()
+        await this.uploadDeviceKeys()
+    }
+
+    async uploadDeviceKeys() {
         check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
         this.logCall('initCrypto:: uploading device keys...')
         return this.cryptoBackend.uploadDeviceKeys()

@@ -16,7 +16,7 @@ import { StreamStateView_IContent } from './streamStateView_IContent'
 export class StreamStateView_UserDeviceKeys implements StreamStateView_IContent {
     readonly streamId: string
 
-    // device_id -> device_keys, fallback_keys
+    // user_id -> device_keys, fallback_keys
     readonly uploadedDeviceKeys = new Map<string, UserDeviceKeyPayload_UserDeviceKey[]>()
 
     constructor(inception: UserDeviceKeyPayload_Inception) {
@@ -88,8 +88,8 @@ export class StreamStateView_UserDeviceKeys implements StreamStateView_IContent 
                 fallbackKeys,
             )
             if (deviceKeys?.deviceId !== undefined) {
-                this.uploadedDeviceKeys.set(deviceKeys.deviceId, [
-                    ...(this.uploadedDeviceKeys.get(deviceKeys.deviceId) || []),
+                this.uploadedDeviceKeys.set(userId, [
+                    ...(this.uploadedDeviceKeys.get(userId) || []),
                     value,
                 ])
             }

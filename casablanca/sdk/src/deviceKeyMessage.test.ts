@@ -129,4 +129,64 @@ describe('deviceKeyMessageTest', () => {
         expect(deviceKeys.device_keys[alicesUserId]).toBeDefined()
         expect(deviceKeys.device_keys[bobsUserId]).toBeDefined()
     })
+
+    test('bobDownloadsAlicesMultipleAndOwnDeviceKeys', async () => {
+        log('bobDownloadsAlicesAndOwnDeviceKeys')
+        // Bob, Alice get created, starts syncing, and uploads respective device keys.
+        await expect(bobsClient.initializeUser()).toResolve()
+        await expect(alicesClient.initializeUser()).toResolve()
+        await bobsClient.startSync()
+        await alicesClient.startSync()
+        const bobsUserId = bobsClient.userId
+        const alicesUserId = alicesClient.userId
+        const bobSelfToDevice = makeDonePromise()
+
+        // Alice should restart her cryptoBackend multiple times, each time uploading new device keys.
+        let tenthDeviceKey = ''
+        let eleventhDeviceKey = ''
+        for (let i = 0; i < 20; i++) {
+            await alicesClient.resetCrypto()
+            if (i === 9) {
+                tenthDeviceKey = alicesClient.olmDevice.deviceCurve25519Key!
+            } else if (i === 10) {
+                eleventhDeviceKey = alicesClient.olmDevice.deviceCurve25519Key!
+            }
+        }
+        // bobs client should sync userDeviceKeyMessages
+        bobsClient.on(
+            'userDeviceKeyMessage',
+            (streamId: string, userId: string, deviceKeys: DeviceKeys, fallbackKeys): void => {
+                log('userDeviceKeyMessage', streamId, userId, deviceKeys, fallbackKeys)
+                bobSelfToDevice.runAndDone(() => {
+                    expect([bobUserDeviceKeyStreamId, aliceUserDeviceKeyStreamId]).toContain(
+                        streamId,
+                    )
+                    expect([bobsUserId, alicesUserId]).toContain(userId)
+                    expect(deviceKeys?.deviceId).toBeDefined()
+                })
+            },
+        )
+        const aliceUserDeviceKeyStreamId = alicesClient.userDeviceKeyStreamId
+        const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
+        // give the state sync a chance to run for both deviceKeys
+        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers({
+            [alicesUserId]: {} as IDeviceKeyRequest,
+            [bobsUserId]: {} as IDeviceKeyRequest,
+        })
+        const aliceDevices = deviceKeys.device_keys[alicesUserId]
+        const aliceDeviceKeys = aliceDevices
+            .map((device) => Object.values(device.keys))
+            .flatMap((v) => v)
+
+        expect(Object.keys(deviceKeys.device_keys).length).toEqual(2)
+        expect(aliceDevices).toBeDefined()
+        expect(aliceDevices.length).toEqual(10)
+        // eleventhDeviceKey out of 20 should be downloaded as part of downloadKeysForUsers
+        expect(aliceDeviceKeys).toContain(eleventhDeviceKey)
+        // latest key should be downloaded
+        expect(aliceDeviceKeys).toContain(alicesClient.olmDevice.deviceCurve25519Key!)
+        // any key uploaded earlier than the lookback window (i.e. 10) should not be downloaded
+        expect(aliceDeviceKeys).not.toContain(tenthDeviceKey)
+        expect(deviceKeys.device_keys[bobsUserId]).toBeDefined()
+    })
 })
