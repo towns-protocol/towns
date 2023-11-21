@@ -31,6 +31,7 @@ RUN SKIP_GENKEY=true ./config_instance.sh docker-single \
     LOG_NOCOLOR true \
     LOG_LEVEL info \
     NODE_REGISTRY "''" \
+    REPL_FACTOR 1 \
     USE_BLOCKCHAIN_STREAM_REGISTRY false
 
 FROM alpine:latest
