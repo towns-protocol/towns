@@ -14,9 +14,17 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type Stream interface {
-	GetMiniblocks(ctx context.Context, fromInclusive int64, ToExclusive int64) ([]*Miniblock, bool, error)
+type AddableStream interface {
 	AddEvent(ctx context.Context, event *ParsedEvent) error
+}
+
+type MiniblockStream interface {
+	GetMiniblocks(ctx context.Context, fromInclusive int64, ToExclusive int64) ([]*Miniblock, bool, error)
+}
+
+type Stream interface {
+	AddableStream
+	MiniblockStream
 }
 
 type SyncResultReceiver interface {
@@ -26,9 +34,11 @@ type SyncResultReceiver interface {
 
 type SyncStream interface {
 	Stream
-	MakeMiniblock(ctx context.Context)
+
 	Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error
 	Unsub(receiver SyncResultReceiver)
+
+	MakeMiniblock(ctx context.Context) // TODO: doesn't seem pertinent to SyncStream
 }
 
 func SyncStreamsResponseFromStreamAndCookie(result *StreamAndCookie) *SyncStreamsResponse {

@@ -99,7 +99,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	}
 }
 
-func (s *Service) addChannelPayload(ctx context.Context, payload *StreamEvent_ChannelPayload, stream Stream, streamView StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addChannelPayload(ctx context.Context, payload *StreamEvent_ChannelPayload, stream AddableStream, streamView StreamView, parsedEvent *ParsedEvent) error {
 	switch content := payload.ChannelPayload.Content.(type) {
 	case *ChannelPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
@@ -121,7 +121,7 @@ func (s *Service) addChannelPayload(ctx context.Context, payload *StreamEvent_Ch
 	}
 }
 
-func (s *Service) addDmChannelPayload(ctx context.Context, payload *StreamEvent_DmChannelPayload, stream Stream, streamView StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addDmChannelPayload(ctx context.Context, payload *StreamEvent_DmChannelPayload, stream AddableStream, streamView StreamView, parsedEvent *ParsedEvent) error {
 	switch content := payload.DmChannelPayload.Content.(type) {
 	case *DmChannelPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
@@ -143,7 +143,7 @@ func (s *Service) addDmChannelPayload(ctx context.Context, payload *StreamEvent_
 	}
 }
 
-func (s *Service) addGdmChannelPayload(ctx context.Context, payload *StreamEvent_GdmChannelPayload, stream Stream, streamView StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addGdmChannelPayload(ctx context.Context, payload *StreamEvent_GdmChannelPayload, stream AddableStream, streamView StreamView, parsedEvent *ParsedEvent) error {
 
 	switch content := payload.GdmChannelPayload.Content.(type) {
 	case *GdmChannelPayload_Inception_:
@@ -162,7 +162,7 @@ func (s *Service) addGdmChannelPayload(ctx context.Context, payload *StreamEvent
 
 }
 
-func (s *Service) addSpacePayload(ctx context.Context, payload *StreamEvent_SpacePayload, stream Stream, streamView StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addSpacePayload(ctx context.Context, payload *StreamEvent_SpacePayload, stream AddableStream, streamView StreamView, parsedEvent *ParsedEvent) error {
 	switch content := payload.SpacePayload.Content.(type) {
 	case *SpacePayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
@@ -184,7 +184,7 @@ func (s *Service) addSpacePayload(ctx context.Context, payload *StreamEvent_Spac
 	}
 }
 
-func (s *Service) addUserPayload(ctx context.Context, payload *StreamEvent_UserPayload, stream Stream, parsedEvent *ParsedEvent) error {
+func (s *Service) addUserPayload(ctx context.Context, payload *StreamEvent_UserPayload, stream AddableStream, parsedEvent *ParsedEvent) error {
 	switch payload.UserPayload.Content.(type) {
 	case *UserPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
@@ -204,7 +204,7 @@ func (s *Service) addUserPayload(ctx context.Context, payload *StreamEvent_UserP
 	}
 }
 
-func (s *Service) addUsernameEvent(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent, username *SpacePayload_Username) error {
+func (s *Service) addUsernameEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, username *SpacePayload_Username) error {
 	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
@@ -223,7 +223,7 @@ func (s *Service) addUsernameEvent(ctx context.Context, stream Stream, view Stre
 	return stream.AddEvent(ctx, parsedEvent)
 }
 
-func (s *Service) addDisplayNameEvent(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent, username *SpacePayload_DisplayName) error {
+func (s *Service) addDisplayNameEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, username *SpacePayload_DisplayName) error {
 	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
@@ -242,7 +242,7 @@ func (s *Service) addDisplayNameEvent(ctx context.Context, stream Stream, view S
 	return stream.AddEvent(ctx, parsedEvent)
 }
 
-func (s *Service) addUserDeviceKeyPayload(ctx context.Context, payload *StreamEvent_UserDeviceKeyPayload, parsedEvent *ParsedEvent, stream Stream, streamView StreamView) error {
+func (s *Service) addUserDeviceKeyPayload(ctx context.Context, payload *StreamEvent_UserDeviceKeyPayload, parsedEvent *ParsedEvent, stream AddableStream, streamView StreamView) error {
 	// RDK registration/revoke has to be done directly by the user
 	switch payload := payload.UserDeviceKeyPayload.Content.(type) {
 	case *UserDeviceKeyPayload_Inception_:
@@ -256,7 +256,7 @@ func (s *Service) addUserDeviceKeyPayload(ctx context.Context, payload *StreamEv
 	}
 }
 
-func (*Service) addUserSettingsPayload(ctx context.Context, payload *StreamEvent_UserSettingsPayload, stream Stream, parsedEvent *ParsedEvent) error {
+func (*Service) addUserSettingsPayload(ctx context.Context, payload *StreamEvent_UserSettingsPayload, stream AddableStream, parsedEvent *ParsedEvent) error {
 	switch payload.UserSettingsPayload.Content.(type) {
 	case *UserSettingsPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
@@ -269,7 +269,7 @@ func (*Service) addUserSettingsPayload(ctx context.Context, payload *StreamEvent
 	}
 }
 
-func (s *Service) addMediaPayload(ctx context.Context, payload *StreamEvent_MediaPayload, stream Stream, streamView StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addMediaPayload(ctx context.Context, payload *StreamEvent_MediaPayload, stream AddableStream, streamView StreamView, parsedEvent *ParsedEvent) error {
 	switch content := payload.MediaPayload.Content.(type) {
 	case *MediaPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
@@ -282,7 +282,7 @@ func (s *Service) addMediaPayload(ctx context.Context, payload *StreamEvent_Medi
 	}
 }
 
-func (s *Service) addChannelMessage(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addChannelMessage(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	streamId := view.StreamId()
 	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
@@ -333,7 +333,7 @@ func (s *Service) addChannelMessage(ctx context.Context, stream Stream, view Str
 	return nil
 }
 
-func (s *Service) addChannelKeySolicitation(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addChannelKeySolicitation(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	streamId := view.StreamId()
 	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
@@ -378,7 +378,7 @@ func (s *Service) addChannelKeySolicitation(ctx context.Context, stream Stream, 
 	return nil
 }
 
-func (s *Service) addDMChannelKeySolicitation(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addDMChannelKeySolicitation(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	streamId := view.StreamId()
 	userId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
@@ -403,7 +403,7 @@ func (s *Service) addDMChannelKeySolicitation(ctx context.Context, stream Stream
 	return nil
 }
 
-func (s *Service) addGDMChannelKeySolicitation(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addGDMChannelKeySolicitation(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
@@ -427,7 +427,7 @@ func (s *Service) addGDMChannelKeySolicitation(ctx context.Context, stream Strea
 	return nil
 }
 
-func (s *Service) addChannelFulfillment(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addChannelFulfillment(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	streamId := view.StreamId()
 	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
@@ -472,7 +472,7 @@ func (s *Service) addChannelFulfillment(ctx context.Context, stream Stream, view
 	return nil
 }
 
-func (s *Service) addDMChannelFulfillment(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addDMChannelFulfillment(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 
 	streamId := view.StreamId()
 	userId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
@@ -498,7 +498,7 @@ func (s *Service) addDMChannelFulfillment(ctx context.Context, stream Stream, vi
 	return nil
 }
 
-func (s *Service) addGDMChannelFulfillment(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addGDMChannelFulfillment(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 
 	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
@@ -523,7 +523,7 @@ func (s *Service) addGDMChannelFulfillment(ctx context.Context, stream Stream, v
 	return nil
 }
 
-func (s *Service) addDMChannelMessage(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addDMChannelMessage(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	streamId := view.StreamId()
 	userId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
@@ -558,7 +558,7 @@ func (s *Service) addDMChannelMessage(ctx context.Context, stream Stream, view S
 	return nil
 }
 
-func (s *Service) addGDMChannelMessage(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addGDMChannelMessage(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	streamId := view.StreamId()
 	userId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
@@ -615,7 +615,7 @@ func (s *Service) checkCreatedByValidNode(ctx context.Context, parsedEvent *Pars
 	return s.nodeRegistry.CheckNodeIsValid(creatorAddressStr)
 }
 
-func (s *Service) updateChannel(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) updateChannel(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	if (parsedEvent.Event.GetSpacePayload() == nil) || (parsedEvent.Event.GetSpacePayload().GetChannel() == nil) {
 		return RiverError(Err_INVALID_ARGUMENT, "invalid channel update event")
 	}
@@ -631,7 +631,7 @@ func (s *Service) updateChannel(ctx context.Context, stream Stream, view StreamV
 	return stream.AddEvent(ctx, parsedEvent)
 }
 
-func (s *Service) addMembershipEvent(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
+func (s *Service) addMembershipEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
 	streamId := view.StreamId()
 	userId := membership.UserId
 	userStreamId, err := common.UserStreamIdFromId(userId)
@@ -717,7 +717,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream Stream, view St
 	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op)
 }
 
-func (s *Service) addDMMembershipEvent(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
+func (s *Service) addDMMembershipEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
 
 	streamId := view.StreamId()
 	inceptionPayload := view.InceptionPayload()
@@ -762,7 +762,7 @@ func (s *Service) addDMMembershipEvent(ctx context.Context, stream Stream, view 
 	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op)
 }
 
-func (s *Service) addGDMMembershipEvent(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
+func (s *Service) addGDMMembershipEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
 
 	streamId := view.StreamId()
 	creatorUserId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
@@ -823,7 +823,7 @@ func (s *Service) addGDMMembershipEvent(ctx context.Context, stream Stream, view
 	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op)
 }
 
-func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, userStream Stream, userStreamView StreamView, originStreamId string, originEvent *ParsedEvent, op MembershipOp) error {
+func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, userStream AddableStream, userStreamView StreamView, originStreamId string, originEvent *ParsedEvent, op MembershipOp) error {
 	inviterId, err := common.AddressHex(originEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
@@ -851,8 +851,8 @@ func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, use
 	return userStream.AddEvent(ctx, userStreamEvent)
 }
 
-func (s *Service) checkUserDeviceKeyEvent(ctx context.Context,
-	stream Stream,
+func (s *Service) checkUserDeviceKeyEvent(
+	ctx context.Context,
 	streamView StreamView,
 	parsedEvent *ParsedEvent) error {
 	// only creator is allowed to add to user device key stream
@@ -873,15 +873,15 @@ func (s *Service) checkUserDeviceKeyEvent(ctx context.Context,
 	return nil
 }
 
-func (s *Service) addUserDeviceKeyEvent(ctx context.Context, stream Stream, streamView StreamView, parsedEvent *ParsedEvent, payload *UserDeviceKeyPayload_UserDeviceKey) error {
-	err := s.checkUserDeviceKeyEvent(ctx, stream, streamView, parsedEvent)
+func (s *Service) addUserDeviceKeyEvent(ctx context.Context, stream AddableStream, streamView StreamView, parsedEvent *ParsedEvent, payload *UserDeviceKeyPayload_UserDeviceKey) error {
+	err := s.checkUserDeviceKeyEvent(ctx, streamView, parsedEvent)
 	if err != nil {
 		return err
 	}
 	return stream.AddEvent(ctx, parsedEvent)
 }
 
-func (s *Service) addMediaChunk(ctx context.Context, stream Stream, streamView StreamView, chunk *MediaPayload_Chunk, parsedEvent *ParsedEvent) error {
+func (s *Service) addMediaChunk(ctx context.Context, stream AddableStream, streamView StreamView, chunk *MediaPayload_Chunk, parsedEvent *ParsedEvent) error {
 	inceptionPayload := streamView.InceptionPayload()
 
 	lastEventCreatorAddress := streamView.LastEvent().Event.CreatorAddress
@@ -890,7 +890,6 @@ func (s *Service) addMediaChunk(ctx context.Context, stream Stream, streamView S
 	}
 
 	mediaInfo, err := MediaStreamInfoFromInceptionPayload(inceptionPayload, streamView.StreamId())
-
 	if err != nil {
 		return err
 	}
@@ -903,8 +902,7 @@ func (s *Service) addMediaChunk(ctx context.Context, stream Stream, streamView S
 		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("chunk size must be less than or equal to %d", s.streamConfig.Media.MaxChunkSize))
 	}
 
-	err = stream.AddEvent(ctx, parsedEvent)
-	return err
+	return stream.AddEvent(ctx, parsedEvent)
 }
 
 func (s *Service) checkJoinedOrInvited(ctx context.Context, streamView StreamView, userId string) (bool, error) {
