@@ -32,7 +32,7 @@ const sortObjectKey = (obj: Record<string, any>) => {
     return sorted
 }
 
-const interceptor: (transportId: string) => Interceptor = (transportId: string) => {
+const interceptor: (transportId: number) => Interceptor = (transportId: number) => {
     // Histogram data structure
     const callHistogram: Record<string, { interval: number; total: number; error?: number }> = {}
 
@@ -54,11 +54,27 @@ const interceptor: (transportId: string) => Interceptor = (transportId: string) 
     // Periodic logging
     setInterval(() => {
         if (Object.keys(callHistogram).length !== 0) {
+            let interval = 0
+            let total = 0
+            let error = 0
+            for (const key in callHistogram) {
+                const e = callHistogram[key]
+                interval += e.interval
+                total += e.total
+                error += e.error ?? 0
+            }
             logCallsHistogram(
                 'RPC stats for transportId=',
                 transportId,
+                'interval=',
+                interval,
+                'total=',
+                total,
+                'error=',
+                error,
                 'intervalMs=',
                 histogramIntervalMs,
+                '\n',
                 sortObjectKey(callHistogram),
             )
             for (const key in callHistogram) {
@@ -191,7 +207,7 @@ const interceptor: (transportId: string) => Interceptor = (transportId: string) 
 }
 
 export function makeStreamRpcClient(dest: Transport | string): PromiseClient<typeof StreamService> {
-    const transportId = `${nextRpcClientNum++}`
+    const transportId = nextRpcClientNum++
     logCallsHistogram('makeStreamRpcClient, transportId =', transportId)
     let transport: Transport
     if (typeof dest === 'string') {
