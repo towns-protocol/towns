@@ -56,12 +56,12 @@ if [ -z "$RIVER_NODE_NAME" ]; then
     exit 1
 fi
 
-CODE_DEPLOY_APP_NAME="${ENVIRONMENT}-river-${RIVER_NODE_NAME}-codedeploy-app"
-CODE_DEPLOY_GROUP_NAME="${ENVIRONMENT}-river-${RIVER_NODE_NAME}-codedeploy-deployment-group"
+CODE_DEPLOY_APP_NAME="${RIVER_NODE_NAME}-codedeploy-app"
+CODE_DEPLOY_GROUP_NAME="${RIVER_NODE_NAME}-codedeploy-deployment-group"
 
 CLUSTER_NAME="${ENVIRONMENT}-river-ecs-cluster"
 REGISTERED_TASK_DEFINITION_FILENAME="$( pwd )/registered-task-definition.json"
-SERVICE_NAME="${ENVIRONMENT}-river-${RIVER_NODE_NAME}-fargate-service"
+SERVICE_NAME="${RIVER_NODE_NAME}-fargate-service"
 
 # Get the ARN of the registered task definition
 TASK_DEFINITION_ARN="$( jq -r '.taskDefinition.taskDefinitionArn' ${REGISTERED_TASK_DEFINITION_FILENAME} )"

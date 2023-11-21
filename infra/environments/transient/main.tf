@@ -67,16 +67,16 @@ resource "cloudflare_record" "sample_app_dns" {
   ttl     = 60
 }
 
-# data "terraform_remote_state" "transient_global_remote_state" {
-#   backend = "s3"
+data "terraform_remote_state" "transient_global_remote_state" {
+  backend = "s3"
 
-#   config = {
-#     region  = "us-east-1"
-#     profile = "harmony-github-actions"
-#     bucket  = "here-not-there-terraform-state"
-#     key     = "env:/transient-global/default"
-#   }
-# }
+  config = {
+    region  = "us-east-1"
+    profile = "harmony-github-actions"
+    bucket  = "here-not-there-terraform-state"
+    key     = "env:/transient-global/default"
+  }
+}
 
 
 # module "river_node" {

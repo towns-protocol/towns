@@ -71,7 +71,7 @@ resource "aws_ecs_cluster" "river_ecs_cluster" {
   tags = module.global_constants.tags
 }
 
-module "river_node" {
+module "river_node_1" {
   source = "../../modules/river-node"
 
   depends_on = [

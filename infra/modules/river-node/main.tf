@@ -504,11 +504,11 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
 resource "aws_codedeploy_app" "river-node-code-deploy-app" {
   compute_platform = "ECS"
-  name             = "${module.global_constants.environment}-river-${var.node_name}-codedeploy-app"
+  name             = "${var.node_name}-codedeploy-app"
 }
 
 resource "aws_iam_role" "ecs_code_deploy_role" {
-  name                = "${module.global_constants.environment}-river-${var.node_name}-ecs-code-deploy-role"
+  name                = "${var.node_name}-ecs-code-deploy-role"
   managed_policy_arns = ["arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"]
 
 
@@ -530,7 +530,7 @@ resource "aws_iam_role" "ecs_code_deploy_role" {
 }
 
 resource "aws_ecs_service" "river-ecs-service" {
-  name                               = "${module.global_constants.environment}-river-${var.node_name}-fargate-service"
+  name                               = "${var.node_name}-fargate-service"
   cluster                            = var.ecs_cluster.id
   task_definition                    = aws_ecs_task_definition.river-fargate.arn
   desired_count                      = 1
@@ -549,7 +549,7 @@ resource "aws_ecs_service" "river-ecs-service" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.blue.arn
+    target_group_arn = aws_lb_target_group.green.arn
     container_name   = "river-node"
     container_port   = 5157
   }
@@ -568,7 +568,7 @@ resource "aws_ecs_service" "river-ecs-service" {
 
 resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   app_name               = aws_codedeploy_app.river-node-code-deploy-app.name
-  deployment_group_name  = "${module.global_constants.environment}-river-${var.node_name}-codedeploy-deployment-group"
+  deployment_group_name  = "${var.node_name}-codedeploy-deployment-group"
   service_role_arn       = aws_iam_role.ecs_code_deploy_role.arn
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
 
@@ -620,47 +620,47 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
 
 ### MONITORING
 
-resource "datadog_monitor" "river_node_cpu_monitor" {
-  count   = module.global_constants.environment == "test" ? 1 : 0
-  name    = "${var.node_name} - CPU Usage"
-  type    = "metric alert"
-  message = "River Node CPU Usage is high on ${var.node_name} ${module.global_constants.sre_slack_identifier}"
-  query   = "avg(last_5m):avg:aws.ecs.service.cpuutilization.maximum{instance:${var.node_name}} > 70"
-  monitor_thresholds {
-    critical          = 70
-    critical_recovery = 30
-  }
+# resource "datadog_monitor" "river_node_cpu_monitor" {
+#   count   = module.global_constants.environment == "test" ? 1 : 0
+#   name    = "${var.node_name} - CPU Usage"
+#   type    = "metric alert"
+#   message = "River Node CPU Usage is high on ${var.node_name} ${module.global_constants.sre_slack_identifier}"
+#   query   = "avg(last_5m):avg:aws.ecs.service.cpuutilization.maximum{instance:${var.node_name}} > 70"
+#   monitor_thresholds {
+#     critical          = 70
+#     critical_recovery = 30
+#   }
 
-  notify_no_data    = false
-  renotify_interval = 60
+#   notify_no_data    = false
+#   renotify_interval = 60
 
-  tags = [
-    "env:${module.global_constants.tags.Environment}",
-    "service:${local.service_name}",
-    "instance:${var.node_name}"
-  ]
-}
+#   tags = [
+#     "env:${module.global_constants.tags.Environment}",
+#     "service:${local.service_name}",
+#     "instance:${var.node_name}"
+#   ]
+# }
 
-resource "datadog_monitor" "river_node_memory_monitor" {
-  count   = module.global_constants.environment == "test" ? 1 : 0
-  name    = "${var.node_name} - Memory Usage"
-  type    = "metric alert"
-  message = "River Node Memory Usage is high on ${var.node_name} ${module.global_constants.sre_slack_identifier}"
-  query   = "avg(last_5m):avg:aws.ecs.service.memory_utilization.maximum{instance:${var.node_name}} > 70"
-  monitor_thresholds {
-    critical          = 70
-    critical_recovery = 30
-  }
+# resource "datadog_monitor" "river_node_memory_monitor" {
+#   count   = module.global_constants.environment == "test" ? 1 : 0
+#   name    = "${var.node_name} - Memory Usage"
+#   type    = "metric alert"
+#   message = "River Node Memory Usage is high on ${var.node_name} ${module.global_constants.sre_slack_identifier}"
+#   query   = "avg(last_5m):avg:aws.ecs.service.memory_utilization.maximum{instance:${var.node_name}} > 70"
+#   monitor_thresholds {
+#     critical          = 70
+#     critical_recovery = 30
+#   }
 
-  notify_no_data    = false
-  renotify_interval = 60
+#   notify_no_data    = false
+#   renotify_interval = 60
 
-  tags = [
-    "env:${module.global_constants.tags.Environment}",
-    "service:${local.service_name}",
-    "instance:${var.node_name}"
-  ]
-}
+#   tags = [
+#     "env:${module.global_constants.tags.Environment}",
+#     "service:${local.service_name}",
+#     "instance:${var.node_name}"
+#   ]
+# }
 
 data "cloudflare_zone" "zone" {
   name = module.global_constants.primary_hosted_zone_name
