@@ -12,7 +12,7 @@
     "lint": "yarn eslint --format unix ./src",
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",
-    "publish:test-beta": "NO_D1_WARNING=true && wrangler deploy --env CF_ENV",
+    "publish": "NO_D1_WARNING=true && wrangler deploy --env CF_ENV",
     "sqlcreate:local": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_test --local --file=./sql/create-schema.sql",
     "sqlcreate:prod": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription --env production --file=./sql/create-schema.sql",
     "sqlcreate:prod-beta": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_beta --env production-beta --file=./sql/create-schema.sql",
