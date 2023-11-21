@@ -1,7 +1,12 @@
 import { makeTestClient } from './util.test'
 import { Client } from './client'
+import { dlog } from './dlog'
+import { createEventDecryptedPromise } from './testutils'
+import { MembershipOp } from '@river/proto'
 
-describe('dmsTests', () => {
+const log = dlog('csb:test')
+
+describe('gdmsTests', () => {
     let bobsClient: Client
     let alicesClient: Client
     let charliesClient: Client
@@ -96,5 +101,89 @@ describe('dmsTests', () => {
     test('gdmsRequireThreeOrMoreUsers', async () => {
         const userIds = [alicesClient.userId]
         await expect(bobsClient.createGDMChannel(userIds)).toReject()
+    })
+
+    // Sender is expected to push keys to all members of the channel before sending the message,
+    test('usersReceiveKeys', async () => {
+        const userIds = [alicesClient.userId, charliesClient.userId, chucksClient.userId]
+        const { streamId } = await bobsClient.createGDMChannel(userIds)
+        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await expect(charliesClient.joinStream(streamId)).toResolve()
+        await expect(bobsClient.waitForStream(streamId)).toResolve()
+        await expect(chucksClient.waitForStream(streamId)).toResolve()
+
+        const promises = [alicesClient, charliesClient, chucksClient].map((client) =>
+            createEventDecryptedPromise(client, 'hello'),
+        )
+
+        await bobsClient.sendMessage(streamId, 'hello')
+        log('waiting for recipients to receive message')
+        await Promise.all(promises)
+    })
+
+    test('usersReceiveKeysAfterInvite', async () => {
+        const userIds = [alicesClient.userId, charliesClient.userId]
+        const { streamId } = await bobsClient.createGDMChannel(userIds)
+        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await expect(charliesClient.joinStream(streamId)).toResolve()
+        await expect(bobsClient.waitForStream(streamId)).toResolve()
+
+        const aliceCharliePromises = [alicesClient, charliesClient].map((client) =>
+            createEventDecryptedPromise(client, 'hello'),
+        )
+
+        await bobsClient.sendMessage(streamId, 'hello')
+        log('waiting for recipients to receive message')
+        await Promise.all(aliceCharliePromises)
+
+        // In this test, Bob invites Chuck _after_ sending the message
+        await expect(bobsClient.inviteUser(streamId, chucksClient.userId)).toResolve()
+        const stream = await chucksClient.waitForStream(streamId)
+        await stream.waitForMembership(MembershipOp.SO_INVITE)
+        await expect(chucksClient.joinStream(streamId)).toResolve()
+        const chuckPromise = createEventDecryptedPromise(chucksClient, 'hello')
+        await expect(await chuckPromise).toResolve()
+    })
+
+    // In this test, Bob goes offline after sending the message,
+    // before Chuck has joined the channel.
+    test('usersReceiveKeysBobGoesOffline', async () => {
+        const userIds = [alicesClient.userId, charliesClient.userId]
+        const { streamId } = await bobsClient.createGDMChannel(userIds)
+        await expect(alicesClient.joinStream(streamId)).toResolve()
+        await expect(charliesClient.joinStream(streamId)).toResolve()
+        await expect(bobsClient.waitForStream(streamId)).toResolve()
+
+        const aliceCharliePromises = [alicesClient, charliesClient].map((client) =>
+            createEventDecryptedPromise(client, 'hello'),
+        )
+
+        await bobsClient.sendMessage(streamId, 'hello')
+        log('waiting for recipients to receive message')
+        await Promise.all(aliceCharliePromises)
+        await bobsClient.stop()
+
+        await expect(alicesClient.inviteUser(streamId, chucksClient.userId)).toResolve()
+        const stream = await chucksClient.waitForStream(streamId)
+        await stream.waitForMembership(MembershipOp.SO_INVITE)
+        await expect(chucksClient.joinStream(streamId)).toResolve()
+        const chuckPromise = createEventDecryptedPromise(chucksClient, 'hello')
+        await expect(await chuckPromise).toResolve()
+    })
+
+    // Users should eventually receive keys — even if they have not JOINED the channel yet.
+    // for GDMS, an INVITE is enough
+    test('usersReceiveKeysWithoutJoin', async () => {
+        const userIds = [alicesClient.userId, charliesClient.userId, chucksClient.userId]
+        const { streamId } = await bobsClient.createGDMChannel(userIds)
+        await expect(bobsClient.waitForStream(streamId)).toResolve()
+
+        const promises = [alicesClient, charliesClient, chucksClient].map((client) =>
+            createEventDecryptedPromise(client, 'hello'),
+        )
+
+        await bobsClient.sendMessage(streamId, 'hello')
+        log('waiting for recipients to receive message')
+        await Promise.all(promises)
     })
 })

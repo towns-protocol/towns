@@ -1,5 +1,6 @@
 import { makeTestClient } from './util.test'
 import { Client } from './client'
+import { createEventDecryptedPromise } from './testutils'
 
 describe('dmsTests', () => {
     let bobsClient: Client
@@ -77,5 +78,23 @@ describe('dmsTests', () => {
 
         const { streamId: streamId2 } = await bobsClient.createDMChannel(alicesClient.userId)
         expect(streamId).toEqual(streamId2)
+    })
+
+    test('usersReceiveKeys', async () => {
+        const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
+        await expect(bobsClient.waitForStream(streamId)).toResolve()
+        await expect(bobsClient.sendMessage(streamId, 'hello this is bob')).toResolve()
+        await expect(alicesClient.sendMessage(streamId, 'hello bob, this is alice')).toResolve()
+        const aliceEventDecryptedPromise = createEventDecryptedPromise(
+            alicesClient,
+            'hello this is bob',
+        )
+        const bobEventDecryptedPromise = createEventDecryptedPromise(
+            bobsClient,
+            'hello bob, this is alice',
+        )
+        await expect(
+            Promise.all([aliceEventDecryptedPromise, bobEventDecryptedPromise]),
+        ).toResolve()
     })
 })

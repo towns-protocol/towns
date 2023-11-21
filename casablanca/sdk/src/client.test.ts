@@ -10,13 +10,8 @@ import {
 } from './id'
 import { IFallbackKey } from './types'
 import { makeDonePromise, makeTestClient, waitFor } from './util.test'
-import {
-    ChannelMessage,
-    DeviceKeys,
-    SnapshotCaseType,
-    SyncStreamsRequest,
-    SyncStreamsResponse,
-} from '@river/proto'
+import { DeviceKeys, SnapshotCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@river/proto'
+import { getChannelMessagePayload } from './testutils'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
 // This is needed to get the jest itnerface for using in spyOn
@@ -43,15 +38,6 @@ function makeMockSyncResponses(count: number) {
             },
     }
     return obj
-}
-
-function getChannelMessagePayload(event?: ChannelMessage) {
-    if (event?.payload?.case === 'post') {
-        if (event.payload.value.content.case === 'text') {
-            return event.payload.value.content.value?.body
-        }
-    }
-    return undefined
 }
 
 describe('clientTest', () => {
