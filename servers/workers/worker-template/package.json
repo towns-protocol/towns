@@ -9,7 +9,6 @@
 		"dev:local": "wrangler dev",
 		"dev:remote": "wrangler dev --remote",
 		"lint": "eslint .",
-		"publish:prod": "wrangler deploy --env production",
 		"test": "jest"
 	},
 	"devDependencies": {

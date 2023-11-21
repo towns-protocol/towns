@@ -12,9 +12,7 @@
         "lint": "yarn eslint --format unix ./src",
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
-        "publish:prod-beta": "wrangler deploy --env production-beta",
-        "publish:staging-beta": "wrangler deploy --env staging-beta",
-        "publish:test-beta": "wrangler deploy --env test-beta",
+        "publish": "wrangler deploy --env $CF_ENV",
         "test": "yarn test:unit",
         "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
     },

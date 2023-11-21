@@ -44,7 +44,7 @@ if [ -z "$ENVIRONMENT" ]; then
     exit 1
 fi
 
-COMMAND="yarn publish:${ENVIRONMENT}";
+export CF_ENV=$ENVIRONMENT
 
 AMP_WORKER_PATH="servers/workers/amp-worker"
 GATEWAY_WORKER_PATH="servers/workers/gateway-worker"
@@ -69,7 +69,7 @@ declare -a WORKER_PATHS=(
 for WORKER_PATH in "${WORKER_PATHS[@]}"; do
   pushd $WORKER_PATH
     echo "Deploying $WORKER_PATH"
-    $COMMAND
+    yarn publish
   popd
 done
 

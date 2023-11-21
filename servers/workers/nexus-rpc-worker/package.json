@@ -9,11 +9,7 @@
 		"dev:local": "wrangler dev",
 		"dev:remote": "wrangler dev --remote",
 		"lint": "eslint .",
-		"publish:prod": "wrangler deploy --env production",
-		"publish:prod-beta": "wrangler deploy --env production-beta",
-		"publish:test": "wrangler deploy --env test",
-		"publish:test-beta": "wrangler deploy --env test-beta",
-		"publish:staging-beta": "wrangler deploy --env staging-beta",
+		"publish": "wrangler deploy --env $CF_ENV",
 		"test": "jest"
 	},
 	"dependencies": {

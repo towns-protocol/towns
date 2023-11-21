@@ -11,11 +11,7 @@
 		"dev:remote": "wrangler dev --remote",
 		"lint": "yarn eslint --format unix ./src",
 		"lint:fix": "yarn lint --fix",
-		"publish:prod": "wrangler deploy --env production",
-		"publish:prod-beta": "wrangler deploy --env production-beta",
-		"publish:staging-beta": "wrangler deploy --env staging-beta",
-		"publish:test": "wrangler deploy --env test",
-		"publish:test-beta": "wrangler deploy --env test-beta",
+		"publish": "wrangler deploy --env $CF_ENV",
 		"test": "yarn test:unit",
 		"test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
 	},
