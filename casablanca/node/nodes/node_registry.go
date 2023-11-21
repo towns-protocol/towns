@@ -15,8 +15,9 @@ import (
 )
 
 type NodeRegistry interface {
-	// Returns nil, nil for the local node.
-	GetRemoteStubForAddress(address string) (StreamServiceClient, error)
+	// Returns error for local node.
+	GetStreamServiceClientForAddress(address string) (StreamServiceClient, error)
+	GetNodeToNodeClientForAddress(address string) (NodeToNodeClient, error)
 
 	CheckNodeIsValid(address string) error
 
@@ -38,8 +39,11 @@ type nodeRecord struct {
 	url     string
 	local   bool
 
-	initStub   sync.Once
-	remoteStub StreamServiceClient
+	streamServiceClientOnce sync.Once
+	streamServiceClient     StreamServiceClient
+
+	nodeToNodeClientOnce sync.Once
+	nodeToNodeClient     NodeToNodeClient
 }
 
 // Currently node registry is immutable, so there is no need for locking yet.
@@ -106,21 +110,38 @@ func MakeSingleNodeRegistry(ctx context.Context, localNodeAddress string) *nodeR
 	}
 }
 
-// Returns nil, nil if address is for the local node.
-func (n *nodeRegistryImpl) GetRemoteStubForAddress(address string) (StreamServiceClient, error) {
+// Returns error for local node.
+func (n *nodeRegistryImpl) GetStreamServiceClientForAddress(address string) (StreamServiceClient, error) {
 	node := n.nodes[address]
 	if node == nil {
 		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address)
 	}
 
 	if node.local {
-		return nil, nil
+		return nil, RiverError(Err_INTERNAL, "can't get remote stub for local node")
 	}
 
-	node.initStub.Do(func() {
-		node.remoteStub = NewStreamServiceClient(n.httpClient, node.url, connect.WithGRPC())
+	node.streamServiceClientOnce.Do(func() {
+		node.streamServiceClient = NewStreamServiceClient(n.httpClient, node.url, connect.WithGRPC())
 	})
-	return node.remoteStub, nil
+	return node.streamServiceClient, nil
+}
+
+// Returns error for local node.
+func (n *nodeRegistryImpl) GetNodeToNodeClientForAddress(address string) (NodeToNodeClient, error) {
+	node := n.nodes[address]
+	if node == nil {
+		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address)
+	}
+
+	if node.local {
+		return nil, RiverError(Err_INTERNAL, "can't get remote stub for local node")
+	}
+
+	node.nodeToNodeClientOnce.Do(func() {
+		node.nodeToNodeClient = NewNodeToNodeClient(n.httpClient, node.url, connect.WithGRPC())
+	})
+	return node.nodeToNodeClient, nil
 }
 
 func (n *nodeRegistryImpl) CheckNodeIsValid(address string) error {

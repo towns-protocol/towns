@@ -27,3 +27,4 @@ type Service struct {
 }
 
 var _ StreamServiceHandler = (*Service)(nil)
+var _ NodeToNodeHandler = (*Service)(nil)

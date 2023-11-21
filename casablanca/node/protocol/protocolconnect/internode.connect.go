@@ -33,6 +33,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// NodeToNodeAllocateStreamProcedure is the fully-qualified name of the NodeToNode's AllocateStream
+	// RPC.
+	NodeToNodeAllocateStreamProcedure = "/river.NodeToNode/AllocateStream"
 	// NodeToNodeNewEventReceivedProcedure is the fully-qualified name of the NodeToNode's
 	// NewEventReceived RPC.
 	NodeToNodeNewEventReceivedProcedure = "/river.NodeToNode/NewEventReceived"
@@ -43,6 +46,7 @@ const (
 
 // NodeToNodeClient is a client for the river.NodeToNode service.
 type NodeToNodeClient interface {
+	AllocateStream(context.Context, *connect_go.Request[protocol.AllocateStreamRequest]) (*connect_go.Response[protocol.AllocateStreamResponse], error)
 	NewEventReceived(context.Context, *connect_go.Request[protocol.NewEventReceivedRequest]) (*connect_go.Response[protocol.NewEventReceivedResponse], error)
 	NewEventInPool(context.Context, *connect_go.Request[protocol.NewEventInPoolRequest]) (*connect_go.Response[protocol.NewEventInPoolResponse], error)
 }
@@ -57,6 +61,11 @@ type NodeToNodeClient interface {
 func NewNodeToNodeClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) NodeToNodeClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &nodeToNodeClient{
+		allocateStream: connect_go.NewClient[protocol.AllocateStreamRequest, protocol.AllocateStreamResponse](
+			httpClient,
+			baseURL+NodeToNodeAllocateStreamProcedure,
+			opts...,
+		),
 		newEventReceived: connect_go.NewClient[protocol.NewEventReceivedRequest, protocol.NewEventReceivedResponse](
 			httpClient,
 			baseURL+NodeToNodeNewEventReceivedProcedure,
@@ -72,8 +81,14 @@ func NewNodeToNodeClient(httpClient connect_go.HTTPClient, baseURL string, opts 
 
 // nodeToNodeClient implements NodeToNodeClient.
 type nodeToNodeClient struct {
+	allocateStream   *connect_go.Client[protocol.AllocateStreamRequest, protocol.AllocateStreamResponse]
 	newEventReceived *connect_go.Client[protocol.NewEventReceivedRequest, protocol.NewEventReceivedResponse]
 	newEventInPool   *connect_go.Client[protocol.NewEventInPoolRequest, protocol.NewEventInPoolResponse]
+}
+
+// AllocateStream calls river.NodeToNode.AllocateStream.
+func (c *nodeToNodeClient) AllocateStream(ctx context.Context, req *connect_go.Request[protocol.AllocateStreamRequest]) (*connect_go.Response[protocol.AllocateStreamResponse], error) {
+	return c.allocateStream.CallUnary(ctx, req)
 }
 
 // NewEventReceived calls river.NodeToNode.NewEventReceived.
@@ -88,6 +103,7 @@ func (c *nodeToNodeClient) NewEventInPool(ctx context.Context, req *connect_go.R
 
 // NodeToNodeHandler is an implementation of the river.NodeToNode service.
 type NodeToNodeHandler interface {
+	AllocateStream(context.Context, *connect_go.Request[protocol.AllocateStreamRequest]) (*connect_go.Response[protocol.AllocateStreamResponse], error)
 	NewEventReceived(context.Context, *connect_go.Request[protocol.NewEventReceivedRequest]) (*connect_go.Response[protocol.NewEventReceivedResponse], error)
 	NewEventInPool(context.Context, *connect_go.Request[protocol.NewEventInPoolRequest]) (*connect_go.Response[protocol.NewEventInPoolResponse], error)
 }
@@ -98,6 +114,11 @@ type NodeToNodeHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewNodeToNodeHandler(svc NodeToNodeHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	nodeToNodeAllocateStreamHandler := connect_go.NewUnaryHandler(
+		NodeToNodeAllocateStreamProcedure,
+		svc.AllocateStream,
+		opts...,
+	)
 	nodeToNodeNewEventReceivedHandler := connect_go.NewUnaryHandler(
 		NodeToNodeNewEventReceivedProcedure,
 		svc.NewEventReceived,
@@ -110,6 +131,8 @@ func NewNodeToNodeHandler(svc NodeToNodeHandler, opts ...connect_go.HandlerOptio
 	)
 	return "/river.NodeToNode/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case NodeToNodeAllocateStreamProcedure:
+			nodeToNodeAllocateStreamHandler.ServeHTTP(w, r)
 		case NodeToNodeNewEventReceivedProcedure:
 			nodeToNodeNewEventReceivedHandler.ServeHTTP(w, r)
 		case NodeToNodeNewEventInPoolProcedure:
@@ -122,6 +145,10 @@ func NewNodeToNodeHandler(svc NodeToNodeHandler, opts ...connect_go.HandlerOptio
 
 // UnimplementedNodeToNodeHandler returns CodeUnimplemented from all methods.
 type UnimplementedNodeToNodeHandler struct{}
+
+func (UnimplementedNodeToNodeHandler) AllocateStream(context.Context, *connect_go.Request[protocol.AllocateStreamRequest]) (*connect_go.Response[protocol.AllocateStreamResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.NodeToNode.AllocateStream is not implemented"))
+}
 
 func (UnimplementedNodeToNodeHandler) NewEventReceived(context.Context, *connect_go.Request[protocol.NewEventReceivedRequest]) (*connect_go.Response[protocol.NewEventReceivedResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.NodeToNode.NewEventReceived is not implemented"))

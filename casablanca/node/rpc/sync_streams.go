@@ -171,13 +171,10 @@ func (s *SyncHandlerV2) handleSyncRequest(
 	for _, cookie := range remoteCookies {
 		nodeAddr := cookie.NodeAddress
 		if subscription.existsRemoteAddress(nodeAddr) {
-			stub, err := s.nodeRegistry.GetRemoteStubForAddress(nodeAddr)
+			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddr)
 			if err != nil {
 				// TODO: Handle the case when node is no longer available.
 				return err
-			}
-			if stub == nil {
-				panic("stub always should set for the remote node")
 			}
 
 			r := &syncNode{
@@ -312,13 +309,10 @@ func (s *SyncHandlerV2) AddStreamsToSync(
 	for _, cookie := range remoteCookies {
 		nodeAddr := cookie.NodeAddress
 		if subscription.existsRemoteAddress(nodeAddr) {
-			stub, err := s.nodeRegistry.GetRemoteStubForAddress(nodeAddr)
+			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddr)
 			if err != nil {
 				// TODO: Handle the case when node is no longer available.
 				return nil, err
-			}
-			if stub == nil {
-				panic("stub always should set for the remote node")
 			}
 
 			r := &syncNode{
@@ -463,13 +457,10 @@ func (s *SyncHandlerV1) syncStreamsImpl(
 		} else {
 			remote, ok := remotes[nodeAddr]
 			if !ok {
-				stub, err := s.nodeRegistry.GetRemoteStubForAddress(nodeAddr)
+				stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddr)
 				if err != nil {
 					// TODO: Handle the case when node is no longer available.
 					return err
-				}
-				if stub == nil {
-					panic("stub always should set for the remote node")
 				}
 
 				remote = &syncNode{

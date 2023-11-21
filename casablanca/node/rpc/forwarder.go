@@ -10,19 +10,40 @@ import (
 	connect_go "github.com/bufbuild/connect-go"
 )
 
+// Returns isLocal, remoteNodes
+func (s *Service) splitLocalAndRemote(ctx context.Context, nodes []string) (bool, []string) {
+	for i, n := range nodes {
+		if n == s.wallet.AddressStr {
+			return true, append(nodes[:i], nodes[i+1:]...)
+		}
+	}
+
+	return false, nodes
+}
+
+// Returns isLocal, remoteNodes, error
+func (s *Service) getNodesForStream(ctx context.Context, streamId string) (bool, []string, error) {
+	nodes, err := s.streamRegistry.GetNodeAddressesForStream(ctx, streamId)
+	if err != nil {
+		return false, nil, err
+	}
+
+	isLocal, remotes := s.splitLocalAndRemote(ctx, nodes)
+	return isLocal, remotes, nil
+}
+
 func (s *Service) getStubForStream(ctx context.Context, streamId string) (StreamServiceClient, error) {
-	nodeAddress, err := s.streamRegistry.GetNodeAddressesForStream(ctx, streamId)
+	isLocal, remotes, err := s.getNodesForStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: right now streams are not replicated, so there is only one node that is responsible for a stream.
-	// In the future, some smarter selection logic will be needed.
-	stub, err := s.nodeRegistry.GetRemoteStubForAddress(nodeAddress[0])
-	if stub != nil {
-		dlog.CtxLog(ctx).Debug("Forwarding request", "streamId", streamId, "nodeAddress", nodeAddress[0])
+	if isLocal {
+		return nil, nil
 	}
-	return stub, err
+
+	firstRemote := remotes[0]
+	dlog.CtxLog(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
+	return s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
 }
 
 func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
@@ -43,21 +64,21 @@ func (s *Service) createStreamImpl(ctx context.Context, req *connect_go.Request[
 		return nil, err
 	}
 
+	isLocal, remotes := s.splitLocalAndRemote(ctx, nodeAddress)
+
+	if isLocal {
+		return s.localCreateStream(ctx, req)
+	}
+
 	// TODO: right now streams are not replicated, so there is only one node that is responsible for a stream.
 	// In the future, some smarter selection logic will be needed.
-	stub, err := s.nodeRegistry.GetRemoteStubForAddress(nodeAddress[0])
+	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(remotes[0])
 	if err != nil {
 		return nil, err
 	}
-	if stub != nil {
-		dlog.CtxLog(ctx).Debug("Forwarding request", "streamId", req.Msg.StreamId, "nodeAddress", nodeAddress[0])
-	}
 
-	if stub != nil {
-		return stub.CreateStream(ctx, req)
-	} else {
-		return s.localCreateStream(ctx, req)
-	}
+	dlog.CtxLog(ctx).Debug("Forwarding request", "streamId", req.Msg.StreamId, "nodeAddress", nodeAddress[0])
+	return stub.CreateStream(ctx, req)
 }
 
 func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
@@ -150,14 +171,23 @@ func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[AddEvent
 }
 
 func (s *Service) addEventImpl(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
-	stub, err := s.getStubForStream(ctx, req.Msg.StreamId)
+	streamId := req.Msg.StreamId
+
+	isLocal, remotes, err := s.getNodesForStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
 
-	if stub != nil {
-		return stub.AddEvent(ctx, req)
-	} else {
+	if isLocal {
 		return s.localAddEvent(ctx, req)
 	}
+
+	firstRemote := remotes[0]
+	dlog.CtxLog(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
+	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
+	if err != nil {
+		return nil, err
+	}
+
+	return stub.AddEvent(ctx, req)
 }
