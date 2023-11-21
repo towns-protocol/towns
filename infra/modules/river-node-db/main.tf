@@ -68,7 +68,7 @@ resource "aws_iam_role_policy" "ecs-to-river-postgres-secret-policy" {
 
 data "aws_rds_engine_version" "postgresql" {
   engine  = "aurora-postgresql"
-  version = "14.6"
+  version = "15.4"
 }
 
 module "rds_aurora_postgresql" {
