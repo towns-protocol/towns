@@ -22,13 +22,14 @@ concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
 
+env:
+    ENVIRONMENT_NAME: ${{ github.event.inputs.environment || github.event.client_payload.environment }}
+    DOCKER_IMAGE_TAG: ${{ github.event.inputs.docker_image_tag || github.event.client_payload.docker_image_tag }}
+
 jobs:
     deploy:
         name: Deploy to AWS ECS
         runs-on: ubuntu-latest
-
-        environment:
-            name: ${{ github.event.inputs.environment || github.event.client_payload.environment }}
 
         permissions:
             contents: write
@@ -46,10 +47,15 @@ jobs:
                   aws-region: us-east-1
 
             - name: Create new task definition
-              run: ./scripts/create-river-task-definition.sh --environment ${{ vars.ENVIRONMENT }} --docker-image-tag ${{ github.event.inputs.docker_image_tag || github.event.client_payload.docker_image_tag }}
+              env:
+                  ENVIRONMENT_NAME: ${{ env.ENVIRONMENT_NAME }}
+                  DOCKER_IMAGE_TAG: ${{ env.DOCKER_IMAGE_TAG }}
+              run: ./scripts/create-river-task-definition.sh
 
             - name: Deploy service
-              run: ./scripts/deploy-river-task-definition.sh --environment ${{ vars.ENVIRONMENT }} --node-name ${{ vars.PRIMARY_NODE_NAME }}
+              env:
+                  ENVIRONMENT_NAME: ${{ env.ENVIRONMENT_NAME }}
+              run: ./scripts/deploy-river-task-definition.sh
 
             # If action failed, we send a slack notification
             - name: Slack notification

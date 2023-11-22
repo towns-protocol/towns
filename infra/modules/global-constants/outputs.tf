@@ -35,3 +35,18 @@ output "sre_slack_identifier" {
   value     = "${local.sre_slack_channel} ${local.sre_goalie_slack_handle}"
   sensitive = false
 }
+
+output "global_remote_state" {
+  value = data.terraform_remote_state.global_remote_state
+}
+
+data "terraform_remote_state" "global_remote_state" {
+  backend = "s3"
+
+  config = {
+    region  = "us-east-1"
+    profile = "harmony-github-actions"
+    bucket  = "here-not-there-terraform-state"
+    key     = "env:/global/default"
+  }
+}

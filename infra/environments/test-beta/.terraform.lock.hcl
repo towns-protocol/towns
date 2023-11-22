@@ -5,6 +5,7 @@ provider "registry.terraform.io/cloudflare/cloudflare" {
   version     = "4.19.0"
   constraints = "~> 4.0"
   hashes = [
+    "h1:MJX41bRjLICu+rLJeMJ0W5cOmulG7muby+sZslO7TME=",
     "h1:tgDfKsBL4SxCgq3sz28oLZ2q+Elzlt1Anpkm7kVC3q8=",
     "zh:1d5315dcbd8187a3a978dc1fb08e80b6cdd353de10afe531b3d1ecb834d0dbae",
     "zh:2a6e5b2e5072e442b35ce6142172e15afb835e16799d04a0054a79d3067f7560",
@@ -29,6 +30,7 @@ provider "registry.terraform.io/datadog/datadog" {
   constraints = "3.32.0"
   hashes = [
     "h1:1S6OYJZGdOPlG0/D6c/TmFhvqIvDuHffbTX98cMFuS4=",
+    "h1:ew2hT2jCIH4mcyIlT9PC4z9RlkE6CVKZju9U8tN6sGY=",
     "zh:2005cd30048d61dd62e6a4e2350ef7f5195afc53097687a97a29fbab123240e9",
     "zh:32205ab5f4a9a67898a57be6ac8a683fd64d9c309395d0d53ee1d58f4882a250",
     "zh:34b1f5a1b095c12c7db68ab88f8bf2baa757bfafaeacdf3476adcebc49d8c285",
@@ -48,8 +50,9 @@ provider "registry.terraform.io/datadog/datadog" {
 
 provider "registry.terraform.io/hashicorp/aws" {
   version     = "5.13.1"
-  constraints = ">= 3.27.0, >= 3.29.0, >= 4.30.0, >= 5.0.0, ~> 5.13.1"
+  constraints = ">= 3.27.0, >= 3.29.0, >= 4.67.0, >= 5.0.0, ~> 5.13.1"
   hashes = [
+    "h1:tFQJ6YLOiIlD0kO6QrBwmInHKwQ5Olbyb8kjAYFkrAQ=",
     "h1:uYJsEJhxGO/dFeK2MsC65wV/NKu7XxnTikh5rbrizBo=",
     "zh:0d107e410ecfbd5d2fb5ff9793f88e2ce03ae5b3bda4e3b772b5d146cdd859d8",
     "zh:1080cf6a402939ec4ad393380f2ab2dfdc0e175903e08ed796aa22eb95868847",
@@ -70,9 +73,9 @@ provider "registry.terraform.io/hashicorp/aws" {
 }
 
 provider "registry.terraform.io/hashicorp/random" {
-  version     = "3.5.1"
-  constraints = ">= 2.2.0"
+  version = "3.5.1"
   hashes = [
+    "h1:6FVyQ/aG6tawPam6B+oFjgdidKd83uG9n7dOSQ66HBA=",
     "h1:VSnd9ZIPyfKHOObuQCaKfnjIHRtR7qTw19Rz8tJxm+k=",
     "zh:04e3fbd610cb52c1017d282531364b9c53ef72b6bc533acb2a90671957324a64",
     "zh:119197103301ebaf7efb91df8f0b6e0dd31e6ff943d231af35ee1831c599188d",

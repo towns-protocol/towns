@@ -3,7 +3,16 @@
 # If any command fails, stop executing this script and return its exit code
 set -eo pipefail
 
+if [ -z "$ENVIRONMENT_NAME" ]; then
+    echo "ENVIRONMENT_NAME is not set"
+    exit 1
+fi
+
 LATEST_DEV_TOWN_WORKER_PATH="servers/workers/latest-dev-town-worker"
+NODE_NAME="river1"
+CASABLANCA_SERVER_URL="${NODE_NAME}-${ENVIRONMENT_NAME}.towns.com"
+CLUSTER_NAME="${ENVIRONMENT_NAME}-river-ecs-cluster"
+SERVICE_NAME="${NODE_NAME}-${ENVIRONMENT_NAME}-fargate-service"
 
 function reset_latest_dev_town_invite_url() {
     if [ "$CREATE_NEW_DEV_TOWN" == "true" ]; then
@@ -18,8 +27,7 @@ function reset_latest_dev_town_invite_url() {
             # will fail.
             set +e
 
-            echo "yes" | yarn delete-latest-devtown-url:${CLOUDFLARE_ENVIRONMENT}
-            # TODO: consolidate environment names: https://linear.app/hnt-labs/issue/HNT-3252/unify-environment-names-between-terraform-and-cloudflare
+            echo "yes" | yarn delete-latest-devtown-url:${ENVIRONMENT_NAME}
 
             # Setting it back to quit on error
             set -eo pipefail
@@ -49,71 +57,28 @@ function reset_db() {
 }
 
 function reset_ecs_containers() {
-    # if not restting the db, we don't need to reset
+    # if not resetting the db, we don't need to reset
     # the ECS containers
     if [ "$RESET_DB" != "true" ]; then
         echo "Skipping ECS container reset"
         return
     fi
 
-    if [ -z "$CLUSTER_NAME" ]; then
-        echo "CLUSTER_NAME is not set"
-        exit 1
-    fi
-
-    if [ -z "$ENVIRONMENT" ]; then
-        echo "ENVIRONMENT is not set"
-        exit 1
-    fi
-
-    if [ -z "$RIVER_NODE_NAME" ]; then
-        echo "RIVER_NODE_NAME is not set"
-        exit 1
-    fi
-
-    SERVICE_NAME="${ENVIRONMENT}-river-${RIVER_NODE_NAME}-fargate-service"
-
     echo "Service name: $SERVICE_NAME"
 
-    # We just signal the ECS tasks to stop, which will trigger the ECS service to restart them
-    echo "Resetting the ECS cluster $CLUSTER_NAME ..."
-    for task in $(aws ecs list-tasks --cluster $CLUSTER_NAME --query "taskArns[]" --output text); do
-        # stop all the tasks
+    # We just signal the ECS tasks associated with the service to stop, 
+    # which will trigger the ECS service to restart them
+    echo "Resetting the ECS service $SERVICE_NAME in cluster $CLUSTER_NAME ..."
+    for task in $(aws ecs list-tasks --cluster $CLUSTER_NAME --service-name $SERVICE_NAME --query "taskArns[]" --output text); do
         echo "Stopping task $task ..."
         aws ecs stop-task --cluster $CLUSTER_NAME --task $task
     done
 
-    # Wait for all the tasks to stop
-    echo "Waiting for the ECS tasks to stop ..."
-    for task in $(aws ecs list-tasks --cluster $CLUSTER_NAME --query "taskArns[]" --output text); do
-        # wait for all the tasks to stop
-        echo "Waiting for task $task to stop ..."
-        aws ecs wait tasks-stopped --cluster $CLUSTER_NAME --tasks $task
-    done
+    # Wait for all the tasks of the service to stop
+    echo "Waiting for the ECS tasks of the service to stop ..."
+    aws ecs wait services-stable --cluster $CLUSTER_NAME --services $SERVICE_NAME
 
-    # Wait for all the tasks to start again
-    echo "Waiting for the ECS tasks to start ..."
-
-    while :; do
-        # Fetch the desired task count of the service
-        DESIRED_COUNT=$(aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME --query "services[0].desiredCount" --output text)
-
-        echo "Desired count: $DESIRED_COUNT"
-
-        # Fetch the count of the running tasks of the service
-        RUNNING_TASKS_COUNT=$(aws ecs list-tasks --cluster $CLUSTER_NAME --service-name $SERVICE_NAME --query "taskArns" --output text | wc -w)
-
-        echo "Running tasks count: $RUNNING_TASKS_COUNT"
-
-        # Check if the desired count matches the running task count
-        if [ "$DESIRED_COUNT" -eq "$RUNNING_TASKS_COUNT" ]; then
-            echo "All tasks are running."
-            break
-        else
-            echo "Not all tasks are running. Desired: $DESIRED_COUNT, Running: $RUNNING_TASKS_COUNT"
-            sleep 10
-        fi
-    done
+    echo "All tasks of the service $SERVICE_NAME are stopped and restarted."
 }
 
 function wait_for_river_to_stop() {
@@ -212,7 +177,7 @@ function create_new_dev_town() {
             fi
 
             # Resetting the latest dev town url
-            yarn set-latest-devtown-url:${CLOUDFLARE_ENVIRONMENT}
+            yarn set-latest-devtown-url:${ENVIRONMENT_NAME}
             # TODO: consolidate environment names: https://linear.app/hnt-labs/issue/HNT-3252/unify-environment-names-between-terraform-and-cloudflare
         popd
     fi

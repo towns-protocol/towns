@@ -8,11 +8,11 @@ locals {
       Node_Name = "${var.river_node_name}",
       Service   = "river-postgres-db"
   })
-  restore_to_point_in_time = var.cow_cluster_source_identifier == null ? null : {
-    source_cluster_identifier  = var.cow_cluster_source_identifier
-    restore_type               = "copy-on-write"
-    use_latest_restorable_time = true
-  }
+  # restore_to_point_in_time = var.cow_cluster_source_identifier == null ? null : {
+  #   source_cluster_identifier  = var.cow_cluster_source_identifier
+  #   restore_type               = "copy-on-write"
+  #   use_latest_restorable_time = true
+  # }
 }
 
 resource "random_password" "rds_river_node_postgresql_password" {
@@ -92,8 +92,8 @@ module "rds_aurora_postgresql" {
   create_monitoring_role = false
 
   security_group_rules = {
-    ex1_ingress = {
-      cidr_blocks = var.allowed_cidr_blocks
+    river_node_sg_ingress = {
+      source_security_group_id = var.river_node_security_group_id
     }
   }
 
@@ -107,7 +107,7 @@ module "rds_aurora_postgresql" {
   # skip_final_snapshot      = true
   # restore_to_point_in_time = null
 
-  restore_to_point_in_time  = local.restore_to_point_in_time
+  # restore_to_point_in_time  = local.restore_to_point_in_time
   skip_final_snapshot       = false
   final_snapshot_identifier = "${var.river_node_name}-postgresql-final-snapshot"
 

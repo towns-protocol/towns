@@ -7,7 +7,8 @@ data "aws_vpc" "vpc" {
 }
 
 locals {
-  service_name = "river-node"
+  service_name        = "river-node"
+  global_remote_state = module.global_constants.global_remote_state.outputs
   tags = merge(
     module.global_constants.tags,
     {
@@ -66,16 +67,6 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   tags = module.global_constants.tags
 }
 
-module "river_node_db" {
-  source = "../../modules/river-node-db"
-
-  database_subnets              = var.database_subnets
-  allowed_cidr_blocks           = var.database_allowed_cidr_blocks
-  vpc_id                        = var.vpc_id
-  river_node_name               = var.node_name
-  ecs_task_execution_role_id    = aws_iam_role.ecs_task_execution_role.id
-  cow_cluster_source_identifier = var.database_cow_cluster_source_identifier
-}
 
 # Behind the load balancer
 module "river_internal_sg" {
@@ -102,6 +93,18 @@ module "river_internal_sg" {
 
   egress_cidr_blocks = ["0.0.0.0/0"] # public internet
   egress_rules       = ["all-all"]
+}
+
+module "river_node_db" {
+  source = "../../modules/river-node-db"
+
+  river_node_security_group_id  = module.river_internal_sg.security_group_id
+  database_subnets              = var.database_subnets
+  allowed_cidr_blocks           = var.database_allowed_cidr_blocks
+  vpc_id                        = var.vpc_id
+  river_node_name               = var.node_name
+  ecs_task_execution_role_id    = aws_iam_role.ecs_task_execution_role.id
+  cow_cluster_source_identifier = var.database_cow_cluster_source_identifier
 }
 
 resource "aws_cloudwatch_log_group" "river_log_group" {
@@ -170,7 +173,7 @@ resource "aws_iam_role_policy" "ecs-to-push_notification_auth_token" {
         ],
         "Effect": "Allow",
         "Resource": [
-          "${data.terraform_remote_state.global_remote_state.outputs.river_global_push_notification_auth_token.arn}"
+          "${local.global_remote_state.river_global_push_notification_auth_token.arn}"
         ]
       }
     ]
@@ -228,7 +231,7 @@ resource "aws_iam_role_policy" "dd_agent_api_key" {
         ],
         "Effect": "Allow",
         "Resource": [
-          "${data.terraform_remote_state.global_remote_state.outputs.river_global_dd_agent_api_key.arn}"
+          "${local.global_remote_state.river_global_dd_agent_api_key.arn}"
         ]
       }
     ]
@@ -254,7 +257,7 @@ resource "aws_iam_role_policy" "hnt_dockerhub_access_key" {
         ],
         "Effect": "Allow",
         "Resource": [
-          "${data.terraform_remote_state.global_remote_state.outputs.hnt_dockerhub_access_key.arn}"
+          "${local.global_remote_state.hnt_dockerhub_access_key.arn}"
         ]
       }
     ]
@@ -320,7 +323,7 @@ resource "aws_lb_listener_rule" "host_rule" {
 }
 
 resource "aws_ecs_task_definition" "river-fargate" {
-  family = "${var.node_name}-river-fargate"
+  family = "${var.node_name}-fargate"
 
   lifecycle {
     ignore_changes = [container_definitions]
@@ -351,7 +354,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
     }]
 
     repositoryCredentials = {
-      credentialsParameter = data.terraform_remote_state.global_remote_state.outputs.hnt_dockerhub_access_key.arn
+      credentialsParameter = local.global_remote_state.hnt_dockerhub_access_key.arn
     },
 
     secrets = [
@@ -369,7 +372,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name      = "PUSHNOTIFICATION__AUTHTOKEN",
-        valueFrom = data.terraform_remote_state.global_remote_state.outputs.river_global_push_notification_auth_token.arn
+        valueFrom = local.global_remote_state.river_global_push_notification_auth_token.arn
       },
     ]
 
@@ -396,7 +399,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "LOG__LEVEL",
-        value = "info"
+        value = "debug"
       },
       {
         name  = "LOG__NOCOLOR",
@@ -423,7 +426,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "true"
       },
       {
-        # TODO: temporarily disable APM to avoid mixing logs
         name  = "PERFORMANCETRACKING__TRACINGENABLED",
         value = "true"
       },
@@ -449,7 +451,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
       secrets = [{
         name      = "DD_API_KEY"
-        valueFrom = data.terraform_remote_state.global_remote_state.outputs.river_global_dd_agent_api_key.arn
+        valueFrom = local.global_remote_state.river_global_dd_agent_api_key.arn
       }]
 
       environment = [

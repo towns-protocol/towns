@@ -108,20 +108,18 @@ data "cloudflare_zone" "zone" {
   name = module.global_constants.primary_hosted_zone_name
 }
 
-# TODO: Uncomment this post-promotion
+resource "cloudflare_record" "app_dns" {
+  zone_id = data.cloudflare_zone.zone.id
+  name    = "app-${terraform.workspace}"
+  value   = "test-beta-ij4p.onrender.com"
+  type    = "CNAME"
+  ttl     = 60
+}
 
-# resource "cloudflare_record" "app_dns" {
-#   zone_id = data.cloudflare_zone.zone.id
-#   name    = "app-${terraform.workspace}"
-#   value   = "test-beta-ij4p.onrender.com"
-#   type    = "CNAME"
-#   ttl     = 60
-# }
-
-# resource "cloudflare_record" "sample_app_dns" {
-#   zone_id = data.cloudflare_zone.zone.id
-#   name    = "sample-app-${terraform.workspace}"
-#   value   = "sample-app-b0wc.onrender.com"
-#   type    = "CNAME"
-#   ttl     = 60
-# }
+resource "cloudflare_record" "sample_app_dns" {
+  zone_id = data.cloudflare_zone.zone.id
+  name    = "sample-app-${terraform.workspace}"
+  value   = "sample-app-b0wc.onrender.com"
+  type    = "CNAME"
+  ttl     = 60
+}

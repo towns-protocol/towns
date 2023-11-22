@@ -3,60 +3,25 @@
 set -x
 set -eo pipefail
 
-usage()
-{
-cat << EOF
-usage: $0 PARAM [-e|--environment] [-d|--docker-image-tag] [-h|--help] 
-
-OPTIONS:
-   PARAM        The param
-   -h|--help    Show this message
-   -e|--environment   The environment to deploy to
-   -d|--docker-image-tag   The docker image tag to deploy
-EOF
-}
-
-# Parse command line arguments
-ENVIRONMENT=""
-DOCKER_IMAGE_TAG=""
-
-while [ "$1" != "" ]; do
-    case $1 in
-        -e | --environment )  
-            shift
-            ENVIRONMENT=$1
-            ;;
-        -d | --docker-image-tag )  
-            shift
-            DOCKER_IMAGE_TAG=$1
-            ;;
-        -h | --help )
-            usage
-            exit
-            ;;
-        * )                     
-            usage
-            exit 1
-            ;;
-    esac
-    shift
-done
-
-echo "ENVIRONMENT: ${ENVIRONMENT}"
-echo "DOCKER_IMAGE_TAG: ${DOCKER_IMAGE_TAG}"
 
 # Validate the arguments
-if [ -z "$ENVIRONMENT" ]; then
-    echo "ERROR: The environment argument is required"
+if [ -z "$ENVIRONMENT_NAME" ]; then
+    echo "ERROR: The ENVIRONMENT_NAME env var is required"
     exit 1
 fi
+
 
 if [ -z "$DOCKER_IMAGE_TAG" ]; then
-    echo "ERROR: The docker image tag argument is required"
+    echo "ERROR: The docker image tag env var is required"
     exit 1
 fi
 
-TASK_DEFINITION_FAMILY="${ENVIRONMENT}-river-fargate"
+echo "ENVIRONMENT_NAME: ${ENVIRONMENT_NAME}"
+echo "DOCKER_IMAGE_TAG: ${DOCKER_IMAGE_TAG}"
+
+NODE_NAME="river1"
+
+TASK_DEFINITION_FAMILY="${NODE_NAME}-${ENVIRONMENT_NAME}-fargate"
 CURRENT_TASK_DEFINITION_FILENAME="$( pwd )/current-task-definition.json"
 NEW_TASK_DEFINITION_FILENAME="$( pwd )/new-task-definition.json"
 REGISTERED_TASK_DEFINITION_FILENAME="$( pwd )/registered-task-definition.json"

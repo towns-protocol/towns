@@ -42,3 +42,8 @@ variable "cow_cluster_source_identifier" {
   type        = string
   default     = null
 }
+
+variable "river_node_security_group_id" {
+  description = "The security group id of the river node"
+  type        = string
+}

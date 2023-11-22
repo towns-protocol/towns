@@ -1,6 +1,7 @@
 name: 'Reset_environment'
 env:
     FOUNDRY_VERSION: nightly-d369d2486f85576eec4ca41d277391dfdae21ba7
+    ENVIRONMENT_NAME: ${{ github.event_name == 'schedule' && 'test-beta' || github.event.inputs.environment }}
 
 on:
     schedule:
@@ -47,6 +48,12 @@ jobs:
         name: Reset
         runs-on: ubuntu-latest
 
+        # due to how github actions doesn't allow accessing the env vars set in the root,
+        # we can't just reuse the ${{ env.ENVIRONMENT_NAME }} variable here. So unfortunately
+        # we have to set it again here. After this step, we can access env specific secrets.
+        # Side note: these variables are DB_URL, ETHERS_NETWORK and WALLET_PRIVATE KEY.
+        # We're no longer resetting the db so this could technically go away. ETHERS_NETWORK
+        # and WALLET_PRIVATE_KEY could be pulled up to the root repo secrets.
         environment:
             name: ${{ github.event_name == 'schedule' && 'test-beta' || github.event.inputs.environment }}
 
@@ -108,13 +115,9 @@ jobs:
                   RESET_DB: ${{ github.event.inputs.reset_db }}
                   CREATE_NEW_DEV_TOWN: ${{ github.event_name == 'schedule' && 'true' || github.event.inputs.create_new_dev_town }}
                   ETHERS_NETWORK: ${{ secrets.ETHERS_NETWORK }}
-                  RIVER_NODE_NAME: ${{ vars.PRIMARY_NODE_NAME }}
-                  ENVIRONMENT: ${{ vars.ENVIRONMENT }}
+                  ENVIRONMENT_NAME: ${{ github.env.ENVIRONMENT_NAME }}
                   WALLET_PRIVATE_KEY: ${{ secrets.HARMONY_HOT_WALLET_PRIVATE_KEY }}
                   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
                   DB_URL: ${{ secrets.DB_URL }}
-                  CLUSTER_NAME: ${{ vars.CLUSTER_NAME }}
-                  CLOUDFLARE_ENVIRONMENT: ${{ vars.CLOUDFLARE_ENVIRONMENT }}
-                  CASABLANCA_SERVER_URL: ${{ vars.CASABLANCA_SERVER_URL }}
-                  CHAIN_ID: ${{ vars.CHAIN_ID }}
+                  CHAIN_ID: 84531
               run: ./scripts/reset-environment.sh
