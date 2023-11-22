@@ -46,7 +46,7 @@ export interface ParsedEvent {
     event: StreamEvent
     envelope: Envelope
     hashStr: string
-    prevEventsStrs: string[]
+    prevMiniblockHashStr?: string
     creatorUserId: string
 }
 
@@ -104,6 +104,7 @@ export function makeRemoteTimelineEvent(
 }
 
 export interface ParsedMiniblock {
+    hash: Uint8Array
     header: MiniblockHeader
     events: ParsedEvent[]
 }

@@ -95,8 +95,8 @@ func (s *PostgresEventStore) createStream(ctx context.Context, streamId string, 
 	return nil
 }
 
-func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, streamId string) (*GetStreamFromLastSnapshotResult, error) {
-	streamFromLastSnaphot, err := s.getStreamFromLastSnapshot(ctx, streamId)
+func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, streamId string, precedingBlockCount int) (*GetStreamFromLastSnapshotResult, error) {
+	streamFromLastSnaphot, err := s.getStreamFromLastSnapshot(ctx, streamId, precedingBlockCount)
 	if err != nil {
 		return nil, s.enrichErrorWithNodeInfo(AsRiverError(err).Func("pg.GetStreamFromLastSnapshot").Tag("streamId", streamId))
 	}
@@ -107,7 +107,7 @@ func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, stre
 // 1. There are no gaps in miniblocks sequence and it starts from latestsnaphot
 // 2. There are no gaps in slot_num for envelopes in minipools and it starts from 0
 // 3. For envelopes all generations are the same and equals to "max generation seq_num in miniblocks" + 1
-func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, streamId string) (*GetStreamFromLastSnapshotResult, error) {
+func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, streamId string, precedingBlockCount int) (*GetStreamFromLastSnapshotResult, error) {
 	defer infra.StoreExecutionTimeMetrics("GetStreamFromLastSnapshotMs", time.Now())
 
 	tx, err := startTx(ctx, s.pool)
@@ -138,7 +138,7 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, stre
 		}
 	}
 
-	result.StartMiniblockNumber = latest_snapshot_miniblock_index
+	result.StartMiniblockNumber = max(0, latest_snapshot_miniblock_index-int64(max(0, precedingBlockCount)))
 
 	miniblocksRow, err := tx.Query(ctx, "SELECT blockdata, seq_num FROM miniblocks WHERE seq_num >= $1 AND stream_id = $2 ORDER BY seq_num", latest_snapshot_miniblock_index, streamId)
 	if err != nil {

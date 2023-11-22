@@ -11,7 +11,7 @@ import (
 	. "casablanca/node/protocol"
 )
 
-func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) (*StreamEvent, error) {
+func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte) (*StreamEvent, error) {
 	salt := make([]byte, 32)
 	_, err := rand.Read(salt)
 	if err != nil {
@@ -20,17 +20,17 @@ func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Paylo
 	epocMillis := time.Now().UnixNano() / int64(time.Millisecond)
 
 	event := &StreamEvent{
-		CreatorAddress:  wallet.Address.Bytes(),
-		Salt:            salt,
-		PrevEvents:      prevHashes,
-		Payload:         payload,
-		CreatedAtEpocMs: epocMillis,
+		CreatorAddress:    wallet.Address.Bytes(),
+		Salt:              salt,
+		PrevMiniblockHash: prevMiniblockHash,
+		Payload:           payload,
+		CreatedAtEpocMs:   epocMillis,
 	}
 
 	return event, nil
 }
 
-func MakeDelegatedStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte, delegateSig []byte) (*StreamEvent, error) {
+func MakeDelegatedStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte, delegateSig []byte) (*StreamEvent, error) {
 	salt := make([]byte, 32)
 	_, err := rand.Read(salt)
 	if err != nil {
@@ -39,12 +39,12 @@ func MakeDelegatedStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEv
 	epocMillis := time.Now().UnixNano() / int64(time.Millisecond)
 
 	event := &StreamEvent{
-		CreatorAddress:  wallet.Address.Bytes(),
-		Salt:            salt,
-		PrevEvents:      prevHashes,
-		Payload:         payload,
-		DelegateSig:     delegateSig,
-		CreatedAtEpocMs: epocMillis,
+		CreatorAddress:    wallet.Address.Bytes(),
+		Salt:              salt,
+		PrevMiniblockHash: prevMiniblockHash,
+		Payload:           payload,
+		DelegateSig:       delegateSig,
+		CreatedAtEpocMs:   epocMillis,
 	}
 
 	return event, nil
@@ -69,16 +69,16 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 	}, nil
 }
 
-func MakeEnvelopeWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) (*Envelope, error) {
-	streamEvent, err := MakeStreamEvent(wallet, payload, prevHashes)
+func MakeEnvelopeWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte) (*Envelope, error) {
+	streamEvent, err := MakeStreamEvent(wallet, payload, prevMiniblockHash)
 	if err != nil {
 		return nil, err
 	}
 	return MakeEnvelopeWithEvent(wallet, streamEvent)
 }
 
-func MakeParsedEventWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) (*ParsedEvent, error) {
-	streamEvent, err := MakeStreamEvent(wallet, payload, prevHashes)
+func MakeParsedEventWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte) (*ParsedEvent, error) {
+	streamEvent, err := MakeStreamEvent(wallet, payload, prevMiniblockHash)
 	if err != nil {
 		return nil, err
 	}
@@ -88,17 +88,12 @@ func MakeParsedEventWithPayload(wallet *crypto.Wallet, payload protocol.IsStream
 		return nil, err
 	}
 
-	prevEventStrs := make([]string, len(streamEvent.PrevEvents))
-	for i, prevEvent := range streamEvent.PrevEvents {
-		prevEventStrs[i] = string(prevEvent)
-	}
-
 	return &ParsedEvent{
-		Event:         streamEvent,
-		Envelope:      envelope,
-		Hash:          envelope.Hash,
-		HashStr:       string(envelope.Hash),
-		PrevEventStrs: prevEventStrs,
+		Event:             streamEvent,
+		Envelope:          envelope,
+		Hash:              envelope.Hash,
+		HashStr:           string(envelope.Hash),
+		PrevMiniblockHash: string(prevMiniblockHash),
 	}, nil
 }
 

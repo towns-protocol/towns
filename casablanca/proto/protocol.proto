@@ -72,11 +72,10 @@ message StreamEvent {
     bytes delegate_sig = 2;
  
     /** Salt ensures that similar messages are not hashed to the same value. genId() from id.ts may be used. */
-    /** TODO: move salt to inception event */
     bytes salt = 3;
  
-    /** Hashes of the preceding leaf events in the stream. Empty array for the inception event. */
-    repeated bytes prev_events = 4;
+    /** Hash of a preceding miniblock. Null for the inception event. Must be a recent miniblock */
+    optional bytes prev_miniblock_hash = 4;
  
     /** CreatedAt is the time when the event was created.
     NOTE: this value is set by clients and is not reliable for anything other than displaying
@@ -747,7 +746,7 @@ enum Err {
     BAD_EVENT_ID = 21;
     BAD_EVENT_SIGNATURE = 22;
     BAD_HASH_FORMAT = 23;
-    BAD_PREV_EVENTS = 24;
+    BAD_PREV_MINIBLOCK_HASH = 24;
     NO_EVENT_SPECIFIED = 25;
     BAD_EVENT = 26;
     USER_CANT_POST = 27;

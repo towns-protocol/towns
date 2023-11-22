@@ -3,11 +3,13 @@ package events
 import (
 	"bytes"
 	. "casablanca/node/base"
+	"casablanca/node/config"
 	"casablanca/node/dlog"
 	. "casablanca/node/protocol"
 	"casablanca/node/storage"
 	. "casablanca/node/utils"
 	"context"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -20,7 +22,8 @@ type StreamView interface {
 	MinipoolEnvelopes() []*Envelope
 	MiniblocksFromLastSnapshot() []*Miniblock
 	SyncCookie(localNodeAddress string) *SyncCookie
-	LastBlockHashAndNum() ([]byte, int64)
+	LastBlock() *miniblockInfo
+	ValidateNextEvent(parsedEvent *ParsedEvent, config *config.RecencyConstraintsConfig) error
 }
 
 func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
@@ -29,15 +32,24 @@ func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*strea
 	}
 
 	miniblocks := make([]*miniblockInfo, len(streamData.Miniblocks))
+	lastMiniblockNumber := int64(-2)
+	snapshotIndex := -1
 	for i, binMiniblock := range streamData.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, streamData.StartMiniblockNumber+int64(i))
+		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock, lastMiniblockNumber+1)
 		if err != nil {
 			return nil, err
 		}
 		miniblocks[i] = miniblock
+		lastMiniblockNumber = miniblock.header().MiniblockNum
+		if snapshotIndex == -1 && miniblock.header().Snapshot != nil {
+			snapshotIndex = i
+		}
 	}
 
-	snapshotIndex := 0
+	if snapshotIndex == -1 {
+		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
+	}
+
 	snapshot := miniblocks[snapshotIndex].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
@@ -134,12 +146,6 @@ func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, e
 		return nil, RiverError(Err_BAD_EVENT, "streamViewImpl: block event not allowed")
 	}
 
-	// TODO: HNT-1843: Re-enable block-aware event duplicate checks
-	// There is a need to reject duplicate events, but there is no efficient way to do it without scanning
-	// all blocks (and minipool). Also, this doesn't work in presense of snapshots.
-	// The fix for this is to allow events to be added only if they reference "recent" block and
-	// to check only recent blocks for duplicates.
-
 	r = &streamViewImpl{
 		streamId:      r.streamId,
 		blocks:        r.blocks,
@@ -150,7 +156,7 @@ func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, e
 	return r, nil
 }
 
-func (r *streamViewImpl) lastBlock() *miniblockInfo {
+func (r *streamViewImpl) LastBlock() *miniblockInfo {
 	return r.blocks[len(r.blocks)-1]
 }
 
@@ -164,7 +170,7 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHea
 	}
 
 	var snapshot *Snapshot
-	last := r.lastBlock()
+	last := r.LastBlock()
 	eventNumOffset := last.header().EventNumOffset + int64(len(last.events)) + 1 // +1 for header
 	miniblockNumOfPrevSnapshot := last.header().PrevSnapshotMiniblockNum
 	if last.header().Snapshot != nil {
@@ -204,7 +210,7 @@ func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamVie
 		return nil, RiverError(Err_INTERNAL, "streamViewImpl: non block event not allowed", "stream", r.streamId, "event", miniblock.headerEvent.ShortDebugStr())
 	}
 
-	lastBlock := r.lastBlock()
+	lastBlock := r.LastBlock()
 	if header.MiniblockNum != lastBlock.header().MiniblockNum+1 {
 		return nil, RiverError(Err_BAD_BLOCK, "streamViewImpl: block number mismatch", "expected", lastBlock.header().MiniblockNum+1, "actual", header.MiniblockNum)
 	}
@@ -327,7 +333,7 @@ func (r *streamViewImpl) SyncCookie(localNodeAddress string) *SyncCookie {
 		StreamId:          r.streamId,
 		MinipoolGen:       r.minipool.generation,
 		MinipoolSlot:      int64(r.minipool.events.Len()),
-		PrevMiniblockHash: r.lastBlock().headerEvent.Hash,
+		PrevMiniblockHash: r.LastBlock().headerEvent.Hash,
 	}
 }
 
@@ -384,6 +390,51 @@ func (r *streamViewImpl) eventsSinceLastSnapshot() []*ParsedEvent {
 	return returnVal
 }
 
-func (r *streamViewImpl) LastBlockHashAndNum() ([]byte, int64) {
-	return r.lastBlock().headerEvent.Hash, r.lastBlock().header().MiniblockNum
+func (r *streamViewImpl) ValidateNextEvent(parsedEvent *ParsedEvent, config *config.RecencyConstraintsConfig) error {
+	// the preceding miniblock hash should reference a recent block
+	// the event should not already exist in any block after the preceding miniblock
+	// the event should not exist in the minipool
+	foundBlockAt := -1
+	// loop over blocks backwards to find block with preceding miniblock hash
+	for i := len(r.blocks) - 1; i >= 0; i-- {
+		block := r.blocks[i]
+		if bytes.Equal(block.headerEvent.Hash, parsedEvent.Event.PrevMiniblockHash) {
+			foundBlockAt = i
+			break
+		}
+	}
+	// ensure that we found it
+	if foundBlockAt == -1 {
+		return RiverError(Err_BAD_PREV_MINIBLOCK_HASH, "prevMiniblockHash not found in recent blocks", "event", parsedEvent.ShortDebugStr(), "expected", FormatHashShort(r.LastBlock().headerEvent.Hash))
+	}
+	// make sure we're recent
+	if !r.isRecentBlock(r.blocks[foundBlockAt], config) {
+		return RiverError(Err_BAD_PREV_MINIBLOCK_HASH, "prevMiniblockHash did not reference a recent block", "event", parsedEvent.ShortDebugStr(), "expected", FormatHashShort(r.LastBlock().headerEvent.Hash))
+	}
+	// loop forwards from foundBlockAt and check for duplicate event
+	for i := foundBlockAt + 1; i < len(r.blocks); i++ {
+		block := r.blocks[i]
+		for _, e := range block.events {
+			if bytes.Equal(e.Hash, parsedEvent.Hash) {
+				return RiverError(Err_DUPLICATE_EVENT, "event already exists in block", "event", parsedEvent.ShortDebugStr())
+			}
+		}
+	}
+	// check for duplicates in the minipool
+	for _, e := range r.minipool.events.Values {
+		if bytes.Equal(e.Hash, parsedEvent.Hash) {
+			return RiverError(Err_DUPLICATE_EVENT, "event already exists in minipool", "event", parsedEvent.ShortDebugStr(), "expected", FormatHashShort(r.LastBlock().headerEvent.Hash))
+		}
+	}
+	// success
+	return nil
+}
+
+func (r *streamViewImpl) isRecentBlock(block *miniblockInfo, config *config.RecencyConstraintsConfig) bool {
+	if block == r.LastBlock() {
+		return true
+	}
+	currentTime := time.Now()
+	maxAgeDuration := time.Duration(config.AgeSeconds) * time.Second
+	return currentTime.Sub(block.header().Timestamp.AsTime()) <= maxAgeDuration
 }

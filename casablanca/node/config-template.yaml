@@ -19,7 +19,6 @@ log:
 metrics:
     enabled: <METRICS_ENABLED>
     port: <METRICS_PORT>
-# profiling is turned of by default (see profilngEnabled: false below)
 performanceTracking:
     profilingEnabled: false
 nodeRegistry: <NODE_REGISTRY>
@@ -30,5 +29,11 @@ stream:
     media:
         maxChunkCount: 10 # max number of chunks in a media stream
         maxChunkSize: 500000 # max number of bytes in a single chunk
+    recencyConstraints:
+        # Each event must be unique and reference the hash of a previous miniblock
+        # If the hash is not of the most recent block, the referenced miniblock must be less than M seconds old.
+        ageSeconds: 11
+        # The node will load M generation miniblocks before the most recent snapshot
+        generations: 5
     replicationFactor: <REPL_FACTOR>
 useBlockchainStreamRegistry: <USE_BLOCKCHAIN_STREAM_REGISTRY>

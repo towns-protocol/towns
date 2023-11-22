@@ -1,6 +1,7 @@
 package events
 
 import (
+	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/protocol"
 	"casablanca/node/storage"
@@ -11,8 +12,19 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func makeEnvelopeWithPayload_T(t *testing.T, wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) *protocol.Envelope {
-	envelope, err := MakeEnvelopeWithPayload(wallet, payload, prevHashes)
+var streamConfig_t = config.StreamConfig{
+	Media: config.MediaStreamConfig{
+		MaxChunkCount: 100,
+		MaxChunkSize:  1000000,
+	},
+	RecencyConstraints: config.RecencyConstraintsConfig{
+		AgeSeconds:  5,
+		Generations: 5,
+	},
+}
+
+func makeEnvelopeWithPayload_T(t *testing.T, wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte) *protocol.Envelope {
+	envelope, err := MakeEnvelopeWithPayload(wallet, payload, prevMiniblockHash)
 	assert.NoError(t, err)
 	return envelope
 }
@@ -43,7 +55,7 @@ func makeTestSpaceStream(
 		t,
 		wallet,
 		Make_SpacePayload_Membership(protocol.MembershipOp_SO_JOIN, userId),
-		[][]byte{inception.Hash},
+		nil,
 	)
 
 	events := []*ParsedEvent{
@@ -90,7 +102,7 @@ func makeTestChannelStream(
 		t,
 		wallet,
 		Make_ChannelPayload_Membership(protocol.MembershipOp_SO_JOIN, userId),
-		[][]byte{inception.Hash},
+		nil,
 	)
 	events := []*ParsedEvent{
 		parsedEvent(t, inception),
@@ -106,7 +118,6 @@ func joinSpace_T(
 	wallet *crypto.Wallet,
 	ctx context.Context,
 	syncStream SyncStream,
-	spaceEvents []*ParsedEvent,
 	users []string,
 ) {
 	stream := syncStream.(*streamImpl)
@@ -122,7 +133,7 @@ func joinSpace_T(
 						protocol.MembershipOp_SO_JOIN,
 						user,
 					),
-					[][]byte{spaceEvents[1].Hash},
+					stream.view.LastBlock().Hash,
 				),
 			),
 		)
@@ -135,7 +146,6 @@ func joinChannel_T(
 	wallet *crypto.Wallet,
 	ctx context.Context,
 	syncStream SyncStream,
-	channelEvents []*ParsedEvent,
 	users []string,
 ) {
 	stream := syncStream.(*streamImpl)
@@ -151,7 +161,7 @@ func joinChannel_T(
 						protocol.MembershipOp_SO_JOIN,
 						user,
 					),
-					[][]byte{channelEvents[1].Hash},
+					stream.view.LastBlock().Hash,
 				),
 			),
 		)
@@ -164,7 +174,6 @@ func leaveChannel_T(
 	wallet *crypto.Wallet,
 	ctx context.Context,
 	syncStream SyncStream,
-	channelEvents []*ParsedEvent,
 	users []string,
 ) {
 	stream := syncStream.(*streamImpl)
@@ -180,7 +189,7 @@ func leaveChannel_T(
 						protocol.MembershipOp_SO_LEAVE,
 						user,
 					),
-					[][]byte{channelEvents[1].Hash},
+					stream.view.LastBlock().Hash,
 				),
 			),
 		)
@@ -199,18 +208,18 @@ func TestSpaceViewState(t *testing.T) {
 		Storage:    storage.NewMemStorage(),
 		Wallet:     nodeWallet,
 		DefaultCtx: ctx,
-	})
+	}, &streamConfig_t)
 	// create a stream
-	spaceEvents, mb := makeTestSpaceStream(t, user1Wallet, "user_1", "space_1", nil)
+	_, mb := makeTestSpaceStream(t, user1Wallet, "user_1", "space_1", nil)
 	s, _, err := streamCache.CreateStream(ctx, "streamid$1", mb)
 	stream := s.(*streamImpl)
 	assert.NoError(t, err)
 	assert.NotNil(t, stream)
 	// add two more membership events
 	// user_2
-	joinSpace_T(t, user2Wallet, ctx, stream, spaceEvents, []string{"user_2"})
+	joinSpace_T(t, user2Wallet, ctx, stream, []string{"user_2"})
 	// user_3
-	joinSpace_T(t, user3Wallet, ctx, stream, spaceEvents, []string{"user_3"})
+	joinSpace_T(t, user3Wallet, ctx, stream, []string{"user_3"})
 	// refresh view
 	view1, err := stream.GetView(ctx)
 	assert.NoError(t, err)
@@ -236,6 +245,7 @@ func TestSpaceViewState(t *testing.T) {
 	miniblock := miniblocks[0]
 	miniblockProtoBytes, err := proto.Marshal(miniblock)
 	assert.NoError(t, err)
+
 	// load up a brand new view from the latest snapshot result
 	var view3 StreamView
 	view3, err = MakeStreamView(&storage.GetStreamFromLastSnapshotResult{
@@ -272,17 +282,17 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 		Storage:    storage.NewMemStorage(),
 		Wallet:     nodeWallet,
 		DefaultCtx: ctx,
-	})
+	}, &streamConfig_t)
 	// create a space stream and add the members
-	spaceEvents, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
+	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
 	sStream, _, _ := streamCache.CreateStream(ctx, spaceStreamId, mb)
 	spaceStream := sStream.(*streamImpl)
-	joinSpace_T(t, userWallet, ctx, spaceStream, spaceEvents, []string{bob, carol})
+	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
-	channelEvents, mb := makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil, nil)
+	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil, nil)
 	cStream, _, _ := streamCache.CreateStream(ctx, channelStreamId, mb)
 	channelStream := cStream.(*streamImpl)
-	joinChannel_T(t, userWallet, ctx, channelStream, channelEvents, []string{alice, bob, carol})
+	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// make a miniblock
 	err := channelStream.makeMiniblock(ctx)
 	assert.NoError(t, err)
@@ -325,19 +335,19 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 		Storage:    storage.NewMemStorage(),
 		Wallet:     nodeWallet,
 		DefaultCtx: ctx,
-	})
+	}, &streamConfig_t)
 	// create a space stream and add the members
-	spaceEvents, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
+	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
 	sStream, _, _ := streamCache.CreateStream(ctx, spaceStreamId, mb)
 	spaceStream := sStream.(*streamImpl)
-	joinSpace_T(t, userWallet, ctx, spaceStream, spaceEvents, []string{bob, carol})
+	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
-	channelEvents, mb := makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil, nil)
+	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil, nil)
 	cStream, _, _ := streamCache.CreateStream(ctx, channelStreamId, mb)
 	channelStream := cStream.(*streamImpl)
-	joinChannel_T(t, userWallet, ctx, channelStream, channelEvents, []string{alice, bob, carol})
+	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// bob leaves the channel
-	leaveChannel_T(t, userWallet, ctx, channelStream, channelEvents, []string{bob})
+	leaveChannel_T(t, userWallet, ctx, channelStream, []string{bob})
 	// make a miniblock
 	err := channelStream.makeMiniblock(ctx)
 	assert.NoError(t, err)

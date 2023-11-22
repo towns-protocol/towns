@@ -52,7 +52,6 @@ describe('nodeRestart', () => {
                     make_UserPayload_Inception({
                         streamId: bobsUserStreamId,
                     }),
-                    [],
                 ),
             ],
             streamId: bobsUserStreamId,
@@ -66,7 +65,6 @@ describe('nodeRestart', () => {
             make_SpacePayload_Inception({
                 streamId: spacedStreamId,
             }),
-            [],
         )
         await bob.createStream({
             events: [
@@ -77,7 +75,6 @@ describe('nodeRestart', () => {
                         userId: bobsUserId,
                         op: MembershipOp.SO_JOIN,
                     }),
-                    [spaceInceptionEvent.hash],
                 ),
             ],
             streamId: spacedStreamId,
@@ -149,7 +146,6 @@ const createNewChannelAndPostHello = async (
                 minEventsPerSnapshot: 100,
             },
         }),
-        [],
     )
     const channelJoinEvent = await makeEvent(
         bobsContext,
@@ -157,9 +153,7 @@ const createNewChannelAndPostHello = async (
             userId: bobsUserId,
             op: MembershipOp.SO_JOIN,
         }),
-        [channelInceptionEvent.hash],
     )
-    let nextHash = channelJoinEvent.hash
     const channelEvents = [channelInceptionEvent, channelJoinEvent]
     log('creating channel with events=', channelEvents)
     await bob.createStream({
@@ -171,6 +165,8 @@ const createNewChannelAndPostHello = async (
     expect(channel).toBeDefined()
     expect(channel.stream).toBeDefined()
     expect(channel.stream?.nextSyncCookie?.streamId).toEqual(channelId)
+    let nextHash = channel.miniblocks.at(-1)?.header?.hash
+    expect(nextHash).toBeDefined()
 
     // Now there must be "channel created" event in the space stream.
     const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
@@ -189,15 +185,15 @@ const createNewChannelAndPostHello = async (
             make_ChannelPayload_Message({
                 text: `hello ${i}`,
             }),
-            [nextHash],
+            nextHash,
         )
-        nextHash = e.hash
         await expect(
             bob.addEvent({
                 streamId: channelId,
                 event: e,
             }),
         ).toResolve()
+        nextHash = (await bob.getLastMiniblockHash({ streamId: channelId })).hash
     }
 
     // Post just hello to the channel
@@ -206,9 +202,9 @@ const createNewChannelAndPostHello = async (
         make_ChannelPayload_Message({
             text: 'hello',
         }),
-        [nextHash],
+        nextHash,
     )
-    const lastHash = helloEvent.hash
+    const lastHash = (await bob.getLastMiniblockHash({ streamId: channelId })).hash
     await expect(
         bob.addEvent({
             streamId: channelId,

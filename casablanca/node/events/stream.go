@@ -1,6 +1,7 @@
 package events
 
 import (
+	"casablanca/node/config"
 	"casablanca/node/dlog"
 	"casablanca/node/storage"
 	"context"
@@ -51,6 +52,7 @@ type streamImpl struct {
 	params *StreamCacheParams
 
 	streamId string
+	config   *config.StreamConfig
 
 	// Mutex protects fields below
 	// View is copied on write.
@@ -75,7 +77,7 @@ func (s *streamImpl) loadInternal(ctx context.Context) {
 	if s.view != nil || s.loadError != nil {
 		return
 	}
-	streamData, err := s.params.Storage.GetStreamFromLastSnapshot(ctx, s.streamId)
+	streamData, err := s.params.Storage.GetStreamFromLastSnapshot(ctx, s.streamId, max(0, s.config.RecencyConstraints.Generations-1))
 	if err != nil {
 		s.loadError = err
 		return
@@ -127,8 +129,8 @@ func (s *streamImpl) stopTicker() {
 func (s *streamImpl) makeMiniblock(ctx context.Context) error {
 	miniblockHeader, envelopes := s.view.makeMiniblockHeader(ctx)
 
-	prevHashes := [][]byte{s.view.LastEvent().Hash}
-	miniblockHeaderEvent, err := MakeParsedEventWithPayload(s.params.Wallet, Make_MiniblockHeader(miniblockHeader), prevHashes)
+	prevMiniblockHash := s.view.LastBlock().Hash
+	miniblockHeaderEvent, err := MakeParsedEventWithPayload(s.params.Wallet, Make_MiniblockHeader(miniblockHeader), prevMiniblockHash)
 	if err != nil {
 		return err
 	}
@@ -191,7 +193,7 @@ func (s *streamImpl) MakeMiniblock(ctx context.Context) {
 	}
 }
 
-func createStream(ctx context.Context, params *StreamCacheParams, streamId string, genesisMiniblock *Miniblock) (*streamImpl, *streamViewImpl, error) {
+func createStream(ctx context.Context, params *StreamCacheParams, config *config.StreamConfig, streamId string, genesisMiniblock *Miniblock) (*streamImpl, *streamViewImpl, error) {
 	serializedMiniblock, err := proto.Marshal(genesisMiniblock)
 	if err != nil {
 		return nil, nil, err
@@ -214,6 +216,7 @@ func createStream(ctx context.Context, params *StreamCacheParams, streamId strin
 	stream := &streamImpl{
 		params:   params,
 		streamId: streamId,
+		config:   config,
 		view:     view,
 	}
 	return stream, view, nil

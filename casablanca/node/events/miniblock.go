@@ -56,7 +56,7 @@ func MakeGenesisMiniblock(wallet *crypto.Wallet, genesisMiniblockEvents []*Parse
 	headerEnvelope, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_MiniblockHeader(header),
-		[][]byte{genesisMiniblockEvents[len(genesisMiniblockEvents)-1].Hash},
+		nil,
 	)
 	if err != nil {
 		return nil, err
@@ -88,6 +88,8 @@ func NextMiniblockTimestamp(prevBlockTimestamp *timestamppb.Timestamp) *timestam
 }
 
 type miniblockInfo struct {
+	Hash        []byte
+	Num         int64
 	headerEvent *ParsedEvent
 	events      []*ParsedEvent
 	proto       *Miniblock
@@ -151,6 +153,8 @@ func NewMiniblockInfoFromProto(pb *Miniblock, expectedBlockNumber int64) (*minib
 	// TODO: add header validation, num of events, prev block hash, block num, etc
 
 	return &miniblockInfo{
+		Hash:        headerEvent.Hash,
+		Num:         blockHeader.MiniblockNum,
 		headerEvent: headerEvent,
 		events:      events,
 		proto:       pb,
@@ -168,6 +172,8 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 	}
 
 	return &miniblockInfo{
+		Hash:        headerEvent.Hash,
+		Num:         headerEvent.Event.GetMiniblockHeader().MiniblockNum,
 		headerEvent: headerEvent,
 		events:      events,
 		proto: &Miniblock{

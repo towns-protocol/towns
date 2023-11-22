@@ -268,6 +268,6 @@ export const converse = async (conversation: string[][], testName: string): Prom
         return 'success'
     } catch (e) {
         log(`converse ERROR`, e)
-        return 'error'
+        throw e
     }
 }

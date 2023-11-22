@@ -77,7 +77,7 @@ func TestPostgresEventStore(t *testing.T) {
 		t.Fatal("Expected to find one stream, found different number")
 	}
 
-	streamFromLastSnaphot, streamRetrievalError := pgEventStore.GetStreamFromLastSnapshot(ctx, streamId1)
+	streamFromLastSnaphot, streamRetrievalError := pgEventStore.GetStreamFromLastSnapshot(ctx, streamId1, 0)
 
 	if streamRetrievalError != nil {
 		t.Fatal(streamRetrievalError)
@@ -160,7 +160,7 @@ func TestPostgresEventStore(t *testing.T) {
 		t.Fatal(streamRetrievalError)
 	}
 
-	streamFromLastSnaphot, streamRetrievalError = pgEventStore.GetStreamFromLastSnapshot(ctx, streamId1)
+	streamFromLastSnaphot, streamRetrievalError = pgEventStore.GetStreamFromLastSnapshot(ctx, streamId1, 0)
 
 	if streamRetrievalError != nil {
 		t.Fatal(streamRetrievalError)
@@ -269,7 +269,7 @@ func TestAddEventConsistencyChecksEventsNumberMismatch(t *testing.T) {
 func TestNoStream(t *testing.T) {
 	teardownTest := setupTest()
 	defer teardownTest()
-	res, err := pgEventStore.GetStreamFromLastSnapshot(context.Background(), "noStream")
+	res, err := pgEventStore.GetStreamFromLastSnapshot(context.Background(), "noStream", 0)
 	assert.Nil(t, res)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "NOT_FOUND")
@@ -370,7 +370,7 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM miniblocks WHERE seq_num = 2")
 
-	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId)
+	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId, 0)
 
 	assert.NotNil(err)
 	assert.Contains(err.Error(), "Miniblocks consistency violation - wrong block sequence number")
@@ -402,7 +402,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 
 	_, _ = pgEventStore.pool.Exec(ctx, "UPDATE minipools SET generation = 777 WHERE slot_num = 1")
 
-	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId)
+	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId, 0)
 
 	assert.NotNil(err)
 	assert.Contains(err.Error(), "Minipool consistency violation - wrong event generation")
@@ -435,7 +435,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM minipools WHERE slot_num = 0")
 
-	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId)
+	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId, 0)
 
 	assert.NotNil(err)
 	assert.Contains(err.Error(), "Minipool consistency violation - slotNums are not sequential")
@@ -469,7 +469,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM minipools WHERE slot_num = 1")
 
-	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId)
+	_, err := pgEventStore.getStreamFromLastSnapshot(ctx, streamId, 0)
 
 	assert.NotNil(err)
 	assert.Contains(err.Error(), "Minipool consistency violation - slotNums are not sequential")

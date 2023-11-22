@@ -123,11 +123,11 @@ describe('sign', () => {
                     },
                 },
             }
-            const event = await makeEvent(context, payload, [hash])
+            const event = await makeEvent(context, payload, hash)
             expect(unpackEnvelope(event)).toBeDefined()
 
             // Event with same payload from different wallet doesn't match
-            const event2 = await makeEvent(context2, payload, [hash])
+            const event2 = await makeEvent(context2, payload, hash)
             expect(unpackEnvelope(event2)).toBeDefined()
             expect(event2).not.toEqual(event)
 
@@ -150,7 +150,7 @@ describe('sign', () => {
             }).toThrow()
 
             // Event with same payload from the same wallet doesn't match
-            const event3 = await makeEvent(context, payload, [hash])
+            const event3 = await makeEvent(context, payload, hash)
             expect(unpackEnvelope(event3)).toBeDefined()
             expect(event3.hash).not.toEqual(event.hash)
             expect(event3).not.toEqual(event)
@@ -167,7 +167,6 @@ describe('sign', () => {
                     make_UserPayload_Inception({
                         streamId: makeUserStreamId('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
                     }),
-                    [],
                 ),
             ).toBeDefined()
 
@@ -180,15 +179,10 @@ describe('sign', () => {
                     },
                 },
             }
-            expect(await makeEvent(context, payload, [hash])).toBeDefined()
-            expect(await makeEvent(context, payload, [hash, hash, hash])).toBeDefined()
+            expect(await makeEvent(context, payload, hash)).toBeDefined()
 
             for (const h of badHashes) {
-                await expect(makeEvent(context, payload, [h])).rejects.toThrow()
-            }
-
-            for (const h of badHashes) {
-                await expect(makeEvent(context, payload, [hash, h])).rejects.toThrow()
+                await expect(makeEvent(context, payload, h)).rejects.toThrow()
             }
         },
     )

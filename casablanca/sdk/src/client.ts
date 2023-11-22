@@ -337,7 +337,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 make_UserPayload_Inception({
                     streamId: userStreamId,
                 }),
-                [],
             ),
         ]
         return await this.rpcClient.createStream({
@@ -356,7 +355,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     streamId: userDeviceKeyStreamId,
                     userId: this.userId,
                 }),
-                [],
             ),
         ]
 
@@ -375,7 +373,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 make_UserSettingsPayload_Inception({
                     streamId: userSettingsStreamId,
                 }),
-                [],
             ),
         ]
 
@@ -398,7 +395,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             make_SpacePayload_Inception({
                 streamId,
             }),
-            [],
         )
         const joinEvent = await makeEvent(
             this.signerContext,
@@ -406,7 +402,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
             }),
-            [inceptionEvent.hash],
         )
 
         await this.rpcClient.createStream({
@@ -440,7 +435,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 },
                 settings: streamSettings,
             }),
-            [],
         )
         const joinEvent = await makeEvent(
             this.signerContext,
@@ -448,7 +442,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
             }),
-            [inceptionEvent.hash],
         )
 
         await this.rpcClient.createStream({
@@ -481,7 +474,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
             }),
-            [inceptionEvent.hash],
         )
 
         const inviteEvent = await makeEvent(
@@ -490,7 +482,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 userId: userId,
                 op: MembershipOp.SO_INVITE,
             }),
-            [joinEvent.hash],
         )
 
         try {
@@ -532,7 +523,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
             }),
-            [events[events.length - 1].hash],
         )
         events.push(joinEvent)
 
@@ -543,7 +533,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     userId: userId,
                     op: MembershipOp.SO_INVITE,
                 }),
-                [events[events.length - 1].hash],
             )
             events.push(inviteEvent)
         }
@@ -579,7 +568,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 chunkCount,
                 settings: streamSettings,
             }),
-            [],
         )
 
         const response = await this.rpcClient.createStream({
@@ -1455,9 +1443,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const stream = this.streams.get(streamId)
         assert(stream !== undefined, 'unknown stream ' + streamId)
 
-        const prevHash = stream.view.leafEventHashes.values().next()
-        assert(!prevHash.done, 'no prev hashes for stream ' + streamId)
-        const event = await makeEvent(this.signerContext, payload, [prevHash.value])
+        const prevHash = stream.view.prevMiniblockHash
+        assert(isDefined(prevHash), 'no prev miniblock hash for stream ' + streamId)
+        const event = await makeEvent(this.signerContext, payload, prevHash)
         if (options.localId) {
             stream.view.updateLocalEvent(options.localId, bin_toHexString(event.hash), this)
         }
@@ -1470,9 +1458,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     async makeEventWithHashAndAddToStream(
         streamId: string,
         payload: PlainMessage<StreamEvent>['payload'],
-        prevBlockHash: Uint8Array,
+        prevMiniblockHash: Uint8Array,
     ): Promise<void> {
-        const event = await makeEvent(this.signerContext, payload, [prevBlockHash])
+        const event = await makeEvent(this.signerContext, payload, prevMiniblockHash)
         await this.rpcClient.addEvent({
             streamId,
             event,

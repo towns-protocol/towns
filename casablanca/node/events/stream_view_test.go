@@ -1,6 +1,7 @@
 package events
 
 import (
+	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/protocol"
 	. "casablanca/node/protocol"
@@ -11,6 +12,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 )
+
+var recencyConstraintsConfig_t = config.RecencyConstraintsConfig{
+	Generations: 5,
+	AgeSeconds:  11,
+}
 
 func parsedEvent(t *testing.T, envelope *protocol.Envelope) *ParsedEvent {
 	parsed, err := ParseEvent(envelope)
@@ -32,7 +38,7 @@ func TestLoad(t *testing.T) {
 	join, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, "userid$1", "streamid$1", nil),
-		[][]byte{inception.Hash},
+		nil,
 	)
 	assert.NoError(t, err)
 	miniblockHeader, err := Make_GenesisMiniblockHeader([]*ParsedEvent{parsedEvent(t, inception), parsedEvent(t, join)})
@@ -40,7 +46,7 @@ func TestLoad(t *testing.T) {
 	miniblockHeaderProto, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_MiniblockHeader(miniblockHeader),
-		[][]byte{join.Hash},
+		nil,
 	)
 	assert.NoError(t, err)
 
@@ -54,6 +60,7 @@ func TestLoad(t *testing.T) {
 	view, err := MakeStreamView(&storage.GetStreamFromLastSnapshotResult{
 		Miniblocks: [][]byte{miniblockProtoBytes},
 	})
+
 	assert.NoError(t, err)
 
 	assert.Equal(t, "streamid$1", view.StreamId())
@@ -97,14 +104,19 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, minEventsPerSnapshot, num)
 	assert.Equal(t, false, view.shouldSnapshot())
 
+	blockHash := view.LastBlock().Hash
+
 	// add one more event (just join again)
 	join2, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, "userid$2", "streamid$1", nil),
-		[][]byte{join.Hash},
+		blockHash,
 	)
 	assert.NoError(t, err)
-	view, err = view.copyAndAddEvent(parsedEvent(t, join2))
+	nextEvent := parsedEvent(t, join2)
+	err = view.ValidateNextEvent(nextEvent, &recencyConstraintsConfig_t)
+	assert.NoError(t, err)
+	view, err = view.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
 
 	// with one new event, we shouldn't snapshot yet
@@ -113,14 +125,19 @@ func TestLoad(t *testing.T) {
 	// and miniblocks should have nil snapshots
 	miniblock, _ := view.makeMiniblockHeader(context.Background())
 	assert.Nil(t, miniblock.Snapshot)
+
 	// add another join event
 	join3, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, "userid$3", "streamid$1", nil),
-		[][]byte{join2.Hash},
+		view.LastBlock().Hash,
 	)
 	assert.NoError(t, err)
-	view, err = view.copyAndAddEvent(parsedEvent(t, join3))
+	nextEvent = parsedEvent(t, join3)
+	assert.NoError(t, err)
+	err = view.ValidateNextEvent(nextEvent, &recencyConstraintsConfig_t)
+	assert.NoError(t, err)
+	view, err = view.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
 	// with two new events, we should snapshot
 	assert.Equal(t, true, view.shouldSnapshot())

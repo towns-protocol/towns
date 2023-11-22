@@ -6,7 +6,6 @@ import {
     ZTEvent,
     useFullyReadMarker,
     useTimelineFilter,
-    useTimelineStore,
     useZionClient,
 } from 'use-zion-client'
 import React, { useCallback, useEffect, useRef, useState } from 'react'

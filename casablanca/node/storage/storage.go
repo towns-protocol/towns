@@ -19,7 +19,7 @@ type StreamStorage interface {
 	CreateStream(ctx context.Context, streamId string, genesisMiniblock []byte) error
 
 	// Returns all stream blocks starting from last snapshot miniblock index and all envelopes in the given minipool.
-	GetStreamFromLastSnapshot(ctx context.Context, streamId string) (*GetStreamFromLastSnapshotResult, error)
+	GetStreamFromLastSnapshot(ctx context.Context, streamId string, precedingBlockCount int) (*GetStreamFromLastSnapshotResult, error)
 
 	// Returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
 	GetMiniblocks(ctx context.Context, streamId string, fromInclusive int64, toExclusive int64) ([][]byte, error)

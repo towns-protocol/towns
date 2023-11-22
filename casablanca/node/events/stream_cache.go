@@ -2,6 +2,7 @@ package events
 
 import (
 	. "casablanca/node/base"
+	"casablanca/node/config"
 	"casablanca/node/crypto"
 	. "casablanca/node/protocol"
 	"casablanca/node/storage"
@@ -23,14 +24,16 @@ type StreamCache interface {
 
 type streamCacheImpl struct {
 	params *StreamCacheParams
+	config *config.StreamConfig
 	cache  sync.Map
 }
 
 var _ StreamCache = (*streamCacheImpl)(nil)
 
-func NewStreamCache(params *StreamCacheParams) *streamCacheImpl {
+func NewStreamCache(params *StreamCacheParams, config *config.StreamConfig) *streamCacheImpl {
 	return &streamCacheImpl{
 		params: params,
+		config: config,
 	}
 }
 
@@ -40,6 +43,7 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (SyncS
 		entry, _ = s.cache.LoadOrStore(streamId, &streamImpl{
 			params:   s.params,
 			streamId: streamId,
+			config:   s.config,
 		})
 	}
 	stream := entry.(*streamImpl)
@@ -62,7 +66,7 @@ func (s *streamCacheImpl) CreateStream(ctx context.Context, streamId string, gen
 		return nil, nil, RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", streamId)
 	}
 
-	stream, view, err := createStream(ctx, s.params, streamId, genesisMiniblock)
+	stream, view, err := createStream(ctx, s.params, s.config, streamId, genesisMiniblock)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -49,30 +49,15 @@ export interface SignerContext {
     deviceId?: string
 }
 
-export const normailizeHashes = (
-    hashes?: Uint8Array[] | Uint8Array | Map<string, Uint8Array>,
-): Uint8Array[] => {
-    if (hashes === undefined) {
-        return []
-    }
-    if (hashes instanceof Uint8Array) {
-        return [hashes]
-    }
-    if (Array.isArray(hashes)) {
-        return hashes
-    }
-    return Array.from(hashes.values())
-}
-
 export const _impl_makeEvent_impl_ = async (
     context: SignerContext,
     payload: PlainMessage<StreamEvent>['payload'],
-    prevEvents: Uint8Array[],
+    prevMiniblockHash?: Uint8Array,
 ): Promise<Envelope> => {
     const streamEvent = new StreamEvent({
         creatorAddress: context.creatorAddress,
         salt: genIdBlob(),
-        prevEvents,
+        prevMiniblockHash,
         payload,
         createdAtEpocMs: BigInt(Date.now()),
     })
@@ -90,9 +75,8 @@ export const _impl_makeEvent_impl_ = async (
 export const makeEvent = async (
     context: SignerContext,
     payload: PlainMessage<StreamEvent>['payload'],
-    prevEventHashes?: Uint8Array[] | Uint8Array | Map<string, Uint8Array>,
+    prevMiniblockHash?: Uint8Array,
 ): Promise<Envelope> => {
-    const hashes = normailizeHashes(prevEventHashes)
     // const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
     const pl = payload // todo check this
     check(isDefined(pl), "Payload can't be undefined", Err.BAD_PAYLOAD)
@@ -101,32 +85,26 @@ export const makeEvent = async (
     check(isDefined(pl.value.content), "Payload content can't be empty", Err.BAD_PAYLOAD)
     check(isDefined(pl.value.content.case), "Payload content case can't be empty", Err.BAD_PAYLOAD)
 
-    if (pl.value.content.case !== 'inception') {
-        check(hashes.length > 0, 'prevEventHashes should be present', Err.BAD_PREV_EVENTS)
-
-        for (const prevEvent of hashes) {
-            check(
-                prevEvent.length === 32,
-                'prevEventHashes should be 32 bytes',
-                Err.BAD_PREV_EVENTS,
-            )
-        }
+    if (prevMiniblockHash) {
+        check(
+            prevMiniblockHash.length === 32,
+            `prevMiniblockHash should be 32 bytes, got ${prevMiniblockHash.length}`,
+            Err.BAD_PREV_MINIBLOCK_HASH,
+        )
     }
 
-    return _impl_makeEvent_impl_(context, pl, hashes)
+    return _impl_makeEvent_impl_(context, pl, prevMiniblockHash)
 }
 
 export const makeEvents = async (
     context: SignerContext,
     payloads: PlainMessage<StreamEvent>['payload'][],
-    prevEventHashes?: Uint8Array[] | Uint8Array | Map<string, Uint8Array>,
+    prevMiniblockHash?: Uint8Array,
 ): Promise<Envelope[]> => {
     const events: Envelope[] = []
-    let hashes = normailizeHashes(prevEventHashes)
     for (const payload of payloads) {
-        const event = await makeEvent(context, payload, hashes)
+        const event = await makeEvent(context, payload, prevMiniblockHash)
         events.push(event)
-        hashes = [event.hash]
     }
     return events
 }
@@ -213,12 +191,13 @@ export const unpackMiniblock = (miniblock: Miniblock): ParsedMiniblock => {
     )
     const events = unpackEnvelopes(miniblock.events)
     return {
+        hash: miniblock.header.hash,
         header: header.event.payload.value,
         events: [...events, header],
     }
 }
 
-export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array): ParsedEvent => {
+export const unpackEnvelope = (envelope: Envelope): ParsedEvent => {
     check(hasElements(envelope.event), 'Event base is not set', Err.BAD_EVENT)
     check(hasElements(envelope.hash), 'Event hash is not set', Err.BAD_EVENT)
     check(hasElements(envelope.signature), 'Event signature is not set', Err.BAD_EVENT)
@@ -240,8 +219,7 @@ export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array):
         checkDelegateSig(recoveredPubKey, event.creatorAddress, event.delegateSig)
     }
 
-    if (event.payload?.value?.content.case !== 'inception') {
-        check(event.prevEvents.length > 0, "prevEvents can't be empty", Err.BAD_PREV_EVENTS)
+    if (event.prevMiniblockHash) {
         // TODO replace with a proper check
         // check(
         //     bin_equal(e.prevEvents[0], prevEventHash),
@@ -254,7 +232,9 @@ export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array):
         event,
         envelope,
         hashStr: bin_toHexString(envelope.hash),
-        prevEventsStrs: event.prevEvents.map((e) => bin_toHexString(e)),
+        prevMiniblockHashStr: event.prevMiniblockHash
+            ? bin_toHexString(event.prevMiniblockHash)
+            : undefined,
         creatorUserId: userIdFromAddress(event.creatorAddress),
     }
 }

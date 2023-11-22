@@ -1,4 +1,4 @@
-import { normailizeHashes, SignerContext, _impl_makeEvent_impl_ } from './sign'
+import { SignerContext, _impl_makeEvent_impl_ } from './sign'
 
 import { dlog } from './dlog'
 import { Envelope, StreamEvent } from '@river/proto'
@@ -28,10 +28,9 @@ export const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL)
 export const makeEvent_test = async (
     context: SignerContext,
     payload: PlainMessage<StreamEvent>['payload'],
-    prevEventHashes?: Uint8Array[] | Uint8Array | Map<string, Uint8Array>,
+    prevMiniblockHash?: Uint8Array,
 ): Promise<Envelope> => {
-    const hashes = normailizeHashes(prevEventHashes)
-    return _impl_makeEvent_impl_(context, payload, hashes)
+    return _impl_makeEvent_impl_(context, payload, prevMiniblockHash)
 }
 
 /**

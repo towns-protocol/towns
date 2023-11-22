@@ -9,7 +9,6 @@ import {
     TEST_URL,
     timeoutIterable,
 } from './util.test'
-import _ from 'lodash'
 import {
     genId,
     makeChannelStreamId,
@@ -106,7 +105,6 @@ describe('streamRpcClient', () => {
                     make_UserPayload_Inception({
                         streamId: streamId,
                     }),
-                    [],
                 ),
             ],
             streamId: streamId,
@@ -123,7 +121,6 @@ describe('streamRpcClient', () => {
             make_UserPayload_Inception({
                 streamId: bobsUserStreamId,
             }),
-            [],
         )
         await bob.createStream({
             events: [inceptionEvent],
@@ -139,7 +136,7 @@ describe('streamRpcClient', () => {
             make_ChannelPayload_Message({
                 text: 'hello',
             }),
-            [inceptionEvent.hash],
+            userStream.miniblocks.at(-1)?.header?.hash,
         )
         const promise = bob.addEvent({
             streamId: bobsUserStreamId,
@@ -179,7 +176,6 @@ describe('streamRpcClient', () => {
                     make_UserPayload_Inception({
                         streamId: bobsUserStreamId,
                     }),
-                    [],
                 ),
             ],
             streamId: bobsUserStreamId,
@@ -192,7 +188,6 @@ describe('streamRpcClient', () => {
                     make_UserPayload_Inception({
                         streamId: alicesUserStreamId,
                     }),
-                    [],
                 ),
             ],
             streamId: alicesUserStreamId,
@@ -205,7 +200,6 @@ describe('streamRpcClient', () => {
             make_SpacePayload_Inception({
                 streamId: spaceId,
             }),
-            [],
         )
         const joinEvent = await makeEvent(
             bobsContext,
@@ -213,7 +207,6 @@ describe('streamRpcClient', () => {
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
             }),
-            [inceptionEvent.hash],
         )
         await bob.createStream({
             events: [inceptionEvent, joinEvent],
@@ -231,7 +224,6 @@ describe('streamRpcClient', () => {
                 spaceId: spaceId,
                 channelProperties: { text: channelProperties },
             }),
-            [],
         )
         let event = await makeEvent(
             bobsContext,
@@ -239,9 +231,8 @@ describe('streamRpcClient', () => {
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
             }),
-            [channelInceptionEvent.hash],
         )
-        await bob.createStream({
+        const createChannelResponse = await bob.createStream({
             events: [channelInceptionEvent, event],
             streamId: channelId,
         })
@@ -252,7 +243,7 @@ describe('streamRpcClient', () => {
             make_ChannelPayload_Message({
                 text: 'hello',
             }),
-            [event.hash],
+            createChannelResponse.miniblocks.at(-1)?.header?.hash,
         )
         await bob.addEvent({
             streamId: channelId,
@@ -268,10 +259,14 @@ describe('streamRpcClient', () => {
                     make_ChannelPayload_Message({
                         text: 'hello',
                     }),
-                    [event.hash],
+                    createChannelResponse.miniblocks.at(-1)?.header?.hash,
                 ),
             }),
-        ).rejects.toThrow()
+        ).rejects.toThrow(
+            expect.objectContaining({
+                message: expect.stringContaining('7:PERMISSION_DENIED'),
+            }),
+        )
 
         // Alice syncs her user stream waiting for invite
         const userAlice = await alice.getStream({
@@ -296,7 +291,7 @@ describe('streamRpcClient', () => {
                 op: MembershipOp.SO_INVITE,
                 userId: alicesUserId,
             }),
-            [event.hash],
+            createChannelResponse.miniblocks.at(-1)?.header?.hash,
         )
         await bob.addEvent({
             streamId: channelId,
@@ -335,7 +330,7 @@ describe('streamRpcClient', () => {
                 op: MembershipOp.SO_JOIN,
                 userId: alicesUserId,
             }),
-            [event.hash],
+            createChannelResponse.miniblocks.at(-1)?.header?.hash,
         )
         await alice.addEvent({
             streamId: channelId,
@@ -385,7 +380,7 @@ describe('streamRpcClient', () => {
             make_ChannelPayload_Message({
                 text: 'Hello, Alice!',
             }),
-            [event.hash],
+            channel.miniblocks.at(-1)?.header?.hash,
         )
         await bob.addEvent({
             streamId: channelId,
@@ -419,7 +414,6 @@ describe('streamRpcClient', () => {
                         make_UserPayload_Inception({
                             streamId: bobsUserStreamId,
                         }),
-                        [],
                     ),
                 ],
                 streamId: bobsUserStreamId,
@@ -475,25 +469,6 @@ describe('streamRpcClient', () => {
                 channelProperties: { text: channelProperties2 },
             }),
         )
-        const channelEvent2_1 = await makeEvent_test(
-            bobsContext,
-            make_ChannelPayload_Membership({
-                userId: bobsUserId,
-                op: MembershipOp.SO_JOIN,
-            }),
-            [],
-        )
-        // TODO: fix up error codes: Err.BAD_PREV_EVENTS
-        await expect(
-            bob.createStream({
-                events: [channelEvent2_0, channelEvent2_1],
-                streamId: channelId2,
-            }),
-        ).rejects.toThrow(
-            expect.objectContaining({
-                message: expect.stringContaining('19:BAD_STREAM_CREATION_PARAMS'),
-            }),
-        )
 
         log('Bob fails to create channel with badly chained initial events, wrong hash value')
         const channelEvent2_2 = await makeEvent(
@@ -502,7 +477,7 @@ describe('streamRpcClient', () => {
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
             }),
-            [channelEvent2_1.hash],
+            Uint8Array.from(Array(32).fill('1')),
         )
         // TODO: fix up error codes Err.BAD_PREV_EVENTS
         await expect(
@@ -517,12 +492,13 @@ describe('streamRpcClient', () => {
         )
 
         log('Bob adds event with correct hash')
+        const lastMiniblockHash = (await bob.getLastMiniblockHash({ streamId: channelId })).hash
         const messageEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
                 text: 'Hello, World!',
             }),
-            _.last(channelEvents)!.hash,
+            lastMiniblockHash,
         )
         await expect(
             bob.addEvent({
@@ -540,35 +516,13 @@ describe('streamRpcClient', () => {
                     make_ChannelPayload_Message({
                         text: 'Hello, World!',
                     }),
-                    [],
                 ),
             }),
         ).rejects.toThrow(
             expect.objectContaining({
-                message: expect.stringContaining('event has no prev events'),
+                message: expect.stringContaining('3:INVALID_ARGUMENT'),
             }),
         )
-
-        // TODO: HNT-1843: Re-enable block-aware event duplicate checks
-        // log('Bob fails to add event with wrong prev event hash')
-        // await expect(
-        //     bob.addEvent({
-        //         streamId: channelId,
-        //         event: await makeEvent(
-        //             bobsContext,
-        //             make_ChannelPayload_Message({
-        //                 text: 'Hello, World!',
-        //             }),
-        //             [channelEvent2_0.hash],
-        //         ),
-        //     }),
-        // ).rejects.toThrow(
-        //     expect.objectContaining({
-        //         message: expect.stringContaining(
-        //             '[unknown] rpc error: code = InvalidArgument desc = AddEvent: prev event',
-        //         ),
-        //     }),
-        // )
     })
 
     test('cantAddWithBadSignature', async () => {
@@ -583,7 +537,6 @@ describe('streamRpcClient', () => {
                         make_UserPayload_Inception({
                             streamId: bobsUserStreamId,
                         }),
-                        [],
                     ),
                 ],
                 streamId: bobsUserStreamId,
@@ -629,12 +582,13 @@ describe('streamRpcClient', () => {
         log('Bob created channel')
 
         log('Bob adds event with correct signature')
+        const lastMiniblockHash = (await bob.getLastMiniblockHash({ streamId: channelId })).hash
         const messageEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
                 text: 'Hello, World!',
             }),
-            _.last(channelEvents)!.hash,
+            lastMiniblockHash,
         )
         channelEvents.push(messageEvent)
         await expect(
@@ -650,7 +604,7 @@ describe('streamRpcClient', () => {
             make_ChannelPayload_Message({
                 text: 'Nah, not really',
             }),
-            _.last(channelEvents)!.hash,
+            lastMiniblockHash,
         )
         badEvent.signature = messageEvent.signature
         await expect(
@@ -658,7 +612,7 @@ describe('streamRpcClient', () => {
                 streamId: channelId,
                 event: badEvent,
             }),
-        ).rejects.toThrow(/22:BAD_EVENT_SIGNATURE/)
+        ).rejects.toThrow('22:BAD_EVENT_SIGNATURE')
     })
 })
 

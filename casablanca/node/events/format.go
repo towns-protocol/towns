@@ -11,14 +11,13 @@ func FormatEventShort(e *ParsedEvent) string {
 	sb.Grow(100)
 	FormatHashFromBytesToSB(&sb, e.Hash)
 	sb.WriteByte(' ')
-	sb.WriteByte('[')
-	for i, pe := range e.Event.PrevEvents {
-		if i > 0 {
-			sb.WriteByte(' ')
-		}
-		FormatHashFromBytesToSB(&sb, pe)
-	}
-	sb.WriteByte(']')
+	FormatHashFromBytesToSB(&sb, e.Event.PrevMiniblockHash)
+	return sb.String()
+}
 
+func FormatHashShort(hash []byte) string {
+	var sb strings.Builder
+	sb.Grow(100)
+	FormatHashFromBytesToSB(&sb, hash)
 	return sb.String()
 }

@@ -33,7 +33,7 @@ func (m *memStorage) CreateStream(ctx context.Context, streamId string, genesisM
 	return nil
 }
 
-func (m *memStorage) GetStreamFromLastSnapshot(ctx context.Context, streamId string) (*GetStreamFromLastSnapshotResult, error) {
+func (m *memStorage) GetStreamFromLastSnapshot(ctx context.Context, streamId string, precedingBlockCount int) (*GetStreamFromLastSnapshotResult, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -41,9 +41,10 @@ func (m *memStorage) GetStreamFromLastSnapshot(ctx context.Context, streamId str
 	if !ok {
 		return nil, RiverError(Err_NOT_FOUND, "Stream not found")
 	}
+	startIndex := max(0, stream.lastSnapshotIndex-max(0, precedingBlockCount))
 	return &GetStreamFromLastSnapshotResult{
-		StartMiniblockNumber: int64(stream.lastSnapshotIndex), // mem_storage, has all blocks in memory
-		Miniblocks:           stream.miniblocks[stream.lastSnapshotIndex:],
+		StartMiniblockNumber: int64(startIndex), // mem_storage, has all blocks in memory
+		Miniblocks:           stream.miniblocks[startIndex:],
 		MinipoolEnvelopes:    stream.minipool,
 	}, nil
 }

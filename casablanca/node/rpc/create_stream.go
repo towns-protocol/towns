@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	"bytes"
 	"casablanca/node/auth"
 	"casablanca/node/common"
 	"casablanca/node/dlog"
@@ -48,6 +47,12 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	log.Debug("localCreateStream", "parsedEvents", parsedEvents)
 
+	for _, event := range parsedEvents {
+		if event.Event.PrevMiniblockHash != nil {
+			return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "PrevMiniblockHash should be nil")
+		}
+	}
+
 	inceptionEvent := parsedEvents[0]
 	inceptionPayload := inceptionEvent.Event.GetInceptionPayload()
 
@@ -57,10 +62,6 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	if inceptionPayload.GetStreamId() != req.StreamId {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "stream id in request does not match stream id in inception event")
-	}
-
-	if err := validateHashes(parsedEvents); err != nil {
-		return nil, err
 	}
 
 	var streamView StreamView
@@ -180,7 +181,7 @@ func (s *Service) createStream_Channel(
 	}
 
 	// side effects
-	prevHashes := [][]byte{spaceView.LastEvent().Hash}
+	prevHash := spaceView.LastBlock().Hash
 	spaceStreamEvent, err := MakeParsedEventWithPayload(
 		s.wallet,
 		Make_SpacePayload_Channel(
@@ -193,7 +194,7 @@ func (s *Service) createStream_Channel(
 				Signature: inceptionEvent.Envelope.Signature,
 			},
 		),
-		prevHashes,
+		prevHash,
 	)
 	if err != nil {
 		return nil, err
@@ -631,18 +632,6 @@ func (s *Service) authAddRemoveChannelsInSpace(
 	}
 	if !allowed {
 		return status.Errorf(codes.PermissionDenied, "user %s is not allowed to create channels in space %s", userId, spaceId)
-	}
-	return nil
-}
-
-func validateHashes(events []*ParsedEvent) error {
-	for i, event := range events {
-		if i == 0 {
-			continue
-		}
-		if len(event.Event.PrevEvents) != 1 || !bytes.Equal(event.Event.PrevEvents[0], events[i-1].Hash) {
-			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "bad hash on event", "event_index", i)
-		}
 	}
 	return nil
 }

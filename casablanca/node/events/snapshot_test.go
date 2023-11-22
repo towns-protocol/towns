@@ -39,7 +39,7 @@ func make_Space_Inception(wallet *crypto.Wallet, streamId string, t *testing.T) 
 	return parsed
 }
 
-func make_User_Membership(wallet *crypto.Wallet, membershipOp MembershipOp, streamId string, prevHash []byte, t *testing.T) *ParsedEvent {
+func make_User_Membership(wallet *crypto.Wallet, membershipOp MembershipOp, streamId string, prevMiniblockHash []byte, t *testing.T) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_UserPayload_Membership(
@@ -48,7 +48,7 @@ func make_User_Membership(wallet *crypto.Wallet, membershipOp MembershipOp, stre
 			streamId,
 			nil, // original event ref
 		),
-		[][]byte{prevHash},
+		prevMiniblockHash,
 	)
 	assert.NoError(t, err)
 	parsed, err := ParseEvent(envelope)
@@ -56,14 +56,14 @@ func make_User_Membership(wallet *crypto.Wallet, membershipOp MembershipOp, stre
 	return parsed
 }
 
-func make_Space_Membership(wallet *crypto.Wallet, membershipOp MembershipOp, userId string, prevHash []byte, t *testing.T) *ParsedEvent {
+func make_Space_Membership(wallet *crypto.Wallet, membershipOp MembershipOp, userId string, prevMiniblockHash []byte, t *testing.T) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_SpacePayload_Membership(
 			membershipOp,
 			userId,
 		),
-		[][]byte{prevHash},
+		prevMiniblockHash,
 	)
 	assert.NoError(t, err)
 	parsed, err := ParseEvent(envelope)
@@ -77,7 +77,7 @@ func make_Space_Username(wallet *crypto.Wallet, username string, streamId string
 		Make_SpacePayload_Username(
 			&protocol.EncryptedData{Text: username},
 		),
-		[][]byte{prevHash},
+		prevHash,
 	)
 	assert.NoError(t, err)
 	parsed, err := ParseEvent(envelope)
@@ -91,14 +91,13 @@ func make_Space_DisplayName(wallet *crypto.Wallet, displayName string, streamId 
 		Make_SpacePayload_DisplayName(
 			&protocol.EncryptedData{Text: displayName},
 		),
-		[][]byte{prevHash},
+		prevHash,
 	)
 	assert.NoError(t, err)
 	parsed, err := ParseEvent(envelope)
 	assert.NoError(t, err)
 	return parsed
 }
-
 
 func TestMakeSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
@@ -119,7 +118,7 @@ func TestUpdateSnapshot(t *testing.T) {
 	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
 
-	membership := make_User_Membership(wallet, MembershipOp_SO_JOIN, streamId, inception.Hash, t)
+	membership := make_User_Membership(wallet, MembershipOp_SO_JOIN, streamId, nil, t)
 	err = Update_Snapshot(snapshot, membership, 0, 1)
 	assert.NoError(t, err)
 	assert.Equal(
@@ -138,7 +137,7 @@ func TestCloneAndUpdateUserSnapshot(t *testing.T) {
 
 	snapshot := proto.Clone(snapshot1).(*Snapshot)
 
-	membership := make_User_Membership(wallet, MembershipOp_SO_JOIN, streamId, inception.Hash, t)
+	membership := make_User_Membership(wallet, MembershipOp_SO_JOIN, streamId, nil, t)
 	err = Update_Snapshot(snapshot, membership, 0, 1)
 	assert.NoError(t, err)
 	assert.Equal(
@@ -159,9 +158,9 @@ func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 
 	snapshot := proto.Clone(snapshot1).(*Snapshot)
 
-	membership := make_Space_Membership(wallet, MembershipOp_SO_JOIN, userId, inception.Hash, t)
-	username := make_Space_Username(wallet, "bob", streamId, inception.Hash, t)
-	displayName := make_Space_DisplayName(wallet, "bobIsTheGreatest", streamId, inception.Hash, t)
+	membership := make_Space_Membership(wallet, MembershipOp_SO_JOIN, userId, nil, t)
+	username := make_Space_Username(wallet, "bob", streamId, nil, t)
+	displayName := make_Space_DisplayName(wallet, "bobIsTheGreatest", streamId, nil, t)
 	events := []*ParsedEvent{membership, username, displayName}
 	for i, event := range events[:] {
 		err = Update_Snapshot(snapshot, event, 3, i)

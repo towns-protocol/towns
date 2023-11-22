@@ -45,7 +45,6 @@ describe('syncWithBlocks', () => {
                         streamId: bobsUserStreamId,
                         settings: { minEventsPerSnapshot: 1, miniblockTimeMs: 1n },
                     }),
-                    [],
                 ),
             ],
             streamId: bobsUserStreamId,
@@ -59,7 +58,6 @@ describe('syncWithBlocks', () => {
             make_SpacePayload_Inception({
                 streamId: spacedStreamId,
             }),
-            [],
         )
         await bob.createStream({
             events: [
@@ -70,7 +68,6 @@ describe('syncWithBlocks', () => {
                         userId: bobsUserId,
                         op: MembershipOp.SO_JOIN,
                     }),
-                    [spaceInceptionEvent.hash],
                 ),
             ],
             streamId: spacedStreamId,
@@ -87,7 +84,6 @@ describe('syncWithBlocks', () => {
                 channelProperties: { text: channelProperties },
                 settings: { miniblockTimeMs: 1n, minEventsPerSnapshot: 1 },
             }),
-            [],
         )
         const channelJoinEvent = await makeEvent(
             bobsContext,
@@ -95,7 +91,6 @@ describe('syncWithBlocks', () => {
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
             }),
-            [channelInceptionEvent.hash],
         )
         let nextHash = channelJoinEvent.hash
         const channelEvents = [channelInceptionEvent, channelJoinEvent]
@@ -128,7 +123,7 @@ describe('syncWithBlocks', () => {
             make_ChannelPayload_Message({
                 text,
             }),
-            [nextHash],
+            channel.miniblocks.at(-1)?.header?.hash,
         )
         nextHash = messageEvent.hash
         const resp = await bob.addEvent({
@@ -192,7 +187,7 @@ describe('syncWithBlocks', () => {
                             make_ChannelPayload_Message({
                                 text,
                             }),
-                            [nextHash],
+                            p.envelope.hash,
                         )
                         nextHash = messageEvent.hash
                         const response = await bob.addEvent({

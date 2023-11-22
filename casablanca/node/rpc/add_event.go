@@ -42,8 +42,8 @@ func (s *Service) localAddEvent(ctx context.Context, req *connect.Request[AddEve
 }
 
 func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEvent *ParsedEvent) error {
-	if len(parsedEvent.Event.PrevEvents) == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "event has no prev events")
+	if parsedEvent.Event.PrevMiniblockHash == nil {
+		return RiverError(Err_INVALID_ARGUMENT, "event has no prevMiniblockHash")
 	}
 
 	stream, streamView, err := s.loadStream(ctx, streamId)
@@ -51,13 +51,11 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 		return err
 	}
 
-	// TODO: fix this check to take blocks into account
-	// check if previous event's hashes match
-	// for _, prevEvent := range parsedEvent.PrevEventStrs {
-	// 	if !streamView.HasEvent(prevEvent) {
-	// 		return status.Errorf(codes.InvalidArgument, "prev event not found")
-	// 	}
-	// }
+	// check preceding miniblock hash
+	err = streamView.ValidateNextEvent(parsedEvent, &s.streamConfig.RecencyConstraints)
+	if err != nil {
+		return err
+	}
 
 	// check event type
 	streamEvent := parsedEvent.Event
@@ -829,7 +827,7 @@ func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, use
 		return err
 	}
 
-	prevHashes := [][]byte{userStreamView.LastEvent().Hash}
+	prevHash := userStreamView.LastBlock().Hash
 	userStreamEvent, err := MakeParsedEventWithPayload(
 		s.wallet,
 		Make_UserPayload_Membership(
@@ -842,7 +840,7 @@ func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, use
 				Signature: originEvent.Envelope.Signature,
 			},
 		),
-		prevHashes,
+		prevHash,
 	)
 	if err != nil {
 		return err

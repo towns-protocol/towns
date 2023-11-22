@@ -13,13 +13,13 @@ import (
 )
 
 type ParsedEvent struct {
-	Event         *StreamEvent
-	Envelope      *Envelope
-	Hash          []byte
-	HashStr       string   `dlog:"omit"` // strangely Go can't have key maps of type []byte...
-	PrevEventStrs []string `dlog:"omit"`
-	SignerPubKey  []byte
-	shortDebugStr string
+	Event             *StreamEvent
+	Envelope          *Envelope
+	Hash              []byte
+	HashStr           string `dlog:"omit"` // strangely Go can't have key maps of type []byte...
+	PrevMiniblockHash string `dlog:"omit"`
+	SignerPubKey      []byte
+	shortDebugStr     string
 }
 
 func (e *ParsedEvent) GetEnvelopeBytes() ([]byte, error) {
@@ -66,18 +66,13 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 		}
 	}
 
-	prevEventStrs := make([]string, len(streamEvent.PrevEvents))
-	for i, prevEvent := range streamEvent.PrevEvents {
-		prevEventStrs[i] = string(prevEvent)
-	}
-
 	return &ParsedEvent{
-		Event:         &streamEvent,
-		Envelope:      envelope,
-		Hash:          envelope.Hash,
-		HashStr:       string(envelope.Hash),
-		PrevEventStrs: prevEventStrs,
-		SignerPubKey:  signerPubKey,
+		Event:             &streamEvent,
+		Envelope:          envelope,
+		Hash:              envelope.Hash,
+		HashStr:           string(envelope.Hash),
+		PrevMiniblockHash: string(streamEvent.PrevMiniblockHash),
+		SignerPubKey:      signerPubKey,
 	}, nil
 }
 

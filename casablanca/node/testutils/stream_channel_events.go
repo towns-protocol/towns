@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"casablanca/node/common"
+	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/protocol"
@@ -11,6 +12,17 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+var streamConfig_t = &config.StreamConfig{
+	Media: config.MediaStreamConfig{
+		MaxChunkCount: 100,
+		MaxChunkSize:  1000000,
+	},
+	RecencyConstraints: config.RecencyConstraintsConfig{
+		Generations: 5,
+		AgeSeconds:  11,
+	},
+}
 
 type StreamContext_T struct {
 	t           *testing.T
@@ -44,7 +56,7 @@ func MakeChannelStreamContext_T(
 		Storage:    storage.NewMemStorage(),
 		Wallet:     wallet,
 		DefaultCtx: ctx,
-	})
+	}, streamConfig_t)
 	// create a channel stream and auto-add the creator as a member
 	channelEvents := MakeChannelInceptionEvents_T(
 		t,
@@ -79,7 +91,7 @@ func JoinChannel_T(
 	ctx := t_Context.Context
 	syncStream := *t_Context.SyncStream
 	streamView := *t_Context.StreamView
-	prevEventHash := streamView.LastEvent().Hash
+	prevMiniblockHash := streamView.LastBlock().Hash
 	for _, user := range users {
 		err := syncStream.AddEvent(
 			ctx,
@@ -92,7 +104,7 @@ func JoinChannel_T(
 						protocol.MembershipOp_SO_JOIN,
 						user,
 					),
-					[][]byte{prevEventHash},
+					prevMiniblockHash,
 				),
 			),
 		)
@@ -110,7 +122,7 @@ func LeaveChannel_T(
 	ctx := t_Context.Context
 	syncStream := *t_Context.SyncStream
 	streamView := *t_Context.StreamView
-	prevEventHash := streamView.LastEvent().Hash
+	prevHash := streamView.LastBlock().Hash
 	for _, user := range users {
 		err := syncStream.AddEvent(
 			ctx,
@@ -123,7 +135,7 @@ func LeaveChannel_T(
 						protocol.MembershipOp_SO_LEAVE,
 						user,
 					),
-					[][]byte{prevEventHash},
+					prevHash,
 				),
 			),
 		)
@@ -140,8 +152,8 @@ func ParsedEvent_T(t *testing.T, envelope *protocol.Envelope) *events.ParsedEven
 	return parsed
 }
 
-func MakeEnvelopeWithPayload_T(t *testing.T, wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) *protocol.Envelope {
-	envelope, err := events.MakeEnvelopeWithPayload(wallet, payload, prevHashes)
+func MakeEnvelopeWithPayload_T(t *testing.T, wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte) *protocol.Envelope {
+	envelope, err := events.MakeEnvelopeWithPayload(wallet, payload, prevMiniblockHash)
 	assert.NoError(t, err)
 	return envelope
 }
@@ -175,7 +187,7 @@ func MakeChannelInceptionEvents_T(
 		t,
 		wallet,
 		events.Make_ChannelPayload_Membership(protocol.MembershipOp_SO_JOIN, userId),
-		[][]byte{inception.Hash},
+		nil,
 	)
 	return []*events.ParsedEvent{
 		ParsedEvent_T(t, inception),

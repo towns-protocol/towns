@@ -24,6 +24,16 @@ func TestServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 		Address: "localhost",
 		Port:    1234,
 		DbUrl:   dbUrl,
+		Stream: config.StreamConfig{
+			Media: config.MediaStreamConfig{
+				MaxChunkCount: 100,
+				MaxChunkSize:  1000000,
+			},
+			RecencyConstraints: config.RecencyConstraintsConfig{
+				Generations: 5,
+				AgeSeconds:  11,
+			},
+		},
 	}
 
 	wallet, err := crypto.NewWallet(ctx)

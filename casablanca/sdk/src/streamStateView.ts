@@ -46,8 +46,8 @@ export class StreamStateView {
     readonly contentKind: SnapshotCaseType
     readonly timeline: StreamTimelineEvent[] = []
     readonly events = new Map<string, StreamTimelineEvent>()
-    readonly leafEventHashes = new Map<string, Uint8Array>()
 
+    prevMiniblockHash?: Uint8Array
     lastEventNum = 0n
     prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
@@ -261,19 +261,6 @@ export class StreamStateView {
         this.events.set(timelineEvent.hashStr, timelineEvent)
 
         const event = timelineEvent.remoteEvent
-        for (const prev of event.prevEventsStrs ?? []) {
-            if (!this.events.has(prev)) {
-                log(
-                    `Added event with unknown prevEvent ${prev}, hash=${event.hashStr}, stream=${this.streamId}`,
-                )
-            }
-        }
-
-        this.leafEventHashes.set(event.hashStr, event.envelope.hash)
-        for (const prev of event.prevEventsStrs ?? []) {
-            this.leafEventHashes.delete(prev)
-        }
-
         const payload = event.event.payload
         check(isDefined(payload), `Event has no payload ${event.hashStr}`, Err.STREAM_BAD_EVENT)
 
@@ -304,6 +291,12 @@ export class StreamStateView {
                     this.mediaContent?.appendEvent(event, payload.value, emitter)
                     break
                 case 'miniblockHeader':
+                    check(
+                        (this.miniblockInfo?.max ?? -1n) < payload.value.miniblockNum,
+                        `Miniblock number out of order ${payload.value.miniblockNum} > ${this.miniblockInfo?.max}`,
+                        Err.STREAM_BAD_EVENT,
+                    )
+                    this.prevMiniblockHash = event.envelope.hash
                     this.getContent().onMiniblockHeader(payload.value, emitter)
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     break
@@ -438,7 +431,7 @@ export class StreamStateView {
         // initialize from snapshot data, this gets all memberships and channel data, etc
         this.initializeFromSnapshot(snapshot, emitter)
         // initialize from miniblocks, the first minblock is the snapshot block, it's events are accounted for
-        const block0 = miniblocks[0].events.map((e, i) =>
+        const block0Events = miniblocks[0].events.map((e, i) =>
             makeRemoteTimelineEvent(e, miniblocks[0].header.eventNumOffset + BigInt(i)),
         )
         // the rest need to be added to the timeline
@@ -450,16 +443,11 @@ export class StreamStateView {
                 ),
             )
         // initialize our event hashes
-        check(block0.length > 0)
-        // save the hash so that we can submit new events to this stream
-        this.leafEventHashes.set(
-            block0[block0.length - 1].remoteEvent.hashStr,
-            block0[block0.length - 1].remoteEvent.envelope.hash,
-        )
+        check(block0Events.length > 0)
         // prepend the snapshotted block in reverse order
-        this.timeline.push(...block0)
-        for (let i = block0.length - 1; i >= 0; i--) {
-            const event = block0[i]
+        this.timeline.push(...block0Events)
+        for (let i = block0Events.length - 1; i >= 0; i--) {
+            const event = block0Events[i]
             this.processPrependedEvent(event, emitter)
         }
         // append the new block events
@@ -470,6 +458,8 @@ export class StreamStateView {
         // initialize the lastEventNum
         const lastBlock = miniblocks[miniblocks.length - 1]
         this.lastEventNum = lastBlock.header.eventNumOffset + BigInt(lastBlock.events.length)
+        // and the prev miniblock has (if there were more than 1 miniblocks, this should already be set)
+        this.prevMiniblockHash = lastBlock.hash
         // append the minipool events
         this.appendStreamAndCookie(streamAndCookie, emitter)
         // let everyone know

@@ -45,7 +45,6 @@ describe('workflows', () => {
                     make_UserPayload_Inception({
                         streamId: bobsUserStreamId,
                     }),
-                    [],
                 ),
             ],
             streamId: bobsUserStreamId,
@@ -58,7 +57,6 @@ describe('workflows', () => {
             make_SpacePayload_Inception({
                 streamId: spacedStreamId,
             }),
-            [],
         )
         await bob.createStream({
             events: [
@@ -69,7 +67,6 @@ describe('workflows', () => {
                         userId: bobsUserId,
                         op: MembershipOp.SO_JOIN,
                     }),
-                    [spaceInceptionEvent.hash],
                 ),
             ],
             streamId: spacedStreamId,
@@ -97,7 +94,6 @@ describe('workflows', () => {
                 spaceId: spacedStreamId,
                 channelProperties: { text: channelProperties },
             }),
-            [],
         )
         const channelJoinEvent = await makeEvent(
             bobsContext,
@@ -105,7 +101,6 @@ describe('workflows', () => {
                 userId: bobsUserId,
                 op: MembershipOp.SO_JOIN,
             }),
-            [channelInceptionEvent.hash],
         )
         await bob.createStream({
             events: [channelInceptionEvent, channelJoinEvent],

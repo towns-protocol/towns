@@ -44,10 +44,16 @@ type PushNotificationConfig struct {
 
 type StreamConfig struct {
 	Media MediaStreamConfig
+	RecencyConstraints RecencyConstraintsConfig
 	ReplicationFactor int
 }
 
 type MediaStreamConfig struct {
 	MaxChunkCount int
 	MaxChunkSize  int
+}
+
+type RecencyConstraintsConfig struct {
+	AgeSeconds  int
+	Generations int
 }

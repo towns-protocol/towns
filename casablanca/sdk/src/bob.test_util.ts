@@ -45,7 +45,6 @@ export const bobTalksToHimself = async (
                 make_UserPayload_Inception({
                     streamId: bobsUserStreamId,
                 }),
-                [],
             ),
         ],
         streamId: bobsUserStreamId,
@@ -60,7 +59,6 @@ export const bobTalksToHimself = async (
         make_SpacePayload_Inception({
             streamId: spacedStreamId,
         }),
-        [],
     )
     await bob.createStream({
         events: [
@@ -71,7 +69,6 @@ export const bobTalksToHimself = async (
                     userId: bobsUserId,
                     op: MembershipOp.SO_JOIN,
                 }),
-                [spaceInceptionEvent.hash],
             ),
         ],
         streamId: spacedStreamId,
@@ -88,7 +85,6 @@ export const bobTalksToHimself = async (
             spaceId: spacedStreamId,
             channelProperties: { text: channelProperties },
         }),
-        [],
     )
     const channelJoinEvent = await makeEvent(
         bobsContext,
@@ -96,9 +92,7 @@ export const bobTalksToHimself = async (
             userId: bobsUserId,
             op: MembershipOp.SO_JOIN,
         }),
-        [channelInceptionEvent.hash],
     )
-    let nextHash = channelJoinEvent.hash
     const channelEvents = [channelInceptionEvent, channelJoinEvent]
     log('creating channel with events=', channelEvents)
     await bob.createStream({
@@ -132,9 +126,8 @@ export const bobTalksToHimself = async (
             make_ChannelPayload_Message({
                 text: 'presync',
             }),
-            [nextHash],
+            channel.miniblocks.at(-1)?.header?.hash,
         )
-        nextHash = presyncEvent.hash
         await bob.addEvent({
             streamId: channelId,
             event: presyncEvent,
@@ -192,14 +185,14 @@ export const bobTalksToHimself = async (
     log('Bob posts a message')
 
     await maybeFlush()
+    const hashResponse = await bob.getLastMiniblockHash({ streamId: channelId })
     const helloEvent = await makeEvent(
         bobsContext,
         make_ChannelPayload_Message({
             text: 'hello',
         }),
-        [nextHash],
+        hashResponse.hash,
     )
-    nextHash = helloEvent.hash
     const addEventPromise = bob.addEvent({
         streamId: channelId,
         event: helloEvent,
@@ -226,7 +219,7 @@ export const bobTalksToHimself = async (
         make_ChannelPayload_Message({
             text: 'hello',
         }),
-        [],
+        Uint8Array.from([1, 2, 3]),
     )
     await expect(
         bob.addEvent({
@@ -235,19 +228,14 @@ export const bobTalksToHimself = async (
         }),
     ).rejects.toThrow()
 
-    // TODO: HNT-1843: Re-enable block-aware event duplicate checks
-    // await maybeFlush()
-    // const badEvent1 = await makeEvent_test(
-    //     bobsContext,
-    //     make_ChannelPayload_Message({ text: 'hello' }),
-    //     [badEvent.hash],
-    // )
-    // await expect(
-    //     bob.addEvent({
-    //         streamId: channelId,
-    //         event: badEvent1,
-    //     }),
-    // ).rejects.toThrow()
+    log("Bob can't add a previously added event (messages from the client contain timestamps)")
+    await maybeFlush()
+    await expect(
+        bob.addEvent({
+            streamId: channelId,
+            event: helloEvent,
+        }),
+    ).rejects.toThrow()
 
     log('done')
 }

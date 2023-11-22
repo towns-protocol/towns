@@ -164,7 +164,7 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 			protocol.MembershipOp_SO_JOIN,
 			userId,
 		),
-		[][]byte{space.Hash},
+		nil,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -209,7 +209,7 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 			protocol.MembershipOp_SO_JOIN,
 			userId,
 		),
-		[][]byte{channel.Hash},
+		nil,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -222,7 +222,11 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 	if err != nil {
 		return nil, nil, err
 	}
-	return reschannel.Msg.Stream.NextSyncCookie, joinChannel.Hash, nil
+	if len(reschannel.Msg.Miniblocks) == 0 {
+		return nil, nil, fmt.Errorf("expected at least one miniblock")
+	}
+	miniblockHash := reschannel.Msg.Miniblocks[len(reschannel.Msg.Miniblocks)-1].Header.Hash
+	return reschannel.Msg.Stream.NextSyncCookie, miniblockHash, nil
 }
 
 func testServerAndClient(
@@ -247,6 +251,16 @@ func testServerAndClient(
 		DbUrl:       dbUrl,
 		StorageType: "postgres",
 		SyncVersion: syncVersion,
+		Stream: config.StreamConfig{
+			Media: config.MediaStreamConfig{
+				MaxChunkCount: 100,
+				MaxChunkSize:  1000000,
+			},
+			RecencyConstraints: config.RecencyConstraintsConfig{
+				AgeSeconds:  11,
+				Generations: 5,
+			},
+		},
 	}
 
 	wallet, err := crypto.NewWallet(ctx)
@@ -363,7 +377,7 @@ func TestMethods(t *testing.T) {
 				protocol.MembershipOp_SO_JOIN,
 				userId,
 			),
-			[][]byte{channelHash},
+			channelHash,
 		)
 		if err != nil {
 			t.Errorf("error creating join event: %v", err)
@@ -384,7 +398,7 @@ func TestMethods(t *testing.T) {
 		message, err := events.MakeEnvelopeWithPayload(
 			wallet2,
 			events.Make_ChannelPayload_Message("hello"),
-			[][]byte{join.Hash},
+			channelHash,
 		)
 		if err != nil {
 			t.Errorf("error creating message event: %v", err)
@@ -506,7 +520,7 @@ func TestRiverDeviceId(t *testing.T) {
 			events.Make_ChannelPayload_Message(
 				"try to send a message without RDK",
 			),
-			[][]byte{channelHash},
+			channelHash,
 			delegateSig,
 		)
 		if err != nil {
@@ -594,7 +608,7 @@ func TestSyncStreams(t *testing.T) {
 	message, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_ChannelPayload_Message("hello"),
-		[][]byte{channelHash},
+		channelHash,
 	)
 	assert.Nilf(t, err, "error creating message event: %v", err)
 	_, err = client.AddEvent(
@@ -677,7 +691,7 @@ func TestAddStreamsToSync(t *testing.T) {
 	message, err := events.MakeEnvelopeWithPayload(
 		aliceWallet,
 		events.Make_ChannelPayload_Message("hello"),
-		[][]byte{channelHash},
+		channelHash,
 	)
 	assert.Nilf(t, err, "error creating message event: %v", err)
 	_, err = aliceClient.AddEvent(
@@ -772,7 +786,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	message1, err := events.MakeEnvelopeWithPayload(
 		aliceWallet,
 		events.Make_ChannelPayload_Message("hello"),
-		[][]byte{channelHash},
+		channelHash,
 	)
 	assert.Nilf(t, err, "error creating message event: %v", err)
 	_, err = aliceClient.AddEvent(
@@ -831,7 +845,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	message2, err := events.MakeEnvelopeWithPayload(
 		aliceWallet,
 		events.Make_ChannelPayload_Message("world"),
-		[][]byte{message1.Hash},
+		channelHash,
 	)
 	assert.Nilf(t, err, "error creating message event: %v", err)
 	_, err = aliceClient.AddEvent(
@@ -930,7 +944,7 @@ func DisableTestManyUsers(t *testing.T) {
 					protocol.MembershipOp_SO_JOIN,
 					userId,
 				),
-				[][]byte{channelHashes[j]},
+				channelHashes[j],
 			)
 			channelHashes[j] = join.Hash
 
@@ -949,7 +963,7 @@ func DisableTestManyUsers(t *testing.T) {
 			message, err := events.MakeEnvelopeWithPayload(
 				wallets[i],
 				events.Make_ChannelPayload_Message("hello"),
-				[][]byte{channelHashes[j]},
+				channelHashes[j],
 			)
 			if err != nil {
 				t.Fatalf("error creating message event: %v", err)
@@ -1023,7 +1037,7 @@ func DisableTestManyUsers(t *testing.T) {
 					message, err := events.MakeEnvelopeWithPayload(
 						wallets[user],
 						events.Make_ChannelPayload_Message(fmt.Sprintf("%d hello from %d", msgId.Add(1)-1, user)),
-						[][]byte{channelHashes[channel]},
+						channelHashes[channel],
 					)
 					assert.NoError(t, err)
 
