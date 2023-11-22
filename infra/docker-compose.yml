@@ -1,8 +1,7 @@
 version: '3'
 services:
   terraform:
-    build:
-      context: .
+    image: hashicorp/terraform:1.6.3
     volumes:
     - .:/mnt/
     - ~/.aws/:/root/.aws
