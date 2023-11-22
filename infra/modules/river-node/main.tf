@@ -11,10 +11,7 @@ locals {
   tags = merge(
     module.global_constants.tags,
     {
-      Service_Name = local.service_name,
-      Node_Name    = var.node_name
-      Service      = local.service_name
-      Instance     = var.node_name
+      Service = local.service_name
     }
   )
 }
@@ -36,6 +33,17 @@ terraform {
   }
 
   required_version = ">= 1.0.3"
+}
+
+data "terraform_remote_state" "global_remote_state" {
+  backend = "s3"
+
+  config = {
+    region  = "us-east-1"
+    profile = "harmony-github-actions"
+    bucket  = "here-not-there-terraform-state"
+    key     = "env:/global/default"
+  }
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
@@ -61,19 +69,20 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 module "river_node_db" {
   source = "../../modules/river-node-db"
 
-  database_subnets           = var.database_subnets
-  allowed_cidr_blocks        = var.database_allowed_cidr_blocks
-  vpc_id                     = var.vpc_id
-  river_node_name            = var.node_name
-  ecs_task_execution_role_id = aws_iam_role.ecs_task_execution_role.id
+  database_subnets              = var.database_subnets
+  allowed_cidr_blocks           = var.database_allowed_cidr_blocks
+  vpc_id                        = var.vpc_id
+  river_node_name               = var.node_name
+  ecs_task_execution_role_id    = aws_iam_role.ecs_task_execution_role.id
+  cow_cluster_source_identifier = var.database_cow_cluster_source_identifier
 }
 
 # Behind the load balancer
 module "river_internal_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
-  name        = "${module.global_constants.environment}_river_internal_sg"
-  description = "Security group for river nodes"
+  name        = "${terraform.workspace}_river_internal_sg"
+  description = "Security group for river node"
   vpc_id      = var.vpc_id
 
 
@@ -96,19 +105,19 @@ module "river_internal_sg" {
 }
 
 resource "aws_cloudwatch_log_group" "river_log_group" {
-  name = "/${module.global_constants.environment}/ecs/river/${var.node_name}"
+  name = "/ecs/river/${var.node_name}"
 
   tags = local.tags
 }
 
 resource "aws_cloudwatch_log_group" "dd_agent_log_group" {
-  name = "/${module.global_constants.environment}/ecs/dd-agent/${var.node_name}"
+  name = "/ecs/dd-agent/${var.node_name}"
 
   tags = local.tags
 }
 
 resource "aws_secretsmanager_secret" "river_node_wallet_credentials" {
-  name = "${module.global_constants.environment}-river-${var.node_name}-wallet-credentials"
+  name = "${var.node_name}-wallet-key"
   tags = local.tags
 }
 
@@ -122,7 +131,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "ecs-to-wallet-secret-policy" {
-  name = "${module.global_constants.environment}-ecs-to-wallet-credentials-policy"
+  name = "${var.node_name}-wallet-credentials"
   role = aws_iam_role.ecs_task_execution_role.id
 
   policy = <<-EOF
@@ -143,108 +152,8 @@ resource "aws_iam_role_policy" "ecs-to-wallet-secret-policy" {
   EOF
 }
 
-resource "aws_secretsmanager_secret" "river_node_push_notification_auth_token" {
-  name = "${module.global_constants.environment}-river-${var.node_name}-push-notification-auth-token"
-  tags = local.tags
-}
-
-resource "aws_secretsmanager_secret_version" "river_node_push_notification_auth_token" {
-  secret_id     = aws_secretsmanager_secret.river_node_push_notification_auth_token.id
-  secret_string = "DUMMY"
-}
-
 resource "aws_iam_role_policy" "ecs-to-push_notification_auth_token" {
-  name = "${module.global_constants.environment}-ecs-to-push-notification-auth-token-policy"
-  role = aws_iam_role.ecs_task_execution_role.id
-
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${aws_secretsmanager_secret.river_node_push_notification_auth_token.arn}"
-        ]
-      }
-    ]
-  }
-  EOF
-}
-
-resource "aws_secretsmanager_secret" "river_node_l1_network_url" {
-  name = "${module.global_constants.environment}-river-${var.node_name}-l1-network-url"
-  tags = local.tags
-}
-
-resource "aws_secretsmanager_secret_version" "river_node_l1_network_url" {
-  secret_id     = aws_secretsmanager_secret.river_node_l1_network_url.id
-  secret_string = "DUMMY"
-}
-
-resource "aws_iam_role_policy" "ecs-to-l1-network-url-secret-policy" {
-  name = "${module.global_constants.environment}-ecs-to-l1-network-url-secret-policy"
-  role = aws_iam_role.ecs_task_execution_role.id
-
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${aws_secretsmanager_secret.river_node_l1_network_url.arn}"
-        ]
-      }
-    ]
-  }
-  EOF
-}
-
-resource "aws_secretsmanager_secret" "dd_agent_api_key" {
-  name = "${module.global_constants.environment}-datadog-agent-api-key"
-  tags = local.tags
-}
-
-resource "aws_secretsmanager_secret_version" "dd_agent_api_key" {
-  secret_id     = aws_secretsmanager_secret.dd_agent_api_key.id
-  secret_string = "DUMMY"
-}
-
-resource "aws_iam_role_policy" "dd_agent_api_key" {
-  name = "${module.global_constants.environment}-datadog-agent-api-key-policy"
-  role = aws_iam_role.ecs_task_execution_role.id
-
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${aws_secretsmanager_secret.dd_agent_api_key.arn}"
-        ]
-      }
-    ]
-  }
-  EOF
-}
-
-data "aws_secretsmanager_secret" "hnt_dockerhub_access_key" {
-  name = "hnt_dockerhub_access_key"
-}
-
-resource "aws_iam_role_policy" "hnt_dockerhub_access_key" {
-  name = "${module.global_constants.environment}-hnt-dockerhub-access-key-policy"
+  name = "${var.node_name}-push-notification-auth-token"
   role = aws_iam_role.ecs_task_execution_role.id
 
   lifecycle {
@@ -261,7 +170,91 @@ resource "aws_iam_role_policy" "hnt_dockerhub_access_key" {
         ],
         "Effect": "Allow",
         "Resource": [
-          "${data.aws_secretsmanager_secret.hnt_dockerhub_access_key.arn}"
+          "${data.terraform_remote_state.global_remote_state.outputs.river_global_push_notification_auth_token.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
+resource "aws_secretsmanager_secret" "river_node_home_chain_network_url" {
+  name = "${var.node_name}-homechain-network-url-secret"
+  tags = local.tags
+}
+
+resource "aws_secretsmanager_secret_version" "river_node_home_chain_network_url" {
+  secret_id     = aws_secretsmanager_secret.river_node_home_chain_network_url.id
+  secret_string = "DUMMY"
+}
+
+resource "aws_iam_role_policy" "ecs-to-home-chain-network-url-secret-policy" {
+  name = "${var.node_name}-home-chain-network-url-secret"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${aws_secretsmanager_secret.river_node_home_chain_network_url.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
+resource "aws_iam_role_policy" "dd_agent_api_key" {
+  name = "${var.node_name}-dd-agent-api-key"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  lifecycle {
+    ignore_changes = all
+  }
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${data.terraform_remote_state.global_remote_state.outputs.river_global_dd_agent_api_key.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
+resource "aws_iam_role_policy" "hnt_dockerhub_access_key" {
+  name = "${var.node_name}-hnt-dockerhub-access-key-policy"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  lifecycle {
+    ignore_changes = all
+  }
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${data.terraform_remote_state.global_remote_state.outputs.hnt_dockerhub_access_key.arn}"
         ]
       }
     ]
@@ -321,13 +314,13 @@ resource "aws_lb_listener_rule" "host_rule" {
 
   condition {
     host_header {
-      values = ["${var.subdomain_name}.${module.global_constants.primary_hosted_zone_name}"]
+      values = ["${var.node_name}.${module.global_constants.primary_hosted_zone_name}"]
     }
   }
 }
 
 resource "aws_ecs_task_definition" "river-fargate" {
-  family = "${module.global_constants.environment}-river-fargate"
+  family = "${var.node_name}-river-fargate"
 
   lifecycle {
     ignore_changes = [container_definitions]
@@ -358,7 +351,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
     }]
 
     repositoryCredentials = {
-      credentialsParameter = data.aws_secretsmanager_secret.hnt_dockerhub_access_key.arn
+      credentialsParameter = data.terraform_remote_state.global_remote_state.outputs.hnt_dockerhub_access_key.arn
     },
 
     secrets = [
@@ -372,18 +365,18 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name      = "CHAIN__NETWORKURL"
-        valueFrom = aws_secretsmanager_secret.river_node_l1_network_url.arn
+        valueFrom = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
       },
       {
         name      = "PUSHNOTIFICATION__AUTHTOKEN",
-        valueFrom = aws_secretsmanager_secret.river_node_push_notification_auth_token.arn
+        valueFrom = data.terraform_remote_state.global_remote_state.outputs.river_global_push_notification_auth_token.arn
       },
     ]
 
     environment = [
       {
         name  = "CHAIN__CHAINID",
-        value = var.l1_chain_id
+        value = var.home_chain_id
       },
       {
         name  = "METRICS__ENABLED",
@@ -419,7 +412,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "DD_ENV"
-        value = module.global_constants.tags.Env
+        value = terraform.workspace
       },
       {
         name  = "DD_TAGS",
@@ -430,6 +423,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "true"
       },
       {
+        # TODO: temporarily disable APM to avoid mixing logs
         name  = "PERFORMANCETRACKING__TRACINGENABLED",
         value = "true"
       },
@@ -455,7 +449,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
       secrets = [{
         name      = "DD_API_KEY"
-        valueFrom = aws_secretsmanager_secret.dd_agent_api_key.arn
+        valueFrom = data.terraform_remote_state.global_remote_state.outputs.river_global_dd_agent_api_key.arn
       }]
 
       environment = [
@@ -533,7 +527,7 @@ resource "aws_ecs_service" "river-ecs-service" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.green.arn
+    target_group_arn = aws_lb_target_group.blue.arn
     container_name   = "river-node"
     container_port   = 5157
   }
@@ -650,7 +644,7 @@ data "cloudflare_zone" "zone" {
 
 resource "cloudflare_record" "alb_dns" {
   zone_id = data.cloudflare_zone.zone.id
-  name    = var.subdomain_name
+  name    = var.node_name
   value   = var.alb_dns_name
   type    = "CNAME"
   ttl     = 60

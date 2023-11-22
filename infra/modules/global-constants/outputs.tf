@@ -13,13 +13,7 @@ output "primary_hosted_zone_name" {
   sensitive = false
 }
 
-output "environment" {
-  value     = terraform.workspace
-  sensitive = false
-}
-
 locals {
-  Environment             = terraform.workspace == "test" ? "test-beta" : terraform.workspace
   sre_goalie_slack_handle = "<@kerem>"
   sre_slack_channel       = "@slack-Here_Not_There_Labs-sre-alerts"
 }
@@ -27,20 +21,14 @@ locals {
 output "tags" {
   value = {
     Managed_By = "Terraform"
-    # If workspace is test, say test-beta
-    Environment         = local.Environment
-    Env                 = local.Environment
-    Terraform_Workspace = terraform.workspace
-
-    # TODO: tag resources by whether they are transient or not
-    # Is_Transient_Environment = strcontains(terraform.workspace, "transient")
+    Env        = terraform.workspace
   }
-  sensitive = true
+  sensitive = false
 }
 
 output "region" {
   value     = "us-east-1"
-  sensitive = true
+  sensitive = false
 }
 
 output "sre_slack_identifier" {

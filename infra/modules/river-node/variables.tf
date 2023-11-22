@@ -48,8 +48,8 @@ variable "alb_dns_name" {
   type        = string
 }
 
-variable "l1_chain_id" {
-  description = "The chain id of the L1 chain"
+variable "home_chain_id" {
+  description = "The chain id of the home chain"
   type        = string
 }
 
@@ -58,7 +58,8 @@ variable "push_notification_worker_url" {
   type        = string
 }
 
-variable "subdomain_name" {
-  description = "The subdomain name for the river node"
+variable "database_cow_cluster_source_identifier" {
+  description = "The cluster identifier of the source cluster when restoring from a snapshot or backup"
   type        = string
+  default     = null
 }

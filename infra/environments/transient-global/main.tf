@@ -40,7 +40,7 @@ module "global_constants" {
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
-  name = "river-vpc-${module.global_constants.environment}"
+  name = "river-vpc-${terraform.workspace}"
   cidr = "10.3.0.0/16"
 
   azs = ["us-east-1a", "us-east-1b"]

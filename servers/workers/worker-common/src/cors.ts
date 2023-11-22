@@ -18,7 +18,7 @@ function getAllowedOrigins(env: Environment): string[] {
                 'http://127.0.0.1:8787',
                 'https://push-notification-worker-test.johnhntlabs.workers.dev',
                 'https://push-notification-worker-test-beta.towns.com',
-                'https://river1-test.towns.com',
+                'https://river1-test-beta.towns.com',
                 'https://test-harmony-web-pr-*.onrender.com',
             ]
         case 'staging': // Stay as close to production as possible.

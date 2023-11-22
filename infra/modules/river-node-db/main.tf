@@ -8,6 +8,11 @@ locals {
       Node_Name = "${var.river_node_name}",
       Service   = "river-postgres-db"
   })
+  restore_to_point_in_time = var.cow_cluster_source_identifier == null ? null : {
+    source_cluster_identifier  = var.cow_cluster_source_identifier
+    restore_type               = "copy-on-write"
+    use_latest_restorable_time = true
+  }
 }
 
 resource "random_password" "rds_river_node_postgresql_password" {
@@ -16,15 +21,12 @@ resource "random_password" "rds_river_node_postgresql_password" {
 }
 
 resource "aws_secretsmanager_secret" "rds_river_node_credentials" {
-  name = "${module.global_constants.environment}-postgres-river-${var.river_node_name}-credentials"
+  name = "${var.river_node_name}-postgres-db-secret"
   tags = local.tags
 }
 
 resource "aws_secretsmanager_secret_version" "rds_river_node_credentials" {
-  secret_id = aws_secretsmanager_secret.rds_river_node_credentials.id
-  lifecycle {
-    ignore_changes = all
-  }
+  secret_id     = aws_secretsmanager_secret.rds_river_node_credentials.id
   secret_string = <<EOF
 {
   "username": "river",
@@ -41,7 +43,7 @@ EOF
 
 # allow ecs_task_execution_role to read the secret but not write it
 resource "aws_iam_role_policy" "ecs-to-river-postgres-secret-policy" {
-  name = "${module.global_constants.environment}-ecs-to-river-postgres-secret-policy"
+  name = "${var.river_node_name}-postgres-secret-policy"
   role = var.ecs_task_execution_role_id
 
   depends_on = [
@@ -74,9 +76,9 @@ data "aws_rds_engine_version" "postgresql" {
 module "rds_aurora_postgresql" {
   source = "terraform-aws-modules/rds-aurora/aws"
 
-  version = "7.7.0"
+  version = "8.5.0"
 
-  name              = "${module.global_constants.environment}-river-${var.river_node_name}-postgresql"
+  name              = "${var.river_node_name}-postgresql"
   engine            = "aurora-postgresql"
   engine_mode       = "provisioned"
   engine_version    = data.aws_rds_engine_version.postgresql.version
@@ -86,17 +88,30 @@ module "rds_aurora_postgresql" {
   subnets               = var.database_subnets
   create_security_group = true
 
-  allowed_cidr_blocks = var.allowed_cidr_blocks
+  monitoring_interval    = 0
+  create_monitoring_role = false
 
-  iam_role_name       = "${var.river_node_name}-${module.global_constants.environment}-river-rds-postgresql-monitoring-role"
-  monitoring_interval = 60
-  apply_immediately   = true
-  skip_final_snapshot = false
+  security_group_rules = {
+    ex1_ingress = {
+      cidr_blocks = var.allowed_cidr_blocks
+    }
+  }
+
+  create_db_subnet_group = true
+
+  apply_immediately = true
+
+  # TODO: conditionally disable backups and snapshotting for transient dbs
+  # to speed up deprovisioning
+  # backup_retention_period  = 0
+  # skip_final_snapshot      = true
+  # restore_to_point_in_time = null
+
+  restore_to_point_in_time  = local.restore_to_point_in_time
+  skip_final_snapshot       = false
+  final_snapshot_identifier = "${var.river_node_name}-postgresql-final-snapshot"
 
   enabled_cloudwatch_logs_exports = ["postgresql"]
-
-  create_random_password = true
-  random_password_length = 32
 
   tags = local.tags
 
@@ -112,6 +127,5 @@ module "rds_aurora_postgresql" {
     one = {}
   }
 
-  # true if the current terraform workspace=test, false otherwise
-  publicly_accessible = terraform.workspace == "test"
+  publicly_accessible = false
 }

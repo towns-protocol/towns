@@ -36,3 +36,9 @@ variable "allowed_cidr_blocks" {
   type        = list(string)
   default     = []
 }
+
+variable "cow_cluster_source_identifier" {
+  description = "The cluster identifier of the source cluster when restoring from a snapshot or backup"
+  type        = string
+  default     = null
+}

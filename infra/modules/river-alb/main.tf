@@ -9,7 +9,7 @@ data "aws_vpc" "vpc" {
 module "river_alb_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
-  name        = "${module.global_constants.environment}_river_alb_sg"
+  name        = "${terraform.workspace}_river_alb_sg"
   description = "Security group river load balancer"
   vpc_id      = var.vpc_id
 
@@ -34,7 +34,7 @@ module "river_alb" {
   source  = "terraform-aws-modules/alb/aws"
   version = "6.0.0"
 
-  name               = "${module.global_constants.environment}-river-alb"
+  name               = "${terraform.workspace}-river-alb"
   load_balancer_type = "application"
 
   vpc_id          = var.vpc_id
@@ -58,8 +58,7 @@ module "river_alb" {
   tags = merge(
     module.global_constants.tags,
     {
-      Service  = "river-node-load-balancer"
-      Instance = "${module.global_constants.tags.Env}-load-balancer"
+      Service = "river-node-load-balancer"
     }
   )
 

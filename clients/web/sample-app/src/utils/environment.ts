@@ -25,7 +25,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
     {
         id: TownsEnvironment.TestBeta,
         name: 'Test Beta',
-        casablancaUrl: 'https://river1-test.towns.com',
+        casablancaUrl: 'https://river1-test-beta.towns.com',
         chain: baseGoerli,
         chainId: baseGoerli.id,
     },
