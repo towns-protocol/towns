@@ -797,16 +797,9 @@ export class RiverDecryptionExtension {
             console.info('CDE::onKeySolicitation got key sharing request for unknown room', {
                 streamId,
             })
-            const response = new ToDeviceMessage(
-                make_ToDevice_KeyResponse({
-                    streamId,
-                    sessions: [],
-                    kind: KeyResponseKind.KRK_KEYS_NOT_FOUND,
-                }),
-            )
-            await encryptAndRespondWith(response)
             return
         }
+
         const response = new ToDeviceMessage(
             make_ToDevice_KeyResponse({
                 kind: KeyResponseKind.KRK_KEYS_FOUND,
