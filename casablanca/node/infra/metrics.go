@@ -25,8 +25,9 @@ var registry = prometheus.DefaultRegisterer
 var (
 	functionDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name: "function_execution_duration_seconds",
-			Help: "Duration of function execution",
+			Name:    "function_execution_duration_seconds",
+			Help:    "Duration of function execution",
+			Buckets: []float64{1, 2, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800},
 		},
 		[]string{"function_name"},
 	)

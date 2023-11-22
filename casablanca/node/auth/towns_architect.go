@@ -7,6 +7,7 @@ import (
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"context"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -54,7 +55,8 @@ func NewTownsArchitectProxy(contract TownsArchitect, address common.Address) Tow
 
 func (proxy *TownsArchitectProxy) GetTownById(opts *bind.CallOpts, networkId string) (common.Address, error) {
 	log := dlog.CtxLog(context.Background())
-
+	start := time.Now()
+	defer infra.StoreExecutionTimeMetrics("GetTownByIdMs", start)
 	log.Debug("GetTownById", "address", proxy.address, "networkId", networkId)
 	result, err := proxy.contract.GetTownById(opts, networkId)
 	if err != nil {
@@ -62,7 +64,7 @@ func (proxy *TownsArchitectProxy) GetTownById(opts *bind.CallOpts, networkId str
 		getTownByIdCalls.Fail()
 		return common.Address{}, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
-	log.Debug("GetTownById", "address", proxy.address, "networkId", networkId, "result", result)
 	getTownByIdCalls.Pass()
+	log.Debug("GetTownById", "address", proxy.address, "networkId", networkId, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }

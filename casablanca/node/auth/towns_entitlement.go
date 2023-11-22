@@ -7,6 +7,7 @@ import (
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"context"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -57,6 +58,8 @@ func NewTownsEntitlementsProxy(contract TownsEntitlements, address common.Addres
 
 func (proxy *TownsEntitlementsProxy) IsEntitledToChannel(opts *bind.CallOpts, channelNetworkId string, user common.Address, permission string) (bool, error) {
 	log := dlog.CtxLog(context.Background())
+	start := time.Now()
+	defer infra.StoreExecutionTimeMetrics("IsEntitledToChannelMs", start)
 	log.Debug("IsEntitledToChannel", "channelNetworkId", channelNetworkId, "user", user, "permission", permission, "address", proxy.address)
 	result, err := proxy.contract.IsEntitledToChannel(opts, channelNetworkId, user, permission)
 	if err != nil {
@@ -65,12 +68,14 @@ func (proxy *TownsEntitlementsProxy) IsEntitledToChannel(opts *bind.CallOpts, ch
 		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
 	isEntitledToChannelCalls.Pass()
-	log.Debug("IsEntitledToChannel", "channelNetworkId", channelNetworkId, "user", user, "permission", permission, "address", proxy.address, "result", result)
+	log.Debug("IsEntitledToChannel", "channelNetworkId", channelNetworkId, "user", user, "permission", permission, "address", proxy.address, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }
 
 func (proxy *TownsEntitlementsProxy) IsEntitledToTown(opts *bind.CallOpts, user common.Address, permission string) (bool, error) {
 	log := dlog.CtxLog(context.Background())
+	start := time.Now()
+	defer infra.StoreExecutionTimeMetrics("IsEntitledToTownMs", start)
 	log.Debug("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address)
 	result, err := proxy.contract.IsEntitledToTown(opts, user, permission)
 	if err != nil {
@@ -79,6 +84,6 @@ func (proxy *TownsEntitlementsProxy) IsEntitledToTown(opts *bind.CallOpts, user 
 		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
 	isEntitledToTownCalls.Pass()
-	log.Debug("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address, "result", result)
+	log.Debug("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }

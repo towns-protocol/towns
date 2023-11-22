@@ -6,6 +6,7 @@ import (
 	"casablanca/node/dlog"
 	"casablanca/node/infra"
 	"context"
+	"time"
 
 	. "casablanca/node/base"
 	"casablanca/node/protocol"
@@ -70,6 +71,8 @@ func NewTownsWalletLink(ethClient *ethclient.Client, chainId int) (*TownsWalletL
 
 func (za *TownsWalletLink) GetWalletsByRootKey(rootKey common.Address) ([]common.Address, error) {
 	log := dlog.CtxLog(context.Background())
+	start := time.Now()
+	defer infra.StoreExecutionTimeMetrics("GetWalletsByRootKeyMs", start)
 	log.Debug("GetWalletsByRootKey", "rootKey", rootKey)
 	result, err := za.link.GetWalletsByRootKey(nil, rootKey)
 	if err != nil {
@@ -78,12 +81,14 @@ func (za *TownsWalletLink) GetWalletsByRootKey(rootKey common.Address) ([]common
 		return nil, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
 	getWalletsByRootKeyCalls.Pass()
-	log.Debug("GetWalletsByRootKey", "rootKey", rootKey, "result", result)
+	log.Debug("GetWalletsByRootKey", "rootKey", rootKey, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }
 
 func (za *TownsWalletLink) GetRootKeyForWallet(wallet common.Address) (common.Address, error) {
 	log := dlog.CtxLog(context.Background())
+	start := time.Now()
+	defer infra.StoreExecutionTimeMetrics("GetRootKeyForWalletMs", start)
 	log.Debug("GetRootKeyForWallet", "wallet", wallet)
 	result, err := za.link.GetRootKeyForWallet(nil, wallet)
 	if err != nil {
@@ -92,12 +97,14 @@ func (za *TownsWalletLink) GetRootKeyForWallet(wallet common.Address) (common.Ad
 		return common.Address{}, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
 	getRootKeyForWalletCalls.Pass()
-	log.Debug("GetRootKeyForWallet", "wallet", wallet, "result", result)
+	log.Debug("GetRootKeyForWallet", "wallet", wallet, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }
 
 func (za *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (uint64, error) {
 	log := dlog.CtxLog(context.Background())
+	start := time.Now()
+	defer infra.StoreExecutionTimeMetrics("GetLatestNonceForRootKeyMs", start)
 	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey)
 	result, err := za.link.GetLatestNonceForRootKey(nil, rootKey)
 	if err != nil {
@@ -112,6 +119,8 @@ func (za *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (uin
 
 func (za *TownsWalletLink) CheckIfLinked(rootKey common.Address, wallet common.Address) (bool, error) {
 	log := dlog.CtxLog(context.Background())
+	start := time.Now()
+	defer infra.StoreExecutionTimeMetrics("CheckIfLinkedMs", start)
 	log.Debug("CheckIfLinked", "rootKey", rootKey, "wallet", wallet)
 	result, err := za.link.CheckIfLinked(nil, rootKey, wallet)
 	if err != nil {

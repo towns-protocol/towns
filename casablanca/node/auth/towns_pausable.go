@@ -7,6 +7,7 @@ import (
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"context"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -55,6 +56,8 @@ func NewTownsPausableProxy(contract TownsPausable, address common.Address) Towns
 
 func (proxy *TownsPausableProxy) Paused(callOpts *bind.CallOpts) (bool, error) {
 	log := dlog.CtxLog(context.Background())
+	start := time.Now()
+	defer infra.StoreExecutionTimeMetrics("PausedMs", start)
 	log.Debug("Paused", "address", proxy.address)
 	result, err := proxy.contract.Paused(callOpts)
 	if err != nil {
@@ -63,6 +66,6 @@ func (proxy *TownsPausableProxy) Paused(callOpts *bind.CallOpts) (bool, error) {
 		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
 	pausedCalls.Pass()
-	log.Debug("Paused", "address", proxy.address, "result", result)
+	log.Debug("Paused", "address", proxy.address, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }

@@ -8,6 +8,7 @@ import (
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"context"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -70,7 +71,8 @@ func NewTownsChannelsProxy[C GeneratedTownsChannels](contract *C) (TownsChannels
 
 func (za *TownsChannelsProxy[GeneratedTownsChannels]) IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bool, error) {
 	log := dlog.CtxLog(context.Background())
-
+	start := time.Now()
+	defer infra.StoreExecutionTimeMetrics("IsDisabledMs", start)
 	var result bool
 	switch v := any(za.contract).(type) {
 	case *localhost_towns_channels.LocalhostTownsChannels:
@@ -95,6 +97,6 @@ func (za *TownsChannelsProxy[GeneratedTownsChannels]) IsDisabled(opts *bind.Call
 		return false, RiverError(protocol.Err_CANNOT_CONNECT, "unsupported chain")
 	}
 	getChannelCalls.Pass()
-	log.Debug("IsDisabled", "channelNetworkId", channelNetworkId, "result", result)
+	log.Debug("IsDisabled", "channelNetworkId", channelNetworkId, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }
