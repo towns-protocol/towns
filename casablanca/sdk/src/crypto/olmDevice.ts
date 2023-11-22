@@ -568,7 +568,7 @@ export class OlmDevice {
         const { session: existingSession, data: existingSessionData } =
             await this.getInboundGroupSession(streamId, sessionId)
 
-        const session = new global.Olm.InboundGroupSession()
+        const session = this.olmDelegate.createInboundGroupSession()
         try {
             log(`Adding megolm session ${streamId}|${sessionId}, session Key ${sessionKey}`)
             try {
