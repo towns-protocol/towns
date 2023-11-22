@@ -72,7 +72,7 @@ export const makeUserContextFromWallet = async (wallet: ethers.Wallet): Promise<
             userPrimaryWallet,
             getPublicKey(devicePrivateKeyStr, false),
         ),
-        deviceId: takeKeccakFingerprintInHex(creatorAddress, 16),
+        deviceId: `${Date.now()}_${Math.floor(Math.random() * 4095).toString(16)}`,
     }
 }
 
