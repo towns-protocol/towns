@@ -73,6 +73,7 @@ echo ""
 if prompt 'Stop Casbablanca?:y/n '
 then
     ./casablanca/scripts/stop_node.sh 
+    ./casablanca/node/stop_multi.sh
 fi
 
 do_killl dendrite "$1"
