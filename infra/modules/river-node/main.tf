@@ -125,10 +125,6 @@ resource "aws_iam_role_policy" "ecs-to-wallet-secret-policy" {
   name = "${module.global_constants.environment}-ecs-to-wallet-credentials-policy"
   role = aws_iam_role.ecs_task_execution_role.id
 
-  depends_on = [
-    aws_secretsmanager_secret_version.river_node_wallet_credentials
-  ]
-
   policy = <<-EOF
   {
     "Version": "2012-10-17",
@@ -160,10 +156,6 @@ resource "aws_secretsmanager_secret_version" "river_node_push_notification_auth_
 resource "aws_iam_role_policy" "ecs-to-push_notification_auth_token" {
   name = "${module.global_constants.environment}-ecs-to-push-notification-auth-token-policy"
   role = aws_iam_role.ecs_task_execution_role.id
-
-  depends_on = [
-    aws_secretsmanager_secret_version.river_node_push_notification_auth_token
-  ]
 
   policy = <<-EOF
   {
@@ -197,10 +189,6 @@ resource "aws_iam_role_policy" "ecs-to-l1-network-url-secret-policy" {
   name = "${module.global_constants.environment}-ecs-to-l1-network-url-secret-policy"
   role = aws_iam_role.ecs_task_execution_role.id
 
-  depends_on = [
-    aws_secretsmanager_secret_version.river_node_l1_network_url
-  ]
-
   policy = <<-EOF
   {
     "Version": "2012-10-17",
@@ -232,10 +220,6 @@ resource "aws_secretsmanager_secret_version" "dd_agent_api_key" {
 resource "aws_iam_role_policy" "dd_agent_api_key" {
   name = "${module.global_constants.environment}-datadog-agent-api-key-policy"
   role = aws_iam_role.ecs_task_execution_role.id
-
-  depends_on = [
-    aws_secretsmanager_secret_version.dd_agent_api_key
-  ]
 
   policy = <<-EOF
   {
@@ -571,8 +555,6 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   deployment_group_name  = "${var.node_name}-codedeploy-deployment-group"
   service_role_arn       = aws_iam_role.ecs_code_deploy_role.arn
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
-
-  depends_on = [aws_ecs_service.river-ecs-service]
 
   ecs_service {
     cluster_name = var.ecs_cluster.name
