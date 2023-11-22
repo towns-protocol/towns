@@ -24,6 +24,10 @@ type TownsArchitectProxy struct {
 	address  common.Address
 }
 
+var (
+	getTownByIdCalls = infra.NewSuccessMetrics("towns_architect_calls", contractCalls)
+)
+
 func NewTownsArchitect(address common.Address, ethClient *ethclient.Client, chainId int) (TownsArchitect, error) {
 	var town_architect_contract TownsArchitect
 	var err error
@@ -55,8 +59,10 @@ func (proxy *TownsArchitectProxy) GetTownById(opts *bind.CallOpts, networkId str
 	result, err := proxy.contract.GetTownById(opts, networkId)
 	if err != nil {
 		log.Error("GetTownById", "address", proxy.address, "networkId", networkId, "error", err)
+		getTownByIdCalls.Fail()
 		return common.Address{}, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
 	log.Debug("GetTownById", "address", proxy.address, "networkId", networkId, "result", result)
+	getTownByIdCalls.Pass()
 	return result, nil
 }

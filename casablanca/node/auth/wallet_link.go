@@ -34,6 +34,13 @@ type TownsWalletLink struct {
 	link      GeneratedWalletLinkContract
 }
 
+var (
+	getWalletsByRootKeyCalls = infra.NewSuccessMetrics("get_wallets_by_root_key_calls", contractCalls)
+	getRootKeyForWalletCalls = infra.NewSuccessMetrics("get_root_key_for_wallet_calls", contractCalls)
+	getLatestNonceCalls      = infra.NewSuccessMetrics("get_latest_nonce_calls", contractCalls)
+	checkIfLinkedCalls       = infra.NewSuccessMetrics("check_if_linked_calls", contractCalls)
+)
+
 func NewTownsWalletLink(ethClient *ethclient.Client, chainId int) (*TownsWalletLink, error) {
 	hexAddress, err := loadWalletLinkContractAddress(chainId)
 	if err != nil {
@@ -66,9 +73,11 @@ func (za *TownsWalletLink) GetWalletsByRootKey(rootKey common.Address) ([]common
 	log.Debug("GetWalletsByRootKey", "rootKey", rootKey)
 	result, err := za.link.GetWalletsByRootKey(nil, rootKey)
 	if err != nil {
+		getWalletsByRootKeyCalls.Fail()
 		log.Error("GetWalletsByRootKey", "rootKey", rootKey, "error", err)
 		return nil, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
+	getWalletsByRootKeyCalls.Pass()
 	log.Debug("GetWalletsByRootKey", "rootKey", rootKey, "result", result)
 	return result, nil
 }
@@ -78,9 +87,11 @@ func (za *TownsWalletLink) GetRootKeyForWallet(wallet common.Address) (common.Ad
 	log.Debug("GetRootKeyForWallet", "wallet", wallet)
 	result, err := za.link.GetRootKeyForWallet(nil, wallet)
 	if err != nil {
+		getRootKeyForWalletCalls.Fail()
 		log.Error("GetRootKeyForWallet", "wallet", wallet, "error", err)
 		return common.Address{}, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
+	getRootKeyForWalletCalls.Pass()
 	log.Debug("GetRootKeyForWallet", "wallet", wallet, "result", result)
 	return result, nil
 }
@@ -90,9 +101,11 @@ func (za *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (uin
 	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey)
 	result, err := za.link.GetLatestNonceForRootKey(nil, rootKey)
 	if err != nil {
+		getLatestNonceCalls.Fail()
 		log.Error("GetLatestNonceForRootKey", "rootKey", rootKey, "error", err)
 		return 0, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
+	getLatestNonceCalls.Pass()
 	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey, "result", result)
 	return result, nil
 }
@@ -102,9 +115,11 @@ func (za *TownsWalletLink) CheckIfLinked(rootKey common.Address, wallet common.A
 	log.Debug("CheckIfLinked", "rootKey", rootKey, "wallet", wallet)
 	result, err := za.link.CheckIfLinked(nil, rootKey, wallet)
 	if err != nil {
+		checkIfLinkedCalls.Fail()
 		log.Error("CheckIfLinked", "rootKey", rootKey, "wallet", wallet, "error", err)
 		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
+	checkIfLinkedCalls.Pass()
 	log.Debug("CheckIfLinked", "rootKey", rootKey, "wallet", wallet, "result", result)
 	return result, nil
 }

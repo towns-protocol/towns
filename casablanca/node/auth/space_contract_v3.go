@@ -2,6 +2,7 @@ package auth
 
 import (
 	"casablanca/node/dlog"
+	"casablanca/node/infra"
 	"context"
 	"sync"
 
@@ -25,6 +26,11 @@ type SpaceContractV3 struct {
 	chainId   int
 	townsLock sync.Mutex
 }
+
+var (
+	contractCalls = infra.NewSuccessMetrics("contract_calls", nil)
+)
+
 
 func NewSpaceContractV3(ctx context.Context, ethClient *ethclient.Client, chanId int) (SpaceContract, error) {
 	log := dlog.CtxLog(ctx)

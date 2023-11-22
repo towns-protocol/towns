@@ -26,6 +26,10 @@ type TownsChannelsProxy[Contract GeneratedTownsChannels] struct {
 	contract *Contract
 }
 
+var (
+	getChannelCalls = infra.NewSuccessMetrics("get_channel_calls", contractCalls)
+)
+
 func NewTownsChannels(ethClient *ethclient.Client, chainId int, address common.Address) (TownsChannels, error) {
 	var towns_channels_contract TownsChannels
 	switch chainId {
@@ -73,6 +77,7 @@ func (za *TownsChannelsProxy[GeneratedTownsChannels]) IsDisabled(opts *bind.Call
 		log.Debug("IsDisabled", "channelNetworkId", channelNetworkId)
 		channelInfo, err := v.GetChannel(opts, channelNetworkId)
 		if err != nil {
+			getChannelCalls.Fail()
 			log.Error("IsDisabled", "channelNetworkId", channelNetworkId, "error", err)
 			return false, err
 		}
@@ -81,6 +86,7 @@ func (za *TownsChannelsProxy[GeneratedTownsChannels]) IsDisabled(opts *bind.Call
 		log.Debug("IsDisabled", "channelNetworkId", channelNetworkId)
 		channelInfo, err := v.GetChannel(opts, channelNetworkId)
 		if err != nil {
+			getChannelCalls.Fail()
 			log.Error("IsDisabled", "channelNetworkId", channelNetworkId, "error", err)
 			return false, err
 		}
@@ -88,6 +94,7 @@ func (za *TownsChannelsProxy[GeneratedTownsChannels]) IsDisabled(opts *bind.Call
 	default:
 		return false, RiverError(protocol.Err_CANNOT_CONNECT, "unsupported chain")
 	}
+	getChannelCalls.Pass()
 	log.Debug("IsDisabled", "channelNetworkId", channelNetworkId, "result", result)
 	return result, nil
 }

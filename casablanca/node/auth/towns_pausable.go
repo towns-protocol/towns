@@ -24,6 +24,10 @@ type TownsPausableProxy struct {
 	contract TownsPausable
 }
 
+var (
+	pausedCalls = infra.NewSuccessMetrics("paused_calls", contractCalls)
+)
+
 func NewTownsPausable(address common.Address, ethClient *ethclient.Client, chainId int) (TownsPausable, error) {
 	var towns_pausable_contract TownsPausable
 	var err error
@@ -54,9 +58,11 @@ func (proxy *TownsPausableProxy) Paused(callOpts *bind.CallOpts) (bool, error) {
 	log.Debug("Paused", "address", proxy.address)
 	result, err := proxy.contract.Paused(callOpts)
 	if err != nil {
+		pausedCalls.Fail()
 		log.Error("Paused", "address", proxy.address, "error", err)
 		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
+	pausedCalls.Pass()
 	log.Debug("Paused", "address", proxy.address, "result", result)
 	return result, nil
 }
