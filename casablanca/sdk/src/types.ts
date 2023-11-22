@@ -33,7 +33,7 @@ import {
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
-import { ISignatures } from './crypto/deviceInfo'
+import { ISignatures } from './crypto/olmLib'
 import { bin_toHexString } from './binary'
 import { RiverEventV2 } from './eventV2'
 

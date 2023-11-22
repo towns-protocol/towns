@@ -8,21 +8,14 @@ import {
     EncryptionAlgorithm,
     IParams,
 } from './base'
-import { DeviceInfo } from '../deviceInfo'
-import {
-    ensureOlmSessionsForDevices,
-    IEncryptedContent,
-    IMegolmEncryptedContent,
-    IOlmSessionResult,
-    MEGOLM_ALGORITHM,
-} from '../olmLib'
-import { DeviceInfoMap, IOlmDevice } from '../deviceList'
+import { IMegolmEncryptedContent, MEGOLM_ALGORITHM, UserDeviceCollection } from '../olmLib'
 import {
     ChannelMessage,
     KeyResponseKind,
     MegolmSession,
     MembershipOp,
     ToDeviceMessage,
+    ToDeviceOp,
 } from '@river/proto'
 import * as olmLib from '../olmLib'
 import { ClearContent, RiverEventV2 } from '../../eventV2'
@@ -162,29 +155,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         singleOlmCreationPhase: boolean,
         session: OutboundSessionInfo,
     ): Promise<void> {
-        // now check if we need to share with any devices
-        const shareMap: Map<string, DeviceInfo[]> = new Map()
-
         const devicesInRoom = await this.getDevicesInRoom(streamId)
-        if (devicesInRoom === null) {
-            this.logCall(`No devices in room to share session for stream ${streamId}`)
-            return
-        }
-
-        for (const [userId, userDevices] of devicesInRoom) {
-            for (const [deviceId, deviceInfo] of userDevices) {
-                if (deviceInfo.getIdentityKey() == this.olmDevice.deviceCurve25519Key) {
-                    // don't bother sending to ourself
-                    continue
-                }
-
-                if (!session.sharedWithDevices.get(userId)?.get(deviceId)) {
-                    shareMap.set(userId, shareMap.get(userId) || [])
-                    shareMap.get(userId)?.push(deviceInfo)
-                }
-            }
-        }
-
         const sessionKey = await this.olmDevice.getOutboundGroupSessionKey(streamId)
         const payload = new MegolmSession({
             streamId: streamId,
@@ -192,135 +163,20 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             sessionKey: sessionKey.key,
             algorithm: MEGOLM_ALGORITHM,
         })
-        // share with all devicesInRoom so do not need to read existing Olm sessions.
-        //const { devicesWithoutSessions, devicesWithSessions } = await getExistingOlmSessions(this.olmDevice, shareMap)
-        try {
-            await Promise.all([
-                /*
-                (async (): Promise<void> => {
-                    // share keys with devices that we already have a session for
-                    const olmSessionList = Array.from(devicesWithSessions.entries())
-                        .map(([userId, sessionsByUser]) =>
-                            Array.from(sessionsByUser.entries()).map(
-                                ([deviceId, session]) =>
-                                    `${userId}/${deviceId}: ${session.sessionId}`,
-                            ),
-                        )
-                        .flat(1)
-                    this.logCall(
-                        'Sharing keys with devices with existing Olm sessions:',
-                        olmSessionList,
-                    )
-                    await this.shareKeyWithOlmSessions(
-                        session,
-                        key,
-                        streamId,
-                        payload,
-                        devicesWithSessions,
-                    )
-                    this.logCall('Shared keys with existing Olm sessions')
-                })(),
-                */
-                (async (): Promise<void> => {
-                    const deviceList = Array.from(shareMap.entries())
-                        .map(([userId, devicesByUser]) =>
-                            devicesByUser.map((device) => `${userId}/${device.deviceId}`),
-                        )
-                        .flat(1)
-                    this.logCall(
-                        'Sharing keys (start phase 1) with devices without existing Olm sessions:',
-                        deviceList,
-                    )
-                    const errorDevices: IOlmDevice[] = []
 
-                    // meanwhile, establish olm sessions for devices that we don't
-                    // already have a session for, and share keys with them.  If
-                    // we're doing two phases of olm session creation, use a
-                    // shorter timeout when fetching one-time keys for the first
-                    // phase.
-                    const start = Date.now()
-                    const failedServers: string[] = []
-                    await this.shareKeyWithDevices(
-                        session,
-                        sessionKey,
-                        streamId,
-                        payload,
-                        shareMap,
-                        errorDevices,
-                    )
-                    this.logCall(
-                        'Shared keys (end phase 1) with devices without existing Olm sessions',
-                    )
+        const toDeviceResponse = new ToDeviceMessage(
+            make_ToDevice_KeyResponse({
+                kind: KeyResponseKind.KRK_KEYS_FOUND,
+                streamId: streamId,
+                sessions: [payload],
+            }),
+        )
 
-                    if (!singleOlmCreationPhase && Date.now() - start < 10000) {
-                        // perform the second phase of olm session creation if requested,
-                        // and if the first phase didn't take too long
-                        void (async (): Promise<void> => {
-                            // Retry sending keys to devices that we were unable to establish
-                            // an olm session for.  This time, we use a longer timeout, but we
-                            // do this in the background and don't block anything else while we
-                            // do this.  We only need to retry users from servers that didn't
-                            // respond the first time.
-                            const retryDevices: Map<string, DeviceInfo[]> = new Map<
-                                string,
-                                DeviceInfo[]
-                            >()
-                            const failedServerMap = new Set()
-                            for (const server of failedServers) {
-                                failedServerMap.add(server)
-                            }
-                            const failedDevices: IOlmDevice[] = []
-                            for (const { userId, deviceInfo } of errorDevices) {
-                                const userHS = userId.slice(userId.indexOf(':') + 1)
-                                if (failedServerMap.has(userHS)) {
-                                    if (retryDevices.has(userId)) {
-                                        retryDevices.get(userId)?.push(deviceInfo)
-                                    } else {
-                                        retryDevices.set(userId, [deviceInfo])
-                                    }
-                                } else {
-                                    // if we aren't going to retry, then handle it
-                                    // as a failed device
-                                    failedDevices.push({ userId, deviceInfo })
-                                }
-                            }
-
-                            const retryDeviceList = Array.from(retryDevices.entries())
-                                .map(([userId, devicesByUser]) =>
-                                    devicesByUser.map((device) => `${userId}/${device.deviceId}`),
-                                )
-                                .flat(1)
-
-                            if (retryDeviceList.length > 0) {
-                                this.logCall(
-                                    'Sharing keys (start phase 2) with devices without existing Olm sessions:',
-                                    retryDeviceList,
-                                )
-                                await this.shareKeyWithDevices(
-                                    session,
-                                    sessionKey,
-                                    streamId,
-                                    payload,
-                                    retryDevices,
-                                    failedDevices,
-                                )
-                                this.logCall(
-                                    'Shared keys (end phase 2) with devices without existing Olm sessions',
-                                )
-                            }
-
-                            await this.notifyFailedOlmDevices(session, sessionKey, failedDevices)
-                        })()
-                    } else {
-                        await this.notifyFailedOlmDevices(session, sessionKey, errorDevices)
-                    }
-                })(),
-                // todo implement: also, notify newly blocked devices that they're blocked
-            ])
-        } catch (error) {
-            this.logError('Error sharing keys', error)
-            throw error
-        }
+        await this.baseApis.encryptAndSendToDevices(
+            devicesInRoom,
+            toDeviceResponse,
+            ToDeviceOp.TDO_KEY_RESPONSE,
+        )
     }
 
     /**
@@ -348,201 +204,6 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         // this.crypto.backupManager.backupGroupSession(this.olmDevice.deviceCurve25519Key!, sessionId)
 
         return new OutboundSessionInfo(sessionId, streamId)
-    }
-
-    /**
-     * Splits the user device map into multiple chunks to reduce the number of
-     * devices we encrypt to per API call.
-     *
-     * @internal
-     *
-     * @param devicesByUser - map from userid to list of devices
-     *
-     * @returns the blocked devices, split into chunks
-     */
-    private splitDevices<T extends DeviceInfo>(
-        devicesByUser: Map<string, Map<string, { device: T }>>,
-    ): IOlmDevice<T>[][] {
-        const maxDevicesPerRequest = 20
-
-        // use an array where the slices of a content map gets stored
-        let currentSlice: IOlmDevice<T>[] = []
-        const mapSlices = [currentSlice]
-
-        for (const [userId, userDevices] of devicesByUser) {
-            for (const deviceInfo of userDevices.values()) {
-                currentSlice.push({
-                    userId: userId,
-                    deviceInfo: deviceInfo.device,
-                })
-            }
-
-            // We do this in the per-user loop as we prefer that all messages to the
-            // same user end up in the same API call to make it easier for the
-            // server (e.g. only have to send one EDU if a remote user, etc). This
-            // does mean that if a user has many devices we may go over the desired
-            // limit, but its not a hard limit so that is fine.
-            if (currentSlice.length > maxDevicesPerRequest) {
-                // the current slice is filled up. Start inserting into the next slice
-                currentSlice = []
-                mapSlices.push(currentSlice)
-            }
-        }
-        if (currentSlice.length === 0) {
-            mapSlices.pop()
-        }
-        return mapSlices
-    }
-
-    /**
-     * @internal
-     *
-     *
-     * @param chain_index - current chain index
-     *
-     * @param userDeviceMap - mapping from userId to deviceInfo
-     *
-     * @param payload - fields to include in the encrypted payload
-     *
-     * @returns Promise which resolves once the key sharing
-     *     for the given userDeviceMap is generated and has been sent.
-     */
-    private encryptAndSendKeysToDevices(
-        session: OutboundSessionInfo,
-        chain_index: number,
-        devices: IOlmDevice[],
-        streamId: string,
-        payload: MegolmSession,
-    ): Promise<void> {
-        const toDeviceResponse = new ToDeviceMessage(
-            make_ToDevice_KeyResponse({
-                kind: KeyResponseKind.KRK_KEYS_FOUND,
-                streamId: streamId,
-                sessions: [payload],
-            }),
-        )
-        return this.crypto
-            .encryptAndSendToDevices(devices, toDeviceResponse)
-            .then(() => {
-                // store that we successfully uploaded the keys of the current slice
-                for (const device of devices) {
-                    session.markSharedWithDevice(
-                        device.userId,
-                        device.deviceInfo.deviceId,
-                        device.deviceInfo.getIdentityKey(),
-                        chain_index,
-                    )
-                }
-            })
-            .catch((error) => {
-                this.logError('failed to encryptAndSendToDevices', error)
-                throw error
-            })
-    }
-
-    /**
-     * @internal
-     *
-     * @param key - the session key as returned by
-     *    OlmDevice.getOutboundGroupSessionKey
-     *
-     * @param payload - the base to-device message payload for sharing keys
-     *
-     * @param devicesByUser - map from userid to list of devices
-     *
-     * @param errorDevices - array that will be populated with the devices that we can't get an
-     *    olm session for
-     *
-     */
-    private async shareKeyWithDevices(
-        session: OutboundSessionInfo,
-        key: IOutboundGroupSessionKey,
-        streamId: string,
-        payload: MegolmSession,
-        devicesByUser: Map<string, DeviceInfo[]>,
-        _errorDevices: IOlmDevice[],
-    ): Promise<void> {
-        // start a new olm session rather than using an existing one
-        const devicemap = await ensureOlmSessionsForDevices(
-            this.olmDevice,
-            this.baseApis,
-            devicesByUser,
-            true,
-        )
-        // we don't prune out errorDevices from devicemap so why call this ?
-        //this.getDevicesWithoutSessions(devicemap, devicesByUser, errorDevices)
-        await this.shareKeyWithOlmSessions(session, key, streamId, payload, devicemap)
-    }
-
-    private async shareKeyWithOlmSessions(
-        session: OutboundSessionInfo,
-        key: IOutboundGroupSessionKey,
-        streamId: string,
-        payload: MegolmSession,
-        deviceMap: Map<string, Map<string, IOlmSessionResult>>,
-    ): Promise<void> {
-        const userDeviceMaps = this.splitDevices(deviceMap)
-        const { chain_index } = { ...key }
-        for (let i = 0; i < userDeviceMaps.length; i++) {
-            const taskDetail = `megolm keys for ${session.sessionId} (slice ${i + 1}/${
-                userDeviceMaps.length
-            })`
-            try {
-                this.logCall(
-                    `Sharing ${taskDetail}`,
-                    userDeviceMaps[i].map((d) => `${d.userId}/${d.deviceInfo.deviceId}`),
-                )
-                await this.encryptAndSendKeysToDevices(
-                    session,
-                    chain_index,
-                    userDeviceMaps[i],
-                    streamId,
-                    payload,
-                )
-                this.logCall(`Shared ${taskDetail}`)
-            } catch (e) {
-                this.logError(`Failed to share ${taskDetail}`)
-                throw e
-            }
-        }
-    }
-
-    /**
-     * Notify devices that we weren't able to create olm sessions.
-     *
-     *
-     *
-     * @param failedDevices - the devices that we were unable to
-     *     create olm sessions for, as returned by shareKeyWithDevices
-     */
-    private async notifyFailedOlmDevices(
-        session: OutboundSessionInfo,
-        key: IOutboundGroupSessionKey,
-        failedDevices: IOlmDevice[],
-    ): Promise<void> {
-        this.logCall(`Notifying ${failedDevices.length} devices we failed to create Olm sessions`)
-
-        // mark the devices that failed as "handled" because we don't want to try
-        // to claim a one-time-key for dead devices on every message.
-        for (const { userId, deviceInfo } of failedDevices) {
-            const deviceId = deviceInfo.deviceId
-
-            session.markSharedWithDevice(
-                userId,
-                deviceId,
-                deviceInfo.getIdentityKey(),
-                key.chain_index,
-            )
-        }
-
-        this.logCall(
-            `Need to notify ${failedDevices.length} failed devices which haven't been notified before`,
-        )
-
-        // send the notifications
-        // note jterzis: do we need a differnt notification for failed olm sessions versus device blocks
-        // which can occur in theory without a failure in session establishment ?
-        //await this.notifyBlockedDevices(session, blockedMap)
     }
 
     /**
@@ -613,7 +274,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             streamId,
         )
 
-        const encryptedContent: IEncryptedContent = {
+        const encryptedContent: IMegolmEncryptedContent = {
             algorithm: MEGOLM_ALGORITHM,
             sender_key: this.olmDevice.deviceCurve25519Key!,
             ciphertext: result.ciphertext,
@@ -648,7 +309,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
      *     element is a map from userId to deviceId to data indicating the devices
      *     that are in the room but that have been blocked.
      */
-    private async getDevicesInRoom(stream_id: string): Promise<null | DeviceInfoMap> {
+    private async getDevicesInRoom(stream_id: string): Promise<UserDeviceCollection> {
         let stream: StreamStateView | undefined
         stream = this.baseApis.stream(stream_id)?.view
         if (!stream) {
@@ -656,20 +317,14 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         }
         if (!stream) {
             this.logError(`stream for room ${stream_id} not found`)
-            return null
+            return {}
         }
         const members: string[] = Array.from(stream.getMemberships().joinedUsers)
         this.logCall(
             `Encrypting for users (shouldEncryptForInvitedMembers:`,
             members.map((u) => `${u} (${MembershipOp[MembershipOp.SO_JOIN]})`),
         )
-
-        const devices = await this.baseApis.downloadKeys(members)
-        if (!devices) {
-            return null
-        }
-
-        return devices
+        return await this.baseApis.downloadUserDeviceInfo(members)
     }
 }
 

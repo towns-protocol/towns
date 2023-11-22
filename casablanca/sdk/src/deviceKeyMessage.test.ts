@@ -1,5 +1,5 @@
 import debug from 'debug'
-import { Client, IDeviceKeyRequest, IDownloadKeyResponse } from './client'
+import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { DeviceKeys } from '@river/proto'
 
@@ -61,10 +61,8 @@ describe('deviceKeyMessageTest', () => {
         )
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
         await bobSelfToDevice.expectToSucceed()
-        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers({
-            [bobsUserId]: {} as IDeviceKeyRequest,
-        })
-        expect(deviceKeys.device_keys[bobsUserId]).toBeDefined()
+        const deviceKeys = await bobsClient.downloadUserDeviceInfo([bobsUserId])
+        expect(deviceKeys[bobsUserId]).toBeDefined()
     })
 
     test('bobDownloadsAlicesDeviceKeys', async () => {
@@ -88,10 +86,8 @@ describe('deviceKeyMessageTest', () => {
             },
         )
         const aliceUserDeviceKeyStreamId = alicesClient.userDeviceKeyStreamId
-        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers({
-            [alicesUserId]: {} as IDeviceKeyRequest,
-        })
-        expect(deviceKeys.device_keys[alicesUserId]).toBeDefined()
+        const deviceKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId])
+        expect(deviceKeys[alicesUserId]).toBeDefined()
     })
 
     test('bobDownloadsAlicesAndOwnDeviceKeys', async () => {
@@ -121,13 +117,10 @@ describe('deviceKeyMessageTest', () => {
         const aliceUserDeviceKeyStreamId = alicesClient.userDeviceKeyStreamId
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
         // give the state sync a chance to run for both deviceKeys
-        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers({
-            [alicesUserId]: {} as IDeviceKeyRequest,
-            [bobsUserId]: {} as IDeviceKeyRequest,
-        })
-        expect(Object.keys(deviceKeys.device_keys).length).toEqual(2)
-        expect(deviceKeys.device_keys[alicesUserId]).toBeDefined()
-        expect(deviceKeys.device_keys[bobsUserId]).toBeDefined()
+        const deviceKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId, bobsUserId])
+        expect(Object.keys(deviceKeys).length).toEqual(2)
+        expect(deviceKeys[alicesUserId]).toBeDefined()
+        expect(deviceKeys[bobsUserId]).toBeDefined()
     })
 
     test('bobDownloadsAlicesMultipleAndOwnDeviceKeys', async () => {
@@ -169,16 +162,10 @@ describe('deviceKeyMessageTest', () => {
         const aliceUserDeviceKeyStreamId = alicesClient.userDeviceKeyStreamId
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
         // give the state sync a chance to run for both deviceKeys
-        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers({
-            [alicesUserId]: {} as IDeviceKeyRequest,
-            [bobsUserId]: {} as IDeviceKeyRequest,
-        })
-        const aliceDevices = deviceKeys.device_keys[alicesUserId]
-        const aliceDeviceKeys = aliceDevices
-            .map((device) => Object.values(device.keys))
-            .flatMap((v) => v)
+        const deviceKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId, bobsUserId])
+        const aliceDevices = deviceKeys[alicesUserId]
+        const aliceDeviceKeys = aliceDevices.map((device) => device.deviceKey)
 
-        expect(Object.keys(deviceKeys.device_keys).length).toEqual(2)
         expect(aliceDevices).toBeDefined()
         expect(aliceDevices.length).toEqual(10)
         // eleventhDeviceKey out of 20 should be downloaded as part of downloadKeysForUsers
@@ -187,6 +174,6 @@ describe('deviceKeyMessageTest', () => {
         expect(aliceDeviceKeys).toContain(alicesClient.olmDevice.deviceCurve25519Key!)
         // any key uploaded earlier than the lookback window (i.e. 10) should not be downloaded
         expect(aliceDeviceKeys).not.toContain(tenthDeviceKey)
-        expect(deviceKeys.device_keys[bobsUserId]).toBeDefined()
+        expect(deviceKeys[bobsUserId]).toBeDefined()
     })
 })

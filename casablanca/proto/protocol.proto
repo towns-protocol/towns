@@ -289,8 +289,7 @@ message UserPayload {
     message ToDevice {
         ToDeviceOp op = 1;
         EncryptedDeviceData message = 2;
-        string device_key = 3;
-        string sender_key = 4;
+        string sender_key = 3;
     }
     
     oneof content {

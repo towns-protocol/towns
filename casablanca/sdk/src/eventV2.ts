@@ -2,7 +2,7 @@ import { dlog } from './dlog'
 import { ChannelMessage, EncryptedData } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { ParsedEvent } from './types'
-import { CryptoBackend, Crypto } from './crypto/crypto'
+import { Crypto } from './crypto/crypto'
 
 const log = dlog('csb:event')
 
@@ -114,10 +114,7 @@ export class RiverEventV2 {
         return this.decryptionPromise
     }
 
-    private async decryptionLoop(
-        crypto: CryptoBackend,
-        options: IDecryptOptions = {},
-    ): Promise<void> {
+    private async decryptionLoop(crypto: Crypto, options: IDecryptOptions = {}): Promise<void> {
         // make sure that this method never runs completely synchronously.
         // (doing so would mean that we would clear decryptionPromise *before*
         // it is set in attemptDecryption - and hence end up with a stuck

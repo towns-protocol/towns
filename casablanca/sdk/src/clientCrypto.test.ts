@@ -2,7 +2,7 @@ import { Client } from './client'
 import { makeTestClient } from './util.test'
 import { OLM_ALGORITHM } from './crypto/olmLib'
 import { make_ToDevice_KeyRequest } from './types'
-import { ToDeviceMessage, ToDeviceOp, UserPayload_ToDevice } from '@river/proto'
+import { OlmMessage, ToDeviceMessage, ToDeviceOp, UserPayload_ToDevice } from '@river/proto'
 
 describe('clientCryptoTest', () => {
     let bobsClient: Client
@@ -26,21 +26,20 @@ describe('clientCryptoTest', () => {
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
         await alicesClient.startSync()
-        const bobsUserId = bobsClient.userId
 
-        // create a message to encrypt with Bob's devices over Olm
-        const envelope = await alicesClient.createOlmEncryptedEvent(
-            new ToDeviceMessage(
-                make_ToDevice_KeyRequest({
-                    streamId: '200',
-                    algorithm: OLM_ALGORITHM,
-                    senderKey: alicesClient.olmDevice.deviceCurve25519Key!,
-                    sessionId: '300',
-                    content: 'First secret encrypted message!',
-                }),
-            ),
-            bobsUserId,
+        const message = new ToDeviceMessage(
+            make_ToDevice_KeyRequest({
+                streamId: '200',
+                algorithm: OLM_ALGORITHM,
+                senderKey: alicesClient.olmDevice.deviceCurve25519Key!,
+                sessionId: '300',
+                content: 'First secret encrypted message!',
+            }),
         )
+
+        const olmMessage = new OlmMessage({ content: message })
+        // create a message to encrypt with Bob's devices over Olm
+        const envelope = alicesClient.encryptOlm(olmMessage, [bobsClient.userDeviceKey()])
         expect(envelope).toBeDefined()
     })
 
@@ -52,20 +51,18 @@ describe('clientCryptoTest', () => {
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
         await alicesClient.startSync()
-        const bobsUserId = bobsClient.userId
 
-        // create a message to encrypt with Bob's devices over Olm
-        const envelope = await alicesClient.createOlmEncryptedEvent(
-            new ToDeviceMessage(
-                make_ToDevice_KeyRequest({
-                    streamId: '200',
-                    algorithm: OLM_ALGORITHM,
-                    senderKey: alicesClient.olmDevice.deviceCurve25519Key!,
-                    sessionId: '300',
-                }),
-            ),
-            bobsUserId,
+        const message = new ToDeviceMessage(
+            make_ToDevice_KeyRequest({
+                streamId: '200',
+                algorithm: OLM_ALGORITHM,
+                senderKey: alicesClient.olmDevice.deviceCurve25519Key!,
+                sessionId: '300',
+            }),
         )
+        const olmMessage = new OlmMessage({ content: message })
+        // create a message to encrypt with Bob's devices over Olm
+        const envelope = await alicesClient.encryptOlm(olmMessage, [bobsClient.userDeviceKey()])
         expect(envelope).toBeDefined()
         const event = {
             // key request or response
@@ -94,7 +91,7 @@ describe('clientCryptoTest', () => {
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
         await alicesClient.startSync()
-        const bobsUserId = bobsClient.userId
+
         const values = ['200', '201']
         const payloads = [
             {
@@ -108,19 +105,18 @@ describe('clientCryptoTest', () => {
         ]
         for (let i = 0; i < payloads.length; i++) {
             const payload = payloads[i]
-            // create a message to encrypt
-            const envelope = await alicesClient.createOlmEncryptedEvent(
-                new ToDeviceMessage(
-                    make_ToDevice_KeyRequest({
-                        streamId: payload.content.key,
-                        algorithm: OLM_ALGORITHM,
-                        senderKey: alicesClient.olmDevice.deviceCurve25519Key!,
-                        sessionId: '300',
-                        content: JSON.stringify(payload),
-                    }),
-                ),
-                bobsUserId,
+            const message = new ToDeviceMessage(
+                make_ToDevice_KeyRequest({
+                    streamId: payload.content.key,
+                    algorithm: OLM_ALGORITHM,
+                    senderKey: alicesClient.olmDevice.deviceCurve25519Key!,
+                    sessionId: '300',
+                    content: JSON.stringify(payload),
+                }),
             )
+            const olmMessage = new OlmMessage({ content: message })
+            // create a message to encrypt
+            const envelope = await alicesClient.encryptOlm(olmMessage, [bobsClient.userDeviceKey()])
 
             expect(envelope).toBeDefined()
             const event = {

@@ -1,15 +1,17 @@
-import { IOlmDevice } from '../deviceList'
+import { UserDevice } from '../olmLib'
 import { InboundGroupSessionData } from '../olmDevice'
 import {
-    IDeviceData,
     IWithheld,
     ISessionInfo,
     AccountRecord,
     MegolmSessionRecord,
     OlmSessionRecord,
+    UserDeviceRecord,
 } from './types'
 
 import Dexie, { Table } from 'dexie'
+
+const DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS = 15 * 60 * 1000 // 15 minutes
 
 export class CryptoStore extends Dexie {
     account!: Table<AccountRecord>
@@ -18,23 +20,25 @@ export class CryptoStore extends Dexie {
     inboundGroupSessions!: Table<InboundGroupSessionData & { streamId: string; sessionId: string }>
     inboundGroupSessionsWithheld!: Table<IWithheld & { streamId: string; sessionId: string }>
     sharedHistoryInboundSessions!: Table<{ streamId: string; sessionId: string }>
-    deviceData!: Table<IDeviceData>
-    notifiedErrorDevices!: Table<IOlmDevice>
+    devices!: Table<UserDeviceRecord>
     userId: string
 
     constructor(databaseName: string, userId: string) {
         super(databaseName)
         this.userId = userId
-        this.version(1).stores({
+        this.version(2).stores({
             account: 'id',
             olmSessions: '[deviceKey+sessionId], deviceKey, sessionId',
             inboundGroupSessions: '[streamId+sessionId]',
             inboundGroupSessionsWithheld: '[streamId+sessionId]',
             outboundGroupSessions: 'streamId',
             sharedHistoryInboundSessions: '[streamId+sessionId]',
-            deviceData: '',
-            notifiedErrorDevices: '',
+            devices: '[userId+deviceId],expirationTimestamp',
         })
+    }
+
+    async initialize() {
+        await this.devices.where('expirationTimestamp').below(Date.now()).delete()
     }
 
     deleteAllData() {
@@ -127,15 +131,6 @@ export class CryptoStore extends Dexie {
         await this.inboundGroupSessionsWithheld.put({ streamId, sessionId, ...sessionData })
     }
 
-    // Device Data
-    async getEndToEndDeviceData(): Promise<IDeviceData | undefined> {
-        return await this.deviceData.get('-')
-    }
-
-    async storeEndToEndDeviceData(deviceData: IDeviceData): Promise<void> {
-        await this.deviceData.put(deviceData, '-')
-    }
-
     async addSharedHistoryInboundGroupSession(streamId: string, sessionId: string): Promise<void> {
         await this.sharedHistoryInboundSessions.put({ streamId, sessionId })
     }
@@ -163,5 +158,50 @@ export class CryptoStore extends Dexie {
         return await this.transaction('rw', this.outboundGroupSessions, async () => {
             return await fn()
         })
+    }
+
+    /**
+     * Only used for testing
+     * @returns total number of devices in the store
+     */
+    async deviceRecordCount() {
+        return await this.devices.count()
+    }
+
+    /**
+     * Store a list of devices for a given userId
+     * @param userId string
+     * @param devices UserDeviceInfo[]
+     * @param expirationMs Expiration time in milliseconds
+     */
+    async saveUserDevices(
+        userId: string,
+        devices: UserDevice[],
+        expirationMs: number = DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS,
+    ) {
+        const expirationTimestamp = Date.now() + expirationMs
+        for (const device of devices) {
+            await this.devices.put({ userId, expirationTimestamp, ...device })
+        }
+    }
+
+    /**
+     * Get all stored devices for a given userId
+     * @param userId string
+     * @returns UserDevice[], a list of devices
+     */
+    async getUserDevices(userId: string): Promise<UserDevice[]> {
+        const expirationTimestamp = Date.now()
+        return (
+            await this.devices
+                .where('userId')
+                .equals(userId)
+                .and((record) => record.expirationTimestamp > expirationTimestamp)
+                .toArray()
+        ).map((record) => ({
+            deviceId: record.deviceId,
+            deviceKey: record.deviceKey,
+            fallbackKey: record.fallbackKey,
+        }))
     }
 }

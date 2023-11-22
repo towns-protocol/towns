@@ -120,7 +120,7 @@ export class OlmDevice {
     /** Ed25519 key for the account, unknown until we load the account from storage in init() */
     public deviceDoNotUseKey: string | null = null
     // keyId: base64(key)
-    public fallbackKey: Record<string, string> = {}
+    public fallbackKey: { keyId: string; key: string } = { keyId: '', key: '' }
 
     // Keep track of sessions that we're starting, so that we don't start
     // multiple sessions for the same device at the same time.
@@ -171,7 +171,6 @@ export class OlmDevice {
         exportedOlmDevice: fromExportedDevice,
     }: IInitOpts = {}): Promise<void> {
         let e2eKeys
-        let fallbackKey: Record<string, Record<string, string>> | undefined
         if (!this.olmDelegate.initialized) {
             await this.olmDelegate.init()
         }
@@ -190,14 +189,8 @@ export class OlmDevice {
                 }
                 await this.initializeAccount(account)
             }
-            fallbackKey = await this.getFallbackKey()
-            if (!fallbackKey || Object.keys(fallbackKey.curve25519).length === 0) {
-                // fallback key { keyId: base64(key) }
-                await this.generateFallbackKey()
-                this.fallbackKey = (await this.getFallbackKey()).curve25519
-            } else {
-                this.fallbackKey = fallbackKey.curve25519
-            }
+            await this.generateFallbackKeyIfNeeded()
+            this.fallbackKey = await this.getFallbackKey()
             e2eKeys = JSON.parse(account.identity_keys())
         } finally {
             account.free()
@@ -402,15 +395,27 @@ export class OlmDevice {
      *
      * @returns Resolved once the account is saved back having generated the key
      */
-    public async generateFallbackKey(): Promise<void> {
-        const account = await this.getAccount()
-        account.generate_fallback_key()
-        await this.storeAccount(account)
+    public async generateFallbackKeyIfNeeded(): Promise<void> {
+        try {
+            await this.getFallbackKey()
+        } catch {
+            const account = await this.getAccount()
+            account.generate_fallback_key()
+            await this.storeAccount(account)
+        }
     }
 
-    public async getFallbackKey(): Promise<Record<string, Record<string, string>>> {
+    public async getFallbackKey(): Promise<{ keyId: string; key: string }> {
         const account = await this.getAccount()
-        return JSON.parse(account.unpublished_fallback_key())
+        const record: Record<string, Record<string, string>> = JSON.parse(
+            account.unpublished_fallback_key(),
+        )
+        const key = Object.values(record.curve25519)[0]
+        const keyId = Object.keys(record.curve25519)[0]
+        if (!key || !keyId) {
+            throw new Error('No fallback key')
+        }
+        return { key, keyId }
     }
 
     public async forgetOldFallbackKey(): Promise<void> {
@@ -787,6 +792,27 @@ export class OlmDevice {
         })
     }
 
+    public async encryptUsingFallbackKey(
+        theirIdentityKey: string,
+        fallbackKey: string,
+        payload: string,
+    ): Promise<EncryptedMessageEnvelope> {
+        return this.cryptoStore.withAccountAndOlmSessionsTx(async () => {
+            const session = this.olmDelegate.createSession()
+            try {
+                const account = await this.getAccount()
+                session.create_outbound(account, theirIdentityKey, fallbackKey)
+                const result = session.encrypt(payload)
+                return new EncryptedMessageEnvelope({ body: result.body, type: result.type })
+            } catch (error) {
+                log('Error encrypting message with fallback key', error)
+                throw error
+            } finally {
+                session.free()
+            }
+        })
+    }
+
     /**
      * Generate a new outbound session
      *
@@ -975,39 +1001,6 @@ export class OlmDevice {
             info.push(sessionInfo)
         }
         return info
-    }
-
-    /**
-     * Encrypt an outgoing message using an existing session
-     *
-     * @param theirDeviceIdentityKey - Curve25519 identity key for the
-     *     remote device
-     * @param sessionId -  the id of the active session
-     * @param payloadString -  payload to be encrypted and sent
-     *
-     * @returns ciphertext
-     */
-    public async encryptMessage(
-        theirDeviceIdentityKey: string,
-        sessionId: string,
-        payloadString: string,
-    ): Promise<EncryptedMessageEnvelope> {
-        checkPayloadLength(payloadString)
-        return this.cryptoStore.withOlmSessionsTx(async () => {
-            const sessionInfo = await this.getSession(theirDeviceIdentityKey, sessionId)
-            const sessionDesc = sessionInfo.session.describe()
-            log(
-                'Olm Session ID ' +
-                    sessionId +
-                    ' to ' +
-                    theirDeviceIdentityKey +
-                    ': ' +
-                    sessionDesc,
-            )
-            const encrypted = sessionInfo.session.encrypt(payloadString)
-            await this.saveSession(theirDeviceIdentityKey, sessionInfo)
-            return new EncryptedMessageEnvelope({ body: encrypted.body, type: encrypted.type })
-        })
     }
 
     /**

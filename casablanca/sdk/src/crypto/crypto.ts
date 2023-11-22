@@ -9,16 +9,8 @@ import { check } from '../check'
 import { Client } from '../client'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import {
-    OLM_ALGORITHM,
-    MEGOLM_ALGORITHM,
-    encryptMessageForDevice,
-    ensureOlmSessionsForDevices,
-    IOlmSessionResult,
-    IOlmEncryptedContent,
-} from './olmLib'
+import { OLM_ALGORITHM, MEGOLM_ALGORITHM, UserDevice, ISignatures } from './olmLib'
 import { OlmMegolmDelegate } from '@river/mecholm'
-import { DeviceInfo, ISignatures, ToDeviceBatch } from './deviceInfo'
 import { OlmDevice, IInitOpts } from './olmDevice'
 import {
     ChannelMessage,
@@ -29,15 +21,13 @@ import {
     MegolmSession,
     OlmMessage,
     ToDeviceMessage,
-    ToDeviceOp,
     UserPayload_ToDevice,
 } from '@river/proto'
 import { IFallbackKey, recursiveMapToObject } from '../types'
 import { bin_fromHexString } from '../binary'
-import { DeviceList, IOlmDevice } from './deviceList'
 import { ethers } from 'ethers'
 import { CryptoStore } from './store/cryptoStore'
-import { OlmDecryption, OlmEncryption } from './algorithms/olm'
+import { OlmDecryption } from './algorithms/olm'
 import { MegolmDecryption, MegolmEncryption } from './algorithms/megolm'
 import { ClearContent, RiverEventV2 } from '../eventV2'
 
@@ -231,14 +221,6 @@ export interface IImportRoomKeysOpts {
 
 export type CryptoEventHandlerMap = {
     /**
-     * Fires whenever a device is marked as verified|unverified|blocked|unblocked
-     */
-    [CryptoEvent.DeviceVerificationChanged]: (
-        userId: string,
-        deviceId: string,
-        device: DeviceInfo,
-    ) => void
-    /**
      * Fires whenever the stored devices for a user will be updated
      */
     [CryptoEvent.WillUpdateDevices]: (users: string[], initialFetch: boolean) => void
@@ -259,16 +241,13 @@ export interface CryptoBackend {
     /**
      * Encrypt an event using Olm
      *
-     * @param event -  event to be encrypted with Olm
-     * @param recipients - recipients to encrypt message for
+     * @param payload -  string to be encrypted with Olm
+     * @param deviceKeys - recipients to encrypt message for
      *
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    encryptOlmEvent(
-        event: ToDeviceMessage,
-        recipients: IEncryptionUserRecipient,
-    ): Promise<EncryptedDeviceData>
+    encryptOlm(payload: string, deviceKeys: UserDevice[]): Promise<EncryptedDeviceData>
 
     /**
      * Encrypt an event using Megolm
@@ -312,9 +291,6 @@ export class Crypto
 
     public readonly supportedAlgorithms: string[]
     public readonly olmDevice: OlmDevice
-    public readonly deviceList: DeviceList
-
-    public readonly olmEncryption: OlmEncryption
     public readonly megolmEncryption: MegolmEncryption
     public readonly olmDecryption: OlmDecryption
     public readonly megolmDecryption: MegolmDecryption
@@ -341,16 +317,8 @@ export class Crypto
             throw e
         })
         this.olmDevice = new OlmDevice(this.olmDelegate, cryptoStore)
-        this.deviceList = new DeviceList(this.client, cryptoStore, this.olmDevice)
         this.supportedAlgorithms = [OLM_ALGORITHM, MEGOLM_ALGORITHM]
-        this.olmEncryption = new OlmEncryption({
-            userId: this.userId,
-            deviceId: this.deviceId,
-            crypto: this,
-            olmDevice: this.olmDevice,
-            baseApis: this.client,
-            config: { algorithm: OLM_ALGORITHM },
-        })
+
         this.olmDecryption = new OlmDecryption({
             userId: this.userId,
             crypto: this,
@@ -382,10 +350,8 @@ export class Crypto
     }
 
     /** stop background processes */
-    public stop(): void {
-        // todo: outgoingRoomKeyRequestManager.stop, dehydrationManager.stop
-        this.deviceList.stop()
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    public stop(): void {}
 
     /** Iniitalize crypto module prior to usage
      *
@@ -393,8 +359,6 @@ export class Crypto
     public async init({ exportedOlmDevice, pickleKey }: IInitOpts = {}): Promise<void> {
         // initialize deviceKey and fallbackKey
         await this.olmDevice.init({ exportedOlmDevice, pickleKey })
-        // todo: implement
-        //await this.deviceList.load()
 
         // build device keys to upload
         if (!this.olmDevice.deviceCurve25519Key || !this.olmDevice.deviceDoNotUseKey) {
@@ -405,37 +369,10 @@ export class Crypto
 
         // todo: create fallback keys here
         const fallbackKey = this.olmDevice.fallbackKey
-        const keyId = Object.keys(fallbackKey)[0]
+
         this.fallbackKeys[this.deviceId] = {
-            [`curve25519:${this.deviceId}:${keyId}`]: { key: fallbackKey[keyId] },
+            [`curve25519:${this.deviceId}:${fallbackKey.keyId}`]: { key: fallbackKey.key },
         }
-
-        log('Crypto: fetching own devices...')
-        let myDevices = this.deviceList.getRawStoredDevicesForUser(this.userId)
-
-        if (!myDevices) {
-            myDevices = {}
-        }
-
-        if (!myDevices[this.deviceId]) {
-            // add our own deviceinfo to the cryptoStore
-            log('Crypto: adding this device to the store...')
-            const deviceInfo = {
-                keys: this.deviceKeys,
-                algorithms: this.supportedAlgorithms,
-                verified: DeviceInfo.DeviceVerification.VERIFIED,
-                known: true,
-            }
-
-            myDevices[this.deviceId] = deviceInfo
-            this.deviceList.storeDevicesForUser(this.userId, myDevices)
-            // await this.deviceList.saveIfDirty()
-        }
-
-        // todo:
-        // get cross-signing keys
-        // start tracking out own device list
-        // start key backup manager
     }
 
     public async uploadDeviceKeys(): Promise<void> {
@@ -478,40 +415,23 @@ export class Crypto
         }
     }
 
-    /**
-     * Encrypt an event using Olm.
-     *
-     * @param event -  event to be sent
-     *
-     * @param target - destination userId devices to encrypt messages for
-     * jterzis: 06/14/23: if 1 userId, sync all devices for that user and
-     * and encrypt contents for those devices. If multiple userIds, sync
-     * each user's devices and encrypt contents for those devices. Assumes
-     * the caller checks the membership of those users for a room in the case
-     * of group message encryption.
-     *
-     * @returns Promise which resolves when the event has been
-     *     encrypted, or null if nothing was needed
-     */
-    public async encryptOlmEvent(
-        event: ToDeviceMessage,
-        recipient: IEncryptionUserRecipient,
-    ): Promise<EncryptedDeviceData> {
-        const encryptedContent = await this.olmEncryption.encryptMessage(recipient.userIds, event)
-
-        if (
-            this.olmDevice.deviceCurve25519Key === null ||
-            this.olmDevice.deviceDoNotUseKey === null
-        ) {
-            throw new Error('device keys not initialized, cannot encrypt event')
-        }
-        const encryptedDeviceData = new EncryptedDeviceData({
-            ciphertext: encryptedContent.ciphertext,
-            algorithm: encryptedContent.algorithm,
+    async encryptOlm(payload: string, deviceKeys: UserDevice[]): Promise<EncryptedDeviceData> {
+        const ciphertextRecord: Record<string, EncryptedMessageEnvelope> = {}
+        await Promise.all(
+            deviceKeys.map(async (deviceKey) => {
+                const encrypted = await this.olmDevice.encryptUsingFallbackKey(
+                    deviceKey.deviceKey,
+                    deviceKey.fallbackKey,
+                    payload,
+                )
+                ciphertextRecord[deviceKey.deviceKey] = encrypted
+            }),
+        )
+        return new EncryptedDeviceData({
+            algorithm: OLM_ALGORITHM,
+            ciphertext: ciphertextRecord,
         })
-        return encryptedDeviceData
     }
-
     /**
      * Encrypt an event according to the configuration of the stream.
      *
@@ -569,177 +489,6 @@ export class Crypto
      */
     public async decryptMegolmEvent(event: RiverEventV2): Promise<ClearContent> {
         return this.megolmDecryption.decryptEvent(event)
-    }
-
-    /**
-     * Get the stored keys for a single device
-     *
-     *
-     * @returns device, or undefined
-     * if we don't know about this device
-     */
-    public getStoredDevice(userId: string, deviceId: string): DeviceInfo | undefined {
-        const devices = this.deviceList.getStoredDevice(userId, deviceId)
-        if (devices) {
-            return devices
-        }
-        return
-    }
-
-    /**
-     * Try to make sure we have established olm sessions for all known devices for
-     * the given users.
-     *
-     * @param users - list of user ids
-     * @param force - If true, force a new Olm session to be created. Default false.
-     *
-     * @returns resolves once the sessions are complete, to
-     *    an Object mapping from userId to deviceId to
-     *    `IOlmSessionResult`
-     */
-    public ensureOlmSessionsForUsers(
-        users: string[],
-        force?: boolean,
-    ): Promise<Map<string, Map<string, IOlmSessionResult>>> {
-        // map user Id → DeviceInfo[]
-        const devicesByUser: Map<string, DeviceInfo[]> = new Map()
-
-        for (const userId of users) {
-            const userDevices: DeviceInfo[] = []
-            devicesByUser.set(userId, userDevices)
-
-            const devices = this.deviceList.getStoredDevicesForUser(userId) || []
-            for (const deviceInfo of devices) {
-                const key = deviceInfo.getIdentityKey()
-                if (key == this.olmDevice.deviceCurve25519Key) {
-                    // don't bother setting up session to ourself
-                    continue
-                }
-                /* todo: implement device verification
-                    if (deviceInfo.verified == DeviceVerification.BLOCKED) {
-                        // don't bother setting up sessions with blocked users
-                        continue;
-                    }
-                    */
-
-                userDevices.push(deviceInfo)
-            }
-        }
-
-        return ensureOlmSessionsForDevices(this.olmDevice, this.client, devicesByUser, force)
-    }
-
-    /**
-     * Encrypts and sends a given object via Olm to-device messages to a given set of devices.
-     *
-     */
-    public async encryptAndSendToDevices(
-        userDeviceInfoArr: IOlmDevice[],
-        payload: ToDeviceMessage,
-    ): Promise<void> {
-        const toDeviceBatch: ToDeviceBatch = {
-            batch: [],
-        }
-
-        try {
-            // encrypt payload with Olm for each device individually
-            await Promise.all(
-                userDeviceInfoArr.map(async ({ userId, deviceInfo }) => {
-                    const deviceId = deviceInfo.deviceId
-                    const ciphertextRecord: Record<string, EncryptedMessageEnvelope> = {}
-                    const encryptedContent: IOlmEncryptedContent = {
-                        algorithm: OLM_ALGORITHM,
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        sender_key: this.olmDevice.deviceCurve25519Key!,
-                        ciphertext: ciphertextRecord,
-                    }
-
-                    toDeviceBatch.batch.push({
-                        userId,
-                        deviceId,
-                        payload: encryptedContent,
-                    })
-
-                    // ensure Olm session for devices, forcing a new one
-                    // which means every message is a pre-key message
-                    // using the fallback key.
-                    await ensureOlmSessionsForDevices(
-                        this.olmDevice,
-                        this.client,
-                        new Map([[userId, [deviceInfo]]]),
-                        true,
-                    )
-
-                    const payloadFields = new OlmMessage({ content: payload })
-                    await encryptMessageForDevice(
-                        encryptedContent.ciphertext,
-                        this.olmDevice,
-                        userId,
-                        deviceInfo,
-                        payloadFields,
-                    )
-                }),
-            )
-            // prune any devices that encryptMessageForDevice couldn't encrypt for,
-            // which is to say nothing would have been added to the ciphertext object.
-            // Corrollary, is that we don't waste a to-device message on a device that
-            // we couldn't encrypt for.
-            toDeviceBatch.batch = toDeviceBatch.batch.filter((msg) => {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                if (!msg.payload?.ciphertext) {
-                    log(
-                        `encryptAndSendToDevices: no ciphertext for device ${msg.userId}, ${msg.deviceId}`,
-                    )
-                    return false
-                }
-                if (Object.keys(msg.payload.ciphertext).length > 0) {
-                    return true
-                } else {
-                    log(
-                        `encryptAndSendToDevices: no ciphertext for device ${msg.userId}, ${msg.deviceId}`,
-                    )
-                    return false
-                }
-            })
-
-            try {
-                let type: ToDeviceOp
-                switch (payload.payload.case) {
-                    case 'request':
-                        type = ToDeviceOp.TDO_KEY_REQUEST
-                        break
-                    case 'response':
-                        type = ToDeviceOp.TDO_KEY_RESPONSE
-                        break
-                    default:
-                        throw new Error('Unknown payload type')
-                }
-                await Promise.all(
-                    toDeviceBatch.batch.map(async (msg) => {
-                        if (!msg.payload?.ciphertext) {
-                            log(
-                                `encryptAndSendToDevices: no ciphertext for device ${msg.userId}, ${msg.deviceId}`,
-                            )
-                            throw new Error('no ciphertext')
-                        }
-                        await this.client.sendToDevicesMessage(
-                            msg.userId,
-                            new EncryptedDeviceData({
-                                algorithm: OLM_ALGORITHM,
-                                ciphertext: msg.payload.ciphertext,
-                            }),
-                            type,
-                        )
-                    }),
-                )
-            } catch (e) {
-                log('sendToDeviceFailed', e)
-                throw e
-            }
-        } catch (e) {
-            log('sendToDeviceFailed promises failed', e)
-            throw e
-        }
     }
 
     /**

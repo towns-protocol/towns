@@ -2,113 +2,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument */
 import { dlog } from '../../dlog'
 import { IEventOlmDecryptionResult } from '../crypto'
-import { DeviceInfo } from '../deviceInfo'
-import { DecryptionAlgorithm, DecryptionError, EncryptionAlgorithm } from './base'
-import { IOlmEncryptedContent, OLM_ALGORITHM, encryptMessageForDevice } from '../olmLib'
+import { DecryptionAlgorithm, DecryptionError } from './base'
 import { IInboundSession } from '../olmDevice'
-import {
-    EncryptedMessageEnvelope,
-    OlmMessage,
-    ToDeviceMessage,
-    UserPayload_ToDevice,
-} from '@river/proto'
+import { EncryptedMessageEnvelope, OlmMessage, UserPayload_ToDevice } from '@river/proto'
 
 const log = dlog('csb:olm')
-
-const DeviceVerification = DeviceInfo.DeviceVerification
-
-/**
- * Olm encryption implementation
- *
- * @param params - parameters, as per {@link EncryptionAlgorithm}
- */
-export class OlmEncryption extends EncryptionAlgorithm {
-    private prepPromise: Promise<void> | null = null
-
-    private ensureSession(userIds: string[]): Promise<void> {
-        if (this.prepPromise) {
-            // prep already in progress
-            return this.prepPromise
-        }
-
-        // jterzis todo 06/14/23: fix this to use await for each async callback
-        // rather than promise chaining.
-        this.prepPromise = this.crypto.deviceList
-            .downloadKeys(userIds)
-            .then(() => {
-                return this.crypto.ensureOlmSessionsForUsers(userIds)
-            })
-            .then(() => {
-                return
-            })
-            .finally(() => {
-                this.prepPromise = null
-            })
-
-        return this.prepPromise
-    }
-
-    /** Encrypt a message with Olm sessions for each user's device separately.
-     *
-     * @param content - plaintext event content
-     *
-     * @returns Promise which resolves to the new event body
-     */
-    public async encryptMessage(
-        recipientUsers: string[],
-        payload: ToDeviceMessage,
-    ): Promise<IOlmEncryptedContent> {
-        await this.ensureSession(recipientUsers)
-
-        if (payload.payload === undefined) {
-            throw new Error('payload value is undefined')
-        }
-
-        if (!this.olmDevice.deviceCurve25519Key) {
-            throw new Error('Olm device has no curve25519 key')
-        }
-
-        const ciphertextRecord: Record<string, EncryptedMessageEnvelope> = {}
-        const encryptedContent: IOlmEncryptedContent = {
-            algorithm: OLM_ALGORITHM,
-            sender_key: this.olmDevice.deviceCurve25519Key,
-            ciphertext: ciphertextRecord,
-        }
-
-        const promises: Promise<void>[] = []
-
-        for (const userId of recipientUsers) {
-            const devices = this.crypto.deviceList.getStoredDevicesForUser(userId) || []
-
-            for (const deviceInfo of devices) {
-                const key = deviceInfo.getIdentityKey()
-                if (key == this.olmDevice.deviceCurve25519Key) {
-                    // don't bother sending to ourself
-                    continue
-                }
-                /* todo: implement device verification
-                if (deviceInfo.verified == DeviceVerification.BLOCKED) {
-                    // don't bother setting up sessions with blocked users
-                    continue
-                }
-                */
-                const payloadFields = new OlmMessage({ content: payload })
-
-                promises.push(
-                    encryptMessageForDevice(
-                        encryptedContent.ciphertext,
-                        this.olmDevice,
-                        userId,
-                        deviceInfo,
-                        payloadFields,
-                    ),
-                )
-            }
-        }
-
-        return Promise.all(promises).then(() => encryptedContent)
-    }
-}
 
 /**
  * Olm decryption implementation
@@ -161,16 +59,6 @@ export class OlmDecryption extends DecryptionAlgorithm {
         }
 
         const payload = OlmMessage.fromJsonString(payloadString)
-
-        // check that the device that encrypted the event belongs to the user
-        // that the event claims it's from.  We need to make sure that our
-        // device list is up-to-date.  If the device is unknown, we can only
-        // assume that the device logged out.  Some event handlers, such as
-        // secret sharing, may be more strict and reject events that come from
-        // unknown devices.
-        await this.crypto.deviceList.downloadKeys([senderUserId], false)
-        // todo: validate device key belongs to sender
-        //const senderKeyUser = this.crypto.deviceList.getUserByIdentityKey(OLM_ALGORITHM, deviceKey)
 
         return {
             clearEvent: payload,

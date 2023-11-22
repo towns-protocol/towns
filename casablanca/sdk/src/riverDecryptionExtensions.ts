@@ -377,11 +377,13 @@ export class RiverDecryptionExtension {
                     `CDE::onToDeviceEvent - no processor found for event with op ${ToDeviceOp[op]}`,
                 )
             }
-            const intendedDeviceKey = event.deviceKey
-            if (intendedDeviceKey !== this.client.olmDevice.deviceCurve25519Key) {
-                // not intended for this device, not attempting to decrypt',
+
+            const ourDeviceKey = this.client.olmDevice.deviceCurve25519Key ?? ''
+            if (!event.message?.ciphertext[ourDeviceKey]) {
+                console.info('CDE::onToDeviceEvent - ignoring event, not intended for this device.')
                 return
             }
+
             try {
                 const clear = await this.client.decryptOlmEvent(event, senderUserId)
                 const senderCurve25519Key = event.senderKey
@@ -392,12 +394,9 @@ export class RiverDecryptionExtension {
                 })
             } catch (e) {
                 console.error(
-                    `CDE::onToDeviceEvent error decrypting to-device event for device key ${
-                        event.deviceKey
-                    },
-                    current device key ${
-                        this.client.olmDevice.deviceCurve25519Key
-                    }, ciphertext: ${JSON.stringify(event.message)}`,
+                    `CDE::onToDeviceEvent error decrypting to-device event. ciphertext: ${JSON.stringify(
+                        event.message,
+                    )}`,
                     e,
                 )
                 return
@@ -675,15 +674,13 @@ export class RiverDecryptionExtension {
             return
         }
 
-        // download key for user to DeviceList
-        await this.client.downloadKeys([fromUserId])
+        // Check if we already have the fallback keys for this senderKey
+        // if not, force a new download!
+        const knownDevices = await this.client.knownDevicesForUserId(fromUserId)
+        const forceDownload = knownDevices.every((device) => device.deviceKey !== senderKey)
 
-        const deviceInfo = this.client.deviceList?.getDeviceByIdentityKey(
-            MEGOLM_ALGORITHM,
-            senderKey,
-        )
-
-        if (!deviceInfo) {
+        const deviceInfos = await this.client.downloadUserDeviceInfo([fromUserId], forceDownload)
+        if (deviceInfos[fromUserId] === undefined) {
             console.warn(
                 'CDE::onKeySolicitation - got key sharing request with no device info found',
             )
@@ -691,8 +688,11 @@ export class RiverDecryptionExtension {
         }
 
         const encryptAndRespondWith = async (response: ToDeviceMessage) => {
-            const devicesInfo = [{ userId: fromUserId, deviceInfo }]
-            return this.client.encryptAndSendToDevices(devicesInfo, response)
+            return this.client.encryptAndSendToDevices(
+                deviceInfos,
+                response,
+                ToDeviceOp.TDO_KEY_RESPONSE,
+            )
         }
 
         const getUniqueUnknownSharedHistorySessions = async (channelId: string) => {

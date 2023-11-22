@@ -17,7 +17,6 @@ import {
     FallbackKeys,
     Key,
     SyncCookie,
-    DeviceKeys,
     UserPayload_ToDevice,
     EncryptedDeviceData,
     ToDeviceMessage,
@@ -30,15 +29,11 @@ import {
     FullyReadMarker,
     Envelope,
     Err,
+    OlmMessage,
 } from '@river/proto'
-import {
-    Crypto,
-    EncryptionInput,
-    GroupEncryptionInput,
-    IEventOlmDecryptionResult,
-} from './crypto/crypto'
+import { Crypto, GroupEncryptionInput, IEventOlmDecryptionResult } from './crypto/crypto'
 import { OlmDevice, IExportedDevice as IExportedOlmDevice } from './crypto/olmDevice'
-import { DeviceInfoMap, DeviceList, IOlmDevice } from './crypto/deviceList'
+import { UserDevice, UserDeviceCollection, MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { DLogger, dlog, dlogError } from './dlog'
 import { StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
@@ -92,14 +87,14 @@ import {
 } from './types'
 import { bin_toHexString, shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/cryptoStore'
-import { DeviceInfo } from './crypto/deviceInfo'
+
 import { IDecryptOptions, RiverEventsV2, RiverEventV2 } from './eventV2'
 import debug from 'debug'
-import { MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { Stream } from './stream'
 import { Code } from '@connectrpc/connect'
 import { isIConnectError } from './utils'
 import { EntitlementsDelegate, RiverDecryptionExtension } from './riverDecryptionExtensions'
+import { deviceKeyPayloadToUserDevice } from './clientUtils'
 
 const enum AbortReason {
     SHUTDOWN = 'SHUTDOWN',
@@ -183,6 +178,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const shortId = shortenHexString(
             this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
         )
+
         this.logCall = dlog('csb:cl:call').extend(shortId)
         this.logSync = dlog('csb:cl:sync').extend(shortId)
         this.logEmitFromStream = dlog('csb:cl:stream').extend(shortId)
@@ -1359,133 +1355,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
     }
 
-    async sendToDevicesMessage(
-        userId: string,
-        event: EncryptedDeviceData,
-        type: ToDeviceOp | string,
-    ): Promise<void[]> {
-        const op: ToDeviceOp =
-            typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
-        assert(op !== undefined, 'invalid to device op')
-        const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
-        if (!senderKey) {
-            this.logCall('no sender key')
-        }
-        const streamId: string = makeUserStreamId(userId)
-        const miniblockHash = await this.getStreamLastMiniblockHash(streamId)
-        // encrypt event contents and encode ciphertext
-        const envelope = event
-        const targetDeviceKeys = Object.keys(event.ciphertext)
-        const promiseArray = targetDeviceKeys.map((deviceKey) => {
-            if (deviceKey == senderKey) {
-                this.logCall('dont send to own device')
-                return
-            }
-            this.logCall(
-                `sendToDevicesMessage:: toDevice streamId ${streamId}, userId ${userId}, devices ${deviceKey}`,
-            )
-            return this.makeEventWithHashAndAddToStream(
-                streamId,
-                make_UserPayload_ToDevice({
-                    // key request or response
-                    op,
-                    message: envelope,
-                    // deviceKey is curve25519 id key of recipient device
-                    deviceKey,
-                    // senderKey is curve25519 id key of sender device
-                    senderKey: senderKey ?? '',
-                }),
-                miniblockHash,
-            )
-        })
-
-        return Promise.all(promiseArray.flat())
-    }
-
-    async encryptAndSendToDevicesMessage(
-        userId: string,
-        event: ToDeviceMessage,
-        type: ToDeviceOp | string,
-    ): Promise<void[]> {
-        const op: ToDeviceOp =
-            typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
-        assert(op !== undefined, 'invalid to device op')
-        const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
-        if (!senderKey) {
-            throw new Error('no sender key')
-        }
-        const streamId: string = makeUserStreamId(userId)
-        const miniblockHash = await this.getStreamLastMiniblockHash(streamId)
-        // encrypt event contents and encode ciphertext
-        const envelope = await this.createOlmEncryptedEvent(event, userId)
-        const targetDeviceKeys = Object.keys(envelope.ciphertext)
-        const promiseArray = targetDeviceKeys.map((deviceKey) => {
-            if (deviceKey === senderKey) {
-                this.logCall('dont send to own device')
-                return
-            }
-            this.logCall(
-                `sendToDevicesMessage:: toDevice streamId ${streamId}, userId ${userId}, devices ${deviceKey}`,
-            )
-            return this.makeEventWithHashAndAddToStream(
-                streamId,
-                make_UserPayload_ToDevice({
-                    // key request or response
-                    op,
-                    message: envelope,
-                    // deviceKey is curve25519 id key of recipient device
-                    deviceKey,
-                    // senderKey is curve25519 id key of sender device
-                    senderKey: senderKey ?? '',
-                }),
-                miniblockHash,
-            )
-        })
-        return Promise.all(promiseArray.flat())
-    }
-
-    async sendToDeviceMessage(
-        userId: string,
-        event: EncryptedDeviceData,
-        type: ToDeviceOp | string,
-    ): Promise<void> {
-        const op: ToDeviceOp =
-            typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
-        const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
-        assert(senderKey !== undefined, 'no sender key')
-        const streamId: string = makeUserStreamId(userId)
-        const miniblockHash = await this.getStreamLastMiniblockHash(streamId)
-        // assert device_id belongs to user
-        const deviceInfoMap = await this.getStoredDevicesForUser(userId)
-        const deviceKeyArr = DeviceInfo.getCurve25519KeyFromUserId(userId, deviceInfoMap)
-        if (!deviceKeyArr || deviceKeyArr.length == 0) {
-            throw new Error('no device keys found for target to-device user ' + userId)
-        }
-        // by default we retrieve the first curve25519 match when sending to a single device
-        // of a user
-        // todo: this will change when we support multiple devices per user
-        // see: https://linear.app/hnt-labs/issue/HNT-1839/multi-device-support-in-todevice-transport
-
-        // todo: HNT-3661 fix this, we shouldn't be choosing any index
-        const deviceKey = deviceKeyArr[0]
-        this.logCall(`toDevice ${deviceKey.deviceId}, streamId ${streamId}, userId ${userId}`)
-        // encrypt event contents and encode ciphertext
-        return this.makeEventWithHashAndAddToStream(
-            streamId,
-            make_UserPayload_ToDevice({
-                // key request or response
-                op,
-                message: event,
-                // deviceKey is curve25519 id key of recipient device
-                deviceKey: deviceKey.key,
-                // senderKey is curve25519 id key of sender device
-                senderKey: senderKey ?? '',
-                // todo: point to origin event for key responses
-            }),
-            miniblockHash,
-        )
-    }
-
     async uploadKeysRequest(content: IUploadKeysRequest): Promise<void> {
         const userId: string = content.user_id
         const deviceId: string = content.device_id
@@ -1522,111 +1391,50 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         )
     }
 
-    /**
-     * Download device keys for a list of users asynchronously.
-     *
-     * @param userIds - map of userIds to deviceIds to algorithms to download keys for.
-     * If deviceIds are empty, all device keys for a user will be downloaded.
-     * @param downloadFallbackKeys - whether to download fallback keys associated with a user's devices.
-     * @returns a promise that resolves to a map from userId to a map from deviceId to deviceInfo.
-     * Additionally, returns map of userIds to error for
-     */
-    async downloadKeysForUsers(
-        request: IDownloadKeyRequest,
-        returnFallbackKeys?: boolean,
-    ): Promise<IDownloadKeyResponse> {
-        // streams have either already been added to client or should be fetched/added from rpcServer
-        const promises = Object.keys(request).map((userId) => {
-            const streamId: string = makeUserDeviceKeyStreamId(userId)
-            return (async () => {
+    public async downloadUserDeviceInfo(
+        userIds: string[],
+        forceDownload: boolean = false,
+    ): Promise<UserDeviceCollection> {
+        const promises = userIds.map(
+            async (userId): Promise<{ userId: string; devices: UserDevice[] }> => {
+                const streamId = makeUserDeviceKeyStreamId(userId)
                 try {
-                    const stream = await this.getStream(streamId)
-                    const response: IDownloadKeyResponse = {
-                        device_keys: {},
-                        fallback_keys: {},
-                    }
-                    // 06/02/23 note: for now there's a one to one mapping between userIds - deviceIds, which is why
-                    // we return the latest UserDeviceKey event for each user from their stream. This won't hold in the future
-                    // as user's will eventually have multiple devices per user, each with a different deviceId.
-
-                    const devicesFlat = stream.userDeviceKeyContent.uploadedDeviceKeys.get(userId)
-                    if (devicesFlat === undefined) {
-                        throw new Error('no device keys found for user ' + userId)
+                    if (!forceDownload) {
+                        const devicesFromStore = await this.cryptoStore.getUserDevices(userId)
+                        if (devicesFromStore.length > 0) {
+                            return { userId, devices: devicesFromStore }
+                        }
                     }
 
                     // return latest 10 device keys until the below issue is complete
                     // todo: https://linear.app/hnt-labs/issue/HNT-3647/devicekey-lifecycle-hardening
                     const deviceLookback = 10
-                    let payloads
-                    if (devicesFlat.length > deviceLookback) {
-                        payloads = devicesFlat.slice(devicesFlat.length - deviceLookback)
-                    } else {
-                        payloads = devicesFlat
-                    }
 
-                    if (!returnFallbackKeys) {
-                        for (const payload of payloads) {
-                            if (isDefined(payload.deviceKeys)) {
-                                // push all known device keys for all devices of user
-                                if (!response.device_keys[userId]) {
-                                    response.device_keys[userId] = []
-                                }
-                                response.device_keys[userId].push(payload.deviceKeys)
-                            }
-                        }
-                    } else {
-                        const fallbackKeysByDeviceId: FallbackKeyResponse[] = []
-                        for (const payload of payloads) {
-                            if (payload.deviceKeys?.deviceId && payload.fallbackKeys) {
-                                fallbackKeysByDeviceId.push({
-                                    [payload.deviceKeys.deviceId]: payload.fallbackKeys,
-                                })
-                            }
-                        }
-                        // push all known device keys for all devices of user
-                        if (fallbackKeysByDeviceId.length > 0) {
-                            if (response.fallback_keys) {
-                                response.fallback_keys[userId] = fallbackKeysByDeviceId
-                            }
-                        }
-                    }
-                    return response
+                    const stream = await this.getStream(streamId)
+                    const userDevices = Array.from(
+                        stream.userDeviceKeyContent.uploadedDeviceKeys.values(),
+                    )
+                        .flatMap((value) => value)
+                        .map(deviceKeyPayloadToUserDevice)
+                        .filter(isDefined)
+                        .slice(-deviceLookback)
+
+                    await this.cryptoStore.saveUserDevices(userId, userDevices)
+                    return { userId, devices: userDevices }
                 } catch (e) {
-                    // return error in response
-                    const response: IDownloadKeyResponse = {
-                        failures: { [userId]: { error: <Error>e } },
-                        device_keys: {},
-                        fallback_keys: {},
-                    }
-                    return response
-                }
-            })()
-        })
-        const results = await Promise.all(promises)
-        const mergedResults: IDownloadKeyResponse = results.reduce(
-            (acc, currentResult) => {
-                return {
-                    failures: { ...acc.failures, ...currentResult.failures },
-                    device_keys: { ...acc.device_keys, ...currentResult.device_keys },
-                    fallback_keys: { ...acc.fallback_keys, ...currentResult.fallback_keys },
+                    return { userId, devices: [] }
                 }
             },
-            { failures: {}, device_keys: {}, fallback_keys: {} },
         )
-        return mergedResults
+
+        return (await Promise.all(promises)).reduce((acc, current) => {
+            acc[current.userId] = current.devices
+            return acc
+        }, {} as UserDeviceCollection)
     }
 
-    public async getStoredDevicesForUser(userId: string): Promise<DeviceInfoMap> {
-        this.logCall('getStoredDevicesForUser', userId)
-        try {
-            const response = await this.downloadKeys([userId])
-            if (response) {
-                return response
-            }
-        } catch (e) {
-            this.logCall('error downloading keys for user', userId, e)
-        }
-        return new Map<string, Map<string, DeviceInfo>>()
+    public async knownDevicesForUserId(userId: string): Promise<UserDevice[]> {
+        return await this.cryptoStore.getUserDevices(userId)
     }
 
     async makeEventAndAddToStream(
@@ -1692,6 +1500,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         if (this.deviceId === undefined) {
             throw new Error('deviceId must be set to init crypto')
         }
+
+        await this.cryptoStore.initialize()
 
         const crypto = new Crypto(this, this.userId, this.deviceId, this.cryptoStore)
         await crypto.init({
@@ -1761,30 +1571,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     }
 
     /**
-     * Create encrypted to device event from a plain message using Olm algorithm for each user's devices
-     * and return ciphertext.
-     *
-     */
-    public async createOlmEncryptedEvent(
-        event: ToDeviceMessage,
-        recipientUserId: string,
-    ): Promise<EncryptedDeviceData> {
-        // encrypt event contents and encode ciphertext
-
-        let encryptedData: EncryptedDeviceData
-        try {
-            encryptedData = await this.encryptOlmEvent({
-                content: event,
-                recipient: { userIds: [recipientUserId] },
-            })
-        } catch (e) {
-            this.logCall('createEncryptedCipherFromEvent: ERROR', e)
-            throw e
-        }
-        return encryptedData
-    }
-
-    /**
      * Decrypt a ToDevice message using Olm algorithm.
      *
      */
@@ -1835,36 +1621,44 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return this.cryptoBackend?.importRoomKeys(streamId, keys, opts)
     }
 
-    public downloadKeys(
-        userIds: string[],
-        forceDownload?: boolean,
-    ): Promise<DeviceInfoMap> | undefined {
-        return this.cryptoBackend?.deviceList.downloadKeys(userIds, !!forceDownload)
-    }
-
-    get deviceList(): DeviceList | undefined {
-        return this.cryptoBackend?.deviceList
-    }
-
     /**
      * Encrypts and sends a given object via Olm to-device messages to a given set of devices.
      */
     public async encryptAndSendToDevices(
-        userDeviceInfoArr: IOlmDevice[],
-        payload: ToDeviceMessage,
-    ): Promise<void> {
+        userDeviceInfos: UserDeviceCollection,
+        message: ToDeviceMessage,
+        toDeviceOp: ToDeviceOp,
+    ): Promise<void[]> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        return this.cryptoBackend.encryptAndSendToDevices(userDeviceInfoArr, payload)
-    }
+        const payload = new OlmMessage({ content: message })
+        const senderKey = this.olmDevice.deviceCurve25519Key
+        if (!senderKey) {
+            throw new Error('No deviceCurve25519Key found')
+        }
 
-    // Encrypt event using Olm.
-    public encryptOlmEvent(input: EncryptionInput): Promise<EncryptedDeviceData> {
-        if (!this.cryptoBackend) {
-            throw new Error('crypto backend not initialized')
-        }
-        return this.cryptoBackend.encryptOlmEvent(input.content, input.recipient)
+        const promises = Object.entries(userDeviceInfos).map(async ([userId, deviceKeys]) => {
+            try {
+                const message = await this.encryptOlm(payload, deviceKeys)
+                const streamId: string = makeUserStreamId(userId)
+                const miniblockHash = await this.getStreamLastMiniblockHash(streamId)
+                await this.makeEventWithHashAndAddToStream(
+                    streamId,
+                    make_UserPayload_ToDevice({
+                        message: message,
+                        senderKey,
+                        op: toDeviceOp,
+                    }),
+                    miniblockHash,
+                )
+                this.logCall("encryptAndSendToDevices: sent to user's devices", userId)
+            } catch (error) {
+                this.logError('sendToDeviceMessage: ERROR', error)
+            }
+        })
+
+        return (await Promise.all(promises)).flat()
     }
 
     // Encrypt event using Megolm.
@@ -1874,7 +1668,33 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
         return this.cryptoBackend.encryptMegolmEvent(input)
     }
+
+    async encryptOlm(payload: OlmMessage, deviceKeys: UserDevice[]): Promise<EncryptedDeviceData> {
+        if (!this.cryptoBackend) {
+            throw new Error('crypto backend not initialized')
+        }
+        const senderKey = this.olmDevice.deviceCurve25519Key
+        if (!senderKey) {
+            throw new Error('No deviceCurve25519Key found')
+        }
+
+        // Don't encrypt to our own device
+        return this.cryptoBackend.encryptOlm(
+            payload.toJsonString(),
+            deviceKeys.filter((key) => key.deviceKey !== senderKey),
+        )
+    }
+
+    // Used during testing
+    userDeviceKey(): UserDevice {
+        return {
+            deviceId: this.deviceId!,
+            deviceKey: this.olmDevice.deviceCurve25519Key!,
+            fallbackKey: this.olmDevice.fallbackKey.key,
+        }
+    }
 }
+
 export interface FallbackKeyResponse {
     [deviceId: string]: FallbackKeys
 }
@@ -1882,18 +1702,6 @@ export interface FallbackKeyResponse {
 // deviceId: algorithm
 export interface IDeviceKeyRequest {
     [deviceId: string]: string
-}
-
-export interface IDownloadKeyRequest {
-    [userId: string]: IDeviceKeyRequest
-}
-
-export interface IDownloadKeyResponse {
-    failures?: Record<string, object>
-    // userId -> deviceKeys
-    device_keys: Record<string, DeviceKeys[]>
-    // userId -> deviceId -> algo:deviceId -> FallbackKey
-    fallback_keys?: Record<string, FallbackKeyResponse[]>
 }
 
 export interface IKeysUploadResponse {

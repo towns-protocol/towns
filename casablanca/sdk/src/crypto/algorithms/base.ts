@@ -1,8 +1,6 @@
 import { Client } from '../../client'
 import { OlmDevice } from '../olmDevice'
 import { Crypto } from '../crypto'
-import { DeviceInfo } from '../deviceInfo'
-import { DeviceInfoMap } from '../deviceList'
 import { IRoomEncryption } from '../store/types'
 import { RiverEventV2 } from '../../eventV2'
 import { MegolmSession } from '@river/proto'
@@ -62,25 +60,6 @@ export abstract class EncryptionAlgorithm {
         this.channelId = params.channelId
     }
 
-    /**
-     * Called when the membership of a member of the room changes.
-     *
-     * @param event -  event causing the change
-     * @param member -  user whose membership changed
-     * @param oldMembership -  previous membership
-     * @public
-     */
-    // todo: implement
-    // public onRoomMembership(event: RiverEventV2, member: RoomMember, oldMembership?: string): void {}
-
-    public reshareKeyWithDevice?(
-        senderKey: string,
-        sessionId: string,
-        userId: string,
-        channelId: string,
-        device: DeviceInfo,
-    ): Promise<void>
-
     public forceDiscardSession?(): void
 }
 
@@ -131,11 +110,6 @@ export abstract class DecryptionAlgorithm {
         // ignore by default
         return false
     }
-
-    public sendSharedHistoryInboundSessions?(
-        channelId: string,
-        devicesByUser: Map<string, DeviceInfo[]>,
-    ): Promise<void>
 }
 
 /**
@@ -181,25 +155,6 @@ function detailedStringForDecryptionError(
     result += ']'
 
     return result
-}
-
-export class UnknownDeviceError extends Error {
-    /**
-     * Exception thrown specifically when we want to warn the user to consider
-     * the security of their conversation before continuing
-     *
-     * @param msg - message describing the problem
-     * @param devices - set of unknown devices per user we're warning about
-     */
-    public constructor(
-        msg: string,
-        public readonly devices: DeviceInfoMap,
-        public event?: RiverEventV2,
-    ) {
-        super(msg)
-        this.name = 'UnknownDeviceError'
-        this.devices = devices
-    }
 }
 
 /**

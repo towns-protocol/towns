@@ -1,6 +1,4 @@
 import { InboundGroupSessionData } from '../olmDevice'
-import { TrackingStatus } from '../deviceList'
-import { IDevice } from '../deviceInfo'
 
 export interface IRoomEncryption {
     algorithm: string
@@ -33,18 +31,6 @@ export interface ISessionInfo {
     lastReceivedMessageTs: number
 }
 
-export interface IDeviceData {
-    devices: {
-        [userId: string]: {
-            [deviceId: string]: IDevice
-        }
-    }
-    trackingStatus: {
-        [userId: string]: TrackingStatus
-    }
-    syncToken?: string
-}
-
 export interface AccountRecord {
     id: string
     accountPickle: string
@@ -61,4 +47,12 @@ export interface MegolmSessionRecord {
     sessionId: string
     session: string
     streamId: string
+}
+
+export interface UserDeviceRecord {
+    userId: string
+    deviceId: string
+    deviceKey: string
+    fallbackKey: string
+    expirationTimestamp: number
 }

@@ -1,5 +1,5 @@
 import { dlog } from './dlog'
-import { Client, IDownloadKeyResponse } from './client'
+import { Client } from './client'
 import {
     genId,
     makeChannelStreamId,
@@ -8,7 +8,6 @@ import {
     makeUserSettingsStreamId,
     makeUserDeviceKeyStreamId,
 } from './id'
-import { IFallbackKey } from './types'
 import { makeDonePromise, makeTestClient, waitFor } from './util.test'
 import { DeviceKeys, SnapshotCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@river/proto'
 import { getChannelMessagePayload } from './testutils'
@@ -540,10 +539,8 @@ describe('clientTest', () => {
         )
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
         await bobSelfToDevice.expectToSucceed()
-        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers({
-            [bobsUserId]: {},
-        })
-        expect(deviceKeys.device_keys[bobsUserId]).toBeDefined()
+        const deviceKeys = await bobsClient.downloadUserDeviceInfo([bobsUserId])
+        expect(deviceKeys[bobsUserId]).toBeDefined()
     })
 
     test('bobDownloadsAlicesDeviceKeys', async () => {
@@ -567,10 +564,8 @@ describe('clientTest', () => {
             },
         )
         const aliceUserDeviceKeyStreamId = alicesClient.userDeviceKeyStreamId
-        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers({
-            [alicesUserId]: {},
-        })
-        expect(deviceKeys.device_keys[alicesUserId]).toBeDefined()
+        const deviceKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId])
+        expect(deviceKeys[alicesUserId]).toBeDefined()
     })
 
     test('bobDownloadsAlicesAndOwnDeviceKeys', async () => {
@@ -599,13 +594,10 @@ describe('clientTest', () => {
         )
         const aliceUserDeviceKeyStreamId = alicesClient.userDeviceKeyStreamId
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
-        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers({
-            [alicesUserId]: {},
-            [bobsUserId]: {},
-        })
-        expect(Object.keys(deviceKeys.device_keys).length).toEqual(2)
-        expect(deviceKeys.device_keys[alicesUserId]).toBeDefined()
-        expect(deviceKeys.device_keys[bobsUserId]).toBeDefined()
+        const deviceKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId, bobsUserId])
+        expect(Object.keys(deviceKeys).length).toEqual(2)
+        expect(deviceKeys[alicesUserId]).toBeDefined()
+        expect(deviceKeys[bobsUserId]).toBeDefined()
     })
 
     test('bobDownloadsAlicesAndOwnFallbackKeys', async () => {
@@ -635,15 +627,13 @@ describe('clientTest', () => {
         )
         const aliceUserDeviceKeyStreamId = alicesClient.userDeviceKeyStreamId
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
-        const fallbackKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers(
-            {
-                [alicesUserId]: {},
-                [bobsUserId]: {},
-            },
+        const fallbackKeys = await bobsClient.downloadUserDeviceInfo(
+            [alicesUserId, bobsUserId],
             true,
         )
-        expect(fallbackKeys.fallback_keys).toBeDefined()
-        expect(Object.keys(fallbackKeys.fallback_keys ?? {}).length).toEqual(2)
+
+        expect(fallbackKeys).toBeDefined()
+        expect(Object.keys(fallbackKeys).length).toEqual(2)
     })
 
     test('bobDownloadsAlicesFallbackKeys', async () => {
@@ -656,42 +646,13 @@ describe('clientTest', () => {
         await alicesClient.startSync()
         const alicesUserId = alicesClient.userId
         expect(alicesClient.deviceId).toBeDefined()
-        const aliceFallbackKeys: Record<string, IFallbackKey> = {
-            [alicesClient.deviceId as string]: {
-                key: 'alice-fallback-key',
-                signatures: {
-                    [`curve25519: ${alicesClient.deviceId}`]: 'alice-fallback-key-signature',
-                },
-            },
-        }
-        await alicesClient.uploadKeysRequest({
-            user_id: alicesClient.userId,
-            device_id: alicesClient.deviceId as string,
-            fallback_keys: aliceFallbackKeys,
-        })
 
-        const fallbackKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers(
-            {
-                [alicesUserId]: {},
-            },
-            true,
+        const fallbackKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId], true)
+        expect(Object.keys(fallbackKeys)).toContain(alicesUserId)
+        expect(Object.keys(fallbackKeys).length).toEqual(1)
+        expect(fallbackKeys[alicesUserId].map((k) => k.fallbackKey)).toContain(
+            Object.values(alicesClient.olmDevice.fallbackKey)[0],
         )
-
-        expect(fallbackKeys.fallback_keys).toBeDefined()
-        expect(Object.keys(fallbackKeys.fallback_keys ?? {})).toContain(alicesUserId)
-        expect(Object.keys(fallbackKeys.fallback_keys ?? {}).length).toEqual(1)
-        if (fallbackKeys.fallback_keys) {
-            const keys: string[] = []
-            Object.values(fallbackKeys.fallback_keys[alicesUserId]).map((value) => {
-                Object.keys(value).map((keyId) => {
-                    const key = Object.values(value[keyId].algoKeyId)[0].key
-                    if (key) {
-                        keys.push(key)
-                    }
-                })
-            })
-            expect(keys).toContain('alice-fallback-key')
-        }
     })
 
     test('aliceLeavesChannelsWhenLeavingSpace', async () => {
@@ -734,5 +695,21 @@ describe('clientTest', () => {
             )
         })
         await alicesClient.stopSync()
+    })
+
+    test('clientReturnsKnownDevicesForUserId', async () => {
+        await expect(bobsClient.initializeUser()).toResolve()
+        await bobsClient.startSync()
+
+        await expect(alicesClient.initializeUser()).toResolve()
+        await alicesClient.startSync()
+
+        await expect(bobsClient.downloadUserDeviceInfo([alicesClient.userId])).toResolve()
+        const knownDevices = await bobsClient.knownDevicesForUserId(alicesClient.userId)
+
+        expect(knownDevices.length).toBe(1)
+        expect(knownDevices[0].fallbackKey).toBe(
+            Object.values(alicesClient.olmDevice.fallbackKey)[0],
+        )
     })
 })

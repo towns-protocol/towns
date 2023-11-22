@@ -3,7 +3,7 @@ import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { KeyResponseKind, ToDeviceMessage, ToDeviceOp, UserPayload_ToDevice } from '@river/proto'
 import { make_ToDevice_KeyRequest, make_ToDevice_KeyResponse } from './types'
-import { OLM_ALGORITHM } from './crypto/olmLib'
+import { OLM_ALGORITHM, UserDeviceCollection } from './crypto/olmLib'
 
 const log = dlog('test')
 
@@ -30,7 +30,6 @@ describe('toDeviceMessageTest', () => {
         await expect(alicesClient.initializeUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
         log('aliceUserStreamId', aliceUserStreamId)
-        const aliceUserId = alicesClient.userId
         await alicesClient.startSync()
 
         const aliceSelfToDevice = makeDonePromise()
@@ -39,8 +38,7 @@ describe('toDeviceMessageTest', () => {
             (streamId: string, event: UserPayload_ToDevice, senderUserId: string): void => {
                 const content = event.message
                 const senderKey = event.senderKey
-                const deviceKey = event.deviceKey
-                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
+                log('toDeviceMessage for Alice', streamId, senderKey, content)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(content).toBeDefined()
@@ -50,10 +48,14 @@ describe('toDeviceMessageTest', () => {
                 })
             },
         )
+
+        const recipients: UserDeviceCollection = {}
+        recipients[alicesClient.userId] = [alicesClient.userDeviceKey()]
+
         // bob sends a message to Alice's device.
         await expect(
-            bobsClient.encryptAndSendToDevicesMessage(
-                aliceUserId,
+            bobsClient.encryptAndSendToDevices(
+                recipients,
                 new ToDeviceMessage(
                     make_ToDevice_KeyRequest({
                         streamId: '200',
@@ -77,7 +79,6 @@ describe('toDeviceMessageTest', () => {
         await expect(alicesClient.initializeUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
         log('aliceUserStreamId', aliceUserStreamId)
-        const aliceUserId = alicesClient.userId
         await alicesClient.startSync()
 
         const aliceSelfToDevice = makeDonePromise()
@@ -86,8 +87,7 @@ describe('toDeviceMessageTest', () => {
             (streamId: string, event: UserPayload_ToDevice, senderUserId: string): void => {
                 const content = event.message
                 const senderKey = event.senderKey
-                const deviceKey = event.deviceKey
-                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
+                log('toDeviceMessage for Alice', streamId, senderKey, content)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(content).toBeDefined()
@@ -98,10 +98,13 @@ describe('toDeviceMessageTest', () => {
                 })
             },
         )
+
+        const bobToAliceRecipients: UserDeviceCollection = {}
+        bobToAliceRecipients[alicesClient.userId] = [alicesClient.userDeviceKey()]
         // bob sends a message to Alice's device.
         await expect(
-            bobsClient.encryptAndSendToDevicesMessage(
-                aliceUserId,
+            bobsClient.encryptAndSendToDevices(
+                bobToAliceRecipients,
                 new ToDeviceMessage(
                     make_ToDevice_KeyRequest({
                         streamId: '201',
@@ -113,9 +116,10 @@ describe('toDeviceMessageTest', () => {
                 ToDeviceOp.TDO_KEY_REQUEST,
             ),
         ).toResolve()
+
         await expect(
-            bobsClient.encryptAndSendToDevicesMessage(
-                aliceUserId,
+            bobsClient.encryptAndSendToDevices(
+                bobToAliceRecipients,
                 new ToDeviceMessage(
                     make_ToDevice_KeyRequest({
                         streamId: '200',
@@ -140,7 +144,6 @@ describe('toDeviceMessageTest', () => {
         await expect(alicesClient.initializeUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
         log('aliceUserStreamId', aliceUserStreamId)
-        const aliceUserId = alicesClient.userId
         await alicesClient.startSync()
 
         const aliceSelfToDevice = makeDonePromise()
@@ -149,8 +152,7 @@ describe('toDeviceMessageTest', () => {
             (streamId: string, event: UserPayload_ToDevice, senderUserId: string): void => {
                 const content = event.message
                 const senderKey = event.senderKey
-                const deviceKey = event.deviceKey
-                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
+                log('toDeviceMessage for Alice', streamId, senderKey, content)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(content).toBeDefined()
@@ -161,10 +163,13 @@ describe('toDeviceMessageTest', () => {
                 })
             },
         )
+
+        const bobToAliceRecipients: UserDeviceCollection = {}
+        bobToAliceRecipients[alicesClient.userId] = [alicesClient.userDeviceKey()]
         // bob sends a message to all Alice's devices.
         await expect(
-            bobsClient.encryptAndSendToDevicesMessage(
-                aliceUserId,
+            bobsClient.encryptAndSendToDevices(
+                bobToAliceRecipients,
                 new ToDeviceMessage(
                     make_ToDevice_KeyRequest({
                         streamId: '202',
@@ -189,7 +194,6 @@ describe('toDeviceMessageTest', () => {
         await expect(alicesClient.initializeUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
         const bobUserStreamId = bobsClient.userStreamId
-        const aliceUserId = alicesClient.userId
         const bobUserId = bobsClient.userId
         await alicesClient.startSync()
 
@@ -200,8 +204,7 @@ describe('toDeviceMessageTest', () => {
             (streamId: string, event: UserPayload_ToDevice, senderUserId: string): void => {
                 const content = event.message
                 const senderKey = event.senderKey
-                const deviceKey = event.deviceKey
-                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
+                log('toDeviceMessage for Alice', streamId, senderKey, content)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(content).toBeDefined()
@@ -209,9 +212,12 @@ describe('toDeviceMessageTest', () => {
                     const clear = await alicesClient.decryptOlmEvent(event, senderUserId)
                     expect(clear).toBeDefined()
                     expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('204')
+
+                    const aliceToBobRecipients: UserDeviceCollection = {}
+                    aliceToBobRecipients[bobUserId] = [bobsClient.userDeviceKey()]
                     await expect(
-                        alicesClient.encryptAndSendToDevicesMessage(
-                            bobUserId,
+                        alicesClient.encryptAndSendToDevices(
+                            aliceToBobRecipients,
                             new ToDeviceMessage(
                                 make_ToDevice_KeyResponse({
                                     streamId: '203',
@@ -238,8 +244,7 @@ describe('toDeviceMessageTest', () => {
             (streamId: string, event: UserPayload_ToDevice, senderUserId: string): void => {
                 const content = event.message
                 const senderKey = event.senderKey
-                const deviceKey = event.deviceKey
-                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
+                log('toDeviceMessage for Alice', streamId, senderKey, content)
                 if (streamId == bobUserStreamId) {
                     bobSelfToDevice.runAndDoneAsync(async () => {
                         expect(content).toBeDefined()
@@ -251,10 +256,13 @@ describe('toDeviceMessageTest', () => {
                 }
             },
         )
+
+        const bobToAliceRecipients: UserDeviceCollection = {}
+        bobToAliceRecipients[alicesClient.userId] = [alicesClient.userDeviceKey()]
         // bob sends a key request message to all Alice's devices.
         await expect(
-            bobsClient.encryptAndSendToDevicesMessage(
-                aliceUserId,
+            bobsClient.encryptAndSendToDevices(
+                bobToAliceRecipients,
                 new ToDeviceMessage(
                     make_ToDevice_KeyRequest({
                         streamId: '204',
