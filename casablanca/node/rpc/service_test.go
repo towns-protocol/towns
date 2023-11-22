@@ -558,33 +558,18 @@ func TestSyncStreams(t *testing.T) {
 	defer closer()
 	// create the streams for a user
 	wallet, _ := crypto.NewWallet(ctx)
-	user, _, err := createUser(ctx, wallet, client)
-	if err != nil {
-		t.Fatalf("error calling CreateStream: %v", err)
-	}
-	if user == nil {
-		t.Errorf("nil sync cookie")
-	}
+	_, _, err := createUser(ctx, wallet, client)
+	assert.Nilf(t, err, "error calling createUser: %v", err)
 	_, _, err = createUserDeviceKeyStream(ctx, wallet, client)
-	if err != nil {
-		t.Fatalf("error calling CreateStream: %v", err)
-	}
+	assert.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
 	// create space
 	space1, _, err := createSpace(ctx, wallet, client, "space1")
-	if err != nil {
-		t.Fatalf("error calling CreateStream: %v", err)
-	}
-	if space1 == nil {
-		t.Fatalf("nil sync cookie")
-	}
+	assert.Nilf(t, err, "error calling createSpace: %v", err)
+	assert.NotNil(t, space1, "nil sync cookie")
 	// create channel
 	channel1, channelHash, err := createChannel(ctx, wallet, client, common.SpaceStreamIdFromName("space1"), "channel1", nil)
-	if err != nil {
-		t.Fatalf("error calling CreateStream: %v", err)
-	}
-	if channel1 == nil {
-		t.Errorf("nil sync cookie")
-	}
+	assert.Nilf(t, err, "error calling createChannel: %v", err)
+	assert.NotNil(t, channel1, "nil sync cookie")
 
 	/**
 	Act
@@ -601,9 +586,7 @@ func TestSyncStreams(t *testing.T) {
 			},
 		),
 	)
-	if err != nil {
-		t.Fatalf("error calling SyncStreams: %v", err)
-	}
+	assert.Nilf(t, err, "error calling SyncStreams: %v", err)
 	// get the syncId for asserts later
 	syncRes.Receive()
 	syncId := syncRes.Msg().SyncId
@@ -613,9 +596,7 @@ func TestSyncStreams(t *testing.T) {
 		events.Make_ChannelPayload_Message("hello"),
 		[][]byte{channelHash},
 	)
-	if err != nil {
-		t.Errorf("error creating message event: %v", err)
-	}
+	assert.Nilf(t, err, "error creating message event: %v", err)
 	_, err = client.AddEvent(
 		ctx,
 		connect.NewRequest(
@@ -625,9 +606,7 @@ func TestSyncStreams(t *testing.T) {
 			},
 		),
 	)
-	if err != nil {
-		t.Fatalf("error calling AddEvent: %v", err)
-	}
+	assert.Nilf(t, err, "error calling AddEvent: %v", err)
 	// wait for the sync
 	syncRes.Receive()
 	msg := syncRes.Msg()
@@ -653,16 +632,10 @@ func TestAddStreamsToSync(t *testing.T) {
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
 	alice, _, err := createUser(ctx, aliceWallet, aliceClient)
-	if err != nil {
-		t.Fatalf("error calling CreateStream: %v", err)
-	}
-	if alice == nil {
-		t.Errorf("nil sync cookie")
-	}
+	assert.Nilf(t, err, "error calling createUser: %v", err)
+	assert.NotNil(t, alice, "nil sync cookie for alice")
 	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
-	if err != nil {
-		t.Fatalf("error calling CreateStream: %v", err)
-	}
+	assert.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
 	// create bob's client, wallet, and streams
 	bobClient := protocolconnect.NewStreamServiceClient(
 		http.DefaultClient,
@@ -670,32 +643,18 @@ func TestAddStreamsToSync(t *testing.T) {
 	)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	bob, _, err := createUser(ctx, bobWallet, bobClient)
-	if err != nil {
-		t.Fatalf("error calling CreateStream: %v", err)
-	}
-	if bob == nil {
-		t.Errorf("nil sync cookie")
-	}
+	assert.Nilf(t, err, "error calling createUser: %v", err)
+	assert.NotNil(t, bob, "nil sync cookie for bob")
 	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient)
-	if err != nil {
-		t.Fatalf("error calling CreateStream: %v", err)
-	}
+	assert.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
 	// alice creates a space
 	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, "space1")
-	if err != nil {
-		t.Fatalf("error calling CreateStream: %v", err)
-	}
-	if space1 == nil {
-		t.Fatalf("nil sync cookie")
-	}
+	assert.Nilf(t, err, "error calling createSpace: %v", err)
+	assert.NotNil(t, space1, "nil sync cookie")
 	// alice creates a channel
 	channel1, channelHash, err := createChannel(ctx, aliceWallet, aliceClient, common.SpaceStreamIdFromName("space1"), "channel1", nil)
-	if err != nil {
-		t.Fatalf("error calling CreateStream: %v", err)
-	}
-	if channel1 == nil {
-		t.Errorf("nil sync cookie")
-	}
+	assert.Nilf(t, err, "error calling createChannel: %v", err)
+	assert.NotNil(t, channel1, "nil sync cookie")
 
 	/**
 	Act
@@ -710,9 +669,7 @@ func TestAddStreamsToSync(t *testing.T) {
 			},
 		),
 	)
-	if err != nil {
-		t.Fatalf("error calling SyncStreams: %v", err)
-	}
+	assert.Nilf(t, err, "error calling SyncStreams: %v", err)
 	// get the syncId for asserts later
 	syncRes.Receive()
 	syncId := syncRes.Msg().SyncId
@@ -722,9 +679,7 @@ func TestAddStreamsToSync(t *testing.T) {
 		events.Make_ChannelPayload_Message("hello"),
 		[][]byte{channelHash},
 	)
-	if err != nil {
-		t.Errorf("error creating message event: %v", err)
-	}
+	assert.Nilf(t, err, "error creating message event: %v", err)
 	_, err = aliceClient.AddEvent(
 		ctx,
 		connect.NewRequest(
@@ -734,24 +689,18 @@ func TestAddStreamsToSync(t *testing.T) {
 			},
 		),
 	)
-	if err != nil {
-		t.Fatalf("error calling AddEvent: %v", err)
-	}
+	assert.Nilf(t, err, "error calling AddEvent: %v", err)
 	// bob adds alice's stream to sync
-	_, err = bobClient.AddStreamsToSync(
+	_, err = bobClient.AddStreamToSync(
 		ctx,
 		connect.NewRequest(
-			&protocol.AddStreamsToSyncRequest{
-				SyncId: syncId,
-				SyncPos: []*protocol.SyncCookie{
-					channel1,
-				},
+			&protocol.AddStreamToSyncRequest{
+				SyncId:  syncId,
+				SyncPos: channel1,
 			},
 		),
 	)
-	if err != nil {
-		t.Fatalf("error calling AddStreamsToSync: %v", err)
-	}
+	assert.Nilf(t, err, "error calling AddStreamsToSync: %v", err)
 	// wait for the sync
 	syncRes.Receive()
 	msg := syncRes.Msg()
@@ -764,6 +713,152 @@ func TestAddStreamsToSync(t *testing.T) {
 	assert.NotEmpty(t, syncId, "expected non-empty sync id")
 	assert.NotNil(t, msg.Stream, "expected 1 stream")
 	assert.Equal(t, syncId, msg.SyncId, "expected sync id to match")
+}
+
+func TestRemoveStreamsFromSync(t *testing.T) {
+	/**
+	Arrange
+	*/
+	// create the test client and server
+	ctx := context.Background()
+	aliceClient, port, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false, 2)
+	defer closer()
+	// create alice's wallet and streams
+	aliceWallet, _ := crypto.NewWallet(ctx)
+	alice, _, err := createUser(ctx, aliceWallet, aliceClient)
+	assert.Nilf(t, err, "error calling createUser: %v", err)
+	assert.NotNil(t, alice, "nil sync cookie for alice")
+	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
+	if err != nil {
+		t.Fatalf("error calling createUser: %v", err)
+	}
+	// create bob's client, wallet, and streams
+	bobClient := protocolconnect.NewStreamServiceClient(
+		http.DefaultClient,
+		fmt.Sprintf("http://localhost:%d", port),
+	)
+	bobWallet, _ := crypto.NewWallet(ctx)
+	bob, _, err := createUser(ctx, bobWallet, bobClient)
+	assert.Nilf(t, err, "error calling createUser: %v", err)
+	assert.NotNil(t, bob, "nil sync cookie for bob")
+	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient)
+	assert.Nilf(t, err, "error calling createUserDeviceKeyStream: %v", err)
+	// alice creates a space
+	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, "space1")
+	assert.Nilf(t, err, "error calling createSpace: %v", err)
+	assert.NotNil(t, space1, "nil sync cookie")
+	// alice creates a channel
+	space1StreamId := common.SpaceStreamIdFromName("space1")
+	channel1StreamId := common.ChannelStreamIdFromName("channel1")
+	channel1, channelHash, err := createChannel(ctx, aliceWallet, aliceClient, space1StreamId, "channel1", nil)
+	assert.Nilf(t, err, "error calling createChannel: %v", err)
+	assert.NotNil(t, channel1, "nil sync cookie")
+	// bob sync streams
+	syncCtx, syncCancel := context.WithCancel(context.Background())
+	syncRes, err := bobClient.SyncStreams(
+		syncCtx,
+		connect.NewRequest(
+			&protocol.SyncStreamsRequest{
+				SyncPos: []*protocol.SyncCookie{},
+			},
+		),
+	)
+	assert.Nilf(t, err, "error calling SyncStreams: %v", err)
+	// get the syncId for asserts later
+	syncRes.Receive()
+	syncId := syncRes.Msg().SyncId
+
+	// add an event to verify that sync is working
+	message1, err := events.MakeEnvelopeWithPayload(
+		aliceWallet,
+		events.Make_ChannelPayload_Message("hello"),
+		[][]byte{channelHash},
+	)
+	assert.Nilf(t, err, "error creating message event: %v", err)
+	_, err = aliceClient.AddEvent(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddEventRequest{
+				StreamId: channel1StreamId,
+				Event:    message1,
+			},
+		),
+	)
+	assert.Nilf(t, err, "error calling AddEvent: %v", err)
+
+	// bob adds alice's stream to sync
+	_, err = bobClient.AddStreamToSync(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddStreamToSyncRequest{
+				SyncId:  syncId,
+				SyncPos: channel1,
+			},
+		),
+	)
+	assert.Nilf(t, err, "error calling AddStreamsToSync: %v", err)
+
+	// When AddEvent is called, node calls streamImpl.notifyToSubscribers() twice
+	// for different events. 	See hnt-3683 for explanation. First event is for
+	// the externally added event (by AddEvent). Second event is the miniblock
+	// event with headers.
+	// drain the events
+	receivedCount := 0
+	for syncRes.Receive() {
+		syncRes.Msg()
+		receivedCount++
+		if receivedCount == 2 {
+			break
+		}
+	}
+
+	/**
+	Act
+	*/
+	// bob removes alice's stream to sync
+	removeRes, err := bobClient.RemoveStreamFromSync(
+		ctx,
+		connect.NewRequest(
+			&protocol.RemoveStreamFromSyncRequest{
+				SyncId:   syncId,
+				StreamId: channel1StreamId,
+			},
+		),
+	)
+	assert.Nilf(t, err, "error calling RemoveStreamsFromSync: %v", err)
+
+	// alice sends another message
+	message2, err := events.MakeEnvelopeWithPayload(
+		aliceWallet,
+		events.Make_ChannelPayload_Message("world"),
+		[][]byte{message1.Hash},
+	)
+	assert.Nilf(t, err, "error creating message event: %v", err)
+	_, err = aliceClient.AddEvent(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddEventRequest{
+				StreamId: channel1StreamId,
+				Event:    message2,
+			},
+		),
+	)
+	assert.Nilf(t, err, "error calling AddEvent: %v", err)
+
+	/**
+	For debugging only. Uncomment to see syncRes.Receive() block.
+	bobClient's syncRes no longer receives the latest events from alice.
+
+	// wait to see if we got a message. We shouldn't.
+	// uncomment: syncRes.Receive()
+	*/
+	syncCancel()
+
+	/**
+	Asserts
+	*/
+	assert.NotEmpty(t, syncId, "expected non-empty sync id")
+	assert.NotNil(t, removeRes.Msg, "expected non-nil remove response")
 }
 
 // TODO: revamp with block support

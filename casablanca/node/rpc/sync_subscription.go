@@ -10,23 +10,29 @@ import (
 )
 
 type syncSubscriptionImpl struct {
-	SyncId       string
-	cancel       context.CancelFunc
-	channel      chan *protocol.SyncStreamsResponse
-	ctx          context.Context
-	firstError   error
-	localStreams map[string]*events.SyncStream
-	remoteNodes  map[string]*syncNode
-	syncLock     sync.Mutex
-	syncResponse syncResponse
+	SyncId        string
+	cancel        context.CancelFunc
+	channel       chan *protocol.SyncStreamsResponse
+	ctx           context.Context
+	firstError    error
+	localStreams  map[string]*events.SyncStream // mapping of streamId to local stream
+	remoteStreams map[string]*syncNode          // mapping of streamId to remote node
+	remoteNodes   map[string]*syncNode          // mapping of node address to remote node
+	syncLock      sync.Mutex
+	syncResponse  syncResponse
 }
 
 type syncResponse interface {
 	Send(msg *protocol.SyncStreamsResponse) error
 }
 
-func (s *syncSubscriptionImpl) existsLocalStreamId(streamId string) bool {
+func (s *syncSubscriptionImpl) existsLocalStream(streamId string) bool {
 	_, exists := s.localStreams[streamId]
+	return exists
+}
+
+func (s *syncSubscriptionImpl) existsRemoteAddress(address string) bool {
+	_, exists := s.remoteNodes[address]
 	return exists
 }
 
@@ -39,13 +45,26 @@ func (s *syncSubscriptionImpl) addLocalStream(
 	defer s.syncLock.Unlock()
 	// only add the stream if it doesn't already exist in the subscription
 	if _, exists := s.localStreams[syncCookie.StreamId]; !exists {
-		s.localStreams[syncCookie.StreamId] = stream
 		err := (*stream).Sub(ctx, syncCookie, s)
 		if err != nil {
 			return err
 		}
+		s.localStreams[syncCookie.StreamId] = stream
 	}
 	return nil
+}
+
+func (s *syncSubscriptionImpl) removeLocalStream(
+	streamId string,
+) bool {
+	s.syncLock.Lock()
+	defer s.syncLock.Unlock()
+	if stream := s.localStreams[streamId]; stream != nil {
+		(*stream).Unsub(s)
+		delete(s.localStreams, streamId)
+		return true // removed
+	}
+	return false // not removed
 }
 
 func (s *syncSubscriptionImpl) unsubAllLocalStreams() {
@@ -56,11 +75,6 @@ func (s *syncSubscriptionImpl) unsubAllLocalStreams() {
 		stream.Unsub(s)
 		delete(s.localStreams, key)
 	}
-}
-
-func (s *syncSubscriptionImpl) existsRemoteAddress(address string) bool {
-	_, exists := s.remoteNodes[address]
-	return exists
 }
 
 func (s *syncSubscriptionImpl) addRemoteNode(
@@ -77,12 +91,60 @@ func (s *syncSubscriptionImpl) addRemoteNode(
 	return false // not added
 }
 
+func (s *syncSubscriptionImpl) addRemoteStream(
+	cookie *protocol.SyncCookie,
+) {
+	s.syncLock.Lock()
+	defer s.syncLock.Unlock()
+	if remote := s.remoteNodes[cookie.NodeAddress]; remote != nil {
+		s.remoteStreams[cookie.StreamId] = remote
+	}
+}
+
+func (s *syncSubscriptionImpl) removeRemoteStream(
+	streamId string,
+) bool {
+	s.syncLock.Lock()
+	defer s.syncLock.Unlock()
+	if remote := s.remoteStreams[streamId]; remote != nil {
+		delete(s.remoteStreams, streamId)
+		return true // removed
+	}
+	return false // not removed
+}
+
+func (s *syncSubscriptionImpl) purgeUnusedRemoteNodes() {
+	s.syncLock.Lock()
+	defer s.syncLock.Unlock()
+	nodesToRemove := make([]*syncNode, 0)
+	for _, remote := range s.remoteNodes {
+		isUsed := false
+		for _, n := range s.remoteStreams {
+			if n == remote {
+				isUsed = true
+				break
+			}
+		}
+		if !isUsed {
+			nodesToRemove = append(nodesToRemove, remote)
+		}
+	}
+	// now purge the nodes
+	for _, remote := range nodesToRemove {
+		remote.close()
+		delete(s.remoteNodes, remote.address)
+	}
+}
+
 func (s *syncSubscriptionImpl) closeAllRemoteNodes() {
 	s.syncLock.Lock()
 	defer s.syncLock.Unlock()
 	for key, node := range s.remoteNodes {
 		node.close()
 		delete(s.remoteNodes, key)
+	}
+	for key := range s.remoteStreams {
+		delete(s.remoteStreams, key)
 	}
 }
 
@@ -106,7 +168,7 @@ func (s *syncSubscriptionImpl) OnSyncError(err error) {
 		return
 	}
 	s.setErrorAndCancel(err)
-	dlog.CtxLog(s.ctx).Warn("OnSyncError: cancelling sync", "error", err)
+	dlog.CtxLog(s.ctx).Warn("SyncStreams:syncSubscriptionImpl:OnSyncError: cancelling sync", "error", err)
 }
 
 func (s *syncSubscriptionImpl) OnUpdate(r *protocol.SyncStreamsResponse) {
@@ -142,9 +204,9 @@ func (s *syncSubscriptionImpl) Dispatch(resp syncResponse) {
 			log.Debug("SyncStreams: context done", "err", err)
 			return
 		case data := <-s.channel:
-			log.Debug("SyncStreams: received response in dispatch loop", "syncId", s.SyncId, "data", data)
+			log.Debug("SyncStreams:syncSubscriptionImpl:Dispatch received response in dispatch loop", "syncId", s.SyncId, "data", data)
 			if err := resp.Send(data); err != nil {
-				log.Debug("SyncStreams: error sending response", "syncId", s.SyncId, "err", err)
+				log.Debug("SyncStreams:syncSubscriptionImpl:Dispatch error sending response", "syncId", s.SyncId, "err", err)
 				s.setErrorAndCancel(err)
 				return
 			}

@@ -60,14 +60,18 @@ type SyncHandler interface {
 		req *connect_go.Request[protocol.SyncStreamsRequest],
 		res *connect_go.ServerStream[protocol.SyncStreamsResponse],
 	) error
-	AddStreamsToSync(
+	AddStreamToSync(
 		ctx context.Context,
-		req *connect_go.Request[protocol.AddStreamsToSyncRequest],
-	) (*connect_go.Response[protocol.AddStreamsToSyncResponse], error)
-	RemoveStreamsFromSync(
+		req *connect_go.Request[protocol.AddStreamToSyncRequest],
+	) (*connect_go.Response[protocol.AddStreamToSyncResponse], error)
+	RemoveStreamFromSync(
 		ctx context.Context,
-		req *connect_go.Request[protocol.RemoveStreamsFromSyncRequest],
-	) (*connect_go.Response[protocol.RemoveStreamsFromSyncResponse], error)
+		req *connect_go.Request[protocol.RemoveStreamFromSyncRequest],
+	) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error)
+	RemoveSync(
+		ctx context.Context,
+		req *connect_go.Request[protocol.RemoveSyncRequest],
+	) (*connect_go.Response[protocol.RemoveSyncResponse], error)
 }
 
 type SyncHandlerV1 struct {
@@ -85,8 +89,10 @@ type SyncHandlerV2 struct {
 }
 
 type syncNode struct {
-	syncPos []*protocol.SyncCookie
-	stub    protocolconnect.StreamServiceClient
+	address         string
+	remoteSyncId    string // the syncId to the remote node's sync subscription
+	forwarderSyncId string // the forwarding node's sync Id
+	stub            protocolconnect.StreamServiceClient
 
 	mu     sync.Mutex
 	stream *connect_go.ServerStreamForClient[protocol.SyncStreamsResponse]
@@ -101,18 +107,25 @@ func (s *Service) SyncStreams(
 	return s.syncHandler.SyncStreams(ctx, req, res)
 }
 
-func (s *Service) AddStreamsToSync(
+func (s *Service) AddStreamToSync(
 	ctx context.Context,
-	req *connect_go.Request[protocol.AddStreamsToSyncRequest],
-) (*connect_go.Response[protocol.AddStreamsToSyncResponse], error) {
-	return s.syncHandler.AddStreamsToSync(ctx, req)
+	req *connect_go.Request[protocol.AddStreamToSyncRequest],
+) (*connect_go.Response[protocol.AddStreamToSyncResponse], error) {
+	return s.syncHandler.AddStreamToSync(ctx, req)
 }
 
-func (s *Service) RemoveStreamsFromSync(
+func (s *Service) RemoveStreamFromSync(
 	ctx context.Context,
-	req *connect_go.Request[protocol.RemoveStreamsFromSyncRequest],
-) (*connect_go.Response[protocol.RemoveStreamsFromSyncResponse], error) {
-	return s.syncHandler.RemoveStreamsFromSync(ctx, req)
+	req *connect_go.Request[protocol.RemoveStreamFromSyncRequest],
+) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error) {
+	return s.syncHandler.RemoveStreamFromSync(ctx, req)
+}
+
+func (s *Service) RemoveSync(
+	ctx context.Context,
+	req *connect_go.Request[protocol.RemoveSyncRequest],
+) (*connect_go.Response[protocol.RemoveSyncResponse], error) {
+	return s.syncHandler.RemoveSync(ctx, req)
 }
 
 func (s *SyncHandlerV2) SyncStreams(
@@ -123,14 +136,14 @@ func (s *SyncHandlerV2) SyncStreams(
 	ctx, log := ctxAndLogForRequest(ctx, req)
 	// generate a random syncId
 	syncId := uuid.New().String()
-	log.Debug("SyncHandlerV2.SyncStreams ENTER", "syncId", syncId, "syncPos", req.Msg.SyncPos)
+	log.Debug("SyncStreams:SyncHandlerV2.SyncStreams ENTER", "syncId", syncId, "syncPos", req.Msg.SyncPos)
 	// return the syncId to the client
 	e := res.Send(&protocol.SyncStreamsResponse{
 		SyncId: syncId,
 	})
 	if e != nil {
 		err := base.AsRiverError(e).Func("SyncStreams")
-		log.Debug("SyncHandlerV2.SyncStreams: failed to send syncId", "res", res, "err", err, "syncId", syncId)
+		log.Debug("SyncStreams:SyncHandlerV2.SyncStreams: failed to send syncId", "res", res, "err", err, "syncId", syncId)
 		return err
 	}
 	e = s.handleSyncRequest(ctx, req, res, syncId)
@@ -145,7 +158,7 @@ func (s *SyncHandlerV2) SyncStreams(
 		return err.AsConnectError()
 	}
 	// no errors
-	log.Debug("SyncHandlerV2.SyncStreams LEAVE")
+	log.Debug("SyncStreams:SyncHandlerV2.SyncStreams LEAVE")
 	return nil
 }
 
@@ -166,11 +179,10 @@ func (s *SyncHandlerV2) handleSyncRequest(
 		s.RemoveSubscription(ctx, syncId)
 	}()
 
-	localCookies, remoteCookies := s.getLocalAndRemoteCookies(req.Msg.SyncPos)
+	localCookies, remoteCookies := getLocalAndRemoteCookies(s.wallet.AddressStr, req.Msg.SyncPos)
 
-	for _, cookie := range remoteCookies {
-		nodeAddr := cookie.NodeAddress
-		if subscription.existsRemoteAddress(nodeAddr) {
+	for nodeAddr, cookies := range remoteCookies {
+		if !subscription.existsRemoteAddress(nodeAddr) {
 			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddr)
 			if err != nil {
 				// TODO: Handle the case when node is no longer available.
@@ -178,13 +190,15 @@ func (s *SyncHandlerV2) handleSyncRequest(
 			}
 
 			r := &syncNode{
-				syncPos: []*protocol.SyncCookie{},
-				stub:    stub,
+				address:         nodeAddr,
+				forwarderSyncId: syncId,
+				stub:            stub,
 			}
 			subscription.addRemoteNode(nodeAddr, r)
 		}
-		remote := subscription.remoteNodes[nodeAddr]
-		remote.syncPos = append(remote.syncPos, cookie)
+		for _, cookie := range cookies {
+			subscription.addRemoteStream(cookie)
+		}
 	}
 
 	if len(localCookies) > 0 {
@@ -192,7 +206,8 @@ func (s *SyncHandlerV2) handleSyncRequest(
 	}
 
 	for _, remote := range subscription.remoteNodes {
-		go remote.syncRemoteNode(ctx, subscription)
+		cookies := remoteCookies[remote.address]
+		go remote.syncRemoteNode(ctx, syncId, cookies, subscription)
 	}
 
 	// start the sync loop
@@ -203,18 +218,36 @@ func (s *SyncHandlerV2) handleSyncRequest(
 		return err
 	}
 
-	log.Error("SyncStreams: sync always should be terminated by context cancel.")
+	log.Error("SyncStreams:SyncStreams: sync always should be terminated by context cancel.")
 	return nil
 }
 
-func (s *SyncHandlerV2) getLocalAndRemoteCookies(cookies []*protocol.SyncCookie) (local []*protocol.SyncCookie, remote []*protocol.SyncCookie) {
-	local = make([]*protocol.SyncCookie, 0, 8)
-	remote = make([]*protocol.SyncCookie, 0, 8)
-	for _, cookie := range cookies {
-		if cookie.NodeAddress == s.wallet.AddressStr {
-			local = append(local, cookie)
+func (s *SyncHandlerV2) RemoveSync(
+	ctx context.Context,
+	req *connect_go.Request[protocol.RemoveSyncRequest],
+) (*connect_go.Response[protocol.RemoveSyncResponse], error) {
+	defer func() {
+		s.RemoveSubscription(ctx, req.Msg.SyncId)
+	}()
+	_, log := ctxAndLogForRequest(ctx, req)
+	log.Debug("SyncStreams:SyncHandlerV2.RemoveSync", "syncId", req.Msg.SyncId)
+	return nil, nil
+}
+
+func getLocalAndRemoteCookies(
+	localWalletAddr string,
+	syncCookies []*protocol.SyncCookie,
+) (localCookies []*protocol.SyncCookie, remoteCookies map[string][]*protocol.SyncCookie) {
+	localCookies = make([]*protocol.SyncCookie, 0, 8)
+	remoteCookies = make(map[string][]*protocol.SyncCookie)
+	for _, cookie := range syncCookies {
+		if cookie.NodeAddress == localWalletAddr {
+			localCookies = append(localCookies, cookie)
 		} else {
-			remote = append(remote, cookie)
+			if remoteCookies[cookie.NodeAddress] == nil {
+				remoteCookies[cookie.NodeAddress] = make([]*protocol.SyncCookie, 0, 8)
+			}
+			remoteCookies[cookie.NodeAddress] = append(remoteCookies[cookie.NodeAddress], cookie)
 		}
 	}
 	return
@@ -228,13 +261,13 @@ func (s *SyncHandlerV2) syncLocalNode(
 	log := dlog.CtxLog(ctx)
 
 	if ctx.Err() != nil {
-		log.Debug("SyncHandlerV2.SyncStreams: syncLocalNode not starting", "context_error", ctx.Err())
+		log.Debug("SyncStreams:SyncHandlerV2.SyncStreams: syncLocalNode not starting", "context_error", ctx.Err())
 		return
 	}
 
 	err := s.syncLocalStreamsImpl(ctx, syncPos, subscription)
 	if err != nil {
-		log.Debug("SyncHandlerV2.SyncStreams: syncLocalNode failed", "err", err)
+		log.Debug("SyncStreams:SyncHandlerV2.SyncStreams: syncLocalNode failed", "err", err)
 		subscription.OnSyncError(err)
 	}
 }
@@ -252,8 +285,15 @@ func (s *SyncHandlerV2) syncLocalStreamsImpl(
 		subscription.unsubAllLocalStreams()
 	}()
 
-	if err := s.addLocalStreamsToSync(ctx, syncPos, subscription); err != nil {
-		return err
+	for _, pos := range syncPos {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		err := s.addLocalStreamToSync(ctx, pos, subscription)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Wait for context to be done before unsubbing.
@@ -261,91 +301,129 @@ func (s *SyncHandlerV2) syncLocalStreamsImpl(
 	return nil
 }
 
-func (s *SyncHandlerV2) addLocalStreamsToSync(
+func (s *SyncHandlerV2) addLocalStreamToSync(
 	ctx context.Context,
-	syncPos []*protocol.SyncCookie,
+	cookie *protocol.SyncCookie,
 	subscription *syncSubscriptionImpl,
 ) error {
-	for _, pos := range syncPos {
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-
-		err := events.SyncCookieValidate(pos)
-		if err != nil {
-			return nil
-		}
-
-		if subscription.existsLocalStreamId(pos.StreamId) {
-			// stream is already subscribed. skip to the next cookie.
-			continue
-		}
-
-		streamSub, _, err := s.cache.GetStream(ctx, pos.StreamId)
-		if err != nil {
-			return err
-		}
-
-		err = subscription.addLocalStream(ctx, pos, &streamSub)
-		if err != nil {
-			return err
-		}
+	if ctx.Err() != nil {
+		return ctx.Err()
 	}
+
+	err := events.SyncCookieValidate(cookie)
+	if err != nil {
+		return nil
+	}
+
+	if subscription.existsLocalStream(cookie.StreamId) {
+		// stream is already subscribed. no need to re-subscribe.
+		return nil
+	}
+
+	streamSub, _, err := s.cache.GetStream(ctx, cookie.StreamId)
+	if err != nil {
+		return err
+	}
+
+	err = subscription.addLocalStream(ctx, cookie, &streamSub)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (s *SyncHandlerV2) AddStreamsToSync(
+func (s *SyncHandlerV2) AddStreamToSync(
 	ctx context.Context,
-	req *connect_go.Request[protocol.AddStreamsToSyncRequest],
-) (*connect_go.Response[protocol.AddStreamsToSyncResponse], error) {
+	req *connect_go.Request[protocol.AddStreamToSyncRequest],
+) (*connect_go.Response[protocol.AddStreamToSyncResponse], error) {
+	ctx, log := ctxAndLogForRequest(ctx, req)
+	log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync ENTER", "syncId", req.Msg.SyncId, "syncPos", req.Msg.SyncPos)
+
 	var subscription *syncSubscriptionImpl
 	if subscription = s.syncIdToSubscription[req.Msg.SyncId]; subscription == nil {
-		return nil, base.RiverError(protocol.Err_NOT_FOUND, "SyncId not found").Func("AddStreamsToSync")
+		log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync: SyncId not found", "syncId", req.Msg.SyncId)
+		return nil, base.RiverError(protocol.Err_NOT_FOUND, "SyncId not found").Func("AddStreamToSync")
 	}
 
-	localCookies, remoteCookies := s.getLocalAndRemoteCookies(req.Msg.SyncPos)
-	addedRemoteNodes := make([]*syncNode, 0, 8)
-
-	for _, cookie := range remoteCookies {
-		nodeAddr := cookie.NodeAddress
-		if subscription.existsRemoteAddress(nodeAddr) {
-			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddr)
-			if err != nil {
-				// TODO: Handle the case when node is no longer available.
-				return nil, err
-			}
-
-			r := &syncNode{
-				syncPos: []*protocol.SyncCookie{},
-				stub:    stub,
-			}
-			if subscription.addRemoteNode(nodeAddr, r) {
-				addedRemoteNodes = append(addedRemoteNodes, r)
-			}
-		}
-		remote := subscription.remoteNodes[nodeAddr]
-		remote.syncPos = append(remote.syncPos, cookie)
-	}
-
-	if len(localCookies) > 0 {
-		if err := s.addLocalStreamsToSync(ctx, localCookies, subscription); err != nil {
+	cookie := req.Msg.SyncPos
+	// Two cases to handle. Either local cookie or remote cookie.
+	if cookie.NodeAddress == s.wallet.AddressStr {
+		// Case 1: local cookie
+		if err := s.addLocalStreamToSync(ctx, cookie, subscription); err != nil {
+			log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync: failed to add local streams", "syncId", req.Msg.SyncId, "err", err)
 			return nil, err
 		}
+		// done.
+		return connect_go.NewResponse(&protocol.AddStreamToSyncResponse{}), nil
 	}
 
-	// start the sync loop for the newly added remote nodes
-	for _, remote := range addedRemoteNodes {
-		go remote.syncRemoteNode(ctx, subscription)
+	// Case 2: remote cookie
+	remoteNode := subscription.remoteNodes[cookie.NodeAddress]
+	isNewRemoteNode := remoteNode == nil
+	if isNewRemoteNode {
+		// the remote node does not exist in the subscription. add it.
+		stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(cookie.NodeAddress)
+		if err != nil {
+			// TODO: Handle the case when node is no longer available.
+			return nil, err
+		}
+		if stub == nil {
+			panic("stub always should set for the remote node")
+		}
+
+		remoteNode = &syncNode{
+			address:         cookie.NodeAddress,
+			forwarderSyncId: subscription.SyncId,
+			stub:            stub,
+		}
+		subscription.addRemoteNode(cookie.NodeAddress, remoteNode)
+	}
+	subscription.addRemoteStream(cookie)
+
+	if isNewRemoteNode {
+		// tell the new remote node to sync
+		syncPos := make([]*protocol.SyncCookie, 0, 1)
+		syncPos = append(syncPos, cookie)
+		go remoteNode.syncRemoteNode(ctx, subscription.SyncId, syncPos, subscription)
+	} else {
+		// tell the existing remote nodes to add the streams to sync
+		go remoteNode.addStreamToSync(ctx, cookie, subscription)
 	}
 
-	return connect_go.NewResponse(&protocol.AddStreamsToSyncResponse{}), nil
+	log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync LEAVE", "syncId", req.Msg.SyncId)
+	return connect_go.NewResponse(&protocol.AddStreamToSyncResponse{}), nil
 }
 
-func (s *SyncHandlerV2) RemoveStreamsFromSync(
+func (s *SyncHandlerV2) RemoveStreamFromSync(
 	ctx context.Context,
-	req *connect_go.Request[protocol.RemoveStreamsFromSyncRequest],
-) (*connect_go.Response[protocol.RemoveStreamsFromSyncResponse], error) {
-	return nil, base.RiverError(protocol.Err_UNIMPLEMENTED, "Not Implemented").Func("RemoveStreamsFromSync")
+	req *connect_go.Request[protocol.RemoveStreamFromSyncRequest],
+) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error) {
+	ctx, log := ctxAndLogForRequest(ctx, req)
+	log.Debug("SyncStreams:SyncHandlerV2.RemoveStreamFromSync ENTER", "syncId", req.Msg.SyncId, "streamId", req.Msg.StreamId)
+
+	var subscription *syncSubscriptionImpl
+	if subscription = s.syncIdToSubscription[req.Msg.SyncId]; subscription == nil {
+		log.Debug("SyncStreams:SyncHandlerV2.RemoveStreamFromSync: SyncId not found", "syncId", req.Msg.SyncId)
+		return nil, base.RiverError(protocol.Err_NOT_FOUND, "SyncId not found").Func("RemoveStreamFromSync")
+	}
+
+	// figure out which stream to remove, and which remote node to remove from.
+	streamId := req.Msg.StreamId
+	if subscription.existsLocalStream(streamId) {
+		subscription.removeLocalStream(streamId)
+	}
+	// use the streamId to find the remote node to remove from
+	if remoteNode := subscription.remoteStreams[streamId]; remoteNode != nil {
+		go remoteNode.removeStreamFromSync(ctx, streamId, subscription)
+		subscription.removeRemoteStream(streamId)
+	}
+
+	// remove any remote nodes that no longer have any streams to sync
+	subscription.purgeUnusedRemoteNodes()
+
+	log.Debug("SyncStreams:SyncHandlerV2.RemoveStreamFromSync LEAVE", "syncId", req.Msg.SyncId)
+	return connect_go.NewResponse(&protocol.RemoveStreamFromSyncResponse{}), nil
 }
 
 func (s *SyncHandlerV2) AddSubscription(
@@ -374,7 +452,7 @@ func (s *SyncHandlerV2) AddSubscription(
 		channel:      make(chan *protocol.SyncStreamsResponse),
 	}
 	s.syncIdToSubscription[syncId] = subscription
-	log.Info("AddSubscription: syncId subscription added", "syncId", syncId)
+	log.Info("SyncStreams:AddSubscription: syncId subscription added", "syncId", syncId)
 	return subscription, nil
 }
 
@@ -385,16 +463,13 @@ func (s *SyncHandlerV2) RemoveSubscription(
 	log := dlog.CtxLog(ctx)
 	s.syncLock.Lock()
 	defer s.syncLock.Unlock()
-	subscription := s.syncIdToSubscription[syncId]
-	if subscription != nil {
+	if subscription := s.syncIdToSubscription[syncId]; subscription != nil {
 		subscription.close()
 		delete(s.syncIdToSubscription, syncId)
+		log.Info("SyncStreams:RemoveSubscription: syncId subscription removed", "syncId", syncId)
+	} else {
+		log.Info("SyncStreams:RemoveSubscription: syncId not found", "syncId", syncId)
 	}
-	log.Info("RemoveSubscription: syncId subscription removed", "syncId", syncId)
-}
-
-func (s *SyncHandlerV2) ResetSubscriptions() {
-	// todo
 }
 
 func (s *SyncHandlerV1) SyncStreams(
@@ -419,18 +494,25 @@ func (s *SyncHandlerV1) SyncStreams(
 	return nil
 }
 
-func (s *SyncHandlerV1) AddStreamsToSync(
+func (s *SyncHandlerV1) AddStreamToSync(
 	ctx context.Context,
-	req *connect_go.Request[protocol.AddStreamsToSyncRequest],
-) (*connect_go.Response[protocol.AddStreamsToSyncResponse], error) {
-	return nil, base.RiverError(protocol.Err_UNIMPLEMENTED, "Not Implemented").Func("AddStreamsToSync")
+	req *connect_go.Request[protocol.AddStreamToSyncRequest],
+) (*connect_go.Response[protocol.AddStreamToSyncResponse], error) {
+	return nil, base.RiverError(protocol.Err_UNIMPLEMENTED, "Not Implemented").Func("AddStreamToSync")
 }
 
-func (s *SyncHandlerV1) RemoveStreamsFromSync(
+func (s *SyncHandlerV1) RemoveStreamFromSync(
 	ctx context.Context,
-	req *connect_go.Request[protocol.RemoveStreamsFromSyncRequest],
-) (*connect_go.Response[protocol.RemoveStreamsFromSyncResponse], error) {
-	return nil, base.RiverError(protocol.Err_UNIMPLEMENTED, "Not Implemented").Func("RemoveStreamsFromSync")
+	req *connect_go.Request[protocol.RemoveStreamFromSyncRequest],
+) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error) {
+	return nil, base.RiverError(protocol.Err_UNIMPLEMENTED, "Not Implemented").Func("RemoveStreamFromSync")
+}
+
+func (s *SyncHandlerV1) RemoveSync(
+	ctx context.Context,
+	req *connect_go.Request[protocol.RemoveSyncRequest],
+) (*connect_go.Response[protocol.RemoveSyncResponse], error) {
+	return nil, base.RiverError(protocol.Err_UNIMPLEMENTED, "Not Implemented").Func("RemoveSync")
 }
 
 func (s *SyncHandlerV1) syncStreamsImpl(
@@ -440,8 +522,8 @@ func (s *SyncHandlerV1) syncStreamsImpl(
 ) error {
 	log := dlog.CtxLog(ctx)
 
-	local := make([]*protocol.SyncCookie, 0, 8)
 	localNodeAddress := s.wallet.AddressStr
+	localCookies, remoteCookies := getLocalAndRemoteCookies(localNodeAddress, req.Msg.SyncPos)
 
 	remotes := make(map[string]*syncNode)
 	defer func() {
@@ -450,27 +532,23 @@ func (s *SyncHandlerV1) syncStreamsImpl(
 		}
 	}()
 
-	for _, cookie := range req.Msg.SyncPos {
-		nodeAddr := cookie.NodeAddress
-		if cookie.NodeAddress == localNodeAddress {
-			local = append(local, cookie)
-		} else {
-			remote, ok := remotes[nodeAddr]
-			if !ok {
-				stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddr)
-				if err != nil {
-					// TODO: Handle the case when node is no longer available.
-					return err
-				}
-
-				remote = &syncNode{
-					syncPos: []*protocol.SyncCookie{cookie},
-					stub:    stub,
-				}
-				remotes[nodeAddr] = remote
-			} else {
-				remote.syncPos = append(remote.syncPos, cookie)
+	for nodeAddr := range remoteCookies {
+		_, ok := remotes[nodeAddr]
+		if !ok {
+			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddr)
+			if err != nil {
+				// TODO: Handle the case when node is no longer available.
+				return err
 			}
+			if stub == nil {
+				panic("stub always should set for the remote node")
+			}
+
+			remote := &syncNode{
+				address: nodeAddr,
+				stub:    stub,
+			}
+			remotes[nodeAddr] = remote
 		}
 	}
 
@@ -482,12 +560,13 @@ func (s *SyncHandlerV1) syncStreamsImpl(
 		channel: make(chan *protocol.SyncStreamsResponse, 128),
 	}
 
-	if len(local) > 0 {
-		go s.syncLocalNode(syncCtx, local, receiver)
+	if len(localCookies) > 0 {
+		go s.syncLocalNode(syncCtx, localCookies, receiver)
 	}
 
 	for _, remote := range remotes {
-		go remote.syncRemoteNode(syncCtx, receiver)
+		c := remoteCookies[remote.address]
+		go remote.syncRemoteNode(syncCtx, "", c, receiver)
 	}
 
 	receiver.Dispatch(res)
@@ -560,10 +639,14 @@ func (s *SyncHandlerV1) syncLocalNode(ctx context.Context, syncPos []*protocol.S
 // Which in turn means that we need to close all outstanding streams to remote nodes.
 // Without control signals there is no clean way to do so, so for now both ctx is canceled and Close is called
 // async hoping this will trigger Receive to abort.
-func (n *syncNode) syncRemoteNode(ctx context.Context, receiver events.SyncResultReceiver) {
+func (n *syncNode) syncRemoteNode(ctx context.Context, forwarderSyncId string, syncPos []*protocol.SyncCookie, receiver events.SyncResultReceiver) {
 	log := dlog.CtxLog(ctx)
 	if ctx.Err() != nil || n.isClosed() {
-		log.Debug("SyncStreams: syncRemoteNode not starting", "context_error", ctx.Err())
+		log.Debug("SyncStreams: syncRemoteNode not started", "context_error", ctx.Err())
+		return
+	}
+	if n.remoteSyncId != "" {
+		log.Debug("SyncStreams: syncRemoteNode not started because there is an existing sync", "remoteSyncId", n.remoteSyncId, "forwarderSyncId", forwarderSyncId)
 		return
 	}
 
@@ -571,7 +654,7 @@ func (n *syncNode) syncRemoteNode(ctx context.Context, receiver events.SyncResul
 		ctx,
 		&connect_go.Request[protocol.SyncStreamsRequest]{
 			Msg: &protocol.SyncStreamsRequest{
-				SyncPos: n.syncPos,
+				SyncPos: syncPos,
 			},
 		},
 	)
@@ -580,6 +663,9 @@ func (n *syncNode) syncRemoteNode(ctx context.Context, receiver events.SyncResul
 		receiver.OnSyncError(err)
 		return
 	}
+
+	n.remoteSyncId = stream.Msg().SyncId
+	n.forwarderSyncId = forwarderSyncId
 
 	if !n.setStream(stream) {
 		log.Debug("SyncStreams: syncRemoteNode already closed")
@@ -612,6 +698,62 @@ func (n *syncNode) syncRemoteNode(ctx context.Context, receiver events.SyncResul
 		log.Debug("SyncStreams: syncRemoteNode receive failed", "err", err)
 		receiver.OnSyncError(err)
 		return
+	}
+}
+
+func (n *syncNode) addStreamToSync(
+	ctx context.Context,
+	cookie *protocol.SyncCookie,
+	receiver events.SyncResultReceiver,
+) {
+	log := dlog.CtxLog(ctx)
+	if ctx.Err() != nil || n.isClosed() {
+		log.Debug("SyncStreams:syncNode addStreamToSync not started", "context_error", ctx.Err())
+	}
+	if n.remoteSyncId == "" {
+		log.Debug("SyncStreams:syncNode addStreamToSync not started because there is no existing sync", "remoteSyncId", n.remoteSyncId)
+	}
+
+	_, err := n.stub.AddStreamToSync(
+		ctx,
+		&connect_go.Request[protocol.AddStreamToSyncRequest]{
+			Msg: &protocol.AddStreamToSyncRequest{
+				SyncPos: cookie,
+				SyncId:  n.remoteSyncId,
+			},
+		},
+	)
+	if err != nil {
+		log.Debug("SyncStreams:syncNode addStreamToSync failed", "err", err)
+		receiver.OnSyncError(err)
+	}
+}
+
+func (n *syncNode) removeStreamFromSync(
+	ctx context.Context,
+	streamId string,
+	receiver events.SyncResultReceiver,
+) {
+	log := dlog.CtxLog(ctx)
+	if ctx.Err() != nil || n.isClosed() {
+		log.Debug("SyncStreams:syncNode removeStreamsFromSync not started", "context_error", ctx.Err())
+	}
+	if n.remoteSyncId == "" {
+		log.Debug("SyncStreams:syncNode removeStreamsFromSync not started because there is no existing sync", "syncId", n.remoteSyncId)
+	}
+
+	_, err := n.stub.RemoveStreamFromSync(
+		ctx,
+		&connect_go.Request[protocol.RemoveStreamFromSyncRequest]{
+			Msg: &protocol.RemoveStreamFromSyncRequest{
+				SyncId:   n.remoteSyncId,
+				StreamId: streamId,
+			},
+		},
+	)
+	if err != nil {
+		log.Debug("SyncStreams:syncNode removeStreamsFromSync failed", "err", err)
+		receiver.OnSyncError(err)
 	}
 }
 

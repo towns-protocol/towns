@@ -49,12 +49,15 @@ const (
 	// StreamServiceSyncStreamsProcedure is the fully-qualified name of the StreamService's SyncStreams
 	// RPC.
 	StreamServiceSyncStreamsProcedure = "/river.StreamService/SyncStreams"
-	// StreamServiceAddStreamsToSyncProcedure is the fully-qualified name of the StreamService's
-	// AddStreamsToSync RPC.
-	StreamServiceAddStreamsToSyncProcedure = "/river.StreamService/AddStreamsToSync"
-	// StreamServiceRemoveStreamsFromSyncProcedure is the fully-qualified name of the StreamService's
-	// RemoveStreamsFromSync RPC.
-	StreamServiceRemoveStreamsFromSyncProcedure = "/river.StreamService/RemoveStreamsFromSync"
+	// StreamServiceAddStreamToSyncProcedure is the fully-qualified name of the StreamService's
+	// AddStreamToSync RPC.
+	StreamServiceAddStreamToSyncProcedure = "/river.StreamService/AddStreamToSync"
+	// StreamServiceRemoveStreamFromSyncProcedure is the fully-qualified name of the StreamService's
+	// RemoveStreamFromSync RPC.
+	StreamServiceRemoveStreamFromSyncProcedure = "/river.StreamService/RemoveStreamFromSync"
+	// StreamServiceRemoveSyncProcedure is the fully-qualified name of the StreamService's RemoveSync
+	// RPC.
+	StreamServiceRemoveSyncProcedure = "/river.StreamService/RemoveSync"
 	// StreamServiceInfoProcedure is the fully-qualified name of the StreamService's Info RPC.
 	StreamServiceInfoProcedure = "/river.StreamService/Info"
 )
@@ -67,8 +70,9 @@ type StreamServiceClient interface {
 	GetLastMiniblockHash(context.Context, *connect_go.Request[protocol.GetLastMiniblockHashRequest]) (*connect_go.Response[protocol.GetLastMiniblockHashResponse], error)
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
 	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.ServerStreamForClient[protocol.SyncStreamsResponse], error)
-	AddStreamsToSync(context.Context, *connect_go.Request[protocol.AddStreamsToSyncRequest]) (*connect_go.Response[protocol.AddStreamsToSyncResponse], error)
-	RemoveStreamsFromSync(context.Context, *connect_go.Request[protocol.RemoveStreamsFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamsFromSyncResponse], error)
+	AddStreamToSync(context.Context, *connect_go.Request[protocol.AddStreamToSyncRequest]) (*connect_go.Response[protocol.AddStreamToSyncResponse], error)
+	RemoveStreamFromSync(context.Context, *connect_go.Request[protocol.RemoveStreamFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error)
+	RemoveSync(context.Context, *connect_go.Request[protocol.RemoveSyncRequest]) (*connect_go.Response[protocol.RemoveSyncResponse], error)
 	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
 }
 
@@ -112,14 +116,19 @@ func NewStreamServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 			baseURL+StreamServiceSyncStreamsProcedure,
 			opts...,
 		),
-		addStreamsToSync: connect_go.NewClient[protocol.AddStreamsToSyncRequest, protocol.AddStreamsToSyncResponse](
+		addStreamToSync: connect_go.NewClient[protocol.AddStreamToSyncRequest, protocol.AddStreamToSyncResponse](
 			httpClient,
-			baseURL+StreamServiceAddStreamsToSyncProcedure,
+			baseURL+StreamServiceAddStreamToSyncProcedure,
 			opts...,
 		),
-		removeStreamsFromSync: connect_go.NewClient[protocol.RemoveStreamsFromSyncRequest, protocol.RemoveStreamsFromSyncResponse](
+		removeStreamFromSync: connect_go.NewClient[protocol.RemoveStreamFromSyncRequest, protocol.RemoveStreamFromSyncResponse](
 			httpClient,
-			baseURL+StreamServiceRemoveStreamsFromSyncProcedure,
+			baseURL+StreamServiceRemoveStreamFromSyncProcedure,
+			opts...,
+		),
+		removeSync: connect_go.NewClient[protocol.RemoveSyncRequest, protocol.RemoveSyncResponse](
+			httpClient,
+			baseURL+StreamServiceRemoveSyncProcedure,
 			opts...,
 		),
 		info: connect_go.NewClient[protocol.InfoRequest, protocol.InfoResponse](
@@ -132,15 +141,16 @@ func NewStreamServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 
 // streamServiceClient implements StreamServiceClient.
 type streamServiceClient struct {
-	createStream          *connect_go.Client[protocol.CreateStreamRequest, protocol.CreateStreamResponse]
-	getStream             *connect_go.Client[protocol.GetStreamRequest, protocol.GetStreamResponse]
-	getMiniblocks         *connect_go.Client[protocol.GetMiniblocksRequest, protocol.GetMiniblocksResponse]
-	getLastMiniblockHash  *connect_go.Client[protocol.GetLastMiniblockHashRequest, protocol.GetLastMiniblockHashResponse]
-	addEvent              *connect_go.Client[protocol.AddEventRequest, protocol.AddEventResponse]
-	syncStreams           *connect_go.Client[protocol.SyncStreamsRequest, protocol.SyncStreamsResponse]
-	addStreamsToSync      *connect_go.Client[protocol.AddStreamsToSyncRequest, protocol.AddStreamsToSyncResponse]
-	removeStreamsFromSync *connect_go.Client[protocol.RemoveStreamsFromSyncRequest, protocol.RemoveStreamsFromSyncResponse]
-	info                  *connect_go.Client[protocol.InfoRequest, protocol.InfoResponse]
+	createStream         *connect_go.Client[protocol.CreateStreamRequest, protocol.CreateStreamResponse]
+	getStream            *connect_go.Client[protocol.GetStreamRequest, protocol.GetStreamResponse]
+	getMiniblocks        *connect_go.Client[protocol.GetMiniblocksRequest, protocol.GetMiniblocksResponse]
+	getLastMiniblockHash *connect_go.Client[protocol.GetLastMiniblockHashRequest, protocol.GetLastMiniblockHashResponse]
+	addEvent             *connect_go.Client[protocol.AddEventRequest, protocol.AddEventResponse]
+	syncStreams          *connect_go.Client[protocol.SyncStreamsRequest, protocol.SyncStreamsResponse]
+	addStreamToSync      *connect_go.Client[protocol.AddStreamToSyncRequest, protocol.AddStreamToSyncResponse]
+	removeStreamFromSync *connect_go.Client[protocol.RemoveStreamFromSyncRequest, protocol.RemoveStreamFromSyncResponse]
+	removeSync           *connect_go.Client[protocol.RemoveSyncRequest, protocol.RemoveSyncResponse]
+	info                 *connect_go.Client[protocol.InfoRequest, protocol.InfoResponse]
 }
 
 // CreateStream calls river.StreamService.CreateStream.
@@ -173,14 +183,19 @@ func (c *streamServiceClient) SyncStreams(ctx context.Context, req *connect_go.R
 	return c.syncStreams.CallServerStream(ctx, req)
 }
 
-// AddStreamsToSync calls river.StreamService.AddStreamsToSync.
-func (c *streamServiceClient) AddStreamsToSync(ctx context.Context, req *connect_go.Request[protocol.AddStreamsToSyncRequest]) (*connect_go.Response[protocol.AddStreamsToSyncResponse], error) {
-	return c.addStreamsToSync.CallUnary(ctx, req)
+// AddStreamToSync calls river.StreamService.AddStreamToSync.
+func (c *streamServiceClient) AddStreamToSync(ctx context.Context, req *connect_go.Request[protocol.AddStreamToSyncRequest]) (*connect_go.Response[protocol.AddStreamToSyncResponse], error) {
+	return c.addStreamToSync.CallUnary(ctx, req)
 }
 
-// RemoveStreamsFromSync calls river.StreamService.RemoveStreamsFromSync.
-func (c *streamServiceClient) RemoveStreamsFromSync(ctx context.Context, req *connect_go.Request[protocol.RemoveStreamsFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamsFromSyncResponse], error) {
-	return c.removeStreamsFromSync.CallUnary(ctx, req)
+// RemoveStreamFromSync calls river.StreamService.RemoveStreamFromSync.
+func (c *streamServiceClient) RemoveStreamFromSync(ctx context.Context, req *connect_go.Request[protocol.RemoveStreamFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error) {
+	return c.removeStreamFromSync.CallUnary(ctx, req)
+}
+
+// RemoveSync calls river.StreamService.RemoveSync.
+func (c *streamServiceClient) RemoveSync(ctx context.Context, req *connect_go.Request[protocol.RemoveSyncRequest]) (*connect_go.Response[protocol.RemoveSyncResponse], error) {
+	return c.removeSync.CallUnary(ctx, req)
 }
 
 // Info calls river.StreamService.Info.
@@ -196,8 +211,9 @@ type StreamServiceHandler interface {
 	GetLastMiniblockHash(context.Context, *connect_go.Request[protocol.GetLastMiniblockHashRequest]) (*connect_go.Response[protocol.GetLastMiniblockHashResponse], error)
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
 	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest], *connect_go.ServerStream[protocol.SyncStreamsResponse]) error
-	AddStreamsToSync(context.Context, *connect_go.Request[protocol.AddStreamsToSyncRequest]) (*connect_go.Response[protocol.AddStreamsToSyncResponse], error)
-	RemoveStreamsFromSync(context.Context, *connect_go.Request[protocol.RemoveStreamsFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamsFromSyncResponse], error)
+	AddStreamToSync(context.Context, *connect_go.Request[protocol.AddStreamToSyncRequest]) (*connect_go.Response[protocol.AddStreamToSyncResponse], error)
+	RemoveStreamFromSync(context.Context, *connect_go.Request[protocol.RemoveStreamFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error)
+	RemoveSync(context.Context, *connect_go.Request[protocol.RemoveSyncRequest]) (*connect_go.Response[protocol.RemoveSyncResponse], error)
 	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
 }
 
@@ -237,14 +253,19 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.Handle
 		svc.SyncStreams,
 		opts...,
 	)
-	streamServiceAddStreamsToSyncHandler := connect_go.NewUnaryHandler(
-		StreamServiceAddStreamsToSyncProcedure,
-		svc.AddStreamsToSync,
+	streamServiceAddStreamToSyncHandler := connect_go.NewUnaryHandler(
+		StreamServiceAddStreamToSyncProcedure,
+		svc.AddStreamToSync,
 		opts...,
 	)
-	streamServiceRemoveStreamsFromSyncHandler := connect_go.NewUnaryHandler(
-		StreamServiceRemoveStreamsFromSyncProcedure,
-		svc.RemoveStreamsFromSync,
+	streamServiceRemoveStreamFromSyncHandler := connect_go.NewUnaryHandler(
+		StreamServiceRemoveStreamFromSyncProcedure,
+		svc.RemoveStreamFromSync,
+		opts...,
+	)
+	streamServiceRemoveSyncHandler := connect_go.NewUnaryHandler(
+		StreamServiceRemoveSyncProcedure,
+		svc.RemoveSync,
 		opts...,
 	)
 	streamServiceInfoHandler := connect_go.NewUnaryHandler(
@@ -266,10 +287,12 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.Handle
 			streamServiceAddEventHandler.ServeHTTP(w, r)
 		case StreamServiceSyncStreamsProcedure:
 			streamServiceSyncStreamsHandler.ServeHTTP(w, r)
-		case StreamServiceAddStreamsToSyncProcedure:
-			streamServiceAddStreamsToSyncHandler.ServeHTTP(w, r)
-		case StreamServiceRemoveStreamsFromSyncProcedure:
-			streamServiceRemoveStreamsFromSyncHandler.ServeHTTP(w, r)
+		case StreamServiceAddStreamToSyncProcedure:
+			streamServiceAddStreamToSyncHandler.ServeHTTP(w, r)
+		case StreamServiceRemoveStreamFromSyncProcedure:
+			streamServiceRemoveStreamFromSyncHandler.ServeHTTP(w, r)
+		case StreamServiceRemoveSyncProcedure:
+			streamServiceRemoveSyncHandler.ServeHTTP(w, r)
 		case StreamServiceInfoProcedure:
 			streamServiceInfoHandler.ServeHTTP(w, r)
 		default:
@@ -305,12 +328,16 @@ func (UnimplementedStreamServiceHandler) SyncStreams(context.Context, *connect_g
 	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.SyncStreams is not implemented"))
 }
 
-func (UnimplementedStreamServiceHandler) AddStreamsToSync(context.Context, *connect_go.Request[protocol.AddStreamsToSyncRequest]) (*connect_go.Response[protocol.AddStreamsToSyncResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.AddStreamsToSync is not implemented"))
+func (UnimplementedStreamServiceHandler) AddStreamToSync(context.Context, *connect_go.Request[protocol.AddStreamToSyncRequest]) (*connect_go.Response[protocol.AddStreamToSyncResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.AddStreamToSync is not implemented"))
 }
 
-func (UnimplementedStreamServiceHandler) RemoveStreamsFromSync(context.Context, *connect_go.Request[protocol.RemoveStreamsFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamsFromSyncResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.RemoveStreamsFromSync is not implemented"))
+func (UnimplementedStreamServiceHandler) RemoveStreamFromSync(context.Context, *connect_go.Request[protocol.RemoveStreamFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.RemoveStreamFromSync is not implemented"))
+}
+
+func (UnimplementedStreamServiceHandler) RemoveSync(context.Context, *connect_go.Request[protocol.RemoveSyncRequest]) (*connect_go.Response[protocol.RemoveSyncResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.RemoveSync is not implemented"))
 }
 
 func (UnimplementedStreamServiceHandler) Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
