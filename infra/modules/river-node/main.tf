@@ -351,6 +351,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
       containerPort = 5157
       hostPort      = 5157
       protocol      = "tcp"
+      }, {
+      containerPort = 8081
+      hostPort      = 8081
+      protocol      = "tcp"
     }]
 
     repositoryCredentials = {
@@ -376,6 +380,12 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
     ]
 
+    dockerLabels = {
+      "com.datadoghq.ad.check_names"  = "[\"openmetrics\"]",
+      "com.datadoghq.ad.init_configs" = "[{}]",
+      "com.datadoghq.ad.instances"    = "[{\"prometheus_url\": \"http://localhost:8081/metrics\", \"namespace\": \"river_node\", \"metrics\": [\"*\"]}]"
+    }
+
     environment = [
       {
         name  = "CHAIN__CHAINID",
@@ -383,7 +393,11 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "METRICS__ENABLED",
-        value = "false"
+        value = "true"
+      },
+      {
+        name  = "METRICS__PORT",
+        value = "8081"
       },
       {
         name  = "STORAGE_TYPE",
@@ -419,7 +433,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "DD_TAGS",
-        value = "instance:${var.node_name}"
+        value = "env:${terraform.workspace}"
       },
       {
         name  = "PERFORMANCETRACKING__PROFILINGENABLED",
@@ -466,7 +480,19 @@ resource "aws_ecs_task_definition" "river-fargate" {
         {
           name  = "DD_APM_ENABLED",
           value = "true"
-        }
+        },
+        {
+          name  = "DD_PROMETHEUS_SCRAPE_ENABLED",
+          value = "true"
+        },
+        {
+          name  = "DD_PROMETHEUS_SCRAPE_CHECKS_ENABLED",
+          value = "true"
+        },
+        {
+          name  = "DD_TAGS",
+          value = "env:${terraform.workspace}"
+        },
       ]
 
       logConfiguration = {
