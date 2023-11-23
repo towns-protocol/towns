@@ -1521,6 +1521,22 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     async uploadDeviceKeys() {
         check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
         this.logCall('initCrypto:: uploading device keys...')
+
+        check(isDefined(this.userDeviceKeyStreamId))
+        const stream = this.stream(this.userDeviceKeyStreamId)
+        check(isDefined(stream), 'device key stream not found')
+
+        if (
+            stream.view.userDeviceKeyContent.containsDeviceKey(
+                this.userId,
+                this.olmDevice.deviceCurve25519Key ?? '',
+                this.olmDevice.fallbackKey.key,
+            )
+        ) {
+            this.logCall('uploadDeviceKeys:: device keys already uploaded')
+            return
+        }
+
         return this.cryptoBackend.uploadDeviceKeys()
     }
 

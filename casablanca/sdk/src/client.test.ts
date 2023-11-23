@@ -712,4 +712,25 @@ describe('clientTest', () => {
             Object.values(alicesClient.olmDevice.fallbackKey)[0],
         )
     })
+
+    // Make sure that the client only uploads device keys
+    // if this exact device key does not exist.
+    test('clientOnlyUploadsDeviceKeysOnce', async () => {
+        await expect(await bobsClient.initializeUser()).toResolve()
+        await bobsClient.startSync()
+        const stream = bobsClient.stream(bobsClient.userDeviceKeyStreamId!)!
+
+        const waitForInitialUpload = makeDonePromise()
+        stream.on('userDeviceKeyMessage', () => {
+            waitForInitialUpload.done()
+        })
+        await waitForInitialUpload.expectToSucceed()
+
+        for (let i = 0; i < 5; i++) {
+            await bobsClient.uploadDeviceKeys()
+        }
+
+        const keys = stream.view.userDeviceKeyContent.uploadedDeviceKeys.get(bobsClient.userId)
+        expect(keys).toHaveLength(1)
+    })
 })

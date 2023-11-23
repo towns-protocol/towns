@@ -10,8 +10,9 @@ import {
     UserDeviceKeyPayload_Snapshot,
     UserDeviceKeyPayload_UserDeviceKey,
 } from '@river/proto'
-import { logNever } from './check'
+import { isDefined, logNever } from './check'
 import { StreamStateView_IContent } from './streamStateView_IContent'
+import { deviceKeyPayloadToUserDevice } from './clientUtils'
 
 export class StreamStateView_UserDeviceKeys implements StreamStateView_IContent {
     readonly streamId: string
@@ -94,5 +95,13 @@ export class StreamStateView_UserDeviceKeys implements StreamStateView_IContent 
                 ])
             }
         }
+    }
+
+    containsDeviceKey(userId: string, deviceKey: string, fallbackKey: string): boolean {
+        const deviceKeys = this.uploadedDeviceKeys.get(userId) ?? []
+        const normalized = deviceKeys.map(deviceKeyPayloadToUserDevice).filter(isDefined)
+        return normalized.some(
+            (device) => device.deviceKey === deviceKey && device.fallbackKey === fallbackKey,
+        )
     }
 }
