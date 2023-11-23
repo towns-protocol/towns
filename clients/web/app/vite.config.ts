@@ -99,10 +99,26 @@ export default ({ mode }: { mode: string }) => {
             vanillaExtractPlugin(),
         ].concat(mode === 'development' ? devPlugins : prodPlugins) as PluginOption[],
         server: {
+            host: env.VITE_LOCAL_HOSTNAME,
             port: 3000,
             hmr: {
                 overlay: false,
             },
+            proxy: env.VITE_CASABLANCA_HOMESERVER_DEV_PROXY_PATH
+                ? {
+                      [`/${env.VITE_CASABLANCA_HOMESERVER_DEV_PROXY_PATH}`]: {
+                          target: env.VITE_CASABLANCA_HOMESERVER_URL,
+                          changeOrigin: true,
+                          rewrite: (path) =>
+                              path.replace(
+                                  new RegExp(
+                                      `^\/${env.VITE_CASABLANCA_HOMESERVER_DEV_PROXY_PATH}/`,
+                                  ),
+                                  '',
+                              ),
+                      },
+                  }
+                : undefined,
         },
     }
 

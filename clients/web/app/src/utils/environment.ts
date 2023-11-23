@@ -49,6 +49,7 @@ const envSchema = z.object({
     VITE_CHAIN_ID: z.string(),
     VITE_UNFURL_SERVER_URL: z.string().url(),
     VITE_GATEWAY_URL: z.string().url(),
+    VITE_CASABLANCA_HOMESERVER_DEV_PROXY_PATH: z.string().optional(), // for now, we're allowing nullish values for casablanca URL
     VITE_CASABLANCA_HOMESERVER_URL: z.string().optional(), // for now, we're allowing nullish values for casablanca URL
     VITE_AUTH_WORKER_HEADER_SECRET: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?
     VITE_GIPHY_API_KEY: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?
@@ -105,6 +106,18 @@ if (rawEnv.VITE_CF_TUNNEL_PREFIX) {
     }
 }
 
+let devProxOverrides: {
+    VITE_CASABLANCA_HOMESERVER_URL?: string
+    VITE_CASABLANCA_HOMESERVER_PROXY_TARGET_URL?: string
+} = {}
+
+if (rawEnv.VITE_CASABLANCA_HOMESERVER_DEV_PROXY_PATH) {
+    devProxOverrides = {
+        VITE_CASABLANCA_HOMESERVER_URL: `/${rawEnv.VITE_CASABLANCA_HOMESERVER_DEV_PROXY_PATH}`,
+        VITE_CASABLANCA_HOMESERVER_PROXY_TARGET_URL: rawEnv.VITE_CASABLANCA_HOMESERVER_URL,
+    }
+}
+
 // if (import.meta.env.PROD) {
 //     if (import.meta.env.MODE === 'production') {
 //         throw new Error('"production" is not a valid mode. Set a mode via the `MODE` env var.')
@@ -117,6 +130,7 @@ if (rawEnv.VITE_CF_TUNNEL_PREFIX) {
 
 export const env = {
     ...rawEnv,
+    ...devProxOverrides,
     ...tunnelOverrides,
 }
 
