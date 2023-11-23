@@ -1,16 +1,14 @@
 import { Allotment, AllotmentHandle } from 'allotment'
-import React, { useMemo, useRef } from 'react'
+import React, { useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
 import { PotentiallyUnusedSuspenseLoader } from '@components/Loaders/SuspenseLoader'
-import { usePrepopulateChannels } from 'hooks/usePrepopulateChannels'
 import { ShortcutModal } from '@components/Shortcuts/ShortcutModal'
 import { MainSideBar, SpaceSideBar } from '@components/SideBars'
 import { SpaceSidebarLoadingPlaceholder } from '@components/SideBars/SpaceSideBar/SpaceSideBarLoading'
 import { Box, Stack } from '@ui'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { usePersistPanes } from 'hooks/usePersistPanes'
-import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { PATHS } from 'routes'
 import { TopBar } from '@components/TopBar/TopBar'
@@ -37,11 +35,6 @@ export const AppPanelLayout = () => {
 
     const displaySpacePanel =
         hasTownRoute && (!(spacesSettingsRoute || spacesNewRoute || homeRoute) || isMessagesRoute)
-
-    const channels = useSpaceChannels()
-    const preloadIds = useMemo(() => channels.map((c) => c.id), [channels])
-
-    usePrepopulateChannels(preloadIds)
 
     return (
         <Stack horizontal grow borderTop position="relative">

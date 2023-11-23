@@ -14,7 +14,6 @@ import {
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { NavItem } from '@components/NavItem/_NavItem'
-import { usePrepopulateChannels } from 'hooks/usePrepopulateChannels'
 import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { TouchLayoutHeader } from '@components/TouchLayoutHeader/TouchLayoutHeader'
@@ -38,7 +37,6 @@ import {
 } from '@ui'
 import { useChannelsWithMentionCountsAndUnread } from 'hooks/useChannelsWithMentionCountsAndUnread'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { PersistAndFadeWelcomeLogo } from 'routes/layouts/WelcomeLayout'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { atoms } from 'ui/styles/atoms.css'
@@ -128,10 +126,6 @@ export const TouchHome = () => {
     }, [])
 
     const { imageSrc } = useImageSource(space?.id.slug ?? '', ImageVariants.thumbnail300)
-
-    const channels = useSpaceChannels()
-    const preloadIds = useMemo(() => channels.map((c) => c.id), [channels])
-    usePrepopulateChannels(preloadIds)
 
     const hasResult = filteredChannels.length > 0 || filteredMembers.length > 0
 
