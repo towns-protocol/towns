@@ -12,7 +12,7 @@ export const TimelineEncryptedContent = React.memo(
         )
 
         return (
-            <Stack insetY="xxs" className={styles.main}>
+            <Stack className={styles.main}>
                 <Box
                     horizontal
                     centerContent

@@ -18,6 +18,7 @@ import { useHandleReaction } from 'hooks/useReactions'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
+import { useTimelineRecorder } from './hooks/useTimelineRecorder'
 
 export enum MessageTimelineType {
     Channel = 'channel',
@@ -60,7 +61,10 @@ export const MessageTimelineWrapper = (props: {
     threadParentId?: string
     isChannelWritable?: boolean
 }) => {
-    const { spaceId, channelId, events, isChannelWritable, threadParentId } = props
+    const { spaceId, channelId, events: _events, isChannelWritable, threadParentId } = props
+
+    const events = useTimelineRecorder(_events)
+
     const userId = useMyProfile()?.userId
     const { sendReadReceipt } = useZionClient()
     const type = threadParentId ? MessageTimelineType.Thread : MessageTimelineType.Channel

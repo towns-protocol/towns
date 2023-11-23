@@ -12,10 +12,10 @@ import React, {
 } from 'react'
 
 import { useEvent } from 'react-use-event-hook'
+import { debug as debugLog } from 'debug'
 import isEqual from 'lodash/isEqual'
 import uniq from 'lodash/uniq'
 import { isUndefined } from 'lodash'
-import debug from 'debug'
 import { notUndefined } from 'ui/utils/utils'
 import { scrollbarsClass } from 'ui/styles/globals/scrollcontainer.css'
 import { useDevice } from 'hooks/useDevice'
@@ -26,13 +26,11 @@ const DEFAULT_ITEM_HEIGHT = 100
 const DEFAULT_MARGIN_RATIO = 1
 const RESET_DELAY_MS = 250
 
-const info = debug('app:vlist')
+const info = debugLog('app:vlist')
 info.color = 'gray'
-info.enabled = false
-const log = debug('app:vlist')
+const log = debugLog('app:vlist')
 log.color = 'cyan'
-log.enabled = false
-const warn = debug('app:vlist')
+const warn = debugLog('app:vlist')
 warn.color = 'orange'
 
 interface Props<T> {
@@ -103,7 +101,7 @@ interface Props<T> {
 
 export function VList<T>(props: Props<T>) {
     const {
-        debug,
+        debug = debugLog.enabled('app:vlist'),
         estimateHeight,
         overscan = DEFAULT_MARGIN_RATIO,
         padding = 0,
@@ -170,11 +168,10 @@ export function VList<T>(props: Props<T>) {
         [itemRendererRef],
     )
 
-    const [vh, setViewportHeight] = useState(0)
-
     // imperative api to refresh debug view
     const debugRef = useRef<() => void>()
 
+    const mainRef = useRef<HTMLDivElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const contentRef = useRef<HTMLDivElement>(null)
     const offsetRef = useRef<HTMLDivElement>(null)
@@ -253,14 +250,7 @@ export function VList<T>(props: Props<T>) {
         [estimateHeight, padding],
     )
 
-    const itemCache = useRef<ItemCacheMap>(
-        (() => {
-            info(`initialiseCache(${list.length})`)
-            const itemCache: ItemCacheMap = {}
-            fillCacheItems(list, itemCache)
-            return itemCache
-        })(),
-    )
+    const itemCache = useRef<ItemCacheMap>({})
 
     useLayoutEffect(() => {
         info(`checkCache(${list.length})`)
@@ -269,10 +259,14 @@ export function VList<T>(props: Props<T>) {
 
     // ---------------------------------------------------------------- viewport
 
+    const viewportHeightRef = useRef(0)
+
     const getScrollY = useEvent(() => {
         if (!containerRef.current) {
             return 0
         }
+
+        const vh = viewportHeightRef.current
 
         const focusedItem = focusItemRef.current?.key
             ? itemCache.current[focusItemRef.current.key]
@@ -281,7 +275,6 @@ export function VList<T>(props: Props<T>) {
         const focus = focusItemRef.current
 
         if (focus && focusedItem) {
-            info(`getScrollTop() -  ${focus.key}`)
             const y = focus?.align === 'end' ? focusedItem.y + focusedItem.height : focusedItem.y
             return y + (focus?.align === 'end' ? padding - vh : 0)
         }
@@ -336,10 +329,11 @@ export function VList<T>(props: Props<T>) {
     const updateDOM = useEvent(() => {
         const offsetContent = getValidRef(offsetRef)
 
-        const referenceDiff = anchorDiffRef.current
-        log(`updateDOM() - ${referenceDiff}`)
+        const anchorDiff = anchorDiffRef.current
 
-        offsetContent.style.top = `${referenceDiff}px`
+        anchorDiff && log(`updateDOM() - ${anchorDiff}`)
+
+        offsetContent.style.top = `${anchorDiff}px`
 
         renderItems.forEach((key) => {
             const cacheItem = itemCache.current[key]
@@ -359,14 +353,20 @@ export function VList<T>(props: Props<T>) {
 
         internalScrollRef.current = true
 
-        log('updateDOMHeight', contentHeightRef.current, content.style.height)
+        const currentHeight = Number(content.style.height.replace(/px$/, ''))
+
+        if (contentHeightRef.current - currentHeight !== 0) {
+            log(`updateDOMHeight from ${content.style.height} to ${contentHeightRef.current}`)
+        }
 
         content.style.height = `${contentHeightRef.current}px`
+
+        // container won't grow more than max-height defined by parent
         container.style.height = `${contentHeightRef.current}px`
 
-        const { height } = container.getBoundingClientRect()
-
-        setViewportHeight(height)
+        // const height = container.getBoundingClientRect().height
+        // viewportHeightRef.current = height
+        // log(`updateDOMHeight: container height ${height}`)
     }, [])
 
     const [isAligned, setIsAligned] = useState(false)
@@ -376,10 +376,13 @@ export function VList<T>(props: Props<T>) {
             return
         }
 
-        setIsReadyToRealign(false)
         // keep offset to scrollBy() once dom is updated
         const diff = anchorDiffRef.current
-        log(`reset scroll diff:${diff}px`)
+        log(`realignImperatively reset scroll diff:${diff}px vh:${viewportHeightRef.current}`)
+
+        if (isTouch) {
+            setIsReadyToRealign(false)
+        }
 
         // reset offsets and update the dom
         anchorDiffRef.current = 0
@@ -404,15 +407,18 @@ export function VList<T>(props: Props<T>) {
         }
 
         if (focusItemRef.current) {
+            const top = getScrollY()
+            log(`realignImperatively() - a ${top}`)
             // in the initialisation phase, we want to keep the scroll position
             // as steady as possible on the focused item (getScrollY will return
             // the focus item's position)
             if (isTouch) {
-                safeTouchScrollTo({ top: getScrollY() })
+                safeTouchScrollTo({ top })
             } else {
-                container.scrollTo({ top: getScrollY() })
+                container.scrollTo({ top })
             }
         } else {
+            log(`realignImperatively() - b`)
             if (isTouch) {
                 safeTouchScrollTo({ top: container.scrollTop - diff })
             } else {
@@ -495,9 +501,9 @@ export function VList<T>(props: Props<T>) {
     const updatePositions = useEvent(() => {
         const anchorKey = anchorRef.current?.key
 
-        log(`updatePositions()`)
+        log(`updatePositions() anchor: ${logKey(anchorKey)}`)
 
-        const prevAnchorKey = anchorKey ? itemCache.current[anchorKey]?.y : undefined
+        const prevAnchorY = anchorKey ? itemCache.current[anchorKey]?.y : undefined
 
         const contentHeight =
             keyList.reduce(
@@ -512,7 +518,7 @@ export function VList<T>(props: Props<T>) {
                     const itemHeight = cacheItem.height ?? 10
 
                     cacheItem.y = y
-                    return y + itemHeight
+                    return Math.round(y + itemHeight)
                 },
                 // padding at the start
                 padding,
@@ -520,15 +526,18 @@ export function VList<T>(props: Props<T>) {
             // padding at the end
             padding
 
-        setIsAligned(contentHeightRef.current === contentHeight)
+        if (isTouch) {
+            setIsAligned(contentHeightRef.current === contentHeight)
+        }
 
         contentHeightRef.current = contentHeight
 
         const cache = anchorKey ? itemCache.current[anchorKey] : undefined
         const newAnchorY = !isUndefined(cache) ? cache.y : 0
+        log(`updatePositions() newAnchorY: ${newAnchorY}`)
 
-        if (notUndefined(prevAnchorKey) && notUndefined(newAnchorY)) {
-            const diff = prevAnchorKey - newAnchorY
+        if (notUndefined(prevAnchorY) && notUndefined(newAnchorY)) {
+            const diff = prevAnchorY - newAnchorY
             anchorDiffRef.current += diff
 
             if (isTouch) {
@@ -544,7 +553,7 @@ export function VList<T>(props: Props<T>) {
             realignImperatively()
         }
 
-        log(`updatePositions() contentHeight:${Math.round(contentHeight)}`)
+        log(`updatePositions() contentHeight:${contentHeight}`)
 
         updateDOM()
         debugRef.current?.()
@@ -569,7 +578,10 @@ export function VList<T>(props: Props<T>) {
         }
     }, [isScrolling])
 
+    const prevViewportHeightRef = useRef(0)
+
     const updateVisibleItems = useEvent((isInternalScroll?: boolean) => {
+        const vh = viewportHeightRef.current
         const scrollY = getScrollY()
         isInternalScroll = isInternalScroll || internalScrollRef.current
 
@@ -585,12 +597,15 @@ export function VList<T>(props: Props<T>) {
 
         const margin = -1 * vh * overscan
 
-        const diff = anchorDiffRef.current
+        const diff = anchorDiffRef.current + (vh - prevViewportHeightRef.current)
+        prevViewportHeightRef.current = vh
 
         const a1 = margin - diff
         const a2 = vh - margin - diff
 
-        const relativeEye = vh * (!focus?.align ? 0.5 : focus.align === 'start' ? 0 : 1)
+        const relativeEye =
+            vh * (!focus?.align ? 1 : focus.align === 'start' ? 0 : 1) +
+            (!focus?.align ? 0 : focus.align === 'start' ? margin : -margin)
 
         const eyeY = scrollY + relativeEye - diff
 
@@ -616,6 +631,10 @@ export function VList<T>(props: Props<T>) {
             return isIntersecting
         })
 
+        if (!isInternalScroll) {
+            log('not internal scroll ?')
+        }
+
         if (!isInternalScroll || focus) {
             const key =
                 focus?.key ??
@@ -626,7 +645,11 @@ export function VList<T>(props: Props<T>) {
 
             if (key && key !== prevAnchor?.key && typeof anchorY === 'number') {
                 anchorRef.current = { key, y: anchorY }
-                log(`setAnchor ${logKey(key)}`)
+                log(
+                    `setAnchor ${
+                        focus?.key ? logKey(focus.key) + focus.align : ``
+                    } -- ${~~eyeY}:${~~anchorY} ${logKey(key)} (was ${prevAnchor?.key})`,
+                )
             }
         }
 
@@ -682,10 +705,12 @@ export function VList<T>(props: Props<T>) {
                     // user-triggered scroll. action which in its turn turns off
                     // scroll focus. to prevent this, keep scroll events muted for a
                     // short period of time.
+                    /*
                     internalScrollTimeout = setTimeout(() => {
                         internalScrollTimeout = undefined
                         internalScrollRef.current = false
                     }, RESET_DELAY_MS)
+                    */
                 }
 
                 return
@@ -721,9 +746,30 @@ export function VList<T>(props: Props<T>) {
 
     useLayoutEffect(() => {
         if (keyList) {
-            updateVisibleItems()
+            updateVisibleItems(true)
         }
     }, [keyList, updateVisibleItems])
+
+    useLayoutEffect(() => {
+        if (!mainRef.current) {
+            return
+        }
+        const resizeObserver = new ResizeObserver(() => {
+            const vh = viewportHeightRef.current
+            const height = mainRef.current?.getBoundingClientRect().height
+
+            if (typeof height !== 'undefined' && vh !== height) {
+                log(`resizeObserver() ${vh} -> ${height}`)
+                viewportHeightRef.current = height
+                anchorDiffRef.current += height - vh
+                realignImperatively()
+            }
+        })
+        resizeObserver.observe(mainRef.current)
+        return () => {
+            resizeObserver.disconnect()
+        }
+    }, [realignImperatively, updateDOMHeight, updatePositions, updateVisibleItems])
 
     /**
      * -------------------------------------------------------------------------- updateItems
@@ -736,6 +782,7 @@ export function VList<T>(props: Props<T>) {
             heightRef: MutableRefObject<HTMLDivElement | null>,
             key: string,
             index: number,
+            observedHeight?: number,
         ) => {
             const cache = itemCache.current[key]
             const height = heightRef.current?.getBoundingClientRect()?.height ?? 0
@@ -787,7 +834,7 @@ export function VList<T>(props: Props<T>) {
 
     useLayoutEffect(() => {
         // make sure this isn't reset often
-        log(`:resizeObserverRef reset`)
+        log(`resizeObserverRef reset`)
 
         const resizeHandler = (entries: ResizeObserverEntry[]) => {
             info(`entries resized: ${entries.length})`)
@@ -862,7 +909,7 @@ export function VList<T>(props: Props<T>) {
     }, [isScrolling, pointerEvents])
 
     return (
-        <div style={computedMainStyle} data-testid="vlist-main">
+        <div style={computedMainStyle} data-testid="vlist-main" ref={mainRef}>
             <div
                 className={scrollbarsClass}
                 style={computedContainerStyle}
@@ -975,7 +1022,8 @@ const logKey = (key?: string) => {
  */
 
 const mainStyle: CSSProperties = {
-    position: 'relative',
+    position: 'absolute',
+    height: '100%',
     display: 'flex',
     contain: 'paint',
     flexDirection: 'column',
@@ -1005,8 +1053,6 @@ const offsetStyle: CSSProperties = {
     position: 'absolute',
     width: '100%',
 }
-
-// utils
 
 const createCacheItem = (values: Pick<ItemCache, 'key' | 'y' | 'height'> & { index: number }) => ({
     el: undefined,

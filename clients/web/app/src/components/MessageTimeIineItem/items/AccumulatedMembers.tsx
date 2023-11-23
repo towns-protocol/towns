@@ -84,9 +84,16 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
     }, [channelName, event.events, event.membershipType, isChannelEncrypted, userId, usersMap])
 
     return (
-        <Stack centerContent horizontal gap="sm" paddingX="lg" paddingY="md" color="gray2">
+        <Stack
+            centerContent
+            direction={{ default: 'row', mobile: 'column' }}
+            gap="sm"
+            paddingX="lg"
+            paddingY="md"
+            color="gray2"
+        >
             <AvatarStack users={avatarUsers} size="avatar_xs" />
-            <Paragraph>{message}</Paragraph>
+            <Paragraph textAlign={{ mobile: 'center' }}>{message}</Paragraph>
         </Stack>
     )
 }

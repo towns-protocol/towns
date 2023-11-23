@@ -14,6 +14,8 @@ import {
     useSpaceMembers,
     useZionClient,
 } from 'use-zion-client'
+import { useHotkeys } from 'react-hotkeys-hook'
+import debug from 'debug'
 import { ChannelHeader } from '@components/ChannelHeader/ChannelHeader'
 import { ChannelIntro } from '@components/ChannelIntro'
 import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
@@ -218,6 +220,7 @@ const SpacesChannelComponent = (props: Props) => {
                             highlightId={messageId || highlightId}
                         />
                     </MessageTimelineWrapper>
+                    <BoxDebugger />
                     <Box
                         gap
                         paddingBottom={isTouch ? 'none' : 'lg'}
@@ -282,4 +285,17 @@ const ScrollbackMarker = (props: {
         onMarkerReached(watermark)
     }
     return <Box ref={ref} />
+}
+
+const BoxDebugger = () => {
+    const [isToggled, setIsToggled] = React.useState(false)
+    useHotkeys(
+        'b',
+        () => {
+            setIsToggled((prev) => !prev)
+        },
+        [],
+        { enabled: debug.enabled('app:vlist') },
+    )
+    return isToggled ? <Box background="accent" width="100%" height="200" /> : <></>
 }

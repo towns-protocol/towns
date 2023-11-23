@@ -82,21 +82,19 @@ export const MessageThreadPanel = (props: Props) => {
                     justifyContent={{ default: 'start', touch: 'end' }}
                     width="100%"
                 >
-                    <Box justifySelf="end" overflow="hidden">
-                        <MessageTimelineWrapper
-                            spaceId={spaceId}
-                            channelId={channelId}
-                            threadParentId={messageId}
-                            events={messagesWithParent}
-                            isChannelWritable={isChannelWritable}
-                        >
-                            <MessageTimeline
-                                align="top"
-                                highlightId={props.highlightId}
-                                groupByUser={false}
-                            />
-                        </MessageTimelineWrapper>
-                    </Box>
+                    <MessageTimelineWrapper
+                        spaceId={spaceId}
+                        channelId={channelId}
+                        threadParentId={messageId}
+                        events={messagesWithParent}
+                        isChannelWritable={isChannelWritable}
+                    >
+                        <MessageTimeline
+                            align="bottom"
+                            highlightId={props.highlightId}
+                            groupByUser={false}
+                        />
+                    </MessageTimelineWrapper>
                 </Stack>
                 {isChannelWritable && (
                     <Box

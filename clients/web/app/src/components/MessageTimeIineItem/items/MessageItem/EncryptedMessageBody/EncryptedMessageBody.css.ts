@@ -1,7 +1,10 @@
 import { globalStyle, keyframes, style } from '@vanilla-extract/css'
 import { vars } from 'ui/styles/vars.css'
 
-export const main = style({})
+export const main = style({
+    marginTop: '-4px',
+    height: 15,
+})
 
 export const hoverBackground = style({
     transition: 'background 320ms',

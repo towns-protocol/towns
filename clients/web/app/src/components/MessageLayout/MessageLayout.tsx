@@ -2,6 +2,7 @@ import { format, formatDistance } from 'date-fns'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { MessageReactions, RoomIdentifier, ThreadStats } from 'use-zion-client'
 import { Link } from 'react-router-dom'
+import debug from 'debug'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'
@@ -121,6 +122,8 @@ export const MessageLayout = (props: Props) => {
     const hasReactions = reactions && numReactions && onReaction
     const displayButtonsInRow = numReactions < 3 && isTouch
 
+    const debugHash = debug.enabled('app:vlist') ? ` [${eventId?.substring(0, 4)}]` : ''
+
     return (
         <Stack
             horizontal
@@ -161,6 +164,7 @@ export const MessageLayout = (props: Props) => {
                             >
                                 <Paragraph truncate size="xs" color="gray2">
                                     {date}
+                                    {debugHash}
                                 </Paragraph>
                             </Box>
                         )}
@@ -212,6 +216,7 @@ export const MessageLayout = (props: Props) => {
                                 textAlign={isListView ? 'right' : 'left'}
                             >
                                 {date}
+                                {debugHash}
                             </Text>
                         )}
                     </Stack>

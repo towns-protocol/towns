@@ -505,20 +505,27 @@ export const MessageTimeline = (props: Props) => {
     return displaySimpleList ? (
         <Box paddingY="md">{listItems.map((item) => itemRenderer(item))}</Box>
     ) : (
-        <VList
-            align={props.align}
-            list={listItems}
-            padding={16}
-            focusItem={focusItem}
-            estimateHeight={estimateItemHeight}
-            getItemKey={(item) => item.key}
-            getItemFocusable={(item) => item.type === 'user-messages' || item.type === 'message'}
-            containerRef={props.containerRef}
-            key={channelId?.networkId}
-            groupIds={groupIds}
-            pointerEvents={isTouch && tabBarHidden ? 'none' : undefined}
-            itemRenderer={itemRenderer}
-        />
+        <Box grow position="relative" justifyContent="end">
+            <VList
+                overscan={3}
+                align={props.align}
+                list={listItems}
+                padding={16}
+                focusItem={focusItem}
+                estimateHeight={estimateItemHeight}
+                getItemKey={(item) => item.key}
+                getItemFocusable={(item) =>
+                    item.type === 'user-messages' ||
+                    item.type === 'message' ||
+                    item.type === 'header'
+                }
+                containerRef={props.containerRef}
+                key={channelId?.networkId}
+                groupIds={groupIds}
+                pointerEvents={isTouch && tabBarHidden ? 'none' : undefined}
+                itemRenderer={itemRenderer}
+            />
+        </Box>
     )
 }
 
