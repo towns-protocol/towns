@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	connect_go "github.com/bufbuild/connect-go"
 	"github.com/rs/cors"
 	"golang.org/x/exp/slog"
 	"golang.org/x/net/http2"
@@ -192,7 +193,8 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		syncHandler:    syncHandler,
 	}
 
-	pattern, handler := protocolconnect.NewStreamServiceHandler(streamService)
+	interceptors := connect_go.WithInterceptors(NewMetricsInterceptor())
+	pattern, handler := protocolconnect.NewStreamServiceHandler(streamService, interceptors)
 
 	mux := httptrace.NewServeMux(
 		httptrace.WithResourceNamer(
