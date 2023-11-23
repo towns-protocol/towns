@@ -9,7 +9,7 @@ import { useShowHasUnreadBadgeForCurrentSpace } from 'hooks/useSpaceUnreadsIgnor
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Avatar } from '@components/Avatar/Avatar'
-import { useVisualViewportContext } from '../VisualViewportContext/VisualViewportContext'
+
 import { TouchScrollToTopScrollId } from './TouchScrollToTopScrollId'
 
 export const TouchTabBar = () => {
@@ -20,7 +20,6 @@ export const TouchTabBar = () => {
     const hasUnreadDMs = dmUnreadChannelIds.size > 0
 
     const { shouldDisplayPWAPrompt, closePWAPrompt } = useInstallPWAPrompt()
-    const { visualViewportScrolled: tabBarHidden } = useVisualViewportContext()
 
     const { createLink } = useCreateLink()
 
@@ -28,7 +27,7 @@ export const TouchTabBar = () => {
         return createLink({ route: 'messages' })
     }, [createLink])
 
-    if (!space || tabBarHidden) {
+    if (!space) {
         return null
     }
 
