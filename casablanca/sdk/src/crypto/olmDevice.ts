@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument*/
 
 import { dlog } from '../dlog'
-import { ISessionInfo, IWithheld } from './store/types'
+import { ISessionInfo } from './store/types'
 import { CryptoStore } from './store/cryptoStore'
 import {
     OlmMegolmDelegate,
@@ -46,13 +46,6 @@ function checkPayloadLength(payloadString: string): void {
                 `The maximum for an encrypted message is ${MAX_PLAINTEXT_LENGTH} bytes.`,
         )
     }
-}
-
-const WITHHELD_MESSAGES: Record<string, string> = {
-    'r.unverified': 'The sender has disabled encrypting to unverified devices.',
-    'r.blacklisted': 'The sender has blocked you.',
-    'r.unauthorised': 'You are not authorised to read the message.',
-    'r.no_olm': 'Unable to establish a secure channel.',
 }
 
 export interface IDecryptedGroupMessage {
@@ -526,22 +519,17 @@ export class OlmDevice {
     ): Promise<{
         session: InboundGroupSession | undefined
         data: InboundGroupSessionData | undefined
-        withheld: IWithheld | undefined
     }> {
         const sessionInfo = await this.cryptoStore.getEndToEndInboundGroupSession(
             streamId,
             sessionId,
         )
-        const withheld = await this.cryptoStore.getEndToEndInboundGroupSessionWithheld(
-            streamId,
-            sessionId,
-        )
+
         const session = sessionInfo ? this.unpickleInboundGroupSession(sessionInfo) : undefined
 
         return {
             session: session,
             data: sessionInfo,
-            withheld,
         }
     }
 
@@ -647,30 +635,6 @@ export class OlmDevice {
     }
 
     /**
-     * Record in the data store why an inbound group session was withheld.
-     *
-     * @param streamId -     room that the session belongs to
-     * @param senderKey -  base64-encoded curve25519 key of the sender
-     * @param sessionId -  session identifier
-     * @param code -       reason code
-     * @param reason -     human-readable version of `code`
-     */
-    public async addInboundGroupSessionWithheld(
-        streamId: string,
-        senderKey: string,
-        sessionId: string,
-        code: string,
-        reason: string,
-    ): Promise<void> {
-        // FIXME: IS THIS CORRECT? senderKey vs streamId??
-        await this.cryptoStore.storeEndToEndInboundGroupSessionWithheld(senderKey, sessionId, {
-            stream_id: streamId,
-            code: code,
-            reason: reason,
-        })
-    }
-
-    /**
      * Decrypt a received message with an inbound group session
      *
      * @param streamId -    room in which the message was received
@@ -695,40 +659,15 @@ export class OlmDevice {
         // to the top level, so we store exceptions in a variable and raise them at
         // the end
 
-        const {
-            session,
-            data: sessionData,
-            withheld,
-        } = await this.getInboundGroupSession(streamId, sessionId)
+        const { session, data: sessionData } = await this.getInboundGroupSession(
+            streamId,
+            sessionId,
+        )
         if (!session || !sessionData) {
-            if (withheld) {
-                throw new DecryptionError(
-                    'MEGOLM_UNKNOWN_INBOUND_SESSION_ID',
-                    calculateWithheldMessage(withheld),
-                    {
-                        session: streamId + '|' + sessionId,
-                    },
-                )
-            }
             return null
         }
 
-        let res: ReturnType<InboundGroupSession['decrypt']>
-        try {
-            res = session.decrypt(body)
-        } catch (e) {
-            if ((<Error>e)?.message === 'OLM.UNKNOWN_MESSAGE_INDEX' && withheld) {
-                throw new DecryptionError(
-                    'MEGOLM_UNKNOWN_INBOUND_SESSION_ID',
-                    calculateWithheldMessage(withheld),
-                    {
-                        session: streamId + '|' + sessionId,
-                    },
-                )
-            } else {
-                throw <Error>e
-            }
-        }
+        const res = session.decrypt(body)
 
         let plaintext: string = res.plaintext
         if (plaintext === undefined) {
@@ -1200,24 +1139,5 @@ export class OlmDevice {
             session_key: sessionKey,
             first_known_index: firstKnownIndex,
         }
-    }
-}
-
-/**
- * Calculate the message to use for the exception when a session key is withheld.
- *
- * @param withheld -  An object that describes why the key was withheld.
- *
- * @returns the message
- *
- * @internal
- */
-function calculateWithheldMessage(withheld: IWithheld): string {
-    if (withheld.code && withheld.code in WITHHELD_MESSAGES) {
-        return WITHHELD_MESSAGES[withheld.code]
-    } else if (withheld.reason) {
-        return withheld.reason
-    } else {
-        return 'decryption key withheld'
     }
 }

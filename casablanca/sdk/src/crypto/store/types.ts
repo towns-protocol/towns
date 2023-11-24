@@ -1,27 +1,7 @@
-import { InboundGroupSessionData } from '../olmDevice'
-
 export interface IRoomEncryption {
     algorithm: string
     rotation_period_ms?: number
     rotation_period_msgs?: number
-}
-
-export interface ISession {
-    streamId: string
-    sessionId: string
-    sessionData?: InboundGroupSessionData
-}
-
-export interface IWithheld {
-    stream_id: string
-    code: string
-    reason: string
-}
-
-export interface IProblem {
-    type: string
-    fixed: boolean
-    time: number
 }
 
 export interface ISessionInfo {

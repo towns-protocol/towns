@@ -1,7 +1,6 @@
 import { UserDevice } from '../olmLib'
 import { InboundGroupSessionData } from '../olmDevice'
 import {
-    IWithheld,
     ISessionInfo,
     AccountRecord,
     MegolmSessionRecord,
@@ -18,7 +17,6 @@ export class CryptoStore extends Dexie {
     olmSessions!: Table<OlmSessionRecord>
     outboundGroupSessions!: Table<MegolmSessionRecord>
     inboundGroupSessions!: Table<InboundGroupSessionData & { streamId: string; sessionId: string }>
-    inboundGroupSessionsWithheld!: Table<IWithheld & { streamId: string; sessionId: string }>
     sharedHistoryInboundSessions!: Table<{ streamId: string; sessionId: string }>
     devices!: Table<UserDeviceRecord>
     userId: string
@@ -26,11 +24,10 @@ export class CryptoStore extends Dexie {
     constructor(databaseName: string, userId: string) {
         super(databaseName)
         this.userId = userId
-        this.version(2).stores({
+        this.version(3).stores({
             account: 'id',
             olmSessions: '[deviceKey+sessionId], deviceKey, sessionId',
             inboundGroupSessions: '[streamId+sessionId]',
-            inboundGroupSessionsWithheld: '[streamId+sessionId]',
             outboundGroupSessions: 'streamId',
             sharedHistoryInboundSessions: '[streamId+sessionId]',
             devices: '[userId+deviceId],expirationTimestamp',
@@ -108,27 +105,12 @@ export class CryptoStore extends Dexie {
         return await this.inboundGroupSessions.get({ sessionId, streamId })
     }
 
-    async getEndToEndInboundGroupSessionWithheld(
-        streamId: string,
-        sessionId: string,
-    ): Promise<IWithheld | undefined> {
-        return await this.inboundGroupSessionsWithheld.get({ sessionId, streamId })
-    }
-
     async storeEndToEndInboundGroupSession(
         streamId: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
     ): Promise<void> {
         await this.inboundGroupSessions.put({ streamId, sessionId, ...sessionData })
-    }
-
-    async storeEndToEndInboundGroupSessionWithheld(
-        streamId: string,
-        sessionId: string,
-        sessionData: IWithheld,
-    ): Promise<void> {
-        await this.inboundGroupSessionsWithheld.put({ streamId, sessionId, ...sessionData })
     }
 
     async addSharedHistoryInboundGroupSession(streamId: string, sessionId: string): Promise<void> {
