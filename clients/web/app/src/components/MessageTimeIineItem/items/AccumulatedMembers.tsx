@@ -20,7 +20,7 @@ type Props = {
 const Verbs = {
     [Membership.Join]: 'joined',
     [Membership.Leave]: 'left',
-    [Membership.Invite]: 'was invited',
+    [Membership.Invite]: 'received an invitation to join',
 } as const
 
 export const AccumulatedRoomMemberEvent = (props: Props) => {

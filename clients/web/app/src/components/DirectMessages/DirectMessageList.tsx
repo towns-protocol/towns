@@ -10,12 +10,10 @@ import {
 } from 'use-zion-client'
 import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
 import { MostRecentMessageInfo_OneOf } from 'use-zion-client/dist/hooks/use-dm-latest-message'
-import { Link } from 'react-router-dom'
 import { useDevice } from 'hooks/useDevice'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Box, Icon, MotionStack, Paragraph, Stack, Text } from '@ui'
 import { UserList } from '@components/UserList/UserList'
-import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { notUndefined } from 'ui/utils/utils'
 import { TimelineEncryptedContent } from '@components/MessageTimeIineItem/items/MessageItem/EncryptedMessageBody/EncryptedMessageBody'
 import { Avatar } from '@components/Avatar/Avatar'
@@ -54,8 +52,8 @@ export const DirectMessageList = () => {
     )
 
     return (
-        <Stack scroll>
-            <Stack padding minHeight="100svh" paddingBottom="safeAreaInsetBottom" gap="xxs">
+        <Stack scroll padding="sm">
+            <Stack minHeight="100svh" paddingBottom="safeAreaInsetBottom" gap="xxs">
                 {dmChannels.length > 0 ? (
                     dmChannels.map((channel) => {
                         return (
@@ -132,18 +130,13 @@ const DirectMessageThread = (props: {
         [counterParty, data?.isGroup, data?.userIds],
     )
 
-    if (!latest && !highlighted) {
-        // skip empty threads unless they are selected (i.e. new message)
-        return <></>
-    }
-
     const userList = userIds ? (
         <UserList
             excludeSelf
             userIds={userIds}
             renderUser={({ displayName, userId }) => (
-                <Box display="inline" key={userId} tooltip={<ProfileHoverCard userId={userId} />}>
-                    <Link to={`profile/${userId}`}>{displayName}</Link>
+                <Box display="inline" key={userId}>
+                    {displayName}
                 </Box>
             )}
         />
