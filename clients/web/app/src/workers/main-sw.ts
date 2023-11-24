@@ -23,11 +23,12 @@ self.addEventListener('message', (event) => {
         self.skipWaiting()
     }
 })
-// self.__WB_MANIFEST is default injection point
-precacheAndRoute(self.__WB_MANIFEST)
 
 // clean old assets
 cleanupOutdatedCaches()
+
+// self.__WB_MANIFEST is default injection point
+precacheAndRoute(self.__WB_MANIFEST)
 
 // to allow work offline
 console.log('main-sw: enabling offline precaching')
