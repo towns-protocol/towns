@@ -364,9 +364,11 @@ export function VList<T>(props: Props<T>) {
         // container won't grow more than max-height defined by parent
         container.style.height = `${contentHeightRef.current}px`
 
-        // const height = container.getBoundingClientRect().height
-        // viewportHeightRef.current = height
-        // log(`updateDOMHeight: container height ${height}`)
+        if (!viewportHeightRef.current) {
+            const height = container.getBoundingClientRect().height
+            log(`updateDOMHeight: container height ${height} was (${viewportHeightRef.current})`)
+            viewportHeightRef.current = height
+        }
     }, [])
 
     const [isAligned, setIsAligned] = useState(false)
