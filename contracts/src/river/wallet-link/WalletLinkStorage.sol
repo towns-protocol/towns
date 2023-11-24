@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 // interfaces
-import {IWalletLinkBase} from "./IWalletLink.sol";
 
 // libraries
 
@@ -15,11 +14,9 @@ library WalletLinkStorage {
 
   struct Layout {
     // mapping RootKeys to Ethereum Wallets is a 1 to many relationship, a root key can have many wallets
-    mapping(address => address[]) rootKeysToWallets;
+    mapping(address => EnumerableSet.AddressSet) rootKeysToWallets;
     // mapping Ethereum Wallets to RootKey is a 1 to 1 relationship, a wallet can only be linked to 1 root key
     mapping(address => address) walletsToRootKey;
-    //mapping that stores all nonces used by a given root key
-    mapping(address => uint64) rootKeysToHighestNonce;
   }
 
   function layout() internal pure returns (Layout storage s) {

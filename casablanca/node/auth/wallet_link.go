@@ -6,6 +6,7 @@ import (
 	"casablanca/node/dlog"
 	"casablanca/node/infra"
 	"context"
+	"math/big"
 	"time"
 
 	. "casablanca/node/base"
@@ -17,14 +18,14 @@ import (
 )
 
 type WalletLinkContract interface {
-	GetLatestNonceForRootKey(rootKey common.Address) (uint64, error)
+	GetLatestNonceForRootKey(rootKey common.Address) (*big.Int, error)
 	GetWalletsByRootKey(rootKey common.Address) ([]common.Address, error)
 	GetRootKeyForWallet(wallet common.Address) (common.Address, error)
 	CheckIfLinked(rootKey common.Address, wallet common.Address) (bool, error)
 }
 
 type GeneratedWalletLinkContract interface {
-	GetLatestNonceForRootKey(opts *bind.CallOpts, rootKey common.Address) (uint64, error)
+	GetLatestNonceForRootKey(opts *bind.CallOpts, rootKey common.Address) (*big.Int, error)
 	GetWalletsByRootKey(opts *bind.CallOpts, rootKey common.Address) ([]common.Address, error)
 	GetRootKeyForWallet(opts *bind.CallOpts, wallet common.Address) (common.Address, error)
 	CheckIfLinked(opts *bind.CallOpts, rootKey common.Address, wallet common.Address) (bool, error)
@@ -101,7 +102,7 @@ func (za *TownsWalletLink) GetRootKeyForWallet(wallet common.Address) (common.Ad
 	return result, nil
 }
 
-func (za *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (uint64, error) {
+func (za *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (*big.Int, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetLatestNonceForRootKeyMs", start)
@@ -110,7 +111,7 @@ func (za *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (uin
 	if err != nil {
 		getLatestNonceCalls.Fail()
 		log.Error("GetLatestNonceForRootKey", "rootKey", rootKey, "error", err)
-		return 0, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
+		return nil, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
 	getLatestNonceCalls.Pass()
 	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey, "result", result)

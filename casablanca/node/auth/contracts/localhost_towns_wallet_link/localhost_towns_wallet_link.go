@@ -31,7 +31,7 @@ var (
 
 // LocalhostTownsWalletLinkMetaData contains all meta data concerning the LocalhostTownsWalletLink contract.
 var LocalhostTownsWalletLinkMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[],\"name\":\"Initializable_InInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Initializable_NotInInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_AlreadySupported\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_NotSupported\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidSignature\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"LinkAlreadyExists\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"nonce\",\"type\":\"uint64\"}],\"name\":\"NonceAlreadyUsed\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"version\",\"type\":\"uint32\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"LinkWalletToRootKey\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"secondWallet\",\"type\":\"address\"}],\"name\":\"RemoveLink\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"__WalletLink_init\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"}],\"name\":\"checkIfLinked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"getLatestNonceForRootKey\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"}],\"name\":\"getRootKeyForWallet\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"getWalletsByRootKey\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"wallets\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"rootKeySignature\",\"type\":\"bytes\"},{\"internalType\":\"uint64\",\"name\":\"nonce\",\"type\":\"uint64\"}],\"name\":\"linkWalletToRootKey\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_ethSignedMessageHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_signature\",\"type\":\"bytes\"}],\"name\":\"recoverSigner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"}],\"name\":\"removeLink\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"sig\",\"type\":\"bytes\"}],\"name\":\"splitSignature\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"},{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[],\"name\":\"Initializable_InInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Initializable_NotInInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_AlreadySupported\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_NotSupported\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"currentNonce\",\"type\":\"uint256\"}],\"name\":\"InvalidAccountNonce\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"WalletLink__InvalidSignature\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"WalletLink__LinkAlreadyExists\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"WalletLink__NotLinked\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"version\",\"type\":\"uint32\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"LinkWalletToRootKey\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"secondWallet\",\"type\":\"address\"}],\"name\":\"RemoveLink\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"__WalletLink_init\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"}],\"name\":\"checkIfLinked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"getLatestNonceForRootKey\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"}],\"name\":\"getRootKeyForWallet\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"}],\"name\":\"getWalletsByRootKey\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"wallets\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"rootKey\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"rootKeySignature\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"}],\"name\":\"linkWalletToRootKey\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"nonces\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"wallet\",\"type\":\"address\"}],\"name\":\"removeLink\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // LocalhostTownsWalletLinkABI is the input ABI used to generate the binding from.
@@ -213,16 +213,16 @@ func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCallerSession) CheckIfL
 
 // GetLatestNonceForRootKey is a free data retrieval call binding the contract method 0x20a00ac8.
 //
-// Solidity: function getLatestNonceForRootKey(address rootKey) view returns(uint64)
-func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCaller) GetLatestNonceForRootKey(opts *bind.CallOpts, rootKey common.Address) (uint64, error) {
+// Solidity: function getLatestNonceForRootKey(address rootKey) view returns(uint256)
+func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCaller) GetLatestNonceForRootKey(opts *bind.CallOpts, rootKey common.Address) (*big.Int, error) {
 	var out []interface{}
 	err := _LocalhostTownsWalletLink.contract.Call(opts, &out, "getLatestNonceForRootKey", rootKey)
 
 	if err != nil {
-		return *new(uint64), err
+		return *new(*big.Int), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
 
 	return out0, err
 
@@ -230,15 +230,15 @@ func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCaller) GetLatestNonceF
 
 // GetLatestNonceForRootKey is a free data retrieval call binding the contract method 0x20a00ac8.
 //
-// Solidity: function getLatestNonceForRootKey(address rootKey) view returns(uint64)
-func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkSession) GetLatestNonceForRootKey(rootKey common.Address) (uint64, error) {
+// Solidity: function getLatestNonceForRootKey(address rootKey) view returns(uint256)
+func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkSession) GetLatestNonceForRootKey(rootKey common.Address) (*big.Int, error) {
 	return _LocalhostTownsWalletLink.Contract.GetLatestNonceForRootKey(&_LocalhostTownsWalletLink.CallOpts, rootKey)
 }
 
 // GetLatestNonceForRootKey is a free data retrieval call binding the contract method 0x20a00ac8.
 //
-// Solidity: function getLatestNonceForRootKey(address rootKey) view returns(uint64)
-func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCallerSession) GetLatestNonceForRootKey(rootKey common.Address) (uint64, error) {
+// Solidity: function getLatestNonceForRootKey(address rootKey) view returns(uint256)
+func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCallerSession) GetLatestNonceForRootKey(rootKey common.Address) (*big.Int, error) {
 	return _LocalhostTownsWalletLink.Contract.GetLatestNonceForRootKey(&_LocalhostTownsWalletLink.CallOpts, rootKey)
 }
 
@@ -304,85 +304,35 @@ func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCallerSession) GetWalle
 	return _LocalhostTownsWalletLink.Contract.GetWalletsByRootKey(&_LocalhostTownsWalletLink.CallOpts, rootKey)
 }
 
-// RecoverSigner is a free data retrieval call binding the contract method 0x97aba7f9.
+// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
 //
-// Solidity: function recoverSigner(bytes32 _ethSignedMessageHash, bytes _signature) pure returns(address)
-func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCaller) RecoverSigner(opts *bind.CallOpts, _ethSignedMessageHash [32]byte, _signature []byte) (common.Address, error) {
+// Solidity: function nonces(address owner) view returns(uint256)
+func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCaller) Nonces(opts *bind.CallOpts, owner common.Address) (*big.Int, error) {
 	var out []interface{}
-	err := _LocalhostTownsWalletLink.contract.Call(opts, &out, "recoverSigner", _ethSignedMessageHash, _signature)
+	err := _LocalhostTownsWalletLink.contract.Call(opts, &out, "nonces", owner)
 
 	if err != nil {
-		return *new(common.Address), err
+		return *new(*big.Int), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
 
 	return out0, err
 
 }
 
-// RecoverSigner is a free data retrieval call binding the contract method 0x97aba7f9.
+// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
 //
-// Solidity: function recoverSigner(bytes32 _ethSignedMessageHash, bytes _signature) pure returns(address)
-func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkSession) RecoverSigner(_ethSignedMessageHash [32]byte, _signature []byte) (common.Address, error) {
-	return _LocalhostTownsWalletLink.Contract.RecoverSigner(&_LocalhostTownsWalletLink.CallOpts, _ethSignedMessageHash, _signature)
+// Solidity: function nonces(address owner) view returns(uint256)
+func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkSession) Nonces(owner common.Address) (*big.Int, error) {
+	return _LocalhostTownsWalletLink.Contract.Nonces(&_LocalhostTownsWalletLink.CallOpts, owner)
 }
 
-// RecoverSigner is a free data retrieval call binding the contract method 0x97aba7f9.
+// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
 //
-// Solidity: function recoverSigner(bytes32 _ethSignedMessageHash, bytes _signature) pure returns(address)
-func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCallerSession) RecoverSigner(_ethSignedMessageHash [32]byte, _signature []byte) (common.Address, error) {
-	return _LocalhostTownsWalletLink.Contract.RecoverSigner(&_LocalhostTownsWalletLink.CallOpts, _ethSignedMessageHash, _signature)
-}
-
-// SplitSignature is a free data retrieval call binding the contract method 0xa7bb5803.
-//
-// Solidity: function splitSignature(bytes sig) pure returns(bytes32 r, bytes32 s, uint8 v)
-func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCaller) SplitSignature(opts *bind.CallOpts, sig []byte) (struct {
-	R [32]byte
-	S [32]byte
-	V uint8
-}, error) {
-	var out []interface{}
-	err := _LocalhostTownsWalletLink.contract.Call(opts, &out, "splitSignature", sig)
-
-	outstruct := new(struct {
-		R [32]byte
-		S [32]byte
-		V uint8
-	})
-	if err != nil {
-		return *outstruct, err
-	}
-
-	outstruct.R = *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
-	outstruct.S = *abi.ConvertType(out[1], new([32]byte)).(*[32]byte)
-	outstruct.V = *abi.ConvertType(out[2], new(uint8)).(*uint8)
-
-	return *outstruct, err
-
-}
-
-// SplitSignature is a free data retrieval call binding the contract method 0xa7bb5803.
-//
-// Solidity: function splitSignature(bytes sig) pure returns(bytes32 r, bytes32 s, uint8 v)
-func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkSession) SplitSignature(sig []byte) (struct {
-	R [32]byte
-	S [32]byte
-	V uint8
-}, error) {
-	return _LocalhostTownsWalletLink.Contract.SplitSignature(&_LocalhostTownsWalletLink.CallOpts, sig)
-}
-
-// SplitSignature is a free data retrieval call binding the contract method 0xa7bb5803.
-//
-// Solidity: function splitSignature(bytes sig) pure returns(bytes32 r, bytes32 s, uint8 v)
-func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCallerSession) SplitSignature(sig []byte) (struct {
-	R [32]byte
-	S [32]byte
-	V uint8
-}, error) {
-	return _LocalhostTownsWalletLink.Contract.SplitSignature(&_LocalhostTownsWalletLink.CallOpts, sig)
+// Solidity: function nonces(address owner) view returns(uint256)
+func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkCallerSession) Nonces(owner common.Address) (*big.Int, error) {
+	return _LocalhostTownsWalletLink.Contract.Nonces(&_LocalhostTownsWalletLink.CallOpts, owner)
 }
 
 // WalletLinkInit is a paid mutator transaction binding the contract method 0x260a409d.
@@ -406,24 +356,24 @@ func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkTransactorSession) Wall
 	return _LocalhostTownsWalletLink.Contract.WalletLinkInit(&_LocalhostTownsWalletLink.TransactOpts)
 }
 
-// LinkWalletToRootKey is a paid mutator transaction binding the contract method 0xf5158913.
+// LinkWalletToRootKey is a paid mutator transaction binding the contract method 0x3b6a64a4.
 //
-// Solidity: function linkWalletToRootKey(address rootKey, bytes rootKeySignature, uint64 nonce) returns()
-func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkTransactor) LinkWalletToRootKey(opts *bind.TransactOpts, rootKey common.Address, rootKeySignature []byte, nonce uint64) (*types.Transaction, error) {
+// Solidity: function linkWalletToRootKey(address rootKey, bytes rootKeySignature, uint256 nonce) returns()
+func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkTransactor) LinkWalletToRootKey(opts *bind.TransactOpts, rootKey common.Address, rootKeySignature []byte, nonce *big.Int) (*types.Transaction, error) {
 	return _LocalhostTownsWalletLink.contract.Transact(opts, "linkWalletToRootKey", rootKey, rootKeySignature, nonce)
 }
 
-// LinkWalletToRootKey is a paid mutator transaction binding the contract method 0xf5158913.
+// LinkWalletToRootKey is a paid mutator transaction binding the contract method 0x3b6a64a4.
 //
-// Solidity: function linkWalletToRootKey(address rootKey, bytes rootKeySignature, uint64 nonce) returns()
-func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkSession) LinkWalletToRootKey(rootKey common.Address, rootKeySignature []byte, nonce uint64) (*types.Transaction, error) {
+// Solidity: function linkWalletToRootKey(address rootKey, bytes rootKeySignature, uint256 nonce) returns()
+func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkSession) LinkWalletToRootKey(rootKey common.Address, rootKeySignature []byte, nonce *big.Int) (*types.Transaction, error) {
 	return _LocalhostTownsWalletLink.Contract.LinkWalletToRootKey(&_LocalhostTownsWalletLink.TransactOpts, rootKey, rootKeySignature, nonce)
 }
 
-// LinkWalletToRootKey is a paid mutator transaction binding the contract method 0xf5158913.
+// LinkWalletToRootKey is a paid mutator transaction binding the contract method 0x3b6a64a4.
 //
-// Solidity: function linkWalletToRootKey(address rootKey, bytes rootKeySignature, uint64 nonce) returns()
-func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkTransactorSession) LinkWalletToRootKey(rootKey common.Address, rootKeySignature []byte, nonce uint64) (*types.Transaction, error) {
+// Solidity: function linkWalletToRootKey(address rootKey, bytes rootKeySignature, uint256 nonce) returns()
+func (_LocalhostTownsWalletLink *LocalhostTownsWalletLinkTransactorSession) LinkWalletToRootKey(rootKey common.Address, rootKeySignature []byte, nonce *big.Int) (*types.Transaction, error) {
 	return _LocalhostTownsWalletLink.Contract.LinkWalletToRootKey(&_LocalhostTownsWalletLink.TransactOpts, rootKey, rootKeySignature, nonce)
 }
 

@@ -37,7 +37,7 @@ describe('Link Wallet', () => {
         }
 
         expect(tx_link_again.error).toBeDefined()
-        expect(tx_link_again.error?.name).toBe('LinkAlreadyExists')
+        expect(tx_link_again.error?.name).toBe('WalletLink__LinkAlreadyExists')
         expect(tx_link_again.transaction?.hash).toBeUndefined()
 
         // remove link

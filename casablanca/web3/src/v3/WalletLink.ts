@@ -29,8 +29,7 @@ export class WalletLink {
             throw new Error('Wallet is already linked')
         }
 
-        const currentNonce = await this.walletLinkShim.read.getLatestNonceForRootKey(rootKeyAddress)
-        const nonce = currentNonce.add(1)
+        const nonce = await this.walletLinkShim.read.getLatestNonceForRootKey(rootKeyAddress)
         const rootKeySignature = await rootKey.signMessage(
             packAddressWithNonce(walletAddress, nonce),
         )
@@ -67,7 +66,7 @@ export class WalletLink {
 
 function packAddressWithNonce(address: string, nonce: BigNumber): Uint8Array {
     const abi = ethers.utils.defaultAbiCoder
-    const packed = abi.encode(['address', 'uint64'], [address, nonce.toNumber()])
+    const packed = abi.encode(['address', 'uint256'], [address, nonce.toNumber()])
     const hash = ethers.utils.keccak256(packed)
     return arrayify(hash)
 }

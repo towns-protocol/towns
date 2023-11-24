@@ -20,8 +20,24 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "currentNonce",
+        "type": "uint256"
+      }
+    ],
+    "name": "InvalidAccountNonce",
+    "type": "error"
+  },
+  {
     "inputs": [],
-    "name": "InvalidSignature",
+    "name": "WalletLink__InvalidSignature",
     "type": "error"
   },
   {
@@ -37,18 +53,23 @@
         "type": "address"
       }
     ],
-    "name": "LinkAlreadyExists",
+    "name": "WalletLink__LinkAlreadyExists",
     "type": "error"
   },
   {
     "inputs": [
       {
-        "internalType": "uint64",
-        "name": "nonce",
-        "type": "uint64"
+        "internalType": "address",
+        "name": "wallet",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "rootKey",
+        "type": "address"
       }
     ],
-    "name": "NonceAlreadyUsed",
+    "name": "WalletLink__NotLinked",
     "type": "error"
   },
   {
@@ -170,9 +191,9 @@
     "name": "getLatestNonceForRootKey",
     "outputs": [
       {
-        "internalType": "uint64",
+        "internalType": "uint256",
         "name": "",
-        "type": "uint64"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -229,9 +250,9 @@
         "type": "bytes"
       },
       {
-        "internalType": "uint64",
+        "internalType": "uint256",
         "name": "nonce",
-        "type": "uint64"
+        "type": "uint256"
       }
     ],
     "name": "linkWalletToRootKey",
@@ -242,25 +263,20 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "_ethSignedMessageHash",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "bytes",
-        "name": "_signature",
-        "type": "bytes"
-      }
-    ],
-    "name": "recoverSigner",
-    "outputs": [
-      {
         "internalType": "address",
-        "name": "",
+        "name": "owner",
         "type": "address"
       }
     ],
-    "stateMutability": "pure",
+    "name": "nonces",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -274,35 +290,6 @@
     "name": "removeLink",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes",
-        "name": "sig",
-        "type": "bytes"
-      }
-    ],
-    "name": "splitSignature",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "r",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "s",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint8",
-        "name": "v",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "pure",
     "type": "function"
   }
 ]

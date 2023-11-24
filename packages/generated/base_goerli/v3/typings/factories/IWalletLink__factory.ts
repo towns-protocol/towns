@@ -9,7 +9,7 @@ import type { IWalletLink, IWalletLinkInterface } from "../IWalletLink";
 const _abi = [
   {
     inputs: [],
-    name: "InvalidSignature",
+    name: "WalletLink__InvalidSignature",
     type: "error",
   },
   {
@@ -25,18 +25,23 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "LinkAlreadyExists",
+    name: "WalletLink__LinkAlreadyExists",
     type: "error",
   },
   {
     inputs: [
       {
-        internalType: "uint64",
-        name: "nonce",
-        type: "uint64",
+        internalType: "address",
+        name: "wallet",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "rootKey",
+        type: "address",
       },
     ],
-    name: "NonceAlreadyUsed",
+    name: "WalletLink__NotLinked",
     type: "error",
   },
   {
@@ -112,9 +117,9 @@ const _abi = [
     name: "getLatestNonceForRootKey",
     outputs: [
       {
-        internalType: "uint64",
+        internalType: "uint256",
         name: "",
-        type: "uint64",
+        type: "uint256",
       },
     ],
     stateMutability: "view",
@@ -171,9 +176,9 @@ const _abi = [
         type: "bytes",
       },
       {
-        internalType: "uint64",
+        internalType: "uint256",
         name: "nonce",
-        type: "uint64",
+        type: "uint256",
       },
     ],
     name: "linkWalletToRootKey",

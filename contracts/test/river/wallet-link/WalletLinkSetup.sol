@@ -19,7 +19,7 @@ abstract contract WalletLinkSetup is FacetTest {
 
   function setUp() public override {
     super.setUp();
-    walletLink = new WalletLink();
+    walletLink = WalletLink(address(diamond));
   }
 
   function diamondInitParams()

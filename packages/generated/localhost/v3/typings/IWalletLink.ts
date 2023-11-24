@@ -33,7 +33,7 @@ export interface IWalletLinkInterface extends utils.Interface {
     "getLatestNonceForRootKey(address)": FunctionFragment;
     "getRootKeyForWallet(address)": FunctionFragment;
     "getWalletsByRootKey(address)": FunctionFragment;
-    "linkWalletToRootKey(address,bytes,uint64)": FunctionFragment;
+    "linkWalletToRootKey(address,bytes,uint256)": FunctionFragment;
     "removeLink(address)": FunctionFragment;
   };
 

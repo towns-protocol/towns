@@ -26,8 +26,24 @@
         "type": "error"
       },
       {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "currentNonce",
+            "type": "uint256"
+          }
+        ],
+        "name": "InvalidAccountNonce",
+        "type": "error"
+      },
+      {
         "inputs": [],
-        "name": "InvalidSignature",
+        "name": "WalletLink__InvalidSignature",
         "type": "error"
       },
       {
@@ -43,18 +59,23 @@
             "type": "address"
           }
         ],
-        "name": "LinkAlreadyExists",
+        "name": "WalletLink__LinkAlreadyExists",
         "type": "error"
       },
       {
         "inputs": [
           {
-            "internalType": "uint64",
-            "name": "nonce",
-            "type": "uint64"
+            "internalType": "address",
+            "name": "wallet",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "rootKey",
+            "type": "address"
           }
         ],
-        "name": "NonceAlreadyUsed",
+        "name": "WalletLink__NotLinked",
         "type": "error"
       },
       {
@@ -176,9 +197,9 @@
         "name": "getLatestNonceForRootKey",
         "outputs": [
           {
-            "internalType": "uint64",
+            "internalType": "uint256",
             "name": "",
-            "type": "uint64"
+            "type": "uint256"
           }
         ],
         "stateMutability": "view",
@@ -235,9 +256,9 @@
             "type": "bytes"
           },
           {
-            "internalType": "uint64",
+            "internalType": "uint256",
             "name": "nonce",
-            "type": "uint64"
+            "type": "uint256"
           }
         ],
         "name": "linkWalletToRootKey",
@@ -248,25 +269,20 @@
       {
         "inputs": [
           {
-            "internalType": "bytes32",
-            "name": "_ethSignedMessageHash",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes",
-            "name": "_signature",
-            "type": "bytes"
-          }
-        ],
-        "name": "recoverSigner",
-        "outputs": [
-          {
             "internalType": "address",
-            "name": "",
+            "name": "owner",
             "type": "address"
           }
         ],
-        "stateMutability": "pure",
+        "name": "nonces",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
         "type": "function"
       },
       {
@@ -281,38 +297,16 @@
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bytes",
-            "name": "sig",
-            "type": "bytes"
-          }
-        ],
-        "name": "splitSignature",
-        "outputs": [
-          {
-            "internalType": "bytes32",
-            "name": "r",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "s",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "uint8",
-            "name": "v",
-            "type": "uint8"
-          }
-        ],
-        "stateMutability": "pure",
-        "type": "function"
       }
     ],
     "devdoc": {
+      "errors": {
+        "InvalidAccountNonce(address,uint256)": [
+          {
+            "details": "The nonce used for an `account` is not the expected current nonce."
+          }
+        ]
+      },
       "kind": "dev",
       "methods": {
         "checkIfLinked(address,address)": {
@@ -345,11 +339,14 @@
             "wallets": "an array of ethereum wallets linked to this root key"
           }
         },
-        "linkWalletToRootKey(address,bytes,uint64)": {
+        "linkWalletToRootKey(address,bytes,uint256)": {
           "params": {
             "nonce": "a nonce used to prevent replay attacks, nonce must always be higher than previous nonce",
             "rootKeySignature": "a signature signing the hash of the wallet address with the rootKey's private key"
           }
+        },
+        "nonces(address)": {
+          "details": "Returns the next unused nonce for an address."
         },
         "removeLink(address)": {
           "params": {
@@ -474,36 +471,44 @@
         "dweb:/ipfs/QmdktQXV7PKABzh43SZqemdTG25RxMaMsgpXTTUvZUxmfU"
       ]
     },
-    "contracts/src/river/wallet-link/IWalletLink.sol": {
-      "keccak256": "0x25aa941ea878e5c1c14647d0d1c09a51417f872c617b3244bce965af00846ed6",
+    "contracts/src/diamond/utils/Nonces.sol": {
+      "keccak256": "0x672cb79a36c3b7cae3030dd9ca3f2f3ab4a3e72a622b55a31c37f234c4031c24",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8c7554d384645ebac2ed8a9a797f1036fb149a959e333fb540a339fcbb76f5f6",
-        "dweb:/ipfs/QmNY4XYjorKoAp7Lw8ibu2aqzthPRgkNKHUWqXZ8bgQJZi"
+        "bzz-raw://005d3f36e6d3f27d94d179c4083a24b14eca08819af6352e595a303ede435321",
+        "dweb:/ipfs/Qmc3eJZf4np4Ure8vFvUZjxX7PBXWz62DaSHT2gvJdufLn"
+      ]
+    },
+    "contracts/src/river/wallet-link/IWalletLink.sol": {
+      "keccak256": "0xfaf8c06e9fcc2022afb5c01e266068be782926c4362a5b4f01f23e9b6620803f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://824133d8674a9b6ce0a525062628814342ccabeed019b6c9f497e2b2c76f95bc",
+        "dweb:/ipfs/QmTJs8bP2KmfD3trUexihcWtMfPLcLuiiNbvhoGWY9qbih"
       ]
     },
     "contracts/src/river/wallet-link/WalletLink.sol": {
-      "keccak256": "0x9c7c90a8d320251e8def32d944203e7e0497e2fdd7c20f2da7da02257b7d1335",
+      "keccak256": "0xc54845f0a756b19145b1a6bfd714f9caa89f06e1896cff8c0e739823d76056d7",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1d63005e546c02a8cd8640da445f18654dc95d5f42fcd9b9b4a2e09e9fc22311",
-        "dweb:/ipfs/QmecZ56hECZgZPiRoWf6p32xywMS5P9hQydc8222spAV5h"
+        "bzz-raw://3fa5b7d4add2c0181b10eac6b3f08bf745deb640fe6ff1f5fd8e6d4c836d8e50",
+        "dweb:/ipfs/QmSo6meqjnBvzCs9fa8mTHS7fRwtewAEPTB6RJqTdqmXJT"
       ]
     },
     "contracts/src/river/wallet-link/WalletLinkBase.sol": {
-      "keccak256": "0xfc4d8db48b9f3b7b8d4edd675c38da62f50dedd70c396d88c86d1cd61693ec4c",
+      "keccak256": "0xbdf618be81cea9424ff7d473b57635baea90c929c8c95786801917388008e5d9",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://a8fcb9d43e1ef08caf9460594affbc000da1be9ef4e73c0dd51355a8a10f98b1",
-        "dweb:/ipfs/QmVyMYMfqDwD4dzXnZTpNGfN7VWYWCmzmZrBMwDr3jUWxW"
+        "bzz-raw://fec93ca91029983caf9b029ead57f2ab0978dfbd78b48be53dacd8808f929384",
+        "dweb:/ipfs/QmZGFpP1sv39NXHxfPEzY9p7Khjt5kRsodz7DhhsWSeJ8q"
       ]
     },
     "contracts/src/river/wallet-link/WalletLinkStorage.sol": {
-      "keccak256": "0xdc35739e66e2fcb74d0029121d80f17a9acaa2d377bbf454661a6dc2a10f2b48",
+      "keccak256": "0xe51b896e1d2b0e79e0e7c96e24537107e50bc177f7b111dbc2e8f6b8db6d83be",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c897d772ebd42c1fc61c158f437f63d4f087a869cd4ac8fb485195ec89e77594",
-        "dweb:/ipfs/QmW1GbyNrd2u84Nu3XidCtHMWQsTE5mML5tXNQgRCRahPy"
+        "bzz-raw://4f3bafa120bf030ee9e6f96c61f0870357d32be1d4c1da75a6da1cf146bd20be",
+        "dweb:/ipfs/QmZiMoKpZmU1P3hDCdfkD6sRKDNNagZo23JKCjbVNyJ57o"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/Address.sol": {

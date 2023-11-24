@@ -8,11 +8,6 @@ pragma solidity ^0.8.19;
 // contracts
 
 interface IWalletLinkBase {
-  struct WalletLinkInfo {
-    address wallet;
-    address rootKey;
-  }
-
   /// @notice Emitted when a user links their wallet to a rootKey
   event LinkWalletToRootKey(address wallet, address rootKey);
 
@@ -22,9 +17,9 @@ interface IWalletLinkBase {
   // =============================================================
   //                      Errors
   // =============================================================
-  error LinkAlreadyExists(address wallet, address rootKey);
-  error NonceAlreadyUsed(uint64 nonce);
-  error InvalidSignature();
+  error WalletLink__LinkAlreadyExists(address wallet, address rootKey);
+  error WalletLink__InvalidSignature();
+  error WalletLink__NotLinked(address wallet, address rootKey);
 }
 
 interface IWalletLink is IWalletLinkBase {
@@ -35,7 +30,7 @@ interface IWalletLink is IWalletLinkBase {
   function linkWalletToRootKey(
     address rootKey,
     bytes calldata rootKeySignature,
-    uint64 nonce
+    uint256 nonce
   ) external;
 
   /**
@@ -83,5 +78,5 @@ interface IWalletLink is IWalletLinkBase {
    */
   function getLatestNonceForRootKey(
     address rootKey
-  ) external view returns (uint64);
+  ) external view returns (uint256);
 }
