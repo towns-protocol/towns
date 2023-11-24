@@ -3,6 +3,7 @@ import { useAllKnownUsers, useMyProfile, useUser, useZionClient } from 'use-zion
 import fuzzysort from 'fuzzysort'
 import { AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router'
+import { firstBy } from 'thenby'
 import {
     Box,
     Button,
@@ -25,7 +26,7 @@ type Props = {
 export const CreateDirectMessage = (props: Props) => {
     const [searchTerm, setSearchTerm] = useState('')
     const { onDirectMessageCreated } = props
-    const { users } = useAllKnownUsers()
+    const { users, usersMap } = useAllKnownUsers()
     const { createDMChannel, createGDMChannel } = useZionClient()
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
     const navigate = useNavigate()
@@ -80,6 +81,11 @@ export const CreateDirectMessage = (props: Props) => {
             all: true,
         })
         .map((r) => r.obj.userId)
+        .sort(
+            firstBy<string>((id) => usersMap[id]?.displayName.startsWith(`0x`)).thenBy(
+                (id) => usersMap[id]?.displayName,
+            ),
+        )
         .filter((id) => id !== userId)
         .slice(0, 25)
 
@@ -127,14 +133,7 @@ export const CreateDirectMessage = (props: Props) => {
                     </Stack>
                 </MotionStack>
             </AnimatePresence>
-            <Box
-                paddingX
-                paddingBottom="md"
-                position="absolute"
-                bottom="none"
-                left="none"
-                right="none"
-            >
+            <Box paddingX paddingBottom="md" bottom="none" left="none" right="none">
                 <Button
                     disabled={selectedUserIds.size === 0}
                     tone="cta1"
