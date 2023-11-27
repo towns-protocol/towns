@@ -383,7 +383,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
     dockerLabels = {
       "com.datadoghq.ad.check_names"  = "[\"openmetrics\"]",
       "com.datadoghq.ad.init_configs" = "[{}]",
-      "com.datadoghq.ad.instances"    = "[{\"prometheus_url\": \"http://localhost:8081/metrics\", \"namespace\": \"river_node\", \"metrics\": [\"*\"], \"histogram_buckets_as_distributions\": true}]"
+      "com.datadoghq.ad.instances"    = "[{\"openmetrics_endpoint\": \"http://localhost:8081/metrics\", \"namespace\": \"river_node\", \"metrics\": [\".*\"], \"collect_counters_with_distributions\": true}]"
     }
 
     environment = [
