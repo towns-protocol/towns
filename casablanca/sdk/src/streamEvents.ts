@@ -25,6 +25,7 @@ export type StreamEvents = {
         streamId: string,
         membership: { joined: boolean; invited: boolean },
     ) => void
+    streamSyncActive: (active: boolean) => void
     userJoinedStream: (streamId: string) => void
     userInvitedToStream: (streamId: string) => void
     userLeftStream: (streamId: string) => void

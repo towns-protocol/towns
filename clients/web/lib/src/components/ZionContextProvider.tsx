@@ -24,6 +24,7 @@ import { DMChannelIdentifier } from '../types/dm-channel-identifier'
 import { useDMUnreads } from '../hooks/ZionContext/useDMUnreads'
 import { useTimelineFilter } from '../store/use-timeline-filter'
 import { ZTEvent } from '../types/timeline-types'
+import { useStreamSyncActive } from '../hooks/ZionContext/useStreamSyncActive'
 
 export type InitialSyncSortPredicate = (a: RoomIdentifier, b: RoomIdentifier) => number
 
@@ -44,6 +45,7 @@ export interface IZionContext {
     dmChannels: DMChannelIdentifier[]
     dmUnreadChannelIds: Set<string> // dmChannelId -> set of channelIds with unreads
     casablancaOnboardingState: IOnboardingState
+    streamSyncActive: boolean
 }
 
 export const ZionContext = createContext<IZionContext | undefined>(undefined)
@@ -89,6 +91,7 @@ const ContextImpl = (props: Props): JSX.Element => {
     const { client, clientSingleton, casablancaClient } = useZionClientListener(props)
     const { invitedToIds } = useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
+    const { streamSyncActive } = useStreamSyncActive(casablancaClient)
     const { spaces } = useSpaces(undefined, casablancaClient)
     const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
@@ -125,6 +128,7 @@ const ContextImpl = (props: Props): JSX.Element => {
                 dmUnreadChannelIds,
                 casablancaOnboardingState,
                 casablancaServerUrl: casablancaServerUrl,
+                streamSyncActive,
             }}
         >
             {props.children}

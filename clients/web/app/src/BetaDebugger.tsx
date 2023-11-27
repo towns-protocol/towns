@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useWeb3Context } from 'use-zion-client'
+import { useWeb3Context, useZionContext } from 'use-zion-client'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
 import { Box, Button, Icon, Paragraph, Text, TextButton } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
@@ -13,6 +13,7 @@ export function BetaDebugger() {
     const show = () => setIsVisible(true)
     const hide = () => setIsVisible(false)
     const { errorMessage, clearSiteData } = useClearSiteData()
+    const { streamSyncActive } = useZionContext()
 
     useEffect(() => {
         if (signer) {
@@ -35,6 +36,12 @@ export function BetaDebugger() {
                 alignItems="center"
                 gap="sm"
             >
+                <Box
+                    width="x1"
+                    height="x1"
+                    rounded="full"
+                    background={streamSyncActive ? 'cta1' : 'error'}
+                />
                 <Text size="xs">
                     Signer: {shortAddress(signerAddress ?? '')} <br />
                 </Text>

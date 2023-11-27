@@ -114,6 +114,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     readonly rpcClient: StreamRpcClientType
     readonly userId: string
     readonly deviceId: string | undefined
+
+    streamSyncActive = false
     userStreamId?: string
     userSettingsStreamId?: string
     userDeviceKeyStreamId?: string
@@ -793,6 +795,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 let running = true
                 let retryCount = 0
                 while (running) {
+                    this.emit('streamSyncActive', true)
+                    this.streamSyncActive = true
+
                     const abortController = new AbortController()
                     this.syncAbort = abortController
 
@@ -859,6 +864,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                         this.syncAbort = undefined
                         this.logSync('sync ITERATION end', iteration)
                     } catch (err) {
+                        this.emit('streamSyncActive', false)
+                        this.streamSyncActive = false
                         switch (abortController.signal.reason) {
                             case AbortReason.SHUTDOWN:
                                 running = false
@@ -903,6 +910,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             } catch (err) {
                 this.logSync('sync failure', err)
                 onFailure?.(err)
+                this.emit('streamSyncActive', false)
+                this.streamSyncActive = false
                 return err
             }
             return undefined
