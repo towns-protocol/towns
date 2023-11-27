@@ -85,3 +85,5 @@ packages/generated/localhost/addresses/entitlementChecker.json
 packages/generated/localhost/addresses/entitlementGatedExample.json
 servers/xchain/contracts/*.go
 common/xchain/dist/*
+
+.envrc

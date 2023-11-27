@@ -8,11 +8,18 @@ if [ -z "$ENVIRONMENT_NAME" ]; then
     exit 1
 fi
 
-LATEST_DEV_TOWN_WORKER_PATH="servers/workers/latest-dev-town-worker"
-NODE_NAME="river1"
-CASABLANCA_SERVER_URL="${NODE_NAME}-${ENVIRONMENT_NAME}.towns.com"
-CLUSTER_NAME="${ENVIRONMENT_NAME}-river-ecs-cluster"
-SERVICE_NAME="${NODE_NAME}-${ENVIRONMENT_NAME}-fargate-service"
+export LATEST_DEV_TOWN_WORKER_PATH="servers/workers/latest-dev-town-worker"
+export NODE_NAME="river1"
+export CASABLANCA_SERVER_URL="https://${NODE_NAME}-${ENVIRONMENT_NAME}.towns.com"
+export CLUSTER_NAME="${ENVIRONMENT_NAME}-river-ecs-cluster"
+export SERVICE_NAME="${NODE_NAME}-${ENVIRONMENT_NAME}-fargate-service"
+
+echo "ENVIRONMENT_NAME: $ENVIRONMENT_NAME"
+echo "LATEST_DEV_TOWN_WORKER_PATH: $LATEST_DEV_TOWN_WORKER_PATH"
+echo "NODE_NAME: $NODE_NAME"
+echo "CASABLANCA_SERVER_URL: $CASABLANCA_SERVER_URL"
+echo "CLUSTER_NAME: $CLUSTER_NAME"
+echo "SERVICE_NAME: $SERVICE_NAME"
 
 function reset_latest_dev_town_invite_url() {
     if [ "$CREATE_NEW_DEV_TOWN" == "true" ]; then

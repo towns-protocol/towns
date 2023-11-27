@@ -115,9 +115,9 @@ jobs:
                   RESET_DB: ${{ github.event.inputs.reset_db }}
                   CREATE_NEW_DEV_TOWN: ${{ github.event_name == 'schedule' && 'true' || github.event.inputs.create_new_dev_town }}
                   ETHERS_NETWORK: ${{ secrets.ETHERS_NETWORK }}
-                  ENVIRONMENT_NAME: ${{ github.env.ENVIRONMENT_NAME }}
+                  ENVIRONMENT_NAME: ${{ env.ENVIRONMENT_NAME }}
+                  CHAIN_ID: 84531
                   WALLET_PRIVATE_KEY: ${{ secrets.HARMONY_HOT_WALLET_PRIVATE_KEY }}
                   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
                   DB_URL: ${{ secrets.DB_URL }}
-                  CHAIN_ID: 84531
               run: ./scripts/reset-environment.sh
