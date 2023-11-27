@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	eth "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -26,6 +27,11 @@ type AuthorizationArgs struct {
 type TownsContract interface {
 	IsAllowed(ctx context.Context, args AuthorizationArgs, info *common.StreamInfo) (bool, error)
 }
+
+const (
+	REQUEST_TIMEOUT_MS = 5000
+	MAX_WALLETS        = 10
+)
 
 var ErrSpaceDisabled = errors.New("space disabled")
 var ErrChannelDisabled = errors.New("channel disabled")
@@ -173,6 +179,7 @@ type EntitlementCheckResult struct {
 	Err     error
 }
 
+// rootKey is always a first wallet in the list.
 func (za *ChainAuth) allRelevantWallets(ctx context.Context, rootKey eth.Address) ([]eth.Address, error) {
 	log := dlog.CtxLog(ctx)
 
@@ -188,9 +195,9 @@ func (za *ChainAuth) allRelevantWallets(ctx context.Context, rootKey eth.Address
 		return nil, err
 	}
 
-	wallets = append(wallets, rootKey)
-
+	wallets = append([]eth.Address{rootKey}, wallets...)
 	log.Debug("allRelevantWallets", "wallets", wallets)
+
 	return wallets, nil
 }
 
@@ -202,10 +209,10 @@ func (za *ChainAuth) allRelevantWallets(ctx context.Context, rootKey eth.Address
 func (za *ChainAuth) checkEntitiement(ctx context.Context, rootKey eth.Address, permission Permission, streamInfo *common.StreamInfo) (bool, error) {
 	log := dlog.CtxLog(ctx)
 
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*REQUEST_TIMEOUT_MS)
 	defer cancel()
 
-	resultsChan := make(chan EntitlementCheckResult)
+	resultsChan := make(chan EntitlementCheckResult, MAX_WALLETS+1)
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -216,6 +223,9 @@ func (za *ChainAuth) checkEntitiement(ctx context.Context, rootKey eth.Address, 
 			log.Error("error getting all wallets", "rootKey", rootKey.Hex(), "error", err)
 			resultsChan <- EntitlementCheckResult{Allowed: false, Err: err}
 			return
+		}
+		if len(wallets) > MAX_WALLETS+1 {
+			wallets = wallets[:MAX_WALLETS+1]
 		}
 		for _, wallet := range wallets {
 			wg.Add(1)
