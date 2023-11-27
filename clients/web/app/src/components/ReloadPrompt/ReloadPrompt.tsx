@@ -24,7 +24,7 @@ export const ReloadPrompt = () => {
             if (env.DEV) {
                 if (env.VITE_PUSH_NOTIFICATION_ENABLED) {
                     // doesn't seem to update the service worker in dev mode without this
-                    updateServiceWorker(true)
+                    updateServiceWorker()
                 }
                 return
             }
@@ -94,21 +94,19 @@ export const ReloadPrompt = () => {
         }
     }, [])
 
+    const [isFailed, setIsFailed] = useState(false)
+
     const onUpdateClick = useCallback(() => {
         const asyncUpdate = async () => {
-            if (isUpdating) {
-                return
-            }
-            setIsUpdating(true)
-
             // start a timer to clear all workers and force a reload if the vite-pwa update somehow fails
             // we're not clearing this timeout because this should only happen once
             // and updateServiceWorker() doesn't throw an error if it doesn't work, so we don't want to clear the timeout immediately
             setTimeout(async () => {
                 log('update failed, clearing workers and reloading...')
+                setIsFailed(true)
                 await clearAllWorkers()
                 window.location.reload()
-            }, SECOND_MS * 5)
+            }, SECOND_MS * 20)
 
             // for safety, currently some of our URLs only work in SPA mode but
             // fail upon hard-refresh because of invalid chars
@@ -122,11 +120,25 @@ export const ReloadPrompt = () => {
             log('updateServiceWorker...')
 
             // triggers update and immediate reload
-            await updateServiceWorker(true)
+            try {
+                await updateServiceWorker()
+            } catch (error) {
+                setIsFailed(true)
+                log('sw: reload prompt, error updating service worker', error)
+            }
 
             log('updateServiceWorker complete')
         }
-        asyncUpdate()
+
+        if (isUpdating) {
+            return
+        }
+        setIsUpdating(true)
+
+        setTimeout(() => {
+            // let the animation settle before requesting the update
+            asyncUpdate()
+        }, 1 * SECOND_MS)
     }, [isUpdating, updateServiceWorker])
 
     return (
@@ -187,8 +199,16 @@ export const ReloadPrompt = () => {
                                 </>
                             ) : (
                                 <FadeInBox horizontal centerContent gap layout="position">
-                                    <Paragraph>Updating</Paragraph>
-                                    <Spinner height="x2" />
+                                    {isFailed ? (
+                                        <Paragraph color="error">
+                                            An error occurred while updating. Reloading...
+                                        </Paragraph>
+                                    ) : (
+                                        <>
+                                            <Paragraph>Updating</Paragraph>
+                                            <Spinner height="x2" />
+                                        </>
+                                    )}
                                 </FadeInBox>
                             )}
                         </Card>
@@ -204,7 +224,8 @@ export const ReloadPrompt = () => {
 async function clearAllWorkers() {
     const registrations = await navigator.serviceWorker.getRegistrations()
     for (const registration of registrations) {
-        registration.unregister()
+        const result = await registration.unregister()
+        log(result ? 'successfully unregistered' : 'failed to unregister')
     }
 }
 
