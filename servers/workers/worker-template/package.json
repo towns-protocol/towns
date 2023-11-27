@@ -9,7 +9,8 @@
 		"dev:local": "wrangler dev",
 		"dev:remote": "wrangler dev --remote",
 		"lint": "eslint .",
-		"test": "jest"
+		"test": "yarn test:unit",
+		"test:unit": "jest"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20230710.1",
