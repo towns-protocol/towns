@@ -142,6 +142,17 @@ export class CryptoStore extends Dexie {
         })
     }
 
+    async withGroupSessionsTx<T>(fn: () => Promise<T>): Promise<T> {
+        return await this.transaction(
+            'rw',
+            this.outboundGroupSessions,
+            this.inboundGroupSessions,
+            async () => {
+                return await fn()
+            },
+        )
+    }
+
     /**
      * Only used for testing
      * @returns total number of devices in the store

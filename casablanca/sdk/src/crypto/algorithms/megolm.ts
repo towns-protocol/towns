@@ -144,7 +144,8 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             return
         } catch (error) {
             // if we don't have a cached session at this point, create a new one
-            const newSession = await this.prepareNewSession(streamId)
+            const sessionId = await this.olmDevice.createOutboundGroupSession(streamId)
+            const newSession = new OutboundSessionInfo(sessionId, streamId)
             this.logCall(`Started new megolm session ${newSession.sessionId}`)
             await this.shareSession(streamId, singleOlmCreationPhase, newSession)
         }
@@ -156,7 +157,15 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         session: OutboundSessionInfo,
     ): Promise<void> {
         const devicesInRoom = await this.getDevicesInRoom(streamId)
-        const sessionKey = await this.olmDevice.getOutboundGroupSessionKey(streamId)
+        const sessionKey = await this.olmDevice.getInboundGroupSessionKey(
+            streamId,
+            session.sessionId,
+        )
+
+        if (!sessionKey) {
+            throw new Error('Session key not found for session ' + session.sessionId)
+        }
+
         const payload = new MegolmSession({
             streamId: streamId,
             sessionId: session.sessionId,
@@ -177,33 +186,6 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             toDeviceResponse,
             ToDeviceOp.TDO_KEY_RESPONSE,
         )
-    }
-
-    /**
-     * @internal
-     *
-     *
-     * @returns session
-     */
-    private async prepareNewSession(streamId: string): Promise<OutboundSessionInfo> {
-        const sessionId = await this.olmDevice.createOutboundGroupSession(streamId)
-        // session key
-        const key = await this.olmDevice.getOutboundGroupSessionKey(streamId)
-
-        await this.olmDevice.addInboundGroupSession(
-            streamId,
-            sessionId,
-            key.key,
-            { doNotUseKey: this.olmDevice.deviceDoNotUseKey! },
-            false,
-        )
-
-        // todo: implement backupManager process for backing up sessions in indexeddb and uncomment below.
-        // see: https://linear.app/hnt-labs/issue/HNT-1831/backup-sessions-in-indexeddb
-        // don't wait for it to complete
-        // this.crypto.backupManager.backupGroupSession(this.olmDevice.deviceCurve25519Key!, sessionId)
-
-        return new OutboundSessionInfo(sessionId, streamId)
     }
 
     /**

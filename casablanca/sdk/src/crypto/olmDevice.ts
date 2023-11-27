@@ -474,14 +474,36 @@ export class OlmDevice {
      *
      */
     public async createOutboundGroupSession(streamId: string): Promise<string> {
-        const session = this.olmDelegate.createOutboundGroupSession()
-        try {
-            session.create()
-            await this.saveOutboundGroupSession(session, streamId)
-            return session.session_id()
-        } finally {
-            session.free()
-        }
+        return await this.cryptoStore.withGroupSessionsTx(async () => {
+            // Create an outbound group session
+            const session = this.olmDelegate.createOutboundGroupSession()
+            const inboundSession = this.olmDelegate.createInboundGroupSession()
+            try {
+                session.create()
+                const sessionId = session.session_id()
+                await this.saveOutboundGroupSession(session, streamId)
+
+                // While still inside the transaction, create an inbound counterpart session
+                // to make sure that the session is exported at message index 0.
+                const key = session.session_key()
+                inboundSession.create(key)
+                const pickled = inboundSession.pickle(this.pickleKey)
+
+                await this.cryptoStore.storeEndToEndInboundGroupSession(streamId, sessionId, {
+                    session: pickled,
+                    stream_id: streamId,
+                    keysClaimed: {},
+                })
+
+                return sessionId
+            } catch (e) {
+                log('Error creating outbound group session', e)
+                throw e
+            } finally {
+                session.free()
+                inboundSession.free()
+            }
+        })
     }
 
     // Inbound group session
