@@ -342,7 +342,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
             borderBottom={!isTouch ? 'default' : 'none'}
         >
             <LexicalComposer initialConfig={initialConfig}>
-                <Stack horizontal gap centerContent width="100%" paddingRight="sm">
+                <Stack horizontal width="100%" paddingRight="sm" alignItems="end">
                     <Box grow width="100%">
                         <RichTextUI
                             focused={focused || !isEditorEmpty}
@@ -367,21 +367,22 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                             />
                         </RichTextUI>
                     </Box>
-                    <Box grow />
-                    <SendMarkdownPlugin
-                        displayButtons={props.displayButtons ?? 'on-focus'}
-                        disabled={isOffline}
-                        focused={focused}
-                        isEditing={isEditing ?? false}
-                        isEditorEmpty={isEditorEmpty}
-                        setIsEditorEmpty={setIsEditorEmpty}
-                        hasImage={imageCount > 0}
-                        key="markdownplugin"
-                        onSendImage={sendImage}
-                        onSend={onSendCb}
-                        onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
-                        onCancel={props.onCancel}
-                    />
+                    <Box paddingY="sm" paddingRight="xs">
+                        <SendMarkdownPlugin
+                            displayButtons={props.displayButtons ?? 'on-focus'}
+                            disabled={isOffline}
+                            focused={focused}
+                            isEditing={isEditing ?? false}
+                            isEditorEmpty={isEditorEmpty}
+                            setIsEditorEmpty={setIsEditorEmpty}
+                            hasImage={imageCount > 0}
+                            key="markdownplugin"
+                            onSendImage={sendImage}
+                            onSend={onSendCb}
+                            onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
+                            onCancel={props.onCancel}
+                        />
+                    </Box>
                 </Stack>
 
                 <Stack gap shrink paddingX paddingBottom="sm">

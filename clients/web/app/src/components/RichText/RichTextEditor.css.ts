@@ -1,6 +1,6 @@
 import { globalStyle, style } from '@vanilla-extract/css'
 import { atoms } from 'ui/styles/atoms.css'
-import { vars } from 'ui/styles/vars.css'
+import { baseline, vars } from 'ui/styles/vars.css'
 
 export const richText = style({})
 
@@ -10,6 +10,8 @@ export const contentEditable = style([
     }),
     {
         outline: 'none',
+        maxHeight: `${baseline * (4 + 22.5)}px`, // pseudo-arbitrary
+        overflow: 'scroll',
     },
 ])
 
