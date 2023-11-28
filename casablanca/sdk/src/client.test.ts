@@ -9,7 +9,13 @@ import {
     makeUserDeviceKeyStreamId,
 } from './id'
 import { makeDonePromise, makeTestClient, waitFor } from './util.test'
-import { DeviceKeys, SnapshotCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@river/proto'
+import {
+    ChannelMessage,
+    DeviceKeys,
+    SnapshotCaseType,
+    SyncStreamsRequest,
+    SyncStreamsResponse,
+} from '@river/proto'
 import { getChannelMessagePayload } from './testutils'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
@@ -18,6 +24,8 @@ import { CallOptions } from '@connectrpc/connect'
 import { jest } from '@jest/globals'
 import { RiverEventV2 } from './eventV2'
 import { SignerContext } from './sign'
+import { make_ChannelPayload_Message } from './types'
+import { check, isDefined } from './check'
 
 const log = dlog('csb:test')
 
@@ -84,6 +92,47 @@ describe('clientTest', () => {
         await expect(bobCanReconnect(bobsClient.signerContext)).toResolve()
 
         log('pass2 done')
+    })
+
+    test('bobSendsBadPrevMiniblockHashShouldResolve', async () => {
+        await expect(bobsClient.initializeUser()).toResolve()
+        await bobsClient.startSync()
+
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
+        await expect(
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, channelId),
+        ).toResolve()
+
+        await bobsClient.waitForStream(channelId)
+
+        // hand construct a message, (don't do this normally! just use sendMessage(..))
+        const encrypted = await bobsClient.createMegolmEncryptedEvent(
+            new ChannelMessage({
+                payload: {
+                    case: 'post',
+                    value: {
+                        content: {
+                            case: 'text',
+                            value: { body: 'Hello world' },
+                        },
+                    },
+                },
+            }),
+            channelId,
+        )
+        check(isDefined(encrypted), 'encrypted should be defined')
+        const message = make_ChannelPayload_Message(encrypted)
+        await expect(
+            bobsClient.makeEventWithHashAndAddToStream(
+                channelId,
+                message,
+                Uint8Array.from(Array(32).fill(0)), // just going to throw any old thing in there... the retry should pick it up
+            ),
+        ).toResolve()
     })
 
     test('clientsCanBeClosedNoSync', async () => {})

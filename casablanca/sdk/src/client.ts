@@ -35,7 +35,7 @@ import { Crypto, GroupEncryptionInput, IEventOlmDecryptionResult } from './crypt
 import { OlmDevice, IExportedDevice as IExportedOlmDevice } from './crypto/olmDevice'
 import { UserDevice, UserDeviceCollection, MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { DLogger, dlog, dlogError } from './dlog'
-import { StreamRpcClientType } from './makeStreamRpcClient'
+import { errorContains, getRpcErrorProperty, StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { assert, check, hasElements, isDefined, throwWithCode } from './check'
@@ -85,7 +85,7 @@ import {
     make_SpacePayload_DisplayName,
     StreamTimelineEvent,
 } from './types'
-import { bin_toHexString, shortenHexString } from './binary'
+import { bin_fromHexString, bin_toHexString, shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/cryptoStore'
 
 import { IDecryptOptions, RiverEventsV2, RiverEventV2 } from './eventV2'
@@ -127,6 +127,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     private readonly logEmitFromClient: DLogger
     private readonly logEvent: DLogger
     private readonly logError: DLogger
+    private readonly logInfo: DLogger
 
     protected exportedOlmDeviceToImport?: IExportedOlmDevice
     public pickleKey?: string
@@ -187,6 +188,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logEmitFromClient = dlog('csb:cl:emit').extend(shortId)
         this.logEvent = dlog('csb:cl:event').extend(shortId)
         this.logError = dlogError('csb:cl:error').extend(shortId)
+        this.logInfo = dlog('csb:cl:info', { defaultEnabled: true }).extend(shortId)
         this.cryptoStore = cryptoStore
         this.logCall('new Client')
     }
@@ -1454,26 +1456,54 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         const prevHash = stream.view.prevMiniblockHash
         assert(isDefined(prevHash), 'no prev miniblock hash for stream ' + streamId)
-        const event = await makeEvent(this.signerContext, payload, prevHash)
-        if (options.localId) {
-            stream.view.updateLocalEvent(options.localId, bin_toHexString(event.hash), this)
-        }
-        await this.rpcClient.addEvent({
-            streamId,
-            event,
-        })
+        await this.makeEventWithHashAndAddToStream(streamId, payload, prevHash, options.localId)
     }
 
     async makeEventWithHashAndAddToStream(
         streamId: string,
         payload: PlainMessage<StreamEvent>['payload'],
         prevMiniblockHash: Uint8Array,
+        localId?: string,
+        retryCount?: number,
     ): Promise<void> {
         const event = await makeEvent(this.signerContext, payload, prevMiniblockHash)
-        await this.rpcClient.addEvent({
-            streamId,
-            event,
-        })
+        const eventId = bin_toHexString(event.hash)
+        if (localId) {
+            const stream = this.streams.get(streamId)
+            assert(stream !== undefined, 'unknown stream ' + streamId)
+            stream.view.updateLocalEvent(localId, eventId, this)
+        }
+
+        try {
+            await this.rpcClient.addEvent({ streamId, event })
+        } catch (err) {
+            // custom retry logic for addEvent
+            // if we send up a stale prevMiniblockHash, the server will return a BAD_PREV_MINIBLOCK_HASH
+            // error and include the expected hash in the error message
+            // if we had a localEventId, pass the last id so the ui can continue to update to the latest hash
+            retryCount = retryCount ?? 0
+            if (errorContains(err, Err.BAD_PREV_MINIBLOCK_HASH) && retryCount < 3) {
+                const expectedHash = getRpcErrorProperty(err, 'expected')
+                this.logInfo(
+                    'RETRYING event after BAD_PREV_MINIBLOCK_HASH response',
+                    retryCount,
+                    'prevHash:',
+                    prevMiniblockHash,
+                    'expectedHash:',
+                    expectedHash,
+                )
+                check(isDefined(expectedHash), 'expected hash not found in error')
+                await this.makeEventWithHashAndAddToStream(
+                    streamId,
+                    payload,
+                    bin_fromHexString(expectedHash),
+                    isDefined(localId) ? eventId : undefined,
+                    retryCount + 1,
+                )
+            } else {
+                throw err
+            }
+        }
     }
 
     async getStreamLastMiniblockHash(streamId: string): Promise<Uint8Array> {

@@ -89,7 +89,7 @@ export const makeEvent = async (
         check(
             prevMiniblockHash.length === 32,
             `prevMiniblockHash should be 32 bytes, got ${prevMiniblockHash.length}`,
-            Err.BAD_PREV_MINIBLOCK_HASH,
+            Err.BAD_HASH_FORMAT,
         )
     }
 

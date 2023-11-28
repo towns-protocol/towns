@@ -226,7 +226,11 @@ export const bobTalksToHimself = async (
             streamId: channelId,
             event: badEvent,
         }),
-    ).rejects.toThrow()
+    ).rejects.toThrow(
+        expect.objectContaining({
+            message: expect.stringContaining('24:BAD_PREV_MINIBLOCK_HASH'),
+        }),
+    )
 
     log("Bob can't add a previously added event (messages from the client contain timestamps)")
     await maybeFlush()
@@ -235,7 +239,11 @@ export const bobTalksToHimself = async (
             streamId: channelId,
             event: helloEvent,
         }),
-    ).rejects.toThrow()
+    ).rejects.toThrow(
+        expect.objectContaining({
+            message: expect.stringContaining('37:DUPLICATE_EVENT'),
+        }),
+    )
 
     log('done')
 }

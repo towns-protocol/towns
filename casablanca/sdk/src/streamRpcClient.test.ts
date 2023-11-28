@@ -830,6 +830,18 @@ describe('streamRpcClient', () => {
             }),
         ).toResolve()
 
+        log('Bob fails to add message twice')
+        await expect(
+            bob.addEvent({
+                streamId: channelId,
+                event: messageEvent,
+            }),
+        ).rejects.toThrow(
+            expect.objectContaining({
+                message: expect.stringContaining('37:DUPLICATE_EVENT'),
+            }),
+        )
+
         log('Bob failes to add event with bad signature')
         const badEvent = await makeEvent(
             bobsContext,
@@ -845,6 +857,21 @@ describe('streamRpcClient', () => {
                 event: badEvent,
             }),
         ).rejects.toThrow('22:BAD_EVENT_SIGNATURE')
+
+        log('Bob fails with outdated prev minibloc hash')
+        const expiredEvent = await makeEvent(
+            bobsContext,
+            make_ChannelPayload_Message({
+                text: 'Nah, not really',
+            }),
+            Uint8Array.from(Array(32).fill('1')),
+        )
+        await expect(
+            bob.addEvent({
+                streamId: channelId,
+                event: expiredEvent,
+            }),
+        ).rejects.toThrow('24:BAD_PREV_MINIBLOCK_HASH')
     })
 })
 

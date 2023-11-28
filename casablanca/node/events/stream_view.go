@@ -405,11 +405,11 @@ func (r *streamViewImpl) ValidateNextEvent(parsedEvent *ParsedEvent, config *con
 	}
 	// ensure that we found it
 	if foundBlockAt == -1 {
-		return RiverError(Err_BAD_PREV_MINIBLOCK_HASH, "prevMiniblockHash not found in recent blocks", "event", parsedEvent.ShortDebugStr(), "expected", FormatHashShort(r.LastBlock().headerEvent.Hash))
+		return RiverError(Err_BAD_PREV_MINIBLOCK_HASH, "prevMiniblockHash not found in recent blocks", "event", parsedEvent.ShortDebugStr(), "expected", FormatFullHashFromBytes(r.LastBlock().headerEvent.Hash))
 	}
 	// make sure we're recent
 	if !r.isRecentBlock(r.blocks[foundBlockAt], config) {
-		return RiverError(Err_BAD_PREV_MINIBLOCK_HASH, "prevMiniblockHash did not reference a recent block", "event", parsedEvent.ShortDebugStr(), "expected", FormatHashShort(r.LastBlock().headerEvent.Hash))
+		return RiverError(Err_BAD_PREV_MINIBLOCK_HASH, "prevMiniblockHash did not reference a recent block", "event", parsedEvent.ShortDebugStr(), "expected", FormatFullHashFromBytes(r.LastBlock().headerEvent.Hash))
 	}
 	// loop forwards from foundBlockAt and check for duplicate event
 	for i := foundBlockAt + 1; i < len(r.blocks); i++ {

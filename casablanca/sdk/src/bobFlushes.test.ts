@@ -9,17 +9,27 @@ import { makeRandomUserContext } from './util.test'
 
 const baseLog = dlog('csb:test:bobFlushes')
 
-describe.skip('bobFlushes', () => {
+describe('bobFlushes', () => {
     let bobsContext: SignerContext
 
     beforeEach(async () => {
         bobsContext = await makeRandomUserContext()
     })
 
-    test.each([
-        ['bobTalksToHimself-flush-nopresync', false],
-        ['bobTalksToHimself-flush-presync', true],
-    ])('%s', async (name: string, presync: boolean) => {
-        await bobTalksToHimself(baseLog.extend(name), bobsContext, false, presync)
+    test('bobTalksToHimself-noflush-nopresync', async () => {
+        await bobTalksToHimself(
+            baseLog.extend('bobTalksToHimself-noflush-nopresync'),
+            bobsContext,
+            false,
+            false,
+        )
+    })
+    test.skip('bobTalksToHimself-noflush-presync', async () => {
+        await bobTalksToHimself(
+            baseLog.extend('bobTalksToHimself-noflush-presync'),
+            bobsContext,
+            false,
+            true,
+        )
     })
 })

@@ -10,7 +10,7 @@ import {
 } from '@connectrpc/connect'
 import { AnyMessage } from '@bufbuild/protobuf'
 import { createConnectTransport } from '@connectrpc/connect-web'
-import { StreamService } from '@river/proto'
+import { Err, StreamService } from '@river/proto'
 import { dlog, dlogError } from './dlog'
 import { genShortId } from './id'
 
@@ -204,6 +204,29 @@ const interceptor: (transportId: number) => Interceptor = (transportId: number) 
         }
         logProtos(name, 'STREAMING RESPONSE DONE', id)
     }
+}
+
+/// check to see of the error message contains an Rrc Err defineded in the protocol.proto
+export function errorContains(err: unknown, error: Err): boolean {
+    if (err !== null && typeof err === 'object' && 'message' in err) {
+        const expected = `${error.valueOf()}:${Err[error]}`
+        if ((err.message as string).includes(expected)) {
+            return true
+        }
+    }
+    return false
+}
+
+/// not great way to pull info out of the error messsage
+export function getRpcErrorProperty(err: unknown, prop: string): string | undefined {
+    if (err !== null && typeof err === 'object' && 'message' in err) {
+        const expected = `${prop} = `
+        const parts = (err.message as string).split(expected)
+        if (parts.length === 2) {
+            return parts[1].split(' ')[0].trim()
+        }
+    }
+    return undefined
 }
 
 export function makeStreamRpcClient(dest: Transport | string): PromiseClient<typeof StreamService> {
