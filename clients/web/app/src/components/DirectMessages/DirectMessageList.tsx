@@ -1,4 +1,3 @@
-import { formatDistance } from 'date-fns'
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useMatch, useNavigate } from 'react-router'
 import {
@@ -8,15 +7,16 @@ import {
     useUser,
     useZionContext,
 } from 'use-zion-client'
-import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
 import { MostRecentMessageInfo_OneOf } from 'use-zion-client/dist/hooks/use-dm-latest-message'
-import { useDevice } from 'hooks/useDevice'
-import { useCreateLink } from 'hooks/useCreateLink'
-import { Box, Icon, MotionStack, Paragraph, Stack, Text } from '@ui'
-import { UserList } from '@components/UserList/UserList'
-import { notUndefined } from 'ui/utils/utils'
-import { TimelineEncryptedContent } from '@components/MessageTimeIineItem/items/MessageItem/EncryptedMessageBody/EncryptedMessageBody'
+import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
 import { Avatar } from '@components/Avatar/Avatar'
+import { TimelineEncryptedContent } from '@components/MessageTimeIineItem/items/MessageItem/EncryptedMessageBody/EncryptedMessageBody'
+import { UserList } from '@components/UserList/UserList'
+import { Box, Icon, MotionStack, Paragraph, Stack, Text } from '@ui'
+import { useCreateLink } from 'hooks/useCreateLink'
+import { useDevice } from 'hooks/useDevice'
+import { notUndefined } from 'ui/utils/utils'
+import { formatShortDate } from 'utils/formatShortDate'
 import { GroupDMIcon } from './GroupDMIcon'
 
 export const DirectMessageList = () => {
@@ -183,9 +183,7 @@ const DirectMessageThread = (props: {
                         <Box grow justifyContent="end" alignItems="end">
                             {latest ? (
                                 <Paragraph size="xs" style={{ whiteSpace: 'nowrap' }} color="gray2">
-                                    {formatDistance(latest.createdAtEpocMs, Date.now(), {
-                                        addSuffix: false,
-                                    })}
+                                    {formatShortDate(latest.createdAtEpocMs)}
                                 </Paragraph>
                             ) : (
                                 <></>
