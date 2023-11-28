@@ -607,4 +607,20 @@ export class StreamStateView {
                 throw new Error('Stream does not support key exchange')
         }
     }
+
+    getUsersEntitledToKeyExchange(): Set<string> {
+        switch (this.contentKind) {
+            case 'channelContent':
+                return new Set([
+                    ...this.getMemberships().joinedUsers,
+                    ...this.getMemberships().invitedUsers,
+                ])
+            case 'dmChannelContent':
+                return this.dmChannelContent.participants()
+            case 'gdmChannelContent':
+                return this.gdmChannelContent.joinedOrInvitedParticipants()
+            default:
+                return new Set()
+        }
+    }
 }

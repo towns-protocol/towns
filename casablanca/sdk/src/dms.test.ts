@@ -83,8 +83,7 @@ describe('dmsTests', () => {
     test('usersReceiveKeys', async () => {
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         await expect(bobsClient.waitForStream(streamId)).toResolve()
-        await expect(bobsClient.sendMessage(streamId, 'hello this is bob')).toResolve()
-        await expect(alicesClient.sendMessage(streamId, 'hello bob, this is alice')).toResolve()
+
         const aliceEventDecryptedPromise = createEventDecryptedPromise(
             alicesClient,
             'hello this is bob',
@@ -93,6 +92,10 @@ describe('dmsTests', () => {
             bobsClient,
             'hello bob, this is alice',
         )
+
+        await expect(bobsClient.sendMessage(streamId, 'hello this is bob')).toResolve()
+        await expect(alicesClient.sendMessage(streamId, 'hello bob, this is alice')).toResolve()
+
         await expect(
             Promise.all([aliceEventDecryptedPromise, bobEventDecryptedPromise]),
         ).toResolve()
