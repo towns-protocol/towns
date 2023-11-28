@@ -2,7 +2,7 @@ import { Client as CasablancaClient } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { Stream } from '@river/sdk'
 import { makeRoomIdentifier } from '../../types/room-identifier'
-import { SnapshotCaseType } from '@river/proto'
+import { MembershipOp, SnapshotCaseType } from '@river/proto'
 import isEqual from 'lodash/isEqual'
 import { DMChannelIdentifier } from '../../types/dm-channel-identifier'
 
@@ -25,6 +25,7 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                         ({
                             id: makeRoomIdentifier(stream.view.streamId),
                             joined: stream.view.getMemberships().isMemberJoined(),
+                            left: stream.view.getMemberships().isMember(MembershipOp.SO_LEAVE),
                             userIds: Array.from(stream.view.dmChannelContent.participants()).filter(
                                 (memberUserId) => memberUserId !== userId,
                             ),
@@ -41,6 +42,7 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                         ({
                             id: makeRoomIdentifier(stream.view.streamId),
                             joined: stream.view.getMemberships().isMemberJoined(),
+                            left: stream.view.getMemberships().isMember(MembershipOp.SO_LEAVE),
                             userIds: Array.from(
                                 stream.view.gdmChannelContent.participants(),
                             ).filter((memberUserId) => memberUserId !== userId),

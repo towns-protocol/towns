@@ -7,6 +7,7 @@ import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveMod
 import { useDevice } from 'hooks/useDevice'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useUserList } from '@components/UserList/UserList'
+import { useCreateLink } from 'hooks/useCreateLink'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { GDMChannelPermissionsModal } from './GDMChannelPermissions'
 
@@ -23,6 +24,9 @@ export const DMChannelInfoPanel = () => {
     const myUserId = useMyUserId()
 
     const navigate = useNavigate()
+
+    const { createLink } = useCreateLink()
+
     const onClose = useCallback(() => {
         navigate('..')
     }, [navigate])
@@ -37,7 +41,11 @@ export const DMChannelInfoPanel = () => {
         }
         await leaveRoom(channel.id)
         setActiveModal(undefined)
-    }, [channel, leaveRoom])
+        const link = createLink({ route: 'messages' })
+        if (link) {
+            navigate(link)
+        }
+    }, [channel?.id, createLink, leaveRoom, navigate])
 
     const onMembersClick = useCallback(() => {
         if (isTouch) {

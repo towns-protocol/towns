@@ -21,7 +21,8 @@ import { GroupDMIcon } from './GroupDMIcon'
 
 export const DirectMessageList = () => {
     const navigate = useNavigate()
-    const { dmChannels } = useZionContext()
+    const { dmChannels: _dmChannels } = useZionContext()
+    const dmChannels = useMemo(() => _dmChannels.filter((c) => !c.left), [_dmChannels])
     const messageId = useMatch('messages/:messageId/*')?.params.messageId
     const { dmUnreadChannelIds } = useZionContext()
 
