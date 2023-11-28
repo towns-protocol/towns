@@ -35,6 +35,7 @@ export function ChatMessages(props: Props): JSX.Element {
         (timeline[0].content?.kind !== ZTEvent.RoomCreate && !hasReachedTerminus)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messagesStartRef = useRef<HTMLDivElement>(null)
+    const isLoadingMore = useRef<boolean>(false)
     const { eventFilter, filterEvent } = useTimelineFilter()
     const eventFilterToggles = [
         {
@@ -86,14 +87,22 @@ export function ChatMessages(props: Props): JSX.Element {
     )
 
     const onClickLoadMore = useCallback(() => {
+        if (isLoadingMore.current) {
+            return
+        }
+        isLoadingMore.current = true
         setScrollToBottom(false)
         ;(async () => {
-            const result = await scrollback(roomId)
-            if (result?.terminus) {
-                setHasReachedTerminus(true)
-            }
-            if (messagesStartRef.current) {
-                messagesStartRef.current.scrollIntoView({ behavior: 'instant' })
+            try {
+                const result = await scrollback(roomId)
+                if (result?.terminus) {
+                    setHasReachedTerminus(true)
+                }
+                if (messagesStartRef.current) {
+                    messagesStartRef.current.scrollIntoView({ behavior: 'instant' })
+                }
+            } finally {
+                isLoadingMore.current = false
             }
         })()
     }, [scrollback, roomId])
