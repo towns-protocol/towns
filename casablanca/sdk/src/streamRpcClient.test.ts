@@ -31,6 +31,238 @@ import { ethers } from 'ethers'
 
 const log = dlog('csb:test:streamRpcClient')
 
+type SyncStreamCallback = (resp: SyncStreamsResponse) => boolean
+
+async function readSyncStreams(
+    stream: AsyncIterable<SyncStreamsResponse>,
+    callback: SyncStreamCallback,
+): Promise<void> {
+    for await (const resp of stream) {
+        if (callback(resp)) {
+            // callback returns true to break from the loop
+            break
+        }
+    }
+}
+
+// disabled until v2 sync is working end-to-end.
+// to run the suite, server must be started with NewSyncHandler(..., SyncVersion=2) in server.go
+describe.skip('streamRpcClient using v2 sync', () => {
+    let alicesContext: SignerContext
+    let bobsContext: SignerContext
+
+    beforeEach(async () => {
+        alicesContext = await makeRandomUserContext()
+        bobsContext = await makeRandomUserContext()
+    })
+
+    test('syncStreamsGetsSyncId', async () => {
+        /** Arrange */
+        const alice = makeStreamRpcClient(TEST_URL)
+        const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
+        const alicesUserStreamId = makeUserStreamId(alicesUserId)
+        // create account for alice
+        await alice.createStream({
+            events: [
+                await makeEvent(
+                    alicesContext,
+                    make_UserPayload_Inception({
+                        streamId: alicesUserStreamId,
+                    }),
+                ),
+            ],
+            streamId: alicesUserStreamId,
+        })
+        // alice creates a space
+        const spaceId = makeSpaceStreamId('alices-space-' + genId())
+        const inceptionEvent = await makeEvent(
+            alicesContext,
+            make_SpacePayload_Inception({
+                streamId: spaceId,
+            }),
+        )
+        const joinEvent = await makeEvent(
+            alicesContext,
+            make_SpacePayload_Membership({
+                userId: alicesUserId,
+                op: MembershipOp.SO_JOIN,
+            }),
+        )
+        await alice.createStream({
+            events: [inceptionEvent, joinEvent],
+            streamId: spaceId,
+        })
+        // alice creates a channel
+        const channelId = makeChannelStreamId('alices-channel-' + genId())
+        const channelProperties = 'Alices channel properties'
+        const channelInceptionEvent = await makeEvent(
+            alicesContext,
+            make_ChannelPayload_Inception({
+                streamId: channelId,
+                spaceId: spaceId,
+                channelProperties: { text: channelProperties },
+            }),
+        )
+        const event = await makeEvent(
+            alicesContext,
+            make_ChannelPayload_Membership({
+                userId: alicesUserId,
+                op: MembershipOp.SO_JOIN,
+            }),
+        )
+        await alice.createStream({
+            events: [channelInceptionEvent, event],
+            streamId: channelId,
+        })
+
+        /** Act */
+        // alice calls syncStreams, and waits for the syncId in the response stream
+        const aliceSyncStreams: AsyncIterable<SyncStreamsResponse> = alice.syncStreams({
+            syncPos: [],
+        })
+        // alice reads the syncId from the response stream
+        let syncId: string | undefined = undefined
+        await readSyncStreams(aliceSyncStreams, function (resp: SyncStreamsResponse) {
+            syncId = resp.syncId
+            //log('syncStreams', 'resp', resp)
+            return true // handled
+        })
+
+        /** Assert */
+        expect(syncId).toBeDefined()
+    })
+
+    test('addStreamToSyncGetsEvents', async () => {
+        /** Arrange */
+        const alice = makeStreamRpcClient(TEST_URL)
+        const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
+        const alicesUserStreamId = makeUserStreamId(alicesUserId)
+        const bob = makeStreamRpcClient(TEST_URL)
+        const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
+        const bobsUserStreamId = makeUserStreamId(bobsUserId)
+        // create accounts for alice and bob
+        await alice.createStream({
+            events: [
+                await makeEvent(
+                    alicesContext,
+                    make_UserPayload_Inception({
+                        streamId: alicesUserStreamId,
+                    }),
+                ),
+            ],
+            streamId: alicesUserStreamId,
+        })
+        await bob.createStream({
+            events: [
+                await makeEvent(
+                    bobsContext,
+                    make_UserPayload_Inception({
+                        streamId: bobsUserStreamId,
+                    }),
+                ),
+            ],
+            streamId: bobsUserStreamId,
+        })
+        // alice creates a space
+        const spaceId = makeSpaceStreamId('alices-space-' + genId())
+        const inceptionEvent = await makeEvent(
+            alicesContext,
+            make_SpacePayload_Inception({
+                streamId: spaceId,
+            }),
+        )
+        const joinEvent = await makeEvent(
+            alicesContext,
+            make_SpacePayload_Membership({
+                userId: alicesUserId,
+                op: MembershipOp.SO_JOIN,
+            }),
+        )
+        await alice.createStream({
+            events: [inceptionEvent, joinEvent],
+            streamId: spaceId,
+        })
+        // alice creates a channel
+        const channelId = makeChannelStreamId('alices-channel-' + genId())
+        const channelProperties = 'Alices channel properties'
+        const channelInceptionEvent = await makeEvent(
+            alicesContext,
+            make_ChannelPayload_Inception({
+                streamId: channelId,
+                spaceId: spaceId,
+                channelProperties: { text: channelProperties },
+            }),
+        )
+        let event = await makeEvent(
+            alicesContext,
+            make_ChannelPayload_Membership({
+                userId: alicesUserId,
+                op: MembershipOp.SO_JOIN,
+            }),
+        )
+        await alice.createStream({
+            events: [channelInceptionEvent, event],
+            streamId: channelId,
+        })
+
+        /** Act */
+        // bob calls syncStreams, and waits for the syncId in the response stream
+        const bobSyncStreams: AsyncIterable<SyncStreamsResponse> = bob.syncStreams({
+            syncPos: [],
+        })
+        // bob reads the syncId from the response stream
+        let syncId: string | undefined = undefined
+        for await (const resp of bobSyncStreams) {
+            syncId = resp.syncId
+            break
+        }
+        // bob joins the channel
+        event = await makeEvent(
+            bobsContext,
+            make_ChannelPayload_Membership({
+                op: MembershipOp.SO_JOIN,
+                userId: bobsUserId,
+            }),
+        )
+        await bob.addEvent({
+            streamId: channelId,
+            event,
+        })
+        // bob adds alice's channel to his syncStreams
+        const bobsChannelStream = await bob.getStream({ streamId: channelId })
+        await bob.addStreamToSync({
+            syncId: syncId!,
+            syncPos: bobsChannelStream.stream!.nextSyncCookie!,
+        })
+        // alice posts a message
+        event = await makeEvent(
+            alicesContext,
+            make_ChannelPayload_Message({
+                text: 'hello',
+            }),
+        )
+        await alice.addEvent({
+            streamId: channelId,
+            event,
+        })
+        // bob should see the message in his sync stream
+        // hnt-3683 explains:
+        // When AddEvent is called, node calls streamImpl.notifyToSubscribers() twice
+        // first time is from addEventImpl called by AddEvent.
+        // second time is from the MakeMiniBlock triggered by miniblockTick
+        let messagesReceived = 0
+        await readSyncStreams(bobSyncStreams, function (_: SyncStreamsResponse) {
+            //log('bobSyncStreams', `resp #${++messagesReceived}`, resp)
+            ++messagesReceived
+            return messagesReceived === 2
+        })
+
+        /** Assert */
+        expect(syncId).toBeTruthy()
+        expect(messagesReceived).toEqual(2)
+    })
+})
+
 describe('streamRpcClient', () => {
     let bobsContext: SignerContext
     let alicesContext: SignerContext

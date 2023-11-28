@@ -12,6 +12,15 @@
             "program": "${workspaceFolder}/node/main.go",
             "args": ["run"],
             "cwd": "${workspaceFolder}/run_files/single"
-        }
+        },
+        {
+          "name": "Launch River server (no entitlements)",
+          "type": "go",
+          "request": "launch",
+          "mode": "auto",
+          "program": "${workspaceFolder}/node/main.go",
+          "args": ["run"],
+          "cwd": "${workspaceFolder}/run_files/single_no_ent"
+      }
     ]
 }
