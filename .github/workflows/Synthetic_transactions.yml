@@ -1,0 +1,119 @@
+name: 'Run Synthetic Transactions'
+env:
+    FOUNDRY_VERSION: nightly-d369d2486f85576eec4ca41d277391dfdae21ba7
+
+on:
+    workflow_dispatch: # A load test was manually triggered
+    # schedule: # A load test was scheduled
+    #     - cron: '0 0 * * *' # Every day at midnight UTC
+jobs:
+    run_load_tests:
+        runs-on: load-testing-runner
+        timeout-minutes: 240
+        services:
+            postgres-casablanca:
+                image: postgres:latest
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                    --name casablanca_postgres_container
+            redis:
+                image: redis:latest
+                ports:
+                    - '6379:6379'
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Increase max_connections in Postgres
+              run: |
+                  docker exec -i casablanca_postgres_container bash << EOF
+                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+                  EOF
+                  docker restart --time 0 casablanca_postgres_container
+                  sleep 5
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: '1.21'
+                  cache: true
+                  cache-dependency-path: |
+                      servers/**/go.sum
+                      casablanca/node/go.sum
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - name: Install Forge modules
+              run: ./scripts/install-deps.sh
+
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '18.13.0'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Build town types
+              run: ./scripts/build-town-types.sh localhost --frozen
+
+            - name: Start anvil
+              # Start anvil in the background, and wait for it to be ready
+              run: anvil & ./scripts/wait-for-blockchain.sh
+
+            - name: Deploy local zion governance contracts
+              run: ./scripts/deploy-zion-governance-contracts.sh
+
+            - name: Wait for postgres to be ready
+              run: |
+                  docker exec -i casablanca_postgres_container bash << EOF
+                    until pg_isready -h localhost -p 5432 -U postgres; do
+                      echo "Waiting for postgres to be ready..."
+                      sleep 2
+                    done
+                  EOF
+
+            - name: Casablanca create db
+              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
+              working-directory: casablanca
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Start Casablanca node with entitlements
+              run: yarn csb:start:entitlements &
+
+            - name: Wait for Casablanca (with entitlements) node to be up
+              run: yarn csb:wait:entitlements
+
+            - name: Run Load Tests
+              run: DATADOG_API_KEY=${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }} ./scripts/run-and-publish-load-test-metrics.sh
+
+            # If failed, we send a slack notification
+            - name: Slack notification
+              if: failure()
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'Load Tests'
+                  SLACK_ICON_EMOJI: ':test_tube:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'Load Test Failure <@Artem Vorobyev>'
