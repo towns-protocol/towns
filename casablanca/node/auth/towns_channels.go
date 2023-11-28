@@ -79,7 +79,7 @@ func (za *TownsChannelsProxy[GeneratedTownsChannels]) IsDisabled(opts *bind.Call
 		log.Debug("IsDisabled", "channelNetworkId", channelNetworkId)
 		channelInfo, err := v.GetChannel(opts, channelNetworkId)
 		if err != nil {
-			getChannelCalls.Fail()
+			getChannelCalls.FailInc()
 			log.Error("IsDisabled", "channelNetworkId", channelNetworkId, "error", err)
 			return false, err
 		}
@@ -88,7 +88,7 @@ func (za *TownsChannelsProxy[GeneratedTownsChannels]) IsDisabled(opts *bind.Call
 		log.Debug("IsDisabled", "channelNetworkId", channelNetworkId)
 		channelInfo, err := v.GetChannel(opts, channelNetworkId)
 		if err != nil {
-			getChannelCalls.Fail()
+			getChannelCalls.FailInc()
 			log.Error("IsDisabled", "channelNetworkId", channelNetworkId, "error", err)
 			return false, err
 		}
@@ -96,7 +96,7 @@ func (za *TownsChannelsProxy[GeneratedTownsChannels]) IsDisabled(opts *bind.Call
 	default:
 		return false, RiverError(protocol.Err_CANNOT_CONNECT, "unsupported chain")
 	}
-	getChannelCalls.Pass()
+	getChannelCalls.PassInc()
 	log.Debug("IsDisabled", "channelNetworkId", channelNetworkId, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }

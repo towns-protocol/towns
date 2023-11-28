@@ -77,11 +77,11 @@ func (za *TownsWalletLink) GetWalletsByRootKey(rootKey common.Address) ([]common
 	log.Debug("GetWalletsByRootKey", "rootKey", rootKey)
 	result, err := za.link.GetWalletsByRootKey(nil, rootKey)
 	if err != nil {
-		getWalletsByRootKeyCalls.Fail()
+		getWalletsByRootKeyCalls.FailInc()
 		log.Error("GetWalletsByRootKey", "rootKey", rootKey, "error", err)
 		return nil, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
-	getWalletsByRootKeyCalls.Pass()
+	getWalletsByRootKeyCalls.PassInc()
 	log.Debug("GetWalletsByRootKey", "rootKey", rootKey, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }
@@ -93,11 +93,11 @@ func (za *TownsWalletLink) GetRootKeyForWallet(wallet common.Address) (common.Ad
 	log.Debug("GetRootKeyForWallet", "wallet", wallet)
 	result, err := za.link.GetRootKeyForWallet(nil, wallet)
 	if err != nil {
-		getRootKeyForWalletCalls.Fail()
+		getRootKeyForWalletCalls.FailInc()
 		log.Error("GetRootKeyForWallet", "wallet", wallet, "error", err)
 		return common.Address{}, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
-	getRootKeyForWalletCalls.Pass()
+	getRootKeyForWalletCalls.PassInc()
 	log.Debug("GetRootKeyForWallet", "wallet", wallet, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }
@@ -109,11 +109,11 @@ func (za *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (*bi
 	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey)
 	result, err := za.link.GetLatestNonceForRootKey(nil, rootKey)
 	if err != nil {
-		getLatestNonceCalls.Fail()
+		getLatestNonceCalls.FailInc()
 		log.Error("GetLatestNonceForRootKey", "rootKey", rootKey, "error", err)
 		return nil, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
-	getLatestNonceCalls.Pass()
+	getLatestNonceCalls.PassInc()
 	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey, "result", result)
 	return result, nil
 }
@@ -125,11 +125,11 @@ func (za *TownsWalletLink) CheckIfLinked(rootKey common.Address, wallet common.A
 	log.Debug("CheckIfLinked", "rootKey", rootKey, "wallet", wallet)
 	result, err := za.link.CheckIfLinked(nil, rootKey, wallet)
 	if err != nil {
-		checkIfLinkedCalls.Fail()
+		checkIfLinkedCalls.FailInc()
 		log.Error("CheckIfLinked", "rootKey", rootKey, "wallet", wallet, "error", err)
 		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
-	checkIfLinkedCalls.Pass()
+	checkIfLinkedCalls.PassInc()
 	log.Debug("CheckIfLinked", "rootKey", rootKey, "wallet", wallet, "result", result)
 	return result, nil
 }

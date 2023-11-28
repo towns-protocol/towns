@@ -16,11 +16,11 @@ var (
 func (s *Service) localGetStream(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
 	res, err := s.getStream(ctx, req)
 	if err != nil {
-		getStreamRequests.Fail()
+		getStreamRequests.FailInc()
 		return nil, err
 	}
 
-	getStreamRequests.Pass()
+	getStreamRequests.PassInc()
 	return res, nil
 }
 

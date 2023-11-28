@@ -61,10 +61,10 @@ func (proxy *TownsArchitectProxy) GetTownById(opts *bind.CallOpts, networkId str
 	result, err := proxy.contract.GetTownById(opts, networkId)
 	if err != nil {
 		log.Error("GetTownById", "address", proxy.address, "networkId", networkId, "error", err)
-		getTownByIdCalls.Fail()
+		getTownByIdCalls.FailInc()
 		return common.Address{}, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
-	getTownByIdCalls.Pass()
+	getTownByIdCalls.PassInc()
 	log.Debug("GetTownById", "address", proxy.address, "networkId", networkId, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }

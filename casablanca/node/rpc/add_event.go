@@ -25,7 +25,7 @@ func (s *Service) localAddEvent(ctx context.Context, req *connect.Request[AddEve
 
 	parsedEvent, err := ParseEvent(req.Msg.Event)
 	if err != nil {
-		addEventRequests.Fail()
+		addEventRequests.FailInc()
 		return nil, AsRiverError(err).Func("localAddEvent")
 	}
 
@@ -33,10 +33,10 @@ func (s *Service) localAddEvent(ctx context.Context, req *connect.Request[AddEve
 
 	err = s.addParsedEvent(ctx, req.Msg.StreamId, parsedEvent)
 	if err == nil {
-		addEventRequests.Pass()
+		addEventRequests.PassInc()
 		return connect.NewResponse(&AddEventResponse{}), nil
 	} else {
-		addEventRequests.Fail()
+		addEventRequests.FailInc()
 		return nil, AsRiverError(err).Func("localAddEvent")
 	}
 }

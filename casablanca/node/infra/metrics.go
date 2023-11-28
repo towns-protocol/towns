@@ -14,9 +14,12 @@ import (
 	config "casablanca/node/infra/config"
 )
 
+/* SuccessMetrics is a struct for tracking success/failure of various operations.
+ * Parent represents the higher level service (e.g. all RPC calls). When the metric is updated,
+ * the parent is also updated (recursively).
+ */
 type SuccessMetrics struct {
-	Sucess prometheus.Counter
-	Total  prometheus.Counter
+	Name   string
 	Parent *SuccessMetrics
 }
 
@@ -31,29 +34,19 @@ var (
 		},
 		[]string{"function_name"},
 	)
+
+	successMetrics = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "success_metrics",
+			Help: "success metrics",
+		},
+		[]string{"name", "status"},
+	)
 )
 
 func NewSuccessMetrics(name string, parent *SuccessMetrics) *SuccessMetrics {
-	success := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: fmt.Sprintf("%s_success", name),
-		Help: fmt.Sprintf("%s success", name),
-	})
-	total := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: fmt.Sprintf("%s_total", name),
-		Help: fmt.Sprintf("%s total", name),
-	})
-	err := registry.Register(success)
-	if err != nil {
-		panic(err)
-	}
-	err = registry.Register(total)
-	if err != nil {
-		panic(err)
-	}
-
 	return &SuccessMetrics{
-		Sucess: success,
-		Total:  total,
+		Name:   name,
 		Parent: parent,
 	}
 }
@@ -74,18 +67,19 @@ func NewCounter(name string, help string) prometheus.Counter {
 	return counter
 }
 
-func (m *SuccessMetrics) Pass() {
-	m.Total.Inc()
-	m.Sucess.Inc()
+/* Increment pass counter for this metric and its parent. */
+func (m *SuccessMetrics) PassInc() {
+	successMetrics.WithLabelValues(m.Name, "pass").Inc()
 	if m.Parent != nil {
-		m.Parent.Pass()
+		m.Parent.PassInc()
 	}
 }
 
-func (m *SuccessMetrics) Fail() {
-	m.Total.Inc()
+/* Increment fail counter for this metric and its parent. */
+func (m *SuccessMetrics) FailInc() {
+	successMetrics.WithLabelValues(m.Name, "fail").Inc()
 	if m.Parent != nil {
-		m.Parent.Fail()
+		m.Parent.FailInc()
 	}
 }
 
@@ -99,7 +93,17 @@ func StartMetricsService(ctx context.Context, config config.MetricsConfig) {
 		panic(err)
 	}
 
-	r.Handle("/metrics", promhttp.Handler())
+	err = registry.Register(successMetrics)
+	if err != nil {
+		panic(err)
+	}
+
+	handlerOpts := promhttp.HandlerOpts{
+		EnableOpenMetrics: true,
+	}
+	metricsHandler := promhttp.HandlerFor(prometheus.DefaultGatherer, handlerOpts)
+
+	r.Handle("/metrics", metricsHandler)
 	addr := fmt.Sprintf("%s:%d", config.Interface, config.Port)
 	log.Info("Starting metrics HTTP server", "addr", addr)
 	err = http.ListenAndServe(addr, r)

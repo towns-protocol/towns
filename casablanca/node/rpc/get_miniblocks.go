@@ -16,11 +16,11 @@ var (
 func (s *Service) localGetMiniblocks(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
 	res, err := s.getMiniblocks(ctx, req)
 	if err != nil {
-		getMiniblocksRequests.Fail()
+		getMiniblocksRequests.FailInc()
 		return nil, err
 	}
 
-	getMiniblocksRequests.Pass()
+	getMiniblocksRequests.PassInc()
 	return res, nil
 }
 

@@ -24,12 +24,12 @@ func (s *Service) Info(ctx context.Context, req *connect_go.Request[protocol.Inf
 	res, err := s.info(ctx, log, req)
 	if err != nil {
 		log.Warn("Info ERROR", "error", err)
-		infoRequests.Fail()
+		infoRequests.FailInc()
 		return nil, err
 	}
 
 	log.Debug("Info LEAVE", "response", res.Msg)
-	infoRequests.Pass()
+	infoRequests.PassInc()
 	return res, nil
 }
 

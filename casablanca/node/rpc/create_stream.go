@@ -26,10 +26,10 @@ var (
 func (s *Service) localCreateStream(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
 	resMsg, err := s.createStream(ctx, req.Msg)
 	if err != nil {
-		createStreamRequests.Fail()
+		createStreamRequests.FailInc()
 		return nil, AsRiverError(err).Func("localCreateStream")
 	}
-	createStreamRequests.Pass()
+	createStreamRequests.PassInc()
 	return connect_go.NewResponse(resMsg), nil
 }
 

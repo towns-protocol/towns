@@ -61,11 +61,11 @@ func (proxy *TownsPausableProxy) Paused(callOpts *bind.CallOpts) (bool, error) {
 	log.Debug("Paused", "address", proxy.address)
 	result, err := proxy.contract.Paused(callOpts)
 	if err != nil {
-		pausedCalls.Fail()
+		pausedCalls.FailInc()
 		log.Error("Paused", "address", proxy.address, "error", err)
 		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
-	pausedCalls.Pass()
+	pausedCalls.PassInc()
 	log.Debug("Paused", "address", proxy.address, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }

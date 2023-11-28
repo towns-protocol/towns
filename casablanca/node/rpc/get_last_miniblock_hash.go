@@ -19,11 +19,11 @@ func (s *Service) localGetLastMiniblockHash(
 ) (*connect_go.Response[GetLastMiniblockHashResponse], error) {
 	res, err := s.getLastMiniblockHash(ctx, req)
 	if err != nil {
-		getLastMiniblockHashRequests.Fail()
+		getLastMiniblockHashRequests.FailInc()
 		return nil, err
 	}
 
-	getLastMiniblockHashRequests.Pass()
+	getLastMiniblockHashRequests.PassInc()
 	return res, nil
 }
 

@@ -63,11 +63,11 @@ func (proxy *TownsEntitlementsProxy) IsEntitledToChannel(opts *bind.CallOpts, ch
 	log.Debug("IsEntitledToChannel", "channelNetworkId", channelNetworkId, "user", user, "permission", permission, "address", proxy.address)
 	result, err := proxy.contract.IsEntitledToChannel(opts, channelNetworkId, user, permission)
 	if err != nil {
-		isEntitledToChannelCalls.Fail()
+		isEntitledToChannelCalls.FailInc()
 		log.Error("IsEntitledToChannel", "channelNetworkId", channelNetworkId, "user", user, "permission", permission, "address", proxy.address, "error", err)
 		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
-	isEntitledToChannelCalls.Pass()
+	isEntitledToChannelCalls.PassInc()
 	log.Debug("IsEntitledToChannel", "channelNetworkId", channelNetworkId, "user", user, "permission", permission, "address", proxy.address, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }
@@ -79,11 +79,11 @@ func (proxy *TownsEntitlementsProxy) IsEntitledToTown(opts *bind.CallOpts, user 
 	log.Debug("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address)
 	result, err := proxy.contract.IsEntitledToTown(opts, user, permission)
 	if err != nil {
-		isEntitledToTownCalls.Fail()
+		isEntitledToTownCalls.FailInc()
 		log.Error("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address, "error", err)
 		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
 	}
-	isEntitledToTownCalls.Pass()
+	isEntitledToTownCalls.PassInc()
 	log.Debug("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }
