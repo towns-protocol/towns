@@ -91,7 +91,7 @@ export function useCasablancaTimelines(
                 const timelineEvents = messages
                     .map((event) => toEvent(event, userId))
                     .filter(filterFn)
-                setState.initializeRoom(userId, streamId, [])
+                setState.initializeStream(userId, streamId)
                 setState.processEvents(timelineEvents, userId, streamId)
             }
         }
@@ -153,9 +153,8 @@ export function useCasablancaTimelines(
 
         //Step 2: add them into the timeline
         timelineEvents.forEach((events, streamId) => {
-            events.filter(filterFn).forEach((event) => {
-                setState.processEvent(event, userId, streamId)
-            })
+            setState.initializeStream(userId, streamId)
+            setState.processEvents(events.filter(filterFn), userId, streamId)
         })
 
         casablancaClient.on('streamInitialized', onStreamInitialized)

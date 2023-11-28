@@ -30,8 +30,7 @@ export type TimelineStoreStates = {
 }
 
 export interface TimelineStoreInterface {
-    initialize: (userId: string, timelines: TimelinesMap) => void
-    initializeRoom: (userId: string, roomId: string, timelineEvents: TimelineEvent[]) => void
+    initializeStream: (userId: string, streamId: string) => void
     reset: (roomIds: string[]) => void
     processEvent: (
         event: TimelineEvent,
@@ -64,35 +63,10 @@ export const useTimelineStore = create<TimelineStore>((set) => ({
 function makeTimelineStoreInterface(
     setState: (fn: (prevState: TimelineStoreStates) => TimelineStoreStates) => void,
 ): TimelineStoreInterface {
-    const initialize = (userId: string, timelines: TimelinesMap) => {
-        const { threadsStats, threads, reactions } = Object.entries(timelines).reduce(
-            (acc, kv) => {
-                const channelId = kv[0]
-                const aggregated = toStatsAndReactions(kv[1], userId)
-                acc.threadsStats[channelId] = aggregated.threadStats
-                acc.threads[channelId] = aggregated.threads
-                acc.reactions[channelId] = aggregated.reactions
-                return acc
-            },
-            {
-                threadsStats: {} as ThreadStatsMap,
-                threads: {} as ThreadsMap,
-                reactions: {} as ReactionsMap,
-            },
-        )
-        setState((prev) => ({
-            timelines: { ...prev.timelines, ...timelines },
-            replacedEvents: prev.replacedEvents,
-            pendingReplacedEvents: prev.pendingReplacedEvents,
-            threadsStats: { ...prev.threadsStats, ...threadsStats },
-            threads: { ...prev.threads, ...threads },
-            reactions: { ...prev.reactions, ...reactions },
-        }))
-    }
-    const initializeRoom = (userId: string, roomId: string, timelineEvents: TimelineEvent[]) => {
-        const aggregated = toStatsAndReactions(timelineEvents, userId)
+    const initializeStream = (userId: string, roomId: string) => {
+        const aggregated = toStatsAndReactions([], userId)
         setState((state) => ({
-            timelines: { ...state.timelines, [roomId]: timelineEvents },
+            timelines: { ...state.timelines, [roomId]: [] },
             replacedEvents: state.replacedEvents,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: {
@@ -153,7 +127,7 @@ function makeTimelineStoreInterface(
                 state.timelines[roomId],
                 userId,
             ),
-            threads: appendThreadEvent(roomId, timelineEvent, state.threads),
+            threads: insertThreadEvent(roomId, timelineEvent, state.threads),
             reactions: addReactions(roomId, timelineEvent, state.reactions),
         }))
     }
@@ -176,7 +150,7 @@ function makeTimelineStoreInterface(
                     state.timelines[roomId],
                     userId,
                 ),
-                threads: prependThreadEvent(roomId, timelineEvent, state.threads),
+                threads: insertThreadEvent(roomId, timelineEvent, state.threads),
                 reactions: addReactions(roomId, timelineEvent, state.reactions),
             }
         })
@@ -253,7 +227,7 @@ function makeTimelineStoreInterface(
                               ),
                           }
                         : threadParentId
-                        ? appendThreadEvent(roomId, newEvent, state.threads)
+                        ? insertThreadEvent(roomId, newEvent, state.threads)
                         : state.threads,
                 reactions: addReactions(
                     roomId,
@@ -318,8 +292,7 @@ function makeTimelineStoreInterface(
     }
 
     return {
-        initialize,
-        initializeRoom,
+        initializeStream,
         reset,
         processEvent,
         processEvents,
@@ -618,27 +591,7 @@ function removeThreadEvent(roomId: string, event: TimelineEvent, threads: Thread
     }
 }
 
-function appendThreadEvent(
-    roomId: string,
-    timelineEvent: TimelineEvent,
-    threads: ThreadsMap,
-): ThreadsMap {
-    if (!timelineEvent.threadParentId) {
-        return threads
-    }
-    const newf = {
-        ...threads,
-        [roomId]: appendTimelineEvent(
-            timelineEvent.threadParentId,
-            timelineEvent,
-            threads[roomId] ?? {},
-        ),
-    }
-
-    return newf
-}
-
-function prependThreadEvent(
+function insertThreadEvent(
     roomId: string,
     timelineEvent: TimelineEvent,
     threads: ThreadsMap,
@@ -648,7 +601,7 @@ function prependThreadEvent(
     }
     return {
         ...threads,
-        [roomId]: prependTimelineEvent(
+        [roomId]: insertTimelineEvent(
             timelineEvent.threadParentId,
             timelineEvent,
             threads[roomId] ?? {},
@@ -667,6 +620,20 @@ function removeTimelineEvent(
             ...timelines[roomId].slice(0, eventIndex),
             ...timelines[roomId].slice(eventIndex + 1),
         ],
+    }
+}
+
+function insertTimelineEvent(
+    roomId: string,
+    timelineEvent: TimelineEvent,
+    timelines: TimelinesMap,
+) {
+    // thread items are decrypted in an unpredictable order, so we need to insert them in the correct order
+    return {
+        ...timelines,
+        [roomId]: [timelineEvent, ...(timelines[roomId] ?? [])].sort((a, b) =>
+            a.eventNum > b.eventNum ? 1 : -1,
+        ),
     }
 }
 
