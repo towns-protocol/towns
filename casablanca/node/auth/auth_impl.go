@@ -29,8 +29,8 @@ type TownsContract interface {
 }
 
 const (
-	REQUEST_TIMEOUT_MS = 5000
-	MAX_WALLETS        = 10
+	DEFAULT_REQUEST_TIMEOUT_MS = 5000
+	DEFAULT_MAX_WALLETS        = 10
 )
 
 var ErrSpaceDisabled = errors.New("space disabled")
@@ -39,10 +39,12 @@ var ErrChannelDisabled = errors.New("channel disabled")
 // TownsPassThrough is an authorization implementation that allows all requests.
 type TownsPassThrough struct{}
 type ChainAuth struct {
-	chainId            int
-	ethClient          *ethclient.Client
-	spaceContract      SpaceContract
-	walletLinkContract WalletLinkContract
+	chainId                int
+	ethClient              *ethclient.Client
+	spaceContract          SpaceContract
+	walletLinkContract     WalletLinkContract
+	linkedWalletsLimit     int
+	contractCallsTimeoutMs int
 }
 
 func NewTownsPassThrough() TownsContract {
@@ -83,6 +85,18 @@ func NewTownsContract(ctx context.Context, cfg *config.ChainConfig) (TownsContra
 		return nil, WrapRiverError(protocol.Err_BAD_CONTRACT, err)
 	}
 	za.walletLinkContract = walletLinkContract
+
+	if cfg.LinkedWalletsLimit > 0 {
+		za.linkedWalletsLimit = cfg.LinkedWalletsLimit
+	} else {
+		za.linkedWalletsLimit = DEFAULT_MAX_WALLETS
+	}
+
+	if cfg.ContractCallsTimeoutMs > 0 {
+		za.contractCallsTimeoutMs = cfg.ContractCallsTimeoutMs
+	} else {
+		za.contractCallsTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS
+	}
 
 	log.Info("Successfully initialised", "network", cfg.NetworkUrl, "id", za.chainId)
 	// no errors.
@@ -209,10 +223,10 @@ func (za *ChainAuth) allRelevantWallets(ctx context.Context, rootKey eth.Address
 func (za *ChainAuth) checkEntitiement(ctx context.Context, rootKey eth.Address, permission Permission, streamInfo *common.StreamInfo) (bool, error) {
 	log := dlog.CtxLog(ctx)
 
-	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*REQUEST_TIMEOUT_MS)
+	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(za.contractCallsTimeoutMs))
 	defer cancel()
 
-	resultsChan := make(chan EntitlementCheckResult, MAX_WALLETS+1)
+	resultsChan := make(chan EntitlementCheckResult, za.linkedWalletsLimit+1)
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -224,8 +238,10 @@ func (za *ChainAuth) checkEntitiement(ctx context.Context, rootKey eth.Address, 
 			resultsChan <- EntitlementCheckResult{Allowed: false, Err: err}
 			return
 		}
-		if len(wallets) > MAX_WALLETS+1 {
-			wallets = wallets[:MAX_WALLETS+1]
+		if len(wallets) > za.linkedWalletsLimit+1 {
+			log.Error("too many wallets linked to the root key", "rootKey", rootKey.Hex(), "wallets", len(wallets))
+			resultsChan <- EntitlementCheckResult{Allowed: false, Err: fmt.Errorf("too many wallets linked to the root key: %d", len(wallets)-1)}
+			return
 		}
 		for _, wallet := range wallets {
 			wg.Add(1)

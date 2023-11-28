@@ -28,8 +28,10 @@ type Config struct {
 }
 
 type ChainConfig struct {
-	NetworkUrl string
-	ChainId    int
+	NetworkUrl             string
+	ChainId                int
+	LinkedWalletsLimit     int
+	ContractCallsTimeoutMs int
 }
 
 type PerformanceTrackingConfig struct {
@@ -43,9 +45,9 @@ type PushNotificationConfig struct {
 }
 
 type StreamConfig struct {
-	Media MediaStreamConfig
+	Media              MediaStreamConfig
 	RecencyConstraints RecencyConstraintsConfig
-	ReplicationFactor int
+	ReplicationFactor  int
 }
 
 type MediaStreamConfig struct {
