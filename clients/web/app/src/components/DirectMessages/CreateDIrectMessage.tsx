@@ -1,9 +1,16 @@
-import React, { useCallback, useState } from 'react'
-import { useAllKnownUsers, useMyProfile, useUser, useZionClient } from 'use-zion-client'
-import fuzzysort from 'fuzzysort'
 import { AnimatePresence } from 'framer-motion'
+import fuzzysort from 'fuzzysort'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { firstBy } from 'thenby'
+import {
+    useAllKnownUsers,
+    useMyProfile,
+    useUser,
+    useZionClient,
+    useZionContext,
+} from 'use-zion-client'
+import { useCreateLink } from 'hooks/useCreateLink'
 import {
     Box,
     Button,
@@ -11,13 +18,13 @@ import {
     Divider,
     IconButton,
     MotionStack,
+    Paragraph,
     Stack,
     Text,
     TextField,
 } from '@ui'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
-import { useCreateLink } from 'hooks/useCreateLink'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 type Props = {
     onDirectMessageCreated: () => void
@@ -89,6 +96,8 @@ export const CreateDirectMessage = (props: Props) => {
         .filter((id) => id !== userId)
         .slice(0, 25)
 
+    const recentUsers = useRecentUsers(userId)
+
     return (
         <Stack gap grow paddingTop="md">
             <AnimatePresence mode="popLayout">
@@ -122,7 +131,14 @@ export const CreateDirectMessage = (props: Props) => {
 
                 <MotionStack gap grow layout="position" position="relative">
                     <Stack scroll scrollbars gap grow absoluteFill insetTop="sm" paddingTop="md">
-                        {filteredUserIds.map((id) => (
+                        {!searchTerm && (
+                            <Box paddingX>
+                                <Paragraph size="sm" color="gray2" fontWeight="medium">
+                                    Recent
+                                </Paragraph>
+                            </Box>
+                        )}
+                        {(searchTerm ? filteredUserIds : recentUsers).map((id) => (
                             <Participant
                                 key={id}
                                 userId={id}
@@ -215,4 +231,21 @@ const SelectedParticipant = (props: ParticipantProps) => {
             </Text>
         </MotionStack>
     )
+}
+
+const useRecentUsers = (userId?: string) => {
+    const { dmChannels } = useZionContext()
+    return useMemo(() => {
+        return dmChannels.reduce((acc, channel) => {
+            if (acc.length >= 10) {
+                return acc
+            }
+            channel.userIds.forEach((id) => {
+                if (id !== userId && !acc.includes(id)) {
+                    acc.push(id)
+                }
+            })
+            return acc
+        }, [] as string[])
+    }, [dmChannels, userId])
 }
