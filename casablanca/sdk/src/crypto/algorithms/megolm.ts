@@ -674,6 +674,34 @@ export class MegolmDecryption extends DecryptionAlgorithm {
 
         return !this.pendingEvents.has(senderKey)
     }
+
+    private getEventById(eventId: string) {
+        for (const [, senderPendingEvents] of this.pendingEvents) {
+            for (const [, pending] of senderPendingEvents) {
+                for (const ev of pending) {
+                    if (ev.getId() === eventId) {
+                        return ev
+                    }
+                }
+            }
+        }
+        return undefined
+    }
+
+    // For debugging purposes only
+    public async decryptEncryptionFailureWithEventId(eventId: string) {
+        const event = this.getEventById(eventId)
+        if (!event) {
+            throw new Error('Event not found')
+        }
+
+        // We're _not_ using the event's own decryption loop here,
+        // this is on purpose because we want to avoid the retryDecryption logic
+        // and catch any errors so we can print them in the console.
+        const result = await this.crypto.decryptMegolmEvent(event)
+        event.setClearData(result)
+        event.emitDecrypted()
+    }
 }
 
 function isValidPayload(

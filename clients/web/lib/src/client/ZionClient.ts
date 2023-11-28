@@ -1485,4 +1485,15 @@ export class ZionClient implements EntitlementsDelegate {
             error,
         })
     }
+
+    /************************************************
+     * Debugging
+     *************************************************/
+
+    public async retryMegolmDecryption(eventId: string) {
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
+        }
+        await this.casablancaClient.retryMegolmDecryption(eventId)
+    }
 }

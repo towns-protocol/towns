@@ -196,11 +196,15 @@ export class RiverEventV2 {
             // todo jterzis: implement push notifications here
 
             if (options.emit !== false) {
-                this.emitter?.emit('eventDecrypted', this, err)
+                this.emitDecrypted(err)
             }
 
             return
         }
+    }
+
+    public emitDecrypted(err?: Error): void {
+        this.emitter?.emit('eventDecrypted', this, err)
     }
 
     /**

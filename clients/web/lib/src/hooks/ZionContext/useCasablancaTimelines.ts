@@ -184,6 +184,21 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
     const isSender = sender.id === userId
     const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.displayName, content, error)}`
 
+    function extractSessionId(event: StreamTimelineEvent): string | undefined {
+        const payload = event.remoteEvent?.event.payload
+        if (
+            !payload ||
+            payload.case !== 'channelPayload' ||
+            payload.value.content.case !== 'message'
+        ) {
+            return undefined
+        }
+
+        return payload.value.content.value.sessionId
+    }
+
+    const sessionId = extractSessionId(timelineEvent)
+
     return {
         eventId: eventId,
         localEventId: timelineEvent.localEvent?.localId,
@@ -200,6 +215,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         isMentioned: getIsMentioned(content, userId),
         isRedacted: false, // redacted is handled in use timeline store when the redaction event is received
         sender,
+        sessionId,
     }
 }
 

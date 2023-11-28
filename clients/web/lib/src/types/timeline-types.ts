@@ -248,6 +248,7 @@ export interface TimelineEvent {
         avatarUrl?: string
         id: string
     }
+    sessionId?: string
 }
 
 export interface ThreadStats {

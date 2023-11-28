@@ -20,6 +20,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { MessageContextMenu } from './MessageContextMenu'
 import { MessageModalSheet } from './MessageModalSheet'
 import { SendStatus, SendStatusIndicator } from './SendStatusIndicator'
+import { DecryptionDebugger } from './DecryptionDebugger'
 
 type Props = {
     userId?: string | null
@@ -50,6 +51,7 @@ type Props = {
     channelLabel?: string
     isChannelWritable?: boolean
     sendStatus?: SendStatus
+    sessionId?: string
 } & BoxProps
 
 export type MessageLayoutProps = Props
@@ -80,6 +82,7 @@ export const MessageLayout = (props: Props) => {
         sendStatus,
         timestamp,
         children,
+        sessionId,
         ...boxProps
     } = props
 
@@ -123,6 +126,7 @@ export const MessageLayout = (props: Props) => {
     const displayButtonsInRow = numReactions < 3 && isTouch
 
     const debugHash = debug.enabled('app:vlist') ? ` [${eventId?.substring(0, 4)}]` : ''
+    const showDecryptionDebugger = debug.enabled('app:decryption')
 
     return (
         <Stack
@@ -303,6 +307,9 @@ export const MessageLayout = (props: Props) => {
                         onClose={() => setIsModalSheetVisible(false)}
                     />
                 )}
+            {showDecryptionDebugger && sessionId && eventId && (
+                <DecryptionDebugger sessionId={sessionId} eventId={eventId} timestamp={timestamp} />
+            )}
         </Stack>
     )
 }

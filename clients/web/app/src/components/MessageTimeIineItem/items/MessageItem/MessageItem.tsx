@@ -261,6 +261,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             replies={replies}
             messageBody={body}
             sendStatus={sendStatus}
+            sessionId={event.sessionId}
             onReaction={handleReaction}
         >
             {props.children}

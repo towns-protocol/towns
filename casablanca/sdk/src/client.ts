@@ -1634,6 +1634,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return this.cryptoBackend?.importRoomKeys(streamId, keys, opts)
     }
 
+    public async retryMegolmDecryption(eventId: string): Promise<void> {
+        return this.cryptoBackend?.decryptMegolmEventWithId(eventId)
+    }
+
     /**
      * Encrypts and sends a given object via Olm to-device messages to a given set of devices.
      */

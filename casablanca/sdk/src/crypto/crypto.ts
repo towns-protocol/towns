@@ -491,6 +491,9 @@ export class Crypto
         return this.megolmDecryption.decryptEvent(event)
     }
 
+    public async decryptMegolmEventWithId(eventId: string): Promise<void> {
+        return this.megolmDecryption.decryptEncryptionFailureWithEventId(eventId)
+    }
     /**
      * Import a list of Megolm room keys previously exported by exportRoomKeys
      *
