@@ -193,9 +193,6 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		syncHandler:    syncHandler,
 	}
 
-	interceptors := connect_go.WithInterceptors(NewMetricsInterceptor())
-	pattern, handler := protocolconnect.NewStreamServiceHandler(streamService, interceptors)
-
 	mux := httptrace.NewServeMux(
 		httptrace.WithResourceNamer(
 			func(r *http.Request) string {
@@ -203,8 +200,15 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 			},
 		),
 	)
-	log.Info("Registering handler", "pattern", pattern)
-	mux.Handle(pattern, newHttpHandler(handler, log))
+
+	interceptors := connect_go.WithInterceptors(NewMetricsInterceptor())
+	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(streamService, interceptors)
+	log.Info("Registering StreamServiceHandler", "pattern", streamServicePattern)
+	mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, log))
+
+	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(streamService, interceptors)
+	log.Info("Registering NodeToNodeHandler", "pattern", nodeServicePattern)
+	mux.Handle(nodeServicePattern, nodeServiceHandler)
 
 	mux.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
 		// TODO: reply with graffiti from config and with node version
@@ -274,7 +278,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		}
 	}
 
-	log.Info("Listening", "addr", address+pattern)
+	log.Info("Listening", "addr", address+streamServicePattern)
 	log.Info("Using DB", "url", cfg.DbUrl)
 	if cfg.UseContract {
 		log.Info("Using chain", "id", cfg.Chain.ChainId)

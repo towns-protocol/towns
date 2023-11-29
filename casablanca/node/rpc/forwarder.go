@@ -57,30 +57,6 @@ func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[Crea
 	return r, nil
 }
 
-func (s *Service) createStreamImpl(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
-	// TODO: this logic needs to be reworked: checks should happen first, then allocation.
-	nodeAddress, err := s.streamRegistry.AllocateStream(ctx, req.Msg.StreamId)
-	if err != nil {
-		return nil, err
-	}
-
-	isLocal, remotes := s.splitLocalAndRemote(ctx, nodeAddress)
-
-	if isLocal {
-		return s.localCreateStream(ctx, req)
-	}
-
-	// TODO: right now streams are not replicated, so there is only one node that is responsible for a stream.
-	// In the future, some smarter selection logic will be needed.
-	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(remotes[0])
-	if err != nil {
-		return nil, err
-	}
-
-	dlog.CtxLog(ctx).Debug("Forwarding request", "streamId", req.Msg.StreamId, "nodeAddress", nodeAddress[0])
-	return stub.CreateStream(ctx, req)
-}
-
 func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 	log.Debug("GetStream ENTER")

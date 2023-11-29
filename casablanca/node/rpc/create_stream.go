@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bufbuild/connect-go"
 	connect_go "github.com/bufbuild/connect-go"
 	"golang.org/x/exp/slog"
 	"google.golang.org/grpc/codes"
@@ -23,7 +24,7 @@ var (
 	createStreamRequests = infra.NewSuccessMetrics("create_stream_requests", serviceRequests)
 )
 
-func (s *Service) localCreateStream(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
+func (s *Service) createStreamImpl(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
 	resMsg, err := s.createStream(ctx, req.Msg)
 	if err != nil {
 		createStreamRequests.FailInc()
@@ -64,30 +65,31 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "stream id in request does not match stream id in inception event")
 	}
 
-	var streamView StreamView
+	var resp *CreateStreamResponse
 	switch inception := inceptionPayload.(type) {
 	case *ChannelPayload_Inception:
-		streamView, err = s.createStream_Channel(ctx, log, parsedEvents, inception)
+		resp, err = s.createStream_Channel(ctx, log, parsedEvents, inception)
 
 	case *SpacePayload_Inception:
-		streamView, err = s.createStream_Space(ctx, log, parsedEvents, inception)
+		resp, err = s.createStream_Space(ctx, log, parsedEvents, inception)
 
 	case *UserPayload_Inception:
-		streamView, err = s.createStream_User(ctx, log, parsedEvents, inception)
+		resp, err = s.createStream_User(ctx, log, parsedEvents, inception)
 
 	case *UserDeviceKeyPayload_Inception:
-		streamView, err = s.createStream_UserDeviceKey(ctx, log, parsedEvents, inception)
+		resp, err = s.createStream_UserDeviceKey(ctx, log, parsedEvents, inception)
 
 	case *UserSettingsPayload_Inception:
-		streamView, err = s.createStream_UserSettings(ctx, log, parsedEvents, inception)
+		resp, err = s.createStream_UserSettings(ctx, log, parsedEvents, inception)
 
 	case *MediaPayload_Inception:
-		streamView, err = s.createStream_Media(ctx, log, parsedEvents, inception)
+		resp, err = s.createStream_Media(ctx, log, parsedEvents, inception)
 
 	case *DmChannelPayload_Inception:
-		streamView, err = s.createStream_DMChannel(ctx, log, parsedEvents, inception)
+		resp, err = s.createStream_DMChannel(ctx, log, parsedEvents, inception)
+
 	case *GdmChannelPayload_Inception:
-		streamView, err = s.createStream_GDMChannel(ctx, log, parsedEvents, inception)
+		resp, err = s.createStream_GDMChannel(ctx, log, parsedEvents, inception)
 
 	default:
 		err = RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream kind")
@@ -97,35 +99,67 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 		return nil, err
 	}
 
-	if streamView == nil {
+	if resp == nil {
 		return nil, RiverError(Err_INTERNAL, "stream not created, but there is no error")
 	}
 
-	return &CreateStreamResponse{
-		Stream: &StreamAndCookie{
-			Events:         streamView.MinipoolEnvelopes(),
-			NextSyncCookie: streamView.SyncCookie(s.wallet.AddressStr),
-		},
-		Miniblocks: streamView.MiniblocksFromLastSnapshot(),
-	}, nil
+	return resp, nil
 }
 
 func (s *Service) createReplicatedStream(
 	ctx context.Context,
 	streamId string,
 	parsedEvents []*ParsedEvent,
-) (StreamView, error) {
+) (*CreateStreamResponse, error) {
+	log := dlog.CtxLog(ctx)
+
 	mb, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
 
-	_, streamView, err := s.cache.CreateStream(ctx, streamId, mb)
+	nodeAddress, err := s.streamRegistry.AllocateStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
 
-	return streamView, nil
+	isLocal, remotes := s.splitLocalAndRemote(ctx, nodeAddress)
+
+	// TODO: for replicated streams fan out here.
+	var cookie *SyncCookie
+	if isLocal {
+		_, streamView, err := s.cache.CreateStream(ctx, streamId, mb)
+		if err != nil {
+			return nil, err
+		}
+		cookie = streamView.SyncCookie(s.wallet.AddressStr)
+	} else {
+		log.Debug("Forwarding request", "streamId", streamId, "nodeAddress", nodeAddress[0])
+
+		stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(remotes[0])
+		if err != nil {
+			return nil, err
+		}
+		resp, err := stub.AllocateStream(
+			ctx,
+			&connect.Request[AllocateStreamRequest]{
+				Msg: &AllocateStreamRequest{
+					Miniblock: mb,
+					StreamId:  streamId,
+				},
+			})
+		if err != nil {
+			return nil, err
+		}
+		cookie = resp.Msg.SyncCookie
+	}
+
+	return &CreateStreamResponse{
+		Stream: &StreamAndCookie{
+			NextSyncCookie: cookie,
+		},
+		Miniblocks: []*Miniblock{mb},
+	}, nil
 }
 
 func (s *Service) createStream_Channel(
@@ -133,7 +167,7 @@ func (s *Service) createStream_Channel(
 	log *slog.Logger,
 	parsedEvents []*ParsedEvent,
 	inception *ChannelPayload_Inception,
-) (StreamView, error) {
+) (*CreateStreamResponse, error) {
 	if len(parsedEvents) != 2 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel stream must have exactly two events")
 	}
@@ -175,7 +209,7 @@ func (s *Service) createStream_Channel(
 	}
 
 	streamId := inception.GetStreamId()
-	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
+	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +244,7 @@ func (s *Service) createStream_Channel(
 		return nil, err
 	}
 
-	return streamView, nil
+	return resp, nil
 }
 
 func (s *Service) createStream_DMChannel(
@@ -218,7 +252,7 @@ func (s *Service) createStream_DMChannel(
 	log *slog.Logger,
 	parsedEvents []*ParsedEvent,
 	inception *DmChannelPayload_Inception,
-) (StreamView, error) {
+) (*CreateStreamResponse, error) {
 	if len(parsedEvents) != 3 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "DM channel stream must have exactly 3 events")
 	}
@@ -257,7 +291,7 @@ func (s *Service) createStream_DMChannel(
 	}
 
 	streamId := inception.GetStreamId()
-	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
+	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +304,7 @@ func (s *Service) createStream_DMChannel(
 	if err != nil {
 		return nil, err
 	}
-	return streamView, nil
+	return resp, nil
 }
 
 func (s *Service) createStream_GDMChannel(
@@ -278,7 +312,7 @@ func (s *Service) createStream_GDMChannel(
 	log *slog.Logger,
 	parsedEvents []*ParsedEvent,
 	inception *GdmChannelPayload_Inception,
-) (StreamView, error) {
+) (*CreateStreamResponse, error) {
 
 	// GDMs require 3+ users. The 4 required events are:
 	// 1. Inception
@@ -340,7 +374,7 @@ func (s *Service) createStream_GDMChannel(
 	}
 
 	streamId := inception.GetStreamId()
-	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
+	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +395,7 @@ func (s *Service) createStream_GDMChannel(
 			return nil, err
 		}
 	}
-	return streamView, nil
+	return resp, nil
 }
 
 func (s *Service) createStream_Space(
@@ -369,7 +403,7 @@ func (s *Service) createStream_Space(
 	log *slog.Logger,
 	parsedEvents []*ParsedEvent,
 	inception *SpacePayload_Inception,
-) (StreamView, error) {
+) (*CreateStreamResponse, error) {
 	if len(parsedEvents) != 2 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "space stream must have exactly two events")
 	}
@@ -407,7 +441,7 @@ func (s *Service) createStream_Space(
 
 	// Create stream.
 	streamId := inception.GetStreamId()
-	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
+	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -418,7 +452,7 @@ func (s *Service) createStream_Space(
 		return nil, err
 	}
 
-	return streamView, nil
+	return resp, nil
 }
 
 func (s *Service) createStream_User(
@@ -426,7 +460,7 @@ func (s *Service) createStream_User(
 	log *slog.Logger,
 	parsedEvents []*ParsedEvent,
 	inception *UserPayload_Inception,
-) (StreamView, error) {
+) (*CreateStreamResponse, error) {
 	if len(parsedEvents) != 1 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user stream must have only one event")
 	}
@@ -440,12 +474,12 @@ func (s *Service) createStream_User(
 	// TODO: Authorization.
 
 	streamId := inception.GetStreamId()
-	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
+	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
 
-	return streamView, nil
+	return resp, nil
 }
 
 func (s *Service) createStream_UserDeviceKey(
@@ -453,7 +487,7 @@ func (s *Service) createStream_UserDeviceKey(
 	log *slog.Logger,
 	parsedEvents []*ParsedEvent,
 	inception *UserDeviceKeyPayload_Inception,
-) (StreamView, error) {
+) (*CreateStreamResponse, error) {
 	if len(parsedEvents) != 1 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user device key stream must have only one event")
 	}
@@ -467,12 +501,12 @@ func (s *Service) createStream_UserDeviceKey(
 	// TODO: Authorization.
 
 	streamId := inception.GetStreamId()
-	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
+	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
 
-	return streamView, nil
+	return resp, nil
 }
 
 func (s *Service) createStream_UserSettings(
@@ -480,7 +514,7 @@ func (s *Service) createStream_UserSettings(
 	log *slog.Logger,
 	parsedEvents []*ParsedEvent,
 	inception *UserSettingsPayload_Inception,
-) (StreamView, error) {
+) (*CreateStreamResponse, error) {
 	if len(parsedEvents) != 1 {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user settings stream must have only one event")
 	}
@@ -494,12 +528,12 @@ func (s *Service) createStream_UserSettings(
 	// TODO: Authorization.
 
 	streamId := inception.GetStreamId()
-	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
+	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
 
-	return streamView, nil
+	return resp, nil
 }
 
 func (s *Service) createStream_Media(
@@ -507,7 +541,7 @@ func (s *Service) createStream_Media(
 	log *slog.Logger,
 	parsedEvents []*ParsedEvent,
 	inception *MediaPayload_Inception,
-) (StreamView, error) {
+) (*CreateStreamResponse, error) {
 	if !CheckMediaStreamId(inception.StreamId) {
 		return nil, RiverError(Err_BAD_STREAM_ID, "CreateStream: invalid media stream id '%s'", inception.StreamId)
 	}
@@ -597,12 +631,12 @@ func (s *Service) createStream_Media(
 	}
 
 	streamId := inception.GetStreamId()
-	streamView, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
+	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
 
-	return streamView, nil
+	return resp, nil
 }
 
 func (s *Service) authAddRemoveChannelsInSpace(

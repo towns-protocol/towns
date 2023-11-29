@@ -24,11 +24,13 @@ func (s *Service) AllocateStream(ctx context.Context, req *connect.Request[Alloc
 func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest) (*AllocateStreamResponse, error) {
 	// TODO: check request is signed by correct node
 	// TODO: all checks that should be done on create?
-	_, _, err := s.cache.CreateStream(ctx, req.StreamId, req.Miniblock)
+	_, view, err := s.cache.CreateStream(ctx, req.StreamId, req.Miniblock)
 	if err != nil {
 		return nil, err
 	}
-	return &AllocateStreamResponse{}, nil
+	return &AllocateStreamResponse{
+		SyncCookie: view.SyncCookie(s.wallet.AddressStr),
+	}, nil
 }
 
 func (s *Service) NewEventReceived(ctx context.Context, req *connect.Request[NewEventReceivedRequest]) (*connect.Response[NewEventReceivedResponse], error) {

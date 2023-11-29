@@ -10,6 +10,7 @@ message AllocateStreamRequest {
 }
 
 message AllocateStreamResponse {
+    SyncCookie sync_cookie = 1;
 }
 
 message NewEventReceivedRequest {
