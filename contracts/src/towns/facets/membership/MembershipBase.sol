@@ -17,7 +17,7 @@ abstract contract MembershipBase is IMembershipBase {
   ) internal {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
     ds.membershipPrice = info.price;
-    ds.membershipLimit = info.limit;
+    ds.membershipMaxSupply = info.maxSupply;
     ds.membershipDuration = info.duration;
     ds.membershipCurrency = info.currency == address(0)
       ? CurrencyTransfer.NATIVE_TOKEN
@@ -144,27 +144,14 @@ abstract contract MembershipBase is IMembershipBase {
   }
 
   // =============================================================
-  //                           Limits
+  //                   Token Max Supply Limits
   // =============================================================
-  function _setMembershipLimit(uint256 newLimit) public {
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
-
-    uint256 maxLimit = IPlatformRequirements(ds.townFactory)
-      .getMembershipMintLimit();
-
-    if (newLimit > maxLimit) revert Membership__InvalidLimit();
-
-    MembershipStorage.layout().membershipLimit = newLimit;
+  function _setMembershipSupplyLimit(uint256 newLimit) public {
+    MembershipStorage.layout().membershipMaxSupply = newLimit;
   }
 
-  function _getMembershipLimit() public view returns (uint256) {
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
-
-    if (ds.membershipLimit == 0) {
-      return IPlatformRequirements(ds.townFactory).getMembershipMintLimit();
-    } else {
-      return ds.membershipLimit;
-    }
+  function _getMembershipSupplyLimit() public view returns (uint256) {
+    return MembershipStorage.layout().membershipMaxSupply;
   }
 
   // =============================================================

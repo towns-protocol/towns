@@ -32,7 +32,7 @@ export declare namespace IMembershipBase {
     name: PromiseOrValue<string>;
     symbol: PromiseOrValue<string>;
     price: PromiseOrValue<BigNumberish>;
-    limit: PromiseOrValue<BigNumberish>;
+    maxSupply: PromiseOrValue<BigNumberish>;
     duration: PromiseOrValue<BigNumberish>;
     currency: PromiseOrValue<string>;
     feeRecipient: PromiseOrValue<string>;
@@ -50,7 +50,7 @@ export declare namespace IMembershipBase {
     name: string;
     symbol: string;
     price: BigNumber;
-    limit: BigNumber;
+    maxSupply: BigNumber;
     duration: BigNumber;
     currency: string;
     feeRecipient: string;

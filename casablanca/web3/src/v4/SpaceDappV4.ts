@@ -417,7 +417,7 @@ export class SpaceDapp implements ISpaceDapp<'v4'> {
 
         return {
             price: price,
-            limit: limit,
+            maxSupply: limit,
             currency: currency,
             feeRecipient: feeRecipient,
         }

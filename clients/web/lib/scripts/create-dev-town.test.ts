@@ -66,7 +66,7 @@ export async function createDevTown(client: ZionTestClient): Promise<RoomIdentif
             name: 'Everyone',
             symbol: 'MEMBER',
             price: 0,
-            limit: 100,
+            maxSupply: 100,
             duration: 0,
             currency: ethers.constants.AddressZero,
             feeRecipient: client.walletAddress,

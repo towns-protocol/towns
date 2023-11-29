@@ -118,12 +118,17 @@ export default [
   },
   {
     "inputs": [],
+    "name": "Membership__InvalidMaxSupply",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "Membership__InvalidPrice",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "Membership__LimitReached",
+    "name": "Membership__MaxSupplyReached",
     "type": "error"
   },
   {
@@ -512,7 +517,7 @@ export default [
           },
           {
             "internalType": "uint256",
-            "name": "limit",
+            "name": "maxSupply",
             "type": "uint256"
           },
           {
@@ -579,7 +584,7 @@ export default [
   },
   {
     "inputs": [],
-    "name": "_getMembershipLimit",
+    "name": "_getMembershipPrice",
     "outputs": [
       {
         "internalType": "uint256",
@@ -592,7 +597,7 @@ export default [
   },
   {
     "inputs": [],
-    "name": "_getMembershipPrice",
+    "name": "_getMembershipSupplyLimit",
     "outputs": [
       {
         "internalType": "uint256",
@@ -646,11 +651,11 @@ export default [
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "newLimit",
+        "name": "newPrice",
         "type": "uint256"
       }
     ],
-    "name": "_setMembershipLimit",
+    "name": "_setMembershipPrice",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -659,11 +664,11 @@ export default [
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "newPrice",
+        "name": "newLimit",
         "type": "uint256"
       }
     ],
-    "name": "_setMembershipPrice",
+    "name": "_setMembershipSupplyLimit",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

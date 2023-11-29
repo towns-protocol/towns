@@ -132,7 +132,7 @@ export const CreateSpaceForm = (props: Props) => {
                 name: 'Member',
                 symbol: 'MEMBER',
                 price: formValue.price,
-                limit: formValue.limit,
+                maxSupply: formValue.limit,
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: await signer.getAddress(),

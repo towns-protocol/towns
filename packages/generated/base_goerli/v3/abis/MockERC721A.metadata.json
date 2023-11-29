@@ -720,6 +720,7 @@
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-math/=lib/prb-math/src/",
       ":prb-test/=lib/prb-test/src/"
     ]
   },

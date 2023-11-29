@@ -21,7 +21,7 @@ function transformData(data: ReturnType<typeof useMembershipInfo>['data']) {
     return {
         ...data,
         price: transformPrice(Number(data.price)),
-        limit: transformLimit(Number(data.limit)),
+        limit: transformLimit(Number(data.maxSupply)),
         currency: transformCurrency(data.currency as string),
     }
 }

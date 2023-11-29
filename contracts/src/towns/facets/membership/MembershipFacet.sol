@@ -49,8 +49,11 @@ contract MembershipFacet is
     if (_balanceOf(receiver) > 0) revert Membership__AlreadyMember();
 
     // // if the membership price is 0, and we have reached the membership limit, revert
-    if (_getMembershipPrice() == 0 && _totalSupply() >= _getMembershipLimit()) {
-      revert Membership__LimitReached();
+    if (
+      _getMembershipSupplyLimit() != 0 &&
+      _totalSupply() >= _getMembershipSupplyLimit()
+    ) {
+      revert Membership__MaxSupplyReached();
     }
 
     tokenId = _nextTokenId();
@@ -115,17 +118,24 @@ contract MembershipFacet is
   }
 
   // =============================================================
-  //                           Limits
+  //                    Token Max Supply Limit
   // =============================================================
 
   /// @inheritdoc IMembership
   function setMembershipLimit(uint256 newLimit) external onlyOwner {
-    _setMembershipLimit(newLimit);
+    // if the new limit is less than the current total supply, revert
+    if (newLimit < _totalSupply()) revert Membership__InvalidMaxSupply();
+
+    // if the new limit is less than the current max supply, revert
+    if (newLimit <= _getMembershipSupplyLimit())
+      revert Membership__InvalidMaxSupply();
+
+    _setMembershipSupplyLimit(newLimit);
   }
 
   /// @inheritdoc IMembership
   function getMembershipLimit() external view returns (uint256) {
-    return _getMembershipLimit();
+    return _getMembershipSupplyLimit();
   }
 
   // =============================================================

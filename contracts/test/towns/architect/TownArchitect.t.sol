@@ -239,7 +239,7 @@ contract TownArchitectTest is
           name: "Member",
           symbol: "MEM",
           price: 0,
-          limit: 0,
+          maxSupply: 0,
           duration: 0,
           currency: address(0),
           feeRecipient: address(0)

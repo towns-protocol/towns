@@ -51,7 +51,7 @@ describe('Zion event handlers test', () => {
                 name: 'Member',
                 symbol: 'MEMBER',
                 price: 0,
-                limit: 100,
+                maxSupply: 100,
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: alice.wallet.address,

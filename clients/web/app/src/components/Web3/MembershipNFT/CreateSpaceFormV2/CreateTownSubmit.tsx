@@ -122,7 +122,7 @@ export function CreateTownSubmit({
                         name: 'Member',
                         symbol: 'MEMBER',
                         price: membershipCost,
-                        limit: membershipLimit,
+                        maxSupply: membershipLimit,
                         duration: 0,
                         currency: ethers.constants.AddressZero,
                         feeRecipient: await signer.getAddress(),

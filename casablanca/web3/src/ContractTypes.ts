@@ -175,5 +175,5 @@ export function isStringArray(
 
 export type MembershipInfo<V extends Versions = TDefaultVersion> = Pick<
     MembershipInfoStruct<V>,
-    'limit' | 'currency' | 'feeRecipient' | 'price'
+    'maxSupply' | 'currency' | 'feeRecipient' | 'price'
 >

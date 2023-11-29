@@ -255,7 +255,7 @@
               },
               {
                 "internalType": "uint256",
-                "name": "limit",
+                "name": "maxSupply",
                 "type": "uint256"
               },
               {
@@ -384,7 +384,7 @@
                   },
                   {
                     "internalType": "uint256",
-                    "name": "limit",
+                    "name": "maxSupply",
                     "type": "uint256"
                   },
                   {

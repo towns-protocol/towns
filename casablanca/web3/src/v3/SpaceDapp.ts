@@ -351,7 +351,7 @@ export class SpaceDapp implements ISpaceDapp<'v3'> {
 
         return {
             price: price.toNumber(),
-            limit: limit.toNumber(),
+            maxSupply: limit.toNumber(),
             currency: currency,
             feeRecipient: feeRecipient,
         }

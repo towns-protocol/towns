@@ -118,11 +118,11 @@ type CreateMembershipStructArgs = {
 } & (
     | Omit<
           IMembershipBaseV3.MembershipInfoStruct,
-          'symbol' | 'price' | 'limit' | 'duration' | 'currency' | 'feeRecipient'
+          'symbol' | 'price' | 'maxSupply' | 'duration' | 'currency' | 'feeRecipient'
       >
     | Omit<
           ITownArchitectBaseV4['MembershipInfoStruct'],
-          'symbol' | 'price' | 'limit' | 'duration' | 'currency' | 'feeRecipient'
+          'symbol' | 'price' | 'maxSupply' | 'duration' | 'currency' | 'feeRecipient'
       >
 )
 function _createMembershipStruct({
@@ -139,7 +139,7 @@ function _createMembershipStruct({
                 name,
                 symbol: 'MEMBER',
                 price: 0,
-                limit: 1000,
+                maxSupply: 1000,
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: ethers.constants.AddressZero,
@@ -157,7 +157,7 @@ function _createMembershipStruct({
                 name,
                 symbol: 'MEMBER',
                 price: BigInt(0),
-                limit: BigInt(1000),
+                maxSupply: BigInt(1000),
                 duration: BigInt(0),
                 currency: zeroAddress,
                 feeRecipient: zeroAddress,

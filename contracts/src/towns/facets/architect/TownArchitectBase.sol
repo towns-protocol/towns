@@ -375,7 +375,7 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
             name: membership.settings.name,
             symbol: membership.settings.symbol,
             price: membership.settings.price,
-            limit: membership.settings.limit,
+            maxSupply: membership.settings.maxSupply,
             duration: membership.settings.duration,
             currency: membership.settings.currency,
             feeRecipient: membership.settings.feeRecipient == address(0)

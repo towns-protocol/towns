@@ -83,7 +83,7 @@ const _abi = [
               },
               {
                 internalType: "uint256",
-                name: "limit",
+                name: "maxSupply",
                 type: "uint256",
               },
               {
@@ -212,7 +212,7 @@ const _abi = [
                   },
                   {
                     internalType: "uint256",
-                    name: "limit",
+                    name: "maxSupply",
                     type: "uint256",
                   },
                   {

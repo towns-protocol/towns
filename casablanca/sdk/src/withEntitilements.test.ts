@@ -44,7 +44,7 @@ describe('withEntitlements', () => {
                 name: 'Everyone',
                 symbol: 'MEMBER',
                 price: 0,
-                limit: 1000,
+                maxSupply: 1000,
                 duration: 0,
                 currency: ETH_ADDRESS,
                 feeRecipient: bob.userId,

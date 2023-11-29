@@ -15,7 +15,7 @@ library MembershipStorage {
     mapping(uint256 => address) memberByTokenId;
     mapping(address => uint256) tokenIdByMember;
     uint256 membershipPrice;
-    uint256 membershipLimit;
+    uint256 membershipMaxSupply;
     address membershipCurrency;
     address membershipFeeRecipient;
     address townFactory;

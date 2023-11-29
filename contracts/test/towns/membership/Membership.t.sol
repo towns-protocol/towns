@@ -13,6 +13,9 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 // contracts
 import {MembershipSetup} from "./MembershipSetup.sol";
 
+// debuggging
+import {console} from "forge-std/console.sol";
+
 contract MembershipTest is
   IMembershipBase,
   IEntitlementBase,
@@ -63,8 +66,26 @@ contract MembershipTest is
     membership.joinTown(_randomAddress());
 
     vm.prank(founder);
-    vm.expectRevert(Membership__LimitReached.selector);
+    vm.expectRevert(Membership__MaxSupplyReached.selector);
     membership.joinTown(alice);
+  }
+
+  function test_joinTown_revert_when_updating_maxSupply() external {
+    vm.prank(founder);
+    membership.setMembershipLimit(2);
+
+    assertTrue(membership.getMembershipPrice() == 0);
+    assertTrue(membership.getMembershipLimit() == 2);
+
+    vm.prank(founder);
+    membership.joinTown(_randomAddress());
+
+    vm.prank(founder);
+    membership.joinTown(_randomAddress());
+
+    vm.prank(founder);
+    vm.expectRevert(Membership__InvalidMaxSupply.selector);
+    membership.setMembershipLimit(1);
   }
 
   function test_joinTown_collectMembershipFee() external {

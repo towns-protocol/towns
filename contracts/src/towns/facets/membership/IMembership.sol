@@ -15,7 +15,7 @@ interface IMembershipBase {
     string name;
     string symbol;
     uint256 price;
-    uint256 limit;
+    uint256 maxSupply;
     uint64 duration;
     address currency;
     address feeRecipient;
@@ -30,11 +30,12 @@ interface IMembershipBase {
   error Membership__InvalidCurrency();
   error Membership__InvalidFeeRecipient();
   error Membership__InvalidDuration();
+  error Membership__InvalidMaxSupply();
 
   error Membership__AlreadyMember();
   error Membership__InsufficientPayment();
   error Membership__PriceTooLow();
-  error Membership__LimitReached();
+  error Membership__MaxSupplyReached();
 
   // =============================================================
   //                           Events
