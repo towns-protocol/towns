@@ -59,15 +59,6 @@ export type OlmGroupSessionExtraData = {
     untrusted?: boolean
 }
 
-interface IInboundGroupSessionKey {
-    chain_index: number
-    key: string
-    forwarding_curve25519_key_chain: string[]
-    sender_claimed_ed25519_key: string | null
-    shared_history: boolean
-    untrusted?: boolean
-}
-
 export interface IInboundSession {
     payload: string
     session_id: string
@@ -888,59 +879,6 @@ export class OlmDevice {
             return false
         } else {
             return true
-        }
-    }
-
-    /**
-     * Extract the keys to a given megolm session, for sharing
-     *
-     * @param streamId - room in which the message was received
-     * @param senderKey - base64-encoded curve25519 key of the sender
-     * @param sessionId - session identifier
-     * @param chainIndex - the chain index at which to export the session.
-     *      If omitted, export at the first index we know about.
-     *
-     * @returns - details of the session key. The key is a base64-encoded megolm key
-     * in export format.
-     */
-    public async getInboundGroupSessionKey(
-        streamId: string,
-        sessionId: string,
-        chainIndex?: number,
-    ): Promise<IInboundGroupSessionKey | null> {
-        const { session, data: sessionData } = await this.getInboundGroupSession(
-            streamId,
-            sessionId,
-        )
-
-        if (!session || !sessionData) {
-            return null
-        }
-
-        if (chainIndex === undefined) {
-            chainIndex = session.first_known_index()
-        }
-
-        const exportedSession = session.export_session(chainIndex)
-
-        const claimedKeys = sessionData.keysClaimed || {}
-        const senderEd25519Key = claimedKeys.ed25519 || null
-
-        // older forwarded keys didn't set the "untrusted"
-        // property, but can be identified by having a
-        // non-empty forwarding key chain.  These keys should
-        // be marked as untrusted since we don't know that they
-        // can be trusted
-        // todo jterzis 07/23: trusted check on forwarding keys not yet implemented
-        // as trust model is not yet defined
-
-        return {
-            chain_index: chainIndex,
-            key: exportedSession,
-            forwarding_curve25519_key_chain: [],
-            sender_claimed_ed25519_key: senderEd25519Key,
-            shared_history: false,
-            untrusted: false,
         }
     }
 

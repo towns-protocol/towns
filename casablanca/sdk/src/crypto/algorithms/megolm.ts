@@ -66,24 +66,17 @@ export class MegolmEncryption extends EncryptionAlgorithm {
 
     private async shareSession(streamId: string, sessionId: string): Promise<void> {
         const devicesInRoom = await this.getDevicesInRoom(streamId)
-        const sessionKey = await this.olmDevice.getInboundGroupSessionKey(streamId, sessionId)
+        const session = await this.olmDevice.exportInboundGroupSession(streamId, sessionId)
 
-        if (!sessionKey) {
+        if (!session) {
             throw new Error('Session key not found for session ' + sessionId)
         }
-
-        const payload = new MegolmSession({
-            streamId: streamId,
-            sessionId: sessionId,
-            sessionKey: sessionKey.key,
-            algorithm: MEGOLM_ALGORITHM,
-        })
 
         const toDeviceResponse = new ToDeviceMessage(
             make_ToDevice_KeyResponse({
                 kind: KeyResponseKind.KRK_KEYS_FOUND,
                 streamId: streamId,
-                sessions: [payload],
+                sessions: [session],
             }),
         )
 
