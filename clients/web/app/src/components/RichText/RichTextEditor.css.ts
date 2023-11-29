@@ -1,17 +1,18 @@
 import { globalStyle, style } from '@vanilla-extract/css'
 import { atoms } from 'ui/styles/atoms.css'
+import { scrollContainerClass } from 'ui/styles/globals/scrollcontainer.css'
 import { baseline, vars } from 'ui/styles/vars.css'
 
 export const richText = style({})
 
 export const contentEditable = style([
+    scrollContainerClass,
     atoms({
         paddingY: 'md',
     }),
     {
         outline: 'none',
         maxHeight: `${baseline * (4 + 22.5)}px`, // pseudo-arbitrary
-        overflow: 'scroll',
     },
 ])
 
