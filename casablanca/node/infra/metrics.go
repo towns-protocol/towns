@@ -95,13 +95,19 @@ func (m *SuccessMetrics) FailInc() {
 	}
 }
 
-func (m *SuccessMetrics) PassIncWithLabel(label string) {
-	successMetrics.WithLabelValues(m.Name, label).Inc()
+// update counter for a child metric and recursively update itself
+func (m *SuccessMetrics) PassIncForChild(child string) {
+	// args are name, status, category
+	successMetrics.WithLabelValues(child, "pass", m.Name).Inc()
+	// recursively increment parent
 	m.PassInc()
 }
 
-func (m *SuccessMetrics) FailIncWithLabel(label string) {
-	successMetrics.WithLabelValues(m.Name, label).Inc()
+// update counter for a child metric and recursively update itself
+func (m *SuccessMetrics) FailIncForChild(child string) {
+	// args are name, status, category
+	successMetrics.WithLabelValues(child, "fail", m.Name).Inc()
+	// recursively increment parent
 	m.FailInc()
 }
 
