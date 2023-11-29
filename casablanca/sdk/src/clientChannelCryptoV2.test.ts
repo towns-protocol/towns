@@ -775,15 +775,17 @@ describe('clientCryptoTest_RiverEventV2', () => {
         await aliceJoined.expectToSucceed()
 
         const bobSelfToDevice = makeDonePromise()
-        bobsClient.on('channelNewMessage', (streamId: string, event: RiverEventV2): void => {
+        bobsClient.on('eventDecrypted', (event: RiverEventV2, err?: Error) => {
+            if (err) {
+                return
+            }
             const content = event.getWireContent()
             const senderKey = content.senderKey
             const sessionId = content.sessionId
-            log('channelNewMessage for Alice', streamId, senderKey, sessionId, content)
-            if (streamId == bobsChannelId) {
+            log('eventDecrypted for Bob', event.getStreamId(), senderKey, sessionId, content)
+            if (event.getStreamId() === bobsChannelId) {
                 bobSelfToDevice.runAndDoneAsync(async () => {
                     expect(content).toBeDefined()
-                    await bobsClient.decryptEventIfNeeded(event)
                     const clearEvent = event.getContent()
                     expect(clearEvent?.content?.payload).toBeDefined()
                     if (
