@@ -42,8 +42,6 @@ const console = {
     error: logError,
 }
 
-/// control the number of outgoing room key requests for events that failed to decrypt
-const MAX_CONCURRENT_ROOM_KEY_REQUESTS = 2
 /// how many events to include in the same to-device message
 const MAX_EVENTS_PER_REQUEST = 64
 /// time betwen debounced calls to look for keys
@@ -98,7 +96,6 @@ interface RoomRecord {
     spaceId?: string
     channelId?: string
     lastRequestAt?: number
-    requestingFrom?: string
     requests: Record<string, KeyRequestRecord>
 }
 
@@ -443,20 +440,10 @@ export class RiverDecryptionExtension {
         )
 
         for (const room of rooms) {
-            if (this.currentlyRequestingCount() >= MAX_CONCURRENT_ROOM_KEY_REQUESTS) {
-                console.warn('CDE::startLookingForKeys - max concurrent requests')
-                break
-            }
             // todo: HNT-2868 remove _startLookingForkeys in favor of _askStreamForKeys which is more efficient
             // since the request happens against the stream not every members' devices.
             await this._askStreamForKeys(room.channelId)
         }
-    }
-
-    private currentlyRequestingCount(): number {
-        return Object.values(this.roomRecords).filter(
-            (roomRecord) => roomRecord.requestingFrom !== undefined,
-        ).length
     }
 
     private async checkSelfIsEntitled(): Promise<void> {
@@ -526,22 +513,35 @@ export class RiverDecryptionExtension {
             throw new Error('CDE::_askRoomForKeys - our device key not found')
         }
 
+        await this.addKeySolicitationsToStream(
+            streamId,
+            ourDeviceKey,
+            knownSessionIds,
+            unknownSessionIds,
+        )
+    }
+
+    private async addKeySolicitationsToStream(
+        streamId: string,
+        ourDeviceKey: string,
+        knownSessionIds: string[],
+        unknownSessionIds: [senderKey: string, sessionId: string][],
+    ) {
         let request: PlainMessage<StreamEvent>['payload']
-        // for each room, ask for all missing sessionIds sequentially to stream
         const requests: Promise<void>[] = []
+        const stream = this.client.streams.get(streamId)
+        if (!stream) {
+            console.warn("CDE::_addKeySolicitationsToStream - stream doesn't exist")
+            return
+        }
+        if (!stream?.view.userIsEntitledToKeyExchange(this.client.userId)) {
+            console.warn(
+                'CDE::_addKeySolicitationsToStream - user is not a member of the room and cannot request keys',
+            )
+            return
+        }
         for (const unknownSessionAndSender of unknownSessionIds) {
             const unknownSessionRequested = unknownSessionAndSender[1]
-            const stream = this.client.streams.get(streamId)
-            if (!stream) {
-                console.warn("CDE::_askRoomForKeys - stream doesn't exist")
-                return
-            }
-            if (!stream?.view.userIsEntitledToKeyExchange(this.client.userId)) {
-                console.warn(
-                    'CDE::_askForRoomKeys - user is not a memeber of the room and cannot request keys',
-                )
-                return
-            }
 
             if (isChannelStreamId(streamId)) {
                 const keySolicitations = stream.view.channelContent.keySolicitations
@@ -583,9 +583,11 @@ export class RiverDecryptionExtension {
                         knownSessionIds.length < MAX_EVENTS_PER_REQUEST ? knownSessionIds : [],
                 })
             } else {
-                throw new Error('CDE::_askRoomForKeys - unknown stream type')
+                throw new Error(
+                    `CDE::_addKeySolicitationsToStream - unknown stream type for streamId: ${streamId}`,
+                )
             }
-            console.log('CDE::_askRoomForKeys - asking for keys', {
+            console.log('CDE::_addKeySolicitationsToStream - asking for keys', {
                 streamId,
                 unknownSessionRequested,
             })
