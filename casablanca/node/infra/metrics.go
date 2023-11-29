@@ -40,7 +40,7 @@ var (
 			Name: "success_metrics",
 			Help: "success metrics",
 		},
-		[]string{"name", "status"},
+		[]string{"name", "status", "category"},
 	)
 )
 
@@ -69,7 +69,13 @@ func NewCounter(name string, help string) prometheus.Counter {
 
 /* Increment pass counter for this metric and its parent. */
 func (m *SuccessMetrics) PassInc() {
-	successMetrics.WithLabelValues(m.Name, "pass").Inc()
+	args := []string{m.Name, "pass"}
+	if m.Parent != nil {
+		args = append(args, m.Parent.Name)
+	} else {
+		args = append(args, "root")
+	}
+	successMetrics.WithLabelValues(args...).Inc()
 	if m.Parent != nil {
 		m.Parent.PassInc()
 	}
@@ -77,7 +83,13 @@ func (m *SuccessMetrics) PassInc() {
 
 /* Increment fail counter for this metric and its parent. */
 func (m *SuccessMetrics) FailInc() {
-	successMetrics.WithLabelValues(m.Name, "fail").Inc()
+	args := []string{m.Name, "fail"}
+	if m.Parent != nil {
+		args = append(args, m.Parent.Name)
+	} else {
+		args = append(args, "root")
+	}
+	successMetrics.WithLabelValues(args...).Inc()
 	if m.Parent != nil {
 		m.Parent.FailInc()
 	}
