@@ -32,11 +32,17 @@ const (
 	PG_REPORT_INTERVAL = 3 * time.Minute
 )
 
+var (
+	dbCalls = infra.NewSuccessMetrics("db_calls", nil)
+)
+
 func (s *PostgresEventStore) CreateStream(ctx context.Context, streamId string, genesisMiniblock []byte) error {
 	err := s.createStream(ctx, streamId, genesisMiniblock)
 	if err != nil {
+		dbCalls.FailIncWithLabel("CreateStream")
 		return s.enrichErrorWithNodeInfo(AsRiverError(err).Func("pg.CreateStream").Tag("streamId", streamId))
 	}
+	dbCalls.PassIncWithLabel("CreateStream")
 	return nil
 }
 
@@ -98,8 +104,10 @@ func (s *PostgresEventStore) createStream(ctx context.Context, streamId string, 
 func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, streamId string, precedingBlockCount int) (*GetStreamFromLastSnapshotResult, error) {
 	streamFromLastSnaphot, err := s.getStreamFromLastSnapshot(ctx, streamId, precedingBlockCount)
 	if err != nil {
+		dbCalls.FailIncWithLabel("GetStreamFromLastSnapshot")
 		return nil, s.enrichErrorWithNodeInfo(AsRiverError(err).Func("pg.GetStreamFromLastSnapshot").Tag("streamId", streamId))
 	}
+	dbCalls.PassIncWithLabel("GetStreamFromLastSnapshot")
 	return streamFromLastSnaphot, nil
 }
 
@@ -225,8 +233,10 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, stre
 func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, minipoolGeneration int64, minipoolSlot int, envelope []byte) error {
 	err := s.addEvent(ctx, streamId, minipoolGeneration, minipoolSlot, envelope)
 	if err != nil {
+		dbCalls.FailIncWithLabel("AddEvent")
 		return s.enrichErrorWithNodeInfo(AsRiverError(err).Func("pg.AddEvent").Tag("streamId", streamId).Tag("minipoolGeneration", minipoolGeneration).Tag("minipoolSlot", minipoolSlot))
 	}
+	dbCalls.PassIncWithLabel("AddEvent")
 	return nil
 }
 
@@ -311,6 +321,7 @@ func (s *PostgresEventStore) addEvent(ctx context.Context, streamId string, mini
 func (s *PostgresEventStore) GetMiniblocks(ctx context.Context, streamId string, fromInclusive int64, toExclusive int64) ([][]byte, error) {
 	miniblocksRow, err := s.pool.Query(ctx, "SELECT blockdata, seq_num FROM miniblocks WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num", fromInclusive, toExclusive, streamId)
 	if err != nil {
+		dbCalls.FailIncWithLabel("GetMiniblocks")
 		return nil, s.enrichErrorWithNodeInfo(WrapRiverError(Err_DB_OPERATION_FAILURE, err).
 			Func("pg.GetMiniblocks").Message("Error reading blocks").Tag("streamId", streamId))
 	}
@@ -326,6 +337,7 @@ func (s *PostgresEventStore) GetMiniblocks(ctx context.Context, streamId string,
 
 		err = miniblocksRow.Scan(&blockdata, &seq_num)
 		if err != nil {
+			dbCalls.FailIncWithLabel("GetMiniblocks")
 			return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("pg.GetMiniblocks").Tag("streamId", streamId).Message("Error scanning blocks")
 		}
 
@@ -340,6 +352,7 @@ func (s *PostgresEventStore) GetMiniblocks(ctx context.Context, streamId string,
 		miniblocks = append(miniblocks, blockdata)
 	}
 
+	dbCalls.PassIncWithLabel("GetMiniblocks")
 	return miniblocks, nil
 }
 
@@ -355,9 +368,11 @@ func (s *PostgresEventStore) CreateBlock(
 	err := s.createBlock(ctx, streamId, minipoolGeneration, minipoolSize, miniblock, snapshotMiniblock, envelopes)
 
 	if err != nil {
+		dbCalls.FailIncWithLabel("CreateBlock")
 		return s.enrichErrorWithNodeInfo(AsRiverError(err).Func("pg.CreateBlock").Tag("streamId", streamId).Tag("minipoolGeneration", minipoolGeneration).Tag("minipoolSize", minipoolSize).Tag("snapshotMiniblock", snapshotMiniblock))
 	}
 
+	dbCalls.PassIncWithLabel("CreateBlock")
 	return nil
 }
 
@@ -450,9 +465,11 @@ func (s *PostgresEventStore) GetStreamsNumber(ctx context.Context) (int, error) 
 	var count int
 	row := s.pool.QueryRow(ctx, "SELECT COUNT(stream_id) FROM es")
 	if err := row.Scan(&count); err != nil {
+		dbCalls.FailIncWithLabel("GetStreamsNumber")
 		return 0, s.enrichErrorWithNodeInfo(WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("GetStreamsNumber").Message("Getting streams number error"))
 	}
 
+	dbCalls.PassIncWithLabel("GetStreamsNumber")
 	return count, nil
 }
 
@@ -543,8 +560,10 @@ func (s *PostgresEventStore) CleanupStorage(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, "DELETE FROM singlenodekey WHERE uuid = $1", s.nodeUUID)
 
 	if err != nil {
+		dbCalls.FailIncWithLabel("CleanupStorage")
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("pg.CleanupStorage").Message("singlenodekey clean up error").Tag("UUID", s.nodeUUID)
 	}
+	dbCalls.PassIncWithLabel("CleanupStorage")
 	return nil
 }
 
@@ -579,6 +598,7 @@ func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]string, error) {
 	streams := []string{}
 	rows, err := s.pool.Query(ctx, "SELECT stream_id FROM es")
 	if err != nil {
+		dbCalls.FailIncWithLabel("GetStreams")
 		return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("GetStreams").Message("Getting streams error")
 	}
 	defer rows.Close()
@@ -586,10 +606,12 @@ func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]string, error) {
 		var streamName string
 		err = rows.Scan(&streamName)
 		if err != nil {
+			dbCalls.FailIncWithLabel("GetStreams")
 			return nil, WrapRiverError(Err_DB_OPERATION_FAILURE, err).Func("GetStreams").Message("Getting streams error (scan phase)")
 		}
 		streams = append(streams, streamName)
 	}
+	dbCalls.PassIncWithLabel("GetStreams")
 	return streams, nil
 }
 
@@ -602,9 +624,11 @@ func (s *PostgresEventStore) DeleteStream(ctx context.Context, streamId string) 
 	err := s.deleteStream(ctx, streamId)
 
 	if err != nil {
+		dbCalls.FailIncWithLabel("DeleteStream")
 		return AsRiverError(err).Func("pg.DeleteStream").Tag("streamId", streamId)
 	}
 
+	dbCalls.PassIncWithLabel("DeleteStream")
 	return nil
 }
 

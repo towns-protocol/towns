@@ -83,6 +83,16 @@ func (m *SuccessMetrics) FailInc() {
 	}
 }
 
+func (m *SuccessMetrics) PassIncWithLabel(label string) {
+	successMetrics.WithLabelValues(m.Name, label).Inc()
+	m.PassInc()
+}
+
+func (m *SuccessMetrics) FailIncWithLabel(label string) {
+	successMetrics.WithLabelValues(m.Name, label).Inc()
+	m.FailInc()
+}
+
 func StartMetricsService(ctx context.Context, config config.MetricsConfig) {
 	log := dlog.CtxLog(ctx)
 
