@@ -1,3 +1,5 @@
+import { FullyReadMarker } from '@river/proto'
+import { isEqual, uniqBy } from 'lodash'
 import React, {
     MutableRefObject,
     useCallback,
@@ -14,20 +16,20 @@ import {
     useFullyReadMarker,
     useZionClient,
 } from 'use-zion-client'
-import { FullyReadMarker } from '@river/proto'
-import { isEqual, uniqBy } from 'lodash'
-import { Box, Divider, Paragraph } from '@ui'
-import { useExperimentsStore } from 'store/experimentsStore'
-import { notUndefined } from 'ui/utils/utils'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
-import { useDevice } from 'hooks/useDevice'
-import { VList } from 'ui/components/VList2/VList'
 import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
+import { Box, Divider, Paragraph } from '@ui'
 import { SECOND_MS } from 'data/constants'
+import { useDevice } from 'hooks/useDevice'
+import { useExperimentsStore } from 'store/experimentsStore'
 import { useStore } from 'store/store'
-import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
+import { VList } from 'ui/components/VList2/VList'
+import { notUndefined } from 'ui/utils/utils'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
+import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
+import { useFocusMessage } from './hooks/useFocusItem'
+import { ListItem } from './types'
 import {
     EncryptedMessageRenderEvent,
     MessageRenderEvent,
@@ -37,8 +39,6 @@ import {
     isRedactedRoomMessage,
     isRoomMessage,
 } from './util/getEventsByDate'
-import { ListItem } from './types'
-import { useFocusMessage } from './hooks/useFocusItem'
 
 type Props = {
     prepend?: JSX.Element
@@ -502,6 +502,27 @@ export const MessageTimeline = (props: Props) => {
         ],
     )
 
+    const offscreenMarker = useMemo(() => {
+        return (
+            <Box padding="lg">
+                <Box
+                    horizontal
+                    centerContent
+                    paddingY="md"
+                    paddingX="lg"
+                    gap="sm"
+                    rounded="lg"
+                    cursor="pointer"
+                    background="cta1"
+                    boxShadow="medium"
+                >
+                    <Paragraph fontWeight="medium">New content</Paragraph>
+                    <Paragraph fontWeight="medium">↓</Paragraph>
+                </Box>
+            </Box>
+        )
+    }, [])
+
     return displaySimpleList ? (
         <Box paddingY="md">{listItems.map((item) => itemRenderer(item))}</Box>
     ) : (
@@ -524,6 +545,7 @@ export const MessageTimeline = (props: Props) => {
                 groupIds={groupIds}
                 pointerEvents={isTouch && tabBarHidden ? 'none' : undefined}
                 itemRenderer={itemRenderer}
+                offscreenMarker={offscreenMarker}
             />
         </Box>
     )

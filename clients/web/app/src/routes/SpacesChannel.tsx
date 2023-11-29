@@ -99,8 +99,14 @@ const SpacesChannelComponent = (props: Props) => {
 
     const hasThreadOpen = !!messageId
 
-    const eventHash = window.location.hash?.replace(/^#/, '')
-    const highlightId = eventHash?.match(/^\$[a-z0-9_-]{16,128}/i) ? eventHash : undefined
+    const highlightId = useMemo(() => {
+        const eventHash = location.hash?.replace(/^#/, '')
+        return eventHash?.match(/^[a-z0-9_-]{16,128}/i)
+            ? channelMessages.some((m) => m.eventId === eventHash)
+                ? eventHash
+                : undefined
+            : undefined
+    }, [channelMessages, location.hash])
 
     const { members } = useSpaceMembers()
 

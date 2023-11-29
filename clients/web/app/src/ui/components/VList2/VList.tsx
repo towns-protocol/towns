@@ -16,6 +16,7 @@ import { debug as debugLog } from 'debug'
 import isEqual from 'lodash/isEqual'
 import uniq from 'lodash/uniq'
 import { isUndefined } from 'lodash'
+import { useInView } from 'react-intersection-observer'
 import { notUndefined } from 'ui/utils/utils'
 import { scrollbarsClass } from 'ui/styles/globals/scrollcontainer.css'
 import { useDevice } from 'hooks/useDevice'
@@ -46,6 +47,8 @@ interface Props<T> {
      * @returns JSX.Element no key needed
      */
     itemRenderer: (item: T, measureRef?: RefObject<HTMLDivElement>, index?: number) => JSX.Element
+
+    offscreenMarker?: JSX.Element
 
     align: 'top' | 'bottom'
 
@@ -192,46 +195,6 @@ export function VList<T>(props: Props<T>) {
     const [renderItems, setRenderItems] = useState<string[]>([])
 
     const prevRenderedItemsRef = useRef<string[]>(renderItems)
-
-    /**
-     * ------------------------------------------------------------------- focus
-     */
-
-    const focusItemRef = useRef<FocusOption | null>()
-
-    // set to true when user scrolls, cancels current focus
-    const [hasUserScrolled, setHasUserScrolled] = useState(false)
-
-    const hasUserScrolledRef = useRef(hasUserScrolled)
-    hasUserScrolledRef.current = hasUserScrolled
-
-    // change focus on prop change (e.g. new incoming message)
-    useEffect(() => {
-        if (!props.focusItem) {
-            return
-        }
-
-        // if a focus element is sticky (highlighted items), the user needs to
-        // initiate a scroll to unblock, unless the `force` param is passed
-        const shouldFocus =
-            !focusItemRef.current?.sticky || hasUserScrolledRef.current || props.focusItem.force
-
-        if (shouldFocus) {
-            focusItemRef.current = props.focusItem
-            setHasUserScrolled(false)
-        }
-    }, [hasUserScrolledRef, props.focusItem])
-
-    /**
-     * discard focus when user scrolls
-     */
-    useEffect(() => {
-        log(`hasScrolled: ${hasUserScrolled}`)
-        if (hasUserScrolled) {
-            log(`setFocus: null`)
-            focusItemRef.current = null
-        }
-    }, [hasUserScrolled])
 
     // ------------------------------------------------------------- cache setup
 
@@ -493,6 +456,62 @@ export function VList<T>(props: Props<T>) {
     }, [debounceResetIdle, isTouch])
 
     /**
+     * ------------------------------------------------------------------- focus
+     */
+
+    const focusItemRef = useRef<FocusOption | null>()
+
+    // set to true when user scrolls, cancels current focus
+    const [hasUserScrolled, setHasUserScrolled] = useState(false)
+
+    const hasUserScrolledRef = useRef(hasUserScrolled)
+    hasUserScrolledRef.current = hasUserScrolled
+
+    const [offscreenFocusMarker, setOffscreenFocusMarker] = useState<string>()
+
+    // change focus on prop change (e.g. new incoming message)
+    useEffect(() => {
+        if (!props.focusItem) {
+            setOffscreenFocusMarker(undefined)
+            return
+        }
+
+        let shouldFocus = props.focusItem.force
+
+        if (!shouldFocus && props.focusItem.align === 'end') {
+            const cy = itemCache.current[props.focusItem.key]?.y
+            if (typeof cy === 'undefined') {
+                return
+            }
+            const top = getScrollY() + viewportHeightRef.current
+            const diff = Math.abs(cy - top)
+            if (diff < viewportHeightRef.current * 0.5) {
+                shouldFocus = true
+                setOffscreenFocusMarker(undefined)
+            } else {
+                setOffscreenFocusMarker(props.focusItem.key)
+            }
+        }
+
+        if (shouldFocus) {
+            focusItemRef.current = props.focusItem
+            setHasUserScrolled(false)
+            realignImperatively()
+        }
+    }, [getScrollY, hasUserScrolledRef, props.focusItem, realignImperatively])
+
+    /**
+     * discard focus when user scrolls
+     */
+    useEffect(() => {
+        log(`hasScrolled: ${hasUserScrolled}`)
+        if (hasUserScrolled) {
+            log(`setFocus: null`)
+            focusItemRef.current = null
+        }
+    }, [hasUserScrolled])
+
+    /**
      * --------------------------------------------------- recalculate positions
      * =========================================================================
      */
@@ -615,7 +634,7 @@ export function VList<T>(props: Props<T>) {
             const cacheItem = itemCache.current[key]
 
             if (!cacheItem) {
-                warn(`andleScroll::skip`)
+                warn(`handleScroll::skip`)
                 return
             }
 
@@ -701,18 +720,6 @@ export function VList<T>(props: Props<T>) {
                 if (!hasHeightChanged) {
                     internalScrollTimeout = undefined
                     internalScrollRef.current = false
-                } else {
-                    // (unharmful) scroll caused by resizing seems to be postponed
-                    // one frame. this happens on startup and gets interpreted as a
-                    // user-triggered scroll. action which in its turn turns off
-                    // scroll focus. to prevent this, keep scroll events muted for a
-                    // short period of time.
-                    /*
-                    internalScrollTimeout = setTimeout(() => {
-                        internalScrollTimeout = undefined
-                        internalScrollRef.current = false
-                    }, RESET_DELAY_MS)
-                    */
                 }
 
                 return
@@ -784,7 +791,6 @@ export function VList<T>(props: Props<T>) {
             heightRef: MutableRefObject<HTMLDivElement | null>,
             key: string,
             index: number,
-            observedHeight?: number,
         ) => {
             const cache = itemCache.current[key]
             const height = heightRef.current?.getBoundingClientRect()?.height ?? 0
@@ -910,6 +916,27 @@ export function VList<T>(props: Props<T>) {
         }
     }, [isScrolling, pointerEvents])
 
+    const offscreenY = offscreenFocusMarker ? itemCache.current[offscreenFocusMarker]?.y ?? -1 : -1
+    const onOffscreenMarkerClick = useCallback(() => {
+        if (props.focusItem) {
+            internalScrollRef.current = true
+            focusItemRef.current = { ...props.focusItem, force: true }
+            realignImperatively()
+            setOffscreenFocusMarker(undefined)
+        }
+    }, [props.focusItem, realignImperatively])
+
+    const onOffscreenMarkerCancel = useCallback(() => setOffscreenFocusMarker(undefined), [])
+
+    const offscreen = props.offscreenMarker && offscreenY > -1 && (
+        <OffscreenMarker
+            offscreenY={offscreenY}
+            offscreenMarker={props.offscreenMarker}
+            onClick={onOffscreenMarkerClick}
+            onCancel={onOffscreenMarkerCancel}
+        />
+    )
+
     return (
         <div style={computedMainStyle} data-testid="vlist-main" ref={mainRef}>
             <div
@@ -944,6 +971,7 @@ export function VList<T>(props: Props<T>) {
                                 />
                             ) : null
                         })}
+                        {offscreen}
                     </div>
                 </div>
             </div>
@@ -960,6 +988,34 @@ export function VList<T>(props: Props<T>) {
                     anchorDiffRef={anchorDiffRef}
                 />
             ) : null}
+        </div>
+    )
+}
+
+const OffscreenMarker = (props: {
+    offscreenY: number
+    offscreenMarker: JSX.Element
+    onClick: () => void
+    onCancel: () => void
+}) => {
+    const { offscreenY, offscreenMarker, onClick, onCancel } = props
+    const { ref, inView } = useInView()
+    useEffect(() => {
+        if (inView) {
+            onCancel()
+        }
+    }, [inView, onCancel])
+    return (
+        <div
+            style={{
+                ...offscreenMarkerContainerStyle,
+                height: offscreenY,
+            }}
+        >
+            <div style={offscreenMarkerStyle} onClick={onClick}>
+                {offscreenMarker}
+            </div>
+            <div ref={ref} />
         </div>
     )
 }
@@ -1054,6 +1110,23 @@ const contentStyle: CSSProperties = {
 const offsetStyle: CSSProperties = {
     position: 'absolute',
     width: '100%',
+}
+
+const offscreenMarkerContainerStyle: CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    width: `100%`,
+    display: 'flex',
+    pointerEvents: 'none',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+}
+
+const offscreenMarkerStyle: CSSProperties = {
+    position: 'sticky',
+    bottom: 0,
+    top: 0,
+    pointerEvents: 'auto',
 }
 
 const createCacheItem = (values: Pick<ItemCache, 'key' | 'y' | 'height'> & { index: number }) => ({
