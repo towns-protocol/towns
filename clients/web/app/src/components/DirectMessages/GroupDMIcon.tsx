@@ -2,29 +2,28 @@ import React, { useMemo } from 'react'
 import { RoomIdentifier, useDMData } from 'use-zion-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { LetterStylesVariantProps } from '@components/IconInitials/IconInitials.css'
-import { Box, BoxProps, Paragraph } from '@ui'
+import { Box, Paragraph } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 
 export const GroupDMIcon = (props: {
     roomIdentifier: RoomIdentifier
     letterFontSize?: LetterStylesVariantProps
-    width?: BoxProps['width']
+    width?: 'x3' | 'x4' | 'x6'
 }) => {
-    // const { width = 'x6' } = props
-
     const { counterParty, data } = useDMData(props.roomIdentifier)
     const userIds = useMemo(
         () => (data?.isGroup ? data.userIds : [counterParty].filter(notUndefined)),
         [counterParty, data?.isGroup, data?.userIds],
     )
 
-    return <AvatarGroup userIds={userIds} />
+    return <AvatarGroup userIds={userIds} width={props.width} />
 }
 
 const REMAINING_PLACEHOLDER = 'REMAINING_PLACEHOLDER'
 
 type Props = {
     userIds?: string[]
+    width?: 'x3' | 'x4' | 'x6'
 }
 
 /**
@@ -36,28 +35,29 @@ const constellations = [
     // single avatar
     [{ size: 1.0 }],
     // 2 avatars
-    [{ size: 0.43 }, { size: 0.43 }],
+    [{ size: 0.4 }, { size: 0.4 }],
     // 3 avatars
-    [{ size: 0.4 }, { size: 0.4 }, { size: 0.4 }],
+    [{ size: 0.38 }, { size: 0.38 }, { size: 0.38 }],
 ]
 
+const fontScale = { x3: 0.5, x4: 0.4, x6: 0.6 }
+
 const AvatarGroup = (props: Props) => {
-    const { userIds } = props
+    const { userIds, width = 'x6' } = props
     // note: profile should already have been removed from userIds
     if (!userIds?.length) {
         return <></>
     }
-    const size = 8 * 6 + 1
 
     // clamp number of avatars to always match a preset
     const total = Math.min(3, userIds.length)
     const constellationIndex = Math.max(0, Math.min(total - 1, constellations.length - 1))
     const constellation = constellations[constellationIndex]
 
-    const containerRadius = size / 2
+    const containerRadius = `50%`
 
     // no margin for single avatar
-    const MARGIN = userIds.length > 1 ? 2 : 0
+    const MARGIN = userIds.length > 1 ? -5 : 0
 
     const slots = userIds.slice()
 
@@ -67,19 +67,21 @@ const AvatarGroup = (props: Props) => {
         slots.splice(1, 0, REMAINING_PLACEHOLDER)
     }
 
+    const startAngle = slots.length === 2 ? 0.333 : 2
+
     return (
-        <Box position="relative" width="x6" height="x6" rounded="full">
+        <Box position="relative" width={width} height={width} rounded="full">
             <Box background="level3" width="100%" height="100%" rounded="full">
                 {slots.slice(0, 3).map((userId, i) => {
-                    const radius = (constellation[i].size * containerRadius * 2) / 2
+                    const radius = `calc(${constellation[i].size} * 50%`
 
                     // start of with a slightly tilted angle, then distribute avatars evenly
                     // around the circle
-                    const angle = Math.PI * -0.33 + Math.PI * 2 * (i / total)
+                    const angle = startAngle + Math.PI * -0.3333 + Math.PI * 2 * (i / total)
                     // center offset from top-left
                     const origin = containerRadius
                     // offset from center in the direction of the angle
-                    const offset = containerRadius - radius - MARGIN
+                    const offset = `calc(50% - ${radius} - ${1 * MARGIN}%)`
 
                     const sizePercent = `${constellation[i].size * 100}%`
 
@@ -89,8 +91,8 @@ const AvatarGroup = (props: Props) => {
                         height: sizePercent,
                         transformOrigin: 'center center',
                         transform: `translate(-50%,-50%)`,
-                        left: origin + Math.cos(angle) * offset,
-                        top: origin + Math.sin(angle) * offset,
+                        left: `calc(${origin} + ${Math.cos(angle)} * ${offset})`,
+                        top: `calc(${origin} + ${Math.sin(angle)} * ${offset})`,
                     } as const
 
                     // this simply replaces the 2nd avatar with the number of remaining
@@ -111,10 +113,8 @@ const AvatarGroup = (props: Props) => {
                                     background="level2"
                                     rounded="full"
                                 >
-                                    <Box style={{ transform: `scale(0.85)` }}>
-                                        <Paragraph strong size="xs">
-                                            {text}
-                                        </Paragraph>
+                                    <Box style={{ transform: `scale(${fontScale[width]})` }}>
+                                        <Paragraph strong>{text}</Paragraph>
                                     </Box>
                                 </Box>
                             ) : (
