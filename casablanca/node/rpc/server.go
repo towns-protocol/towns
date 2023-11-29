@@ -232,6 +232,8 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		}
 	})
 
+	mux.HandleFunc("/memory", MemoryHandler())
+
 	address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 	httpListener, err := net.Listen("tcp", address)
 	if err != nil {
