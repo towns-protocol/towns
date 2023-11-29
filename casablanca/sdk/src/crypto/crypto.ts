@@ -7,8 +7,6 @@ import { keccak256 } from 'ethereum-cryptography/keccak'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 import { check } from '../check'
 import { Client } from '../client'
-import EventEmitter from 'events'
-import TypedEmitter from 'typed-emitter'
 import { OLM_ALGORITHM, MEGOLM_ALGORITHM, UserDevice, ISignatures } from './olmLib'
 import { OlmMegolmDelegate } from '@river/mecholm'
 import { OlmDevice, IInitOpts } from './olmDevice'
@@ -29,7 +27,7 @@ import { ethers } from 'ethers'
 import { CryptoStore } from './store/cryptoStore'
 import { OlmDecryption } from './algorithms/olm'
 import { MegolmDecryption, MegolmEncryption } from './algorithms/megolm'
-import { ClearContent, RiverEventV2 } from '../eventV2'
+import { RiverEventV2 } from '../eventV2'
 
 const log = dlog('csb:crypto')
 
@@ -134,24 +132,6 @@ export const makeOldTownsDelegateSig = async (
     return bin_fromHexString(await primaryWallet.signMessage(devicePubKey))
 }
 
-/**
- * The result of a successful call to Crypto.decryptEvent
- */
-export interface IEventDecryptionResult {
-    /**
-     * The plaintext payload for the event (typically containing <tt>type</tt> and <tt>content</tt> fields).
-     */
-    clearEvent: ClearContent
-    /**
-     * Key owned by the sender of this event.
-     */
-    senderCurve25519Key?: string
-    /**
-     * The sender doesn't authorize the unverified devices to decrypt his messages
-     */
-    encryptedDisabledForUnverifiedDevices?: boolean
-}
-
 export interface IEventOlmDecryptionResult {
     /**
      * The plaintext payload for the event (typically containing <tt>type</tt> and <tt>content</tt> fields).
@@ -181,24 +161,6 @@ export type EncryptionInput = {
     recipient: IEncryptionUserRecipient
 }
 
-interface IRoomKey {
-    channel_id: string
-    algorithm: string
-}
-
-/**
- * The parameters of a room key request
- */
-export interface IRoomKeyRequestBody extends IRoomKey {
-    session_id: string
-    stream_id: string
-}
-
-export interface IRoomKeyRequestRecipient {
-    userId: string
-    deviceId: string
-}
-
 export enum CryptoEvent {
     DeviceVerificationChanged = 'deviceVerificationChanged',
     WillUpdateDevices = 'crypto.willUpdateDevices',
@@ -210,13 +172,6 @@ export interface IImportOpts {
     successes: number
     failures: number
     total: number
-}
-
-export interface IImportRoomKeysOpts {
-    /** called with an object that has a "stage" param */
-    progressCallback?: (stage: IImportOpts) => void
-    untrusted?: boolean
-    source?: string // TODO: Enum
 }
 
 export type CryptoEventHandlerMap = {
@@ -263,7 +218,7 @@ export interface CryptoBackend {
      * @returns a promise which resolves once we have finished decrypting.
      * Rejects with an error if there is a problem decrypting the event.
      */
-    decryptMegolmEvent(event: RiverEventV2): Promise<ClearContent>
+    decryptMegolmEvent(event: RiverEventV2): Promise<void>
 
     /**
      * Decrypt a received event using Olm
@@ -282,10 +237,7 @@ interface ISignableObject {
     unsigned?: object
 }
 
-export class Crypto
-    extends (EventEmitter as new () => TypedEmitter<CryptoEventHandlerMap>)
-    implements CryptoBackend
-{
+export class Crypto implements CryptoBackend {
     public deviceKeys: Record<string, string> = {}
     private olmDelegate: OlmMegolmDelegate | undefined
 
@@ -306,7 +258,6 @@ export class Crypto
         public readonly deviceId: string,
         public readonly cryptoStore: CryptoStore,
     ) {
-        super()
         // jterzis 05/05/23: this list is probably close to the actual list, but also tentative until confirmed.
         // todo: implement olmDevice instantiation
         // initialize Olm library
@@ -339,14 +290,6 @@ export class Crypto
             olmDevice: this.olmDevice,
             baseApis: this.client,
         })
-
-        // todo:: implement
-        // outgoingRoomKeyRequestManager
-        // toDeviceVerificationRequests
-        // cryptoCallbacks for crypto extensions
-        // crossSigningInfo
-        // SecretStorage
-        // dehydrationManager
     }
 
     /** stop background processes */
@@ -432,6 +375,20 @@ export class Crypto
             ciphertext: ciphertextRecord,
         })
     }
+
+    /**
+     * Decrypt a received event using Olm
+     */
+    public async decryptOlmEvent(
+        event: UserPayload_ToDevice,
+        senderUserId: string,
+    ): Promise<IEventOlmDecryptionResult> {
+        if (!event?.message?.algorithm) {
+            throw new Error('Event has no algorithm specified')
+        }
+        return this.olmDecryption.decryptEvent(event, senderUserId)
+    }
+
     /**
      * Encrypt an event according to the configuration of the stream.
      *
@@ -472,23 +429,23 @@ export class Crypto
     }
 
     /**
-     * Decrypt a received event using Olm
-     */
-    public async decryptOlmEvent(
-        event: UserPayload_ToDevice,
-        senderUserId: string,
-    ): Promise<IEventOlmDecryptionResult> {
-        if (!event?.message?.algorithm) {
-            throw new Error('Event has no algorithm specified')
-        }
-        return this.olmDecryption.decryptEvent(event, senderUserId)
-    }
-
-    /**
      * Decrypt a received event using Megolm
      */
-    public async decryptMegolmEvent(event: RiverEventV2): Promise<ClearContent> {
-        return this.megolmDecryption.decryptEvent(event)
+    public async decryptMegolmEvent(event: RiverEventV2) {
+        log('decryptMegolmEvent', event)
+        if (!event.shouldAttemptDecryption()) {
+            return
+        }
+        if (event.decryptionPromise) {
+            await event.decryptionPromise
+        } else {
+            try {
+                event.decryptionPromise = this.megolmDecryption.decryptEvent(event)
+                await event.decryptionPromise
+            } finally {
+                event.decryptionPromise = null
+            }
+        }
     }
 
     public async decryptMegolmEventWithId(eventId: string): Promise<void> {
@@ -497,67 +454,21 @@ export class Crypto
     /**
      * Import a list of Megolm room keys previously exported by exportRoomKeys
      *
+     * @param streamId - the id of the stream the keys are for
      * @param keys - a list of session export objects
      * @returns a promise which resolves once the keys have been imported
      */
-    public async importRoomKeys(
-        streamId: string,
-        keys: MegolmSession[],
-        opts: IImportRoomKeysOpts = {},
-    ): Promise<void> {
-        let successes = 0
-        let failures = 0
-        const total = keys.length
-
-        function updateProgress(): void {
-            opts.progressCallback?.({
-                stage: 'load_keys',
-                successes,
-                failures,
-                total,
-            })
-        }
-
-        await Promise.all(
-            keys.map(async (key) => {
-                if (!streamId || !key.algorithm) {
-                    dlog('ignoring room key entry with missing fields')
-                    failures++
-                    if (opts.progressCallback) {
-                        updateProgress()
+    public async importRoomKeys(streamId: string, keys: MegolmSession[]): Promise<void> {
+        await this.cryptoStore.withMegolmSessions(async () =>
+            Promise.all(
+                keys.map(async (key) => {
+                    try {
+                        await this.megolmDecryption.importRoomKey(streamId, key)
+                    } catch {
+                        dlog(`failed to import key`)
                     }
-                    return null
-                }
-
-                const alg = this.megolmDecryption
-                try {
-                    await alg.importRoomKey(streamId, key)
-                } catch {
-                    dlog(`failed to import key`)
-                }
-                successes++
-                if (opts.progressCallback) {
-                    updateProgress()
-                }
-                return
-            }),
+                }),
+            ),
         )
     }
-}
-
-/**
- * Outgoing room key request manager
- */
-export enum RoomKeyRequestState {
-    /** The request has not been sent */
-    Unsent,
-    /** The request is sent, awaiting reply */
-    Sent,
-    /** reply received, cancellation not yet sent */
-    CancellationPending,
-    /**
-     * Cancellation not yet and and will transition to UNSENT
-     * instead of being deleted once the cancellation has been sent.
-     */
-    CancellationPendingAndWillResend,
 }

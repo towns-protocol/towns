@@ -12,9 +12,9 @@ import {
     Utility,
     Session,
 } from '@river/mecholm'
-import { DecryptionError } from './algorithms/base'
 import { IOutboundGroupSessionKey } from './algorithms/megolm'
-import { EncryptedMessageEnvelope } from '@river/proto'
+import { EncryptedMessageEnvelope, MegolmSession } from '@river/proto'
+import { MEGOLM_ALGORITHM } from './olmLib'
 
 const log = dlog('csb:olmDevice')
 
@@ -88,23 +88,6 @@ export interface IInitOpts {
     olmDelegate?: OlmMegolmDelegate
 }
 
-interface Extensible {
-    [key: string]: any
-}
-export interface IMegolmSessionData extends Extensible {
-    /** Other keys the sender claims. */
-    sender_claimed_keys: Record<string, string>
-    stream_id: string
-    /** Unique id for the session */
-    session_id: string
-    /** Base64'ed key data */
-    session_key: string
-    algorithm?: string
-    untrusted?: boolean
-}
-
-//type FallbackKeys = { curve25519: { [keyId: string]: string } }
-
 export class OlmDevice {
     public pickleKey = 'DEFAULT_KEY' // set by consumers
 
@@ -123,8 +106,6 @@ export class OlmDevice {
     // todo: ensure we need this to serialize prekey message given we're using fallback keys
     // not one time keys, which suffer a race condition and expire once used.
     public olmPrekeyPromise: Promise<any> = Promise.resolve() // set by consumers
-
-    private outboundGroupSessionStore: Record<string, string> = {}
 
     // Store a set of decrypted message indexes for each group session.
     // This partially mitigates a replay attack where a MITM resends a group
@@ -428,7 +409,7 @@ export class OlmDevice {
         session: OutboundGroupSession,
         streamId: string,
     ): Promise<void> {
-        return this.cryptoStore.withOutboundGroupSessionsTx(async () => {
+        return this.cryptoStore.withMegolmSessions(async () => {
             await this.cryptoStore.storeEndToEndOutboundGroupSession(
                 session.session_id(),
                 session.pickle(this.pickleKey),
@@ -441,7 +422,7 @@ export class OlmDevice {
      * Extract OutboundGroupSession from the session store and call given fn.
      */
     private async getOutboundGroupSession(streamId: string): Promise<OutboundGroupSession> {
-        return this.cryptoStore.withOutboundGroupSessionsTx(async () => {
+        return this.cryptoStore.withMegolmSessions(async () => {
             const pickled = await this.cryptoStore.getEndToEndOutboundGroupSession(streamId)
             if (!pickled) {
                 throw new Error(`Unknown outbound group session ${streamId}`)
@@ -474,7 +455,7 @@ export class OlmDevice {
      *
      */
     public async createOutboundGroupSession(streamId: string): Promise<string> {
-        return await this.cryptoStore.withGroupSessionsTx(async () => {
+        return await this.cryptoStore.withMegolmSessions(async () => {
             // Create an outbound group session
             const session = this.olmDelegate.createOutboundGroupSession()
             const inboundSession = this.olmDelegate.createInboundGroupSession()
@@ -535,7 +516,7 @@ export class OlmDevice {
      *
      * @internal
      */
-    private async getInboundGroupSession(
+    async getInboundGroupSession(
         streamId: string,
         sessionId: string,
     ): Promise<{
@@ -647,85 +628,9 @@ export class OlmDevice {
                 sessionId,
                 sessionData,
             )
-
-            if (!existingSession) {
-                await this.cryptoStore.addSharedHistoryInboundGroupSession(streamId, sessionId)
-            }
         } finally {
             session.free()
         }
-    }
-
-    /**
-     * Decrypt a received message with an inbound group session
-     *
-     * @param streamId -    room in which the message was received
-     * @param senderKey - base64-encoded curve25519 key of the sender
-     * @param sessionId - session identifier
-     * @param body -      base64-encoded body of the encrypted message
-     * @param eventId -   ID of the event being decrypted
-     * @param timestamp - timestamp of the event being decrypted
-     *
-     * @returns null if the sessionId is unknown
-     */
-    public async decryptGroupMessage(
-        streamId: string,
-        sessionId: string,
-        body: string,
-        eventId: string,
-        timestamp?: number,
-    ): Promise<IDecryptedGroupMessage | null> {
-        let result: IDecryptedGroupMessage | null = null
-        // when the localstorage crypto store is used as an indexeddb backend,
-        // exceptions thrown from within the inner function are not passed through
-        // to the top level, so we store exceptions in a variable and raise them at
-        // the end
-
-        const { session, data: sessionData } = await this.getInboundGroupSession(
-            streamId,
-            sessionId,
-        )
-        if (!session || !sessionData) {
-            return null
-        }
-
-        const res = session.decrypt(body)
-
-        let plaintext: string = res.plaintext
-        if (plaintext === undefined) {
-            // @ts-ignore - Compatibility for older olm versions.
-            plaintext = res as string
-        } else {
-            // Check if we have seen this message index before to detect replay attacks.
-            // If the event ID and timestamp are specified, and the match the event ID
-            // and timestamp from the last time we used this message index, then we
-            // don't consider it a replay attack.
-            const messageIndexKey = `${streamId}|${sessionId}|${res.message_index}`
-            if (messageIndexKey in this.inboundGroupSessionMessageIndexes) {
-                const msgInfo = this.inboundGroupSessionMessageIndexes[messageIndexKey]
-                if (msgInfo.id !== eventId || msgInfo.timestamp !== timestamp) {
-                    throw new Error(
-                        'Duplicate message index, possible replay attack: ' + messageIndexKey,
-                    )
-                    return null
-                }
-            }
-            this.inboundGroupSessionMessageIndexes[messageIndexKey] = {
-                id: eventId,
-                timestamp: timestamp!,
-            }
-        }
-
-        sessionData.session = session.pickle(this.pickleKey)
-        await this.cryptoStore.storeEndToEndInboundGroupSession(streamId, sessionId, sessionData)
-
-        result = {
-            result: plaintext,
-            keysClaimed: sessionData.keysClaimed || {},
-            streamId: streamId,
-            untrusted: !!sessionData.untrusted,
-        }
-        return result
     }
 
     /**
@@ -740,7 +645,7 @@ export class OlmDevice {
         payloadString: string,
         streamId: string,
     ): Promise<{ ciphertext: string; sessionId: string }> {
-        return await this.cryptoStore.withOutboundGroupSessionsTx(async () => {
+        return await this.cryptoStore.withMegolmSessions(async () => {
             log(`encrypting msg with megolm session for stream id ${streamId}`)
 
             checkPayloadLength(payloadString)
@@ -873,98 +778,6 @@ export class OlmDevice {
     }
 
     /**
-     * Get the right olm session id for encrypting messages to the given identity key
-     *
-     * @param theirDeviceIdentityKey - Curve25519 identity key for the
-     *     remote device
-     * @param nowait - Don't wait for an in-progress session to complete.
-     *     This should only be set to true of the calling function is the function
-     *     that marked the session as being in-progress.
-     * @returns  session id, or null if no established session
-     */
-    public async getSessionIdForDevice(
-        theirDeviceIdentityKey: string,
-        nowait = false,
-    ): Promise<string | null> {
-        const sessionInfos = await this.getSessionInfoForDevice(theirDeviceIdentityKey, nowait)
-
-        if (sessionInfos.length === 0) {
-            return null
-        }
-        // Use the session that has most recently received a message
-        let idxOfBest = 0
-        for (let i = 1; i < sessionInfos.length; i++) {
-            const thisSessInfo = sessionInfos[i]
-            const thisLastReceived =
-                thisSessInfo.lastReceivedMessageTs === undefined
-                    ? 0
-                    : thisSessInfo.lastReceivedMessageTs
-
-            const bestSessInfo = sessionInfos[idxOfBest]
-            const bestLastReceived =
-                bestSessInfo.lastReceivedMessageTs === undefined
-                    ? 0
-                    : bestSessInfo.lastReceivedMessageTs
-            if (
-                thisLastReceived > bestLastReceived ||
-                (thisLastReceived === bestLastReceived &&
-                    thisSessInfo.sessionId < bestSessInfo.sessionId)
-            ) {
-                idxOfBest = i
-            }
-        }
-        return sessionInfos[idxOfBest].sessionId
-    }
-
-    /**
-     * Get information on the active Olm sessions for a device.
-     * <p>
-     * Returns an array, with an entry for each active session. The first entry in
-     * the result will be the one used for outgoing messages. Each entry contains
-     * the keys 'hasReceivedMessage' (true if the session has received an incoming
-     * message and is therefore past the pre-key stage), and 'sessionId'.
-     *
-     * @param deviceIdentityKey - Curve25519 identity key for the device
-     * @param nowait - Don't wait for an in-progress session to complete.
-     *     This should only be set to true of the calling function is the function
-     *     that marked the session as being in-progress.
-     */
-    public async getSessionInfoForDevice(
-        deviceIdentityKey: string,
-        nowait = false,
-    ): Promise<
-        { sessionId: string; lastReceivedMessageTs: number; hasReceivedMessage: boolean }[]
-    > {
-        if (deviceIdentityKey in this.sessionsInProgress && !nowait) {
-            log(`Waiting for Olm session for ${deviceIdentityKey} to be created`)
-            try {
-                await this.sessionsInProgress[deviceIdentityKey]
-            } catch (e) {
-                // if the session failed to be created, then just fall through and
-                // return an empty result
-            }
-        }
-        const info: {
-            lastReceivedMessageTs: number
-            hasReceivedMessage: boolean
-            sessionId: string
-        }[] = []
-
-        const sessions = await this.cryptoStore.getEndToEndSessions(deviceIdentityKey)
-
-        for (const session of sessions) {
-            const sessInfo = await this.unpickleSession(session)
-            const sessionInfo = {
-                lastReceivedMessageTs: sessInfo.lastReceivedMessageTs,
-                hasReceivedMessage: sessInfo.session.has_received_message(),
-                sessionId: session.sessionId,
-            }
-            info.push(sessionInfo)
-        }
-        return info
-    }
-
-    /**
      * Decrypt an incoming message using an existing session
      *
      * @param theirDeviceIdentityKey - Curve25519 identity key for the
@@ -1046,10 +859,8 @@ export class OlmDevice {
 
     // Group Sessions
 
-    public async getSharedHistoryInboundGroupSessions(
-        streamId: string,
-    ): Promise<[streamId: string, sessionId: string][]> {
-        return await this.cryptoStore.getSharedHistoryInboundGroupSessions(streamId)
+    public async getInboundGroupSessionIds(streamId: string): Promise<string[]> {
+        return await this.cryptoStore.getInboundGroupSessionIds(streamId)
     }
 
     /**
@@ -1060,10 +871,9 @@ export class OlmDevice {
      * @param sessionId - session identifier
      */
     public async hasInboundSessionKeys(streamId: string, sessionId: string): Promise<boolean> {
-        const sessionData = await this.cryptoStore.getEndToEndInboundGroupSession(
-            streamId,
-            sessionId,
-        )
+        const sessionData = await this.cryptoStore.withMegolmSessions(async () => {
+            return this.cryptoStore.getEndToEndInboundGroupSession(streamId, sessionId)
+        })
 
         if (!sessionData) {
             return false
@@ -1141,25 +951,28 @@ export class OlmDevice {
      * @param sessionId  - session identifier
      * @param sessionData - the session object from the store
      */
-    public exportInboundGroupSession(
+    public async exportInboundGroupSession(
         streamId: string,
         sessionId: string,
-        sessionData: InboundGroupSessionData,
-    ): IMegolmSessionData {
+    ): Promise<MegolmSession | undefined> {
+        const sessionData = await this.cryptoStore.getEndToEndInboundGroupSession(
+            streamId,
+            sessionId,
+        )
+        if (!sessionData) {
+            return undefined
+        }
+
         const session = this.unpickleInboundGroupSession(sessionData)
         const messageIndex = session.first_known_index()
-
         const sessionKey = session.export_session(messageIndex)
-        const firstKnownIndex = session.first_known_index()
         session.free()
 
-        return {
-            sender_key: streamId,
-            sender_claimed_keys: sessionData.keysClaimed,
-            stream_id: sessionData.stream_id,
-            session_id: sessionId,
-            session_key: sessionKey,
-            first_known_index: firstKnownIndex,
-        }
+        return new MegolmSession({
+            streamId: streamId,
+            sessionId: sessionId,
+            sessionKey: sessionKey,
+            algorithm: MEGOLM_ALGORITHM,
+        })
     }
 }

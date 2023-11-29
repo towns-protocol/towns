@@ -440,8 +440,6 @@ describe('clientTest', () => {
         await expect(alicesClient.initializeUser()).toResolve()
         await alicesClient.startSync()
 
-        await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!')).toResolve()
-
         // Alice can't sent a message to Bob's channel.
         // TODO: since Alice doesn't sync Bob's channel, this fails fast (i.e. stream is unknown to Alice's client).
         // It would be interesting for Alice to sync this channel, and then try to send a message.
@@ -537,6 +535,7 @@ describe('clientTest', () => {
             })
         })
 
+        await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!')).toResolve()
         await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, Alice!')).toResolve()
 
         log('Waiting for Alice to get messages...')

@@ -88,7 +88,7 @@ import {
 import { bin_fromHexString, bin_toHexString, shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/cryptoStore'
 
-import { IDecryptOptions, RiverEventsV2, RiverEventV2 } from './eventV2'
+import { RiverEventsV2, RiverEventV2 } from './eventV2'
 import debug from 'debug'
 import { Stream } from './stream'
 import { Code } from '@connectrpc/connect'
@@ -1629,24 +1629,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     /**
      * Attempts to decrypt an event
      */
-    public async decryptEventIfNeeded(
-        event: RiverEventV2,
-        options?: IDecryptOptions,
-    ): Promise<void> {
-        if (event.shouldAttemptDecryption()) {
-            if (!this.cryptoBackend) {
-                throw new Error('crypto backend not initialized')
-            }
-            await event.attemptDecryption(this.cryptoBackend, options)
+    public async decryptEventIfNeeded(event: RiverEventV2): Promise<void> {
+        if (!this.cryptoBackend) {
+            throw new Error('crypto backend not initialized')
         }
-
-        if (event.isBeingDecrypted()) {
-            const promise = event.getDecryptionPromise()
-            if (promise) {
-                return promise
-            }
-        }
-        return Promise.resolve()
+        return this.cryptoBackend.decryptMegolmEvent(event)
     }
 
     public hasInboundSessionKeys(streamId: string, sessionId: string): Promise<boolean> {
@@ -1656,12 +1643,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         ) as Promise<boolean>
     }
 
-    public async importRoomKeys(
-        streamId: string,
-        keys: MegolmSession[],
-        opts?: object,
-    ): Promise<void> {
-        return this.cryptoBackend?.importRoomKeys(streamId, keys, opts)
+    public async importRoomKeys(streamId: string, keys: MegolmSession[]): Promise<void> {
+        return this.cryptoBackend?.importRoomKeys(streamId, keys)
     }
 
     public async retryMegolmDecryption(eventId: string): Promise<void> {

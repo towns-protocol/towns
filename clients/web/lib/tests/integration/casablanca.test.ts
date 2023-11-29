@@ -12,18 +12,13 @@ import {
 } from '@river/sdk'
 import { bin_fromHexString, SignerContext } from '@river/sdk'
 import { ethers } from 'ethers'
-import {
-    RoomMessageEncryptedEvent,
-    RoomMessageEvent,
-    ZTEvent,
-} from '../../src/types/timeline-types'
+import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
     makeUniqueName,
     registerAndStartClients,
 } from './helpers/TestUtils'
-import { setTimeout } from 'timers/promises'
 import { Permission } from '@river/web3'
 import debug from 'debug'
 
@@ -123,15 +118,7 @@ describe('casablanca', () => {
         await bob.sendMessage(channelId, 'Hello, world from Bob!')
 
         log('Bob sent a message, waiting for Alice to receive it')
-        await waitFor(async () => {
-            const encryptedEvent = await alice.getLatestEvent<RoomMessageEncryptedEvent>(
-                channelId,
-                ZTEvent.RoomMessageEncrypted,
-            )
-            expect(encryptedEvent).toBeDefined()
-            expect(encryptedEvent?.fallbackContent).toContain('m.room.encrypted')
-        })
-        await setTimeout(10)
+
         await waitFor(async () => {
             const event = await alice.getLatestEvent<RoomMessageEvent>(
                 channelId,
@@ -178,14 +165,6 @@ describe('casablanca', () => {
 
         log('Bob sent a message, waiting for Alice to receive it')
 
-        await waitFor(async () => {
-            const encryptedEvent = await alice.getLatestEvent<RoomMessageEncryptedEvent>(
-                channelId,
-                ZTEvent.RoomMessageEncrypted,
-            )
-            expect(encryptedEvent).toBeDefined()
-            expect(encryptedEvent?.content?.kind).toEqual('m.room.encrypted')
-        })
         await waitFor(async () => {
             const event = await alice.getLatestEvent<RoomMessageEvent>(
                 channelId,

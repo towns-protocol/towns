@@ -17,19 +17,17 @@ export class CryptoStore extends Dexie {
     olmSessions!: Table<OlmSessionRecord>
     outboundGroupSessions!: Table<MegolmSessionRecord>
     inboundGroupSessions!: Table<InboundGroupSessionData & { streamId: string; sessionId: string }>
-    sharedHistoryInboundSessions!: Table<{ streamId: string; sessionId: string }>
     devices!: Table<UserDeviceRecord>
     userId: string
 
     constructor(databaseName: string, userId: string) {
         super(databaseName)
         this.userId = userId
-        this.version(3).stores({
+        this.version(4).stores({
             account: 'id',
             olmSessions: '[deviceKey+sessionId], deviceKey, sessionId',
             inboundGroupSessions: '[streamId+sessionId]',
             outboundGroupSessions: 'streamId',
-            sharedHistoryInboundSessions: '[streamId+sessionId]',
             devices: '[userId+deviceId],expirationTimestamp',
         })
     }
@@ -113,43 +111,25 @@ export class CryptoStore extends Dexie {
         await this.inboundGroupSessions.put({ streamId, sessionId, ...sessionData })
     }
 
-    async addSharedHistoryInboundGroupSession(streamId: string, sessionId: string): Promise<void> {
-        await this.sharedHistoryInboundSessions.put({ streamId, sessionId })
-    }
-
-    async getSharedHistoryInboundGroupSessions(
-        streamId: string,
-    ): Promise<[streamId: string, sessionId: string][]> {
-        const sessions = await this.sharedHistoryInboundSessions.where({ streamId }).toArray()
-        return sessions.map((s) => [s.streamId, s.sessionId])
+    async getInboundGroupSessionIds(streamId: string): Promise<string[]> {
+        const sessions = await this.inboundGroupSessions.where({ streamId }).toArray()
+        return sessions.map((s) => s.sessionId)
     }
 
     async withOlmSessionsTx<T>(fn: () => Promise<T>): Promise<T> {
-        return await this.transaction('rw', this.olmSessions, async () => {
-            return await fn()
-        })
+        return await this.transaction('rw', this.olmSessions, fn)
     }
 
     async withAccountAndOlmSessionsTx<T>(fn: () => Promise<T>): Promise<T> {
-        return await this.transaction('rw', this.account, this.olmSessions, async () => {
-            return await fn()
-        })
+        return await this.transaction('rw', this.account, this.olmSessions, fn)
     }
 
-    async withOutboundGroupSessionsTx<T>(fn: () => Promise<T>): Promise<T> {
-        return await this.transaction('rw', this.outboundGroupSessions, async () => {
-            return await fn()
-        })
-    }
-
-    async withGroupSessionsTx<T>(fn: () => Promise<T>): Promise<T> {
+    async withMegolmSessions<T>(fn: () => Promise<T>): Promise<T> {
         return await this.transaction(
             'rw',
             this.outboundGroupSessions,
             this.inboundGroupSessions,
-            async () => {
-                return await fn()
-            },
+            fn,
         )
     }
 

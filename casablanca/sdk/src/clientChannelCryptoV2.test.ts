@@ -83,6 +83,15 @@ describe('clientCryptoTest_RiverEventV2', () => {
         if (!senderKey) {
             throw new Error('Sender key not found')
         }
+
+        const session = await alicesClient.olmDevice.exportInboundGroupSession(
+            bobsChannelId,
+            encryptedData.sessionId!,
+        )
+        if (!session) {
+            throw new Error('Session not found')
+        }
+        await expect(bobsClient.importRoomKeys(bobsChannelId, [session])).toResolve()
         // create a message event from alice's encrypted event and have bob decrypt it
         //const messagePayload = make_ChannelPayload_Message(encryptedData)
 
@@ -161,6 +170,16 @@ describe('clientCryptoTest_RiverEventV2', () => {
         if (!senderKey) {
             throw new Error('Sender key not found')
         }
+
+        const session = await alicesClient.olmDevice.exportInboundGroupSession(
+            bobsChannelId,
+            encryptedData.sessionId!,
+        )
+        if (!session) {
+            throw new Error('Session not found')
+        }
+        await expect(bobsClient.importRoomKeys(bobsChannelId, [session])).toResolve()
+
         // create a message event from alice's encrypted event and have bob decrypt it
         //const messagePayload = make_ChannelPayload_Message(encryptedData)
 
@@ -243,6 +262,15 @@ describe('clientCryptoTest_RiverEventV2', () => {
             throw new Error('Sender key not found')
         }
 
+        const session = await alicesClient.olmDevice.exportInboundGroupSession(
+            bobsChannelId,
+            encryptedData.sessionId!,
+        )
+        if (!session) {
+            throw new Error('Session not found')
+        }
+        await expect(bobsClient.importRoomKeys(bobsChannelId, [session])).toResolve()
+
         const event = new RiverEventV2({
             channel_id: bobsChannelId,
             event_id: 'fake_event_id',
@@ -313,6 +341,16 @@ describe('clientCryptoTest_RiverEventV2', () => {
         if (!senderKey) {
             throw new Error('Sender key not found')
         }
+
+        const session = await alicesClient.olmDevice.exportInboundGroupSession(
+            bobsChannelId,
+            encryptedData.sessionId!,
+        )
+        if (!session) {
+            throw new Error('Session not found')
+        }
+        await expect(bobsClient.importRoomKeys(bobsChannelId, [session])).toResolve()
+
         // create a message event from alice's encrypted event and have bob decrypt it
         //const messagePayload = make_ChannelPayload_Message(encryptedData)
 
@@ -392,6 +430,16 @@ describe('clientCryptoTest_RiverEventV2', () => {
         if (!senderKey) {
             throw new Error('Sender key not found')
         }
+
+        const session = await alicesClient.olmDevice.exportInboundGroupSession(
+            bobsChannelId,
+            encryptedData.sessionId!,
+        )
+        if (!session) {
+            throw new Error('Session not found')
+        }
+        await expect(bobsClient.importRoomKeys(bobsChannelId, [session])).toResolve()
+
         // create a message event from alice's encrypted event and have bob decrypt it
         //const messagePayload = make_ChannelPayload_Message(encryptedData)
 
@@ -470,6 +518,15 @@ describe('clientCryptoTest_RiverEventV2', () => {
         if (!senderKey) {
             throw new Error('Sender key not found')
         }
+
+        const session = await alicesClient.olmDevice.exportInboundGroupSession(
+            bobsChannelId,
+            encryptedData.sessionId!,
+        )
+        if (!session) {
+            throw new Error('Session not found')
+        }
+        await expect(bobsClient.importRoomKeys(bobsChannelId, [session])).toResolve()
 
         const event = new RiverEventV2({
             channel_id: bobsChannelId,
@@ -670,15 +727,14 @@ describe('clientCryptoTest_RiverEventV2', () => {
             stream_id: bobsChannelId,
             content: encryptedData,
         })
-        await expect(alicesClient.decryptEventIfNeeded(eventForAlice)).toResolve()
+        await expect(alicesClient.decryptEventIfNeeded(eventForAlice)).rejects.toResolve()
         const clear = eventForAlice.getContent()
-        if (clear && clear.error) {
-            expect(clear.error.type).toEqual('m.bad.encrypted')
-        }
+        expect(clear!.error).toBeDefined()
+        expect(clear!.error!.type).toEqual('m.bad.encrypted')
     })
 
     // todo: run the following tests once RiverEventV2 replaces RiverEvent in client emitters.
-    test.skip('encryptDecryptChannelMessageSentOverClient', async () => {
+    test('encryptDecryptChannelMessageSentOverClient', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()
@@ -755,7 +811,7 @@ describe('clientCryptoTest_RiverEventV2', () => {
         await bobSelfToDevice.expectToSucceed()
     })
 
-    test.skip('encryptedChannelMessageReturnsCiphertext', async () => {
+    test('encryptedChannelMessageReturnsCiphertext', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()

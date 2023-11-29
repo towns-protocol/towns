@@ -62,10 +62,6 @@ describe('sendAMessage', () => {
             await waitForWithRetries(() => client.joinRoom(channelId))
         }
 
-        // bob sends a message to the room
-        console.log(`!!!!!! bob sends message`)
-        await bob.sendMessage(channelId, 'Hello Alice!')
-
         const clientEvents: RiverEventV2[] = []
         const bobRecievedEvents: RiverEventV2[] = []
         // everyone should receive the message
@@ -99,6 +95,10 @@ describe('sendAMessage', () => {
                 }
             },
         )
+
+        // bob sends a message to the room
+        console.log(`!!!!!! bob sends message`)
+        await bob.sendMessage(channelId, 'Hello Alice!')
 
         // everyone sends a message to the room
         for (let i = 1; i < numClients; i++) {

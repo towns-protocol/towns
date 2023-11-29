@@ -2,23 +2,8 @@ import { Client } from '../../client'
 import { OlmDevice } from '../olmDevice'
 import { Crypto } from '../crypto'
 import { IRoomEncryption } from '../store/types'
-import { RiverEventV2 } from '../../eventV2'
-import { MegolmSession } from '@river/proto'
-
-/**
- * Map of registered encryption algorithm classes. A map from string to {@link EncryptionAlgorithm} class
- */
-export const ENCRYPTION_CLASSES = new Map<string, new (params: IParams) => EncryptionAlgorithm>()
 
 export type DecryptionClassParams<P extends IParams = IParams> = Omit<P, 'deviceId' | 'config'>
-
-/**
- * map of registered encryption algorithm classes. Map from string to {@link DecryptionAlgorithm} class
- */
-export const DECRYPTION_CLASSES = new Map<
-    string,
-    new (params: DecryptionClassParams) => DecryptionAlgorithm
->()
 
 export interface IParams {
     /** The UserID for the local user */
@@ -59,8 +44,6 @@ export abstract class EncryptionAlgorithm {
         this.baseApis = params.baseApis
         this.channelId = params.channelId
     }
-
-    public forceDiscardSession?(): void
 }
 
 /**
@@ -79,36 +62,6 @@ export abstract class DecryptionAlgorithm {
         this.olmDevice = params.olmDevice
         this.baseApis = params.baseApis
         this.channelId = params.channelId
-    }
-
-    /**
-     * Handle a key event
-     *
-     * @param _params - event key event
-     */
-    public async onRoomKeyEvent(_params: RiverEventV2): Promise<void> {
-        // ignore by default
-    }
-
-    /**
-     * Import a room key
-     *
-     * @param _opts - object
-     */
-
-    public async importRoomKey(_streamId: string, _session: MegolmSession): Promise<void> {
-        // ignore by default
-    }
-
-    /**
-     * Retry decrypting all the events from a sender that haven't been
-     * decrypted yet.
-     *
-     * @param _senderKey - the sender's key
-     */
-    public async retryDecryptionFromSender(_senderKey: string): Promise<boolean> {
-        // ignore by default
-        return false
     }
 }
 
@@ -155,25 +108,4 @@ function detailedStringForDecryptionError(
     result += ']'
 
     return result
-}
-
-/**
- * Registers an encryption/decryption class for a particular algorithm
- *
- * @param algorithm - algorithm tag to register for
- *
- * @param encryptor - {@link EncryptionAlgorithm} implementation
- *
- * @param decryptor - {@link DecryptionAlgorithm} implementation
- */
-export function registerAlgorithm<P extends IParams = IParams>(
-    algorithm: string,
-    encryptor: new (params: P) => EncryptionAlgorithm,
-    decryptor: new (params: DecryptionClassParams<P>) => DecryptionAlgorithm,
-): void {
-    ENCRYPTION_CLASSES.set(algorithm, encryptor as new (params: IParams) => EncryptionAlgorithm)
-    DECRYPTION_CLASSES.set(
-        algorithm,
-        decryptor as new (params: DecryptionClassParams) => DecryptionAlgorithm,
-    )
 }

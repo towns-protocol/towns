@@ -518,17 +518,13 @@ export class RiverDecryptionExtension {
                 const wireContent = event.getWireContent()
                 return [wireContent.senderKey ?? '', wireContent.sessionId ?? '']
             })
-        const allSharedHistorySessions: [senderKey: string, sessionId: string][] | undefined =
-            await this.client.cryptoBackend?.olmDevice?.getSharedHistoryInboundGroupSessions(
-                streamId,
-            )
+        const knownSessionIds =
+            (await this.client.cryptoBackend?.olmDevice?.getInboundGroupSessionIds(streamId)) ?? []
 
         const ourDeviceKey = this.client.olmDevice.deviceCurve25519Key
         if (!ourDeviceKey) {
             throw new Error('CDE::_askRoomForKeys - our device key not found')
         }
-        const knownSessions =
-            allSharedHistorySessions?.map(([_senderKey, sessionId]) => sessionId) ?? []
 
         let request: PlainMessage<StreamEvent>['payload']
         // for each room, ask for all missing sessionIds sequentially to stream
@@ -560,7 +556,7 @@ export class RiverDecryptionExtension {
                     algorithm: MEGOLM_ALGORITHM,
                     senderKey: ourDeviceKey,
                     knownSessionIds:
-                        knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
+                        knownSessionIds.length < MAX_EVENTS_PER_REQUEST ? knownSessionIds : [],
                 })
             } else if (isDMChannelStreamId(streamId)) {
                 const keySolicitations = stream.view.dmChannelContent.keySolicitations
@@ -572,7 +568,7 @@ export class RiverDecryptionExtension {
                     algorithm: MEGOLM_ALGORITHM,
                     senderKey: ourDeviceKey,
                     knownSessionIds:
-                        knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
+                        knownSessionIds.length < MAX_EVENTS_PER_REQUEST ? knownSessionIds : [],
                 })
             } else if (isGDMChannelStreamId(streamId)) {
                 const keySolicitations = stream.view.gdmChannelContent.keySolicitations
@@ -584,7 +580,7 @@ export class RiverDecryptionExtension {
                     algorithm: MEGOLM_ALGORITHM,
                     senderKey: ourDeviceKey,
                     knownSessionIds:
-                        knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : [],
+                        knownSessionIds.length < MAX_EVENTS_PER_REQUEST ? knownSessionIds : [],
                 })
             } else {
                 throw new Error('CDE::_askRoomForKeys - unknown stream type')
@@ -696,17 +692,14 @@ export class RiverDecryptionExtension {
         }
 
         const getUniqueUnknownSharedHistorySessions = async (channelId: string) => {
-            if (knownSessionIds) {
-                const allSharedHistorySessions =
-                    await this.client.cryptoBackend?.olmDevice.getSharedHistoryInboundGroupSessions(
-                        channelId,
-                    )
-                return (
-                    allSharedHistorySessions?.filter(
-                        ([_streamId, sessionId]) => !knownSessionIds?.includes(sessionId),
-                    ) ?? []
-                )
-            }
+            const allSharedHistorySessionIds =
+                (await this.client.cryptoBackend?.olmDevice.getInboundGroupSessionIds(channelId)) ??
+                []
+
+            return allSharedHistorySessionIds.filter(
+                (sessionId) => !knownSessionIds.includes(sessionId),
+            )
+
             return []
         }
 
@@ -735,45 +728,32 @@ export class RiverDecryptionExtension {
 
         console.log('CDE::onKeySolicitation requested', {
             streamId,
-            requestedSessions: requestedSessions?.length,
-            knownSessionIds: knownSessionIds?.length,
+            requestedSessions: requestedSessions.length,
+            knownSessionIds: knownSessionIds.length,
             mySessions: sharedHistorySessions.length,
         })
 
-        const uniqueRequestedSessions = (requestedSessions ?? []).filter(
-            (x) => !sharedHistorySessions.some((y) => x[1] === y[1]),
-        )
+        const uniqueRequestedSessions = requestedSessions
+            .map((session) => session[1])
+            .filter((x) => !sharedHistorySessions.some((y) => x[1] === y))
 
         const allRequestedSessions = sharedHistorySessions.concat(uniqueRequestedSessions)
         console.log('CDE::onKeySolicitation all requested sessions', { allRequestedSessions })
 
         const exportedSessions: MegolmSessionData[] = []
 
-        for (const [streamId, sessionId] of allRequestedSessions) {
-            const sessionData = await this.client.cryptoStore.getEndToEndInboundGroupSession(
+        for (const sessionId of allRequestedSessions) {
+            const megolmSession = await this.client.olmDevice.exportInboundGroupSession(
                 streamId,
                 sessionId,
             )
-            if (!sessionData || !this.client.cryptoBackend) {
+
+            if (!megolmSession) {
                 continue
             }
 
-            if (sessionData.stream_id === streamId) {
-                const sess = this.client.cryptoBackend?.olmDevice.exportInboundGroupSession(
-                    streamId,
-                    sessionId,
-                    sessionData,
-                )
-                delete sess.first_known_index
-                sess.algorithm = MEGOLM_ALGORITHM
-                exportedSessions.push(
-                    new MegolmSession({
-                        streamId: sess.stream_id,
-                        sessionId: sess.session_id,
-                        sessionKey: sess.session_key,
-                        algorithm: sess.algorithm,
-                    }),
-                )
+            if (megolmSession.streamId === streamId) {
+                exportedSessions.push(megolmSession)
             } else {
                 console.error('CDE::onKeySolicitation got key sharing request for wrong room', {
                     streamId,
@@ -787,8 +767,8 @@ export class RiverDecryptionExtension {
             fromUserId,
             toUserId: fromUserId,
             streamId,
-            knownSessionIds: knownSessionIds?.length,
-            requestedSessions: requestedSessions?.length,
+            knownSessionIds: knownSessionIds.length,
+            requestedSessions: requestedSessions.length,
             numSessionsLookedUp: allRequestedSessions.length,
             exportedSessions: exportedSessions.length,
         })
@@ -925,9 +905,6 @@ export class RiverDecryptionExtension {
                             await this.client.importRoomKeys(streamId, sessions)
                         }
                     }
-                    await Promise.all([
-                        streamRecord.decryptionFailures.map((e) => e.getDecryptionPromise()),
-                    ])
 
                     // clear any request to this user and start looking for keys again
                     console.info('CDE::onKeyResponse - complete', {
