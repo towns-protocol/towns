@@ -476,7 +476,8 @@ export function VList<T>(props: Props<T>) {
             return
         }
 
-        let shouldFocus = props.focusItem.force
+        let shouldFocus =
+            props.focusItem.force || (!hasUserScrolledRef.current && !focusItemRef.current?.sticky)
 
         if (!shouldFocus && props.focusItem.align === 'end') {
             const cy = itemCache.current[props.focusItem.key]?.y
