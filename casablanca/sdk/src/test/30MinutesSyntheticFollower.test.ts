@@ -1,0 +1,186 @@
+/**
+ * @group synthetic
+ */
+
+import { dlog } from '../dlog'
+import { makeUserContextFromWallet, makeDonePromise, waitFor } from '../util.test'
+import { ethers } from 'ethers'
+import { jest } from '@jest/globals'
+import { makeStreamRpcClient } from '../makeStreamRpcClient'
+import { userIdFromAddress } from '../id'
+import { Client } from '../client'
+import { RiverDbManager } from '../riverDbManager'
+import { MockEntitlementsDelegate } from '../utils'
+import { Queue, Worker } from 'bullmq'
+import { ClearContent, RiverEventV2 } from '../eventV2'
+import {
+    testRunTimeMs,
+    testChannelId,
+    connectionOptions,
+    loginWaitTime,
+    followerKey,
+    replySentTime,
+    jsonRpcProviderUrl,
+    nodeRpcURL,
+    fromFollowerQueueName,
+    fromLeaderQueueName,
+} from './30MinutesSyntheticConfig'
+
+// This is a temporary hack because importing viem via SpaceDapp causes a jest error
+// specifically the code in ConvertersEntitlements.ts - decodeAbiParameters and encodeAbiParameters functions have an import that can't be found
+// Need to use the new space dapp in an actual browser to see if this is a problem there too before digging in further
+jest.unstable_mockModule('viem', async () => {
+    return {
+        BaseError: class extends Error {},
+        hexToString: jest.fn(),
+        encodeFunctionData: jest.fn(),
+        decodeAbiParameters: jest.fn(),
+        encodeAbiParameters: jest.fn(),
+        parseAbiParameters: jest.fn(),
+        zeroAddress: `0x${'0'.repeat(40)}`,
+    }
+})
+
+const log = dlog('csb:test:synthetic')
+
+const healthcheckQueueFollower = new Queue(fromFollowerQueueName, {
+    connection: connectionOptions,
+})
+
+describe('mirrorMessages', () => {
+    test(
+        'mirrorMessages',
+        async () => {
+            const messagesSet: Set<string> = new Set()
+            const messagesMap: Map<string, ClearContent> = new Map()
+
+            let leaderLoggedIn = false
+            let replySent = false
+
+            //Step 1 - Initialize worker to track follower status
+            // eslint-disable-next-line
+            const _followerWorker = new Worker(
+                fromLeaderQueueName,
+                // eslint-disable-next-line
+                async (command) => {
+                    const commandData = command.data as { commandType: string; messageTest: string }
+                    log('commandData', commandData)
+                    if (commandData.commandType === 'leaderLoggedIn') {
+                        leaderLoggedIn = true
+                        log('leaderLoggedIn flag set to true')
+                    }
+                    if (commandData.commandType === 'messageSent') {
+                        let eventFound = false
+                        for (let i = 1; i <= 10; i++) {
+                            log('Iteration ' + i + ' of 10')
+                            if (messagesSet.has(commandData.messageTest)) {
+                                log('Event found')
+                                eventFound = true
+                                break
+                            }
+                            await new Promise((resolve) => setTimeout(resolve, 1000))
+                        }
+                        if (!eventFound) {
+                            log('Event not found')
+                            throw new Error('Event not found')
+                        }
+                        const clearEvent = messagesMap.get(commandData.messageTest)
+                        if (
+                            clearEvent?.content?.payload?.case === 'post' &&
+                            clearEvent?.content?.payload?.value?.content?.case === 'text' &&
+                            clearEvent?.content?.payload?.value?.content.value?.body ===
+                                commandData.messageTest
+                        ) {
+                            await client.sendMessage(
+                                testChannelId,
+                                'Mirror from Bot 2: ' + commandData.messageTest,
+                            )
+                            log(
+                                'Reply message sent with text: ',
+                                'Mirror from Bot 2: ' + commandData.messageTest,
+                            )
+                            replySent = true
+                        }
+                    }
+                    return
+                },
+                { connection: connectionOptions, concurrency: 50 },
+            )
+
+            // set up the web3 provider and spacedap
+            const followerWallet = new ethers.Wallet(followerKey)
+            const provider = new ethers.providers.JsonRpcProvider(jsonRpcProviderUrl)
+            const walletWithProvider = followerWallet.connect(provider)
+            const context = await makeUserContextFromWallet(walletWithProvider)
+
+            const rpcClient = makeStreamRpcClient(nodeRpcURL)
+
+            const userId = userIdFromAddress(context.creatorAddress)
+
+            const cryptoStore = RiverDbManager.getCryptoDb(userId)
+            const client = new Client(
+                context,
+                rpcClient,
+                cryptoStore,
+                new MockEntitlementsDelegate(),
+            )
+            client.setMaxListeners(100)
+            await client.initializeUser()
+            const balance = await walletWithProvider.getBalance()
+            log('Wallet balance:', balance.toString())
+            log('Wallet address:', followerWallet.address)
+            log('Wallet address:', walletWithProvider.address)
+            const startSyncResult = await client.startSync()
+            log('startSyncResult', startSyncResult)
+            log('client', client.userId)
+
+            await healthcheckQueueFollower.add(fromFollowerQueueName, {
+                commandType: 'followerLoggedIn',
+                messageTest: '',
+            })
+            log('followerLoggedIn notification sent')
+            //Step 3 - wait for follower to be logged in
+            await waitFor(
+                () => {
+                    expect(leaderLoggedIn).toBe(true)
+                },
+                {
+                    timeoutMS: loginWaitTime,
+                },
+            )
+            log('Leader logged in notification recieved')
+            const done = makeDonePromise()
+            client.on('eventDecrypted', (event: RiverEventV2, err: Error | undefined): void => {
+                if (err) {
+                    log('eventDecrypted error', err)
+                    return
+                }
+                done.runAsync(async () => {
+                    // await client.decryptEventIfNeeded(event)
+                    const clearEvent = event.getContent()
+                    expect(clearEvent?.content?.payload).toBeDefined()
+                    if (
+                        clearEvent?.content?.payload?.case === 'post' &&
+                        clearEvent?.content?.payload?.value?.content?.case === 'text'
+                    ) {
+                        const body = clearEvent?.content?.payload?.value?.content.value?.body
+                        log('Event decrypted with text:', body)
+                        messagesSet.add(body)
+                        messagesMap.set(body, clearEvent)
+                    }
+                })
+            })
+
+            await waitFor(
+                () => {
+                    expect(replySent).toBe(true)
+                },
+                {
+                    timeoutMS: replySentTime,
+                },
+            )
+            log('Successfully done')
+        },
+        testRunTimeMs * 2,
+    )
+})

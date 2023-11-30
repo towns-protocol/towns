@@ -3,12 +3,12 @@ env:
     FOUNDRY_VERSION: nightly-d369d2486f85576eec4ca41d277391dfdae21ba7
 
 on:
-    workflow_dispatch: # A load test was manually triggered
-    # schedule: # A load test was scheduled
-    #     - cron: '0 0 * * *' # Every day at midnight UTC
+    workflow_dispatch: # A synthetic test which is triggered each 30 minutes
+    schedule: # A synthetic test was scheduled
+        - cron: '*/30 * * * *' # Every 30 minutes
 jobs:
-    run_load_tests:
-        runs-on: load-testing-runner
+    run_synthetic_tests:
+        runs-on: synthetic-test-runner
         timeout-minutes: 240
         services:
             postgres-casablanca:
@@ -103,8 +103,8 @@ jobs:
             - name: Wait for Casablanca (with entitlements) node to be up
               run: yarn csb:wait:entitlements
 
-            - name: Run Load Tests
-              run: DATADOG_API_KEY=${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }} ./scripts/run-and-publish-load-test-metrics.sh
+            - name: Run Synthetic Test
+              run: yarn test:ci:synthetic:all
 
             # If failed, we send a slack notification
             - name: Slack notification
@@ -113,7 +113,7 @@ jobs:
               env:
                   SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
                   SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'Load Tests'
+                  SLACK_USERNAME: 'Synthetic Tests'
                   SLACK_ICON_EMOJI: ':test_tube:'
                   SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'Load Test Failure <@Artem Vorobyev>'
+                  SLACK_MESSAGE: 'Synthetic Test Failure <@Artem Vorobyev>'

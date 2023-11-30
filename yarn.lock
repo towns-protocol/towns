@@ -6219,6 +6219,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^6.10.0
     browser-or-node: ^2.1.1
+    bullmq: ^4.10.0
     debug: ^4.3.4
     dexie: ^3.2.4
     eslint: ^8.53.0
