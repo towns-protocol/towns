@@ -193,8 +193,7 @@ type EntitlementCheckResult struct {
 	Err     error
 }
 
-// rootKey is always a first wallet in the list.
-func (za *ChainAuth) allRelevantWallets(ctx context.Context, rootKey eth.Address) ([]eth.Address, error) {
+func (za *ChainAuth) getLinkedWallets(ctx context.Context, rootKey eth.Address) ([]eth.Address, error) {
 	log := dlog.CtxLog(ctx)
 
 	if za.walletLinkContract == nil {
@@ -209,7 +208,6 @@ func (za *ChainAuth) allRelevantWallets(ctx context.Context, rootKey eth.Address
 		return nil, err
 	}
 
-	wallets = append([]eth.Address{rootKey}, wallets...)
 	log.Debug("allRelevantWallets", "wallets", wallets)
 
 	return wallets, nil
@@ -217,7 +215,7 @@ func (za *ChainAuth) allRelevantWallets(ctx context.Context, rootKey eth.Address
 
 /** checkEntitiement checks if the user is entitled to the space / channel.
  * It checks the entitlments for the root key and all the wallets linked to it in parallel.
- * If any of the wallets is entitled, the user is entitled.
+ * If any of the wallets is entitled, the user is entitled and all inflight requests are cancelled.
  * If any of the operations fail before getting positive result, the whole operation fails.
  */
 func (za *ChainAuth) checkEntitiement(ctx context.Context, rootKey eth.Address, permission Permission, streamInfo *common.StreamInfo) (bool, error) {
@@ -226,23 +224,30 @@ func (za *ChainAuth) checkEntitiement(ctx context.Context, rootKey eth.Address, 
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(za.contractCallsTimeoutMs))
 	defer cancel()
 
+	// We need to check the root key and all linked wallets.
 	resultsChan := make(chan EntitlementCheckResult, za.linkedWalletsLimit+1)
 	var wg sync.WaitGroup
 
+	// Get linked wallets and check them in parallel.
 	wg.Add(1)
 	go func() {
+		// defer here is essential since we are (mis)using WaitGroup here.
+		// It is ok to increment the WaitGroup once it is being waited on as long as the counter is not zero
+		// (see https://pkg.go.dev/sync#WaitGroup)
+		// We are adding new goroutines to the WaitGroup in the loop below, so we need to make sure that the counter is always > 0.
 		defer wg.Done()
-		wallets, err := za.allRelevantWallets(ctx, rootKey)
+		wallets, err := za.getLinkedWallets(ctx, rootKey)
 		if err != nil {
 			log.Error("error getting all wallets", "rootKey", rootKey.Hex(), "error", err)
 			resultsChan <- EntitlementCheckResult{Allowed: false, Err: err}
 			return
 		}
-		if len(wallets) > za.linkedWalletsLimit+1 {
+		if len(wallets) > za.linkedWalletsLimit {
 			log.Error("too many wallets linked to the root key", "rootKey", rootKey.Hex(), "wallets", len(wallets))
 			resultsChan <- EntitlementCheckResult{Allowed: false, Err: fmt.Errorf("too many wallets linked to the root key: %d", len(wallets)-1)}
 			return
 		}
+		// Check all wallets in parallel.
 		for _, wallet := range wallets {
 			wg.Add(1)
 			go func(address eth.Address) {
@@ -253,6 +258,7 @@ func (za *ChainAuth) checkEntitiement(ctx context.Context, rootKey eth.Address, 
 		}
 	}()
 
+	// Check root key in parallel.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -267,11 +273,19 @@ func (za *ChainAuth) checkEntitiement(ctx context.Context, rootKey eth.Address, 
 
 	for opResult := range resultsChan {
 		if opResult.Err != nil {
+			// we don't check for context cancellation error here because
+			// * if it is a timeout it has to propagate
+			// * the explicit cancel happens only here, so it is not possible.
+
+			// Cancel all inflight requests.
 			cancel()
+			// Any error is a failure.
 			return false, opResult.Err
 		}
 		if opResult.Allowed {
+			// We have the result we need, cancel all inflight requests.
 			cancel()
+
 			return true, nil
 		}
 	}
