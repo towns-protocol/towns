@@ -73,7 +73,7 @@ func NewTownsWalletLink(ethClient *ethclient.Client, chainId int) (*TownsWalletL
 func (za *TownsWalletLink) GetWalletsByRootKey(rootKey common.Address) ([]common.Address, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("GetWalletsByRootKeyMs", start)
+	defer infra.StoreExecutionTimeMetrics("GetWalletsByRootKey", "contract", start)
 	log.Debug("GetWalletsByRootKey", "rootKey", rootKey)
 	result, err := za.link.GetWalletsByRootKey(nil, rootKey)
 	if err != nil {
@@ -89,7 +89,7 @@ func (za *TownsWalletLink) GetWalletsByRootKey(rootKey common.Address) ([]common
 func (za *TownsWalletLink) GetRootKeyForWallet(wallet common.Address) (common.Address, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("GetRootKeyForWalletMs", start)
+	defer infra.StoreExecutionTimeMetrics("GetRootKeyForWallet", "contract", start)
 	log.Debug("GetRootKeyForWallet", "wallet", wallet)
 	result, err := za.link.GetRootKeyForWallet(nil, wallet)
 	if err != nil {
@@ -105,7 +105,7 @@ func (za *TownsWalletLink) GetRootKeyForWallet(wallet common.Address) (common.Ad
 func (za *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (*big.Int, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("GetLatestNonceForRootKeyMs", start)
+	defer infra.StoreExecutionTimeMetrics("GetLatestNonceForRootKey", "contract", start)
 	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey)
 	result, err := za.link.GetLatestNonceForRootKey(nil, rootKey)
 	if err != nil {
@@ -121,7 +121,7 @@ func (za *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (*bi
 func (za *TownsWalletLink) CheckIfLinked(rootKey common.Address, wallet common.Address) (bool, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("CheckIfLinkedMs", start)
+	defer infra.StoreExecutionTimeMetrics("CheckIfLinked", "contract", start)
 	log.Debug("CheckIfLinked", "rootKey", rootKey, "wallet", wallet)
 	result, err := za.link.CheckIfLinked(nil, rootKey, wallet)
 	if err != nil {

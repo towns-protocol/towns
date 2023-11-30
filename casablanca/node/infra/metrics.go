@@ -28,11 +28,11 @@ var registry = prometheus.DefaultRegisterer
 var (
 	functionDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "function_execution_duration_seconds",
+			Name:    "function_execution_duration_ms",
 			Help:    "Duration of function execution",
 			Buckets: []float64{1, 2, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800},
 		},
-		[]string{"function_name"},
+		[]string{"name", "category"},
 	)
 
 	successMetrics = prometheus.NewCounterVec(
@@ -51,8 +51,8 @@ func NewSuccessMetrics(name string, parent *SuccessMetrics) *SuccessMetrics {
 	}
 }
 
-func StoreExecutionTimeMetrics(name string, startTime time.Time) {
-	functionDuration.WithLabelValues(name).Observe(float64(time.Since(startTime).Milliseconds()))
+func StoreExecutionTimeMetrics(name string, category string, startTime time.Time) {
+	functionDuration.WithLabelValues(name, category).Observe(float64(time.Since(startTime).Milliseconds()))
 }
 
 func NewCounter(name string, help string) prometheus.Counter {

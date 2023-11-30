@@ -15,7 +15,7 @@ func NewMetricsInterceptor() connect.UnaryInterceptorFunc {
 			req connect.AnyRequest,
 		) (connect.AnyResponse, error) {
 			proc := req.Spec().Procedure
-			defer infra.StoreExecutionTimeMetrics(proc, time.Now())
+			defer infra.StoreExecutionTimeMetrics(proc, "rpc", time.Now())
 			return next(ctx, req)
 		}
 	}

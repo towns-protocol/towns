@@ -59,7 +59,7 @@ func NewTownsEntitlementsProxy(contract TownsEntitlements, address common.Addres
 func (proxy *TownsEntitlementsProxy) IsEntitledToChannel(opts *bind.CallOpts, channelNetworkId string, user common.Address, permission string) (bool, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("IsEntitledToChannelMs", start)
+	defer infra.StoreExecutionTimeMetrics("IsEntitledToChannel", "contract", start)
 	log.Debug("IsEntitledToChannel", "channelNetworkId", channelNetworkId, "user", user, "permission", permission, "address", proxy.address)
 	result, err := proxy.contract.IsEntitledToChannel(opts, channelNetworkId, user, permission)
 	if err != nil {
@@ -75,7 +75,7 @@ func (proxy *TownsEntitlementsProxy) IsEntitledToChannel(opts *bind.CallOpts, ch
 func (proxy *TownsEntitlementsProxy) IsEntitledToTown(opts *bind.CallOpts, user common.Address, permission string) (bool, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("IsEntitledToTownMs", start)
+	defer infra.StoreExecutionTimeMetrics("IsEntitledToTown", "contract", start)
 	log.Debug("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address)
 	result, err := proxy.contract.IsEntitledToTown(opts, user, permission)
 	if err != nil {

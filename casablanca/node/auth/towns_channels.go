@@ -72,7 +72,7 @@ func NewTownsChannelsProxy[C GeneratedTownsChannels](contract *C) (TownsChannels
 func (za *TownsChannelsProxy[GeneratedTownsChannels]) IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bool, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("IsDisabledMs", start)
+	defer infra.StoreExecutionTimeMetrics("IsDisabled", "contract", start)
 	var result bool
 	switch v := any(za.contract).(type) {
 	case *localhost_towns_channels.LocalhostTownsChannels:

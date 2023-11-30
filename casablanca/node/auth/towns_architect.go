@@ -56,7 +56,7 @@ func NewTownsArchitectProxy(contract TownsArchitect, address common.Address) Tow
 func (proxy *TownsArchitectProxy) GetTownById(opts *bind.CallOpts, networkId string) (common.Address, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("GetTownByIdMs", start)
+	defer infra.StoreExecutionTimeMetrics("GetTownById", "contract", start)
 	log.Debug("GetTownById", "address", proxy.address, "networkId", networkId)
 	result, err := proxy.contract.GetTownById(opts, networkId)
 	if err != nil {
