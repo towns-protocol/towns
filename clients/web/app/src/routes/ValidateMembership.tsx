@@ -17,6 +17,7 @@ export const ValidateMembership = () => {
         return <Outlet />
     }
 
+    console.log('ValidateMembership', { chainSpaceLoading, initialSyncComplete })
     if (chainSpaceLoading || !initialSyncComplete) {
         return <WelcomeLayout debugText="validate membership: loading town data" />
     }

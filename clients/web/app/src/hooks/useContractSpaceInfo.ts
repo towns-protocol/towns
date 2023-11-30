@@ -17,8 +17,10 @@ export const useContractSpaceInfo = (
     return useQuery(
         ['spaceDappGetSpaceInfo', spaceId],
         async () => {
+            console.log('useContractSpaceInfo', { spaceId, spaceDapp })
             if (spaceId && spaceDapp) {
                 const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
+                console.log('useContractSpaceInfo', { spaceInfo })
                 // Query data cannot be undefined. Return a value other than undefined from query function.
                 return spaceInfo ?? null
             } else {
@@ -27,7 +29,7 @@ export const useContractSpaceInfo = (
             }
         },
         {
-            enabled: !!spaceId,
+            enabled: !!spaceId && !!spaceDapp,
             staleTime: 1000 * 15,
             refetchOnMount: false,
             refetchOnWindowFocus: false,
