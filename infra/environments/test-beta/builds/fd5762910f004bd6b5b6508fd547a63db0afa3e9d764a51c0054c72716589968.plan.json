@@ -1,0 +1,1 @@
+{"filename": "builds/fd5762910f004bd6b5b6508fd547a63db0afa3e9d764a51c0054c72716589968.zip", "runtime": "nodejs18.x", "artifacts_dir": "builds", "build_plan": [["npm", "nodejs18.x", "../../modules/post-provision-config/lambda-function/package.json", null, null], ["zip", "../../modules/post-provision-config/lambda-function", null]]}

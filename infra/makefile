@@ -12,7 +12,7 @@ override terraform_workspace_name := $(if $(filter transient,$(ENV)), transient-
 env:
 	@cat /dev/null > .env
 	echo "ENV=$(ENV)" >> .env
-	echo "AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION)" >> .env
+	echo "AWS_DEFAULT_REGION=us-east-1" >> .env
 ifdef AWS_PROFILE
 	echo "AWS_PROFILE=$(AWS_PROFILE)" >> .env
 endif
