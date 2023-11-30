@@ -660,7 +660,7 @@ export class OlmDevice {
                 const account = await this.getAccount()
                 session.create_outbound(account, theirIdentityKey, fallbackKey)
                 const result = session.encrypt(payload)
-                return new EncryptedMessageEnvelope({ body: result.body, type: result.type })
+                return new EncryptedMessageEnvelope({ ciphertext: result.body, type: result.type })
             } catch (error) {
                 log('Error encrypting message with fallback key', error)
                 throw error

@@ -26,25 +26,25 @@ export class OlmDecryption extends DecryptionAlgorithm {
         senderUserId: string,
     ): Promise<IEventOlmDecryptionResult> {
         const deviceKey = event.senderKey
-        const ciphertext = event.message?.ciphertext
+        const toDeviceMessages = event.message?.toDeviceMessages
 
         if (!deviceKey) {
             throw new DecryptionError('OLM_MISSING_SENDER_KEY', 'Missing sender key')
         }
-        if (!ciphertext) {
-            throw new DecryptionError('OLM_MISSING_CIPHERTEXT', 'Missing ciphertext')
+        if (!toDeviceMessages) {
+            throw new DecryptionError('OLM_MISSING_CIPHERTEXT', 'Missing toDeviceMessages')
         }
         if (!this.olmDevice.deviceCurve25519Key) {
             throw new DecryptionError('OLM_MISSING_DEVICE_KEY', 'Missing device key')
         }
 
-        if (!(this.olmDevice.deviceCurve25519Key in ciphertext)) {
+        if (!(this.olmDevice.deviceCurve25519Key in toDeviceMessages)) {
             throw new DecryptionError(
                 'OLM_NOT_INCLUDED_IN_RECIPIENTS',
                 'Not included in recipients',
             )
         }
-        const message = ciphertext[this.olmDevice.deviceCurve25519Key]
+        const message = toDeviceMessages[this.olmDevice.deviceCurve25519Key]
         let payloadString: string
 
         try {
@@ -110,7 +110,7 @@ export class OlmDecryption extends DecryptionAlgorithm {
                     theirDeviceIdentityKey,
                     sessionId,
                     message.type ?? 0,
-                    message.body,
+                    message.ciphertext,
                 )
                 log(
                     'Decrypted Olm message from ' +
@@ -124,7 +124,7 @@ export class OlmDecryption extends DecryptionAlgorithm {
                     theirDeviceIdentityKey,
                     sessionId,
                     message.type ?? 0,
-                    message.body,
+                    message.ciphertext,
                 )
 
                 if (foundSession) {
@@ -166,7 +166,7 @@ export class OlmDecryption extends DecryptionAlgorithm {
             res = await this.olmDevice.createInboundSession(
                 theirDeviceIdentityKey,
                 message.type,
-                message.body,
+                message.ciphertext,
             )
         } catch (e) {
             decryptionErrors['(new)'] = (<Error>e).message

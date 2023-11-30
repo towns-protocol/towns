@@ -480,7 +480,7 @@ message EncryptedDeviceData {
     /**
     * Mapping from device identifier to encryption envelope.
     */
-    map<string, EncryptedMessageEnvelope> ciphertext = 1;
+    map<string, EncryptedMessageEnvelope> toDeviceMessages = 1;
     /**
     * Encryption algorithm  used to encrypt this event.
     */
@@ -493,7 +493,7 @@ message EncryptedMessageEnvelope {
     /**
     * Ciphertext of the encryption envelope.
     */
-    string body = 2;
+    string ciphertext = 2;
 }
 
 /**

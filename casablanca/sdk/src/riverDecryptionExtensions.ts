@@ -327,7 +327,7 @@ export class RiverDecryptionExtension {
     ) => {
         ;(async () => {
             const ourDeviceKey = this.client.olmDevice.deviceCurve25519Key ?? ''
-            if (!event.message?.ciphertext[ourDeviceKey]) {
+            if (!event.message?.toDeviceMessages[ourDeviceKey]) {
                 console.info('CDE::onToDeviceEvent - ignoring event, not intended for this device.')
                 return
             }

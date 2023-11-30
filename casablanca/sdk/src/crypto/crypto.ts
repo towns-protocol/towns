@@ -372,7 +372,7 @@ export class Crypto implements CryptoBackend {
         )
         return new EncryptedDeviceData({
             algorithm: OLM_ALGORITHM,
-            ciphertext: ciphertextRecord,
+            toDeviceMessages: ciphertextRecord,
         })
     }
 
