@@ -66,6 +66,8 @@ const envSchema = z.object({
     VITE_AMP_WORKER_URL: z.string().url().optional(),
     VITE_TOWNS_TOKEN_URL: z.string().url().optional(),
 
+    VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER: intString.optional(),
+
     VITE_DD_CLIENT_TOKEN: z.string().optional(), // used for datadog client side monitoring
     VITE_PRIVY_ID: z.string(),
 

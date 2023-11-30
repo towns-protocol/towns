@@ -64,7 +64,7 @@ if [ "$IS_PULL_REQUEST" = true ]; then
         --header "accept: application/json" \
         --header "authorization: Bearer $RENDER_API_KEY" \
         --header "content-type: application/json" \
-        --data '[{"key":"VITE_CASABLANCA_HOMESERVER_URL","value":"'"$river_node_url"'"}]'
+        --data '[{"key":"VITE_CASABLANCA_HOMESERVER_URL","value":"'"$river_node_url"'"},{"key":"VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER","value":"'"$pr_number"'"}]'
         
 else
     echo "Not a pull request. No custom domain needed."
