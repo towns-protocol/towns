@@ -466,5 +466,12 @@ export class Crypto implements CryptoBackend {
                 }),
             ),
         )
+
+        await Promise.all(
+            keys.map(async (key) => {
+                // have another go at decrypting events sent with this session.
+                await this.megolmDecryption.retryDecryption(key.sessionId)
+            }),
+        )
     }
 }

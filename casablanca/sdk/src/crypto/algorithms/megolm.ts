@@ -285,8 +285,6 @@ export class MegolmDecryption extends DecryptionAlgorithm {
                 false,
                 extraSessionData,
             )
-            // have another go at decrypting events sent with this session.
-            await this.retryDecryption(session.sessionId)
         } catch (e) {
             this.logError(`Error handling room key import: ${(<Error>e).message}`)
         }
@@ -301,10 +299,10 @@ export class MegolmDecryption extends DecryptionAlgorithm {
      * @returns whether all messages were successfully
      *     decrypted with trusted keys
      */
-    private async retryDecryption(sessionId: string): Promise<boolean> {
+    async retryDecryption(sessionId: string) {
         const pending = this.pendingEvents.get(sessionId)
         if (!pending) {
-            return true
+            return
         }
 
         const pendingList = [...pending]
@@ -323,10 +321,6 @@ export class MegolmDecryption extends DecryptionAlgorithm {
                 }
             }),
         )
-
-        // If decrypted successfully with trusted keys, they'll have
-        // been removed from pendingEvents
-        return !this.pendingEvents.has(sessionId)
     }
 
     private getEventById(eventId: string) {
