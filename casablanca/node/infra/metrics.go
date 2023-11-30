@@ -23,6 +23,12 @@ type SuccessMetrics struct {
 	Parent *SuccessMetrics
 }
 
+const (
+	RPC_CATEGORY            = "rpc"
+	DB_CALLS_CATEGORY       = "db_calls"
+	CONTRACT_CALLS_CATEGORY = "contract_calls"
+)
+
 var registry = prometheus.DefaultRegisterer
 
 var (

@@ -33,7 +33,7 @@ const (
 )
 
 var (
-	dbCalls = infra.NewSuccessMetrics("db_calls", nil)
+	dbCalls = infra.NewSuccessMetrics(infra.DB_CALLS_CATEGORY, nil)
 )
 
 func (s *PostgresEventStore) CreateStream(ctx context.Context, streamId string, genesisMiniblock []byte) error {
@@ -47,7 +47,7 @@ func (s *PostgresEventStore) CreateStream(ctx context.Context, streamId string, 
 }
 
 func (s *PostgresEventStore) createStream(ctx context.Context, streamId string, genesisMiniblock []byte) error {
-	defer infra.StoreExecutionTimeMetrics("CreateStream", "db", time.Now())
+	defer infra.StoreExecutionTimeMetrics("CreateStream", infra.DB_CALLS_CATEGORY, time.Now())
 
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
@@ -116,7 +116,7 @@ func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, stre
 // 2. There are no gaps in slot_num for envelopes in minipools and it starts from 0
 // 3. For envelopes all generations are the same and equals to "max generation seq_num in miniblocks" + 1
 func (s *PostgresEventStore) getStreamFromLastSnapshot(ctx context.Context, streamId string, precedingBlockCount int) (*GetStreamFromLastSnapshotResult, error) {
-	defer infra.StoreExecutionTimeMetrics("GetStreamFromLastSnapshot", "db", time.Now())
+	defer infra.StoreExecutionTimeMetrics("GetStreamFromLastSnapshot", infra.DB_CALLS_CATEGORY, time.Now())
 
 	tx, err := startTx(ctx, s.pool)
 
@@ -245,7 +245,7 @@ func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, mini
 // 2. There are no gaps in seqNums and they start from 0 execpt service record with seqNum = -1
 // 3. All events in minipool have proper generation
 func (s *PostgresEventStore) addEvent(ctx context.Context, streamId string, minipoolGeneration int64, minipoolSlot int, envelope []byte) error {
-	defer infra.StoreExecutionTimeMetrics("AddEvent", "db", time.Now())
+	defer infra.StoreExecutionTimeMetrics("AddEvent", infra.DB_CALLS_CATEGORY, time.Now())
 
 	// Start transaction for making checks of minipool generation and slot
 	// If everything is ok we will add event to minipool and commit transaction
@@ -387,7 +387,7 @@ func (s *PostgresEventStore) createBlock(
 	snapshotMiniblock bool,
 	envelopes [][]byte,
 ) error {
-	defer infra.StoreExecutionTimeMetrics("CreateBlock", "db", time.Now())
+	defer infra.StoreExecutionTimeMetrics("CreateBlock", infra.DB_CALLS_CATEGORY, time.Now())
 
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
@@ -460,7 +460,7 @@ func (s *PostgresEventStore) createBlock(
 }
 
 func (s *PostgresEventStore) GetStreamsNumber(ctx context.Context) (int, error) {
-	defer infra.StoreExecutionTimeMetrics("GetStreamNumbers", "db", time.Now())
+	defer infra.StoreExecutionTimeMetrics("GetStreamNumbers", infra.DB_CALLS_CATEGORY, time.Now())
 
 	var count int
 	row := s.pool.QueryRow(ctx, "SELECT COUNT(stream_id) FROM es")
@@ -576,7 +576,7 @@ func (s *PostgresEventStore) enrichErrorWithNodeInfo(err *RiverErrorImpl) *River
 // Creates record in es table for the stream
 // Should always be used in scope of open transaction tx
 func (s *PostgresEventStore) createEventStreamInstance(ctx context.Context, tx pgx.Tx, streamId string) error {
-	defer infra.StoreExecutionTimeMetrics("createEventStreamInstance", "db", time.Now())
+	defer infra.StoreExecutionTimeMetrics("createEventStreamInstance", infra.DB_CALLS_CATEGORY, time.Now())
 
 	err := s.compareUUID(ctx, tx)
 	if err != nil {
@@ -593,7 +593,7 @@ func (s *PostgresEventStore) createEventStreamInstance(ctx context.Context, tx p
 
 // GetStreams returns a list of all event streams
 func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]string, error) {
-	defer infra.StoreExecutionTimeMetrics("GetStreams", "db", time.Now())
+	defer infra.StoreExecutionTimeMetrics("GetStreams", infra.DB_CALLS_CATEGORY, time.Now())
 
 	streams := []string{}
 	rows, err := s.pool.Query(ctx, "SELECT stream_id FROM es")
@@ -633,7 +633,7 @@ func (s *PostgresEventStore) DeleteStream(ctx context.Context, streamId string) 
 }
 
 func (s *PostgresEventStore) deleteStream(ctx context.Context, streamId string) error {
-	defer infra.StoreExecutionTimeMetrics("DeleteStream", "db", time.Now())
+	defer infra.StoreExecutionTimeMetrics("DeleteStream", infra.DB_CALLS_CATEGORY, time.Now())
 
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
@@ -728,7 +728,7 @@ func newPostgresEventStore(
 	clean bool,
 	exitSignal chan error,
 ) (*PostgresEventStore, error) {
-	defer infra.StoreExecutionTimeMetrics("NewPostgresEventStore", "db", time.Now())
+	defer infra.StoreExecutionTimeMetrics("NewPostgresEventStore", infra.DB_CALLS_CATEGORY, time.Now())
 
 	log := dlog.CtxLog(ctx)
 
@@ -790,7 +790,7 @@ func (s *PostgresEventStore) Close() error {
 }
 
 func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
-	defer infra.StoreExecutionTimeMetrics("cleanStorage", "db", time.Now())
+	defer infra.StoreExecutionTimeMetrics("cleanStorage", infra.DB_CALLS_CATEGORY, time.Now())
 
 	tx, err := pool.Begin(ctx)
 	if err != nil {
@@ -833,7 +833,7 @@ func InitStorage(ctx context.Context, pool *pgxpool.Pool, databaseSchemaName str
 }
 
 func initStorage(ctx context.Context, pool *pgxpool.Pool, databaseSchemaName string, instanceId string) error {
-	defer infra.StoreExecutionTimeMetrics("initStorage", "db", time.Now())
+	defer infra.StoreExecutionTimeMetrics("initStorage", infra.DB_CALLS_CATEGORY, time.Now())
 
 	log := dlog.CtxLog(ctx)
 

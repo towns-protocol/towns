@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	serviceRequests = infra.NewSuccessMetrics("service_requests", nil)
+	serviceRequests = infra.NewSuccessMetrics(infra.RPC_CATEGORY, nil)
 )
 
 type Service struct {

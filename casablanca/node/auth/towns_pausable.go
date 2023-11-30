@@ -57,7 +57,7 @@ func NewTownsPausableProxy(contract TownsPausable, address common.Address) Towns
 func (proxy *TownsPausableProxy) Paused(callOpts *bind.CallOpts) (bool, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("Paused", "contract", start)
+	defer infra.StoreExecutionTimeMetrics("Paused", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("Paused", "address", proxy.address)
 	result, err := proxy.contract.Paused(callOpts)
 	if err != nil {
