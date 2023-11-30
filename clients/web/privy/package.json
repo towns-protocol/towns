@@ -22,6 +22,6 @@
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "use-zion-client": "workspace:^",
-        "wagmi": "^1.3.10"
+        "wagmi": "^1.4.7"
     }
 }
