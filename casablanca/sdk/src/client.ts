@@ -317,6 +317,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         await this.initUserStream(userStreamId, userStream)
         await this.uploadDeviceKeys()
         await this.initUserJoinedStreams()
+        this.decryptionExtensions?.start()
     }
 
     // special wrapper around rpcClient.getStream which catches NOT_FOUND errors but re-throws everything else

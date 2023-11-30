@@ -184,6 +184,11 @@ export class RiverDecryptionExtension {
         client.on('eventDecrypted', this.onDecryptedEvent)
     }
 
+    public start(): void {
+        this.receivedToDeviceEventQueue.start()
+        this.receivedKeySolicitationEventQueue.start()
+    }
+
     public stop(): void {
         this.throttledStartLookingForKeys?.cancel()
         this.throttledStartLookingForKeys = null
@@ -912,7 +917,7 @@ export class RiverDecryptionExtension {
 }
 
 class ProcessingQueue<TItem> {
-    private running = true
+    private running = false
     private processFn: (item: TItem) => Promise<void>
     private delayMs: number
     private queue: TItem[] = []
@@ -924,9 +929,14 @@ class ProcessingQueue<TItem> {
         this.delayMs = params.delayMs
     }
 
+    public start() {
+        this.running = true
+        this.process()
+    }
+
     public enqueue(item: TItem) {
+        this.queue.push(item)
         if (this.running) {
-            this.queue.push(item)
             this.process()
         } else {
             console.warn('ProcessingQueue::enqueue called when not running')
