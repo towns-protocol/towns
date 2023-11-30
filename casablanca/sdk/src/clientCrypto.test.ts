@@ -1,8 +1,7 @@
 import { Client } from './client'
 import { makeTestClient } from './util.test'
-import { OLM_ALGORITHM } from './crypto/olmLib'
-import { make_ToDevice_KeyRequest } from './types'
-import { OlmMessage, ToDeviceMessage, ToDeviceOp, UserPayload_ToDevice } from '@river/proto'
+import { KeyResponseKind, OlmMessage, ToDeviceMessage, UserPayload_ToDevice } from '@river/proto'
+import { make_ToDevice_KeyResponse } from './types'
 
 describe('clientCryptoTest', () => {
     let bobsClient: Client
@@ -28,12 +27,10 @@ describe('clientCryptoTest', () => {
         await alicesClient.startSync()
 
         const message = new ToDeviceMessage(
-            make_ToDevice_KeyRequest({
+            make_ToDevice_KeyResponse({
+                kind: KeyResponseKind.KRK_KEYS_NOT_FOUND,
                 streamId: '200',
-                algorithm: OLM_ALGORITHM,
-                senderKey: alicesClient.olmDevice.deviceCurve25519Key!,
-                sessionId: '300',
-                content: 'First secret encrypted message!',
+                sessions: [],
             }),
         )
 
@@ -53,11 +50,10 @@ describe('clientCryptoTest', () => {
         await alicesClient.startSync()
 
         const message = new ToDeviceMessage(
-            make_ToDevice_KeyRequest({
+            make_ToDevice_KeyResponse({
                 streamId: '200',
-                algorithm: OLM_ALGORITHM,
-                senderKey: alicesClient.olmDevice.deviceCurve25519Key!,
-                sessionId: '300',
+                kind: KeyResponseKind.KRK_KEYS_NOT_FOUND,
+                sessions: [],
             }),
         )
         const olmMessage = new OlmMessage({ content: message })
@@ -66,7 +62,6 @@ describe('clientCryptoTest', () => {
         expect(envelope).toBeDefined()
         const event = {
             // key request or response
-            op: ToDeviceOp.TDO_KEY_REQUEST,
             message: envelope,
             // deviceKey is curve25519 id key of recipient device
             deviceKey: bobsClient.olmDevice.deviceCurve25519Key!,
@@ -106,12 +101,10 @@ describe('clientCryptoTest', () => {
         for (let i = 0; i < payloads.length; i++) {
             const payload = payloads[i]
             const message = new ToDeviceMessage(
-                make_ToDevice_KeyRequest({
+                make_ToDevice_KeyResponse({
                     streamId: payload.content.key,
-                    algorithm: OLM_ALGORITHM,
-                    senderKey: alicesClient.olmDevice.deviceCurve25519Key!,
-                    sessionId: '300',
-                    content: JSON.stringify(payload),
+                    kind: KeyResponseKind.KRK_KEYS_NOT_FOUND,
+                    sessions: [],
                 }),
             )
             const olmMessage = new OlmMessage({ content: message })
@@ -120,8 +113,6 @@ describe('clientCryptoTest', () => {
 
             expect(envelope).toBeDefined()
             const event = {
-                // key request or response
-                op: ToDeviceOp.TDO_KEY_REQUEST,
                 message: envelope,
                 // deviceKey is curve25519 id key of recipient device
                 deviceKey: bobsClient.olmDevice.deviceCurve25519Key!,

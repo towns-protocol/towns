@@ -89,7 +89,13 @@ export class StreamStateView_User implements StreamStateView_IContent {
         if (payload.content.value === undefined || payload.content.case !== 'toDevice') {
             return
         }
-        emitter?.emit('toDeviceMessage', this.streamId, payload.content.value, event.creatorUserId)
+        emitter?.emit(
+            'toDeviceMessage',
+            this.streamId,
+            event.hashStr,
+            payload.content.value,
+            event.creatorUserId,
+        )
 
         // TODO: filter by deviceId and only store current deviceId's events
         this.toDeviceMessages.push(event)

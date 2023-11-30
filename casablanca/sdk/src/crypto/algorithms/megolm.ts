@@ -15,7 +15,6 @@ import {
     MegolmSession,
     MembershipOp,
     ToDeviceMessage,
-    ToDeviceOp,
 } from '@river/proto'
 import { RiverEventV2 } from '../../eventV2'
 import { make_ToDevice_KeyResponse } from '../../types'
@@ -80,11 +79,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             }),
         )
 
-        await this.baseApis.encryptAndSendToDevices(
-            devicesInRoom,
-            toDeviceResponse,
-            ToDeviceOp.TDO_KEY_RESPONSE,
-        )
+        await this.baseApis.encryptAndSendToDevices(devicesInRoom, toDeviceResponse)
     }
 
     /**

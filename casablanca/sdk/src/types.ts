@@ -292,24 +292,6 @@ export const make_ChannelMessage_Redaction = (
     })
 }
 
-export const make_ToDevice_KeyRequest = (input: {
-    streamId: string
-    algorithm: string
-    senderKey: string
-    sessionId: string
-    content?: string
-    knownSessionIds?: string[]
-}): PlainMessage<ToDeviceMessage> => {
-    const { knownSessionIds: possibleKnownSessionIds, ...rest } = input
-    const knownSessionIds = possibleKnownSessionIds ? possibleKnownSessionIds : []
-    return {
-        payload: {
-            case: 'request',
-            value: { ...rest, knownSessionIds: knownSessionIds },
-        },
-    }
-}
-
 export const make_ToDevice_KeyResponse = (input: {
     streamId: string
     sessions: PlainMessage<MegolmSession>[]

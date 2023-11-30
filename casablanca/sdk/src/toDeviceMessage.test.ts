@@ -1,11 +1,12 @@
 import { dlog } from './dlog'
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { KeyResponseKind, ToDeviceMessage, ToDeviceOp, UserPayload_ToDevice } from '@river/proto'
-import { make_ToDevice_KeyRequest, make_ToDevice_KeyResponse } from './types'
-import { OLM_ALGORITHM, UserDeviceCollection } from './crypto/olmLib'
+import { KeyResponseKind, ToDeviceMessage } from '@river/proto'
+import { make_ToDevice_KeyResponse } from './types'
+import { UserDeviceCollection } from './crypto/olmLib'
+import { IEventOlmDecryptionResult } from './crypto/crypto'
 
-const log = dlog('test')
+const log = dlog('test:toDeviceMessage')
 
 describe('toDeviceMessageTest', () => {
     let bobsClient: Client
@@ -34,15 +35,15 @@ describe('toDeviceMessageTest', () => {
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
-            'toDeviceMessage',
-            (streamId: string, event: UserPayload_ToDevice, senderUserId: string): void => {
-                const content = event.message
-                const senderKey = event.senderKey
-                log('toDeviceMessage for Alice', streamId, senderKey, content)
+            'toDeviceMessageDecrypted',
+            (
+                streamId: string,
+                eventId: string,
+                clear: IEventOlmDecryptionResult,
+                _senderUserId: string,
+            ): void => {
+                log('toDeviceMessage for Alice', streamId, clear)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
-                    expect(streamId).toBe(aliceUserStreamId)
-                    expect(content).toBeDefined()
-                    const clear = await alicesClient.decryptOlmEvent(event, senderUserId)
                     expect(clear).toBeDefined()
                     expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('200')
                 })
@@ -57,14 +58,12 @@ describe('toDeviceMessageTest', () => {
             bobsClient.encryptAndSendToDevices(
                 recipients,
                 new ToDeviceMessage(
-                    make_ToDevice_KeyRequest({
+                    make_ToDevice_KeyResponse({
                         streamId: '200',
-                        algorithm: OLM_ALGORITHM,
-                        senderKey: '324523',
-                        sessionId: '300',
+                        kind: KeyResponseKind.KRK_KEYS_NOT_FOUND,
+                        sessions: [],
                     }),
                 ),
-                ToDeviceOp.TDO_UNSPECIFIED,
             ),
         ).toResolve()
         await aliceSelfToDevice.expectToSucceed()
@@ -83,17 +82,17 @@ describe('toDeviceMessageTest', () => {
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.on(
-            'toDeviceMessage',
-            (streamId: string, event: UserPayload_ToDevice, senderUserId: string): void => {
-                const content = event.message
-                const senderKey = event.senderKey
-                log('toDeviceMessage for Alice', streamId, senderKey, content)
+            'toDeviceMessageDecrypted',
+            (
+                streamId: string,
+                eventId: string,
+                clear: IEventOlmDecryptionResult,
+                _senderUserId: string,
+            ): void => {
+                log('toDeviceMessage for Alice', streamId, clear)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
-                    expect(streamId).toBe(aliceUserStreamId)
-                    expect(content).toBeDefined()
-                    const clear = await alicesClient.decryptOlmEvent(event, senderUserId)
                     expect(clear).toBeDefined()
-                    expect(clear.clearEvent.content?.payload.case).toBe('request')
+                    expect(clear.clearEvent.content?.payload.case).toBe('response')
                     expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('201')
                 })
             },
@@ -106,14 +105,12 @@ describe('toDeviceMessageTest', () => {
             bobsClient.encryptAndSendToDevices(
                 bobToAliceRecipients,
                 new ToDeviceMessage(
-                    make_ToDevice_KeyRequest({
+                    make_ToDevice_KeyResponse({
                         streamId: '201',
-                        algorithm: OLM_ALGORITHM,
-                        senderKey: '324523',
-                        sessionId: '300',
+                        kind: KeyResponseKind.KRK_KEYS_NOT_FOUND,
+                        sessions: [],
                     }),
                 ),
-                ToDeviceOp.TDO_KEY_REQUEST,
             ),
         ).toResolve()
 
@@ -121,14 +118,12 @@ describe('toDeviceMessageTest', () => {
             bobsClient.encryptAndSendToDevices(
                 bobToAliceRecipients,
                 new ToDeviceMessage(
-                    make_ToDevice_KeyRequest({
+                    make_ToDevice_KeyResponse({
                         streamId: '200',
-                        algorithm: OLM_ALGORITHM,
-                        senderKey: '324523',
-                        sessionId: '300',
+                        kind: KeyResponseKind.KRK_KEYS_NOT_FOUND,
+                        sessions: [],
                     }),
                 ),
-                ToDeviceOp.TDO_KEY_REQUEST,
             ),
         ).toResolve()
         await aliceSelfToDevice.expectToSucceed()
@@ -148,17 +143,18 @@ describe('toDeviceMessageTest', () => {
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
-            'toDeviceMessage',
-            (streamId: string, event: UserPayload_ToDevice, senderUserId: string): void => {
-                const content = event.message
-                const senderKey = event.senderKey
-                log('toDeviceMessage for Alice', streamId, senderKey, content)
+            'toDeviceMessageDecrypted',
+            (
+                streamId: string,
+                eventId: string,
+                clear: IEventOlmDecryptionResult,
+                _senderUserId: string,
+            ): void => {
+                log('toDeviceMessage for Alice', streamId)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(streamId).toBe(aliceUserStreamId)
-                    expect(content).toBeDefined()
-                    const clear = await alicesClient.decryptOlmEvent(event, senderUserId)
                     expect(clear).toBeDefined()
-                    expect(clear.clearEvent.content?.payload.case).toBe('request')
+                    expect(clear.clearEvent.content?.payload.case).toBe('response')
                     expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('202')
                 })
             },
@@ -171,20 +167,18 @@ describe('toDeviceMessageTest', () => {
             bobsClient.encryptAndSendToDevices(
                 bobToAliceRecipients,
                 new ToDeviceMessage(
-                    make_ToDevice_KeyRequest({
+                    make_ToDevice_KeyResponse({
                         streamId: '202',
-                        algorithm: OLM_ALGORITHM,
-                        senderKey: '324523',
-                        sessionId: '300',
+                        kind: KeyResponseKind.KRK_KEYS_NOT_FOUND,
+                        sessions: [],
                     }),
                 ),
-                ToDeviceOp.TDO_KEY_REQUEST,
             ),
         ).toResolve()
         await aliceSelfToDevice.expectToSucceed()
     })
 
-    test.skip('bobAndAliceExchangeToDeviceMessages', async () => {
+    test('bobAndAliceExchangeToDeviceMessages', async () => {
         log('bobAndAliceExchangeToDeviceMessages')
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.initializeUser()).toResolve()
@@ -200,16 +194,16 @@ describe('toDeviceMessageTest', () => {
         const aliceSelfToDevice = makeDonePromise()
         const bobSelfToDevice = makeDonePromise()
         alicesClient.once(
-            'toDeviceMessage',
-            (streamId: string, event: UserPayload_ToDevice, senderUserId: string): void => {
-                const content = event.message
-                const senderKey = event.senderKey
-                log('toDeviceMessage for Alice', streamId, senderKey, content)
+            'toDeviceMessageDecrypted',
+            (
+                streamId: string,
+                eventId: string,
+                clear: IEventOlmDecryptionResult,
+                _senderUserId: string,
+            ): void => {
+                log('toDeviceMessage for Alice', streamId, clear)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(streamId).toBe(aliceUserStreamId)
-                    expect(content).toBeDefined()
-                    expect(event.op).toEqual(ToDeviceOp.TDO_KEY_REQUEST)
-                    const clear = await alicesClient.decryptOlmEvent(event, senderUserId)
                     expect(clear).toBeDefined()
                     expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('204')
 
@@ -232,7 +226,6 @@ describe('toDeviceMessageTest', () => {
                                     content: 'Hi Bob, certainly!',
                                 }),
                             ),
-                            ToDeviceOp.TDO_KEY_RESPONSE,
                         ),
                     ).toResolve()
                 })
@@ -240,16 +233,16 @@ describe('toDeviceMessageTest', () => {
         )
 
         bobsClient.on(
-            'toDeviceMessage',
-            (streamId: string, event: UserPayload_ToDevice, senderUserId: string): void => {
-                const content = event.message
-                const senderKey = event.senderKey
-                log('toDeviceMessage for Alice', streamId, senderKey, content)
+            'toDeviceMessageDecrypted',
+            (
+                streamId: string,
+                eventId: string,
+                clear: IEventOlmDecryptionResult,
+                _senderUserId: string,
+            ): void => {
+                log('toDeviceMessage for Alice', streamId, clear)
                 if (streamId == bobUserStreamId) {
                     bobSelfToDevice.runAndDoneAsync(async () => {
-                        expect(content).toBeDefined()
-                        expect(event.op).toBe(ToDeviceOp.TDO_KEY_RESPONSE)
-                        const clear = await bobsClient.decryptOlmEvent(event, senderUserId)
                         expect(clear).toBeDefined()
                         expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('203')
                     })
@@ -264,14 +257,12 @@ describe('toDeviceMessageTest', () => {
             bobsClient.encryptAndSendToDevices(
                 bobToAliceRecipients,
                 new ToDeviceMessage(
-                    make_ToDevice_KeyRequest({
+                    make_ToDevice_KeyResponse({
                         streamId: '204',
-                        algorithm: OLM_ALGORITHM,
-                        senderKey: 'alice sender key',
-                        sessionId: '300',
+                        kind: KeyResponseKind.KRK_KEYS_NOT_FOUND,
+                        sessions: [],
                     }),
                 ),
-                ToDeviceOp.TDO_KEY_REQUEST,
             ),
         ).toResolve()
         await aliceSelfToDevice.expectToSucceed()

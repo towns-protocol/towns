@@ -286,7 +286,7 @@ message UserPayload {
     }
     
     message ToDevice {
-        ToDeviceOp op = 1;
+        reserved 1;
         EncryptedDeviceData message = 2;
         string sender_key = 3;
     }
@@ -662,12 +662,6 @@ enum ChannelOp {
     CO_CREATED = 1;
     CO_DELETED = 2;
     CO_UPDATED = 4;
-}
-
-enum ToDeviceOp {
-    TDO_UNSPECIFIED = 0;
-    TDO_KEY_REQUEST = 1;
-    TDO_KEY_RESPONSE = 2;
 }
 
 // Codes from 1 to 16 match gRPC/Connect codes.

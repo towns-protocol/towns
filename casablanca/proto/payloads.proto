@@ -124,19 +124,8 @@ message FullyReadMarkers {
 }
 
 // value field of a ToDeviceMessage, which is either
-// a) ciphertext encrypted for a specific device (identified by curve25519 key)
-// b) a key request
-// c) a key response
+// a key response
 message ToDeviceMessage {
-    message KeyRequest {
-        string stream_id = 1;
-        string algorithm = 2;
-        // request session id
-        string session_id = 3;
-        // known session ids
-        repeated string known_session_ids = 4;
-    }
-
     message KeyResponse {
         /** Stream ID that sessions belong to */
         string stream_id = 1;
@@ -144,11 +133,10 @@ message ToDeviceMessage {
         KeyResponseKind kind = 3;
     }
 
+    reserved 1;
     oneof payload {
-        KeyRequest request = 1;
         KeyResponse response = 2;
     }
-
 }
 
 /** Olm encrypted messages are decoded into ToDeviceMessages.

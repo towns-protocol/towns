@@ -1,7 +1,6 @@
 import { PlainMessage } from '@bufbuild/protobuf'
 import {
     MembershipOp,
-    ToDeviceOp,
     ChannelOp,
     ChannelMessage_Post_Mention,
     ChannelMessage,
@@ -1657,7 +1656,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     public async encryptAndSendToDevices(
         userDeviceInfos: UserDeviceCollection,
         message: ToDeviceMessage,
-        toDeviceOp: ToDeviceOp,
     ): Promise<void[]> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
@@ -1678,7 +1676,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     make_UserPayload_ToDevice({
                         message: message,
                         senderKey,
-                        op: toDeviceOp,
                     }),
                     miniblockHash,
                 )

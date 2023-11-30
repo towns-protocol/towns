@@ -1,7 +1,6 @@
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Permission } from '@river/web3'
 import {
-    ToDeviceOp,
     KeyResponseKind,
     MegolmSession,
     ToDeviceMessage,
@@ -118,10 +117,6 @@ export class RiverDecryptionExtension {
     private accountAddress: string
     // todo: remove processor map related to to-device events HNT-2868
     private receivedToDeviceEventQueue: ProcessingQueue<EventOlmDecryptionResult>
-    private receivedToDeviceProcessorMap: Record<
-        string,
-        (event: OlmDecryptedMessage, senderId: string, senderCurve25519Key: string) => Promise<void>
-    >
     private receivedKeySolicitationEventQueue: ProcessingQueue<EventKeySolicitation>
     private receivedKeySolicitationProcessor: (
         event: KeySolicitation,
@@ -139,13 +134,6 @@ export class RiverDecryptionExtension {
         // todo: this will likely change soon as userId will not always be 1-1 with
         // account address
         this.accountAddress = this.userId
-
-        // mapping of event type to processors
-        this.receivedToDeviceProcessorMap = {
-            [ToDeviceOp[ToDeviceOp.TDO_KEY_RESPONSE]]: (e, s) => {
-                return this.onKeyResponse(e, s)
-            },
-        }
 
         this.receivedToDeviceEventQueue = new ProcessingQueue<EventOlmDecryptionResult>({
             process: (event) => {
@@ -205,7 +193,6 @@ export class RiverDecryptionExtension {
         this.client.off('channelNewMessage', this.onChannelEvent)
         this.client.off('streamNewUserJoined', this.onNewUserJoinedEvent)
         this.client.off('eventDecrypted', this.onDecryptedEvent)
-        this.receivedToDeviceProcessorMap = {}
         this.receivedToDeviceEventQueue.stop()
         this.receivedKeySolicitationEventQueue.stop()
     }
@@ -232,34 +219,7 @@ export class RiverDecryptionExtension {
 
     private async processToDeviceEvent(event: EventOlmDecryptionResult): Promise<void> {
         const content = event.clearEvent
-        const op = content.content?.payload.case
-        if (!op) {
-            throw new Error(
-                'CDE::processToDeviceEvent - no op found - is this not a toDevice event?',
-            )
-        }
-        let toDeviceOp: string | undefined
-        switch (op) {
-            case 'request':
-                toDeviceOp = ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST]
-                break
-            case 'response':
-                toDeviceOp = ToDeviceOp[ToDeviceOp.TDO_KEY_RESPONSE]
-                break
-            default:
-                break
-        }
-        if (!toDeviceOp) {
-            throw new Error(`CDE::processToDeviceEvent - no toDeviceOp found for event ${op}`)
-        }
-        const processor = this.receivedToDeviceProcessorMap[toDeviceOp]
-        if (!processor) {
-            throw new Error(
-                `CDE::processToDeviceEvent - no processor found for event ${toDeviceOp}`,
-            )
-        }
-
-        await processor(content, event.senderUserId, event.senderCurve25519Key ?? '')
+        await this.onKeyResponse(content, event.senderUserId)
     }
 
     private onDecryptedEvent = (event: RiverEventV2, err: Error | undefined) => {
@@ -360,30 +320,21 @@ export class RiverDecryptionExtension {
     }
 
     private onToDeviceEvent = (
-        _streamId: string,
+        streamId: string,
+        eventId: string,
         event: UserPayload_ToDevice,
         senderUserId: string,
     ) => {
         ;(async () => {
-            const op = event.op
-            if (!op) {
-                throw new Error('CDE::onToDeviceEvent - no event type found')
-            }
-            if (!Object.keys(this.receivedToDeviceProcessorMap).includes(ToDeviceOp[op])) {
-                throw new Error(
-                    `CDE::onToDeviceEvent - no processor found for event with op ${ToDeviceOp[op]}`,
-                )
-            }
-
             const ourDeviceKey = this.client.olmDevice.deviceCurve25519Key ?? ''
             if (!event.message?.ciphertext[ourDeviceKey]) {
                 console.info('CDE::onToDeviceEvent - ignoring event, not intended for this device.')
                 return
             }
-
             try {
                 const clear = await this.client.decryptOlmEvent(event, senderUserId)
                 const senderCurve25519Key = event.senderKey
+                this.client.emit('toDeviceMessageDecrypted', streamId, eventId, clear, senderUserId)
                 this.receivedToDeviceEventQueue.enqueue({
                     ...clear,
                     senderUserId,
@@ -686,11 +637,7 @@ export class RiverDecryptionExtension {
         }
 
         const encryptAndRespondWith = async (response: ToDeviceMessage) => {
-            return this.client.encryptAndSendToDevices(
-                deviceInfos,
-                response,
-                ToDeviceOp.TDO_KEY_RESPONSE,
-            )
+            return this.client.encryptAndSendToDevices(deviceInfos, response)
         }
 
         const getUniqueUnknownSharedHistorySessions = async (channelId: string) => {

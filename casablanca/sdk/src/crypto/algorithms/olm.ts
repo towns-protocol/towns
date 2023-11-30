@@ -1,12 +1,13 @@
 // todo: fix lint issues and remove exception see: https://linear.app/hnt-labs/issue/HNT-1721/address-linter-overrides-in-matrix-encryption-code-from-sdk
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument */
-import { dlog } from '../../dlog'
+import { dlog, dlogError } from '../../dlog'
 import { IEventOlmDecryptionResult } from '../crypto'
 import { DecryptionAlgorithm, DecryptionError } from './base'
 import { IInboundSession } from '../olmDevice'
 import { EncryptedMessageEnvelope, OlmMessage, UserPayload_ToDevice } from '@river/proto'
 
 const log = dlog('csb:olm')
+const logError = dlogError('csb:olm:error')
 
 /**
  * Olm decryption implementation
@@ -47,11 +48,9 @@ export class OlmDecryption extends DecryptionAlgorithm {
         let payloadString: string
 
         try {
-            payloadString = await this.decryptMessage(
-                deviceKey,
-                new EncryptedMessageEnvelope(message),
-            )
+            payloadString = await this.decryptMessage(deviceKey, message)
         } catch (e) {
+            logError('OLM_BAD_ENCRYPTED_MESSAGE', e)
             throw new DecryptionError('OLM_BAD_ENCRYPTED_MESSAGE', 'Bad Encrypted Message', {
                 sender: deviceKey,
                 err: e instanceof Error ? e.message : 'unknown error',
