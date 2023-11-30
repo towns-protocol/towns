@@ -19,7 +19,6 @@ import {
     MegolmSession,
     OlmMessage,
     ToDeviceMessage,
-    UserPayload_ToDevice,
 } from '@river/proto'
 import { IFallbackKey, recursiveMapToObject } from '../types'
 import { bin_fromHexString } from '../binary'
@@ -227,8 +226,8 @@ export interface CryptoBackend {
      * Rejects with an error if there is a problem decrypting the event.
      */
     decryptOlmEvent(
-        event: UserPayload_ToDevice,
-        senderUserId: string,
+        envelope: EncryptedMessageEnvelope,
+        senderDeviceKey: string,
     ): Promise<IEventOlmDecryptionResult>
 }
 
@@ -380,13 +379,10 @@ export class Crypto implements CryptoBackend {
      * Decrypt a received event using Olm
      */
     public async decryptOlmEvent(
-        event: UserPayload_ToDevice,
-        senderUserId: string,
+        envelope: EncryptedMessageEnvelope,
+        senderDeviceKey: string,
     ): Promise<IEventOlmDecryptionResult> {
-        if (!event?.message?.algorithm) {
-            throw new Error('Event has no algorithm specified')
-        }
-        return this.olmDecryption.decryptEvent(event, senderUserId)
+        return this.olmDecryption.decryptEvent(envelope, senderDeviceKey)
     }
 
     /**

@@ -2,8 +2,11 @@ import { Client } from './client'
 import { makeTestClient } from './util.test'
 import { KeyResponseKind, OlmMessage, ToDeviceMessage, UserPayload_ToDevice } from '@river/proto'
 import { make_ToDevice_KeyResponse } from './types'
+import { dlog } from './dlog'
 
-describe('clientCryptoTest', () => {
+const log = dlog('test:clientCrypto')
+
+describe('clientCrypto', () => {
     let bobsClient: Client
     let alicesClient: Client
 
@@ -69,10 +72,11 @@ describe('clientCryptoTest', () => {
             senderKey: alicesClient.olmDevice.deviceCurve25519Key!,
             // todo: point to origin event for key responses
         }
+        const payload = new UserPayload_ToDevice(event)
         // ensure olm session with bob
         const clear = await bobsClient.decryptOlmEvent(
-            new UserPayload_ToDevice(event),
-            alicesClient.userId,
+            envelope.toDeviceMessages[bobsClient.userDeviceKey().deviceKey],
+            payload.senderKey,
         )
         expect(clear).toBeDefined()
         expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('200')
@@ -120,6 +124,7 @@ describe('clientCryptoTest', () => {
                 senderKey: alicesClient.olmDevice.deviceCurve25519Key!,
                 // todo: point to origin event for key responses
             }
+            log('event', event)
             // ensure olm session with bob
 
             const senderKey = alicesClient.olmDevice.deviceCurve25519Key
@@ -129,8 +134,8 @@ describe('clientCryptoTest', () => {
 
             // ensure olm session with bob
             const clear = await bobsClient.decryptOlmEvent(
-                new UserPayload_ToDevice(event),
-                alicesClient.userId,
+                envelope.toDeviceMessages[bobsClient.userDeviceKey().deviceKey],
+                senderKey,
             )
             expect(clear).toBeDefined()
             expect(clear?.clearEvent?.content?.payload?.value?.streamId).toContain(values[i])

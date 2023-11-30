@@ -16,7 +16,6 @@ import {
     FallbackKeys,
     Key,
     SyncCookie,
-    UserPayload_ToDevice,
     EncryptedDeviceData,
     ToDeviceMessage,
     EncryptedData,
@@ -29,6 +28,7 @@ import {
     Envelope,
     Err,
     OlmMessage,
+    EncryptedMessageEnvelope,
 } from '@river/proto'
 import { Crypto, GroupEncryptionInput, IEventOlmDecryptionResult } from './crypto/crypto'
 import { OlmDevice, IExportedDevice as IExportedOlmDevice } from './crypto/olmDevice'
@@ -1617,13 +1617,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
      *
      */
     public async decryptOlmEvent(
-        event: UserPayload_ToDevice,
-        senderUserId: string,
+        envelope: EncryptedMessageEnvelope,
+        senderDeviceKey: string,
     ): Promise<IEventOlmDecryptionResult> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        return this.cryptoBackend.decryptOlmEvent(event, senderUserId)
+        return this.cryptoBackend.decryptOlmEvent(envelope, senderDeviceKey)
     }
     /**
      * Attempts to decrypt an event

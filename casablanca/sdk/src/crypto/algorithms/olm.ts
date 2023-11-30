@@ -22,37 +22,21 @@ export class OlmDecryption extends DecryptionAlgorithm {
      * problem decrypting the event.
      */
     public async decryptEvent(
-        event: UserPayload_ToDevice,
-        senderUserId: string,
+        envelope: EncryptedMessageEnvelope,
+        senderDeviceKey: string,
     ): Promise<IEventOlmDecryptionResult> {
-        const deviceKey = event.senderKey
-        const toDeviceMessages = event.message?.toDeviceMessages
-
-        if (!deviceKey) {
-            throw new DecryptionError('OLM_MISSING_SENDER_KEY', 'Missing sender key')
-        }
-        if (!toDeviceMessages) {
-            throw new DecryptionError('OLM_MISSING_CIPHERTEXT', 'Missing toDeviceMessages')
-        }
         if (!this.olmDevice.deviceCurve25519Key) {
             throw new DecryptionError('OLM_MISSING_DEVICE_KEY', 'Missing device key')
         }
 
-        if (!(this.olmDevice.deviceCurve25519Key in toDeviceMessages)) {
-            throw new DecryptionError(
-                'OLM_NOT_INCLUDED_IN_RECIPIENTS',
-                'Not included in recipients',
-            )
-        }
-        const message = toDeviceMessages[this.olmDevice.deviceCurve25519Key]
         let payloadString: string
 
         try {
-            payloadString = await this.decryptMessage(deviceKey, message)
+            payloadString = await this.decryptMessage(senderDeviceKey, envelope)
         } catch (e) {
             logError('OLM_BAD_ENCRYPTED_MESSAGE', e)
             throw new DecryptionError('OLM_BAD_ENCRYPTED_MESSAGE', 'Bad Encrypted Message', {
-                sender: deviceKey,
+                sender: senderDeviceKey,
                 err: e instanceof Error ? e.message : 'unknown error',
             })
         }
@@ -61,7 +45,7 @@ export class OlmDecryption extends DecryptionAlgorithm {
 
         return {
             clearEvent: payload,
-            senderCurve25519Key: deviceKey,
+            senderCurve25519Key: senderDeviceKey,
         }
     }
 

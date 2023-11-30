@@ -332,7 +332,10 @@ export class RiverDecryptionExtension {
                 return
             }
             try {
-                const clear = await this.client.decryptOlmEvent(event, senderUserId)
+                const clear = await this.client.decryptOlmEvent(
+                    event.message?.toDeviceMessages[ourDeviceKey],
+                    event.senderKey,
+                )
                 const senderCurve25519Key = event.senderKey
                 this.client.emit('toDeviceMessageDecrypted', streamId, eventId, clear, senderUserId)
                 this.receivedToDeviceEventQueue.enqueue({
