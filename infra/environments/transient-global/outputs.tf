@@ -12,3 +12,7 @@ output "river_ecs_cluster" {
     id   = aws_ecs_cluster.river_ecs_cluster.id
   }
 }
+
+output "rpc_proxy_global_access_key" {
+  value = aws_secretsmanager_secret.rpc_proxy_global_access_key
+}

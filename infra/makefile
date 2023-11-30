@@ -12,6 +12,7 @@ override terraform_workspace_name := $(if $(filter transient,$(ENV)), transient-
 env:
 	@cat /dev/null > .env
 	echo "ENV=$(ENV)" >> .env
+	echo "AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION)" >> .env
 ifdef AWS_PROFILE
 	echo "AWS_PROFILE=$(AWS_PROFILE)" >> .env
 endif
@@ -48,41 +49,40 @@ shell: env check
 # This is clean setup after removing the .terraform folder and reinitialise the terraform
 clean: env check
 	$(CMD) /bin/bash -c 'rm -rf ${ENV}/.terraform'
-	$(CMD) -chdir=${terraform_folder} init -backend-config=../../backend.conf --reconfigure
+	$(CMD) terraform -chdir=${terraform_folder} init -backend-config=../../backend.conf --reconfigure
 
 # This is to reinitialise terraform, including image rebuild from start
 clean_init: env check
 	$(NOCACHECMD)
 	$(CMD) /bin/bash -c 'rm -rf ${ENV}/.terraform'
-	$(CMD) -chdir=${terraform_folder} init -backend-config=../../backend.conf --reconfigure
+	$(CMD) terraform -chdir=${terraform_folder} init -backend-config=../../backend.conf --reconfigure
 
 # This is for terraform init
 init: env check
-	$(CMD) -chdir=${terraform_folder} init -backend-config=../../backend.conf --reconfigure
+	$(CMD) terraform -chdir=${terraform_folder} init -backend-config=../../backend.conf --reconfigure
 
 # This will format the whole terraform code
 fmt: env
-	$(CMD) fmt --recursive
+	$(CMD) terraform fmt --recursive
 
 lint: env
-	$(CMD) fmt --recursive --check
+	$(CMD) terraform fmt --recursive --check
 
 # This will validate the terraform scripts
 validate: env
-	$(CMD) validate
+	$(CMD) terraform validate
 
 # This will plan the terraform infra changes
 plan: env check
-	$(CMD) -chdir=${terraform_folder} workspace select $(terraform_workspace_name) || $(CMD) -chdir=${terraform_folder} workspace new $(terraform_workspace_name)
-	$(CMD) -chdir=${terraform_folder} plan
+	$(CMD) terraform -chdir=${terraform_folder} workspace select $(terraform_workspace_name) || $(CMD) terraform -chdir=${terraform_folder} workspace new $(terraform_workspace_name)
+	$(CMD) terraform -chdir=${terraform_folder} plan
 
 # This will apply the terraform infra changes
 apply: env check
-	$(CMD) -chdir=${terraform_folder} workspace select $(terraform_workspace_name) || $(CMD) -chdir=${terraform_folder} workspace new $(terraform_workspace_name)
-	$(CMD) -chdir=${terraform_folder} apply $(CI_AUTOAPPROVE)
+	$(CMD) terraform -chdir=${terraform_folder} workspace select $(terraform_workspace_name) || $(CMD) terraform -chdir=${terraform_folder} workspace new $(terraform_workspace_name)
+	$(CMD) terraform -chdir=${terraform_folder} apply $(CI_AUTOAPPROVE)
 
 # This will destroy the terraform infra
 destroy: env check
-	$(CMD) -chdir=${terraform_folder} workspace select $(terraform_workspace_name) || $(CMD) -chdir=${terraform_folder} workspace new $(terraform_workspace_name)
-	$(CMD) -chdir=${terraform_folder} destroy $(CI_AUTOAPPROVE)
-
+	$(CMD) terraform -chdir=${terraform_folder} workspace select $(terraform_workspace_name) || $(CMD) terraform -chdir=${terraform_folder} workspace new $(terraform_workspace_name)
+	$(CMD) terraform -chdir=${terraform_folder} destroy $(CI_AUTOAPPROVE)

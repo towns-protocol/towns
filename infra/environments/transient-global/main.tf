@@ -67,6 +67,16 @@ module "river_alb" {
 }
 
 resource "aws_ecs_cluster" "river_ecs_cluster" {
-  name = "${module.global_constants.environment}-river-ecs-cluster"
+  name = "${terraform.workspace}-river-ecs-cluster"
   tags = module.global_constants.tags
+}
+
+resource "aws_secretsmanager_secret" "rpc_proxy_global_access_key" {
+  name = "${terraform.workspace}-rpc-proxy-global-access-key"
+  tags = module.global_constants.tags
+}
+
+resource "aws_secretsmanager_secret_version" "rpc_proxy_global_access_key" {
+  secret_id     = aws_secretsmanager_secret.rpc_proxy_global_access_key.id
+  secret_string = "DUMMY"
 }

@@ -16,6 +16,25 @@ output "primary_hosted_zone_name" {
 locals {
   sre_goalie_slack_handle = "<@kerem>"
   sre_slack_channel       = "@slack-Here_Not_There_Labs-sre-alerts"
+  datadog_forwarder_stack_lambda = {
+    name = "DatadogIntegration-ForwarderStack-RUFAY0-Forwarder-HzhENFwRgMR6"
+  }
+}
+
+data "aws_lambda_function" "datadog_forwarder_stack_lambda" {
+  function_name = local.datadog_forwarder_stack_lambda.name
+}
+
+output "datadug_forwarder_stack_lambda" {
+  value     = data.aws_lambda_function.datadog_forwarder_stack_lambda
+  sensitive = false
+}
+
+data "aws_caller_identity" "current" {}
+
+output "account_id" {
+  value     = data.aws_caller_identity.current.account_id
+  sensitive = false
 }
 
 output "tags" {
@@ -36,10 +55,6 @@ output "sre_slack_identifier" {
   sensitive = false
 }
 
-output "global_remote_state" {
-  value = data.terraform_remote_state.global_remote_state
-}
-
 data "terraform_remote_state" "global_remote_state" {
   backend = "s3"
 
@@ -49,4 +64,23 @@ data "terraform_remote_state" "global_remote_state" {
     bucket  = "here-not-there-terraform-state"
     key     = "env:/global/default"
   }
+}
+
+output "global_remote_state" {
+  value = data.terraform_remote_state.global_remote_state
+}
+
+data "terraform_remote_state" "transient_global_remote_state" {
+  backend = "s3"
+
+  config = {
+    region  = "us-east-1"
+    profile = "harmony-github-actions"
+    bucket  = "here-not-there-terraform-state"
+    key     = "env:/transient-global/default"
+  }
+}
+
+output "transient_global_remote_state" {
+  value = data.terraform_remote_state.transient_global_remote_state
 }

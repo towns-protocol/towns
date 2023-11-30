@@ -98,19 +98,66 @@ module "river_internal_sg" {
 module "river_node_db" {
   source = "../../modules/river-node-db"
 
-  river_node_security_group_id  = module.river_internal_sg.security_group_id
-  database_subnets              = var.database_subnets
-  allowed_cidr_blocks           = var.database_allowed_cidr_blocks
-  vpc_id                        = var.vpc_id
-  river_node_name               = var.node_name
-  ecs_task_execution_role_id    = aws_iam_role.ecs_task_execution_role.id
-  cow_cluster_source_identifier = var.database_cow_cluster_source_identifier
+  river_node_security_group_id                = module.river_internal_sg.security_group_id
+  post_provision_config_lambda_function_sg_id = aws_security_group.post_provision_config_lambda_function_sg.id
+  database_subnets                            = var.database_subnets
+  river_node_subnets                          = var.node_subnets
+  vpc_id                                      = var.vpc_id
+  river_node_name                             = var.node_name
+  ecs_task_execution_role_id                  = aws_iam_role.ecs_task_execution_role.id
+  cluster_source_identifier                   = var.database_cluster_source_identifier
+  is_transient                                = var.is_transient
+}
+
+resource "aws_security_group" "post_provision_config_lambda_function_sg" {
+  name        = "${var.node_name}_post_provision_config_lambda_function_sg"
+  description = "Security group for the lambda function to configure the infra after provisioning"
+  vpc_id      = var.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+module "post_provision_config" {
+  source = "../../modules/post-provision-config"
+
+  river_node_name                   = var.node_name
+  river_node_subnets                = var.node_subnets
+  river_node_wallet_credentials_arn = aws_secretsmanager_secret.river_node_wallet_credentials.arn
+  homechain_network_url_secret_arn  = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
+  rds_river_node_credentials_arn    = module.river_node_db.rds_river_node_credentials_arn
+  rds_cluster_resource_id           = module.river_node_db.rds_aurora_postgresql.cluster_resource_id
+  vpc_id                            = var.vpc_id
+  security_group_id                 = aws_security_group.post_provision_config_lambda_function_sg.id
+}
+
+locals {
+  function_name = module.post_provision_config.lambda_function.lambda_function_name
+}
+
+# Invoking the lambda function one RDS is created to configure the DB
+resource "null_resource" "invoke_lambda" {
+  provisioner "local-exec" {
+    command = "aws lambda invoke --function-name ${local.function_name} /dev/null"
+  }
+  depends_on = [module.river_node_db, module.post_provision_config]
 }
 
 resource "aws_cloudwatch_log_group" "river_log_group" {
   name = "/ecs/river/${var.node_name}"
 
   tags = local.tags
+}
+
+resource "aws_cloudwatch_log_subscription_filter" "river_log_group_filter" {
+  name            = "${var.node_name}-river-log-group"
+  log_group_name  = aws_cloudwatch_log_group.river_log_group.name
+  filter_pattern  = ""
+  destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
 resource "aws_cloudwatch_log_group" "dd_agent_log_group" {
@@ -304,7 +351,9 @@ resource "aws_lb_target_group" "green" {
 
 resource "aws_lb_listener_rule" "host_rule" {
   listener_arn = var.alb_https_listener_arn
-  priority     = 1
+
+  # set the priority dynamically to avoid conflicts with
+  priority = var.is_transient ? var.git_pr_number : 1
 
   lifecycle {
     ignore_changes = [action]
@@ -324,6 +373,7 @@ resource "aws_lb_listener_rule" "host_rule" {
 
 resource "aws_ecs_task_definition" "river-fargate" {
   family = "${var.node_name}-fargate"
+
 
   lifecycle {
     ignore_changes = [container_definitions]
@@ -542,6 +592,13 @@ resource "aws_ecs_service" "river-ecs-service" {
   desired_count                      = 1
   deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 100
+
+  # do not attempt to create the service before the lambda runs
+  depends_on = [
+    module.river_node_db,
+    module.post_provision_config,
+    null_resource.invoke_lambda
+  ]
 
   launch_type      = "FARGATE"
   platform_version = "1.4.0"

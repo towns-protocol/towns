@@ -13,6 +13,6 @@ export VITE_APP_RELEASE_VERSION=$RENDER_GIT_COMMIT
 
 export PREVIEW_DOMAIN_SUFFIX="app-preview.towns.com"
 
-./scripts/setup-render-preview-custom-domain.sh
+./scripts/setup-render-preview-environment.sh
 yarn install
 yarn harmonyweb:build

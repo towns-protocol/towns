@@ -3,6 +3,12 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "git_pr_number" {
+  description = "The GitHub Pull Request number"
+  type        = number
+  default     = null
+}
+
 variable "node_name" {
   description = "The name of the river node"
   type        = string
@@ -24,13 +30,6 @@ variable "node_subnets" {
 variable "database_subnets" {
   description = "List of subnet IDs used by database subnet group created"
   type        = list(string)
-  default     = []
-}
-
-variable "database_allowed_cidr_blocks" {
-  description = "List of CIDR blocks allowed to connect to the database"
-  type        = list(string)
-  default     = []
 }
 
 variable "alb_security_group_id" {
@@ -58,8 +57,14 @@ variable "push_notification_worker_url" {
   type        = string
 }
 
-variable "database_cow_cluster_source_identifier" {
+variable "database_cluster_source_identifier" {
   description = "The cluster identifier of the source cluster when restoring from a snapshot or backup"
   type        = string
   default     = null
+}
+
+variable "is_transient" {
+  description = "Whether or not this db is transient"
+  type        = bool
+  default     = false
 }

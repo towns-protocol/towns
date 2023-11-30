@@ -3,7 +3,7 @@ on:
     pull_request:
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
+    group: ${{ github.workflow }}-provision-${{ github.ref }}
     cancel-in-progress: false
     # TODO: how can we make sure there's only one per environment running at the same time?
 
@@ -11,11 +11,12 @@ jobs:
     provision_transient_environment:
         permissions: write-all
         runs-on: ubuntu-latest-8-cores
-        timeout-minutes: 20
+        timeout-minutes: 40
 
         env:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_DEFAULT_REGION: us-east-1
             ENV: 'transient'
             TF_VAR_cloudflare_terraform_api_token: ${{ secrets.CLOUDFLARE_TERRAFORM_API_TOKEN }}
             GIT_PR_NUMBER: ${{ github.event.pull_request.number}}
@@ -57,3 +58,14 @@ jobs:
                       }
               env:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+
+    river_node_continuous_deploys:
+        uses: './.github/workflows/River_node_docker.yml'
+        secrets: inherit
+        needs: provision_transient_environment
+        permissions: write-all
+        # TODO: only run if a change in /casablanca/node is detected
+        # TODO: only deploy if the new docker image is different than what's currently active
+        with:
+            environment_name: ${{ format('transient-{0}', github.event.pull_request.number )}}
+            docker_image_tag: ${{ format('transient-{0}-latest', github.event.pull_request.number )}}

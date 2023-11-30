@@ -91,11 +91,10 @@ module "river_node_1" {
   alb_dns_name           = module.river_alb.lb_dns_name
   alb_https_listener_arn = module.river_alb.lb_https_listener_arn
 
-  database_allowed_cidr_blocks = module.vpc.private_subnets_cidr_blocks
-  database_subnets             = module.vpc.database_subnets
+  database_subnets = module.vpc.database_subnets
 
   # TODO: make this more generalizable, consider computing from env name
-  database_cow_cluster_source_identifier = "arn:aws:rds:us-east-1:211286738967:cluster:test-river-river-1-test-postgresql"
+  database_cluster_source_identifier = "arn:aws:rds:us-east-1:211286738967:cluster:test-river-river-1-test-postgresql"
 
   home_chain_id                = 84531
   push_notification_worker_url = "https://push-notification-worker-${terraform.workspace}.towns.com"

@@ -5,7 +5,9 @@
 -- Replace <RIVER_PASSWORD> with a passwords of your choice
 -- Remember that the bastion host needs to be allowed into the database allowed_cidr_blocks.
 -- Remember to remove the bastion host from the allowed_cidr_blocks when you're done.
-CREATE ROLE river WITH PASSWORD '<RIVER_PASSWORD>' CREATEDB LOGIN;
+CREATE ROLE river IF NOT EXISTS WITH PASSWORD '<RIVER_PASSWORD>' CREATEDB LOGIN;
+
+GRANT rds_iam TO root;
 
 -- make river an owner of public schema
 ALTER SCHEMA public OWNER TO river;

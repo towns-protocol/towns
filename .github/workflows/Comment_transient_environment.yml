@@ -25,9 +25,11 @@ jobs:
                       const gitPrNumber = process.env.GIT_PR_NUMBER;
                       const webAppUrl = `https://${gitPrNumber}.app-preview.towns.com`;
                       const sampleAppUrl = `https://${gitPrNumber}.sample-app-preview.towns.com`;
+                      const riverNodeUrl = `https://river1-transient-${gitPrNumber}.towns.com`;
                       const message = `
                       Web App: [${webAppUrl}](${webAppUrl})
                       Sample App: [${sampleAppUrl}](${sampleAppUrl})
+                      River Node: [${riverNodeUrl}](${riverNodeUrl})
                       `;
 
                       github.rest.issues.createComment({

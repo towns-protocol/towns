@@ -8,12 +8,27 @@ on:
             - main
         paths:
             - 'casablanca/node/**'
+
     workflow_dispatch: # A build was manually requested
-    workflow_call: # Another pipeline called us
-        secrets:
-            DOCKER_HUB_TOKEN:
+        inputs:
+            environment_name:
+                description: 'Environment Name'
+                type: string
+                default: 'test-beta'
+            docker_image_tag:
+                description: 'Docker image tag'
                 required: true
-            DOCKER_HUB_USERNAME:
+                default: 'latest'
+
+    workflow_call:
+        inputs:
+            environment_name:
+                description: 'Environment Name'
+                type: string
+                required: true
+            docker_image_tag:
+                description: 'Docker image tag'
+                type: string
                 required: true
 
 env:
@@ -22,19 +37,46 @@ env:
     PLATFORMS: linux/amd64,linux/arm64
 
 jobs:
-    monolith:
+    build:
         name: Build docker image
+
         runs-on: ubuntu-latest-8-cores
+
         permissions:
             contents: write
             packages: write
+
+        outputs:
+            environment_name: ${{ steps.compute_env_name_and_latest_tag.outputs.environment_name }}
+            latest_tag_name: ${{ steps.compute_env_name_and_latest_tag.outputs.latest_tag_name }}
+            release_version: ${{ steps.set_release_version.outputs.release_version }}
+
         steps:
             - name: Checkout
               uses: actions/checkout@v3
 
             - name: Put abbreviated commit hash to release version
-              working-directory: ./scripts
-              run: echo $(git log -1 --pretty=%h) | awk '{print "RELEASE_VERSION="$1""}' >> $GITHUB_ENV
+              id: set_release_version
+              run: |
+                  COMMIT_HASH=$(git log -1 --pretty=%h)
+                  echo "::set-output name=release_version::${COMMIT_HASH}"
+
+            - name: Compute the environment name and latest tag
+              id: compute_env_name_and_latest_tag
+              env:
+                  IS_PUSH: ${{ github.event_name == 'push' }}
+                  IS_INPUT_DRIVEN: ${{ inputs.environment_name != '' }}
+              run: |
+                  if [ "${{ env.IS_PUSH }}" == "true" ]; then
+                      echo "::set-output name=environment_name::test-beta"
+                      echo "::set-output name=latest_tag_name::latest"
+                  elif [ "${{ env.IS_INPUT_DRIVEN }}" == "true" ]; then
+                      echo "::set-output name=environment_name::${{ inputs.environment_name }}"
+                      echo "::set-output name=latest_tag_name::${{ inputs.docker_image_tag }}"
+                  else
+                      echo "::error::Unhandled event type"
+                      exit 1
+                  fi
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v2
@@ -47,6 +89,7 @@ jobs:
                   password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
             - name: Build River Node
+              id: build_river_node
               uses: docker/build-push-action@v4
               with:
                   cache-from: type=gha
@@ -57,26 +100,12 @@ jobs:
                   push: true
                   build-args: |
                       GIT_SHA=${{ github.sha }}
-                      RELEASE_VERSION=${{ env.RELEASE_VERSION }}
+                      RELEASE_VERSION=${{ steps.set_release_version.outputs.release_version }}
                   tags: |
-                      ${{ env.DOCKER_NAMESPACE }}/river-node:latest
-                      ${{ env.DOCKER_NAMESPACE }}/river-node:${{ env.RELEASE_VERSION }}
+                      ${{ env.DOCKER_NAMESPACE }}/river-node:${{ steps.compute_env_name_and_latest_tag.outputs.latest_tag_name }}
+                      ${{ env.DOCKER_NAMESPACE }}/river-node:${{ steps.set_release_version.outputs.release_version }}
 
-            - name: Deploy River Node to ECS
-              run: |
-                  curl -X POST \
-                  -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                  -H "Accept: application/vnd.github.v3+json" \
-                  https://api.github.com/repos/${{ github.repository }}/dispatches \
-                  -d '{
-                  "event_type": "deploy-event",
-                  "client_payload": {
-                      "environment": "test-beta",
-                      "docker_image_tag": "${{ env.RELEASE_VERSION }}"
-                    }
-                  }'
-
-              # If action failed, we send a slack notification
+            # If action failed, we send a slack notification
             - name: Slack notification
               if: failure()
               uses: slackapi/slack-github-action@v1.24.0
@@ -92,3 +121,14 @@ jobs:
                       }
               env:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+
+    deploy:
+        uses: './.github/workflows/River_deploy.yml'
+        needs: build
+        permissions:
+            contents: write
+            packages: write
+        secrets: inherit
+        with:
+            environment_name: ${{ needs.build.outputs.environment_name }}
+            docker_image_tag: ${{ needs.build.outputs.release_version }}

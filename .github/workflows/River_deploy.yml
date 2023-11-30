@@ -3,28 +3,29 @@ name: 'River_deploy'
 on:
     workflow_dispatch:
         inputs:
-            environment:
-                description: 'Environment'
+            environment_name:
+                description: 'Environment name'
                 required: true
-                default: 'test-beta'
-                type: choice
-                options:
-                    - test-beta
+                type: string
             docker_image_tag:
                 description: 'Docker image tag to deploy'
                 required: true
                 default: 'latest'
-    repository_dispatch:
-        types:
-            - deploy-event
+
+    workflow_call:
+        inputs:
+            environment_name:
+                description: 'Environment name'
+                required: true
+                type: string
+            docker_image_tag:
+                description: 'Docker image tag to deploy'
+                required: true
+                type: string
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
+    group: ${{ github.workflow }}-deploy-${{ github.ref }}
     cancel-in-progress: true
-
-env:
-    ENVIRONMENT_NAME: ${{ github.event.inputs.environment || github.event.client_payload.environment }}
-    DOCKER_IMAGE_TAG: ${{ github.event.inputs.docker_image_tag || github.event.client_payload.docker_image_tag }}
 
 jobs:
     deploy:
@@ -48,13 +49,13 @@ jobs:
 
             - name: Create new task definition
               env:
-                  ENVIRONMENT_NAME: ${{ env.ENVIRONMENT_NAME }}
-                  DOCKER_IMAGE_TAG: ${{ env.DOCKER_IMAGE_TAG }}
+                  ENVIRONMENT_NAME: ${{ inputs.environment_name }}
+                  DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
               run: ./scripts/create-river-task-definition.sh
 
             - name: Deploy service
               env:
-                  ENVIRONMENT_NAME: ${{ env.ENVIRONMENT_NAME }}
+                  ENVIRONMENT_NAME: ${{ inputs.environment_name }}
               run: ./scripts/deploy-river-task-definition.sh
 
             # If action failed, we send a slack notification
@@ -65,7 +66,7 @@ jobs:
                   payload: |
                       {
                           "step": "Deploy River ECS",
-                          "environment": "${{ github.event.inputs.environment || github.event.client_payload.environment }}",
+                          "environment": "${{ inputs.environment_name }}",
                           "branch": "${{ github.ref }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
                           "commit": "${{ github.sha }}",
