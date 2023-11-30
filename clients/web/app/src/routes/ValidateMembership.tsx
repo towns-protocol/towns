@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Outlet } from 'react-router'
 import { Membership } from 'use-zion-client'
 import { Box } from '@ui'
@@ -13,11 +13,14 @@ export const ValidateMembership = () => {
     const initialSyncComplete = useWaitForInitialSync()
     const spaceId = useSpaceIdFromPathname()
 
+    useEffect(() => {
+        console.log('ValidateMembership', spaceId, { chainSpaceLoading, initialSyncComplete })
+    }, [chainSpaceLoading, spaceId, initialSyncComplete])
+
     if (!spaceId) {
         return <Outlet />
     }
 
-    console.log('ValidateMembership', { chainSpaceLoading, initialSyncComplete })
     if (chainSpaceLoading || !initialSyncComplete) {
         return <WelcomeLayout debugText="validate membership: loading town data" />
     }
