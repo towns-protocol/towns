@@ -266,13 +266,11 @@ jobs:
             - name: Run Node Flush Tests (without entitlements)
               run: yarn workspace @river/sdk run test:node-minipool-flush
 
-            - name: Archive Casablanca log
-              if: always()
+            - name: Archive River Node Logs and Settings
               uses: actions/upload-artifact@v3
               with:
-                  name: casablanca-node-log
-                  path: |
-                      casablanca/node/run_files/single/logs/dev.log
+                  name: 'river-node-${{ github.job }}'
+                  path: ./casablanca/node/run_files/
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -413,13 +411,11 @@ jobs:
                   cd casablanca/sdk
                   RIVER_TEST_URL=http://localhost:5174 yarn test:ci
 
-            - name: Archive Casablanca log
-              if: always()
+            - name: Archive River Node Logs and Settings
               uses: actions/upload-artifact@v3
               with:
-                  name: casablanca-node-log
-                  path: |
-                      casablanca/node/run_files/single/logs/dev.log
+                  name: 'river-node-${{ github.job }}'
+                  path: ./casablanca/node/run_files/
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -565,13 +561,11 @@ jobs:
             - name: Run River Tests (with entitlements)
               run: yarn workspace @river/sdk run test:ci:with-entitlements
 
-            - name: Archive Casablanca log
-              if: always()
+            - name: Archive River Node Logs and Settings
               uses: actions/upload-artifact@v3
               with:
-                  name: casablanca-node-log
-                  path: |
-                      casablanca/node/run_files/single/logs/dev.log
+                  name: 'river-node-${{ github.job }}'
+                  path: ./casablanca/node/run_files/
 
             # If CI failed, we send a slack notification
             - name: Slack notification
