@@ -10,7 +10,7 @@ on:
                 required: true
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
+    group: ${{ github.workflow }}-deprovision-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
     cancel-in-progress: false
     # TODO: how can we make sure there's only one per environment running at the same time?
     # TODO: make this wait for any ongoing Provision Transient Environment workflow to finish
