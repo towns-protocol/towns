@@ -58,7 +58,7 @@ export interface StreamTimelineEvent {
     localEvent?: LocalEvent
     remoteEvent?: ParsedEvent
     decryptedContent?: RiverEventV2
-    localEventNum?: bigint
+    miniblockNum?: bigint
     confirmedEventNum?: bigint
 }
 
@@ -90,16 +90,20 @@ export function isDecryptedEvent(event: StreamTimelineEvent): event is Decrypted
     return event.decryptedContent !== undefined && event.remoteEvent !== undefined
 }
 
-export function makeRemoteTimelineEvent(
-    parsedEvent: ParsedEvent,
-    eventNum: bigint,
-): RemoteTimelineEvent {
+export function makeRemoteTimelineEvent(params: {
+    parsedEvent: ParsedEvent
+    eventNum: bigint
+    miniblockNum?: bigint
+    confirmedEventNum?: bigint
+}): RemoteTimelineEvent {
     return {
-        hashStr: parsedEvent.hashStr,
-        creatorUserId: parsedEvent.creatorUserId,
-        eventNum,
-        createdAtEpocMs: parsedEvent.event.createdAtEpocMs,
-        remoteEvent: parsedEvent,
+        hashStr: params.parsedEvent.hashStr,
+        creatorUserId: params.parsedEvent.creatorUserId,
+        eventNum: params.eventNum,
+        createdAtEpocMs: params.parsedEvent.event.createdAtEpocMs,
+        remoteEvent: params.parsedEvent,
+        miniblockNum: params.miniblockNum,
+        confirmedEventNum: params.confirmedEventNum,
     }
 }
 

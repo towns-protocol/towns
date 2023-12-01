@@ -209,6 +209,8 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         fallbackContent: fbc,
         isEncrypting: eventId.startsWith('~'),
         isLocalPending: timelineEvent.remoteEvent === undefined,
+        confirmedEventNum: timelineEvent.confirmedEventNum,
+        confirmedInBlockNum: timelineEvent.miniblockNum,
         threadParentId: getThreadParentId(content),
         reactionParentId: getReactionParentId(content),
         isMentioned: getIsMentioned(content, userId),

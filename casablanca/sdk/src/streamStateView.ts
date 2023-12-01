@@ -36,6 +36,7 @@ import {
 } from './streamStateView_IContent'
 import { StreamStateView_DMChannel } from './streamStateView_DMChannel'
 import { genLocalId } from './id'
+import { bin_toHexString } from './binary'
 
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
@@ -243,10 +244,18 @@ export class StreamStateView {
                 existingEvent.remoteEvent = parsedEvent
                 updated.push(existingEvent)
             } else {
-                const event = makeRemoteTimelineEvent(parsedEvent, this.lastEventNum++)
+                const event = makeRemoteTimelineEvent({
+                    parsedEvent,
+                    eventNum: this.lastEventNum++,
+                    miniblockNum: undefined,
+                    confirmedEventNum: undefined,
+                })
                 this.timeline.push(event)
-                this.processAppendedEvent(event, emitter)
+                const modified = this.processAppendedEvent(event, emitter)
                 appended.push(event)
+                if (modified) {
+                    updated.push(...modified)
+                }
             }
         }
         this.syncCookie = streamAndCookie.nextSyncCookie
@@ -256,13 +265,14 @@ export class StreamStateView {
     private processAppendedEvent(
         timelineEvent: RemoteTimelineEvent,
         emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    ): StreamTimelineEvent[] | undefined {
         check(!this.events.has(timelineEvent.hashStr))
         this.events.set(timelineEvent.hashStr, timelineEvent)
 
         const event = timelineEvent.remoteEvent
         const payload = event.event.payload
         check(isDefined(payload), `Event has no payload ${event.hashStr}`, Err.STREAM_BAD_EVENT)
+        let updated: StreamTimelineEvent[] | undefined = undefined
 
         try {
             switch (payload.case) {
@@ -299,8 +309,21 @@ export class StreamStateView {
                     this.prevMiniblockHash = event.envelope.hash
                     this.getContent().onMiniblockHeader(payload.value, emitter)
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
+                    timelineEvent.confirmedEventNum =
+                        payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)
+                    updated = []
+                    for (let i = 0; i < payload.value.eventHashes.length; i++) {
+                        const eventId = bin_toHexString(payload.value.eventHashes[i])
+                        const event = this.events.get(eventId)
+                        if (!event) {
+                            logError(`Mininblock event not found ${eventId}`) // aellis this is pretty serious
+                            continue
+                        }
+                        event.miniblockNum = payload.value.miniblockNum
+                        event.confirmedEventNum = payload.value.eventNumOffset + BigInt(i)
+                        updated?.push(event)
+                    }
                     break
-
                 case undefined:
                     break
                 default:
@@ -309,6 +332,7 @@ export class StreamStateView {
         } catch (e) {
             logError(`StreamStateView::Error appending event ${event.hashStr}`, e)
         }
+        return updated
     }
 
     private processPrependedEvent(
@@ -431,17 +455,27 @@ export class StreamStateView {
         // initialize from snapshot data, this gets all memberships and channel data, etc
         this.initializeFromSnapshot(snapshot, emitter)
         // initialize from miniblocks, the first minblock is the snapshot block, it's events are accounted for
-        const block0Events = miniblocks[0].events.map((e, i) =>
-            makeRemoteTimelineEvent(e, miniblocks[0].header.eventNumOffset + BigInt(i)),
-        )
+        const block0Events = miniblocks[0].events.map((parsedEvent, i) => {
+            const eventNum = miniblocks[0].header.eventNumOffset + BigInt(i)
+            return makeRemoteTimelineEvent({
+                parsedEvent,
+                eventNum,
+                miniblockNum: miniblocks[0].header.miniblockNum,
+                confirmedEventNum: eventNum,
+            })
+        })
         // the rest need to be added to the timeline
-        const rest = miniblocks
-            .slice(1)
-            .flatMap((mb) =>
-                mb.events.map((e, i) =>
-                    makeRemoteTimelineEvent(e, mb.header.eventNumOffset + BigInt(i)),
-                ),
-            )
+        const rest = miniblocks.slice(1).flatMap((mb) =>
+            mb.events.map((parsedEvent, i) => {
+                const eventNum = mb.header.eventNumOffset + BigInt(i)
+                return makeRemoteTimelineEvent({
+                    parsedEvent,
+                    eventNum,
+                    miniblockNum: mb.header.miniblockNum,
+                    confirmedEventNum: eventNum,
+                })
+            }),
+        )
         // initialize our event hashes
         check(block0Events.length > 0)
         // prepend the snapshotted block in reverse order
@@ -481,8 +515,13 @@ export class StreamStateView {
     ) {
         const unpackedMiniblocks = miniblocks.map((mb) => unpackMiniblock(mb))
         const prepended = unpackedMiniblocks.flatMap((mb) =>
-            mb.events.map((e, i) =>
-                makeRemoteTimelineEvent(e, mb.header.eventNumOffset + BigInt(i)),
+            mb.events.map((parsedEvent, i) =>
+                makeRemoteTimelineEvent({
+                    parsedEvent,
+                    eventNum: mb.header.eventNumOffset + BigInt(i),
+                    miniblockNum: mb.header.miniblockNum,
+                    confirmedEventNum: mb.header.eventNumOffset + BigInt(i),
+                }),
             ),
         )
         this.timeline.unshift(...prepended)

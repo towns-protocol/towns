@@ -61,7 +61,8 @@ describe('unreadMessageCountEdgeCases', () => {
             }, [channelFullyReadMarker, sendReadReceipt])
             // format for easy reading
             function formatMessage(e: TimelineEvent) {
-                return `${e.eventNum} ${e.fallbackContent} eventId: ${e.eventId}`
+                const eventNumStr = `${e.eventNum}/${e.confirmedEventNum ?? '??'}`
+                return `${eventNumStr} ${e.fallbackContent} eventId: ${e.eventId}`
             }
             return (
                 <>
@@ -73,7 +74,7 @@ describe('unreadMessageCountEdgeCases', () => {
                     <div data-testid="channelFullyReadMarker">
                         {channelFullyReadMarker === undefined
                             ? 'undefined'
-                            : `isUnread:${channelFullyReadMarker.isUnread.toString()} mentions:${channelFullyReadMarker.mentions.toString()} eventId:${
+                            : `isUnread:${channelFullyReadMarker.isUnread.toString()} mentions:${channelFullyReadMarker.mentions.toString()} eventId: ${
                                   channelFullyReadMarker.eventId
                               }`}
                     </div>

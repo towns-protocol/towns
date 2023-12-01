@@ -223,10 +223,10 @@ describe('sendThreadedMessageHooks', () => {
                 (e: TimelineEvent, v?: 'short') => {
                     const replyCount = channelThreadStats[e.eventId]?.replyCount
                     const replyCountStr = replyCount ? `(replyCount:${replyCount})` : ''
-                    const idxStr = `#${e.eventNum}`
+                    const eventNumStr = `${e.eventNum}/${e.confirmedEventNum ?? '??'}`
                     const idStr = `id: ${e.eventId}`
                     const content = v !== undefined ? '' : `content: ${JSON.stringify(e.content)}`
-                    return `${idxStr} ${e.fallbackContent} ${replyCountStr} ${idStr} ${content}`
+                    return `${eventNumStr}} ${e.fallbackContent} ${replyCountStr} ${idStr} ${content}`
                 },
                 [channelThreadStats],
             )

@@ -239,6 +239,8 @@ export interface TimelineEvent {
     fallbackContent: string
     isEncrypting: boolean // local only, isLocalPending should also be true
     isLocalPending: boolean /// true if we're waiting for the event to get sent back from the server
+    confirmedEventNum?: bigint
+    confirmedInBlockNum?: bigint
     threadParentId?: string
     reactionParentId?: string
     isMentioned: boolean

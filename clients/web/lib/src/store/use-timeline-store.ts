@@ -311,6 +311,8 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             ...next,
             eventId: eventId,
             eventNum: prev.eventNum,
+            confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
+            confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
             createdAtEpocMs: prev.createdAtEpocMs,
             updatedAtEpocMs: next.createdAtEpocMs,
             content: {
@@ -328,16 +330,29 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             ...next,
             eventId: prev.eventId,
             eventNum: prev.eventNum,
+            confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
+            confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
             createdAtEpocMs: prev.createdAtEpocMs,
             updatedAtEpocMs: next.createdAtEpocMs,
             threadParentId: prev.threadParentId,
             reactionParentId: prev.reactionParentId,
+        }
+    } else if (prev.content?.kind === ZTEvent.RedactedEvent) {
+        // replacing a redacted event should maintain the redacted state
+        return {
+            ...prev,
+            confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
+            confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
         }
     } else {
         // make sure we carry the createdAtEpocMs of the previous event
         // so we don't end up with a timeline that has events out of order.
         return {
             ...next,
+            eventId: prev.eventId,
+            eventNum: prev.eventNum,
+            confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
+            confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
             createdAtEpocMs: prev.createdAtEpocMs,
             updatedAtEpocMs: next.createdAtEpocMs,
         }
