@@ -59,17 +59,6 @@ export type OlmGroupSessionExtraData = {
     untrusted?: boolean
 }
 
-export interface IExportedDevice {
-    pickleKey: string
-    pickledAccount: string
-    sessions: ISessionInfo[]
-}
-export interface IInitOpts {
-    exportedOlmDevice?: IExportedDevice
-    pickleKey?: string
-    olmDelegate?: OlmMegolmDelegate
-}
-
 export class OlmDevice {
     public pickleKey = 'DEFAULT_KEY' // set by consumers
 
@@ -122,29 +111,14 @@ export class OlmDevice {
      *
      *
      */
-    public async init({
-        pickleKey,
-        exportedOlmDevice: fromExportedDevice,
-    }: IInitOpts = {}): Promise<void> {
+    public async init(): Promise<void> {
         let e2eKeys
         if (!this.olmDelegate.initialized) {
             await this.olmDelegate.init()
         }
         const account = this.olmDelegate.createAccount()
-
         try {
-            if (fromExportedDevice) {
-                if (pickleKey) {
-                    log('ignoring opts.pickleKey' + ' because opts.fromExportedDevice is present.')
-                }
-                this.pickleKey = fromExportedDevice.pickleKey
-                await this.initializeFromExportedDevice(fromExportedDevice, account)
-            } else {
-                if (pickleKey) {
-                    this.pickleKey = pickleKey
-                }
-                await this.initializeAccount(account)
-            }
+            await this.initializeAccount(account)
             await this.generateFallbackKeyIfNeeded()
             this.fallbackKey = await this.getFallbackKey()
             e2eKeys = JSON.parse(account.identity_keys())
@@ -161,37 +135,6 @@ export class OlmDevice {
                 this.deviceCurve25519Key
             }, fallbackKey ${JSON.stringify(this.fallbackKey)}`,
         )
-    }
-
-    /**
-     * Populates the crypto store using data that was exported from an existing device.
-     * Note that for now only the “account” and “sessions” stores are populated;
-     * Other stores will be as with a new device.
-     *
-     * @param exportedData - Data exported from another device
-     *     through the “export” method.
-     * @param account - an olm account to initialize
-     */
-    private async initializeFromExportedDevice(
-        exportedData: IExportedDevice,
-        account: Account,
-    ): Promise<void> {
-        await this.cryptoStore.storeAccount(exportedData.pickledAccount)
-        for (const session of exportedData.sessions) {
-            const { deviceKey, sessionId } = session
-            if (!deviceKey || !sessionId) {
-                continue
-            }
-            const sessionInfo = {
-                sessionId,
-                deviceKey,
-                session: session.session,
-                lastReceivedMessageTs: session.lastReceivedMessageTs,
-            }
-
-            // await this.cryptoStore.storeEndToEndSession(sessionInfo)
-        }
-        account.unpickle(this.pickleKey, exportedData.pickledAccount)
     }
 
     private async initializeAccount(account: Account): Promise<void> {

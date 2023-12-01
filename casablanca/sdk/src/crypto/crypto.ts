@@ -9,7 +9,7 @@ import { check } from '../check'
 import { Client } from '../client'
 import { OLM_ALGORITHM, MEGOLM_ALGORITHM, UserDevice, ISignatures } from './olmLib'
 import { OlmMegolmDelegate } from '@river/mecholm'
-import { OlmDevice, IInitOpts } from './olmDevice'
+import { OlmDevice } from './olmDevice'
 import {
     ChannelMessage,
     EncryptedData,
@@ -280,9 +280,9 @@ export class Crypto implements CryptoBackend {
     /** Iniitalize crypto module prior to usage
      *
      */
-    public async init({ exportedOlmDevice, pickleKey }: IInitOpts = {}): Promise<void> {
+    public async init(): Promise<void> {
         // initialize deviceKey and fallbackKey
-        await this.olmDevice.init({ exportedOlmDevice, pickleKey })
+        await this.olmDevice.init()
 
         // build device keys to upload
         if (!this.olmDevice.deviceCurve25519Key || !this.olmDevice.deviceDoNotUseKey) {

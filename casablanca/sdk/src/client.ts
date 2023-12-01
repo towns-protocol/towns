@@ -31,7 +31,7 @@ import {
     EncryptedMessageEnvelope,
 } from '@river/proto'
 import { Crypto, GroupEncryptionInput } from './crypto/crypto'
-import { OlmDevice, IExportedDevice as IExportedOlmDevice } from './crypto/olmDevice'
+import { OlmDevice } from './crypto/olmDevice'
 import { UserDevice, UserDeviceCollection, MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { DLogger, dlog, dlogError } from './dlog'
 import { errorContains, getRpcErrorProperty, StreamRpcClientType } from './makeStreamRpcClient'
@@ -100,12 +100,6 @@ const enum AbortReason {
     BLIP = 'BLIP',
 }
 
-interface IExportedDevice {
-    olmDevice: IExportedOlmDevice
-    userId: string
-    deviceId: string
-}
-
 export type EmittedEvents = StreamEvents & RiverEventsV2
 
 export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
@@ -128,8 +122,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     private readonly logError: DLogger
     private readonly logInfo: DLogger
 
-    protected exportedOlmDeviceToImport?: IExportedOlmDevice
-    public pickleKey?: string
     public cryptoBackend?: Crypto
     public cryptoStore: CryptoStore
 
@@ -145,8 +137,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         cryptoStore: CryptoStore,
         entitlementsDelegate: EntitlementsDelegate,
         logNamespaceFilter?: string,
-        olmDeviceToImport?: IExportedDevice,
-        pickleKey?: string,
     ) {
         super()
         if (logNamespaceFilter) {
@@ -164,19 +154,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.entitlementsDelegate = entitlementsDelegate
         this.signerContext = signerContext
         this.rpcClient = rpcClient
-        if (olmDeviceToImport) {
-            this.deviceId = olmDeviceToImport.deviceId
-            this.userId = olmDeviceToImport.userId
-            // will be used during crypto async init
-            this.exportedOlmDeviceToImport = olmDeviceToImport.olmDevice
-        } else {
-            this.userId = userIdFromAddress(signerContext.creatorAddress)
-            // TODO: tighten deviceId type and validate as we do with userId
-            this.deviceId = signerContext.deviceId
-            if (pickleKey) {
-                this.pickleKey = pickleKey
-            }
-        }
+
+        this.userId = userIdFromAddress(signerContext.creatorAddress)
+        // TODO: tighten deviceId type and validate as we do with userId
+        this.deviceId = signerContext.deviceId
+
         const shortId = shortenHexString(
             this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
         )
@@ -1531,11 +1513,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         await this.cryptoStore.initialize()
 
         const crypto = new Crypto(this, this.userId, this.deviceId, this.cryptoStore)
-        await crypto.init({
-            exportedOlmDevice: this.exportedOlmDeviceToImport,
-            pickleKey: this.pickleKey,
-        })
-        delete this.exportedOlmDeviceToImport
+        await crypto.init()
         this.cryptoBackend = crypto
         this.decryptionExtensions = new RiverDecryptionExtension(this, this.entitlementsDelegate)
     }
