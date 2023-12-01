@@ -204,7 +204,7 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHea
 	}, events
 }
 
-func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamViewImpl, error) {
+func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo, config *config.StreamConfig) (*streamViewImpl, error) {
 	header := miniblock.headerEvent.Event.GetMiniblockHeader()
 	if header == nil {
 		return nil, RiverError(Err_INTERNAL, "streamViewImpl: non block event not allowed", "stream", r.streamId, "event", miniblock.headerEvent.ShortDebugStr())
@@ -238,19 +238,22 @@ func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamVie
 		}
 	}
 
+	var startIndex int
 	var snapshotIndex int
 	var snapshot *Snapshot
 	if header.Snapshot != nil {
 		snapshot = header.Snapshot
-		snapshotIndex = len(r.blocks)
+		startIndex = max(0, len(r.blocks)-config.RecencyConstraints.Generations)
+		snapshotIndex = len(r.blocks) - startIndex
 	} else {
+		startIndex = 0
 		snapshot = r.snapshot
 		snapshotIndex = r.snapshotIndex
 	}
 
 	return &streamViewImpl{
 		streamId:      r.streamId,
-		blocks:        append(r.blocks, miniblock),
+		blocks:        append(r.blocks[startIndex:], miniblock),
 		minipool:      newMiniPoolInstance(minipoolEvents, header.MiniblockNum+1),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,

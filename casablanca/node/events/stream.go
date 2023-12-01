@@ -158,7 +158,7 @@ func (s *streamImpl) makeMiniblock(ctx context.Context) error {
 		return err
 	}
 
-	newSV, err := s.view.copyAndApplyBlock(miniblock)
+	newSV, err := s.view.copyAndApplyBlock(miniblock, s.config)
 	if err != nil {
 		return err
 	}

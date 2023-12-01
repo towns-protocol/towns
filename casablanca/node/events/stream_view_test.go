@@ -123,8 +123,8 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, false, view.shouldSnapshot())
 
 	// and miniblocks should have nil snapshots
-	miniblock, _ := view.makeMiniblockHeader(context.Background())
-	assert.Nil(t, miniblock.Snapshot)
+	miniblockHeader, _ = view.makeMiniblockHeader(context.Background())
+	assert.Nil(t, miniblockHeader.Snapshot)
 
 	// add another join event
 	join3, err := MakeEnvelopeWithPayload(
@@ -143,8 +143,8 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, true, view.shouldSnapshot())
 	assert.Equal(t, 2, len(view.eventsSinceLastSnapshot()))
 	// and miniblocks should have non - nil snapshots
-	miniblock, _ = view.makeMiniblockHeader(context.Background())
-	assert.NotNil(t, miniblock.Snapshot)
+	miniblockHeader, envelopes := view.makeMiniblockHeader(context.Background())
+	assert.NotNil(t, miniblockHeader.Snapshot)
 
 	// check count
 	count := 0
@@ -154,7 +154,31 @@ func TestLoad(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.GreaterOrEqual(t, count, 3)
-	assert.Equal(t, int64(count), miniblock.EventNumOffset)
+	assert.Equal(t, int64(count), miniblockHeader.EventNumOffset)
+	// test copy and apply block
+	// how many blocks do we currently have?
+	assert.Equal(t, len(view.blocks), 1)
+	// create a new block
+	miniblockHeaderEvent, err := MakeParsedEventWithPayload(wallet, Make_MiniblockHeader(miniblockHeader), view.LastBlock().Hash)
+	assert.NoError(t, err)
+	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
+	assert.NoError(t, err)
+	// with 5 generations
+	newSV, err := view.copyAndApplyBlock(miniblock, &config.StreamConfig{
+		RecencyConstraints: config.RecencyConstraintsConfig{
+			Generations: 5,
+			AgeSeconds:  11,
+		},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, len(newSV.blocks), 2)
+	// with 0 generations
+	newSV, err = view.copyAndApplyBlock(miniblock, &config.StreamConfig{
+		RecencyConstraints: config.RecencyConstraintsConfig{
+			Generations: 0,
+			AgeSeconds:  11,
+		},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, len(newSV.blocks), 1)
 }
-
-// TODO: add negative tests
