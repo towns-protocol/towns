@@ -37,7 +37,7 @@ const htmlTemplate = `
     <script>
         function triggerGC() {
             document.getElementById('loading').style.display = 'block';
-            fetch('/memory?gcnow=true')
+            fetch('?gcnow=true')
                 .then(response => response.text())
                 .then(html => {
                     document.open();
