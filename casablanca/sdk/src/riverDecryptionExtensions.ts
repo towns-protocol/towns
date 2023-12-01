@@ -830,25 +830,12 @@ export class RiverDecryptionExtension {
                         const sessions: MegolmSession[] = []
                         // loop over everything we got back
                         for (const content of responseSessions) {
-                            // see if we still need the key as there's no point in importing it twice
-                            const event = this.roomRecords[streamId]?.decryptionFailures.find(
-                                (e) => e.getWireContent().sessionId === content.sessionId,
+                            const hasKeys = await this.client.hasInboundSessionKeys(
+                                content.streamId,
+                                content.sessionId,
                             )
-
-                            if (event) {
-                                if (event.isDecryptionFailure()) {
-                                    sessions.push(content)
-                                }
-                            } else {
-                                // if we aren't tracking this event, check if we
-                                // are missing keys for it
-                                const hasKeys = await this.client.hasInboundSessionKeys(
-                                    content.streamId,
-                                    content.sessionId,
-                                )
-                                if (!hasKeys) {
-                                    sessions.push(content)
-                                }
+                            if (!hasKeys) {
+                                sessions.push(content)
                             }
                         }
 
