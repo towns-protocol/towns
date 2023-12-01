@@ -15,6 +15,9 @@ locals {
       Service = local.service_name
     }
   )
+
+  vcpu   = var.is_transient ? 2048 : 4096
+  memory = var.is_transient ? 4096 : 30720
 }
 
 terraform {
@@ -384,8 +387,11 @@ resource "aws_ecs_task_definition" "river-fargate" {
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
-  cpu    = 2048
-  memory = 4096
+  # 4 vCPU
+  cpu = local.vcpu
+
+  # 30 GB
+  memory = local.memory
 
   requires_compatibilities = ["FARGATE"]
 
