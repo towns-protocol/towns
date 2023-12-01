@@ -82,7 +82,10 @@ apply: env check
 	$(CMD) terraform -chdir=${terraform_folder} workspace select $(terraform_workspace_name) || $(CMD) terraform -chdir=${terraform_folder} workspace new $(terraform_workspace_name)
 	$(CMD) terraform -chdir=${terraform_folder} apply $(CI_AUTOAPPROVE)
 
+wait_for_lock_release:
+	$(CMD) sh lock_wait.sh
+
 # This will destroy the terraform infra
-destroy: env check
+destroy: env check wait_for_lock_release
 	$(CMD) terraform -chdir=${terraform_folder} workspace select $(terraform_workspace_name) || $(CMD) terraform -chdir=${terraform_folder} workspace new $(terraform_workspace_name)
 	$(CMD) terraform -chdir=${terraform_folder} destroy $(CI_AUTOAPPROVE)

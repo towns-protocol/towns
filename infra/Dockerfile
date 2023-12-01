@@ -17,7 +17,8 @@ RUN apk update && apk add --no-cache \
   bash \
   openssh \
   vim \
-  npm
+  npm \
+  jq
 
 # Upgrade pip in a separate layer
 RUN pip install --upgrade pip
