@@ -22,10 +22,23 @@ on:
                 description: 'Docker image tag to deploy'
                 required: true
                 type: string
+        secrets:
+            AWS_ACCESS_KEY_ID:
+                description: 'AWS access key id'
+                required: true
+            AWS_SECRET_ACCESS_KEY:
+                description: 'AWS secret access key'
+                required: true
+            SLACK_WEBHOOK_URL:
+                description: 'Slack webhook url'
+                required: true
 
 concurrency:
     group: ${{ github.workflow }}-deploy-${{ github.ref }}
     cancel-in-progress: true
+
+env:
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
 
 jobs:
     deploy:
@@ -72,5 +85,3 @@ jobs:
                           "commit": "${{ github.sha }}",
                           "actor": "${{ github.actor }}"
                       }
-              env:
-                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}

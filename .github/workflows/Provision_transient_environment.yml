@@ -56,11 +56,16 @@ jobs:
                           "actor": "${{ github.actor }}"
                       }
               env:
-                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TRANSIENT_CD_WORKFLOW_WEBHOOK_URL }}
 
     river_node_continuous_deploys:
         uses: './.github/workflows/River_node_docker.yml'
-        secrets: inherit
+        secrets:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+            DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TRANSIENT_CD_WORKFLOW_WEBHOOK_URL }}
         needs: provision_transient_environment
         permissions: write-all
         # TODO: only run if a change in /casablanca/node is detected
