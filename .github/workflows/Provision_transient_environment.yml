@@ -1,6 +1,7 @@
 name: Provision Transient Environment
 on:
     pull_request:
+        types: [opened, synchronize, reopened, labeled, unlabeled]
 
 concurrency:
     group: ${{ github.workflow }}-provision-${{ github.ref }}
@@ -8,10 +9,34 @@ concurrency:
     # TODO: how can we make sure there's only one per environment running at the same time?
 
 jobs:
+    check_labels:
+        # a step that checks if the PR has the label "provision-transient-environment"
+        # if it does, it will trigger the provision_transient_environment job
+        runs-on: ubuntu-latest
+        permissions: write-all
+        outputs:
+            provision: ${{ steps.check_labels.outputs.provision }}
+        steps:
+            - name: Check labels
+              id: check_labels
+              uses: actions/github-script@v3
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      const labels = await github.issues.listLabelsOnIssue({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: context.issue.number
+                      });
+                      const provision = labels.data.some(label => label.name === 'provision transient environment');
+                      core.setOutput('provision', provision);
+
     provision_transient_environment:
+        needs: check_labels
         permissions: write-all
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 40
+        if: needs.check_labels.outputs.provision == 'true'
 
         env:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -68,6 +93,8 @@ jobs:
             SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TRANSIENT_CD_WORKFLOW_WEBHOOK_URL }}
         needs: provision_transient_environment
         permissions: write-all
+
+        if: needs.check_labels.outputs.provision == 'true'
         # TODO: only run if a change in /casablanca/node is detected
         # TODO: only deploy if the new docker image is different than what's currently active
         with:
