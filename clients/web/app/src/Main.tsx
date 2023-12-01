@@ -7,6 +7,8 @@ import { useRootTheme } from 'hooks/useRootTheme'
 import { PrivyProvider } from 'PrivyProvider'
 import { ClearStaleWagmiStorage } from 'ClearStaleWagmiStorage'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
+import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
+import { env } from 'utils'
 
 const App = React.lazy(() => import('App'))
 
@@ -24,6 +26,8 @@ export const Main = () => {
                     <Suspense fallback={<WelcomeLayout debugText="lazy loading app" />}>
                         <ZLayerProvider>
                             <App />
+                            {/* the service worker won't exist in dev-mode and there's not need to check for updates */}
+                            {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && <ReloadPrompt />}
                         </ZLayerProvider>
                     </Suspense>
                 </BrowserRouter>

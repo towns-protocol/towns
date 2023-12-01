@@ -4,8 +4,6 @@ import { useLocation } from 'react-router'
 import { InitialSyncSortPredicate, ZTEvent, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
 
-import { usePrivy } from '@privy-io/react-auth'
-import { usePrivyWagmi } from '@privy-io/wagmi-connector'
 import { SetSignerFromWalletClient } from '@towns/privy'
 import { Notifications } from '@components/Notifications/Notifications'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
@@ -14,7 +12,6 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
-import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { Figma } from 'ui/styles/palette'
 import { AppBadge, FaviconBadge } from '@components/AppBadges/AppBadges'
 import { AppNotifications } from '@components/AppNotifications/AppNotifications'
@@ -22,12 +19,10 @@ import { useStore } from 'store/store'
 import { RegisterPushSubscription } from '@components/RegisterPushSubscription/RegisterPushSubscription'
 import { AllRoutes } from 'AllRoutes'
 import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
-import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
-import { AuthContextProvider, useIsConnected } from 'hooks/useAuth'
+import { AuthContextProvider } from 'hooks/useAuth'
 import { useWatchForPrivyRequestErrors } from 'hooks/useWatchForPrivyRequestErrors'
+import DebugBar from '@components/DebugBar/DebugBar'
 import { BetaDebugger } from './BetaDebugger'
-
-const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
 FontLoader.init()
 
@@ -35,9 +30,6 @@ export const App = () => {
     const { theme } = useStore((state) => ({
         theme: state.theme,
     }))
-
-    const { ready: privyReady } = usePrivy()
-    const { ready: privyWagmiReady } = usePrivyWagmi()
 
     useWindowListener()
     useWatchForPrivyRequestErrors()
@@ -61,10 +53,6 @@ export const App = () => {
         return 1
     }, [])
 
-    const isConnected = useIsConnected()
-
-    const showWelcomeLayout = !privyReady || (isConnected && !privyWagmiReady)
-
     return (
         <ZionContextProvider
             casablancaServerUrl={environment.casablancaUrl}
@@ -77,50 +65,41 @@ export const App = () => {
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
         >
             <>
-                {/* the service worker won't exist in dev-mode and there's not need to check for updates */}
-                {(!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && <ReloadPrompt />}
-
-                {showWelcomeLayout ? (
-                    <WelcomeLayout debugText="waiting for privy and wagmi" />
-                ) : (
-                    <>
-                        <BetaDebugger />
-                        <SetSignerFromWalletClient chainId={environment.chainId} />
-                        <AuthContextProvider>
-                            <FaviconBadge />
-                            <AppBadge />
-                            <AppNotifications />
-                            <RegisterPushSubscription />
-                            <Helmet>
-                                <meta
-                                    name="theme-color"
-                                    content={
-                                        isTouch
-                                            ? theme === 'dark'
-                                                ? Figma.DarkMode.Level1
-                                                : Figma.LightMode.Level1
-                                            : theme === 'dark'
-                                            ? Figma.DarkMode.Readability
-                                            : Figma.LightMode.Readability
-                                    }
-                                />
-                            </Helmet>
-                            <AnalyticsProvider>
-                                <>
-                                    {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && (
-                                        <DebugBar {...environment} />
-                                    )}
-                                    <AllRoutes />
-                                </>
-                            </AnalyticsProvider>
-                            {!env.VITE_DISABLE_DEBUG_BARS && (
-                                <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
+                <BetaDebugger />
+                <SetSignerFromWalletClient chainId={environment.chainId} />
+                <AuthContextProvider>
+                    <FaviconBadge />
+                    <AppBadge />
+                    <AppNotifications />
+                    <RegisterPushSubscription />
+                    <Helmet>
+                        <meta
+                            name="theme-color"
+                            content={
+                                isTouch
+                                    ? theme === 'dark'
+                                        ? Figma.DarkMode.Level1
+                                        : Figma.LightMode.Level1
+                                    : theme === 'dark'
+                                    ? Figma.DarkMode.Readability
+                                    : Figma.LightMode.Readability
+                            }
+                        />
+                    </Helmet>
+                    <AnalyticsProvider>
+                        <>
+                            {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && (
+                                <DebugBar {...environment} />
                             )}
-                            <Notifications />
-                            <ServiceWorkerSpacesSyncer />
-                        </AuthContextProvider>
-                    </>
-                )}
+                            <AllRoutes />
+                        </>
+                    </AnalyticsProvider>
+                    {!env.VITE_DISABLE_DEBUG_BARS && (
+                        <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
+                    )}
+                    <Notifications />
+                    <ServiceWorkerSpacesSyncer />
+                </AuthContextProvider>
             </>
         </ZionContextProvider>
     )

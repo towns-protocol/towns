@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { useZionContext } from 'use-zion-client'
+import { usePrivy } from '@privy-io/react-auth'
 import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { Box, Stack } from '@ui'
 import { useAuth } from 'hooks/useAuth'
@@ -19,6 +20,11 @@ const PlaygroundRoutes = React.lazy(() => import('@components/Playground/Playgro
 
 export const AllRoutes = () => {
     const { isAuthenticatedAndConnected } = useAuth()
+    const { ready: privyReady } = usePrivy()
+
+    if (!privyReady) {
+        return <WelcomeLayout debugText="privy not ready" />
+    }
 
     return (
         <>
