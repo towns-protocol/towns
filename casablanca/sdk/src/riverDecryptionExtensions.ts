@@ -28,6 +28,7 @@ import {
 import { isTestEnv } from './utils'
 import { bin_fromString } from './binary'
 import { dlog, dlogError } from './dlog'
+import { isDefined } from './check'
 
 const logLog = dlog('csb:rde:log', { defaultEnabled: isTestEnv() })
 const logInfo = dlog('csb:rde:info', { defaultEnabled: true })
@@ -459,13 +460,16 @@ export class RiverDecryptionExtension {
             [streamId]: { timestamp: now, response: [] },
         }
 
-        const unknownSessionIds: [senderKey: string, sessionId: string][] =
-            roomRecord.decryptionFailures.map((event) => {
-                const wireContent = event.getWireContent()
-                return [wireContent.senderKey ?? '', wireContent.sessionId ?? '']
-            })
+        const failedSessionIds = roomRecord.decryptionFailures
+            .map((event) => event.getWireContent().sessionId)
+            .filter(isDefined)
+
         const knownSessionIds =
             (await this.client.cryptoBackend?.olmDevice?.getInboundGroupSessionIds(streamId)) ?? []
+
+        const unknownSessionIds = new Set(
+            failedSessionIds.filter((s) => !knownSessionIds.includes(s)),
+        )
 
         const ourDeviceKey = this.client.olmDevice.deviceCurve25519Key
         if (!ourDeviceKey) {
@@ -476,7 +480,7 @@ export class RiverDecryptionExtension {
             streamId,
             ourDeviceKey,
             knownSessionIds,
-            unknownSessionIds,
+            Array.from(unknownSessionIds),
         )
     }
 
@@ -484,7 +488,7 @@ export class RiverDecryptionExtension {
         streamId: string,
         ourDeviceKey: string,
         knownSessionIds: string[],
-        unknownSessionIds: [senderKey: string, sessionId: string][],
+        unknownSessionIds: string[],
     ) {
         let request: PlainMessage<StreamEvent>['payload']
         const requests: Promise<void>[] = []
@@ -499,19 +503,17 @@ export class RiverDecryptionExtension {
             )
             return
         }
-        for (const unknownSessionAndSender of unknownSessionIds) {
-            const unknownSessionRequested = unknownSessionAndSender[1]
-
+        for (const unknownSessionId of unknownSessionIds) {
             if (isChannelStreamId(streamId)) {
                 const keySolicitations = stream.view.channelContent.keySolicitations
                 // todo jterzis: add restart criteria based on eventNum returned from miniblock in the case that
                 // a fulfillment didn't return the correct session key
-                if (keySolicitations.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
+                if (keySolicitations.hasKeySolicitation(ourDeviceKey, unknownSessionId)) {
                     return
                 }
 
                 request = make_ChannelPayload_KeySolicitation({
-                    sessionId: unknownSessionRequested,
+                    sessionId: unknownSessionId,
                     algorithm: MEGOLM_ALGORITHM,
                     senderKey: ourDeviceKey,
                     knownSessionIds:
@@ -519,11 +521,11 @@ export class RiverDecryptionExtension {
                 })
             } else if (isDMChannelStreamId(streamId)) {
                 const keySolicitations = stream.view.dmChannelContent.keySolicitations
-                if (keySolicitations.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
+                if (keySolicitations.hasKeySolicitation(ourDeviceKey, unknownSessionId)) {
                     return
                 }
                 request = make_DmChannelPayload_KeySolicitation({
-                    sessionId: unknownSessionRequested,
+                    sessionId: unknownSessionId,
                     algorithm: MEGOLM_ALGORITHM,
                     senderKey: ourDeviceKey,
                     knownSessionIds:
@@ -531,11 +533,11 @@ export class RiverDecryptionExtension {
                 })
             } else if (isGDMChannelStreamId(streamId)) {
                 const keySolicitations = stream.view.gdmChannelContent.keySolicitations
-                if (keySolicitations.hasKeySolicitation(ourDeviceKey, unknownSessionRequested)) {
+                if (keySolicitations.hasKeySolicitation(ourDeviceKey, unknownSessionId)) {
                     return
                 }
                 request = make_GdmChannelPayload_KeySolicitation({
-                    sessionId: unknownSessionRequested,
+                    sessionId: unknownSessionId,
                     algorithm: MEGOLM_ALGORITHM,
                     senderKey: ourDeviceKey,
                     knownSessionIds:
@@ -548,7 +550,7 @@ export class RiverDecryptionExtension {
             }
             console.log('CDE::_addKeySolicitationsToStream - asking for keys', {
                 streamId,
-                unknownSessionRequested,
+                unknownSessionId,
             })
             requests.push(this.client.makeEventAndAddToStream(streamId, request))
         }
