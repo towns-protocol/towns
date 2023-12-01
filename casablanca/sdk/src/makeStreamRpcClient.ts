@@ -22,7 +22,7 @@ const logError = dlogError('csb:rpc:error')
 let nextRpcClientNum = 0
 const histogramIntervalMs = 5000
 
-const sortObjectKey = (obj: Record<string, any>) => {
+export const sortObjectKey = (obj: Record<string, any>) => {
     const sorted: Record<string, any> = {}
     Object.keys(obj)
         .sort()

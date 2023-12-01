@@ -27,8 +27,10 @@ import {
 import { isTestEnv } from './utils'
 import { bin_fromString } from './binary'
 import { dlog, dlogError } from './dlog'
+import { sortObjectKey } from './makeStreamRpcClient'
 import { isDefined } from './check'
 
+const logCallsHistogram = dlog('csb:rde:histogram', { defaultEnabled: true })
 const logLog = dlog('csb:rde:log', { defaultEnabled: isTestEnv() })
 const logInfo = dlog('csb:rde:info', { defaultEnabled: true })
 const logWarn = dlog('csb:rde:warn', { defaultEnabled: true })
@@ -49,6 +51,7 @@ const TIME_BETWEEN_LOOKING_FOR_KEYS_MS = 500
 const DELAY_BETWEEN_PROCESSING_TO_DEVICE_EVENTS_MS = 10
 // max time to wait before sending a key fulfillment
 const MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS = 2000
+const histogramIntervalMs = 10000
 
 type MegolmSessionData = MegolmSession
 type OlmDecryptedMessage = OlmMessage
@@ -127,6 +130,7 @@ export class RiverDecryptionExtension {
     ) => Promise<void>
     private throttledStartLookingForKeys: DebouncedFunc<() => void> | null = null
     private clientRunning = true
+    private callHistogram: Record<string, { interval: number; total: number; error?: number }> = {}
 
     constructor(client: Client, delegate: EntitlementsDelegate) {
         this.client = client
@@ -179,10 +183,39 @@ export class RiverDecryptionExtension {
         // listen for roster changes
         client.on('streamNewUserJoined', this.onNewUserJoinedEvent)
 
-        // todo: listen for device update events
-
         // listen for decryption events
         client.on('eventDecrypted', this.onDecryptedEvent)
+
+        // Periodic logging
+        setInterval(() => {
+            if (Object.keys(this.callHistogram).length !== 0) {
+                let interval = 0
+                let total = 0
+                let error = 0
+                for (const key in this.callHistogram) {
+                    const e = this.callHistogram[key]
+                    interval += e.interval
+                    total += e.total
+                    error += e.error ?? 0
+                }
+                logCallsHistogram(
+                    'Key sharing stats',
+                    'interval=',
+                    interval,
+                    'total=',
+                    total,
+                    'error=',
+                    error,
+                    'intervalMs=',
+                    histogramIntervalMs,
+                    '\n',
+                    sortObjectKey(this.callHistogram),
+                )
+                for (const key in this.callHistogram) {
+                    this.callHistogram[key].interval = 0
+                }
+            }
+        }, histogramIntervalMs)
     }
 
     public start(): void {
@@ -331,6 +364,7 @@ export class RiverDecryptionExtension {
         senderUserId: string,
     ) => {
         ;(async () => {
+            let error = false
             const ourDeviceKey = this.client.olmDevice.deviceCurve25519Key ?? ''
             if (!event.message?.toDeviceMessages[ourDeviceKey]) {
                 console.info('CDE::onToDeviceEvent - ignoring event, not intended for this device.')
@@ -353,13 +387,21 @@ export class RiverDecryptionExtension {
                     senderUserId,
                 })
             } catch (e) {
+                error = true
                 console.error(
                     `CDE::onToDeviceEvent error decrypting to-device event. ciphertext: ${JSON.stringify(
                         event.message,
                     )}`,
                     e,
                 )
-                return
+            } finally {
+                this.updateHistogram(
+                    'onToDeviceEvent, eventId:' + eventId.slice(0, 8),
+                    streamId,
+                    [],
+                    error,
+                    senderUserId,
+                )
             }
         })().catch((e) => {
             console.error('CDE::onToDeviceEvent - error decrypting event', e)
@@ -444,47 +486,57 @@ export class RiverDecryptionExtension {
     }
 
     private async _askStreamForKeys(streamId: string) {
-        const roomRecord = this.roomRecords[streamId]
-        if (!roomRecord) {
-            throw new Error('CDE::_askStreamForKeys - room record not found')
-        }
-        const hasStream = this.client.streams.has(streamId)
-        if (!hasStream) {
-            throw new Error('CDE::_askRoomForKeys - room not found')
-        }
-        if (!roomRecord.decryptionFailures.length) {
-            console.log(`CDE::_askRoomForKeys - no decryption failures for`, { streamId })
-            return
-        }
-        const now = Date.now()
-        roomRecord.lastRequestAt = now
-        roomRecord.requests = {
-            ...(roomRecord.requests ?? {}),
-            [streamId]: { timestamp: now, response: [] },
-        }
+        let error = false
+        const unknownSessionIds: Set<string> = new Set()
+        try {
+            const roomRecord = this.roomRecords[streamId]
+            if (!roomRecord) {
+                throw new Error('CDE::_askStreamForKeys - room record not found')
+            }
+            const hasStream = this.client.streams.has(streamId)
+            if (!hasStream) {
+                throw new Error('CDE::_askRoomForKeys - room not found')
+            }
+            if (!roomRecord.decryptionFailures.length) {
+                console.log(`CDE::_askRoomForKeys - no decryption failures for`, { streamId })
+                return
+            }
+            const now = Date.now()
+            roomRecord.lastRequestAt = now
+            roomRecord.requests = {
+                ...(roomRecord.requests ?? {}),
+                [streamId]: { timestamp: now, response: [] },
+            }
 
-        const failedSessionIds = roomRecord.decryptionFailures
-            .map((event) => event.getWireContent().sessionId)
-            .filter(isDefined)
+            const failedSessionIds = roomRecord.decryptionFailures
+                .map((event) => event.getWireContent().sessionId)
+                .filter(isDefined)
 
-        const knownSessionIds =
-            (await this.client.cryptoBackend?.olmDevice?.getInboundGroupSessionIds(streamId)) ?? []
+            const knownSessionIds =
+                (await this.client.cryptoBackend?.olmDevice?.getInboundGroupSessionIds(streamId)) ??
+                []
 
-        const unknownSessionIds = new Set(
-            failedSessionIds.filter((s) => !knownSessionIds.includes(s)),
-        )
+            const unknownSessionIds = new Set(
+                failedSessionIds.filter((s) => !knownSessionIds.includes(s)),
+            )
 
-        const ourDeviceKey = this.client.olmDevice.deviceCurve25519Key
-        if (!ourDeviceKey) {
-            throw new Error('CDE::_askRoomForKeys - our device key not found')
+            const ourDeviceKey = this.client.olmDevice.deviceCurve25519Key
+            if (!ourDeviceKey) {
+                throw new Error('CDE::_askRoomForKeys - our device key not found')
+            }
+
+            await this.addKeySolicitationsToStream(
+                streamId,
+                ourDeviceKey,
+                knownSessionIds,
+                Array.from(unknownSessionIds),
+            )
+        } catch (e) {
+            error = true
+            throw e
+        } finally {
+            this.updateHistogram('askStreamForKeys', streamId, Array.from(unknownSessionIds), error)
         }
-
-        await this.addKeySolicitationsToStream(
-            streamId,
-            ourDeviceKey,
-            knownSessionIds,
-            Array.from(unknownSessionIds),
-        )
     }
 
     private async addKeySolicitationsToStream(
@@ -566,236 +618,264 @@ export class RiverDecryptionExtension {
         streamId: string,
         eventHash: string,
     ) {
-        // todo: allow for sending key requests for multiple sessionIds at once
-        const { sessionId, knownSessionIds, senderKey } = event
+        const exportedSessions: MegolmSessionData[] = []
+        let error = false
+        try {
+            // todo: allow for sending key requests for multiple sessionIds at once
+            const { sessionId, knownSessionIds, senderKey } = event
 
-        // don't process key solicitations from our device
-        if (senderKey === this.client.olmDevice.deviceCurve25519Key) {
-            console.warn('CDE::onKeySolicitation: request from our own device, skipping.')
-            return
-        }
+            // don't process key solicitations from our device
+            if (senderKey === this.client.olmDevice.deviceCurve25519Key) {
+                console.warn('CDE::onKeySolicitation: request from our own device, skipping.')
+                return
+            }
 
-        // todo: support multiple stream types not just channel streams
-        const stream = this.client.streams.get(streamId)
-        if (!stream) {
-            console.error('CDE::onKeyRequest - no stream found for streamId', { streamId })
-            return
-        }
+            // todo: support multiple stream types not just channel streams
+            const stream = this.client.streams.get(streamId)
+            if (!stream) {
+                console.error('CDE::onKeyRequest - no stream found for streamId', { streamId })
+                return
+            }
 
-        const spaceId =
-            stream.view.contentKind === 'channelContent'
-                ? stream.view.channelContent.spaceId
-                : undefined
+            const spaceId =
+                stream.view.contentKind === 'channelContent'
+                    ? stream.view.channelContent.spaceId
+                    : undefined
 
-        if (!spaceId && stream.view.contentKind === 'channelContent') {
-            console.log('CDE::onKeyRequest - no spaceId found for streamId', { streamId })
-        }
+            if (!spaceId && stream.view.contentKind === 'channelContent') {
+                console.log('CDE::onKeyRequest - no spaceId found for streamId', { streamId })
+            }
 
-        const requestedSessions: [streamId: string, sessionId: string][] = [[streamId, sessionId]]
-        console.log('CDE::onKeySolicitation recieved', {
-            spaceId,
-            streamId,
-            fromUserId,
-            senderKey,
-            sessionId,
-        })
-
-        const hasStream = this.client.streams.has(streamId)
-        if (!hasStream) {
-            throw new Error('CDE::_onKeySolicitation - room not found')
-        }
-
-        if (!stream?.view.userIsEntitledToKeyExchange(fromUserId)) {
-            console.warn(`CDE::_onKeySolicitation - not a stream member asking for keys`, {
-                streamId,
-                fromUserId,
-            })
-            return
-        }
-
-        // check with the space contract to see if this user is entitled
-        const isEntitled = await this.delegate.isEntitled(
-            spaceId,
-            streamId,
-            fromUserId,
-            Permission.Read,
-        )
-
-        if (!isEntitled) {
-            console.warn('CDE::onKeySolicitation - key sharing request from unentitled user', {
+            const requestedSessions: [streamId: string, sessionId: string][] = [
+                [streamId, sessionId],
+            ]
+            console.log('CDE::onKeySolicitation recieved', {
                 spaceId,
                 streamId,
-                from: fromUserId,
-            })
-            return
-        }
-        if (!senderKey) {
-            console.warn(
-                'CDE::onKeySolicitation - got key sharing request with no sender key found',
-            )
-            return
-        }
-
-        // Check if we already have the fallback keys for this senderKey
-        // if not, force a new download!
-        const knownDevices = await this.client.knownDevicesForUserId(fromUserId)
-        const forceDownload = knownDevices.every((device) => device.deviceKey !== senderKey)
-
-        const deviceInfos = await this.client.downloadUserDeviceInfo([fromUserId], forceDownload)
-        if (deviceInfos[fromUserId] === undefined) {
-            console.warn(
-                'CDE::onKeySolicitation - got key sharing request with no device info found',
-            )
-            return
-        }
-
-        const encryptAndRespondWith = async (response: ToDeviceMessage) => {
-            return this.client.encryptAndSendToDevices(deviceInfos, response)
-        }
-
-        const getUniqueUnknownSharedHistorySessions = async (channelId: string) => {
-            const allSharedHistorySessionIds =
-                (await this.client.cryptoBackend?.olmDevice.getInboundGroupSessionIds(channelId)) ??
-                []
-
-            return allSharedHistorySessionIds.filter(
-                (sessionId) => !knownSessionIds.includes(sessionId),
-            )
-
-            return []
-        }
-
-        // Set a timeout — we don't want all channel members to simultaneously respond to the key request
-        const waitTime =
-            isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
-                ? 0
-                : isTestEnv()
-                ? 100
-                : Math.random() * MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS
-        console.log('CDE::onKeySolicitation waiting for', waitTime, 'ms')
-        await new Promise((resolve) => setTimeout(resolve, waitTime))
-
-        // Last minute check to make sure noone else has responded to the key solicitation
-        const fulfilled = this.keySolicitationFulfilled(streamId, eventHash, sessionId)
-        if (fulfilled) {
-            console.warn('CDE::onKeySolicitation - key request already fulfilled for session', {
+                fromUserId,
+                senderKey,
                 sessionId,
-                streamId,
-                eventHash,
             })
-            return
-        }
 
-        const sharedHistorySessions = await getUniqueUnknownSharedHistorySessions(streamId)
-
-        console.log('CDE::onKeySolicitation requested', {
-            streamId,
-            requestedSessions: requestedSessions.length,
-            knownSessionIds: knownSessionIds.length,
-            mySessions: sharedHistorySessions.length,
-        })
-
-        const uniqueRequestedSessions = requestedSessions
-            .map((session) => session[1])
-            .filter((x) => !sharedHistorySessions.some((y) => x[1] === y))
-
-        const allRequestedSessions = sharedHistorySessions.concat(uniqueRequestedSessions)
-        console.log('CDE::onKeySolicitation all requested sessions', { allRequestedSessions })
-
-        const exportedSessions: MegolmSessionData[] = []
-
-        for (const sessionId of allRequestedSessions) {
-            const megolmSession = await this.client.olmDevice.exportInboundGroupSession(
-                streamId,
-                sessionId,
-            )
-
-            if (!megolmSession) {
-                continue
+            const hasStream = this.client.streams.has(streamId)
+            if (!hasStream) {
+                throw new Error('CDE::_onKeySolicitation - room not found')
             }
 
-            if (megolmSession.streamId === streamId) {
-                exportedSessions.push(megolmSession)
-            } else {
-                console.error('CDE::onKeySolicitation got key sharing request for wrong room', {
+            if (!stream?.view.userIsEntitledToKeyExchange(fromUserId)) {
+                console.warn(`CDE::_onKeySolicitation - not a stream member asking for keys`, {
                     streamId,
                     fromUserId,
-                    sessionId,
                 })
+                return
             }
-        }
 
-        console.info('CDE::onKeySolicitation responding to key request', {
-            fromUserId,
-            toUserId: fromUserId,
-            streamId,
-            knownSessionIds: knownSessionIds.length,
-            requestedSessions: requestedSessions.length,
-            numSessionsLookedUp: allRequestedSessions.length,
-            exportedSessions: exportedSessions.length,
-        })
-
-        if (!exportedSessions.length) {
-            console.info('CDE::onKeySolicitation got key sharing request for unknown room', {
+            // check with the space contract to see if this user is entitled
+            const isEntitled = await this.delegate.isEntitled(
+                spaceId,
                 streamId,
-            })
-            return
-        }
+                fromUserId,
+                Permission.Read,
+            )
 
-        const response = new ToDeviceMessage(
-            make_ToDevice_KeyResponse({
-                kind: KeyResponseKind.KRK_KEYS_FOUND,
+            if (!isEntitled) {
+                console.warn('CDE::onKeySolicitation - key sharing request from unentitled user', {
+                    spaceId,
+                    streamId,
+                    from: fromUserId,
+                })
+                return
+            }
+            if (!senderKey) {
+                console.warn(
+                    'CDE::onKeySolicitation - got key sharing request with no sender key found',
+                )
+                return
+            }
+
+            // Check if we already have the fallback keys for this senderKey
+            // if not, force a new download!
+            const knownDevices = await this.client.knownDevicesForUserId(fromUserId)
+            const forceDownload = knownDevices.every((device) => device.deviceKey !== senderKey)
+
+            const deviceInfos = await this.client.downloadUserDeviceInfo(
+                [fromUserId],
+                forceDownload,
+            )
+            if (deviceInfos[fromUserId] === undefined) {
+                console.warn(
+                    'CDE::onKeySolicitation - got key sharing request with no device info found',
+                )
+                return
+            }
+
+            const encryptAndRespondWith = async (response: ToDeviceMessage) => {
+                return this.client.encryptAndSendToDevices(deviceInfos, response)
+            }
+
+            const getUniqueUnknownSharedHistorySessions = async (channelId: string) => {
+                const allSharedHistorySessionIds =
+                    (await this.client.cryptoBackend?.olmDevice.getInboundGroupSessionIds(
+                        channelId,
+                    )) ?? []
+
+                return allSharedHistorySessionIds.filter(
+                    (sessionId) => !knownSessionIds.includes(sessionId),
+                )
+            }
+
+            // Set a timeout — we don't want all channel members to simultaneously respond to the key request
+            const waitTime =
+                isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)
+                    ? 0
+                    : isTestEnv()
+                    ? 100
+                    : Math.random() * MAX_WAIT_TIME_FOR_KEY_FULFILLMENT_MS
+            console.log('CDE::onKeySolicitation waiting for', waitTime, 'ms')
+            await new Promise((resolve) => setTimeout(resolve, waitTime))
+
+            // Last minute check to make sure noone else has responded to the key solicitation
+            const fulfilled = this.keySolicitationFulfilled(streamId, eventHash, sessionId)
+            if (fulfilled) {
+                console.warn('CDE::onKeySolicitation - key request already fulfilled for session', {
+                    sessionId,
+                    streamId,
+                    eventHash,
+                })
+                return
+            }
+
+            const sharedHistorySessions = await getUniqueUnknownSharedHistorySessions(streamId)
+
+            console.log('CDE::onKeySolicitation requested', {
                 streamId,
-                sessions: exportedSessions,
-            }),
-        )
-        await encryptAndRespondWith(response)
-        let fulfillment: PlainMessage<StreamEvent>['payload']
-        if (isChannelStreamId(streamId)) {
-            fulfillment = make_ChannelPayload_Fulfillment({
-                originHash: bin_fromString(eventHash),
-                sessionIds: exportedSessions.map((s) => s.sessionId),
-                algorithm: event.algorithm,
+                requestedSessions: requestedSessions.length,
+                knownSessionIds: knownSessionIds.length,
+                mySessions: sharedHistorySessions.length,
             })
-        } else if (isDMChannelStreamId(streamId)) {
-            fulfillment = make_DmChannelPayload_Fulfillment({
-                originHash: bin_fromString(eventHash),
-                sessionIds: exportedSessions.map((s) => s.sessionId),
-                algorithm: event.algorithm,
+
+            const uniqueRequestedSessions = requestedSessions
+                .map((session) => session[1])
+                .filter((x) => !sharedHistorySessions.some((y) => x === y))
+
+            const allRequestedSessions = sharedHistorySessions.concat(uniqueRequestedSessions)
+            console.log('CDE::onKeySolicitation all requested sessions', {
+                allRequestedSessions,
+                requestedSessions,
+                sharedHistorySessions,
+                uniqueRequestedSessions,
             })
-        } else if (isGDMChannelStreamId(streamId)) {
-            fulfillment = make_GdmChannelPayload_Fulfillment({
-                originHash: bin_fromString(eventHash),
-                sessionIds: exportedSessions.map((s) => s.sessionId),
-                algorithm: event.algorithm,
+
+            for (const sessionId of allRequestedSessions) {
+                const megolmSession = await this.client.olmDevice.exportInboundGroupSession(
+                    streamId,
+                    sessionId,
+                )
+
+                if (!megolmSession) {
+                    continue
+                }
+
+                if (megolmSession.streamId === streamId) {
+                    exportedSessions.push(megolmSession)
+                } else {
+                    console.error('CDE::onKeySolicitation got key sharing request for wrong room', {
+                        streamId,
+                        fromUserId,
+                        sessionId,
+                    })
+                }
+            }
+
+            if (!exportedSessions.length) {
+                console.info('CDE::onKeySolicitation got key sharing request for unknown room', {
+                    streamId,
+                })
+                return
+            }
+
+            console.info('CDE::onKeySolicitation responding to key request', {
+                fromUserId,
+                toUserId: fromUserId,
+                streamId,
+                knownSessionIds: knownSessionIds.length,
+                requestedSessions: requestedSessions.length,
+                numSessionsLookedUp: allRequestedSessions.length,
+                exportedSessions: exportedSessions.length,
+                exportedSessionIds: exportedSessions.map((s) => s.sessionId),
             })
-        } else {
-            throw new Error('CDE::_onKeySolicitation - unknown stream type')
+
+            const response = new ToDeviceMessage(
+                make_ToDevice_KeyResponse({
+                    kind: KeyResponseKind.KRK_KEYS_FOUND,
+                    streamId,
+                    sessions: exportedSessions,
+                }),
+            )
+
+            await encryptAndRespondWith(response)
+            let fulfillment: PlainMessage<StreamEvent>['payload']
+            if (isChannelStreamId(streamId)) {
+                fulfillment = make_ChannelPayload_Fulfillment({
+                    originHash: bin_fromString(eventHash),
+                    sessionIds: exportedSessions.map((s) => s.sessionId),
+                    algorithm: event.algorithm,
+                })
+            } else if (isDMChannelStreamId(streamId)) {
+                fulfillment = make_DmChannelPayload_Fulfillment({
+                    originHash: bin_fromString(eventHash),
+                    sessionIds: exportedSessions.map((s) => s.sessionId),
+                    algorithm: event.algorithm,
+                })
+            } else if (isGDMChannelStreamId(streamId)) {
+                fulfillment = make_GdmChannelPayload_Fulfillment({
+                    originHash: bin_fromString(eventHash),
+                    sessionIds: exportedSessions.map((s) => s.sessionId),
+                    algorithm: event.algorithm,
+                })
+            } else {
+                throw new Error('CDE::_onKeySolicitation - unknown stream type')
+            }
+            // send fulfillment to channel stream
+            await this.client.makeEventAndAddToStream(streamId, fulfillment)
+        } catch (e) {
+            error = true
+            throw e
+        } finally {
+            this.updateHistogram(
+                'onKeySolicitation eventId:' + eventHash.slice(0, 8),
+                streamId,
+                exportedSessions.map((s) => s.sessionId),
+                error,
+                fromUserId,
+            )
         }
-        // send fulfillment to channel stream
-        await this.client.makeEventAndAddToStream(streamId, fulfillment)
     }
 
     private async onKeyResponse(event: OlmDecryptedMessage, senderId: string) {
-        const clear_content = event['content']
-        if (!clear_content) {
-            throw new Error(
-                'CDE::onKeyRespone - no parsed content found in event, did decryption fail?',
-            )
-        }
-        if (clear_content.payload.case !== 'response') {
-            console.error('CDE::onKeyResponse - not a key response')
-            return
-        }
+        let error = false
+        let streamId = ''
+        let responseSessions: MegolmSession[] = []
+        try {
+            const clear_content = event['content']
+            if (!clear_content) {
+                throw new Error(
+                    'CDE::onKeyRespone - no parsed content found in event, did decryption fail?',
+                )
+            }
+            if (clear_content.payload.case !== 'response') {
+                console.error('CDE::onKeyResponse - not a key response')
+                return
+            }
 
-        switch (clear_content.payload.value.kind) {
-            case KeyResponseKind.KRK_CHANNEL_NOT_FOUND:
-                break
-            case KeyResponseKind.KRK_KEYS_NOT_FOUND:
-                break
-            case KeyResponseKind.KRK_KEYS_FOUND:
-                {
-                    const { streamId, sessions: responseSessions } = clear_content.payload.value
+            switch (clear_content.payload.value.kind) {
+                case KeyResponseKind.KRK_CHANNEL_NOT_FOUND:
+                    break
+                case KeyResponseKind.KRK_KEYS_NOT_FOUND:
+                    break
+                case KeyResponseKind.KRK_KEYS_FOUND: {
+                    streamId = clear_content.payload.value.streamId
+                    responseSessions = clear_content.payload.value.sessions
 
                     if (!streamId) {
                         console.warn('CDE::onKeyResponse - no streamId found', { streamId })
@@ -840,34 +920,46 @@ export class RiverDecryptionExtension {
                             if (!hasKeys) {
                                 sessions.push(content)
                             }
+
+                            // if we found some new keys, import them
+                            if (!sessions.length) {
+                                console.info('CDE::onKeyResponse - no new keys needed')
+                            } else {
+                                console.info('CDE:importSessionKeys', {
+                                    inPayload: sessions.length,
+                                    needed: sessions.length,
+                                    senderId,
+                                })
+                                await this.client.importRoomKeys(streamId, sessions)
+                            }
                         }
 
-                        // if we found some new keys, import them
-                        if (!sessions.length) {
-                            console.info('CDE::onKeyResponse - no new keys needed')
-                        } else {
-                            console.info('CDE:importSessionKeys', {
-                                inPayload: sessions.length,
-                                needed: sessions.length,
-                                senderId,
-                            })
-                            await this.client.importRoomKeys(streamId, sessions)
-                        }
+                        // clear any request to this user and start looking for keys again
+                        console.info('CDE::onKeyResponse - complete', {
+                            kind: clear_content.payload.value.kind,
+                            senderId,
+                            streamId,
+                        })
+                        this.clearKeyRequest(streamId)
                     }
-
-                    // clear any request to this user and start looking for keys again
-                    console.info('CDE::onKeyResponse - complete', {
-                        kind: clear_content.payload.value.kind,
-                        senderId,
-                        streamId,
-                    })
-                    this.clearKeyRequest(streamId)
+                    break
                 }
-                break
-            default:
-                console.info(
-                    `CDE::onKeyResponse - unknown response kind', ${clear_content.payload.value.kind}, ${senderId}`,
-                )
+                default:
+                    console.info(
+                        `CDE::onKeyResponse - unknown response kind', ${clear_content.payload.value.kind}, ${senderId}`,
+                    )
+            }
+        } catch (e) {
+            error = true
+            throw e
+        } finally {
+            this.updateHistogram(
+                'onKeyResponse',
+                streamId,
+                responseSessions.map((s) => s.sessionId),
+                error,
+                senderId,
+            )
         }
     }
 
@@ -904,6 +996,33 @@ export class RiverDecryptionExtension {
         }
         if (this.throttledStartLookingForKeys) {
             this.throttledStartLookingForKeys()
+        }
+    }
+
+    private updateHistogram(
+        methodName: string,
+        streamId: string,
+        sessionIds: string[],
+        error?: boolean,
+        fromUserId?: string,
+    ) {
+        const sessions = sessionIds.length == 0 ? ['unknownSessionId'] : sessionIds
+        const names = sessions.map((sessionId) =>
+            fromUserId
+                ? `${methodName} fromUser:${fromUserId} streamId:${streamId} sessionId:${sessionId}`
+                : `${methodName} streamId:${streamId} sessionId:${sessionId}`,
+        )
+        for (const name of names) {
+            let e = this.callHistogram[name]
+            if (!e) {
+                e = { interval: 0, total: 0 }
+                this.callHistogram[name] = e
+            }
+            e.interval++
+            e.total++
+            if (error) {
+                e.error = (e.error ?? 0) + 1
+            }
         }
     }
 }
