@@ -3,6 +3,12 @@ on:
     pull_request:
         types: [closed]
 
+    workflow_dispatch:
+        inputs:
+            pr_number:
+                description: 'Pull Request number'
+                required: true
+
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: false
@@ -20,7 +26,7 @@ jobs:
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             ENV: 'transient'
             TF_VAR_cloudflare_terraform_api_token: ${{ secrets.CLOUDFLARE_TERRAFORM_API_TOKEN }}
-            GIT_PR_NUMBER: ${{ github.event.pull_request.number}}
+            GIT_PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
 
         steps:
             - name: Cancel previous runs
@@ -50,7 +56,7 @@ jobs:
                   payload: |
                       {
                           "step": "Deprovision Transient Environment",
-                          "environment": "Transient-${{ github.event.pull_request.number }}",
+                          "environment": "Transient-${{ env.GIT_PR_NUMBER }}",
                           "branch": "${{ github.ref }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
                           "commit": "${{ github.sha }}",
