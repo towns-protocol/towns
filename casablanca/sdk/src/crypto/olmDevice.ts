@@ -514,6 +514,7 @@ export class OlmDevice {
         fallbackKey: string,
         payload: string,
     ): Promise<EncryptedMessageEnvelope> {
+        checkPayloadLength(payload)
         return this.cryptoStore.withAccountTx(async () => {
             const session = this.olmDelegate.createSession()
             try {
@@ -548,6 +549,7 @@ export class OlmDevice {
             throw new Error('Only pre-key messages supported')
         }
 
+        checkPayloadLength(envelope.ciphertext)
         return await this.cryptoStore.withAccountTx(async () => {
             const account = await this.getAccount()
             const session = this.olmDelegate.createSession()
