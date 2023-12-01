@@ -6,8 +6,6 @@ import { RoleSettings } from '@components/SpaceSettings/RoleSettings/RoleSetting
 import { RoleSettingsPermissions } from '@components/SpaceSettings/RoleSettings/RoleSettingsPermissions'
 import { RoleSettingsGating } from '@components/SpaceSettings/RoleSettings/RoleSettingsGating'
 import { RoleSettingsDisplay } from '@components/SpaceSettings/RoleSettings/RoleSettingsDisplay'
-import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
-import { env } from 'utils'
 import { SpaceContextRoute } from 'routes/SpaceContextRoute'
 import { useDevice } from 'hooks/useDevice'
 import { DirectMessageThread } from '@components/DirectMessages/DirectMessageThread'
@@ -45,7 +43,6 @@ const CheckRedirect = () => {
 }
 
 export const AuthenticatedRoutes = () => {
-    const { data: isHolderOfPioneerNft } = useIsHolderOfPioneerNFT()
     const { isTouch } = useDevice()
 
     return (
@@ -91,14 +88,7 @@ export const AuthenticatedRoutes = () => {
                     </>
                 ) : (
                     <>
-                        {(env.DEV || isHolderOfPioneerNft) && (
-                            <>
-                                <Route
-                                    path={`${PATHS.SPACES}/new`}
-                                    element={<CreateSpaceFormV2 />}
-                                />
-                            </>
-                        )}
+                        <Route path={`${PATHS.SPACES}/new`} element={<CreateSpaceFormV2 />} />
                         <Route element={<ValidateMembership />}>
                             <Route element={<AppPanelLayout />}>
                                 <Route path={`${PATHS.SPACES}/:spaceSlug`}>

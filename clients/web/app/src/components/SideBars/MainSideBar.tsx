@@ -5,10 +5,8 @@ import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { RegisterMainShortcuts } from '@components/Shortcuts/RegisterMainShortcuts'
 import { SideBar } from '@components/SideBars/_SideBar'
-import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
-import { env } from 'utils'
 import { Box, Dot, Icon } from '@ui'
 import { NavItem } from '@components/NavItem/_NavItem'
 
@@ -18,7 +16,6 @@ export const MainSideBar = () => {
     const { spaceId } = useSpaceContext()
     const invites = useInvites()
     const { dmUnreadChannelIds } = useZionContext()
-    const { data: isHolderOfPioneerNft } = useIsHolderOfPioneerNFT()
 
     return (
         <SideBar elevateReadability paddingY="sm" height="100%">
@@ -52,21 +49,19 @@ export const MainSideBar = () => {
                     />
                 </TransitionItem>
             ))}
-            {(env.DEV || isHolderOfPioneerNft) && (
-                <TransitionItem key="new">
-                    <ActionNavItem
-                        id={`${PATHS.SPACES}/new`}
-                        link={`/${PATHS.SPACES}/new`}
-                        icon="plus"
-                        label="New Town"
-                        tooltip="New Town"
-                        tooltipOptions={{
-                            placement: 'horizontal',
-                            immediate: true,
-                        }}
-                    />
-                </TransitionItem>
-            )}
+            <TransitionItem key="new">
+                <ActionNavItem
+                    id={`${PATHS.SPACES}/new`}
+                    link={`/${PATHS.SPACES}/new`}
+                    icon="plus"
+                    label="New Town"
+                    tooltip="New Town"
+                    tooltipOptions={{
+                        placement: 'horizontal',
+                        immediate: true,
+                    }}
+                />
+            </TransitionItem>
             {invites.map((m) => (
                 <TransitionItem key={m.id.networkId}>
                     <SpaceNavItem
