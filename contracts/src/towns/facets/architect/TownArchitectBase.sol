@@ -380,7 +380,8 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
             currency: membership.settings.currency,
             feeRecipient: membership.settings.feeRecipient == address(0)
               ? _msgSenderTownArchitect()
-              : membership.settings.feeRecipient
+              : membership.settings.feeRecipient,
+            freeAllocation: membership.settings.freeAllocation
           }),
           forwarder: ITownProxyBase.Forwarder({
             trustedForwarder: _getTrustedForwarder()

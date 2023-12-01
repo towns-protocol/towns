@@ -19,6 +19,7 @@ interface IMembershipBase {
     uint64 duration;
     address currency;
     address feeRecipient;
+    uint256 freeAllocation;
   }
 
   // =============================================================
@@ -31,6 +32,7 @@ interface IMembershipBase {
   error Membership__InvalidFeeRecipient();
   error Membership__InvalidDuration();
   error Membership__InvalidMaxSupply();
+  error Membership__InvalidFreeAllocation();
 
   error Membership__AlreadyMember();
   error Membership__InsufficientPayment();
@@ -44,6 +46,8 @@ interface IMembershipBase {
   event MembershipLimitUpdated(uint256 indexed limit);
   event MembershipCurrencyUpdated(address indexed currency);
   event MembershipFeeRecipientUpdated(address indexed recipient);
+
+  event MembershipFreeAllocationUpdated(uint256 indexed allocation);
 }
 
 interface IMembership is IMembershipBase {
@@ -105,6 +109,21 @@ interface IMembership is IMembershipBase {
    * @return The membership price
    */
   function getMembershipPrice() external view returns (uint256);
+
+  // =============================================================
+  //                           Allocation
+  // =============================================================
+  /**
+   * @notice Set the membership free allocation
+   * @param newAllocation The new membership free allocation
+   */
+  function setMembershipFreeAllocation(uint256 newAllocation) external;
+
+  /**
+   * @notice Get the membership free allocation
+   * @return The membership free allocation
+   */
+  function getMembershipFreeAllocation() external view returns (uint256);
 
   // =============================================================
   //                        Limits

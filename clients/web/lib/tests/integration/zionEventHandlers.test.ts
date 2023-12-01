@@ -55,6 +55,7 @@ describe('Zion event handlers test', () => {
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: alice.wallet.address,
+                freeAllocation: 0,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {

@@ -74,6 +74,7 @@ describe('mediaWithEntitlementsTests', () => {
                 duration: 0,
                 currency: ETH_ADDRESS,
                 feeRecipient: bobClient.userId,
+                freeAllocation: 0,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {

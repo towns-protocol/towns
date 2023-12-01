@@ -126,6 +126,7 @@ export function CreateTownSubmit({
                         duration: 0,
                         currency: ethers.constants.AddressZero,
                         feeRecipient: await signer.getAddress(),
+                        freeAllocation: 0,
                     },
                     requirements: {
                         everyone: tokensGatingMembership.length === 0,

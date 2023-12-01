@@ -113,6 +113,11 @@ export default [
   },
   {
     "inputs": [],
+    "name": "Membership__InvalidFreeAllocation",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "Membership__InvalidLimit",
     "type": "error"
   },
@@ -369,6 +374,19 @@ export default [
       {
         "indexed": true,
         "internalType": "uint256",
+        "name": "allocation",
+        "type": "uint256"
+      }
+    ],
+    "name": "MembershipFreeAllocationUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
         "name": "limit",
         "type": "uint256"
       }
@@ -534,6 +552,11 @@ export default [
             "internalType": "address",
             "name": "feeRecipient",
             "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "freeAllocation",
+            "type": "uint256"
           }
         ],
         "internalType": "struct IMembershipBase.MembershipInfo",
@@ -577,6 +600,19 @@ export default [
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_getMembershipFreeAllocation",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -643,6 +679,19 @@ export default [
       }
     ],
     "name": "_setMembershipFeeRecipient",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "newAllocation",
+        "type": "uint256"
+      }
+    ],
+    "name": "_setMembershipFreeAllocation",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -795,6 +844,19 @@ export default [
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMembershipFreeAllocation",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1050,6 +1112,19 @@ export default [
       }
     ],
     "name": "setMembershipFeeRecipient",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "newAllocation",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMembershipFreeAllocation",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

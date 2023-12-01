@@ -136,6 +136,7 @@ export const CreateSpaceForm = (props: Props) => {
                 duration: 0,
                 currency: ethers.constants.AddressZero,
                 feeRecipient: await signer.getAddress(),
+                freeAllocation: 0,
             },
             permissions: memberPermissions,
             requirements: {

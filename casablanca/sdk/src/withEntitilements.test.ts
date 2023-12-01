@@ -48,6 +48,7 @@ describe('withEntitlements', () => {
                 duration: 0,
                 currency: ETH_ADDRESS,
                 feeRecipient: bob.userId,
+                freeAllocation: 0,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {

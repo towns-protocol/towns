@@ -242,7 +242,8 @@ contract TownArchitectTest is
           maxSupply: 0,
           duration: 0,
           currency: address(0),
-          feeRecipient: address(0)
+          feeRecipient: address(0),
+          freeAllocation: 0
         }),
         requirements: MembershipRequirements({
           everyone: false,

@@ -20,6 +20,7 @@ library MembershipStorage {
     address membershipFeeRecipient;
     address townFactory;
     uint64 membershipDuration;
+    uint256 freeAllocation;
   }
 
   function layout() internal pure returns (Layout storage l) {

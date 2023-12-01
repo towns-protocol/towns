@@ -95,6 +95,7 @@ contract MembershipFacet is
   // =============================================================
   /// @inheritdoc IMembership
   function setMembershipDuration(uint64 newDuration) external onlyOwner {
+    _verifyDuration(newDuration);
     _setMembershipDuration(newDuration);
   }
 
@@ -109,6 +110,8 @@ contract MembershipFacet is
 
   /// @inheritdoc IMembership
   function setMembershipPrice(uint256 newPrice) external onlyOwner {
+    _verifyCurrency(_getMembershipCurrency());
+    _verifyPrice(newPrice);
     _setMembershipPrice(newPrice);
   }
 
@@ -118,18 +121,36 @@ contract MembershipFacet is
   }
 
   // =============================================================
+  //                           Allocation
+  // =============================================================
+  /// @inheritdoc IMembership
+  function setMembershipFreeAllocation(
+    uint256 newAllocation
+  ) external onlyOwner {
+    // get current supply limit
+    uint256 currentSupplyLimit = _getMembershipSupplyLimit();
+
+    // verify newLimit is not more than the max supply limit
+    if (currentSupplyLimit != 0 && newAllocation > currentSupplyLimit)
+      revert Membership__InvalidFreeAllocation();
+
+    // verify newLimit is not more than the allowed platform limit
+    _verifyFreeAllocation(newAllocation);
+    _setMembershipFreeAllocation(newAllocation);
+  }
+
+  /// @inheritdoc IMembership
+  function getMembershipFreeAllocation() external view returns (uint256) {
+    return _getMembershipFreeAllocation();
+  }
+
+  // =============================================================
   //                    Token Max Supply Limit
   // =============================================================
 
   /// @inheritdoc IMembership
   function setMembershipLimit(uint256 newLimit) external onlyOwner {
-    // if the new limit is less than the current total supply, revert
-    if (newLimit < _totalSupply()) revert Membership__InvalidMaxSupply();
-
-    // if the new limit is less than the current max supply, revert
-    if (newLimit <= _getMembershipSupplyLimit())
-      revert Membership__InvalidMaxSupply();
-
+    _verifyMaxSupply(newLimit, _totalSupply());
     _setMembershipSupplyLimit(newLimit);
   }
 
@@ -144,6 +165,7 @@ contract MembershipFacet is
 
   /// @inheritdoc IMembership
   function setMembershipCurrency(address newCurrency) external onlyOwner {
+    _verifyCurrency(newCurrency);
     _setMembershipCurrency(newCurrency);
   }
 
@@ -158,6 +180,7 @@ contract MembershipFacet is
 
   /// @inheritdoc IMembership
   function setMembershipFeeRecipient(address newRecipient) external onlyOwner {
+    _verifyRecipient(newRecipient);
     _setMembershipFeeRecipient(newRecipient);
   }
 

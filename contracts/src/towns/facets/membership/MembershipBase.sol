@@ -16,14 +16,21 @@ abstract contract MembershipBase is IMembershipBase {
     address townFactory
   ) internal {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
-    ds.membershipPrice = info.price;
+
+    ds.townFactory = townFactory;
+
+    _verifyDuration(info.duration);
+    _verifyRecipient(info.feeRecipient);
+    _verifyFreeAllocation(info.freeAllocation);
+
     ds.membershipMaxSupply = info.maxSupply;
-    ds.membershipDuration = info.duration;
     ds.membershipCurrency = info.currency == address(0)
       ? CurrencyTransfer.NATIVE_TOKEN
       : info.currency;
+    ds.membershipPrice = info.price;
+    ds.membershipDuration = info.duration;
     ds.membershipFeeRecipient = info.feeRecipient;
-    ds.townFactory = townFactory;
+    ds.freeAllocation = info.freeAllocation;
   }
 
   // =============================================================
@@ -95,47 +102,37 @@ abstract contract MembershipBase is IMembershipBase {
   // =============================================================
   //                           Duration
   // =============================================================
+  function _verifyDuration(uint64 duration) internal view {
+    // verify it's not more than platform max
+    if (
+      duration >
+      IPlatformRequirements(_getTownFactory()).getMembershipDuration()
+    ) revert Membership__InvalidDuration();
+  }
+
   function _getMembershipDuration() internal view returns (uint64) {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
 
     if (ds.membershipDuration > 0) return ds.membershipDuration;
 
-    return
-      IPlatformRequirements(MembershipStorage.layout().townFactory)
-        .getMembershipDuration();
+    return IPlatformRequirements(ds.townFactory).getMembershipDuration();
   }
 
   function _setMembershipDuration(uint64 newDuration) internal {
-    if (newDuration < 0) revert Membership__InvalidDuration();
-
-    // verify it's not more than platform max
-    if (
-      newDuration >
-      IPlatformRequirements(MembershipStorage.layout().townFactory)
-        .getMembershipDuration()
-    ) revert Membership__InvalidDuration();
-
     MembershipStorage.layout().membershipDuration = newDuration;
   }
 
   // =============================================================
   //                           Pricing
   // =============================================================
-  function _setMembershipPrice(uint256 newPrice) public {
-    if (newPrice < 0) revert Membership__InvalidPrice();
-
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
-
-    // verify currency is set as well
-    if (ds.membershipCurrency == address(0))
-      revert Membership__InvalidCurrency();
-
-    uint256 protocolFee = IPlatformRequirements(ds.townFactory)
+  function _verifyPrice(uint256 newPrice) internal view {
+    uint256 minPrice = IPlatformRequirements(_getTownFactory())
       .getMembershipFee();
+    if (newPrice < minPrice) revert Membership__PriceTooLow();
+  }
 
-    if (newPrice < protocolFee) revert Membership__PriceTooLow();
-
-    ds.membershipPrice = newPrice;
+  function _setMembershipPrice(uint256 newPrice) public {
+    MembershipStorage.layout().membershipPrice = newPrice;
   }
 
   /// @dev Makes it virtual to allow other pricing strategies
@@ -144,8 +141,49 @@ abstract contract MembershipBase is IMembershipBase {
   }
 
   // =============================================================
+  //                           Allocation
+  // =============================================================
+  function _verifyFreeAllocation(uint256 newAllocation) internal view {
+    MembershipStorage.Layout storage ds = MembershipStorage.layout();
+
+    // verify newLimit is not more than the allowed platform limit
+    if (
+      newAllocation >
+      IPlatformRequirements(ds.townFactory).getMembershipMintLimit()
+    ) revert Membership__InvalidFreeAllocation();
+  }
+
+  function _setMembershipFreeAllocation(uint256 newAllocation) public {
+    MembershipStorage.Layout storage ds = MembershipStorage.layout();
+    ds.freeAllocation = newAllocation;
+    emit MembershipFreeAllocationUpdated(newAllocation);
+  }
+
+  function _getMembershipFreeAllocation() public view returns (uint256) {
+    uint256 freeAllocation = MembershipStorage.layout().freeAllocation;
+
+    if (freeAllocation > 0) return freeAllocation;
+
+    return
+      IPlatformRequirements(MembershipStorage.layout().townFactory)
+        .getMembershipMintLimit();
+  }
+
+  // =============================================================
   //                   Token Max Supply Limits
   // =============================================================
+  function _verifyMaxSupply(
+    uint256 newLimit,
+    uint256 totalSupply
+  ) internal view {
+    // if the new limit is less than the current total supply, revert
+    if (newLimit < totalSupply) revert Membership__InvalidMaxSupply();
+
+    // if the new limit is less than the current max supply, revert
+    if (newLimit <= _getMembershipSupplyLimit())
+      revert Membership__InvalidMaxSupply();
+  }
+
   function _setMembershipSupplyLimit(uint256 newLimit) public {
     MembershipStorage.layout().membershipMaxSupply = newLimit;
   }
@@ -157,8 +195,11 @@ abstract contract MembershipBase is IMembershipBase {
   // =============================================================
   //                           Currency
   // =============================================================
+  function _verifyCurrency(address currency) internal pure {
+    if (currency == address(0)) revert Membership__InvalidCurrency();
+  }
+
   function _setMembershipCurrency(address newCurrency) public {
-    if (newCurrency == address(0)) revert Membership__InvalidCurrency();
     MembershipStorage.layout().membershipCurrency = newCurrency;
   }
 
@@ -169,8 +210,11 @@ abstract contract MembershipBase is IMembershipBase {
   // =============================================================
   //                           Recipient
   // =============================================================
+  function _verifyRecipient(address recipient) internal pure {
+    if (recipient == address(0)) revert Membership__InvalidFeeRecipient();
+  }
+
   function _setMembershipFeeRecipient(address newRecipient) public {
-    if (newRecipient == address(0)) revert Membership__InvalidFeeRecipient();
     MembershipStorage.layout().membershipFeeRecipient = newRecipient;
   }
 

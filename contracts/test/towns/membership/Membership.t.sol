@@ -237,6 +237,42 @@ contract MembershipTest is
   }
 
   // =============================================================
+  //                           Allocation
+  // =============================================================
+  function test_setMembershipAllocation() external {
+    uint256 newAllocation = 100;
+
+    vm.prank(founder);
+    membership.setMembershipFreeAllocation(newAllocation);
+
+    assertEq(membership.getMembershipFreeAllocation(), newAllocation);
+  }
+
+  function test_setMembershipFreeAllocation_revert_when_adding_more_than_mint_limit()
+    external
+  {
+    uint256 maxFreeAllocation = IPlatformRequirements(townFactory)
+      .getMembershipMintLimit();
+
+    uint256 newAllocation = maxFreeAllocation + 1;
+
+    vm.prank(founder);
+    vm.expectRevert(Membership__InvalidFreeAllocation.selector);
+    membership.setMembershipFreeAllocation(newAllocation);
+  }
+
+  function test_setMembershipFreeAllocation_revert_when_addingMoreThanMaxSupply()
+    external
+  {
+    vm.prank(founder);
+    membership.setMembershipLimit(10);
+
+    vm.prank(founder);
+    vm.expectRevert(Membership__InvalidFreeAllocation.selector);
+    membership.setMembershipFreeAllocation(11);
+  }
+
+  // =============================================================
   //                           Helpers
   // =============================================================
   function _calculatePotentialFee(
