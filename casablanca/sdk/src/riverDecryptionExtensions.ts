@@ -15,7 +15,6 @@ import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId, isUserStr
 import { MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { RiverEventV2 } from './eventV2'
 import { Client } from './client'
-import { IEventOlmDecryptionResult } from './crypto/crypto'
 import {
     make_ChannelPayload_KeySolicitation,
     make_ChannelPayload_Fulfillment,
@@ -99,7 +98,8 @@ interface RoomRecord {
     requests: Record<string, KeyRequestRecord>
 }
 
-interface EventOlmDecryptionResult extends IEventOlmDecryptionResult {
+interface EventOlmDecryptionResult {
+    message: OlmMessage
     senderUserId: string
 }
 
@@ -224,8 +224,7 @@ export class RiverDecryptionExtension {
     }
 
     private async processToDeviceEvent(event: EventOlmDecryptionResult): Promise<void> {
-        const content = event.clearEvent
-        await this.onKeyResponse(content, event.senderUserId)
+        await this.onKeyResponse(event.message, event.senderUserId)
     }
 
     private onDecryptedEvent = (event: RiverEventV2, err: Error | undefined) => {
@@ -338,16 +337,20 @@ export class RiverDecryptionExtension {
                 return
             }
             try {
-                const clear = await this.client.decryptOlmEvent(
+                const message = await this.client.decryptOlmEvent(
                     event.message?.toDeviceMessages[ourDeviceKey],
                     event.senderKey,
                 )
-                const senderCurve25519Key = event.senderKey
-                this.client.emit('toDeviceMessageDecrypted', streamId, eventId, clear, senderUserId)
-                this.receivedToDeviceEventQueue.enqueue({
-                    ...clear,
+                this.client.emit(
+                    'toDeviceMessageDecrypted',
+                    streamId,
+                    eventId,
+                    message,
                     senderUserId,
-                    senderCurve25519Key,
+                )
+                this.receivedToDeviceEventQueue.enqueue({
+                    message,
+                    senderUserId,
                 })
             } catch (e) {
                 console.error(

@@ -24,7 +24,7 @@ import { IFallbackKey, recursiveMapToObject } from '../types'
 import { bin_fromHexString } from '../binary'
 import { ethers } from 'ethers'
 import { CryptoStore } from './store/cryptoStore'
-import { OlmDecryption } from './algorithms/olm'
+
 import { MegolmDecryption, MegolmEncryption } from './algorithms/megolm'
 import { RiverEventV2 } from '../eventV2'
 
@@ -131,17 +131,6 @@ export const makeOldTownsDelegateSig = async (
     return bin_fromHexString(await primaryWallet.signMessage(devicePubKey))
 }
 
-export interface IEventOlmDecryptionResult {
-    /**
-     * The plaintext payload for the event (typically containing <tt>type</tt> and <tt>content</tt> fields).
-     */
-    clearEvent: OlmMessage
-    /**
-     * Key owned by the sender of this event.
-     */
-    senderCurve25519Key?: string
-}
-
 export interface IEncryptionUserRecipient {
     userIds: string[]
 }
@@ -228,7 +217,7 @@ export interface CryptoBackend {
     decryptOlmEvent(
         envelope: EncryptedMessageEnvelope,
         senderDeviceKey: string,
-    ): Promise<IEventOlmDecryptionResult>
+    ): Promise<OlmMessage>
 }
 
 interface ISignableObject {
@@ -243,7 +232,6 @@ export class Crypto implements CryptoBackend {
     public readonly supportedAlgorithms: string[]
     public readonly olmDevice: OlmDevice
     public readonly megolmEncryption: MegolmEncryption
-    public readonly olmDecryption: OlmDecryption
     public readonly megolmDecryption: MegolmDecryption
 
     public globalBlacklistUnverifiedDevices = false
@@ -269,12 +257,6 @@ export class Crypto implements CryptoBackend {
         this.olmDevice = new OlmDevice(this.olmDelegate, cryptoStore)
         this.supportedAlgorithms = [OLM_ALGORITHM, MEGOLM_ALGORITHM]
 
-        this.olmDecryption = new OlmDecryption({
-            userId: this.userId,
-            crypto: this,
-            olmDevice: this.olmDevice,
-            baseApis: this.client,
-        })
         this.megolmEncryption = new MegolmEncryption({
             userId: this.userId,
             deviceId: this.deviceId,
@@ -381,8 +363,9 @@ export class Crypto implements CryptoBackend {
     public async decryptOlmEvent(
         envelope: EncryptedMessageEnvelope,
         senderDeviceKey: string,
-    ): Promise<IEventOlmDecryptionResult> {
-        return this.olmDecryption.decryptEvent(envelope, senderDeviceKey)
+    ): Promise<OlmMessage> {
+        const cleartext = await this.olmDevice.decryptMessage(envelope, senderDeviceKey)
+        return OlmMessage.fromJsonString(cleartext)
     }
 
     /**

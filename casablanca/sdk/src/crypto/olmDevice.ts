@@ -59,15 +59,6 @@ export type OlmGroupSessionExtraData = {
     untrusted?: boolean
 }
 
-export interface IInboundSession {
-    payload: string
-    session_id: string
-}
-
-interface IUnpickledSessionInfo extends Omit<ISessionInfo, 'session'> {
-    session: Session
-}
-
 export interface IExportedDevice {
     pickleKey: string
     pickledAccount: string
@@ -198,7 +189,7 @@ export class OlmDevice {
                 lastReceivedMessageTs: session.lastReceivedMessageTs,
             }
 
-            await this.cryptoStore.storeEndToEndSession(sessionInfo)
+            // await this.cryptoStore.storeEndToEndSession(sessionInfo)
         }
         account.unpickle(this.pickleKey, exportedData.pickledAccount)
     }
@@ -244,80 +235,6 @@ export class OlmDevice {
      */
     private async storeAccount(account: Account): Promise<void> {
         await this.cryptoStore.storeAccount(account.pickle(this.pickleKey))
-    }
-
-    /**
-     * Export data for re-creating the Olm device later.
-     * TODO export data other than just account and (P2P) sessions.
-     *
-     * @returns The exported data
-     */
-    public async export(): Promise<IExportedDevice> {
-        const result: Partial<IExportedDevice> = {
-            pickleKey: this.pickleKey,
-        }
-
-        const account = await this.getAccount()
-        result.pickledAccount = account.pickle(this.pickleKey)
-        result.sessions = await this.cryptoStore.getAllEndToEndSessions()
-        return result as IExportedDevice
-    }
-
-    /**
-     * extract an OlmSession from the session store and call the given function
-     * The session is usable only within the callback passed to this
-     * function and will be freed as soon the callback returns. It is *not*
-     * usable for the rest of the lifetime of the transaction.
-     *
-     * @param txn - Opaque transaction object from cryptoStore.doTxn()
-     * @internal
-     */
-    private async getSession(deviceKey: string, sessionId: string): Promise<IUnpickledSessionInfo> {
-        const sessionInfo = await this.cryptoStore.getEndToEndSession(deviceKey, sessionId)
-        const unpickled = await this.unpickleSession(sessionInfo)
-        return unpickled
-    }
-
-    /**
-     * Creates a session object from a session pickle and executes the given
-     * function with it. The session object is destroyed once the function
-     * returns.
-     *
-     * @internal
-     */
-    private async unpickleSession(sessionInfo: ISessionInfo): Promise<IUnpickledSessionInfo> {
-        const session = this.olmDelegate.createSession()
-        session.unpickle(this.pickleKey, sessionInfo.session)
-        const unpickledSessInfo: IUnpickledSessionInfo = Object.assign({}, sessionInfo, {
-            session,
-        })
-        return unpickledSessInfo
-    }
-
-    /**
-     * Store our OlmSession in the session store
-     *
-     * @param sessionInfo - `{session: OlmSession, lastReceivedMessageTs: int}`
-     * @param txn - Opaque transaction object from cryptoStore.doTxn()
-     * @internal
-     */
-    private async saveSession(
-        deviceKey: string,
-        sessionInfo: IUnpickledSessionInfo,
-    ): Promise<void> {
-        const sessionId = sessionInfo.session.session_id()
-        log(
-            `Saving Olm session ${sessionId} with device ${deviceKey}: ${sessionInfo.session.describe()}`,
-        )
-
-        // Why do we re-use the input object for this, overwriting the same key with a different
-        // type? Is it because we want to erase the unpickled session to enforce that it's no longer
-        // used? A comment would be great.
-        const pickledSessionInfo = Object.assign(sessionInfo, {
-            session: sessionInfo.session.pickle(this.pickleKey),
-        })
-
-        await this.cryptoStore.storeEndToEndSession(pickledSessionInfo)
     }
 
     /**
@@ -654,7 +571,7 @@ export class OlmDevice {
         fallbackKey: string,
         payload: string,
     ): Promise<EncryptedMessageEnvelope> {
-        return this.cryptoStore.withAccountAndOlmSessionsTx(async () => {
+        return this.cryptoStore.withAccountTx(async () => {
             const session = this.olmDelegate.createSession()
             try {
                 const account = await this.getAccount()
@@ -671,161 +588,47 @@ export class OlmDevice {
     }
 
     /**
-     * Generate a new outbound session
-     *
-     * The new session will be stored in the cryptoStore.
-     *
-     * @param theirIdentityKey - remote user's Curve25519 identity key
-     * @param theirOneTimeKey -  remote user's one-time Curve25519 key
-     * @returns sessionId for the outbound session.
-     */
-    public async createOutboundSession(
-        theirIdentityKey: string,
-        theirOneTimeKey: string,
-    ): Promise<string> {
-        return this.cryptoStore.withAccountAndOlmSessionsTx(async () => {
-            const account = await this.getAccount()
-            const session = this.olmDelegate.createSession()
-            session.create_outbound(account, theirIdentityKey, theirOneTimeKey)
-            const newSessionId = session.session_id()
-            const sessionInfo: IUnpickledSessionInfo = {
-                sessionId: session.session_id(),
-                deviceKey: theirIdentityKey,
-                session,
-                lastReceivedMessageTs: Date.now(),
-            }
-            await this.storeAccount(account)
-            await this.saveSession(theirIdentityKey, sessionInfo)
-            return newSessionId
-        })
-    }
-
-    /**
-     * Generate a new inbound session, given an incoming message
-     *
-     * @param theirDeviceIdentityKey - remote user's Curve25519 identity key
-     * @param messageType -  messageType field from the received message (must be 0)
-     * @param ciphertext - base64-encoded body from the received message
-     *
-     * @returns decrypted payload, and
-     *     session id of new session
-     *
-     * @throws Error if the received message was not valid (for instance, it didn't use a valid one-time key).
-     */
-    public async createInboundSession(
-        theirDeviceIdentityKey: string,
-        messageType: number,
-        ciphertext: string,
-    ): Promise<IInboundSession> {
-        if (messageType !== 0) {
-            throw new Error('Need messageType == 0 to create inbound session')
-        }
-        return await this.cryptoStore.withAccountAndOlmSessionsTx(async () => {
-            const account = await this.getAccount()
-            const session = this.olmDelegate.createSession()
-            try {
-                session.create_inbound_from(account, theirDeviceIdentityKey, ciphertext)
-                await this.storeAccount(account)
-
-                const payloadString = session.decrypt(messageType, ciphertext)
-                const sessionInfo: IUnpickledSessionInfo = {
-                    session,
-                    sessionId: session.session_id(),
-                    deviceKey: theirDeviceIdentityKey,
-                    // this counts as a received message: set last received message time
-                    // to now
-                    lastReceivedMessageTs: Date.now(),
-                }
-                await this.saveSession(theirDeviceIdentityKey, sessionInfo)
-                return {
-                    payload: payloadString,
-                    session_id: session.session_id(),
-                }
-            } finally {
-                session.free()
-            }
-        })
-    }
-
-    /**
-     * Get a list of known session IDs for the given device
-     *
-     * @param theirDeviceIdentityKey - Curve25519 identity key for the
-     *     remote device
-     * @returns  a list of known session ids for the device
-     */
-    public async getSessionIdsForDevice(theirDeviceIdentityKey: string): Promise<string[]> {
-        if (theirDeviceIdentityKey in this.sessionsInProgress) {
-            log(`waiting for Olm session for ${theirDeviceIdentityKey} to be created`)
-            try {
-                await this.sessionsInProgress[theirDeviceIdentityKey]
-            } catch (e) {
-                // if the session failed to be created, just fall through and
-                // return an empty result
-            }
-        }
-        const sessionIds = await this.cryptoStore.getEndToEndSessions(theirDeviceIdentityKey)
-        return sessionIds.map((info) => info.sessionId)
-    }
-
-    /**
      * Decrypt an incoming message using an existing session
      *
      * @param theirDeviceIdentityKey - Curve25519 identity key for the
      *     remote device
-     * @param sessionId -  the id of the active session
      * @param messageType -  messageType field from the received message
      * @param ciphertext - base64-encoded body from the received message
      *
      * @returns decrypted payload.
      */
     public async decryptMessage(
+        envelope: EncryptedMessageEnvelope,
         theirDeviceIdentityKey: string,
-        sessionId: string,
-        messageType: number,
-        ciphertext: string,
     ): Promise<string> {
-        return this.cryptoStore.withOlmSessionsTx(async () => {
-            const sessionInfo = await this.getSession(theirDeviceIdentityKey, sessionId)
-            const sessionDesc = sessionInfo.session.describe()
+        if (envelope.type !== 0) {
+            throw new Error('Only pre-key messages supported')
+        }
+
+        return await this.cryptoStore.withAccountTx(async () => {
+            const account = await this.getAccount()
+            const session = this.olmDelegate.createSession()
+            const sessionDesc = session.describe()
             log(
                 'Olm Session ID ' +
-                    sessionId +
+                    session.session_id() +
                     ' from ' +
                     theirDeviceIdentityKey +
                     ': ' +
                     sessionDesc,
             )
-            const payloadString = sessionInfo.session.decrypt(messageType, ciphertext)
-            sessionInfo.lastReceivedMessageTs = Date.now()
-            await this.saveSession(theirDeviceIdentityKey, sessionInfo)
-            return payloadString
+            try {
+                session.create_inbound_from(account, theirDeviceIdentityKey, envelope.ciphertext)
+                await this.storeAccount(account)
+                return session.decrypt(envelope.type, envelope.ciphertext)
+            } catch (e) {
+                throw new Error(
+                    'Error decrypting prekey message: ' + JSON.stringify((<Error>e).message),
+                )
+            } finally {
+                session.free()
+            }
         })
-    }
-
-    /**
-     * Determine if an incoming messages is a prekey message matching an existing session
-     *
-     * @param theirDeviceIdentityKey - Curve25519 identity key for the
-     *     remote device
-     * @param sessionId -  the id of the active session
-     * @param messageType -  messageType field from the received message
-     * @param ciphertext - base64-encoded body from the received message
-     *
-     * @returns true if the received message is a prekey message which matches
-     *    the given session.
-     */
-    public async matchesSession(
-        theirDeviceIdentityKey: string,
-        sessionId: string,
-        messageType: number,
-        ciphertext: string,
-    ): Promise<boolean> {
-        if (messageType !== 0) {
-            return false
-        }
-        const sessionInfo = await this.getSession(theirDeviceIdentityKey, sessionId)
-        return sessionInfo.session.matches_inbound(ciphertext)
     }
 
     // Utilities

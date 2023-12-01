@@ -79,7 +79,7 @@ describe('clientCrypto', () => {
             payload.senderKey,
         )
         expect(clear).toBeDefined()
-        expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('200')
+        expect(clear.content?.payload?.value?.streamId).toEqual('200')
     })
 
     test('clientCanEncryptDecryptToDeviceMultipleEventObjects', async () => {
@@ -138,7 +138,7 @@ describe('clientCrypto', () => {
                 senderKey,
             )
             expect(clear).toBeDefined()
-            expect(clear?.clearEvent?.content?.payload?.value?.streamId).toContain(values[i])
+            expect(clear.content?.payload?.value?.streamId).toContain(values[i])
         }
     })
 })

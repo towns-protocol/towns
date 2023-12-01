@@ -16,13 +16,6 @@ export interface AccountRecord {
     accountPickle: string
 }
 
-export interface OlmSessionRecord {
-    deviceKey: string
-    sessionId: string
-    session: string
-    lastReceivedMessageTs: number
-}
-
 export interface MegolmSessionRecord {
     sessionId: string
     session: string

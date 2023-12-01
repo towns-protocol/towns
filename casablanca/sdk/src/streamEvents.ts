@@ -5,10 +5,10 @@ import {
     FullyReadMarker,
     UserPayload_ToDevice,
     KeySolicitation,
+    OlmMessage,
 } from '@river/proto'
 import { LocalTimelineEvent, RemoteTimelineEvent, StreamTimelineEvent } from './types'
 import { RiverEventV2 } from './eventV2'
-import { IEventOlmDecryptionResult } from './crypto/crypto'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]
@@ -55,7 +55,7 @@ export type StreamEvents = {
     toDeviceMessageDecrypted: (
         streamId: string,
         eventId: string,
-        clear: IEventOlmDecryptionResult,
+        clear: OlmMessage,
         senderUserId: string,
     ) => void
     keySolicitationMessage: (

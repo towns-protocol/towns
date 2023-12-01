@@ -30,7 +30,7 @@ import {
     OlmMessage,
     EncryptedMessageEnvelope,
 } from '@river/proto'
-import { Crypto, GroupEncryptionInput, IEventOlmDecryptionResult } from './crypto/crypto'
+import { Crypto, GroupEncryptionInput } from './crypto/crypto'
 import { OlmDevice, IExportedDevice as IExportedOlmDevice } from './crypto/olmDevice'
 import { UserDevice, UserDeviceCollection, MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { DLogger, dlog, dlogError } from './dlog'
@@ -1620,7 +1620,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     public async decryptOlmEvent(
         envelope: EncryptedMessageEnvelope,
         senderDeviceKey: string,
-    ): Promise<IEventOlmDecryptionResult> {
+    ): Promise<OlmMessage> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }

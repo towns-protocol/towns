@@ -1,12 +1,6 @@
 import { UserDevice } from '../olmLib'
 import { InboundGroupSessionData } from '../olmDevice'
-import {
-    ISessionInfo,
-    AccountRecord,
-    MegolmSessionRecord,
-    OlmSessionRecord,
-    UserDeviceRecord,
-} from './types'
+import { AccountRecord, MegolmSessionRecord, UserDeviceRecord } from './types'
 
 import Dexie, { Table } from 'dexie'
 
@@ -14,7 +8,6 @@ const DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS = 15 * 60 * 1000 // 15 minutes
 
 export class CryptoStore extends Dexie {
     account!: Table<AccountRecord>
-    olmSessions!: Table<OlmSessionRecord>
     outboundGroupSessions!: Table<MegolmSessionRecord>
     inboundGroupSessions!: Table<InboundGroupSessionData & { streamId: string; sessionId: string }>
     devices!: Table<UserDeviceRecord>
@@ -23,9 +16,8 @@ export class CryptoStore extends Dexie {
     constructor(databaseName: string, userId: string) {
         super(databaseName)
         this.userId = userId
-        this.version(4).stores({
+        this.version(5).stores({
             account: 'id',
-            olmSessions: '[deviceKey+sessionId], deviceKey, sessionId',
             inboundGroupSessions: '[streamId+sessionId]',
             outboundGroupSessions: 'streamId',
             devices: '[userId+deviceId],expirationTimestamp',
@@ -58,26 +50,6 @@ export class CryptoStore extends Dexie {
 
     async storeAccount(accountPickle: string): Promise<void> {
         await this.account.put({ id: this.userId, accountPickle })
-    }
-
-    async getEndToEndSession(deviceKey: string, sessionId: string): Promise<ISessionInfo> {
-        const session = await this.olmSessions.get({ deviceKey, sessionId })
-        if (!session) {
-            throw new Error('session not found')
-        }
-        return session
-    }
-
-    async getEndToEndSessions(deviceKey: string): Promise<ISessionInfo[]> {
-        return await this.olmSessions.where({ deviceKey }).toArray()
-    }
-
-    async getAllEndToEndSessions(): Promise<ISessionInfo[]> {
-        return await this.olmSessions.toArray()
-    }
-
-    async storeEndToEndSession(sessionInfo: ISessionInfo): Promise<void> {
-        await this.olmSessions.put(sessionInfo)
     }
 
     async storeEndToEndOutboundGroupSession(
@@ -116,12 +88,8 @@ export class CryptoStore extends Dexie {
         return sessions.map((s) => s.sessionId)
     }
 
-    async withOlmSessionsTx<T>(fn: () => Promise<T>): Promise<T> {
-        return await this.transaction('rw', this.olmSessions, fn)
-    }
-
-    async withAccountAndOlmSessionsTx<T>(fn: () => Promise<T>): Promise<T> {
-        return await this.transaction('rw', this.account, this.olmSessions, fn)
+    async withAccountTx<T>(fn: () => Promise<T>): Promise<T> {
+        return await this.transaction('rw', this.account, fn)
     }
 
     async withMegolmSessions<T>(fn: () => Promise<T>): Promise<T> {

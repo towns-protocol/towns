@@ -4,7 +4,6 @@ import { makeDonePromise, makeTestClient } from './util.test'
 import { KeyResponseKind, ToDeviceMessage } from '@river/proto'
 import { make_ToDevice_KeyResponse } from './types'
 import { UserDeviceCollection } from './crypto/olmLib'
-import { IEventOlmDecryptionResult } from './crypto/crypto'
 
 const log = dlog('test:toDeviceMessage')
 
@@ -36,16 +35,11 @@ describe('toDeviceMessageTest', () => {
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
             'toDeviceMessageDecrypted',
-            (
-                streamId: string,
-                eventId: string,
-                clear: IEventOlmDecryptionResult,
-                _senderUserId: string,
-            ): void => {
+            (streamId: string, eventId: string, clear, _senderUserId: string): void => {
                 log('toDeviceMessage for Alice', streamId, clear)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(clear).toBeDefined()
-                    expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('200')
+                    expect(clear?.content?.payload?.value?.streamId).toEqual('200')
                 })
             },
         )
@@ -83,17 +77,12 @@ describe('toDeviceMessageTest', () => {
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.on(
             'toDeviceMessageDecrypted',
-            (
-                streamId: string,
-                eventId: string,
-                clear: IEventOlmDecryptionResult,
-                _senderUserId: string,
-            ): void => {
+            (streamId: string, eventId: string, clear, _senderUserId: string): void => {
                 log('toDeviceMessage for Alice', streamId, clear)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(clear).toBeDefined()
-                    expect(clear.clearEvent.content?.payload.case).toBe('response')
-                    expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('201')
+                    expect(clear.content?.payload.case).toBe('response')
+                    expect(clear.content?.payload?.value?.streamId).toEqual('201')
                 })
             },
         )
@@ -144,18 +133,13 @@ describe('toDeviceMessageTest', () => {
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
             'toDeviceMessageDecrypted',
-            (
-                streamId: string,
-                eventId: string,
-                clear: IEventOlmDecryptionResult,
-                _senderUserId: string,
-            ): void => {
+            (streamId: string, eventId: string, clear, _senderUserId: string): void => {
                 log('toDeviceMessage for Alice', streamId)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(clear).toBeDefined()
-                    expect(clear.clearEvent.content?.payload.case).toBe('response')
-                    expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('202')
+                    expect(clear.content?.payload.case).toBe('response')
+                    expect(clear.content?.payload?.value?.streamId).toEqual('202')
                 })
             },
         )
@@ -195,17 +179,12 @@ describe('toDeviceMessageTest', () => {
         const bobSelfToDevice = makeDonePromise()
         alicesClient.once(
             'toDeviceMessageDecrypted',
-            (
-                streamId: string,
-                eventId: string,
-                clear: IEventOlmDecryptionResult,
-                _senderUserId: string,
-            ): void => {
+            (streamId: string, eventId: string, clear, _senderUserId: string): void => {
                 log('toDeviceMessage for Alice', streamId, clear)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(clear).toBeDefined()
-                    expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('204')
+                    expect(clear.content?.payload?.value?.streamId).toEqual('204')
 
                     const aliceToBobRecipients: UserDeviceCollection = {}
                     aliceToBobRecipients[bobUserId] = [bobsClient.userDeviceKey()]
@@ -234,17 +213,12 @@ describe('toDeviceMessageTest', () => {
 
         bobsClient.on(
             'toDeviceMessageDecrypted',
-            (
-                streamId: string,
-                eventId: string,
-                clear: IEventOlmDecryptionResult,
-                _senderUserId: string,
-            ): void => {
+            (streamId: string, eventId: string, clear, _senderUserId: string): void => {
                 log('toDeviceMessage for Alice', streamId, clear)
                 if (streamId == bobUserStreamId) {
                     bobSelfToDevice.runAndDoneAsync(async () => {
                         expect(clear).toBeDefined()
-                        expect(clear?.clearEvent?.content?.payload?.value?.streamId).toEqual('203')
+                        expect(clear.content?.payload?.value?.streamId).toEqual('203')
                     })
                 }
             },
