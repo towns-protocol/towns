@@ -92,7 +92,7 @@ export function useCasablancaTimelines(
                     .map((event) => toEvent(event, userId))
                     .filter(filterFn)
                 setState.initializeStream(userId, streamId)
-                setState.processEvents(timelineEvents, userId, streamId)
+                setState.appendEvents(timelineEvents, userId, streamId)
             }
         }
 
@@ -110,13 +110,11 @@ export function useCasablancaTimelines(
                 }
                 if (appended) {
                     const events = appended.map((event) => toEvent(event, userId)).filter(filterFn)
-                    setState.processEvents(events, userId, streamId)
+                    setState.appendEvents(events, userId, streamId)
                 }
                 if (updated) {
                     const events = updated.map((event) => toEvent(event, userId)).filter(filterFn)
-                    events.map((event) =>
-                        setState.processEvent(event, userId, streamId, event.eventId),
-                    )
+                    setState.updateEvents(events, userId, streamId)
                 }
             }
         }
@@ -131,7 +129,7 @@ export function useCasablancaTimelines(
                 streamIds.add(streamId)
                 const event = toEvent(localEvent, userId)
                 if (filterFn(event)) {
-                    setState.processEvent(event, userId, streamId, localEventId)
+                    setState.updateEvent(event, userId, streamId, localEventId)
                 }
             }
         }
@@ -154,7 +152,7 @@ export function useCasablancaTimelines(
         //Step 2: add them into the timeline
         timelineEvents.forEach((events, streamId) => {
             setState.initializeStream(userId, streamId)
-            setState.processEvents(events.filter(filterFn), userId, streamId)
+            setState.appendEvents(events.filter(filterFn), userId, streamId)
         })
 
         casablancaClient.on('streamInitialized', onStreamInitialized)

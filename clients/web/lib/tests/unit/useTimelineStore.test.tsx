@@ -40,7 +40,7 @@ function execute(
     //
     {
         // test appending events (normal flow when syncing channels)
-        setState.processEvents(events, userId, channelId)
+        setState.appendEvents(events, userId, channelId)
         // get the timeline store interface
         const {
             timelines: timelinesAppended,

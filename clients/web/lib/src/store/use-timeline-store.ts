@@ -32,14 +32,15 @@ export type TimelineStoreStates = {
 export interface TimelineStoreInterface {
     initializeStream: (userId: string, streamId: string) => void
     reset: (roomIds: string[]) => void
-    processEvent: (
+    appendEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
+    prependEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
+    updateEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
+    updateEvent: (
         event: TimelineEvent,
         userId: string,
         streamId: string,
-        updatingEventId?: string,
+        updatingEventId: string,
     ) => void
-    processEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
-    prependEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
 }
 
 export type TimelineStore = TimelineStoreStates & {
@@ -97,26 +98,28 @@ function makeTimelineStoreInterface(
             return prev
         })
     }
-    const removeEvent = (roomId: string, eventId: string) => {
-        setState((state) => {
-            const eventIndex = state.timelines[roomId]?.findIndex((e) => e.eventId == eventId)
-            if ((eventIndex ?? -1) < 0) {
-                return state
-            }
-            const event = state.timelines[roomId][eventIndex]
-
-            return {
-                timelines: removeTimelineEvent(roomId, eventIndex, state.timelines),
-                replacedEvents: state.replacedEvents,
-                pendingReplacedEvents: state.pendingReplacedEvents,
-                threadsStats: removeThreadStat(roomId, event, state.threadsStats),
-                threads: removeThreadEvent(roomId, event, state.threads),
-                reactions: removeReaction(roomId, event, state.reactions),
-            }
-        })
+    const removeEvent = (state: TimelineStoreStates, roomId: string, eventId: string) => {
+        const eventIndex = state.timelines[roomId]?.findIndex((e) => e.eventId == eventId)
+        if ((eventIndex ?? -1) < 0) {
+            return state
+        }
+        const event = state.timelines[roomId][eventIndex]
+        return {
+            timelines: removeTimelineEvent(roomId, eventIndex, state.timelines),
+            replacedEvents: state.replacedEvents,
+            pendingReplacedEvents: state.pendingReplacedEvents,
+            threadsStats: removeThreadStat(roomId, event, state.threadsStats),
+            threads: removeThreadEvent(roomId, event, state.threads),
+            reactions: removeReaction(roomId, event, state.reactions),
+        }
     }
-    const appendEvent = (userId: string, roomId: string, timelineEvent: TimelineEvent) => {
-        setState((state) => ({
+    const appendEvent = (
+        state: TimelineStoreStates,
+        userId: string,
+        roomId: string,
+        timelineEvent: TimelineEvent,
+    ) => {
+        return {
             timelines: appendTimelineEvent(roomId, timelineEvent, state.timelines),
             replacedEvents: state.replacedEvents,
             pendingReplacedEvents: state.pendingReplacedEvents,
@@ -129,116 +132,116 @@ function makeTimelineStoreInterface(
             ),
             threads: insertThreadEvent(roomId, timelineEvent, state.threads),
             reactions: addReactions(roomId, timelineEvent, state.reactions),
-        }))
+        }
     }
-    const prependEvent = (userId: string, roomId: string, inTimelineEvent: TimelineEvent) => {
-        setState((state) => {
-            const timelineEvent = state.pendingReplacedEvents[roomId]?.[inTimelineEvent.eventId]
-                ? toReplacedMessageEvent(
-                      inTimelineEvent,
-                      state.pendingReplacedEvents[roomId][inTimelineEvent.eventId],
-                  )
-                : inTimelineEvent
-            return {
-                timelines: prependTimelineEvent(roomId, timelineEvent, state.timelines),
-                replacedEvents: state.replacedEvents,
-                pendingReplacedEvents: state.pendingReplacedEvents,
-                threadsStats: addThreadStats(
-                    roomId,
-                    timelineEvent,
-                    state.threadsStats,
-                    state.timelines[roomId],
-                    userId,
-                ),
-                threads: insertThreadEvent(roomId, timelineEvent, state.threads),
-                reactions: addReactions(roomId, timelineEvent, state.reactions),
-            }
-        })
+    const prependEvent = (
+        state: TimelineStoreStates,
+        userId: string,
+        roomId: string,
+        inTimelineEvent: TimelineEvent,
+    ) => {
+        const timelineEvent = state.pendingReplacedEvents[roomId]?.[inTimelineEvent.eventId]
+            ? toReplacedMessageEvent(
+                  inTimelineEvent,
+                  state.pendingReplacedEvents[roomId][inTimelineEvent.eventId],
+              )
+            : inTimelineEvent
+        return {
+            timelines: prependTimelineEvent(roomId, timelineEvent, state.timelines),
+            replacedEvents: state.replacedEvents,
+            pendingReplacedEvents: state.pendingReplacedEvents,
+            threadsStats: addThreadStats(
+                roomId,
+                timelineEvent,
+                state.threadsStats,
+                state.timelines[roomId],
+                userId,
+            ),
+            threads: insertThreadEvent(roomId, timelineEvent, state.threads),
+            reactions: addReactions(roomId, timelineEvent, state.reactions),
+        }
     }
 
     const replaceEvent = (
+        state: TimelineStoreStates,
         userId: string,
         roomId: string,
         replacedMsgId: string,
         timelineEvent: TimelineEvent,
     ) => {
-        setState((state) => {
-            const timeline = state.timelines[roomId] ?? []
-            const eventIndex = timeline.findIndex((e: TimelineEvent) => e.eventId === replacedMsgId)
-            if (eventIndex === -1) {
-                // if we didn't find an event to replace...
-                if (state.pendingReplacedEvents[roomId]?.[replacedMsgId]) {
-                    // if we already have a replacement here, leave it, because we sync backwards, we assume the first one is the correct one
-                    return state
-                } else {
-                    // otherwise add it to the pending list
-                    return {
-                        ...state,
-                        pendingReplacedEvents: {
-                            ...state.pendingReplacedEvents,
-                            [roomId]: {
-                                ...state.pendingReplacedEvents[roomId],
-                                [replacedMsgId]: timelineEvent,
-                            },
+        const timeline = state.timelines[roomId] ?? []
+        const eventIndex = timeline.findIndex((e: TimelineEvent) => e.eventId === replacedMsgId)
+        if (eventIndex === -1) {
+            // if we didn't find an event to replace...
+            if (state.pendingReplacedEvents[roomId]?.[replacedMsgId]) {
+                // if we already have a replacement here, leave it, because we sync backwards, we assume the first one is the correct one
+                return state
+            } else {
+                // otherwise add it to the pending list
+                return {
+                    ...state,
+                    pendingReplacedEvents: {
+                        ...state.pendingReplacedEvents,
+                        [roomId]: {
+                            ...state.pendingReplacedEvents[roomId],
+                            [replacedMsgId]: timelineEvent,
                         },
-                    }
+                    },
                 }
             }
-            const oldEvent = timeline[eventIndex]
-            const newEvent = toReplacedMessageEvent(oldEvent, timelineEvent)
+        }
+        const oldEvent = timeline[eventIndex]
+        const newEvent = toReplacedMessageEvent(oldEvent, timelineEvent)
 
-            const threadParentId = newEvent.threadParentId
-            const threadTimeline = threadParentId
-                ? state.threads[roomId]?.[threadParentId]
-                : undefined
-            const threadEventIndex =
-                threadTimeline?.findIndex((e) => e.eventId === replacedMsgId) ?? -1
+        const threadParentId = newEvent.threadParentId
+        const threadTimeline = threadParentId ? state.threads[roomId]?.[threadParentId] : undefined
+        const threadEventIndex = threadTimeline?.findIndex((e) => e.eventId === replacedMsgId) ?? -1
 
-            return {
-                timelines: replaceTimelineEvent(
-                    roomId,
-                    newEvent,
-                    eventIndex,
-                    timeline,
-                    state.timelines,
-                ),
-                replacedEvents: {
-                    ...state.replacedEvents,
-                    [roomId]: [...(state.replacedEvents[roomId] ?? []), { oldEvent, newEvent }],
-                },
-                pendingReplacedEvents: state.pendingReplacedEvents,
-                threadsStats: addThreadStats(
-                    roomId,
-                    newEvent,
-                    removeThreadStat(roomId, oldEvent, state.threadsStats),
-                    state.timelines[roomId],
-                    userId,
-                ),
-                threads:
-                    threadParentId && threadTimeline && threadEventIndex >= 0
-                        ? {
-                              ...state.threads,
-                              [roomId]: replaceTimelineEvent(
-                                  threadParentId,
-                                  newEvent,
-                                  threadEventIndex,
-                                  threadTimeline,
-                                  state.threads[roomId],
-                              ),
-                          }
-                        : threadParentId
-                        ? insertThreadEvent(roomId, newEvent, state.threads)
-                        : state.threads,
-                reactions: addReactions(
-                    roomId,
-                    newEvent,
-                    removeReaction(roomId, oldEvent, state.reactions),
-                ),
-            }
-        })
+        return {
+            timelines: replaceTimelineEvent(
+                roomId,
+                newEvent,
+                eventIndex,
+                timeline,
+                state.timelines,
+            ),
+            replacedEvents: {
+                ...state.replacedEvents,
+                [roomId]: [...(state.replacedEvents[roomId] ?? []), { oldEvent, newEvent }],
+            },
+            pendingReplacedEvents: state.pendingReplacedEvents,
+            threadsStats: addThreadStats(
+                roomId,
+                newEvent,
+                removeThreadStat(roomId, oldEvent, state.threadsStats),
+                state.timelines[roomId],
+                userId,
+            ),
+            threads:
+                threadParentId && threadTimeline && threadEventIndex >= 0
+                    ? {
+                          ...state.threads,
+                          [roomId]: replaceTimelineEvent(
+                              threadParentId,
+                              newEvent,
+                              threadEventIndex,
+                              threadTimeline,
+                              state.threads[roomId],
+                          ),
+                      }
+                    : threadParentId
+                    ? insertThreadEvent(roomId, newEvent, state.threads)
+                    : state.threads,
+            reactions: addReactions(
+                roomId,
+                newEvent,
+                removeReaction(roomId, oldEvent, state.reactions),
+            ),
+        }
     }
 
     function processEvent(
+        state: TimelineStoreStates,
         event: TimelineEvent,
         userId: string,
         streamId: string,
@@ -249,54 +252,82 @@ function makeTimelineStoreInterface(
         if (redactsEventId) {
             if (updatingEventId) {
                 // remove the formerly encrypted event
-                removeEvent(streamId, updatingEventId)
+                state = removeEvent(state, streamId, updatingEventId)
             }
             const redactedEvent = makeRedactionEvent(event)
-            replaceEvent(userId, streamId, redactsEventId, redactedEvent)
-            appendEvent(userId, streamId, event)
+            state = replaceEvent(state, userId, streamId, redactsEventId, redactedEvent)
+            state = appendEvent(state, userId, streamId, event)
         } else if (editsEventId) {
             if (updatingEventId) {
-                removeEvent(streamId, updatingEventId)
+                state = removeEvent(state, streamId, updatingEventId)
             }
-            replaceEvent(userId, streamId, editsEventId, event)
+            state = replaceEvent(state, userId, streamId, editsEventId, event)
         } else {
             if (updatingEventId) {
                 // replace the formerly encrypted event
-                replaceEvent(userId, streamId, updatingEventId, event)
+                state = replaceEvent(state, userId, streamId, updatingEventId, event)
             } else {
-                appendEvent(userId, streamId, event)
+                state = appendEvent(state, userId, streamId, event)
             }
         }
+        return state
     }
 
-    function processEvents(events: TimelineEvent[], userId: string, streamId: string) {
-        for (const event of events) {
-            processEvent(event, userId, streamId, undefined)
-        }
+    function appendEvents(events: TimelineEvent[], userId: string, streamId: string) {
+        setState((state) => {
+            for (const event of events) {
+                state = processEvent(state, event, userId, streamId, undefined)
+            }
+            return state
+        })
     }
 
     function prependEvents(events: TimelineEvent[], userId: string, streamId: string) {
-        for (const event of reverse(events)) {
-            const editsEventId = getEditsId(event.content)
-            const redactsEventId = getRedactsId(event.content)
-            if (redactsEventId) {
-                const redactedEvent = makeRedactionEvent(event)
-                prependEvent(userId, streamId, event)
-                replaceEvent(userId, streamId, redactsEventId, redactedEvent)
-            } else if (editsEventId) {
-                replaceEvent(userId, streamId, editsEventId, event)
-            } else {
-                prependEvent(userId, streamId, event)
+        setState((state) => {
+            for (const event of reverse(events)) {
+                const editsEventId = getEditsId(event.content)
+                const redactsEventId = getRedactsId(event.content)
+                if (redactsEventId) {
+                    const redactedEvent = makeRedactionEvent(event)
+                    state = prependEvent(state, userId, streamId, event)
+                    state = replaceEvent(state, userId, streamId, redactsEventId, redactedEvent)
+                } else if (editsEventId) {
+                    state = replaceEvent(state, userId, streamId, editsEventId, event)
+                } else {
+                    state = prependEvent(state, userId, streamId, event)
+                }
             }
-        }
+            return state
+        })
+    }
+
+    function updateEvents(events: TimelineEvent[], userId: string, streamId: string) {
+        setState((state) => {
+            for (const event of events) {
+                state = processEvent(state, event, userId, streamId, event.eventId)
+            }
+            return state
+        })
+    }
+
+    function updateEvent(
+        event: TimelineEvent,
+        userId: string,
+        streamId: string,
+        replacingEventId: string,
+    ) {
+        setState((state) => {
+            return processEvent(state, event, userId, streamId, replacingEventId)
+        })
     }
 
     return {
         initializeStream,
         reset,
-        processEvent,
-        processEvents,
+        appendEvents,
         prependEvents,
+        updateEvents,
+        updateEvent,
     }
 }
 
