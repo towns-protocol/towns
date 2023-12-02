@@ -20,6 +20,7 @@ type StreamCache interface {
 	GetStream(ctx context.Context, streamId string) (SyncStream, StreamView, error)
 	CreateStream(ctx context.Context, streamId string, genesisMiniblock *Miniblock) (SyncStream, StreamView, error)
 	ForceFlushAll(ctx context.Context)
+	ListStreams(ctx context.Context) []string
 }
 
 type streamCacheImpl struct {
@@ -87,4 +88,13 @@ func (s *streamCacheImpl) ForceFlushAll(ctx context.Context) {
 		stream.ForceFlush(ctx)
 		return true
 	})
+}
+
+func (s *streamCacheImpl) ListStreams(ctx context.Context) []string {
+	var result []string
+	s.cache.Range(func(key, value interface{}) bool {
+		result = append(result, key.(string))
+		return true
+	})
+	return result
 }

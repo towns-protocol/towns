@@ -15,6 +15,15 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+type StreamViewStats struct {
+	FirstMiniblockNum     int64
+	LastMiniblockNum      int64
+	EventsInMiniblocks    int
+	SnapshotsInMiniblocks int
+	EventsInMinipool      int
+	TotalEventsEver       int // This is total number of events in the stream ever, not in the cache.
+}
+
 type StreamView interface {
 	StreamId() string
 	InceptionPayload() IsInceptionPayload
@@ -24,6 +33,7 @@ type StreamView interface {
 	SyncCookie(localNodeAddress string) *SyncCookie
 	LastBlock() *miniblockInfo
 	ValidateNextEvent(parsedEvent *ParsedEvent, config *config.RecencyConstraintsConfig) error
+	GetStats() StreamViewStats
 }
 
 func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
@@ -440,4 +450,27 @@ func (r *streamViewImpl) isRecentBlock(block *miniblockInfo, config *config.Rece
 	currentTime := time.Now()
 	maxAgeDuration := time.Duration(config.AgeSeconds) * time.Second
 	return currentTime.Sub(block.header().Timestamp.AsTime()) <= maxAgeDuration
+}
+
+func (r *streamViewImpl) GetStats() StreamViewStats {
+	stats := StreamViewStats{
+		FirstMiniblockNum: r.blocks[0].Num,
+		LastMiniblockNum:  r.LastBlock().Num,
+		EventsInMinipool:  r.minipool.events.Len(),
+	}
+
+	for _, block := range r.blocks {
+		stats.EventsInMiniblocks += len(block.events) + 1 // +1 for header
+		if block.header().Snapshot != nil {
+			stats.SnapshotsInMiniblocks++
+		}
+	}
+
+	stats.TotalEventsEver = int(r.blocks[r.snapshotIndex].header().EventNumOffset)
+	for _, block := range r.blocks[r.snapshotIndex:] {
+		stats.TotalEventsEver += len(block.events) + 1 // +1 for header
+	}
+	stats.TotalEventsEver += r.minipool.events.Len()
+
+	return stats
 }

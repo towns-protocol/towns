@@ -199,7 +199,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		}
 	})
 
-	registerDebugHandlers(mux)
+	registerDebugHandlers(mux, cache)
 
 	address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 	httpListener, err := net.Listen("tcp", address)
