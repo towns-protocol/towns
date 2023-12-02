@@ -199,5 +199,9 @@ func registerDebugHandlers(mux httpMux, cache StreamCache) {
 	handler.Handle(mux, "/debug/cache", &cacheHandler{cache: cache})
 	handler.Handle(mux, "/debug/memory", MemoryHandler())
 	handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 	handler.HandleFunc(mux, "/debug/stacks", handleStacks)
 }
