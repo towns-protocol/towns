@@ -253,6 +253,12 @@ export interface TimelineEvent {
     sessionId?: string
 }
 
+export interface TimelineEventConfirmation {
+    eventId: string
+    confirmedEventNum: bigint
+    confirmedInBlockNum: bigint
+}
+
 export interface ThreadStats {
     /// Thread Parent
     replyCount: number

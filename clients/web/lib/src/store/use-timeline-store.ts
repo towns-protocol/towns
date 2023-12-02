@@ -5,6 +5,7 @@ import {
     RoomMessageEvent,
     ThreadStats,
     TimelineEvent,
+    TimelineEventConfirmation,
     TimelineEvent_OneOf,
     ZTEvent,
     getFallbackContent,
@@ -41,6 +42,7 @@ export interface TimelineStoreInterface {
         streamId: string,
         updatingEventId: string,
     ) => void
+    confirmEvents: (confirmations: TimelineEventConfirmation[], streamId: string) => void
 }
 
 export type TimelineStore = TimelineStoreStates & {
@@ -240,6 +242,64 @@ function makeTimelineStoreInterface(
         }
     }
 
+    function confirmEvent(
+        state: TimelineStoreStates,
+        streamId: string,
+        confirmation: TimelineEventConfirmation,
+    ) {
+        // very very similar to replaceEvent, but we only swap out the confirmedInBlockNum and confirmedEventNum
+        const timeline = state.timelines[streamId] ?? []
+        const eventIndex = timeline.findIndex(
+            (e: TimelineEvent) => e.eventId === confirmation.eventId,
+        )
+        if (eventIndex === -1) {
+            return state
+        }
+        const oldEvent = timeline[eventIndex]
+        const newEvent = {
+            ...oldEvent,
+            confirmedEventNum: confirmation.confirmedEventNum,
+            confirmedInBlockNum: confirmation.confirmedInBlockNum,
+        }
+
+        const threadParentId = newEvent.threadParentId
+        const threadTimeline = threadParentId
+            ? state.threads[streamId]?.[threadParentId]
+            : undefined
+        const threadEventIndex =
+            threadTimeline?.findIndex((e) => e.eventId === confirmation.eventId) ?? -1
+
+        return {
+            timelines: replaceTimelineEvent(
+                streamId,
+                newEvent,
+                eventIndex,
+                timeline,
+                state.timelines,
+            ),
+            replacedEvents: {
+                ...state.replacedEvents,
+                [streamId]: [...(state.replacedEvents[streamId] ?? []), { oldEvent, newEvent }],
+            },
+            pendingReplacedEvents: state.pendingReplacedEvents,
+            threadsStats: state.threadsStats,
+            threads:
+                threadParentId && threadTimeline && threadEventIndex >= 0
+                    ? {
+                          ...state.threads,
+                          [streamId]: replaceTimelineEvent(
+                              threadParentId,
+                              newEvent,
+                              threadEventIndex,
+                              threadTimeline,
+                              state.threads[streamId],
+                          ),
+                      }
+                    : state.threads,
+            reactions: state.reactions,
+        }
+    }
+
     function processEvent(
         state: TimelineStoreStates,
         event: TimelineEvent,
@@ -321,6 +381,15 @@ function makeTimelineStoreInterface(
         })
     }
 
+    function confirmEvents(confirmations: TimelineEventConfirmation[], streamId: string) {
+        setState((state) => {
+            confirmations.forEach((confirmation) => {
+                state = confirmEvent(state, streamId, confirmation)
+            })
+            return state
+        })
+    }
+
     return {
         initializeStream,
         reset,
@@ -328,6 +397,7 @@ function makeTimelineStoreInterface(
         prependEvents,
         updateEvents,
         updateEvent,
+        confirmEvents,
     }
 }
 

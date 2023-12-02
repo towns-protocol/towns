@@ -7,13 +7,19 @@ import {
     KeySolicitation,
     OlmMessage,
 } from '@river/proto'
-import { LocalTimelineEvent, RemoteTimelineEvent, StreamTimelineEvent } from './types'
+import {
+    ConfirmedTimelineEvent,
+    LocalTimelineEvent,
+    RemoteTimelineEvent,
+    StreamTimelineEvent,
+} from './types'
 import { RiverEventV2 } from './eventV2'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]
     appended?: StreamTimelineEvent[]
     updated?: StreamTimelineEvent[]
+    confirmed?: ConfirmedTimelineEvent[]
 }
 
 export type StreamEvents = {

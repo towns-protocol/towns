@@ -13,9 +13,11 @@ import {
 import TypedEmitter from 'typed-emitter'
 import { check, logNever, isDefined } from './check'
 import {
+    ConfirmedTimelineEvent,
     ParsedMiniblock,
     RemoteTimelineEvent,
     StreamTimelineEvent,
+    isConfirmedEvent,
     isLocalEvent,
     makeRemoteTimelineEvent,
 } from './types'
@@ -234,9 +236,14 @@ export class StreamStateView {
     private appendStreamAndCookie(
         streamAndCookie: StreamAndCookie,
         emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): { appended: StreamTimelineEvent[]; updated: StreamTimelineEvent[] } {
+    ): {
+        appended: StreamTimelineEvent[]
+        updated: StreamTimelineEvent[]
+        confirmed: ConfirmedTimelineEvent[]
+    } {
         const appended: StreamTimelineEvent[] = []
         const updated: StreamTimelineEvent[] = []
+        const confirmed: ConfirmedTimelineEvent[] = []
         for (const unparsedEvent of streamAndCookie.events) {
             const parsedEvent = unpackEnvelope(unparsedEvent)
             const existingEvent = this.events.get(parsedEvent.hashStr)
@@ -251,28 +258,28 @@ export class StreamStateView {
                     confirmedEventNum: undefined,
                 })
                 this.timeline.push(event)
-                const modified = this.processAppendedEvent(event, emitter)
+                const newlyConfirmed = this.processAppendedEvent(event, emitter)
                 appended.push(event)
-                if (modified) {
-                    updated.push(...modified)
+                if (newlyConfirmed) {
+                    confirmed.push(...newlyConfirmed)
                 }
             }
         }
         this.syncCookie = streamAndCookie.nextSyncCookie
-        return { appended, updated }
+        return { appended, updated, confirmed }
     }
 
     private processAppendedEvent(
         timelineEvent: RemoteTimelineEvent,
         emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): StreamTimelineEvent[] | undefined {
+    ): ConfirmedTimelineEvent[] | undefined {
         check(!this.events.has(timelineEvent.hashStr))
         this.events.set(timelineEvent.hashStr, timelineEvent)
 
         const event = timelineEvent.remoteEvent
         const payload = event.event.payload
         check(isDefined(payload), `Event has no payload ${event.hashStr}`, Err.STREAM_BAD_EVENT)
-        let updated: StreamTimelineEvent[] | undefined = undefined
+        let confirmed: ConfirmedTimelineEvent[] | undefined = undefined
 
         try {
             switch (payload.case) {
@@ -311,7 +318,7 @@ export class StreamStateView {
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     timelineEvent.confirmedEventNum =
                         payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)
-                    updated = []
+                    confirmed = []
                     for (let i = 0; i < payload.value.eventHashes.length; i++) {
                         const eventId = bin_toHexString(payload.value.eventHashes[i])
                         const event = this.events.get(eventId)
@@ -321,7 +328,8 @@ export class StreamStateView {
                         }
                         event.miniblockNum = payload.value.miniblockNum
                         event.confirmedEventNum = payload.value.eventNumOffset + BigInt(i)
-                        updated?.push(event)
+                        check(isConfirmedEvent(event), `Event is not confirmed ${eventId}`)
+                        confirmed.push(event)
                     }
                     break
                 case undefined:
@@ -332,7 +340,7 @@ export class StreamStateView {
         } catch (e) {
             logError(`StreamStateView::Error appending event ${event.hashStr}`, e)
         }
-        return updated
+        return confirmed
     }
 
     private processPrependedEvent(
@@ -504,8 +512,15 @@ export class StreamStateView {
         streamAndCookie: StreamAndCookie,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
-        const { appended, updated } = this.appendStreamAndCookie(streamAndCookie, emitter)
-        emitter?.emit('streamUpdated', this.streamId, this.contentKind, { appended, updated })
+        const { appended, updated, confirmed } = this.appendStreamAndCookie(
+            streamAndCookie,
+            emitter,
+        )
+        emitter?.emit('streamUpdated', this.streamId, this.contentKind, {
+            appended: appended.length > 0 ? appended : undefined,
+            updated: updated.length > 0 ? updated : undefined,
+            confirmed: confirmed.length > 0 ? confirmed : undefined,
+        })
     }
 
     prependEvents(

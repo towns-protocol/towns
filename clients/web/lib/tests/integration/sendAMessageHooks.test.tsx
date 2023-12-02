@@ -122,7 +122,9 @@ describe('sendMessageHooks', () => {
                         e.isLocalPending ? 'true' : 'false'
                     }`
                 }
-                return `${e.fallbackContent} eventId: ${e.eventId}`
+                return `#:${e.eventNum} ✅:${e.confirmedEventNum ?? '??'} ${
+                    e.fallbackContent
+                } eventId: ${e.eventId}`
             }, [])
             return (
                 <>
@@ -189,6 +191,8 @@ describe('sendMessageHooks', () => {
         })
         // expect our message to show
         await waitFor(() => expect(message0).toHaveTextContent('hello bob'))
+        // and for a block confirmation
+        await waitFor(() => expect(message0).not.toHaveTextContent('✅:??'))
         // have bob send a message to jane
         fireEvent.click(sendMessageButton)
 
@@ -201,6 +205,8 @@ describe('sendMessageHooks', () => {
         await waitFor(() => expect(jane.getMessages(janesChannelId)).toContain('hello jane'))
         // expect the message to "flush" out of local pending state
         await waitFor(() => expect(message1).not.toHaveTextContent('isLocalPending: true'))
+        // expect it to get confirmed
+        await waitFor(() => expect(message0).not.toHaveTextContent('✅:??'))
         // edit the event
         fireEvent.click(editButton)
         // wait for the event to be edited

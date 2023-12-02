@@ -102,7 +102,7 @@ export function useCasablancaTimelines(
             change: StreamChange,
         ) => {
             if (hasTimelineContent(kind)) {
-                const { prepended, appended, updated } = change
+                const { prepended, appended, updated, confirmed } = change
                 streamIds.add(streamId)
                 if (prepended) {
                     const events = prepended.map((event) => toEvent(event, userId)).filter(filterFn)
@@ -115,6 +115,14 @@ export function useCasablancaTimelines(
                 if (updated) {
                     const events = updated.map((event) => toEvent(event, userId)).filter(filterFn)
                     setState.updateEvents(events, userId, streamId)
+                }
+                if (confirmed) {
+                    const confirmations = confirmed.map((event) => ({
+                        eventId: event.hashStr,
+                        confirmedInBlockNum: event.miniblockNum,
+                        confirmedEventNum: event.confirmedEventNum,
+                    }))
+                    setState.confirmEvents(confirmations, streamId)
                 }
             }
         }

@@ -70,6 +70,14 @@ export type LocalTimelineEvent = Omit<StreamTimelineEvent, 'localEvent'> & {
     localEvent: LocalEvent
 }
 
+export type ConfirmedTimelineEvent = Omit<
+    RemoteTimelineEvent,
+    'confirmedEventNum' | 'miniblockNum'
+> & {
+    confirmedEventNum: bigint
+    miniblockNum: bigint
+}
+
 export type DecryptedTimelineEvent = Omit<
     StreamTimelineEvent,
     'decryptedContent' | 'remoteEvent'
@@ -88,6 +96,14 @@ export function isRemoteEvent(event: StreamTimelineEvent): event is RemoteTimeli
 
 export function isDecryptedEvent(event: StreamTimelineEvent): event is DecryptedTimelineEvent {
     return event.decryptedContent !== undefined && event.remoteEvent !== undefined
+}
+
+export function isConfirmedEvent(event: StreamTimelineEvent): event is ConfirmedTimelineEvent {
+    return (
+        isRemoteEvent(event) &&
+        event.confirmedEventNum !== undefined &&
+        event.miniblockNum !== undefined
+    )
 }
 
 export function makeRemoteTimelineEvent(params: {
