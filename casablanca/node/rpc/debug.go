@@ -85,6 +85,6 @@ func registerDebugHandlers(mux httpMux) {
 	mux.HandleFunc("/debug", handler.ServeHTTP)
 
 	handler.Handle(mux, "/debug/memory", MemoryHandler())
-	handler.HandleFunc(mux, "/debug/pprof", pprof.Index)
+	handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
 	handler.HandleFunc(mux, "/debug/stacks", handleStacks)
 }
