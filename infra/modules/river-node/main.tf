@@ -9,15 +9,27 @@ data "aws_vpc" "vpc" {
 locals {
   service_name        = "river-node"
   global_remote_state = module.global_constants.global_remote_state.outputs
-  tags = merge(
+  river_node_tags = merge(
     module.global_constants.tags,
     {
       Service = local.service_name
     }
   )
+  dd_agent_tags = merge(
+    module.global_constants.tags,
+    {
+      Service = "dd-agent"
+    }
+  )
 
-  vcpu   = var.is_transient ? 2048 : 4096
-  memory = var.is_transient ? 4096 : 30720
+  total_vcpu   = var.is_transient ? 2048 : 4096
+  total_memory = var.is_transient ? 4096 : 30720
+
+  dd_agent_cpu   = local.total_vcpu * 0.25
+  river_node_cpu = local.total_vcpu * 0.75
+
+  dd_agent_memory   = 1024
+  river_node_memory = local.total_memory - local.dd_agent_memory
 }
 
 terraform {
@@ -153,7 +165,7 @@ resource "null_resource" "invoke_lambda" {
 resource "aws_cloudwatch_log_group" "river_log_group" {
   name = "/ecs/river/${var.node_name}"
 
-  tags = local.tags
+  tags = local.river_node_tags
 }
 
 resource "aws_cloudwatch_log_subscription_filter" "river_log_group_filter" {
@@ -166,12 +178,19 @@ resource "aws_cloudwatch_log_subscription_filter" "river_log_group_filter" {
 resource "aws_cloudwatch_log_group" "dd_agent_log_group" {
   name = "/ecs/dd-agent/${var.node_name}"
 
-  tags = local.tags
+  tags = local.dd_agent_tags
+}
+
+resource "aws_cloudwatch_log_subscription_filter" "dd_agent_log_group_filter" {
+  name            = "${var.node_name}-dd-agent-log-group"
+  log_group_name  = aws_cloudwatch_log_group.dd_agent_log_group.name
+  filter_pattern  = ""
+  destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
 resource "aws_secretsmanager_secret" "river_node_wallet_credentials" {
   name = "${var.node_name}-wallet-key"
-  tags = local.tags
+  tags = local.river_node_tags
 }
 
 resource "aws_secretsmanager_secret_version" "river_node_wallet_credentials" {
@@ -233,7 +252,7 @@ resource "aws_iam_role_policy" "ecs-to-push_notification_auth_token" {
 
 resource "aws_secretsmanager_secret" "river_node_home_chain_network_url" {
   name = "${var.node_name}-homechain-network-url-secret"
-  tags = local.tags
+  tags = local.river_node_tags
 }
 
 resource "aws_secretsmanager_secret_version" "river_node_home_chain_network_url" {
@@ -331,7 +350,7 @@ resource "aws_lb_target_group" "blue" {
     unhealthy_threshold = 2
   }
 
-  tags = local.tags
+  tags = local.river_node_tags
 }
 
 resource "aws_lb_target_group" "green" {
@@ -349,7 +368,7 @@ resource "aws_lb_target_group" "green" {
     unhealthy_threshold = 2
   }
 
-  tags = local.tags
+  tags = local.river_node_tags
 }
 
 resource "aws_lb_listener_rule" "host_rule" {
@@ -377,9 +396,8 @@ resource "aws_lb_listener_rule" "host_rule" {
 resource "aws_ecs_task_definition" "river-fargate" {
   family = "${var.node_name}-fargate"
 
-
-  lifecycle {
-    ignore_changes = [container_definitions]
+  ephemeral_storage {
+    size_in_gib = var.is_transient ? 20 : 100
   }
 
   network_mode = "awsvpc"
@@ -388,10 +406,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
   # 4 vCPU
-  cpu = local.vcpu
+  cpu = local.total_vcpu
 
   # 30 GB
-  memory = local.memory
+  memory = local.total_memory
 
   requires_compatibilities = ["FARGATE"]
 
@@ -412,6 +430,9 @@ resource "aws_ecs_task_definition" "river-fargate" {
       hostPort      = 8081
       protocol      = "tcp"
     }]
+
+    cpu    = local.river_node_cpu
+    memory = local.river_node_memory
 
     repositoryCredentials = {
       credentialsParameter = local.global_remote_state.hnt_dockerhub_access_key.arn
@@ -469,7 +490,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "LOG__LEVEL",
-        value = "debug"
+        value = "info"
       },
       {
         name  = "LOG__NOCOLOR",
@@ -518,6 +539,9 @@ resource "aws_ecs_task_definition" "river-fargate" {
         "hostPort" : 8126,
         "protocol" : "tcp"
       }]
+
+      cpu    = local.dd_agent_cpu
+      memory = local.dd_agent_memory
 
       secrets = [{
         name      = "DD_API_KEY"
