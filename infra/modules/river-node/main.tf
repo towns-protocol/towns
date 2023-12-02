@@ -30,6 +30,8 @@ locals {
 
   dd_agent_memory   = 1024
   river_node_memory = local.total_memory - local.dd_agent_memory
+
+  ephemeral_storage_size_in_gib = var.is_transient ? 21 : 100
 }
 
 terraform {
@@ -397,7 +399,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
   family = "${var.node_name}-fargate"
 
   ephemeral_storage {
-    size_in_gib = var.is_transient ? 20 : 100
+    size_in_gib = local.ephemeral_storage_size_in_gib
   }
 
   network_mode = "awsvpc"
