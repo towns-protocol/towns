@@ -1,75 +1,89 @@
 package nodes
 
 import (
-	"casablanca/node/dlog"
+	. "casablanca/node/base"
+	. "casablanca/node/protocol"
 	"casablanca/node/registries"
 	"context"
 	"hash/fnv"
 )
 
 type StreamRegistry interface {
-	GetNodeAddressesForStream(ctx context.Context, streamId string) ([]string, error)
-	AllocateStream(ctx context.Context, streamId string) ([]string, error)
+	GetStreamInfo(ctx context.Context, streamId string) ([]string, []byte, error)
+	AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte) ([]string, error)
 }
 
-// Temp implementation that hashed the streamId and returns the node that is responsible for it.
-// TODO: replace with on-chain registry.
 type streamRegistryImpl struct {
-	nodeRegistry                NodeRegistry
-	streamReplicationFactor     int
-	streamRegistryContract      registries.StreamRegistryContract
-	useBlockChainStreamRegistry bool
+	nodeRegistry NodeRegistry
+	replFactor   int
+	contract     registries.StreamRegistryContract
 }
 
 var _ StreamRegistry = (*streamRegistryImpl)(nil)
 
-func NewStreamRegistry(nodeRegistry NodeRegistry, useBlockChainStreamRegistry bool, streamRegistryContract registries.StreamRegistryContract, streamReplicationFactor int) *streamRegistryImpl {
-	if streamReplicationFactor < 1 {
-		streamReplicationFactor = 1
+func NewStreamRegistry(nodeRegistry NodeRegistry, contract registries.StreamRegistryContract, replFactor int) *streamRegistryImpl {
+	if replFactor < 1 {
+		replFactor = 1
 	}
 	return &streamRegistryImpl{
-		nodeRegistry:                nodeRegistry,
-		streamReplicationFactor:     streamReplicationFactor,
-		streamRegistryContract:      streamRegistryContract,
-		useBlockChainStreamRegistry: useBlockChainStreamRegistry,
+		nodeRegistry: nodeRegistry,
+		replFactor:   replFactor,
+		contract:     contract,
 	}
 }
 
-func hashStringToUint64(s string) uint64 {
-	h := fnv.New64a()
-	h.Write([]byte(s))
-	return h.Sum64()
+func (sr *streamRegistryImpl) GetStreamInfo(ctx context.Context, streamId string) ([]string, []byte, error) {
+	return sr.contract.GetStream(ctx, streamId)
 }
 
-func (sr *streamRegistryImpl) GetNodeAddressesForStream(ctx context.Context, streamId string) ([]string, error) {
-	log := dlog.CtxLog(ctx)
-	h := hashStringToUint64(streamId)
-	index := h % uint64(sr.nodeRegistry.NumNodes())
-	addr, err := sr.nodeRegistry.GetNodeAddressByIndex(int(index))
+func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte) ([]string, error) {
+	addrs, err := chooseStreamNodes(ctx, streamId, sr.nodeRegistry, sr.replFactor)
 	if err != nil {
 		return nil, err
 	}
 
-	if sr.useBlockChainStreamRegistry {
-		addresses, err := sr.streamRegistryContract.GetNodeAddressesForStream(streamId)
-		if err != nil {
-			log.Error("Cannot get node addresses for stream", "streamId", streamId, "error", err)
-			return nil, err
-		}
-
-		if (addresses != nil) && (len(addresses) == 1) && (addresses[0] == addr) {
-			return []string{addr}, nil
-		}
-
-		_, err = sr.streamRegistryContract.SetNodeAddressesForStream(streamId, []string{addr})
-		if err != nil {
-			log.Error("Cannot get node addresses for stream", "streamId", streamId, "error", err)
-		}
+	err = sr.contract.AllocateStream(ctx, streamId, addrs, genesisMiniblockHash)
+	if err != nil {
+		return nil, err
 	}
 
-	return []string{addr}, nil
+	return addrs, nil
 }
 
-func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId string) ([]string, error) {
-	return sr.GetNodeAddressesForStream(ctx, streamId)
+func chooseStreamNodes(ctx context.Context, streamId string, nr NodeRegistry, replFactor int) ([]string, error) {
+	if replFactor < 1 {
+		replFactor = 1
+	}
+	if nr.NumNodes() < replFactor {
+		return nil, RiverError(Err_BAD_CONFIG, "replication factor is greater than number of nodes", "replication_factor", replFactor, "num_nodes", nr.NumNodes())
+	}
+
+	indexes := make([]int, 0, replFactor)
+	h := fnv.New64a()
+	numNodes := uint64(nr.NumNodes())
+	for len(indexes) < replFactor {
+		h.Write([]byte(streamId))
+		index := int(h.Sum64() % numNodes)
+	outerLoop:
+		for {
+			for _, i := range indexes {
+				if i == index {
+					index = (index + 1) % nr.NumNodes()
+					continue outerLoop
+				}
+			}
+			break
+		}
+		indexes = append(indexes, index)
+	}
+
+	addrs := make([]string, 0, len(indexes))
+	for _, i := range indexes {
+		addr, err := nr.GetNodeAddressByIndex(i)
+		if err != nil {
+			return nil, err
+		}
+		addrs = append(addrs, addr)
+	}
+	return addrs, nil
 }

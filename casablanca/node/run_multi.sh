@@ -6,10 +6,10 @@ METRICS_ENABLED=true
 RPC_PORT=5170
 METRICS_PORT=8010
 DB_PORT=5433
-USE_BLOCKCHAIN_STREAM_REGISTRY=false
+USE_BLOCKCHAIN_STREAM_REGISTRY=true
 
 # Default number of instances
-NUM_INSTANCES=3
+NUM_INSTANCES=10
 REPL_FACTOR=1
 
 CONFIG=false
@@ -88,7 +88,11 @@ if [ "$RUN" == "true" ]; then
         INSTANCE=${INSTANCE//\"}
         pushd ./run_files/$INSTANCE
         echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
-        LOGINSTANCE=true go run --race ../../node/main.go run --config config/config.yaml "${args[@]:-}" &
+        if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
+            echo "And funding it with 1 ETH"
+            cast rpc -r http://127.0.0.1:8545 anvil_setBalance `cat ./wallet/node_address` 1000000000000000000
+        fi
+        go run --race ../../node/main.go run --config config/config.yaml "${args[@]:-}" &
         popd
     done
 fi

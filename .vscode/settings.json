@@ -20,9 +20,12 @@
     "./servers/workers/push-notification-worker",
   ],
   "[solidity]": {
-    "editor.defaultFormatter": "NomicFoundation.hardhat-solidity"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "solidity.formatter": "prettier",
   "go.lintTool": "golangci-lint",
-  "go.lintFlags": ["--fast"]
+  "go.lintFlags": [
+    "--fast"
+  ],
+  "solidity.defaultCompiler": "localNodeModule"
 }

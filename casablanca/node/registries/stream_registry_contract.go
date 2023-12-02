@@ -1,7 +1,10 @@
 package registries
 
+import "context"
+
 type StreamRegistryContract interface {
-	SetNodeAddressesForStream(streamId string, addresses []string) (bool, error)
-	AddNodeAddressForStream(streamId string, address string) (bool, error)
-	GetNodeAddressesForStream(streamId string) ([]string, error)
+	AllocateStream(ctx context.Context, streamId string, addresses []string, genesisMiniblockHash []byte) error
+	GetStream(ctx context.Context, streamId string) ([]string, []byte, error)
+	GetStreamsLength(ctx context.Context) (int64, error)
+	GetStreamByIndex(ctx context.Context, index int64) (string, []string, []byte, error)
 }

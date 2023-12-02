@@ -138,10 +138,25 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		nodeRegistry,
 	)
 
-	streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, &cfg.TopChain, wallet)
+	var streamRegistry nodes.StreamRegistry
+	if cfg.UseBlockChainStreamRegistry {
+		blockchain, err := crypto.NewReadWriteBlockchain(ctx, &cfg.TopChain, wallet)
+		if err != nil {
+			log.Error("failed to create blockchain", "error", err)
+			return nil, 0, nil, err
+		}
 
-	if err != nil {
-		log.Error("NewStreamRegistryContract", "error", err)
+		streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, blockchain)
+		if err != nil {
+			log.Error("NewStreamRegistryContract", "error", err)
+			return nil, 0, nil, err
+		}
+		streamRegistry = nodes.NewStreamRegistry(nodeRegistry, streamRegistryContract, cfg.Stream.ReplicationFactor)
+
+		log.Info("Using blockchain stream registry")
+	} else {
+		streamRegistry = nodes.NewFakeStreamRegistry(nodeRegistry, cfg.Stream.ReplicationFactor)
+		log.Warn("Using fake stream registry")
 	}
 
 	streamService := &Service{
@@ -150,7 +165,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		wallet:         wallet,
 		exitSignal:     exitSignal,
 		nodeRegistry:   nodeRegistry,
-		streamRegistry: nodes.NewStreamRegistry(nodeRegistry, cfg.UseBlockChainStreamRegistry, streamRegistryContract, cfg.Stream.ReplicationFactor),
+		streamRegistry: streamRegistry,
 		streamConfig:   cfg.Stream,
 		notification:   notification,
 		syncHandler:    syncHandler,

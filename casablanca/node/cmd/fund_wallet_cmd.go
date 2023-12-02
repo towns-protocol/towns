@@ -20,7 +20,7 @@ func fund_wallet(cfg *config.Config) error {
 		return err
 	}
 
-	if !cfg.UseContract {
+	if !cfg.UseContract && !cfg.UseBlockChainStreamRegistry {
 		log.Info("Not using blockchain, skipping funding")
 		return nil
 	}

@@ -55,7 +55,6 @@ func TestServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 }
 
 func FundWallet(ctx context.Context, wallet common.Address, url string) error {
-
 	rpcClient, err := eth_rpc.DialContext(ctx, url)
 	if err != nil {
 		panic(err)

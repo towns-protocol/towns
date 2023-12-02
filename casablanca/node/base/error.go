@@ -6,6 +6,7 @@ package base
 import (
 	"casablanca/node/protocol"
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -14,7 +15,16 @@ import (
 	"strings"
 
 	connect_go "github.com/bufbuild/connect-go"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/rpc"
 	"golang.org/x/exp/slog"
+)
+
+// Constants are not exported when go bindings are generated from solidity, so there is duplication here.
+const (
+	ContractErrorNotFound      = "NOT_FOUND"
+	ContractErrorAlreadyExists = "ALREADY_EXISTS"
+	ContractErrorOutOfBounds   = "OUT_OF_BOUNDS"
 )
 
 // Without this limit, go's http reader fails and replaces actual
@@ -176,14 +186,21 @@ func IsRiverError(err error) bool {
 	return ok
 }
 
-func AsRiverError(err error) *RiverErrorImpl {
+// If there is information to be extracted from the error, then code is set accordingly.
+// If not, then provided defaulCode is used.
+func AsRiverError(err error, defaulCode ...protocol.Err) *RiverErrorImpl {
 	e, ok := err.(*RiverErrorImpl)
 	if ok {
 		return e
 	}
-	ce, ok := err.(*connect_go.Error)
-	if ok {
-		code := protocol.Err_UNKNOWN
+
+	code := protocol.Err_UNKNOWN
+	if len(defaulCode) > 0 {
+		code = defaulCode[0]
+	}
+
+	// Map connect errors to river errors
+	if ce, ok := err.(*connect_go.Error); ok {
 		if value, ok := ce.Meta()[RIVER_ERROR_HEADER]; ok && len(value) > 0 {
 			v, ok := protocol.Err_value[value[0]]
 			if ok {
@@ -198,8 +215,33 @@ func AsRiverError(err error) *RiverErrorImpl {
 			Base: err,
 		}
 	}
+
+	// Map contract errors to river errors
+	if de, ok := err.(rpc.DataError); ok {
+		if de.ErrorData() != nil {
+			hexStr := de.ErrorData().(string)
+			hexStr = strings.TrimPrefix(hexStr, "0x")
+			revert, e := hex.DecodeString(hexStr)
+			if e == nil {
+				reason, e := abi.UnpackRevert(revert)
+				if e == nil {
+					if reason == ContractErrorNotFound {
+						code = protocol.Err_NOT_FOUND
+					} else if reason == ContractErrorAlreadyExists {
+						code = protocol.Err_ALREADY_EXISTS
+					} else if reason == ContractErrorOutOfBounds {
+						code = protocol.Err_INVALID_ARGUMENT
+					}
+				}
+			}
+		}
+		return &RiverErrorImpl{
+			Code: code,
+			Base: err,
+		}
+	}
+
 	if err != nil {
-		code := protocol.Err_UNKNOWN
 		if err == context.Canceled {
 			code = protocol.Err_CANCELED
 		} else if err == context.DeadlineExceeded {
@@ -217,9 +259,11 @@ func AsRiverError(err error) *RiverErrorImpl {
 	}
 }
 
+// WrapRiverError and AsRiverError became the same:
+// If there is information to be extracted from the error, then code is set accordingly.
+// If not, then provided code is used.
 func WrapRiverError(code protocol.Err, err error) *RiverErrorImpl {
-	e := AsRiverError(err)
-	e.Code = code
+	e := AsRiverError(err, code)
 	return e
 }
 

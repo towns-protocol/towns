@@ -1,103 +1,113 @@
 package registries
 
 import (
-	"casablanca/node/auth/contracts/localhost_towns_stream_registry"
+	. "casablanca/node/auth/contracts/localhost_towns_stream_registry"
+	. "casablanca/node/base"
+	"casablanca/node/dlog"
 	"casablanca/node/infra"
+	. "casablanca/node/protocol"
 	"context"
 	"math/big"
-
-	"golang.org/x/exp/slog"
 
 	"casablanca/node/crypto"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	crypto_ethereum "github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type StreamRegistryContractLocalhostV3 struct {
-	ethClient  *ethclient.Client
-	transactor *crypto.Wallet
-	registry   *localhost_towns_stream_registry.LocalhostTownsStreamRegistry
+	registry   *LocalhostTownsStreamRegistry
+	blockchain *crypto.Blockchain
 }
 
-func NewStreamRegistryContractLocalhostV3(ethClient *ethclient.Client, nodeWallet *crypto.Wallet) (*StreamRegistryContractLocalhostV3, error) {
+var _ StreamRegistryContract = (*StreamRegistryContractLocalhostV3)(nil)
+
+func NewStreamRegistryContractLocalhostV3(
+	ctx context.Context,
+	blockchain *crypto.Blockchain,
+) (*StreamRegistryContractLocalhostV3, error) {
+	log := dlog.CtxLog(ctx)
+
 	// get the space factory address from config
 	strAddress, err := loadStreamRegistryContractAddress(infra.CHAIN_ID_LOCALHOST)
 	if err != nil {
-		slog.Error("error parsing localhost contract address", "address", strAddress, "error", err)
+		log.Error("error parsing localhost contract address", "address", strAddress, "error", err)
 		return nil, err
 	}
 	address := common.HexToAddress(strAddress)
 
-	stream_registry, err := localhost_towns_stream_registry.NewLocalhostTownsStreamRegistry(address, ethClient)
-
+	stream_registry, err := NewLocalhostTownsStreamRegistry(address, blockchain.Client)
 	if err != nil {
-		slog.Error("error fetching localhost TownArchitect contract with address", "address", strAddress, "error", err)
+		log.Error("error fetching localhost TownArchitect contract with address", "address", strAddress, "error", err)
 		return nil, err
 	}
-	// no errors.
-	streamRegistryContract := &StreamRegistryContractLocalhostV3{
-		ethClient:  ethClient,
-		transactor: nodeWallet,
+
+	return &StreamRegistryContractLocalhostV3{
 		registry:   stream_registry,
-	}
-
-	return streamRegistryContract, nil
+		blockchain: blockchain,
+	}, nil
 }
 
-func (za *StreamRegistryContractLocalhostV3) SetNodeAddressesForStream(streamId string, addresses []string) (bool, error) {
-	txOpts, err := za.prepareTxOpts()
+func (sr *StreamRegistryContractLocalhostV3) AllocateStream(
+	ctx context.Context,
+	streamId string,
+	addresses []string,
+	genesisMiniblockHash []byte,
+) error {
+	addrs, err := AddressStrsToEthAddresses(addresses)
 	if err != nil {
-		return false, err
+		return AsRiverError(err).Func("AllocateStream")
 	}
 
-	_, err = za.registry.AddNodesToStream(txOpts, hashStreamId(streamId), addresses)
+	hash, err := BytesToEthHash(genesisMiniblockHash)
 	if err != nil {
-		return false, err
+		return AsRiverError(err).Func("AllocateStream")
 	}
-	return true, nil
+
+	transactor := LocalhostTownsStreamRegistryTransactorRaw{
+		Contract: &sr.registry.LocalhostTownsStreamRegistryTransactor,
+	}
+	_, _, err = sr.blockchain.TxRunner.SumbitAndWait(ctx, &transactor, "allocateStream", StreamRegistryStream{
+		StreamId:             streamId,
+		Nodes:                addrs,
+		GenesisMiniblockHash: hash,
+	})
+	if err != nil {
+		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Func("AllocateStream").Message("Smart contract call failed")
+	}
+
+	return nil
 }
 
-func (za *StreamRegistryContractLocalhostV3) AddNodeAddressForStream(streamId string, address string) (bool, error) {
-	txOpts, err := za.prepareTxOpts()
+func (sr *StreamRegistryContractLocalhostV3) GetStream(ctx context.Context, streamId string) ([]string, []byte, error) {
+	stream, err := sr.registry.GetStream(sr.callOpts(ctx), streamId)
 	if err != nil {
-		return false, err
+		return nil, nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
 	}
-
-	_, err = za.registry.AddNodeToStream(txOpts, hashStreamId(streamId), address)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
+	return EthAddressesToAddressStrs(stream.Nodes), stream.GenesisMiniblockHash[:], nil
 }
 
-func (za *StreamRegistryContractLocalhostV3) GetNodeAddressesForStream(streamId string) ([]string, error) {
-	addresses, err := za.registry.GetStreamNodes(nil, hashStreamId(streamId))
+func (sr *StreamRegistryContractLocalhostV3) GetStreamsLength(ctx context.Context) (int64, error) {
+	num, err := sr.registry.GetStreamsLength(sr.callOpts(ctx))
 	if err != nil {
-		return nil, err
+		return 0, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamNum").Message("Call failed")
 	}
-	return addresses, nil
+	if !num.IsInt64() {
+		return 0, RiverError(Err_INTERNAL, "Stream number is too big", "num", num).Func("GetStreamNum")
+	}
+	return num.Int64(), nil
 }
 
-func hashStreamId(streamId string) string {
-	hash := crypto_ethereum.Keccak256Hash([]byte(streamId))
-	return hash.String()
+func (sr *StreamRegistryContractLocalhostV3) GetStreamByIndex(ctx context.Context, index int64) (string, []string, []byte, error) {
+	stream, err := sr.registry.GetStreamByIndex(sr.callOpts(ctx), big.NewInt(index))
+	if err != nil {
+		return "", nil, nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamByIndex").Message("Smart contract call failed")
+	}
+	return stream.StreamId, EthAddressesToAddressStrs(stream.Nodes), stream.GenesisMiniblockHash[:], nil
 }
 
-func (za *StreamRegistryContractLocalhostV3) prepareTxOpts() (*bind.TransactOpts, error) {
-	gasLimit := uint64(1000000)
-	gasPrice, err := za.ethClient.SuggestGasPrice(context.Background())
-	if err != nil {
-		return nil, err
+func (sr *StreamRegistryContractLocalhostV3) callOpts(ctx context.Context) *bind.CallOpts {
+	return &bind.CallOpts{
+		Context: ctx,
 	}
-
-	txOpts, err := bind.NewKeyedTransactorWithChainID(za.transactor.PrivateKeyStruct, big.NewInt(31337))
-	if err != nil {
-		return nil, err
-	}
-	txOpts.GasPrice = gasPrice
-	txOpts.GasLimit = gasLimit
-	return txOpts, nil
 }

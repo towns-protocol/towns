@@ -24,8 +24,9 @@ var (
 var cmdConfig *config.Config
 
 var rootCmd = &cobra.Command{
-	Use:   "node",
-	Short: "Towns.com node",
+	Use:          "node",
+	Short:        "Towns.com node",
+	SilenceUsage: true, // Do not print usage when an error occurs
 }
 
 func Execute() {

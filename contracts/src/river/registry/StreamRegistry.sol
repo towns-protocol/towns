@@ -1,75 +1,46 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+// Deploy: ./scripts/deploy-stream-registry.sh
+// Generate bindings: ./scripts/build-town-types.sh
 contract StreamRegistry {
-  // Mapping from string to an array of strings (the set)
-  mapping(string => string[]) private streamNodesStorage;
+  string public constant errAlreadyExists = "ALREADY_EXISTS";
+  string public constant errNotFound = "NOT_FOUND";
+  string public constant errOutOfBounds = "OUT_OF_BOUNDS";
 
-  // Function to add a value to the set for a given key
-  function addNodeToStream(
-    string memory streamIdHash,
-    string memory newNodeId
-  ) public {
-    require(
-      !valueExists(streamIdHash, newNodeId),
-      "Value already exists in the set"
-    );
-    streamNodesStorage[streamIdHash].push(newNodeId);
+  struct Stream {
+    string streamId;
+    address[] nodes;
+    bytes32 genesisMiniblockHash;
   }
 
-  function addNodesToStream(
-    string memory streamIdHash,
-    string[] memory newNodeIds
-  ) public {
-    for (uint256 i = 0; i < newNodeIds.length; i++) {
-      addNodeToStream(streamIdHash, newNodeIds[i]);
-    }
+  Stream[] private streams;
+  mapping(bytes32 => uint256) private streamIdToIndex;
+
+  function allocateStream(Stream memory newStream) public {
+    bytes32 streamIdHash = keccak256(bytes(newStream.streamId));
+    require(streamIdToIndex[streamIdHash] == 0, errAlreadyExists);
+    streams.push(newStream);
+    // Update the mapping (array index starts from 0, so we add 1 to differentiate from the default value)
+    streamIdToIndex[streamIdHash] = streams.length;
   }
 
-  // Function to remove a value from the set for a given key
-  function removeNodeFromStream(
-    string memory streamIdHash,
-    string memory nodeId
-  ) public {
-    require(
-      valueExists(streamIdHash, nodeId),
-      "Value does not exist in the set"
-    );
-    string[] storage values = streamNodesStorage[streamIdHash];
-    for (uint256 i = 0; i < values.length; i++) {
-      if (keccak256(bytes(values[i])) == keccak256(bytes(nodeId))) {
-        for (uint256 j = i; j < values.length - 1; j++) {
-          values[j] = values[j + 1];
-        }
-        values.pop();
-        break;
-      }
-    }
+  function getStream(
+    string memory _streamId
+  ) public view returns (Stream memory) {
+    bytes32 streamIdHash = keccak256(bytes(_streamId));
+    uint256 index = streamIdToIndex[streamIdHash];
+    require(index != 0, errNotFound);
+    // Adjust index to retrieve the correct Stream (since we added 1 in allocateStream)
+    return streams[index - 1];
   }
 
-  // Function to check if a value exists in the set for a given key
-  function valueExists(
-    string memory streamIdHash,
-    string memory nodeId
-  ) public view returns (bool) {
-    string[] storage values = streamNodesStorage[streamIdHash];
-    for (uint256 i = 0; i < values.length; i++) {
-      if (keccak256(bytes(values[i])) == keccak256(bytes(nodeId))) {
-        return true;
-      }
-    }
-    return false;
+  function getStreamsLength() public view returns (uint256) {
+    return streams.length;
   }
 
-  // Function to get all values in the set for a given key
-  function getStreamNodes(
-    string memory streamIdHash
-  ) public view returns (string[] memory) {
-    return streamNodesStorage[streamIdHash];
+  function getStreamByIndex(uint256 index) public view returns (Stream memory) {
+    require(index < streams.length, errOutOfBounds);
+    return streams[index];
   }
 }
-
-//Notes:
-//Generate stubs for the contract with script
-//DeployRegistry.sh
-//deploy zion governance contrct

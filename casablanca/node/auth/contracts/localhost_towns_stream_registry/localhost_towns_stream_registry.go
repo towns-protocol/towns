@@ -29,9 +29,16 @@ var (
 	_ = abi.ConvertType
 )
 
+// StreamRegistryStream is an auto generated low-level Go binding around an user-defined struct.
+type StreamRegistryStream struct {
+	StreamId             string
+	Nodes                []common.Address
+	GenesisMiniblockHash [32]byte
+}
+
 // LocalhostTownsStreamRegistryMetaData contains all meta data concerning the LocalhostTownsStreamRegistry contract.
 var LocalhostTownsStreamRegistryMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"string\",\"name\":\"streamIdHash\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"newNodeId\",\"type\":\"string\"}],\"name\":\"addNodeToStream\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"streamIdHash\",\"type\":\"string\"},{\"internalType\":\"string[]\",\"name\":\"newNodeIds\",\"type\":\"string[]\"}],\"name\":\"addNodesToStream\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"streamIdHash\",\"type\":\"string\"}],\"name\":\"getStreamNodes\",\"outputs\":[{\"internalType\":\"string[]\",\"name\":\"\",\"type\":\"string[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"streamIdHash\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"nodeId\",\"type\":\"string\"}],\"name\":\"removeNodeFromStream\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"streamIdHash\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"nodeId\",\"type\":\"string\"}],\"name\":\"valueExists\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"streamId\",\"type\":\"string\"},{\"internalType\":\"address[]\",\"name\":\"nodes\",\"type\":\"address[]\"},{\"internalType\":\"bytes32\",\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\"}],\"internalType\":\"structStreamRegistry.Stream\",\"name\":\"newStream\",\"type\":\"tuple\"}],\"name\":\"allocateStream\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"errAlreadyExists\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"errNotFound\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"errOutOfBounds\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_streamId\",\"type\":\"string\"}],\"name\":\"getStream\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"streamId\",\"type\":\"string\"},{\"internalType\":\"address[]\",\"name\":\"nodes\",\"type\":\"address[]\"},{\"internalType\":\"bytes32\",\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\"}],\"internalType\":\"structStreamRegistry.Stream\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"getStreamByIndex\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"streamId\",\"type\":\"string\"},{\"internalType\":\"address[]\",\"name\":\"nodes\",\"type\":\"address[]\"},{\"internalType\":\"bytes32\",\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\"}],\"internalType\":\"structStreamRegistry.Stream\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getStreamsLength\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // LocalhostTownsStreamRegistryABI is the input ABI used to generate the binding from.
@@ -180,127 +187,209 @@ func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryTransactorRaw) 
 	return _LocalhostTownsStreamRegistry.Contract.contract.Transact(opts, method, params...)
 }
 
-// GetStreamNodes is a free data retrieval call binding the contract method 0x4bb7481b.
+// ErrAlreadyExists is a free data retrieval call binding the contract method 0xd16248f9.
 //
-// Solidity: function getStreamNodes(string streamIdHash) view returns(string[])
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCaller) GetStreamNodes(opts *bind.CallOpts, streamIdHash string) ([]string, error) {
+// Solidity: function errAlreadyExists() view returns(string)
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCaller) ErrAlreadyExists(opts *bind.CallOpts) (string, error) {
 	var out []interface{}
-	err := _LocalhostTownsStreamRegistry.contract.Call(opts, &out, "getStreamNodes", streamIdHash)
+	err := _LocalhostTownsStreamRegistry.contract.Call(opts, &out, "errAlreadyExists")
 
 	if err != nil {
-		return *new([]string), err
+		return *new(string), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new([]string)).(*[]string)
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
 
 	return out0, err
 
 }
 
-// GetStreamNodes is a free data retrieval call binding the contract method 0x4bb7481b.
+// ErrAlreadyExists is a free data retrieval call binding the contract method 0xd16248f9.
 //
-// Solidity: function getStreamNodes(string streamIdHash) view returns(string[])
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistrySession) GetStreamNodes(streamIdHash string) ([]string, error) {
-	return _LocalhostTownsStreamRegistry.Contract.GetStreamNodes(&_LocalhostTownsStreamRegistry.CallOpts, streamIdHash)
+// Solidity: function errAlreadyExists() view returns(string)
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistrySession) ErrAlreadyExists() (string, error) {
+	return _LocalhostTownsStreamRegistry.Contract.ErrAlreadyExists(&_LocalhostTownsStreamRegistry.CallOpts)
 }
 
-// GetStreamNodes is a free data retrieval call binding the contract method 0x4bb7481b.
+// ErrAlreadyExists is a free data retrieval call binding the contract method 0xd16248f9.
 //
-// Solidity: function getStreamNodes(string streamIdHash) view returns(string[])
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCallerSession) GetStreamNodes(streamIdHash string) ([]string, error) {
-	return _LocalhostTownsStreamRegistry.Contract.GetStreamNodes(&_LocalhostTownsStreamRegistry.CallOpts, streamIdHash)
+// Solidity: function errAlreadyExists() view returns(string)
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCallerSession) ErrAlreadyExists() (string, error) {
+	return _LocalhostTownsStreamRegistry.Contract.ErrAlreadyExists(&_LocalhostTownsStreamRegistry.CallOpts)
 }
 
-// ValueExists is a free data retrieval call binding the contract method 0xef7eb93e.
+// ErrNotFound is a free data retrieval call binding the contract method 0xd2bc97d6.
 //
-// Solidity: function valueExists(string streamIdHash, string nodeId) view returns(bool)
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCaller) ValueExists(opts *bind.CallOpts, streamIdHash string, nodeId string) (bool, error) {
+// Solidity: function errNotFound() view returns(string)
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCaller) ErrNotFound(opts *bind.CallOpts) (string, error) {
 	var out []interface{}
-	err := _LocalhostTownsStreamRegistry.contract.Call(opts, &out, "valueExists", streamIdHash, nodeId)
+	err := _LocalhostTownsStreamRegistry.contract.Call(opts, &out, "errNotFound")
 
 	if err != nil {
-		return *new(bool), err
+		return *new(string), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
 
 	return out0, err
 
 }
 
-// ValueExists is a free data retrieval call binding the contract method 0xef7eb93e.
+// ErrNotFound is a free data retrieval call binding the contract method 0xd2bc97d6.
 //
-// Solidity: function valueExists(string streamIdHash, string nodeId) view returns(bool)
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistrySession) ValueExists(streamIdHash string, nodeId string) (bool, error) {
-	return _LocalhostTownsStreamRegistry.Contract.ValueExists(&_LocalhostTownsStreamRegistry.CallOpts, streamIdHash, nodeId)
+// Solidity: function errNotFound() view returns(string)
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistrySession) ErrNotFound() (string, error) {
+	return _LocalhostTownsStreamRegistry.Contract.ErrNotFound(&_LocalhostTownsStreamRegistry.CallOpts)
 }
 
-// ValueExists is a free data retrieval call binding the contract method 0xef7eb93e.
+// ErrNotFound is a free data retrieval call binding the contract method 0xd2bc97d6.
 //
-// Solidity: function valueExists(string streamIdHash, string nodeId) view returns(bool)
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCallerSession) ValueExists(streamIdHash string, nodeId string) (bool, error) {
-	return _LocalhostTownsStreamRegistry.Contract.ValueExists(&_LocalhostTownsStreamRegistry.CallOpts, streamIdHash, nodeId)
+// Solidity: function errNotFound() view returns(string)
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCallerSession) ErrNotFound() (string, error) {
+	return _LocalhostTownsStreamRegistry.Contract.ErrNotFound(&_LocalhostTownsStreamRegistry.CallOpts)
 }
 
-// AddNodeToStream is a paid mutator transaction binding the contract method 0x74469214.
+// ErrOutOfBounds is a free data retrieval call binding the contract method 0x8a3c9ed1.
 //
-// Solidity: function addNodeToStream(string streamIdHash, string newNodeId) returns()
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryTransactor) AddNodeToStream(opts *bind.TransactOpts, streamIdHash string, newNodeId string) (*types.Transaction, error) {
-	return _LocalhostTownsStreamRegistry.contract.Transact(opts, "addNodeToStream", streamIdHash, newNodeId)
+// Solidity: function errOutOfBounds() view returns(string)
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCaller) ErrOutOfBounds(opts *bind.CallOpts) (string, error) {
+	var out []interface{}
+	err := _LocalhostTownsStreamRegistry.contract.Call(opts, &out, "errOutOfBounds")
+
+	if err != nil {
+		return *new(string), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
+
+	return out0, err
+
 }
 
-// AddNodeToStream is a paid mutator transaction binding the contract method 0x74469214.
+// ErrOutOfBounds is a free data retrieval call binding the contract method 0x8a3c9ed1.
 //
-// Solidity: function addNodeToStream(string streamIdHash, string newNodeId) returns()
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistrySession) AddNodeToStream(streamIdHash string, newNodeId string) (*types.Transaction, error) {
-	return _LocalhostTownsStreamRegistry.Contract.AddNodeToStream(&_LocalhostTownsStreamRegistry.TransactOpts, streamIdHash, newNodeId)
+// Solidity: function errOutOfBounds() view returns(string)
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistrySession) ErrOutOfBounds() (string, error) {
+	return _LocalhostTownsStreamRegistry.Contract.ErrOutOfBounds(&_LocalhostTownsStreamRegistry.CallOpts)
 }
 
-// AddNodeToStream is a paid mutator transaction binding the contract method 0x74469214.
+// ErrOutOfBounds is a free data retrieval call binding the contract method 0x8a3c9ed1.
 //
-// Solidity: function addNodeToStream(string streamIdHash, string newNodeId) returns()
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryTransactorSession) AddNodeToStream(streamIdHash string, newNodeId string) (*types.Transaction, error) {
-	return _LocalhostTownsStreamRegistry.Contract.AddNodeToStream(&_LocalhostTownsStreamRegistry.TransactOpts, streamIdHash, newNodeId)
+// Solidity: function errOutOfBounds() view returns(string)
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCallerSession) ErrOutOfBounds() (string, error) {
+	return _LocalhostTownsStreamRegistry.Contract.ErrOutOfBounds(&_LocalhostTownsStreamRegistry.CallOpts)
 }
 
-// AddNodesToStream is a paid mutator transaction binding the contract method 0xd0481c6c.
+// GetStream is a free data retrieval call binding the contract method 0x5e587d7a.
 //
-// Solidity: function addNodesToStream(string streamIdHash, string[] newNodeIds) returns()
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryTransactor) AddNodesToStream(opts *bind.TransactOpts, streamIdHash string, newNodeIds []string) (*types.Transaction, error) {
-	return _LocalhostTownsStreamRegistry.contract.Transact(opts, "addNodesToStream", streamIdHash, newNodeIds)
+// Solidity: function getStream(string _streamId) view returns((string,address[],bytes32))
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCaller) GetStream(opts *bind.CallOpts, _streamId string) (StreamRegistryStream, error) {
+	var out []interface{}
+	err := _LocalhostTownsStreamRegistry.contract.Call(opts, &out, "getStream", _streamId)
+
+	if err != nil {
+		return *new(StreamRegistryStream), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(StreamRegistryStream)).(*StreamRegistryStream)
+
+	return out0, err
+
 }
 
-// AddNodesToStream is a paid mutator transaction binding the contract method 0xd0481c6c.
+// GetStream is a free data retrieval call binding the contract method 0x5e587d7a.
 //
-// Solidity: function addNodesToStream(string streamIdHash, string[] newNodeIds) returns()
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistrySession) AddNodesToStream(streamIdHash string, newNodeIds []string) (*types.Transaction, error) {
-	return _LocalhostTownsStreamRegistry.Contract.AddNodesToStream(&_LocalhostTownsStreamRegistry.TransactOpts, streamIdHash, newNodeIds)
+// Solidity: function getStream(string _streamId) view returns((string,address[],bytes32))
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistrySession) GetStream(_streamId string) (StreamRegistryStream, error) {
+	return _LocalhostTownsStreamRegistry.Contract.GetStream(&_LocalhostTownsStreamRegistry.CallOpts, _streamId)
 }
 
-// AddNodesToStream is a paid mutator transaction binding the contract method 0xd0481c6c.
+// GetStream is a free data retrieval call binding the contract method 0x5e587d7a.
 //
-// Solidity: function addNodesToStream(string streamIdHash, string[] newNodeIds) returns()
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryTransactorSession) AddNodesToStream(streamIdHash string, newNodeIds []string) (*types.Transaction, error) {
-	return _LocalhostTownsStreamRegistry.Contract.AddNodesToStream(&_LocalhostTownsStreamRegistry.TransactOpts, streamIdHash, newNodeIds)
+// Solidity: function getStream(string _streamId) view returns((string,address[],bytes32))
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCallerSession) GetStream(_streamId string) (StreamRegistryStream, error) {
+	return _LocalhostTownsStreamRegistry.Contract.GetStream(&_LocalhostTownsStreamRegistry.CallOpts, _streamId)
 }
 
-// RemoveNodeFromStream is a paid mutator transaction binding the contract method 0xa21c1252.
+// GetStreamByIndex is a free data retrieval call binding the contract method 0x68b454df.
 //
-// Solidity: function removeNodeFromStream(string streamIdHash, string nodeId) returns()
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryTransactor) RemoveNodeFromStream(opts *bind.TransactOpts, streamIdHash string, nodeId string) (*types.Transaction, error) {
-	return _LocalhostTownsStreamRegistry.contract.Transact(opts, "removeNodeFromStream", streamIdHash, nodeId)
+// Solidity: function getStreamByIndex(uint256 index) view returns((string,address[],bytes32))
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCaller) GetStreamByIndex(opts *bind.CallOpts, index *big.Int) (StreamRegistryStream, error) {
+	var out []interface{}
+	err := _LocalhostTownsStreamRegistry.contract.Call(opts, &out, "getStreamByIndex", index)
+
+	if err != nil {
+		return *new(StreamRegistryStream), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(StreamRegistryStream)).(*StreamRegistryStream)
+
+	return out0, err
+
 }
 
-// RemoveNodeFromStream is a paid mutator transaction binding the contract method 0xa21c1252.
+// GetStreamByIndex is a free data retrieval call binding the contract method 0x68b454df.
 //
-// Solidity: function removeNodeFromStream(string streamIdHash, string nodeId) returns()
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistrySession) RemoveNodeFromStream(streamIdHash string, nodeId string) (*types.Transaction, error) {
-	return _LocalhostTownsStreamRegistry.Contract.RemoveNodeFromStream(&_LocalhostTownsStreamRegistry.TransactOpts, streamIdHash, nodeId)
+// Solidity: function getStreamByIndex(uint256 index) view returns((string,address[],bytes32))
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistrySession) GetStreamByIndex(index *big.Int) (StreamRegistryStream, error) {
+	return _LocalhostTownsStreamRegistry.Contract.GetStreamByIndex(&_LocalhostTownsStreamRegistry.CallOpts, index)
 }
 
-// RemoveNodeFromStream is a paid mutator transaction binding the contract method 0xa21c1252.
+// GetStreamByIndex is a free data retrieval call binding the contract method 0x68b454df.
 //
-// Solidity: function removeNodeFromStream(string streamIdHash, string nodeId) returns()
-func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryTransactorSession) RemoveNodeFromStream(streamIdHash string, nodeId string) (*types.Transaction, error) {
-	return _LocalhostTownsStreamRegistry.Contract.RemoveNodeFromStream(&_LocalhostTownsStreamRegistry.TransactOpts, streamIdHash, nodeId)
+// Solidity: function getStreamByIndex(uint256 index) view returns((string,address[],bytes32))
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCallerSession) GetStreamByIndex(index *big.Int) (StreamRegistryStream, error) {
+	return _LocalhostTownsStreamRegistry.Contract.GetStreamByIndex(&_LocalhostTownsStreamRegistry.CallOpts, index)
+}
+
+// GetStreamsLength is a free data retrieval call binding the contract method 0x80e8ecb5.
+//
+// Solidity: function getStreamsLength() view returns(uint256)
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCaller) GetStreamsLength(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _LocalhostTownsStreamRegistry.contract.Call(opts, &out, "getStreamsLength")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetStreamsLength is a free data retrieval call binding the contract method 0x80e8ecb5.
+//
+// Solidity: function getStreamsLength() view returns(uint256)
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistrySession) GetStreamsLength() (*big.Int, error) {
+	return _LocalhostTownsStreamRegistry.Contract.GetStreamsLength(&_LocalhostTownsStreamRegistry.CallOpts)
+}
+
+// GetStreamsLength is a free data retrieval call binding the contract method 0x80e8ecb5.
+//
+// Solidity: function getStreamsLength() view returns(uint256)
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryCallerSession) GetStreamsLength() (*big.Int, error) {
+	return _LocalhostTownsStreamRegistry.Contract.GetStreamsLength(&_LocalhostTownsStreamRegistry.CallOpts)
+}
+
+// AllocateStream is a paid mutator transaction binding the contract method 0xd340882f.
+//
+// Solidity: function allocateStream((string,address[],bytes32) newStream) returns()
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryTransactor) AllocateStream(opts *bind.TransactOpts, newStream StreamRegistryStream) (*types.Transaction, error) {
+	return _LocalhostTownsStreamRegistry.contract.Transact(opts, "allocateStream", newStream)
+}
+
+// AllocateStream is a paid mutator transaction binding the contract method 0xd340882f.
+//
+// Solidity: function allocateStream((string,address[],bytes32) newStream) returns()
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistrySession) AllocateStream(newStream StreamRegistryStream) (*types.Transaction, error) {
+	return _LocalhostTownsStreamRegistry.Contract.AllocateStream(&_LocalhostTownsStreamRegistry.TransactOpts, newStream)
+}
+
+// AllocateStream is a paid mutator transaction binding the contract method 0xd340882f.
+//
+// Solidity: function allocateStream((string,address[],bytes32) newStream) returns()
+func (_LocalhostTownsStreamRegistry *LocalhostTownsStreamRegistryTransactorSession) AllocateStream(newStream StreamRegistryStream) (*types.Transaction, error) {
+	return _LocalhostTownsStreamRegistry.Contract.AllocateStream(&_LocalhostTownsStreamRegistry.TransactOpts, newStream)
 }

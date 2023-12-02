@@ -23,7 +23,7 @@ func (s *Service) splitLocalAndRemote(ctx context.Context, nodes []string) (bool
 
 // Returns isLocal, remoteNodes, error
 func (s *Service) getNodesForStream(ctx context.Context, streamId string) (bool, []string, error) {
-	nodes, err := s.streamRegistry.GetNodeAddressesForStream(ctx, streamId)
+	nodes, _, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
 		return false, nil, err
 	}

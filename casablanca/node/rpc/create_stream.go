@@ -118,7 +118,7 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	nodeAddress, err := s.streamRegistry.AllocateStream(ctx, streamId)
+	nodeAddress, err := s.streamRegistry.AllocateStream(ctx, streamId, mb.Header.Hash)
 	if err != nil {
 		return nil, err
 	}

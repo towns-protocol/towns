@@ -4,6 +4,7 @@
 import type {
   BaseContract,
   BigNumber,
+  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -22,63 +23,94 @@ import type {
   PromiseOrValue,
 } from "./common";
 
+export declare namespace StreamRegistry {
+  export type StreamStruct = {
+    streamId: PromiseOrValue<string>;
+    nodes: PromiseOrValue<string>[];
+    genesisMiniblockHash: PromiseOrValue<BytesLike>;
+  };
+
+  export type StreamStructOutput = [string, string[], string] & {
+    streamId: string;
+    nodes: string[];
+    genesisMiniblockHash: string;
+  };
+}
+
 export interface StreamRegistryInterface extends utils.Interface {
   functions: {
-    "addNodeToStream(string,string)": FunctionFragment;
-    "addNodesToStream(string,string[])": FunctionFragment;
-    "getStreamNodes(string)": FunctionFragment;
-    "removeNodeFromStream(string,string)": FunctionFragment;
-    "valueExists(string,string)": FunctionFragment;
+    "allocateStream((string,address[],bytes32))": FunctionFragment;
+    "errAlreadyExists()": FunctionFragment;
+    "errNotFound()": FunctionFragment;
+    "errOutOfBounds()": FunctionFragment;
+    "getStream(string)": FunctionFragment;
+    "getStreamByIndex(uint256)": FunctionFragment;
+    "getStreamsLength()": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "addNodeToStream"
-      | "addNodesToStream"
-      | "getStreamNodes"
-      | "removeNodeFromStream"
-      | "valueExists"
+      | "allocateStream"
+      | "errAlreadyExists"
+      | "errNotFound"
+      | "errOutOfBounds"
+      | "getStream"
+      | "getStreamByIndex"
+      | "getStreamsLength"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "addNodeToStream",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    functionFragment: "allocateStream",
+    values: [StreamRegistry.StreamStruct]
   ): string;
   encodeFunctionData(
-    functionFragment: "addNodesToStream",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>[]]
+    functionFragment: "errAlreadyExists",
+    values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getStreamNodes",
+    functionFragment: "errNotFound",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "errOutOfBounds",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getStream",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "removeNodeFromStream",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    functionFragment: "getStreamByIndex",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
-    functionFragment: "valueExists",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    functionFragment: "getStreamsLength",
+    values?: undefined
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "addNodeToStream",
+    functionFragment: "allocateStream",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "addNodesToStream",
+    functionFragment: "errAlreadyExists",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getStreamNodes",
+    functionFragment: "errNotFound",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "removeNodeFromStream",
+    functionFragment: "errOutOfBounds",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "getStream", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getStreamByIndex",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "valueExists",
+    functionFragment: "getStreamsLength",
     data: BytesLike
   ): Result;
 
@@ -112,157 +144,127 @@ export interface StreamRegistry extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    addNodeToStream(
-      streamIdHash: PromiseOrValue<string>,
-      newNodeId: PromiseOrValue<string>,
+    allocateStream(
+      newStream: StreamRegistry.StreamStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    addNodesToStream(
-      streamIdHash: PromiseOrValue<string>,
-      newNodeIds: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+    errAlreadyExists(overrides?: CallOverrides): Promise<[string]>;
 
-    getStreamNodes(
-      streamIdHash: PromiseOrValue<string>,
+    errNotFound(overrides?: CallOverrides): Promise<[string]>;
+
+    errOutOfBounds(overrides?: CallOverrides): Promise<[string]>;
+
+    getStream(
+      _streamId: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<[string[]]>;
+    ): Promise<[StreamRegistry.StreamStructOutput]>;
 
-    removeNodeFromStream(
-      streamIdHash: PromiseOrValue<string>,
-      nodeId: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    valueExists(
-      streamIdHash: PromiseOrValue<string>,
-      nodeId: PromiseOrValue<string>,
+    getStreamByIndex(
+      index: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[boolean]>;
+    ): Promise<[StreamRegistry.StreamStructOutput]>;
+
+    getStreamsLength(overrides?: CallOverrides): Promise<[BigNumber]>;
   };
 
-  addNodeToStream(
-    streamIdHash: PromiseOrValue<string>,
-    newNodeId: PromiseOrValue<string>,
+  allocateStream(
+    newStream: StreamRegistry.StreamStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  addNodesToStream(
-    streamIdHash: PromiseOrValue<string>,
-    newNodeIds: PromiseOrValue<string>[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  errAlreadyExists(overrides?: CallOverrides): Promise<string>;
 
-  getStreamNodes(
-    streamIdHash: PromiseOrValue<string>,
+  errNotFound(overrides?: CallOverrides): Promise<string>;
+
+  errOutOfBounds(overrides?: CallOverrides): Promise<string>;
+
+  getStream(
+    _streamId: PromiseOrValue<string>,
     overrides?: CallOverrides
-  ): Promise<string[]>;
+  ): Promise<StreamRegistry.StreamStructOutput>;
 
-  removeNodeFromStream(
-    streamIdHash: PromiseOrValue<string>,
-    nodeId: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  valueExists(
-    streamIdHash: PromiseOrValue<string>,
-    nodeId: PromiseOrValue<string>,
+  getStreamByIndex(
+    index: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<boolean>;
+  ): Promise<StreamRegistry.StreamStructOutput>;
+
+  getStreamsLength(overrides?: CallOverrides): Promise<BigNumber>;
 
   callStatic: {
-    addNodeToStream(
-      streamIdHash: PromiseOrValue<string>,
-      newNodeId: PromiseOrValue<string>,
+    allocateStream(
+      newStream: StreamRegistry.StreamStruct,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    addNodesToStream(
-      streamIdHash: PromiseOrValue<string>,
-      newNodeIds: PromiseOrValue<string>[],
-      overrides?: CallOverrides
-    ): Promise<void>;
+    errAlreadyExists(overrides?: CallOverrides): Promise<string>;
 
-    getStreamNodes(
-      streamIdHash: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<string[]>;
+    errNotFound(overrides?: CallOverrides): Promise<string>;
 
-    removeNodeFromStream(
-      streamIdHash: PromiseOrValue<string>,
-      nodeId: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    errOutOfBounds(overrides?: CallOverrides): Promise<string>;
 
-    valueExists(
-      streamIdHash: PromiseOrValue<string>,
-      nodeId: PromiseOrValue<string>,
+    getStream(
+      _streamId: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<boolean>;
+    ): Promise<StreamRegistry.StreamStructOutput>;
+
+    getStreamByIndex(
+      index: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<StreamRegistry.StreamStructOutput>;
+
+    getStreamsLength(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   filters: {};
 
   estimateGas: {
-    addNodeToStream(
-      streamIdHash: PromiseOrValue<string>,
-      newNodeId: PromiseOrValue<string>,
+    allocateStream(
+      newStream: StreamRegistry.StreamStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    addNodesToStream(
-      streamIdHash: PromiseOrValue<string>,
-      newNodeIds: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
+    errAlreadyExists(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getStreamNodes(
-      streamIdHash: PromiseOrValue<string>,
+    errNotFound(overrides?: CallOverrides): Promise<BigNumber>;
+
+    errOutOfBounds(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getStream(
+      _streamId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    removeNodeFromStream(
-      streamIdHash: PromiseOrValue<string>,
-      nodeId: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    valueExists(
-      streamIdHash: PromiseOrValue<string>,
-      nodeId: PromiseOrValue<string>,
+    getStreamByIndex(
+      index: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    getStreamsLength(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    addNodeToStream(
-      streamIdHash: PromiseOrValue<string>,
-      newNodeId: PromiseOrValue<string>,
+    allocateStream(
+      newStream: StreamRegistry.StreamStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    addNodesToStream(
-      streamIdHash: PromiseOrValue<string>,
-      newNodeIds: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
+    errAlreadyExists(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    getStreamNodes(
-      streamIdHash: PromiseOrValue<string>,
+    errNotFound(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    errOutOfBounds(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getStream(
+      _streamId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    removeNodeFromStream(
-      streamIdHash: PromiseOrValue<string>,
-      nodeId: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    valueExists(
-      streamIdHash: PromiseOrValue<string>,
-      nodeId: PromiseOrValue<string>,
+    getStreamByIndex(
+      index: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    getStreamsLength(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

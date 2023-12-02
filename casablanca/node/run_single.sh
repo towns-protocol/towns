@@ -19,7 +19,7 @@ while [[ "$#" -gt 0 ]]; do
             USE_CONTRACT=false
             METRICS_ENABLED=false
             METRICS_PORT=8082
-            USE_BLOCKCHAIN_STREAM_REGISTRY=false
+            USE_BLOCKCHAIN_STREAM_REGISTRY=true
             shift
             ;;
         *)
