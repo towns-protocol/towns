@@ -28,3 +28,7 @@ export const CHANNEL_INFO_PARAMS = {
     DIRECTORY: 'directory',
     INVITE: 'invite',
 } as const
+
+export const NESTED_PROFILE_PANEL_PATHS = {
+    WALLETS: 'wallets',
+} as const

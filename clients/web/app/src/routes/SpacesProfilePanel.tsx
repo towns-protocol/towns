@@ -17,6 +17,7 @@ import { useAuth } from 'hooks/useAuth'
 import { useStore } from 'store/store'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { Panel, PanelButton } from '@components/Panel/Panel'
+import { NESTED_PROFILE_PANEL_PATHS } from 'routes'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const navigate = useNavigate()
@@ -64,6 +65,14 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const { usersMap } = useAllKnownUsers()
     const location = useLocation()
     const isMeRoute = matchRoutes([{ path: '/me' }], location) || profileId === 'me'
+
+    const onWalletLinkingClick = useEvent(() => {
+        navigate(`${location.pathname}/${NESTED_PROFILE_PANEL_PATHS.WALLETS}`, {
+            state: {
+                from: location.pathname,
+            },
+        })
+    })
 
     const user = useMemo(
         () =>
@@ -182,6 +191,13 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                             Aa
                         </Box>
                         <Paragraph color="default">Switch theme</Paragraph>
+                    </PanelButton>
+
+                    <PanelButton onClick={onWalletLinkingClick}>
+                        <Box width="height_md" alignItems="center">
+                            <Icon type="wallet" size="square_sm" />
+                        </Box>
+                        <Paragraph>Wallets</Paragraph>
                     </PanelButton>
 
                     <PanelButton tone="negative" onClick={onLogoutClick}>

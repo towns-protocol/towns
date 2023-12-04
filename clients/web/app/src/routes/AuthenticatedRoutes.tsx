@@ -10,6 +10,7 @@ import { SpaceContextRoute } from 'routes/SpaceContextRoute'
 import { useDevice } from 'hooks/useDevice'
 import { DirectMessageThread } from '@components/DirectMessages/DirectMessageThread'
 import { CreateSpaceFormV2 } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2'
+import { NestedPanel } from '@components/Panel/NestedPanel'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
@@ -98,6 +99,10 @@ export const AuthenticatedRoutes = () => {
                                             path="profile/:profileId"
                                             element={<SpaceProfilePanel />}
                                         />
+                                        <Route
+                                            path="profile/:profileId/:nestedPanel"
+                                            element={<NestedPanel />}
+                                        />
                                         <Route path="info" element={<InfoPanelWrapper />} />
                                     </Route>
                                     <Route path="channels/:channelSlug" element={<SpacesChannel />}>
@@ -108,6 +113,10 @@ export const AuthenticatedRoutes = () => {
                                         <Route
                                             path="profile/:profileId"
                                             element={<SpaceProfilePanel />}
+                                        />
+                                        <Route
+                                            path="profile/:profileId/:nestedPanel"
+                                            element={<NestedPanel />}
                                         />
                                         <Route path="info" element={<InfoPanelWrapper />} />
                                     </Route>
@@ -127,6 +136,7 @@ const messageRoutes = (
         <Route path=":channelSlug" element={<DirectMessageThread />}>
             <Route path="replies/:messageId" element={<SpacesChannelReplies parentRoute="../" />} />
             <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+            <Route path="profile/:profileId/:nestedPanel" element={<NestedPanel />} />
             <Route path="info" element={<DMInfoPanelWrapper />} />
         </Route>
     </Route>
@@ -145,6 +155,7 @@ const OutsideTownRoutes = () => {
             <Route element={<CheckRedirect />}>
                 <Route path="*" element={<NoJoinedSpacesFallback />}>
                     <Route path="me" element={<SpaceProfilePanel />} />
+                    <Route path="me/:nestedPanel" element={<NestedPanel />} />
                 </Route>
             </Route>
         </Routes>
@@ -158,11 +169,13 @@ const TownRoutes = () => (
     <Routes>
         <Route path="threads" element={<SpaceThreads />}>
             <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+            <Route path="profile/:profileId/:nestedPanel" element={<NestedPanel />} />
             <Route path="info" element={<InfoPanelWrapper />} />
         </Route>
 
         <Route path="mentions" element={<SpaceMentions />}>
             <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+            <Route path="profile/:profileId/:nestedPanel" element={<NestedPanel />} />
             <Route path="info" element={<InfoPanelWrapper />} />
         </Route>
 
@@ -188,6 +201,7 @@ const TownRoutes = () => (
         <Route element={<SpacesChannelRoute />}>
             <Route path="channels/:channelSlug/members" element={<ChannelMembers />}>
                 <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                <Route path="profile/:profileId/:nestedPanel" element={<NestedPanel />} />
                 <Route path="info" element={<InfoPanelWrapper />} />
             </Route>
         </Route>

@@ -17,6 +17,7 @@ type Props = {
     label?: React.ReactNode | string
     paddingX?: BoxProps['padding']
     modalPresentable?: boolean
+    leftBarButton?: React.ReactNode
     rightBarButton?: React.ReactNode
     onClose?: () => void
 }
@@ -27,7 +28,7 @@ export const Panel = (props: Props) => {
 }
 
 const DesktopPanel = (props: Props) => {
-    const { paddingX = 'md', onClose, rightBarButton } = props
+    const { paddingX = 'md', onClose, rightBarButton, leftBarButton } = props
     useSafeEscapeKeyCancellation({ onEscape: onClose, capture: false })
 
     return (
@@ -44,6 +45,7 @@ const DesktopPanel = (props: Props) => {
                 color="gray1"
                 justifySelf="start"
             >
+                {leftBarButton && <Stack paddingRight="sm">{leftBarButton}</Stack>}
                 <Stack grow color="gray2" overflow="hidden">
                     {props.label}
                 </Stack>
