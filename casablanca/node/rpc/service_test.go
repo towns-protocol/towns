@@ -238,11 +238,11 @@ func testServerAndClient(
 ) (client protocolconnect.StreamServiceClient, port int, closer func()) {
 	cfg := &config.Config{
 		UseContract: useContract,
-		Chain: config.ChainConfig{
+		BaseChain: config.ChainConfig{
 			ChainId:    infra.CHAIN_ID_LOCALHOST,
 			NetworkUrl: "http://localhost:8545",
 		},
-		TopChain: config.ChainConfig{
+		RiverChain: config.ChainConfig{
 			ChainId:    infra.CHAIN_ID_LOCALHOST,
 			NetworkUrl: "http://localhost:8545",
 		},
@@ -269,7 +269,7 @@ func testServerAndClient(
 	}
 
 	if useContract {
-		err = testutils.FundWallet(ctx, wallet.Address, cfg.TopChain.NetworkUrl)
+		err = testutils.FundWallet(ctx, wallet.Address, cfg.RiverChain.NetworkUrl)
 		if err != nil {
 			panic(err)
 		}

@@ -14,7 +14,7 @@ import (
 func srdump(cfg *config.Config) error {
 	ctx := context.Background()
 
-	blockchain, err := crypto.NewReadOnlyBlockchain(ctx, &cfg.TopChain)
+	blockchain, err := crypto.NewReadOnlyBlockchain(ctx, &cfg.RiverChain)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func srdump(cfg *config.Config) error {
 func srstream(cfg *config.Config, streamId string) error {
 	ctx := context.Background()
 
-	blockchain, err := crypto.NewReadOnlyBlockchain(ctx, &cfg.TopChain)
+	blockchain, err := crypto.NewReadOnlyBlockchain(ctx, &cfg.RiverChain)
 	if err != nil {
 		return err
 	}

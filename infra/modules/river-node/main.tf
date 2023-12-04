@@ -463,7 +463,12 @@ resource "aws_ecs_task_definition" "river-fargate" {
         valueFrom = "${aws_secretsmanager_secret.river_node_wallet_credentials.arn}:walletPathPrivateKey::"
       },
       {
-        name      = "CHAIN__NETWORKURL"
+        name      = "BASECHAIN__NETWORKURL"
+        valueFrom = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
+      },
+      {
+        name = "CHAIN__NETWORKURL"
+        // TODO: remove after migration
         valueFrom = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
       },
       {
@@ -480,9 +485,14 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
     environment = [
       {
+        name  = "BASECHAIN__CHAINID",
+        value = var.home_chain_id
+      },
+      {
         name  = "CHAIN__CHAINID",
         value = var.home_chain_id
       },
+      // TODO: remove after migration
       {
         name  = "METRICS__ENABLED",
         value = "true"

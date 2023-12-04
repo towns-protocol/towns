@@ -25,7 +25,7 @@ func fund_wallet(cfg *config.Config) error {
 		return nil
 	}
 
-	err = testutils.FundWallet(ctx, wallet.Address, cfg.TopChain.NetworkUrl)
+	err = testutils.FundWallet(ctx, wallet.Address, cfg.RiverChain.NetworkUrl)
 	if err != nil {
 		return err
 	}

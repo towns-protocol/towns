@@ -4,10 +4,10 @@ storageType: postgres
 address:
 useContract: <USE_CONTRACT>
 walletprivatekey:
-chain:
+baseChain:
     chainId: 31337
     networkUrl: 'http://127.0.0.1:8545'
-topChain:
+riverChain:
     chainId: 31337
     networkUrl: 'http://127.0.0.1:8545'
 log:

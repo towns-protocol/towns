@@ -99,8 +99,8 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	var townsContract auth.TownsContract
 	if cfg.UseContract {
-		log.Info("Using casablanca auth", "chain_config", cfg.Chain)
-		townsContract, err = auth.NewTownsContract(ctx, &cfg.Chain)
+		log.Info("Using casablanca auth", "chain_config", cfg.BaseChain)
+		townsContract, err = auth.NewTownsContract(ctx, &cfg.BaseChain)
 		if err != nil {
 			log.Error("failed to create auth", "error", err)
 			return nil, 0, nil, err
@@ -140,7 +140,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	var streamRegistry nodes.StreamRegistry
 	if cfg.UseBlockChainStreamRegistry {
-		blockchain, err := crypto.NewReadWriteBlockchain(ctx, &cfg.TopChain, wallet)
+		blockchain, err := crypto.NewReadWriteBlockchain(ctx, &cfg.RiverChain, wallet)
 		if err != nil {
 			log.Error("failed to create blockchain", "error", err)
 			return nil, 0, nil, err
@@ -250,7 +250,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	log.Info("Listening", "addr", address+streamServicePattern)
 	log.Info("Using DB", "url", cfg.DbUrl)
 	if cfg.UseContract {
-		log.Info("Using chain", "id", cfg.Chain.ChainId)
+		log.Info("Using chain", "id", cfg.BaseChain.ChainId)
 	} else {
 		log.Info("Running Without Entitlements")
 	}

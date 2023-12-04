@@ -17,7 +17,7 @@ import (
 func TestServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.StreamServiceClient, func()) {
 	cfg := &config.Config{
 		UseContract: false,
-		Chain: config.ChainConfig{
+		BaseChain: config.ChainConfig{
 			ChainId:    infra.CHAIN_ID_LOCALHOST,
 			NetworkUrl: "http://localhost:8545",
 		},

@@ -6,25 +6,46 @@ import (
 
 // Viper uses mapstructure module to marshal settings into config struct.
 type Config struct {
-	Port        int
-	Address     string
+	// Network
+	// 0 can be used in tests to elect a free available port.
+	Port int
+	// DNS name of the node. Used to select interface to listen on. Can be empty.
+	Address string
+
+	// Storage
 	DbUrl       string
 	StorageType string
-	Metrics     infra.MetricsConfig
-	Chain       ChainConfig
-	TopChain    ChainConfig
-	UseContract bool
-	Log         infra.LogConfig
-	// TODO HNT-2048 remove once RDK registration/revoke is implemented in the client
-	SkipDelegateCheck           bool
-	PerformanceTracking         PerformanceTrackingConfig
-	PushNotification            PushNotificationConfig
-	Stream                      StreamConfig
-	NodeRegistry                string
-	WalletPrivateKey            string
-	LogInstance                 bool
-	SyncVersion                 int
+
+	// Blockchain configuration
+	BaseChain  ChainConfig
+	RiverChain ChainConfig
+
+	// Logging
+	Log infra.LogConfig
+
+	// Metrics
+	Metrics             infra.MetricsConfig
+	PerformanceTracking PerformanceTrackingConfig
+
+	// Push notifications
+	// Will be removed for push notifications V2 which will sync streams from outside process.
+	PushNotification PushNotificationConfig
+
+	// Stream configuration
+	Stream StreamConfig
+
+	// Node registry configuration.
+	// Path to .json file with node registry (to be moved to blockchain).
+	NodeRegistry string
+
+	// Feature flags
+	// Used to disable functionality for some testing setups.
+	UseContract                 bool
 	UseBlockChainStreamRegistry bool
+	SyncVersion                 int
+
+	// What is this and why is it here?
+	WalletPrivateKey string
 }
 
 type ChainConfig struct {
