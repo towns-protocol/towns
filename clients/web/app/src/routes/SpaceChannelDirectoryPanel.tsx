@@ -8,8 +8,9 @@ import {
     useChannelData,
     useChannelMembers,
 } from 'use-zion-client'
+import { isGDMChannelStreamId } from '@river/sdk'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { Box, Paragraph, Stack } from '@ui'
+import { Box, Icon, Paragraph, Stack } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
 import { useCreateLink } from 'hooks/useCreateLink'
@@ -17,14 +18,21 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Panel } from '@components/Panel/Panel'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
+import { CHANNEL_INFO_PARAMS } from 'routes'
+import { ChannelInviteModal } from './ChannelInvitePanel'
 
 export const ChannelDirectoryPanel = () => {
     const { channel } = useChannelData()
     const navigate = useNavigate()
 
+    const canAddMembers = channel?.id ? isGDMChannelStreamId(channel.id.networkId) : false
     const onClose = useEvent(() => {
         navigate('..')
     })
+
+    const addMembersClick = useCallback(() => {
+        navigate(`../${CHANNEL_INFO_PARAMS.INFO}?${CHANNEL_INFO_PARAMS.INVITE}`)
+    }, [navigate])
 
     return (
         <Panel
@@ -38,16 +46,18 @@ export const ChannelDirectoryPanel = () => {
             }
             onClose={onClose}
         >
-            <ChannelMembers />
+            <ChannelMembers onAddMembersClick={canAddMembers ? addMembersClick : undefined} />
         </Panel>
     )
 }
 
-const ChannelMembers = () => {
+const ChannelMembers = (props: { onAddMembersClick?: () => void }) => {
+    const { onAddMembersClick } = props
     const { members } = useChannelMembers()
 
     return (
         <Stack paddingY="md" minHeight="forceScroll">
+            {onAddMembersClick && <AddMemberRow onClick={onAddMembersClick} />}
             {members.map((m) => (
                 <ChannelMemberRow key={m.userId} user={m} />
             ))}
@@ -56,10 +66,41 @@ const ChannelMembers = () => {
 }
 
 export const ChannelMembersModal = (props: { onHide: () => void }) => {
+    const { channel } = useChannelData()
+    const canAddMembers = channel?.id ? isGDMChannelStreamId(channel.id.networkId) : false
+    const [inviteModalOpen, setInviteModalOpen] = React.useState(false)
+    const onAddMembersClick = useCallback(() => {
+        setInviteModalOpen(true)
+    }, [setInviteModalOpen])
+
     return (
         <ModalContainer touchTitle="Members" onHide={props.onHide}>
-            <ChannelMembers />
+            <ChannelMembers onAddMembersClick={canAddMembers ? onAddMembersClick : undefined} />
+            {inviteModalOpen && <ChannelInviteModal onHide={() => setInviteModalOpen(false)} />}
         </ModalContainer>
+    )
+}
+
+const AddMemberRow = (props: { onClick: () => void }) => {
+    const { onClick } = props
+    return (
+        <Stack
+            horizontal
+            paddingX="md"
+            paddingY="sm"
+            background={{ hover: 'level3', default: undefined }}
+            cursor="pointer"
+            onClick={onClick}
+        >
+            <Stack horizontal height="height_lg" gap="md" width="100%" alignItems="center">
+                <Box centerContent background="level3" width="x4" height="x4" rounded="full">
+                    <Icon type="personAdd" size="square_xs" color="default" />
+                </Box>
+                <Stack grow gap="paragraph" overflow="hidden">
+                    Add members
+                </Stack>
+            </Stack>
+        </Stack>
     )
 }
 

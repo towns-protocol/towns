@@ -1,251 +1,48 @@
-import { AnimatePresence } from 'framer-motion'
-import fuzzysort from 'fuzzysort'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import { firstBy } from 'thenby'
-import {
-    useAllKnownUsers,
-    useMyProfile,
-    useUser,
-    useZionClient,
-    useZionContext,
-} from 'use-zion-client'
+import { useZionClient } from 'use-zion-client'
 import { useCreateLink } from 'hooks/useCreateLink'
-import {
-    Box,
-    Button,
-    Checkbox,
-    Divider,
-    IconButton,
-    MotionStack,
-    Paragraph,
-    Stack,
-    Text,
-    TextField,
-} from '@ui'
-import { Avatar } from '@components/Avatar/Avatar'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { DirectMessageInviteUserList } from './DirectMessageInviteUserList'
 
 type Props = {
     onDirectMessageCreated: () => void
 }
 
 export const CreateDirectMessage = (props: Props) => {
-    const [searchTerm, setSearchTerm] = useState('')
     const { onDirectMessageCreated } = props
-    const { users, usersMap } = useAllKnownUsers()
     const { createDMChannel, createGDMChannel } = useZionClient()
-    const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
-    const navigate = useNavigate()
-    const userId = useMyProfile()?.userId
-
     const { createLink } = useCreateLink()
+    const navigate = useNavigate()
 
-    const onCreateButtonClicked = useCallback(async () => {
-        if (selectedUserIds.size === 1) {
-            const first = Array.from(selectedUserIds)[0]
-            const streamId = await createDMChannel(first)
+    const onCreateButtonClicked = useCallback(
+        async (selectedUserIds: Set<string>) => {
+            if (selectedUserIds.size === 1) {
+                const first = Array.from(selectedUserIds)[0]
+                const streamId = await createDMChannel(first)
 
-            if (streamId) {
-                const link = createLink({ messageId: streamId.slug })
-                if (link) {
-                    navigate(link)
+                if (streamId) {
+                    const link = createLink({ messageId: streamId.slug })
+                    if (link) {
+                        navigate(link)
+                        onDirectMessageCreated()
+                    }
+                }
+            } else {
+                const userIds = Array.from(selectedUserIds)
+                const streamId = await createGDMChannel(userIds)
+                if (streamId) {
+                    navigate(`/messages/${streamId.slug}`)
                     onDirectMessageCreated()
                 }
             }
-        } else {
-            const userIds = Array.from(selectedUserIds)
-            const streamId = await createGDMChannel(userIds)
-            if (streamId) {
-                navigate(`/messages/${streamId.slug}`)
-                onDirectMessageCreated()
-            }
-        }
-    }, [
-        selectedUserIds,
-        createDMChannel,
-        createLink,
-        navigate,
-        onDirectMessageCreated,
-        createGDMChannel,
-    ])
-
-    const toggleMember = useCallback((id: string) => {
-        setSelectedUserIds((prev) => {
-            const next = new Set(prev)
-            if (next.has(id)) {
-                next.delete(id)
-            } else {
-                next.add(id)
-            }
-            return next
-        })
-    }, [])
-
-    const filteredUserIds = fuzzysort
-        .go(searchTerm, users, {
-            key: 'displayName',
-            all: true,
-        })
-        .map((r) => r.obj.userId)
-        .sort(
-            firstBy<string>((id) => usersMap[id]?.displayName.startsWith(`0x`)).thenBy(
-                (id) => usersMap[id]?.displayName,
-            ),
-        )
-        .filter((id) => id !== userId)
-        .slice(0, 25)
-
-    const recentUsers = useRecentUsers(userId)
-
-    return (
-        <Stack gap grow paddingTop="md">
-            <AnimatePresence mode="popLayout">
-                {selectedUserIds.size > 0 && (
-                    <Stack
-                        horizontal
-                        scroll
-                        paddingX
-                        overflowX="scroll"
-                        gap="lg"
-                        alignItems="center"
-                        key="selected-users"
-                    >
-                        {Array.from(selectedUserIds).map((id) => (
-                            <SelectedParticipant key={id} userId={id} onToggle={toggleMember} />
-                        ))}
-                    </Stack>
-                )}
-                <MotionStack gap key="searchterm" layout="position">
-                    {selectedUserIds.size > 0 && <Divider />}
-                    <Box paddingX>
-                        <TextField
-                            background="level2"
-                            value={searchTerm}
-                            placeholder="Search people"
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </Box>
-                    <Divider />
-                </MotionStack>
-
-                <MotionStack gap grow layout="position" position="relative">
-                    <Stack scroll scrollbars gap grow absoluteFill insetTop="sm" paddingTop="md">
-                        {!searchTerm && (
-                            <Box paddingX>
-                                <Paragraph size="sm" color="gray2" fontWeight="medium">
-                                    Recent
-                                </Paragraph>
-                            </Box>
-                        )}
-                        {(searchTerm ? filteredUserIds : recentUsers).map((id) => (
-                            <Participant
-                                key={id}
-                                userId={id}
-                                selected={selectedUserIds.has(id)}
-                                onToggle={toggleMember}
-                            />
-                        ))}
-                    </Stack>
-                </MotionStack>
-            </AnimatePresence>
-            <Box paddingX paddingBottom="md" bottom="none" left="none" right="none">
-                <Button
-                    disabled={selectedUserIds.size === 0}
-                    tone="cta1"
-                    onClick={onCreateButtonClicked}
-                >
-                    {selectedUserIds.size > 1 ? 'Create Group DM' : 'Create DM'}
-                </Button>
-            </Box>
-        </Stack>
+        },
+        [createDMChannel, createLink, navigate, onDirectMessageCreated, createGDMChannel],
     )
-}
-
-type ParticipantProps = {
-    userId: string
-    onToggle: (id: string) => void
-}
-
-const Participant = (props: ParticipantProps & { selected: boolean }) => {
-    const { userId, onToggle, selected } = props
-    const profile = useUser(userId)
-
-    const onClick = useCallback(() => {
-        onToggle(userId)
-    }, [onToggle, userId])
-
     return (
-        <MotionStack
-            horizontal
-            gap
-            paddingX
-            transition={{ type: 'spring', damping: 25, stiffness: 120 }}
-            width="100%"
-            alignItems="center"
-            layout="position"
-            cursor="pointer"
-            onClick={onClick}
-        >
-            <Avatar userId={userId} size="avatar_x4" />
-            <Text truncate fontWeight="medium">
-                {getPrettyDisplayName(profile).displayName}
-            </Text>
-            <Box grow />
-            <Checkbox name="" checked={selected} onChange={onClick} />
-        </MotionStack>
+        <DirectMessageInviteUserList
+            submitButtonTextSingleUser="Create DM"
+            submitButtonTextMultipleUsers="Create Group DM"
+            onSubmit={onCreateButtonClicked}
+        />
     )
-}
-
-const SelectedParticipant = (props: ParticipantProps) => {
-    const { userId, onToggle } = props
-    const profile = useUser(userId)
-
-    return (
-        <MotionStack
-            layout
-            centerContent
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            gap="sm"
-        >
-            <Box position="relative">
-                <Avatar size="avatar_lg" userId={userId} />
-                <IconButton
-                    hoverable
-                    icon="close"
-                    size="square_xxs"
-                    position="topRight"
-                    rounded="full"
-                    background="level4"
-                    color="default"
-                    border="level3"
-                    tooltip="Remove"
-                    tooltipOptions={{ placement: 'vertical', immediate: true }}
-                    onClick={() => onToggle(userId)}
-                />
-            </Box>
-            <Text truncate fontWeight="medium" fontSize="sm">
-                {getPrettyDisplayName(profile).displayName}
-            </Text>
-        </MotionStack>
-    )
-}
-
-const useRecentUsers = (userId?: string) => {
-    const { dmChannels } = useZionContext()
-    return useMemo(() => {
-        return dmChannels.reduce((acc, channel) => {
-            if (acc.length >= 10) {
-                return acc
-            }
-            channel.userIds.forEach((id) => {
-                if (id !== userId && !acc.includes(id)) {
-                    acc.push(id)
-                }
-            })
-            return acc
-        }, [] as string[])
-    }, [dmChannels, userId])
 }

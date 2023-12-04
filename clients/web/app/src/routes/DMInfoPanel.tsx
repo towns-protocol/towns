@@ -4,6 +4,7 @@ import { CHANNEL_INFO_PARAMS } from 'routes'
 import { ChannelDirectoryPanel } from './SpaceChannelDirectoryPanel'
 import { DMChannelInfoPanel } from './DMChannelInfoPanel'
 import { GDMChannelPermissionsPanel } from './GDMChannelPermissions'
+import { ChannelInvitePanel } from './ChannelInvitePanel'
 
 export const DMInfoPanelWrapper = () => {
     const [search] = useSearchParams()
@@ -13,6 +14,8 @@ export const DMInfoPanelWrapper = () => {
         return <ChannelDirectoryPanel />
     } else if (search.get(CHANNEL_INFO_PARAMS.PERMISSIONS) !== null) {
         return <GDMChannelPermissionsPanel />
+    } else if (search.get(CHANNEL_INFO_PARAMS.INVITE) !== null) {
+        return <ChannelInvitePanel />
     }
     return undefined
 }

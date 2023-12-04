@@ -26,4 +26,5 @@ export const CHANNEL_INFO_PARAMS = {
     CHANNEL: 'channel',
     PERMISSIONS: 'permissions',
     DIRECTORY: 'directory',
+    INVITE: 'invite',
 } as const
