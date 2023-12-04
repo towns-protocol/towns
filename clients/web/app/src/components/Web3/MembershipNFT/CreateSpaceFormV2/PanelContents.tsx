@@ -2,6 +2,7 @@ import React, { ChangeEvent, PropsWithChildren, useCallback, useMemo } from 'rea
 import { UseFormReturn, useFormContext } from 'react-hook-form'
 import { AnimatePresence } from 'framer-motion'
 import { ethers } from 'ethers'
+import { foundryMockNftAddress } from 'use-zion-client'
 import {
     Box,
     Dropdown,
@@ -17,6 +18,10 @@ import { TokensList } from '@components/Tokens'
 import { FadeInBox } from '@components/Transitions'
 import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 import { useAuth } from 'hooks/useAuth'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { env } from 'utils'
+import { useEnvironment } from 'hooks/useEnvironmnet'
+import { shortAddress } from 'ui/utils/utils'
 import { CreateSpaceFormV2SchemaType, membershipCostError } from './CreateSpaceFormV2.schema'
 import { PanelContentProps, PanelType } from './types'
 
@@ -98,6 +103,8 @@ function GatingContent() {
         [],
     )
 
+    const chainId = useEnvironment().chainId
+
     if (!wallet) {
         return null
     }
@@ -126,14 +133,24 @@ function GatingContent() {
                 >
                     {() => {
                         return (
-                            <TokensList
-                                wallet={wallet}
-                                showTokenList={isTokenHolders}
-                                initialItems={formProps.getValues('tokensGatingMembership')}
-                                onUpdate={(tokens) =>
-                                    onSelectedTokensUpdate(tokens, formProps.setValue)
-                                }
-                            />
+                            <>
+                                {env.DEV && chainId === 31337 && (
+                                    <ClipboardCopy
+                                        label={`Mock NFT ${shortAddress(
+                                            foundryMockNftAddress,
+                                        )} (local wallet linking)`}
+                                        clipboardContent={foundryMockNftAddress}
+                                    />
+                                )}
+                                <TokensList
+                                    wallet={wallet}
+                                    showTokenList={isTokenHolders}
+                                    initialItems={formProps.getValues('tokensGatingMembership')}
+                                    onUpdate={(tokens) =>
+                                        onSelectedTokensUpdate(tokens, formProps.setValue)
+                                    }
+                                />
+                            </>
                         )
                     }}
                 </RadioCard>

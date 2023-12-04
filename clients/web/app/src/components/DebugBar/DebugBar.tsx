@@ -5,7 +5,8 @@ import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
 import { mintMockNFT, useConnectivity, useWeb3Context } from 'use-zion-client'
 import { debug } from 'debug'
-import { Box, Button, Divider, Icon, Stack, Text } from '@ui'
+import { isAddress } from 'ethers/lib/utils'
+import { Box, Button, Divider, Icon, Stack, Text, TextField } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
 import { isTouch } from 'hooks/useDevice'
@@ -18,10 +19,12 @@ import {
 } from 'hooks/useEnvironmnet'
 import { useAuth } from 'hooks/useAuth'
 import { env } from 'utils'
+import { useMockNftBalance } from 'hooks/useMockNftBalance'
 
 const CF_TUNNEL_PREFIX = env.VITE_CF_TUNNEL_PREFIX
 
 const log = debug('app:DebugBar')
+const anvilKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 
 type Props = UseEnvironmentReturn
 
@@ -47,7 +50,6 @@ const goHome = () => (window.location.href = window.location.protocol + '//' + w
 
 async function fundWallet({ accountId, provider, chainId }: FundProps) {
     try {
-        const anvilKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
         const wallet = new ethers.Wallet(anvilKey, provider)
 
         const amount = 0.1
@@ -64,35 +66,82 @@ async function fundWallet({ accountId, provider, chainId }: FundProps) {
         log('fundWallet result', result)
         const receipt = await result.wait()
         log('fundWallet receipt', receipt)
-        if (chainId === 31337 && provider) {
-            // only support localhost anvil testing
-            const mintTx = await mintMockNFT(chainId, provider, wallet, accountId)
-            await mintTx.wait()
-            log('fundWallet minted MockNFT', { walletAddress: accountId })
-            console.log('fundWallet minted MockNFT', { walletAddress: accountId })
-        }
     } catch (e) {
         console.error('fundWallet error', e)
     }
 }
 
+async function mint({ accountId, provider, chainId }: FundProps) {
+    const wallet = new ethers.Wallet(anvilKey, provider)
+    try {
+        if (chainId === 31337 && provider) {
+            // only support localhost anvil testing
+            const mintTx = await mintMockNFT(chainId, provider, wallet, accountId)
+            await mintTx.wait()
+            log(' minted MockNFT', { walletAddress: accountId })
+            console.log(' minted MockNFT', { walletAddress: accountId })
+        }
+    } catch (e) {
+        console.error(' minted MockNFT error', e)
+    }
+}
+
 const FundButton = (props: FundProps & { disabled: boolean }) => {
-    const balance = useBalance({ address: props.accountId, watch: true })
+    const [addressToFund, setAddressToFund] = useState(props.accountId)
+    const balance = useBalance({
+        address: addressToFund,
+        watch: true,
+        enabled: isAddress(addressToFund),
+    })
+
+    const { data: mockNftBalance } = useMockNftBalance(addressToFund)
+
     return (
         <Stack gap>
+            <TextField
+                defaultValue={addressToFund}
+                border="default"
+                onChange={(e) => {
+                    isAddress(e.target.value)
+                        ? setAddressToFund(e.target.value as Address)
+                        : setAddressToFund('0x')
+                }}
+            />
             <Button
                 width="300"
-                disabled={props.disabled}
+                disabled={props.disabled || !isAddress(addressToFund)}
                 size="button_xs"
-                onClick={() => fundWallet(props)}
+                onClick={() =>
+                    fundWallet({
+                        ...props,
+                        accountId: addressToFund,
+                    })
+                }
             >
                 <>
-                    <Text size="sm">Fund Wallet and Mint MockNFT</Text>
-                    <Text size="sm">{shortAddress(props.accountId)}</Text>
+                    <Text size="sm">Fund Wallet</Text>
+                    <Text size="sm">{shortAddress(addressToFund)}</Text>
+                </>
+            </Button>
+            <Button
+                width="300"
+                disabled={props.disabled || !isAddress(addressToFund)}
+                size="button_xs"
+                onClick={() =>
+                    mint({
+                        ...props,
+                        accountId: addressToFund,
+                    })
+                }
+            >
+                <>
+                    <Text size="sm">Mint Mock NFT</Text>
+                    <Text size="sm">{shortAddress(addressToFund)}</Text>
                 </>
             </Button>
             <Text size="sm" color="cta1">
                 Balance: {balance.data?.formatted} {balance.data?.symbol}
+                Mock NFT: {mockNftBalance}
             </Text>
         </Stack>
     )
@@ -140,6 +189,11 @@ const DebugModal = ({
                             <Text strong size="sm">
                                 {walletChain.id === 31337 && 'Fund '}
                                 Accounts
+                            </Text>
+                            <br />
+                            <Text size="sm" color="secondary">
+                                12/1/2023: You still need to mint mock NFT if you want to create a
+                                town locally
                             </Text>
                             <br />
                             {accounts.map((accountId) => (

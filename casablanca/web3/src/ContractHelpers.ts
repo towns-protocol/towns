@@ -46,6 +46,29 @@ export function mintMockNFT(
     throw new Error(`Unsupported chainId ${chainId}, only 31337 is supported.`)
 }
 
+export function balanceOfMockNFT(
+    chainId: number,
+    provider: ethers.providers.Provider | PublicClient,
+    address: Address,
+) {
+    if (chainId === 31337) {
+        const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
+        if (isEthersProvider(provider)) {
+            const mockNFT = new MockERC721AShimV3(mockNFTAddress, chainId, provider)
+            return mockNFT.read.balanceOf(address)
+        } else {
+            const mockNFT = new MockERC721AShimV4(mockNFTAddress, chainId, provider)
+            return mockNFT.read({
+                functionName: 'balanceOf',
+                args: [address],
+            })
+        }
+    }
+    throw new Error(`Unsupported chainId ${chainId}, only 31337 is supported.`)
+}
+
+export const foundryMockNftAddress = getContractsInfo(31337).mockErc721aAddress
+
 export function getMemberNftAddress(chainId: number): string | null {
     const contractInfo = getContractsInfo(chainId)
     if (!contractInfo) {
