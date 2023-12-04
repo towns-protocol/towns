@@ -12,13 +12,15 @@ locals {
   river_node_tags = merge(
     module.global_constants.tags,
     {
-      Service = local.service_name
+      Service   = local.service_name
+      Node_Name = var.node_name
     }
   )
   dd_agent_tags = merge(
     module.global_constants.tags,
     {
-      Service = "dd-agent"
+      Service   = "dd-agent"
+      Node_Name = var.node_name
     }
   )
 
@@ -398,6 +400,10 @@ resource "aws_lb_listener_rule" "host_rule" {
 resource "aws_ecs_task_definition" "river-fargate" {
   family = "${var.node_name}-fargate"
 
+  lifecycle {
+    ignore_changes = [container_definitions]
+  }
+
   ephemeral_storage {
     size_in_gib = local.ephemeral_storage_size_in_gib
   }
@@ -573,7 +579,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
         },
         {
           name  = "DD_TAGS",
-          value = "env:${terraform.workspace}"
+          value = "env:${terraform.workspace}, node_name:${var.node_name}"
         },
       ]
 
@@ -655,10 +661,7 @@ resource "aws_ecs_service" "river-ecs-service" {
     assign_public_ip = true
   }
 
-  tags = merge(module.global_constants.tags, {
-    Instance = var.node_name
-    Service  = "river-node"
-  })
+  tags = local.river_node_tags
 }
 
 resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
@@ -666,6 +669,8 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   deployment_group_name  = "${var.node_name}-codedeploy-deployment-group"
   service_role_arn       = aws_iam_role.ecs_code_deploy_role.arn
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
+
+  tags = local.river_node_tags
 
   ecs_service {
     cluster_name = var.ecs_cluster.name
