@@ -21,15 +21,15 @@ export const isUserId = (userId: string | Uint8Array): boolean => {
 
 // reason about data in logs, tests, etc.
 export enum StreamPrefix {
-    User = '00-',
-    Space = '11-',
-    Channel = '22-',
-    UserDevice = '33-',
-    UserSettings = '44-',
-    Media = '55-',
-    DM = '66-',
-    GDM = '77-',
-    UserToDevice = '88-',
+    User = 'USER-',
+    Space = 'SPCE-',
+    Channel = 'CHAN-',
+    UserDevice = 'UDKS-',
+    UserSettings = 'USET-',
+    Media = 'BLOB-',
+    DM = 'DMDM-',
+    GDM = 'GDMS-',
+    UserToDevice = 'UDEV-',
 }
 
 export const allowedStreamPrefixes = (): string[] => Object.values(StreamPrefix)
