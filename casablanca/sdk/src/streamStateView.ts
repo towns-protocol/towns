@@ -14,6 +14,7 @@ import TypedEmitter from 'typed-emitter'
 import { check, logNever, isDefined } from './check'
 import {
     ConfirmedTimelineEvent,
+    DecryptedTimelineEvent,
     ParsedMiniblock,
     RemoteTimelineEvent,
     StreamTimelineEvent,
@@ -21,7 +22,6 @@ import {
     isLocalEvent,
     makeRemoteTimelineEvent,
 } from './types'
-import { RiverEventV2 } from './eventV2'
 import { unpackEnvelope, unpackMiniblock } from './sign'
 import { EmittedEvents } from './client'
 import { StreamStateView_Space } from './streamStateView_Space'
@@ -29,7 +29,10 @@ import { StreamStateView_Channel } from './streamStateView_Channel'
 import { StreamStateView_User } from './streamStateView_User'
 import { StreamStateView_UserSettings } from './streamStateView_UserSettings'
 import { StreamStateView_UserDeviceKeys } from './streamStateView_UserDeviceKey'
-import { StreamStateView_Membership } from './streamStateView_Membership'
+import {
+    StreamStateView_Membership,
+    StreamStateView_UserStreamMembership,
+} from './streamStateView_Membership'
 import { StreamStateView_Media } from './streamStateView_Media'
 import { StreamStateView_GDMChannel } from './streamStateView_GDMChannel'
 import {
@@ -38,7 +41,10 @@ import {
 } from './streamStateView_IContent'
 import { StreamStateView_DMChannel } from './streamStateView_DMChannel'
 import { genLocalId } from './id'
+import { StreamStateView_UserToDevice } from './streamStateView_UserToDevice'
 import { bin_toHexString } from './binary'
+import { StreamStateView_Common } from './streamStateView_Common'
+import { DecryptedContent } from './encryptedContentTypes'
 
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
@@ -55,6 +61,9 @@ export class StreamStateView {
     prevSnapshotMiniblockNum: bigint
     miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
+
+    // Common Content
+    commonContent: StreamStateView_Common
 
     // Space Content
     private readonly _spaceContent?: StreamStateView_Space
@@ -116,6 +125,15 @@ export class StreamStateView {
         return this._userDeviceKeyContent
     }
 
+    private readonly _userToDeviceContent?: StreamStateView_UserToDevice
+    get userToDeviceContent(): StreamStateView_UserToDevice {
+        check(
+            isDefined(this._userToDeviceContent),
+            `userToDeviceContent not defined for ${this.contentKind}`,
+        )
+        return this._userToDeviceContent
+    }
+
     private readonly _mediaContent?: StreamStateView_Media
     get mediaContent(): StreamStateView_Media {
         check(isDefined(this._mediaContent), `mediaContent not defined for ${this.contentKind}`)
@@ -128,6 +146,7 @@ export class StreamStateView {
         snapshot: Snapshot,
         prevSnapshotMiniblockNum: bigint,
     ) {
+        log('streamStateView', streamId)
         check(isDefined(snapshot), `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
 
         check(
@@ -146,6 +165,7 @@ export class StreamStateView {
         this.streamId = streamId
         this.contentKind = snapshot.content.case
         this.prevSnapshotMiniblockNum = prevSnapshotMiniblockNum
+        this.commonContent = new StreamStateView_Common(streamId)
 
         switch (snapshot.content.case) {
             case 'channelContent':
@@ -185,6 +205,11 @@ export class StreamStateView {
                     snapshot.content.value.inception,
                 )
                 break
+            case `userToDeviceContent`:
+                this._userToDeviceContent = new StreamStateView_UserToDevice(
+                    snapshot.content.value.inception,
+                )
+                break
             case 'mediaContent':
                 this._mediaContent = new StreamStateView_Media(snapshot.content.value.inception)
                 break
@@ -200,6 +225,8 @@ export class StreamStateView {
         snapshot: Snapshot,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
+        this.commonContent.initialize(snapshot, emitter)
+
         switch (snapshot.content.case) {
             case 'channelContent':
                 this.channelContent.initialize(snapshot, snapshot.content.value, emitter)
@@ -221,6 +248,9 @@ export class StreamStateView {
                 break
             case 'userDeviceKeyContent':
                 this.userDeviceKeyContent.initialize(snapshot, snapshot.content.value, emitter)
+                break
+            case 'userToDeviceContent':
+                this.userToDeviceContent.initialize(snapshot, snapshot.content.value, emitter)
                 break
             case 'mediaContent':
                 this.mediaContent.initialize(snapshot, snapshot.content.value, emitter)
@@ -304,8 +334,14 @@ export class StreamStateView {
                 case 'userDeviceKeyPayload':
                     this.userDeviceKeyContent?.appendEvent(event, payload.value, emitter)
                     break
+                case 'userToDevicePayload':
+                    this.userToDeviceContent?.appendEvent(event, payload.value, emitter)
+                    break
                 case 'mediaPayload':
                     this.mediaContent?.appendEvent(event, payload.value, emitter)
+                    break
+                case 'commonPayload':
+                    this.commonContent.appendEvent(event, payload.value, emitter)
                     break
                 case 'miniblockHeader':
                     check(
@@ -314,8 +350,8 @@ export class StreamStateView {
                         Err.STREAM_BAD_EVENT,
                     )
                     this.prevMiniblockHash = event.envelope.hash
-                    this.getContent().onMiniblockHeader(payload.value, emitter)
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
+                    this.getContent().onMiniblockHeader(payload.value, emitter)
                     timelineEvent.confirmedEventNum =
                         payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)
                     confirmed = []
@@ -377,8 +413,14 @@ export class StreamStateView {
                 case 'userDeviceKeyPayload':
                     this.userDeviceKeyContent?.prependEvent(event, payload.value, emitter)
                     break
+                case 'userToDevicePayload':
+                    this.userToDeviceContent?.prependEvent(event, payload.value, emitter)
+                    break
                 case 'mediaPayload':
                     this.mediaContent?.prependEvent(event, payload.value, emitter)
+                    break
+                case 'commonPayload':
+                    this.commonContent.prependEvent(event, payload.value, emitter)
                     break
                 case 'miniblockHeader':
                     this.updateMiniblockInfo(payload.value, { min: payload.value.miniblockNum })
@@ -419,37 +461,31 @@ export class StreamStateView {
     }
 
     // update streeam state with successfully decrypted events by hashStr event id
-    updateDecrypted(event: RiverEventV2, emitter: TypedEmitter<EmittedEvents>): void {
-        const hashStr = event.getId()
-        if (!hashStr) {
-            log(`Ignoring decrypted event with no hash id`)
-            return
-        }
-        if (event.shouldAttemptDecryption()) {
-            log(`Ignoring event that has not attempted decryption yet, hash=${hashStr}`)
-            return
-        }
-
-        const timelineEvent = this.events.get(hashStr)
-        if (!timelineEvent) {
-            logError(`Ignoring decrypted event that is not in timeline, hash=${hashStr}`)
-            return
-        }
-
-        if (timelineEvent.decryptedContent === event) {
-            log(`Ignoring duplicate decrypted event ${hashStr}`)
-            return
-        }
+    updateDecrypted(
+        eventId: string,
+        content: DecryptedContent,
+        emitter: TypedEmitter<EmittedEvents>,
+    ): DecryptedTimelineEvent {
+        const timelineEvent = this.events.get(eventId)
+        check(isDefined(timelineEvent), `Event not found ${eventId}`)
 
         if (timelineEvent.decryptedContent !== undefined) {
-            logError(`timeline event was decrypted twice? ${hashStr}`)
+            logError(`timeline event was decrypted twice? ${eventId}`)
         }
 
-        timelineEvent.decryptedContent = event
+        timelineEvent.decryptedContent = content
 
         emitter.emit('streamUpdated', this.streamId, this.contentKind, {
             updated: [timelineEvent],
         })
+        // dispatching eventDecrypted makes it easier to test
+        emitter.emit(
+            'eventDecrypted',
+            this.streamId,
+            this.contentKind,
+            timelineEvent as DecryptedTimelineEvent,
+        )
+        return timelineEvent as DecryptedTimelineEvent
     }
 
     initialize(
@@ -602,11 +638,13 @@ export class StreamStateView {
             case 'spaceContent':
                 return this.spaceContent.memberships
             case 'userContent':
-                throw new Error('User content has no memberships')
+                return new StreamStateView_UserStreamMembership(this.streamId)
             case 'userSettingsContent':
-                throw new Error('User settings content has no memberships')
+                return new StreamStateView_UserStreamMembership(this.streamId)
             case 'userDeviceKeyContent':
-                throw new Error('User device key content has no memberships')
+                return new StreamStateView_UserStreamMembership(this.streamId)
+            case 'userToDeviceContent':
+                return new StreamStateView_UserStreamMembership(this.streamId)
             case 'mediaContent':
                 throw new Error('Media content has no memberships')
             case undefined:
@@ -633,6 +671,8 @@ export class StreamStateView {
                 return this.userSettingsContent
             case 'userDeviceKeyContent':
                 return this.userDeviceKeyContent
+            case 'userToDeviceContent':
+                return this.userToDeviceContent
             case 'mediaContent':
                 return this.mediaContent
             case undefined:
@@ -658,7 +698,7 @@ export class StreamStateView {
             case 'gdmChannelContent':
                 return this.gdmChannelContent.joinedOrInvitedParticipants().has(userId)
             default:
-                throw new Error('Stream does not support key exchange')
+                throw new Error('Stream does not support key exchange') // meow
         }
     }
 

@@ -13,7 +13,6 @@ describe('ClientStoreTests', () => {
     test('Add devices to store', async () => {
         const userId = genId()
         const userDevice: UserDevice = {
-            deviceId: genId(),
             deviceKey: genId(),
             fallbackKey: genId(),
         }
@@ -24,7 +23,6 @@ describe('ClientStoreTests', () => {
         const userId = genId()
         const devices = [...Array(10).keys()].map(() => {
             const userDevice: UserDevice = {
-                deviceId: genId(),
                 deviceKey: genId(),
                 fallbackKey: genId(),
             }
@@ -35,15 +33,14 @@ describe('ClientStoreTests', () => {
 
         const fetchedDevices = await store.getUserDevices(userId)
         expect(fetchedDevices.length).toEqual(10)
-        expect(fetchedDevices.sort((a, b) => a.deviceId.localeCompare(b.deviceId))).toEqual(
-            devices.sort((a, b) => a.deviceId.localeCompare(b.deviceId)),
+        expect(fetchedDevices.sort((a, b) => a.deviceKey.localeCompare(b.deviceKey))).toEqual(
+            devices.sort((a, b) => a.deviceKey.localeCompare(b.deviceKey)),
         )
     })
 
     test('Expired devices are not fetched', async () => {
         const userId = genId()
         const userDevice: UserDevice = {
-            deviceId: genId(),
             deviceKey: genId(),
             fallbackKey: genId(),
         }
@@ -61,7 +58,6 @@ describe('ClientStoreTests', () => {
     test('Adding the same device id twice updates the expiration time', async () => {
         const userId = genId()
         const userDevice: UserDevice = {
-            deviceId: genId(),
             deviceKey: genId(),
             fallbackKey: genId(),
         }
@@ -76,7 +72,7 @@ describe('ClientStoreTests', () => {
         await new Promise((resolve) => setTimeout(resolve, expirationMs + 100))
         const devicesAfterTimeout = await store.getUserDevices(userId)
         expect(devicesAfterTimeout.length).toEqual(1)
-        expect(devicesAfterTimeout[0].deviceId).toEqual(userDevice.deviceId)
+        expect(devicesAfterTimeout[0].deviceKey).toEqual(userDevice.deviceKey)
     })
 
     // This test is slightly articifical, but the idea is to make sure
@@ -85,7 +81,6 @@ describe('ClientStoreTests', () => {
     test('Expired devices are purged on init', async () => {
         const userId = genId()
         const userDevice: UserDevice = {
-            deviceId: genId(),
             deviceKey: genId(),
             fallbackKey: genId(),
         }

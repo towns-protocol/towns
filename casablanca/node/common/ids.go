@@ -40,6 +40,10 @@ const (
 
 	STREAM_GDM_CHANNEL_PREFIX      = "77"
 	STREAM_GDM_CHANNEL_PREFIX_DASH = "77-"
+
+	STREAM_USER_TO_DEVICE_PREFIX          = "88"
+	STREAM_USER_TO_DEVICE_PREFIX_DASH     = "88-"
+	STREAM_USER_TO_DEVICE_PREFIX_DASH_HEX = "88-0x"
 )
 
 func AddressHex(address []byte) (string, error) {
@@ -93,6 +97,10 @@ func CheckUserStreamId(streamId string, creatorUserId []byte) error {
 	return CheckUserStreamIdForPrefix(streamId, creatorUserId, STREAM_USER_PREFIX_DASH)
 }
 
+func CheckUserToDeviceStreamId(streamId string, creatorUserId []byte) error {
+	return CheckUserStreamIdForPrefix(streamId, creatorUserId, STREAM_USER_TO_DEVICE_PREFIX_DASH)
+}
+
 func CheckUserDeviceKeyStreamId(streamId string, creatorUserId []byte) error {
 	return CheckUserStreamIdForPrefix(streamId, creatorUserId, STREAM_USER_DEVICE_KEY_PREFIX_DASH)
 }
@@ -114,6 +122,13 @@ func UserDeviceKeyStreamIdFromId(id string) (string, error) {
 		return "", RiverError(Err_BAD_STREAM_ID, "invalid id length", "id", id)
 	}
 	return STREAM_USER_DEVICE_KEY_PREFIX_DASH + id, nil
+}
+
+func UserToDeviceStreamIdFromId(id string) (string, error) {
+	if len(id) != 42 {
+		return "", RiverError(Err_BAD_STREAM_ID, "invalid id length", "id", id)
+	}
+	return STREAM_USER_TO_DEVICE_PREFIX_DASH + id, nil
 }
 
 func UserStreamIdFromId(id string) (string, error) {

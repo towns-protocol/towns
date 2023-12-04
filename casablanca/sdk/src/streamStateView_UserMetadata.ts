@@ -1,7 +1,7 @@
 import {
     SpacePayload_WrappedEncryptedData as WrappedEncryptedData,
-    EncryptedData,
     MiniblockHeader,
+    EncryptedData,
 } from '@river/proto'
 import { logNever } from './check'
 import TypedEmitter from 'typed-emitter'
@@ -103,7 +103,7 @@ export class StreamStateView_UserMetadata {
                 break
             case 'displayName':
                 this.pendingDisplayNameEvents.set(eventId, { eventId, payload, userId })
-                this.plaintextDisplayNames.set(userId, payload.text)
+                this.plaintextDisplayNames.set(userId, payload.ciphertext)
                 emitter?.emit('streamPendingDisplayNameUpdated', this.streamId, userId)
                 break
             default:
@@ -133,7 +133,7 @@ export class StreamStateView_UserMetadata {
                 this.displayNames.set(userId, payload)
                 emitter?.emit('streamDisplayNameUpdated', this.streamId, userId)
 
-                const displayName = payload.data?.text
+                const displayName = payload.data?.ciphertext
                 if (displayName) {
                     this.plaintextDisplayNames.set(userId, displayName)
                 }

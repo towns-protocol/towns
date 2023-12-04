@@ -1,6 +1,5 @@
-import { makeTestClient } from './util.test'
+import { makeTestClient, createEventDecryptedPromise } from './util.test'
 import { Client } from './client'
-import { createEventDecryptedPromise } from './testutils'
 
 describe('dmsTests', () => {
     let bobsClient: Client

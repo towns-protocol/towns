@@ -5,9 +5,9 @@
 import { SnapshotCaseType } from '@river/proto'
 import { Client } from './client'
 import { DLogger, dlog } from './dlog'
-import { RiverEventV2 } from './eventV2'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { makeDonePromise, makeTestClient, sendFlush } from './util.test'
+import { DecryptedTimelineEvent } from './types'
 
 const log_base = dlog('csb:test')
 
@@ -28,19 +28,20 @@ describe('clientFlushes', () => {
 
         const done = makeDonePromise()
 
-        const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
+        const onChannelNewMessage = (
+            channelId: string,
+            streamKind: SnapshotCaseType,
+            event: DecryptedTimelineEvent,
+        ): void => {
             log('onChannelNewMessage', channelId)
             done.runAndDoneAsync(async () => {
-                const content = event.getWireContent()
-                expect(content).toBeDefined()
-                await bobsClient.decryptEventIfNeeded(event)
-                const clearEvent = event.getContent()
-                expect(clearEvent?.content?.payload).toBeDefined()
+                const clearEvent = event.decryptedContent.content
+                expect(clearEvent?.payload).toBeDefined()
                 if (
-                    clearEvent?.content?.payload?.case === 'post' &&
-                    clearEvent?.content?.payload?.value?.content?.case === 'text'
+                    clearEvent?.payload?.case === 'post' &&
+                    clearEvent?.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(clearEvent?.content?.payload?.value?.content.value?.body).toContain(
+                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
                         'Hello, world!',
                     )
                 }
@@ -55,7 +56,7 @@ describe('clientFlushes', () => {
                     log('channel content')
                     log(channel.view)
 
-                    channel.on('channelNewMessage', onChannelNewMessage)
+                    channel.on('eventDecrypted', onChannelNewMessage)
                     bobsClient.sendMessage(streamId, 'Hello, world!')
                     await sendFlush(bobsClient.rpcClient)
                 }
@@ -105,19 +106,20 @@ describe('clientFlushes', () => {
 
         const done = makeDonePromise()
 
-        const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
+        const onChannelNewMessage = (
+            channelId: string,
+            streamKind: SnapshotCaseType,
+            event: DecryptedTimelineEvent,
+        ): void => {
             log('onChannelNewMessage', channelId)
             done.runAndDoneAsync(async () => {
-                const content = event.getWireContent()
-                expect(content).toBeDefined()
-                await bobsAnotherClient.decryptEventIfNeeded(event)
-                const clearEvent = event.getContent()
-                expect(clearEvent?.content?.payload).toBeDefined()
+                const clearEvent = event.decryptedContent.content
+                expect(clearEvent?.payload).toBeDefined()
                 if (
-                    clearEvent?.content?.payload?.case === 'post' &&
-                    clearEvent?.content?.payload?.value?.content?.case === 'text'
+                    clearEvent?.payload?.case === 'post' &&
+                    clearEvent?.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(clearEvent?.content?.payload?.value?.content.value?.body).toContain(
+                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
                         'Hello, again!',
                     )
                 }
@@ -132,10 +134,12 @@ describe('clientFlushes', () => {
                     log('channel content')
                     log(channel.view)
 
-                    const messages = Array.from(channel.view.channelContent.messages.state.values())
+                    const messages = channel.view.timeline.filter(
+                        (x) => x.decryptedContent?.kind === 'channelMessage',
+                    )
                     expect(messages).toHaveLength(1)
 
-                    channel.on('channelNewMessage', onChannelNewMessage)
+                    channel.on('eventDecrypted', onChannelNewMessage)
                     bobsAnotherClient.sendMessage(streamId, 'Hello, again!')
                     await sendFlush(bobsClient.rpcClient)
                 }

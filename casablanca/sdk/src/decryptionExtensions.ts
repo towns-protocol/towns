@@ -1,0 +1,554 @@
+import EventEmitter from 'events'
+import TypedEmitter from 'typed-emitter'
+import { Permission } from '@river/web3'
+import { Client } from './client'
+import { EncryptedContent } from './encryptedContentTypes'
+import { MEGOLM_ALGORITHM, MegolmSession, UserDevice } from './crypto/olmLib'
+import {
+    CommonPayload_KeySolicitation,
+    SessionKeys,
+    UserToDevicePayload_MegolmSessions,
+} from '@river/proto'
+import { check, isDefined } from './check'
+import { dlog } from './dlog'
+import { make_CommonPayload_KeyFulfillment, make_CommonPayload_KeySolicitation } from './types'
+import { removeCommon } from './utils'
+
+const log = dlog('csb:decryption', { defaultEnabled: true })
+
+export interface EntitlementsDelegate {
+    isEntitled(
+        spaceId: string | undefined,
+        channelId: string | undefined,
+        user: string,
+        permission: Permission,
+    ): Promise<boolean>
+}
+
+export enum DecryptionStatus {
+    initializing,
+    updating,
+    processingNewKeys,
+    decryptingEvents,
+    retryingDecryption,
+    requestingKeys,
+    respondingToKeyRequests,
+    idle,
+}
+
+export type DecryptionEvents = {
+    statusChanged: (status: DecryptionStatus) => void
+}
+
+interface EncryptedContentItem {
+    streamId: string
+    eventId: string
+    encryptedContent: EncryptedContent
+}
+
+interface DecryptionRetryItem {
+    event: EncryptedContentItem
+    retryAt: Date
+}
+
+interface KeySolicitationItem {
+    streamId: string
+    fromUserId: string
+    solicitation: CommonPayload_KeySolicitation
+    respondAfter: Date
+}
+
+interface MissingKeysItem {
+    streamId: string
+    waitUntil: Date
+}
+
+/**
+ *
+ * Responsibilities:
+ * 1. Download new to-device messages that happened while we were offline
+ * 2. Decrypt new to-device messages
+ * 3. Decrypt encrypted content
+ * 4. Retry decryption failures, request keys for failed decryption
+ * 5. Respond to key requests
+ *
+ *
+ * Notes:
+ * If in the future we started snapshotting the eventNum of the last message sent by every user,
+ * we could use that to determine the order we send out keys, and the order that we reply to key requests.
+ *
+ * It should be easy to introduce a priority stream, where we decrypt messages from that stream first, before
+ * anything else, so the messages show up quicky in the ui that the user is looking at.
+ *
+ * We need code to purge bad sessions (if someones sends us the wrong key, or a key that doesn't decrypt the message)
+ */
+export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitter<DecryptionEvents>) {
+    public status: DecryptionStatus = DecryptionStatus.initializing
+    private onStopFn?: () => void
+    private queues = {
+        priorityTasks: new Array<() => Promise<void>>(),
+        newMegolmSession: new Array<UserToDevicePayload_MegolmSessions>(),
+        encryptedContent: new Array<EncryptedContentItem>(),
+        decryptionRetries: new Array<DecryptionRetryItem>(),
+        missingKeys: new Array<MissingKeysItem>(),
+        keySolicitations: new Array<KeySolicitationItem>(),
+    }
+    private decryptionFailures: Record<string, Record<string, EncryptedContentItem[]>> = {} // streamId: sessionId: EncryptedContentItem[]
+    private inProgressTick?: Promise<void>
+    private timeoutId?: NodeJS.Timeout
+    private delayMs: number = 15
+    private started: boolean = false
+
+    constructor(
+        private client: Client,
+        private delegate: EntitlementsDelegate,
+        private userId: string,
+        private userDevice: UserDevice,
+    ) {
+        super()
+        const onNewMegolmSessions = (
+            sessions: UserToDevicePayload_MegolmSessions,
+            _senderId: string,
+        ) => {
+            this.queues.newMegolmSession.push(sessions)
+            this.checkStartTicking()
+        }
+
+        const onNewEncryptedContent = (
+            streamId: string,
+            eventId: string,
+            encryptedContent: EncryptedContent,
+        ) => {
+            this.queues.encryptedContent.push({
+                streamId,
+                eventId,
+                encryptedContent,
+            })
+            this.checkStartTicking()
+        }
+
+        const onKeySolicitation = (
+            streamId: string,
+            fromUserId: string,
+            keySolicitation: CommonPayload_KeySolicitation,
+        ) => {
+            if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
+                return
+            }
+            removeItem(
+                this.queues.keySolicitations,
+                (x) => x.solicitation.deviceKey === keySolicitation.deviceKey,
+            )
+            if (keySolicitation.sessionIds.length > 0 || keySolicitation.isNewDevice) {
+                this.queues.keySolicitations.push({
+                    streamId,
+                    fromUserId,
+                    solicitation: keySolicitation,
+                    respondAfter: new Date(
+                        Date.now() + this.getRespondDelayMSForKeySolicitation(streamId, fromUserId),
+                    ),
+                })
+                this.checkStartTicking()
+            }
+        }
+
+        client.on('newMegolmSessions', onNewMegolmSessions)
+        client.on('newEncryptedContent', onNewEncryptedContent)
+        client.on('newKeySolicitation', onKeySolicitation)
+        client.on('updatedKeySolicitation', onKeySolicitation)
+
+        this.onStopFn = () => {
+            client.off('newMegolmSessions', onNewMegolmSessions)
+            client.off('newEncryptedContent', onNewEncryptedContent)
+            client.off('newKeySolicitation', onKeySolicitation)
+            client.off('updatedKeySolicitation', onKeySolicitation)
+        }
+    }
+
+    start() {
+        check(!this.started, 'start() called twice, please re-instantiate instead')
+        this.started = true
+        // enqueue a task to download new to-device messages
+        this.queues.priorityTasks.push(() => this.client.downloadNewToDeviceMessages())
+        // start the tick loop
+        this.checkStartTicking()
+    }
+
+    async stop() {
+        this.onStopFn?.()
+        this.onStopFn = undefined
+        await this.stopTicking()
+    }
+
+    private setStatus(status: DecryptionStatus) {
+        if (this.status !== status) {
+            log(`status changed ${DecryptionStatus[status]}`)
+            this.status = status
+            this.emit('statusChanged', status)
+        }
+    }
+
+    private checkStartTicking() {
+        if (!this.started || this.timeoutId || !this.onStopFn) {
+            return
+        }
+        if (!Object.values(this.queues).find((q) => q.length > 0)) {
+            this.setStatus(DecryptionStatus.idle)
+            return
+        }
+        this.timeoutId = setTimeout(() => {
+            this.inProgressTick = this.tick()
+            this.inProgressTick
+                .catch((e) => log('ProcessTick Error', e))
+                .finally(() => {
+                    this.timeoutId = undefined
+                    this.checkStartTicking()
+                })
+        }, this.delayMs)
+    }
+
+    private async stopTicking() {
+        if (this.timeoutId) {
+            clearTimeout(this.timeoutId)
+            this.timeoutId = undefined
+        }
+        if (this.inProgressTick) {
+            try {
+                await this.inProgressTick
+            } catch (e) {
+                log('ProcessTick Error2', e)
+            } finally {
+                this.inProgressTick = undefined
+            }
+        }
+    }
+
+    // just do one thing then return
+    private tick(): Promise<void> {
+        const now = new Date()
+
+        const priorityTask = this.queues.priorityTasks.shift()
+        if (priorityTask) {
+            this.setStatus(DecryptionStatus.updating)
+            return priorityTask()
+        }
+
+        const session = this.queues.newMegolmSession.shift()
+        if (session) {
+            this.setStatus(DecryptionStatus.processingNewKeys)
+            return this.processNewMegolmSession(session)
+        }
+
+        const encryptedContent = this.queues.encryptedContent.shift()
+        if (encryptedContent) {
+            this.setStatus(DecryptionStatus.decryptingEvents)
+            return this.processEncryptedContentItem(encryptedContent)
+        }
+
+        const decryptionRetry = dequeue(this.queues.decryptionRetries, now, (x) => x.retryAt)
+        if (decryptionRetry) {
+            this.setStatus(DecryptionStatus.retryingDecryption)
+            return this.processDecryptionRetry(decryptionRetry)
+        }
+
+        const missingKeys = dequeue(this.queues.missingKeys, now, (x) => x.waitUntil)
+        if (missingKeys) {
+            this.setStatus(DecryptionStatus.requestingKeys)
+            return this.processMissingKeys(missingKeys)
+        }
+
+        const keySolicitation = dequeue(this.queues.keySolicitations, now, (x) => x.respondAfter)
+        if (keySolicitation) {
+            this.setStatus(DecryptionStatus.respondingToKeyRequests)
+            return this.processKeySolicitation(keySolicitation)
+        }
+
+        this.setStatus(DecryptionStatus.idle)
+        return Promise.resolve()
+    }
+
+    private async processNewMegolmSession(
+        session: UserToDevicePayload_MegolmSessions,
+    ): Promise<void> {
+        // check if this message is to our device
+        const ciphertext = session.ciphertexts[this.userDevice.deviceKey]
+        if (!ciphertext) {
+            return
+        }
+        // check if it contains any keys we need
+        const neededKeyIndexs = []
+        for (let i = 0; i < session.sessionIds.length; i++) {
+            const sessionId = session.sessionIds[i]
+            const hasKeys = await this.client.hasInboundSessionKeys(session.streamId, sessionId)
+            if (!hasKeys) {
+                neededKeyIndexs.push(i)
+            }
+        }
+        if (!neededKeyIndexs.length) {
+            return
+        }
+        // decrypte the message
+        const clearText = await this.client.decryptOlmEvent(ciphertext, session.senderKey)
+        const sessionKeys = SessionKeys.fromJsonString(clearText)
+        check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
+        // make megolm sessions
+        const sessions = neededKeyIndexs.map((i) => ({
+            streamId: session.streamId,
+            sessionId: session.sessionIds[i],
+            sessionKey: sessionKeys.keys[i],
+            algorithm: MEGOLM_ALGORITHM,
+        }))
+        // import the sessions
+        log('importing megolm sessions count: ', sessions.length)
+        await this.client.importRoomKeys(session.streamId, sessions)
+        // re-enqueue any decryption failures with these ids
+        for (const session of sessions) {
+            if (this.decryptionFailures[session.streamId]?.[session.sessionId]) {
+                this.queues.encryptedContent.push(
+                    ...this.decryptionFailures[session.streamId][session.sessionId],
+                )
+                delete this.decryptionFailures[session.streamId][session.sessionId]
+            }
+        }
+        // if we processed them all, ack the stream
+        if (this.queues.newMegolmSession.length === 0) {
+            await this.client.ackToDeviceStream()
+        }
+    }
+
+    private async processEncryptedContentItem(item: EncryptedContentItem): Promise<void> {
+        try {
+            check(isDefined(this.client.userToDeviceStreamId), 'userToDeviceStreamId not found')
+            const toDeviceStream = this.client.stream(this.client.userToDeviceStreamId)
+            check(isDefined(toDeviceStream), 'toDeviceStream not found')
+            if (
+                toDeviceStream.view.userToDeviceContent.hasPendingSessionId(
+                    this.userDevice.deviceKey,
+                    item.encryptedContent.content.sessionId,
+                )
+            ) {
+                // if we have a pending session for this key, waiting for confirmation then we can't decrypt it yet
+                this.queues.decryptionRetries.push({
+                    event: item,
+                    retryAt: new Date(Date.now() + 1000), // give it 1 seconds for miniblockblock to confirm
+                })
+            } else {
+                await this.client.decryptMegolmEvent(
+                    item.streamId,
+                    item.eventId,
+                    item.encryptedContent,
+                )
+            }
+        } catch (e) {
+            // todo, update the view to show the event as failed decryption with a reason https://linear.app/hnt-labs/issue/HNT-3934/new-decryption-extensions-update-streamtimelineevent-with-decryption
+            // todo, only retry on missing key errors https://linear.app/hnt-labs/issue/HNT-3933/new-decryptionextensions-only-retry-errors-where-keys-are-missing
+            this.queues.decryptionRetries.push({
+                event: item,
+                retryAt: new Date(Date.now() + 3000), // give it 3 seconds, maybe someone will send us the key
+            })
+        }
+    }
+
+    private async processDecryptionRetry(retryItem: DecryptionRetryItem): Promise<void> {
+        const item = retryItem.event
+        try {
+            await this.client.decryptMegolmEvent(item.streamId, item.eventId, item.encryptedContent)
+        } catch (e) {
+            // todo, update the view to show the event as failed decryption with a reason https://linear.app/hnt-labs/issue/HNT-3934/new-decryption-extensions-update-streamtimelineevent-with-decryption
+            // todo, only retry on missing key errors https://linear.app/hnt-labs/issue/HNT-3933/new-decryptionextensions-only-retry-errors-where-keys-are-missing
+            const streamId = item.streamId
+            const sessionId = item.encryptedContent.content.sessionId
+            if (!this.decryptionFailures[streamId]) {
+                this.decryptionFailures[streamId] = {}
+            }
+            if (!this.decryptionFailures[streamId][sessionId]) {
+                this.decryptionFailures[streamId][sessionId] = []
+            }
+            this.decryptionFailures[streamId][sessionId].push(item)
+
+            removeItem(this.queues.missingKeys, (x) => x.streamId === streamId)
+            this.queues.missingKeys.push({
+                streamId: item.streamId,
+                waitUntil: new Date(Date.now() + 1000),
+            })
+        }
+    }
+
+    private async processMissingKeys(item: MissingKeysItem): Promise<void> {
+        const streamId = item.streamId
+        const missingSessionIds = takeFirst(
+            100,
+            Object.keys(this.decryptionFailures[streamId] ?? {}).sort(),
+        )
+        // limit to 100 keys for now todo revisit https://linear.app/hnt-labs/issue/HNT-3936/revisit-how-we-limit-the-number-of-session-ids-that-we-request
+        if (!missingSessionIds.length) {
+            return
+        }
+        const stream = this.client.stream(streamId)
+        if (!stream) {
+            return
+        }
+        const solicitedEvents = stream.view.commonContent.solicitations[this.userId]?.events ?? []
+        const existingKeyRequest = solicitedEvents.find(
+            (x) => x.deviceKey === this.userDevice.deviceKey,
+        )
+        if (sortedArraysEqual(existingKeyRequest?.sessionIds ?? [], missingSessionIds)) {
+            log('already requested keys for this session')
+            return
+        }
+        const knownSessionIds =
+            (await this.client.cryptoBackend?.olmDevice?.getInboundGroupSessionIds(streamId)) ?? []
+
+        const isNewDevice = knownSessionIds.length === 0
+
+        const keySolicitation = make_CommonPayload_KeySolicitation({
+            deviceKey: this.userDevice.deviceKey,
+            fallbackKey: this.userDevice.fallbackKey,
+            isNewDevice,
+            sessionIds: isNewDevice ? [] : missingSessionIds,
+        })
+        log('requesting keys', {
+            isNewDevice,
+            sessionIds: missingSessionIds.length,
+        })
+        await this.client.makeEventAndAddToStream(streamId, keySolicitation)
+    }
+
+    private async processKeySolicitation(item: KeySolicitationItem): Promise<void> {
+        log('processing key request', item)
+        const streamId = item.streamId
+        const stream = this.client.stream(streamId)
+        check(isDefined(stream), 'stream not found')
+        const knownSessionIds =
+            (await this.client.cryptoBackend?.olmDevice?.getInboundGroupSessionIds(streamId)) ?? []
+
+        knownSessionIds.sort()
+        const requestedSessionIds = item.solicitation.sessionIds.sort()
+        const replySessionIds = item.solicitation.isNewDevice
+            ? knownSessionIds
+            : removeCommon(requestedSessionIds, knownSessionIds)
+        if (replySessionIds.length === 0) {
+            return
+        }
+
+        if (!stream.view.userIsEntitledToKeyExchange(this.client.userId)) {
+            log('user is not a member of the room and cannot request keys')
+            return
+        }
+        if (stream.view.contentKind === 'channelContent') {
+            const channel = stream.view.channelContent
+            const entitlements = await this.delegate.isEntitled(
+                channel.spaceId,
+                streamId,
+                item.fromUserId,
+                Permission.Read,
+            )
+            if (!entitlements) {
+                log('user is not entitled to key exchange')
+                return
+            }
+        }
+        const sessions: MegolmSession[] = []
+        for (const sessionId of replySessionIds) {
+            const megolmSession = await this.client.olmDevice.exportInboundGroupSession(
+                streamId,
+                sessionId,
+            )
+            if (megolmSession) {
+                sessions.push(megolmSession)
+            }
+        }
+        log('processing key request', {
+            requestedCount: item.solicitation.sessionIds.length,
+            replyIds: replySessionIds.length,
+            sessions: sessions.length,
+        })
+        if (sessions.length === 0) {
+            return
+        }
+
+        const fulfillment = make_CommonPayload_KeyFulfillment({
+            userId: item.fromUserId,
+            deviceKey: item.solicitation.deviceKey,
+            sessionIds: item.solicitation.isNewDevice ? [] : sessions.map((x) => x.sessionId),
+        })
+
+        await this.client.makeEventAndAddToStream(streamId, fulfillment)
+
+        const chunked = chunkArray(sessions, 100)
+        for (const chunk of chunked) {
+            await this.client.encryptAndShareMegolmSessions(streamId, chunk, {
+                [item.fromUserId]: [
+                    {
+                        deviceKey: item.solicitation.deviceKey,
+                        fallbackKey: item.solicitation.fallbackKey,
+                    },
+                ],
+            })
+        }
+    }
+
+    private getRespondDelayMSForKeySolicitation(streamId: string, userId: string): number {
+        // if its us requesting... then we can respond immediately
+        if (userId === this.userId) {
+            return 0
+        }
+        const stream = this.client.stream(streamId)
+        check(isDefined(stream), 'stream not found')
+        const numMembers = stream.view.getMemberships().joinedUsers.size
+        const maxWaitTimeSeconds = Math.max(5, Math.min(30, numMembers))
+        const waitTime = maxWaitTimeSeconds * 1000 * Math.random() // this could be much better
+        return waitTime
+    }
+}
+
+/// Returns the first item from the array,
+/// if dateFn is provided, returns the first item where dateFn(item) <= now
+function dequeue<T>(items: T[], now: Date, dateFn: (x: T) => Date): T | undefined {
+    if (items.length === 0) {
+        return undefined
+    }
+    items.sort((a, b) => dateFn(a).getTime() - dateFn(b).getTime())
+    if (dateFn(items[0]) > now) {
+        return undefined
+    }
+    return items.shift()
+}
+
+function removeItem<T>(items: T[], predicate: (x: T) => boolean) {
+    const index = items.findIndex(predicate)
+    if (index !== -1) {
+        items.splice(index, 1)
+    }
+}
+
+function sortedArraysEqual(a: string[], b: string[]): boolean {
+    if (a.length !== b.length) {
+        return false
+    }
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) {
+            return false
+        }
+    }
+    return true
+}
+
+function chunkArray<T>(array: T[], chunkSize: number): T[][] {
+    const chunks: T[][] = []
+
+    for (let i = 0; i < array.length; i += chunkSize) {
+        const chunk = array.slice(i, i + chunkSize)
+        chunks.push(chunk)
+    }
+
+    return chunks
+}
+
+function takeFirst<T>(count: number, array: T[]): T[] {
+    const result: T[] = []
+    for (let i = 0; i < count && i < array.length; i++) {
+        result.push(array[i])
+    }
+    return result
+}

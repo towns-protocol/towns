@@ -9,6 +9,7 @@ import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } fro
 import { getPublicKey } from 'ethereum-cryptography/secp256k1'
 import { ethers } from 'ethers'
 import { EncryptedData, StreamEvent } from '@river/proto'
+import { TEST_ENCRYPTED_MESSAGE_PROPS } from './util.test'
 
 const log = dlog('test:sign')
 
@@ -112,7 +113,8 @@ describe('sign', () => {
             const context2 = await c2()
 
             const message: PlainMessage<EncryptedData> = {
-                text: 'Hello, World!',
+                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                ciphertext: 'Hello, World!',
             }
             const payload: PlainMessage<StreamEvent>['payload'] = {
                 case: 'channelPayload',
@@ -175,7 +177,7 @@ describe('sign', () => {
                 value: {
                     content: {
                         case: 'message',
-                        value: { text: 'Hello, World!' },
+                        value: { ...TEST_ENCRYPTED_MESSAGE_PROPS, ciphertext: 'Hello, World!' },
                     },
                 },
             }

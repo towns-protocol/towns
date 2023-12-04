@@ -182,15 +182,32 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHea
 	var snapshot *Snapshot
 	last := r.LastBlock()
 	eventNumOffset := last.header().EventNumOffset + int64(len(last.events)) + 1 // +1 for header
+	nextMiniblockNum := last.header().MiniblockNum + 1
 	miniblockNumOfPrevSnapshot := last.header().PrevSnapshotMiniblockNum
 	if last.header().Snapshot != nil {
 		miniblockNumOfPrevSnapshot = last.header().MiniblockNum
 	}
 	if r.shouldSnapshot() {
 		snapshot = proto.Clone(r.snapshot).(*Snapshot)
-		events := r.eventsSinceLastSnapshot()
-		for i, e := range events {
-			err := Update_Snapshot(snapshot, e, eventNumOffset, i)
+		// update all blocks since last snapshot
+		for i := r.snapshotIndex + 1; i < len(r.blocks); i++ {
+			block := r.blocks[i]
+			miniblockNum := block.header().MiniblockNum
+			for j, e := range block.events {
+				offset := block.header().EventNumOffset
+				err := Update_Snapshot(snapshot, e, miniblockNum, offset+int64(j))
+				if err != nil {
+					log.Error("Failed to update snapshot",
+						"error", err,
+						"streamId", r.streamId,
+						"event", e.ShortDebugStr(),
+					)
+				}
+			}
+		}
+		// update with current events in minipool
+		for i, e := range r.minipool.events.Values {
+			err := Update_Snapshot(snapshot, e, nextMiniblockNum, eventNumOffset+int64(i))
 			if err != nil {
 				log.Error("Failed to update snapshot",
 					"error", err,
@@ -200,8 +217,9 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHea
 			}
 		}
 	}
+
 	return &MiniblockHeader{
-		MiniblockNum:             last.header().MiniblockNum + 1,
+		MiniblockNum:             nextMiniblockNum,
 		Timestamp:                NextMiniblockTimestamp(last.header().Timestamp),
 		EventHashes:              hashes,
 		PrevMiniblockHash:        last.headerEvent.Hash,
@@ -365,8 +383,7 @@ func (r *streamViewImpl) shouldSnapshot() bool {
 	// Do not snapshot user key streams
 	// See https://linear.app/hnt-labs/issue/HNT-3531/implement-snapshotting-for-key-stream
 	_, isUserDeviceKeyPayload := r.InceptionPayload().(*UserDeviceKeyPayload_Inception)
-	_, isUserPayload := r.InceptionPayload().(*UserPayload_Inception)
-	if usingDefault && (isUserDeviceKeyPayload || isUserPayload) {
+	if usingDefault && (isUserDeviceKeyPayload) {
 		return false
 	}
 
@@ -388,19 +405,6 @@ func (r *streamViewImpl) shouldSnapshot() bool {
 		}
 	}
 	return false
-}
-
-func (r *streamViewImpl) eventsSinceLastSnapshot() []*ParsedEvent {
-	num, _ := r.getMinEventsPerSnapshot()
-	returnVal := make([]*ParsedEvent, 0, num)
-	// add events from blocks without snapshot
-	for i := r.snapshotIndex + 1; i < len(r.blocks); i++ {
-		block := r.blocks[i]
-		returnVal = append(returnVal, block.events...)
-	}
-	// add the minipool
-	returnVal = append(returnVal, r.minipool.events.Values...)
-	return returnVal
 }
 
 func (r *streamViewImpl) ValidateNextEvent(parsedEvent *ParsedEvent, config *config.RecencyConstraintsConfig) error {

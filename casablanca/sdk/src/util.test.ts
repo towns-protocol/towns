@@ -1,11 +1,17 @@
 import { SignerContext, _impl_makeEvent_impl_ } from './sign'
 
 import { dlog } from './dlog'
-import { Envelope, StreamEvent } from '@river/proto'
+import {
+    EncryptedData,
+    Envelope,
+    StreamEvent,
+    ChannelMessage,
+    SnapshotCaseType,
+} from '@river/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
 import { userIdFromAddress } from './id'
-import { ParsedEvent, takeKeccakFingerprintInHex } from './types'
+import { ParsedEvent, takeKeccakFingerprintInHex, DecryptedTimelineEvent } from './types'
 import { bin_fromHexString, bin_toHexString } from './binary'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto/crypto'
@@ -15,8 +21,8 @@ import { StreamRpcClientType, makeStreamRpcClient } from './makeStreamRpcClient'
 import assert from 'assert'
 import { setTimeout } from 'timers/promises'
 import _ from 'lodash'
-import { EntitlementsDelegate } from './riverDecryptionExtensions'
 import { MockEntitlementsDelegate } from './utils'
+import { EntitlementsDelegate } from './decryptionExtensions'
 
 const log = dlog('csb:test:util')
 
@@ -31,6 +37,13 @@ export const makeEvent_test = async (
     prevMiniblockHash?: Uint8Array,
 ): Promise<Envelope> => {
     return _impl_makeEvent_impl_(context, payload, prevMiniblockHash)
+}
+
+export const TEST_ENCRYPTED_MESSAGE_PROPS: PlainMessage<EncryptedData> = {
+    sessionId: '',
+    ciphertext: '',
+    algorithm: '',
+    senderKey: '',
 }
 
 /**
@@ -285,4 +298,28 @@ export function waitFor<T>(
             }
         }
     })
+}
+
+export function getChannelMessagePayload(event?: ChannelMessage) {
+    if (event?.payload?.case === 'post') {
+        if (event.payload.value.content.case === 'text') {
+            return event.payload.value.content.value?.body
+        }
+    }
+    return undefined
+}
+
+export function createEventDecryptedPromise(client: Client, expectedMessageText: string) {
+    const recipientReceivesMessageWithoutError = makeDonePromise()
+    client.on(
+        'eventDecrypted',
+        (streamId: string, contentKind: SnapshotCaseType, event: DecryptedTimelineEvent): void => {
+            recipientReceivesMessageWithoutError.runAndDone(() => {
+                const content = event.decryptedContent
+                expect(content).toBeDefined()
+                expect(getChannelMessagePayload(content?.content)).toEqual(expectedMessageText)
+            })
+        },
+    )
+    return recipientReceivesMessageWithoutError.promise
 }

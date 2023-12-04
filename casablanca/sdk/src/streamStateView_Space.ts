@@ -6,8 +6,8 @@ import { EmittedEvents } from './client'
 import {
     ChannelOp,
     ChannelProperties,
-    EncryptedData,
     Err,
+    EncryptedData,
     MiniblockHeader,
     Snapshot,
     SpacePayload,
@@ -153,7 +153,7 @@ export class StreamStateView_Space implements StreamStateView_IContent {
 
     private decryptChannelProps(encryptedData: EncryptedData | undefined): ChannelProperties {
         //TODO: We need to support decryption once encryption is enabled for Channel EncryptedData events
-        let channelProperties = ChannelProperties.fromJsonString(encryptedData?.text ?? '')
+        let channelProperties = ChannelProperties.fromJsonString(encryptedData?.ciphertext ?? '')
         if (!isDefined(channelProperties)) {
             channelProperties = new ChannelProperties()
         }

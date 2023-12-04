@@ -5,6 +5,7 @@ import (
 	. "casablanca/node/protocol"
 	"errors"
 	"fmt"
+	"sort"
 )
 
 func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
@@ -20,12 +21,13 @@ func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
 	}
 
 	snapshot := &Snapshot{
+		Common:  &CommonPayload_Snapshot{},
 		Content: content,
 	}
 
 	for i, event := range events[1:] {
 		// start at index 1 to account for inception event
-		err = Update_Snapshot(snapshot, event, 1, i)
+		err = Update_Snapshot(snapshot, event, 0, int64(1+i))
 		if err != nil {
 			return nil, err
 		}
@@ -76,6 +78,12 @@ func make_SnapshotContent(iPayload IsInceptionPayload) (IsSnapshot_Content, erro
 				Inception: payload,
 			},
 		}, nil
+	case *UserToDevicePayload_Inception:
+		return &Snapshot_UserToDeviceContent{
+			UserToDeviceContent: &UserToDevicePayload_Snapshot{
+				Inception: payload,
+			},
+		}, nil
 	case *UserDeviceKeyPayload_Inception:
 		return &Snapshot_UserDeviceKeyContent{
 			UserDeviceKeyContent: &UserDeviceKeyPayload_Snapshot{
@@ -94,14 +102,14 @@ func make_SnapshotContent(iPayload IsInceptionPayload) (IsSnapshot_Content, erro
 }
 
 // mutate snapshot with content of event if applicable
-func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, eventNumOffset int64, eventNum int) error {
+func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64, eventNum int64) error {
 	switch payload := event.Event.Payload.(type) {
 	case *StreamEvent_SpacePayload:
-		user, err := common.AddressHex(event.Event.CreatorAddress)
+		creator, err := common.AddressHex(event.Event.CreatorAddress)
 		if err != nil {
 			return err
 		}
-		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, user, eventNumOffset+int64(eventNum))
+		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, creator, eventNum)
 	case *StreamEvent_ChannelPayload:
 		return update_Snapshot_Channel(iSnapshot, payload.ChannelPayload)
 	case *StreamEvent_DmChannelPayload:
@@ -114,6 +122,18 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, eventNumOffset int
 		return update_Snapshot_UserSettings(iSnapshot, payload.UserSettingsPayload)
 	case *StreamEvent_UserDeviceKeyPayload:
 		return update_Snapshot_UserDeviceKey(iSnapshot, payload.UserDeviceKeyPayload)
+	case *StreamEvent_UserToDevicePayload:
+		creator, err := common.AddressHex(event.Event.CreatorAddress)
+		if err != nil {
+			return err
+		}
+		return update_Snapshot_UserToDevice(iSnapshot, payload.UserToDevicePayload, creator, miniblockNum)
+	case *StreamEvent_CommonPayload:
+		creator, err := common.AddressHex(event.Event.CreatorAddress)
+		if err != nil {
+			return err
+		}
+		return update_Snapshot_Common(iSnapshot, payload.CommonPayload, creator)
 	default:
 		return fmt.Errorf("unknown payload type %T", event.Event.Payload)
 	}
@@ -172,7 +192,7 @@ func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload
 		}
 		snapshot.ChannelContent.Memberships[content.Membership.UserId] = content.Membership
 		return nil
-	case *ChannelPayload_Message, *ChannelPayload_KeySolicitation, *ChannelPayload_Fulfillment:
+	case *ChannelPayload_Message:
 		return nil
 	default:
 		return fmt.Errorf("unknown channel payload type %T", channelPayload.Content)
@@ -193,7 +213,7 @@ func update_Snapshot_DmChannel(iSnapshot *Snapshot, dmChannelPayload *DmChannelP
 		}
 		snapshot.DmChannelContent.Memberships[content.Membership.UserId] = content.Membership
 		return nil
-	case *DmChannelPayload_Message, *DmChannelPayload_KeySolicitation, *DmChannelPayload_Fulfillment:
+	case *DmChannelPayload_Message:
 		return nil
 	default:
 		return fmt.Errorf("unknown dm channel payload type %T", dmChannelPayload.Content)
@@ -215,7 +235,7 @@ func update_Snapshot_GdmChannel(iSnapshot *Snapshot, channelPayload *GdmChannelP
 		}
 		snapshot.GdmChannelContent.Memberships[content.Membership.UserId] = content.Membership
 		return nil
-	case *GdmChannelPayload_Message, *GdmChannelPayload_KeySolicitation, *GdmChannelPayload_Fulfillment:
+	case *GdmChannelPayload_Message:
 		return nil
 	default:
 		return fmt.Errorf("unknown channel payload type %T", channelPayload.Content)
@@ -235,8 +255,6 @@ func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
 			snapshot.UserContent.Memberships = make(map[string]*UserPayload_UserMembership)
 		}
 		snapshot.UserContent.Memberships[content.UserMembership.StreamId] = content.UserMembership
-		return nil
-	case *UserPayload_ToDevice_:
 		return nil
 	default:
 		return fmt.Errorf("unknown user payload type %T", userPayload.Content)
@@ -270,13 +288,158 @@ func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userDeviceKeyPayload *Us
 	switch content := userDeviceKeyPayload.Content.(type) {
 	case *UserDeviceKeyPayload_Inception_:
 		return errors.New("cannot update blockheader with inception event")
-	case *UserDeviceKeyPayload_UserDeviceKey_:
-		if snapshot.UserDeviceKeyContent.UserDeviceKeys == nil {
-			snapshot.UserDeviceKeyContent.UserDeviceKeys = make(map[string]*UserDeviceKeyPayload_UserDeviceKey)
+	case *UserDeviceKeyPayload_MegolmDevice_:
+		if snapshot.UserDeviceKeyContent.MegolmDevices == nil {
+			snapshot.UserDeviceKeyContent.MegolmDevices = make([]*UserDeviceKeyPayload_MegolmDevice, 0)
 		}
-		snapshot.UserDeviceKeyContent.UserDeviceKeys[content.UserDeviceKey.DeviceKeys.DeviceId] = content.UserDeviceKey
+		// filter out the key if it already exists
+		i := 0
+		for _, key := range snapshot.UserDeviceKeyContent.MegolmDevices {
+			if key.DeviceKey != content.MegolmDevice.DeviceKey {
+				snapshot.UserDeviceKeyContent.MegolmDevices[i] = key
+				i++
+			}
+		}
+		if i == len(snapshot.UserDeviceKeyContent.MegolmDevices)-1 {
+			// just an inplace sort operation
+			snapshot.UserDeviceKeyContent.MegolmDevices[i] = content.MegolmDevice
+		} else {
+			// truncate and stick the new key on the end
+			MAX_DEVICES := 10
+			startIndex := max(0, i-MAX_DEVICES)
+			snapshot.UserDeviceKeyContent.MegolmDevices = append(snapshot.UserDeviceKeyContent.MegolmDevices[startIndex:i], content.MegolmDevice)
+		}
 		return nil
 	default:
 		return fmt.Errorf("unknown user device key payload type %T", userDeviceKeyPayload.Content)
 	}
+}
+
+func update_Snapshot_UserToDevice(iSnapshot *Snapshot, userToDevicePayload *UserToDevicePayload, senderId string, miniblockNum int64) error {
+	snapshot := iSnapshot.Content.(*Snapshot_UserToDeviceContent)
+	if snapshot == nil {
+		return errors.New("blockheader snapshot is not a user to device snapshot")
+	}
+	switch content := userToDevicePayload.Content.(type) {
+	case *UserToDevicePayload_Inception_:
+		return errors.New("cannot update blockheader with inception event")
+	case *UserToDevicePayload_MegolmSessions_:
+		if snapshot.UserToDeviceContent.DeviceSummary == nil {
+			snapshot.UserToDeviceContent.DeviceSummary = make(map[string]*UserToDevicePayload_Snapshot_DeviceSummary)
+		}
+		// loop over keys in the ciphertext map
+		for deviceKey := range content.MegolmSessions.Ciphertexts {
+			if summary, ok := snapshot.UserToDeviceContent.DeviceSummary[deviceKey]; ok {
+				summary.UpperBound = miniblockNum
+			} else {
+				snapshot.UserToDeviceContent.DeviceSummary[deviceKey] = &UserToDevicePayload_Snapshot_DeviceSummary{
+					LowerBound: miniblockNum,
+					UpperBound: miniblockNum,
+				}
+			}
+		}
+		// cleanup devices
+		cleanup_Snapshot_UserToDevice(snapshot, miniblockNum)
+
+		return nil
+	case *UserToDevicePayload_Ack_:
+		if snapshot.UserToDeviceContent.DeviceSummary == nil {
+			return nil
+		}
+		deviceKey := content.Ack.DeviceKey
+		if summary, ok := snapshot.UserToDeviceContent.DeviceSummary[deviceKey]; ok {
+			if summary.UpperBound <= content.Ack.MiniblockNum {
+				delete(snapshot.UserToDeviceContent.DeviceSummary, deviceKey)
+			} else {
+				summary.LowerBound = content.Ack.MiniblockNum + 1
+			}
+		}
+		cleanup_Snapshot_UserToDevice(snapshot, miniblockNum)
+		return nil
+	default:
+		return fmt.Errorf("unknown user to device payload type %T", userToDevicePayload.Content)
+	}
+}
+
+func cleanup_Snapshot_UserToDevice(snapshot *Snapshot_UserToDeviceContent, currentMiniblockNum int64) {
+	maxGenerations := int64(3600) // blocks are made every 2 seconds if events exist. 3600 would be 5 days of blocks 24 hours a day
+	if snapshot.UserToDeviceContent.DeviceSummary != nil {
+		for deviceKey, deviceSummary := range snapshot.UserToDeviceContent.DeviceSummary {
+			isOlderThanMaxGenerations := (currentMiniblockNum - deviceSummary.LowerBound) > maxGenerations
+			if isOlderThanMaxGenerations {
+				delete(snapshot.UserToDeviceContent.DeviceSummary, deviceKey)
+			}
+		}
+	}
+}
+
+func update_Snapshot_Common(iSnapshot *Snapshot, commonPayload *CommonPayload, senderId string) error {
+	snapshot := iSnapshot.Common
+	if snapshot == nil {
+		return errors.New("blockheader snapshot common is undefined")
+	}
+	switch content := commonPayload.Content.(type) {
+	case *CommonPayload_KeySolicitation_:
+		// remove prev solicitation with same device key, sort the event keys in the new event and append it
+		if snapshot.Solicitations == nil {
+			snapshot.Solicitations = make(map[string]*CommonPayload_Snapshot_Solicitations)
+		}
+		if solicitations, ok := snapshot.Solicitations[senderId]; ok {
+			// remove prev solicitation with same device key
+			i := 0
+			for _, event := range solicitations.Events {
+				if event.DeviceKey != content.KeySolicitation.DeviceKey {
+					solicitations.Events[i] = event
+					i++
+				}
+			}
+			// sort the event keys in the new event and append it
+			event := content.KeySolicitation
+			event.SessionIds = sort.StringSlice(event.SessionIds)
+			solicitations.Events = append(solicitations.Events[:i], event)
+		} else {
+			snapshot.Solicitations[senderId] = &CommonPayload_Snapshot_Solicitations{
+				Events: []*CommonPayload_KeySolicitation{content.KeySolicitation},
+			}
+		}
+		return nil
+	case *CommonPayload_KeyFulfillment_:
+		// clear out any fulfilled session ids for the device key
+		if solicitation, ok := snapshot.Solicitations[content.KeyFulfillment.UserId]; ok {
+			for _, event := range solicitation.Events {
+				if event.DeviceKey == content.KeyFulfillment.DeviceKey {
+					event.SessionIds = removeCommon(event.SessionIds, content.KeyFulfillment.SessionIds)
+					event.IsNewDevice = false
+					break
+				}
+			}
+		}
+		return nil
+	default:
+		return fmt.Errorf("unknown common payload type %T", commonPayload.Content)
+	}
+}
+
+func removeCommon(x, y []string) []string {
+	result := make([]string, 0, len(x))
+	i, j := 0, 0
+
+	for i < len(x) && j < len(y) {
+		if x[i] < y[j] {
+			result = append(result, x[i])
+			i++
+		} else if x[i] > y[j] {
+			j++
+		} else {
+			i++
+			j++
+		}
+	}
+
+	// Append remaining elements from x
+	if i < len(x) {
+		result = append(result, x[i:]...)
+	}
+
+	return result
 }

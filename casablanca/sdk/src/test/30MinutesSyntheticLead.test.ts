@@ -11,7 +11,6 @@ import { userIdFromAddress } from '../id'
 import { Client } from '../client'
 import { RiverDbManager } from '../riverDbManager'
 import { MockEntitlementsDelegate } from '../utils'
-import { RiverEventV2 } from '../eventV2'
 import { Queue, Worker } from 'bullmq'
 import {
     testRunTimeMs,
@@ -24,6 +23,8 @@ import {
     fromFollowerQueueName,
     fromLeaderQueueName,
 } from './30MinutesSyntheticConfig'
+import { DecryptedTimelineEvent } from '../types'
+import { SnapshotCaseType } from '@river/proto'
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error
 // specifically the code in ConvertersEntitlements.ts - decodeAbiParameters and encodeAbiParameters functions have an import that can't be found
@@ -117,25 +118,29 @@ describe('mirrorMessages', () => {
 
             //Step 4 - send message
             const done = makeDonePromise()
-            client.on('eventDecrypted', (event: RiverEventV2, err: Error | undefined): void => {
-                if (err) {
-                    log('eventDecrypted error', err)
-                    return
-                }
-                done.runAsync(async () => {
-                    // await client.decryptEventIfNeeded(event)
-                    const clearEvent = event.getContent()
-                    expect(clearEvent?.content?.payload).toBeDefined()
-                    if (
-                        clearEvent?.content?.payload?.case === 'post' &&
-                        clearEvent?.content?.payload?.value?.content?.case === 'text'
-                    ) {
-                        const body = clearEvent?.content?.payload?.value?.content.value?.body
-                        messagesSet.add(body)
-                        log('Added message', body)
-                    }
-                })
-            })
+            client.on(
+                'eventDecrypted',
+                (
+                    streamId: string,
+                    contentKind: SnapshotCaseType,
+                    event: DecryptedTimelineEvent,
+                ): void => {
+                    done.runAsync(async () => {
+                        // await client.decryptEventIfNeeded(event)
+                        const clearEvent = event.decryptedContent
+                        expect(clearEvent?.content?.payload).toBeDefined()
+                        expect(clearEvent.kind).toEqual('channelMessage')
+                        if (
+                            clearEvent?.content?.payload?.case === 'post' &&
+                            clearEvent?.content?.payload?.value?.content?.case === 'text'
+                        ) {
+                            const body = clearEvent?.content?.payload?.value?.content.value?.body
+                            messagesSet.add(body)
+                            log('Added message', body)
+                        }
+                    })
+                },
+            )
 
             const currentDate = new Date()
             const isoDateString = currentDate.toISOString()

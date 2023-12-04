@@ -92,15 +92,16 @@ export interface MiniblockHeaderEvent {
 export interface FulfillmentEvent {
     kind: ZTEvent.Fulfillment
     sessionIds: string[]
-    originEventHash: string
-    algorithm?: string
+    deviceKey: string
+    to: string
     from: string
 }
 
 export interface KeySolicitationEvent {
     kind: ZTEvent.KeySolicitation
-    sessionId: string
-    senderKey: string
+    sessionIds: string[]
+    deviceKey: string
+    isNewDevice: boolean
 }
 
 export interface ReactionEvent {
@@ -379,7 +380,7 @@ export function getFallbackContent(
         case ZTEvent.Fulfillment:
             return `Fulfillment sessionIds: ${content.sessionIds.join(',')}, from: ${content.from}`
         case ZTEvent.KeySolicitation:
-            return `KeySolicitation sessionId: ${content.sessionId}, senderKey: ${content.senderKey}`
+            return `KeySolicitation deviceKey: ${content.deviceKey} sessionIds: ${content.sessionIds.length}`
         default:
             staticAssertNever(content)
     }

@@ -4,7 +4,7 @@ import { AccountRecord, MegolmSessionRecord, UserDeviceRecord } from './types'
 
 import Dexie, { Table } from 'dexie'
 
-const DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS = 15 * 60 * 1000 // 15 minutes
+const DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS = 15 * 60 * 1000 // 15 minutes todo increase to like 10 days or something https://github.com/HereNotThere/harmony/pull/4222#issuecomment-1822935596
 
 export class CryptoStore extends Dexie {
     account!: Table<AccountRecord>
@@ -16,11 +16,11 @@ export class CryptoStore extends Dexie {
     constructor(databaseName: string, userId: string) {
         super(databaseName)
         this.userId = userId
-        this.version(5).stores({
+        this.version(6).stores({
             account: 'id',
             inboundGroupSessions: '[streamId+sessionId]',
             outboundGroupSessions: 'streamId',
-            devices: '[userId+deviceId],expirationTimestamp',
+            devices: '[userId+deviceKey],expirationTimestamp',
         })
     }
 
@@ -140,7 +140,6 @@ export class CryptoStore extends Dexie {
                 .and((record) => record.expirationTimestamp > expirationTimestamp)
                 .toArray()
         ).map((record) => ({
-            deviceId: record.deviceId,
             deviceKey: record.deviceKey,
             fallbackKey: record.fallbackKey,
         }))

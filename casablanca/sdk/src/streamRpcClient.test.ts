@@ -8,6 +8,7 @@ import {
     makeTestRpcClient,
     TEST_URL,
     timeoutIterable,
+    TEST_ENCRYPTED_MESSAGE_PROPS,
 } from './util.test'
 import {
     genId,
@@ -20,6 +21,7 @@ import {
     make_ChannelPayload_Inception,
     make_ChannelPayload_Membership,
     make_ChannelPayload_Message,
+    make_fake_encryptedData,
     make_SpacePayload_Inception,
     make_SpacePayload_Membership,
     make_UserPayload_Inception,
@@ -100,7 +102,7 @@ describe.skip('streamRpcClient using v2 sync', () => {
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spaceId,
-                channelProperties: { text: channelProperties },
+                channelProperties: make_fake_encryptedData(channelProperties),
             }),
         )
         const event = await makeEvent(
@@ -190,7 +192,7 @@ describe.skip('streamRpcClient using v2 sync', () => {
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spaceId,
-                channelProperties: { text: channelProperties },
+                channelProperties: make_fake_encryptedData(channelProperties),
             }),
         )
         let event = await makeEvent(
@@ -238,7 +240,8 @@ describe.skip('streamRpcClient using v2 sync', () => {
         event = await makeEvent(
             alicesContext,
             make_ChannelPayload_Message({
-                text: 'hello',
+                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                ciphertext: 'hello',
             }),
         )
         await alice.addEvent({
@@ -366,7 +369,8 @@ describe('streamRpcClient', () => {
         const event = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
-                text: 'hello',
+                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                ciphertext: 'hello',
             }),
             userStream.miniblocks.at(-1)?.header?.hash,
         )
@@ -454,7 +458,7 @@ describe('streamRpcClient', () => {
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spaceId,
-                channelProperties: { text: channelProperties },
+                channelProperties: make_fake_encryptedData(channelProperties),
             }),
         )
         let event = await makeEvent(
@@ -473,7 +477,8 @@ describe('streamRpcClient', () => {
         event = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
-                text: 'hello',
+                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                ciphertext: 'hello',
             }),
             createChannelResponse.miniblocks.at(-1)?.header?.hash,
         )
@@ -489,7 +494,8 @@ describe('streamRpcClient', () => {
                 event: await makeEvent(
                     alicesContext,
                     make_ChannelPayload_Message({
-                        text: 'hello',
+                        ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                        ciphertext: 'hello',
                     }),
                     createChannelResponse.miniblocks.at(-1)?.header?.hash,
                 ),
@@ -590,7 +596,7 @@ describe('streamRpcClient', () => {
             const p = e.event.payload
             if (p?.case === 'channelPayload' && p.value.content.case === 'message') {
                 messageCount++
-                expect(p.value.content.value.text).toEqual('hello')
+                expect(p.value.content.value.ciphertext).toEqual('hello')
             }
         })
         expect(messageCount).toEqual(1)
@@ -610,7 +616,8 @@ describe('streamRpcClient', () => {
         event = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
-                text: 'Hello, Alice!',
+                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                ciphertext: 'Hello, Alice!',
             }),
             channel.miniblocks.at(-1)?.header?.hash,
         )
@@ -627,7 +634,7 @@ describe('streamRpcClient', () => {
                 (e) =>
                     e.event.payload?.case === 'channelPayload' &&
                     e.event.payload?.value.content.case === 'message' &&
-                    e.event.payload?.value.content.value.text === 'Hello, Alice!',
+                    e.event.payload?.value.content.value.ciphertext === 'Hello, Alice!',
             ),
         ).toResolve()
 
@@ -676,7 +683,7 @@ describe('streamRpcClient', () => {
         const channelEvents = await makeEvents(bobsContext, [
             make_ChannelPayload_Inception({
                 streamId: channelId,
-                channelProperties: { text: channelProperties },
+                channelProperties: make_fake_encryptedData(channelProperties),
                 spaceId: spacedStreamId,
             }),
             make_ChannelPayload_Membership({
@@ -698,7 +705,7 @@ describe('streamRpcClient', () => {
             make_ChannelPayload_Inception({
                 streamId: channelId2,
                 spaceId: spacedStreamId,
-                channelProperties: { text: channelProperties2 },
+                channelProperties: make_fake_encryptedData(channelProperties2),
             }),
         )
 
@@ -728,7 +735,8 @@ describe('streamRpcClient', () => {
         const messageEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
-                text: 'Hello, World!',
+                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                ciphertext: 'Hello, World!',
             }),
             lastMiniblockHash,
         )
@@ -746,7 +754,8 @@ describe('streamRpcClient', () => {
                 event: await makeEvent_test(
                     bobsContext,
                     make_ChannelPayload_Message({
-                        text: 'Hello, World!',
+                        ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                        ciphertext: 'Hello, World!',
                     }),
                 ),
             }),
@@ -800,7 +809,7 @@ describe('streamRpcClient', () => {
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spacedStreamId,
-                channelProperties: { text: channelProperties },
+                channelProperties: make_fake_encryptedData(channelProperties),
             }),
             make_ChannelPayload_Membership({
                 userId: bobsUserId,
@@ -818,7 +827,8 @@ describe('streamRpcClient', () => {
         const messageEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
-                text: 'Hello, World!',
+                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                ciphertext: 'Hello, World!',
             }),
             lastMiniblockHash,
         )
@@ -846,7 +856,8 @@ describe('streamRpcClient', () => {
         const badEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
-                text: 'Nah, not really',
+                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                ciphertext: 'Nah, not really',
             }),
             lastMiniblockHash,
         )
@@ -862,7 +873,8 @@ describe('streamRpcClient', () => {
         const expiredEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
-                text: 'Nah, not really',
+                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                ciphertext: 'Nah, not really',
             }),
             Uint8Array.from(Array(32).fill('1')),
         )

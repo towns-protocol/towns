@@ -54,3 +54,28 @@ export class MockEntitlementsDelegate {
         return true
     }
 }
+
+export function removeCommon(x: string[], y: string[]): string[] {
+    const result = []
+    let i = 0
+    let j = 0
+
+    while (i < x.length && j < y.length) {
+        if (x[i] < y[j]) {
+            result.push(x[i])
+            i++
+        } else if (x[i] > y[j]) {
+            j++
+        } else {
+            i++
+            j++
+        }
+    }
+
+    // Append remaining elements from x
+    if (i < x.length) {
+        result.push(...x.slice(i))
+    }
+
+    return result
+}

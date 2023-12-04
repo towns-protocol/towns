@@ -184,7 +184,7 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 
 func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string, channelId string, streamSettings *protocol.StreamSettings) (*protocol.SyncCookie, []byte, error) {
 	var channelProperties protocol.EncryptedData
-	channelProperties.Text = "encrypted text supposed to be here"
+	channelProperties.Ciphertext = "encrypted text supposed to be here"
 	channelStreamId := common.ChannelStreamIdFromName(channelId)
 	channel, err := events.MakeEnvelopeWithPayload(
 		wallet,
@@ -1084,7 +1084,7 @@ func DisableTestManyUsers(t *testing.T) {
 				assert.NoError(t, err)
 				msg := e.GetChannelMessage()
 				assert.NotNil(t, msg)
-				tokens := strings.Split(msg.Message.Text, " ")
+				tokens := strings.Split(msg.Message.Ciphertext, " ")
 				assert.Equal(t, 4, len(tokens))
 				id, err := strconv.Atoi(tokens[0])
 				assert.NoError(t, err)

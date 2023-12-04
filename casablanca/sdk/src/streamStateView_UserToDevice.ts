@@ -1,0 +1,125 @@
+import TypedEmitter from 'typed-emitter'
+import { ParsedEvent } from './types'
+import { EmittedEvents } from './client'
+import {
+    MiniblockHeader,
+    Snapshot,
+    UserToDevicePayload,
+    UserToDevicePayload_Snapshot,
+    UserToDevicePayload_Inception,
+    UserToDevicePayload_Snapshot_DeviceSummary,
+    UserToDevicePayload_MegolmSessions,
+    UserToDevicePayload_Ack,
+} from '@river/proto'
+import { logNever } from './check'
+import { StreamStateView_IContent } from './streamStateView_IContent'
+import { bin_toHexString } from './binary'
+
+export class StreamStateView_UserToDevice implements StreamStateView_IContent {
+    readonly streamId: string
+    deviceSummary: Record<string, UserToDevicePayload_Snapshot_DeviceSummary> = {}
+    pendingMegolmSessions: Record<
+        string,
+        { creatorUserId: string; value: UserToDevicePayload_MegolmSessions }
+    > = {}
+
+    constructor(inception: UserToDevicePayload_Inception) {
+        this.streamId = inception.streamId
+    }
+
+    initialize(
+        snapshot: Snapshot,
+        content: UserToDevicePayload_Snapshot,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        Object.entries(content.deviceSummary).map(([deviceId, summary]) => {
+            this.deviceSummary[deviceId] = summary
+        })
+    }
+
+    onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
+        for (const eventHash of blockHeader.eventHashes) {
+            const eventId = bin_toHexString(eventHash)
+            const payload = this.pendingMegolmSessions[eventId]
+            if (payload) {
+                delete this.pendingMegolmSessions[eventId]
+                this.addMegolmSessions(payload.creatorUserId, payload.value, emitter)
+            }
+        }
+    }
+
+    prependEvent(
+        event: ParsedEvent,
+        payload: UserToDevicePayload,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        switch (payload.content.case) {
+            case 'inception':
+                break
+            case 'megolmSessions':
+                this.addMegolmSessions(event.creatorUserId, payload.content.value, emitter)
+                break
+            case 'ack':
+                break
+            case undefined:
+                break
+            default:
+                logNever(payload.content)
+        }
+    }
+
+    appendEvent(
+        event: ParsedEvent,
+        payload: UserToDevicePayload,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        switch (payload.content.case) {
+            case 'inception':
+                break
+            case 'megolmSessions':
+                this.pendingMegolmSessions[event.hashStr] = {
+                    creatorUserId: event.creatorUserId,
+                    value: payload.content.value,
+                }
+                break
+            case 'ack':
+                this.updateDeviceSummary(event, payload.content.value)
+                break
+            case undefined:
+                break
+            default:
+                logNever(payload.content)
+        }
+    }
+
+    hasPendingSessionId(deviceKey: string, sessionId: string): boolean {
+        for (const [_, payload] of Object.entries(this.pendingMegolmSessions)) {
+            if (
+                payload.value.sessionIds.includes(sessionId) &&
+                payload.value.ciphertexts[deviceKey]
+            ) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private addMegolmSessions(
+        creatorUserId: string,
+        content: UserToDevicePayload_MegolmSessions,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ) {
+        emitter?.emit('newMegolmSessions', content, creatorUserId)
+    }
+
+    private updateDeviceSummary(event: ParsedEvent, content: UserToDevicePayload_Ack) {
+        const summary = this.deviceSummary[content.deviceKey]
+        if (summary) {
+            if (summary.upperBound <= content.miniblockNum) {
+                delete this.deviceSummary[content.deviceKey]
+            } else {
+                summary.lowerBound = content.miniblockNum + 1n
+            }
+        }
+    }
+}

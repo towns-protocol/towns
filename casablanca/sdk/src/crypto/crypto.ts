@@ -1,32 +1,18 @@
-// TODO(HNT-1380): looks like browser supports async sign, but nodejs doesn't by default
-// Figure out if async sign should be used everywhere.
-
 import { dlog } from '../dlog'
 import { assertBytes } from 'ethereum-cryptography/utils'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 import { check } from '../check'
 import { Client } from '../client'
-import { OLM_ALGORITHM, MEGOLM_ALGORITHM, UserDevice, ISignatures } from './olmLib'
+import { OLM_ALGORITHM, MEGOLM_ALGORITHM, UserDevice, MegolmSession } from './olmLib'
 import { OlmMegolmDelegate } from '@river/mecholm'
 import { OlmDevice } from './olmDevice'
-import {
-    ChannelMessage,
-    EncryptedData,
-    EncryptedDeviceData,
-    EncryptedMessageEnvelope,
-    Err,
-    MegolmSession,
-    OlmMessage,
-    ToDeviceMessage,
-} from '@river/proto'
-import { IFallbackKey, recursiveMapToObject } from '../types'
+import { EncryptedData, Err } from '@river/proto'
 import { bin_fromHexString } from '../binary'
 import { ethers } from 'ethers'
 import { CryptoStore } from './store/cryptoStore'
 
 import { MegolmDecryption, MegolmEncryption } from './algorithms/megolm'
-import { RiverEventV2 } from '../eventV2'
 
 const log = dlog('csb:crypto')
 
@@ -131,102 +117,7 @@ export const makeOldTownsDelegateSig = async (
     return bin_fromHexString(await primaryWallet.signMessage(devicePubKey))
 }
 
-export interface IEncryptionUserRecipient {
-    userIds: string[]
-}
-
-export interface IEncryptionStreamRecipient {
-    streamId: string
-}
-
-export type GroupEncryptionInput = {
-    content: ChannelMessage
-    recipient: IEncryptionStreamRecipient
-}
-
-export type EncryptionInput = {
-    content: ToDeviceMessage
-    recipient: IEncryptionUserRecipient
-}
-
-export enum CryptoEvent {
-    DeviceVerificationChanged = 'deviceVerificationChanged',
-    WillUpdateDevices = 'crypto.willUpdateDevices',
-    DevicesUpdated = 'crypto.devicesUpdated',
-}
-
-export interface IImportOpts {
-    stage: string // TODO: Enum
-    successes: number
-    failures: number
-    total: number
-}
-
-export type CryptoEventHandlerMap = {
-    /**
-     * Fires whenever the stored devices for a user will be updated
-     */
-    [CryptoEvent.WillUpdateDevices]: (users: string[], initialFetch: boolean) => void
-    /**
-     * Fires whenever the stored devices for a user have changed
-     */
-    [CryptoEvent.DevicesUpdated]: (users: string[], initialFetch: boolean) => void
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface CryptoBackend {
-    // TODO: add common interface for crypto implementations
-    /**
-     * Shut down any background processes related to crypto
-     */
-    stop(): void
-
-    /**
-     * Encrypt an event using Olm
-     *
-     * @param payload -  string to be encrypted with Olm
-     * @param deviceKeys - recipients to encrypt message for
-     *
-     * @returns Promise which resolves when the event has been
-     *     encrypted, or null if nothing was needed
-     */
-    encryptOlm(payload: string, deviceKeys: UserDevice[]): Promise<EncryptedDeviceData>
-
-    /**
-     * Encrypt an event using Megolm
-     *
-     * @returns Promise which resolves when the event has been
-     *     encrypted, or null if nothing was needed
-     */
-    encryptMegolmEvent(input: GroupEncryptionInput): Promise<EncryptedData>
-
-    /**
-     * Decrypt a received event using Megolm
-     *
-     * @returns a promise which resolves once we have finished decrypting.
-     * Rejects with an error if there is a problem decrypting the event.
-     */
-    decryptMegolmEvent(event: RiverEventV2): Promise<void>
-
-    /**
-     * Decrypt a received event using Olm
-     *
-     * @returns a promise which resolves once we have finished decrypting.
-     * Rejects with an error if there is a problem decrypting the event.
-     */
-    decryptOlmEvent(
-        envelope: EncryptedMessageEnvelope,
-        senderDeviceKey: string,
-    ): Promise<OlmMessage>
-}
-
-interface ISignableObject {
-    signatures?: ISignatures
-    unsigned?: object
-}
-
-export class Crypto implements CryptoBackend {
-    public deviceKeys: Record<string, string> = {}
+export class Crypto {
     private olmDelegate: OlmMegolmDelegate | undefined
 
     public readonly supportedAlgorithms: string[]
@@ -236,8 +127,6 @@ export class Crypto implements CryptoBackend {
 
     public globalBlacklistUnverifiedDevices = false
     public globalErrorOnUnknownDevices = true
-    // device_id -> map ( algo_key_id: { key, signatures: { key: sig}})
-    private fallbackKeys: Record<string, Record<string, IFallbackKey>> = {}
 
     public constructor(
         public readonly client: Client,
@@ -245,8 +134,6 @@ export class Crypto implements CryptoBackend {
         public readonly deviceId: string,
         public readonly cryptoStore: CryptoStore,
     ) {
-        // jterzis 05/05/23: this list is probably close to the actual list, but also tentative until confirmed.
-        // todo: implement olmDevice instantiation
         // initialize Olm library
         this.olmDelegate = new OlmMegolmDelegate()
         // olm lib returns a Promise<void> on init, hence the catch if it rejects
@@ -273,10 +160,6 @@ export class Crypto implements CryptoBackend {
         })
     }
 
-    /** stop background processes */
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    public stop(): void {}
-
     /** Iniitalize crypto module prior to usage
      *
      */
@@ -288,59 +171,19 @@ export class Crypto implements CryptoBackend {
         if (!this.olmDevice.deviceCurve25519Key || !this.olmDevice.deviceDoNotUseKey) {
             log('device keys not initialized, cannot encrypt event')
         }
-        this.deviceKeys['donotuse:' + this.deviceId] = this.olmDevice.deviceDoNotUseKey ?? ''
-        this.deviceKeys['curve25519:' + this.deviceId] = this.olmDevice.deviceCurve25519Key ?? ''
-
-        // todo: create fallback keys here
-        const fallbackKey = this.olmDevice.fallbackKey
-
-        this.fallbackKeys[this.deviceId] = {
-            [`curve25519:${this.deviceId}:${fallbackKey.keyId}`]: { key: fallbackKey.key },
-        }
     }
 
-    public async uploadDeviceKeys(): Promise<void> {
-        // todo: add signatures for verification to device keys
-        const deviceKeys = {
-            algorithms: this.supportedAlgorithms,
-            device_id: this.deviceId,
-            keys: this.deviceKeys,
-            user_id: this.userId,
-            signatures: {},
-        }
-
-        const fallbackKey = this.fallbackKeys[this.deviceId]
-
-        return this.signObject(deviceKeys).then(() => {
-            return this.client.uploadKeysRequest({
-                user_id: this.userId,
-                device_id: this.deviceId,
-                device_keys: deviceKeys,
-                fallback_keys: fallbackKey,
-            })
-        })
-    }
-
-    public async signObject<T extends ISignableObject & object>(obj: T): Promise<void> {
-        const sigs = new Map(Object.entries(obj.signatures || {}))
-        const unsigned = obj.unsigned
-
-        delete obj.signatures
-        delete obj.unsigned
-
-        const userSignatures = sigs.get(this.userId) || {}
-        sigs.set(this.userId, userSignatures)
-        // todo: implement olmDevice sign using TDK as signing key
-        // https://linear.app/hnt-labs/issue/HNT-1796/tdk-signature-storage-curve25519-key
-        userSignatures['donotuse:' + this.deviceId] = ''
-        obj.signatures = recursiveMapToObject(sigs)
-        if (unsigned !== undefined) {
-            obj.unsigned = unsigned
-        }
-    }
-
-    async encryptOlm(payload: string, deviceKeys: UserDevice[]): Promise<EncryptedDeviceData> {
-        const ciphertextRecord: Record<string, EncryptedMessageEnvelope> = {}
+    /**
+     * Encrypt an event using Olm
+     *
+     * @param payload -  string to be encrypted with Olm
+     * @param deviceKeys - recipients to encrypt message for
+     *
+     * @returns Promise which resolves when the event has been
+     *     encrypted, or null if nothing was needed
+     */
+    async encryptOlm(payload: string, deviceKeys: UserDevice[]): Promise<Record<string, string>> {
+        const ciphertextRecord: Record<string, string> = {}
         await Promise.all(
             deviceKeys.map(async (deviceKey) => {
                 const encrypted = await this.olmDevice.encryptUsingFallbackKey(
@@ -348,88 +191,42 @@ export class Crypto implements CryptoBackend {
                     deviceKey.fallbackKey,
                     payload,
                 )
-                ciphertextRecord[deviceKey.deviceKey] = encrypted
+                check(encrypted.type === 0, 'expecting only prekey messages at this time')
+                ciphertextRecord[deviceKey.deviceKey] = encrypted.body
             }),
         )
-        return new EncryptedDeviceData({
-            algorithm: OLM_ALGORITHM,
-            toDeviceMessages: ciphertextRecord,
-        })
+        return ciphertextRecord
     }
 
     /**
      * Decrypt a received event using Olm
+     *
+     * @returns a promise which resolves once we have finished decrypting.
+     * Rejects with an error if there is a problem decrypting the event.
      */
-    public async decryptOlmEvent(
-        envelope: EncryptedMessageEnvelope,
-        senderDeviceKey: string,
-    ): Promise<OlmMessage> {
-        const cleartext = await this.olmDevice.decryptMessage(envelope, senderDeviceKey)
-        return OlmMessage.fromJsonString(cleartext)
+    public async decryptOlmEvent(ciphertext: string, senderDeviceKey: string): Promise<string> {
+        return await this.olmDevice.decryptMessage(ciphertext, senderDeviceKey)
     }
 
     /**
-     * Encrypt an event according to the configuration of the stream.
-     *
-     * @param event -  event to be sent
-     *
-     * @param userIds - destination userId devices to encrypt messages for
-     * jterzis: 06/14/23: if 1 userId, sync all devices for that user and
-     * and encrypt contents for those devices. If multiple userIds, sync
-     * each user's devices and encrypt contents for those devices. Assumes
-     * the caller checks the membership of those users for a room in the case
-     * of group message encryption.
+     * Encrypt an event using Megolm
      *
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    public async encryptMegolmEvent(input: GroupEncryptionInput): Promise<EncryptedData> {
-        const alg = this.megolmEncryption
-        const content = input.content
-        if (!content) {
-            throw new Error('Event has no content')
-        }
-
-        if (this.olmDevice.deviceCurve25519Key === null) {
-            throw new Error('device keys not initialized, cannot encrypt event')
-        }
-
-        const encrypted = await alg.encryptMessage(input.recipient.streamId, content)
-
-        const encryptedData = new EncryptedData({
-            text: encrypted.ciphertext,
-            algorithm: encrypted.algorithm,
-            senderKey: encrypted.sender_key,
-            deviceId: encrypted.device_id,
-            sessionId: encrypted.session_id,
-        })
-
-        return encryptedData
+    public async encryptMegolmEvent(streamId: string, payload: string): Promise<EncryptedData> {
+        return this.megolmEncryption.encryptMessage(streamId, payload)
     }
-
     /**
      * Decrypt a received event using Megolm
+     *
+     * @returns a promise which resolves once we have finished decrypting.
+     * Rejects with an error if there is a problem decrypting the event.
      */
-    public async decryptMegolmEvent(event: RiverEventV2) {
-        log('decryptMegolmEvent', event)
-        if (!event.shouldAttemptDecryption()) {
-            return
-        }
-        if (event.decryptionPromise) {
-            await event.decryptionPromise
-        } else {
-            try {
-                event.decryptionPromise = this.megolmDecryption.decryptEvent(event)
-                await event.decryptionPromise
-            } finally {
-                event.decryptionPromise = null
-            }
-        }
+    public async decryptMegolmEvent(streamId: string, content: EncryptedData) {
+        return this.megolmDecryption.decryptEvent(streamId, content)
     }
 
-    public async decryptMegolmEventWithId(eventId: string): Promise<void> {
-        return this.megolmDecryption.decryptEncryptionFailureWithEventId(eventId)
-    }
     /**
      * Import a list of Megolm room keys previously exported by exportRoomKeys
      *
@@ -448,13 +245,6 @@ export class Crypto implements CryptoBackend {
                     }
                 }),
             ),
-        )
-
-        await Promise.all(
-            keys.map(async (key) => {
-                // have another go at decrypting events sent with this session.
-                await this.megolmDecryption.retryDecryption(key.sessionId)
-            }),
         )
     }
 }

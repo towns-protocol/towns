@@ -8,18 +8,10 @@ import {
     EncryptionAlgorithm,
     IParams,
 } from './base'
-import { IMegolmEncryptedContent, MEGOLM_ALGORITHM, UserDeviceCollection } from '../olmLib'
-import {
-    ChannelMessage,
-    KeyResponseKind,
-    MegolmSession,
-    MembershipOp,
-    ToDeviceMessage,
-} from '@river/proto'
-import { RiverEventV2 } from '../../eventV2'
-import { make_ToDevice_KeyResponse } from '../../types'
+import { MEGOLM_ALGORITHM, MegolmSession, UserDeviceCollection } from '../olmLib'
+import { EncryptedData, MembershipOp } from '@river/proto'
 import { StreamStateView } from '../../streamStateView'
-import { Message } from '@bufbuild/protobuf'
+import { PlainMessage } from '@bufbuild/protobuf'
 
 export interface IOutboundGroupSessionKey {
     chain_index: number
@@ -59,7 +51,8 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             // if we don't have a cached session at this point, create a new one
             const sessionId = await this.olmDevice.createOutboundGroupSession(streamId)
             this.logCall(`Started new megolm session ${sessionId}`)
-            await this.shareSession(streamId, sessionId)
+            // don't wait for the session to be shared
+            void this.shareSession(streamId, sessionId)
         }
     }
 
@@ -71,15 +64,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             throw new Error('Session key not found for session ' + sessionId)
         }
 
-        const toDeviceResponse = new ToDeviceMessage(
-            make_ToDevice_KeyResponse({
-                kind: KeyResponseKind.KRK_KEYS_FOUND,
-                streamId: streamId,
-                sessions: [session],
-            }),
-        )
-
-        await this.baseApis.encryptAndSendToDevices(devicesInRoom, toDeviceResponse)
+        await this.baseApis.encryptAndShareMegolmSessions(streamId, [session], devicesInRoom)
     }
 
     /**
@@ -87,39 +72,19 @@ export class MegolmEncryption extends EncryptionAlgorithm {
      *
      * @returns Promise which resolves to the new event body
      */
-    public async encryptMessage(
-        streamId: string,
-        content: Message,
-        type: 'channelMessage' = 'channelMessage',
-    ): Promise<IMegolmEncryptedContent> {
+    public async encryptMessage(streamId: string, payload: string): Promise<EncryptedData> {
         this.logCall('Starting to encrypt event')
 
-        const encoded = content.toJsonString()
         await this.ensureOutboundSession(streamId)
-        const payloadJson = {
-            channel_id: streamId,
-            type: type,
-            content: encoded,
-        }
 
-        const result = await this.olmDevice.encryptGroupMessage(
-            JSON.stringify(payloadJson),
-            streamId,
-        )
+        const result = await this.olmDevice.encryptGroupMessage(payload, streamId)
 
-        const encryptedContent: IMegolmEncryptedContent = {
+        return new EncryptedData({
             algorithm: MEGOLM_ALGORITHM,
-            sender_key: this.olmDevice.deviceCurve25519Key!,
+            senderKey: this.olmDevice.deviceCurve25519Key!,
             ciphertext: result.ciphertext,
-            session_id: result.sessionId,
-            // Include our device ID so that recipients can send us a
-            // m.new_device message if they don't have our session key.
-            // XXX: Do we still need this now that m.new_device messages
-            // no longer exist since #483?
-            device_id: this.deviceId,
-        }
-
-        return encryptedContent
+            sessionId: result.sessionId,
+        } satisfies PlainMessage<EncryptedData>)
     }
 
     /**
@@ -157,8 +122,6 @@ export class MegolmEncryption extends EncryptionAlgorithm {
  * @param params - parameters, as per {@link DecryptionAlgorithm}
  */
 export class MegolmDecryption extends DecryptionAlgorithm {
-    private pendingEvents = new Map<string, Set<RiverEventV2>>()
-
     private readonly logCall: DLogger
     private readonly logError: DLogger
 
@@ -174,99 +137,19 @@ export class MegolmDecryption extends DecryptionAlgorithm {
      * decrypting, or rejects with an `algorithms.DecryptionError` if there is a
      * problem decrypting the event.
      */
-    public async decryptEvent(event: RiverEventV2) {
-        const content = event.getWireContent()
-        if (!content.senderKey || !content.sessionId || !content.text) {
+    public async decryptEvent(streamId: string, content: EncryptedData): Promise<string> {
+        if (!content.senderKey || !content.sessionId || !content.ciphertext) {
             throw new DecryptionError('MEGOLM_MISSING_FIELDS', 'Missing fields in input')
         }
 
-        if (!event.shouldAttemptDecryption() && !event.isDecryptionFailure()) {
-            this.logCall(`Not decrypting event ${event.getId()} (already decrypted)`)
-            return
+        const { session } = await this.olmDevice.getInboundGroupSession(streamId, content.sessionId)
+
+        if (!session) {
+            throw new Error('Session not found')
         }
 
-        try {
-            const { session } = await this.olmDevice.getInboundGroupSession(
-                event.getStreamId(),
-                content.sessionId,
-            )
-
-            if (!session) {
-                throw new Error('Session not found')
-            }
-
-            const decrypted = session.decrypt(content.text)
-            const payload = JSON.parse(decrypted.plaintext)
-            if (!isValidPayload(payload)) {
-                throw new Error('Invalid payload')
-            }
-
-            const type = payload.type
-            const protoContent = payload.content
-            if (type === 'channelMessage') {
-                const message = ChannelMessage.fromJsonString(protoContent)
-                const clearEvent = { content: message, type }
-                event.setClearData(clearEvent)
-                event.emitDecrypted()
-                this.removeEventFromPendingListV2(event)
-            } else {
-                throw new DecryptionError(
-                    'MEGOLM_UNKNOWN_MESSAGE_TYPE',
-                    'Unknown message type: ' + type,
-                )
-            }
-        } catch (e) {
-            this.addEventToPendingListV2(event)
-            event.setClearData(RiverEventV2.badEncryptedMessage(String(e)))
-            event.emitDecrypted(e as Error)
-            throw e
-        }
-    }
-
-    /**
-     * Add an event to the list of those awaiting their session keys.
-     *
-     * @internal
-     *
-     */
-    private addEventToPendingListV2(event: RiverEventV2): void {
-        const content = event.getWireContent()
-        const sessionId = content.sessionId
-
-        if (!sessionId) {
-            this.logError('addEventToPendingListV2 called with missing sessionId')
-            return
-        }
-        if (!this.pendingEvents.has(sessionId)) {
-            this.pendingEvents.set(sessionId, new Set<RiverEventV2>())
-        }
-        this.pendingEvents.get(sessionId)?.add(event)
-    }
-
-    /**
-     * Remove an event from the list of those awaiting their session keys.
-     *
-     * @internal
-     *
-     */
-    private removeEventFromPendingListV2(event: RiverEventV2): void {
-        const content = event.getWireContent()
-        const sessionId = content.sessionId
-        if (!sessionId) {
-            this.logError('removeEventToPendingListV2 called with missing sessionId')
-            return
-        }
-        const events = this.pendingEvents.get(sessionId)
-        if (!events) {
-            return
-        }
-
-        if (events.has(event)) {
-            events.delete(event)
-            if (events.size === 0) {
-                this.pendingEvents.delete(sessionId)
-            }
-        }
+        const result = session.decrypt(content.ciphertext)
+        return result.plaintext
     }
 
     /**
@@ -289,77 +172,4 @@ export class MegolmDecryption extends DecryptionAlgorithm {
             this.logError(`Error handling room key import: ${(<Error>e).message}`)
         }
     }
-
-    /**
-     * Have another go at decrypting events after we receive a key. Resolves once
-     * decryption has been re-attempted on all events.
-     *
-     * @internal
-     *
-     * @returns whether all messages were successfully
-     *     decrypted with trusted keys
-     */
-    async retryDecryption(sessionId: string) {
-        const pending = this.pendingEvents.get(sessionId)
-        if (!pending) {
-            return
-        }
-
-        const pendingList = [...pending]
-        this.logCall(
-            'Retrying decryption on events:',
-            pendingList.map((e) => `${e.getId()}`),
-        )
-
-        await Promise.all(
-            pendingList.map(async (ev) => {
-                try {
-                    await this.decryptEvent(ev)
-                } catch (e) {
-                    // don't die if something goes wrong
-                    this.logError(`Error retrying decryption: ${(<Error>e).message}`)
-                }
-            }),
-        )
-    }
-
-    private getEventById(eventId: string) {
-        for (const [, pending] of this.pendingEvents) {
-            for (const ev of pending) {
-                if (ev.getId() === eventId) {
-                    return ev
-                }
-            }
-        }
-        return undefined
-    }
-
-    // For debugging purposes only
-    public async decryptEncryptionFailureWithEventId(eventId: string) {
-        const event = this.getEventById(eventId)
-        if (!event) {
-            throw new Error('Event not found')
-        }
-        try {
-            await this.crypto.decryptMegolmEvent(event)
-            this.logCall(`Successfully decrypted event ${eventId}`)
-        } catch (e) {
-            this.logCall(`Error decrypting event ${eventId}: ${(<Error>e).message}`)
-        }
-    }
-}
-
-function isValidPayload(
-    obj: unknown,
-): obj is { content: string; type: string; channel_id: string } {
-    return (
-        obj !== null &&
-        typeof obj === 'object' &&
-        'content' in obj &&
-        typeof obj.content === 'string' &&
-        'type' in obj &&
-        typeof obj.type === 'string' &&
-        'channel_id' in obj &&
-        typeof obj.channel_id === 'string'
-    )
 }

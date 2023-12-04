@@ -24,7 +24,6 @@ export interface MegolmSessionRecord {
 
 export interface UserDeviceRecord {
     userId: string
-    deviceId: string
     deviceKey: string
     fallbackKey: string
     expirationTimestamp: number

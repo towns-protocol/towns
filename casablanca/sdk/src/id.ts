@@ -29,6 +29,7 @@ export enum StreamPrefix {
     Media = '55-',
     DM = '66-',
     GDM = '77-',
+    UserToDevice = '88-',
 }
 
 export const allowedStreamPrefixes = (): string[] => Object.values(StreamPrefix)
@@ -55,6 +56,14 @@ export const makeUserDeviceKeyStreamId = (userId: string | Uint8Array): string =
     check(isUserId(userId), 'Invalid user id: ' + userId.toString())
     return makeStreamId(
         StreamPrefix.UserDevice,
+        userId instanceof Uint8Array ? userIdFromAddress(userId) : userId,
+    )
+}
+
+export const makeUserToDeviceStreamId = (userId: string | Uint8Array): string => {
+    check(isUserId(userId), 'Invalid user id: ' + userId.toString())
+    return makeStreamId(
+        StreamPrefix.UserToDevice,
         userId instanceof Uint8Array ? userIdFromAddress(userId) : userId,
     )
 }

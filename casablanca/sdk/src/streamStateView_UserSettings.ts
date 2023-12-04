@@ -89,7 +89,7 @@ export class StreamStateView_UserSettings implements StreamStateView_IContent {
         }
         this.fullyReadMarkersSrc.set(payload.channelStreamId, content)
         const fullyReadMarkersContent = toPlainMessage(
-            FullyReadMarkers.fromJsonString(content.text),
+            FullyReadMarkers.fromJsonString(content.ciphertext),
         )
 
         this.fullyReadMarkers.set(payload.channelStreamId, fullyReadMarkersContent.markers)

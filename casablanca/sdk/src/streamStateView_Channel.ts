@@ -11,20 +11,14 @@ import {
 } from '@river/proto'
 import { logNever } from './check'
 import { StreamStateView_IContent } from './streamStateView_IContent'
-import { StreamStateView_Messages } from './streamStateView_Messages'
-import { StreamStateView_KeySolicitations } from './streamStateView_KeySolicitations'
 
 export class StreamStateView_Channel implements StreamStateView_IContent {
     readonly streamId: string
     readonly spaceId?: string
     readonly memberships: StreamStateView_Membership
-    readonly messages: StreamStateView_Messages
-    readonly keySolicitations: StreamStateView_KeySolicitations
 
     constructor(userId: string, inception: ChannelPayload_Inception) {
         this.memberships = new StreamStateView_Membership(userId, inception.streamId)
-        this.messages = new StreamStateView_Messages(inception.streamId, inception.spaceId)
-        this.keySolicitations = new StreamStateView_KeySolicitations(inception.streamId)
         this.streamId = inception.streamId
         this.spaceId = inception.spaceId
     }
@@ -50,16 +44,13 @@ export class StreamStateView_Channel implements StreamStateView_IContent {
             case 'inception':
                 break
             case 'message':
-                this.messages.addChannelMessage(event, emitter)
+                emitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
+                    kind: 'channelMessage',
+                    content: payload.content.value,
+                })
                 break
             case 'membership':
                 // nothing to do, membership was conveyed in the snapshot
-                break
-            case 'fulfillment':
-                this.keySolicitations.addKeyFulfillmentMessage(event, payload, emitter)
-                break
-            case 'keySolicitation':
-                this.keySolicitations.addKeySolicitationMessage(event, payload, emitter)
                 break
             case undefined:
                 break
@@ -77,7 +68,10 @@ export class StreamStateView_Channel implements StreamStateView_IContent {
             case 'inception':
                 break
             case 'message':
-                this.messages.addChannelMessage(event, emitter)
+                emitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
+                    kind: 'channelMessage',
+                    content: payload.content.value,
+                })
                 break
             case 'membership':
                 this.memberships.appendMembershipEvent(
@@ -85,12 +79,6 @@ export class StreamStateView_Channel implements StreamStateView_IContent {
                     payload.content.value,
                     emitter,
                 )
-                break
-            case 'fulfillment':
-                this.keySolicitations.addKeyFulfillmentMessage(event, payload, emitter)
-                break
-            case 'keySolicitation':
-                this.keySolicitations.addKeySolicitationMessage(event, payload, emitter)
                 break
             case undefined:
                 break

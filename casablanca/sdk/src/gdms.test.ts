@@ -1,7 +1,6 @@
-import { makeTestClient } from './util.test'
+import { makeTestClient, createEventDecryptedPromise } from './util.test'
 import { Client } from './client'
 import { dlog } from './dlog'
-import { createEventDecryptedPromise } from './testutils'
 import { MembershipOp } from '@river/proto'
 
 const log = dlog('csb:test')
@@ -61,7 +60,6 @@ describe('gdmsTests', () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).toResolve()
-
         await expect(chucksClient.joinStream(streamId)).toReject()
     })
 

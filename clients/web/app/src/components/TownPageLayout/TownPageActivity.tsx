@@ -142,14 +142,20 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                 const firstChannelId = Array.from(spaceContent.spaceChannelsMetadata.keys()).at(0)
 
                 if (firstChannelId) {
-                    const { channelContent } = await client.getStream(firstChannelId)
-
-                    const messages = Array.from(channelContent.messages.state.values()).filter(
-                        (f) => isWithin(f.event.createdAtEpocMs, DAY_MS),
+                    const streamView = await client.getStream(firstChannelId)
+                    const channelMessages = streamView.timeline.filter(
+                        (x) =>
+                            isRemoteEvent(x) &&
+                            x.remoteEvent.event.payload.case === 'channelPayload' &&
+                            x.remoteEvent.event.payload.value?.content.case === 'message',
                     )
 
-                    const activeUsers = Array.from(channelContent.messages.state.values())
-                        .filter((f) => isWithin(f.event.createdAtEpocMs, DAY_MS))
+                    const messages = channelMessages.filter((f) =>
+                        isWithin(f.createdAtEpocMs, DAY_MS),
+                    )
+
+                    const activeUsers = channelMessages
+                        .filter((f) => isWithin(f.createdAtEpocMs, DAY_MS))
                         .reduce((acc, curr) => {
                             acc.add(curr.creatorUserId)
                             return acc

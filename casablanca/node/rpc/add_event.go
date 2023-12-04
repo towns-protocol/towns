@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/bufbuild/connect-go"
 
@@ -89,8 +90,14 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	case *StreamEvent_UserSettingsPayload:
 		return s.addUserSettingsPayload(ctx, payload, stream, parsedEvent)
 
+	case *StreamEvent_UserToDevicePayload:
+		return s.addUserToDevicePayload(ctx, payload, stream, streamView, parsedEvent)
+
 	case *StreamEvent_MediaPayload:
 		return s.addMediaPayload(ctx, payload, stream, streamView, parsedEvent)
+
+	case *StreamEvent_CommonPayload:
+		return s.addCommonPayload(ctx, payload, stream, streamView, parsedEvent)
 
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown payload type")
@@ -108,12 +115,6 @@ func (s *Service) addChannelPayload(ctx context.Context, payload *StreamEvent_Ch
 	case *ChannelPayload_Message:
 		return s.addChannelMessage(ctx, stream, streamView, parsedEvent)
 
-	case *ChannelPayload_KeySolicitation:
-		return s.addChannelKeySolicitation(ctx, stream, streamView, parsedEvent)
-
-	case *ChannelPayload_Fulfillment:
-		return s.addChannelFulfillment(ctx, stream, streamView, parsedEvent)
-
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
@@ -130,12 +131,6 @@ func (s *Service) addDmChannelPayload(ctx context.Context, payload *StreamEvent_
 	case *DmChannelPayload_Message:
 		return s.addDMChannelMessage(ctx, stream, streamView, parsedEvent)
 
-	case *DmChannelPayload_KeySolicitation:
-		return s.addDMChannelKeySolicitation(ctx, stream, streamView, parsedEvent)
-
-	case *DmChannelPayload_Fulfillment:
-		return s.addDMChannelFulfillment(ctx, stream, streamView, parsedEvent)
-
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
@@ -150,10 +145,6 @@ func (s *Service) addGdmChannelPayload(ctx context.Context, payload *StreamEvent
 		return s.addGDMMembershipEvent(ctx, stream, streamView, parsedEvent, content.Membership)
 	case *GdmChannelPayload_Message:
 		return s.addGDMChannelMessage(ctx, stream, streamView, parsedEvent)
-	case *GdmChannelPayload_KeySolicitation:
-		return s.addGDMChannelKeySolicitation(ctx, stream, streamView, parsedEvent)
-	case *GdmChannelPayload_Fulfillment:
-		return s.addGDMChannelFulfillment(ctx, stream, streamView, parsedEvent)
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
@@ -193,10 +184,6 @@ func (s *Service) addUserPayload(ctx context.Context, payload *StreamEvent_UserP
 			return err
 		}
 		return stream.AddEvent(ctx, parsedEvent)
-
-	case *UserPayload_ToDevice_:
-		return stream.AddEvent(ctx, parsedEvent)
-
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
@@ -242,13 +229,30 @@ func (s *Service) addDisplayNameEvent(ctx context.Context, stream AddableStream,
 
 func (s *Service) addUserDeviceKeyPayload(ctx context.Context, payload *StreamEvent_UserDeviceKeyPayload, parsedEvent *ParsedEvent, stream AddableStream, streamView StreamView) error {
 	// RDK registration/revoke has to be done directly by the user
-	switch payload := payload.UserDeviceKeyPayload.Content.(type) {
+	switch payload.UserDeviceKeyPayload.Content.(type) {
 	case *UserDeviceKeyPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
 
-	case *UserDeviceKeyPayload_UserDeviceKey_:
-		return s.addUserDeviceKeyEvent(ctx, stream, streamView, parsedEvent, payload.UserDeviceKey)
+	case *UserDeviceKeyPayload_MegolmDevice_:
+		return s.addUserDeviceKeyEvent(ctx, stream, streamView, parsedEvent)
 
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
+	}
+}
+
+func (s *Service) addUserToDevicePayload(ctx context.Context, payload *StreamEvent_UserToDevicePayload, stream AddableStream, streamView StreamView, parsedEvent *ParsedEvent) error {
+	switch payload.UserToDevicePayload.Content.(type) {
+	case *UserToDevicePayload_Inception_:
+		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
+	case *UserToDevicePayload_MegolmSessions_:
+		return stream.AddEvent(ctx, parsedEvent)
+	case *UserToDevicePayload_Ack_:
+		err := s.checkIsCreatorOfUserStream(ctx, streamView, parsedEvent)
+		if err != nil {
+			return err
+		}
+		return stream.AddEvent(ctx, parsedEvent)
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
@@ -278,6 +282,59 @@ func (s *Service) addMediaPayload(ctx context.Context, payload *StreamEvent_Medi
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
+}
+
+func (s *Service) addCommonPayload(ctx context.Context, payload *StreamEvent_CommonPayload, stream AddableStream, streamView StreamView, parsedEvent *ParsedEvent) error {
+	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+	switch streamView.InceptionPayload().(type) {
+	case *UserPayload_Inception:
+		err := s.checkIsCreatorOfUserStream(ctx, streamView, parsedEvent)
+		if err != nil {
+			return err
+		}
+	case *ChannelPayload_Inception:
+		err := s.checkIsMember(ctx, streamView, creator)
+		if err != nil {
+			return err
+		}
+	case *GdmChannelPayload_Inception:
+		err := s.checkIsMember(ctx, streamView, creator)
+		if err != nil {
+			return err
+		}
+	case *DmChannelPayload_Inception:
+		err := s.checkIsMember(ctx, streamView, creator)
+		if err != nil {
+			return err
+		}
+	case *SpacePayload_Inception:
+		err := s.checkIsMember(ctx, streamView, creator)
+		if err != nil {
+			return err
+		}
+	case *UserSettingsPayload_Inception:
+		err := s.checkIsCreatorOfUserStream(ctx, streamView, parsedEvent)
+		if err != nil {
+			return err
+		}
+	case *UserDeviceKeyPayload_Inception:
+		err := s.checkIsCreatorOfUserStream(ctx, streamView, parsedEvent)
+		if err != nil {
+			return err
+		}
+	case *UserToDevicePayload_Inception:
+		err := s.checkIsCreatorOfUserStream(ctx, streamView, parsedEvent)
+		if err != nil {
+			return err
+		}
+	default:
+		return RiverError(Err_STREAM_BAD_EVENT, "unimplemented stream type").Func("addCommonPayload")
+	}
+
+	return stream.AddEvent(ctx, parsedEvent)
 }
 
 func (s *Service) addChannelMessage(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
@@ -328,196 +385,6 @@ func (s *Service) addChannelMessage(ctx context.Context, stream AddableStream, v
 		// context.Background() to avoid this issue.
 		s.notification.SendPushNotification(context.Background(), info, &view, user)
 	}
-	return nil
-}
-
-func (s *Service) addChannelKeySolicitation(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
-	streamId := view.StreamId()
-	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return err
-	}
-
-	info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, user)
-	if err != nil {
-		return err
-	}
-
-	allowed, err := s.townsContract.IsAllowed(
-		ctx,
-		auth.AuthorizationArgs{
-			StreamId:   streamId,
-			UserId:     user,
-			Permission: auth.PermissionRead,
-		},
-		info,
-	)
-	if err != nil {
-		return err
-	}
-	if !allowed {
-		return RiverError(Err_PERMISSION_DENIED, "user is not allowed to write to stream", "user", user)
-	}
-
-	// check if user is a member of the channel
-	member, err := s.checkMembership(ctx, view, user)
-	if err != nil {
-		return err
-	}
-	if !member {
-		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
-	}
-
-	err = stream.AddEvent(ctx, parsedEvent)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) addDMChannelKeySolicitation(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
-	streamId := view.StreamId()
-	userId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return err
-	}
-
-	inceptionPayload := view.InceptionPayload()
-	info, err := DMStreamInfoFromInceptionPayload(inceptionPayload, streamId)
-	if err != nil {
-		return err
-	}
-
-	if userId != info.FirstPartyId && userId != info.SecondPartyId {
-		return RiverError(Err_PERMISSION_DENIED, "user is not a member of DM", "user", userId)
-	}
-
-	err = stream.AddEvent(ctx, parsedEvent)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) addGDMChannelKeySolicitation(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
-	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return err
-	}
-
-	// Users should be able to decrypt the channel messages
-	// before joining, but not after leaving.
-	member, err := s.checkJoinedOrInvited(ctx, view, user)
-	if err != nil {
-		return err
-	}
-	if !member {
-		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
-	}
-
-	err = stream.AddEvent(ctx, parsedEvent)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) addChannelFulfillment(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
-	streamId := view.StreamId()
-	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return err
-	}
-
-	info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, user)
-	if err != nil {
-		return err
-	}
-
-	allowed, err := s.townsContract.IsAllowed(
-		ctx,
-		auth.AuthorizationArgs{
-			StreamId:   streamId,
-			UserId:     user,
-			Permission: auth.PermissionRead,
-		},
-		info,
-	)
-	if err != nil {
-		return err
-	}
-	if !allowed {
-		return RiverError(Err_PERMISSION_DENIED, "user is not allowed to write to stream", "user", user)
-	}
-
-	// check if user is a member of the channel
-	member, err := s.checkMembership(ctx, view, user)
-	if err != nil {
-		return err
-	}
-	if !member {
-		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
-	}
-
-	err = stream.AddEvent(ctx, parsedEvent)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) addDMChannelFulfillment(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
-
-	streamId := view.StreamId()
-	userId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return err
-	}
-
-	inceptionPayload := view.InceptionPayload()
-	info, err := DMStreamInfoFromInceptionPayload(inceptionPayload, streamId)
-	if err != nil {
-		return err
-	}
-
-	if userId != info.FirstPartyId && userId != info.SecondPartyId {
-		return RiverError(Err_PERMISSION_DENIED, "user is not a member of DM", "user", userId)
-	}
-
-	err = stream.AddEvent(ctx, parsedEvent)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) addGDMChannelFulfillment(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
-
-	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return err
-	}
-
-	// Users should be able to decrypt the channel messages
-	// before joining, but not after leaving.
-	member, err := s.checkJoinedOrInvited(ctx, view, user)
-	if err != nil {
-		return err
-	}
-	if !member {
-		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
-	}
-
-	err = stream.AddEvent(ctx, parsedEvent)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -595,6 +462,17 @@ func (s *Service) checkMembership(ctx context.Context, streamView StreamView, us
 		return false, RiverError(Err_INTERNAL, "stream is not joinable")
 	}
 	return view.IsUserJoined(userId)
+}
+
+func (s *Service) checkIsMember(ctx context.Context, streamView StreamView, userId string) error {
+	member, err := s.checkJoinedOrInvited(ctx, streamView, userId)
+	if err != nil {
+		return err
+	}
+	if !member {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", userId)
+	}
+	return nil
 }
 
 func (s *Service) checkInvited(ctx context.Context, streamView StreamView, userId string) (bool, error) {
@@ -849,6 +727,25 @@ func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, use
 	return userStream.AddEvent(ctx, userStreamEvent)
 }
 
+func (s *Service) checkIsCreatorOfUserStream(ctx context.Context, streamView StreamView, parsedEvent *ParsedEvent) error {
+	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+
+	parts := strings.Split(streamView.StreamId(), "-")
+	if len(parts) != 2 {
+		return RiverError(Err_INTERNAL, "invalid stream id")
+	}
+
+	userIdPart := parts[1]
+	if userIdPart != creator {
+		return RiverError(Err_PERMISSION_DENIED, "only creator is allowed to add to user stream")
+	}
+
+	return nil
+}
+
 func (s *Service) checkUserDeviceKeyEvent(
 	ctx context.Context,
 	streamView StreamView,
@@ -871,7 +768,7 @@ func (s *Service) checkUserDeviceKeyEvent(
 	return nil
 }
 
-func (s *Service) addUserDeviceKeyEvent(ctx context.Context, stream AddableStream, streamView StreamView, parsedEvent *ParsedEvent, payload *UserDeviceKeyPayload_UserDeviceKey) error {
+func (s *Service) addUserDeviceKeyEvent(ctx context.Context, stream AddableStream, streamView StreamView, parsedEvent *ParsedEvent) error {
 	err := s.checkUserDeviceKeyEvent(ctx, streamView, parsedEvent)
 	if err != nil {
 		return err

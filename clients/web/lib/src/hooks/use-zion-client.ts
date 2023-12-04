@@ -189,7 +189,6 @@ interface ZionClientImpl {
         transactionContext: WalletLinkTransactionContext,
     ) => Promise<WalletLinkTransactionContext | undefined>
     userOnWrongNetworkForSignIn: boolean
-    retryMegolmDecryption?(eventId: string): Promise<void>
 }
 
 export function useZionClient(): ZionClientImpl {
@@ -261,7 +260,6 @@ export function useZionClient(): ZionClientImpl {
         getLinkedWallets: useWithCatch(client?.getLinkedWallets),
         waitWalletLinkTransaction: useWithCatch(client?.waitWalletLinkTransaction),
         userOnWrongNetworkForSignIn,
-        retryMegolmDecryption: client?.retryMegolmDecryption,
     }
 }
 

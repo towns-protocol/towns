@@ -84,7 +84,7 @@ func makeTestChannelStream(
 	}
 	if channelProperties == nil {
 		channelProperties = &protocol.EncryptedData{
-			Text: "encrypted text supposed to be here",
+			Ciphertext: "encrypted text supposed to be here",
 		}
 	}
 	inception := makeEnvelopeWithPayload_T(

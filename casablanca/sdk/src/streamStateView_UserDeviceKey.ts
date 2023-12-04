@@ -2,26 +2,27 @@ import TypedEmitter from 'typed-emitter'
 import { ParsedEvent } from './types'
 import { EmittedEvents } from './client'
 import {
-    DeviceKeys,
     MiniblockHeader,
     Snapshot,
     UserDeviceKeyPayload,
     UserDeviceKeyPayload_Inception,
+    UserDeviceKeyPayload_MegolmDevice,
     UserDeviceKeyPayload_Snapshot,
-    UserDeviceKeyPayload_UserDeviceKey,
 } from '@river/proto'
-import { isDefined, logNever } from './check'
+import { logNever } from './check'
 import { StreamStateView_IContent } from './streamStateView_IContent'
-import { deviceKeyPayloadToUserDevice } from './clientUtils'
+import { UserDevice } from './crypto/olmLib'
 
 export class StreamStateView_UserDeviceKeys implements StreamStateView_IContent {
     readonly streamId: string
+    readonly streamCreatorId: string
 
     // user_id -> device_keys, fallback_keys
-    readonly uploadedDeviceKeys = new Map<string, UserDeviceKeyPayload_UserDeviceKey[]>()
+    readonly megolmKeys: UserDevice[] = []
 
     constructor(inception: UserDeviceKeyPayload_Inception) {
         this.streamId = inception.streamId
+        this.streamCreatorId = inception.userId
     }
 
     initialize(
@@ -30,7 +31,7 @@ export class StreamStateView_UserDeviceKeys implements StreamStateView_IContent 
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         // dispatch events for all device keys, todo this seems inefficient?
-        for (const [_, value] of Object.entries(content.userDeviceKeys)) {
+        for (const value of content.megolmDevices) {
             this.addUserDeviceKey(value, emitter)
         }
     }
@@ -40,21 +41,11 @@ export class StreamStateView_UserDeviceKeys implements StreamStateView_IContent 
     }
 
     prependEvent(
-        event: ParsedEvent,
-        payload: UserDeviceKeyPayload,
+        _event: ParsedEvent,
+        _payload: UserDeviceKeyPayload,
         _emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
-        switch (payload.content.case) {
-            case 'inception':
-                break
-            case 'userDeviceKey':
-                // handled in snapshot
-                break
-            case undefined:
-                break
-            default:
-                logNever(payload.content)
-        }
+        // nohing to do
     }
 
     appendEvent(
@@ -65,7 +56,7 @@ export class StreamStateView_UserDeviceKeys implements StreamStateView_IContent 
         switch (payload.content.case) {
             case 'inception':
                 break
-            case 'userDeviceKey':
+            case 'megolmDevice':
                 this.addUserDeviceKey(payload.content.value, emitter)
                 break
             case undefined:
@@ -76,32 +67,18 @@ export class StreamStateView_UserDeviceKeys implements StreamStateView_IContent 
     }
 
     private addUserDeviceKey(
-        value: UserDeviceKeyPayload_UserDeviceKey,
+        value: UserDeviceKeyPayload_MegolmDevice,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
-        {
-            const { userId, deviceKeys, fallbackKeys } = value
-            emitter?.emit(
-                'userDeviceKeyMessage',
-                this.streamId,
-                userId,
-                deviceKeys as DeviceKeys,
-                fallbackKeys,
-            )
-            if (deviceKeys?.deviceId !== undefined) {
-                this.uploadedDeviceKeys.set(userId, [
-                    ...(this.uploadedDeviceKeys.get(userId) || []),
-                    value,
-                ])
-            }
+        const device = {
+            deviceKey: value.deviceKey,
+            fallbackKey: value.fallbackKey,
+        } satisfies UserDevice
+        const existing = this.megolmKeys.findIndex((x) => x.deviceKey === device.deviceKey)
+        if (existing >= 0) {
+            this.megolmKeys.splice(existing, 1)
         }
-    }
-
-    containsDeviceKey(userId: string, deviceKey: string, fallbackKey: string): boolean {
-        const deviceKeys = this.uploadedDeviceKeys.get(userId) ?? []
-        const normalized = deviceKeys.map(deviceKeyPayloadToUserDevice).filter(isDefined)
-        return normalized.some(
-            (device) => device.deviceKey === deviceKey && device.fallbackKey === fallbackKey,
-        )
+        this.megolmKeys.push(device)
+        emitter?.emit('userDeviceKeyMessage', this.streamId, this.streamCreatorId, device)
     }
 }

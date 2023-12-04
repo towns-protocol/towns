@@ -1,7 +1,13 @@
-import { makeEvent, SignerContext, unpackEnvelopes } from './sign'
+import { makeEvent, SignerContext, unpackEnvelopes, unpackStreamResponse } from './sign'
 import { MembershipOp, SyncStreamsResponse, Envelope } from '@river/proto'
 import { DLogger } from './dlog'
-import { lastEventFiltered, makeEvent_test, makeTestRpcClient, sendFlush } from './util.test'
+import {
+    lastEventFiltered,
+    makeEvent_test,
+    makeTestRpcClient,
+    sendFlush,
+    TEST_ENCRYPTED_MESSAGE_PROPS,
+} from './util.test'
 import {
     genId,
     makeChannelStreamId,
@@ -83,7 +89,7 @@ export const bobTalksToHimself = async (
         make_ChannelPayload_Inception({
             streamId: channelId,
             spaceId: spacedStreamId,
-            channelProperties: { text: channelProperties },
+            channelProperties: { ...TEST_ENCRYPTED_MESSAGE_PROPS, ciphertext: channelProperties },
         }),
     )
     const channelJoinEvent = await makeEvent(
@@ -108,13 +114,14 @@ export const bobTalksToHimself = async (
 
     // Now there must be "channel created" event in the space stream.
     const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
-    const channelCreatePayload = lastEventFiltered(
-        unpackEnvelopes(spaceResponse.stream!.events),
-        getChannelPayload,
-    )
+    const envelopes = [
+        ...unpackStreamResponse(spaceResponse).miniblocks.flatMap((x) => x.events),
+        ...unpackEnvelopes(spaceResponse.stream!.events),
+    ]
+    const channelCreatePayload = lastEventFiltered(envelopes, getChannelPayload)
     expect(channelCreatePayload).toBeDefined()
     expect(channelCreatePayload?.channelId).toEqual(channelId)
-    expect(channelCreatePayload?.channelProperties?.text).toEqual(channelProperties)
+    expect(channelCreatePayload?.channelProperties?.ciphertext).toEqual(channelProperties)
 
     await maybeFlush()
 
@@ -124,7 +131,8 @@ export const bobTalksToHimself = async (
         presyncEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
-                text: 'presync',
+                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                ciphertext: 'presync',
             }),
             channel.miniblocks.at(-1)?.header?.hash,
         )
@@ -189,7 +197,8 @@ export const bobTalksToHimself = async (
     const helloEvent = await makeEvent(
         bobsContext,
         make_ChannelPayload_Message({
-            text: 'hello',
+            ...TEST_ENCRYPTED_MESSAGE_PROPS,
+            ciphertext: 'hello',
         }),
         hashResponse.hash,
     )
@@ -217,7 +226,8 @@ export const bobTalksToHimself = async (
     const badEvent = await makeEvent_test(
         bobsContext,
         make_ChannelPayload_Message({
-            text: 'hello',
+            ...TEST_ENCRYPTED_MESSAGE_PROPS,
+            ciphertext: 'hello',
         }),
         Uint8Array.from([1, 2, 3]),
     )

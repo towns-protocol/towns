@@ -24,8 +24,14 @@ import {
     make_SpacePayload_Inception,
     make_SpacePayload_Membership,
     make_UserPayload_Inception,
+    make_fake_encryptedData,
 } from './types'
-import { lastEventFiltered, makeRandomUserContext, makeTestRpcClient } from './util.test'
+import {
+    TEST_ENCRYPTED_MESSAGE_PROPS,
+    lastEventFiltered,
+    makeRandomUserContext,
+    makeTestRpcClient,
+} from './util.test'
 
 const log = dlog('csb:test:nodeRestart')
 const data_log = log.extend('data')
@@ -140,7 +146,7 @@ const createNewChannelAndPostHello = async (
         make_ChannelPayload_Inception({
             streamId: channelId,
             spaceId: spacedStreamId,
-            channelProperties: { text: channelProperties },
+            channelProperties: make_fake_encryptedData(channelProperties),
             settings: {
                 miniblockTimeMs: 100n,
                 minEventsPerSnapshot: 100,
@@ -176,14 +182,15 @@ const createNewChannelAndPostHello = async (
     )
     expect(channelCreatePayload).toBeDefined()
     expect(channelCreatePayload?.channelId).toEqual(channelId)
-    expect(channelCreatePayload?.channelProperties?.text).toEqual(channelProperties)
+    expect(channelCreatePayload?.channelProperties?.ciphertext).toEqual(channelProperties)
 
     // Post 1000 hellos to the channel
     for (let i = 0; i < 1000; i++) {
         const e = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
-                text: `hello ${i}`,
+                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                ciphertext: `hello ${i}`,
             }),
             nextHash,
         )
@@ -200,7 +207,8 @@ const createNewChannelAndPostHello = async (
     const helloEvent = await makeEvent(
         bobsContext,
         make_ChannelPayload_Message({
-            text: 'hello',
+            ...TEST_ENCRYPTED_MESSAGE_PROPS,
+            ciphertext: 'hello',
         }),
         nextHash,
     )
@@ -241,7 +249,7 @@ const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: stri
     all_events.push(...events)
     const hello = lastEventFiltered(all_events, getMessagePayload)
     expect(hello).toBeDefined()
-    expect(hello?.text).toEqual('hello')
+    expect(hello?.ciphertext).toEqual('hello')
 }
 
 const countStreamBlocksAndSnapshots = async (bob: StreamRpcClientType, streamId: string) => {

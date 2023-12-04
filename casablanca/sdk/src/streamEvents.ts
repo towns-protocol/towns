@@ -1,19 +1,19 @@
 import {
-    DeviceKeys,
     ChannelProperties,
     SnapshotCaseType,
     FullyReadMarker,
-    UserPayload_ToDevice,
-    KeySolicitation,
-    OlmMessage,
+    UserToDevicePayload_MegolmSessions,
+    CommonPayload_KeySolicitation,
 } from '@river/proto'
 import {
     ConfirmedTimelineEvent,
+    DecryptedTimelineEvent,
     LocalTimelineEvent,
     RemoteTimelineEvent,
     StreamTimelineEvent,
 } from './types'
-import { RiverEventV2 } from './eventV2'
+import { UserDevice } from './crypto/olmLib'
+import { EncryptedContent } from './encryptedContentTypes'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]
@@ -47,35 +47,28 @@ export type StreamEvents = {
         channelProperties: ChannelProperties,
     ) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
-    channelNewMessage: (channelId: string, message: RiverEventV2) => void
     fullyReadMarkersUpdated: (
         channelId: string,
         fullyReadMarkers: Record<string, FullyReadMarker>,
     ) => void
-    toDeviceMessage: (
+    newMegolmSessions: (sessions: UserToDevicePayload_MegolmSessions, senderId: string) => void
+    newEncryptedContent: (streamId: string, eventId: string, content: EncryptedContent) => void
+    newKeySolicitation: (
         streamId: string,
-        eventId: string,
-        event: UserPayload_ToDevice,
-        senderUserId: string,
+        fromUserId: string,
+        event: CommonPayload_KeySolicitation,
     ) => void
-    toDeviceMessageDecrypted: (
+    updatedKeySolicitation: (
         streamId: string,
-        eventId: string,
-        clear: OlmMessage,
-        senderUserId: string,
+        fromUserId: string,
+        event: CommonPayload_KeySolicitation,
     ) => void
-    keySolicitationMessage: (
+    eventDecrypted: (
         streamId: string,
-        event: KeySolicitation,
-        eventHash: string,
-        senderUserId: string,
+        contentKind: SnapshotCaseType,
+        event: DecryptedTimelineEvent,
     ) => void
-    userDeviceKeyMessage: (
-        streamId: string,
-        userId: string,
-        deviceKeys: DeviceKeys,
-        fallbackKeys: object | undefined,
-    ) => void
+    userDeviceKeyMessage: (streamId: string, userId: string, userDevice: UserDevice) => void
     streamInitialized: (streamId: string, contentKind: SnapshotCaseType) => void
     streamUpdated: (streamId: string, contentKind: SnapshotCaseType, change: StreamChange) => void
     streamLocalEventIdReplaced: (

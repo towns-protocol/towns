@@ -18,8 +18,14 @@ import {
     make_SpacePayload_Inception,
     make_SpacePayload_Membership,
     make_UserPayload_Inception,
+    make_fake_encryptedData,
 } from './types'
-import { makeRandomUserContext, makeTestRpcClient, timeoutIterable } from './util.test'
+import {
+    TEST_ENCRYPTED_MESSAGE_PROPS,
+    makeRandomUserContext,
+    makeTestRpcClient,
+    timeoutIterable,
+} from './util.test'
 
 const log = dlog('csb:test:syncWithBlocks')
 
@@ -81,7 +87,7 @@ describe('syncWithBlocks', () => {
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spacedStreamId,
-                channelProperties: { text: channelProperties },
+                channelProperties: make_fake_encryptedData(channelProperties),
                 settings: { miniblockTimeMs: 1n, minEventsPerSnapshot: 1 },
             }),
         )
@@ -121,7 +127,8 @@ describe('syncWithBlocks', () => {
         const messageEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
-                text,
+                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                ciphertext: text,
             }),
             channel.miniblocks.at(-1)?.header?.hash,
         )
@@ -163,7 +170,7 @@ describe('syncWithBlocks', () => {
                     if (expectMessage) {
                         const message = getMessagePayload(p)
                         expect(message).toBeDefined()
-                        expect(message?.text).toEqual(text)
+                        expect(message?.ciphertext).toEqual(text)
                         log('messageSeen', { message })
                         expectMessage = false
                     } else {
@@ -185,7 +192,8 @@ describe('syncWithBlocks', () => {
                         const messageEvent = await makeEvent(
                             bobsContext,
                             make_ChannelPayload_Message({
-                                text,
+                                ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                                ciphertext: text,
                             }),
                             p.envelope.hash,
                         )

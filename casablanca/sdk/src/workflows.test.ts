@@ -1,4 +1,4 @@
-import { makeEvent, SignerContext, unpackEnvelopes } from './sign'
+import { makeEvent, SignerContext, unpackEnvelopes, unpackStreamResponse } from './sign'
 import { MembershipOp } from '@river/proto'
 import { dlog } from './dlog'
 import { lastEventFiltered, makeRandomUserContext, TEST_URL } from './util.test'
@@ -14,6 +14,7 @@ import {
     getUserPayload_Membership,
     make_ChannelPayload_Inception,
     make_ChannelPayload_Membership,
+    make_fake_encryptedData,
     make_SpacePayload_Inception,
     make_SpacePayload_Membership,
     make_UserPayload_Inception,
@@ -92,7 +93,7 @@ describe('workflows', () => {
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spacedStreamId,
-                channelProperties: { text: channelProperties },
+                channelProperties: make_fake_encryptedData(channelProperties),
             }),
         )
         const channelJoinEvent = await makeEvent(
@@ -122,10 +123,11 @@ describe('workflows', () => {
         // Not there must be "channel created" event in the space stream.
         const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
         expect(spaceResponse.stream).toBeDefined()
-        const channelCreatePayload = lastEventFiltered(
-            unpackEnvelopes(spaceResponse.stream!.events),
-            getChannelPayload,
-        )
+        const envelopes = [
+            ...unpackStreamResponse(spaceResponse).miniblocks.flatMap((x) => x.events),
+            ...unpackEnvelopes(spaceResponse.stream!.events),
+        ]
+        const channelCreatePayload = lastEventFiltered(envelopes, getChannelPayload)
         expect(channelCreatePayload).toBeDefined()
         expect(channelCreatePayload?.channelId).toEqual(channelId)
 

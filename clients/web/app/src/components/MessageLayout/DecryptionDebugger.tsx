@@ -1,6 +1,5 @@
-import React, { useCallback } from 'react'
-import { useZionClient } from 'use-zion-client'
-import { Box, Button, Icon, Stack, Text, Tooltip } from '@ui'
+import React from 'react'
+import { Box, Icon, Stack, Text, Tooltip } from '@ui'
 
 export const DecryptionDebugger = (props: {
     sessionId: string
@@ -8,10 +7,6 @@ export const DecryptionDebugger = (props: {
     timestamp?: number
 }) => {
     const { sessionId, eventId, timestamp } = props
-    const { client } = useZionClient()
-    const buttonPressed = useCallback(async () => {
-        await client?.retryMegolmDecryption(eventId)
-    }, [client, eventId])
 
     return (
         <Box
@@ -38,9 +33,6 @@ export const DecryptionDebugger = (props: {
                         <Text textAlign="center" fontSize="sm">
                             <strong>Encrypted with Session ID</strong> {sessionId}
                         </Text>
-                        <Button tone="cta1" size="button_sm" onClick={buttonPressed}>
-                            Retry
-                        </Button>
                     </Stack>
                 </Tooltip>
             }

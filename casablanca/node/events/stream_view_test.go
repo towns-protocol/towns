@@ -141,7 +141,8 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	// with two new events, we should snapshot
 	assert.Equal(t, true, view.shouldSnapshot())
-	assert.Equal(t, 2, len(view.eventsSinceLastSnapshot()))
+	assert.Equal(t, 1, len(view.blocks))
+	assert.Equal(t, 2, len(view.blocks[0].events))
 	// and miniblocks should have non - nil snapshots
 	miniblockHeader, envelopes := view.makeMiniblockHeader(context.Background())
 	assert.NotNil(t, miniblockHeader.Snapshot)

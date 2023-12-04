@@ -1,7 +1,7 @@
 import debug from 'debug'
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { DeviceKeys } from '@river/proto'
+import { UserDevice } from './crypto/olmLib'
 
 const log = debug('test')
 
@@ -28,12 +28,12 @@ describe('deviceKeyMessageTest', () => {
         const bobSelfToDevice = makeDonePromise()
         bobsClient.once(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: DeviceKeys, fallbackKeys): void => {
-                log('userDeviceKeyMessage for Bob', streamId, userId, deviceKeys, fallbackKeys)
+            (streamId: string, userId: string, userDevice: UserDevice): void => {
+                log('userDeviceKeyMessage for Bob', streamId, userId, userDevice)
                 bobSelfToDevice.runAndDone(() => {
                     expect(streamId).toBe(bobUserDeviceKeyStreamId)
                     expect(userId).toBe(bobsUserId)
-                    expect(deviceKeys?.deviceId).toBeDefined()
+                    expect(userDevice.deviceKey).toBeDefined()
                 })
             },
         )
@@ -50,12 +50,12 @@ describe('deviceKeyMessageTest', () => {
         const bobSelfToDevice = makeDonePromise()
         bobsClient.once(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: DeviceKeys, fallbackKeys): void => {
-                log('userDeviceKeyMessage for Bob', streamId, userId, deviceKeys, fallbackKeys)
+            (streamId: string, userId: string, userDevice: UserDevice): void => {
+                log('userDeviceKeyMessage for Bob', streamId, userId, userDevice)
                 bobSelfToDevice.runAndDone(() => {
                     expect(streamId).toBe(bobUserDeviceKeyStreamId)
                     expect(userId).toBe(bobsUserId)
-                    expect(deviceKeys?.deviceId).toBeDefined()
+                    expect(userDevice.deviceKey).toBeDefined()
                 })
             },
         )
@@ -76,12 +76,12 @@ describe('deviceKeyMessageTest', () => {
         const alicesSelfToDevice = makeDonePromise()
         alicesClient.once(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: DeviceKeys, fallbackKeys): void => {
-                log('userDeviceKeyMessage for Alice', streamId, userId, deviceKeys, fallbackKeys)
+            (streamId: string, userId: string, userDevice: UserDevice): void => {
+                log('userDeviceKeyMessage for Alice', streamId, userId, userDevice)
                 alicesSelfToDevice.runAndDone(() => {
                     expect(streamId).toBe(aliceUserDeviceKeyStreamId)
                     expect(userId).toBe(alicesUserId)
-                    expect(deviceKeys?.deviceId).toBeDefined()
+                    expect(userDevice.deviceKey).toBeDefined()
                 })
             },
         )
@@ -103,14 +103,14 @@ describe('deviceKeyMessageTest', () => {
         // bobs client should sync userDeviceKeyMessage twice (once for alice, once for bob)
         bobsClient.on(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: DeviceKeys, fallbackKeys): void => {
-                log('userDeviceKeyMessage', streamId, userId, deviceKeys, fallbackKeys)
+            (streamId: string, userId: string, userDevice: UserDevice): void => {
+                log('userDeviceKeyMessage', streamId, userId, userDevice)
                 bobSelfToDevice.runAndDone(() => {
                     expect([bobUserDeviceKeyStreamId, aliceUserDeviceKeyStreamId]).toContain(
                         streamId,
                     )
                     expect([bobsUserId, alicesUserId]).toContain(userId)
-                    expect(deviceKeys?.deviceId).toBeDefined()
+                    expect(userDevice.deviceKey).toBeDefined()
                 })
             },
         )
@@ -148,14 +148,14 @@ describe('deviceKeyMessageTest', () => {
         // bobs client should sync userDeviceKeyMessages
         bobsClient.on(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: DeviceKeys, fallbackKeys): void => {
-                log('userDeviceKeyMessage', streamId, userId, deviceKeys, fallbackKeys)
+            (streamId: string, userId: string, userDevice: UserDevice): void => {
+                log('userDeviceKeyMessage', streamId, userId, userDevice)
                 bobSelfToDevice.runAndDone(() => {
                     expect([bobUserDeviceKeyStreamId, aliceUserDeviceKeyStreamId]).toContain(
                         streamId,
                     )
                     expect([bobsUserId, alicesUserId]).toContain(userId)
-                    expect(deviceKeys?.deviceId).toBeDefined()
+                    expect(userDevice.deviceKey).toBeDefined()
                 })
             },
         )

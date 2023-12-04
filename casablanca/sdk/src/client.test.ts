@@ -7,25 +7,28 @@ import {
     makeUserStreamId,
     makeUserSettingsStreamId,
     makeUserDeviceKeyStreamId,
+    makeUserToDeviceStreamId,
 } from './id'
-import { makeDonePromise, makeTestClient, waitFor } from './util.test'
+import { makeDonePromise, makeTestClient, waitFor, getChannelMessagePayload } from './util.test'
 import {
     ChannelMessage,
-    DeviceKeys,
     SnapshotCaseType,
     SyncStreamsRequest,
     SyncStreamsResponse,
 } from '@river/proto'
-import { getChannelMessagePayload } from './testutils'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
 // This is needed to get the jest itnerface for using in spyOn
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { jest } from '@jest/globals'
-import { RiverEventV2 } from './eventV2'
 import { SignerContext } from './sign'
-import { make_ChannelPayload_Message } from './types'
+import {
+    DecryptedTimelineEvent,
+    make_ChannelPayload_Message,
+    make_CommonPayload_KeyFulfillment,
+} from './types'
 import { check, isDefined } from './check'
+import { UserDevice } from './crypto/olmLib'
 
 const log = dlog('csb:test')
 
@@ -110,7 +113,7 @@ describe('clientTest', () => {
         await bobsClient.waitForStream(channelId)
 
         // hand construct a message, (don't do this normally! just use sendMessage(..))
-        const encrypted = await bobsClient.createMegolmEncryptedEvent(
+        const encrypted = await bobsClient.encryptMegolmEvent(
             new ChannelMessage({
                 payload: {
                     case: 'post',
@@ -290,9 +293,10 @@ describe('clientTest', () => {
 
     test('clientCreatesStreamsForNewUser', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        expect(bobsClient.streams.size).toEqual(3)
+        expect(bobsClient.streams.size).toEqual(4)
         expect(bobsClient.streams.get(makeUserSettingsStreamId(bobsClient.userId))).toBeDefined()
         expect(bobsClient.streams.get(makeUserStreamId(bobsClient.userId))).toBeDefined()
+        expect(bobsClient.streams.get(makeUserToDeviceStreamId(bobsClient.userId))).toBeDefined()
         expect(bobsClient.streams.get(makeUserDeviceKeyStreamId(bobsClient.userId))).toBeDefined()
     })
 
@@ -300,7 +304,7 @@ describe('clientTest', () => {
         await expect(bobsClient.initializeUser()).toResolve()
         const bobsAnotherClient = await makeTestClient(undefined, bobsClient.signerContext)
         await expect(bobsAnotherClient.initializeUser()).toResolve()
-        expect(bobsAnotherClient.streams.size).toEqual(3)
+        expect(bobsAnotherClient.streams.size).toEqual(4)
         expect(
             bobsAnotherClient.streams.get(makeUserSettingsStreamId(bobsClient.userId)),
         ).toBeDefined()
@@ -308,6 +312,33 @@ describe('clientTest', () => {
         expect(
             bobsAnotherClient.streams.get(makeUserDeviceKeyStreamId(bobsClient.userId)),
         ).toBeDefined()
+    })
+
+    test('bobCanSendCommonPayload', async () => {
+        await expect(bobsClient.initializeUser()).toResolve()
+        await bobsClient.startSync()
+        expect(bobsClient.userSettingsStreamId).toBeDefined()
+        const ping = make_CommonPayload_KeyFulfillment({
+            deviceKey: 'foo',
+            userId: 'baz',
+            sessionIds: ['bar'],
+        })
+        await expect(
+            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, ping),
+        ).toResolve()
+        await waitFor(() => {
+            const lastEvent = bobsClient.streams
+                .get(bobsClient.userSettingsStreamId!)
+                ?.view.timeline.filter((x) => x.remoteEvent?.event.payload.case === 'commonPayload')
+                .at(-1)
+            expect(lastEvent).toBeDefined()
+            check(lastEvent?.remoteEvent?.event.payload.case === 'commonPayload', '??')
+            check(
+                lastEvent?.remoteEvent?.event.payload.value.content.case === 'keyFulfillment',
+                '??',
+            )
+            expect(lastEvent?.remoteEvent?.event.payload.value.content.value.deviceKey).toBe('foo')
+        })
     })
 
     test('bobCreatesUnamedSpaceAndStream', async () => {
@@ -331,20 +362,22 @@ describe('clientTest', () => {
 
         const done = makeDonePromise()
 
-        const onChannelNewMessage = (channelId: string, event: RiverEventV2): void => {
+        const onChannelNewMessage = (
+            channelId: string,
+            streamKind: SnapshotCaseType,
+            event: DecryptedTimelineEvent,
+        ): void => {
             log('onChannelNewMessage', channelId)
             log(event)
 
             done.runAndDoneAsync(async () => {
-                const content = event.getWireContent()
-                expect(content).toBeDefined()
-                await bobsAnotherClient.decryptEventIfNeeded(event)
-                const clearEvent = event.getContent()
+                expect(event.decryptedContent.kind).toBe('channelMessage')
+                const clearEvent = event.decryptedContent.content
                 if (
-                    clearEvent?.content?.payload?.case === 'post' &&
-                    clearEvent?.content?.payload?.value?.content?.case === 'text'
+                    clearEvent?.payload?.case === 'post' &&
+                    clearEvent?.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(clearEvent?.content?.payload?.value?.content.value?.body).toContain(
+                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
                         'Hello, again!',
                     )
                 }
@@ -359,11 +392,13 @@ describe('clientTest', () => {
                     const channel = bobsAnotherClient.stream(streamId)!
                     log('channel content')
                     log(channel.view)
-                    const messages = Array.from(
-                        channel.view.channelContent.messages.state.values() ?? [],
+                    const messages = channel.view.timeline.filter(
+                        (x) =>
+                            x.remoteEvent?.event.payload.case === 'channelPayload' &&
+                            x.remoteEvent?.event.payload.value.content.case === 'message',
                     )
                     expect(messages).toHaveLength(1)
-                    channel.on('channelNewMessage', onChannelNewMessage)
+                    channel.on('eventDecrypted', onChannelNewMessage)
                     channelWithContentId = streamId
                 }
             })
@@ -474,66 +509,74 @@ describe('clientTest', () => {
             'Both!',
         ]
 
-        alicesClient.on('eventDecrypted', (event: RiverEventV2, error?: Error): void => {
-            if (error) {
-                return
-            }
-            const channelId = event.getStreamId()
-            const content = event.getWireContent()
-            expect(content).toBeDefined()
-            log('eventDecrypted', 'Alice', channelId)
-            aliceGetsMessage.runAsync(async () => {
-                expect(channelId).toBe(bobsChannelId)
-                const clearEvent = event.getContent()
-                expect(clearEvent?.content?.payload).toBeDefined()
-                if (
-                    clearEvent?.content?.payload?.case === 'post' &&
-                    clearEvent?.content?.payload?.value?.content?.case === 'text'
-                ) {
-                    const body = clearEvent?.content?.payload?.value?.content.value?.body
-                    // @ts-ignore
-                    expect(body).toBeOneOf(conversation)
-                    if (body === 'Hello, Alice!') {
-                        alicesClient.sendMessage(channelId, 'Hello, Bob!')
-                    } else if (body === 'Weather nice?') {
-                        alicesClient.sendMessage(channelId, 'Sun and rain!')
-                    } else if (body === 'Coffee or tea?') {
-                        alicesClient.sendMessage(channelId, 'Both!')
-                        aliceGetsMessage.done()
+        alicesClient.on(
+            'eventDecrypted',
+            (
+                streamId: string,
+                contentKind: SnapshotCaseType,
+                event: DecryptedTimelineEvent,
+            ): void => {
+                const channelId = streamId
+                const content = event.decryptedContent.content
+                expect(content).toBeDefined()
+                log('eventDecrypted', 'Alice', channelId)
+                aliceGetsMessage.runAsync(async () => {
+                    expect(channelId).toBe(bobsChannelId)
+                    const clearEvent = event.decryptedContent
+                    expect(clearEvent?.content?.payload).toBeDefined()
+                    if (
+                        clearEvent?.content?.payload?.case === 'post' &&
+                        clearEvent?.content?.payload?.value?.content?.case === 'text'
+                    ) {
+                        const body = clearEvent?.content?.payload?.value?.content.value?.body
+                        // @ts-ignore
+                        expect(body).toBeOneOf(conversation)
+                        if (body === 'Hello, Alice!') {
+                            alicesClient.sendMessage(channelId, 'Hello, Bob!')
+                        } else if (body === 'Weather nice?') {
+                            alicesClient.sendMessage(channelId, 'Sun and rain!')
+                        } else if (body === 'Coffee or tea?') {
+                            alicesClient.sendMessage(channelId, 'Both!')
+                            aliceGetsMessage.done()
+                        }
                     }
-                }
-            })
-        })
+                })
+            },
+        )
 
-        bobsClient.on('eventDecrypted', (event: RiverEventV2, error?: Error): void => {
-            if (error) {
-                return
-            }
-            const channelId = event.getStreamId()
-            const content = event.getWireContent()
-            expect(content).toBeDefined()
-            log('eventDecrypted', 'Bob', channelId)
-            bobGetsMessage.runAsync(async () => {
-                expect(channelId).toBe(bobsChannelId)
-                const clearEvent = event.getContent()
-                expect(clearEvent?.content?.payload).toBeDefined()
-                if (
-                    clearEvent?.content?.payload?.case === 'post' &&
-                    clearEvent?.content?.payload?.value?.content?.case === 'text'
-                ) {
-                    const body = clearEvent?.content?.payload?.value?.content.value?.body
-                    // @ts-ignore
-                    expect(body).toBeOneOf(conversation)
-                    if (body === 'Hello, Bob!') {
-                        bobsClient.sendMessage(channelId, 'Weather nice?')
-                    } else if (body === 'Sun and rain!') {
-                        bobsClient.sendMessage(channelId, 'Coffee or tea?')
-                    } else if (body === 'Both!') {
-                        bobGetsMessage.done()
+        bobsClient.on(
+            'eventDecrypted',
+            (
+                streamId: string,
+                contentKind: SnapshotCaseType,
+                event: DecryptedTimelineEvent,
+            ): void => {
+                const channelId = streamId
+                const content = event.decryptedContent.content
+                expect(content).toBeDefined()
+                log('eventDecrypted', 'Bob', channelId)
+                bobGetsMessage.runAsync(async () => {
+                    expect(channelId).toBe(bobsChannelId)
+                    const clearEvent = event.decryptedContent
+                    expect(clearEvent.content?.payload).toBeDefined()
+                    if (
+                        clearEvent.content?.payload?.case === 'post' &&
+                        clearEvent.content?.payload?.value?.content?.case === 'text'
+                    ) {
+                        const body = clearEvent.content?.payload?.value?.content.value?.body
+                        // @ts-ignore
+                        expect(body).toBeOneOf(conversation)
+                        if (body === 'Hello, Bob!') {
+                            bobsClient.sendMessage(channelId, 'Weather nice?')
+                        } else if (body === 'Sun and rain!') {
+                            bobsClient.sendMessage(channelId, 'Coffee or tea?')
+                        } else if (body === 'Both!') {
+                            bobGetsMessage.done()
+                        }
                     }
-                }
-            })
-        })
+                })
+            },
+        )
 
         await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!')).toResolve()
         await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, Alice!')).toResolve()
@@ -554,12 +597,12 @@ describe('clientTest', () => {
         const bobSelfToDevice = makeDonePromise()
         bobsClient.once(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: DeviceKeys, fallbackKeys): void => {
-                log('userDeviceKeyMessage for Bob', streamId, userId, deviceKeys, fallbackKeys)
+            (streamId: string, userId: string, userDevice: UserDevice): void => {
+                log('userDeviceKeyMessage for Bob', streamId, userId, userDevice)
                 bobSelfToDevice.runAndDone(() => {
                     expect(streamId).toBe(bobUserDeviceKeyStreamId)
                     expect(userId).toBe(bobsUserId)
-                    expect(deviceKeys?.deviceId).toBeDefined()
+                    expect(userDevice.deviceKey).toBeDefined()
                 })
             },
         )
@@ -576,12 +619,12 @@ describe('clientTest', () => {
         const bobSelfToDevice = makeDonePromise()
         bobsClient.once(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: DeviceKeys, fallbackKeys): void => {
-                log('userDeviceKeyMessage for Bob', streamId, userId, deviceKeys, fallbackKeys)
+            (streamId: string, userId: string, deviceKeys: UserDevice): void => {
+                log('userDeviceKeyMessage for Bob', streamId, userId, deviceKeys)
                 bobSelfToDevice.runAndDone(() => {
                     expect(streamId).toBe(bobUserDeviceKeyStreamId)
                     expect(userId).toBe(bobsUserId)
-                    expect(deviceKeys?.deviceId).toBeDefined()
+                    expect(deviceKeys.deviceKey).toBeDefined()
                 })
             },
         )
@@ -602,12 +645,12 @@ describe('clientTest', () => {
         const alicesSelfToDevice = makeDonePromise()
         alicesClient.once(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: DeviceKeys, fallbackKeys): void => {
-                log('userDeviceKeyMessage for Alice', streamId, userId, deviceKeys, fallbackKeys)
+            (streamId: string, userId: string, deviceKeys: UserDevice): void => {
+                log('userDeviceKeyMessage for Alice', streamId, userId, deviceKeys)
                 alicesSelfToDevice.runAndDone(() => {
                     expect(streamId).toBe(aliceUserDeviceKeyStreamId)
                     expect(userId).toBe(alicesUserId)
-                    expect(deviceKeys?.deviceId).toBeDefined()
+                    expect(deviceKeys.deviceKey).toBeDefined()
                 })
             },
         )
@@ -629,14 +672,14 @@ describe('clientTest', () => {
         // bobs client should sync userDeviceKeyMessage twice (once for alice, once for bob)
         bobsClient.on(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: DeviceKeys, fallbackKeys): void => {
-                log('userDeviceKeyMessage', streamId, userId, deviceKeys, fallbackKeys)
+            (streamId: string, userId: string, deviceKeys: UserDevice): void => {
+                log('userDeviceKeyMessage', streamId, userId, deviceKeys)
                 bobSelfToDevice.runAndDone(() => {
                     expect([bobUserDeviceKeyStreamId, aliceUserDeviceKeyStreamId]).toContain(
                         streamId,
                     )
                     expect([bobsUserId, alicesUserId]).toContain(userId)
-                    expect(deviceKeys?.deviceId).toBeDefined()
+                    expect(deviceKeys.deviceKey).toBeDefined()
                 })
             },
         )
@@ -662,14 +705,14 @@ describe('clientTest', () => {
         // bobs client should sync userDeviceKeyMessage twice (once for alice, once for bob)
         bobsClient.on(
             'userDeviceKeyMessage',
-            (streamId: string, userId: string, deviceKeys: DeviceKeys, fallbackKeys): void => {
-                log('userDeviceKeyMessage', streamId, userId, deviceKeys, fallbackKeys)
+            (streamId: string, userId: string, deviceKeys: UserDevice): void => {
+                log('userDeviceKeyMessage', streamId, userId, deviceKeys)
                 bobSelfToDevice.runAndDone(() => {
                     expect([bobUserDeviceKeyStreamId, aliceUserDeviceKeyStreamId]).toContain(
                         streamId,
                     )
                     expect([bobsUserId, alicesUserId]).toContain(userId)
-                    expect(deviceKeys?.deviceId).toBeDefined()
+                    expect(deviceKeys.deviceKey).toBeDefined()
                 })
             },
         )
@@ -778,7 +821,7 @@ describe('clientTest', () => {
             await bobsClient.uploadDeviceKeys()
         }
 
-        const keys = stream.view.userDeviceKeyContent.uploadedDeviceKeys.get(bobsClient.userId)
+        const keys = stream.view.userDeviceKeyContent.megolmKeys
         expect(keys).toHaveLength(1)
     })
 })

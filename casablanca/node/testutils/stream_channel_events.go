@@ -170,7 +170,7 @@ func MakeChannelInceptionEvents_T(
 		MiniblockTimeMs:      10000000,
 	}
 	channelProperties := &protocol.EncryptedData{
-		Text: "encrypted text supposed to be here",
+		Ciphertext: "encrypted text supposed to be here",
 	}
 	inception := MakeEnvelopeWithPayload_T(
 		t,

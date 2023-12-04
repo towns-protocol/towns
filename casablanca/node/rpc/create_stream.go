@@ -82,6 +82,9 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 	case *UserSettingsPayload_Inception:
 		resp, err = s.createStream_UserSettings(ctx, log, parsedEvents, inception)
 
+	case *UserToDevicePayload_Inception:
+		resp, err = s.createStream_UserToDevice(ctx, log, parsedEvents, inception)
+
 	case *MediaPayload_Inception:
 		resp, err = s.createStream_Media(ctx, log, parsedEvents, inception)
 
@@ -473,6 +476,30 @@ func (s *Service) createStream_User(
 
 	// TODO: Authorization.
 
+	streamId := inception.GetStreamId()
+	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (s *Service) createStream_UserToDevice(
+	ctx context.Context,
+	log *slog.Logger,
+	parsedEvents []*ParsedEvent,
+	inception *UserToDevicePayload_Inception,
+) (*CreateStreamResponse, error) {
+	if len(parsedEvents) != 1 {
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user to device stream must have only one event")
+	}
+
+	err := CheckUserToDeviceStreamId(inception.StreamId, parsedEvents[0].Event.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: Authorization.
 	streamId := inception.GetStreamId()
 	resp, err := s.createReplicatedStream(ctx, streamId, parsedEvents)
 	if err != nil {

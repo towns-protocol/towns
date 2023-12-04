@@ -13,8 +13,7 @@ import {
     Session,
 } from '@river/mecholm'
 import { IOutboundGroupSessionKey } from './algorithms/megolm'
-import { EncryptedMessageEnvelope, MegolmSession } from '@river/proto'
-import { MEGOLM_ALGORITHM } from './olmLib'
+import { MEGOLM_ALGORITHM, MegolmSession } from './olmLib'
 
 const log = dlog('csb:olmDevice')
 
@@ -513,7 +512,7 @@ export class OlmDevice {
         theirIdentityKey: string,
         fallbackKey: string,
         payload: string,
-    ): Promise<EncryptedMessageEnvelope> {
+    ): Promise<{ type: 0 | 1; body: string }> {
         checkPayloadLength(payload)
         return this.cryptoStore.withAccountTx(async () => {
             const session = this.olmDelegate.createSession()
@@ -521,7 +520,7 @@ export class OlmDevice {
                 const account = await this.getAccount()
                 session.create_outbound(account, theirIdentityKey, fallbackKey)
                 const result = session.encrypt(payload)
-                return new EncryptedMessageEnvelope({ ciphertext: result.body, type: result.type })
+                return result
             } catch (error) {
                 log('Error encrypting message with fallback key', error)
                 throw error
@@ -542,14 +541,15 @@ export class OlmDevice {
      * @returns decrypted payload.
      */
     public async decryptMessage(
-        envelope: EncryptedMessageEnvelope,
+        ciphertext: string,
         theirDeviceIdentityKey: string,
+        messageType: number = 0,
     ): Promise<string> {
-        if (envelope.type !== 0) {
+        if (messageType !== 0) {
             throw new Error('Only pre-key messages supported')
         }
 
-        checkPayloadLength(envelope.ciphertext)
+        checkPayloadLength(ciphertext)
         return await this.cryptoStore.withAccountTx(async () => {
             const account = await this.getAccount()
             const session = this.olmDelegate.createSession()
@@ -563,9 +563,9 @@ export class OlmDevice {
                     sessionDesc,
             )
             try {
-                session.create_inbound_from(account, theirDeviceIdentityKey, envelope.ciphertext)
+                session.create_inbound_from(account, theirDeviceIdentityKey, ciphertext)
                 await this.storeAccount(account)
-                return session.decrypt(envelope.type, envelope.ciphertext)
+                return session.decrypt(messageType, ciphertext)
             } catch (e) {
                 throw new Error(
                     'Error decrypting prekey message: ' + JSON.stringify((<Error>e).message),
@@ -654,11 +654,11 @@ export class OlmDevice {
         const sessionKey = session.export_session(messageIndex)
         session.free()
 
-        return new MegolmSession({
+        return {
             streamId: streamId,
             sessionId: sessionId,
             sessionKey: sessionKey,
             algorithm: MEGOLM_ALGORITHM,
-        })
+        }
     }
 }

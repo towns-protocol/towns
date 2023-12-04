@@ -1,4 +1,4 @@
-import { PlainMessage } from '@bufbuild/protobuf'
+import { Message, PlainMessage } from '@bufbuild/protobuf'
 import {
     MembershipOp,
     ChannelOp,
@@ -12,12 +12,7 @@ import {
     ChannelMessage_Reaction,
     ChannelMessage_Redaction,
     StreamEvent,
-    MegolmSession,
-    FallbackKeys,
-    Key,
     SyncCookie,
-    EncryptedDeviceData,
-    ToDeviceMessage,
     EncryptedData,
     GetStreamResponse,
     CreateStreamResponse,
@@ -27,17 +22,16 @@ import {
     FullyReadMarker,
     Envelope,
     Err,
-    OlmMessage,
-    EncryptedMessageEnvelope,
+    SessionKeys,
 } from '@river/proto'
-import { Crypto, GroupEncryptionInput } from './crypto/crypto'
+import { Crypto } from './crypto/crypto'
 import { OlmDevice } from './crypto/olmDevice'
-import { UserDevice, UserDeviceCollection, MEGOLM_ALGORITHM } from './crypto/olmLib'
+import { MegolmSession, UserDevice, UserDeviceCollection } from './crypto/olmLib'
 import { DLogger, dlog, dlogError } from './dlog'
 import { errorContains, getRpcErrorProperty, StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { assert, check, hasElements, isDefined, throwWithCode } from './check'
+import { assert, check, hasElements, isDefined, logNever, throwWithCode } from './check'
 import {
     isChannelStreamId,
     isDMChannelStreamId,
@@ -51,15 +45,13 @@ import {
     makeUserDeviceKeyStreamId,
     makeUserSettingsStreamId,
     makeUserStreamId,
+    makeUserToDeviceStreamId,
     userIdFromAddress,
 } from './id'
 import { SignerContext, makeEvent, unpackStreamResponse } from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
-    IDeviceKeys,
-    IFallbackKey,
-    make_UserDeviceKeyPayload_UserDeviceKey,
     make_UserDeviceKeyPayload_Inception,
     make_ChannelPayload_Inception,
     make_ChannelProperties,
@@ -68,8 +60,6 @@ import {
     make_SpacePayload_Inception,
     make_SpacePayload_Membership,
     make_UserPayload_Inception,
-    make_UserPayload_ToDevice,
-    IDeviceKeySignatures,
     make_SpacePayload_Channel,
     make_UserSettingsPayload_FullyReadMarkers,
     make_UserSettingsPayload_Inception,
@@ -83,24 +73,29 @@ import {
     make_GDMChannelPayload_Membership,
     make_SpacePayload_DisplayName,
     StreamTimelineEvent,
+    make_UserToDevicePayload_Ack,
+    make_UserToDevicePayload_Inception,
+    make_fake_encryptedData,
+    make_UserDeviceKeyPayload_MegolmDevice,
+    make_UserToDevicePayload_MegolmSessions,
+    DecryptedTimelineEvent,
 } from './types'
 import { bin_fromHexString, bin_toHexString, shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/cryptoStore'
 
-import { RiverEventsV2, RiverEventV2 } from './eventV2'
 import debug from 'debug'
 import { Stream } from './stream'
 import { Code } from '@connectrpc/connect'
 import { isIConnectError } from './utils'
-import { EntitlementsDelegate, RiverDecryptionExtension } from './riverDecryptionExtensions'
-import { deviceKeyPayloadToUserDevice } from './clientUtils'
+import { DecryptedContent_ChannelMessage, EncryptedContent } from './encryptedContentTypes'
+import { DecryptionExtensions, EntitlementsDelegate } from './decryptionExtensions'
 
 const enum AbortReason {
     SHUTDOWN = 'SHUTDOWN',
     BLIP = 'BLIP',
 }
 
-export type EmittedEvents = StreamEvents & RiverEventsV2
+export type EmittedEvents = StreamEvents
 
 export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
     readonly signerContext: SignerContext
@@ -112,6 +107,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     userStreamId?: string
     userSettingsStreamId?: string
     userDeviceKeyStreamId?: string
+    userToDeviceStreamId?: string
     readonly streams: Map<string, Stream> = new Map()
 
     private readonly logCall: DLogger
@@ -129,7 +125,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     private syncLoop?: Promise<unknown>
     private syncAbort?: AbortController
     private entitlementsDelegate: EntitlementsDelegate
-    private decryptionExtensions?: RiverDecryptionExtension
+    private decryptionExtensions?: DecryptionExtensions
 
     constructor(
         signerContext: SignerContext,
@@ -187,7 +183,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     async stop(): Promise<void> {
         this.logCall('stop')
-        this.decryptionExtensions?.stop()
+        await this.decryptionExtensions?.stop()
         await this.stopSync()
     }
 
@@ -201,19 +197,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     ): Promise<void> {
         assert(this.userStreamId === undefined, 'streamId must not be set')
         this.userStreamId = userStreamId
-        const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
-            unpackStreamResponse(response)
-
-        const stream = new Stream(
-            this.userId,
-            userStreamId,
-            snapshot,
-            prevSnapshotMiniblockNum,
-            this,
-            this.logEmitFromStream,
-        )
-        this.streams.set(userStreamId, stream)
-        stream.initialize(streamAndCookie, snapshot, miniblocks)
+        await this.initStreamFromResponse(userStreamId, response)
     }
 
     private async initUserJoinedStreams() {
@@ -240,19 +224,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     ): Promise<void> {
         assert(this.userSettingsStreamId === undefined, 'streamId must not be set')
         this.userSettingsStreamId = userSettingsStreamId
-        const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
-            unpackStreamResponse(response)
-
-        const stream = new Stream(
-            this.userId,
-            userSettingsStreamId,
-            snapshot,
-            prevSnapshotMiniblockNum,
-            this,
-            this.logEmitFromStream,
-        )
-        this.streams.set(userSettingsStreamId, stream)
-        stream.initialize(streamAndCookie, snapshot, miniblocks)
+        await this.initStreamFromResponse(userSettingsStreamId, response)
     }
 
     private async initUserDeviceKeyStream(
@@ -261,18 +233,34 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     ): Promise<void> {
         assert(this.userDeviceKeyStreamId === undefined, 'streamId must not be set')
         this.userDeviceKeyStreamId = userDeviceKeyStreamId
+        await this.initStreamFromResponse(userDeviceKeyStreamId, response)
+    }
+
+    private async initUserToDeviceStream(
+        userToDeviceStreamId: string,
+        response: GetStreamResponse | CreateStreamResponse,
+    ): Promise<void> {
+        assert(this.userToDeviceStreamId === undefined, 'streamId must not be set')
+        this.userToDeviceStreamId = userToDeviceStreamId
+        await this.initStreamFromResponse(userToDeviceStreamId, response)
+    }
+
+    private async initStreamFromResponse(
+        streamId: string,
+        response: GetStreamResponse | CreateStreamResponse,
+    ): Promise<void> {
         const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
             unpackStreamResponse(response)
 
         const stream = new Stream(
             this.userId,
-            userDeviceKeyStreamId,
+            streamId,
             snapshot,
             prevSnapshotMiniblockNum,
             this,
             this.logEmitFromStream,
         )
-        this.streams.set(userDeviceKeyStreamId, stream)
+        this.streams.set(streamId, stream)
         stream.initialize(streamAndCookie, snapshot, miniblocks)
     }
 
@@ -280,13 +268,18 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logCall('initializeUser')
         assert(this.userStreamId === undefined, 'already initialized')
         await this.initCrypto()
+        check(isDefined(this.decryptionExtensions), 'decryptionExtensions must be defined')
         const userStreamId = makeUserStreamId(this.userId)
+        const userToDeviceStreamId = makeUserToDeviceStreamId(this.userId)
         const userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
         const userSettingsStreamId = makeUserSettingsStreamId(this.userId)
 
         // todo as part of HNT-2826 we should check/create all these streamson the node
         const userStream =
             (await this.getUserStream(userStreamId)) ?? (await this.createUserStream(userStreamId))
+        const userToDeviceStream =
+            (await this.getUserStream(userToDeviceStreamId)) ??
+            (await this.createUserToDeviceStream(userToDeviceStreamId))
         const userDeviceKeyStream =
             (await this.getUserStream(userDeviceKeyStreamId)) ??
             (await this.createUserDeviceKeyStream(userDeviceKeyStreamId))
@@ -295,11 +288,12 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             (await this.createUserSettingsStream(userSettingsStreamId))
 
         await this.initUserDeviceKeyStream(userDeviceKeyStreamId, userDeviceKeyStream)
+        await this.initUserToDeviceStream(userToDeviceStreamId, userToDeviceStream)
         await this.initUserSettingsStream(userSettingsStreamId, userSettingResponse)
         await this.initUserStream(userStreamId, userStream)
         await this.uploadDeviceKeys()
         await this.initUserJoinedStreams()
-        this.decryptionExtensions?.start()
+        this.decryptionExtensions.start()
     }
 
     // special wrapper around rpcClient.getStream which catches NOT_FOUND errors but re-throws everything else
@@ -340,6 +334,12 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 make_UserDeviceKeyPayload_Inception({
                     streamId: userDeviceKeyStreamId,
                     userId: this.userId,
+                    // device keys are updated often, and we're limited to
+                    // 10, so after ten just snapshot
+                    settings: {
+                        minEventsPerSnapshot: 10,
+                        miniblockTimeMs: 2000n,
+                    },
                 }),
             ),
         ]
@@ -347,6 +347,34 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return await this.rpcClient.createStream({
             events: userDeviceKeyEvents,
             streamId: userDeviceKeyStreamId,
+        })
+    }
+
+    private async createUserToDeviceStream(
+        userToDeviceStreamId: string,
+    ): Promise<CreateStreamResponse> {
+        const userToDeviceEvents = [
+            await makeEvent(
+                this.signerContext,
+                make_UserToDevicePayload_Inception({
+                    streamId: userToDeviceStreamId,
+                    // todo: move this to a config on the node https://linear.app/hnt-labs/issue/HNT-3931/move-custom-snapshot-config-for-user-streams-to-node
+                    // aellis optimizing the to device stream to make blocks
+                    // faster and snapshot often, because of the way we ack
+                    // for different devices,
+                    // this keeps us from having to re-download things for other
+                    // devices. This should be configured on the node side.
+                    settings: {
+                        minEventsPerSnapshot: 10,
+                        miniblockTimeMs: 1000n,
+                    },
+                }),
+            ),
+        ]
+
+        return await this.rpcClient.createStream({
+            events: userToDeviceEvents,
+            streamId: userToDeviceStreamId,
         })
     }
 
@@ -416,9 +444,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId,
-                channelProperties: {
-                    text: make_ChannelProperties(channelName, channelTopic).toJsonString(),
-                },
+                channelProperties: make_fake_encryptedData(
+                    make_ChannelProperties(channelName, channelTopic).toJsonString(),
+                ),
                 settings: streamSettings,
             }),
         )
@@ -586,20 +614,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logCall('updateChannel', channelId, spaceId, channelName, channelTopic)
         assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
         assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
-
-        const channelPropertiesToUpdate = {
-            text: make_ChannelProperties(channelName, channelTopic).toJsonString(),
-            algorithm: '',
-            senderKey: '',
-            deviceId: '',
-        }
+        const channelProps = make_ChannelProperties(channelName, channelTopic).toJsonString()
 
         return this.makeEventAndAddToStream(
             spaceId, // we send events to the stream of the space where updated channel belongs to
             make_SpacePayload_Channel({
                 op: ChannelOp.CO_UPDATED,
                 channelId: channelId,
-                channelProperties: channelPropertiesToUpdate,
+                channelProperties: make_fake_encryptedData(channelProps),
             }),
             { method: 'updateChannel' },
         )
@@ -623,16 +645,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             this.userSettingsStreamId,
             make_UserSettingsPayload_FullyReadMarkers({
                 channelStreamId: channelId,
-                content: {
-                    text: fullyReadMarkersContent.toJsonString(),
-                },
+                content: make_fake_encryptedData(fullyReadMarkersContent.toJsonString()),
             }),
             { method: 'sendFullyReadMarker' },
         )
     }
 
     async setDisplayName(streamId: string, displayName: string) {
-        const payload = make_SpacePayload_DisplayName({ text: displayName })
+        const payload = make_SpacePayload_DisplayName(make_fake_encryptedData(displayName))
         await this.makeEventAndAddToStream(streamId, payload, { method: 'displayName' })
     }
 
@@ -666,14 +686,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             throw new Error(`Stream ${streamId} not found after waiting`)
         }
         return stream
-    }
-
-    public updateDecryptedStream(streamId: string, event: RiverEventV2): void {
-        const stream = this.stream(streamId)
-        if (stream === undefined) {
-            throw new Error(`Stream ${streamId} not found`)
-        }
-        stream.view.updateDecrypted(event, this)
     }
 
     async getStream(streamId: string): Promise<StreamStateView> {
@@ -951,7 +963,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const stream = this.stream(streamId)
         check(stream !== undefined, 'stream not found')
         const localId = stream.view.appendLocalEvent(payload, this)
-        const message = await this.createMegolmEncryptedEvent(payload, streamId)
+        const message = await this.encryptMegolmEvent(payload, streamId)
         if (!message) {
             throw new Error('failed to encrypt message')
         }
@@ -1336,40 +1348,30 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
     }
 
-    async uploadKeysRequest(content: IUploadKeysRequest): Promise<void> {
-        const userId: string = content.user_id
-        const deviceId: string = content.device_id
-        const streamId: string = makeUserDeviceKeyStreamId(userId)
-        // TODO: assert device_id belongs to user
-        // const deviceIds = this.getStoredDevicesForUser(userId)
-        // TODO: check for fallbackKeys in arguments and ensure upload
-        // of actual keys, algorithms.
-        let fallbackKeys: Record<string, PlainMessage<Key>> = {}
-        if (content?.fallback_keys) {
-            fallbackKeys = Object.fromEntries(
-                Object.entries(content.fallback_keys).map(([key, value]) => {
-                    const newValue = {
-                        key: value.key,
-                        signatures: value.signatures as IDeviceKeySignatures,
-                    }
-                    return [key, newValue]
-                }),
-            )
+    async downloadNewToDeviceMessages(): Promise<void> {
+        this.logCall('downloadNewToDeviceMessages')
+        check(isDefined(this.userToDeviceStreamId))
+        const stream = this.stream(this.userToDeviceStreamId)
+        check(isDefined(stream))
+        check(isDefined(stream.view.miniblockInfo))
+        if (stream.view.miniblockInfo.terminusReached) {
+            return
         }
-        return this.makeEventAndAddToStream(
-            streamId,
-            make_UserDeviceKeyPayload_UserDeviceKey({
-                userId: userId,
-                deviceKeys: {
-                    deviceId: deviceId,
-                    algorithms: content.device_keys?.algorithms ?? [],
-                    keys: content.device_keys?.keys ?? {},
-                    signatures: content.device_keys?.signatures ?? {},
-                },
-                fallbackKeys: { algoKeyId: fallbackKeys },
-            }),
-            { method: 'userDeviceKey' },
-        )
+        const deviceSummary =
+            stream.view.userToDeviceContent.deviceSummary[this.userDeviceKey().deviceKey]
+        if (!deviceSummary) {
+            return
+        }
+        if (deviceSummary.lowerBound < stream.view.miniblockInfo.min) {
+            const toExclusive = stream.view.miniblockInfo.min
+            const fromInclusive = deviceSummary.lowerBound
+            const response = await this.rpcClient.getMiniblocks({
+                streamId: this.userToDeviceStreamId,
+                fromInclusive,
+                toExclusive,
+            })
+            stream.prependEvents(response.miniblocks, response.terminus)
+        }
     }
 
     public async downloadUserDeviceInfo(
@@ -1386,20 +1388,12 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                             return { userId, devices: devicesFromStore }
                         }
                     }
-
-                    // return latest 10 device keys until the below issue is complete
-                    // todo: https://linear.app/hnt-labs/issue/HNT-3647/devicekey-lifecycle-hardening
+                    // return latest 10 device keys
                     const deviceLookback = 10
-
                     const stream = await this.getStream(streamId)
-                    const userDevices = Array.from(
-                        stream.userDeviceKeyContent.uploadedDeviceKeys.values(),
+                    const userDevices = stream.userDeviceKeyContent.megolmKeys.slice(
+                        -deviceLookback,
                     )
-                        .flatMap((value) => value)
-                        .map(deviceKeyPayloadToUserDevice)
-                        .filter(isDefined)
-                        .slice(-deviceLookback)
-
                     await this.cryptoStore.saveUserDevices(userId, userDevices)
                     return { userId, devices: userDevices }
                 } catch (e) {
@@ -1500,22 +1494,20 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             return
         }
 
-        if (this.userId == undefined) {
-            throw new Error('userId must be set to init crypto')
-        }
-
-        // TODO: for now this just creates crypto module and uploads deviceKeys.
-        // We should ensure cryptoStore is not empty, initialize room list, and set the olmVersion.
-        if (this.deviceId === undefined) {
-            throw new Error('deviceId must be set to init crypto')
-        }
+        check(this.userId !== undefined, 'userId must be set to init crypto')
+        check(this.deviceId !== undefined, 'deviceId must be set to init crypto')
 
         await this.cryptoStore.initialize()
 
         const crypto = new Crypto(this, this.userId, this.deviceId, this.cryptoStore)
         await crypto.init()
         this.cryptoBackend = crypto
-        this.decryptionExtensions = new RiverDecryptionExtension(this, this.entitlementsDelegate)
+        this.decryptionExtensions = new DecryptionExtensions(
+            this,
+            this.entitlementsDelegate,
+            this.userId,
+            this.userDeviceKey(),
+        )
     }
 
     /**
@@ -1543,75 +1535,85 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const stream = this.stream(this.userDeviceKeyStreamId)
         check(isDefined(stream), 'device key stream not found')
 
-        if (
-            stream.view.userDeviceKeyContent.containsDeviceKey(
-                this.userId,
-                this.olmDevice.deviceCurve25519Key ?? '',
-                this.olmDevice.fallbackKey.key,
-            )
-        ) {
-            this.logCall('uploadDeviceKeys:: device keys already uploaded')
-            return
-        }
-
-        return this.cryptoBackend.uploadDeviceKeys()
+        return this.makeEventAndAddToStream(
+            this.userDeviceKeyStreamId,
+            make_UserDeviceKeyPayload_MegolmDevice({
+                ...this.userDeviceKey(),
+            }),
+            { method: 'userDeviceKey' },
+        )
     }
 
-    /**
-     * Create encrypted channel event from a plain message using Megolm algorithm for a session
-     * corresponding to a particular channel.
-     *
-     */
-    async createMegolmEncryptedEvent(
-        event: ChannelMessage,
-        channelId: string,
-    ): Promise<EncryptedData | undefined> {
-        // encrypt event contents and encode ciphertext
-        const input = { content: event, recipient: { streamId: channelId } }
-        let encryptedEvent: EncryptedData
-        try {
-            encryptedEvent = await this.encryptMegolmEvent(input)
-        } catch (e) {
-            this.logCall('createMegolmEncryptedEvent: ERROR', e)
-            throw e
+    async ackToDeviceStream() {
+        check(isDefined(this.userToDeviceStreamId), 'user to device stream not found')
+        check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
+        const toDeviceStream = this.streams.get(this.userToDeviceStreamId)
+        check(isDefined(toDeviceStream), 'user to device stream not found')
+        const miniblockNum = toDeviceStream?.view.miniblockInfo?.max
+        check(isDefined(miniblockNum), 'miniblockNum not found')
+        this.logCall('ackToDeviceStream:: acking received keys...')
+        const previousAck =
+            toDeviceStream.view.userToDeviceContent.deviceSummary[this.userDeviceKey().deviceKey]
+        if (previousAck && previousAck.lowerBound >= miniblockNum) {
+            this.logCall(
+                'ackToDeviceStream:: already acked',
+                previousAck,
+                'miniblockNum:',
+                miniblockNum,
+            )
+            return
         }
-        const senderKey = this.olmDevice.deviceCurve25519Key
-        if (!senderKey) {
-            throw new Error('createMegolmEncryptedEvent: no sender key')
-        }
-        const { text: ciphertext, sessionId: session_id } = encryptedEvent
-        const result = ciphertext
-            ? new EncryptedData({
-                  senderKey,
-                  sessionId: session_id,
-                  text: ciphertext,
-                  algorithm: MEGOLM_ALGORITHM,
-              })
-            : undefined
-        return result
+        await this.makeEventAndAddToStream(
+            this.userToDeviceStreamId,
+            make_UserToDevicePayload_Ack({
+                deviceKey: this.userDeviceKey().deviceKey,
+                miniblockNum,
+            }),
+        )
     }
 
     /**
      * Decrypt a ToDevice message using Olm algorithm.
      *
      */
-    public async decryptOlmEvent(
-        envelope: EncryptedMessageEnvelope,
-        senderDeviceKey: string,
-    ): Promise<OlmMessage> {
+    public async decryptOlmEvent(ciphertext: string, senderDeviceKey: string): Promise<string> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        return this.cryptoBackend.decryptOlmEvent(envelope, senderDeviceKey)
+        return this.cryptoBackend.decryptOlmEvent(ciphertext, senderDeviceKey)
     }
     /**
-     * Attempts to decrypt an event
+     * decrypts and applies megolm event
      */
-    public async decryptEventIfNeeded(event: RiverEventV2): Promise<void> {
+    public async decryptMegolmEvent(
+        streamId: string,
+        eventId: string,
+        encryptedContent: EncryptedContent,
+    ): Promise<DecryptedTimelineEvent | undefined> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        return this.cryptoBackend.decryptMegolmEvent(event)
+        const stream = this.stream(streamId)
+        if (!stream) {
+            return undefined
+        }
+        const clearText = await this.cryptoBackend.decryptMegolmEvent(
+            streamId,
+            encryptedContent.content,
+        )
+        switch (encryptedContent.kind) {
+            case 'channelMessage': {
+                const message = ChannelMessage.fromJsonString(clearText)
+                const decryptedContent = {
+                    kind: 'channelMessage',
+                    content: message,
+                } satisfies DecryptedContent_ChannelMessage
+                return stream.view.updateDecrypted(eventId, decryptedContent, this)
+            }
+            default:
+                logNever(encryptedContent.kind, 'unknown encryptedContent.kind')
+                return undefined
+        }
     }
 
     public hasInboundSessionKeys(streamId: string, sessionId: string): Promise<boolean> {
@@ -1625,42 +1627,48 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return this.cryptoBackend?.importRoomKeys(streamId, keys)
     }
 
-    public async retryMegolmDecryption(eventId: string): Promise<void> {
-        return this.cryptoBackend?.decryptMegolmEventWithId(eventId)
-    }
+    public async encryptAndShareMegolmSessions(
+        streamId: string,
+        sessions: MegolmSession[],
+        toDevices: UserDeviceCollection,
+    ) {
+        check(isDefined(this.cryptoBackend), "crypto backend isn't initialized")
+        check(sessions.length >= 0, 'no sessions to encrypt')
+        check(
+            new Set(sessions.map((s) => s.streamId)).size === 1,
+            'sessions should all be from the same stream',
+        )
+        check(sessions[0].streamId === streamId, 'streamId mismatch')
 
-    /**
-     * Encrypts and sends a given object via Olm to-device messages to a given set of devices.
-     */
-    public async encryptAndSendToDevices(
-        userDeviceInfos: UserDeviceCollection,
-        message: ToDeviceMessage,
-    ): Promise<void[]> {
-        if (!this.cryptoBackend) {
-            throw new Error('crypto backend not initialized')
-        }
-        const payload = new OlmMessage({ content: message })
-        const senderKey = this.olmDevice.deviceCurve25519Key
-        if (!senderKey) {
-            throw new Error('No deviceCurve25519Key found')
-        }
+        const userDevice = this.userDeviceKey()
 
-        const promises = Object.entries(userDeviceInfos).map(async ([userId, deviceKeys]) => {
+        const sessionIds = sessions.map((session) => session.sessionId)
+        const sessionKeys = sessions.map((session) => session.sessionKey)
+        const payload = new SessionKeys({
+            keys: sessionKeys,
+        })
+        const promises = Object.entries(toDevices).map(async ([userId, deviceKeys]) => {
             try {
-                const message = await this.encryptOlm(payload, deviceKeys)
-                const streamId: string = makeUserStreamId(userId)
-                const miniblockHash = await this.getStreamLastMiniblockHash(streamId)
+                const ciphertext = await this.encryptOlm(payload, deviceKeys)
+                if (Object.keys(ciphertext).length === 0) {
+                    this.logCall('encryptAndShareMegolmSessions: no ciphertext to send', userId)
+                    return
+                }
+                const toStreamId: string = makeUserToDeviceStreamId(userId)
+                const miniblockHash = await this.getStreamLastMiniblockHash(toStreamId)
                 await this.makeEventWithHashAndAddToStream(
-                    streamId,
-                    make_UserPayload_ToDevice({
-                        message: message,
-                        senderKey,
+                    toStreamId,
+                    make_UserToDevicePayload_MegolmSessions({
+                        streamId,
+                        senderKey: userDevice.deviceKey,
+                        sessionIds: sessionIds,
+                        ciphertexts: ciphertext,
                     }),
                     miniblockHash,
                 )
-                this.logCall("encryptAndSendToDevices: sent to user's devices", userId)
+                this.logCall("encryptAndShareMegolmSessions: sent to user's devices", userId)
             } catch (error) {
-                this.logError('sendToDeviceMessage: ERROR', error)
+                this.logError('encryptAndShareMegolmSessions: ERROR', error)
             }
         })
 
@@ -1668,57 +1676,29 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     }
 
     // Encrypt event using Megolm.
-    public encryptMegolmEvent(input: GroupEncryptionInput): Promise<EncryptedData> {
+    public encryptMegolmEvent(event: Message, streamId: string): Promise<EncryptedData> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        return this.cryptoBackend.encryptMegolmEvent(input)
+        const clearText = event.toJsonString()
+        return this.cryptoBackend.encryptMegolmEvent(streamId, clearText)
     }
 
-    async encryptOlm(payload: OlmMessage, deviceKeys: UserDevice[]): Promise<EncryptedDeviceData> {
-        if (!this.cryptoBackend) {
-            throw new Error('crypto backend not initialized')
-        }
-        const senderKey = this.olmDevice.deviceCurve25519Key
-        if (!senderKey) {
-            throw new Error('No deviceCurve25519Key found')
-        }
+    async encryptOlm(payload: Message, deviceKeys: UserDevice[]): Promise<Record<string, string>> {
+        check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
 
         // Don't encrypt to our own device
         return this.cryptoBackend.encryptOlm(
             payload.toJsonString(),
-            deviceKeys.filter((key) => key.deviceKey !== senderKey),
+            deviceKeys.filter((key) => key.deviceKey !== this.userDeviceKey().deviceKey),
         )
     }
 
     // Used during testing
     userDeviceKey(): UserDevice {
         return {
-            deviceId: this.deviceId!,
             deviceKey: this.olmDevice.deviceCurve25519Key!,
             fallbackKey: this.olmDevice.fallbackKey.key,
         }
     }
-}
-
-export interface FallbackKeyResponse {
-    [deviceId: string]: FallbackKeys
-}
-
-// deviceId: algorithm
-export interface IDeviceKeyRequest {
-    [deviceId: string]: string
-}
-
-export interface IKeysUploadResponse {
-    fallback_key_counts: {
-        [algorithm: string]: number
-    }
-}
-
-export interface IUploadKeysRequest {
-    user_id: string
-    device_id: string
-    device_keys?: Required<IDeviceKeys>
-    fallback_keys?: Record<string, IFallbackKey>
 }

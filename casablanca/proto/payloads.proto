@@ -123,53 +123,9 @@ message FullyReadMarkers {
     map<string, Content> markers = 1;
 }
 
-// value field of a ToDeviceMessage, which is either
-// a key response
-message ToDeviceMessage {
-    message KeyResponse {
-        /** Stream ID that sessions belong to */
-        string stream_id = 1;
-        repeated MegolmSession sessions = 2;
-        KeyResponseKind kind = 3;
-    }
-
-    reserved 1;
-    oneof payload {
-        KeyResponse response = 2;
-    }
-}
-
-/** Olm encrypted messages are decoded into ToDeviceMessages.
-*
-*/
-message OlmMessage {
-        ToDeviceMessage content = 1;
-}
-
-/** Exported Megolm session data.
-*/
-message MegolmSession {
-    /** Stream id associated with session */
-    string stream_id = 1;
-    /** Unique id for this session */
-    string session_id = 2;
-    /** Base64-encoded megolm session key data */
-    string session_key = 3;
-    optional string algorithm = 4;
-}
-
-enum KeyResponseKind {
-    KRK_UNDEFINED = 0;
-    KRK_KEYS_FOUND = 1;
-    KRK_KEYS_NOT_FOUND = 2;
-    KRK_CHANNEL_NOT_FOUND = 3;
-}
-
 /** 
-* RiverKey is used to store private part of River Root Key (RK) or River Device Key (RDK), and (optionally) signature for RDK.
-* The signature is always a ECDSA signature by RK of the public part of RDK.
-**/ 
-message RiverKey {
-    bytes private_key = 1;
-    bytes signature = 2;
+* ToDeviceMessage payload for megolm session key sharing.
+*/
+message SessionKeys {
+    repeated string keys = 1;
 }

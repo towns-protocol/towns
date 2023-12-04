@@ -73,4 +73,20 @@ describe('OlmPlayground', () => {
         expect(aliceToBob.decrypt(encrypted.type, encrypted.body)).toEqual('bob to alice 1')
         expect(() => aliceToBob.decrypt(encrypted.type, encrypted.body)).toThrow()
     })
+
+    test('decrypt same messages out of order', async () => {
+        alice.generate_fallback_key()
+        const aliceFallbackKey = getFallbackKey(alice)
+        const aliceIdentityKey = getIdentityKey(alice)
+        const bobToAlice = OlmDelegate.createSession()
+        bobToAlice.create_outbound(bob, aliceIdentityKey, aliceFallbackKey)
+
+        const encrypted1 = bobToAlice.encrypt('bob to alice 1')
+        const encrypted2 = bobToAlice.encrypt('bob to alice 2')
+
+        const aliceToBob = OlmDelegate.createSession()
+        aliceToBob.create_inbound(alice, encrypted2.body)
+        expect(aliceToBob.decrypt(encrypted2.type, encrypted2.body)).toEqual('bob to alice 2')
+        expect(aliceToBob.decrypt(encrypted1.type, encrypted1.body)).toEqual('bob to alice 1')
+    })
 })

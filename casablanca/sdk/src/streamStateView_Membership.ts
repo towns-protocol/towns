@@ -155,3 +155,11 @@ export class StreamStateView_Membership {
         }
     }
 }
+
+export class StreamStateView_UserStreamMembership extends StreamStateView_Membership {
+    constructor(streamId: string) {
+        const userId = streamId.split('-')[1]
+        super(userId, streamId)
+        this.joinedUsers.add(userId)
+    }
+}

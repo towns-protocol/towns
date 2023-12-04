@@ -3,16 +3,14 @@ import {
     Client as CasablancaClient,
     ParsedEvent,
     StreamTimelineEvent,
-    getStreamPayloadCase,
     isCiphertext,
     isRemoteEvent,
     logNever,
-    RiverEventV2,
-    bin_toString,
     isDecryptedEvent,
     isLocalEvent,
     LocalTimelineEvent,
     StreamChange,
+    DecryptedTimelineEvent,
 } from '@river/sdk'
 import {
     MembershipOp,
@@ -26,6 +24,7 @@ import {
     DmChannelPayload,
     GdmChannelPayload,
     ChannelMessage,
+    CommonPayload,
 } from '@river/proto'
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
@@ -233,37 +232,12 @@ function toTownsContent(timelineEvent: StreamTimelineEvent): TownsContentResult 
             'local event',
         )
     } else if (isDecryptedEvent(timelineEvent)) {
-        return toTownsContent_fromRiverEvent(timelineEvent.hashStr, timelineEvent.decryptedContent)
+        return toTownsContent_fromDecryptedEvent(timelineEvent.hashStr, timelineEvent)
     } else if (isRemoteEvent(timelineEvent)) {
         return toTownsContent_fromParsedEvent(timelineEvent.hashStr, timelineEvent.remoteEvent)
     } else {
         return { error: 'unknown event content type' }
     }
-}
-
-function validateEvent_fromRiverEventV2(
-    eventId: string,
-    message: RiverEventV2,
-): Partial<ErrorResult> & { description?: string } {
-    let error: ErrorResult
-    // handle RiverEventV2
-    const streamId = message.getStreamId()
-    const payloadCase = getStreamPayloadCase(streamId)
-
-    const content = message.getWireContent()
-    if (!content.text || !message.wireEvent?.event.payload?.value) {
-        error = { error: 'payloadless payload' }
-        return error
-    }
-    if (!message.wireEvent?.event.payload?.case) {
-        error = { error: 'caseless payload' }
-        return error
-    }
-
-    const description = `${payloadCase ?? 'unknown payload case'}::${
-        message.wireEvent.event.payload.case
-    } id: ${eventId}`
-    return { description }
 }
 
 function validateEvent(
@@ -287,38 +261,22 @@ function validateEvent(
     return { description }
 }
 
-function toTownsContent_fromRiverEvent(eventId: string, message: RiverEventV2): TownsContentResult {
-    const { error, description } = validateEvent_fromRiverEventV2(eventId, message)
-    if (error) {
-        return { error }
-    }
-    if (!description) {
-        return { error: 'no description' }
-    }
-    // return decryption failures
-    if (message.isDecryptionFailure()) {
-        console.log(`$$$ useCasablancaTimelines decryption failure`, message.getContent())
-        return {
-            content: { kind: ZTEvent.RoomMessageEncrypted } satisfies RoomMessageEncryptedEvent,
-        }
-    }
-    // handle RiverEventV2s which store potentially decrypted contents of the original parsed event
-    const payloadCase = getStreamPayloadCase(message.getStreamId())
-    switch (payloadCase) {
-        case 'channelPayload':
-        case 'dmChannelPayload':
-        case 'gdmChannelPayload':
-            return toTownsContent_ChanelPayload_Message_fromRiverEventV2(message, description)
-        case 'userPayload':
-            return {
-                error: `${description} user payload not supported yet`,
-            }
-        default:
-            console.error('$$$ useCasablancaTimelines unknown case', {
-                payload: payloadCase,
-            })
-            return { error: `unknown payload case ${payloadCase ?? ''}` }
-    }
+function toTownsContent_fromDecryptedEvent(
+    eventId: string,
+    message: DecryptedTimelineEvent,
+): TownsContentResult {
+    const description = `${message.decryptedContent.kind} id: ${eventId}`
+
+    // ENABLE switch when we have more decrypted content kinds
+    // switch (message.decryptedContent.kind) {
+    //     case 'channelMessage':
+    //         return toTownsContent_FromChannelMessage(message.decryptedContent.content, description)
+    //     default:
+    //         logNever(message.decryptedContent, 'unknown decrypted content kind')
+    //         return { error: `unknown payload case ${message.decryptedContent.kind ?? ''}` }
+    // }
+
+    return toTownsContent_FromChannelMessage(message.decryptedContent.content, description)
 }
 
 function toTownsContent_fromParsedEvent(eventId: string, message: ParsedEvent): TownsContentResult {
@@ -374,6 +332,10 @@ function toTownsContent_fromParsedEvent(eventId: string, message: ParsedEvent): 
             return {
                 error: `${description} userSettingsPayload not supported?`,
             }
+        case 'userToDevicePayload':
+            return {
+                error: `${description} userToDevicePayload not supported?`,
+            }
         case 'miniblockHeader':
             return toTownsContent_MiniblockHeader(
                 eventId,
@@ -385,6 +347,13 @@ function toTownsContent_fromParsedEvent(eventId: string, message: ParsedEvent): 
             return {
                 error: `${description} mediaPayload not supported?`,
             }
+        case 'commonPayload':
+            return toTownsContent_CommonPayload(
+                eventId,
+                message,
+                message.event.payload.value,
+                description,
+            )
         case undefined:
             return { error: `${description} undefined payload case` }
         default:
@@ -404,6 +373,42 @@ function toTownsContent_MiniblockHeader(
             kind: ZTEvent.MiniblockHeader,
             message: value,
         } satisfies MiniblockHeaderEvent,
+    }
+}
+
+function toTownsContent_CommonPayload(
+    eventId: string,
+    message: ParsedEvent,
+    value: CommonPayload,
+    description: string,
+): TownsContentResult {
+    switch (value.content.case) {
+        case 'keySolicitation':
+            return {
+                content: {
+                    kind: ZTEvent.KeySolicitation,
+                    sessionIds: value.content.value.sessionIds,
+                    deviceKey: value.content.value.deviceKey,
+                    isNewDevice: value.content.value.isNewDevice,
+                } satisfies KeySolicitationEvent,
+            }
+        case 'keyFulfillment':
+            return {
+                content: {
+                    kind: ZTEvent.Fulfillment,
+                    sessionIds: value.content.value.sessionIds,
+                    deviceKey: value.content.value.deviceKey,
+                    to: value.content.value.userId,
+                    from: message.creatorUserId,
+                } satisfies FulfillmentEvent, // make a real thing
+            }
+        case undefined:
+            return { error: `${description} undefined message kind` }
+        default:
+            logNever(value.content, 'unknown common payload case')
+            return {
+                error: `${description} unknown common payload case`,
+            }
     }
 }
 
@@ -438,9 +443,6 @@ function toTownsContent_UserPayload(
                 } satisfies RoomMemberEvent,
             }
         }
-        case 'toDevice': {
-            return { error: `${description} unknown message kind` }
-        }
         case undefined: {
             return { error: `${description} unknown message kind` }
         }
@@ -461,25 +463,6 @@ function toTownsContent_ChannelPayload(
     description: string,
 ): TownsContentResult {
     switch (value.content.case) {
-        case 'fulfillment': {
-            return {
-                content: {
-                    from: message.creatorUserId,
-                    kind: ZTEvent.Fulfillment,
-                    sessionIds: value.content.value.sessionIds,
-                    originEventHash: bin_toString(value.content.value.originHash),
-                } satisfies FulfillmentEvent,
-            }
-        }
-        case 'keySolicitation': {
-            return {
-                content: {
-                    kind: ZTEvent.KeySolicitation,
-                    sessionId: value.content.value.sessionId,
-                    senderKey: value.content.value.senderKey,
-                } satisfies KeySolicitationEvent,
-            }
-        }
         case 'inception': {
             return {
                 content: {
@@ -565,35 +548,11 @@ function toTownsContent_FromChannelMessage(
     }
 }
 
-function toTownsContent_ChanelPayload_Message_fromRiverEventV2(
-    payload: RiverEventV2,
-    description: string,
-): TownsContentResult {
-    const channelMessage = payload.getContent()
-    if (!channelMessage) {
-        // if we don't have clear content available, we either have a decryption failure or we should attempt decryption
-        if (payload.shouldAttemptDecryption() || payload.isDecryptionFailure()) {
-            return {
-                content: {
-                    kind: ZTEvent.RoomMessageEncrypted,
-                } satisfies RoomMessageEncryptedEvent,
-            }
-        }
-        return { error: `${description} no clear text in message` }
-    }
-
-    if (!channelMessage.content) {
-        return { error: `${description} no content in clear text in message` }
-    }
-
-    return toTownsContent_FromChannelMessage(channelMessage.content, description)
-}
-
 function toTownsContent_ChannelPayload_Message(
     payload: EncryptedData,
     description: string,
 ): TownsContentResult {
-    if (isCiphertext(payload.text)) {
+    if (isCiphertext(payload.ciphertext)) {
         console.log(
             `$$$ useCasablancaTimelines toTownsContent_ChannelPayload_Message ciphertext`,
             payload.sessionId,
@@ -762,7 +721,7 @@ function toTownsContent_SpacePayload(
                 content: {
                     kind: ZTEvent.SpaceUsername,
                     userId: message.creatorUserId,
-                    username: payload.text,
+                    username: payload.ciphertext,
                 } satisfies SpaceUsernameEvent,
             }
         }
@@ -774,7 +733,7 @@ function toTownsContent_SpacePayload(
                 content: {
                     kind: ZTEvent.SpaceDisplayName,
                     userId: message.creatorUserId,
-                    displayName: payload.text,
+                    displayName: payload.ciphertext,
                 } satisfies SpaceDisplayNameEvent,
             }
         }

@@ -11,20 +11,14 @@ import { StreamStateView_IContent } from './streamStateView_IContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { ParsedEvent } from './types'
 import { logNever } from './check'
-import { StreamStateView_Messages } from './streamStateView_Messages'
-import { StreamStateView_KeySolicitations } from './streamStateView_KeySolicitations'
 
 export class StreamStateView_GDMChannel implements StreamStateView_IContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
-    readonly messages: StreamStateView_Messages
-    readonly keySolicitations: StreamStateView_KeySolicitations
     lastEventCreatedAtEpocMs = 0n
 
     constructor(userId: string, inception: GdmChannelPayload_Inception) {
         this.memberships = new StreamStateView_Membership(userId, inception.streamId)
-        this.messages = new StreamStateView_Messages(inception.streamId)
-        this.keySolicitations = new StreamStateView_KeySolicitations(inception.streamId)
         this.streamId = inception.streamId
     }
 
@@ -50,16 +44,13 @@ export class StreamStateView_GDMChannel implements StreamStateView_IContent {
                 this.updateLastEvent(event)
                 break
             case 'message':
-                this.messages.addChannelMessage(event, emitter)
+                emitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
+                    kind: 'channelMessage',
+                    content: payload.content.value,
+                })
                 break
             case 'membership':
                 // nothing to do, membership was conveyed in the snapshot
-                break
-            case 'fulfillment':
-                this.keySolicitations.addKeyFulfillmentMessage(event, payload, emitter)
-                break
-            case 'keySolicitation':
-                // todo jterzis - HNT-2868
                 break
             case undefined:
                 break
@@ -78,7 +69,10 @@ export class StreamStateView_GDMChannel implements StreamStateView_IContent {
                 this.updateLastEvent(event)
                 break
             case 'message':
-                this.messages.addChannelMessage(event, emitter)
+                emitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
+                    kind: 'channelMessage',
+                    content: payload.content.value,
+                })
                 this.updateLastEvent(event)
                 break
             case 'membership':
@@ -87,12 +81,6 @@ export class StreamStateView_GDMChannel implements StreamStateView_IContent {
                     payload.content.value,
                     emitter,
                 )
-                break
-            case 'fulfillment':
-                this.keySolicitations.addKeyFulfillmentMessage(event, payload, emitter)
-                break
-            case 'keySolicitation':
-                this.keySolicitations.addKeySolicitationMessage(event, payload, emitter)
                 break
             case undefined:
                 break

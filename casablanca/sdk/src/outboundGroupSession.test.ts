@@ -43,11 +43,11 @@ describe('outboundSessionTests', () => {
         await expect(bobsOtherClient.initializeUser()).toResolve()
         await bobsOtherClient.startSync()
 
-        const encrypted1 = await bobsClient.createMegolmEncryptedEvent(message, channelId)
-        const encrypted2 = await bobsOtherClient.createMegolmEncryptedEvent(message, channelId)
+        const encrypted1 = await bobsClient.encryptMegolmEvent(message, channelId)
+        const encrypted2 = await bobsOtherClient.encryptMegolmEvent(message, channelId)
 
         expect(encrypted1?.sessionId).toBeDefined()
-        expect(encrypted1!.sessionId).toEqual(encrypted2!.sessionId)
+        expect(encrypted1.sessionId).toEqual(encrypted2.sessionId)
 
         await bobsOtherClient.stop()
         await bobsClient.stop()
@@ -80,16 +80,16 @@ describe('outboundSessionTests', () => {
             },
         })
 
-        const encryptedChannel1_1 = await bobsClient.createMegolmEncryptedEvent(message, channelId1)
-        const encryptedChannel1_2 = await bobsClient.createMegolmEncryptedEvent(message, channelId1)
-        const encryptedChannel2_1 = await bobsClient.createMegolmEncryptedEvent(message, channelId2)
+        const encryptedChannel1_1 = await bobsClient.encryptMegolmEvent(message, channelId1)
+        const encryptedChannel1_2 = await bobsClient.encryptMegolmEvent(message, channelId1)
+        const encryptedChannel2_1 = await bobsClient.encryptMegolmEvent(message, channelId2)
 
         expect(encryptedChannel1_1?.sessionId).toBeDefined()
         expect(encryptedChannel1_2?.sessionId).toBeDefined()
-        expect(encryptedChannel1_1!.sessionId).toEqual(encryptedChannel1_2!.sessionId)
-        expect(encryptedChannel1_1!.sessionId).not.toEqual(encryptedChannel2_1!.sessionId)
+        expect(encryptedChannel1_1.sessionId).toEqual(encryptedChannel1_2.sessionId)
+        expect(encryptedChannel1_1.sessionId).not.toEqual(encryptedChannel2_1.sessionId)
 
-        const x = bobsClient.hasInboundSessionKeys(channelId1, encryptedChannel1_1!.sessionId!)
+        const x = bobsClient.hasInboundSessionKeys(channelId1, encryptedChannel1_1.sessionId)
         expect(x).toBeDefined()
     })
 })

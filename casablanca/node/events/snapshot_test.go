@@ -75,7 +75,7 @@ func make_Space_Username(wallet *crypto.Wallet, username string, streamId string
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_SpacePayload_Username(
-			&protocol.EncryptedData{Text: username},
+			&protocol.EncryptedData{Ciphertext: username},
 		),
 		prevHash,
 	)
@@ -89,7 +89,7 @@ func make_Space_DisplayName(wallet *crypto.Wallet, displayName string, streamId 
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_SpacePayload_DisplayName(
-			&protocol.EncryptedData{Text: displayName},
+			&protocol.EncryptedData{Ciphertext: displayName},
 		),
 		prevHash,
 	)
@@ -163,7 +163,7 @@ func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 	displayName := make_Space_DisplayName(wallet, "bobIsTheGreatest", streamId, nil, t)
 	events := []*ParsedEvent{membership, username, displayName}
 	for i, event := range events[:] {
-		err = Update_Snapshot(snapshot, event, 3, i)
+		err = Update_Snapshot(snapshot, event, 1, int64(3+i))
 		assert.NoError(t, err)
 	}
 
@@ -175,12 +175,12 @@ func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 	assert.Equal(
 		t,
 		"bob",
-		snapshot.Content.(*Snapshot_SpaceContent).SpaceContent.Usernames[userId].Data.Text,
+		snapshot.Content.(*Snapshot_SpaceContent).SpaceContent.Usernames[userId].Data.Ciphertext,
 	)
 	assert.Equal(
 		t,
 		"bobIsTheGreatest",
-		snapshot.Content.(*Snapshot_SpaceContent).SpaceContent.DisplayNames[userId].Data.Text,
+		snapshot.Content.(*Snapshot_SpaceContent).SpaceContent.DisplayNames[userId].Data.Ciphertext,
 	)
 	assert.Equal(
 		t,

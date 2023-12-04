@@ -130,7 +130,7 @@ func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
 		ChannelPayload: &ChannelPayload{
 			Content: &ChannelPayload_Message{
 				Message: &protocol.EncryptedData{
-					Text: content,
+					Ciphertext: content,
 				},
 			},
 		},

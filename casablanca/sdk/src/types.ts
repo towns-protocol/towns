@@ -5,37 +5,36 @@ import {
     ChannelMessage,
     ChannelMessage_Post_Content_Text,
     UserDeviceKeyPayload_Inception,
-    UserDeviceKeyPayload_UserDeviceKey,
     UserPayload_Inception,
     SpacePayload_Inception,
     ChannelProperties,
     ChannelPayload_Inception,
     UserSettingsPayload_Inception,
     Membership,
-    UserPayload_ToDevice,
     SpacePayload_Channel,
     EncryptedData,
-    ToDeviceMessage,
     UserPayload_UserMembership,
     UserSettingsPayload_FullyReadMarkers,
     MiniblockHeader,
     ChannelMessage_Post_Mention,
-    MegolmSession,
-    KeyResponseKind,
     ChannelMessage_Post_Content_Image_Info,
     ChannelMessage_Post,
     MediaPayload_Inception,
     MediaPayload_Chunk,
     DmChannelPayload_Inception,
     GdmChannelPayload_Inception,
-    KeySolicitation,
-    Fulfillment,
+    UserToDevicePayload_Ack,
+    UserToDevicePayload_Inception,
+    CommonPayload,
+    UserDeviceKeyPayload_MegolmDevice,
+    UserToDevicePayload_MegolmSessions,
+    CommonPayload_KeyFulfillment,
+    CommonPayload_KeySolicitation,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
-import { ISignatures } from './crypto/olmLib'
 import { bin_toHexString } from './binary'
-import { RiverEventV2 } from './eventV2'
+import { DecryptedContent } from './encryptedContentTypes'
 
 export interface LocalEvent {
     localId: string
@@ -57,7 +56,7 @@ export interface StreamTimelineEvent {
     createdAtEpocMs: bigint
     localEvent?: LocalEvent
     remoteEvent?: ParsedEvent
-    decryptedContent?: RiverEventV2
+    decryptedContent?: DecryptedContent
     miniblockNum?: bigint
     confirmedEventNum?: bigint
 }
@@ -71,9 +70,10 @@ export type LocalTimelineEvent = Omit<StreamTimelineEvent, 'localEvent'> & {
 }
 
 export type ConfirmedTimelineEvent = Omit<
-    RemoteTimelineEvent,
-    'confirmedEventNum' | 'miniblockNum'
+    StreamTimelineEvent,
+    'remoteEvent' | 'confirmedEventNum' | 'miniblockNum'
 > & {
+    remoteEvent: ParsedEvent
     confirmedEventNum: bigint
     miniblockNum: bigint
 }
@@ -83,7 +83,7 @@ export type DecryptedTimelineEvent = Omit<
     'decryptedContent' | 'remoteEvent'
 > & {
     remoteEvent: ParsedEvent
-    decryptedContent: RiverEventV2
+    decryptedContent: DecryptedContent
 }
 
 export function isLocalEvent(event: StreamTimelineEvent): event is LocalTimelineEvent {
@@ -127,25 +127,6 @@ export interface ParsedMiniblock {
     hash: Uint8Array
     header: MiniblockHeader
     events: ParsedEvent[]
-}
-
-export interface IDeviceKeySignatures {
-    [keyId: string]: string
-}
-
-export interface ISigned {
-    signatures?: ISignatures
-}
-
-export interface IDeviceKeys {
-    algorithms: Array<string>
-    keys: Record<string, string>
-    signatures?: IDeviceKeySignatures
-}
-export interface IFallbackKey {
-    key: string
-    fallback?: boolean
-    signatures?: IDeviceKeySignatures
 }
 
 export function isCiphertext(text: string): boolean {
@@ -312,17 +293,13 @@ export const make_ChannelMessage_Redaction = (
     })
 }
 
-export const make_ToDevice_KeyResponse = (input: {
-    streamId: string
-    sessions: PlainMessage<MegolmSession>[]
-    kind: KeyResponseKind
-    content?: string
-}): PlainMessage<ToDeviceMessage> => {
+// !!! todo don't ship this !!! https://linear.app/hnt-labs/issue/HNT-3935/remove-calls-to-make-fake-encrypteddata
+export const make_fake_encryptedData = (ciphertext: string): PlainMessage<EncryptedData> => {
     return {
-        payload: {
-            case: 'response',
-            value: { ...input },
-        },
+        ciphertext,
+        sessionId: '',
+        algorithm: '',
+        senderKey: '',
     }
 }
 
@@ -445,6 +422,20 @@ export const make_UserDeviceKeyPayload_Inception = (
     }
 }
 
+export const make_UserToDevicePayload_Inception = (
+    value: PlainMessage<UserToDevicePayload_Inception>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'userToDevicePayload',
+        value: {
+            content: {
+                case: 'inception',
+                value,
+            },
+        },
+    }
+}
+
 export const make_SpacePayload_Membership = (
     value: PlainMessage<Membership>,
 ): PlainMessage<StreamEvent>['payload'] => {
@@ -473,28 +464,42 @@ export const make_ChannelPayload_Membership = (
     }
 }
 
-export const make_UserPayload_ToDevice = (
-    value: PlainMessage<UserPayload_ToDevice>,
+export const make_UserToDevicePayload_MegolmSessions = (
+    value: PlainMessage<UserToDevicePayload_MegolmSessions>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'userPayload',
+        case: 'userToDevicePayload',
         value: {
             content: {
-                case: 'toDevice',
+                case: 'megolmSessions',
                 value,
             },
         },
     }
 }
 
-export const make_UserDeviceKeyPayload_UserDeviceKey = (
-    value: PlainMessage<UserDeviceKeyPayload_UserDeviceKey>,
+export const make_UserToDevicePayload_Ack = (
+    value: PlainMessage<UserToDevicePayload_Ack>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'userToDevicePayload',
+        value: {
+            content: {
+                case: 'ack',
+                value,
+            },
+        },
+    }
+}
+
+export const make_UserDeviceKeyPayload_MegolmDevice = (
+    value: PlainMessage<UserDeviceKeyPayload_MegolmDevice>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
         case: 'userDeviceKeyPayload',
         value: {
             content: {
-                case: 'userDeviceKey',
+                case: 'megolmDevice',
                 value,
             },
         },
@@ -580,87 +585,31 @@ export const make_ChannelPayload_Message = (
     }
 }
 
-export const make_ChannelPayload_KeySolicitation = (
-    value: PlainMessage<KeySolicitation>,
+export const make_CommonPayload_KeyFulfillment = (
+    content: PlainMessage<CommonPayload_KeyFulfillment>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'channelPayload',
+        case: 'commonPayload',
+        value: {
+            content: {
+                case: 'keyFulfillment',
+                value: content,
+            },
+        } satisfies PlainMessage<CommonPayload>,
+    }
+}
+
+export const make_CommonPayload_KeySolicitation = (
+    content: PlainMessage<CommonPayload_KeySolicitation>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'commonPayload',
         value: {
             content: {
                 case: 'keySolicitation',
-                value,
+                value: content,
             },
-        },
-    }
-}
-
-export const make_DmChannelPayload_KeySolicitation = (
-    value: PlainMessage<KeySolicitation>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'dmChannelPayload',
-        value: {
-            content: {
-                case: 'keySolicitation',
-                value,
-            },
-        },
-    }
-}
-
-export const make_GdmChannelPayload_KeySolicitation = (
-    value: PlainMessage<KeySolicitation>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'gdmChannelPayload',
-        value: {
-            content: {
-                case: 'keySolicitation',
-                value,
-            },
-        },
-    }
-}
-
-export const make_ChannelPayload_Fulfillment = (
-    value: PlainMessage<Fulfillment>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'channelPayload',
-        value: {
-            content: {
-                case: 'fulfillment',
-                value,
-            },
-        },
-    }
-}
-
-export const make_DmChannelPayload_Fulfillment = (
-    value: PlainMessage<Fulfillment>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'dmChannelPayload',
-        value: {
-            content: {
-                case: 'fulfillment',
-                value,
-            },
-        },
-    }
-}
-
-export const make_GdmChannelPayload_Fulfillment = (
-    value: PlainMessage<Fulfillment>,
-): PlainMessage<StreamEvent>['payload'] => {
-    return {
-        case: 'gdmChannelPayload',
-        value: {
-            content: {
-                case: 'fulfillment',
-                value,
-            },
-        },
+        } satisfies PlainMessage<CommonPayload>,
     }
 }
 
@@ -716,7 +665,7 @@ export const getMessagePayloadContent = (
     if (!payload) {
         return undefined
     }
-    return ChannelMessage.fromJsonString(payload.text)
+    return ChannelMessage.fromJsonString(payload.ciphertext)
 }
 
 export const getMessagePayloadContent_Text = (
@@ -761,30 +710,6 @@ export const make_MediaPayload_Chunk = (
             },
         },
     }
-}
-
-function processMapToObjectValue(value: any): any {
-    if (value instanceof Map) {
-        return recursiveMapToObject(value)
-    } else if (Array.isArray(value)) {
-        // TODO: tighten this return type
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return value.map((v) => processMapToObjectValue(v))
-    } else {
-        return value
-    }
-}
-
-export function recursiveMapToObject(map: Map<any, any>): Record<any, any> {
-    const targetMap = new Map()
-
-    for (const [key, value] of map) {
-        targetMap.set(key, processMapToObjectValue(value))
-    }
-
-    // TODO: tighten this return type
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return Object.fromEntries(targetMap.entries())
 }
 
 export const getMiniblockHeader = (

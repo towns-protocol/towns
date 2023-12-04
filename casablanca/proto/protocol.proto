@@ -92,14 +92,16 @@ message StreamEvent {
     */
     oneof payload {
         MiniblockHeader miniblock_header = 100;
-        SpacePayload space_payload = 101;
-        ChannelPayload channel_payload = 102;
-        UserPayload user_payload = 103;
-        UserSettingsPayload user_settings_payload = 104;
-        UserDeviceKeyPayload user_device_key_payload = 105;
-        MediaPayload media_payload = 106;
-        DmChannelPayload dm_channel_payload = 107;
-        GdmChannelPayload gdm_channel_payload = 108;
+        CommonPayload common_payload = 101;
+        SpacePayload space_payload = 102;
+        ChannelPayload channel_payload = 103;
+        UserPayload user_payload = 104;
+        UserSettingsPayload user_settings_payload = 105;
+        UserDeviceKeyPayload user_device_key_payload = 106;
+        UserToDevicePayload user_to_device_payload = 107;
+        MediaPayload media_payload = 108;
+        DmChannelPayload dm_channel_payload = 109;
+        GdmChannelPayload gdm_channel_payload = 110;
     }
 }
 
@@ -135,6 +137,39 @@ message MiniblockHeader {
     // stream payloads are required to have a content field
     oneof content {
         google.protobuf.Empty none = 100;
+    }
+}
+
+/**
+* CommonPayload
+* can appear in any stream
+*/
+message CommonPayload {
+    message Snapshot {
+        message Solicitations {
+            // unique by device_key, limited to 10
+            repeated KeySolicitation events = 2;
+        }
+        // user_id: Solicitations
+        map <string, Solicitations> solicitations = 1;
+    }
+
+    message KeySolicitation {
+        string device_key = 1; // requesters device_key
+        string fallback_key = 2; // requesters fallback_key
+        bool is_new_device = 3; // true if this is a new device, session_ids will be empty
+        repeated string session_ids = 4; 
+    }
+
+    message KeyFulfillment {
+        string user_id = 1;
+        string device_key = 2;
+        repeated string session_ids = 3; 
+    }
+
+    oneof content {
+        KeySolicitation key_solicitation = 1;
+        KeyFulfillment key_fulfillment = 2;
     }
 }
 
@@ -208,8 +243,6 @@ message ChannelPayload {
         Inception inception = 1;
         EncryptedData message = 2;
         Membership membership = 3;
-        Fulfillment fulfillment = 4;
-        KeySolicitation key_solicitation = 5;
     }
 }
 
@@ -233,8 +266,6 @@ message DmChannelPayload {
         Inception inception = 1;
         Membership membership = 2;
         EncryptedData message = 3;
-        Fulfillment fulfillment = 4;
-        KeySolicitation key_solicitation = 5;
     }
 }
 
@@ -257,8 +288,6 @@ message GdmChannelPayload {
         Inception inception = 1;
         Membership membership = 2;
         EncryptedData message = 3;
-        Fulfillment fulfillment = 4;
-        KeySolicitation key_solicitation = 5;
     }
 }
 
@@ -285,42 +314,54 @@ message UserPayload {
         MembershipOp op = 4;
     }
     
-    message ToDevice {
-        reserved 1;
-        EncryptedDeviceData message = 2;
-        string sender_key = 3;
-    }
-    
     oneof content {
         Inception inception = 1;
         UserMembership user_membership = 2;
-        ToDevice to_device = 3;
     }
 }
 
 /**
-* KeySolicitation messages are used to request keys pertaining to a given session,
-* stream and optional algorithm. For now, algorithm is megolm, but this can change.
+* UserToDevicePayload
+* olm encrypted payloads 
 */
-message KeySolicitation {
-    string session_id = 1;
-    string algorithm = 2;
-    // known session ids
-    repeated string known_session_ids = 3;
-    string sender_key = 4;
-}
+message UserToDevicePayload {
+    message Snapshot {
+        message DeviceSummary {
+            // mininblock_num first block with un-acked sessions for this device
+            int64 lowerBound = 1;
+            // mininblock_num last block with un-acked sessions for this device
+            int64 upperBound = 2;
+        }
 
-/**
-* Fulfillment is used to acknowledge that the event depicted by event hash
-* was responded to by a device over secure to device communication
-* with the requested session.
-* Used to prevent spurious processing of key requests
-* by multiple requested users' devices.
-*/
-message Fulfillment {
-    bytes origin_hash = 1; // origin KeySolicitation event hash
-    repeated string session_ids = 2;
-    optional string algorithm = 3;
+        Inception inception = 1;
+        // deviceKey: miniblockNum that the ack was snapshotted
+        map<string, DeviceSummary> device_summary = 2;
+    }
+
+    message Inception {
+        string stream_id = 1;
+        StreamSettings settings = 2;
+    }
+
+    message MegolmSessions {
+        string stream_id = 1;
+        string sender_key = 2;
+        repeated string session_ids = 3;
+        // deviceKey: per device ciphertext of encrypted session keys that match session_ids 
+        map<string, string> ciphertexts = 4;
+    }
+
+    message Ack {
+        string device_key = 1;
+        int64 miniblock_num = 2;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        Ack ack = 2;
+        MegolmSessions megolm_sessions = 3;
+        
+    }
 }
 
 /**
@@ -357,8 +398,8 @@ message UserDeviceKeyPayload {
     message Snapshot {
         // inception
         Inception inception = 1;
-        // deviceId: UserDeviceKey
-        map<string, UserDeviceKey> user_device_keys = 2;
+        // device keys for this user, unique by device_key, capped at N, most recent last
+        repeated MegolmDevice megolm_devices = 2;
     }
 
     message Inception {
@@ -367,15 +408,14 @@ message UserDeviceKeyPayload {
         StreamSettings settings = 3;
     }
 
-    message UserDeviceKey {
-        string user_id = 1;
-        DeviceKeys device_keys = 2;
-        FallbackKeys fallback_keys = 3;
+    message MegolmDevice {
+        string device_key = 1;
+        string fallback_key = 2;
     }
 
     oneof content {
         Inception inception = 1;
-        UserDeviceKey user_device_key = 2;
+        MegolmDevice megolm_device = 2;
     }
 }
 
@@ -409,6 +449,9 @@ message MediaPayload {
 * Snapshot contains a summary of all state events up to the most recent miniblock
 */
 message Snapshot {
+    
+    CommonPayload.Snapshot common = 1;
+    
     // Snapshot data specific for each stream type.
     oneof content {
         SpacePayload.Snapshot space_content = 101;
@@ -419,6 +462,7 @@ message Snapshot {
         MediaPayload.Snapshot media_content = 106;
         DmChannelPayload.Snapshot dm_channel_content = 107;
         GdmChannelPayload.Snapshot gdm_channel_content = 108;
+        UserToDevicePayload.Snapshot user_to_device_content = 109;
     }
 }
 
@@ -452,86 +496,23 @@ message Membership {
     string user_id = 2;
 }
 
-
 message EncryptedData {
     /**
     * Ciphertext of the encryption envelope.
     */
-    string text = 1;
+    string ciphertext = 1;
     /**
     * Encryption algorithm  used to encrypt this event.
     */
-    optional string algorithm = 2;
+    string algorithm = 2;
     /**
     * Sender device public key identifying the sender's device.
     */
-    optional string sender_key = 3;
-    /**
-    * Sender's device id.
-    */
-    optional string device_id = 4;
+    string sender_key = 3;
     /**
     * The ID of the session used to encrypt the message.
     */
-    optional string session_id = 5;
-}
-
-message EncryptedDeviceData {
-    /**
-    * Mapping from device identifier to encryption envelope.
-    */
-    map<string, EncryptedMessageEnvelope> toDeviceMessages = 1;
-    /**
-    * Encryption algorithm  used to encrypt this event.
-    */
-    optional string algorithm = 2;
-}
-
-message EncryptedMessageEnvelope {
-    // Either 0 for pre-key messages or 1 after session is established.
-    int32 type = 1;
-    /**
-    * Ciphertext of the encryption envelope.
-    */
-    string ciphertext = 2;
-}
-
-/**
-* DeviceKeys are used to store public identity keys and signatures for a particular
-* user's device. 
-* 
-* device_id: unique identifier for the device - River hash over RDK public part.
-* algorithms: encryption algorithms supported by the device.
-* keys: public identity keys (signing keys) for the device with property in format <algorithm>:<device_id>.
-*       Keys should be encoded as specified by key algorithm. 
-* signatures: map from <algorithm>:<device_id> to signature. 
-*/
-message DeviceKeys {
-    string device_id = 1;
-    repeated string algorithms = 2;
-    map<string, string> keys = 3;
-    map<string, string> signatures = 4;
-}
-
-/**
-* FallbackKeys are used to store "pre-key" messages for a particular user's device.
-*
-* algo_key_id: map from <algorithm>:<key_id> to Key.
-*/
-message FallbackKeys {
-    map<string, Key> algo_key_id = 1;
-}
-
-/**
-* Key is used to store fallback keys and depending on the algorithm signatures
-* that are formatted as <algorithm>:<device_id> mapped to <signature>
-*
-* key: key value
-* signatures: map from <algorithm>:<device_id> to signature for given key.
-*/
-message Key {
-    string key = 1;
-    map<string, string> signatures = 2;
+    string session_id = 4;
 }
 
 message SyncCookie  {

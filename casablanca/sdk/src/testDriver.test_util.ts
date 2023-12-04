@@ -2,8 +2,9 @@ import { Client } from './client'
 import { DLogger, dlog } from './dlog'
 import { makeTestClient, withTimeout } from './util.test'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
-import { ClearContent, RiverEventV2 } from './eventV2'
-import { MembershipOp } from '@river/proto'
+import { MembershipOp, SnapshotCaseType } from '@river/proto'
+import { DecryptedTimelineEvent } from './types'
+import { check } from './check'
 
 class TestDriver {
     readonly client: Client
@@ -30,7 +31,7 @@ class TestDriver {
 
         this.client.on('userInvitedToStream', (s) => void this.userInvitedToStream.bind(this)(s))
         this.client.on('userJoinedStream', (s) => void this.userJoinedStream.bind(this)(s))
-        this.client.on('eventDecrypted', (e, err) => void this.eventDecrypted.bind(this)(e, err))
+        this.client.on('eventDecrypted', (e, f, g) => void this.eventDecrypted.bind(this)(e, f, g))
 
         await this.client.startSync()
         this.log(`driver started client`)
@@ -51,60 +52,53 @@ class TestDriver {
         this.log(`userJoinedStream streamId=${streamId}`)
     }
 
-    eventDecrypted(event: RiverEventV2, error?: Error): void {
-        if (error) {
-            return
-        }
-        const streamId = event.getStreamId()
-        let payload: ClearContent | undefined
+    eventDecrypted(
+        streamId: string,
+        contentKind: SnapshotCaseType,
+        event: DecryptedTimelineEvent,
+    ): void {
+        const payload = event.decryptedContent
         let content = ''
-        ;(async () => {
-            payload = event.getContent()
-            if (!payload) {
-                return
-            }
-            if (
-                payload?.content?.payload?.case !== 'post' ||
-                payload?.content?.payload?.value.content.case !== 'text'
-            ) {
-                throw new Error(`eventDecrypted is not a post`)
-            }
-            content = payload?.content?.payload?.value.content.value.body
-            this.log(
-                `eventDecrypted channelId=${streamId} message=${content}`,
-                this.expected ? [...this.expected] : undefined,
-            )
-            if (this.expected?.delete(content)) {
-                this.log(`eventDecrypted expected message Received, text=${content}`)
+        check(payload.kind === 'channelMessage')
+        if (
+            payload.content?.payload?.case !== 'post' ||
+            payload.content?.payload?.value.content.case !== 'text'
+        ) {
+            throw new Error(`eventDecrypted is not a post`)
+        }
+        content = payload.content?.payload?.value.content.value.body
+        this.log(
+            `eventDecrypted channelId=${streamId} message=${content}`,
+            this.expected ? [...this.expected] : undefined,
+        )
+        if (this.expected?.delete(content)) {
+            this.log(`eventDecrypted expected message Received, text=${content}`)
 
-                if (this.expected.size === 0) {
-                    this.expected = undefined
-                    if (this.allExpectedReceived === undefined) {
-                        throw new Error('allExpectedReceived is undefined')
-                    }
-                    this.log(`eventDecrypted all expected messages Received, text=${content}`)
-                    this.allExpectedReceived()
-                } else {
-                    this.log(`eventDecrypted still expecting messages`, this.expected)
+            if (this.expected.size === 0) {
+                this.expected = undefined
+                if (this.allExpectedReceived === undefined) {
+                    throw new Error('allExpectedReceived is undefined')
                 }
+                this.log(`eventDecrypted all expected messages Received, text=${content}`)
+                this.allExpectedReceived()
             } else {
-                if (this.badMessageReceived === undefined) {
-                    throw new Error('badMessageReceived is undefined')
-                }
-                this.log(
-                    `channelNewMessage badMessageReceived text=${content}}, expected=${Array.from(
-                        this.expected?.values() ?? [],
-                    ).join(', ')}`,
-                )
-                this.badMessageReceived(
-                    `badMessageReceived text=${content}, expected=${Array.from(
-                        this.expected?.values() ?? [],
-                    ).join(', ')}`,
-                )
+                this.log(`eventDecrypted still expecting messages`, this.expected)
             }
-        })().catch((e) => {
-            throw new Error(`eventDecrypted error`, <Error>e)
-        })
+        } else {
+            if (this.badMessageReceived === undefined) {
+                throw new Error('badMessageReceived is undefined')
+            }
+            this.log(
+                `channelNewMessage badMessageReceived text=${content}}, expected=${Array.from(
+                    this.expected?.values() ?? [],
+                ).join(', ')}`,
+            )
+            this.badMessageReceived(
+                `badMessageReceived text=${content}, expected=${Array.from(
+                    this.expected?.values() ?? [],
+                ).join(', ')}`,
+            )
+        }
     }
 
     async step(

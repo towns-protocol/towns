@@ -42,16 +42,13 @@ export class StreamStateView_User implements StreamStateView_IContent {
     prependEvent(
         event: ParsedEvent,
         payload: UserPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         switch (payload.content.case) {
             case 'inception':
                 break
             case 'userMembership':
                 // memberships are handled in the snapshot
-                break
-            case 'toDevice':
-                this.addToDeviceMessage(event, payload, emitter)
                 break
             case undefined:
                 break
@@ -71,34 +68,11 @@ export class StreamStateView_User implements StreamStateView_IContent {
             case 'userMembership':
                 this.addUserPayload_userMembership(payload.content.value, emitter)
                 break
-            case 'toDevice':
-                this.addToDeviceMessage(event, payload, emitter)
-                break
             case undefined:
                 break
             default:
                 logNever(payload.content)
         }
-    }
-
-    private addToDeviceMessage(
-        event: ParsedEvent,
-        payload: UserPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ) {
-        if (payload.content.value === undefined || payload.content.case !== 'toDevice') {
-            return
-        }
-        emitter?.emit(
-            'toDeviceMessage',
-            this.streamId,
-            event.hashStr,
-            payload.content.value,
-            event.creatorUserId,
-        )
-
-        // TODO: filter by deviceId and only store current deviceId's events
-        this.toDeviceMessages.push(event)
     }
 
     private addUserPayload_userMembership(

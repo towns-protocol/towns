@@ -78,12 +78,12 @@
     {
       "label": "Start Watches",
       "dependsOn": [
-        "WatchWorkersCommon",
-        "WatchSharedLib",
-        "WatchCasablancaSdk",
         "WatchCasablancaMechOlm",
         "WatchCasablancaProto",
+        "WatchWorkersCommon",
+        "WatchSharedLib",
         "WatchCasablancaWeb3",
+        "WatchCasablancaSdk",
       ],
       "group": {
         "kind": "build",
