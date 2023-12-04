@@ -7,22 +7,29 @@ data "aws_vpc" "vpc" {
 }
 
 locals {
+  node_name = "river${var.node_number}-${terraform.workspace}"
+
   service_name        = "river-node"
   global_remote_state = module.global_constants.global_remote_state.outputs
+
   river_node_tags = merge(
     module.global_constants.tags,
     {
-      Service   = local.service_name
-      Node_Name = var.node_name
+      Service     = local.service_name
+      Node_Number = var.node_number
+      Node_Name   = local.node_name
     }
   )
   dd_agent_tags = merge(
     module.global_constants.tags,
     {
-      Service   = "dd-agent"
-      Node_Name = var.node_name
+      Service     = "dd-agent"
+      Node_Number = var.node_number
+      Node_Name   = local.node_name
     }
   )
+
+  dd_required_tags = "env:${terraform.workspace}, node_name:${local.node_name}, node_number:${var.node_number}"
 
   total_vcpu   = var.is_transient ? 2048 : 4096
   total_memory = var.is_transient ? 4096 : 30720
@@ -67,7 +74,7 @@ data "terraform_remote_state" "global_remote_state" {
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name                = "${var.node_name}-ecsTaskExecutionRole"
+  name                = "${local.node_name}-ecsTaskExecutionRole"
   managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
@@ -122,14 +129,14 @@ module "river_node_db" {
   database_subnets                            = var.database_subnets
   river_node_subnets                          = var.node_subnets
   vpc_id                                      = var.vpc_id
-  river_node_name                             = var.node_name
+  river_node_name                             = local.node_name
   ecs_task_execution_role_id                  = aws_iam_role.ecs_task_execution_role.id
   cluster_source_identifier                   = var.database_cluster_source_identifier
   is_transient                                = var.is_transient
 }
 
 resource "aws_security_group" "post_provision_config_lambda_function_sg" {
-  name        = "${var.node_name}_post_provision_config_lambda_function_sg"
+  name        = "${local.node_name}_post_provision_config_lambda_function_sg"
   description = "Security group for the lambda function to configure the infra after provisioning"
   vpc_id      = var.vpc_id
 
@@ -144,7 +151,7 @@ resource "aws_security_group" "post_provision_config_lambda_function_sg" {
 module "post_provision_config" {
   source = "../../modules/post-provision-config"
 
-  river_node_name                   = var.node_name
+  river_node_name                   = local.node_name
   river_node_subnets                = var.node_subnets
   river_node_wallet_credentials_arn = aws_secretsmanager_secret.river_node_wallet_credentials.arn
   homechain_network_url_secret_arn  = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
@@ -167,33 +174,33 @@ resource "null_resource" "invoke_lambda" {
 }
 
 resource "aws_cloudwatch_log_group" "river_log_group" {
-  name = "/ecs/river/${var.node_name}"
+  name = "/ecs/river/${local.node_name}"
 
   tags = local.river_node_tags
 }
 
 resource "aws_cloudwatch_log_subscription_filter" "river_log_group_filter" {
-  name            = "${var.node_name}-river-log-group"
+  name            = "${local.node_name}-river-log-group"
   log_group_name  = aws_cloudwatch_log_group.river_log_group.name
   filter_pattern  = ""
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
 resource "aws_cloudwatch_log_group" "dd_agent_log_group" {
-  name = "/ecs/dd-agent/${var.node_name}"
+  name = "/ecs/dd-agent/${local.node_name}"
 
   tags = local.dd_agent_tags
 }
 
 resource "aws_cloudwatch_log_subscription_filter" "dd_agent_log_group_filter" {
-  name            = "${var.node_name}-dd-agent-log-group"
+  name            = "${local.node_name}-dd-agent-log-group"
   log_group_name  = aws_cloudwatch_log_group.dd_agent_log_group.name
   filter_pattern  = ""
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
 resource "aws_secretsmanager_secret" "river_node_wallet_credentials" {
-  name = "${var.node_name}-wallet-key"
+  name = "${local.node_name}-wallet-key"
   tags = local.river_node_tags
 }
 
@@ -207,7 +214,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "ecs-to-wallet-secret-policy" {
-  name = "${var.node_name}-wallet-credentials"
+  name = "${local.node_name}-wallet-credentials"
   role = aws_iam_role.ecs_task_execution_role.id
 
   policy = <<-EOF
@@ -229,7 +236,7 @@ resource "aws_iam_role_policy" "ecs-to-wallet-secret-policy" {
 }
 
 resource "aws_iam_role_policy" "ecs-to-push_notification_auth_token" {
-  name = "${var.node_name}-push-notification-auth-token"
+  name = "${local.node_name}-push-notification-auth-token"
   role = aws_iam_role.ecs_task_execution_role.id
 
   lifecycle {
@@ -255,7 +262,7 @@ resource "aws_iam_role_policy" "ecs-to-push_notification_auth_token" {
 }
 
 resource "aws_secretsmanager_secret" "river_node_home_chain_network_url" {
-  name = "${var.node_name}-homechain-network-url-secret"
+  name = "${local.node_name}-homechain-network-url-secret"
   tags = local.river_node_tags
 }
 
@@ -265,7 +272,7 @@ resource "aws_secretsmanager_secret_version" "river_node_home_chain_network_url"
 }
 
 resource "aws_iam_role_policy" "ecs-to-home-chain-network-url-secret-policy" {
-  name = "${var.node_name}-home-chain-network-url-secret"
+  name = "${local.node_name}-home-chain-network-url-secret"
   role = aws_iam_role.ecs_task_execution_role.id
 
   policy = <<-EOF
@@ -287,7 +294,7 @@ resource "aws_iam_role_policy" "ecs-to-home-chain-network-url-secret-policy" {
 }
 
 resource "aws_iam_role_policy" "dd_agent_api_key" {
-  name = "${var.node_name}-dd-agent-api-key"
+  name = "${local.node_name}-dd-agent-api-key"
   role = aws_iam_role.ecs_task_execution_role.id
 
   lifecycle {
@@ -313,7 +320,7 @@ resource "aws_iam_role_policy" "dd_agent_api_key" {
 }
 
 resource "aws_iam_role_policy" "hnt_dockerhub_access_key" {
-  name = "${var.node_name}-hnt-dockerhub-access-key-policy"
+  name = "${local.node_name}-hnt-dockerhub-access-key-policy"
   role = aws_iam_role.ecs_task_execution_role.id
 
   lifecycle {
@@ -339,7 +346,7 @@ resource "aws_iam_role_policy" "hnt_dockerhub_access_key" {
 }
 
 resource "aws_lb_target_group" "blue" {
-  name        = "${var.node_name}-blue"
+  name        = "${local.node_name}-blue"
   protocol    = "HTTP"
   port        = 80
   target_type = "ip"
@@ -358,7 +365,7 @@ resource "aws_lb_target_group" "blue" {
 }
 
 resource "aws_lb_target_group" "green" {
-  name        = "${var.node_name}-green"
+  name        = "${local.node_name}-green"
   protocol    = "HTTP"
   port        = 80
   target_type = "ip"
@@ -392,13 +399,13 @@ resource "aws_lb_listener_rule" "host_rule" {
 
   condition {
     host_header {
-      values = ["${var.node_name}.${module.global_constants.primary_hosted_zone_name}"]
+      values = ["${local.node_name}.${module.global_constants.primary_hosted_zone_name}"]
     }
   }
 }
 
 resource "aws_ecs_task_definition" "river-fargate" {
-  family = "${var.node_name}-fargate"
+  family = "${local.node_name}-fargate"
 
   lifecycle {
     ignore_changes = [container_definitions]
@@ -518,7 +525,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "DD_TAGS",
-        value = "env:${terraform.workspace}"
+        value = local.dd_required_tags
       },
       {
         name  = "PERFORMANCETRACKING__PROFILINGENABLED",
@@ -534,7 +541,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       options = {
         "awslogs-group"         = aws_cloudwatch_log_group.river_log_group.name
         "awslogs-region"        = "us-east-1"
-        "awslogs-stream-prefix" = var.node_name
+        "awslogs-stream-prefix" = local.node_name
       }
     }
     },
@@ -579,7 +586,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
         },
         {
           name  = "DD_TAGS",
-          value = "env:${terraform.workspace}, node_name:${var.node_name}"
+          value = local.dd_required_tags
         },
       ]
 
@@ -588,7 +595,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.dd_agent_log_group.name
           "awslogs-region"        = "us-east-1"
-          "awslogs-stream-prefix" = "dd-agent-${var.node_name}"
+          "awslogs-stream-prefix" = "dd-agent-${local.node_name}"
         }
       }
   }])
@@ -598,11 +605,11 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
 resource "aws_codedeploy_app" "river-node-code-deploy-app" {
   compute_platform = "ECS"
-  name             = "${var.node_name}-codedeploy-app"
+  name             = "${local.node_name}-codedeploy-app"
 }
 
 resource "aws_iam_role" "ecs_code_deploy_role" {
-  name                = "${var.node_name}-ecs-code-deploy-role"
+  name                = "${local.node_name}-ecs-code-deploy-role"
   managed_policy_arns = ["arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"]
 
 
@@ -624,7 +631,7 @@ resource "aws_iam_role" "ecs_code_deploy_role" {
 }
 
 resource "aws_ecs_service" "river-ecs-service" {
-  name                               = "${var.node_name}-fargate-service"
+  name                               = "${local.node_name}-fargate-service"
   cluster                            = var.ecs_cluster.id
   task_definition                    = aws_ecs_task_definition.river-fargate.arn
   desired_count                      = 1
@@ -666,7 +673,7 @@ resource "aws_ecs_service" "river-ecs-service" {
 
 resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   app_name               = aws_codedeploy_app.river-node-code-deploy-app.name
-  deployment_group_name  = "${var.node_name}-codedeploy-deployment-group"
+  deployment_group_name  = "${local.node_name}-codedeploy-deployment-group"
   service_role_arn       = aws_iam_role.ecs_code_deploy_role.arn
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
 
@@ -766,7 +773,7 @@ data "cloudflare_zone" "zone" {
 
 resource "cloudflare_record" "alb_dns" {
   zone_id = data.cloudflare_zone.zone.id
-  name    = var.node_name
+  name    = local.node_name
   value   = var.alb_dns_name
   type    = "CNAME"
   ttl     = 60

@@ -99,8 +99,7 @@ module "river_node_1" {
   home_chain_id                = 84531
   push_notification_worker_url = "https://push-notification-worker-${terraform.workspace}.towns.com"
 
-
-  node_name = "river1-${terraform.workspace}"
+  node_number = 1
 }
 
 data "cloudflare_zone" "zone" {
