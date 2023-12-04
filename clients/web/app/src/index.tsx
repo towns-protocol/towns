@@ -46,17 +46,6 @@ if (env.DEV) {
 if (env.VITE_DD_CLIENT_TOKEN) {
     const service = 'towns-webapp'
 
-    datadogLogs.init({
-        clientToken: env.VITE_DD_CLIENT_TOKEN,
-        service,
-        forwardConsoleLogs: env.VITE_LOG_FORWARDING,
-        forwardErrorsToLogs: true,
-        sessionSampleRate: env.VITE_LOG_SAMPLING_RATE,
-        telemetrySampleRate: 0,
-        env: datadogEnvName,
-        version: env.VITE_APP_RELEASE_VERSION,
-    })
-
     datadogRum.init({
         applicationId: 'c6afdc65-2431-48ff-b8f2-c4879fc75293',
         clientToken: 'pub947b3cbe543e47b9a64b2abca5028974',
@@ -70,6 +59,20 @@ if (env.VITE_DD_CLIENT_TOKEN) {
         trackResources: true,
         trackLongTasks: true,
         defaultPrivacyLevel: 'mask-user-input',
+    })
+
+    datadogLogs.init({
+        clientToken: env.VITE_DD_CLIENT_TOKEN,
+        service,
+        forwardConsoleLogs: env.VITE_LOG_FORWARDING,
+        forwardErrorsToLogs: true,
+        sessionSampleRate: env.VITE_LOG_SAMPLING_RATE,
+        telemetrySampleRate: 0,
+        env: datadogEnvName,
+        version: env.VITE_APP_RELEASE_VERSION,
+        beforeSend: (event) => {
+            event.session_id = datadogRum.getInternalContext()?.session_id
+        },
     })
 
     console.info(`datadogLogs initialized for env: ${env.MODE}`)
