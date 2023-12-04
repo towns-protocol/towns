@@ -1,7 +1,7 @@
 name: Comment Transient Environment
 on:
     pull_request:
-        types: [opened]
+        types: [opened, ready_for_review]
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
