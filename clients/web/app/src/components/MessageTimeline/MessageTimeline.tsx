@@ -1,14 +1,6 @@
 import { FullyReadMarker } from '@river/proto'
 import { isEqual, uniqBy } from 'lodash'
-import React, {
-    MutableRefObject,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from 'react'
+import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
     MessageType,
     TimelineEvent,
@@ -25,9 +17,10 @@ import { useExperimentsStore } from 'store/experimentsStore'
 import { useStore } from 'store/store'
 import { VList } from 'ui/components/VList2/VList'
 import { notUndefined } from 'ui/utils/utils'
+import { useChannelType } from 'hooks/useChannelType'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
-import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
+import { MessageTimelineType, useTimelineContext } from './MessageTimelineContext'
 import { useFocusMessage } from './hooks/useFocusItem'
 import { ListItem } from './types'
 import {
@@ -57,7 +50,7 @@ const unhandledEventKinds = [ZTEvent.MiniblockHeader, ZTEvent.Fulfillment, ZTEve
 
 export const MessageTimeline = (props: Props) => {
     const { groupByUser = true, displayAsSimpleList: displaySimpleList = false } = props
-    const timelineContext = useContext(MessageTimelineContext)
+    const timelineContext = useTimelineContext()
     const repliesMap = timelineContext?.messageRepliesMap
     const channelId = timelineContext?.channelId
     const isChannelEncrypted = timelineContext?.isChannelEncrypted
@@ -151,18 +144,20 @@ export const MessageTimeline = (props: Props) => {
     )
 
     const isThread = timelineContext?.type === MessageTimelineType.Thread
+    const channelType = useChannelType(channelId)
 
     const dateGroups = useMemo(
         () =>
             getEventsByDate(
                 events,
+                channelType,
                 fullyReadPersisted,
                 isThread,
                 repliesMap,
                 experiments,
                 groupByUser,
             ),
-        [events, fullyReadPersisted, isThread, repliesMap, experiments, groupByUser],
+        [events, channelType, fullyReadPersisted, isThread, repliesMap, experiments, groupByUser],
     )
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

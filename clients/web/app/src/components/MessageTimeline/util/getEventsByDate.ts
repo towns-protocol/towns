@@ -186,6 +186,7 @@ const createRelativeDateUtil = () => {
 
 export const getEventsByDate = (
     events: TimelineEvent[],
+    channelType: 'channel' | 'dm' | 'gdm',
     fullyReadMarker?: FullyReadMarker,
     isThread?: boolean,
     replyMap?: Record<string, ThreadStats>,
@@ -291,7 +292,7 @@ export const getEventsByDate = (
                         events: [event],
                     })
                 }
-            } else if (isRoomMember(event)) {
+            } else if (isRoomMember(event) && channelType !== 'dm') {
                 let accumulatedEvents = renderEvents.find(
                     (e) =>
                         e.type === RenderEventType.AccumulatedRoomMembers &&
