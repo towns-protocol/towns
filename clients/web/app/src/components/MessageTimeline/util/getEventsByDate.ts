@@ -20,6 +20,7 @@ export enum RenderEventType {
     RoomMember = 'RoomMember',
     AccumulatedRoomMembers = 'AccumulatedRoomMembers',
     RoomCreate = 'RoomCreate',
+    ChannelHeader = 'ChannelHeader',
     FullyRead = 'FullyRead',
     ThreadUpdate = 'ThreadUpdate',
 }
@@ -90,6 +91,12 @@ export interface AccumulatedRoomMemberRenderEvent extends BaseEvent {
     events: ZRoomMemberEvent[]
 }
 
+export interface ChannelHeaderRenderEvent extends BaseEvent {
+    type: RenderEventType.ChannelHeader
+    key: string
+    event: ZRoomCreateEvent
+}
+
 export interface RoomCreateRenderEvent extends BaseEvent {
     type: RenderEventType.RoomCreate
     key: string
@@ -145,15 +152,16 @@ export type DateGroup = {
 }
 
 export type RenderEvent =
-    | UserMessagesRenderEvent
-    | RoomMemberRenderEvent
     | AccumulatedRoomMemberRenderEvent
-    | RoomCreateRenderEvent
+    | ChannelHeaderRenderEvent
+    | EncryptedMessageRenderEvent
     | FullyReadRenderEvent
     | MessageRenderEvent
-    | ThreadUpdateRenderEvent
-    | EncryptedMessageRenderEvent
     | RedactedMessageRenderEvent
+    | RoomCreateRenderEvent
+    | RoomMemberRenderEvent
+    | ThreadUpdateRenderEvent
+    | UserMessagesRenderEvent
 
 const DEBUG_NO_GROUP_BY_USER = false
 
@@ -185,6 +193,8 @@ export const getEventsByDate = (
     groupByUser: boolean = DEBUG_NO_GROUP_BY_USER,
 ) => {
     const { getRelativeDays } = createRelativeDateUtil()
+
+    console.log(`ttt`, events)
 
     const result = events.reduce(
         (result, event: TimelineEvent, index) => {
@@ -315,8 +325,13 @@ export const getEventsByDate = (
                 accumulatedEvents.events.push(event)
             } else if (isRoomCreate(event)) {
                 renderEvents.push({
+                    type: RenderEventType.ChannelHeader,
+                    key: `channel-header-${event.eventId}`,
+                    event,
+                })
+                renderEvents.push({
                     type: RenderEventType.RoomCreate,
-                    key: event.eventId,
+                    key: `room-create-${event.eventId}`,
                     event,
                 })
             }
@@ -333,7 +348,7 @@ export const getEventsByDate = (
             // remove date groups that don't contain any messages (or only redacted messages)
             g.events.some(
                 (e) =>
-                    e.type === RenderEventType.RoomCreate ||
+                    e.type === RenderEventType.ChannelHeader ||
                     (e.type === RenderEventType.UserMessages &&
                         // keep redacted messages with replies
                         !e.events.every((e) => e.isRedacted && !replyMap?.[e.eventId])),
@@ -345,9 +360,9 @@ export const getEventsByDate = (
     // active and granular timeline
     result.dateGroups.forEach((g) =>
         g.events.sort(
-            firstBy((e: RenderEvent) => e.type !== RenderEventType.RoomCreate).thenBy(
-                (e) => e.type !== RenderEventType.AccumulatedRoomMembers,
-            ),
+            firstBy((e: RenderEvent) => e.type !== RenderEventType.ChannelHeader)
+                .thenBy((e: RenderEvent) => e.type !== RenderEventType.RoomCreate)
+                .thenBy((e: RenderEvent) => e.type !== RenderEventType.AccumulatedRoomMembers),
         ),
     )
 

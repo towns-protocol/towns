@@ -214,7 +214,7 @@ export const MessageTimeline = (props: Props) => {
                 // positions the channel intro at the top before date groups
                 if (groupIndex === 0) {
                     const createRoomEventIndex = flattened.findIndex(
-                        (e) => e.type === RenderEventType.RoomCreate,
+                        (e) => e.type === RenderEventType.ChannelHeader,
                     )
                     if (createRoomEventIndex > -1) {
                         // puts the create event at top before the date group
@@ -474,7 +474,7 @@ export const MessageTimeline = (props: Props) => {
                     paddingX={timelineContext?.type === MessageTimelineType.Channel ? 'lg' : 'md'}
                     onMarkAsRead={onMarkAsRead}
                 />
-            ) : r.item.type === RenderEventType.RoomCreate ? (
+            ) : r.item.type === RenderEventType.ChannelHeader ? (
                 props.header ?? <></>
             ) : (
                 <MessageTimelineItem

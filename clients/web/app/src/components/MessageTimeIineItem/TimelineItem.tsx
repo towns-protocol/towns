@@ -6,6 +6,7 @@ import { TimelineGenericEvent } from './items/GenericItem'
 import { MessageItem } from './items/MessageItem/MessageItem'
 import { TimelineThreadUpdates } from './items/ThreadUpdates'
 import { RenderEvent, RenderEventType } from '../MessageTimeline/util/getEventsByDate'
+import { RoomCreate } from './items/RoomCreate'
 
 export const MessageTimelineItem = React.memo(
     (props: {
@@ -42,9 +43,20 @@ export const MessageTimelineItem = React.memo(
                 return <TimelineGenericEvent event={itemData.event} key={itemData.event.eventId} />
             }
 
-            case RenderEventType.RoomCreate: {
+            case RenderEventType.ChannelHeader: {
                 return (
                     <TimelineChannelCreateEvent event={itemData.event} channelName={channelName} />
+                )
+            }
+
+            case RenderEventType.RoomCreate: {
+                return (
+                    <RoomCreate
+                        event={itemData.event}
+                        key={itemData.key}
+                        userId={userId}
+                        channelName={channelName}
+                    />
                 )
             }
 
