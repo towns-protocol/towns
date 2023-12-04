@@ -27,6 +27,7 @@
   sepolia = { key = "${ETHERSCAN_API_KEY}" }
   base_goerli = { key = "${BASESCAN_GOERLI_API_KEY}", url = "${BASESCAN_GOERLI_URL}" }
   base = { key = "${BASESCAN_API_KEY}", url = "${BASESCAN_URL}"}
+  river = {key="${RIVERSCAN_API_KEY}", url = "${RIVERSCAN_URL}"}
 
 [rpc_endpoints]
   anvil = "http://127.0.0.1:8545"
@@ -34,6 +35,7 @@
   sepolia = "${SEPOLIA_RPC_URL}"
   base_goerli = "${BASE_GOERLI_RPC_URL}"
   base = "${BASE_RPC_URL}"
+  river = "${RIVER_RPC_URL}"
 
 [fmt]
   bracket_spacing = true

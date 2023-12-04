@@ -391,17 +391,17 @@
   },
   "ast": {
     "absolutePath": "contracts/src/river/registry/StreamRegistry.sol",
-    "id": 17607,
+    "id": 17620,
     "exportedSymbols": {
       "StreamRegistry": [
-        17606
+        17619
       ]
     },
     "nodeType": "SourceUnit",
     "src": "32:1515:124",
     "nodes": [
       {
-        "id": 17474,
+        "id": 17487,
         "nodeType": "PragmaDirective",
         "src": "32:24:124",
         "nodes": [],
@@ -413,12 +413,12 @@
         ]
       },
       {
-        "id": 17606,
+        "id": 17619,
         "nodeType": "ContractDefinition",
         "src": "157:1389:124",
         "nodes": [
           {
-            "id": 17477,
+            "id": 17490,
             "nodeType": "VariableDeclaration",
             "src": "185:58:124",
             "nodes": [],
@@ -427,7 +427,7 @@
             "mutability": "constant",
             "name": "errAlreadyExists",
             "nameLocation": "208:16:124",
-            "scope": 17606,
+            "scope": 17619,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -435,7 +435,7 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 17475,
+              "id": 17488,
               "name": "string",
               "nodeType": "ElementaryTypeName",
               "src": "185:6:124",
@@ -446,7 +446,7 @@
             },
             "value": {
               "hexValue": "414c52454144595f455849535453",
-              "id": 17476,
+              "id": 17489,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -463,7 +463,7 @@
             "visibility": "public"
           },
           {
-            "id": 17480,
+            "id": 17493,
             "nodeType": "VariableDeclaration",
             "src": "247:48:124",
             "nodes": [],
@@ -472,7 +472,7 @@
             "mutability": "constant",
             "name": "errNotFound",
             "nameLocation": "270:11:124",
-            "scope": 17606,
+            "scope": 17619,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -480,7 +480,7 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 17478,
+              "id": 17491,
               "name": "string",
               "nodeType": "ElementaryTypeName",
               "src": "247:6:124",
@@ -491,7 +491,7 @@
             },
             "value": {
               "hexValue": "4e4f545f464f554e44",
-              "id": 17479,
+              "id": 17492,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -508,7 +508,7 @@
             "visibility": "public"
           },
           {
-            "id": 17483,
+            "id": 17496,
             "nodeType": "VariableDeclaration",
             "src": "299:55:124",
             "nodes": [],
@@ -517,7 +517,7 @@
             "mutability": "constant",
             "name": "errOutOfBounds",
             "nameLocation": "322:14:124",
-            "scope": 17606,
+            "scope": 17619,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -525,7 +525,7 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 17481,
+              "id": 17494,
               "name": "string",
               "nodeType": "ElementaryTypeName",
               "src": "299:6:124",
@@ -536,7 +536,7 @@
             },
             "value": {
               "hexValue": "4f55545f4f465f424f554e4453",
-              "id": 17482,
+              "id": 17495,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -553,7 +553,7 @@
             "visibility": "public"
           },
           {
-            "id": 17491,
+            "id": 17504,
             "nodeType": "StructDefinition",
             "src": "359:95:124",
             "nodes": [],
@@ -561,12 +561,12 @@
             "members": [
               {
                 "constant": false,
-                "id": 17485,
+                "id": 17498,
                 "mutability": "mutable",
                 "name": "streamId",
                 "nameLocation": "386:8:124",
                 "nodeType": "VariableDeclaration",
-                "scope": 17491,
+                "scope": 17504,
                 "src": "379:15:124",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -575,7 +575,7 @@
                   "typeString": "string"
                 },
                 "typeName": {
-                  "id": 17484,
+                  "id": 17497,
                   "name": "string",
                   "nodeType": "ElementaryTypeName",
                   "src": "379:6:124",
@@ -588,12 +588,12 @@
               },
               {
                 "constant": false,
-                "id": 17488,
+                "id": 17501,
                 "mutability": "mutable",
                 "name": "nodes",
                 "nameLocation": "410:5:124",
                 "nodeType": "VariableDeclaration",
-                "scope": 17491,
+                "scope": 17504,
                 "src": "400:15:124",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -603,7 +603,7 @@
                 },
                 "typeName": {
                   "baseType": {
-                    "id": 17486,
+                    "id": 17499,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "400:7:124",
@@ -613,7 +613,7 @@
                       "typeString": "address"
                     }
                   },
-                  "id": 17487,
+                  "id": 17500,
                   "nodeType": "ArrayTypeName",
                   "src": "400:9:124",
                   "typeDescriptions": {
@@ -625,12 +625,12 @@
               },
               {
                 "constant": false,
-                "id": 17490,
+                "id": 17503,
                 "mutability": "mutable",
                 "name": "genesisMiniblockHash",
                 "nameLocation": "429:20:124",
                 "nodeType": "VariableDeclaration",
-                "scope": 17491,
+                "scope": 17504,
                 "src": "421:28:124",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -639,7 +639,7 @@
                   "typeString": "bytes32"
                 },
                 "typeName": {
-                  "id": 17489,
+                  "id": 17502,
                   "name": "bytes32",
                   "nodeType": "ElementaryTypeName",
                   "src": "421:7:124",
@@ -653,11 +653,11 @@
             ],
             "name": "Stream",
             "nameLocation": "366:6:124",
-            "scope": 17606,
+            "scope": 17619,
             "visibility": "public"
           },
           {
-            "id": 17495,
+            "id": 17508,
             "nodeType": "VariableDeclaration",
             "src": "458:24:124",
             "nodes": [],
@@ -665,46 +665,46 @@
             "mutability": "mutable",
             "name": "streams",
             "nameLocation": "475:7:124",
-            "scope": 17606,
+            "scope": 17619,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_array$_t_struct$_Stream_$17491_storage_$dyn_storage",
+              "typeIdentifier": "t_array$_t_struct$_Stream_$17504_storage_$dyn_storage",
               "typeString": "struct StreamRegistry.Stream[]"
             },
             "typeName": {
               "baseType": {
-                "id": 17493,
+                "id": 17506,
                 "nodeType": "UserDefinedTypeName",
                 "pathNode": {
-                  "id": 17492,
+                  "id": 17505,
                   "name": "Stream",
                   "nameLocations": [
                     "458:6:124"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 17491,
+                  "referencedDeclaration": 17504,
                   "src": "458:6:124"
                 },
-                "referencedDeclaration": 17491,
+                "referencedDeclaration": 17504,
                 "src": "458:6:124",
                 "typeDescriptions": {
-                  "typeIdentifier": "t_struct$_Stream_$17491_storage_ptr",
+                  "typeIdentifier": "t_struct$_Stream_$17504_storage_ptr",
                   "typeString": "struct StreamRegistry.Stream"
                 }
               },
-              "id": 17494,
+              "id": 17507,
               "nodeType": "ArrayTypeName",
               "src": "458:8:124",
               "typeDescriptions": {
-                "typeIdentifier": "t_array$_t_struct$_Stream_$17491_storage_$dyn_storage_ptr",
+                "typeIdentifier": "t_array$_t_struct$_Stream_$17504_storage_$dyn_storage_ptr",
                 "typeString": "struct StreamRegistry.Stream[]"
               }
             },
             "visibility": "private"
           },
           {
-            "id": 17499,
+            "id": 17512,
             "nodeType": "VariableDeclaration",
             "src": "486:51:124",
             "nodes": [],
@@ -712,7 +712,7 @@
             "mutability": "mutable",
             "name": "streamIdToIndex",
             "nameLocation": "522:15:124",
-            "scope": 17606,
+            "scope": 17619,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -720,11 +720,11 @@
               "typeString": "mapping(bytes32 => uint256)"
             },
             "typeName": {
-              "id": 17498,
+              "id": 17511,
               "keyName": "",
               "keyNameLocation": "-1:-1:-1",
               "keyType": {
-                "id": 17496,
+                "id": 17509,
                 "name": "bytes32",
                 "nodeType": "ElementaryTypeName",
                 "src": "494:7:124",
@@ -742,7 +742,7 @@
               "valueName": "",
               "valueNameLocation": "-1:-1:-1",
               "valueType": {
-                "id": 17497,
+                "id": 17510,
                 "name": "uint256",
                 "nodeType": "ElementaryTypeName",
                 "src": "505:7:124",
@@ -755,29 +755,29 @@
             "visibility": "private"
           },
           {
-            "id": 17538,
+            "id": 17551,
             "nodeType": "FunctionDefinition",
             "src": "542:381:124",
             "nodes": [],
             "body": {
-              "id": 17537,
+              "id": 17550,
               "nodeType": "Block",
               "src": "598:325:124",
               "nodes": [],
               "statements": [
                 {
                   "assignments": [
-                    17506
+                    17519
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 17506,
+                      "id": 17519,
                       "mutability": "mutable",
                       "name": "streamIdHash",
                       "nameLocation": "612:12:124",
                       "nodeType": "VariableDeclaration",
-                      "scope": 17537,
+                      "scope": 17550,
                       "src": "604:20:124",
                       "stateVariable": false,
                       "storageLocation": "default",
@@ -786,7 +786,7 @@
                         "typeString": "bytes32"
                       },
                       "typeName": {
-                        "id": 17505,
+                        "id": 17518,
                         "name": "bytes32",
                         "nodeType": "ElementaryTypeName",
                         "src": "604:7:124",
@@ -798,25 +798,25 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 17514,
+                  "id": 17527,
                   "initialValue": {
                     "arguments": [
                       {
                         "arguments": [
                           {
                             "expression": {
-                              "id": 17510,
+                              "id": 17523,
                               "name": "newStream",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 17502,
+                              "referencedDeclaration": 17515,
                               "src": "643:9:124",
                               "typeDescriptions": {
-                                "typeIdentifier": "t_struct$_Stream_$17491_memory_ptr",
+                                "typeIdentifier": "t_struct$_Stream_$17504_memory_ptr",
                                 "typeString": "struct StreamRegistry.Stream memory"
                               }
                             },
-                            "id": 17511,
+                            "id": 17524,
                             "isConstant": false,
                             "isLValue": true,
                             "isPure": false,
@@ -824,7 +824,7 @@
                             "memberLocation": "653:8:124",
                             "memberName": "streamId",
                             "nodeType": "MemberAccess",
-                            "referencedDeclaration": 17485,
+                            "referencedDeclaration": 17498,
                             "src": "643:18:124",
                             "typeDescriptions": {
                               "typeIdentifier": "t_string_memory_ptr",
@@ -839,7 +839,7 @@
                               "typeString": "string memory"
                             }
                           ],
-                          "id": 17509,
+                          "id": 17522,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -851,14 +851,14 @@
                             "typeString": "type(bytes storage pointer)"
                           },
                           "typeName": {
-                            "id": 17508,
+                            "id": 17521,
                             "name": "bytes",
                             "nodeType": "ElementaryTypeName",
                             "src": "637:5:124",
                             "typeDescriptions": {}
                           }
                         },
-                        "id": 17512,
+                        "id": 17525,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -882,7 +882,7 @@
                           "typeString": "bytes memory"
                         }
                       ],
-                      "id": 17507,
+                      "id": 17520,
                       "name": "keccak256",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
@@ -893,7 +893,7 @@
                         "typeString": "function (bytes memory) pure returns (bytes32)"
                       }
                     },
-                    "id": 17513,
+                    "id": 17526,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -920,31 +920,31 @@
                           "typeIdentifier": "t_uint256",
                           "typeString": "uint256"
                         },
-                        "id": 17520,
+                        "id": 17533,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
                         "lValueRequested": false,
                         "leftExpression": {
                           "baseExpression": {
-                            "id": 17516,
+                            "id": 17529,
                             "name": "streamIdToIndex",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 17499,
+                            "referencedDeclaration": 17512,
                             "src": "677:15:124",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_bytes32_$_t_uint256_$",
                               "typeString": "mapping(bytes32 => uint256)"
                             }
                           },
-                          "id": 17518,
+                          "id": 17531,
                           "indexExpression": {
-                            "id": 17517,
+                            "id": 17530,
                             "name": "streamIdHash",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 17506,
+                            "referencedDeclaration": 17519,
                             "src": "693:12:124",
                             "typeDescriptions": {
                               "typeIdentifier": "t_bytes32",
@@ -966,7 +966,7 @@
                         "operator": "==",
                         "rightExpression": {
                           "hexValue": "30",
-                          "id": 17519,
+                          "id": 17532,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -987,11 +987,11 @@
                         }
                       },
                       {
-                        "id": 17521,
+                        "id": 17534,
                         "name": "errAlreadyExists",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17477,
+                        "referencedDeclaration": 17490,
                         "src": "713:16:124",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -1010,7 +1010,7 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 17515,
+                      "id": 17528,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
@@ -1024,7 +1024,7 @@
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 17522,
+                    "id": 17535,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1040,7 +1040,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 17523,
+                  "id": 17536,
                   "nodeType": "ExpressionStatement",
                   "src": "669:61:124"
                 },
@@ -1048,14 +1048,14 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 17527,
+                        "id": 17540,
                         "name": "newStream",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17502,
+                        "referencedDeclaration": 17515,
                         "src": "749:9:124",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_struct$_Stream_$17491_memory_ptr",
+                          "typeIdentifier": "t_struct$_Stream_$17504_memory_ptr",
                           "typeString": "struct StreamRegistry.Stream memory"
                         }
                       }
@@ -1063,23 +1063,23 @@
                     "expression": {
                       "argumentTypes": [
                         {
-                          "typeIdentifier": "t_struct$_Stream_$17491_memory_ptr",
+                          "typeIdentifier": "t_struct$_Stream_$17504_memory_ptr",
                           "typeString": "struct StreamRegistry.Stream memory"
                         }
                       ],
                       "expression": {
-                        "id": 17524,
+                        "id": 17537,
                         "name": "streams",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17495,
+                        "referencedDeclaration": 17508,
                         "src": "736:7:124",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_array$_t_struct$_Stream_$17491_storage_$dyn_storage",
+                          "typeIdentifier": "t_array$_t_struct$_Stream_$17504_storage_$dyn_storage",
                           "typeString": "struct StreamRegistry.Stream storage ref[] storage ref"
                         }
                       },
-                      "id": 17526,
+                      "id": 17539,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -1089,11 +1089,11 @@
                       "nodeType": "MemberAccess",
                       "src": "736:12:124",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_arraypush_nonpayable$_t_array$_t_struct$_Stream_$17491_storage_$dyn_storage_ptr_$_t_struct$_Stream_$17491_storage_$returns$__$attached_to$_t_array$_t_struct$_Stream_$17491_storage_$dyn_storage_ptr_$",
+                        "typeIdentifier": "t_function_arraypush_nonpayable$_t_array$_t_struct$_Stream_$17504_storage_$dyn_storage_ptr_$_t_struct$_Stream_$17504_storage_$returns$__$attached_to$_t_array$_t_struct$_Stream_$17504_storage_$dyn_storage_ptr_$",
                         "typeString": "function (struct StreamRegistry.Stream storage ref[] storage pointer,struct StreamRegistry.Stream storage ref)"
                       }
                     },
-                    "id": 17528,
+                    "id": 17541,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1109,37 +1109,37 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 17529,
+                  "id": 17542,
                   "nodeType": "ExpressionStatement",
                   "src": "736:23:124"
                 },
                 {
                   "expression": {
-                    "id": 17535,
+                    "id": 17548,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 17530,
+                        "id": 17543,
                         "name": "streamIdToIndex",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17499,
+                        "referencedDeclaration": 17512,
                         "src": "872:15:124",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_bytes32_$_t_uint256_$",
                           "typeString": "mapping(bytes32 => uint256)"
                         }
                       },
-                      "id": 17532,
+                      "id": 17545,
                       "indexExpression": {
-                        "id": 17531,
+                        "id": 17544,
                         "name": "streamIdHash",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17506,
+                        "referencedDeclaration": 17519,
                         "src": "888:12:124",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes32",
@@ -1161,18 +1161,18 @@
                     "operator": "=",
                     "rightHandSide": {
                       "expression": {
-                        "id": 17533,
+                        "id": 17546,
                         "name": "streams",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17495,
+                        "referencedDeclaration": 17508,
                         "src": "904:7:124",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_array$_t_struct$_Stream_$17491_storage_$dyn_storage",
+                          "typeIdentifier": "t_array$_t_struct$_Stream_$17504_storage_$dyn_storage",
                           "typeString": "struct StreamRegistry.Stream storage ref[] storage ref"
                         }
                       },
-                      "id": 17534,
+                      "id": 17547,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -1192,7 +1192,7 @@
                       "typeString": "uint256"
                     }
                   },
-                  "id": 17536,
+                  "id": 17549,
                   "nodeType": "ExpressionStatement",
                   "src": "872:46:124"
                 }
@@ -1205,41 +1205,41 @@
             "name": "allocateStream",
             "nameLocation": "551:14:124",
             "parameters": {
-              "id": 17503,
+              "id": 17516,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17502,
+                  "id": 17515,
                   "mutability": "mutable",
                   "name": "newStream",
                   "nameLocation": "580:9:124",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17538,
+                  "scope": 17551,
                   "src": "566:23:124",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_Stream_$17491_memory_ptr",
+                    "typeIdentifier": "t_struct$_Stream_$17504_memory_ptr",
                     "typeString": "struct StreamRegistry.Stream"
                   },
                   "typeName": {
-                    "id": 17501,
+                    "id": 17514,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 17500,
+                      "id": 17513,
                       "name": "Stream",
                       "nameLocations": [
                         "566:6:124"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 17491,
+                      "referencedDeclaration": 17504,
                       "src": "566:6:124"
                     },
-                    "referencedDeclaration": 17491,
+                    "referencedDeclaration": 17504,
                     "src": "566:6:124",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Stream_$17491_storage_ptr",
+                      "typeIdentifier": "t_struct$_Stream_$17504_storage_ptr",
                       "typeString": "struct StreamRegistry.Stream"
                     }
                   },
@@ -1249,40 +1249,40 @@
               "src": "565:25:124"
             },
             "returnParameters": {
-              "id": 17504,
+              "id": 17517,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "598:0:124"
             },
-            "scope": 17606,
+            "scope": 17619,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "public"
           },
           {
-            "id": 17575,
+            "id": 17588,
             "nodeType": "FunctionDefinition",
             "src": "927:357:124",
             "nodes": [],
             "body": {
-              "id": 17574,
+              "id": 17587,
               "nodeType": "Block",
               "src": "1015:269:124",
               "nodes": [],
               "statements": [
                 {
                   "assignments": [
-                    17547
+                    17560
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 17547,
+                      "id": 17560,
                       "mutability": "mutable",
                       "name": "streamIdHash",
                       "nameLocation": "1029:12:124",
                       "nodeType": "VariableDeclaration",
-                      "scope": 17574,
+                      "scope": 17587,
                       "src": "1021:20:124",
                       "stateVariable": false,
                       "storageLocation": "default",
@@ -1291,7 +1291,7 @@
                         "typeString": "bytes32"
                       },
                       "typeName": {
-                        "id": 17546,
+                        "id": 17559,
                         "name": "bytes32",
                         "nodeType": "ElementaryTypeName",
                         "src": "1021:7:124",
@@ -1303,17 +1303,17 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 17554,
+                  "id": 17567,
                   "initialValue": {
                     "arguments": [
                       {
                         "arguments": [
                           {
-                            "id": 17551,
+                            "id": 17564,
                             "name": "_streamId",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 17540,
+                            "referencedDeclaration": 17553,
                             "src": "1060:9:124",
                             "typeDescriptions": {
                               "typeIdentifier": "t_string_memory_ptr",
@@ -1328,7 +1328,7 @@
                               "typeString": "string memory"
                             }
                           ],
-                          "id": 17550,
+                          "id": 17563,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -1340,14 +1340,14 @@
                             "typeString": "type(bytes storage pointer)"
                           },
                           "typeName": {
-                            "id": 17549,
+                            "id": 17562,
                             "name": "bytes",
                             "nodeType": "ElementaryTypeName",
                             "src": "1054:5:124",
                             "typeDescriptions": {}
                           }
                         },
-                        "id": 17552,
+                        "id": 17565,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -1371,7 +1371,7 @@
                           "typeString": "bytes memory"
                         }
                       ],
-                      "id": 17548,
+                      "id": 17561,
                       "name": "keccak256",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
@@ -1382,7 +1382,7 @@
                         "typeString": "function (bytes memory) pure returns (bytes32)"
                       }
                     },
-                    "id": 17553,
+                    "id": 17566,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1403,17 +1403,17 @@
                 },
                 {
                   "assignments": [
-                    17556
+                    17569
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 17556,
+                      "id": 17569,
                       "mutability": "mutable",
                       "name": "index",
                       "nameLocation": "1085:5:124",
                       "nodeType": "VariableDeclaration",
-                      "scope": 17574,
+                      "scope": 17587,
                       "src": "1077:13:124",
                       "stateVariable": false,
                       "storageLocation": "default",
@@ -1422,7 +1422,7 @@
                         "typeString": "uint256"
                       },
                       "typeName": {
-                        "id": 17555,
+                        "id": 17568,
                         "name": "uint256",
                         "nodeType": "ElementaryTypeName",
                         "src": "1077:7:124",
@@ -1434,27 +1434,27 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 17560,
+                  "id": 17573,
                   "initialValue": {
                     "baseExpression": {
-                      "id": 17557,
+                      "id": 17570,
                       "name": "streamIdToIndex",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17499,
+                      "referencedDeclaration": 17512,
                       "src": "1093:15:124",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_bytes32_$_t_uint256_$",
                         "typeString": "mapping(bytes32 => uint256)"
                       }
                     },
-                    "id": 17559,
+                    "id": 17572,
                     "indexExpression": {
-                      "id": 17558,
+                      "id": 17571,
                       "name": "streamIdHash",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17547,
+                      "referencedDeclaration": 17560,
                       "src": "1109:12:124",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes32",
@@ -1483,17 +1483,17 @@
                           "typeIdentifier": "t_uint256",
                           "typeString": "uint256"
                         },
-                        "id": 17564,
+                        "id": 17577,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
                         "lValueRequested": false,
                         "leftExpression": {
-                          "id": 17562,
+                          "id": 17575,
                           "name": "index",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 17556,
+                          "referencedDeclaration": 17569,
                           "src": "1136:5:124",
                           "typeDescriptions": {
                             "typeIdentifier": "t_uint256",
@@ -1504,7 +1504,7 @@
                         "operator": "!=",
                         "rightExpression": {
                           "hexValue": "30",
-                          "id": 17563,
+                          "id": 17576,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -1525,11 +1525,11 @@
                         }
                       },
                       {
-                        "id": 17565,
+                        "id": 17578,
                         "name": "errNotFound",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17480,
+                        "referencedDeclaration": 17493,
                         "src": "1148:11:124",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -1548,7 +1548,7 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 17561,
+                      "id": 17574,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
@@ -1562,7 +1562,7 @@
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 17566,
+                    "id": 17579,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1578,41 +1578,41 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 17567,
+                  "id": 17580,
                   "nodeType": "ExpressionStatement",
                   "src": "1128:32:124"
                 },
                 {
                   "expression": {
                     "baseExpression": {
-                      "id": 17568,
+                      "id": 17581,
                       "name": "streams",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17495,
+                      "referencedDeclaration": 17508,
                       "src": "1261:7:124",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_array$_t_struct$_Stream_$17491_storage_$dyn_storage",
+                        "typeIdentifier": "t_array$_t_struct$_Stream_$17504_storage_$dyn_storage",
                         "typeString": "struct StreamRegistry.Stream storage ref[] storage ref"
                       }
                     },
-                    "id": 17572,
+                    "id": 17585,
                     "indexExpression": {
                       "commonType": {
                         "typeIdentifier": "t_uint256",
                         "typeString": "uint256"
                       },
-                      "id": 17571,
+                      "id": 17584,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
                       "lValueRequested": false,
                       "leftExpression": {
-                        "id": 17569,
+                        "id": 17582,
                         "name": "index",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17556,
+                        "referencedDeclaration": 17569,
                         "src": "1269:5:124",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -1623,7 +1623,7 @@
                       "operator": "-",
                       "rightExpression": {
                         "hexValue": "31",
-                        "id": 17570,
+                        "id": 17583,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -1650,12 +1650,12 @@
                     "nodeType": "IndexAccess",
                     "src": "1261:18:124",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Stream_$17491_storage",
+                      "typeIdentifier": "t_struct$_Stream_$17504_storage",
                       "typeString": "struct StreamRegistry.Stream storage ref"
                     }
                   },
-                  "functionReturnParameters": 17545,
-                  "id": 17573,
+                  "functionReturnParameters": 17558,
+                  "id": 17586,
                   "nodeType": "Return",
                   "src": "1254:25:124"
                 }
@@ -1668,17 +1668,17 @@
             "name": "getStream",
             "nameLocation": "936:9:124",
             "parameters": {
-              "id": 17541,
+              "id": 17554,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17540,
+                  "id": 17553,
                   "mutability": "mutable",
                   "name": "_streamId",
                   "nameLocation": "965:9:124",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17575,
+                  "scope": 17588,
                   "src": "951:23:124",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -1687,7 +1687,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 17539,
+                    "id": 17552,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "951:6:124",
@@ -1702,41 +1702,41 @@
               "src": "945:33:124"
             },
             "returnParameters": {
-              "id": 17545,
+              "id": 17558,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17544,
+                  "id": 17557,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17575,
+                  "scope": 17588,
                   "src": "1000:13:124",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_Stream_$17491_memory_ptr",
+                    "typeIdentifier": "t_struct$_Stream_$17504_memory_ptr",
                     "typeString": "struct StreamRegistry.Stream"
                   },
                   "typeName": {
-                    "id": 17543,
+                    "id": 17556,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 17542,
+                      "id": 17555,
                       "name": "Stream",
                       "nameLocations": [
                         "1000:6:124"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 17491,
+                      "referencedDeclaration": 17504,
                       "src": "1000:6:124"
                     },
-                    "referencedDeclaration": 17491,
+                    "referencedDeclaration": 17504,
                     "src": "1000:6:124",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Stream_$17491_storage_ptr",
+                      "typeIdentifier": "t_struct$_Stream_$17504_storage_ptr",
                       "typeString": "struct StreamRegistry.Stream"
                     }
                   },
@@ -1745,18 +1745,18 @@
               ],
               "src": "999:15:124"
             },
-            "scope": 17606,
+            "scope": 17619,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "public"
           },
           {
-            "id": 17584,
+            "id": 17597,
             "nodeType": "FunctionDefinition",
             "src": "1288:90:124",
             "nodes": [],
             "body": {
-              "id": 17583,
+              "id": 17596,
               "nodeType": "Block",
               "src": "1346:32:124",
               "nodes": [],
@@ -1764,18 +1764,18 @@
                 {
                   "expression": {
                     "expression": {
-                      "id": 17580,
+                      "id": 17593,
                       "name": "streams",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17495,
+                      "referencedDeclaration": 17508,
                       "src": "1359:7:124",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_array$_t_struct$_Stream_$17491_storage_$dyn_storage",
+                        "typeIdentifier": "t_array$_t_struct$_Stream_$17504_storage_$dyn_storage",
                         "typeString": "struct StreamRegistry.Stream storage ref[] storage ref"
                       }
                     },
-                    "id": 17581,
+                    "id": 17594,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1789,8 +1789,8 @@
                       "typeString": "uint256"
                     }
                   },
-                  "functionReturnParameters": 17579,
-                  "id": 17582,
+                  "functionReturnParameters": 17592,
+                  "id": 17595,
                   "nodeType": "Return",
                   "src": "1352:21:124"
                 }
@@ -1803,23 +1803,23 @@
             "name": "getStreamsLength",
             "nameLocation": "1297:16:124",
             "parameters": {
-              "id": 17576,
+              "id": 17589,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1313:2:124"
             },
             "returnParameters": {
-              "id": 17579,
+              "id": 17592,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17578,
+                  "id": 17591,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17584,
+                  "scope": 17597,
                   "src": "1337:7:124",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1828,7 +1828,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 17577,
+                    "id": 17590,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1337:7:124",
@@ -1842,18 +1842,18 @@
               ],
               "src": "1336:9:124"
             },
-            "scope": 17606,
+            "scope": 17619,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "public"
           },
           {
-            "id": 17605,
+            "id": 17618,
             "nodeType": "FunctionDefinition",
             "src": "1382:162:124",
             "nodes": [],
             "body": {
-              "id": 17604,
+              "id": 17617,
               "nodeType": "Block",
               "src": "1459:85:124",
               "nodes": [],
@@ -1866,17 +1866,17 @@
                           "typeIdentifier": "t_uint256",
                           "typeString": "uint256"
                         },
-                        "id": 17596,
+                        "id": 17609,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
                         "lValueRequested": false,
                         "leftExpression": {
-                          "id": 17593,
+                          "id": 17606,
                           "name": "index",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 17586,
+                          "referencedDeclaration": 17599,
                           "src": "1473:5:124",
                           "typeDescriptions": {
                             "typeIdentifier": "t_uint256",
@@ -1887,18 +1887,18 @@
                         "operator": "<",
                         "rightExpression": {
                           "expression": {
-                            "id": 17594,
+                            "id": 17607,
                             "name": "streams",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 17495,
+                            "referencedDeclaration": 17508,
                             "src": "1481:7:124",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_array$_t_struct$_Stream_$17491_storage_$dyn_storage",
+                              "typeIdentifier": "t_array$_t_struct$_Stream_$17504_storage_$dyn_storage",
                               "typeString": "struct StreamRegistry.Stream storage ref[] storage ref"
                             }
                           },
-                          "id": 17595,
+                          "id": 17608,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": false,
@@ -1919,11 +1919,11 @@
                         }
                       },
                       {
-                        "id": 17597,
+                        "id": 17610,
                         "name": "errOutOfBounds",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 17483,
+                        "referencedDeclaration": 17496,
                         "src": "1497:14:124",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -1942,7 +1942,7 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 17592,
+                      "id": 17605,
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
@@ -1956,7 +1956,7 @@
                         "typeString": "function (bool,string memory) pure"
                       }
                     },
-                    "id": 17598,
+                    "id": 17611,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1972,31 +1972,31 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 17599,
+                  "id": 17612,
                   "nodeType": "ExpressionStatement",
                   "src": "1465:47:124"
                 },
                 {
                   "expression": {
                     "baseExpression": {
-                      "id": 17600,
+                      "id": 17613,
                       "name": "streams",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17495,
+                      "referencedDeclaration": 17508,
                       "src": "1525:7:124",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_array$_t_struct$_Stream_$17491_storage_$dyn_storage",
+                        "typeIdentifier": "t_array$_t_struct$_Stream_$17504_storage_$dyn_storage",
                         "typeString": "struct StreamRegistry.Stream storage ref[] storage ref"
                       }
                     },
-                    "id": 17602,
+                    "id": 17615,
                     "indexExpression": {
-                      "id": 17601,
+                      "id": 17614,
                       "name": "index",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 17586,
+                      "referencedDeclaration": 17599,
                       "src": "1533:5:124",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
@@ -2010,12 +2010,12 @@
                     "nodeType": "IndexAccess",
                     "src": "1525:14:124",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Stream_$17491_storage",
+                      "typeIdentifier": "t_struct$_Stream_$17504_storage",
                       "typeString": "struct StreamRegistry.Stream storage ref"
                     }
                   },
-                  "functionReturnParameters": 17591,
-                  "id": 17603,
+                  "functionReturnParameters": 17604,
+                  "id": 17616,
                   "nodeType": "Return",
                   "src": "1518:21:124"
                 }
@@ -2028,17 +2028,17 @@
             "name": "getStreamByIndex",
             "nameLocation": "1391:16:124",
             "parameters": {
-              "id": 17587,
+              "id": 17600,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17586,
+                  "id": 17599,
                   "mutability": "mutable",
                   "name": "index",
                   "nameLocation": "1416:5:124",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17605,
+                  "scope": 17618,
                   "src": "1408:13:124",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2047,7 +2047,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 17585,
+                    "id": 17598,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1408:7:124",
@@ -2062,41 +2062,41 @@
               "src": "1407:15:124"
             },
             "returnParameters": {
-              "id": 17591,
+              "id": 17604,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17590,
+                  "id": 17603,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17605,
+                  "scope": 17618,
                   "src": "1444:13:124",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_Stream_$17491_memory_ptr",
+                    "typeIdentifier": "t_struct$_Stream_$17504_memory_ptr",
                     "typeString": "struct StreamRegistry.Stream"
                   },
                   "typeName": {
-                    "id": 17589,
+                    "id": 17602,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 17588,
+                      "id": 17601,
                       "name": "Stream",
                       "nameLocations": [
                         "1444:6:124"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 17491,
+                      "referencedDeclaration": 17504,
                       "src": "1444:6:124"
                     },
-                    "referencedDeclaration": 17491,
+                    "referencedDeclaration": 17504,
                     "src": "1444:6:124",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Stream_$17491_storage_ptr",
+                      "typeIdentifier": "t_struct$_Stream_$17504_storage_ptr",
                       "typeString": "struct StreamRegistry.Stream"
                     }
                   },
@@ -2105,7 +2105,7 @@
               ],
               "src": "1443:15:124"
             },
-            "scope": 17606,
+            "scope": 17619,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "public"
@@ -2118,11 +2118,11 @@
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          17606
+          17619
         ],
         "name": "StreamRegistry",
         "nameLocation": "166:14:124",
-        "scope": 17607,
+        "scope": 17620,
         "usedErrors": [],
         "usedEvents": []
       }

@@ -12,6 +12,17 @@ import {DeployHelpers} from "./DeployHelpers.s.sol";
 contract DeployBase is DeployHelpers, Script {
   string internal constant DEPLOYMENT_CACHE_PATH = "packages/generated";
 
+  constructor() {
+    setChain(
+      "river",
+      ChainData({
+        name: "river",
+        chainId: 6524490,
+        rpcUrl: "https://towns-devnet.rpc.caldera.xyz/http"
+      })
+    );
+  }
+
   // =============================================================
   //                      DEPLOYMENT HELPERS
   // =============================================================

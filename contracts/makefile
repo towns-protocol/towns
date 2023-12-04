@@ -41,6 +41,17 @@ migrate-anvil:;
 	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
 
 # ===========================
+# 				 River
+# ===========================
+deploy-river :;
+	@forge build
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url river --private-key ${PRIVATE_KEY} --verifier blockscout --verifier-url ${RIVERSCAN_URL} --broadcast --verify
+
+verify-river :;
+	@forge build
+	@forge verify-contract ${address} ${contract} --chain river
+
+# ===========================
 # 				 Base Goerli
 # ===========================
 deploy-base-goerli :;
