@@ -6,8 +6,8 @@ export const followerKey = '61cb187a9413019e97aee61ba84d3761f66eda8a05c00834b903
 export const followerId = '0x0d04e9fF8AF48B749Bb954CceF52d2114BaeE1aD' //Artem Privy through personal email
 export const followerUserName = 'Artem (GMail)'
 
-export const testTownId = '11-TYOw7nWLSG_ttoC6oCCaS'
-export const testChannelId = '22-XSqLwEOzrcyBW0zN8omoP'
+export const testTownId = '11-S5W7_ol3mWHw26yBWtWqf'
+export const testChannelId = '22-ixuliM9NO8Z93yRToHTjL'
 
 export const testRunTimeMs = 180000 // test runtime in milliseconds
 export const connectionOptions = {
