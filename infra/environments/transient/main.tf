@@ -97,5 +97,5 @@ module "river_node_1" {
   # TODO: generalize this to env name once we start deploying transient workers
   push_notification_worker_url = "https://push-notification-worker-test-beta.towns.com"
 
-  node_name = "river1-${terraform.workspace}"
+  node_number = 1
 }
