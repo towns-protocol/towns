@@ -23,3 +23,9 @@ variable "git_pr_number" {
     error_message = "The PR number cannot be 0."
   }
 }
+
+variable "is_transient_lite" {
+  description = "Is this a transient lite environment?"
+  type        = bool
+  default     = false
+}

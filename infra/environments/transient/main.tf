@@ -72,6 +72,8 @@ resource "cloudflare_record" "sample_app_dns" {
 module "river_node_1" {
   source = "../../modules/river-node"
 
+  count = var.is_transient_lite ? 0 : 1
+
   is_transient  = true
   git_pr_number = var.git_pr_number
 

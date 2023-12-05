@@ -10,12 +10,13 @@ concurrency:
 
 jobs:
     check_labels:
-        # a step that checks if the PR has the label "provision-transient-environment"
-        # if it does, it will trigger the provision_transient_environment job
+        # a step that checks if the PR has the label "provision full transient environment"
+        # if present, it will trigger the full transient environment workflow
+        # otherwise, it will trigger the transient lite workflow
         runs-on: ubuntu-latest
         permissions: write-all
         outputs:
-            provision: ${{ steps.check_labels.outputs.provision }}
+            provision_full_transient_environment: ${{ steps.check_labels.outputs.provision_full_transient_environment }}
         steps:
             - name: Check labels
               id: check_labels
@@ -28,15 +29,14 @@ jobs:
                           repo: context.repo.repo,
                           issue_number: context.issue.number
                       });
-                      const provision = labels.data.some(label => label.name === 'provision transient environment');
-                      core.setOutput('provision', provision);
+                      const provision_full_transient_environment = labels.data.some(label => label.name === 'provision full transient environment');
+                      core.setOutput('provision_full_transient_environment', provision_full_transient_environment);
 
     provision_transient_environment:
         needs: check_labels
         permissions: write-all
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 40
-        if: needs.check_labels.outputs.provision == 'true'
 
         env:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -63,6 +63,7 @@ jobs:
               working-directory: ./infra
               env:
                   CI_AUTOAPPROVE: true
+                  IS_TRANSIENT_LITE: ${{ needs.check_labels.outputs.provision_full_transient_environment != 'true' }}
               run:
                   make apply
                   # If action failed, we send a slack notification
@@ -94,7 +95,7 @@ jobs:
         needs: provision_transient_environment
         permissions: write-all
 
-        if: needs.check_labels.outputs.provision == 'true'
+        if: needs.check_labels.outputs.provision_full_transient_environment == 'true'
         # TODO: only run if a change in /casablanca/node is detected
         # TODO: only deploy if the new docker image is different than what's currently active
         with:
