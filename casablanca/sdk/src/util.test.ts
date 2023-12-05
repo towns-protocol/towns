@@ -23,6 +23,7 @@ import { setTimeout } from 'timers/promises'
 import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
 import { EntitlementsDelegate } from './decryptionExtensions'
+import { check } from './check'
 
 const log = dlog('csb:test:util')
 
@@ -315,6 +316,7 @@ export function createEventDecryptedPromise(client: Client, expectedMessageText:
             recipientReceivesMessageWithoutError.runAndDone(() => {
                 const content = event.decryptedContent
                 expect(content).toBeDefined()
+                check(content.kind === 'channelMessage')
                 expect(getChannelMessagePayload(content?.content)).toEqual(expectedMessageText)
             })
         },

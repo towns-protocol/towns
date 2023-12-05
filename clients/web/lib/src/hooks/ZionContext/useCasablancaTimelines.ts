@@ -267,16 +267,15 @@ function toTownsContent_fromDecryptedEvent(
 ): TownsContentResult {
     const description = `${message.decryptedContent.kind} id: ${eventId}`
 
-    // ENABLE switch when we have more decrypted content kinds
-    // switch (message.decryptedContent.kind) {
-    //     case 'channelMessage':
-    //         return toTownsContent_FromChannelMessage(message.decryptedContent.content, description)
-    //     default:
-    //         logNever(message.decryptedContent, 'unknown decrypted content kind')
-    //         return { error: `unknown payload case ${message.decryptedContent.kind ?? ''}` }
-    // }
-
-    return toTownsContent_FromChannelMessage(message.decryptedContent.content, description)
+    switch (message.decryptedContent.kind) {
+        case 'text':
+            return { error: `payload contains only text: ${message.decryptedContent.content}` }
+        case 'channelMessage':
+            return toTownsContent_FromChannelMessage(message.decryptedContent.content, description)
+        default:
+            logNever(message.decryptedContent)
+            return { error: `Unknown payload case: ${description}` }
+    }
 }
 
 function toTownsContent_fromParsedEvent(eventId: string, message: ParsedEvent): TownsContentResult {
@@ -355,10 +354,10 @@ function toTownsContent_fromParsedEvent(eventId: string, message: ParsedEvent): 
                 description,
             )
         case undefined:
-            return { error: `${description} undefined payload case` }
+            return { error: `Undefined payload case: ${description}` }
         default:
             logNever(message.event.payload)
-            return { error: `unknown payload case ${description}` }
+            return { error: `Unknown payload case: ${description}` }
     }
 }
 
@@ -403,11 +402,11 @@ function toTownsContent_CommonPayload(
                 } satisfies FulfillmentEvent, // make a real thing
             }
         case undefined:
-            return { error: `${description} undefined message kind` }
+            return { error: `Undefined payload case: ${description}` }
         default:
-            logNever(value.content, 'unknown common payload case')
+            logNever(value.content)
             return {
-                error: `${description} unknown common payload case`,
+                error: `Unknown payload case: ${description}`,
             }
     }
 }
@@ -444,13 +443,12 @@ function toTownsContent_UserPayload(
             }
         }
         case undefined: {
-            return { error: `${description} unknown message kind` }
+            return { error: `Undefined payload case: ${description}` }
         }
         default: {
             logNever(value.content)
             return {
-                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                error: `${description} unknown message kind`,
+                error: `Unknown payload case: ${description}`,
             }
         }
     }
@@ -492,11 +490,11 @@ function toTownsContent_ChannelPayload(
             return toTownsContent_ChannelPayload_Message(payload, description)
         }
         case undefined: {
-            return { error: `${description} undefined message kind` }
+            return { error: `Undefined payload case: ${description}` }
         }
         default:
             logNever(value.content)
-            return { error: `${description} unknown payload case` }
+            return { error: `Unknown payload case: ${description}` }
     }
 }
 
@@ -507,7 +505,11 @@ function toTownsContent_FromChannelMessage(
     switch (channelMessage.payload?.case) {
         case 'post':
             return (
-                toTownsContent_ChannelPayload_Message_Post(channelMessage.payload.value) ?? {
+                toTownsContent_ChannelPayload_Message_Post(
+                    channelMessage.payload.value,
+                    undefined,
+                    description,
+                ) ?? {
                     error: `${description} unknown message type`,
                 }
             )
@@ -534,15 +536,16 @@ function toTownsContent_FromChannelMessage(
             const newContent = toTownsContent_ChannelPayload_Message_Post(
                 newPost,
                 channelMessage.payload.value.refEventId,
+                description,
             )
             return newContent ?? { error: `${description} no content in edit` }
         }
         case undefined:
-            return { error: `${description} undefined message kind` }
+            return { error: `Undefined payload case: ${description}` }
         default: {
             logNever(channelMessage.payload)
             return {
-                error: `${description} unknown message kind`,
+                error: `Unknown payload case: ${description}`,
             }
         }
     }
@@ -569,8 +572,9 @@ function toTownsContent_ChannelPayload_Message(
 
 function toTownsContent_ChannelPayload_Message_Post(
     value: ChannelMessage_Post | PlainMessage<ChannelMessage_Post>,
-    editsEventId?: string,
-) {
+    editsEventId: string | undefined,
+    description: string,
+): TownsContentResult {
     switch (value.content.case) {
         case 'text':
             return {
@@ -664,10 +668,10 @@ function toTownsContent_ChannelPayload_Message_Post(
                 } satisfies RoomMessageEvent,
             }
         case undefined:
-            return undefined
+            return { error: `Undefined payload case: ${description}` }
         default:
             logNever(value.content)
-            return undefined
+            return { error: `Unknown payload case: ${description}` }
     }
 }
 
@@ -738,10 +742,10 @@ function toTownsContent_SpacePayload(
             }
         }
         case undefined:
-            return { error: `${description} undefined payload case` }
+            return { error: `Undefined payload case: ${description}` }
         default:
             logNever(value.content)
-            return { error: `${description} unknown payload case` }
+            return { error: `Unknown payload case: ${description}` }
     }
 }
 

@@ -87,7 +87,11 @@ import debug from 'debug'
 import { Stream } from './stream'
 import { Code } from '@connectrpc/connect'
 import { isIConnectError } from './utils'
-import { DecryptedContent_ChannelMessage, EncryptedContent } from './encryptedContentTypes'
+import {
+    DecryptedContent_ChannelMessage,
+    DecryptedContent_Text,
+    EncryptedContent,
+} from './encryptedContentTypes'
 import { DecryptionExtensions, EntitlementsDelegate } from './decryptionExtensions'
 import { PersistenceStore } from './persistenceStore'
 
@@ -1592,6 +1596,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
         const cleartext = await this.cleartextForMegolmEvent(streamId, eventId, encryptedContent)
         switch (encryptedContent.kind) {
+            case 'text': {
+                const decryptedContent = {
+                    kind: 'text',
+                    content: clearText,
+                } satisfies DecryptedContent_Text
+                return stream.view.updateDecrypted(eventId, decryptedContent, this)
+            }
             case 'channelMessage': {
                 const message = ChannelMessage.fromJsonString(cleartext)
                 const decryptedContent = {

@@ -16,7 +16,7 @@ import {
 import { Permission } from '@river/web3'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
-import { DecryptedTimelineEvent } from '@river/sdk'
+import { DecryptedTimelineEvent, check } from '@river/sdk'
 import { SnapshotCaseType } from '@river/proto'
 
 describe('sendAMessage', () => {
@@ -118,6 +118,7 @@ describe('sendAMessage', () => {
 function getMessages(events: DecryptedTimelineEvent[]): string[] {
     return events.map((e) => {
         const content = e.decryptedContent
+        check(content.kind === 'channelMessage')
         if (
             content !== undefined &&
             content?.content?.payload &&

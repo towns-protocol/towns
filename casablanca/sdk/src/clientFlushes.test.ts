@@ -8,6 +8,7 @@ import { DLogger, dlog } from './dlog'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { makeDonePromise, makeTestClient, sendFlush } from './util.test'
 import { DecryptedTimelineEvent } from './types'
+import { check } from './check'
 
 const log_base = dlog('csb:test')
 
@@ -35,13 +36,14 @@ describe('clientFlushes', () => {
         ): void => {
             log('onChannelNewMessage', channelId)
             done.runAndDoneAsync(async () => {
-                const clearEvent = event.decryptedContent.content
-                expect(clearEvent?.payload).toBeDefined()
+                const clearEvent = event.decryptedContent
+                check(clearEvent.kind === 'channelMessage')
+                expect(clearEvent.content.payload).toBeDefined()
                 if (
-                    clearEvent?.payload?.case === 'post' &&
-                    clearEvent?.payload?.value?.content?.case === 'text'
+                    clearEvent.content.payload?.case === 'post' &&
+                    clearEvent.content.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                    expect(clearEvent.content.payload?.value?.content.value?.body).toContain(
                         'Hello, world!',
                     )
                 }
@@ -113,13 +115,14 @@ describe('clientFlushes', () => {
         ): void => {
             log('onChannelNewMessage', channelId)
             done.runAndDoneAsync(async () => {
-                const clearEvent = event.decryptedContent.content
-                expect(clearEvent?.payload).toBeDefined()
+                const clearEvent = event.decryptedContent
+                check(clearEvent.kind === 'channelMessage')
+                expect(clearEvent.content.payload).toBeDefined()
                 if (
-                    clearEvent?.payload?.case === 'post' &&
-                    clearEvent?.payload?.value?.content?.case === 'text'
+                    clearEvent.content.payload?.case === 'post' &&
+                    clearEvent.content.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                    expect(clearEvent.content.payload?.value?.content.value?.body).toContain(
                         'Hello, again!',
                     )
                 }

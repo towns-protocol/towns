@@ -27,6 +27,7 @@ import {
 import { DecryptedContent } from '../encryptedContentTypes'
 import { SnapshotCaseType } from '@river/proto'
 import { DecryptedTimelineEvent } from '../types'
+import { check } from '../check'
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error
 // specifically the code in ConvertersEntitlements.ts - decodeAbiParameters and encodeAbiParameters functions have an import that can't be found
@@ -87,10 +88,11 @@ describe('mirrorMessages', () => {
                             throw new Error('Event not found')
                         }
                         const clearEvent = messagesMap.get(commandData.messageTest)
+                        check(clearEvent?.kind === 'channelMessage')
                         if (
-                            clearEvent?.content?.payload?.case === 'post' &&
-                            clearEvent?.content?.payload?.value?.content?.case === 'text' &&
-                            clearEvent?.content?.payload?.value?.content.value?.body ===
+                            clearEvent.content?.payload?.case === 'post' &&
+                            clearEvent.content?.payload?.value?.content?.case === 'text' &&
+                            clearEvent.content?.payload?.value?.content.value?.body ===
                                 commandData.messageTest
                         ) {
                             await client.sendMessage(
@@ -162,12 +164,13 @@ describe('mirrorMessages', () => {
                     done.runAsync(async () => {
                         // await client.decryptEventIfNeeded(event)
                         const clearEvent = event.decryptedContent
-                        expect(clearEvent?.content?.payload).toBeDefined()
+                        check(clearEvent.kind === 'channelMessage')
+                        expect(clearEvent.content?.payload).toBeDefined()
                         if (
-                            clearEvent?.content?.payload?.case === 'post' &&
-                            clearEvent?.content?.payload?.value?.content?.case === 'text'
+                            clearEvent.content?.payload?.case === 'post' &&
+                            clearEvent.content?.payload?.value?.content?.case === 'text'
                         ) {
-                            const body = clearEvent?.content?.payload?.value?.content.value?.body
+                            const body = clearEvent.content?.payload?.value?.content.value?.body
                             log('Event decrypted with text:', body)
                             messagesSet.add(body)
                             messagesMap.set(body, clearEvent)

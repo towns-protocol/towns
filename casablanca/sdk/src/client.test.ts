@@ -371,13 +371,13 @@ describe('clientTest', () => {
             log(event)
 
             done.runAndDoneAsync(async () => {
-                expect(event.decryptedContent.kind).toBe('channelMessage')
-                const clearEvent = event.decryptedContent.content
+                const clearEvent = event.decryptedContent
+                check(clearEvent.kind === 'channelMessage')
                 if (
-                    clearEvent?.payload?.case === 'post' &&
-                    clearEvent?.payload?.value?.content?.case === 'text'
+                    clearEvent?.content.payload?.case === 'post' &&
+                    clearEvent?.content.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                    expect(clearEvent?.content.payload?.value?.content.value?.body).toContain(
                         'Hello, again!',
                     )
                 }
@@ -523,12 +523,12 @@ describe('clientTest', () => {
                 aliceGetsMessage.runAsync(async () => {
                     expect(channelId).toBe(bobsChannelId)
                     const clearEvent = event.decryptedContent
-                    expect(clearEvent?.content?.payload).toBeDefined()
+                    check(clearEvent.kind === 'channelMessage')
                     if (
-                        clearEvent?.content?.payload?.case === 'post' &&
-                        clearEvent?.content?.payload?.value?.content?.case === 'text'
+                        clearEvent.content.payload?.case === 'post' &&
+                        clearEvent.content.payload?.value?.content?.case === 'text'
                     ) {
-                        const body = clearEvent?.content?.payload?.value?.content.value?.body
+                        const body = clearEvent.content.payload?.value?.content.value?.body
                         // @ts-ignore
                         expect(body).toBeOneOf(conversation)
                         if (body === 'Hello, Alice!') {
@@ -558,7 +558,7 @@ describe('clientTest', () => {
                 bobGetsMessage.runAsync(async () => {
                     expect(channelId).toBe(bobsChannelId)
                     const clearEvent = event.decryptedContent
-                    expect(clearEvent.content?.payload).toBeDefined()
+                    check(clearEvent.kind === 'channelMessage')
                     if (
                         clearEvent.content?.payload?.case === 'post' &&
                         clearEvent.content?.payload?.value?.content?.case === 'text'
