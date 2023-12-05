@@ -407,10 +407,6 @@ resource "aws_lb_listener_rule" "host_rule" {
 resource "aws_ecs_task_definition" "river-fargate" {
   family = "${local.node_name}-fargate"
 
-  lifecycle {
-    ignore_changes = [container_definitions]
-  }
-
   ephemeral_storage {
     size_in_gib = local.ephemeral_storage_size_in_gib
   }
@@ -455,11 +451,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
     secrets = [
       {
-        // TODO: remove after migration
-        name      = "DBURL"
-        valueFrom = "${module.river_node_db.rds_river_node_credentials_arn}:dbConnectionString::"
-      },
-      {
         name      = "DATABASE__PASSWORD",
         valueFrom = "${module.river_node_db.rds_river_node_credentials_arn}:password::"
       },
@@ -469,11 +460,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name      = "BASECHAIN__NETWORKURL"
-        valueFrom = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
-      },
-      {
-        name = "CHAIN__NETWORKURL"
-        // TODO: remove after migration
         valueFrom = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
       },
       {
@@ -493,12 +479,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
         name  = "BASECHAIN__CHAINID",
         value = var.home_chain_id
       },
-      {
-        // TODO: remove after migration
-        name  = "CHAIN__CHAINID",
-        value = var.home_chain_id
-      },
-      // TODO: remove after migration
       {
         name  = "METRICS__ENABLED",
         value = "true"
