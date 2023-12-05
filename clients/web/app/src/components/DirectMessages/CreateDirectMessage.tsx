@@ -31,8 +31,11 @@ export const CreateDirectMessage = (props: Props) => {
                 const userIds = Array.from(selectedUserIds)
                 const streamId = await createGDMChannel(userIds)
                 if (streamId) {
-                    navigate(`/messages/${streamId.slug}`)
-                    onDirectMessageCreated()
+                    const link = createLink({ messageId: streamId.slug })
+                    if (link) {
+                        navigate(link)
+                        onDirectMessageCreated()
+                    }
                 }
             }
         },

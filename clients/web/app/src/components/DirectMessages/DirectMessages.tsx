@@ -3,7 +3,7 @@ import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/Tou
 import { Box, BoxProps, Icon, IconButton, IconName, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { CreateDirectMessage } from './CreateDIrectMessage'
+import { CreateDirectMessage } from './CreateDirectMessage'
 import { DirectMessageList } from './DirectMessageList'
 
 type DirectMessagesPanelProps = {
