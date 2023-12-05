@@ -195,8 +195,6 @@ export const getEventsByDate = (
 ) => {
     const { getRelativeDays } = createRelativeDateUtil()
 
-    console.log(`ttt`, events)
-
     const result = events.reduce(
         (result, event: TimelineEvent, index) => {
             const { dateGroups } = result
