@@ -455,8 +455,13 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
     secrets = [
       {
+        // TODO: remove after migration
         name      = "DBURL"
         valueFrom = "${module.river_node_db.rds_river_node_credentials_arn}:dbConnectionString::"
+      },
+      {
+        name      = "DATABASE__PASSWORD",
+        valueFrom = "${module.river_node_db.rds_river_node_credentials_arn}:password::"
       },
       {
         name      = "WALLETPRIVATEKEY"
@@ -489,6 +494,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = var.home_chain_id
       },
       {
+        // TODO: remove after migration
         name  = "CHAIN__CHAINID",
         value = var.home_chain_id
       },
@@ -545,6 +551,26 @@ resource "aws_ecs_task_definition" "river-fargate" {
         name  = "PERFORMANCETRACKING__TRACINGENABLED",
         value = "true"
       },
+      {
+        name  = "DATABASE__HOST",
+        value = module.river_node_db.rds_aurora_postgresql.cluster_endpoint
+      },
+      {
+        name  = "DATABASE__PORT",
+        value = "5432"
+      },
+      {
+        name  = "DATABASE__USER",
+        value = "river"
+      },
+      {
+        name  = "DATABASE__DATABASE",
+        value = "river"
+      },
+      {
+        name  = "DATABASE__EXTRA"
+        value = "?sslmode=disable&pool_max_conns=1000"
+      }
     ]
     logConfiguration = {
       logDriver = "awslogs"

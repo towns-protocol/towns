@@ -1,5 +1,12 @@
 port: <RPC_PORT>
-dburl: postgres://postgres:postgres@localhost:<DB_PORT>/casablanca?sslmode=disable&pool_max_conns=1000
+database:
+    url: postgres://postgres:postgres@localhost:<DB_PORT>/casablanca?sslmode=disable&pool_max_conns=1000
+    database: ''
+    user: ''
+    password: ''
+    port: ''
+    extra: ''
+    host: ''
 storageType: postgres
 address:
 useContract: <USE_CONTRACT>

@@ -248,7 +248,7 @@ func testServerAndClient(
 		},
 		Address:     "localhost",
 		Port:        1234,
-		DbUrl:       dbUrl,
+		Database:    config.DatabaseConfig{Url: dbUrl},
 		StorageType: "postgres",
 		SyncVersion: syncVersion,
 		Stream: config.StreamConfig{

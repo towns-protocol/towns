@@ -42,12 +42,29 @@ func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAdd
 	return nodes.LoadNodeRegistry(ctx, nodeRegistryPath, localNodeAddress)
 }
 
-func createStore(ctx context.Context, dbUrl string, storageType string, address string, instanceId string, exitSignal chan error) (storage.StreamStorage, Cleanup, error) {
+func getDbURL(dbConfig config.DatabaseConfig) string {
+	if dbConfig.Password != "" {
+		return fmt.Sprintf(
+			"postgresql://%s:%s@%s:%d/%s%s",
+			dbConfig.User,
+			dbConfig.Password,
+			dbConfig.Host,
+			dbConfig.Port,
+			dbConfig.Database,
+			dbConfig.Extra,
+		)
+	}
+
+	return dbConfig.Url
+}
+
+func createStore(ctx context.Context, dbConfig config.DatabaseConfig, storageType string, address string, instanceId string, exitSignal chan error) (storage.StreamStorage, Cleanup, error) {
 	log := dlog.CtxLog(ctx)
 	if storageType == "in-memory" {
 		log.Warn("Using in-memory storage")
 		return storage.NewMemStorage(), nil, nil
 	} else {
+		dbUrl := getDbURL(dbConfig)
 		schema := storage.DbSchemaNameFromAddress(address)
 		store, err := storage.NewPostgresEventStore(ctx, dbUrl, schema, instanceId, false, exitSignal)
 		if err != nil {
@@ -92,7 +109,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	exitSignal := make(chan error, 1)
 
-	store, storageCleaner, err := createStore(ctx, cfg.DbUrl, cfg.StorageType, wallet.AddressStr, instanceId, exitSignal)
+	store, storageCleaner, err := createStore(ctx, cfg.Database, cfg.StorageType, wallet.AddressStr, instanceId, exitSignal)
 	if err != nil {
 		return nil, 0, nil, err
 	}
@@ -248,7 +265,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	}
 
 	log.Info("Listening", "addr", address+streamServicePattern)
-	log.Info("Using DB", "url", cfg.DbUrl)
+	log.Info("Using DB", "url", getDbURL(cfg.Database))
 	if cfg.UseContract {
 		log.Info("Using chain", "id", cfg.BaseChain.ChainId)
 	} else {

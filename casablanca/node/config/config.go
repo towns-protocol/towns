@@ -13,7 +13,7 @@ type Config struct {
 	Address string
 
 	// Storage
-	DbUrl       string
+	Database    DatabaseConfig
 	StorageType string
 
 	// Blockchain configuration
@@ -46,6 +46,16 @@ type Config struct {
 
 	// What is this and why is it here?
 	WalletPrivateKey string
+}
+
+type DatabaseConfig struct {
+	Url      string
+	Host     string
+	Port     int
+	User     string
+	Password string
+	Database string
+	Extra    string
 }
 
 type ChainConfig struct {

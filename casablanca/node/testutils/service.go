@@ -23,7 +23,9 @@ func TestServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 		},
 		Address: "localhost",
 		Port:    1234,
-		DbUrl:   dbUrl,
+		Database: config.DatabaseConfig{
+			Url: dbUrl,
+		},
 		Stream: config.StreamConfig{
 			Media: config.MediaStreamConfig{
 				MaxChunkCount: 100,
