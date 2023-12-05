@@ -3,8 +3,7 @@ module "global_constants" {
 }
 
 locals {
-  rpc_proxy_global_access_key_arn        = module.global_constants.transient_global_remote_state.outputs.rpc_proxy_global_access_key.arn
-  post_provision_config_lambda_s3_object = module.global_constants.global_remote_state.outputs.post_provision_config_lambda_s3_object
+  rpc_proxy_global_access_key_arn = module.global_constants.transient_global_remote_state.outputs.rpc_proxy_global_access_key.arn
 }
 
 
@@ -19,12 +18,7 @@ module "post_provision_config_lambda_function" {
   architectures          = ["x86_64"]
   publish                = true
   timeout                = 30 #seconds
-  create_package         = false
-  s3_existing_package = {
-    bucket = local.post_provision_config_lambda_s3_object.bucket
-    key    = local.post_provision_config_lambda_s3_object.key
-  }
-
+  source_path            = "../../modules/post-provision-config/lambda-function"
   vpc_subnet_ids         = var.river_node_subnets
   vpc_security_group_ids = [var.security_group_id]
   attach_network_policy  = true

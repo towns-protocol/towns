@@ -17,13 +17,3 @@ output "primary_hosted_zone_cert" {
   value     = aws_acm_certificate.primary_hosted_zone_cert
   sensitive = true
 }
-
-output "post_provision_config_lambda_s3_object" {
-  description = "S3 Object for lambda zip packaged file"
-  value       = aws_s3_object.post_provision_config_lambda_code
-}
-
-output "lambdas_s3_bucket" {
-  description = "S3 Bucket for lambda zip packaged files"
-  value       = aws_s3_bucket.hnt_lambdas
-}
