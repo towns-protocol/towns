@@ -1,69 +1,99 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
-import { useMatch, useNavigate } from 'react-router'
-import {
-    useDMData,
-    useDMLatestMessage,
-    useMyUserId,
-    useUser,
-    useZionContext,
-} from 'use-zion-client'
-import { MostRecentMessageInfo_OneOf } from 'use-zion-client/dist/hooks/use-dm-latest-message'
-import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
-import { Avatar } from '@components/Avatar/Avatar'
-import { TimelineEncryptedContent } from '@components/MessageTimeIineItem/items/MessageItem/EncryptedMessageBody/EncryptedMessageBody'
-import { UserList } from '@components/UserList/UserList'
-import { Box, Icon, MotionStack, Paragraph, Stack, Text } from '@ui'
+import React, {
+    ChangeEvent,
+    useCallback,
+    useDeferredValue,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
+import { useLocation, useMatch, useNavigate } from 'react-router'
+import { DMChannelIdentifier, useTimelineStore, useZionContext } from 'use-zion-client'
+import { ResultItem } from '@components/SearchBar/SearchResultItem'
+import { Box, Icon, Paragraph, Stack, TextField } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { useDmChannels } from 'hooks/useDMChannels'
 import { useDevice } from 'hooks/useDevice'
+import { useSearch } from 'hooks/useSearch'
 import { notUndefined } from 'ui/utils/utils'
-import { formatShortDate } from 'utils/formatShortDate'
-import { GroupDMIcon } from './GroupDMIcon'
+import { SearchContext } from '@components/SearchContext/SearchContext'
+import { DirectMessageListItem } from './DirectMessageListItem'
 
 export const DirectMessageList = () => {
-    const navigate = useNavigate()
-    const { dmChannels: _dmChannels } = useZionContext()
-    const dmChannels = useMemo(() => _dmChannels.filter((c) => !c.left), [_dmChannels])
-    const messageId = useMatch('messages/:messageId/*')?.params.messageId
+    const { channels: dmChannelIds } = useFilteredDirectMessages()
+
+    const routeMatch = useMatch('messages/:channelId/*')
+
+    const channelId = routeMatch?.params.channelId
+    const hashId = useLocation().hash.replace('#', '')
+
     const { dmUnreadChannelIds } = useZionContext()
 
-    const { isTouch } = useDevice()
+    const { selectMessage } = useSelectMessage(dmChannelIds, channelId)
 
-    const hasInitRef = useRef(false)
+    const [searchValue, setSearchValue] = useState('')
 
-    const { createLink } = useCreateLink()
+    const onSearch = useCallback((value: string) => {
+        setSearchValue(value)
+    }, [])
 
-    useEffect(() => {
-        if (!hasInitRef.current && !isTouch && !messageId && dmChannels.length > 0) {
-            const link = createLink({ messageId: dmChannels[0].id.slug })
-            if (link) {
-                navigate(link)
-            }
-        }
-        hasInitRef.current = true
-    }, [messageId, dmChannels, navigate, isTouch, createLink])
+    const searchResults = useSearch(searchValue).searchResults.filter(
+        (r) => r.item.type === 'dmMessage',
+    )
 
-    const onThreadClick = useCallback(
-        (id: string) => {
-            const link = createLink({ messageId: id })
-            if (link) {
-                navigate(link)
-            }
-        },
-        [createLink, navigate],
+    const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
+        threadsStats,
+    }))
+
+    const channels = searchResults.length
+        ? searchResults
+              .filter((r) => r.item.type === 'dmMessage')
+              .map((r) => {
+                  return dmChannelIds.find(
+                      (c) => r.item.type === 'dmMessage' && c.id.slug === r.item.channelId,
+                  )
+              })
+              .filter(notUndefined)
+        : dmChannelIds
+
+    const dmChannels = useDmChannels()
+
+    const miscProps = useMemo(
+        () => ({ channels: [...dmChannels], members: [], threadsStats, spaceId: undefined }),
+        [dmChannels, threadsStats],
     )
 
     return (
         <Stack scroll padding="sm">
+            <SearchField onSearchValue={onSearch} />
             <Stack minHeight="100svh" paddingBottom="safeAreaInsetBottom" gap="xxs">
-                {dmChannels.length > 0 ? (
-                    dmChannels.map((channel) => {
+                {searchResults.length > 0 ? (
+                    <SearchContext.Provider value="messages">
+                        {searchResults.map((s, index, items) => (
+                            <ResultItem
+                                key={s.item.key}
+                                result={s}
+                                misc={miscProps}
+                                paddingY="sm"
+                                paddingX="sm"
+                                rounded="sm"
+                                background={
+                                    s.item.type === 'dmMessage' && hashId === s.item.key
+                                        ? 'level2'
+                                        : 'level1'
+                                }
+                            />
+                        ))}
+                    </SearchContext.Provider>
+                ) : channels.length > 0 ? (
+                    channels.map((channel) => {
                         return (
-                            <DirectMessageThread
+                            <DirectMessageListItem
                                 key={channel.id.slug}
                                 channel={channel}
-                                highlighted={messageId === channel.id.slug}
+                                highlighted={channelId === channel.id.slug}
                                 unread={dmUnreadChannelIds.has(channel.id.slug)}
-                                onClick={() => onThreadClick(channel.id.slug)}
+                                onSelect={selectMessage}
                             />
                         )
                     })
@@ -88,131 +118,70 @@ export const DirectMessageList = () => {
     )
 }
 
-const DirectMessageThread = (props: {
-    channel: DMChannelIdentifier
-    onClick: () => void
-    highlighted: boolean
-    unread: boolean
-}) => {
-    const { channel, onClick, highlighted, unread } = props
-    const latest = useDMLatestMessage(channel.id)
-    const latestUser = useUser(latest?.sender.id)
-    const myUserId = useMyUserId()
+const SearchField = (props: { onSearchValue: (value: string) => void }) => {
+    const { onSearchValue } = props
 
-    const latestMessageRender = (info: undefined | MostRecentMessageInfo_OneOf) => {
-        switch (info?.kind) {
-            case 'media':
-                return '📷'
-            case 'text':
-                return latestUser
-                    ? `${myUserId === latestUser.userId ? 'you' : latestUser.displayName}: ${
-                          info.text
-                      }`
-                    : info.text
-            case 'encrypted':
-                return (
-                    <Box paddingY="xs">
-                        <TimelineEncryptedContent event={{ createdAtEpocMs: 0 }} />
-                    </Box>
-                )
+    const [value, setValue] = useState('')
 
-            default:
-                return (
-                    <Box horizontal>
-                        <Paragraph size="sm">New message</Paragraph>
-                    </Box>
-                )
+    const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target) {
+            setValue(e.target.value)
         }
     }
 
-    const { counterParty, data } = useDMData(channel.id)
-    const userIds = useMemo(
-        () => (data?.isGroup ? data.userIds : [counterParty].filter(notUndefined)),
-        [counterParty, data?.isGroup, data?.userIds],
-    )
+    const deferredValue = useDeferredValue(value)
 
-    const userList = userIds ? (
-        <UserList
-            excludeSelf
-            userIds={userIds}
-            renderUser={({ displayName, userId }) => (
-                <Box display="inline" key={userId}>
-                    {displayName}
-                </Box>
-            )}
-        />
-    ) : (
-        <></>
-    )
+    useEffect(() => {
+        onSearchValue(deferredValue)
+    }, [deferredValue, onSearchValue])
 
     return (
-        <MotionStack
-            key={channel.id.slug}
-            layout="position"
-            transition={{ type: 'spring', damping: 25, stiffness: 120 }}
-            cursor="pointer"
-            onClick={onClick}
-        >
-            <Box
-                gap
-                horizontal
-                hoverable={!highlighted}
-                background={highlighted ? 'level2' : 'level1'}
-                alignItems="start"
-                padding="sm"
-                borderRadius="sm"
-            >
-                {channel.isGroup ? (
-                    <Box insetRight="xs">
-                        <GroupDMIcon roomIdentifier={channel.id} />
-                    </Box>
-                ) : (
-                    channel.userIds.map((userId) => (
-                        <Avatar key={userId} userId={userId} insetRight="xs" />
-                    ))
-                )}
-
-                <Box grow gap="sm" width="100%" overflow="hidden" height="100%" paddingY="xxs">
-                    {/* first line: title and date */}
-                    <Stack horizontal gap>
-                        {/* text on the left */}
-                        <Text truncate color="default" fontWeight={unread ? 'medium' : 'normal'}>
-                            {/* {data?.isGroup ? 'GM' : 'DM'} */}
-                            {userList}
-                        </Text>
-                        {/* date on the right */}
-                        <Box grow justifyContent="end" alignItems="end">
-                            {latest ? (
-                                <Paragraph size="xs" style={{ whiteSpace: 'nowrap' }} color="gray2">
-                                    {formatShortDate(latest.createdAtEpocMs)}
-                                </Paragraph>
-                            ) : (
-                                <></>
-                            )}
-                        </Box>
-                    </Stack>
-                    {/* truncated message body */}
-                    <Text>
-                        {/* nested text hack to get cap-size vertical margins right */}
-                        <Text
-                            color={unread ? 'default' : 'gray2'}
-                            size="sm"
-                            style={{
-                                // todo: experiment with this, may not keep
-                                // and if we keep it will move into the Text component
-                                padding: '4px 0',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                display: '-webkit-box',
-                            }}
-                        >
-                            {latestMessageRender(latest?.info)}
-                        </Text>
-                    </Text>
-                </Box>
-            </Box>
-        </MotionStack>
+        <Box horizontal padding="sm" height="x7" shrink={false}>
+            <TextField
+                autoFocus
+                tone="none"
+                background="level2"
+                height="100%"
+                placeholder="Search DMs"
+                value={value ?? undefined}
+                onChange={onChange}
+            />
+        </Box>
     )
+}
+
+const useFilteredDirectMessages = () => {
+    const { dmChannels: _dmChannels } = useZionContext()
+    const channels = useMemo(() => _dmChannels.filter((c) => !c.left), [_dmChannels])
+    return { channels }
+}
+
+const useSelectMessage = (dmChannels: DMChannelIdentifier[], messageId?: string) => {
+    const { isTouch } = useDevice()
+    const navigate = useNavigate()
+    const hasInitRef = useRef(false)
+    const { createLink } = useCreateLink()
+
+    // auto select first message if needed
+    useEffect(() => {
+        if (!hasInitRef.current && !isTouch && !messageId && dmChannels.length > 0) {
+            const link = createLink({ messageId: dmChannels[0].id.slug })
+            if (link) {
+                navigate(link)
+            }
+        }
+        hasInitRef.current = true
+    }, [messageId, dmChannels, navigate, isTouch, createLink])
+
+    const selectMessage = useCallback(
+        (id: string) => {
+            const link = createLink({ messageId: id })
+            if (link) {
+                navigate(link)
+            }
+        },
+        [createLink, navigate],
+    )
+
+    return { selectMessage }
 }

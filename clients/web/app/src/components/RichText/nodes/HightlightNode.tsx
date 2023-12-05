@@ -80,13 +80,8 @@ export class HightlightNode extends TextNode {
         const dom = super.createDOM(config)
         dom.className = atoms({
             fontWeight: 'medium',
-            background: { default: 'accentTransparent' },
-            border: { default: 'level3', hover: 'level4' },
-            paddingX: 'xs',
-            rounded: 'xs',
-            fontSize: { desktop: 'md', mobile: 'mds' },
+            color: 'accent',
             cursor: 'pointer',
-            insetY: 'xxs',
         })
         dom.setAttribute('data-term', this.__term)
 

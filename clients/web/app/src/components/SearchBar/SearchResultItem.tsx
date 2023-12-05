@@ -13,16 +13,19 @@ import { Avatar } from '@components/Avatar/Avatar'
 import { CombinedResult } from './types'
 import { SearchMessagesResultItem } from './SearchMessageResultItem'
 
-export const ResultItem = (props: {
-    result: CombinedResult
-    misc: {
-        channels: Channel[]
-        members: RoomMember[]
-        threadsStats: ThreadStatsMap
-        spaceId: RoomIdentifier | undefined
-    }
-}) => {
-    const item = props.result.item
+export const ResultItem = (
+    props: {
+        result: CombinedResult
+        misc: {
+            channels: Channel[]
+            members: RoomMember[]
+            threadsStats: ThreadStatsMap
+            spaceId: RoomIdentifier | undefined
+        }
+    } & BoxProps,
+) => {
+    const { result, misc: miscProps, ...boxProps } = props
+    const item = result.item
     const { createLink } = useCreateLink()
 
     const { isTouch } = useDevice()
@@ -51,7 +54,7 @@ export const ResultItem = (props: {
 
         case 'channel': {
             const link = createLink({
-                spaceId: props.misc.spaceId?.networkId,
+                spaceId: miscProps.spaceId?.networkId,
                 channelId: item.source.channelNetworkId,
             })
 
@@ -85,12 +88,12 @@ export const ResultItem = (props: {
 
         case 'dmMessage': {
             return (
-                <ItemContainer paddingY="md">
+                <ItemContainer paddingY="md" {...boxProps}>
                     <MessageResultItem
                         event={item.source}
                         channelId={item.channelId}
-                        misc={props.misc}
-                        highlightedTerms={props.result.searchResult.terms}
+                        misc={miscProps}
+                        highlightedTerms={result.searchResult.terms}
                     />
                 </ItemContainer>
             )
@@ -101,8 +104,8 @@ export const ResultItem = (props: {
                     <MessageResultItem
                         event={item.source}
                         channelId={item.channelId}
-                        misc={props.misc}
-                        highlightedTerms={props.result.searchResult.terms}
+                        misc={miscProps}
+                        highlightedTerms={result.searchResult.terms}
                     />
                 </ItemContainer>
             )
@@ -123,7 +126,7 @@ const ItemContainer = (props: BoxProps) => (
     />
 )
 
-export const MessageResultItem = (props: {
+const MessageResultItem = (props: {
     event: ZRoomMessageEvent
     highlightedTerms?: string[]
     channelId: string

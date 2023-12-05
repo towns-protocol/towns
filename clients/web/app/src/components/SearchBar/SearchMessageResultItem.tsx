@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useContext, useEffect, useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
     EventStatus,
     MentionResult as MessageResult,
     RoomIdentifier,
+    useDMData,
     useSpaceId,
     useSpaceMembers,
 } from 'use-zion-client'
@@ -17,15 +18,23 @@ import { atoms } from 'ui/styles/atoms.css'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
+import { SearchContext } from '@components/SearchContext/SearchContext'
+import { formatShortDate } from 'utils/formatShortDate'
+import { UserList } from '@components/UserList/UserList'
+import { notUndefined } from 'ui/utils/utils'
+import { useDevice } from 'hooks/useDevice'
 
 const createMessageLink = (
+    isTouch: boolean,
     channelId: RoomIdentifier,
     eventId: string,
     threadId?: string,
     spaceId?: string,
 ) => {
     if (isDMChannelStreamId(channelId.networkId) || isGDMChannelStreamId(channelId.networkId)) {
-        return `/${PATHS.MESSAGES}/${channelId.networkId}/#${eventId}`
+        return isTouch
+            ? `/${PATHS.SPACES}/${spaceId}/${PATHS.MESSAGES}/${channelId.networkId}/#${eventId}`
+            : `/${PATHS.MESSAGES}/${channelId.networkId}/#${eventId}`
     }
 
     if (!spaceId) {
@@ -55,14 +64,17 @@ export const SearchMessagesResultItem = (
 
     const displayName = getPrettyDisplayName(sender).displayName
 
+    const { isTouch } = useDevice()
+
     const link = useMemo(() => {
         return createMessageLink(
+            isTouch,
             result.channel.id,
             result.event.eventId,
             result.thread?.eventId,
             spaceSlug,
         )
-    }, [result.channel.id, result.event.eventId, result.thread, spaceSlug])
+    }, [isTouch, result.channel.id, result.event.eventId, result.thread?.eventId, spaceSlug])
 
     useEffect(() => {
         if (props.selected && ref.current) {
@@ -70,14 +82,27 @@ export const SearchMessagesResultItem = (
         }
     }, [props.selected])
 
+    const isMessageSearch = useContext(SearchContext) === 'messages'
+
+    const { counterParty, data } = useDMData(result.channel?.id)
+
+    const userIds = useMemo(
+        () => (data?.isGroup ? data.userIds ?? [] : [counterParty].filter(notUndefined)),
+        [counterParty, data?.isGroup, data?.userIds],
+    )
+
     if (!content) {
         return null
     }
 
     const channelLabel =
-        result.channel.label.length > 0
-            ? `${result.thread ? `Thread in` : ``} #${result.channel.label.toLowerCase()}`
-            : ''
+        isMessageSearch && userIds.length > 0 ? (
+            <UserList userIds={userIds} />
+        ) : result.channel.label.length > 0 ? (
+            `${result.thread ? `Thread in` : ``} #${result.channel.label.toLowerCase()}`
+        ) : (
+            ''
+        )
 
     const timestamp = result.event.createdAtEpocMs
 
@@ -88,10 +113,16 @@ export const SearchMessagesResultItem = (
         : undefined
 
     const item = (
-        <Box gap horizontal grow>
-            <Box width="x4">
-                <Avatar userId={sender?.userId} size="avatar_x4" />
-            </Box>
+        <Box horizontal grow gap="sm">
+            {isMessageSearch ? (
+                <Box width="x6">
+                    <Avatar userId={sender?.userId} size="avatar_md" />
+                </Box>
+            ) : (
+                <Box width="x4">
+                    <Avatar userId={sender?.userId} size="avatar_x4" />
+                </Box>
+            )}
             <Box grow gap="paragraph">
                 <Stack>
                     <RichTextPreview
@@ -109,13 +140,50 @@ export const SearchMessagesResultItem = (
                         }
                     />
                 </Stack>
-                <Stack horizontal grow justifyContent="spaceBetween" fontSize="sm" color="gray2">
-                    <Text size="sm">
-                        {displayName} &middot; {date}
-                    </Text>
-                    <Text size="sm">{channelLabel}</Text>
-                </Stack>
+                {isMessageSearch ? (
+                    <Stack
+                        horizontal
+                        grow
+                        justifyContent="spaceBetween"
+                        fontSize="sm"
+                        color="gray2"
+                    >
+                        <Text size="sm">
+                            {
+                                <UserList
+                                    excludeSelf
+                                    userIds={userIds}
+                                    renderUser={({ displayName, userId }) => (
+                                        <Box display="inline" key={userId}>
+                                            {displayName}
+                                        </Box>
+                                    )}
+                                />
+                            }
+                        </Text>
+                    </Stack>
+                ) : (
+                    <Stack
+                        horizontal
+                        grow
+                        justifyContent="spaceBetween"
+                        fontSize="sm"
+                        color="gray2"
+                    >
+                        <Text size="sm">
+                            {displayName} &middot; {date}
+                        </Text>
+                        <Text size="sm">{channelLabel}</Text>
+                    </Stack>
+                )}
             </Box>
+            {isMessageSearch && (
+                <Box width="x6" shrink={false}>
+                    <Text size="xs" color="gray2">
+                        {formatShortDate(timestamp)}
+                    </Text>
+                </Box>
+            )}
         </Box>
     )
 

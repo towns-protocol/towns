@@ -12,7 +12,7 @@ type Props = {
     maxNames?: number
     userIds: string[]
 
-    renderUser?: (user: { userId: string; displayName: string }) => void
+    renderUser?: (user: { userId: string; displayName: string; key: string }) => void
 }
 
 export const UserList = (props: Props) => {
@@ -54,6 +54,10 @@ export const useUserList = (params: Props) => {
     }, [excludeSelf, maxNames, members])
 
     return fragments.map((f) => {
-        return typeof f === 'string' ? f : renderUser ? renderUser(f) : f.displayName
+        return typeof f === 'string'
+            ? f
+            : renderUser
+            ? renderUser({ ...f, key: f.userId })
+            : f.displayName
     })
 }
