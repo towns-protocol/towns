@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Address } from 'wagmi'
+import { Address, useBalance } from 'wagmi'
 import { useConnectWallet, usePrivy, useWallets } from '@privy-io/react-auth'
 import { useEmbeddedWallet } from '@towns/privy'
 import {
@@ -17,7 +17,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { mapToErrorMessage } from './utils'
+import { formatEthDisplay, mapToErrorMessage } from './utils'
 
 export function WalletLinkingPanel() {
     const [unlinkModal, setUnlinkModal] = useState<{
@@ -166,6 +166,11 @@ function LinkedWallet({
     onUnlinkClick?: (address: Address) => void
 }) {
     const isTownsWallet = address === loggedInWalletAddress
+    const townsBalance = useBalance({
+        address: address,
+        enabled: isTownsWallet,
+        watch: true,
+    })
     return (
         <PanelButton
             cursor="auto"
@@ -176,7 +181,19 @@ function LinkedWallet({
             height="x8"
         >
             <Stack gap="sm" alignItems="start">
-                <Paragraph>{isTownsWallet ? 'Towns Wallet' : 'External Wallet'}</Paragraph>
+                <Paragraph>
+                    {isTownsWallet ? 'Towns Wallet' : 'External Wallet'}
+                    {isTownsWallet && (
+                        <>
+                            {' '}
+                            -{' '}
+                            {formatEthDisplay(
+                                Number.parseFloat(townsBalance?.data?.formatted ?? '0'),
+                            )}{' '}
+                            {townsBalance?.data?.symbol}
+                        </>
+                    )}
+                </Paragraph>
                 <ClipboardCopy label={shortAddress(address)} clipboardContent={address} />
             </Stack>
 
