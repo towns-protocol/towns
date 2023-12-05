@@ -267,6 +267,7 @@ jobs:
               run: yarn workspace @river/sdk run test:node-minipool-flush
 
             - name: Archive River Node Logs and Settings
+              if: always()
               uses: actions/upload-artifact@v3
               with:
                   name: 'river-node-${{ github.job }}'
@@ -412,6 +413,7 @@ jobs:
                   RIVER_TEST_URL=http://localhost:5174 yarn test:ci
 
             - name: Archive River Node Logs and Settings
+              if: always()
               uses: actions/upload-artifact@v3
               with:
                   name: 'river-node-${{ github.job }}'
@@ -562,6 +564,7 @@ jobs:
               run: yarn workspace @river/sdk run test:ci:with-entitlements
 
             - name: Archive River Node Logs and Settings
+              if: always()
               uses: actions/upload-artifact@v3
               with:
                   name: 'river-node-${{ github.job }}'
