@@ -1,10 +1,6 @@
 import { useCallback, useState } from 'react'
 import { RoomIdentifier, makeRoomIdentifier, useWeb3Context, useZionClient } from 'use-zion-client'
-import {
-    isLimitReachedError,
-    isMaybeFundsError,
-    mapToErrorMessage,
-} from '@components/Web3/MembershipNFT/CreateSpaceFormV2/utils'
+import { isLimitReachedError, isMaybeFundsError, mapToErrorMessage } from '@components/Web3/utils'
 
 export const useJoinTown = (networkId: string | undefined, onSuccessfulJoin?: () => void) => {
     const { client } = useZionClient()

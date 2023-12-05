@@ -2,8 +2,7 @@ import { getAccountAddress, useSpaceId, useZionClient } from 'use-zion-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
-import { useBalance } from 'wagmi'
-import { Box, FormRender, MotionStack, Paragraph, Stack, Text, TextButton, TextField } from '@ui'
+import { Box, FormRender, MotionStack, Paragraph, Stack, TextButton, TextField } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useSetUserBio } from 'hooks/useUserBio'
 import { shortAddress } from 'ui/utils/utils'
@@ -15,8 +14,6 @@ import { InvalidCookieNotification } from '@components/Notifications/InvalidCook
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { vars } from 'ui/styles/vars.css'
 import { transitions } from 'ui/transitions/transitions'
-import { ExportWalletButton } from '@components/Web3/ExportPrivy'
-import { formatEthDisplay } from '@components/Web3/utils'
 import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
@@ -41,7 +38,6 @@ export const UserProfile = (props: Props) => {
     const spaceId = useSpaceId()
 
     const { mutateAsync: mutateAsyncBio } = useSetUserBio(userAddress)
-    const balance = useBalance({ address: loggedInWalletAddress, watch: true })
 
     const resourceId = useMemo(() => {
         return getAccountAddress(userId ?? '') ?? ''
@@ -93,35 +89,19 @@ export const UserProfile = (props: Props) => {
     const walletContent = () => {
         if (userAddress) {
             return (
-                <>
-                    <Box horizontal justifyContent="spaceBetween">
-                        <ClipboardCopy
-                            label={shortAddress(userAddress)}
-                            clipboardContent={userAddress}
-                        />
-                        {canEdit && (
-                            <Text>
-                                {formatEthDisplay(
-                                    Number.parseFloat(balance?.data?.formatted ?? '0'),
-                                )}{' '}
-                                {balance.data?.symbol}
-                            </Text>
-                        )}
-                    </Box>
-
-                    {canEdit && (
-                        <Box paddingTop="md" alignSelf="end">
-                            <ExportWalletButton />
-                        </Box>
-                    )}
-                </>
+                <Box horizontal justifyContent="spaceBetween">
+                    <ClipboardCopy
+                        label={shortAddress(userAddress)}
+                        clipboardContent={userAddress}
+                    />
+                </Box>
             )
         }
         return null
     }
 
     return (
-        <Stack grow padding gap position="relative">
+        <Stack grow padding gap paddingBottom="none" position="relative">
             <Stack centerContent={center} padding="lg">
                 <FormRender maxWidth="200" width="100%" key={resourceId}>
                     {({ register, formState, setError, clearErrors }) => (
@@ -152,7 +132,7 @@ export const UserProfile = (props: Props) => {
                     )}
                 </FormRender>
             </Stack>
-            <Stack grow gap="lg">
+            <Stack grow gap>
                 <EditModeContainer
                     inputId={InputId.DisplayName}
                     canEdit={canEdit}
@@ -184,7 +164,7 @@ export const UserProfile = (props: Props) => {
                                 transition={transitions.button}
                             >
                                 {!isEditing ? (
-                                    <Box grow gap="sm" width="100%">
+                                    <Box grow width="100%">
                                         <Box
                                             horizontal
                                             alignItems="center"
@@ -211,7 +191,7 @@ export const UserProfile = (props: Props) => {
                                     </Box>
                                 ) : (
                                     <Box grow horizontal gap>
-                                        <Stack grow gap="sm">
+                                        <Stack grow>
                                             <Stack>
                                                 <Box horizontal gap="sm">
                                                     <TextField

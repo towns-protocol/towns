@@ -23,7 +23,7 @@ import { FailedUploadAfterSpaceCreation } from '@components/Notifications/Failed
 import { BottomBar } from '../BottomBar'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
-import { mapToErrorMessage } from './utils'
+import { mapToErrorMessage } from '../../utils'
 
 export function CreateTownSubmit({
     form,

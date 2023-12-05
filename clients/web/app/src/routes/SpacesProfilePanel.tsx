@@ -142,7 +142,15 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                 </Box>
             )}
             {isCurrentUser && (
-                <Stack padding gap paddingBottom="lg">
+                <Stack gap paddingX paddingBottom="lg" paddingTop="none">
+                    {/* wallets */}
+                    <PanelButton onClick={onWalletLinkingClick}>
+                        <Box width="height_md" alignItems="center">
+                            <Icon type="wallet" size="square_sm" />
+                        </Box>
+                        <Paragraph>Wallets</Paragraph>
+                    </PanelButton>
+
                     {simplifiedPermissionState === 'soft-denied' && (
                         <>
                             <PanelButton onClick={requestPushPermission}>
@@ -191,13 +199,6 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                             Aa
                         </Box>
                         <Paragraph color="default">Switch theme</Paragraph>
-                    </PanelButton>
-
-                    <PanelButton onClick={onWalletLinkingClick}>
-                        <Box width="height_md" alignItems="center">
-                            <Icon type="wallet" size="square_sm" />
-                        </Box>
-                        <Paragraph>Wallets</Paragraph>
                     </PanelButton>
 
                     <PanelButton tone="negative" onClick={onLogoutClick}>
