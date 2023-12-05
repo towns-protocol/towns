@@ -1,8 +1,9 @@
 version: '3'
 services:
   terraform:
-    build:
-      context: .
+    # build:
+    #   context: .
+    image: herenotthere/hnt-infra:latest
     volumes:
     - .:/mnt/
     - ~/.aws/:/root/.aws

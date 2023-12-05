@@ -46,7 +46,7 @@ jobs:
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
                   context: ./infra
-                  file: ./Dockerfile
+                  file: ./infra/Dockerfile
                   platforms: ${{ env.PLATFORMS }}
                   push: true
                   tags: |
