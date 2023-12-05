@@ -89,6 +89,7 @@ import { Code } from '@connectrpc/connect'
 import { isIConnectError } from './utils'
 import { DecryptedContent_ChannelMessage, EncryptedContent } from './encryptedContentTypes'
 import { DecryptionExtensions, EntitlementsDelegate } from './decryptionExtensions'
+import { PersistenceStore } from './persistenceStore'
 
 const enum AbortReason {
     SHUTDOWN = 'SHUTDOWN',
@@ -125,6 +126,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     private syncAbort?: AbortController
     private entitlementsDelegate: EntitlementsDelegate
     private decryptionExtensions?: DecryptionExtensions
+    private persistenceStore: PersistenceStore
 
     constructor(
         signerContext: SignerContext,
@@ -164,6 +166,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logError = dlogError('csb:cl:error').extend(shortId)
         this.logInfo = dlog('csb:cl:info', { defaultEnabled: true }).extend(shortId)
         this.cryptoStore = cryptoStore
+        this.persistenceStore = new PersistenceStore(`persistence-${this.userId}`)
         this.logCall('new Client')
     }
 
@@ -1583,20 +1586,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         eventId: string,
         encryptedContent: EncryptedContent,
     ): Promise<DecryptedTimelineEvent | undefined> {
-        if (!this.cryptoBackend) {
-            throw new Error('crypto backend not initialized')
-        }
         const stream = this.stream(streamId)
         if (!stream) {
             return undefined
         }
-        const clearText = await this.cryptoBackend.decryptMegolmEvent(
-            streamId,
-            encryptedContent.content,
-        )
+        const cleartext = await this.cleartextForMegolmEvent(streamId, eventId, encryptedContent)
         switch (encryptedContent.kind) {
             case 'channelMessage': {
-                const message = ChannelMessage.fromJsonString(clearText)
+                const message = ChannelMessage.fromJsonString(cleartext)
                 const decryptedContent = {
                     kind: 'channelMessage',
                     content: message,
@@ -1607,6 +1604,30 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 logNever(encryptedContent.kind, 'unknown encryptedContent.kind')
                 return undefined
         }
+    }
+
+    private async cleartextForMegolmEvent(
+        streamId: string,
+        eventId: string,
+        encryptedContent: EncryptedContent,
+    ): Promise<string> {
+        const cached = await this.persistenceStore.getCleartext(eventId)
+        if (cached) {
+            this.logInfo('Cache hit for cleartext', eventId)
+            return cached
+        }
+        this.logInfo('Cache miss for cleartext', eventId)
+
+        if (!this.cryptoBackend) {
+            throw new Error('crypto backend not initialized')
+        }
+        const cleartext = await this.cryptoBackend.decryptMegolmEvent(
+            streamId,
+            encryptedContent.content,
+        )
+
+        await this.persistenceStore.saveCleartext(eventId, cleartext)
+        return cleartext
     }
 
     public hasInboundSessionKeys(streamId: string, sessionId: string): Promise<boolean> {
