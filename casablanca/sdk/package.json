@@ -13,7 +13,7 @@
         "lint:fix": "yarn lint --fix",
         "my-jest": "yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
         "my-node": "yarn node -r ../../scripts/node-no-warn.js --loader ts-node/esm --experimental-specifier-resolution=node --experimental-vm-modules",
-        "test": "yarn my-jest --group=-node-minipool-flush --group=-with-entitilements --group=-restart",
+        "test": "yarn my-jest --group=-node-minipool-flush --group=-with-entitilements --group=-restart --group=-synthetic",
         "test:ci": "yarn test --testTimeout=180000 --group=-synthetic",
         "test:ci:with-entitlements": "yarn my-jest --group=with-entitilements --group=-synthetic",
         "test:ci:synthetic:all": "yarn my-jest --group=synthetic --testTimeout=180000",
