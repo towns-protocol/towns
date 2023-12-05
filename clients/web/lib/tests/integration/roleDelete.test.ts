@@ -2,7 +2,7 @@
 /**
  * @group casablanca
  */
-import { MAXTRIX_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
+import { NoThrownError, getError } from './helpers/ErrorUtils'
 import { Room } from '../../src/types/zion-types'
 import {
     createTestSpaceGatedByTownAndZionNfts,
@@ -32,6 +32,13 @@ describe('delete role', () => {
         )
         if (!bobWithNft.walletAddress) {
             throw new Error('bobWithNft.walletAddress is undefined')
+        }
+        const carolWithNft = await registerAndStartClient(
+            'carolWithNft',
+            TestConstants.getWalletWithMemberNft(),
+        )
+        if (!carolWithNft.walletAddress) {
+            throw new Error('carolWithNft.walletAddress is undefined')
         }
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
@@ -104,7 +111,7 @@ describe('delete role', () => {
             throw error
         }
         // bob tries to join the room again
-        // expect that bob cannot join the room
+        // expect that bob can join the room because of the cached entitlement
         const error = await getError<Error>(async function () {
             rejoinedRoom = await bobWithNft.joinRoom(channel, spaceId)
         })
@@ -119,16 +126,23 @@ describe('delete role', () => {
         /** Assert */
         // verify transaction was successful
         expect(receipt?.status).toEqual(1)
-        // verify bob cannot join the room
-        expect(rejoinedRoom).toBeUndefined()
+        // verify bob can join the room with cached entitlement
+        expect(rejoinedRoom).toBeDefined()
+
+        let carolJoinedRoom: Room | undefined
+
+        // carol tries to join the room, and can't as the NFT is no longer accepted
+        const carolError = await getError<Error>(async function () {
+            carolJoinedRoom = await carolWithNft.joinRoom(channel, spaceId)
+        })
+        expect(carolJoinedRoom).toBeUndefined()
+
         // verify error was thrown.
-        expect(error).not.toBeInstanceOf(NoThrownError)
+        expect(carolError).not.toBeInstanceOf(NoThrownError)
         // check if error has property name
-        if (error.name == 'ConnectError') {
+        if (carolError.name == 'ConnectError') {
             // Casablanca
-            expect(error.message).toContain('permission_denied')
-        } else {
-            expect(error).toHaveProperty('name', MAXTRIX_ERROR.M_FORBIDDEN)
+            expect(carolError.message).toContain('permission_denied')
         }
         // verify role is deleted
         const actual = await alice.spaceDapp.getRole(spaceId, roleId)
@@ -154,15 +168,15 @@ describe('delete role', () => {
 
     test('delete user-gated role with a channel using it', async () => {
         /** Arrange */
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
-        if (!bob.walletAddress) {
-            throw new Error('bob.walletAddress is undefined')
+        const { alice, bob, carol } = await registerAndStartClients(['alice', 'bob', 'carol'])
+        if (!bob.walletAddress || !carol.walletAddress) {
+            throw new Error('bob.walletAddress or carol is undefined')
         }
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
         const newTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // add bob to the users list
-        const newUsers: string[] = [bob.walletAddress]
+        const newUsers: string[] = [bob.walletAddress, carol.walletAddress]
         // create a new test space
         await alice.fundWallet()
         const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
@@ -201,7 +215,7 @@ describe('delete role', () => {
         // sanity check: bob joins the space successfully
         await waitForWithRetries(() => bob.joinRoom(channel, spaceId))
         // bob leaves the room so that we can delete the role, and test
-        // that bob can no longer join the room
+        // that bob can continue to join room with cached entitlement
         await bob.leave(channel, spaceId)
 
         await waitFor(() => expect(bob.getRoomData(channel)?.membership).not.toBe('join'))
@@ -239,15 +253,21 @@ describe('delete role', () => {
         /** Assert */
         // verify transaction was successful
         expect(receipt?.status).toEqual(1)
+
+        let carolJoinedRoom: Room | undefined
+        // bob tries to join the room again
+        // expect that bob cannot join the room
+        const carolError = await getError<Error>(async function () {
+            carolJoinedRoom = await carol.joinRoom(channel, spaceId)
+        })
+
         // verfy bob cannot join the room
-        expect(rejoinedRoom).toBeUndefined()
+        expect(carolJoinedRoom).toBeUndefined()
         // verify error was thrown.
-        expect(error).not.toBeInstanceOf(NoThrownError)
-        if (error.name == 'ConnectError') {
+        expect(carolError).not.toBeInstanceOf(NoThrownError)
+        if (carolError.name == 'ConnectError') {
             // Casablanca
-            expect(error.message).toContain('permission_denied')
-        } else {
-            expect(error).toHaveProperty('name', MAXTRIX_ERROR.M_FORBIDDEN)
+            expect(carolError.message).toContain('permission_denied')
         }
         // verify role is deleted
         const actual = await alice.spaceDapp.getRole(spaceId, roleId)

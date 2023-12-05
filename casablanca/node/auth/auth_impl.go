@@ -5,6 +5,7 @@ import (
 	"casablanca/node/common"
 	"casablanca/node/config"
 	"casablanca/node/dlog"
+	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"casablanca/node/utils"
 	"context"
@@ -36,8 +37,20 @@ const (
 var ErrSpaceDisabled = errors.New("space disabled")
 var ErrChannelDisabled = errors.New("channel disabled")
 
+var (
+	isEntitledToChannelCacheHit  = infra.NewSuccessMetrics("is_entitled_to_channel_cache_hit", contractCalls)
+	isEntitledToChannelCacheMiss = infra.NewSuccessMetrics("is_entitled_to_channel_cache_miss", contractCalls)
+	isEntitledToSpaceCacheHit    = infra.NewSuccessMetrics("is_entitled_to_space_cache_hit", contractCalls)
+	isEntitledToSpaceCacheMiss   = infra.NewSuccessMetrics("is_entitled_to_space_cache_miss", contractCalls)
+	isSpaceEnabledCacheHit       = infra.NewSuccessMetrics("is_space_enabled_cache_hit", contractCalls)
+	isSpaceEnabledCacheMiss      = infra.NewSuccessMetrics("is_space_enabled_cache_miss", contractCalls)
+	isChannelEnabledCacheHit     = infra.NewSuccessMetrics("is_channel_enabled_cache_hit", contractCalls)
+	isChannelEnabledCacheMiss    = infra.NewSuccessMetrics("is_channel_enabled_cache_miss", contractCalls)
+)
+
 // TownsPassThrough is an authorization implementation that allows all requests.
 type TownsPassThrough struct{}
+
 type ChainAuth struct {
 	chainId                int
 	ethClient              *ethclient.Client
@@ -45,6 +58,7 @@ type ChainAuth struct {
 	walletLinkContract     WalletLinkContract
 	linkedWalletsLimit     int
 	contractCallsTimeoutMs int
+	entitlementCache       *entitlementCache
 }
 
 func NewTownsPassThrough() TownsContract {
@@ -69,6 +83,12 @@ func NewTownsContract(ctx context.Context, cfg *config.ChainConfig) (TownsContra
 	za := &ChainAuth{
 		chainId:   chainId,
 		ethClient: ethClient,
+	}
+
+	za.entitlementCache, err = newEntitlementCache(ctx, cfg)
+	if err != nil {
+
+		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
 	}
 
 	space_contract, err := NewSpaceContractV3(ctx, ethClient, chainId)
@@ -99,6 +119,7 @@ func NewTownsContract(ctx context.Context, cfg *config.ChainConfig) (TownsContra
 	}
 
 	log.Info("Successfully initialised", "network", cfg.NetworkUrl, "id", za.chainId)
+
 	// no errors.
 	return za, nil
 }
@@ -111,9 +132,10 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, stre
 	log := dlog.CtxLog(ctx)
 
 	userIdentifier := CreateUserIdentifier(args.UserId)
-	log.Debug("IsAllowed", "args", args, "user", userIdentifier.AccountAddress.Hex(), "streamInfo", streamInfo)
 
-	result, err := za.checkEntitiement(ctx, userIdentifier.AccountAddress, args.Permission, streamInfo)
+	result, err := za.entitlementCache.executeUsingCache(args, func() (bool, error) {
+		return za.checkEntitiement(ctx, userIdentifier.AccountAddress, args.Permission, streamInfo)
+	})
 	if err != nil {
 		log.Error("error checking user entitlement", "error", err)
 		return false, WrapRiverError(protocol.Err_CANNOT_CHECK_ENTITLEMENTS, err)
@@ -122,18 +144,12 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, stre
 }
 
 func (za *ChainAuth) isWalletAllowed(ctx context.Context, wallet eth.Address, permission Permission, streamInfo *common.StreamInfo) (bool, error) {
-	log := dlog.CtxLog(ctx)
-
 	// Check if user is entitled to space / channel.
 	switch streamInfo.StreamType {
 	case common.Space:
-		isEntitled, err := za.isEntitledToSpace(streamInfo, wallet, permission)
-		log.Debug("IsAllowed result", "isEntitledToSpace", isEntitled, "err", err)
-		return isEntitled, err
+		return za.isEntitledToSpace(streamInfo, wallet, permission)
 	case common.Channel:
-		isEntitled, err := za.isEntitledToChannel(ctx, streamInfo, wallet, permission)
-		log.Debug("IsAllowed result", "isEntitledToChannel", isEntitled, "err", err)
-		return isEntitled, err
+		return za.isEntitledToChannel(streamInfo, wallet, permission)
 	case common.DMChannel:
 		fallthrough
 	case common.GDMChannel:
@@ -152,40 +168,97 @@ func (za *ChainAuth) isWalletAllowed(ctx context.Context, wallet eth.Address, pe
 }
 
 func (za *ChainAuth) isEntitledToSpace(streamInfo *common.StreamInfo, user eth.Address, permission Permission) (bool, error) {
-	// space disabled check.
-	isDisabled, err := za.spaceContract.IsSpaceDisabled(streamInfo.SpaceId)
+	disabledCacheHit := true
+	// Intentionally use a const for the permission and userid here, as we want to check if the space is enabled, not if the user is entitled to it.
+	isEnabled, err := za.entitlementCache.executeUsingCache(AuthorizationArgs{UserId: "all", StreamId: streamInfo.SpaceId, Permission: 0}, func() (bool, error) {
+		// This is awkward as we want enabled to be cached for 15 minutes, but the API returns the inverse
+		disabledCacheHit = false
+		isDisabled, err := za.spaceContract.IsSpaceDisabled(streamInfo.SpaceId)
+		return !isDisabled, err
+
+	})
 	if err != nil {
 		return false, err
-	} else if isDisabled {
+	}
+
+	if disabledCacheHit {
+		isSpaceEnabledCacheHit.PassInc()
+	} else {
+		isSpaceEnabledCacheMiss.PassInc()
+	}
+
+	if !isEnabled {
 		return false, ErrSpaceDisabled
 	}
 
-	// space entitlement check.
-	isEntitled, err := za.spaceContract.IsEntitledToSpace(
-		streamInfo.SpaceId,
-		user,
-		permission,
-	)
-	return isEntitled, err
+	cacheHit := true
+	isEntitled, err := za.entitlementCache.executeUsingCache(AuthorizationArgs{UserId: user.String(), StreamId: streamInfo.ChannelId, Permission: permission}, func() (bool, error) {
+		// space entitlement check.
+		cacheHit = false
+		return za.spaceContract.IsEntitledToSpace(
+			streamInfo.SpaceId,
+			user,
+			permission,
+		)
+	})
+	if err != nil {
+		return false, err
+	}
+
+	if cacheHit {
+		isEntitledToSpaceCacheHit.PassInc()
+	} else {
+		isEntitledToSpaceCacheMiss.PassInc()
+	}
+	return isEntitled, nil
 }
 
-func (za *ChainAuth) isEntitledToChannel(ctx context.Context, streamInfo *common.StreamInfo, user eth.Address, permission Permission) (bool, error) {
-	// channel disabled check.
-	isDisabled, err := za.spaceContract.IsChannelDisabled(streamInfo.SpaceId, streamInfo.ChannelId)
+func (za *ChainAuth) isEntitledToChannel(streamInfo *common.StreamInfo, user eth.Address, permission Permission) (bool, error) {
+	disabledCacheHit := true
+
+	// Intentionally use a const for th
+	isEnabled, err := za.entitlementCache.executeUsingCache(AuthorizationArgs{UserId: "all", StreamId: streamInfo.SpaceId, Permission: 0}, func() (bool, error) {
+		disabledCacheHit = false
+		// This is awkward as we want enabled to be cached for 15 minutes, but the API returns the inverse
+		isDisabled, err := za.spaceContract.IsChannelDisabled(streamInfo.SpaceId, streamInfo.ChannelId)
+		return !isDisabled, err
+	})
+
 	if err != nil {
 		return false, err
-	} else if isDisabled {
+	}
+
+	if disabledCacheHit {
+		isChannelEnabledCacheHit.PassInc()
+	} else {
+		isChannelEnabledCacheMiss.PassInc()
+	}
+
+	if !isEnabled {
 		return false, ErrSpaceDisabled
 	}
 
-	// channel entitlement check.
-	isEntitled, err := za.spaceContract.IsEntitledToChannel(
-		streamInfo.SpaceId,
-		streamInfo.ChannelId,
-		user,
-		permission,
-	)
-	return isEntitled, err
+	cacheHit := true
+	isEntitled, err := za.entitlementCache.executeUsingCache(AuthorizationArgs{UserId: user.String(), StreamId: streamInfo.ChannelId, Permission: permission}, func() (bool, error) {
+		// channel entitlement check.
+		cacheHit = false
+		return za.spaceContract.IsEntitledToChannel(
+			streamInfo.SpaceId,
+			streamInfo.ChannelId,
+			user,
+			permission,
+		)
+	})
+	if err != nil {
+		return false, err
+	}
+
+	if cacheHit {
+		isEntitledToChannelCacheHit.PassInc()
+	} else {
+		isEntitledToChannelCacheMiss.PassInc()
+	}
+	return isEntitled, nil
 }
 
 type EntitlementCheckResult struct {

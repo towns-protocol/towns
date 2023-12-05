@@ -589,17 +589,47 @@ export class ZionClient implements EntitlementsDelegate {
         user: string,
         permission: Permission,
     ): Promise<boolean> {
-        const rootKeyPromise = this.isWalletEntitled(spaceId, channelId, user, permission)
+        const rootKeyPromise = this.isWalletEntitled(spaceId, channelId, user, permission).then(
+            (result) => {
+                console.log(
+                    '[isEntitled] rootKey is user entitlted for channel and space',
+                    result,
+                    {
+                        spaceId,
+                        channelId,
+                        user,
+                        permission,
+                    },
+                )
+                if (!result) {
+                    throw new Error('not entitled')
+                } else {
+                    return result
+                }
+            },
+        )
 
         const walletsPromise = this.getLinkedWallets(user).then((wallets) =>
-            Promise.race(
+            Promise.any(
                 wallets.map((wallet) =>
-                    this.isWalletEntitled(spaceId, channelId, wallet, permission),
+                    this.isWalletEntitled(spaceId, channelId, wallet, permission).then((result) => {
+                        console.log(
+                            '[isEntitled] linkedWallet is user entitlted for channel and space',
+                            result,
+                            { spaceId, channelId, user, permission },
+                        )
+                        if (!result) {
+                            throw new Error('not entitled')
+                        } else {
+                            return result
+                        }
+                    }),
                 ),
             ),
         )
+        const allPromises = [rootKeyPromise, walletsPromise]
 
-        return await Promise.race([rootKeyPromise, walletsPromise])
+        return Promise.any(allPromises).catch(() => false)
     }
 
     private async isWalletEntitled(
@@ -951,20 +981,25 @@ export class ZionClient implements EntitlementsDelegate {
         }
 
         const wallet = await signer.getAddress()
+        console.log('[joinTown] getAddress', wallet)
 
         try {
             if (await this.spaceDapp.hasTownMembership(spaceId.networkId, wallet)) {
-                return this.joinRoom(spaceId)
+                return await this.joinRoom(spaceId)
             }
         } catch (error) {
             const decodeError = this.getDecodedErrorForSpaceFactory(spaceId.networkId)
-            console.error('[mintMembershipAndJoinRoom] failed', decodeError)
-            throw decodeError
+            console.error('[joinTown] hasTownMembership failed', decodeError)
+            throw new Error(decodeError.message)
         }
+        console.log('[joinTown] minting membership')
 
         await this.mintMembershipTransaction(spaceId, signer)
+        console.log('[joinTown] minted membership')
 
-        return this.joinRoom(spaceId)
+        const room = await this.joinRoom(spaceId)
+        console.log('[joinTown] room', room)
+        return room
     }
 
     /************************************************
@@ -979,10 +1014,14 @@ export class ZionClient implements EntitlementsDelegate {
         }
         const wallet = await signer.getAddress()
 
+        console.log('[mintMembershipTransaction] getAddress', wallet)
+
         try {
             const transaction = await this.spaceDapp.joinTown(spaceId.networkId, wallet, signer)
+            console.log(`[mintMembershipTransaction] transaction created`, transaction)
             await transaction.wait()
         } catch (error) {
+            console.error('[mintMembershipTransaction] failed', error)
             const decodeError = await this.getDecodedErrorForSpace(spaceId.networkId, error)
             console.error('[mintMembershipAndJoinRoom] failed', decodeError)
             throw decodeError
@@ -1396,16 +1435,24 @@ export class ZionClient implements EntitlementsDelegate {
         try {
             return this.spaceDapp.parseSpaceFactoryError(error)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (e: any) {
+        } catch (e: unknown) {
             if (e instanceof Error) {
                 return e
             }
-            // Cannot decode error
-            console.error('[getDecodedErrorForSpaceFactory]', 'cannot decode error', e)
-            return {
-                name: 'unknown',
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                message: e.message,
+            if (
+                typeof e === 'object' &&
+                e !== null &&
+                'name' in e &&
+                typeof e.name === 'string' &&
+                'message' in e &&
+                typeof e.message === 'string' &&
+                e.message !== undefined
+            ) {
+                const newErr = new Error(e.message)
+                newErr.name = e.name
+                return newErr
+            } else {
+                return new Error(`[getDecodedErrorForSpaceFactory] cannot decode error`)
             }
         }
     }
@@ -1413,18 +1460,29 @@ export class ZionClient implements EntitlementsDelegate {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async getDecodedErrorForSpace(spaceId: string, error: any): Promise<Error> {
         try {
-            return await this.spaceDapp.parseSpaceError(spaceId, error)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (e: any) {
+            // parseSpaceError needs to be rewritten to return actual errors
+            const fakeError = await this.spaceDapp.parseSpaceError(spaceId, error)
+            const realError = new Error(fakeError.message)
+            realError.name = fakeError.name
+            return realError
+        } catch (e: unknown) {
             if (e instanceof Error) {
                 return e
             }
-            // Cannot decode error
-            console.error('[getDecodedErrorForSpace]', 'cannot decode error', e)
-            return {
-                name: 'unknown',
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                message: e.message,
+            if (
+                typeof e === 'object' &&
+                e !== null &&
+                'name' in e &&
+                typeof e.name === 'string' &&
+                'message' in e &&
+                typeof e.message === 'string' &&
+                e.message !== undefined
+            ) {
+                const newErr = new Error(e.message)
+                newErr.name = e.name
+                return newErr
+            } else {
+                return new Error(`[getDecodedErrorForSpace] cannot decode error`)
             }
         }
     }

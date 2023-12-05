@@ -49,10 +49,14 @@ type Config struct {
 }
 
 type ChainConfig struct {
-	NetworkUrl             string
-	ChainId                int
-	LinkedWalletsLimit     int
-	ContractCallsTimeoutMs int
+	NetworkUrl                         string
+	ChainId                            int
+	LinkedWalletsLimit                 int
+	ContractCallsTimeoutMs             int
+	PositiveEntitlementCacheSize       int
+	PositiveEntitlementCacheTTLSeconds int
+	NegativeEntitlementCacheSize       int
+	NegativeEntitlementCacheTTLSeconds int
 }
 
 type PerformanceTrackingConfig struct {
