@@ -13,7 +13,7 @@ export function useSpaceMembers() {
             members: allUsers.users,
             membersMap: allUsers.usersMap,
         }),
-        [],
+        [allUsers.users, allUsers.usersMap],
     )
     const { spaceId } = useSpaceContext()
     const spaceMembers = useMembers(spaceId)
