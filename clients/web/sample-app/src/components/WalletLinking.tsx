@@ -2,7 +2,11 @@ import { Button, Stack, Typography } from '@mui/material'
 import { ConnectedWallet, usePrivy, useWallets } from '@privy-io/react-auth'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useLinkWalletTransaction, useZionClient } from 'use-zion-client'
+import {
+    useLinkWalletTransaction,
+    useUnlinkWalletTransaction,
+    useZionClient,
+} from 'use-zion-client'
 import { useAccount } from 'wagmi'
 
 export const WalletLinking = () => {
@@ -80,7 +84,8 @@ const WalletListItem = (props: { wallet: ConnectedWallet }) => {
 
 const WalletLinkButton = (props: { wallet: ConnectedWallet }) => {
     const { wallets } = useWallets()
-    const { isLoading, linkWalletTransaction, unlinkWalletTransaction } = useLinkWalletTransaction()
+    const { isLoading, linkWalletTransaction } = useLinkWalletTransaction()
+    const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
     const { getLinkedWallets } = useZionClient()
 
     const [linkedWallets, setLinkedWallets] = useState<string[]>([])

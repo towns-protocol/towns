@@ -69,7 +69,11 @@ export { useUpdateRoleTransaction } from './hooks/use-update-role-transaction'
 export { useUpdateSpaceNameTransaction } from './hooks/use-update-space-name-transaction'
 export { useUser } from './hooks/use-user'
 export { useZionClient } from './hooks/use-zion-client'
-export { useLinkWalletTransaction } from './hooks/use-linked-wallets'
+export {
+    useLinkWalletTransaction,
+    useUnlinkWalletTransaction,
+    useLinkedWallets,
+} from './hooks/use-linked-wallets'
 
 export { useCasablancaStore } from './store/use-casablanca-store'
 export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'

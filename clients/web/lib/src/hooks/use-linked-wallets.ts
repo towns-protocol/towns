@@ -9,9 +9,67 @@ import { ethers } from 'ethers'
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { BlockchainTransactionType } from '../types/web3-types'
+import { queryClient, useQuery } from '../query/queryClient'
+import { blockchainKeys } from '../query/query-keys'
+import { useConnectivity } from './use-connectivity'
 
 export function useLinkWalletTransaction() {
-    const { linkWallet, removeLink, waitWalletLinkTransaction } = useZionClient()
+    const { traceTransaction, ...rest } = useLinkTransactionBuilder()
+    const { linkWallet } = useZionClient()
+    return {
+        ...rest,
+        linkWalletTransaction: useCallback(
+            async function (
+                rootKey: ethers.Signer | undefined,
+                wallet: ethers.Signer | undefined,
+            ): Promise<WalletLinkTransactionContext | undefined> {
+                return traceTransaction(async () => {
+                    if (!rootKey || !wallet) {
+                        // cannot sign the transaction. stop processing.
+                        return createTransactionContext({
+                            status: TransactionStatus.Failed,
+                            error: new SignerUndefinedError(),
+                        })
+                    }
+                    // ok to proceed
+                    return linkWallet(rootKey, wallet)
+                })
+            },
+            [linkWallet, traceTransaction],
+        ),
+    }
+}
+
+export function useUnlinkWalletTransaction() {
+    const { traceTransaction, ...rest } = useLinkTransactionBuilder()
+    const { removeLink } = useZionClient()
+    return {
+        ...rest,
+        unlinkWalletTransaction: useCallback(
+            async function (
+                rootKey: ethers.Signer | undefined,
+                walletAddress: string | undefined,
+            ): Promise<WalletLinkTransactionContext | undefined> {
+                return traceTransaction(async () => {
+                    if (!rootKey || !walletAddress) {
+                        // cannot sign the transaction. stop processing.
+                        return createTransactionContext({
+                            status: TransactionStatus.Failed,
+                            error: new SignerUndefinedError(),
+                        })
+                    }
+                    // ok to proceed
+                    return removeLink(rootKey, walletAddress)
+                })
+            },
+            [removeLink, traceTransaction],
+        ),
+    }
+}
+
+function useLinkTransactionBuilder() {
+    const { waitWalletLinkTransaction } = useZionClient()
+    const { loggedInWalletAddress } = useConnectivity()
     const [transactionContext, setTransactionContext] = useState<
         WalletLinkTransactionContext | undefined
     >(undefined)
@@ -57,6 +115,11 @@ export function useLinkWalletTransaction() {
 
                     // Wait for transaction to be mined
                     transactionResult = await waitWalletLinkTransaction(transactionResult)
+                    if (loggedInWalletAddress) {
+                        await queryClient.invalidateQueries(
+                            blockchainKeys.linkedWallets(loggedInWalletAddress),
+                        )
+                    }
                     setTransactionContext(transactionResult)
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,47 +134,7 @@ export function useLinkWalletTransaction() {
             }
             return transactionResult
         },
-        [waitWalletLinkTransaction],
-    )
-
-    const linkWalletTransaction = useCallback(
-        async function (
-            rootKey: ethers.Signer | undefined,
-            wallet: ethers.Signer | undefined,
-        ): Promise<WalletLinkTransactionContext | undefined> {
-            return traceTransaction(async () => {
-                if (!rootKey || !wallet) {
-                    // cannot sign the transaction. stop processing.
-                    return createTransactionContext({
-                        status: TransactionStatus.Failed,
-                        error: new SignerUndefinedError(),
-                    })
-                }
-                // ok to proceed
-                return linkWallet(rootKey, wallet)
-            })
-        },
-        [linkWallet, traceTransaction],
-    )
-
-    const unlinkWalletTransaction = useCallback(
-        async function (
-            rootKey: ethers.Signer | undefined,
-            walletAddress: string | undefined,
-        ): Promise<WalletLinkTransactionContext | undefined> {
-            return traceTransaction(async () => {
-                if (!rootKey || !walletAddress) {
-                    // cannot sign the transaction. stop processing.
-                    return createTransactionContext({
-                        status: TransactionStatus.Failed,
-                        error: new SignerUndefinedError(),
-                    })
-                }
-                // ok to proceed
-                return removeLink(rootKey, walletAddress)
-            })
-        },
-        [removeLink, traceTransaction],
+        [loggedInWalletAddress, waitWalletLinkTransaction],
     )
 
     return {
@@ -120,7 +143,23 @@ export function useLinkWalletTransaction() {
         error,
         transactionHash,
         transactionStatus,
-        linkWalletTransaction,
-        unlinkWalletTransaction,
+        traceTransaction,
     }
+}
+
+export function useLinkedWallets() {
+    const { loggedInWalletAddress } = useConnectivity()
+    const { client } = useZionClient()
+    return useQuery(
+        blockchainKeys.linkedWallets(loggedInWalletAddress ?? 'waitingForLoggedUser'),
+        () => {
+            if (!client || !loggedInWalletAddress) {
+                return []
+            }
+            return client.getLinkedWallets(loggedInWalletAddress)
+        },
+        {
+            enabled: !!loggedInWalletAddress && !!client,
+        },
+    )
 }

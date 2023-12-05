@@ -48,4 +48,5 @@ export const blockchainKeys = {
     },
     entitledChannels: (spaceId: string) => ['syncEntitledChannels', spaceId],
     membershipInfo: (spaceId: string) => ['membershipInfo', spaceId],
+    linkedWallets: (walletAddress: string) => ['linkedWallets', walletAddress],
 }
