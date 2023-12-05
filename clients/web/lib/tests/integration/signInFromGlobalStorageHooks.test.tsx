@@ -22,7 +22,6 @@ import { useZionContext } from '../../src/components/ZionContextProvider'
 
 const initialCasablanacStoreState = useCasablancaStore.getState()
 console.log('$$$$ ', { initialCasablanacStoreState })
-let deviceId: string
 let provider: ZionTestWeb3Provider
 /*
 Note: Jest runs tests serially within the collection,
@@ -46,7 +45,6 @@ describe('signInFromGlobalStorageHooks', () => {
         // create a new client and sign in
         const { alice } = await registerAndStartClients(['alice'])
         // assign device id for later use
-        deviceId = alice.signerContext!.deviceId!
         provider = alice.provider
         // stop alice
         await alice.stopClients()
@@ -205,25 +203,8 @@ describe('signInFromGlobalStorageHooks', () => {
         await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()))
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
 
-        const casablancaUrl = process.env.CASABLANCA_SERVER_URL!
-        const credentialStore = JSON.parse(
-            global.localStorage.getItem(CREDENTIAL_STORE_NAME) || '{}',
-        )
-
         const dbs = await indexedDB.databases()
         // should not create an additional db
         expect(dbs.length).toEqual(1)
-
-        // todo 11/14/23: tie deviceId lifecycle to browser context for each user, which means
-        // the deviceId will not change on logout/login unless the browser context changes.
-        // https://linear.app/hnt-labs/issue/HNT-3647/devicekey-lifecycle-hardening
-
-        // we already had a login, so we should have a deviceId
-        // our first login deviceId should match the one from csb auth reponse
-        await waitFor(() =>
-            expect(
-                deviceId == credentialStore.state.casablancaCredentialsMap[casablancaUrl].deviceId,
-            ).toEqual(false),
-        )
     })
 }) // end describe

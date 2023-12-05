@@ -3,13 +3,11 @@ import { OlmDevice } from '../olmDevice'
 import { Crypto } from '../crypto'
 import { IRoomEncryption } from '../store/types'
 
-export type DecryptionClassParams<P extends IParams = IParams> = Omit<P, 'deviceId' | 'config'>
+export type DecryptionClassParams<P extends IParams = IParams> = Omit<P, 'config'>
 
 export interface IParams {
     /** The UserID for the local user */
     userId: string
-    /** The identifier for this device. */
-    deviceId: string
     /** crypto core */
     crypto: Crypto
     /** olm.js wrapper */
@@ -27,7 +25,6 @@ export interface IParams {
  */
 export abstract class EncryptionAlgorithm {
     protected readonly userId: string
-    protected readonly deviceId: string
     protected readonly crypto: Crypto
     protected readonly olmDevice: OlmDevice
     protected readonly baseApis: Client
@@ -38,7 +35,6 @@ export abstract class EncryptionAlgorithm {
      */
     public constructor(params: IParams) {
         this.userId = params.userId
-        this.deviceId = params.deviceId
         this.crypto = params.crypto
         this.olmDevice = params.olmDevice
         this.baseApis = params.baseApis

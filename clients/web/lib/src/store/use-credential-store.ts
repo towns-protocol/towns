@@ -16,7 +16,6 @@ export type CasablancaCredentials = {
     privateKey: string
     creatorAddress: string
     delegateSig?: string
-    deviceId?: string
     loggedInWalletAddress: Address
 }
 

@@ -16,7 +16,6 @@ import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
-    makeUniqueName,
     registerAndStartClients,
 } from './helpers/TestUtils'
 import { Permission } from '@river/web3'
@@ -35,7 +34,6 @@ describe('casablanca', () => {
             signerPrivateKey: () => pk,
             creatorAddress,
             delegateSig,
-            deviceId: makeUniqueName('bob'),
         }
         const csurl: string = process.env.CASABLANCA_SERVER_URL!
         log('new CasablancaClient', csurl)

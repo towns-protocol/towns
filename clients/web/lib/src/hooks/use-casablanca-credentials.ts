@@ -18,7 +18,6 @@ export function useCasablancaCredentials() {
         userId: credentials?.creatorAddress
             ? prepareAndValidateAddress(credentials?.creatorAddress)
             : credentials?.creatorAddress,
-        deviceId: credentials?.deviceId,
         loggedInWalletAddress: credentials?.loggedInWalletAddress,
         isAuthenticated,
         loginStatus,

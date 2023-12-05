@@ -46,7 +46,6 @@ export interface SignerContext {
     signerPrivateKey: () => string
     creatorAddress: Uint8Array
     delegateSig?: Uint8Array
-    deviceId?: string
 }
 
 export const _impl_makeEvent_impl_ = async (

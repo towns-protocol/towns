@@ -11,7 +11,7 @@ import {
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
 import { userIdFromAddress } from './id'
-import { ParsedEvent, takeKeccakFingerprintInHex, DecryptedTimelineEvent } from './types'
+import { ParsedEvent, DecryptedTimelineEvent } from './types'
 import { bin_fromHexString, bin_toHexString } from './binary'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto/crypto'
@@ -64,7 +64,6 @@ export const makeRandomUserContext = async (): Promise<SignerContext> => {
             () => userPrivateKey,
             getPublicKey(devicePrivateKeyStr, false),
         ),
-        deviceId: takeKeccakFingerprintInHex(creatorAddress, 16),
     }
     log('makeRandomUserContext', creatorAddress)
     return ret
@@ -84,7 +83,6 @@ export const makeUserContextFromWallet = async (wallet: ethers.Wallet): Promise<
             userPrimaryWallet,
             getPublicKey(devicePrivateKeyStr, false),
         ),
-        deviceId: `${Date.now()}_${Math.floor(Math.random() * 4095).toString(16)}`,
     }
 }
 

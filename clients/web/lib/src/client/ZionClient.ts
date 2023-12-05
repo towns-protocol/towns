@@ -6,7 +6,6 @@ import {
     bin_fromHexString,
     makeOldTownsDelegateSig,
     makeStreamRpcClient,
-    takeKeccakFingerprintInHex,
     userIdFromAddress,
     EntitlementsDelegate,
 } from '@river/sdk'
@@ -161,16 +160,12 @@ export class ZionClient implements EntitlementsDelegate {
             throw new SignerUndefinedError("can't sign without a web3 signer")
         }
         const creatorAddress = bin_fromHexString(await signer.getAddress())
-        // In the future, we shouldn't create a new deviceId every time the app refreshes / starts
-        // todo: https://linear.app/hnt-labs/issue/HNT-3647/devicekey-lifecycle-hardening
-        const deviceId = takeKeccakFingerprintInHex(crypto.getRandomValues(new Uint8Array(16)), 16)
         const delegateSig = await makeOldTownsDelegateSig(signer, delegateWallet.publicKey)
         const pk = delegateWallet.privateKey.slice(2)
         const context: SignerContext = {
             signerPrivateKey: () => pk,
             creatorAddress,
             delegateSig,
-            deviceId,
         }
         return context
     }

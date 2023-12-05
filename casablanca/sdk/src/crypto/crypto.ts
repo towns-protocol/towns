@@ -131,7 +131,6 @@ export class Crypto {
     public constructor(
         public readonly client: Client,
         public readonly userId: string,
-        public readonly deviceId: string,
         public readonly cryptoStore: CryptoStore,
     ) {
         // initialize Olm library
@@ -146,7 +145,6 @@ export class Crypto {
 
         this.megolmEncryption = new MegolmEncryption({
             userId: this.userId,
-            deviceId: this.deviceId,
             crypto: this,
             olmDevice: this.olmDevice,
             baseApis: this.client,

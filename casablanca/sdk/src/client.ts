@@ -101,7 +101,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     readonly signerContext: SignerContext
     readonly rpcClient: StreamRpcClientType
     readonly userId: string
-    readonly deviceId: string | undefined
 
     streamSyncActive = false
     userStreamId?: string
@@ -152,8 +151,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.rpcClient = rpcClient
 
         this.userId = userIdFromAddress(signerContext.creatorAddress)
-        // TODO: tighten deviceId type and validate as we do with userId
-        this.deviceId = signerContext.deviceId
 
         const shortId = shortenHexString(
             this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
@@ -1495,11 +1492,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
 
         check(this.userId !== undefined, 'userId must be set to init crypto')
-        check(this.deviceId !== undefined, 'deviceId must be set to init crypto')
 
         await this.cryptoStore.initialize()
 
-        const crypto = new Crypto(this, this.userId, this.deviceId, this.cryptoStore)
+        const crypto = new Crypto(this, this.userId, this.cryptoStore)
         await crypto.init()
         this.cryptoBackend = crypto
         this.decryptionExtensions = new DecryptionExtensions(
@@ -1517,9 +1513,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logCall('resetCrypto')
         if (this.userId == undefined) {
             throw new Error('userId must be set to reset crypto')
-        }
-        if (this.deviceId === undefined) {
-            throw new Error('deviceId must be set to reset crypto')
         }
         this.cryptoBackend = undefined
         await this.cryptoStore.deleteAccount(this.userId)

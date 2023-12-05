@@ -184,7 +184,6 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
                         delegateSig: credentials.delegateSig
                             ? bin_fromHexString(credentials.delegateSig)
                             : undefined,
-                        deviceId: credentials.deviceId,
                     }
                     const casablancaClient = await this.client.startCasablancaClient(context)
                     return new LoggedIn(credentials, casablancaClient)

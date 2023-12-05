@@ -736,7 +736,6 @@ describe('clientTest', () => {
         await bobsClient.startSync()
         await alicesClient.startSync()
         const alicesUserId = alicesClient.userId
-        expect(alicesClient.deviceId).toBeDefined()
 
         const fallbackKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId], true)
         expect(Object.keys(fallbackKeys)).toContain(alicesUserId)
