@@ -138,7 +138,6 @@ const SearchField = (props: { onSearchValue: (value: string) => void }) => {
     return (
         <Box horizontal padding="sm" height="x7" shrink={false}>
             <TextField
-                autoFocus
                 tone="none"
                 background="level2"
                 height="100%"
