@@ -19,7 +19,7 @@ export const loginWaitTime = 90000
 export const replySentTime = 90000
 
 export const jsonRpcProviderUrl = 'https://goerli.base.org'
-export const nodeRpcURL = 'https://river1-test-beta.towns.com'
+export const nodeRpcURL = process.env.RIVER_NODE_RPC_URL || 'https://river1-test-beta.towns.com'
 
 export const fromFollowerQueueName = 'healthcheckqueuefollower'
 export const fromLeaderQueueName = 'healthcheckqueueleader'
