@@ -89,3 +89,44 @@ resource "aws_secretsmanager_secret_version" "river_global_dd_agent_api_key" {
   secret_id     = aws_secretsmanager_secret.river_global_dd_agent_api_key.id
   secret_string = "DUMMY"
 }
+
+
+resource "null_resource" "lambda_npm_dependencies" {
+  provisioner "local-exec" {
+    command = "cd ${path.root}/lambda-function && npm install"
+  }
+
+  triggers = {
+    index   = sha256(file("${path.root}/lambda-function/index.js"))
+    package = sha256(file("${path.root}/lambda-function/package.json"))
+    lock    = sha256(file("${path.root}/lambda-function/package-lock.json"))
+  }
+}
+
+data "null_data_source" "wait_for_npm_dependecies_exporter" {
+  inputs = {
+    lambda_dependency_id = null_resource.lambda_npm_dependencies.id
+    source_dir           = "${path.root}/lambda-function/"
+  }
+}
+
+locals {
+  lambda_zip_file_name = "post_provision_config_lambda_code.zip"
+}
+
+data "archive_file" "build_zip_lambda" {
+  output_path = "${path.root}/${local.lambda_zip_file_name}"
+  source_dir  = data.null_data_source.wait_for_npm_dependecies_exporter.outputs["source_dir"]
+  type        = "zip"
+}
+
+resource "aws_s3_bucket" "hnt_lambdas" {
+  bucket = "here-not-there-lambdas"
+  tags   = module.global_constants.tags
+}
+
+resource "aws_s3_object" "post_provision_config_lambda_code" {
+  bucket = aws_s3_bucket.hnt_lambdas.bucket
+  key    = local.lambda_zip_file_name
+  source = data.archive_file.build_zip_lambda.output_path
+}

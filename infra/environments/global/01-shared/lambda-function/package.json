@@ -1,0 +1,18 @@
+{
+  "name": "db-config-lambda-function",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "pg": "8.11.3",
+    "@aws-sdk/rds-signer": "3.460.0",
+    "@aws-sdk/client-secrets-manager": "3.460.0",
+    "ethereumjs-wallet": "1.0.2",
+    "ethereumjs-util": "7.1.5"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
