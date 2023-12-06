@@ -148,6 +148,7 @@ type CreateMembershipStructArgs = {
           | 'currency'
           | 'feeRecipient'
           | 'freeAllocation'
+          | 'pricingModule'
       >
     | Omit<
           ITownArchitectBaseV4['MembershipInfoStruct'],
@@ -158,6 +159,7 @@ type CreateMembershipStructArgs = {
           | 'currency'
           | 'feeRecipient'
           | 'freeAllocation'
+          | 'pricingModule'
       >
 )
 function _createMembershipStruct({
@@ -179,6 +181,7 @@ function _createMembershipStruct({
                 currency: ethers.constants.AddressZero,
                 feeRecipient: ethers.constants.AddressZero,
                 freeAllocation: 0,
+                pricingModule: ethers.constants.AddressZero,
             },
             permissions,
             requirements: {
@@ -198,6 +201,7 @@ function _createMembershipStruct({
                 currency: zeroAddress,
                 feeRecipient: zeroAddress,
                 freeAllocation: 0,
+                pricingModule: ethers.constants.AddressZero,
             },
             permissions,
             requirements: {

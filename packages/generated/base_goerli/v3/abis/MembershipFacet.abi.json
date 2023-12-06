@@ -113,6 +113,11 @@
   },
   {
     "inputs": [],
+    "name": "Membership__InvalidFreeAllocation",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "Membership__InvalidLimit",
     "type": "error"
   },
@@ -124,6 +129,11 @@
   {
     "inputs": [],
     "name": "Membership__InvalidPrice",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Membership__InvalidPricingModule",
     "type": "error"
   },
   {
@@ -369,6 +379,19 @@
       {
         "indexed": true,
         "internalType": "uint256",
+        "name": "allocation",
+        "type": "uint256"
+      }
+    ],
+    "name": "MembershipFreeAllocationUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
         "name": "limit",
         "type": "uint256"
       }
@@ -534,6 +557,16 @@
             "internalType": "address",
             "name": "feeRecipient",
             "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "freeAllocation",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "pricingModule",
+            "type": "address"
           }
         ],
         "internalType": "struct IMembershipBase.MembershipInfo",
@@ -584,6 +617,25 @@
   },
   {
     "inputs": [],
+    "name": "_getMembershipFreeAllocation",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "totalMinted",
+        "type": "uint256"
+      }
+    ],
     "name": "_getMembershipPrice",
     "outputs": [
       {
@@ -603,6 +655,19 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_getPricingModule",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -651,6 +716,19 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "newAllocation",
+        "type": "uint256"
+      }
+    ],
+    "name": "_setMembershipFreeAllocation",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "newPrice",
         "type": "uint256"
       }
@@ -669,6 +747,19 @@
       }
     ],
     "name": "_setMembershipSupplyLimit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newPricingModule",
+        "type": "address"
+      }
+    ],
+    "name": "_setPricingModule",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -802,6 +893,19 @@
   },
   {
     "inputs": [],
+    "name": "getMembershipFreeAllocation",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getMembershipLimit",
     "outputs": [
       {
@@ -821,6 +925,19 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMembershipPricingModule",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -1058,6 +1175,19 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "newAllocation",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMembershipFreeAllocation",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "newLimit",
         "type": "uint256"
       }
@@ -1076,6 +1206,19 @@
       }
     ],
     "name": "setMembershipPrice",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "pricingModule",
+        "type": "address"
+      }
+    ],
+    "name": "setMembershipPricingModule",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

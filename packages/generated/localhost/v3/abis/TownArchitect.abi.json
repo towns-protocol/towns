@@ -277,6 +277,11 @@
                 "internalType": "uint256",
                 "name": "freeAllocation",
                 "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "pricingModule",
+                "type": "address"
               }
             ],
             "internalType": "struct IMembershipBase.MembershipInfo",
@@ -411,6 +416,11 @@
                     "internalType": "uint256",
                     "name": "freeAllocation",
                     "type": "uint256"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "pricingModule",
+                    "type": "address"
                   }
                 ],
                 "internalType": "struct IMembershipBase.MembershipInfo",

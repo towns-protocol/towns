@@ -160,6 +160,7 @@ export async function createTestSpaceGatedByTownAndZionNfts(
             currency: ethers.constants.AddressZero,
             feeRecipient: client.walletAddress,
             freeAllocation: 0,
+            pricingModule: ethers.constants.AddressZero,
         },
         permissions: rolePermissions,
         requirements: {
@@ -203,6 +204,7 @@ export async function createTestSpaceGatedByTownNft(
             currency: ethers.constants.AddressZero,
             feeRecipient: client.walletAddress,
             freeAllocation: 0,
+            pricingModule: ethers.constants.AddressZero,
         },
         permissions: rolePermissions,
         requirements: {

@@ -133,6 +133,11 @@ export default [
   },
   {
     "inputs": [],
+    "name": "Membership__InvalidPricingModule",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "Membership__MaxSupplyReached",
     "type": "error"
   },
@@ -557,6 +562,11 @@ export default [
             "internalType": "uint256",
             "name": "freeAllocation",
             "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "pricingModule",
+            "type": "address"
           }
         ],
         "internalType": "struct IMembershipBase.MembershipInfo",
@@ -619,7 +629,13 @@ export default [
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "totalMinted",
+        "type": "uint256"
+      }
+    ],
     "name": "_getMembershipPrice",
     "outputs": [
       {
@@ -639,6 +655,19 @@ export default [
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_getPricingModule",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -718,6 +747,19 @@ export default [
       }
     ],
     "name": "_setMembershipSupplyLimit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newPricingModule",
+        "type": "address"
+      }
+    ],
+    "name": "_setPricingModule",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -883,6 +925,19 @@ export default [
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMembershipPricingModule",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -1151,6 +1206,19 @@ export default [
       }
     ],
     "name": "setMembershipPrice",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "pricingModule",
+        "type": "address"
+      }
+    ],
+    "name": "setMembershipPricingModule",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

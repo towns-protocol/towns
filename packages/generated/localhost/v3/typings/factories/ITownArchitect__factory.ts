@@ -106,6 +106,11 @@ const _abi = [
                 name: "freeAllocation",
                 type: "uint256",
               },
+              {
+                internalType: "address",
+                name: "pricingModule",
+                type: "address",
+              },
             ],
             internalType: "struct IMembershipBase.MembershipInfo",
             name: "settings",
@@ -239,6 +244,11 @@ const _abi = [
                     internalType: "uint256",
                     name: "freeAllocation",
                     type: "uint256",
+                  },
+                  {
+                    internalType: "address",
+                    name: "pricingModule",
+                    type: "address",
                   },
                 ],
                 internalType: "struct IMembershipBase.MembershipInfo",

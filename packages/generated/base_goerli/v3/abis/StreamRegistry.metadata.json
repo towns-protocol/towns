@@ -8,53 +8,67 @@
       {
         "inputs": [
           {
-            "internalType": "string",
-            "name": "streamIdHash",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "newNodeId",
-            "type": "string"
+            "components": [
+              {
+                "internalType": "string",
+                "name": "streamId",
+                "type": "string"
+              },
+              {
+                "internalType": "address[]",
+                "name": "nodes",
+                "type": "address[]"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "genesisMiniblockHash",
+                "type": "bytes32"
+              }
+            ],
+            "internalType": "struct StreamRegistry.Stream",
+            "name": "newStream",
+            "type": "tuple"
           }
         ],
-        "name": "addNodeToStream",
+        "name": "allocateStream",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
       },
       {
-        "inputs": [
-          {
-            "internalType": "string",
-            "name": "streamIdHash",
-            "type": "string"
-          },
-          {
-            "internalType": "string[]",
-            "name": "newNodeIds",
-            "type": "string[]"
-          }
-        ],
-        "name": "addNodesToStream",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "string",
-            "name": "streamIdHash",
-            "type": "string"
-          }
-        ],
-        "name": "getStreamNodes",
+        "inputs": [],
+        "name": "errAlreadyExists",
         "outputs": [
           {
-            "internalType": "string[]",
+            "internalType": "string",
             "name": "",
-            "type": "string[]"
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "errNotFound",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "errOutOfBounds",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
           }
         ],
         "stateMutability": "view",
@@ -64,39 +78,82 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "streamIdHash",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "nodeId",
+            "name": "_streamId",
             "type": "string"
           }
         ],
-        "name": "removeNodeFromStream",
-        "outputs": [],
-        "stateMutability": "nonpayable",
+        "name": "getStream",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "streamId",
+                "type": "string"
+              },
+              {
+                "internalType": "address[]",
+                "name": "nodes",
+                "type": "address[]"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "genesisMiniblockHash",
+                "type": "bytes32"
+              }
+            ],
+            "internalType": "struct StreamRegistry.Stream",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
         "type": "function"
       },
       {
         "inputs": [
           {
-            "internalType": "string",
-            "name": "streamIdHash",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "nodeId",
-            "type": "string"
+            "internalType": "uint256",
+            "name": "index",
+            "type": "uint256"
           }
         ],
-        "name": "valueExists",
+        "name": "getStreamByIndex",
         "outputs": [
           {
-            "internalType": "bool",
+            "components": [
+              {
+                "internalType": "string",
+                "name": "streamId",
+                "type": "string"
+              },
+              {
+                "internalType": "address[]",
+                "name": "nodes",
+                "type": "address[]"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "genesisMiniblockHash",
+                "type": "bytes32"
+              }
+            ],
+            "internalType": "struct StreamRegistry.Stream",
             "name": "",
-            "type": "bool"
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getStreamsLength",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
           }
         ],
         "stateMutability": "view",
@@ -130,6 +187,7 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/math/=lib/prb-math/src/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
       ":base64-sol/=lib/base64/",
@@ -147,11 +205,11 @@
   },
   "sources": {
     "contracts/src/river/registry/StreamRegistry.sol": {
-      "keccak256": "0xb8a1e176cb4cf84f58a5bbb8b0a144bcc7e2b9721936b14c758023351587da4b",
+      "keccak256": "0x312e2c5f6417c140c85c8cc6c9020bb81c3ac5642725c6a39c0a09f6d1c63d7a",
       "license": "MIT",
       "urls": [
-        "bzz-raw://cff191b9c758ce62e583af1ac74707c4563c877f07b5aa94da80a4a377eb76b5",
-        "dweb:/ipfs/QmbQq5r8AHWaA1qqSxXrf4Pkh4dYLDLH99DedSeU2KFQgw"
+        "bzz-raw://e9fe55d5fabd1df6af75ce71fffadaf114aa0a257a0b3963f66c1cd3c9b3b975",
+        "dweb:/ipfs/QmWwcu2eBRPSA7Uziq7EQDuGPKgZVrjCwdWaw7GAiRF8DS"
       ]
     }
   },

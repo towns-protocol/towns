@@ -75,6 +75,7 @@ describe('mediaWithEntitlementsTests', () => {
                 currency: ETH_ADDRESS,
                 feeRecipient: bobClient.userId,
                 freeAllocation: 0,
+                pricingModule: ethers.constants.AddressZero,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {

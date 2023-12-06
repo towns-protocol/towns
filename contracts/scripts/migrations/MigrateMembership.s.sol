@@ -12,7 +12,6 @@ import {Migration} from "../common/Migration.s.sol";
 
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {MembershipHelper} from "contracts/test/towns/membership/MembershipSetup.sol";
-
 import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipFacet.sol";
 
 contract MigrateMembership is Migration {

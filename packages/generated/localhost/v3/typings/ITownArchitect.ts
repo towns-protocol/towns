@@ -37,6 +37,7 @@ export declare namespace IMembershipBase {
     currency: PromiseOrValue<string>;
     feeRecipient: PromiseOrValue<string>;
     freeAllocation: PromiseOrValue<BigNumberish>;
+    pricingModule: PromiseOrValue<string>;
   };
 
   export type MembershipInfoStructOutput = [
@@ -47,7 +48,8 @@ export declare namespace IMembershipBase {
     BigNumber,
     string,
     string,
-    BigNumber
+    BigNumber,
+    string
   ] & {
     name: string;
     symbol: string;
@@ -57,6 +59,7 @@ export declare namespace IMembershipBase {
     currency: string;
     feeRecipient: string;
     freeAllocation: BigNumber;
+    pricingModule: string;
   };
 }
 
@@ -149,8 +152,8 @@ export declare namespace ITownArchitectBase {
 
 export interface ITownArchitectInterface extends utils.Interface {
   functions: {
-    "computeTown(string,((string,string,uint256,uint256,uint64,address,address,uint256),(bool,(address,uint256,bool,uint256[])[],address[]),string[]))": FunctionFragment;
-    "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256),(bool,(address,uint256,bool,uint256[])[],address[]),string[]),(string,string)))": FunctionFragment;
+    "computeTown(string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[]),string[]))": FunctionFragment;
+    "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[]),string[]),(string,string)))": FunctionFragment;
     "gateByToken(address,uint256)": FunctionFragment;
     "getTokenIdByTown(address)": FunctionFragment;
     "getTokenIdByTownId(string)": FunctionFragment;

@@ -49,6 +49,7 @@ describe('withEntitlements', () => {
                 currency: ETH_ADDRESS,
                 feeRecipient: bob.userId,
                 freeAllocation: 0,
+                pricingModule: ethers.constants.AddressZero,
             },
             permissions: [Permission.Read, Permission.Write],
             requirements: {

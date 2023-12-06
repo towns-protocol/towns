@@ -20,6 +20,7 @@ interface IMembershipBase {
     address currency;
     address feeRecipient;
     uint256 freeAllocation;
+    address pricingModule;
   }
 
   // =============================================================
@@ -33,6 +34,7 @@ interface IMembershipBase {
   error Membership__InvalidDuration();
   error Membership__InvalidMaxSupply();
   error Membership__InvalidFreeAllocation();
+  error Membership__InvalidPricingModule();
 
   error Membership__AlreadyMember();
   error Membership__InsufficientPayment();
@@ -93,6 +95,21 @@ interface IMembership is IMembershipBase {
    * @return The membership duration
    */
   function getMembershipDuration() external view returns (uint64);
+
+  // =============================================================
+  //                        Pricing Module
+  // =============================================================
+  /**
+   * @notice Set the membership pricing module
+   * @param pricingModule The new pricing module
+   */
+  function setMembershipPricingModule(address pricingModule) external;
+
+  /**
+   * @notice Get the membership pricing module
+   * @return The membership pricing module
+   */
+  function getMembershipPricingModule() external view returns (address);
 
   // =============================================================
   //                           Pricing

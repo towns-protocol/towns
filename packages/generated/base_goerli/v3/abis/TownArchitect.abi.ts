@@ -272,6 +272,16 @@ export default [
                 "internalType": "address",
                 "name": "feeRecipient",
                 "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "freeAllocation",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "pricingModule",
+                "type": "address"
               }
             ],
             "internalType": "struct IMembershipBase.MembershipInfo",
@@ -400,6 +410,16 @@ export default [
                   {
                     "internalType": "address",
                     "name": "feeRecipient",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "freeAllocation",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "pricingModule",
                     "type": "address"
                   }
                 ],

@@ -21,6 +21,7 @@ library MembershipStorage {
     address townFactory;
     uint64 membershipDuration;
     uint256 freeAllocation;
+    address pricingModule;
   }
 
   function layout() internal pure returns (Layout storage l) {

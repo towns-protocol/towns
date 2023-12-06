@@ -58,7 +58,7 @@ contract MembershipFacet is
 
     tokenId = _nextTokenId();
 
-    _collectMembershipFee(receiver);
+    _collectMembershipFee(receiver, _totalMinted());
     _safeMint(receiver, 1);
     _renewSubscription(tokenId, _getMembershipDuration());
   }
@@ -72,7 +72,7 @@ contract MembershipFacet is
     if (!_isApprovedOrOwner(tokenId))
       revert ApprovalCallerNotOwnerNorApproved();
 
-    _collectMembershipFee(receiver);
+    _collectMembershipFee(receiver, _totalMinted());
     _renewSubscription(tokenId, _getMembershipDuration());
   }
 
@@ -105,6 +105,23 @@ contract MembershipFacet is
   }
 
   // =============================================================
+  //                        Pricing Module
+  // =============================================================
+  /// @inheritdoc IMembership
+  function setMembershipPricingModule(
+    address pricingModule
+  ) external onlyOwner {
+    if (pricingModule == address(0)) revert Membership__InvalidPricingModule();
+    _verifyPricingModule(pricingModule);
+    _setPricingModule(pricingModule);
+  }
+
+  /// @inheritdoc IMembership
+  function getMembershipPricingModule() external view returns (address) {
+    return _getPricingModule();
+  }
+
+  // =============================================================
   //                           Pricing
   // =============================================================
 
@@ -117,7 +134,7 @@ contract MembershipFacet is
 
   /// @inheritdoc IMembership
   function getMembershipPrice() external view returns (uint256) {
-    return _getMembershipPrice();
+    return _getMembershipPrice(_totalMinted());
   }
 
   // =============================================================

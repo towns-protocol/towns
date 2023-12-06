@@ -119,6 +119,11 @@
       },
       {
         "inputs": [],
+        "name": "Membership__InvalidFreeAllocation",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "Membership__InvalidLimit",
         "type": "error"
       },
@@ -130,6 +135,11 @@
       {
         "inputs": [],
         "name": "Membership__InvalidPrice",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__InvalidPricingModule",
         "type": "error"
       },
       {
@@ -375,6 +385,19 @@
           {
             "indexed": true,
             "internalType": "uint256",
+            "name": "allocation",
+            "type": "uint256"
+          }
+        ],
+        "name": "MembershipFreeAllocationUpdated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
             "name": "limit",
             "type": "uint256"
           }
@@ -540,6 +563,16 @@
                 "internalType": "address",
                 "name": "feeRecipient",
                 "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "freeAllocation",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "pricingModule",
+                "type": "address"
               }
             ],
             "internalType": "struct IMembershipBase.MembershipInfo",
@@ -590,6 +623,25 @@
       },
       {
         "inputs": [],
+        "name": "_getMembershipFreeAllocation",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "totalMinted",
+            "type": "uint256"
+          }
+        ],
         "name": "_getMembershipPrice",
         "outputs": [
           {
@@ -609,6 +661,19 @@
             "internalType": "uint256",
             "name": "",
             "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "_getPricingModule",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
           }
         ],
         "stateMutability": "view",
@@ -657,6 +722,19 @@
         "inputs": [
           {
             "internalType": "uint256",
+            "name": "newAllocation",
+            "type": "uint256"
+          }
+        ],
+        "name": "_setMembershipFreeAllocation",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
             "name": "newPrice",
             "type": "uint256"
           }
@@ -675,6 +753,19 @@
           }
         ],
         "name": "_setMembershipSupplyLimit",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newPricingModule",
+            "type": "address"
+          }
+        ],
+        "name": "_setPricingModule",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -808,6 +899,19 @@
       },
       {
         "inputs": [],
+        "name": "getMembershipFreeAllocation",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
         "name": "getMembershipLimit",
         "outputs": [
           {
@@ -827,6 +931,19 @@
             "internalType": "uint256",
             "name": "",
             "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMembershipPricingModule",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
           }
         ],
         "stateMutability": "view",
@@ -1064,6 +1181,19 @@
         "inputs": [
           {
             "internalType": "uint256",
+            "name": "newAllocation",
+            "type": "uint256"
+          }
+        ],
+        "name": "setMembershipFreeAllocation",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
             "name": "newLimit",
             "type": "uint256"
           }
@@ -1082,6 +1212,19 @@
           }
         ],
         "name": "setMembershipPrice",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "pricingModule",
+            "type": "address"
+          }
+        ],
+        "name": "setMembershipPricingModule",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -1178,7 +1321,7 @@
       },
       "kind": "dev",
       "methods": {
-        "_getMembershipPrice()": {
+        "_getMembershipPrice(uint256)": {
           "details": "Makes it virtual to allow other pricing strategies"
         },
         "approve(address,uint256)": {
@@ -1212,6 +1355,11 @@
             "_0": "The membership fee recipient"
           }
         },
+        "getMembershipFreeAllocation()": {
+          "returns": {
+            "_0": "The membership free allocation"
+          }
+        },
         "getMembershipLimit()": {
           "returns": {
             "_0": "The membership limit"
@@ -1220,6 +1368,11 @@
         "getMembershipPrice()": {
           "returns": {
             "_0": "The membership price"
+          }
+        },
+        "getMembershipPricingModule()": {
+          "returns": {
+            "_0": "The membership pricing module"
           }
         },
         "getTownFactory()": {
@@ -1281,6 +1434,11 @@
             "newRecipient": "The new membership fee recipient"
           }
         },
+        "setMembershipFreeAllocation(uint256)": {
+          "params": {
+            "newAllocation": "The new membership free allocation"
+          }
+        },
         "setMembershipLimit(uint256)": {
           "params": {
             "newLimit": "The new membership limit"
@@ -1289,6 +1447,11 @@
         "setMembershipPrice(uint256)": {
           "params": {
             "newPrice": "The new membership price"
+          }
+        },
+        "setMembershipPricingModule(address)": {
+          "params": {
+            "pricingModule": "The new pricing module"
           }
         },
         "symbol()": {
@@ -1402,11 +1565,17 @@
         "getMembershipFeeRecipient()": {
           "notice": "Get the membership fee recipient"
         },
+        "getMembershipFreeAllocation()": {
+          "notice": "Get the membership free allocation"
+        },
         "getMembershipLimit()": {
           "notice": "Get the membership limit"
         },
         "getMembershipPrice()": {
           "notice": "Get the membership price"
+        },
+        "getMembershipPricingModule()": {
+          "notice": "Get the membership pricing module"
         },
         "getTownFactory()": {
           "notice": "Get the town factory"
@@ -1429,11 +1598,17 @@
         "setMembershipFeeRecipient(address)": {
           "notice": "Set the membership fee recipient"
         },
+        "setMembershipFreeAllocation(uint256)": {
+          "notice": "Set the membership free allocation"
+        },
         "setMembershipLimit(uint256)": {
           "notice": "Set the membership limit"
         },
         "setMembershipPrice(uint256)": {
           "notice": "Set the membership price"
+        },
+        "setMembershipPricingModule(address)": {
+          "notice": "Set the membership pricing module"
         }
       },
       "version": 1
@@ -1455,6 +1630,7 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/math/=lib/prb-math/src/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
       ":base64-sol/=lib/base64/",
@@ -1704,35 +1880,43 @@
       ]
     },
     "contracts/src/towns/facets/membership/IMembership.sol": {
-      "keccak256": "0x96ba770b950a2d958ed96ab467b88e7c16dd6eb5844c7dbec8debb09755bf7c5",
+      "keccak256": "0x231c86eba93e033849cc333f82b2f2bfba5160c8f68347d1a4fd7436a153cbc2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1316edec4562e0ebf5eabe7a1c29e02ed873ab7631b603cbf861457c754106ca",
-        "dweb:/ipfs/Qmb3dHfBEiHfTgG8P1LSjCnPW4j4XD6kRAkYm6AvAEk3Wd"
+        "bzz-raw://abae5242693df12e96bdedec72fd3906a5864c86339174694d3ba1b7ff4cea60",
+        "dweb:/ipfs/QmaEd1RTKhi4wk8cqMebDbJZJJ3WnFqqyvCESfVKNYRu7M"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x36681d02a96c39bd512483e24405daea75b42d73fbbfaf794590624b1f37c1c3",
+      "keccak256": "0x838a0e0695423de65d5389f5ca7b520a0d59cc44aefe423c45e4923ebbbe5be7",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://2dd0d63594a6e8c060da055ab34c250ddaaaf79bfcbd6ee0337edc761abd0814",
-        "dweb:/ipfs/QmWK53idzSbcpzF2taFsBseQgZBgatLnffyYq2zH74FtLp"
+        "bzz-raw://bfd6ea91324c1e8928b7b009a975da894e185a7e6b3ddbeac0f1737935b43233",
+        "dweb:/ipfs/QmQmKrTF8aNrSQpkeYyufbALPqGo5Jy6z1RVsz5oTuaAE1"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0xab3baf06468e7176d3add705ac9dfbe4eded6e0c6c96d45d76521617e72f7153",
+      "keccak256": "0x2c5c7e7b88ad2314a13c32eafcc218d588b17f1e53d85dccb4e06dceb23b0515",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://09e1c69fbc2c3b071a7864ade857dadd64e86ae78b2366a1f428089560660779",
-        "dweb:/ipfs/QmPZTHbtmQgXPFJFKGFxZUjQx3T6RFXPn4Pi8gwYtSponn"
+        "bzz-raw://a3c5acfc66ba6d47db429904abed78fe98a0f8f3a225de5fd09f64cafe87d8c4",
+        "dweb:/ipfs/QmcwCvNDbw4iDn9tRpDDTuHmEskYuLgRCmUdKV8SwM7R4R"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipStorage.sol": {
-      "keccak256": "0x40660d013852595ab7748b1e79e02755de813f63c44cdb200745976388aac45e",
+      "keccak256": "0xbaffc6e176bd530e811ee46b167f95899cca0bae5fa5a0faff42432bff896b98",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b09db90fdfd8ae7505002b8dfce2b0e840be46924c488f01a337708021ddbbd8",
-        "dweb:/ipfs/QmPBL7gZjXiG6ChQowmvpTKZrXFTYrxPdhhSW2uchEeuUW"
+        "bzz-raw://dfe9a8d15a30c272962daba744b50c073611023196e7f7d5d677456990f28f1d",
+        "dweb:/ipfs/QmXYkoKXhFiKFauosed5XnuiB2uSmrnqBwQc7jCn3v1Hvy"
+      ]
+    },
+    "contracts/src/towns/facets/membership/pricing/IMembershipPricing.sol": {
+      "keccak256": "0x382d5312d9b7fb9f324a70b84b749cbb0a94a1ec3d65a0f7bad09849d67195ba",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://7615a51f285468c699e4b1f39cb73c224e587c3751d644d8f84e1bc41ffbe041",
+        "dweb:/ipfs/QmUoeTd9Bmrwi5pzF34eNWBxhym8iGp94fDtxJYdrRdnTt"
       ]
     },
     "contracts/src/towns/facets/platform/requirements/IPlatformRequirements.sol": {

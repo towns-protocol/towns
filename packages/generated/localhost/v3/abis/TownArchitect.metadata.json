@@ -283,6 +283,11 @@
                     "internalType": "uint256",
                     "name": "freeAllocation",
                     "type": "uint256"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "pricingModule",
+                    "type": "address"
                   }
                 ],
                 "internalType": "struct IMembershipBase.MembershipInfo",
@@ -417,6 +422,11 @@
                         "internalType": "uint256",
                         "name": "freeAllocation",
                         "type": "uint256"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "pricingModule",
+                        "type": "address"
                       }
                     ],
                     "internalType": "struct IMembershipBase.MembershipInfo",
@@ -692,7 +702,7 @@
       },
       "kind": "dev",
       "methods": {
-        "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256),(bool,(address,uint256,bool,uint256[])[],address[]),string[]),(string,string)))": {
+        "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[]),string[]),(string,string)))": {
           "params": {
             "townInfo": "Town information"
           }
@@ -711,7 +721,7 @@
       },
       "kind": "user",
       "methods": {
-        "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256),(bool,(address,uint256,bool,uint256[])[],address[]),string[]),(string,string)))": {
+        "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[]),string[]),(string,string)))": {
           "notice": "Creates a new town"
         }
       },
@@ -734,6 +744,7 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/math/=lib/prb-math/src/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
       ":base64-sol/=lib/base64/",
@@ -1135,11 +1146,11 @@
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitectBase.sol": {
-      "keccak256": "0x3ad35d17bc62a85b42ad4fb1518c5c2057f7c130a62f2dd7b4d6fe982c607813",
+      "keccak256": "0x951941b38abdb7a9093aecf3289b15f8b1357f54ad248148e18161a485391996",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8a95ba6bece3283e4619074dcf35a76f73b9bcf767c3bd70d1511c4d28ec843f",
-        "dweb:/ipfs/QmT6z7t7f4Z8Z11uufA6bwRCCJT8ogpHn9zDq13EhgDYU9"
+        "bzz-raw://1447bfe21371a4ec51ac4718ee139ffe971037b3901722612d3118fbd87d3f80",
+        "dweb:/ipfs/QmUDm8XHfQdswNe2exUCBmTCW26sdPmHmYjVsf99Fm7sNS"
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitectStorage.sol": {
@@ -1215,27 +1226,35 @@
       ]
     },
     "contracts/src/towns/facets/membership/IMembership.sol": {
-      "keccak256": "0xdce944bf3e6f8845f32e300a524c8b3c9b3a2392656aa036efe0e35c0c3bda4e",
+      "keccak256": "0x231c86eba93e033849cc333f82b2f2bfba5160c8f68347d1a4fd7436a153cbc2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://41d9a1c6413172ec0ee64e9d3683ba9fb67f189fdcf7337ad817f5251ed0560e",
-        "dweb:/ipfs/QmUavN6kxjgebzobMAgzt27hB3hNfJc7TyzvZHZ1kx9CHQ"
+        "bzz-raw://abae5242693df12e96bdedec72fd3906a5864c86339174694d3ba1b7ff4cea60",
+        "dweb:/ipfs/QmaEd1RTKhi4wk8cqMebDbJZJJ3WnFqqyvCESfVKNYRu7M"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x8732ba7f407e0fa4e660077293f17f7de02a984eacb2afca23d514b49d0bff65",
+      "keccak256": "0x838a0e0695423de65d5389f5ca7b520a0d59cc44aefe423c45e4923ebbbe5be7",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://28a5429155a0ad1ebeca9f1c8e723b4edbbb56718f71122ddfd4ead56c9c102f",
-        "dweb:/ipfs/QmW1EF6rZXZ71Q8Fdy5W8cfLQsxwLYwhWJceaQLa2kspYH"
+        "bzz-raw://bfd6ea91324c1e8928b7b009a975da894e185a7e6b3ddbeac0f1737935b43233",
+        "dweb:/ipfs/QmQmKrTF8aNrSQpkeYyufbALPqGo5Jy6z1RVsz5oTuaAE1"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipStorage.sol": {
-      "keccak256": "0x2e4820ea7565754399e8db1d29f57e6b4ab786bd51d1dcbe4ea0c34881e6c8c6",
+      "keccak256": "0xbaffc6e176bd530e811ee46b167f95899cca0bae5fa5a0faff42432bff896b98",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://02f58600d68830cd67c838699cdbc720fe3f6e7b64417c561ea1a25a24549629",
-        "dweb:/ipfs/QmRyFeJvTXjYcXzcFSSj5qqq9tYV28vThL6z2D3eHYX5L6"
+        "bzz-raw://dfe9a8d15a30c272962daba744b50c073611023196e7f7d5d677456990f28f1d",
+        "dweb:/ipfs/QmXYkoKXhFiKFauosed5XnuiB2uSmrnqBwQc7jCn3v1Hvy"
+      ]
+    },
+    "contracts/src/towns/facets/membership/pricing/IMembershipPricing.sol": {
+      "keccak256": "0x382d5312d9b7fb9f324a70b84b749cbb0a94a1ec3d65a0f7bad09849d67195ba",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://7615a51f285468c699e4b1f39cb73c224e587c3751d644d8f84e1bc41ffbe041",
+        "dweb:/ipfs/QmUoeTd9Bmrwi5pzF34eNWBxhym8iGp94fDtxJYdrRdnTt"
       ]
     },
     "contracts/src/towns/facets/owner/ITownOwner.sol": {

@@ -139,6 +139,11 @@
       },
       {
         "inputs": [],
+        "name": "Membership__InvalidPricingModule",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "Membership__MaxSupplyReached",
         "type": "error"
       },
@@ -563,6 +568,11 @@
                 "internalType": "uint256",
                 "name": "freeAllocation",
                 "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "pricingModule",
+                "type": "address"
               }
             ],
             "internalType": "struct IMembershipBase.MembershipInfo",
@@ -625,7 +635,13 @@
         "type": "function"
       },
       {
-        "inputs": [],
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "totalMinted",
+            "type": "uint256"
+          }
+        ],
         "name": "_getMembershipPrice",
         "outputs": [
           {
@@ -645,6 +661,19 @@
             "internalType": "uint256",
             "name": "",
             "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "_getPricingModule",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
           }
         ],
         "stateMutability": "view",
@@ -724,6 +753,19 @@
           }
         ],
         "name": "_setMembershipSupplyLimit",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newPricingModule",
+            "type": "address"
+          }
+        ],
+        "name": "_setPricingModule",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -889,6 +931,19 @@
             "internalType": "uint256",
             "name": "",
             "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getMembershipPricingModule",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
           }
         ],
         "stateMutability": "view",
@@ -1162,6 +1217,19 @@
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "pricingModule",
+            "type": "address"
+          }
+        ],
+        "name": "setMembershipPricingModule",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "symbol",
         "outputs": [
@@ -1253,7 +1321,7 @@
       },
       "kind": "dev",
       "methods": {
-        "_getMembershipPrice()": {
+        "_getMembershipPrice(uint256)": {
           "details": "Makes it virtual to allow other pricing strategies"
         },
         "approve(address,uint256)": {
@@ -1300,6 +1368,11 @@
         "getMembershipPrice()": {
           "returns": {
             "_0": "The membership price"
+          }
+        },
+        "getMembershipPricingModule()": {
+          "returns": {
+            "_0": "The membership pricing module"
           }
         },
         "getTownFactory()": {
@@ -1374,6 +1447,11 @@
         "setMembershipPrice(uint256)": {
           "params": {
             "newPrice": "The new membership price"
+          }
+        },
+        "setMembershipPricingModule(address)": {
+          "params": {
+            "pricingModule": "The new pricing module"
           }
         },
         "symbol()": {
@@ -1496,6 +1574,9 @@
         "getMembershipPrice()": {
           "notice": "Get the membership price"
         },
+        "getMembershipPricingModule()": {
+          "notice": "Get the membership pricing module"
+        },
         "getTownFactory()": {
           "notice": "Get the town factory"
         },
@@ -1525,6 +1606,9 @@
         },
         "setMembershipPrice(uint256)": {
           "notice": "Set the membership price"
+        },
+        "setMembershipPricingModule(address)": {
+          "notice": "Set the membership pricing module"
         }
       },
       "version": 1
@@ -1546,6 +1630,7 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/math/=lib/prb-math/src/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
       ":base64-sol/=lib/base64/",
@@ -1795,35 +1880,43 @@
       ]
     },
     "contracts/src/towns/facets/membership/IMembership.sol": {
-      "keccak256": "0xdce944bf3e6f8845f32e300a524c8b3c9b3a2392656aa036efe0e35c0c3bda4e",
+      "keccak256": "0x231c86eba93e033849cc333f82b2f2bfba5160c8f68347d1a4fd7436a153cbc2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://41d9a1c6413172ec0ee64e9d3683ba9fb67f189fdcf7337ad817f5251ed0560e",
-        "dweb:/ipfs/QmUavN6kxjgebzobMAgzt27hB3hNfJc7TyzvZHZ1kx9CHQ"
+        "bzz-raw://abae5242693df12e96bdedec72fd3906a5864c86339174694d3ba1b7ff4cea60",
+        "dweb:/ipfs/QmaEd1RTKhi4wk8cqMebDbJZJJ3WnFqqyvCESfVKNYRu7M"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x8732ba7f407e0fa4e660077293f17f7de02a984eacb2afca23d514b49d0bff65",
+      "keccak256": "0x838a0e0695423de65d5389f5ca7b520a0d59cc44aefe423c45e4923ebbbe5be7",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://28a5429155a0ad1ebeca9f1c8e723b4edbbb56718f71122ddfd4ead56c9c102f",
-        "dweb:/ipfs/QmW1EF6rZXZ71Q8Fdy5W8cfLQsxwLYwhWJceaQLa2kspYH"
+        "bzz-raw://bfd6ea91324c1e8928b7b009a975da894e185a7e6b3ddbeac0f1737935b43233",
+        "dweb:/ipfs/QmQmKrTF8aNrSQpkeYyufbALPqGo5Jy6z1RVsz5oTuaAE1"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0xff9272f6e237955d5b9073275937b1e9250e9a9864a6812bc040e3cdcbd9f256",
+      "keccak256": "0x2c5c7e7b88ad2314a13c32eafcc218d588b17f1e53d85dccb4e06dceb23b0515",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://4bae19c033cc672f9acbf3c4c1865aacfddf86823804ea1e0aa8f2f99397471d",
-        "dweb:/ipfs/Qme4UowEsUxKGSTKgvBChcgtuxAB98yXcMSbmZZCY9AUEf"
+        "bzz-raw://a3c5acfc66ba6d47db429904abed78fe98a0f8f3a225de5fd09f64cafe87d8c4",
+        "dweb:/ipfs/QmcwCvNDbw4iDn9tRpDDTuHmEskYuLgRCmUdKV8SwM7R4R"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipStorage.sol": {
-      "keccak256": "0x2e4820ea7565754399e8db1d29f57e6b4ab786bd51d1dcbe4ea0c34881e6c8c6",
+      "keccak256": "0xbaffc6e176bd530e811ee46b167f95899cca0bae5fa5a0faff42432bff896b98",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://02f58600d68830cd67c838699cdbc720fe3f6e7b64417c561ea1a25a24549629",
-        "dweb:/ipfs/QmRyFeJvTXjYcXzcFSSj5qqq9tYV28vThL6z2D3eHYX5L6"
+        "bzz-raw://dfe9a8d15a30c272962daba744b50c073611023196e7f7d5d677456990f28f1d",
+        "dweb:/ipfs/QmXYkoKXhFiKFauosed5XnuiB2uSmrnqBwQc7jCn3v1Hvy"
+      ]
+    },
+    "contracts/src/towns/facets/membership/pricing/IMembershipPricing.sol": {
+      "keccak256": "0x382d5312d9b7fb9f324a70b84b749cbb0a94a1ec3d65a0f7bad09849d67195ba",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://7615a51f285468c699e4b1f39cb73c224e587c3751d644d8f84e1bc41ffbe041",
+        "dweb:/ipfs/QmUoeTd9Bmrwi5pzF34eNWBxhym8iGp94fDtxJYdrRdnTt"
       ]
     },
     "contracts/src/towns/facets/platform/requirements/IPlatformRequirements.sol": {

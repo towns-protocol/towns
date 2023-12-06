@@ -82,7 +82,8 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
         duration: 0,
         currency: address(0),
         feeRecipient: townDAO,
-        freeAllocation: 0
+        freeAllocation: 0,
+        pricingModule: address(0)
       }),
       townFactory,
       address(trustedForwarder)
@@ -113,7 +114,7 @@ contract MembershipHelper is FacetHelper {
     membership = new MembershipFacet();
 
     uint256 index;
-    bytes4[] memory selectors_ = new bytes4[](18);
+    bytes4[] memory selectors_ = new bytes4[](20);
 
     // Forwarder
     selectors_[index++] = IERC2771Recipient.isTrustedForwarder.selector;
@@ -127,6 +128,10 @@ contract MembershipHelper is FacetHelper {
     // Duration
     selectors_[index++] = IMembership.setMembershipDuration.selector;
     selectors_[index++] = IMembership.getMembershipDuration.selector;
+
+    // Pricing Module
+    selectors_[index++] = IMembership.setMembershipPricingModule.selector;
+    selectors_[index++] = IMembership.getMembershipPricingModule.selector;
 
     // Pricing
     selectors_[index++] = IMembership.setMembershipPrice.selector;
