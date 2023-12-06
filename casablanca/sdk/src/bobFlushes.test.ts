@@ -24,7 +24,7 @@ describe('bobFlushes', () => {
             false,
         )
     })
-    test.skip('bobTalksToHimself-noflush-presync', async () => {
+    test('bobTalksToHimself-noflush-presync', async () => {
         await bobTalksToHimself(
             baseLog.extend('bobTalksToHimself-noflush-presync'),
             bobsContext,
