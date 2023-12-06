@@ -100,7 +100,7 @@ export const DirectMessageInviteUserList = (props: {
 
                 <MotionStack gap grow layout="position" position="relative">
                     <Stack scroll scrollbars gap grow absoluteFill insetTop="sm" paddingTop="md">
-                        {!searchTerm && (
+                        {!searchTerm && recentUsers?.length > 0 && (
                             <Box paddingX>
                                 <Paragraph size="sm" color="gray2" fontWeight="medium">
                                     Recent

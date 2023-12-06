@@ -8,6 +8,7 @@ import { UserList } from '@components/UserList/UserList'
 import { Box, BoxProps, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { formatShortDate } from 'utils/formatShortDate'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { GroupDMIcon } from './GroupDMIcon'
 
 export const DirectMessageListItem = (props: {
@@ -17,7 +18,8 @@ export const DirectMessageListItem = (props: {
     unread: boolean
 }) => {
     const { channel, onSelect, highlighted, unread } = props
-    const latest = useDMLatestMessage(channel.id)
+
+    const { latest, unreadCount } = useDMLatestMessage(channel.id)
     const latestUser = useUser(latest?.sender.id)
     const myUserId = useMyUserId()
 
@@ -27,9 +29,11 @@ export const DirectMessageListItem = (props: {
                 return '📷'
             case 'text':
                 return latestUser
-                    ? `${myUserId === latestUser.userId ? 'you' : latestUser.displayName}: ${
-                          info.text
-                      }`
+                    ? `${
+                          myUserId === latestUser.userId
+                              ? 'you'
+                              : getPrettyDisplayName(latestUser).displayName
+                      }: ${info.text}`
                     : info.text
             case 'encrypted':
                 return (
@@ -94,7 +98,11 @@ export const DirectMessageListItem = (props: {
                     {/* date on the right */}
                     <Box grow justifyContent="end" alignItems="end">
                         {latest ? (
-                            <Paragraph size="xs" style={{ whiteSpace: 'nowrap' }} color="gray2">
+                            <Paragraph
+                                size="xs"
+                                style={{ whiteSpace: 'nowrap' }}
+                                color={unread ? 'accent' : 'gray2'}
+                            >
                                 {formatShortDate(latest.createdAtEpocMs)}
                             </Paragraph>
                         ) : (
@@ -102,26 +110,44 @@ export const DirectMessageListItem = (props: {
                         )}
                     </Box>
                 </Stack>
-                {/* truncated message body */}
-                <Text>
-                    {/* nested text hack to get cap-size vertical margins right */}
-                    <Text
-                        color={unread ? 'default' : 'gray2'}
-                        size="sm"
-                        style={{
-                            // todo: experiment with this, may not keep
-                            // and if we keep it will move into the Text component
-                            padding: '4px 0',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                        }}
-                    >
-                        {latestMessageRender(latest?.info)}
+                <Stack horizontal>
+                    {/* truncated message body */}
+                    <Text>
+                        {/* nested text hack to get cap-size vertical margins right */}
+                        <Text
+                            color={unread ? 'default' : 'gray2'}
+                            size="sm"
+                            style={{
+                                // todo: experiment with this, may not keep
+                                // and if we keep it will move into the Text component
+                                padding: '4px 0',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                            }}
+                        >
+                            {latestMessageRender(latest?.info)}
+                        </Text>
                     </Text>
-                </Text>
+                    {/* date on the right */}
+                    {unread && (
+                        <Box grow justifyContent="start" alignItems="end">
+                            <Box
+                                centerContent
+                                background="accent"
+                                height="x2"
+                                minWidth="x2"
+                                rounded="full"
+                            >
+                                <Paragraph fontWeight="medium" size="xs">
+                                    {unreadCount > 0 ? unreadCount : ''}
+                                </Paragraph>
+                            </Box>
+                        </Box>
+                    )}
+                </Stack>
             </Box>
         </DirectMessageMotionContainer>
     )

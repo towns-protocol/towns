@@ -1,8 +1,9 @@
 import { RoomIdentifier } from '../types/room-identifier'
 import { useTimeline } from './use-timeline'
-import { TimelineEvent_OneOf, ZTEvent } from '../types/timeline-types'
+import { TimelineEvent, TimelineEvent_OneOf, ZTEvent } from '../types/timeline-types'
 import { useMemo } from 'react'
 import { MessageType } from '../types/zion-types'
+import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 
 export type MostRecentMessageInfo_OneOf =
     | MostRecentMessageInfoMedia
@@ -22,23 +23,45 @@ export interface MostRecentMessageEncrypted {
     kind: 'encrypted'
 }
 
+type LatestMessageInfo = {
+    createdAtEpocMs: number
+    info: ReturnType<typeof toMostRecentMessageInfo> | undefined
+    sender: TimelineEvent['sender']
+}
+
 export function useDMLatestMessage(roomId: RoomIdentifier) {
     const { timeline } = useTimeline(roomId)
+    const unreadMarker = useFullyReadMarkerStore((state) => state.markers[roomId.networkId])
+
+    // let's not count unreads if the timeline doesn't yet contain the event marked as unread
+    const hasRelevantUnreadMarker =
+        unreadMarker.isUnread && timeline.some((event) => event.eventId === unreadMarker?.eventId)
+
     const latestMessage = useMemo(() => {
+        let unreadCount = 0
+        let latest: LatestMessageInfo | undefined
+
         for (let i = timeline.length - 1; i >= 0; i--) {
             const message = timeline[i]
             const info = toMostRecentMessageInfo(message.content)
 
-            if (info) {
-                return {
+            if (info && hasRelevantUnreadMarker) {
+                unreadCount++
+            }
+            if (!latest && info) {
+                latest = {
                     createdAtEpocMs: message.createdAtEpocMs,
                     info: info,
                     sender: message.sender,
                 }
             }
+            if (unreadMarker?.eventId === message.eventId) {
+                // we don't need to look further than the lastest unread marker
+                break
+            }
         }
-        return undefined
-    }, [timeline])
+        return { latest, unreadCount }
+    }, [hasRelevantUnreadMarker, timeline, unreadMarker?.eventId])
     return latestMessage
 }
 

@@ -65,8 +65,8 @@ export const DirectMessageList = () => {
 
     return (
         <Stack scroll padding="sm">
-            <SearchField onSearchValue={onSearch} />
             <Stack minHeight="100svh" paddingBottom="safeAreaInsetBottom" gap="xxs">
+                <SearchField onSearchValue={onSearch} />
                 {searchResults.length > 0 ? (
                     <SearchContext.Provider value="messages">
                         {searchResults.map((s, index, items) => (
@@ -136,7 +136,7 @@ const SearchField = (props: { onSearchValue: (value: string) => void }) => {
     }, [deferredValue, onSearchValue])
 
     return (
-        <Box horizontal padding="sm" height="x7" shrink={false}>
+        <Box horizontal padding="sm" height="x8" shrink={false}>
             <TextField
                 tone="none"
                 background="level2"
