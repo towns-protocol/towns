@@ -137,8 +137,13 @@ func (r *streamViewImpl) getInvites() (*mapset.Set[string], error) {
 	invites := mapset.NewSet[string]()
 	switch snapshotContent := r.snapshot.Content.(type) {
 	case *protocol.Snapshot_GdmChannelContent:
-
 		for _, user := range snapshotContent.GdmChannelContent.GetMemberships() {
+			if user.GetOp() == protocol.MembershipOp_SO_INVITE {
+				invites.Add(user.UserId)
+			}
+		}
+	case *protocol.Snapshot_DmChannelContent:
+		for _, user := range snapshotContent.DmChannelContent.GetMemberships() {
 			if user.GetOp() == protocol.MembershipOp_SO_INVITE {
 				invites.Add(user.UserId)
 			}
@@ -153,20 +158,32 @@ func (r *streamViewImpl) getInvites() (*mapset.Set[string], error) {
 		case *protocol.StreamEvent_GdmChannelPayload:
 			switch gdmChannelPayload := payload.GdmChannelPayload.Content.(type) {
 			case *protocol.GdmChannelPayload_Membership:
-
 				user := gdmChannelPayload.Membership.UserId
-
 				// If a user leaves, they will need to be re-invited to the channel.
 				if gdmChannelPayload.Membership.GetOp() == protocol.MembershipOp_SO_INVITE {
 					invites.Add(user)
 				} else if gdmChannelPayload.Membership.GetOp() == protocol.MembershipOp_SO_LEAVE {
 					invites.Remove(user)
 				}
+			default:
+				break
+			}
 
+		case *protocol.StreamEvent_DmChannelPayload:
+			switch payload := payload.DmChannelPayload.Content.(type) {
+			case *protocol.DmChannelPayload_Membership:
+				user := payload.Membership.UserId
+				// If a user leaves, they will need to be re-invited to the channel.
+				if payload.Membership.GetOp() == protocol.MembershipOp_SO_INVITE {
+					invites.Add(user)
+				} else if payload.Membership.GetOp() == protocol.MembershipOp_SO_LEAVE {
+					invites.Remove(user)
+				}
 			default:
 				break
 			}
 		}
+
 		return true, nil
 	})
 
