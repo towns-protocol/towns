@@ -104,7 +104,7 @@ describe('clientFlushes', () => {
     })
 
     const bobCanReconnect = async (log: DLogger) => {
-        const bobsAnotherClient = await makeTestClient(undefined, bobsClient.signerContext)
+        const bobsAnotherClient = await makeTestClient({ context: bobsClient.signerContext })
 
         const done = makeDonePromise()
 

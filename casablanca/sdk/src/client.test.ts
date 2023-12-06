@@ -302,7 +302,7 @@ describe('clientTest', () => {
 
     test('clientCreatesStreamsForExistingUser', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        const bobsAnotherClient = await makeTestClient(undefined, bobsClient.signerContext)
+        const bobsAnotherClient = await makeTestClient({ context: bobsClient.signerContext })
         await expect(bobsAnotherClient.initializeUser()).toResolve()
         expect(bobsAnotherClient.streams.size).toEqual(4)
         expect(
@@ -358,7 +358,7 @@ describe('clientTest', () => {
     })
 
     const bobCanReconnect = async (signer: SignerContext) => {
-        const bobsAnotherClient = await makeTestClient(undefined, signer)
+        const bobsAnotherClient = await makeTestClient({ context: signer })
 
         const done = makeDonePromise()
 

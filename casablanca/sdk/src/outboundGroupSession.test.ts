@@ -39,7 +39,7 @@ describe('outboundSessionTests', () => {
             },
         })
 
-        const bobsOtherClient = await makeTestClient(undefined, bobsClient.signerContext)
+        const bobsOtherClient = await makeTestClient({ context: bobsClient.signerContext })
         await expect(bobsOtherClient.initializeUser()).toResolve()
         await bobsOtherClient.startSync()
 

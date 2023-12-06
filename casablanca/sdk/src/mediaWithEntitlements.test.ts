@@ -39,14 +39,17 @@ describe('mediaWithEntitlementsTests', () => {
     beforeEach(async () => {
         bobWallet = ethers.Wallet.createRandom()
         bobContext = await makeUserContextFromWallet(bobWallet)
-        bobClient = await makeTestClient(TEST_URL_WITH_ENTITILEMENTS, bobContext)
+        bobClient = await makeTestClient({ url: TEST_URL_WITH_ENTITILEMENTS, context: bobContext })
 
         await bobClient.initializeUser()
         await bobClient.startSync()
 
         aliceWallet = ethers.Wallet.createRandom()
         aliceContext = await makeUserContextFromWallet(aliceWallet)
-        aliceClient = await makeTestClient(TEST_URL_WITH_ENTITILEMENTS, aliceContext)
+        aliceClient = await makeTestClient({
+            url: TEST_URL_WITH_ENTITILEMENTS,
+            context: aliceContext,
+        })
     })
 
     test('clientCanOnlyCreateMediaStreamIfMemberOfSpaceAndChannel', async () => {
