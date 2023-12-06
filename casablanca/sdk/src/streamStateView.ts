@@ -565,7 +565,7 @@ export class StreamStateView {
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
         const unpackedMiniblocks = miniblocks.map((mb) => unpackMiniblock(mb))
-        const prepended = unpackedMiniblocks.flatMap((mb) =>
+        const prependedFull = unpackedMiniblocks.flatMap((mb) =>
             mb.events.map((parsedEvent, i) =>
                 makeRemoteTimelineEvent({
                     parsedEvent,
@@ -575,6 +575,18 @@ export class StreamStateView {
                 }),
             ),
         )
+
+        // aellis 11/23 I don't know why we're getting dupes on scrollback,
+        // but this prevents us from throwing an error
+        const prepended = prependedFull.filter((e) => !this.events.has(e.hashStr))
+        if (prepended.length !== prependedFull.length) {
+            logError('StreamStateView::prependEvents: duplicate events found', {
+                dupes: prependedFull
+                    .filter((e) => this.events.has(e.hashStr))
+                    .map((e) => e.hashStr),
+            })
+        }
+
         this.timeline.unshift(...prepended)
         // prepend the new block events in reverse order
         for (let i = prepended.length - 1; i >= 0; i--) {
