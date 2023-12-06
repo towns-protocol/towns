@@ -89,17 +89,19 @@ export class BaseContractShim<
     public parseError(error: unknown): Error {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
         const anyError = error as any
-        const { errorData, errorMessage } = this.getErrorData(anyError)
+        const { errorData, errorMessage, errorName } = this.getErrorData(anyError)
         /**
          * Return early if we have trouble extracting the error data.
          * Don't know how to decode it.
          */
         if (!errorData) {
-            console.log("don't know how to extract error data")
+            console.log(
+                `parseError ${errorName}: no error data, or don't know how to extract error data`,
+            )
             return {
-                name: UNKNOWN_ERROR,
+                name: errorName ?? UNKNOWN_ERROR,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                message: anyError,
+                message: errorMessage ?? anyError,
             }
         }
         /**
@@ -127,38 +129,44 @@ export class BaseContractShim<
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private getErrorData(anyError: any): { errorData: BytesLike; errorMessage: string } {
+    private getErrorData(anyError: any): {
+        errorData: BytesLike
+        errorMessage: string
+        errorName: string
+    } {
         /**
          * Error data is nested in different places depending on whether the app is
          * running in jest/node, or which blockchain (goerli, or anvil).
          */
-        // Case 1: jest/node error
+        // Case: jest/node error
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         let errorData: BytesLike = anyError.error?.error?.error?.data
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         let errorMessage: string = anyError.error?.error?.error?.message
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        let errorName: string = anyError.error?.error?.error?.name
+
         if (!errorData) {
-            // Case 2: Browser (goerli)
+            // Case: Browser (anvil || base goerli)
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            errorData = anyError.error?.data?.originalError?.data
+            errorData = anyError.error?.error?.data
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            errorMessage = anyError.error?.data?.originalError?.message
+            errorMessage = anyError.error?.error?.message
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            errorName = anyError.error?.error?.name
         }
+
         if (!errorData) {
-            // Case 3: Browser (anvil)
+            // Case: Non blockchain error (i.e. thrown by SpaceDapp) OR unknown error
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            errorData = anyError.error?.data?.data
+            errorMessage = anyError?.message
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            errorMessage = anyError.error?.data?.message
-        }
-        if (!errorData) {
-            // Case 4: Unknown
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            errorMessage = anyError.message
+            errorName = anyError?.name
         }
         return {
             errorData,
             errorMessage,
+            errorName,
         }
     }
 

@@ -10,6 +10,7 @@ import {
     toBytes,
 } from 'viem'
 import { SpaceDappTransaction } from './types'
+import { WalletAlreadyLinkedError, WalletNotLinkedError } from '../error-types'
 
 export class WalletLink {
     private readonly walletLinkShim: IWalletLinkShim
@@ -37,7 +38,7 @@ export class WalletLink {
         })
 
         if (isLinkedAlready) {
-            throw new Error('Wallet is already linked')
+            throw new WalletAlreadyLinkedError()
         }
 
         const currentNonce = await this.walletLinkShim.read({
@@ -82,7 +83,7 @@ export class WalletLink {
         })
 
         if (!isLinkedAlready) {
-            throw new Error('Wallet is not linked')
+            throw new WalletNotLinkedError()
         }
 
         return this.walletLinkShim.write({

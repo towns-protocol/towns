@@ -15,5 +15,5 @@ export const ERROR_NAME_LENGTH_INVALID = 'NameLengthInvalid'
 export const ERROR_NAME_CONTAINS_INVALID_CHARACTERS = 'NameContainsInvalidCharacters'
 export const ERROR_SPACE_ALREADY_REGISTERED = 'SpaceAlreadyRegistered'
 
-// TODO - create custom error and put in lib
+export const ENTITLEMENT_NOT_ALLOWED = 'Entitlement__NotAllowed'
 export const ERROR_GATE_FACET_SERVICE_NOT_ALLOWED = 'GateFacetService__NotAllowed'

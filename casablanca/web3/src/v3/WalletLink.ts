@@ -2,6 +2,7 @@ import { BigNumber, ContractTransaction, ethers } from 'ethers'
 import { IWalletLinkShim } from './WalletLinkShim'
 import { IStaticContractsInfo } from '../IStaticContractsInfo'
 import { arrayify } from 'ethers/lib/utils'
+import { WalletAlreadyLinkedError, WalletNotLinkedError } from '../error-types'
 
 export class WalletLink {
     private readonly walletLinkShim: IWalletLinkShim
@@ -26,7 +27,7 @@ export class WalletLink {
         )
 
         if (isLinkedAlready) {
-            throw new Error('Wallet is already linked')
+            throw new WalletAlreadyLinkedError()
         }
 
         const nonce = await this.walletLinkShim.read.getLatestNonceForRootKey(rootKeyAddress)
@@ -57,7 +58,7 @@ export class WalletLink {
             walletAddress,
         )
         if (!isLinkedAlready) {
-            throw new Error('Wallet is not linked')
+            throw new WalletNotLinkedError()
         }
 
         return await this.walletLinkShim.write(rootKey).removeLink(walletAddress)

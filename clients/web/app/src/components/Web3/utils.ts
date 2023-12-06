@@ -3,13 +3,17 @@ import {
     TokenEntitlementStruct,
     WalletDoesNotMatchSignedInAccountError,
 } from 'use-zion-client'
+
+import { WalletAlreadyLinkedError, WalletNotLinkedError } from '@river/web3'
+
 import {
+    ENTITLEMENT_NOT_ALLOWED,
     ERROR_GATE_FACET_SERVICE_NOT_ALLOWED,
     ERROR_INVALID_PARAMETERS,
     ERROR_NAME_CONTAINS_INVALID_CHARACTERS,
     ERROR_NAME_LENGTH_INVALID,
     ERROR_SPACE_ALREADY_REGISTERED,
-} from '@components/Web3/CreateSpaceForm/constants'
+} from '@components/Web3/constants'
 
 // Evan TODO: pass tokenIds too
 // TBD if we need other params, they can be added one at a time
@@ -46,6 +50,9 @@ export function formatEthDisplay(num: number) {
     return formatted
 }
 
+const walletLinkError = new WalletAlreadyLinkedError()
+const walletNotLinkedError = new WalletNotLinkedError()
+
 export function mapToErrorMessage(error: Error | undefined) {
     if (!error) {
         return 'An unknown error occurred. Cannot save transaction.'
@@ -65,6 +72,12 @@ export function mapToErrorMessage(error: Error | undefined) {
         case isMaybeFundsError(error):
             errorText =
                 'You may have insufficient funds in your wallet. Please check your wallet and try again.'
+            break
+        case errorName === walletLinkError.name:
+            errorText = 'Wallet is already linked.'
+            break
+        case errorName === walletNotLinkedError.name:
+            errorText = 'Wallet is not linked.'
             break
         case errorName === ERROR_NAME_CONTAINS_INVALID_CHARACTERS:
             errorText =
@@ -88,6 +101,9 @@ export function mapToErrorMessage(error: Error | undefined) {
             errorText =
                 'Current wallet is not the same as the signed in account. Please switch your wallet and try again.'
             break
+        case errorName === ENTITLEMENT_NOT_ALLOWED:
+            errorText = 'Not entitled to perform this action.'
+            break
         case errorName === ERROR_GATE_FACET_SERVICE_NOT_ALLOWED:
             errorText = 'Not allowed to create town. Your wallet may contain insufficient funds.'
             break
@@ -105,5 +121,5 @@ export function isLimitReachedError(error: Error | undefined) {
 }
 
 export function isMaybeFundsError(error: Error | undefined) {
-    return error?.message?.toString()?.includes('cannot estimate gas')
+    return error?.message?.toString()?.includes('gas required exceeds allowance (0)')
 }

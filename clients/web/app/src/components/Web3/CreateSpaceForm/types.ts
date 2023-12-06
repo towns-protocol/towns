@@ -1,5 +1,5 @@
 import { UploadImageRequestConfig } from 'api/lib/uploadImage'
-import { MEMBERSHIP_TYPE, SPACE_NAME, TOKENS } from './constants'
+import { MEMBERSHIP_TYPE, SPACE_NAME, TOKENS } from '../constants'
 
 // TODO: this should map to ExternalTokenStruct
 export type TokenDataStruct = {
