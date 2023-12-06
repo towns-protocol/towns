@@ -287,9 +287,9 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         if (!neededKeyIndexs.length) {
             return
         }
-        // decrypte the message
-        const clearText = await this.client.decryptOlmEvent(ciphertext, session.senderKey)
-        const sessionKeys = SessionKeys.fromJsonString(clearText)
+        // decrypt the message
+        const cleartext = await this.client.decryptOlmEvent(ciphertext, session.senderKey)
+        const sessionKeys = SessionKeys.fromJsonString(cleartext)
         check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
         // make megolm sessions
         const sessions = neededKeyIndexs.map((i) => ({

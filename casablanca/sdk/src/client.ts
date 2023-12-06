@@ -1599,7 +1599,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             case 'text': {
                 const decryptedContent = {
                     kind: 'text',
-                    content: clearText,
+                    content: cleartext,
                 } satisfies DecryptedContent_Text
                 return stream.view.updateDecrypted(eventId, decryptedContent, this)
             }
@@ -1705,8 +1705,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        const clearText = event.toJsonString()
-        return this.cryptoBackend.encryptMegolmEvent(streamId, clearText)
+        const cleartext = event.toJsonString()
+        return this.cryptoBackend.encryptMegolmEvent(streamId, cleartext)
     }
 
     async encryptOlm(payload: Message, deviceKeys: UserDevice[]): Promise<Record<string, string>> {
