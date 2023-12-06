@@ -4,6 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router'
 import {
     Permission,
+    RoomIdentifier,
     RoomMember,
     SpaceData,
     getAccountAddress,
@@ -114,7 +115,7 @@ export const TouchHome = () => {
 
     const filteredChannels = useMemo(() => {
         return fuzzysort
-            .go(searchString, channelsWithMentionCountsAndUnread, { key: 'name', all: true })
+            .go(searchString, channelsWithMentionCountsAndUnread, { key: 'label', all: true })
             .map((m) => m.obj)
     }, [channelsWithMentionCountsAndUnread, searchString])
 
@@ -350,9 +351,9 @@ const ErrorFallbackComponent = (props: { error: Error }) => {
 const ChannelList = (props: {
     space: SpaceData
     channels: {
-        channelNetworkId: string
+        id: RoomIdentifier
         isJoined: boolean
-        name: string
+        label: string
         mentionCount: number
         unread: boolean
         muted: boolean
@@ -364,20 +365,20 @@ const ChannelList = (props: {
             {channels.map((c) =>
                 c.isJoined ? (
                     <TouchChannelResultRow
-                        key={c.channelNetworkId}
-                        channelNetworkId={c.channelNetworkId}
-                        name={c.name}
+                        key={c.id.networkId}
+                        channelNetworkId={c.id.networkId}
+                        name={c.label}
                         unread={c.unread}
                         mentionCount={c.mentionCount}
                         muted={c.muted}
                     />
                 ) : (
-                    <Box padding="sm" key={c.channelNetworkId}>
+                    <Box padding="sm" key={c.id.networkId}>
                         <ChannelItem
-                            key={c.channelNetworkId}
+                            key={c.id.networkId}
                             space={space}
-                            channelNetworkId={c.channelNetworkId}
-                            name={c.name}
+                            channelNetworkId={c.id.networkId}
+                            name={c.label}
                         />
                     </Box>
                 ),

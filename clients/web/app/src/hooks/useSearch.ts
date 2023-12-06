@@ -16,9 +16,9 @@ export const useSearch = (searchTerms: string) => {
     const indexedChannels = useMemo(
         () =>
             channelsWithMentionCountsAndUnread.map((c) => ({
-                key: `channel-${c.channelNetworkId}`,
+                key: `channel-${c.id.networkId}`,
                 type: 'channel' as const,
-                body: c.name,
+                body: c.label,
                 source: c,
             })),
         [channelsWithMentionCountsAndUnread],
@@ -43,7 +43,6 @@ export const useSearch = (searchTerms: string) => {
     const order = ['user', 'channel', 'dmMessage', 'message']
 
     const searchResults = useMiniSearch(searchItems, searchTerms)
-        .map((r) => r)
         .map((r) => ({ searchResult: r, item: searchItems.find((i) => i.key === r.id) }))
         .filter(isCombinedResultItem)
         .sort(firstBy((r) => order.indexOf(r.item.type)))

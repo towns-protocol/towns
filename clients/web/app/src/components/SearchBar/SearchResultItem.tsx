@@ -55,13 +55,13 @@ export const ResultItem = (
         case 'channel': {
             const link = createLink({
                 spaceId: miscProps.spaceId?.networkId,
-                channelId: item.source.channelNetworkId,
+                channelId: item.source.id.networkId,
             })
 
             return isTouch ? (
                 <TouchChannelResultRow
-                    channelNetworkId={item.source.channelNetworkId}
-                    name={item.source.name}
+                    channelNetworkId={item.source.id.networkId}
+                    name={item.source.label}
                     unread={item.source.unread}
                     mentionCount={item.source.mentionCount}
                     muted={item.source.muted}
@@ -79,7 +79,7 @@ export const ResultItem = (
                             <Icon type="tag" size="square_xs" />
                         </Box>
                         <Box centerContent>
-                            <Paragraph>{item.source.name}</Paragraph>
+                            <Paragraph>{item.source.label}</Paragraph>
                         </Box>
                     </ItemContainer>
                 </Link>

@@ -119,8 +119,8 @@ describe('<TouchHome />', () => {
                 channelsWithMentionCountsAndUnread: [
                     {
                         isJoined: true,
-                        name: 'general',
-                        channelNetworkId: 'some-network',
+                        label: 'general',
+                        id: { networkId: 'some-network', slug: 'some-network' },
                         disabled: false,
                         mentionCount: 0,
                         unread: false,

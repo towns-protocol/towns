@@ -1,13 +1,26 @@
 import { useMemo } from 'react'
-import { useFullyReadMarkerStore, useSpaceData, useSpaceMentions } from 'use-zion-client'
+import {
+    useFullyReadMarkerStore,
+    useMyChannels,
+    useSpaceData,
+    useSpaceMentions,
+} from 'use-zion-client'
 import { Mute } from '@push-notification-worker/types'
 import { useGetNotificationSettings } from 'api/lib/notificationSettings'
-import { useContractChannelsWithJoinedStatus } from './useContractChannelsWithJoinedStatus'
+
+import { useSpaceChannels } from './useSpaceChannels'
 
 export const useChannelsWithMentionCountsAndUnread = () => {
     const space = useSpaceData()
     const mentions = useSpaceMentions()
-    const { contractChannelsWithJoinedStatus } = useContractChannelsWithJoinedStatus()
+
+    const channels = useSpaceChannels()
+    const myChannelGroups = useMyChannels(space)
+    const joinedChannels = useMemo(
+        () => myChannelGroups.flatMap((g) => g.channels),
+        [myChannelGroups],
+    )
+
     const { data } = useGetNotificationSettings()
     const fullyReadMarkers = useFullyReadMarkerStore()
 
@@ -38,23 +51,26 @@ export const useChannelsWithMentionCountsAndUnread = () => {
     }, [mentions])
 
     const channelsWithMentionCountsAndUnread = useMemo(() => {
-        return contractChannelsWithJoinedStatus
+        return channels
             .map((c) => {
+                const channelId = c.id.networkId
                 return {
                     ...c,
-                    mentionCount: mentionCountsPerChannel.get(c.channelNetworkId) ?? 0,
+                    isJoined: joinedChannels.some((mc) => mc.id.networkId === channelId),
+                    mentionCount: mentionCountsPerChannel.get(channelId) ?? 0,
                     unread:
-                        fullyReadMarkers.markers[c.channelNetworkId]?.isUnread &&
-                        !mutedChannelIds.has(c.channelNetworkId) &&
+                        fullyReadMarkers.markers[channelId]?.isUnread &&
+                        !mutedChannelIds.has(channelId) &&
                         !spaceIsMuted,
-                    muted: mutedChannelIds.has(c.channelNetworkId) || spaceIsMuted,
+                    muted: mutedChannelIds.has(channelId) || spaceIsMuted,
                 }
             })
-            .sort((a, b) => a.name.localeCompare(b.name))
+            .sort((a, b) => a.label.localeCompare(b.label))
     }, [
-        contractChannelsWithJoinedStatus,
+        channels,
+        joinedChannels,
         mentionCountsPerChannel,
-        fullyReadMarkers,
+        fullyReadMarkers.markers,
         mutedChannelIds,
         spaceIsMuted,
     ])

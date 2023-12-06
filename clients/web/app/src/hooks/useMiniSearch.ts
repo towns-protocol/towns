@@ -30,9 +30,11 @@ export const useMiniSearch = (_messages: EventDocument[], _search: string) => {
     )
 
     useEffect(() => {
-        miniSearch.addAll(
-            filteredMessages.filter((m) => m?.source).filter((m) => !miniSearch.has(m.id)),
-        )
+        const all = filteredMessages.filter((m) => m?.source)
+        const existing = all.filter((m) => miniSearch.has(m.id))
+        const missing = all.filter((m) => !miniSearch.has(m.id))
+        miniSearch.addAll(missing)
+        existing.forEach((m) => miniSearch.replace(m))
     }, [filteredMessages, miniSearch])
 
     const results = useMemo(() => {
