@@ -9,19 +9,19 @@ const blockNumberMockResponse = {
 describe('rpc worker tests', () => {
 	const NEXUS_GLOBAL_ACCESS_KEY = 'my-dev-key'
 	const NEXUS_ALCHEMY_KEY = 'my-alchemy-key'
-	const ETH_MAINNET_ENDPOINT = `https://falcon.com/eth/mainnet?key=${NEXUS_GLOBAL_ACCESS_KEY}`
+	const BASE_GOERLI_ENDPOINT = `https://falcon.com/base/goerli?key=${NEXUS_GLOBAL_ACCESS_KEY}`
 
 	beforeEach(() => {
 		const fetchMock = getMiniflareFetchMock()
 		fetchMock.disableNetConnect()
 
-		const origin = fetchMock.get('https://eth-mainnet.alchemyapi.io')
+		const origin = fetchMock.get('https://base-goerli.g.alchemy.com')
 		origin.intercept({ method: 'POST', path: () => true }).reply(200, blockNumberMockResponse)
 	})
 
 	describe('alchemy is up', () => {
 		it('GET /eth/mainnet', async () => {
-			const request = new Request(ETH_MAINNET_ENDPOINT, {
+			const request = new Request(BASE_GOERLI_ENDPOINT, {
 				method: 'GET',
 			})
 			const result = await worker.fetch(request, {
@@ -38,15 +38,15 @@ describe('rpc worker tests', () => {
 				access: 'authorized',
 				code: 200,
 				chain: {
-					chainId: 1,
-					networkName: 'ethereum',
-					chainName: 'mainnet',
+					chainId: 84531,
+					networkName: 'base',
+					chainName: 'goerli',
 				},
 			})
 		})
 
 		it('POST /eth/mainnet', async () => {
-			const request = new Request(ETH_MAINNET_ENDPOINT, {
+			const request = new Request(BASE_GOERLI_ENDPOINT, {
 				method: 'POST',
 				body: JSON.stringify({
 					jsonrpc: '2.0',

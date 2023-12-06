@@ -1,29 +1,18 @@
-import { Nexus } from '@whatsgood/nexus'
+import { NexusServer } from '@whatsgood/nexus'
 
-// Leaving this here for now, so that we can
-// disable any provider we don't want to use,
-// even if their keys are in the env.
-const server = Nexus.createServer({
-	providers: {
-		// alchemy: {
-		// 	disabled: true,
-		// },
-		infura: {
-			disabled: true,
+type Env = Record<string, string>
+
+const server = NexusServer.create<Env>({
+	providers: (ctx) => [
+		{
+			name: 'alchemy',
+			key: ctx.NEXUS_ALCHEMY_KEY,
 		},
-		ankr: {
-			disabled: true,
-		},
-		base: {
-			disabled: true,
-		},
-	},
+	],
+	globalAccessKey: (ctx) => ctx.NEXUS_GLOBAL_ACCESS_KEY,
+	chains: [84531],
 })
 
-export const worker = {
-	async fetch(request: Request, env: Record<string, string>): Promise<Response> {
-		return server.fetch(request, env)
-	},
-}
+export const worker = { fetch: server.fetch }
 
 export default worker
