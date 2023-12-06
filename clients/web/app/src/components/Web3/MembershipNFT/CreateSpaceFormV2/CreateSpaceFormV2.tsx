@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useRef, useState } from 'react'
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { FormProvider, UseFormReturn, useFormContext } from 'react-hook-form'
 import { useMyProfile } from 'use-zion-client'
 import { ethers } from 'ethers'
@@ -129,30 +129,13 @@ export function CreateSpaceFormV2() {
                                         paddingTop="x16"
                                     >
                                         {/* left col */}
-                                        <Stack grow>
+                                        <Stack grow position="relative" zIndex="above">
                                             <Stack>
                                                 <Stack paddingY="x4" gap="sm">
-                                                    <AutoGrowTextArea
-                                                        text={spaceNameValue}
-                                                        style={{
-                                                            fontFamily: 'TitleFont',
-                                                            textTransform: 'uppercase',
-                                                        }}
-                                                        fontSize="h1"
-                                                        maxWidth="500"
-                                                        paddingY="none"
-                                                        paddingX="none"
-                                                        placeholder="town name"
-                                                        tone="none"
-                                                        autoComplete="one-time-code"
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') {
-                                                                e.preventDefault()
-                                                            }
-                                                        }}
-                                                        {..._form.register('spaceName')}
+                                                    <SpaceNameField
+                                                        form={_form}
+                                                        spaceNameValue={spaceNameValue}
                                                     />
-
                                                     {_form.formState.errors['spaceName'] &&
                                                         showSpaceNameError() && (
                                                             <FadeInBox key="spaceNameError">
@@ -295,6 +278,7 @@ export function CreateSpaceFormV2() {
                             <MotionStack
                                 width="600"
                                 position="absolute"
+                                zIndex="above"
                                 background="level1"
                                 height="100vh"
                                 right="none"
@@ -344,6 +328,7 @@ export const TownPageBackgroundImageUpdater = ({
         useFormContext<CreateSpaceFormV2SchemaType>()
 
     const rawImageSrc = watch('spaceIconUrl')
+    const spaceName = watch('spaceName')
     // b/c it's a FileList before upload
     const imageSrc = typeof rawImageSrc === 'string' ? rawImageSrc : undefined
 
@@ -394,6 +379,7 @@ export const TownPageBackgroundImageUpdater = ({
                 <InteractiveTownsToken
                     mintMode
                     size="xl"
+                    spaceName={spaceName}
                     address={transactionDetails.townAddress}
                     imageSrc={imageSrc ?? undefined}
                 />
@@ -441,5 +427,42 @@ function FormFieldEdit({
                 </MotionBox>
             )}
         </Box>
+    )
+}
+
+function SpaceNameField({
+    form,
+    spaceNameValue,
+}: {
+    spaceNameValue: string
+    form: UseFormReturn<CreateSpaceFormV2SchemaType>
+}) {
+    const { setFocus } = useFormContext<CreateSpaceFormV2SchemaType>()
+    useEffect(() => {
+        setFocus('spaceName')
+    }, [setFocus])
+    return (
+        <>
+            <AutoGrowTextArea
+                text={spaceNameValue}
+                style={{
+                    fontFamily: 'TitleFont',
+                    textTransform: 'uppercase',
+                }}
+                fontSize="h1"
+                maxWidth="500"
+                paddingY="none"
+                paddingX="none"
+                placeholder="town name"
+                tone="none"
+                autoComplete="one-time-code"
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault()
+                    }
+                }}
+                {...form.register('spaceName')}
+            />
+        </>
     )
 }

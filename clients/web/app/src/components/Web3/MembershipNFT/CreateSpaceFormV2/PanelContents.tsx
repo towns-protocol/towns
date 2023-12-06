@@ -193,13 +193,29 @@ function PricingContent() {
                 return
             }
 
-            const _price = Number(value)
+            if (value.includes('.')) {
+                const priceHasDecimalAlready = price.toString().includes('.')
+                const [, decimal] = value.split('.')
 
-            setValue('membershipCost', _price, {
+                // user deleted the only decimal number
+                if (!decimal && priceHasDecimalAlready) {
+                    // strip the "." from the value and set to integer
+                    setValue('membershipCost', Number(value), {
+                        shouldValidate: true,
+                    })
+                    return
+                }
+                // user added decimal but hasn't enterd any numbers after it
+                if (!decimal) {
+                    return
+                }
+            }
+
+            setValue('membershipCost', Number(value), {
                 shouldValidate: true,
             })
         },
-        [setValue, setError],
+        [setValue, setError, price],
     )
 
     const onLimitChange = useCallback(
@@ -218,8 +234,8 @@ function PricingContent() {
             // so adding an error in this case
             const _limit = Number(value)
 
-            if (!isNaN(price)) {
-                if (price < 1 && _limit > 1000) {
+            if (!isNaN(+price)) {
+                if (+price < 1 && _limit > 1000) {
                     setError('membershipCost', {
                         message: membershipCostError,
                     })
