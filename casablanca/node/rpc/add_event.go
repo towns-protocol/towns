@@ -296,22 +296,22 @@ func (s *Service) addCommonPayload(ctx context.Context, payload *StreamEvent_Com
 			return err
 		}
 	case *ChannelPayload_Inception:
-		err := s.checkIsMember(ctx, streamView, creator)
+		err := s.checkJoinedOrInvited(ctx, streamView, creator)
 		if err != nil {
 			return err
 		}
 	case *GdmChannelPayload_Inception:
-		err := s.checkIsMember(ctx, streamView, creator)
+		err := s.checkJoinedOrInvited(ctx, streamView, creator)
 		if err != nil {
 			return err
 		}
 	case *DmChannelPayload_Inception:
-		err := s.checkIsMember(ctx, streamView, creator)
+		err := s.checkJoinedOrInvited(ctx, streamView, creator)
 		if err != nil {
 			return err
 		}
 	case *SpacePayload_Inception:
-		err := s.checkIsMember(ctx, streamView, creator)
+		err := s.checkJoinedOrInvited(ctx, streamView, creator)
 		if err != nil {
 			return err
 		}
@@ -462,17 +462,6 @@ func (s *Service) checkMembership(ctx context.Context, streamView StreamView, us
 		return false, RiverError(Err_INTERNAL, "stream is not joinable")
 	}
 	return view.IsUserJoined(userId)
-}
-
-func (s *Service) checkIsMember(ctx context.Context, streamView StreamView, userId string) error {
-	member, err := s.checkJoinedOrInvited(ctx, streamView, userId)
-	if err != nil {
-		return err
-	}
-	if !member {
-		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", userId)
-	}
-	return nil
 }
 
 func (s *Service) checkInvited(ctx context.Context, streamView StreamView, userId string) (bool, error) {
@@ -800,23 +789,27 @@ func (s *Service) addMediaChunk(ctx context.Context, stream AddableStream, strea
 	return stream.AddEvent(ctx, parsedEvent)
 }
 
-func (s *Service) checkJoinedOrInvited(ctx context.Context, streamView StreamView, userId string) (bool, error) {
+func (s *Service) checkJoinedOrInvited(ctx context.Context, streamView StreamView, userId string) error {
 	view := streamView.(JoinableStreamView)
 	if view == nil {
-		return false, RiverError(Err_INTERNAL, "stream is not joinable")
-	}
-	joined, err := view.IsUserJoined(userId)
-	if err != nil {
-		return false, err
+		return RiverError(Err_INTERNAL, "stream is not joinable")
 	}
 
+	joined, err := view.IsUserJoined(userId)
+	if err != nil {
+		return err
+	}
 	if joined {
-		return true, nil
+		return nil
 	}
 
 	invited, err := view.IsUserInvited(userId)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return invited, nil
+	if invited {
+		return nil
+	}
+
+	return RiverError(Err_PERMISSION_DENIED, "user is not a joined or invited to stream", "user", userId)
 }
