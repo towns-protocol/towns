@@ -77,6 +77,13 @@ const searchPaths: Path[] = [
     },
 ]
 
+const townHomePaths: Path[] = [
+    {
+        path: `/${PATHS.SPACES}/:spaceId/*`,
+        replace: `/${PATHS.SPACES}/:spaceId`,
+    },
+]
+
 const threadPaths: Path[] = [
     {
         path: `/${PATHS.MESSAGES}/:channelId/*`,
@@ -177,6 +184,11 @@ const linkParams = {
             route: 'search' as const,
         },
     },
+    home: {
+        params: {
+            route: 'townHome' as const,
+        },
+    },
     messages: {
         params: {
             route: 'messages',
@@ -208,6 +220,9 @@ const getSearchPathsForParams = (linkParams: LinkParams) => {
     }
     if ('route' in linkParams && linkParams.route === 'mentions') {
         return mentionsRoutePaths
+    }
+    if ('route' in linkParams && linkParams.route === 'townHome') {
+        return townHomePaths
     }
     if ('threadId' in linkParams) {
         return threadPaths

@@ -167,7 +167,7 @@ const OutsideTownRoutes = () => {
  */
 const TownRoutes = () => (
     <Routes>
-        <Route path="threads" element={<SpaceThreads />}>
+        <Route path={PATHS.THREADS} element={<SpaceThreads />}>
             <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
             <Route path="profile/:profileId/:nestedPanel" element={<NestedPanel />} />
             <Route path="info" element={<InfoPanelWrapper />} />

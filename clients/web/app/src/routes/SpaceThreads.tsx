@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { firstBy } from 'thenby'
 import {
     ChannelContextProvider,
@@ -7,8 +7,9 @@ import {
     useSpaceId,
     useSpaceThreadRoots,
 } from 'use-zion-client'
+import { useNavigate } from 'react-router'
 import { MessageThread } from '@components/MessageThread/MessageThread'
-import { Box, Divider, Heading, Icon, Paragraph, Stack } from '@ui'
+import { Box, Divider, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
 import { usePersistOrder } from 'hooks/usePersistOrder'
 import { useDevice } from 'hooks/useDevice'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
@@ -17,6 +18,7 @@ import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinn
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
+import { useCreateLink } from 'hooks/useCreateLink'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 function sortThreads(threads: ThreadResult[]) {
@@ -42,11 +44,39 @@ export const SpaceThreads = () => {
         identityFn: (t: ThreadResult) => t.thread.parentId,
     })
 
+    const navigate = useNavigate()
+
+    const { createLink } = useCreateLink()
+    const onTouchClose = useCallback(() => {
+        const link = createLink({ route: 'townHome' })
+        if (link) {
+            navigate(link)
+        }
+    }, [createLink, navigate])
+
     return (
         <CentralPanelLayout>
-            {isTouch && <TouchNavBar>Threads</TouchNavBar>}
+            {isTouch && (
+                <TouchNavBar
+                    contentLeft={
+                        <IconButton
+                            icon="back"
+                            size="square_md"
+                            color="default"
+                            onClick={onTouchClose}
+                        />
+                    }
+                >
+                    Threads
+                </TouchNavBar>
+            )}
             {userId && spaceId && threads.length > 0 ? (
-                <Stack scroll grow id={TouchScrollToTopScrollId.ThreadsTabScrollId}>
+                <Stack
+                    scroll
+                    grow
+                    id={TouchScrollToTopScrollId.ThreadsTabScrollId}
+                    position="relative"
+                >
                     <Stack
                         gap="lg"
                         paddingX={isTouch ? 'none' : 'lg'}

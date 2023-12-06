@@ -1,13 +1,15 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useMyProfile, useSpaceMentions } from 'use-zion-client'
+import { useNavigate } from 'react-router'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { IsolatedMessageItem } from '@components/ResultItem/IsolatedMessageItem'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
-import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
+import { Box, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
+import { useCreateLink } from 'hooks/useCreateLink'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
@@ -41,10 +43,38 @@ export const SpaceMentions = () => {
         return <NoJoinedChannelsFallback />
     }
 
+    const navigate = useNavigate()
+
+    const { createLink } = useCreateLink()
+    const onTouchClose = useCallback(() => {
+        const link = createLink({ route: 'townHome' })
+        if (link) {
+            navigate(link)
+        }
+    }, [createLink, navigate])
+
     return (
         <CentralPanelLayout>
-            {isTouch && <TouchNavBar>Mentions</TouchNavBar>}
-            <Stack scroll height="100%" id={TouchScrollToTopScrollId.MentionsTabScrollId}>
+            {isTouch && (
+                <TouchNavBar
+                    contentLeft={
+                        <IconButton
+                            icon="back"
+                            size="square_md"
+                            color="default"
+                            onClick={onTouchClose}
+                        />
+                    }
+                >
+                    Mentions
+                </TouchNavBar>
+            )}
+            <Stack
+                scroll
+                height="100%"
+                id={TouchScrollToTopScrollId.MentionsTabScrollId}
+                position="relative"
+            >
                 {mentions.length ? (
                     <Stack minHeight="forceScroll">
                         <Stack
