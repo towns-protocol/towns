@@ -7,7 +7,7 @@
         "build": "tsc && vite build",
         "coverage": "vitest run --coverage",
         "dev": "vite",
-        "lint": "eslint . --cache",
+        "lint": "eslint . --cache --max-warnings=0",
         "lint:fix": "yarn lint --fix",
         "preview": "vite preview",
         "test": "yarn test:unit",

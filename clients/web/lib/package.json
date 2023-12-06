@@ -13,7 +13,7 @@
         "csb:test-web-lib": "yarn my-jest --maxWorkers=5",
         "csb:test-web-lib-done": "yarn csb:test-web-lib --group=casablanca",
         "csb:test-web-lib-todo": "yarn csb:test-web-lib --group=-casablanca --group=-integration/load --group=-synthetic",
-        "lint": "eslint .",
+        "lint": "eslint . --max-warnings=0",
         "lint:fix": "yarn lint --fix",
         "my-jest": "NODE_ENV=development yarn node --trace-warnings -r ../../../scripts/node-no-warn.js --experimental-vm-modules --experimental-wasm-modules $(yarn bin jest) --forceExit --silent",
         "postinstall": "tsc",
