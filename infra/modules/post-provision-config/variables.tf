@@ -21,12 +21,18 @@ variable "river_node_subnets" {
   type        = list(string)
 }
 
-variable "rds_river_node_credentials_arn" {
-  description = "The arn of the rds river node credentials"
-  type        = string
+variable "river_user_db_config" {
+  description = "The granular connection fields to the river db"
+  type = object({
+    host         = string
+    port         = number
+    database     = string
+    user         = string
+    password_arn = string
+  })
   validation {
-    condition     = var.rds_river_node_credentials_arn != ""
-    error_message = "The rds river node credentials arn cannot be empty."
+    condition     = var.river_user_db_config != null
+    error_message = "The river db connection cannot be null."
   }
 }
 

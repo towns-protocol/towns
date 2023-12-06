@@ -16,15 +16,6 @@ variable "vpc_id" {
   }
 }
 
-variable "ecs_task_execution_role_id" {
-  description = "The ecs task execution role id"
-  type        = string
-  validation {
-    condition     = var.ecs_task_execution_role_id != ""
-    error_message = "The ecs task execution role id cannot be empty."
-  }
-}
-
 variable "database_subnets" {
   description = "List of subnet IDs used by database subnet group created"
   type        = list(string)

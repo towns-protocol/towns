@@ -19,59 +19,6 @@ locals {
   iam_database_authentication_enabled = true
 }
 
-resource "random_password" "rds_river_node_postgresql_password" {
-  length  = 32
-  special = false
-}
-
-resource "aws_secretsmanager_secret" "rds_river_node_credentials" {
-  name = "${var.river_node_name}-postgres-db-secret"
-  tags = local.tags
-}
-
-resource "aws_secretsmanager_secret_version" "rds_river_node_credentials" {
-  secret_id     = aws_secretsmanager_secret.rds_river_node_credentials.id
-  secret_string = <<EOF
-{
-  "username": "river",
-  "database": "river",
-  "password": "${random_password.rds_river_node_postgresql_password.result}",
-  "engine": "postgres",
-  "host": "${module.rds_aurora_postgresql.cluster_endpoint}",
-  "port": ${module.rds_aurora_postgresql.cluster_port},
-  "dbClusterIdentifier": "${module.rds_aurora_postgresql.cluster_id}",
-  "dbConnectionString": "postgresql://river:${random_password.rds_river_node_postgresql_password.result}@${module.rds_aurora_postgresql.cluster_endpoint}:${module.rds_aurora_postgresql.cluster_port}/river?sslmode=disable&pool_max_conns=1000"
-}
-EOF
-}
-
-# allow ecs_task_execution_role to read the secret but not write it
-resource "aws_iam_role_policy" "ecs-to-river-postgres-secret-policy" {
-  name = "${var.river_node_name}-postgres-secret-policy"
-  role = var.ecs_task_execution_role_id
-
-  depends_on = [
-    aws_secretsmanager_secret_version.rds_river_node_credentials
-  ]
-
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${aws_secretsmanager_secret.rds_river_node_credentials.arn}"
-        ]
-      }
-    ]
-  }
-  EOF
-}
-
 data "aws_rds_engine_version" "postgresql" {
   engine  = "aurora-postgresql"
   version = "15.4"

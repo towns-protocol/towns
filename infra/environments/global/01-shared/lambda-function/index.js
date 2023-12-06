@@ -1,6 +1,7 @@
 const {SecretsManagerClient, GetSecretValueCommand, PutSecretValueCommand} = require('@aws-sdk/client-secrets-manager')
 const {Signer} = require('@aws-sdk/rds-signer')
 const {Client} = require('pg');
+const crypto = require('crypto');
 
 const Wallet = require('ethereumjs-wallet');
 const EthereumUtil = require('ethereumjs-util');
@@ -8,6 +9,26 @@ const EthereumUtil = require('ethereumjs-util');
 const LAMBDA_DB_USER='root'
 const CHAIN_ID = 84531;
 const BASE_URL = `https://nexus-rpc-worker-test-beta.towns.com/${CHAIN_ID}`
+
+function generatePassword(length = 12) {
+  return crypto.randomBytes(length).toString('base64').slice(0, length);
+}
+
+function generatePostgresPassword() {
+  const PG_PASSWORD_LENGTH = 32;
+  let password = generatePassword(PG_PASSWORD_LENGTH);
+  while (
+    password.includes("'") || 
+    password.includes('"') || 
+    password.includes('\\') || 
+    password.includes(';')
+  ) {
+    console.log('regenerating password')
+    password = generatePassword(PG_PASSWORD_LENGTH);
+  }
+  console.log('generated password.');
+  return password;
+}
 
 function generateFromPrivateKey(privateKey) {
   console.log('generating from private key')
@@ -73,23 +94,12 @@ async function setHomechainNetworkUrlSecret() {
   console.log('done setting homechain network url secret')
 }
   
-
-const getRiverDBCredentials = async () => {
-  console.log('getting river db credentials')
-  const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
-  const command = new GetSecretValueCommand({
-    SecretId: process.env.RIVER_DB_CREDENTIALS_ARN
-  })
-  const secretRaw = await secretsClient.send(command);
-  return JSON.parse(secretRaw.SecretString)
-}
-
-const getRiverDBAuthToken = async (secretParsed) => {
+const getRiverDBAuthToken = async (riverUserDBConfig) => {
   console.log('getting river db auth token')
   const signer = new Signer({
     region: 'us-east-1',
-    hostname: secretParsed.host,
-    port: secretParsed.port,
+    hostname: riverUserDBConfig.HOST,
+    port: riverUserDBConfig.PORT,
     username: LAMBDA_DB_USER,
   })
 
@@ -98,18 +108,18 @@ const getRiverDBAuthToken = async (secretParsed) => {
 
 }
 
-const configRiverDB = async ({
-  secretParsed,
+const configureRiverDB = async ({
   token,
   address,
+  riverUserDBConfig,
 }) => {
   console.log('configuring river db')
   const pgClient = new Client({
-    host: secretParsed.host,
-    database: secretParsed.database,
+    host: riverUserDBConfig.HOST,
+    database: riverUserDBConfig.DATABASE,
     password: token,
     user: LAMBDA_DB_USER,
-    port: secretParsed.port,
+    port: riverUserDBConfig.PORT,
     ssl: {
       rejectUnauthorized: false
     }
@@ -123,7 +133,8 @@ const configRiverDB = async ({
     console.log('connected')
 
     console.log('updating db password')
-    await pgClient.query(`ALTER USER river WITH PASSWORD '${secretParsed.password}';`)
+    // TODO: CREATE USER IF NOT EXISTS
+    await pgClient.query(`ALTER USER river WITH PASSWORD '${riverUserDBConfig.PASSWORD}';`)
 
     console.log('updating schema name')
     const OLD_SCHEMA_NAME = 's0xbf2fe1d28887a0000a1541291c895a26bd7b1ddd'
@@ -145,18 +156,46 @@ const configRiverDB = async ({
   }
 }
 
+async function findOrCreateRiverUserDBConfig() {
+  console.log('finding or creating river user password')
+  const RIVER_USER_DB_CONFIG = JSON.parse(process.env.RIVER_USER_DB_CONFIG)
+  
+  const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
+  const command = new GetSecretValueCommand({
+    SecretId: RIVER_USER_DB_CONFIG.PASSWORD_ARN
+  })
+  const secretValue = await secretsClient.send(command);
+  let password = secretValue.SecretString;
+  if (password === 'DUMMY') {
+    console.log('saving new river db password')
+    password = generatePostgresPassword();
+    const putSecretCommand = new PutSecretValueCommand({
+      SecretId: RIVER_USER_DB_CONFIG.PASSWORD_ARN,
+      SecretString: password,
+    })
+    await secretsClient.send(putSecretCommand);
+  } else {
+    console.log('river db password already set')
+  }
+
+  return {
+    ...RIVER_USER_DB_CONFIG,
+    PASSWORD: password,
+  }
+}
+
 exports.handler = async (event, context, callback) => {
   try {
     await setHomechainNetworkUrlSecret();
     const privateKey = await getOrSetWalletPrivateKey()
     const wallet = generateFromPrivateKey(privateKey);
     const address = wallet.getAddressString();
-    const secretParsed = await getRiverDBCredentials();
-    const token = await getRiverDBAuthToken(secretParsed);
-    await configRiverDB({
+    const riverUserDBConfig = await findOrCreateRiverUserDBConfig();
+    const token = await getRiverDBAuthToken(riverUserDBConfig);
+    await configureRiverDB({
       token,
-      secretParsed,
       address,
+      riverUserDBConfig
     });
     callback(null, 'done')
   } catch (e) {

@@ -130,7 +130,6 @@ module "river_node_db" {
   river_node_subnets                          = var.node_subnets
   vpc_id                                      = var.vpc_id
   river_node_name                             = local.node_name
-  ecs_task_execution_role_id                  = aws_iam_role.ecs_task_execution_role.id
   cluster_source_identifier                   = var.database_cluster_source_identifier
   is_transient                                = var.is_transient
 }
@@ -148,6 +147,16 @@ resource "aws_security_group" "post_provision_config_lambda_function_sg" {
   }
 }
 
+resource "aws_secretsmanager_secret" "rds_river_node_password" {
+  name = "${local.node_name}-postgres-db-password"
+  tags = local.river_node_tags
+}
+
+resource "aws_secretsmanager_secret_version" "rds_river_node_password" {
+  secret_id     = aws_secretsmanager_secret.rds_river_node_password.id
+  secret_string = "DUMMY"
+}
+
 module "post_provision_config" {
   source = "../../modules/post-provision-config"
 
@@ -155,7 +164,7 @@ module "post_provision_config" {
   river_node_subnets                = var.node_subnets
   river_node_wallet_credentials_arn = aws_secretsmanager_secret.river_node_wallet_credentials.arn
   homechain_network_url_secret_arn  = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
-  rds_river_node_credentials_arn    = module.river_node_db.rds_river_node_credentials_arn
+  river_user_db_config              = local.river_user_db_config
   rds_cluster_resource_id           = module.river_node_db.rds_aurora_postgresql.cluster_resource_id
   vpc_id                            = var.vpc_id
   security_group_id                 = aws_security_group.post_provision_config_lambda_function_sg.id
@@ -228,6 +237,28 @@ resource "aws_iam_role_policy" "ecs-to-wallet-secret-policy" {
         "Effect": "Allow",
         "Resource": [
           "${aws_secretsmanager_secret.river_node_wallet_credentials.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
+resource "aws_iam_role_policy" "ecs-to-rds-password-policy" {
+  name = "${local.node_name}-rds-password"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${aws_secretsmanager_secret.rds_river_node_password.arn}"
         ]
       }
     ]
@@ -404,6 +435,16 @@ resource "aws_lb_listener_rule" "host_rule" {
   }
 }
 
+locals {
+  river_user_db_config = {
+    host         = module.river_node_db.rds_aurora_postgresql.cluster_endpoint
+    port         = "5432"
+    database     = "river"
+    user         = "river"
+    password_arn = aws_secretsmanager_secret.rds_river_node_password.arn
+  }
+}
+
 resource "aws_ecs_task_definition" "river-fargate" {
   family = "${local.node_name}-fargate"
 
@@ -452,7 +493,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
     secrets = [
       {
         name      = "DATABASE__PASSWORD",
-        valueFrom = "${module.river_node_db.rds_river_node_credentials_arn}:password::"
+        valueFrom = aws_secretsmanager_secret.rds_river_node_password.arn
       },
       {
         name      = "WALLETPRIVATEKEY"
@@ -533,19 +574,19 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "DATABASE__HOST",
-        value = module.river_node_db.rds_aurora_postgresql.cluster_endpoint
+        value = local.river_user_db_config.host
       },
       {
         name  = "DATABASE__PORT",
-        value = "5432"
+        value = local.river_user_db_config.port
       },
       {
         name  = "DATABASE__USER",
-        value = "river"
+        value = local.river_user_db_config.user
       },
       {
         name  = "DATABASE__DATABASE",
-        value = "river"
+        value = local.river_user_db_config.database
       },
       {
         name  = "DATABASE__EXTRA"

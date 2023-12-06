@@ -103,20 +103,21 @@ resource "null_resource" "lambda_npm_dependencies" {
   }
 }
 
+locals {
+  lambda_zip_file_name = "post_provision_config_lambda_code.zip"
+  source_dir           = "${path.root}/lambda-function/"
+}
+
 data "null_data_source" "wait_for_npm_dependecies_exporter" {
   inputs = {
     lambda_dependency_id = null_resource.lambda_npm_dependencies.id
-    source_dir           = "${path.root}/lambda-function/"
+    source_dir           = local.source_dir
   }
-}
-
-locals {
-  lambda_zip_file_name = "post_provision_config_lambda_code.zip"
 }
 
 data "archive_file" "build_zip_lambda" {
   output_path = "${path.root}/${local.lambda_zip_file_name}"
-  source_dir  = data.null_data_source.wait_for_npm_dependecies_exporter.outputs["source_dir"]
+  source_dir  = local.source_dir
   type        = "zip"
 }
 
@@ -129,4 +130,12 @@ resource "aws_s3_object" "post_provision_config_lambda_code" {
   bucket = aws_s3_bucket.hnt_lambdas.bucket
   key    = local.lambda_zip_file_name
   source = data.archive_file.build_zip_lambda.output_path
+  etag   = data.archive_file.build_zip_lambda.output_md5
+}
+
+resource "aws_s3_bucket_versioning" "post_provision_config_lambda_code_versioning" {
+  bucket = aws_s3_bucket.hnt_lambdas.bucket
+  versioning_configuration {
+    status = "Enabled"
+  }
 }

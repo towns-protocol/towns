@@ -21,8 +21,9 @@ module "post_provision_config_lambda_function" {
   timeout                = 30 #seconds
   create_package         = false
   s3_existing_package = {
-    bucket = local.post_provision_config_lambda_s3_object.bucket
-    key    = local.post_provision_config_lambda_s3_object.key
+    bucket     = local.post_provision_config_lambda_s3_object.bucket
+    key        = local.post_provision_config_lambda_s3_object.key
+    version_id = local.post_provision_config_lambda_s3_object.version_id
   }
 
   vpc_subnet_ids         = var.river_node_subnets
@@ -36,25 +37,31 @@ module "post_provision_config_lambda_function" {
   attach_policy_json = true
 
   environment_variables = {
-    RIVER_DB_CREDENTIALS_ARN          = var.rds_river_node_credentials_arn
+    RIVER_USER_DB_CONFIG = jsonencode({
+      HOST         = var.river_user_db_config.host
+      PORT         = var.river_user_db_config.port
+      DATABASE     = var.river_user_db_config.database
+      USER         = var.river_user_db_config.user
+      PASSWORD_ARN = var.river_user_db_config.password_arn
+    })
     RIVER_NODE_WALLET_CREDENTIALS_ARN = var.river_node_wallet_credentials_arn
     RPC_PROXY_GLOBAL_ACCESS_KEY_ARN   = local.rpc_proxy_global_access_key_arn
     HOME_CHAIN_NETWORK_URL_SECRET_ARN = var.homechain_network_url_secret_arn
   }
 
 
-  # TODO: add rds-connect policy
   policy_json = <<-EOT
     {
       "Version": "2012-10-17",
       "Statement": [
         {
           "Action": [
-            "secretsmanager:GetSecretValue"
+            "secretsmanager:GetSecretValue",
+            "secretsmanager:PutSecretValue"
           ],
           "Effect": "Allow",
           "Resource": [
-            "${var.rds_river_node_credentials_arn}"
+            "${var.river_user_db_config.password_arn}"
           ]
         },
         {
