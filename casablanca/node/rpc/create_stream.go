@@ -2,11 +2,11 @@ package rpc
 
 import (
 	"casablanca/node/auth"
-	"casablanca/node/common"
 	"casablanca/node/dlog"
 	. "casablanca/node/events"
 	"casablanca/node/infra"
 	. "casablanca/node/protocol"
+	"casablanca/node/shared"
 	"context"
 	"fmt"
 
@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	. "casablanca/node/base"
-	. "casablanca/node/common"
+	. "casablanca/node/shared"
 )
 
 var (
@@ -588,7 +588,7 @@ func (s *Service) createStream_Media(
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel does not exist")
 	}
 
-	user, err := common.AddressHex(parsedEvents[0].Event.CreatorAddress)
+	user, err := shared.AddressHex(parsedEvents[0].Event.CreatorAddress)
 	if err != nil {
 		return nil, err
 	}

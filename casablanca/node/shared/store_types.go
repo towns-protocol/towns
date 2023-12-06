@@ -1,7 +1,7 @@
 /*
 Stream types for interacting with the blockchain layer.
 */
-package common
+package shared
 
 type StreamType int64
 

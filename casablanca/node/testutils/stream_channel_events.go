@@ -1,11 +1,11 @@
 package testutils
 
 import (
-	"casablanca/node/common"
 	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/protocol"
+	"casablanca/node/shared"
 	"casablanca/node/storage"
 	"context"
 	"testing"
@@ -28,7 +28,7 @@ type StreamContext_T struct {
 	t           *testing.T
 	Context     context.Context
 	StreamCache events.StreamCache
-	StreamInfo  *common.StreamInfo
+	StreamInfo  *shared.StreamInfo
 	SyncStream  *events.SyncStream
 	StreamView  *events.StreamView
 }

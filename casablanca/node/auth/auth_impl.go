@@ -2,12 +2,12 @@ package auth
 
 import (
 	. "casablanca/node/base"
-	"casablanca/node/common"
 	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/dlog"
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
+	"casablanca/node/shared"
 	"context"
 	_ "embed"
 	"errors"
@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	eth "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type AuthorizationArgs struct {
@@ -25,7 +25,7 @@ type AuthorizationArgs struct {
 }
 
 type AuthChecker interface {
-	IsAllowed(ctx context.Context, args AuthorizationArgs, info *common.StreamInfo) (bool, error)
+	IsAllowed(ctx context.Context, args AuthorizationArgs, info *shared.StreamInfo) (bool, error)
 }
 
 const (
@@ -97,7 +97,7 @@ func NewChainAuth(
 	}, nil
 }
 
-func (ca *chainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, streamInfo *common.StreamInfo) (bool, error) {
+func (ca *chainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, streamInfo *shared.StreamInfo) (bool, error) {
 	log := dlog.CtxLog(ctx)
 
 	userIdentifier := CreateUserIdentifier(args.UserId)
@@ -112,31 +112,31 @@ func (ca *chainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, stre
 	return result, nil
 }
 
-func (ca *chainAuth) isWalletAllowed(ctx context.Context, wallet eth.Address, permission Permission, streamInfo *common.StreamInfo) (bool, error) {
+func (ca *chainAuth) isWalletAllowed(ctx context.Context, wallet common.Address, permission Permission, streamInfo *shared.StreamInfo) (bool, error) {
 	// Check if user is entitled to space / channel.
 	switch streamInfo.StreamType {
-	case common.Space:
+	case shared.Space:
 		return ca.isEntitledToSpace(streamInfo, wallet, permission)
-	case common.Channel:
+	case shared.Channel:
 		return ca.isEntitledToChannel(streamInfo, wallet, permission)
-	case common.DMChannel:
+	case shared.DMChannel:
 		fallthrough
-	case common.GDMChannel:
+	case shared.GDMChannel:
 		fallthrough
-	case common.User:
+	case shared.User:
 		fallthrough
-	case common.UserSettings:
+	case shared.UserSettings:
 		fallthrough
-	case common.Unknown:
+	case shared.Unknown:
 		fallthrough
-	case common.InvalidStreamType:
+	case shared.InvalidStreamType:
 		fallthrough
 	default:
 		return false, fmt.Errorf("unhandled stream type: %s", streamInfo.StreamType)
 	}
 }
 
-func (ca *chainAuth) isEntitledToSpace(streamInfo *common.StreamInfo, user eth.Address, permission Permission) (bool, error) {
+func (ca *chainAuth) isEntitledToSpace(streamInfo *shared.StreamInfo, user common.Address, permission Permission) (bool, error) {
 	disabledCacheHit := true
 	// Intentionally use a const for the permission and userid here, as we want to check if the space is enabled, not if the user is entitled to it.
 	isEnabled, err := ca.entitlementCache.executeUsingCache(AuthorizationArgs{UserId: "all", StreamId: streamInfo.SpaceId, Permission: 0}, func() (bool, error) {
@@ -182,7 +182,7 @@ func (ca *chainAuth) isEntitledToSpace(streamInfo *common.StreamInfo, user eth.A
 	return isEntitled, nil
 }
 
-func (ca *chainAuth) isEntitledToChannel(streamInfo *common.StreamInfo, user eth.Address, permission Permission) (bool, error) {
+func (ca *chainAuth) isEntitledToChannel(streamInfo *shared.StreamInfo, user common.Address, permission Permission) (bool, error) {
 	disabledCacheHit := true
 
 	// Intentionally use a const for th
@@ -235,12 +235,12 @@ type EntitlementCheckResult struct {
 	Err     error
 }
 
-func (ca *chainAuth) getLinkedWallets(ctx context.Context, rootKey eth.Address) ([]eth.Address, error) {
+func (ca *chainAuth) getLinkedWallets(ctx context.Context, rootKey common.Address) ([]common.Address, error) {
 	log := dlog.CtxLog(ctx)
 
 	if ca.walletLinkContract == nil {
 		log.Warn("Wallet link contract is not setup properly, returning root key only")
-		return []eth.Address{rootKey}, nil
+		return []common.Address{rootKey}, nil
 	}
 
 	// get all the wallets for the root key.
@@ -260,7 +260,7 @@ func (ca *chainAuth) getLinkedWallets(ctx context.Context, rootKey eth.Address) 
  * If any of the wallets is entitled, the user is entitled and all inflight requests are cancelled.
  * If any of the operations fail before getting positive result, the whole operation fails.
  */
-func (ca *chainAuth) checkEntitiement(ctx context.Context, rootKey eth.Address, permission Permission, streamInfo *common.StreamInfo) (bool, error) {
+func (ca *chainAuth) checkEntitiement(ctx context.Context, rootKey common.Address, permission Permission, streamInfo *shared.StreamInfo) (bool, error) {
 	log := dlog.CtxLog(ctx)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
@@ -292,7 +292,7 @@ func (ca *chainAuth) checkEntitiement(ctx context.Context, rootKey eth.Address, 
 		// Check all wallets in parallel.
 		for _, wallet := range wallets {
 			wg.Add(1)
-			go func(address eth.Address) {
+			go func(address common.Address) {
 				defer wg.Done()
 				result, err := ca.isWalletAllowed(ctx, address, permission, streamInfo)
 				resultsChan <- EntitlementCheckResult{Allowed: result, Err: err}

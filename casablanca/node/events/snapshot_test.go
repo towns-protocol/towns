@@ -1,9 +1,9 @@
 package events
 
 import (
-	"casablanca/node/common"
 	"casablanca/node/crypto"
 	"casablanca/node/protocol"
+	"casablanca/node/shared"
 	"context"
 	"testing"
 
@@ -153,7 +153,7 @@ func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 	inception := make_Space_Inception(wallet, streamId, t)
 	snapshot1, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
-	userId, err := common.AddressHex(inception.Event.CreatorAddress)
+	userId, err := shared.AddressHex(inception.Event.CreatorAddress)
 	assert.NoError(t, err)
 
 	snapshot := proto.Clone(snapshot1).(*Snapshot)

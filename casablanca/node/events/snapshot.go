@@ -1,8 +1,8 @@
 package events
 
 import (
-	"casablanca/node/common"
 	. "casablanca/node/protocol"
+	"casablanca/node/shared"
 	"errors"
 	"fmt"
 	"sort"
@@ -105,7 +105,7 @@ func make_SnapshotContent(iPayload IsInceptionPayload) (IsSnapshot_Content, erro
 func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64, eventNum int64) error {
 	switch payload := event.Event.Payload.(type) {
 	case *StreamEvent_SpacePayload:
-		creator, err := common.AddressHex(event.Event.CreatorAddress)
+		creator, err := shared.AddressHex(event.Event.CreatorAddress)
 		if err != nil {
 			return err
 		}
@@ -123,13 +123,13 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	case *StreamEvent_UserDeviceKeyPayload:
 		return update_Snapshot_UserDeviceKey(iSnapshot, payload.UserDeviceKeyPayload)
 	case *StreamEvent_UserToDevicePayload:
-		creator, err := common.AddressHex(event.Event.CreatorAddress)
+		creator, err := shared.AddressHex(event.Event.CreatorAddress)
 		if err != nil {
 			return err
 		}
 		return update_Snapshot_UserToDevice(iSnapshot, payload.UserToDevicePayload, creator, miniblockNum)
 	case *StreamEvent_CommonPayload:
-		creator, err := common.AddressHex(event.Event.CreatorAddress)
+		creator, err := shared.AddressHex(event.Event.CreatorAddress)
 		if err != nil {
 			return err
 		}

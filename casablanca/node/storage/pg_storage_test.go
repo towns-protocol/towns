@@ -2,7 +2,7 @@ package storage
 
 import (
 	. "casablanca/node/base"
-	. "casablanca/node/common"
+	. "casablanca/node/shared"
 	"casablanca/node/testutils/dbtestutils"
 	"context"
 	"os"

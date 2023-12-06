@@ -2,60 +2,60 @@ package events
 
 import (
 	. "casablanca/node/base"
-	"casablanca/node/common"
 	. "casablanca/node/protocol"
+	"casablanca/node/shared"
 )
 
-func StreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string, userId string) (*common.StreamInfo, error) {
+func StreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string, userId string) (*shared.StreamInfo, error) {
 	if payload == nil {
 		return nil, RiverError(Err_STREAM_NO_INCEPTION_EVENT, "no inception payload for stream", "streamId", streamId)
 	}
 
 	switch inception := payload.(type) {
 	case *UserPayload_Inception:
-		return &common.StreamInfo{
+		return &shared.StreamInfo{
 			SpaceId:    inception.StreamId,
-			StreamType: common.User,
+			StreamType: shared.User,
 		}, nil
 	case *ChannelPayload_Inception:
-		return &common.StreamInfo{
+		return &shared.StreamInfo{
 			SpaceId:    inception.SpaceId,
 			ChannelId:  inception.StreamId,
-			StreamType: common.Channel,
+			StreamType: shared.Channel,
 		}, nil
 	case *GdmChannelPayload_Inception:
-		return &common.StreamInfo{
+		return &shared.StreamInfo{
 			SpaceId:    inception.StreamId,
-			StreamType: common.GDMChannel,
+			StreamType: shared.GDMChannel,
 		}, nil
 	case *DmChannelPayload_Inception:
-		return &common.StreamInfo{
+		return &shared.StreamInfo{
 			SpaceId:    inception.StreamId,
-			StreamType: common.DMChannel,
+			StreamType: shared.DMChannel,
 		}, nil
 	case *SpacePayload_Inception:
-		return &common.StreamInfo{
+		return &shared.StreamInfo{
 			SpaceId:    inception.StreamId,
-			StreamType: common.Space,
+			StreamType: shared.Space,
 		}, nil
 	case *UserSettingsPayload_Inception:
-		return &common.StreamInfo{
+		return &shared.StreamInfo{
 			SpaceId:    inception.StreamId,
-			StreamType: common.UserSettings,
+			StreamType: shared.UserSettings,
 		}, nil
 	default:
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "unimplemented stream type").Func("StreamInfoFromInceptionPayload")
 	}
 }
 
-func DMStreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string) (*common.DMStreamInfo, error) {
+func DMStreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string) (*shared.DMStreamInfo, error) {
 	if payload == nil {
 		return nil, RiverError(Err_STREAM_NO_INCEPTION_EVENT, "no inception payload for stream", "streamId", streamId)
 	}
 
 	switch inception := payload.(type) {
 	case *DmChannelPayload_Inception:
-		return &common.DMStreamInfo{
+		return &shared.DMStreamInfo{
 			FirstPartyId:  inception.FirstPartyId,
 			SecondPartyId: inception.SecondPartyId,
 		}, nil
@@ -64,13 +64,13 @@ func DMStreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId strin
 	}
 }
 
-func MediaStreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string) (*common.MediaStreamInfo, error) {
+func MediaStreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string) (*shared.MediaStreamInfo, error) {
 	if payload == nil {
 		return nil, RiverError(Err_STREAM_NO_INCEPTION_EVENT, "no inception payload for stream", "streamId", streamId)
 	}
 	switch inception := payload.(type) {
 	case *MediaPayload_Inception:
-		return &common.MediaStreamInfo{
+		return &shared.MediaStreamInfo{
 			ChannelId:  inception.ChannelId,
 			MediaId:    inception.StreamId,
 			ChunkCount: inception.ChunkCount,

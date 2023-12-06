@@ -10,11 +10,11 @@ import (
 
 	"casablanca/node/auth"
 	. "casablanca/node/base"
-	"casablanca/node/common"
 	"casablanca/node/dlog"
 	. "casablanca/node/events"
 	"casablanca/node/infra"
 	. "casablanca/node/protocol"
+	"casablanca/node/shared"
 )
 
 var (
@@ -190,7 +190,7 @@ func (s *Service) addUserPayload(ctx context.Context, payload *StreamEvent_UserP
 }
 
 func (s *Service) addUsernameEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, username *SpacePayload_Username) error {
-	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	creator, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func (s *Service) addUsernameEvent(ctx context.Context, stream AddableStream, vi
 }
 
 func (s *Service) addDisplayNameEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, username *SpacePayload_DisplayName) error {
-	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	creator, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -285,7 +285,7 @@ func (s *Service) addMediaPayload(ctx context.Context, payload *StreamEvent_Medi
 }
 
 func (s *Service) addCommonPayload(ctx context.Context, payload *StreamEvent_CommonPayload, stream AddableStream, streamView StreamView, parsedEvent *ParsedEvent) error {
-	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	creator, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -339,7 +339,7 @@ func (s *Service) addCommonPayload(ctx context.Context, payload *StreamEvent_Com
 
 func (s *Service) addChannelMessage(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	streamId := view.StreamId()
-	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	user, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -390,7 +390,7 @@ func (s *Service) addChannelMessage(ctx context.Context, stream AddableStream, v
 
 func (s *Service) addDMChannelMessage(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	streamId := view.StreamId()
-	userId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	userId, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -425,7 +425,7 @@ func (s *Service) addDMChannelMessage(ctx context.Context, stream AddableStream,
 
 func (s *Service) addGDMChannelMessage(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	streamId := view.StreamId()
-	userId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	userId, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -473,7 +473,7 @@ func (s *Service) checkInvited(ctx context.Context, streamView StreamView, userI
 }
 
 func (s *Service) checkCreatedByValidNode(ctx context.Context, parsedEvent *ParsedEvent) error {
-	creatorAddressStr, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	creatorAddressStr, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -499,7 +499,7 @@ func (s *Service) updateChannel(ctx context.Context, stream AddableStream, view 
 func (s *Service) addMembershipEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
 	streamId := view.StreamId()
 	userId := membership.UserId
-	userStreamId, err := common.UserStreamIdFromId(userId)
+	userStreamId, err := shared.UserStreamIdFromId(userId)
 	if err != nil {
 		return err
 	}
@@ -516,7 +516,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream AddableStream, 
 		return err
 	}
 
-	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	creator, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -595,7 +595,7 @@ func (s *Service) addDMMembershipEvent(ctx context.Context, stream AddableStream
 		return RiverError(Err_PERMISSION_DENIED, "user is not a member of DM", "user", membership.UserId)
 	}
 
-	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	creator, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -609,7 +609,7 @@ func (s *Service) addDMMembershipEvent(ctx context.Context, stream AddableStream
 	}
 
 	userId := membership.UserId
-	userStreamId, err := common.UserStreamIdFromId(userId)
+	userStreamId, err := shared.UserStreamIdFromId(userId)
 	if err != nil {
 		return err
 	}
@@ -630,7 +630,7 @@ func (s *Service) addDMMembershipEvent(ctx context.Context, stream AddableStream
 func (s *Service) addGDMMembershipEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
 
 	streamId := view.StreamId()
-	creatorUserId, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	creatorUserId, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -669,7 +669,7 @@ func (s *Service) addGDMMembershipEvent(ctx context.Context, stream AddableStrea
 		return RiverError(Err_BAD_EVENT, "invalid membership op")
 	}
 
-	userStreamId, err := common.UserStreamIdFromId(membership.UserId)
+	userStreamId, err := shared.UserStreamIdFromId(membership.UserId)
 	if err != nil {
 		return err
 	}
@@ -689,7 +689,7 @@ func (s *Service) addGDMMembershipEvent(ctx context.Context, stream AddableStrea
 }
 
 func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, userStream AddableStream, userStreamView StreamView, originStreamId string, originEvent *ParsedEvent, op MembershipOp) error {
-	inviterId, err := common.AddressHex(originEvent.Event.CreatorAddress)
+	inviterId, err := shared.AddressHex(originEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -717,7 +717,7 @@ func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, use
 }
 
 func (s *Service) checkIsCreatorOfUserStream(ctx context.Context, streamView StreamView, parsedEvent *ParsedEvent) error {
-	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	creator, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -740,12 +740,12 @@ func (s *Service) checkUserDeviceKeyEvent(
 	streamView StreamView,
 	parsedEvent *ParsedEvent) error {
 	// only creator is allowed to add to user device key stream
-	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	creator, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
 
-	deviceStreamId, err := common.UserDeviceKeyStreamIdFromId(creator)
+	deviceStreamId, err := shared.UserDeviceKeyStreamIdFromId(creator)
 	if err != nil {
 		return err
 	}

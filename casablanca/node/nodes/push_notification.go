@@ -2,10 +2,10 @@ package nodes
 
 import (
 	"bytes"
-	"casablanca/node/common"
 	"casablanca/node/config"
 	"casablanca/node/dlog"
 	"casablanca/node/events"
+	"casablanca/node/shared"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -20,7 +20,7 @@ import (
 type PushNotification interface {
 	SendPushNotification(
 		ctx context.Context,
-		streamInfo *common.StreamInfo,
+		streamInfo *shared.StreamInfo,
 		streamView *events.StreamView,
 		senderId string, // sender of the event
 	)
@@ -44,7 +44,7 @@ func MakePushNotification(ctx context.Context, cfg *config.PushNotificationConfi
 
 func (p pushNotificationImpl) SendPushNotification(
 	ctx context.Context,
-	streamInfo *common.StreamInfo,
+	streamInfo *shared.StreamInfo,
 	streamView *events.StreamView,
 	senderId string,
 ) {
@@ -58,7 +58,7 @@ func (p pushNotificationImpl) SendPushNotification(
 
 func (p pushNotificationImpl) sendNotificationRequest(
 	ctx context.Context,
-	channelInfo *common.StreamInfo,
+	channelInfo *shared.StreamInfo,
 	channelView *events.StreamView,
 	senderId string,
 ) {
