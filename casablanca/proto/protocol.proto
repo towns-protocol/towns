@@ -327,10 +327,14 @@ message UserPayload {
 message UserToDevicePayload {
     message Snapshot {
         message DeviceSummary {
-            // mininblock_num first block with un-acked sessions for this device
-            int64 lowerBound = 1;
-            // mininblock_num last block with un-acked sessions for this device
-            int64 upperBound = 2;
+            /**
+            * UpperBound = latest to device event sent from other client per deviceKey
+            * LowerBound = latest ack sent by stream owner per deviceKey
+            * on ack, if UpperBound <= LowerBound then delete this deviceKey entry from the record
+            * on ack or new session, if any device’s lower bound < N generations ago, delete the deviceKey entry from the record
+            */
+            int64 lower_bound = 1;
+            int64 upper_bound = 2;
         }
 
         Inception inception = 1;
