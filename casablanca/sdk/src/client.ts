@@ -170,7 +170,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logError = dlogError('csb:cl:error').extend(shortId)
         this.logInfo = dlog('csb:cl:info', { defaultEnabled: true }).extend(shortId)
         this.cryptoStore = cryptoStore
-        this.persistenceStore = new PersistenceStore(`persistence-${this.userId}`)
+        this.persistenceStore = new PersistenceStore(
+            `persistence-${cryptoStore.name.replace('database-', '')}`,
+        )
         this.logCall('new Client')
     }
 
