@@ -3,9 +3,11 @@ import fuzzysort from 'fuzzysort'
 import React, { useCallback, useMemo, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router'
 import {
+    Permission,
     RoomMember,
     SpaceData,
     getAccountAddress,
+    useHasPermission,
     useSpaceData,
     useSpaceMembers,
     useSpaceThreadRootsUnreadCount,
@@ -46,6 +48,8 @@ import { shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useStore } from 'store/store'
 import { Avatar } from '@components/Avatar/Avatar'
+import { useAuth } from 'hooks/useAuth'
+import { CreateChannelFormModal } from '@components/Web3/CreateChannelForm/CreateChannelForm'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
@@ -60,15 +64,22 @@ const variants = {
     exit: { opacity: 0 },
 }
 
-type Overlay = undefined | 'main-panel' | 'direct-messages'
+type Overlay = undefined | 'main-panel' | 'create-channel'
 
 export const TouchHome = () => {
     const space = useSpaceData()
+    const { loggedInWalletAddress } = useAuth()
     const [isSearching, setIsSearching] = useState<boolean>(false)
     const [searchString, setSearchString] = useState<string>('')
     const [caretVisible, setCaretVisible] = useState<boolean>(false)
     const isLoadingChannels = space?.isLoadingChannels ?? true
     const { members } = useSpaceMembers()
+
+    const { hasPermission: canCreateChannel } = useHasPermission({
+        spaceId: space?.id.networkId,
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.AddRemoveChannels,
+    })
 
     const onFocus = useCallback(() => {
         setIsSearching(true)
@@ -276,6 +287,14 @@ export const TouchHome = () => {
                                                     )}
                                                 </>
                                             )}
+                                            {canCreateChannel && (
+                                                <CreateChannelRow
+                                                    onClick={() =>
+                                                        setActiveOverlay('create-channel')
+                                                    }
+                                                />
+                                            )}
+
                                             {filteredMembers.length > 0 && (
                                                 <>
                                                     <Spacer />
@@ -307,6 +326,12 @@ export const TouchHome = () => {
                 <AnimatePresence>
                     {activeOverlay === 'main-panel' && (
                         <TouchHomeOverlay onClose={() => setActiveOverlay(undefined)} />
+                    )}
+                    {activeOverlay === 'create-channel' && space?.id && (
+                        <CreateChannelFormModal
+                            spaceId={space.id}
+                            onHide={() => setActiveOverlay(undefined)}
+                        />
                     )}
                 </AnimatePresence>
             </VisualViewportContextProvider>
@@ -535,6 +560,17 @@ export const TouchGenericResultRow = (props: {
                 )}
                 <SearchResultItemIcon type="arrowRight" background="inherit" />
             </Stack>
+        </NavItem>
+    )
+}
+
+const CreateChannelRow = (props: { onClick: () => void }) => {
+    return (
+        <NavItem height="x6" onClick={props.onClick}>
+            <SearchResultItemIcon type="plus" color="default" />
+            <Text size="sm" color="gray1">
+                Create channel
+            </Text>
         </NavItem>
     )
 }

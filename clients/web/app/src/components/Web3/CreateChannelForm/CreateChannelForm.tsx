@@ -26,6 +26,7 @@ import { TransactionButton } from '@components/TransactionButton'
 import { env } from 'utils'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { useContractRoles } from 'hooks/useContractRoles'
+import { ModalContainer } from '@components/Modals/ModalContainer'
 
 type Props = {
     spaceId: RoomIdentifier
@@ -317,4 +318,12 @@ export const CreateChannelFormContainer = ({ spaceId, onHide }: Omit<Props, 'onC
     )
 
     return <CreateChannelForm spaceId={spaceId} onHide={onHide} onCreateChannel={onCreateChannel} />
+}
+
+export const CreateChannelFormModal = ({ spaceId, onHide }: Omit<Props, 'onCreateChannel'>) => {
+    return (
+        <ModalContainer onHide={onHide}>
+            <CreateChannelFormContainer spaceId={spaceId} onHide={onHide} />
+        </ModalContainer>
+    )
 }
