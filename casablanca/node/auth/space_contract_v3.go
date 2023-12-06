@@ -1,13 +1,13 @@
 package auth
 
 import (
-	"casablanca/node/dlog"
+	"casablanca/node/config"
 	"casablanca/node/infra"
 	"context"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type Town struct {
@@ -19,11 +19,11 @@ type Town struct {
 }
 
 type SpaceContractV3 struct {
-	ethClient      *ethclient.Client
 	townsArchitect TownsArchitect
-	// map of networkId to the town
+	version        string
+	backend        bind.ContractBackend
+
 	towns     map[string]*Town
-	chainId   int
 	townsLock sync.Mutex
 }
 
@@ -31,40 +31,36 @@ var (
 	contractCalls = infra.NewSuccessMetrics("contract_calls", nil)
 )
 
+var EMPTY_ADDRESS = common.Address{}
 
-func NewSpaceContractV3(ctx context.Context, ethClient *ethclient.Client, chanId int) (SpaceContract, error) {
-	log := dlog.CtxLog(ctx)
-	// get the space factory address from config
-	strAddress, err := loadContractAddress(chanId)
+func NewSpaceContractV3(
+	ctx context.Context,
+	townsArcitectCfg *config.ContractConfig,
+	backend bind.ContractBackend,
+	//walletLinkingCfg *config.ContractConfig,
+) (SpaceContract, error) {
+	townsArchitect, err := NewTownsArchitect(townsArcitectCfg, backend)
 	if err != nil {
-		log.Error("error parsing contract address", "address", strAddress, "chainId", chanId, "error", err)
 		return nil, err
 	}
-	address := common.HexToAddress(strAddress)
-	townsArchitect, err := NewTownsArchitect(address, ethClient, chanId)
-	if err != nil {
-		log.Error("error fetching TownArchitect contract with address", "address", strAddress, "chainId", chanId, "error", err)
-		return nil, err
-	}
-	// no errors.
+
 	spaceContract := &SpaceContractV3{
-		ethClient:      ethClient,
 		townsArchitect: townsArchitect,
+		version:        townsArcitectCfg.Version,
+		backend:        backend,
 		towns:          make(map[string]*Town),
-		chainId:        chanId,
-		townsLock:      sync.Mutex{},
 	}
 
 	return spaceContract, nil
 }
 
-func (za *SpaceContractV3) IsEntitledToSpace(
+func (sc *SpaceContractV3) IsEntitledToSpace(
 	spaceNetworkId string,
 	user common.Address,
 	permission Permission,
 ) (bool, error) {
 	// get the town entitlements and check if user is entitled.
-	town, err := za.getTown(spaceNetworkId)
+	town, err := sc.getTown(spaceNetworkId)
 	if err != nil || town == nil {
 		return false, err
 	}
@@ -76,14 +72,14 @@ func (za *SpaceContractV3) IsEntitledToSpace(
 	return isEntitled, err
 }
 
-func (za *SpaceContractV3) IsEntitledToChannel(
+func (sc *SpaceContractV3) IsEntitledToChannel(
 	spaceNetworkId string,
 	channelNetworkId string,
 	user common.Address,
 	permission Permission,
 ) (bool, error) {
 	// get the town entitlements and check if user is entitled to the channel
-	town, err := za.getTown(spaceNetworkId)
+	town, err := sc.getTown(spaceNetworkId)
 	if err != nil || town == nil {
 		return false, err
 	}
@@ -97,8 +93,8 @@ func (za *SpaceContractV3) IsEntitledToChannel(
 	return isEntitled, err
 }
 
-func (za *SpaceContractV3) IsSpaceDisabled(spaceNetworkId string) (bool, error) {
-	town, err := za.getTown(spaceNetworkId)
+func (sc *SpaceContractV3) IsSpaceDisabled(spaceNetworkId string) (bool, error) {
+	town, err := sc.getTown(spaceNetworkId)
 	if err != nil || town == nil {
 		return false, err
 	}
@@ -107,8 +103,8 @@ func (za *SpaceContractV3) IsSpaceDisabled(spaceNetworkId string) (bool, error) 
 	return isDisabled, err
 }
 
-func (za *SpaceContractV3) IsChannelDisabled(spaceNetworkId string, channelNetworkId string) (bool, error) {
-	channel, err := za.getChannel(spaceNetworkId, channelNetworkId)
+func (sc *SpaceContractV3) IsChannelDisabled(spaceNetworkId string, channelNetworkId string) (bool, error) {
+	channel, err := sc.getChannel(spaceNetworkId, channelNetworkId)
 	if err != nil || channel == nil {
 		return false, err
 	}
@@ -116,43 +112,43 @@ func (za *SpaceContractV3) IsChannelDisabled(spaceNetworkId string, channelNetwo
 	return isDisabled, err
 }
 
-func (za *SpaceContractV3) getTown(networkId string) (*Town, error) {
-	za.townsLock.Lock()
-	defer za.townsLock.Unlock()
-	if za.towns[networkId] == nil {
+func (sc *SpaceContractV3) getTown(townId string) (*Town, error) {
+	sc.townsLock.Lock()
+	defer sc.townsLock.Unlock()
+	if sc.towns[townId] == nil {
 		// use the networkId to fetch the town's contract address
-		townAddress, err := za.townsArchitect.GetTownById(nil, networkId)
+		townAddress, err := sc.townsArchitect.GetTownById(nil, townId)
 		if err != nil || townAddress == EMPTY_ADDRESS {
 			return nil, err
 		}
-		entitlements, err := NewTownsEntitlements(townAddress, za.ethClient, za.chainId)
+		entitlements, err := NewTownsEntitlements(sc.version, townAddress, sc.backend)
 		if err != nil {
 			return nil, err
 		}
-		pausable, err := NewTownsPausable(townAddress, za.ethClient, za.chainId)
+		pausable, err := NewTownsPausable(sc.version, townAddress, sc.backend)
 		if err != nil {
 			return nil, err
 		}
 		// cache the town
-		za.towns[networkId] = &Town{
+		sc.towns[townId] = &Town{
 			address:      townAddress,
 			entitlements: entitlements,
 			pausable:     pausable,
 			channels:     make(map[string]TownsChannels),
 		}
 	}
-	return za.towns[networkId], nil
+	return sc.towns[townId], nil
 }
 
-func (za *SpaceContractV3) getChannel(spaceNetworkId string, channelNetworkId string) (TownsChannels, error) {
-	town, err := za.getTown(spaceNetworkId)
+func (sc *SpaceContractV3) getChannel(spaceNetworkId string, channelNetworkId string) (TownsChannels, error) {
+	town, err := sc.getTown(spaceNetworkId)
 	if err != nil || town == nil {
 		return nil, err
 	}
 	town.channelsLock.Lock()
 	defer town.channelsLock.Unlock()
 	if town.channels[channelNetworkId] == nil {
-		channel, err := NewTownsChannels(za.ethClient, za.chainId, town.address)
+		channel, err := NewTownsChannels(sc.version, town.address, sc.backend)
 		if err != nil {
 			return nil, err
 		}

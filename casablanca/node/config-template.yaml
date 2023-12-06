@@ -1,3 +1,4 @@
+# Network configuration
 port: <RPC_PORT>
 database:
     url: postgres://postgres:postgres@localhost:<DB_PORT>/casablanca?sslmode=disable&pool_max_conns=1000
@@ -8,30 +9,52 @@ database:
     extra: ''
     host: ''
 storageType: postgres
-address:
-useContract: <USE_CONTRACT>
-walletprivatekey:
+
+# Blockchain configuration
 baseChain:
     chainId: 31337
     networkUrl: 'http://127.0.0.1:8545'
 riverChain:
     chainId: 31337
     networkUrl: 'http://127.0.0.1:8545'
+
+# Base contracts
+townsArchitectContract:
+    address: '../addresses/townFactory.json'
+    version: 'dev'
+walletLinkContract:
+    address: '../addresses/walletLink.json'
+    version: 'dev'
+
+# River contracts
+registryContract:
+    address: '../addresses/streamRegistry.json'
+    version: 'dev'
+
+# Logging
 log:
     file: logs/dev.log
     level: <LOG_LEVEL>
     console: true
     noColor: <LOG_NOCOLOR>
     format: text
+
+# Metrics
 metrics:
     enabled: <METRICS_ENABLED>
     port: <METRICS_PORT>
 performanceTracking:
     profilingEnabled: false
+
+# Node registry JSON path
 nodeRegistry: <NODE_REGISTRY>
+
+# Push notification configuration
 pushNotification:
     url: '' # URL to the push notification worker. Default empty string disables it.
     authToken: '' # auth token for the push notification worker
+
+# Stream settings
 stream:
     media:
         maxChunkCount: 10 # max number of chunks in a media stream
@@ -43,4 +66,8 @@ stream:
         # The node will load M generation miniblocks before the most recent snapshot
         generations: 5
     replicationFactor: <REPL_FACTOR>
+
+# Debug feature flags.
 useBlockchainStreamRegistry: <USE_BLOCKCHAIN_STREAM_REGISTRY>
+useContract: <USE_CONTRACT>
+walletprivatekey:

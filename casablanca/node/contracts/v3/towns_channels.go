@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package base_goerli_towns_channels
+package v3
 
 import (
 	"errors"
@@ -37,113 +37,113 @@ type IChannelBaseChannel struct {
 	RoleIds  []*big.Int
 }
 
-// BaseGoerliTownsChannelsMetaData contains all meta data concerning the BaseGoerliTownsChannels contract.
-var BaseGoerliTownsChannelsMetaData = &bind.MetaData{
+// TownsChannelsMetaData contains all meta data concerning the TownsChannels contract.
+var TownsChannelsMetaData = &bind.MetaData{
 	ABI: "[{\"inputs\":[],\"name\":\"ChannelService__ChannelAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ChannelService__ChannelDisabled\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ChannelService__ChannelDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ChannelService__RoleAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ChannelService__RoleDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Entitlement__InvalidValue\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Entitlement__NotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Entitlement__ValueAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Initializable_InInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_AlreadySupported\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_NotSupported\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Ownable__NotOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Ownable__ZeroAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Pausable__NotPaused\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Pausable__Paused\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Validator__InvalidStringLength\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"version\",\"type\":\"uint32\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Paused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Unpaused\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"}],\"name\":\"addRoleToChannel\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"metadata\",\"type\":\"string\"},{\"internalType\":\"uint256[]\",\"name\":\"roleIds\",\"type\":\"uint256[]\"}],\"name\":\"createChannel\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"}],\"name\":\"getChannel\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"disabled\",\"type\":\"bool\"},{\"internalType\":\"string\",\"name\":\"metadata\",\"type\":\"string\"},{\"internalType\":\"uint256[]\",\"name\":\"roleIds\",\"type\":\"uint256[]\"}],\"internalType\":\"structIChannelBase.Channel\",\"name\":\"channel\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getChannels\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"disabled\",\"type\":\"bool\"},{\"internalType\":\"string\",\"name\":\"metadata\",\"type\":\"string\"},{\"internalType\":\"uint256[]\",\"name\":\"roleIds\",\"type\":\"uint256[]\"}],\"internalType\":\"structIChannelBase.Channel[]\",\"name\":\"channels\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"}],\"name\":\"removeChannel\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"}],\"name\":\"removeRoleFromChannel\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"metadata\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"disabled\",\"type\":\"bool\"}],\"name\":\"updateChannel\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
-// BaseGoerliTownsChannelsABI is the input ABI used to generate the binding from.
-// Deprecated: Use BaseGoerliTownsChannelsMetaData.ABI instead.
-var BaseGoerliTownsChannelsABI = BaseGoerliTownsChannelsMetaData.ABI
+// TownsChannelsABI is the input ABI used to generate the binding from.
+// Deprecated: Use TownsChannelsMetaData.ABI instead.
+var TownsChannelsABI = TownsChannelsMetaData.ABI
 
-// BaseGoerliTownsChannels is an auto generated Go binding around an Ethereum contract.
-type BaseGoerliTownsChannels struct {
-	BaseGoerliTownsChannelsCaller     // Read-only binding to the contract
-	BaseGoerliTownsChannelsTransactor // Write-only binding to the contract
-	BaseGoerliTownsChannelsFilterer   // Log filterer for contract events
+// TownsChannels is an auto generated Go binding around an Ethereum contract.
+type TownsChannels struct {
+	TownsChannelsCaller     // Read-only binding to the contract
+	TownsChannelsTransactor // Write-only binding to the contract
+	TownsChannelsFilterer   // Log filterer for contract events
 }
 
-// BaseGoerliTownsChannelsCaller is an auto generated read-only Go binding around an Ethereum contract.
-type BaseGoerliTownsChannelsCaller struct {
+// TownsChannelsCaller is an auto generated read-only Go binding around an Ethereum contract.
+type TownsChannelsCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// BaseGoerliTownsChannelsTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type BaseGoerliTownsChannelsTransactor struct {
+// TownsChannelsTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type TownsChannelsTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// BaseGoerliTownsChannelsFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type BaseGoerliTownsChannelsFilterer struct {
+// TownsChannelsFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type TownsChannelsFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// BaseGoerliTownsChannelsSession is an auto generated Go binding around an Ethereum contract,
+// TownsChannelsSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
-type BaseGoerliTownsChannelsSession struct {
-	Contract     *BaseGoerliTownsChannels // Generic contract binding to set the session for
+type TownsChannelsSession struct {
+	Contract     *TownsChannels // Generic contract binding to set the session for
 	CallOpts     bind.CallOpts            // Call options to use throughout this session
 	TransactOpts bind.TransactOpts        // Transaction auth options to use throughout this session
 }
 
-// BaseGoerliTownsChannelsCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// TownsChannelsCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
-type BaseGoerliTownsChannelsCallerSession struct {
-	Contract *BaseGoerliTownsChannelsCaller // Generic contract caller binding to set the session for
+type TownsChannelsCallerSession struct {
+	Contract *TownsChannelsCaller // Generic contract caller binding to set the session for
 	CallOpts bind.CallOpts                  // Call options to use throughout this session
 }
 
-// BaseGoerliTownsChannelsTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// TownsChannelsTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
-type BaseGoerliTownsChannelsTransactorSession struct {
-	Contract     *BaseGoerliTownsChannelsTransactor // Generic contract transactor binding to set the session for
+type TownsChannelsTransactorSession struct {
+	Contract     *TownsChannelsTransactor // Generic contract transactor binding to set the session for
 	TransactOpts bind.TransactOpts                  // Transaction auth options to use throughout this session
 }
 
-// BaseGoerliTownsChannelsRaw is an auto generated low-level Go binding around an Ethereum contract.
-type BaseGoerliTownsChannelsRaw struct {
-	Contract *BaseGoerliTownsChannels // Generic contract binding to access the raw methods on
+// TownsChannelsRaw is an auto generated low-level Go binding around an Ethereum contract.
+type TownsChannelsRaw struct {
+	Contract *TownsChannels // Generic contract binding to access the raw methods on
 }
 
-// BaseGoerliTownsChannelsCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type BaseGoerliTownsChannelsCallerRaw struct {
-	Contract *BaseGoerliTownsChannelsCaller // Generic read-only contract binding to access the raw methods on
+// TownsChannelsCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type TownsChannelsCallerRaw struct {
+	Contract *TownsChannelsCaller // Generic read-only contract binding to access the raw methods on
 }
 
-// BaseGoerliTownsChannelsTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type BaseGoerliTownsChannelsTransactorRaw struct {
-	Contract *BaseGoerliTownsChannelsTransactor // Generic write-only contract binding to access the raw methods on
+// TownsChannelsTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type TownsChannelsTransactorRaw struct {
+	Contract *TownsChannelsTransactor // Generic write-only contract binding to access the raw methods on
 }
 
-// NewBaseGoerliTownsChannels creates a new instance of BaseGoerliTownsChannels, bound to a specific deployed contract.
-func NewBaseGoerliTownsChannels(address common.Address, backend bind.ContractBackend) (*BaseGoerliTownsChannels, error) {
-	contract, err := bindBaseGoerliTownsChannels(address, backend, backend, backend)
+// NewTownsChannels creates a new instance of TownsChannels, bound to a specific deployed contract.
+func NewTownsChannels(address common.Address, backend bind.ContractBackend) (*TownsChannels, error) {
+	contract, err := bindTownsChannels(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &BaseGoerliTownsChannels{BaseGoerliTownsChannelsCaller: BaseGoerliTownsChannelsCaller{contract: contract}, BaseGoerliTownsChannelsTransactor: BaseGoerliTownsChannelsTransactor{contract: contract}, BaseGoerliTownsChannelsFilterer: BaseGoerliTownsChannelsFilterer{contract: contract}}, nil
+	return &TownsChannels{TownsChannelsCaller: TownsChannelsCaller{contract: contract}, TownsChannelsTransactor: TownsChannelsTransactor{contract: contract}, TownsChannelsFilterer: TownsChannelsFilterer{contract: contract}}, nil
 }
 
-// NewBaseGoerliTownsChannelsCaller creates a new read-only instance of BaseGoerliTownsChannels, bound to a specific deployed contract.
-func NewBaseGoerliTownsChannelsCaller(address common.Address, caller bind.ContractCaller) (*BaseGoerliTownsChannelsCaller, error) {
-	contract, err := bindBaseGoerliTownsChannels(address, caller, nil, nil)
+// NewTownsChannelsCaller creates a new read-only instance of TownsChannels, bound to a specific deployed contract.
+func NewTownsChannelsCaller(address common.Address, caller bind.ContractCaller) (*TownsChannelsCaller, error) {
+	contract, err := bindTownsChannels(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &BaseGoerliTownsChannelsCaller{contract: contract}, nil
+	return &TownsChannelsCaller{contract: contract}, nil
 }
 
-// NewBaseGoerliTownsChannelsTransactor creates a new write-only instance of BaseGoerliTownsChannels, bound to a specific deployed contract.
-func NewBaseGoerliTownsChannelsTransactor(address common.Address, transactor bind.ContractTransactor) (*BaseGoerliTownsChannelsTransactor, error) {
-	contract, err := bindBaseGoerliTownsChannels(address, nil, transactor, nil)
+// NewTownsChannelsTransactor creates a new write-only instance of TownsChannels, bound to a specific deployed contract.
+func NewTownsChannelsTransactor(address common.Address, transactor bind.ContractTransactor) (*TownsChannelsTransactor, error) {
+	contract, err := bindTownsChannels(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &BaseGoerliTownsChannelsTransactor{contract: contract}, nil
+	return &TownsChannelsTransactor{contract: contract}, nil
 }
 
-// NewBaseGoerliTownsChannelsFilterer creates a new log filterer instance of BaseGoerliTownsChannels, bound to a specific deployed contract.
-func NewBaseGoerliTownsChannelsFilterer(address common.Address, filterer bind.ContractFilterer) (*BaseGoerliTownsChannelsFilterer, error) {
-	contract, err := bindBaseGoerliTownsChannels(address, nil, nil, filterer)
+// NewTownsChannelsFilterer creates a new log filterer instance of TownsChannels, bound to a specific deployed contract.
+func NewTownsChannelsFilterer(address common.Address, filterer bind.ContractFilterer) (*TownsChannelsFilterer, error) {
+	contract, err := bindTownsChannels(address, nil, nil, filterer)
 	if err != nil {
 		return nil, err
 	}
-	return &BaseGoerliTownsChannelsFilterer{contract: contract}, nil
+	return &TownsChannelsFilterer{contract: contract}, nil
 }
 
-// bindBaseGoerliTownsChannels binds a generic wrapper to an already deployed contract.
-func bindBaseGoerliTownsChannels(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := BaseGoerliTownsChannelsMetaData.GetAbi()
+// bindTownsChannels binds a generic wrapper to an already deployed contract.
+func bindTownsChannels(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := TownsChannelsMetaData.GetAbi()
 	if err != nil {
 		return nil, err
 	}
@@ -154,46 +154,46 @@ func bindBaseGoerliTownsChannels(address common.Address, caller bind.ContractCal
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _BaseGoerliTownsChannels.Contract.BaseGoerliTownsChannelsCaller.contract.Call(opts, result, method, params...)
+func (_TownsChannels *TownsChannelsRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _TownsChannels.Contract.TownsChannelsCaller.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.BaseGoerliTownsChannelsTransactor.contract.Transfer(opts)
+func (_TownsChannels *TownsChannelsRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _TownsChannels.Contract.TownsChannelsTransactor.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.BaseGoerliTownsChannelsTransactor.contract.Transact(opts, method, params...)
+func (_TownsChannels *TownsChannelsRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _TownsChannels.Contract.TownsChannelsTransactor.contract.Transact(opts, method, params...)
 }
 
 // Call invokes the (constant) contract method with params as input values and
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _BaseGoerliTownsChannels.Contract.contract.Call(opts, result, method, params...)
+func (_TownsChannels *TownsChannelsCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _TownsChannels.Contract.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.contract.Transfer(opts)
+func (_TownsChannels *TownsChannelsTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _TownsChannels.Contract.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.contract.Transact(opts, method, params...)
+func (_TownsChannels *TownsChannelsTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _TownsChannels.Contract.contract.Transact(opts, method, params...)
 }
 
 // GetChannel is a free data retrieval call binding the contract method 0x7cd7ee3d.
 //
 // Solidity: function getChannel(string channelId) view returns((string,bool,string,uint256[]) channel)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsCaller) GetChannel(opts *bind.CallOpts, channelId string) (IChannelBaseChannel, error) {
+func (_TownsChannels *TownsChannelsCaller) GetChannel(opts *bind.CallOpts, channelId string) (IChannelBaseChannel, error) {
 	var out []interface{}
-	err := _BaseGoerliTownsChannels.contract.Call(opts, &out, "getChannel", channelId)
+	err := _TownsChannels.contract.Call(opts, &out, "getChannel", channelId)
 
 	if err != nil {
 		return *new(IChannelBaseChannel), err
@@ -208,23 +208,23 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsCaller) GetChannel(opts *
 // GetChannel is a free data retrieval call binding the contract method 0x7cd7ee3d.
 //
 // Solidity: function getChannel(string channelId) view returns((string,bool,string,uint256[]) channel)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsSession) GetChannel(channelId string) (IChannelBaseChannel, error) {
-	return _BaseGoerliTownsChannels.Contract.GetChannel(&_BaseGoerliTownsChannels.CallOpts, channelId)
+func (_TownsChannels *TownsChannelsSession) GetChannel(channelId string) (IChannelBaseChannel, error) {
+	return _TownsChannels.Contract.GetChannel(&_TownsChannels.CallOpts, channelId)
 }
 
 // GetChannel is a free data retrieval call binding the contract method 0x7cd7ee3d.
 //
 // Solidity: function getChannel(string channelId) view returns((string,bool,string,uint256[]) channel)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsCallerSession) GetChannel(channelId string) (IChannelBaseChannel, error) {
-	return _BaseGoerliTownsChannels.Contract.GetChannel(&_BaseGoerliTownsChannels.CallOpts, channelId)
+func (_TownsChannels *TownsChannelsCallerSession) GetChannel(channelId string) (IChannelBaseChannel, error) {
+	return _TownsChannels.Contract.GetChannel(&_TownsChannels.CallOpts, channelId)
 }
 
 // GetChannels is a free data retrieval call binding the contract method 0x9575f6ac.
 //
 // Solidity: function getChannels() view returns((string,bool,string,uint256[])[] channels)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsCaller) GetChannels(opts *bind.CallOpts) ([]IChannelBaseChannel, error) {
+func (_TownsChannels *TownsChannelsCaller) GetChannels(opts *bind.CallOpts) ([]IChannelBaseChannel, error) {
 	var out []interface{}
-	err := _BaseGoerliTownsChannels.contract.Call(opts, &out, "getChannels")
+	err := _TownsChannels.contract.Call(opts, &out, "getChannels")
 
 	if err != nil {
 		return *new([]IChannelBaseChannel), err
@@ -239,125 +239,125 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsCaller) GetChannels(opts 
 // GetChannels is a free data retrieval call binding the contract method 0x9575f6ac.
 //
 // Solidity: function getChannels() view returns((string,bool,string,uint256[])[] channels)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsSession) GetChannels() ([]IChannelBaseChannel, error) {
-	return _BaseGoerliTownsChannels.Contract.GetChannels(&_BaseGoerliTownsChannels.CallOpts)
+func (_TownsChannels *TownsChannelsSession) GetChannels() ([]IChannelBaseChannel, error) {
+	return _TownsChannels.Contract.GetChannels(&_TownsChannels.CallOpts)
 }
 
 // GetChannels is a free data retrieval call binding the contract method 0x9575f6ac.
 //
 // Solidity: function getChannels() view returns((string,bool,string,uint256[])[] channels)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsCallerSession) GetChannels() ([]IChannelBaseChannel, error) {
-	return _BaseGoerliTownsChannels.Contract.GetChannels(&_BaseGoerliTownsChannels.CallOpts)
+func (_TownsChannels *TownsChannelsCallerSession) GetChannels() ([]IChannelBaseChannel, error) {
+	return _TownsChannels.Contract.GetChannels(&_TownsChannels.CallOpts)
 }
 
 // AddRoleToChannel is a paid mutator transaction binding the contract method 0x42bb09b2.
 //
 // Solidity: function addRoleToChannel(string channelId, uint256 roleId) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsTransactor) AddRoleToChannel(opts *bind.TransactOpts, channelId string, roleId *big.Int) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.contract.Transact(opts, "addRoleToChannel", channelId, roleId)
+func (_TownsChannels *TownsChannelsTransactor) AddRoleToChannel(opts *bind.TransactOpts, channelId string, roleId *big.Int) (*types.Transaction, error) {
+	return _TownsChannels.contract.Transact(opts, "addRoleToChannel", channelId, roleId)
 }
 
 // AddRoleToChannel is a paid mutator transaction binding the contract method 0x42bb09b2.
 //
 // Solidity: function addRoleToChannel(string channelId, uint256 roleId) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsSession) AddRoleToChannel(channelId string, roleId *big.Int) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.AddRoleToChannel(&_BaseGoerliTownsChannels.TransactOpts, channelId, roleId)
+func (_TownsChannels *TownsChannelsSession) AddRoleToChannel(channelId string, roleId *big.Int) (*types.Transaction, error) {
+	return _TownsChannels.Contract.AddRoleToChannel(&_TownsChannels.TransactOpts, channelId, roleId)
 }
 
 // AddRoleToChannel is a paid mutator transaction binding the contract method 0x42bb09b2.
 //
 // Solidity: function addRoleToChannel(string channelId, uint256 roleId) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsTransactorSession) AddRoleToChannel(channelId string, roleId *big.Int) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.AddRoleToChannel(&_BaseGoerliTownsChannels.TransactOpts, channelId, roleId)
+func (_TownsChannels *TownsChannelsTransactorSession) AddRoleToChannel(channelId string, roleId *big.Int) (*types.Transaction, error) {
+	return _TownsChannels.Contract.AddRoleToChannel(&_TownsChannels.TransactOpts, channelId, roleId)
 }
 
 // CreateChannel is a paid mutator transaction binding the contract method 0x51f83cea.
 //
 // Solidity: function createChannel(string channelId, string metadata, uint256[] roleIds) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsTransactor) CreateChannel(opts *bind.TransactOpts, channelId string, metadata string, roleIds []*big.Int) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.contract.Transact(opts, "createChannel", channelId, metadata, roleIds)
+func (_TownsChannels *TownsChannelsTransactor) CreateChannel(opts *bind.TransactOpts, channelId string, metadata string, roleIds []*big.Int) (*types.Transaction, error) {
+	return _TownsChannels.contract.Transact(opts, "createChannel", channelId, metadata, roleIds)
 }
 
 // CreateChannel is a paid mutator transaction binding the contract method 0x51f83cea.
 //
 // Solidity: function createChannel(string channelId, string metadata, uint256[] roleIds) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsSession) CreateChannel(channelId string, metadata string, roleIds []*big.Int) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.CreateChannel(&_BaseGoerliTownsChannels.TransactOpts, channelId, metadata, roleIds)
+func (_TownsChannels *TownsChannelsSession) CreateChannel(channelId string, metadata string, roleIds []*big.Int) (*types.Transaction, error) {
+	return _TownsChannels.Contract.CreateChannel(&_TownsChannels.TransactOpts, channelId, metadata, roleIds)
 }
 
 // CreateChannel is a paid mutator transaction binding the contract method 0x51f83cea.
 //
 // Solidity: function createChannel(string channelId, string metadata, uint256[] roleIds) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsTransactorSession) CreateChannel(channelId string, metadata string, roleIds []*big.Int) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.CreateChannel(&_BaseGoerliTownsChannels.TransactOpts, channelId, metadata, roleIds)
+func (_TownsChannels *TownsChannelsTransactorSession) CreateChannel(channelId string, metadata string, roleIds []*big.Int) (*types.Transaction, error) {
+	return _TownsChannels.Contract.CreateChannel(&_TownsChannels.TransactOpts, channelId, metadata, roleIds)
 }
 
 // RemoveChannel is a paid mutator transaction binding the contract method 0x05b2cfbc.
 //
 // Solidity: function removeChannel(string channelId) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsTransactor) RemoveChannel(opts *bind.TransactOpts, channelId string) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.contract.Transact(opts, "removeChannel", channelId)
+func (_TownsChannels *TownsChannelsTransactor) RemoveChannel(opts *bind.TransactOpts, channelId string) (*types.Transaction, error) {
+	return _TownsChannels.contract.Transact(opts, "removeChannel", channelId)
 }
 
 // RemoveChannel is a paid mutator transaction binding the contract method 0x05b2cfbc.
 //
 // Solidity: function removeChannel(string channelId) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsSession) RemoveChannel(channelId string) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.RemoveChannel(&_BaseGoerliTownsChannels.TransactOpts, channelId)
+func (_TownsChannels *TownsChannelsSession) RemoveChannel(channelId string) (*types.Transaction, error) {
+	return _TownsChannels.Contract.RemoveChannel(&_TownsChannels.TransactOpts, channelId)
 }
 
 // RemoveChannel is a paid mutator transaction binding the contract method 0x05b2cfbc.
 //
 // Solidity: function removeChannel(string channelId) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsTransactorSession) RemoveChannel(channelId string) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.RemoveChannel(&_BaseGoerliTownsChannels.TransactOpts, channelId)
+func (_TownsChannels *TownsChannelsTransactorSession) RemoveChannel(channelId string) (*types.Transaction, error) {
+	return _TownsChannels.Contract.RemoveChannel(&_TownsChannels.TransactOpts, channelId)
 }
 
 // RemoveRoleFromChannel is a paid mutator transaction binding the contract method 0x499061b5.
 //
 // Solidity: function removeRoleFromChannel(string channelId, uint256 roleId) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsTransactor) RemoveRoleFromChannel(opts *bind.TransactOpts, channelId string, roleId *big.Int) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.contract.Transact(opts, "removeRoleFromChannel", channelId, roleId)
+func (_TownsChannels *TownsChannelsTransactor) RemoveRoleFromChannel(opts *bind.TransactOpts, channelId string, roleId *big.Int) (*types.Transaction, error) {
+	return _TownsChannels.contract.Transact(opts, "removeRoleFromChannel", channelId, roleId)
 }
 
 // RemoveRoleFromChannel is a paid mutator transaction binding the contract method 0x499061b5.
 //
 // Solidity: function removeRoleFromChannel(string channelId, uint256 roleId) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsSession) RemoveRoleFromChannel(channelId string, roleId *big.Int) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.RemoveRoleFromChannel(&_BaseGoerliTownsChannels.TransactOpts, channelId, roleId)
+func (_TownsChannels *TownsChannelsSession) RemoveRoleFromChannel(channelId string, roleId *big.Int) (*types.Transaction, error) {
+	return _TownsChannels.Contract.RemoveRoleFromChannel(&_TownsChannels.TransactOpts, channelId, roleId)
 }
 
 // RemoveRoleFromChannel is a paid mutator transaction binding the contract method 0x499061b5.
 //
 // Solidity: function removeRoleFromChannel(string channelId, uint256 roleId) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsTransactorSession) RemoveRoleFromChannel(channelId string, roleId *big.Int) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.RemoveRoleFromChannel(&_BaseGoerliTownsChannels.TransactOpts, channelId, roleId)
+func (_TownsChannels *TownsChannelsTransactorSession) RemoveRoleFromChannel(channelId string, roleId *big.Int) (*types.Transaction, error) {
+	return _TownsChannels.Contract.RemoveRoleFromChannel(&_TownsChannels.TransactOpts, channelId, roleId)
 }
 
 // UpdateChannel is a paid mutator transaction binding the contract method 0x9c02812e.
 //
 // Solidity: function updateChannel(string channelId, string metadata, bool disabled) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsTransactor) UpdateChannel(opts *bind.TransactOpts, channelId string, metadata string, disabled bool) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.contract.Transact(opts, "updateChannel", channelId, metadata, disabled)
+func (_TownsChannels *TownsChannelsTransactor) UpdateChannel(opts *bind.TransactOpts, channelId string, metadata string, disabled bool) (*types.Transaction, error) {
+	return _TownsChannels.contract.Transact(opts, "updateChannel", channelId, metadata, disabled)
 }
 
 // UpdateChannel is a paid mutator transaction binding the contract method 0x9c02812e.
 //
 // Solidity: function updateChannel(string channelId, string metadata, bool disabled) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsSession) UpdateChannel(channelId string, metadata string, disabled bool) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.UpdateChannel(&_BaseGoerliTownsChannels.TransactOpts, channelId, metadata, disabled)
+func (_TownsChannels *TownsChannelsSession) UpdateChannel(channelId string, metadata string, disabled bool) (*types.Transaction, error) {
+	return _TownsChannels.Contract.UpdateChannel(&_TownsChannels.TransactOpts, channelId, metadata, disabled)
 }
 
 // UpdateChannel is a paid mutator transaction binding the contract method 0x9c02812e.
 //
 // Solidity: function updateChannel(string channelId, string metadata, bool disabled) returns()
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsTransactorSession) UpdateChannel(channelId string, metadata string, disabled bool) (*types.Transaction, error) {
-	return _BaseGoerliTownsChannels.Contract.UpdateChannel(&_BaseGoerliTownsChannels.TransactOpts, channelId, metadata, disabled)
+func (_TownsChannels *TownsChannelsTransactorSession) UpdateChannel(channelId string, metadata string, disabled bool) (*types.Transaction, error) {
+	return _TownsChannels.Contract.UpdateChannel(&_TownsChannels.TransactOpts, channelId, metadata, disabled)
 }
 
-// BaseGoerliTownsChannelsInitializedIterator is returned from FilterInitialized and is used to iterate over the raw logs and unpacked data for Initialized events raised by the BaseGoerliTownsChannels contract.
-type BaseGoerliTownsChannelsInitializedIterator struct {
-	Event *BaseGoerliTownsChannelsInitialized // Event containing the contract specifics and raw log
+// TownsChannelsInitializedIterator is returned from FilterInitialized and is used to iterate over the raw logs and unpacked data for Initialized events raised by the TownsChannels contract.
+type TownsChannelsInitializedIterator struct {
+	Event *TownsChannelsInitialized // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -371,7 +371,7 @@ type BaseGoerliTownsChannelsInitializedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *BaseGoerliTownsChannelsInitializedIterator) Next() bool {
+func (it *TownsChannelsInitializedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -380,7 +380,7 @@ func (it *BaseGoerliTownsChannelsInitializedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(BaseGoerliTownsChannelsInitialized)
+			it.Event = new(TownsChannelsInitialized)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -395,7 +395,7 @@ func (it *BaseGoerliTownsChannelsInitializedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(BaseGoerliTownsChannelsInitialized)
+		it.Event = new(TownsChannelsInitialized)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -411,19 +411,19 @@ func (it *BaseGoerliTownsChannelsInitializedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *BaseGoerliTownsChannelsInitializedIterator) Error() error {
+func (it *TownsChannelsInitializedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *BaseGoerliTownsChannelsInitializedIterator) Close() error {
+func (it *TownsChannelsInitializedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// BaseGoerliTownsChannelsInitialized represents a Initialized event raised by the BaseGoerliTownsChannels contract.
-type BaseGoerliTownsChannelsInitialized struct {
+// TownsChannelsInitialized represents a Initialized event raised by the TownsChannels contract.
+type TownsChannelsInitialized struct {
 	Version uint32
 	Raw     types.Log // Blockchain specific contextual infos
 }
@@ -431,21 +431,21 @@ type BaseGoerliTownsChannelsInitialized struct {
 // FilterInitialized is a free log retrieval operation binding the contract event 0xe9c9b456cb2994b80aeef036cf59d26e9617df80f816a6ee5a5b4166e07e2f5c.
 //
 // Solidity: event Initialized(uint32 version)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) FilterInitialized(opts *bind.FilterOpts) (*BaseGoerliTownsChannelsInitializedIterator, error) {
+func (_TownsChannels *TownsChannelsFilterer) FilterInitialized(opts *bind.FilterOpts) (*TownsChannelsInitializedIterator, error) {
 
-	logs, sub, err := _BaseGoerliTownsChannels.contract.FilterLogs(opts, "Initialized")
+	logs, sub, err := _TownsChannels.contract.FilterLogs(opts, "Initialized")
 	if err != nil {
 		return nil, err
 	}
-	return &BaseGoerliTownsChannelsInitializedIterator{contract: _BaseGoerliTownsChannels.contract, event: "Initialized", logs: logs, sub: sub}, nil
+	return &TownsChannelsInitializedIterator{contract: _TownsChannels.contract, event: "Initialized", logs: logs, sub: sub}, nil
 }
 
 // WatchInitialized is a free log subscription operation binding the contract event 0xe9c9b456cb2994b80aeef036cf59d26e9617df80f816a6ee5a5b4166e07e2f5c.
 //
 // Solidity: event Initialized(uint32 version)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchInitialized(opts *bind.WatchOpts, sink chan<- *BaseGoerliTownsChannelsInitialized) (event.Subscription, error) {
+func (_TownsChannels *TownsChannelsFilterer) WatchInitialized(opts *bind.WatchOpts, sink chan<- *TownsChannelsInitialized) (event.Subscription, error) {
 
-	logs, sub, err := _BaseGoerliTownsChannels.contract.WatchLogs(opts, "Initialized")
+	logs, sub, err := _TownsChannels.contract.WatchLogs(opts, "Initialized")
 	if err != nil {
 		return nil, err
 	}
@@ -455,8 +455,8 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchInitialize
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(BaseGoerliTownsChannelsInitialized)
-				if err := _BaseGoerliTownsChannels.contract.UnpackLog(event, "Initialized", log); err != nil {
+				event := new(TownsChannelsInitialized)
+				if err := _TownsChannels.contract.UnpackLog(event, "Initialized", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -480,18 +480,18 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchInitialize
 // ParseInitialized is a log parse operation binding the contract event 0xe9c9b456cb2994b80aeef036cf59d26e9617df80f816a6ee5a5b4166e07e2f5c.
 //
 // Solidity: event Initialized(uint32 version)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) ParseInitialized(log types.Log) (*BaseGoerliTownsChannelsInitialized, error) {
-	event := new(BaseGoerliTownsChannelsInitialized)
-	if err := _BaseGoerliTownsChannels.contract.UnpackLog(event, "Initialized", log); err != nil {
+func (_TownsChannels *TownsChannelsFilterer) ParseInitialized(log types.Log) (*TownsChannelsInitialized, error) {
+	event := new(TownsChannelsInitialized)
+	if err := _TownsChannels.contract.UnpackLog(event, "Initialized", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// BaseGoerliTownsChannelsInterfaceAddedIterator is returned from FilterInterfaceAdded and is used to iterate over the raw logs and unpacked data for InterfaceAdded events raised by the BaseGoerliTownsChannels contract.
-type BaseGoerliTownsChannelsInterfaceAddedIterator struct {
-	Event *BaseGoerliTownsChannelsInterfaceAdded // Event containing the contract specifics and raw log
+// TownsChannelsInterfaceAddedIterator is returned from FilterInterfaceAdded and is used to iterate over the raw logs and unpacked data for InterfaceAdded events raised by the TownsChannels contract.
+type TownsChannelsInterfaceAddedIterator struct {
+	Event *TownsChannelsInterfaceAdded // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -505,7 +505,7 @@ type BaseGoerliTownsChannelsInterfaceAddedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *BaseGoerliTownsChannelsInterfaceAddedIterator) Next() bool {
+func (it *TownsChannelsInterfaceAddedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -514,7 +514,7 @@ func (it *BaseGoerliTownsChannelsInterfaceAddedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(BaseGoerliTownsChannelsInterfaceAdded)
+			it.Event = new(TownsChannelsInterfaceAdded)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -529,7 +529,7 @@ func (it *BaseGoerliTownsChannelsInterfaceAddedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(BaseGoerliTownsChannelsInterfaceAdded)
+		it.Event = new(TownsChannelsInterfaceAdded)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -545,19 +545,19 @@ func (it *BaseGoerliTownsChannelsInterfaceAddedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *BaseGoerliTownsChannelsInterfaceAddedIterator) Error() error {
+func (it *TownsChannelsInterfaceAddedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *BaseGoerliTownsChannelsInterfaceAddedIterator) Close() error {
+func (it *TownsChannelsInterfaceAddedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// BaseGoerliTownsChannelsInterfaceAdded represents a InterfaceAdded event raised by the BaseGoerliTownsChannels contract.
-type BaseGoerliTownsChannelsInterfaceAdded struct {
+// TownsChannelsInterfaceAdded represents a InterfaceAdded event raised by the TownsChannels contract.
+type TownsChannelsInterfaceAdded struct {
 	InterfaceId [4]byte
 	Raw         types.Log // Blockchain specific contextual infos
 }
@@ -565,31 +565,31 @@ type BaseGoerliTownsChannelsInterfaceAdded struct {
 // FilterInterfaceAdded is a free log retrieval operation binding the contract event 0x78f84e5b1c5c05be2b5ad3800781dd404d6d6c6302bc755c0fe20f58a33a7f22.
 //
 // Solidity: event InterfaceAdded(bytes4 indexed interfaceId)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) FilterInterfaceAdded(opts *bind.FilterOpts, interfaceId [][4]byte) (*BaseGoerliTownsChannelsInterfaceAddedIterator, error) {
+func (_TownsChannels *TownsChannelsFilterer) FilterInterfaceAdded(opts *bind.FilterOpts, interfaceId [][4]byte) (*TownsChannelsInterfaceAddedIterator, error) {
 
 	var interfaceIdRule []interface{}
 	for _, interfaceIdItem := range interfaceId {
 		interfaceIdRule = append(interfaceIdRule, interfaceIdItem)
 	}
 
-	logs, sub, err := _BaseGoerliTownsChannels.contract.FilterLogs(opts, "InterfaceAdded", interfaceIdRule)
+	logs, sub, err := _TownsChannels.contract.FilterLogs(opts, "InterfaceAdded", interfaceIdRule)
 	if err != nil {
 		return nil, err
 	}
-	return &BaseGoerliTownsChannelsInterfaceAddedIterator{contract: _BaseGoerliTownsChannels.contract, event: "InterfaceAdded", logs: logs, sub: sub}, nil
+	return &TownsChannelsInterfaceAddedIterator{contract: _TownsChannels.contract, event: "InterfaceAdded", logs: logs, sub: sub}, nil
 }
 
 // WatchInterfaceAdded is a free log subscription operation binding the contract event 0x78f84e5b1c5c05be2b5ad3800781dd404d6d6c6302bc755c0fe20f58a33a7f22.
 //
 // Solidity: event InterfaceAdded(bytes4 indexed interfaceId)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchInterfaceAdded(opts *bind.WatchOpts, sink chan<- *BaseGoerliTownsChannelsInterfaceAdded, interfaceId [][4]byte) (event.Subscription, error) {
+func (_TownsChannels *TownsChannelsFilterer) WatchInterfaceAdded(opts *bind.WatchOpts, sink chan<- *TownsChannelsInterfaceAdded, interfaceId [][4]byte) (event.Subscription, error) {
 
 	var interfaceIdRule []interface{}
 	for _, interfaceIdItem := range interfaceId {
 		interfaceIdRule = append(interfaceIdRule, interfaceIdItem)
 	}
 
-	logs, sub, err := _BaseGoerliTownsChannels.contract.WatchLogs(opts, "InterfaceAdded", interfaceIdRule)
+	logs, sub, err := _TownsChannels.contract.WatchLogs(opts, "InterfaceAdded", interfaceIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -599,8 +599,8 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchInterfaceA
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(BaseGoerliTownsChannelsInterfaceAdded)
-				if err := _BaseGoerliTownsChannels.contract.UnpackLog(event, "InterfaceAdded", log); err != nil {
+				event := new(TownsChannelsInterfaceAdded)
+				if err := _TownsChannels.contract.UnpackLog(event, "InterfaceAdded", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -624,18 +624,18 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchInterfaceA
 // ParseInterfaceAdded is a log parse operation binding the contract event 0x78f84e5b1c5c05be2b5ad3800781dd404d6d6c6302bc755c0fe20f58a33a7f22.
 //
 // Solidity: event InterfaceAdded(bytes4 indexed interfaceId)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) ParseInterfaceAdded(log types.Log) (*BaseGoerliTownsChannelsInterfaceAdded, error) {
-	event := new(BaseGoerliTownsChannelsInterfaceAdded)
-	if err := _BaseGoerliTownsChannels.contract.UnpackLog(event, "InterfaceAdded", log); err != nil {
+func (_TownsChannels *TownsChannelsFilterer) ParseInterfaceAdded(log types.Log) (*TownsChannelsInterfaceAdded, error) {
+	event := new(TownsChannelsInterfaceAdded)
+	if err := _TownsChannels.contract.UnpackLog(event, "InterfaceAdded", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// BaseGoerliTownsChannelsInterfaceRemovedIterator is returned from FilterInterfaceRemoved and is used to iterate over the raw logs and unpacked data for InterfaceRemoved events raised by the BaseGoerliTownsChannels contract.
-type BaseGoerliTownsChannelsInterfaceRemovedIterator struct {
-	Event *BaseGoerliTownsChannelsInterfaceRemoved // Event containing the contract specifics and raw log
+// TownsChannelsInterfaceRemovedIterator is returned from FilterInterfaceRemoved and is used to iterate over the raw logs and unpacked data for InterfaceRemoved events raised by the TownsChannels contract.
+type TownsChannelsInterfaceRemovedIterator struct {
+	Event *TownsChannelsInterfaceRemoved // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -649,7 +649,7 @@ type BaseGoerliTownsChannelsInterfaceRemovedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *BaseGoerliTownsChannelsInterfaceRemovedIterator) Next() bool {
+func (it *TownsChannelsInterfaceRemovedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -658,7 +658,7 @@ func (it *BaseGoerliTownsChannelsInterfaceRemovedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(BaseGoerliTownsChannelsInterfaceRemoved)
+			it.Event = new(TownsChannelsInterfaceRemoved)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -673,7 +673,7 @@ func (it *BaseGoerliTownsChannelsInterfaceRemovedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(BaseGoerliTownsChannelsInterfaceRemoved)
+		it.Event = new(TownsChannelsInterfaceRemoved)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -689,19 +689,19 @@ func (it *BaseGoerliTownsChannelsInterfaceRemovedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *BaseGoerliTownsChannelsInterfaceRemovedIterator) Error() error {
+func (it *TownsChannelsInterfaceRemovedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *BaseGoerliTownsChannelsInterfaceRemovedIterator) Close() error {
+func (it *TownsChannelsInterfaceRemovedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// BaseGoerliTownsChannelsInterfaceRemoved represents a InterfaceRemoved event raised by the BaseGoerliTownsChannels contract.
-type BaseGoerliTownsChannelsInterfaceRemoved struct {
+// TownsChannelsInterfaceRemoved represents a InterfaceRemoved event raised by the TownsChannels contract.
+type TownsChannelsInterfaceRemoved struct {
 	InterfaceId [4]byte
 	Raw         types.Log // Blockchain specific contextual infos
 }
@@ -709,31 +709,31 @@ type BaseGoerliTownsChannelsInterfaceRemoved struct {
 // FilterInterfaceRemoved is a free log retrieval operation binding the contract event 0x8bd383568d0bc57b64b8e424138fc19ae827e694e05757faa8fea8f63fb87315.
 //
 // Solidity: event InterfaceRemoved(bytes4 indexed interfaceId)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) FilterInterfaceRemoved(opts *bind.FilterOpts, interfaceId [][4]byte) (*BaseGoerliTownsChannelsInterfaceRemovedIterator, error) {
+func (_TownsChannels *TownsChannelsFilterer) FilterInterfaceRemoved(opts *bind.FilterOpts, interfaceId [][4]byte) (*TownsChannelsInterfaceRemovedIterator, error) {
 
 	var interfaceIdRule []interface{}
 	for _, interfaceIdItem := range interfaceId {
 		interfaceIdRule = append(interfaceIdRule, interfaceIdItem)
 	}
 
-	logs, sub, err := _BaseGoerliTownsChannels.contract.FilterLogs(opts, "InterfaceRemoved", interfaceIdRule)
+	logs, sub, err := _TownsChannels.contract.FilterLogs(opts, "InterfaceRemoved", interfaceIdRule)
 	if err != nil {
 		return nil, err
 	}
-	return &BaseGoerliTownsChannelsInterfaceRemovedIterator{contract: _BaseGoerliTownsChannels.contract, event: "InterfaceRemoved", logs: logs, sub: sub}, nil
+	return &TownsChannelsInterfaceRemovedIterator{contract: _TownsChannels.contract, event: "InterfaceRemoved", logs: logs, sub: sub}, nil
 }
 
 // WatchInterfaceRemoved is a free log subscription operation binding the contract event 0x8bd383568d0bc57b64b8e424138fc19ae827e694e05757faa8fea8f63fb87315.
 //
 // Solidity: event InterfaceRemoved(bytes4 indexed interfaceId)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchInterfaceRemoved(opts *bind.WatchOpts, sink chan<- *BaseGoerliTownsChannelsInterfaceRemoved, interfaceId [][4]byte) (event.Subscription, error) {
+func (_TownsChannels *TownsChannelsFilterer) WatchInterfaceRemoved(opts *bind.WatchOpts, sink chan<- *TownsChannelsInterfaceRemoved, interfaceId [][4]byte) (event.Subscription, error) {
 
 	var interfaceIdRule []interface{}
 	for _, interfaceIdItem := range interfaceId {
 		interfaceIdRule = append(interfaceIdRule, interfaceIdItem)
 	}
 
-	logs, sub, err := _BaseGoerliTownsChannels.contract.WatchLogs(opts, "InterfaceRemoved", interfaceIdRule)
+	logs, sub, err := _TownsChannels.contract.WatchLogs(opts, "InterfaceRemoved", interfaceIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -743,8 +743,8 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchInterfaceR
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(BaseGoerliTownsChannelsInterfaceRemoved)
-				if err := _BaseGoerliTownsChannels.contract.UnpackLog(event, "InterfaceRemoved", log); err != nil {
+				event := new(TownsChannelsInterfaceRemoved)
+				if err := _TownsChannels.contract.UnpackLog(event, "InterfaceRemoved", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -768,18 +768,18 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchInterfaceR
 // ParseInterfaceRemoved is a log parse operation binding the contract event 0x8bd383568d0bc57b64b8e424138fc19ae827e694e05757faa8fea8f63fb87315.
 //
 // Solidity: event InterfaceRemoved(bytes4 indexed interfaceId)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) ParseInterfaceRemoved(log types.Log) (*BaseGoerliTownsChannelsInterfaceRemoved, error) {
-	event := new(BaseGoerliTownsChannelsInterfaceRemoved)
-	if err := _BaseGoerliTownsChannels.contract.UnpackLog(event, "InterfaceRemoved", log); err != nil {
+func (_TownsChannels *TownsChannelsFilterer) ParseInterfaceRemoved(log types.Log) (*TownsChannelsInterfaceRemoved, error) {
+	event := new(TownsChannelsInterfaceRemoved)
+	if err := _TownsChannels.contract.UnpackLog(event, "InterfaceRemoved", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// BaseGoerliTownsChannelsOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the BaseGoerliTownsChannels contract.
-type BaseGoerliTownsChannelsOwnershipTransferredIterator struct {
-	Event *BaseGoerliTownsChannelsOwnershipTransferred // Event containing the contract specifics and raw log
+// TownsChannelsOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the TownsChannels contract.
+type TownsChannelsOwnershipTransferredIterator struct {
+	Event *TownsChannelsOwnershipTransferred // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -793,7 +793,7 @@ type BaseGoerliTownsChannelsOwnershipTransferredIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *BaseGoerliTownsChannelsOwnershipTransferredIterator) Next() bool {
+func (it *TownsChannelsOwnershipTransferredIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -802,7 +802,7 @@ func (it *BaseGoerliTownsChannelsOwnershipTransferredIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(BaseGoerliTownsChannelsOwnershipTransferred)
+			it.Event = new(TownsChannelsOwnershipTransferred)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -817,7 +817,7 @@ func (it *BaseGoerliTownsChannelsOwnershipTransferredIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(BaseGoerliTownsChannelsOwnershipTransferred)
+		it.Event = new(TownsChannelsOwnershipTransferred)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -833,19 +833,19 @@ func (it *BaseGoerliTownsChannelsOwnershipTransferredIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *BaseGoerliTownsChannelsOwnershipTransferredIterator) Error() error {
+func (it *TownsChannelsOwnershipTransferredIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *BaseGoerliTownsChannelsOwnershipTransferredIterator) Close() error {
+func (it *TownsChannelsOwnershipTransferredIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// BaseGoerliTownsChannelsOwnershipTransferred represents a OwnershipTransferred event raised by the BaseGoerliTownsChannels contract.
-type BaseGoerliTownsChannelsOwnershipTransferred struct {
+// TownsChannelsOwnershipTransferred represents a OwnershipTransferred event raised by the TownsChannels contract.
+type TownsChannelsOwnershipTransferred struct {
 	PreviousOwner common.Address
 	NewOwner      common.Address
 	Raw           types.Log // Blockchain specific contextual infos
@@ -854,7 +854,7 @@ type BaseGoerliTownsChannelsOwnershipTransferred struct {
 // FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
 //
 // Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*BaseGoerliTownsChannelsOwnershipTransferredIterator, error) {
+func (_TownsChannels *TownsChannelsFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*TownsChannelsOwnershipTransferredIterator, error) {
 
 	var previousOwnerRule []interface{}
 	for _, previousOwnerItem := range previousOwner {
@@ -865,17 +865,17 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) FilterOwnership
 		newOwnerRule = append(newOwnerRule, newOwnerItem)
 	}
 
-	logs, sub, err := _BaseGoerliTownsChannels.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	logs, sub, err := _TownsChannels.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
 	if err != nil {
 		return nil, err
 	}
-	return &BaseGoerliTownsChannelsOwnershipTransferredIterator{contract: _BaseGoerliTownsChannels.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
+	return &TownsChannelsOwnershipTransferredIterator{contract: _TownsChannels.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
 }
 
 // WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
 //
 // Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *BaseGoerliTownsChannelsOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
+func (_TownsChannels *TownsChannelsFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *TownsChannelsOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
 
 	var previousOwnerRule []interface{}
 	for _, previousOwnerItem := range previousOwner {
@@ -886,7 +886,7 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchOwnershipT
 		newOwnerRule = append(newOwnerRule, newOwnerItem)
 	}
 
-	logs, sub, err := _BaseGoerliTownsChannels.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	logs, sub, err := _TownsChannels.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
 	if err != nil {
 		return nil, err
 	}
@@ -896,8 +896,8 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchOwnershipT
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(BaseGoerliTownsChannelsOwnershipTransferred)
-				if err := _BaseGoerliTownsChannels.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+				event := new(TownsChannelsOwnershipTransferred)
+				if err := _TownsChannels.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -921,18 +921,18 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchOwnershipT
 // ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
 //
 // Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) ParseOwnershipTransferred(log types.Log) (*BaseGoerliTownsChannelsOwnershipTransferred, error) {
-	event := new(BaseGoerliTownsChannelsOwnershipTransferred)
-	if err := _BaseGoerliTownsChannels.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+func (_TownsChannels *TownsChannelsFilterer) ParseOwnershipTransferred(log types.Log) (*TownsChannelsOwnershipTransferred, error) {
+	event := new(TownsChannelsOwnershipTransferred)
+	if err := _TownsChannels.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// BaseGoerliTownsChannelsPausedIterator is returned from FilterPaused and is used to iterate over the raw logs and unpacked data for Paused events raised by the BaseGoerliTownsChannels contract.
-type BaseGoerliTownsChannelsPausedIterator struct {
-	Event *BaseGoerliTownsChannelsPaused // Event containing the contract specifics and raw log
+// TownsChannelsPausedIterator is returned from FilterPaused and is used to iterate over the raw logs and unpacked data for Paused events raised by the TownsChannels contract.
+type TownsChannelsPausedIterator struct {
+	Event *TownsChannelsPaused // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -946,7 +946,7 @@ type BaseGoerliTownsChannelsPausedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *BaseGoerliTownsChannelsPausedIterator) Next() bool {
+func (it *TownsChannelsPausedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -955,7 +955,7 @@ func (it *BaseGoerliTownsChannelsPausedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(BaseGoerliTownsChannelsPaused)
+			it.Event = new(TownsChannelsPaused)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -970,7 +970,7 @@ func (it *BaseGoerliTownsChannelsPausedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(BaseGoerliTownsChannelsPaused)
+		it.Event = new(TownsChannelsPaused)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -986,19 +986,19 @@ func (it *BaseGoerliTownsChannelsPausedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *BaseGoerliTownsChannelsPausedIterator) Error() error {
+func (it *TownsChannelsPausedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *BaseGoerliTownsChannelsPausedIterator) Close() error {
+func (it *TownsChannelsPausedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// BaseGoerliTownsChannelsPaused represents a Paused event raised by the BaseGoerliTownsChannels contract.
-type BaseGoerliTownsChannelsPaused struct {
+// TownsChannelsPaused represents a Paused event raised by the TownsChannels contract.
+type TownsChannelsPaused struct {
 	Account common.Address
 	Raw     types.Log // Blockchain specific contextual infos
 }
@@ -1006,21 +1006,21 @@ type BaseGoerliTownsChannelsPaused struct {
 // FilterPaused is a free log retrieval operation binding the contract event 0x62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258.
 //
 // Solidity: event Paused(address account)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) FilterPaused(opts *bind.FilterOpts) (*BaseGoerliTownsChannelsPausedIterator, error) {
+func (_TownsChannels *TownsChannelsFilterer) FilterPaused(opts *bind.FilterOpts) (*TownsChannelsPausedIterator, error) {
 
-	logs, sub, err := _BaseGoerliTownsChannels.contract.FilterLogs(opts, "Paused")
+	logs, sub, err := _TownsChannels.contract.FilterLogs(opts, "Paused")
 	if err != nil {
 		return nil, err
 	}
-	return &BaseGoerliTownsChannelsPausedIterator{contract: _BaseGoerliTownsChannels.contract, event: "Paused", logs: logs, sub: sub}, nil
+	return &TownsChannelsPausedIterator{contract: _TownsChannels.contract, event: "Paused", logs: logs, sub: sub}, nil
 }
 
 // WatchPaused is a free log subscription operation binding the contract event 0x62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258.
 //
 // Solidity: event Paused(address account)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchPaused(opts *bind.WatchOpts, sink chan<- *BaseGoerliTownsChannelsPaused) (event.Subscription, error) {
+func (_TownsChannels *TownsChannelsFilterer) WatchPaused(opts *bind.WatchOpts, sink chan<- *TownsChannelsPaused) (event.Subscription, error) {
 
-	logs, sub, err := _BaseGoerliTownsChannels.contract.WatchLogs(opts, "Paused")
+	logs, sub, err := _TownsChannels.contract.WatchLogs(opts, "Paused")
 	if err != nil {
 		return nil, err
 	}
@@ -1030,8 +1030,8 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchPaused(opt
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(BaseGoerliTownsChannelsPaused)
-				if err := _BaseGoerliTownsChannels.contract.UnpackLog(event, "Paused", log); err != nil {
+				event := new(TownsChannelsPaused)
+				if err := _TownsChannels.contract.UnpackLog(event, "Paused", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1055,18 +1055,18 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchPaused(opt
 // ParsePaused is a log parse operation binding the contract event 0x62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258.
 //
 // Solidity: event Paused(address account)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) ParsePaused(log types.Log) (*BaseGoerliTownsChannelsPaused, error) {
-	event := new(BaseGoerliTownsChannelsPaused)
-	if err := _BaseGoerliTownsChannels.contract.UnpackLog(event, "Paused", log); err != nil {
+func (_TownsChannels *TownsChannelsFilterer) ParsePaused(log types.Log) (*TownsChannelsPaused, error) {
+	event := new(TownsChannelsPaused)
+	if err := _TownsChannels.contract.UnpackLog(event, "Paused", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// BaseGoerliTownsChannelsUnpausedIterator is returned from FilterUnpaused and is used to iterate over the raw logs and unpacked data for Unpaused events raised by the BaseGoerliTownsChannels contract.
-type BaseGoerliTownsChannelsUnpausedIterator struct {
-	Event *BaseGoerliTownsChannelsUnpaused // Event containing the contract specifics and raw log
+// TownsChannelsUnpausedIterator is returned from FilterUnpaused and is used to iterate over the raw logs and unpacked data for Unpaused events raised by the TownsChannels contract.
+type TownsChannelsUnpausedIterator struct {
+	Event *TownsChannelsUnpaused // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1080,7 +1080,7 @@ type BaseGoerliTownsChannelsUnpausedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *BaseGoerliTownsChannelsUnpausedIterator) Next() bool {
+func (it *TownsChannelsUnpausedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1089,7 +1089,7 @@ func (it *BaseGoerliTownsChannelsUnpausedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(BaseGoerliTownsChannelsUnpaused)
+			it.Event = new(TownsChannelsUnpaused)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1104,7 +1104,7 @@ func (it *BaseGoerliTownsChannelsUnpausedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(BaseGoerliTownsChannelsUnpaused)
+		it.Event = new(TownsChannelsUnpaused)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1120,19 +1120,19 @@ func (it *BaseGoerliTownsChannelsUnpausedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *BaseGoerliTownsChannelsUnpausedIterator) Error() error {
+func (it *TownsChannelsUnpausedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *BaseGoerliTownsChannelsUnpausedIterator) Close() error {
+func (it *TownsChannelsUnpausedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// BaseGoerliTownsChannelsUnpaused represents a Unpaused event raised by the BaseGoerliTownsChannels contract.
-type BaseGoerliTownsChannelsUnpaused struct {
+// TownsChannelsUnpaused represents a Unpaused event raised by the TownsChannels contract.
+type TownsChannelsUnpaused struct {
 	Account common.Address
 	Raw     types.Log // Blockchain specific contextual infos
 }
@@ -1140,21 +1140,21 @@ type BaseGoerliTownsChannelsUnpaused struct {
 // FilterUnpaused is a free log retrieval operation binding the contract event 0x5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa.
 //
 // Solidity: event Unpaused(address account)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) FilterUnpaused(opts *bind.FilterOpts) (*BaseGoerliTownsChannelsUnpausedIterator, error) {
+func (_TownsChannels *TownsChannelsFilterer) FilterUnpaused(opts *bind.FilterOpts) (*TownsChannelsUnpausedIterator, error) {
 
-	logs, sub, err := _BaseGoerliTownsChannels.contract.FilterLogs(opts, "Unpaused")
+	logs, sub, err := _TownsChannels.contract.FilterLogs(opts, "Unpaused")
 	if err != nil {
 		return nil, err
 	}
-	return &BaseGoerliTownsChannelsUnpausedIterator{contract: _BaseGoerliTownsChannels.contract, event: "Unpaused", logs: logs, sub: sub}, nil
+	return &TownsChannelsUnpausedIterator{contract: _TownsChannels.contract, event: "Unpaused", logs: logs, sub: sub}, nil
 }
 
 // WatchUnpaused is a free log subscription operation binding the contract event 0x5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa.
 //
 // Solidity: event Unpaused(address account)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchUnpaused(opts *bind.WatchOpts, sink chan<- *BaseGoerliTownsChannelsUnpaused) (event.Subscription, error) {
+func (_TownsChannels *TownsChannelsFilterer) WatchUnpaused(opts *bind.WatchOpts, sink chan<- *TownsChannelsUnpaused) (event.Subscription, error) {
 
-	logs, sub, err := _BaseGoerliTownsChannels.contract.WatchLogs(opts, "Unpaused")
+	logs, sub, err := _TownsChannels.contract.WatchLogs(opts, "Unpaused")
 	if err != nil {
 		return nil, err
 	}
@@ -1164,8 +1164,8 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchUnpaused(o
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(BaseGoerliTownsChannelsUnpaused)
-				if err := _BaseGoerliTownsChannels.contract.UnpackLog(event, "Unpaused", log); err != nil {
+				event := new(TownsChannelsUnpaused)
+				if err := _TownsChannels.contract.UnpackLog(event, "Unpaused", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1189,9 +1189,9 @@ func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) WatchUnpaused(o
 // ParseUnpaused is a log parse operation binding the contract event 0x5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa.
 //
 // Solidity: event Unpaused(address account)
-func (_BaseGoerliTownsChannels *BaseGoerliTownsChannelsFilterer) ParseUnpaused(log types.Log) (*BaseGoerliTownsChannelsUnpaused, error) {
-	event := new(BaseGoerliTownsChannelsUnpaused)
-	if err := _BaseGoerliTownsChannels.contract.UnpackLog(event, "Unpaused", log); err != nil {
+func (_TownsChannels *TownsChannelsFilterer) ParseUnpaused(log types.Log) (*TownsChannelsUnpaused, error) {
+	event := new(TownsChannelsUnpaused)
+	if err := _TownsChannels.contract.UnpackLog(event, "Unpaused", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

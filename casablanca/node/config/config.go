@@ -20,6 +20,13 @@ type Config struct {
 	BaseChain  ChainConfig
 	RiverChain ChainConfig
 
+	// Base chain contract configuration
+	TownsArchitectContract ContractConfig
+	WalletLinkContract     ContractConfig
+
+	// Contract configuration
+	RegistryContract ContractConfig
+
 	// Logging
 	Log infra.LogConfig
 
@@ -93,4 +100,11 @@ type MediaStreamConfig struct {
 type RecencyConstraintsConfig struct {
 	AgeSeconds  int
 	Generations int
+}
+
+type ContractConfig struct {
+	// Address of the contract on the blockchain or path to the JSON file with address.
+	Address string
+	// Version of the contract to use.
+	Version string
 }

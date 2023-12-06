@@ -1,4 +1,7 @@
-#!/bin/bash
+#!/bin/bash -ue
+cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+cd ..
+
 CHAIN="${1:-localhost}"
 FROZEN="${2:-}"
 ABI_DIR="packages/generated/${CHAIN}/v3/abis"
@@ -15,7 +18,6 @@ RIVER_TOWNS_STREAM_REGISTRY_DIR="${RIVER_DIR}/${CHAIN}_towns_stream_registry"
 XCHAIN_DIR="servers/xchain/contracts"
 XCHAIN_PACKAGE="_xchain"
 
-forge clean
 forge build --extra-output-files metadata --extra-output-files abi --force
 
 yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|StreamRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|ITownOwner|MockERC721A|MembershipFacet|Member|PioneerFacet).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
@@ -28,22 +30,13 @@ for file in $ABI_DIR/*.abi.json; do
   echo "export default $(cat $file) as const" > $ABI_DIR/$filename.ts
 done
 
-# Town Architect typings
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/TownArchitect.sol/TownArchitect.abi.json --pkg "${CHAIN}_towns_architect" --type "${CHAIN}_towns_architect" --out "${RIVER_TOWNS_ARCHITECT_DIR}/${CHAIN}_towns_architect.go"
-# Town Channels typings
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Channels.sol/Channels.abi.json --pkg "${CHAIN}_towns_channels" --type "${CHAIN}_towns_channels" --out "${RIVER_TOWNS_CHANNELS_DIR}/${CHAIN}_towns_channels.go"
-# Town Entitlements typings
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/EntitlementsManager.sol/EntitlementsManager.abi.json --pkg "${CHAIN}_towns_entitlements" --type "${CHAIN}_towns_entitlements" --out "${RIVER_TOWNS_ENTITLEMENTS_DIR}/${CHAIN}_towns_entitlements.go"
-# Town Pausable typings
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Pausable.sol/Pausable.abi.json --pkg "${CHAIN}_towns_pausable" --type "${CHAIN}_towns_pausable" --out "${RIVER_TOWNS_PAUSABLE_DIR}/${CHAIN}_towns_pausable.go"
+./scripts/gen-river-node-bindings.sh $CHAIN
+
 # XChain Entitlements typings
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementChecker.sol/IEntitlementChecker.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementChecker" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementChecker.go"
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementGated.sol/IEntitlementGated.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementGated" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementGated.go"
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementRule.sol/IEntitlementRule.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementRule" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementRule.go"
-# Towns WalletLink Registry
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/WalletLink.sol/WalletLink.abi.json --pkg "${CHAIN}_towns_wallet_link" --type "${CHAIN}_towns_wallet_link" --out "${RIVER_TOWNS_WALLET_LINK_DIR}/${CHAIN}_towns_wallet_link.go"
-# Towns Stream Registry
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/StreamRegistry.sol/StreamRegistry.abi.json --pkg "${CHAIN}_towns_stream_registry" --type "${CHAIN}_towns_stream_registry" --out "${RIVER_TOWNS_STREAM_REGISTRY_DIR}/${CHAIN}_towns_stream_registry.go"
+
 
 # Using the $FROZEN flag and git diff, we can check if this script generates any new files
 # under the $ABI_DIR directory.

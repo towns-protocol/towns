@@ -1,20 +1,21 @@
 package auth
 
 import (
-	"casablanca/node/auth/contracts/base_goerli_towns_wallet_link"
-	"casablanca/node/auth/contracts/localhost_towns_wallet_link"
+	. "casablanca/node/base"
+	"casablanca/node/config"
+	"casablanca/node/contracts"
+	"casablanca/node/contracts/dev"
+	v3 "casablanca/node/contracts/v3"
+	"casablanca/node/crypto"
 	"casablanca/node/dlog"
 	"casablanca/node/infra"
+	. "casablanca/node/protocol"
 	"context"
 	"math/big"
 	"time"
 
-	. "casablanca/node/base"
-	"casablanca/node/protocol"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type WalletLinkContract interface {
@@ -32,8 +33,7 @@ type GeneratedWalletLinkContract interface {
 }
 
 type TownsWalletLink struct {
-	ethClient *ethclient.Client
-	link      GeneratedWalletLinkContract
+	contract GeneratedWalletLinkContract
 }
 
 var (
@@ -43,91 +43,87 @@ var (
 	checkIfLinkedCalls       = infra.NewSuccessMetrics("check_if_linked_calls", contractCalls)
 )
 
-func NewTownsWalletLink(ethClient *ethclient.Client, chainId int) (*TownsWalletLink, error) {
-	hexAddress, err := loadWalletLinkContractAddress(chainId)
+func NewTownsWalletLink(cfg *config.ContractConfig, backend bind.ContractBackend) (*TownsWalletLink, error) {
+	address, err := crypto.ParseOrLoadAddress(cfg.Address)
 	if err != nil {
-		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+		return nil, AsRiverError(err, Err_BAD_CONFIG).Message("Failed to parse contract address").Func("NewTownsWalletLink")
 	}
-	address := common.HexToAddress(hexAddress)
-
-	var wallet_link_contract GeneratedWalletLinkContract
-	switch chainId {
-	case infra.CHAIN_ID_LOCALHOST:
-		wallet_link_contract, err = localhost_towns_wallet_link.NewLocalhostTownsWalletLink(address, ethClient)
-	case infra.CHAIN_ID_BASE_GOERLI:
-		wallet_link_contract, err = base_goerli_towns_wallet_link.NewBaseGoerliTownsWalletLink(address, ethClient)
-	default:
-		return nil, RiverError(protocol.Err_CANNOT_CONNECT, "unsupported chain", "chainId", chainId)
+	var c GeneratedWalletLinkContract
+	switch cfg.Version {
+	case contracts.DEV:
+		c, err = dev.NewWalletLink(address, backend)
+	case contracts.V3:
+		c, err = v3.NewTownsWalletLink(address, backend)
 	}
 	if err != nil {
-		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+		return nil, WrapRiverError(Err_CANNOT_CONNECT, err).Tags("address", cfg.Address, "version", cfg.Version).Func("NewTownsWalletLink").Message("Failed to initialize contract")
 	}
-
-	var contract = &TownsWalletLink{
-		ethClient: ethClient,
-		link:      wallet_link_contract,
+	if c == nil {
+		return nil, RiverError(Err_CANNOT_CONNECT, "Unsupported version", "version", cfg.Version, "address", cfg.Address).Func("NewTownsWalletLink")
 	}
-	return contract, nil
+	return &TownsWalletLink{
+		contract: c,
+	}, nil
 }
 
-func (za *TownsWalletLink) GetWalletsByRootKey(rootKey common.Address) ([]common.Address, error) {
+func (l *TownsWalletLink) GetWalletsByRootKey(rootKey common.Address) ([]common.Address, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetWalletsByRootKey", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("GetWalletsByRootKey", "rootKey", rootKey)
-	result, err := za.link.GetWalletsByRootKey(nil, rootKey)
+	result, err := l.contract.GetWalletsByRootKey(nil, rootKey)
 	if err != nil {
 		getWalletsByRootKeyCalls.FailInc()
 		log.Error("GetWalletsByRootKey", "rootKey", rootKey, "error", err)
-		return nil, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
+		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
 	}
 	getWalletsByRootKeyCalls.PassInc()
 	log.Debug("GetWalletsByRootKey", "rootKey", rootKey, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }
 
-func (za *TownsWalletLink) GetRootKeyForWallet(wallet common.Address) (common.Address, error) {
+func (l *TownsWalletLink) GetRootKeyForWallet(wallet common.Address) (common.Address, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetRootKeyForWallet", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("GetRootKeyForWallet", "wallet", wallet)
-	result, err := za.link.GetRootKeyForWallet(nil, wallet)
+	result, err := l.contract.GetRootKeyForWallet(nil, wallet)
 	if err != nil {
 		getRootKeyForWalletCalls.FailInc()
 		log.Error("GetRootKeyForWallet", "wallet", wallet, "error", err)
-		return common.Address{}, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
+		return common.Address{}, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
 	}
 	getRootKeyForWalletCalls.PassInc()
 	log.Debug("GetRootKeyForWallet", "wallet", wallet, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }
 
-func (za *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (*big.Int, error) {
+func (l *TownsWalletLink) GetLatestNonceForRootKey(rootKey common.Address) (*big.Int, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetLatestNonceForRootKey", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey)
-	result, err := za.link.GetLatestNonceForRootKey(nil, rootKey)
+	result, err := l.contract.GetLatestNonceForRootKey(nil, rootKey)
 	if err != nil {
 		getLatestNonceCalls.FailInc()
 		log.Error("GetLatestNonceForRootKey", "rootKey", rootKey, "error", err)
-		return nil, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
+		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
 	}
 	getLatestNonceCalls.PassInc()
 	log.Debug("GetLatestNonceForRootKey", "rootKey", rootKey, "result", result)
 	return result, nil
 }
 
-func (za *TownsWalletLink) CheckIfLinked(rootKey common.Address, wallet common.Address) (bool, error) {
+func (l *TownsWalletLink) CheckIfLinked(rootKey common.Address, wallet common.Address) (bool, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("CheckIfLinked", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("CheckIfLinked", "rootKey", rootKey, "wallet", wallet)
-	result, err := za.link.CheckIfLinked(nil, rootKey, wallet)
+	result, err := l.contract.CheckIfLinked(nil, rootKey, wallet)
 	if err != nil {
 		checkIfLinkedCalls.FailInc()
 		log.Error("CheckIfLinked", "rootKey", rootKey, "wallet", wallet, "error", err)
-		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
+		return false, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
 	}
 	checkIfLinkedCalls.PassInc()
 	log.Debug("CheckIfLinked", "rootKey", rootKey, "wallet", wallet, "result", result)

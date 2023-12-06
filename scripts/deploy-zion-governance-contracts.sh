@@ -1,8 +1,9 @@
-#!/usr/bin/env bash
-cd contracts/
+#!/bin/bash -ue
+cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+cd ../contracts
 
 # this line makes sure that the script exits if any command fails
-set -eo pipefail
+set -ueo pipefail
 
 set -a
 . .env.localhost
@@ -20,11 +21,6 @@ make deploy-anvil contract=DeployTownFactory
 make deploy-anvil contract=DeployMember
 make deploy-anvil contract=DeployMockNFT
 
-cd ../
-cp packages/generated/localhost/addresses/townFactory.json servers/dendrite/zion/contracts/localhost_town_factory.json
-cp packages/generated/goerli/addresses/townFactory.json servers/dendrite/zion/contracts/goerli_town_factory.json
-cp packages/generated/sepolia/addresses/townFactory.json servers/dendrite/zion/contracts/sepolia_town_factory.json
-cp packages/generated/localhost/addresses/townFactory.json casablanca/node/auth/contracts/localhost_town_factory.json
-cp packages/generated/goerli/addresses/townFactory.json casablanca/node/auth/contracts/goerli_town_factory.json
-cp packages/generated/sepolia/addresses/townFactory.json casablanca/node/auth/contracts/sepolia_town_factory.json
-cp packages/generated/base_goerli/addresses/townFactory.json casablanca/node/auth/contracts/base_goerli_town_factory.json
+cd ..
+mkdir -p casablanca/node/run_files/addresses
+cp packages/generated/localhost/addresses/townFactory.json casablanca/node/run_files/addresses

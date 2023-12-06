@@ -1,12 +1,13 @@
-#!/usr/bin/env bash
-cd contracts/
-# yarn clean
+#!/bin/bash -ue
+cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+cd ../contracts
+
 set -a
 . .env.localhost
 set +a
 make deploy-anvil contract=DeployMultiInit
 make deploy-anvil contract=DeployWalletLink
 
-cd ../
-cp packages/generated/localhost/addresses/walletLink.json casablanca/node/auth/contracts/localhost_wallet_link.json
-cp packages/generated/base_goerli/addresses/walletLink.json casablanca/node/auth/contracts/base_goerli_wallet_link.json
+cd ..
+mkdir -p casablanca/node/run_files/addresses
+cp packages/generated/localhost/addresses/walletLink.json casablanca/node/run_files/addresses

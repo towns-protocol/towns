@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package localhost_towns_entitlements
+package v3
 
 import (
 	"errors"
@@ -37,113 +37,113 @@ type IEntitlementsManagerBaseEntitlement struct {
 	IsImmutable   bool
 }
 
-// LocalhostTownsEntitlementsMetaData contains all meta data concerning the LocalhostTownsEntitlements contract.
-var LocalhostTownsEntitlementsMetaData = &bind.MetaData{
+// TownsEntitlementsMetaData contains all meta data concerning the TownsEntitlements contract.
+var TownsEntitlementsMetaData = &bind.MetaData{
 	ABI: "[{\"inputs\":[],\"name\":\"Entitlement__InvalidValue\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Entitlement__NotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Entitlement__ValueAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__EntitlementAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__EntitlementDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__ImmutableEntitlement\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__InvalidEntitlementAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementsService__InvalidEntitlementInterface\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Ownable__NotOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Ownable__ZeroAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Pausable__NotPaused\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Pausable__Paused\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Paused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Unpaused\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"entitlement\",\"type\":\"address\"}],\"name\":\"addEntitlementModule\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"entitlements\",\"type\":\"address[]\"}],\"name\":\"addImmutableEntitlements\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"entitlement\",\"type\":\"address\"}],\"name\":\"getEntitlement\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"moduleAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"moduleType\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isImmutable\",\"type\":\"bool\"}],\"internalType\":\"structIEntitlementsManagerBase.Entitlement\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getEntitlements\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"moduleAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"moduleType\",\"type\":\"string\"},{\"internalType\":\"bool\",\"name\":\"isImmutable\",\"type\":\"bool\"}],\"internalType\":\"structIEntitlementsManagerBase.Entitlement[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"permission\",\"type\":\"string\"}],\"name\":\"isEntitledToChannel\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"permission\",\"type\":\"string\"}],\"name\":\"isEntitledToTown\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"entitlement\",\"type\":\"address\"}],\"name\":\"removeEntitlementModule\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
-// LocalhostTownsEntitlementsABI is the input ABI used to generate the binding from.
-// Deprecated: Use LocalhostTownsEntitlementsMetaData.ABI instead.
-var LocalhostTownsEntitlementsABI = LocalhostTownsEntitlementsMetaData.ABI
+// TownsEntitlementsABI is the input ABI used to generate the binding from.
+// Deprecated: Use TownsEntitlementsMetaData.ABI instead.
+var TownsEntitlementsABI = TownsEntitlementsMetaData.ABI
 
-// LocalhostTownsEntitlements is an auto generated Go binding around an Ethereum contract.
-type LocalhostTownsEntitlements struct {
-	LocalhostTownsEntitlementsCaller     // Read-only binding to the contract
-	LocalhostTownsEntitlementsTransactor // Write-only binding to the contract
-	LocalhostTownsEntitlementsFilterer   // Log filterer for contract events
+// TownsEntitlements is an auto generated Go binding around an Ethereum contract.
+type TownsEntitlements struct {
+	TownsEntitlementsCaller     // Read-only binding to the contract
+	TownsEntitlementsTransactor // Write-only binding to the contract
+	TownsEntitlementsFilterer   // Log filterer for contract events
 }
 
-// LocalhostTownsEntitlementsCaller is an auto generated read-only Go binding around an Ethereum contract.
-type LocalhostTownsEntitlementsCaller struct {
+// TownsEntitlementsCaller is an auto generated read-only Go binding around an Ethereum contract.
+type TownsEntitlementsCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// LocalhostTownsEntitlementsTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type LocalhostTownsEntitlementsTransactor struct {
+// TownsEntitlementsTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type TownsEntitlementsTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// LocalhostTownsEntitlementsFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type LocalhostTownsEntitlementsFilterer struct {
+// TownsEntitlementsFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type TownsEntitlementsFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// LocalhostTownsEntitlementsSession is an auto generated Go binding around an Ethereum contract,
+// TownsEntitlementsSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
-type LocalhostTownsEntitlementsSession struct {
-	Contract     *LocalhostTownsEntitlements // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts               // Call options to use throughout this session
-	TransactOpts bind.TransactOpts           // Transaction auth options to use throughout this session
+type TownsEntitlementsSession struct {
+	Contract     *TownsEntitlements // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts                // Call options to use throughout this session
+	TransactOpts bind.TransactOpts            // Transaction auth options to use throughout this session
 }
 
-// LocalhostTownsEntitlementsCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// TownsEntitlementsCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
-type LocalhostTownsEntitlementsCallerSession struct {
-	Contract *LocalhostTownsEntitlementsCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts                     // Call options to use throughout this session
+type TownsEntitlementsCallerSession struct {
+	Contract *TownsEntitlementsCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts                      // Call options to use throughout this session
 }
 
-// LocalhostTownsEntitlementsTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// TownsEntitlementsTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
-type LocalhostTownsEntitlementsTransactorSession struct {
-	Contract     *LocalhostTownsEntitlementsTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts                     // Transaction auth options to use throughout this session
+type TownsEntitlementsTransactorSession struct {
+	Contract     *TownsEntitlementsTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts                      // Transaction auth options to use throughout this session
 }
 
-// LocalhostTownsEntitlementsRaw is an auto generated low-level Go binding around an Ethereum contract.
-type LocalhostTownsEntitlementsRaw struct {
-	Contract *LocalhostTownsEntitlements // Generic contract binding to access the raw methods on
+// TownsEntitlementsRaw is an auto generated low-level Go binding around an Ethereum contract.
+type TownsEntitlementsRaw struct {
+	Contract *TownsEntitlements // Generic contract binding to access the raw methods on
 }
 
-// LocalhostTownsEntitlementsCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type LocalhostTownsEntitlementsCallerRaw struct {
-	Contract *LocalhostTownsEntitlementsCaller // Generic read-only contract binding to access the raw methods on
+// TownsEntitlementsCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type TownsEntitlementsCallerRaw struct {
+	Contract *TownsEntitlementsCaller // Generic read-only contract binding to access the raw methods on
 }
 
-// LocalhostTownsEntitlementsTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type LocalhostTownsEntitlementsTransactorRaw struct {
-	Contract *LocalhostTownsEntitlementsTransactor // Generic write-only contract binding to access the raw methods on
+// TownsEntitlementsTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type TownsEntitlementsTransactorRaw struct {
+	Contract *TownsEntitlementsTransactor // Generic write-only contract binding to access the raw methods on
 }
 
-// NewLocalhostTownsEntitlements creates a new instance of LocalhostTownsEntitlements, bound to a specific deployed contract.
-func NewLocalhostTownsEntitlements(address common.Address, backend bind.ContractBackend) (*LocalhostTownsEntitlements, error) {
-	contract, err := bindLocalhostTownsEntitlements(address, backend, backend, backend)
+// NewTownsEntitlements creates a new instance of TownsEntitlements, bound to a specific deployed contract.
+func NewTownsEntitlements(address common.Address, backend bind.ContractBackend) (*TownsEntitlements, error) {
+	contract, err := bindTownsEntitlements(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &LocalhostTownsEntitlements{LocalhostTownsEntitlementsCaller: LocalhostTownsEntitlementsCaller{contract: contract}, LocalhostTownsEntitlementsTransactor: LocalhostTownsEntitlementsTransactor{contract: contract}, LocalhostTownsEntitlementsFilterer: LocalhostTownsEntitlementsFilterer{contract: contract}}, nil
+	return &TownsEntitlements{TownsEntitlementsCaller: TownsEntitlementsCaller{contract: contract}, TownsEntitlementsTransactor: TownsEntitlementsTransactor{contract: contract}, TownsEntitlementsFilterer: TownsEntitlementsFilterer{contract: contract}}, nil
 }
 
-// NewLocalhostTownsEntitlementsCaller creates a new read-only instance of LocalhostTownsEntitlements, bound to a specific deployed contract.
-func NewLocalhostTownsEntitlementsCaller(address common.Address, caller bind.ContractCaller) (*LocalhostTownsEntitlementsCaller, error) {
-	contract, err := bindLocalhostTownsEntitlements(address, caller, nil, nil)
+// NewTownsEntitlementsCaller creates a new read-only instance of TownsEntitlements, bound to a specific deployed contract.
+func NewTownsEntitlementsCaller(address common.Address, caller bind.ContractCaller) (*TownsEntitlementsCaller, error) {
+	contract, err := bindTownsEntitlements(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &LocalhostTownsEntitlementsCaller{contract: contract}, nil
+	return &TownsEntitlementsCaller{contract: contract}, nil
 }
 
-// NewLocalhostTownsEntitlementsTransactor creates a new write-only instance of LocalhostTownsEntitlements, bound to a specific deployed contract.
-func NewLocalhostTownsEntitlementsTransactor(address common.Address, transactor bind.ContractTransactor) (*LocalhostTownsEntitlementsTransactor, error) {
-	contract, err := bindLocalhostTownsEntitlements(address, nil, transactor, nil)
+// NewTownsEntitlementsTransactor creates a new write-only instance of TownsEntitlements, bound to a specific deployed contract.
+func NewTownsEntitlementsTransactor(address common.Address, transactor bind.ContractTransactor) (*TownsEntitlementsTransactor, error) {
+	contract, err := bindTownsEntitlements(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &LocalhostTownsEntitlementsTransactor{contract: contract}, nil
+	return &TownsEntitlementsTransactor{contract: contract}, nil
 }
 
-// NewLocalhostTownsEntitlementsFilterer creates a new log filterer instance of LocalhostTownsEntitlements, bound to a specific deployed contract.
-func NewLocalhostTownsEntitlementsFilterer(address common.Address, filterer bind.ContractFilterer) (*LocalhostTownsEntitlementsFilterer, error) {
-	contract, err := bindLocalhostTownsEntitlements(address, nil, nil, filterer)
+// NewTownsEntitlementsFilterer creates a new log filterer instance of TownsEntitlements, bound to a specific deployed contract.
+func NewTownsEntitlementsFilterer(address common.Address, filterer bind.ContractFilterer) (*TownsEntitlementsFilterer, error) {
+	contract, err := bindTownsEntitlements(address, nil, nil, filterer)
 	if err != nil {
 		return nil, err
 	}
-	return &LocalhostTownsEntitlementsFilterer{contract: contract}, nil
+	return &TownsEntitlementsFilterer{contract: contract}, nil
 }
 
-// bindLocalhostTownsEntitlements binds a generic wrapper to an already deployed contract.
-func bindLocalhostTownsEntitlements(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := LocalhostTownsEntitlementsMetaData.GetAbi()
+// bindTownsEntitlements binds a generic wrapper to an already deployed contract.
+func bindTownsEntitlements(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := TownsEntitlementsMetaData.GetAbi()
 	if err != nil {
 		return nil, err
 	}
@@ -154,46 +154,46 @@ func bindLocalhostTownsEntitlements(address common.Address, caller bind.Contract
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _LocalhostTownsEntitlements.Contract.LocalhostTownsEntitlementsCaller.contract.Call(opts, result, method, params...)
+func (_TownsEntitlements *TownsEntitlementsRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _TownsEntitlements.Contract.TownsEntitlementsCaller.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.Contract.LocalhostTownsEntitlementsTransactor.contract.Transfer(opts)
+func (_TownsEntitlements *TownsEntitlementsRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _TownsEntitlements.Contract.TownsEntitlementsTransactor.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.Contract.LocalhostTownsEntitlementsTransactor.contract.Transact(opts, method, params...)
+func (_TownsEntitlements *TownsEntitlementsRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _TownsEntitlements.Contract.TownsEntitlementsTransactor.contract.Transact(opts, method, params...)
 }
 
 // Call invokes the (constant) contract method with params as input values and
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _LocalhostTownsEntitlements.Contract.contract.Call(opts, result, method, params...)
+func (_TownsEntitlements *TownsEntitlementsCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _TownsEntitlements.Contract.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.Contract.contract.Transfer(opts)
+func (_TownsEntitlements *TownsEntitlementsTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _TownsEntitlements.Contract.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.Contract.contract.Transact(opts, method, params...)
+func (_TownsEntitlements *TownsEntitlementsTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _TownsEntitlements.Contract.contract.Transact(opts, method, params...)
 }
 
 // GetEntitlement is a free data retrieval call binding the contract method 0xfba4ff9d.
 //
 // Solidity: function getEntitlement(address entitlement) view returns((string,address,string,bool))
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCaller) GetEntitlement(opts *bind.CallOpts, entitlement common.Address) (IEntitlementsManagerBaseEntitlement, error) {
+func (_TownsEntitlements *TownsEntitlementsCaller) GetEntitlement(opts *bind.CallOpts, entitlement common.Address) (IEntitlementsManagerBaseEntitlement, error) {
 	var out []interface{}
-	err := _LocalhostTownsEntitlements.contract.Call(opts, &out, "getEntitlement", entitlement)
+	err := _TownsEntitlements.contract.Call(opts, &out, "getEntitlement", entitlement)
 
 	if err != nil {
 		return *new(IEntitlementsManagerBaseEntitlement), err
@@ -208,23 +208,23 @@ func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCaller) GetEntitlem
 // GetEntitlement is a free data retrieval call binding the contract method 0xfba4ff9d.
 //
 // Solidity: function getEntitlement(address entitlement) view returns((string,address,string,bool))
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsSession) GetEntitlement(entitlement common.Address) (IEntitlementsManagerBaseEntitlement, error) {
-	return _LocalhostTownsEntitlements.Contract.GetEntitlement(&_LocalhostTownsEntitlements.CallOpts, entitlement)
+func (_TownsEntitlements *TownsEntitlementsSession) GetEntitlement(entitlement common.Address) (IEntitlementsManagerBaseEntitlement, error) {
+	return _TownsEntitlements.Contract.GetEntitlement(&_TownsEntitlements.CallOpts, entitlement)
 }
 
 // GetEntitlement is a free data retrieval call binding the contract method 0xfba4ff9d.
 //
 // Solidity: function getEntitlement(address entitlement) view returns((string,address,string,bool))
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCallerSession) GetEntitlement(entitlement common.Address) (IEntitlementsManagerBaseEntitlement, error) {
-	return _LocalhostTownsEntitlements.Contract.GetEntitlement(&_LocalhostTownsEntitlements.CallOpts, entitlement)
+func (_TownsEntitlements *TownsEntitlementsCallerSession) GetEntitlement(entitlement common.Address) (IEntitlementsManagerBaseEntitlement, error) {
+	return _TownsEntitlements.Contract.GetEntitlement(&_TownsEntitlements.CallOpts, entitlement)
 }
 
 // GetEntitlements is a free data retrieval call binding the contract method 0x487dc38c.
 //
 // Solidity: function getEntitlements() view returns((string,address,string,bool)[])
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCaller) GetEntitlements(opts *bind.CallOpts) ([]IEntitlementsManagerBaseEntitlement, error) {
+func (_TownsEntitlements *TownsEntitlementsCaller) GetEntitlements(opts *bind.CallOpts) ([]IEntitlementsManagerBaseEntitlement, error) {
 	var out []interface{}
-	err := _LocalhostTownsEntitlements.contract.Call(opts, &out, "getEntitlements")
+	err := _TownsEntitlements.contract.Call(opts, &out, "getEntitlements")
 
 	if err != nil {
 		return *new([]IEntitlementsManagerBaseEntitlement), err
@@ -239,23 +239,23 @@ func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCaller) GetEntitlem
 // GetEntitlements is a free data retrieval call binding the contract method 0x487dc38c.
 //
 // Solidity: function getEntitlements() view returns((string,address,string,bool)[])
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsSession) GetEntitlements() ([]IEntitlementsManagerBaseEntitlement, error) {
-	return _LocalhostTownsEntitlements.Contract.GetEntitlements(&_LocalhostTownsEntitlements.CallOpts)
+func (_TownsEntitlements *TownsEntitlementsSession) GetEntitlements() ([]IEntitlementsManagerBaseEntitlement, error) {
+	return _TownsEntitlements.Contract.GetEntitlements(&_TownsEntitlements.CallOpts)
 }
 
 // GetEntitlements is a free data retrieval call binding the contract method 0x487dc38c.
 //
 // Solidity: function getEntitlements() view returns((string,address,string,bool)[])
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCallerSession) GetEntitlements() ([]IEntitlementsManagerBaseEntitlement, error) {
-	return _LocalhostTownsEntitlements.Contract.GetEntitlements(&_LocalhostTownsEntitlements.CallOpts)
+func (_TownsEntitlements *TownsEntitlementsCallerSession) GetEntitlements() ([]IEntitlementsManagerBaseEntitlement, error) {
+	return _TownsEntitlements.Contract.GetEntitlements(&_TownsEntitlements.CallOpts)
 }
 
 // IsEntitledToChannel is a free data retrieval call binding the contract method 0xcea632bc.
 //
 // Solidity: function isEntitledToChannel(string channelId, address user, string permission) view returns(bool)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCaller) IsEntitledToChannel(opts *bind.CallOpts, channelId string, user common.Address, permission string) (bool, error) {
+func (_TownsEntitlements *TownsEntitlementsCaller) IsEntitledToChannel(opts *bind.CallOpts, channelId string, user common.Address, permission string) (bool, error) {
 	var out []interface{}
-	err := _LocalhostTownsEntitlements.contract.Call(opts, &out, "isEntitledToChannel", channelId, user, permission)
+	err := _TownsEntitlements.contract.Call(opts, &out, "isEntitledToChannel", channelId, user, permission)
 
 	if err != nil {
 		return *new(bool), err
@@ -270,23 +270,23 @@ func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCaller) IsEntitledT
 // IsEntitledToChannel is a free data retrieval call binding the contract method 0xcea632bc.
 //
 // Solidity: function isEntitledToChannel(string channelId, address user, string permission) view returns(bool)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsSession) IsEntitledToChannel(channelId string, user common.Address, permission string) (bool, error) {
-	return _LocalhostTownsEntitlements.Contract.IsEntitledToChannel(&_LocalhostTownsEntitlements.CallOpts, channelId, user, permission)
+func (_TownsEntitlements *TownsEntitlementsSession) IsEntitledToChannel(channelId string, user common.Address, permission string) (bool, error) {
+	return _TownsEntitlements.Contract.IsEntitledToChannel(&_TownsEntitlements.CallOpts, channelId, user, permission)
 }
 
 // IsEntitledToChannel is a free data retrieval call binding the contract method 0xcea632bc.
 //
 // Solidity: function isEntitledToChannel(string channelId, address user, string permission) view returns(bool)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCallerSession) IsEntitledToChannel(channelId string, user common.Address, permission string) (bool, error) {
-	return _LocalhostTownsEntitlements.Contract.IsEntitledToChannel(&_LocalhostTownsEntitlements.CallOpts, channelId, user, permission)
+func (_TownsEntitlements *TownsEntitlementsCallerSession) IsEntitledToChannel(channelId string, user common.Address, permission string) (bool, error) {
+	return _TownsEntitlements.Contract.IsEntitledToChannel(&_TownsEntitlements.CallOpts, channelId, user, permission)
 }
 
 // IsEntitledToTown is a free data retrieval call binding the contract method 0x4ff8eb71.
 //
 // Solidity: function isEntitledToTown(address user, string permission) view returns(bool)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCaller) IsEntitledToTown(opts *bind.CallOpts, user common.Address, permission string) (bool, error) {
+func (_TownsEntitlements *TownsEntitlementsCaller) IsEntitledToTown(opts *bind.CallOpts, user common.Address, permission string) (bool, error) {
 	var out []interface{}
-	err := _LocalhostTownsEntitlements.contract.Call(opts, &out, "isEntitledToTown", user, permission)
+	err := _TownsEntitlements.contract.Call(opts, &out, "isEntitledToTown", user, permission)
 
 	if err != nil {
 		return *new(bool), err
@@ -301,83 +301,83 @@ func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCaller) IsEntitledT
 // IsEntitledToTown is a free data retrieval call binding the contract method 0x4ff8eb71.
 //
 // Solidity: function isEntitledToTown(address user, string permission) view returns(bool)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsSession) IsEntitledToTown(user common.Address, permission string) (bool, error) {
-	return _LocalhostTownsEntitlements.Contract.IsEntitledToTown(&_LocalhostTownsEntitlements.CallOpts, user, permission)
+func (_TownsEntitlements *TownsEntitlementsSession) IsEntitledToTown(user common.Address, permission string) (bool, error) {
+	return _TownsEntitlements.Contract.IsEntitledToTown(&_TownsEntitlements.CallOpts, user, permission)
 }
 
 // IsEntitledToTown is a free data retrieval call binding the contract method 0x4ff8eb71.
 //
 // Solidity: function isEntitledToTown(address user, string permission) view returns(bool)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsCallerSession) IsEntitledToTown(user common.Address, permission string) (bool, error) {
-	return _LocalhostTownsEntitlements.Contract.IsEntitledToTown(&_LocalhostTownsEntitlements.CallOpts, user, permission)
+func (_TownsEntitlements *TownsEntitlementsCallerSession) IsEntitledToTown(user common.Address, permission string) (bool, error) {
+	return _TownsEntitlements.Contract.IsEntitledToTown(&_TownsEntitlements.CallOpts, user, permission)
 }
 
 // AddEntitlementModule is a paid mutator transaction binding the contract method 0x070b9c3f.
 //
 // Solidity: function addEntitlementModule(address entitlement) returns()
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsTransactor) AddEntitlementModule(opts *bind.TransactOpts, entitlement common.Address) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.contract.Transact(opts, "addEntitlementModule", entitlement)
+func (_TownsEntitlements *TownsEntitlementsTransactor) AddEntitlementModule(opts *bind.TransactOpts, entitlement common.Address) (*types.Transaction, error) {
+	return _TownsEntitlements.contract.Transact(opts, "addEntitlementModule", entitlement)
 }
 
 // AddEntitlementModule is a paid mutator transaction binding the contract method 0x070b9c3f.
 //
 // Solidity: function addEntitlementModule(address entitlement) returns()
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsSession) AddEntitlementModule(entitlement common.Address) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.Contract.AddEntitlementModule(&_LocalhostTownsEntitlements.TransactOpts, entitlement)
+func (_TownsEntitlements *TownsEntitlementsSession) AddEntitlementModule(entitlement common.Address) (*types.Transaction, error) {
+	return _TownsEntitlements.Contract.AddEntitlementModule(&_TownsEntitlements.TransactOpts, entitlement)
 }
 
 // AddEntitlementModule is a paid mutator transaction binding the contract method 0x070b9c3f.
 //
 // Solidity: function addEntitlementModule(address entitlement) returns()
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsTransactorSession) AddEntitlementModule(entitlement common.Address) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.Contract.AddEntitlementModule(&_LocalhostTownsEntitlements.TransactOpts, entitlement)
+func (_TownsEntitlements *TownsEntitlementsTransactorSession) AddEntitlementModule(entitlement common.Address) (*types.Transaction, error) {
+	return _TownsEntitlements.Contract.AddEntitlementModule(&_TownsEntitlements.TransactOpts, entitlement)
 }
 
 // AddImmutableEntitlements is a paid mutator transaction binding the contract method 0x8bfc820f.
 //
 // Solidity: function addImmutableEntitlements(address[] entitlements) returns()
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsTransactor) AddImmutableEntitlements(opts *bind.TransactOpts, entitlements []common.Address) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.contract.Transact(opts, "addImmutableEntitlements", entitlements)
+func (_TownsEntitlements *TownsEntitlementsTransactor) AddImmutableEntitlements(opts *bind.TransactOpts, entitlements []common.Address) (*types.Transaction, error) {
+	return _TownsEntitlements.contract.Transact(opts, "addImmutableEntitlements", entitlements)
 }
 
 // AddImmutableEntitlements is a paid mutator transaction binding the contract method 0x8bfc820f.
 //
 // Solidity: function addImmutableEntitlements(address[] entitlements) returns()
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsSession) AddImmutableEntitlements(entitlements []common.Address) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.Contract.AddImmutableEntitlements(&_LocalhostTownsEntitlements.TransactOpts, entitlements)
+func (_TownsEntitlements *TownsEntitlementsSession) AddImmutableEntitlements(entitlements []common.Address) (*types.Transaction, error) {
+	return _TownsEntitlements.Contract.AddImmutableEntitlements(&_TownsEntitlements.TransactOpts, entitlements)
 }
 
 // AddImmutableEntitlements is a paid mutator transaction binding the contract method 0x8bfc820f.
 //
 // Solidity: function addImmutableEntitlements(address[] entitlements) returns()
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsTransactorSession) AddImmutableEntitlements(entitlements []common.Address) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.Contract.AddImmutableEntitlements(&_LocalhostTownsEntitlements.TransactOpts, entitlements)
+func (_TownsEntitlements *TownsEntitlementsTransactorSession) AddImmutableEntitlements(entitlements []common.Address) (*types.Transaction, error) {
+	return _TownsEntitlements.Contract.AddImmutableEntitlements(&_TownsEntitlements.TransactOpts, entitlements)
 }
 
 // RemoveEntitlementModule is a paid mutator transaction binding the contract method 0xbe24138d.
 //
 // Solidity: function removeEntitlementModule(address entitlement) returns()
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsTransactor) RemoveEntitlementModule(opts *bind.TransactOpts, entitlement common.Address) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.contract.Transact(opts, "removeEntitlementModule", entitlement)
+func (_TownsEntitlements *TownsEntitlementsTransactor) RemoveEntitlementModule(opts *bind.TransactOpts, entitlement common.Address) (*types.Transaction, error) {
+	return _TownsEntitlements.contract.Transact(opts, "removeEntitlementModule", entitlement)
 }
 
 // RemoveEntitlementModule is a paid mutator transaction binding the contract method 0xbe24138d.
 //
 // Solidity: function removeEntitlementModule(address entitlement) returns()
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsSession) RemoveEntitlementModule(entitlement common.Address) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.Contract.RemoveEntitlementModule(&_LocalhostTownsEntitlements.TransactOpts, entitlement)
+func (_TownsEntitlements *TownsEntitlementsSession) RemoveEntitlementModule(entitlement common.Address) (*types.Transaction, error) {
+	return _TownsEntitlements.Contract.RemoveEntitlementModule(&_TownsEntitlements.TransactOpts, entitlement)
 }
 
 // RemoveEntitlementModule is a paid mutator transaction binding the contract method 0xbe24138d.
 //
 // Solidity: function removeEntitlementModule(address entitlement) returns()
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsTransactorSession) RemoveEntitlementModule(entitlement common.Address) (*types.Transaction, error) {
-	return _LocalhostTownsEntitlements.Contract.RemoveEntitlementModule(&_LocalhostTownsEntitlements.TransactOpts, entitlement)
+func (_TownsEntitlements *TownsEntitlementsTransactorSession) RemoveEntitlementModule(entitlement common.Address) (*types.Transaction, error) {
+	return _TownsEntitlements.Contract.RemoveEntitlementModule(&_TownsEntitlements.TransactOpts, entitlement)
 }
 
-// LocalhostTownsEntitlementsOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the LocalhostTownsEntitlements contract.
-type LocalhostTownsEntitlementsOwnershipTransferredIterator struct {
-	Event *LocalhostTownsEntitlementsOwnershipTransferred // Event containing the contract specifics and raw log
+// TownsEntitlementsOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the TownsEntitlements contract.
+type TownsEntitlementsOwnershipTransferredIterator struct {
+	Event *TownsEntitlementsOwnershipTransferred // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -391,7 +391,7 @@ type LocalhostTownsEntitlementsOwnershipTransferredIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *LocalhostTownsEntitlementsOwnershipTransferredIterator) Next() bool {
+func (it *TownsEntitlementsOwnershipTransferredIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -400,7 +400,7 @@ func (it *LocalhostTownsEntitlementsOwnershipTransferredIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(LocalhostTownsEntitlementsOwnershipTransferred)
+			it.Event = new(TownsEntitlementsOwnershipTransferred)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -415,7 +415,7 @@ func (it *LocalhostTownsEntitlementsOwnershipTransferredIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(LocalhostTownsEntitlementsOwnershipTransferred)
+		it.Event = new(TownsEntitlementsOwnershipTransferred)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -431,19 +431,19 @@ func (it *LocalhostTownsEntitlementsOwnershipTransferredIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *LocalhostTownsEntitlementsOwnershipTransferredIterator) Error() error {
+func (it *TownsEntitlementsOwnershipTransferredIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *LocalhostTownsEntitlementsOwnershipTransferredIterator) Close() error {
+func (it *TownsEntitlementsOwnershipTransferredIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// LocalhostTownsEntitlementsOwnershipTransferred represents a OwnershipTransferred event raised by the LocalhostTownsEntitlements contract.
-type LocalhostTownsEntitlementsOwnershipTransferred struct {
+// TownsEntitlementsOwnershipTransferred represents a OwnershipTransferred event raised by the TownsEntitlements contract.
+type TownsEntitlementsOwnershipTransferred struct {
 	PreviousOwner common.Address
 	NewOwner      common.Address
 	Raw           types.Log // Blockchain specific contextual infos
@@ -452,7 +452,7 @@ type LocalhostTownsEntitlementsOwnershipTransferred struct {
 // FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
 //
 // Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*LocalhostTownsEntitlementsOwnershipTransferredIterator, error) {
+func (_TownsEntitlements *TownsEntitlementsFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*TownsEntitlementsOwnershipTransferredIterator, error) {
 
 	var previousOwnerRule []interface{}
 	for _, previousOwnerItem := range previousOwner {
@@ -463,17 +463,17 @@ func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) FilterOwn
 		newOwnerRule = append(newOwnerRule, newOwnerItem)
 	}
 
-	logs, sub, err := _LocalhostTownsEntitlements.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	logs, sub, err := _TownsEntitlements.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
 	if err != nil {
 		return nil, err
 	}
-	return &LocalhostTownsEntitlementsOwnershipTransferredIterator{contract: _LocalhostTownsEntitlements.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
+	return &TownsEntitlementsOwnershipTransferredIterator{contract: _TownsEntitlements.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
 }
 
 // WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
 //
 // Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *LocalhostTownsEntitlementsOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
+func (_TownsEntitlements *TownsEntitlementsFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *TownsEntitlementsOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
 
 	var previousOwnerRule []interface{}
 	for _, previousOwnerItem := range previousOwner {
@@ -484,7 +484,7 @@ func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) WatchOwne
 		newOwnerRule = append(newOwnerRule, newOwnerItem)
 	}
 
-	logs, sub, err := _LocalhostTownsEntitlements.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	logs, sub, err := _TownsEntitlements.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
 	if err != nil {
 		return nil, err
 	}
@@ -494,8 +494,8 @@ func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) WatchOwne
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(LocalhostTownsEntitlementsOwnershipTransferred)
-				if err := _LocalhostTownsEntitlements.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+				event := new(TownsEntitlementsOwnershipTransferred)
+				if err := _TownsEntitlements.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -519,18 +519,18 @@ func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) WatchOwne
 // ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
 //
 // Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) ParseOwnershipTransferred(log types.Log) (*LocalhostTownsEntitlementsOwnershipTransferred, error) {
-	event := new(LocalhostTownsEntitlementsOwnershipTransferred)
-	if err := _LocalhostTownsEntitlements.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+func (_TownsEntitlements *TownsEntitlementsFilterer) ParseOwnershipTransferred(log types.Log) (*TownsEntitlementsOwnershipTransferred, error) {
+	event := new(TownsEntitlementsOwnershipTransferred)
+	if err := _TownsEntitlements.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// LocalhostTownsEntitlementsPausedIterator is returned from FilterPaused and is used to iterate over the raw logs and unpacked data for Paused events raised by the LocalhostTownsEntitlements contract.
-type LocalhostTownsEntitlementsPausedIterator struct {
-	Event *LocalhostTownsEntitlementsPaused // Event containing the contract specifics and raw log
+// TownsEntitlementsPausedIterator is returned from FilterPaused and is used to iterate over the raw logs and unpacked data for Paused events raised by the TownsEntitlements contract.
+type TownsEntitlementsPausedIterator struct {
+	Event *TownsEntitlementsPaused // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -544,7 +544,7 @@ type LocalhostTownsEntitlementsPausedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *LocalhostTownsEntitlementsPausedIterator) Next() bool {
+func (it *TownsEntitlementsPausedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -553,7 +553,7 @@ func (it *LocalhostTownsEntitlementsPausedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(LocalhostTownsEntitlementsPaused)
+			it.Event = new(TownsEntitlementsPaused)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -568,7 +568,7 @@ func (it *LocalhostTownsEntitlementsPausedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(LocalhostTownsEntitlementsPaused)
+		it.Event = new(TownsEntitlementsPaused)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -584,19 +584,19 @@ func (it *LocalhostTownsEntitlementsPausedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *LocalhostTownsEntitlementsPausedIterator) Error() error {
+func (it *TownsEntitlementsPausedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *LocalhostTownsEntitlementsPausedIterator) Close() error {
+func (it *TownsEntitlementsPausedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// LocalhostTownsEntitlementsPaused represents a Paused event raised by the LocalhostTownsEntitlements contract.
-type LocalhostTownsEntitlementsPaused struct {
+// TownsEntitlementsPaused represents a Paused event raised by the TownsEntitlements contract.
+type TownsEntitlementsPaused struct {
 	Account common.Address
 	Raw     types.Log // Blockchain specific contextual infos
 }
@@ -604,21 +604,21 @@ type LocalhostTownsEntitlementsPaused struct {
 // FilterPaused is a free log retrieval operation binding the contract event 0x62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258.
 //
 // Solidity: event Paused(address account)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) FilterPaused(opts *bind.FilterOpts) (*LocalhostTownsEntitlementsPausedIterator, error) {
+func (_TownsEntitlements *TownsEntitlementsFilterer) FilterPaused(opts *bind.FilterOpts) (*TownsEntitlementsPausedIterator, error) {
 
-	logs, sub, err := _LocalhostTownsEntitlements.contract.FilterLogs(opts, "Paused")
+	logs, sub, err := _TownsEntitlements.contract.FilterLogs(opts, "Paused")
 	if err != nil {
 		return nil, err
 	}
-	return &LocalhostTownsEntitlementsPausedIterator{contract: _LocalhostTownsEntitlements.contract, event: "Paused", logs: logs, sub: sub}, nil
+	return &TownsEntitlementsPausedIterator{contract: _TownsEntitlements.contract, event: "Paused", logs: logs, sub: sub}, nil
 }
 
 // WatchPaused is a free log subscription operation binding the contract event 0x62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258.
 //
 // Solidity: event Paused(address account)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) WatchPaused(opts *bind.WatchOpts, sink chan<- *LocalhostTownsEntitlementsPaused) (event.Subscription, error) {
+func (_TownsEntitlements *TownsEntitlementsFilterer) WatchPaused(opts *bind.WatchOpts, sink chan<- *TownsEntitlementsPaused) (event.Subscription, error) {
 
-	logs, sub, err := _LocalhostTownsEntitlements.contract.WatchLogs(opts, "Paused")
+	logs, sub, err := _TownsEntitlements.contract.WatchLogs(opts, "Paused")
 	if err != nil {
 		return nil, err
 	}
@@ -628,8 +628,8 @@ func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) WatchPaus
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(LocalhostTownsEntitlementsPaused)
-				if err := _LocalhostTownsEntitlements.contract.UnpackLog(event, "Paused", log); err != nil {
+				event := new(TownsEntitlementsPaused)
+				if err := _TownsEntitlements.contract.UnpackLog(event, "Paused", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -653,18 +653,18 @@ func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) WatchPaus
 // ParsePaused is a log parse operation binding the contract event 0x62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258.
 //
 // Solidity: event Paused(address account)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) ParsePaused(log types.Log) (*LocalhostTownsEntitlementsPaused, error) {
-	event := new(LocalhostTownsEntitlementsPaused)
-	if err := _LocalhostTownsEntitlements.contract.UnpackLog(event, "Paused", log); err != nil {
+func (_TownsEntitlements *TownsEntitlementsFilterer) ParsePaused(log types.Log) (*TownsEntitlementsPaused, error) {
+	event := new(TownsEntitlementsPaused)
+	if err := _TownsEntitlements.contract.UnpackLog(event, "Paused", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
 	return event, nil
 }
 
-// LocalhostTownsEntitlementsUnpausedIterator is returned from FilterUnpaused and is used to iterate over the raw logs and unpacked data for Unpaused events raised by the LocalhostTownsEntitlements contract.
-type LocalhostTownsEntitlementsUnpausedIterator struct {
-	Event *LocalhostTownsEntitlementsUnpaused // Event containing the contract specifics and raw log
+// TownsEntitlementsUnpausedIterator is returned from FilterUnpaused and is used to iterate over the raw logs and unpacked data for Unpaused events raised by the TownsEntitlements contract.
+type TownsEntitlementsUnpausedIterator struct {
+	Event *TownsEntitlementsUnpaused // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -678,7 +678,7 @@ type LocalhostTownsEntitlementsUnpausedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *LocalhostTownsEntitlementsUnpausedIterator) Next() bool {
+func (it *TownsEntitlementsUnpausedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -687,7 +687,7 @@ func (it *LocalhostTownsEntitlementsUnpausedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(LocalhostTownsEntitlementsUnpaused)
+			it.Event = new(TownsEntitlementsUnpaused)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -702,7 +702,7 @@ func (it *LocalhostTownsEntitlementsUnpausedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(LocalhostTownsEntitlementsUnpaused)
+		it.Event = new(TownsEntitlementsUnpaused)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -718,19 +718,19 @@ func (it *LocalhostTownsEntitlementsUnpausedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *LocalhostTownsEntitlementsUnpausedIterator) Error() error {
+func (it *TownsEntitlementsUnpausedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *LocalhostTownsEntitlementsUnpausedIterator) Close() error {
+func (it *TownsEntitlementsUnpausedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// LocalhostTownsEntitlementsUnpaused represents a Unpaused event raised by the LocalhostTownsEntitlements contract.
-type LocalhostTownsEntitlementsUnpaused struct {
+// TownsEntitlementsUnpaused represents a Unpaused event raised by the TownsEntitlements contract.
+type TownsEntitlementsUnpaused struct {
 	Account common.Address
 	Raw     types.Log // Blockchain specific contextual infos
 }
@@ -738,21 +738,21 @@ type LocalhostTownsEntitlementsUnpaused struct {
 // FilterUnpaused is a free log retrieval operation binding the contract event 0x5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa.
 //
 // Solidity: event Unpaused(address account)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) FilterUnpaused(opts *bind.FilterOpts) (*LocalhostTownsEntitlementsUnpausedIterator, error) {
+func (_TownsEntitlements *TownsEntitlementsFilterer) FilterUnpaused(opts *bind.FilterOpts) (*TownsEntitlementsUnpausedIterator, error) {
 
-	logs, sub, err := _LocalhostTownsEntitlements.contract.FilterLogs(opts, "Unpaused")
+	logs, sub, err := _TownsEntitlements.contract.FilterLogs(opts, "Unpaused")
 	if err != nil {
 		return nil, err
 	}
-	return &LocalhostTownsEntitlementsUnpausedIterator{contract: _LocalhostTownsEntitlements.contract, event: "Unpaused", logs: logs, sub: sub}, nil
+	return &TownsEntitlementsUnpausedIterator{contract: _TownsEntitlements.contract, event: "Unpaused", logs: logs, sub: sub}, nil
 }
 
 // WatchUnpaused is a free log subscription operation binding the contract event 0x5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa.
 //
 // Solidity: event Unpaused(address account)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) WatchUnpaused(opts *bind.WatchOpts, sink chan<- *LocalhostTownsEntitlementsUnpaused) (event.Subscription, error) {
+func (_TownsEntitlements *TownsEntitlementsFilterer) WatchUnpaused(opts *bind.WatchOpts, sink chan<- *TownsEntitlementsUnpaused) (event.Subscription, error) {
 
-	logs, sub, err := _LocalhostTownsEntitlements.contract.WatchLogs(opts, "Unpaused")
+	logs, sub, err := _TownsEntitlements.contract.WatchLogs(opts, "Unpaused")
 	if err != nil {
 		return nil, err
 	}
@@ -762,8 +762,8 @@ func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) WatchUnpa
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(LocalhostTownsEntitlementsUnpaused)
-				if err := _LocalhostTownsEntitlements.contract.UnpackLog(event, "Unpaused", log); err != nil {
+				event := new(TownsEntitlementsUnpaused)
+				if err := _TownsEntitlements.contract.UnpackLog(event, "Unpaused", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -787,9 +787,9 @@ func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) WatchUnpa
 // ParseUnpaused is a log parse operation binding the contract event 0x5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa.
 //
 // Solidity: event Unpaused(address account)
-func (_LocalhostTownsEntitlements *LocalhostTownsEntitlementsFilterer) ParseUnpaused(log types.Log) (*LocalhostTownsEntitlementsUnpaused, error) {
-	event := new(LocalhostTownsEntitlementsUnpaused)
-	if err := _LocalhostTownsEntitlements.contract.UnpackLog(event, "Unpaused", log); err != nil {
+func (_TownsEntitlements *TownsEntitlementsFilterer) ParseUnpaused(log types.Log) (*TownsEntitlementsUnpaused, error) {
+	event := new(TownsEntitlementsUnpaused)
+	if err := _TownsEntitlements.contract.UnpackLog(event, "Unpaused", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

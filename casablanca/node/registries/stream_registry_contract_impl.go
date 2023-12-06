@@ -1,10 +1,10 @@
 package registries
 
 import (
-	. "casablanca/node/auth/contracts/localhost_towns_stream_registry"
 	. "casablanca/node/base"
+	"casablanca/node/config"
+	"casablanca/node/contracts/dev"
 	"casablanca/node/dlog"
-	"casablanca/node/infra"
 	. "casablanca/node/protocol"
 	"context"
 	"math/big"
@@ -12,43 +12,48 @@ import (
 	"casablanca/node/crypto"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 )
 
-type StreamRegistryContractLocalhostV3 struct {
-	registry   *LocalhostTownsStreamRegistry
+type streamRegistryContractImpl struct {
+	registry   *dev.StreamRegistry
 	blockchain *crypto.Blockchain
 }
 
-var _ StreamRegistryContract = (*StreamRegistryContractLocalhostV3)(nil)
+var _ StreamRegistryContract = (*streamRegistryContractImpl)(nil)
 
-func NewStreamRegistryContractLocalhostV3(
+func newStreamRegistryContractImpl(
 	ctx context.Context,
 	blockchain *crypto.Blockchain,
-) (*StreamRegistryContractLocalhostV3, error) {
+	cfg *config.ContractConfig,
+) (*streamRegistryContractImpl, error) {
 	log := dlog.CtxLog(ctx)
 
-	// get the space factory address from config
-	strAddress, err := loadStreamRegistryContractAddress(infra.CHAIN_ID_LOCALHOST)
-	if err != nil {
-		log.Error("error parsing localhost contract address", "address", strAddress, "error", err)
-		return nil, err
-	}
-	address := common.HexToAddress(strAddress)
-
-	stream_registry, err := NewLocalhostTownsStreamRegistry(address, blockchain.Client)
-	if err != nil {
-		log.Error("error fetching localhost TownArchitect contract with address", "address", strAddress, "error", err)
-		return nil, err
+	if cfg.Version != "dev" {
+		return nil, RiverError(Err_BAD_CONFIG, "Unsupported contract version", "version", cfg.Version).Func("newStreamRegistryContractImpl")
 	}
 
-	return &StreamRegistryContractLocalhostV3{
+	address, err := crypto.ParseOrLoadAddress(cfg.Address)
+	if err != nil {
+		return nil, AsRiverError(err, Err_BAD_CONFIG).Message("Failed to parse contract address").Func("newStreamRegistryContractImpl")
+	}
+
+	stream_registry, err := dev.NewStreamRegistry(address, blockchain.Client)
+	if err != nil {
+		return nil,
+			AsRiverError(err, Err_BAD_CONFIG).
+				Message("Failed to initialize registry contract").
+				Tags("address", cfg.Address, "version", cfg.Version).
+				Func("newStreamRegistryContractImpl").
+				LogError(log)
+	}
+
+	return &streamRegistryContractImpl{
 		registry:   stream_registry,
 		blockchain: blockchain,
 	}, nil
 }
 
-func (sr *StreamRegistryContractLocalhostV3) AllocateStream(
+func (sr *streamRegistryContractImpl) AllocateStream(
 	ctx context.Context,
 	streamId string,
 	addresses []string,
@@ -64,10 +69,10 @@ func (sr *StreamRegistryContractLocalhostV3) AllocateStream(
 		return AsRiverError(err).Func("AllocateStream")
 	}
 
-	transactor := LocalhostTownsStreamRegistryTransactorRaw{
-		Contract: &sr.registry.LocalhostTownsStreamRegistryTransactor,
+	transactor := dev.StreamRegistryTransactorRaw{
+		Contract: &sr.registry.StreamRegistryTransactor,
 	}
-	_, _, err = sr.blockchain.TxRunner.SumbitAndWait(ctx, &transactor, "allocateStream", StreamRegistryStream{
+	_, _, err = sr.blockchain.TxRunner.SumbitAndWait(ctx, &transactor, "allocateStream", dev.StreamRegistryStream{
 		StreamId:             streamId,
 		Nodes:                addrs,
 		GenesisMiniblockHash: hash,
@@ -79,7 +84,7 @@ func (sr *StreamRegistryContractLocalhostV3) AllocateStream(
 	return nil
 }
 
-func (sr *StreamRegistryContractLocalhostV3) GetStream(ctx context.Context, streamId string) ([]string, []byte, error) {
+func (sr *streamRegistryContractImpl) GetStream(ctx context.Context, streamId string) ([]string, []byte, error) {
 	stream, err := sr.registry.GetStream(sr.callOpts(ctx), streamId)
 	if err != nil {
 		return nil, nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStream").Message("Call failed")
@@ -87,7 +92,7 @@ func (sr *StreamRegistryContractLocalhostV3) GetStream(ctx context.Context, stre
 	return EthAddressesToAddressStrs(stream.Nodes), stream.GenesisMiniblockHash[:], nil
 }
 
-func (sr *StreamRegistryContractLocalhostV3) GetStreamsLength(ctx context.Context) (int64, error) {
+func (sr *streamRegistryContractImpl) GetStreamsLength(ctx context.Context) (int64, error) {
 	num, err := sr.registry.GetStreamsLength(sr.callOpts(ctx))
 	if err != nil {
 		return 0, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamNum").Message("Call failed")
@@ -98,7 +103,7 @@ func (sr *StreamRegistryContractLocalhostV3) GetStreamsLength(ctx context.Contex
 	return num.Int64(), nil
 }
 
-func (sr *StreamRegistryContractLocalhostV3) GetStreamByIndex(ctx context.Context, index int64) (string, []string, []byte, error) {
+func (sr *streamRegistryContractImpl) GetStreamByIndex(ctx context.Context, index int64) (string, []string, []byte, error) {
 	stream, err := sr.registry.GetStreamByIndex(sr.callOpts(ctx), big.NewInt(index))
 	if err != nil {
 		return "", nil, nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamByIndex").Message("Smart contract call failed")
@@ -106,7 +111,7 @@ func (sr *StreamRegistryContractLocalhostV3) GetStreamByIndex(ctx context.Contex
 	return stream.StreamId, EthAddressesToAddressStrs(stream.Nodes), stream.GenesisMiniblockHash[:], nil
 }
 
-func (sr *StreamRegistryContractLocalhostV3) callOpts(ctx context.Context) *bind.CallOpts {
+func (sr *streamRegistryContractImpl) callOpts(ctx context.Context) *bind.CallOpts {
 	return &bind.CallOpts{
 		Context: ctx,
 	}

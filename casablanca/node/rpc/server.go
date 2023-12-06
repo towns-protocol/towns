@@ -90,6 +90,20 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	log.Info("Starting server", "config", cfg)
 
+	// TODO: Temp hack to support main env with old config.
+	// Inject contract addreeses for Base Goerli.
+	if cfg.BaseChain.ChainId == 84531 {
+		cfg.TownsArchitectContract = config.ContractConfig{
+			Address: "0xAABeead2Aa1Dc97dbbf44e7daC50e43c50f71DF9",
+			Version: "v3",
+		}
+		cfg.WalletLinkContract = config.ContractConfig{
+			Address: "0x2855EeA53ae6118aac6E636b00fb27b7D6aF78cb",
+			Version: "v3",
+		}
+		log.Warn("Using hardcoded contract addresses for Base Goerli (TODO: move to env)", "newConfig", cfg)
+	}
+
 	if wallet == nil {
 		var err error
 		wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
@@ -114,17 +128,30 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		return nil, 0, nil, err
 	}
 
-	var townsContract auth.TownsContract
+	var townsContract auth.AuthChecker
 	if cfg.UseContract {
-		log.Info("Using casablanca auth", "chain_config", cfg.BaseChain)
-		townsContract, err = auth.NewTownsContract(ctx, &cfg.BaseChain)
+		baseChain, err := crypto.NewReadOnlyBlockchain(ctx, &cfg.BaseChain)
+		if err != nil {
+			log.Error("Failed to initialize blockchain for base", "error", err, "chain_config", cfg.BaseChain)
+			return nil, 0, nil, err
+		}
+
+		log.Info("Using River Auth", "chain_config", cfg.BaseChain)
+		townsContract, err = auth.NewChainAuth(
+			ctx,
+			baseChain,
+			&cfg.TownsArchitectContract,
+			&cfg.WalletLinkContract,
+			cfg.BaseChain.LinkedWalletsLimit,
+			cfg.BaseChain.ContractCallsTimeoutMs,
+		)
 		if err != nil {
 			log.Error("failed to create auth", "error", err)
 			return nil, 0, nil, err
 		}
 	} else {
-		log.Warn("Using passthrough auth")
-		townsContract = auth.NewTownsPassThrough()
+		log.Warn("Using fake auth for testing")
+		townsContract = auth.NewFakeAuthChecker()
 	}
 
 	notification := nodes.MakePushNotification(
@@ -159,11 +186,11 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	if cfg.UseBlockChainStreamRegistry {
 		blockchain, err := crypto.NewReadWriteBlockchain(ctx, &cfg.RiverChain, wallet)
 		if err != nil {
-			log.Error("failed to create blockchain", "error", err)
+			log.Error("Failed to initialize blockchain for river", "error", err, "chain_config", cfg.RiverChain)
 			return nil, 0, nil, err
 		}
 
-		streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, blockchain)
+		streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, blockchain, &cfg.RegistryContract)
 		if err != nil {
 			log.Error("NewStreamRegistryContract", "error", err)
 			return nil, 0, nil, err

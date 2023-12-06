@@ -1,19 +1,18 @@
 package auth
 
 import (
-	"casablanca/node/auth/contracts/base_goerli_towns_entitlements"
-	"casablanca/node/auth/contracts/localhost_towns_entitlements"
+	. "casablanca/node/base"
+	"casablanca/node/contracts"
+	"casablanca/node/contracts/dev"
+	v3 "casablanca/node/contracts/v3"
 	"casablanca/node/dlog"
 	"casablanca/node/infra"
-	"casablanca/node/protocol"
+	. "casablanca/node/protocol"
 	"context"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
-
-	. "casablanca/node/base"
 )
 
 type TownsEntitlements interface {
@@ -21,7 +20,7 @@ type TownsEntitlements interface {
 	IsEntitledToTown(opts *bind.CallOpts, user common.Address, permission string) (bool, error)
 }
 
-type TownsEntitlementsProxy struct {
+type townsEntitlementsProxy struct {
 	contract TownsEntitlements
 	address  common.Address
 }
@@ -31,32 +30,28 @@ var (
 	isEntitledToTownCalls    = infra.NewSuccessMetrics("is_entitled_to_town_calls", contractCalls)
 )
 
-func NewTownsEntitlements(address common.Address, ethClient *ethclient.Client, chainId int) (TownsEntitlements, error) {
-	var towns_entitlement_contract TownsEntitlements
+func NewTownsEntitlements(version string, address common.Address, backend bind.ContractBackend) (TownsEntitlements, error) {
+	var c TownsEntitlements
 	var err error
-	switch chainId {
-	case infra.CHAIN_ID_LOCALHOST:
-		towns_entitlement_contract, err = localhost_towns_entitlements.NewLocalhostTownsEntitlements(address, ethClient)
-	case infra.CHAIN_ID_BASE_GOERLI:
-		towns_entitlement_contract, err = base_goerli_towns_entitlements.NewBaseGoerliTownsEntitlements(address, ethClient)
-	default:
-		return nil, RiverError(protocol.Err_CANNOT_CONNECT, "unsupported chain", "chainId", chainId)
+	switch version {
+	case contracts.DEV:
+		c, err = dev.NewEntitlementsManager(address, backend)
+	case contracts.V3:
+		c, err = v3.NewTownsEntitlements(address, backend)
 	}
 	if err != nil {
-		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+		return nil, WrapRiverError(Err_CANNOT_CONNECT, err).Tags("address", address, "version", version).Func("NewTownsEntitlements").Message("Failed to initialize contract")
 	}
-
-	return NewTownsEntitlementsProxy(towns_entitlement_contract, address), nil
-}
-
-func NewTownsEntitlementsProxy(contract TownsEntitlements, address common.Address) TownsEntitlements {
-	return &TownsEntitlementsProxy{
-		contract: contract,
+	if c == nil {
+		return nil, RiverError(Err_CANNOT_CONNECT, "Unsupported version", "address", address, "version", version).Func("NewTownsEntitlements")
+	}
+	return &townsEntitlementsProxy{
+		contract: c,
 		address:  address,
-	}
+	}, nil
 }
 
-func (proxy *TownsEntitlementsProxy) IsEntitledToChannel(opts *bind.CallOpts, channelNetworkId string, user common.Address, permission string) (bool, error) {
+func (proxy *townsEntitlementsProxy) IsEntitledToChannel(opts *bind.CallOpts, channelNetworkId string, user common.Address, permission string) (bool, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("IsEntitledToChannel", infra.CONTRACT_CALLS_CATEGORY, start)
@@ -65,14 +60,14 @@ func (proxy *TownsEntitlementsProxy) IsEntitledToChannel(opts *bind.CallOpts, ch
 	if err != nil {
 		isEntitledToChannelCalls.FailInc()
 		log.Error("IsEntitledToChannel", "channelNetworkId", channelNetworkId, "user", user, "permission", permission, "address", proxy.address, "error", err)
-		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
+		return false, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
 	}
 	isEntitledToChannelCalls.PassInc()
 	log.Debug("IsEntitledToChannel", "channelNetworkId", channelNetworkId, "user", user, "permission", permission, "address", proxy.address, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }
 
-func (proxy *TownsEntitlementsProxy) IsEntitledToTown(opts *bind.CallOpts, user common.Address, permission string) (bool, error) {
+func (proxy *townsEntitlementsProxy) IsEntitledToTown(opts *bind.CallOpts, user common.Address, permission string) (bool, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("IsEntitledToTown", infra.CONTRACT_CALLS_CATEGORY, start)
@@ -81,7 +76,7 @@ func (proxy *TownsEntitlementsProxy) IsEntitledToTown(opts *bind.CallOpts, user 
 	if err != nil {
 		isEntitledToTownCalls.FailInc()
 		log.Error("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address, "error", err)
-		return false, WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err)
+		return false, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
 	}
 	isEntitledToTownCalls.PassInc()
 	log.Debug("IsEntitledToTown", "user", user, "permission", permission, "address", proxy.address, "result", result, "duration", time.Since(start).Milliseconds())

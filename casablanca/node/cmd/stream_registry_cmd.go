@@ -19,7 +19,7 @@ func srdump(cfg *config.Config) error {
 		return err
 	}
 
-	streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, blockchain)
+	streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, blockchain, &cfg.RegistryContract)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func srstream(cfg *config.Config, streamId string) error {
 		return err
 	}
 
-	streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, blockchain)
+	streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, blockchain, &cfg.RegistryContract)
 	if err != nil {
 		return err
 	}

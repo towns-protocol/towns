@@ -1,102 +1,100 @@
 package auth
 
 import (
-	"casablanca/node/auth/contracts/base_goerli_towns_channels"
-	"casablanca/node/auth/contracts/localhost_towns_channels"
 	. "casablanca/node/base"
+	"casablanca/node/contracts"
+	"casablanca/node/contracts/dev"
+	v3 "casablanca/node/contracts/v3"
 	"casablanca/node/dlog"
 	"casablanca/node/infra"
-	"casablanca/node/protocol"
+	. "casablanca/node/protocol"
 	"context"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type TownsChannels interface {
 	IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bool, error)
 }
 
-type GeneratedTownsChannels interface {
-	localhost_towns_channels.LocalhostTownsChannels | base_goerli_towns_channels.BaseGoerliTownsChannels
+type v001Caller struct {
+	contract *v3.TownsChannels
 }
 
-type TownsChannelsProxy[Contract GeneratedTownsChannels] struct {
-	contract *Contract
+var _ TownsChannels = (*v001Caller)(nil)
+
+func (c *v001Caller) IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bool, error) {
+	ch, err := c.contract.GetChannel(opts, channelNetworkId)
+	if err != nil {
+		return false, err
+	}
+	return ch.Disabled, nil
+}
+
+type devCaller struct {
+	contract *dev.Channels
+}
+
+var _ TownsChannels = (*devCaller)(nil)
+
+func (c *devCaller) IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bool, error) {
+	ch, err := c.contract.GetChannel(opts, channelNetworkId)
+	if err != nil {
+		return false, err
+	}
+	return ch.Disabled, nil
 }
 
 var (
 	getChannelCalls = infra.NewSuccessMetrics("get_channel_calls", contractCalls)
 )
 
-func NewTownsChannels(ethClient *ethclient.Client, chainId int, address common.Address) (TownsChannels, error) {
-	var towns_channels_contract TownsChannels
-	switch chainId {
-	case infra.CHAIN_ID_LOCALHOST:
-		localhost_contract, err := localhost_towns_channels.NewLocalhostTownsChannels(address, ethClient)
-		if err != nil {
-			return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+func NewTownsChannels(version string, address common.Address, backend bind.ContractBackend) (TownsChannels, error) {
+	var c TownsChannels
+	var err error
+	switch version {
+	case contracts.DEV:
+		var cc *dev.Channels
+		cc, err = dev.NewChannels(address, backend)
+		if cc != nil {
+			c = &devCaller{contract: cc}
 		}
-		towns_channels_contract, err = NewTownsChannelsProxy[localhost_towns_channels.LocalhostTownsChannels](
-			localhost_contract,
-		)
-		if err != nil {
-			return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+	case contracts.V3:
+		var cc *v3.TownsChannels
+		cc, err = v3.NewTownsChannels(address, backend)
+		if cc != nil {
+			c = &v001Caller{contract: cc}
 		}
-	case infra.CHAIN_ID_BASE_GOERLI:
-		base_goerli_contract, err := base_goerli_towns_channels.NewBaseGoerliTownsChannels(address, ethClient)
-		if err != nil {
-			return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
-		}
-		towns_channels_contract, err = NewTownsChannelsProxy[base_goerli_towns_channels.BaseGoerliTownsChannels](
-			base_goerli_contract,
-		)
-		if err != nil {
-			return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
-		}
-	default:
-		return nil, RiverError(protocol.Err_CANNOT_CONNECT, "unsupported chain", "chainId", chainId)
 	}
-
-	return towns_channels_contract, nil
+	if err != nil {
+		return nil, WrapRiverError(Err_CANNOT_CONNECT, err).Tags("address", address, "version", version).Func("NewTownsPausable").Message("Failed to initialize contract")
+	}
+	if c == nil {
+		return nil, RiverError(Err_CANNOT_CONNECT, "Unsupported version", "address", address, "version", version).Func("NewTownsPausable")
+	}
+	return &townsChannelsProxy{contract: c}, nil
 }
 
-func NewTownsChannelsProxy[C GeneratedTownsChannels](contract *C) (TownsChannels, error) {
-	return &TownsChannelsProxy[C]{
-		contract: contract,
-	}, nil
+type townsChannelsProxy struct {
+	contract TownsChannels
 }
 
-func (za *TownsChannelsProxy[GeneratedTownsChannels]) IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bool, error) {
+var _ TownsChannels = (*townsChannelsProxy)(nil)
+
+func (p *townsChannelsProxy) IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bool, error) {
 	log := dlog.CtxLog(context.Background())
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("IsDisabled", infra.CONTRACT_CALLS_CATEGORY, start)
-	var result bool
-	switch v := any(za.contract).(type) {
-	case *localhost_towns_channels.LocalhostTownsChannels:
-		log.Debug("IsDisabled", "channelNetworkId", channelNetworkId)
-		channelInfo, err := v.GetChannel(opts, channelNetworkId)
-		if err != nil {
-			getChannelCalls.FailInc()
-			log.Error("IsDisabled", "channelNetworkId", channelNetworkId, "error", err)
-			return false, err
-		}
-		result = channelInfo.Disabled
-	case *base_goerli_towns_channels.BaseGoerliTownsChannels:
-		log.Debug("IsDisabled", "channelNetworkId", channelNetworkId)
-		channelInfo, err := v.GetChannel(opts, channelNetworkId)
-		if err != nil {
-			getChannelCalls.FailInc()
-			log.Error("IsDisabled", "channelNetworkId", channelNetworkId, "error", err)
-			return false, err
-		}
-		result = channelInfo.Disabled
-	default:
-		return false, RiverError(protocol.Err_CANNOT_CONNECT, "unsupported chain")
+	log.Debug("IsDisabled", "channelNetworkId", channelNetworkId)
+	disabled, err := p.contract.IsDisabled(opts, channelNetworkId)
+	if err != nil {
+		getChannelCalls.FailInc()
+		log.Error("IsDisabled", "channelNetworkId", channelNetworkId, "error", err)
+		return false, err
 	}
 	getChannelCalls.PassInc()
-	log.Debug("IsDisabled", "channelNetworkId", channelNetworkId, "result", result, "duration", time.Since(start).Milliseconds())
-	return result, nil
+	log.Debug("IsDisabled", "channelNetworkId", channelNetworkId, "result", disabled, "duration", time.Since(start).Milliseconds())
+	return disabled, nil
 }
