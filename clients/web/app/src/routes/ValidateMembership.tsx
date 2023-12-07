@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { Outlet } from 'react-router'
-import { Membership } from 'use-zion-client'
+import { Membership, useZionContext } from 'use-zion-client'
 import { Box } from '@ui'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
@@ -10,8 +10,14 @@ import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const ValidateMembership = () => {
     const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
+    const { spaces } = useZionContext()
     const initialSyncComplete = useWaitForInitialSync()
     const spaceId = useSpaceIdFromPathname()
+
+    const riverSpace = useMemo(
+        () => spaces.find((s) => s.id.networkId === spaceId),
+        [spaceId, spaces],
+    )
 
     useEffect(() => {
         console.log('ValidateMembership', spaceId, { chainSpaceLoading, initialSyncComplete })
@@ -22,7 +28,11 @@ export const ValidateMembership = () => {
     }
 
     if (chainSpaceLoading || !initialSyncComplete) {
-        return <WelcomeLayout debugText="validate membership: loading town data" />
+        return riverSpace ? (
+            <Outlet />
+        ) : (
+            <WelcomeLayout debugText="validate membership: loading town data" />
+        )
     }
 
     if (!chainSpace && !space) {
