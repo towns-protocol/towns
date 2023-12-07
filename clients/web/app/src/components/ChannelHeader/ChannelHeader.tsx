@@ -129,7 +129,7 @@ const DMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
 const GDMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
     const { data } = useDMData(props.roomIdentifier)
     const userIds = useMemo(() => data?.userIds ?? [], [data?.userIds])
-    const title = useUserList({ userIds, excludeSelf: true }).join('')
+    const title = useUserList({ userIds, excludeSelf: true, maxNames: 3 }).join('')
 
     return (
         <Text fontSize="md" color="default">

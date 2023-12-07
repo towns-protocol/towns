@@ -61,6 +61,7 @@ export const DirectMessageListItem = (props: {
         <UserList
             excludeSelf
             userIds={userIds}
+            maxNames={3}
             renderUser={({ displayName, userId }) => (
                 <Box display="inline" key={userId}>
                     {displayName}

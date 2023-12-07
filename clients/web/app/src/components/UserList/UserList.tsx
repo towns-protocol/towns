@@ -21,7 +21,7 @@ export const UserList = (props: Props) => {
 }
 
 export const useUserList = (params: Props) => {
-    const { excludeSelf, userIds, maxNames = 8 } = params
+    const { excludeSelf, userIds, maxNames = 3 } = params
 
     const stableRenderRef = useRef(params.renderUser)
     const renderUser = (stableRenderRef.current = params.renderUser)
@@ -42,8 +42,8 @@ export const useUserList = (params: Props) => {
         }
 
         return (members as (UserName | string)[])
-            .slice(0, maxNames)
-            .concat(members.length >= maxNames ? 'others' : excludeSelf ? [] : 'you')
+            .slice(0, members.length <= maxNames ? maxNames : maxNames - 1)
+            .concat(members.length > maxNames ? 'others' : excludeSelf ? [] : 'you')
             .reduce((acc, m, i, arr) => {
                 if (i > 0) {
                     acc.push(i < arr.length - 1 ? ', ' : ' and ')
