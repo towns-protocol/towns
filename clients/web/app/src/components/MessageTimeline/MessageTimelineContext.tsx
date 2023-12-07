@@ -17,6 +17,7 @@ import { Box } from '@ui'
 import { useHandleReaction } from 'hooks/useReactions'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
 import { useTimelineRecorder } from './hooks/useTimelineRecorder'
 
@@ -89,7 +90,9 @@ export const MessageTimelineWrapper = (props: {
 
     const onMentionClick = useCallback(
         (mentionName: string) => {
-            const profileId = members?.find((m) => m.displayName === mentionName.trim())?.userId
+            const profileId = members?.find(
+                (m) => getPrettyDisplayName(m).displayName === mentionName.trim(),
+            )?.userId
             if (!profileId) {
                 return
             }

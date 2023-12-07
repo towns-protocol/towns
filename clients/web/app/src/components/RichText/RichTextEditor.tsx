@@ -30,6 +30,7 @@ import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
 import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { MessageStatusAnnotation, useInitialConfig } from './hooks/useInitialConfig'
 import { AnnotationNode } from './nodes/AnnotationNode'
 import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
@@ -113,7 +114,7 @@ const useTransformers = ({ members, channels, highlightTerms }: IUseTransformers
     const transformers = useMemo(() => {
         const names = members
             .filter((m) => notUndefined(m.displayName))
-            .map((m) => ({ displayName: m.displayName, userId: m.userId }))
+            .map((m) => ({ displayName: getPrettyDisplayName(m).displayName, userId: m.userId }))
         const channelHashtags = channels.filter(notUndefined)
         return [
             createMentionTransformer(names),
