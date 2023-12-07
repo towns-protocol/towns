@@ -1,18 +1,16 @@
 import React, { useCallback, useMemo } from 'react'
-import { Channel, RoomIdentifier, useChannelMembers, useDMData, useRoom } from 'use-zion-client'
 import { Link, useNavigate } from 'react-router-dom'
+import { Channel, RoomIdentifier, useChannelMembers, useDMData, useRoom } from 'use-zion-client'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
+import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
+import { useUserList } from '@components/UserList/UserList'
 import { Box, Button, Icon, IconButton, MotionStack, Paragraph, Stack, Text } from '@ui'
+import { useMuteSettings } from 'api/lib/notificationSettings'
+import { useChannelType } from 'hooks/useChannelType'
 import { useDevice } from 'hooks/useDevice'
 import { usePushNotifications } from 'hooks/usePushNotifications'
-import { useMuteSettings } from 'api/lib/notificationSettings'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
-import { useChannelType } from 'hooks/useChannelType'
-import { GroupDMIcon } from '@components/DirectMessages/GroupDMIcon'
 import { CHANNEL_INFO_PARAMS } from 'routes'
-import { useUserList } from '@components/UserList/UserList'
-import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
     channel: Channel
@@ -83,6 +81,7 @@ const DesktopChannelHeader = (props: Props) => {
                         background="level2"
                         alignItems="center"
                         rounded="sm"
+                        minHeight="height_lg"
                     >
                         {channelType === 'channel' ? (
                             <>
@@ -121,12 +120,9 @@ const DMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
         return undefined
     }
     return (
-        <>
-            <Avatar userId={counterParty} size="avatar_sm" />
-            <Text truncate fontSize="md" fontWeight="medium" color="default">
-                {title}
-            </Text>
-        </>
+        <Text truncate fontSize="md" fontWeight="medium" color="default">
+            {title}
+        </Text>
     )
 }
 
@@ -136,12 +132,9 @@ const GDMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
     const title = useUserList({ userIds, excludeSelf: true }).join('')
 
     return (
-        <>
-            <GroupDMIcon roomIdentifier={props.roomIdentifier} width="x3" letterFontSize="sm" />
-            <Text fontSize="md" fontWeight="medium" color="default">
-                {title}
-            </Text>
-        </>
+        <Text fontSize="md" color="default">
+            {title}
+        </Text>
     )
 }
 

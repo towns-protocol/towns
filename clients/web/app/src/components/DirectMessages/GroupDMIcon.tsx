@@ -70,7 +70,7 @@ const AvatarGroup = (props: Props) => {
     const startAngle = slots.length === 2 ? 0.333 : 2
 
     return (
-        <Box position="relative" width={width} height={width} rounded="full">
+        <Box position="relative" minWidth={width} height={width} rounded="full">
             <Box background="level3" width="100%" height="100%" rounded="full">
                 {slots.slice(0, 3).map((userId, i) => {
                     const radius = `calc(${constellation[i].size} * 50%`
