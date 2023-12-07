@@ -10,14 +10,15 @@ import { EmittedEvents } from './client'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { ParsedEvent } from './types'
-import { logNever } from './check'
+import { check, logNever } from './check'
 
-export class StreamStateView_GDMChannel implements StreamStateView_IContent {
+export class StreamStateView_GDMChannel extends StreamStateView_IContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
     lastEventCreatedAtEpocMs = 0n
 
     constructor(userId: string, inception: GdmChannelPayload_Inception) {
+        super()
         this.memberships = new StreamStateView_Membership(userId, inception.streamId)
         this.streamId = inception.streamId
     }
@@ -34,11 +35,9 @@ export class StreamStateView_GDMChannel implements StreamStateView_IContent {
         this.memberships.onMiniblockHeader(blockHeader, emitter)
     }
 
-    prependEvent(
-        event: ParsedEvent,
-        payload: GdmChannelPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    prependEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'gdmChannelPayload')
+        const payload: GdmChannelPayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 this.updateLastEvent(event)
@@ -59,11 +58,9 @@ export class StreamStateView_GDMChannel implements StreamStateView_IContent {
         }
     }
 
-    appendEvent(
-        event: ParsedEvent,
-        payload: GdmChannelPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'gdmChannelPayload')
+        const payload: GdmChannelPayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 this.updateLastEvent(event)

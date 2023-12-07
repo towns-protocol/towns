@@ -9,15 +9,16 @@ import {
     MiniblockHeader,
     Snapshot,
 } from '@river/proto'
-import { logNever } from './check'
+import { check, logNever } from './check'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 
-export class StreamStateView_Channel implements StreamStateView_IContent {
+export class StreamStateView_Channel extends StreamStateView_IContent {
     readonly streamId: string
     readonly spaceId?: string
     readonly memberships: StreamStateView_Membership
 
     constructor(userId: string, inception: ChannelPayload_Inception) {
+        super()
         this.memberships = new StreamStateView_Membership(userId, inception.streamId)
         this.streamId = inception.streamId
         this.spaceId = inception.spaceId
@@ -35,11 +36,9 @@ export class StreamStateView_Channel implements StreamStateView_IContent {
         this.memberships.onMiniblockHeader(blockHeader, emitter)
     }
 
-    prependEvent(
-        event: ParsedEvent,
-        payload: ChannelPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    prependEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'channelPayload')
+        const payload: ChannelPayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -59,11 +58,9 @@ export class StreamStateView_Channel implements StreamStateView_IContent {
         }
     }
 
-    appendEvent(
-        event: ParsedEvent,
-        payload: ChannelPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'channelPayload')
+        const payload: ChannelPayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break

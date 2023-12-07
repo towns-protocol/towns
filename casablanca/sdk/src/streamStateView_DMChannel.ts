@@ -10,9 +10,9 @@ import { EmittedEvents } from './client'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { ParsedEvent } from './types'
-import { logNever } from './check'
+import { check, logNever } from './check'
 
-export class StreamStateView_DMChannel implements StreamStateView_IContent {
+export class StreamStateView_DMChannel extends StreamStateView_IContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
     readonly firstPartyId: string
@@ -20,6 +20,7 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
     lastEventCreatedAtEpocMs = 0n
 
     constructor(userId: string, inception: DmChannelPayload_Inception) {
+        super()
         this.memberships = new StreamStateView_Membership(userId, inception.streamId)
         this.streamId = inception.streamId
         this.firstPartyId = inception.firstPartyId
@@ -38,11 +39,9 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
         this.memberships.onMiniblockHeader(blockHeader, emitter)
     }
 
-    appendEvent(
-        event: ParsedEvent,
-        payload: DmChannelPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'dmChannelPayload')
+        const payload: DmChannelPayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 this.updateLastEvent(event)
@@ -70,11 +69,9 @@ export class StreamStateView_DMChannel implements StreamStateView_IContent {
         }
     }
 
-    prependEvent(
-        event: ParsedEvent,
-        payload: DmChannelPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    prependEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'dmChannelPayload')
+        const payload: DmChannelPayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 this.updateLastEvent(event)

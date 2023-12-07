@@ -29,22 +29,17 @@ import { StreamStateView_Channel } from './streamStateView_Channel'
 import { StreamStateView_User } from './streamStateView_User'
 import { StreamStateView_UserSettings } from './streamStateView_UserSettings'
 import { StreamStateView_UserDeviceKeys } from './streamStateView_UserDeviceKey'
-import {
-    StreamStateView_Membership,
-    StreamStateView_UserStreamMembership,
-} from './streamStateView_Membership'
+import { StreamStateView_Membership } from './streamStateView_Membership'
 import { StreamStateView_Media } from './streamStateView_Media'
 import { StreamStateView_GDMChannel } from './streamStateView_GDMChannel'
-import {
-    StreamStateView_IContent,
-    StreamStateView_UnknownContent,
-} from './streamStateView_IContent'
+import { StreamStateView_IContent } from './streamStateView_IContent'
 import { StreamStateView_DMChannel } from './streamStateView_DMChannel'
 import { genLocalId } from './id'
 import { StreamStateView_UserToDevice } from './streamStateView_UserToDevice'
 import { bin_toHexString } from './binary'
-import { StreamStateView_Common } from './streamStateView_Common'
+import { StreamStateView_CommonContent } from './streamStateView_CommonContent'
 import { DecryptedContent } from './encryptedContentTypes'
+import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
@@ -63,7 +58,7 @@ export class StreamStateView {
     syncCookie?: SyncCookie
 
     // Common Content
-    commonContent: StreamStateView_Common
+    commonContent: StreamStateView_CommonContent
 
     // Space Content
     private readonly _spaceContent?: StreamStateView_Space
@@ -165,7 +160,7 @@ export class StreamStateView {
         this.streamId = streamId
         this.contentKind = snapshot.content.case
         this.prevSnapshotMiniblockNum = prevSnapshotMiniblockNum
-        this.commonContent = new StreamStateView_Common(streamId)
+        this.commonContent = new StreamStateView_CommonContent(streamId)
 
         switch (snapshot.content.case) {
             case 'channelContent':
@@ -313,36 +308,6 @@ export class StreamStateView {
 
         try {
             switch (payload.case) {
-                case 'channelPayload':
-                    this.channelContent?.appendEvent(event, payload.value, emitter)
-                    break
-                case 'dmChannelPayload':
-                    this.dmChannelContent?.appendEvent(event, payload.value, emitter)
-                    break
-                case 'gdmChannelPayload':
-                    this.gdmChannelContent.appendEvent(event, payload.value, emitter)
-                    break
-                case 'spacePayload':
-                    this.spaceContent?.appendEvent(event, payload.value, emitter)
-                    break
-                case 'userPayload':
-                    this.userContent?.appendEvent(event, payload.value, emitter)
-                    break
-                case 'userSettingsPayload':
-                    this.userSettingsContent?.appendEvent(event, payload.value, emitter)
-                    break
-                case 'userDeviceKeyPayload':
-                    this.userDeviceKeyContent?.appendEvent(event, payload.value, emitter)
-                    break
-                case 'userToDevicePayload':
-                    this.userToDeviceContent?.appendEvent(event, payload.value, emitter)
-                    break
-                case 'mediaPayload':
-                    this.mediaContent?.appendEvent(event, payload.value, emitter)
-                    break
-                case 'commonPayload':
-                    this.commonContent.appendEvent(event, payload.value, emitter)
-                    break
                 case 'miniblockHeader':
                     check(
                         (this.miniblockInfo?.max ?? -1n) < payload.value.miniblockNum,
@@ -368,10 +333,13 @@ export class StreamStateView {
                         confirmed.push(event)
                     }
                     break
+                case 'commonPayload':
+                    this.commonContent.appendEvent(event, payload.value, emitter)
+                    break
                 case undefined:
                     break
                 default:
-                    logNever(payload)
+                    this.getContent().appendEvent(event, emitter)
             }
         } catch (e) {
             logError(`StreamStateView::Error appending event ${event.hashStr}`, e)
@@ -392,45 +360,21 @@ export class StreamStateView {
 
         try {
             switch (payload.case) {
-                case 'channelPayload':
-                    this.channelContent?.prependEvent(event, payload.value, emitter)
-                    break
-                case 'dmChannelPayload':
-                    this.dmChannelContent?.prependEvent(event, payload.value, emitter)
-                    break
-                case 'gdmChannelPayload':
-                    this.gdmChannelContent.prependEvent(event, payload.value, emitter)
-                    break
-                case 'spacePayload':
-                    this.spaceContent?.prependEvent(event, payload.value, emitter)
-                    break
-                case 'userPayload':
-                    this.userContent?.prependEvent(event, payload.value, emitter)
-                    break
-                case 'userSettingsPayload':
-                    this.userSettingsContent?.prependEvent(event, payload.value, emitter)
-                    break
-                case 'userDeviceKeyPayload':
-                    this.userDeviceKeyContent?.prependEvent(event, payload.value, emitter)
-                    break
-                case 'userToDevicePayload':
-                    this.userToDeviceContent?.prependEvent(event, payload.value, emitter)
-                    break
-                case 'mediaPayload':
-                    this.mediaContent?.prependEvent(event, payload.value, emitter)
-                    break
-                case 'commonPayload':
-                    this.commonContent.prependEvent(event, payload.value, emitter)
-                    break
                 case 'miniblockHeader':
                     this.updateMiniblockInfo(payload.value, { min: payload.value.miniblockNum })
                     this.prevSnapshotMiniblockNum = payload.value.prevSnapshotMiniblockNum
                     break
-
+                case 'commonPayload':
+                    this.commonContent.prependEvent(event, payload.value, emitter)
+                    break
                 case undefined:
+                    logError(
+                        `StreamStateView::Error undefined payload case ${event.hashStr}`,
+                        payload,
+                    )
                     break
                 default:
-                    logNever(payload)
+                    this.getContent().prependEvent(event, emitter)
             }
         } catch (e) {
             logError(`StreamStateView::Error prepending event ${event.hashStr}`, e)
@@ -640,31 +584,7 @@ export class StreamStateView {
     }
 
     getMemberships(): StreamStateView_Membership {
-        switch (this.contentKind) {
-            case 'channelContent':
-                return this.channelContent.memberships
-            case 'dmChannelContent':
-                return this.dmChannelContent.memberships
-            case 'gdmChannelContent':
-                return this.gdmChannelContent.memberships
-            case 'spaceContent':
-                return this.spaceContent.memberships
-            case 'userContent':
-                return new StreamStateView_UserStreamMembership(this.streamId)
-            case 'userSettingsContent':
-                return new StreamStateView_UserStreamMembership(this.streamId)
-            case 'userDeviceKeyContent':
-                return new StreamStateView_UserStreamMembership(this.streamId)
-            case 'userToDeviceContent':
-                return new StreamStateView_UserStreamMembership(this.streamId)
-            case 'mediaContent':
-                throw new Error('Media content has no memberships')
-            case undefined:
-                throw new Error('Stream has no content')
-            default:
-                logNever(this.contentKind)
-                return new StreamStateView_Membership('', '')
-        }
+        return this.getContent().memberships
     }
 
     getContent(): StreamStateView_IContent {
@@ -691,7 +611,7 @@ export class StreamStateView {
                 throw new Error('Stream has no content')
             default:
                 logNever(this.contentKind)
-                return new StreamStateView_UnknownContent()
+                return new StreamStateView_UnknownContent(this.streamId)
         }
     }
 

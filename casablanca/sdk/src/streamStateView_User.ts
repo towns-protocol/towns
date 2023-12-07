@@ -10,18 +10,22 @@ import {
     UserPayload_Snapshot,
     UserPayload_UserMembership,
 } from '@river/proto'
-import { logNever } from './check'
+import { check, logNever } from './check'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView_IContent } from './streamStateView_IContent'
+import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 
-export class StreamStateView_User implements StreamStateView_IContent {
+export class StreamStateView_User extends StreamStateView_IContent {
     readonly streamId: string
+    readonly memberships: StreamStateView_UserStreamMembership
     readonly userInvitedStreams = new Set<string>()
     readonly userJoinedStreams = new Set<string>()
     readonly toDeviceMessages: ParsedEvent[] = []
 
     constructor(inception: UserPayload_Inception) {
+        super()
         this.streamId = inception.streamId
+        this.memberships = new StreamStateView_UserStreamMembership(inception.streamId)
     }
 
     initialize(
@@ -39,11 +43,9 @@ export class StreamStateView_User implements StreamStateView_IContent {
         // nothing to do
     }
 
-    prependEvent(
-        event: ParsedEvent,
-        payload: UserPayload,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    prependEvent(event: ParsedEvent, _emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'userPayload')
+        const payload: UserPayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -57,11 +59,9 @@ export class StreamStateView_User implements StreamStateView_IContent {
         }
     }
 
-    appendEvent(
-        event: ParsedEvent,
-        payload: UserPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'userPayload')
+        const payload: UserPayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break

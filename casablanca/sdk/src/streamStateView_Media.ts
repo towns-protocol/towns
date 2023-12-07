@@ -6,21 +6,29 @@ import {
     MediaPayload_Snapshot,
     MiniblockHeader,
 } from '@river/proto'
-import { logNever } from './check'
+import { check, logNever } from './check'
 import { ParsedEvent } from './types'
 import { EmittedEvents } from './client'
+import { StreamStateView_IContent } from './streamStateView_IContent'
+import { StreamStateView_Membership } from './streamStateView_Membership'
 
-export class StreamStateView_Media {
+export class StreamStateView_Media extends StreamStateView_IContent {
     readonly streamId: string
     readonly channelId: string
     readonly chunkCount: number
     readonly chunks: Uint8Array[]
 
     constructor(inception: MediaPayload_Inception) {
+        super()
         this.streamId = inception.streamId
         this.channelId = inception.channelId
         this.chunkCount = inception.chunkCount
         this.chunks = Array<Uint8Array>(inception.chunkCount)
+    }
+
+    get memberships(): StreamStateView_Membership {
+        // media streams don't have memberships
+        throw new Error(`not implemented`)
     }
 
     initialize(
@@ -35,11 +43,9 @@ export class StreamStateView_Media {
         // nothing to do
     }
 
-    appendEvent(
-        _event: ParsedEvent,
-        payload: MediaPayload,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    appendEvent(event: ParsedEvent, _emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'mediaPayload')
+        const payload: MediaPayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -59,12 +65,8 @@ export class StreamStateView_Media {
         }
     }
 
-    prependEvent(
-        _event: ParsedEvent,
-        _payload: MediaPayload,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    prependEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
         // append / prepend are identical for media content
-        this.appendEvent(_event, _payload, _emitter)
+        this.appendEvent(event, emitter)
     }
 }

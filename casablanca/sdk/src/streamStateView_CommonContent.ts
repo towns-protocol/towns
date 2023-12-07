@@ -1,22 +1,20 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import TypedEmitter from 'typed-emitter'
 import {
     Snapshot,
     MiniblockHeader,
     CommonPayload,
-    CommonPayload_Snapshot,
     CommonPayload_Snapshot_Solicitations,
     CommonPayload_KeySolicitation,
     CommonPayload_KeyFulfillment,
 } from '@river/proto'
 import { EmittedEvents } from './client'
-import { StreamStateView_IContent } from './streamStateView_IContent'
 import { ParsedEvent } from './types'
 import { logNever } from './check'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { removeCommon } from './utils'
 
-export class StreamStateView_Common implements StreamStateView_IContent {
+// common payloads exist in all streams, this data structure helps aggregates them
+export class StreamStateView_CommonContent {
     readonly streamId: string
     solicitations: Record<string, CommonPayload_Snapshot_Solicitations> = {}
 
@@ -36,14 +34,14 @@ export class StreamStateView_Common implements StreamStateView_IContent {
         }
     }
 
-    onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
+    onMiniblockHeader(_blockHeader: MiniblockHeader, _emitter?: TypedEmitter<EmittedEvents>): void {
         // nothing to do
     }
 
     prependEvent(
-        event: ParsedEvent,
-        payload: CommonPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        _event: ParsedEvent,
+        _payload: CommonPayload,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         // nothing to do
     }

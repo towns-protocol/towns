@@ -15,17 +15,18 @@ import {
     SpacePayload_Inception,
     SpacePayload_Snapshot,
 } from '@river/proto'
-import { isDefined, logNever, throwWithCode } from './check'
+import { check, isDefined, logNever, throwWithCode } from './check'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 
-export class StreamStateView_Space implements StreamStateView_IContent {
+export class StreamStateView_Space extends StreamStateView_IContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
     readonly userMetadata: StreamStateView_UserMetadata
     readonly spaceChannelsMetadata = new Map<string, ChannelProperties>()
 
     constructor(userId: string, inception: SpacePayload_Inception) {
+        super()
         this.memberships = new StreamStateView_Membership(userId, inception.streamId)
         this.userMetadata = new StreamStateView_UserMetadata(userId, inception.streamId)
         this.streamId = inception.streamId
@@ -53,11 +54,9 @@ export class StreamStateView_Space implements StreamStateView_IContent {
         this.userMetadata.onMiniblockHeader(blockHeader, emitter)
     }
 
-    prependEvent(
-        event: ParsedEvent,
-        payload: SpacePayload,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    prependEvent(event: ParsedEvent, _emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'spacePayload')
+        const payload: SpacePayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -80,11 +79,9 @@ export class StreamStateView_Space implements StreamStateView_IContent {
         }
     }
 
-    appendEvent(
-        event: ParsedEvent,
-        payload: SpacePayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'spacePayload')
+        const payload: SpacePayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break

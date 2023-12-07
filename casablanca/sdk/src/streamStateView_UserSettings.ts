@@ -12,22 +12,26 @@ import {
 import TypedEmitter from 'typed-emitter'
 import { ParsedEvent } from './types'
 import { EmittedEvents } from './client'
-import { logNever } from './check'
+import { check, logNever } from './check'
 import { StreamEvents } from './streamEvents'
 import { dlog } from './dlog'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 import { toPlainMessage } from '@bufbuild/protobuf'
+import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 
 const log = dlog('csb:stream')
 
-export class StreamStateView_UserSettings implements StreamStateView_IContent {
+export class StreamStateView_UserSettings extends StreamStateView_IContent {
     readonly streamId: string
+    readonly memberships: StreamStateView_UserStreamMembership
     readonly settings = new Map<string, string>()
     readonly fullyReadMarkersSrc = new Map<string, EncryptedData>()
     readonly fullyReadMarkers = new Map<string, Record<string, FullyReadMarker>>()
 
     constructor(inception: UserSettingsPayload_Inception) {
+        super()
         this.streamId = inception.streamId
+        this.memberships = new StreamStateView_UserStreamMembership(inception.streamId)
     }
 
     initialize(snapshot: Snapshot, content: UserSettingsPayload_Snapshot): void {
@@ -41,11 +45,9 @@ export class StreamStateView_UserSettings implements StreamStateView_IContent {
         // nothing to do
     }
 
-    prependEvent(
-        event: ParsedEvent,
-        payload: UserSettingsPayload,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    prependEvent(event: ParsedEvent, _emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'userSettingsPayload')
+        const payload: UserSettingsPayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -59,11 +61,9 @@ export class StreamStateView_UserSettings implements StreamStateView_IContent {
         }
     }
 
-    appendEvent(
-        event: ParsedEvent,
-        payload: UserSettingsPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'userSettingsPayload')
+        const payload: UserSettingsPayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break

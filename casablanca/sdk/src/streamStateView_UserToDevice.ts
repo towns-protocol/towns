@@ -11,12 +11,14 @@ import {
     UserToDevicePayload_MegolmSessions,
     UserToDevicePayload_Ack,
 } from '@river/proto'
-import { logNever } from './check'
+import { check, logNever } from './check'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 import { bin_toHexString } from './binary'
+import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 
-export class StreamStateView_UserToDevice implements StreamStateView_IContent {
+export class StreamStateView_UserToDevice extends StreamStateView_IContent {
     readonly streamId: string
+    readonly memberships: StreamStateView_UserStreamMembership
     deviceSummary: Record<string, UserToDevicePayload_Snapshot_DeviceSummary> = {}
     pendingMegolmSessions: Record<
         string,
@@ -24,7 +26,9 @@ export class StreamStateView_UserToDevice implements StreamStateView_IContent {
     > = {}
 
     constructor(inception: UserToDevicePayload_Inception) {
+        super()
         this.streamId = inception.streamId
+        this.memberships = new StreamStateView_UserStreamMembership(inception.streamId)
     }
 
     initialize(
@@ -48,11 +52,9 @@ export class StreamStateView_UserToDevice implements StreamStateView_IContent {
         }
     }
 
-    prependEvent(
-        event: ParsedEvent,
-        payload: UserToDevicePayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    prependEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'userToDevicePayload')
+        const payload: UserToDevicePayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -68,11 +70,9 @@ export class StreamStateView_UserToDevice implements StreamStateView_IContent {
         }
     }
 
-    appendEvent(
-        event: ParsedEvent,
-        payload: UserToDevicePayload,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    appendEvent(event: ParsedEvent, _emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'userToDevicePayload')
+        const payload: UserToDevicePayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break

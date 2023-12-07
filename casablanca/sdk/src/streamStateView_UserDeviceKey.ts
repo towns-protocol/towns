@@ -9,19 +9,23 @@ import {
     UserDeviceKeyPayload_MegolmDevice,
     UserDeviceKeyPayload_Snapshot,
 } from '@river/proto'
-import { logNever } from './check'
+import { check, logNever } from './check'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 import { UserDevice } from './crypto/olmLib'
+import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 
-export class StreamStateView_UserDeviceKeys implements StreamStateView_IContent {
+export class StreamStateView_UserDeviceKeys extends StreamStateView_IContent {
     readonly streamId: string
+    readonly memberships: StreamStateView_UserStreamMembership
     readonly streamCreatorId: string
 
     // user_id -> device_keys, fallback_keys
     readonly megolmKeys: UserDevice[] = []
 
     constructor(inception: UserDeviceKeyPayload_Inception) {
+        super()
         this.streamId = inception.streamId
+        this.memberships = new StreamStateView_UserStreamMembership(inception.streamId)
         this.streamCreatorId = inception.userId
     }
 
@@ -40,19 +44,13 @@ export class StreamStateView_UserDeviceKeys implements StreamStateView_IContent 
         // nothing to do
     }
 
-    prependEvent(
-        _event: ParsedEvent,
-        _payload: UserDeviceKeyPayload,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    prependEvent(_event: ParsedEvent, _emitter: TypedEmitter<EmittedEvents> | undefined): void {
         // nohing to do
     }
 
-    appendEvent(
-        event: ParsedEvent,
-        payload: UserDeviceKeyPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
+    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+        check(event.event.payload.case === 'userDeviceKeyPayload')
+        const payload: UserDeviceKeyPayload = event.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
