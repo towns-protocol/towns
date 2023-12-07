@@ -556,10 +556,6 @@ function toTownsContent_ChannelPayload_Message(
     description: string,
 ): TownsContentResult {
     if (isCiphertext(payload.ciphertext)) {
-        console.log(
-            `$$$ useCasablancaTimelines toTownsContent_ChannelPayload_Message ciphertext`,
-            payload.sessionId,
-        )
         return {
             // if payload is an EncryptedData message, than it is encrypted content kind
             content: { kind: ZTEvent.RoomMessageEncrypted } satisfies RoomMessageEncryptedEvent,
