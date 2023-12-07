@@ -172,7 +172,7 @@ const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
     dlog.opts = opts
 
     dlog.extend = (sub: string, delimiter?: string): DLogger => {
-        return makeDlog(d.extend(sub, delimiter))
+        return makeDlog(d.extend(sub, delimiter), opts)
     }
 
     Object.defineProperty(dlog, 'enabled', {
