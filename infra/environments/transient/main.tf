@@ -69,6 +69,14 @@ resource "cloudflare_record" "sample_app_dns" {
   ttl     = 60
 }
 
+module "river_db_cluster" {
+  source           = "../../modules/river-db-cluster"
+  database_subnets = local.transient_global_remote_state.vpc.database_subnets
+  vpc_id           = local.transient_global_remote_state.vpc.vpc_id
+
+  is_transient = true
+}
+
 module "river_node_1" {
   source = "../../modules/river-node"
 
@@ -89,15 +97,12 @@ module "river_node_1" {
   alb_dns_name           = local.transient_global_remote_state.river_alb.lb_dns_name
   alb_https_listener_arn = local.transient_global_remote_state.river_alb.lb_https_listener_arn
 
-  database_subnets = local.transient_global_remote_state.vpc.database_subnets
-
-  # TODO: make this more generalizable, consider computing from env name
-  database_cluster_source_identifier = "arn:aws:rds:us-east-1:211286738967:cluster:river1-test-beta-postgresql"
-
   home_chain_id = 84531
 
   # TODO: generalize this to env name once we start deploying transient workers
   push_notification_worker_url = "https://push-notification-worker-test-beta.towns.com"
 
   node_number = 1
+
+  river_node_db = module.river_db_cluster
 }

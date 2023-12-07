@@ -121,22 +121,13 @@ module "river_internal_sg" {
   egress_rules       = ["all-all"]
 }
 
-module "river_node_db" {
-  source                    = "../../modules/river-node-db"
-  database_subnets          = var.database_subnets
-  vpc_id                    = var.vpc_id
-  river_node_name           = local.node_name
-  cluster_source_identifier = var.database_cluster_source_identifier
-  is_transient              = var.is_transient
-}
-
 resource "aws_security_group_rule" "allow_river_node_inbound_to_db" {
   type      = "ingress"
   from_port = 5432
   to_port   = 5432
   protocol  = "tcp"
 
-  security_group_id        = module.river_node_db.rds_aurora_postgresql.security_group_id
+  security_group_id        = var.river_node_db.rds_aurora_postgresql.security_group_id
   source_security_group_id = module.river_internal_sg.security_group_id
 }
 
@@ -146,7 +137,7 @@ resource "aws_security_group_rule" "allow_post_provision_config_lambda_inbound_t
   to_port   = 5432
   protocol  = "tcp"
 
-  security_group_id        = module.river_node_db.rds_aurora_postgresql.security_group_id
+  security_group_id        = var.river_node_db.rds_aurora_postgresql.security_group_id
   source_security_group_id = aws_security_group.post_provision_config_lambda_function_sg.id
 }
 
@@ -176,14 +167,16 @@ resource "aws_secretsmanager_secret_version" "rds_river_node_password" {
 module "post_provision_config" {
   source = "../../modules/post-provision-config"
 
-  river_node_name                   = local.node_name
-  subnet_ids                        = var.node_subnets
-  river_node_wallet_credentials_arn = aws_secretsmanager_secret.river_node_wallet_credentials.arn
-  homechain_network_url_secret_arn  = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
-  river_user_db_config              = local.river_user_db_config
-  rds_cluster_resource_id           = module.river_node_db.rds_aurora_postgresql.cluster_resource_id
-  vpc_id                            = var.vpc_id
-  security_group_id                 = aws_security_group.post_provision_config_lambda_function_sg.id
+  river_node_name                         = local.node_name
+  subnet_ids                              = var.node_subnets
+  river_node_wallet_credentials_arn       = aws_secretsmanager_secret.river_node_wallet_credentials.arn
+  homechain_network_url_secret_arn        = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
+  river_db_cluster_master_user_secret_arn = var.river_node_db.root_user_secret_arn
+  river_user_db_config                    = local.river_user_db_config
+  rds_cluster_resource_id                 = var.river_node_db.rds_aurora_postgresql.cluster_resource_id
+  vpc_id                                  = var.vpc_id
+  security_group_id                       = aws_security_group.post_provision_config_lambda_function_sg.id
+
 }
 
 locals {
@@ -195,7 +188,7 @@ resource "null_resource" "invoke_lambda" {
   provisioner "local-exec" {
     command = "aws lambda invoke --function-name ${local.function_name} /dev/null"
   }
-  depends_on = [module.river_node_db, module.post_provision_config]
+  depends_on = [var.river_node_db, module.post_provision_config]
 }
 
 resource "aws_cloudwatch_log_group" "river_log_group" {
@@ -453,7 +446,7 @@ resource "aws_lb_listener_rule" "host_rule" {
 
 locals {
   river_user_db_config = {
-    host         = module.river_node_db.rds_aurora_postgresql.cluster_endpoint
+    host         = var.river_node_db.rds_aurora_postgresql.cluster_endpoint
     port         = "5432"
     database     = "river"
     user         = "river"
@@ -713,7 +706,7 @@ resource "aws_ecs_service" "river-ecs-service" {
 
   # do not attempt to create the service before the lambda runs
   depends_on = [
-    module.river_node_db,
+    var.river_node_db,
     module.post_provision_config,
     null_resource.invoke_lambda
   ]

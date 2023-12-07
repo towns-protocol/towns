@@ -6,7 +6,6 @@ const crypto = require('crypto');
 const Wallet = require('ethereumjs-wallet');
 const EthereumUtil = require('ethereumjs-util');
 
-const LAMBDA_DB_USER='root'
 const CHAIN_ID = 84531;
 const BASE_URL = `https://nexus-rpc-worker-test-beta.towns.com/${CHAIN_ID}`
 
@@ -21,6 +20,7 @@ function generatePostgresPassword() {
     password.includes("'") || 
     password.includes('"') || 
     password.includes('\\') || 
+    password.includes('/') || 
     password.includes(';')
   ) {
     console.log('regenerating password')
@@ -93,32 +93,33 @@ async function setHomechainNetworkUrlSecret() {
   }
   console.log('done setting homechain network url secret')
 }
-  
-const getRiverDBAuthToken = async (riverUserDBConfig) => {
-  console.log('getting river db auth token')
-  const signer = new Signer({
-    region: 'us-east-1',
-    hostname: riverUserDBConfig.HOST,
-    port: riverUserDBConfig.PORT,
-    username: LAMBDA_DB_USER,
+
+const getMasterUserCredentials = async () => {
+  console.log('getting master user credentials')
+  const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
+
+  const getMasterUserCredentials = new GetSecretValueCommand({
+    SecretId: process.env.RIVER_DB_CLUSTER_MASTER_USER_SECRET_ARN
   })
+  const masterUserCredentialsSecret = (await secretsClient.send(getMasterUserCredentials)).SecretString;
 
-  const token = await signer.getAuthToken();
-  return token;
-
+  const masterUserCredentials = JSON.parse(masterUserCredentialsSecret)
+  console.log('got master user credentials')
+  return masterUserCredentials;
 }
-
+  
 const configureRiverDB = async ({
-  token,
   address,
   riverUserDBConfig,
+  masterUserCredentials,
 }) => {
   console.log('configuring river db')
+  
   const pgClient = new Client({
     host: riverUserDBConfig.HOST,
     database: riverUserDBConfig.DATABASE,
-    password: token,
-    user: LAMBDA_DB_USER,
+    password: masterUserCredentials.password,
+    user: masterUserCredentials.username,
     port: riverUserDBConfig.PORT,
     ssl: {
       rejectUnauthorized: false
@@ -191,11 +192,11 @@ exports.handler = async (event, context, callback) => {
     const wallet = generateFromPrivateKey(privateKey);
     const address = wallet.getAddressString();
     const riverUserDBConfig = await findOrCreateRiverUserDBConfig();
-    const token = await getRiverDBAuthToken(riverUserDBConfig);
+    const masterUserCredentials = await getMasterUserCredentials();
     await configureRiverDB({
-      token,
       address,
-      riverUserDBConfig
+      riverUserDBConfig,
+      masterUserCredentials,
     });
     callback(null, 'done')
   } catch (e) {

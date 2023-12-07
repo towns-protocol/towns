@@ -71,8 +71,16 @@ resource "aws_ecs_cluster" "river_ecs_cluster" {
   tags = module.global_constants.tags
 }
 
+module "river_db_cluster" {
+  source           = "../../modules/river-db-cluster"
+  database_subnets = module.vpc.database_subnets
+  vpc_id           = module.vpc.vpc_id
+}
+
 module "river_node_1" {
   source = "../../modules/river-node"
+
+  river_node_db = module.river_db_cluster
 
   depends_on = [
     module.vpc,
@@ -90,11 +98,6 @@ module "river_node_1" {
   alb_security_group_id  = module.river_alb.security_group_id
   alb_dns_name           = module.river_alb.lb_dns_name
   alb_https_listener_arn = module.river_alb.lb_https_listener_arn
-
-  database_subnets = module.vpc.database_subnets
-
-  # TODO: make this more generalizable, consider computing from env name
-  database_cluster_source_identifier = "arn:aws:rds:us-east-1:211286738967:cluster:test-river-river-1-test-postgresql"
 
   home_chain_id                = 84531
   push_notification_worker_url = "https://push-notification-worker-${terraform.workspace}.towns.com"

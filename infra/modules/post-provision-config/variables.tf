@@ -72,3 +72,13 @@ variable "security_group_id" {
     error_message = "The security group id cannot be empty."
   }
 }
+
+variable "river_db_cluster_master_user_secret_arn" {
+  description = "The arn of the river db cluster master user secret"
+  type        = string
+
+  validation {
+    condition     = var.river_db_cluster_master_user_secret_arn != ""
+    error_message = "The river db cluster master user secret arn cannot be empty."
+  }
+}

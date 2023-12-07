@@ -27,11 +27,6 @@ variable "node_subnets" {
   type        = list(string)
 }
 
-variable "database_subnets" {
-  description = "List of subnet IDs used by database subnet group created"
-  type        = list(string)
-}
-
 variable "alb_security_group_id" {
   description = "The security group id of the alb"
   type        = string
@@ -57,14 +52,13 @@ variable "push_notification_worker_url" {
   type        = string
 }
 
-variable "database_cluster_source_identifier" {
-  description = "The cluster identifier of the source cluster when restoring from a snapshot or backup"
-  type        = string
-  default     = null
-}
-
 variable "is_transient" {
   description = "Whether or not this db is transient"
   type        = bool
   default     = false
+}
+
+variable "river_node_db" {
+  description = "The river node db module"
+  type        = any
 }
