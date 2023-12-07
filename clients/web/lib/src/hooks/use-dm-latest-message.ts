@@ -1,9 +1,10 @@
 import { RoomIdentifier } from '../types/room-identifier'
 import { useTimeline } from './use-timeline'
 import { TimelineEvent, TimelineEvent_OneOf, ZTEvent } from '../types/timeline-types'
-import { useMemo } from 'react'
+
 import { MessageType } from '../types/zion-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
+import { useMemo } from 'react'
 
 export type MostRecentMessageInfo_OneOf =
     | MostRecentMessageInfoMedia
@@ -38,14 +39,14 @@ export function useDMLatestMessage(roomId: RoomIdentifier) {
         unreadMarker.isUnread && timeline.some((event) => event.eventId === unreadMarker?.eventId)
 
     const latestMessage = useMemo(() => {
+        let markerReached = false
         let unreadCount = 0
         let latest: LatestMessageInfo | undefined
-
         for (let i = timeline.length - 1; i >= 0; i--) {
             const message = timeline[i]
             const info = toMostRecentMessageInfo(message.content)
 
-            if (info && hasRelevantUnreadMarker) {
+            if (!markerReached && info && hasRelevantUnreadMarker) {
                 unreadCount++
             }
             if (!latest && info) {
@@ -57,7 +58,7 @@ export function useDMLatestMessage(roomId: RoomIdentifier) {
             }
             if (unreadMarker?.eventId === message.eventId) {
                 // we don't need to look further than the lastest unread marker
-                break
+                markerReached = true
             }
         }
         return { latest, unreadCount }
