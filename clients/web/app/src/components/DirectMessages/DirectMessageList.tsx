@@ -10,7 +10,7 @@ import React, {
 import { useLocation, useMatch, useNavigate } from 'react-router'
 import { DMChannelIdentifier, useTimelineStore, useZionContext } from 'use-zion-client'
 import { ResultItem } from '@components/SearchBar/SearchResultItem'
-import { Box, Icon, Paragraph, Stack, TextField } from '@ui'
+import { Box, Icon, IconButton, Paragraph, Stack, TextField } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDmChannels } from 'hooks/useDMChannels'
 import { useDevice } from 'hooks/useDevice'
@@ -66,7 +66,8 @@ export const DirectMessageList = () => {
     return (
         <Stack scroll padding="sm">
             <Stack minHeight="100svh" paddingBottom="safeAreaInsetBottom" gap="xxs">
-                <SearchField onSearchValue={onSearch} />
+                {channels.length > 0 && <SearchField onSearchValue={onSearch} />}
+
                 {searchResults.length > 0 ? (
                     <SearchContext.Provider value="messages">
                         {searchResults.map((s, index, items) => (
@@ -129,6 +130,10 @@ const SearchField = (props: { onSearchValue: (value: string) => void }) => {
         }
     }
 
+    const onClearSearch = useCallback(() => {
+        setValue('')
+    }, [])
+
     const deferredValue = useDeferredValue(value)
 
     useEffect(() => {
@@ -136,16 +141,30 @@ const SearchField = (props: { onSearchValue: (value: string) => void }) => {
     }, [deferredValue, onSearchValue])
 
     return (
-        <Box horizontal padding="sm" height="x8" shrink={false}>
-            <TextField
-                tone="none"
-                background="level2"
-                height="100%"
-                placeholder="Search DMs"
-                value={value ?? undefined}
-                onChange={onChange}
-            />
-        </Box>
+        <Stack horizontal>
+            <Box horizontal grow padding="sm" height="x8" shrink={false}>
+                <TextField
+                    tone="none"
+                    background="level2"
+                    height="100%"
+                    placeholder="Search DMs"
+                    value={value ?? undefined}
+                    onKeyDown={(e) => e.key === 'Escape' && onClearSearch()}
+                    onChange={onChange}
+                />
+            </Box>
+            {!!value && (
+                <Box centerContent>
+                    <IconButton
+                        padding="sm"
+                        size="square_sm"
+                        color="gray2"
+                        icon="close"
+                        onClick={onClearSearch}
+                    />
+                </Box>
+            )}
+        </Stack>
     )
 }
 
