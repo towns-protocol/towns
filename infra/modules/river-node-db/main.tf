@@ -42,15 +42,6 @@ module "rds_aurora_postgresql" {
   monitoring_interval    = 0
   create_monitoring_role = false
 
-  security_group_rules = {
-    river_node_sg_ingress = {
-      source_security_group_id = var.river_node_security_group_id
-    }
-    post_provision_config_lambda_function_sg_ingress = {
-      source_security_group_id = var.post_provision_config_lambda_function_sg_id
-    }
-  }
-
   create_db_subnet_group = true
 
   apply_immediately = true
@@ -82,7 +73,6 @@ module "rds_aurora_postgresql" {
 
   iam_database_authentication_enabled = local.iam_database_authentication_enabled
 }
-
 
 resource "aws_cloudwatch_log_subscription_filter" "rds_log_group_filter" {
   name            = "${var.river_node_name}-postgresql-river-log-group"

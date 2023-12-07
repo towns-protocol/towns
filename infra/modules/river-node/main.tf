@@ -98,7 +98,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 module "river_internal_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
-  name        = "${terraform.workspace}_river_internal_sg"
+  name        = "${local.node_name}_river_internal_sg"
   description = "Security group for river node"
   vpc_id      = var.vpc_id
 
@@ -122,16 +122,32 @@ module "river_internal_sg" {
 }
 
 module "river_node_db" {
-  source = "../../modules/river-node-db"
+  source                    = "../../modules/river-node-db"
+  database_subnets          = var.database_subnets
+  vpc_id                    = var.vpc_id
+  river_node_name           = local.node_name
+  cluster_source_identifier = var.database_cluster_source_identifier
+  is_transient              = var.is_transient
+}
 
-  river_node_security_group_id                = module.river_internal_sg.security_group_id
-  post_provision_config_lambda_function_sg_id = aws_security_group.post_provision_config_lambda_function_sg.id
-  database_subnets                            = var.database_subnets
-  river_node_subnets                          = var.node_subnets
-  vpc_id                                      = var.vpc_id
-  river_node_name                             = local.node_name
-  cluster_source_identifier                   = var.database_cluster_source_identifier
-  is_transient                                = var.is_transient
+resource "aws_security_group_rule" "allow_river_node_inbound_to_db" {
+  type      = "ingress"
+  from_port = 5432
+  to_port   = 5432
+  protocol  = "tcp"
+
+  security_group_id        = module.river_node_db.rds_aurora_postgresql.security_group_id
+  source_security_group_id = module.river_internal_sg.security_group_id
+}
+
+resource "aws_security_group_rule" "allow_post_provision_config_lambda_inbound_to_db" {
+  type      = "ingress"
+  from_port = 5432
+  to_port   = 5432
+  protocol  = "tcp"
+
+  security_group_id        = module.river_node_db.rds_aurora_postgresql.security_group_id
+  source_security_group_id = aws_security_group.post_provision_config_lambda_function_sg.id
 }
 
 resource "aws_security_group" "post_provision_config_lambda_function_sg" {
@@ -161,7 +177,7 @@ module "post_provision_config" {
   source = "../../modules/post-provision-config"
 
   river_node_name                   = local.node_name
-  river_node_subnets                = var.node_subnets
+  subnet_ids                        = var.node_subnets
   river_node_wallet_credentials_arn = aws_secretsmanager_secret.river_node_wallet_credentials.arn
   homechain_network_url_secret_arn  = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
   river_user_db_config              = local.river_user_db_config

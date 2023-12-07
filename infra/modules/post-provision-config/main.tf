@@ -26,7 +26,7 @@ module "post_provision_config_lambda_function" {
     version_id = local.post_provision_config_lambda_s3_object.version_id
   }
 
-  vpc_subnet_ids         = var.river_node_subnets
+  vpc_subnet_ids         = var.subnet_ids
   vpc_security_group_ids = [var.security_group_id]
   attach_network_policy  = true
 

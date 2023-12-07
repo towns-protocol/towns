@@ -16,8 +16,8 @@ variable "vpc_id" {
   }
 }
 
-variable "river_node_subnets" {
-  description = "The subnet ids of the river node"
+variable "subnet_ids" {
+  description = "The subnet ids for the lambda"
   type        = list(string)
 }
 
