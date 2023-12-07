@@ -4,9 +4,7 @@ import {
     Err,
     SnapshotCaseType,
     SyncCookie,
-    StreamAndCookie,
     Snapshot,
-    Miniblock,
     MiniblockHeader,
     MembershipOp,
 } from '@river/proto'
@@ -16,13 +14,13 @@ import {
     ConfirmedTimelineEvent,
     DecryptedTimelineEvent,
     ParsedMiniblock,
+    ParsedStreamAndCookie,
     RemoteTimelineEvent,
     StreamTimelineEvent,
     isConfirmedEvent,
     isLocalEvent,
     makeRemoteTimelineEvent,
 } from './types'
-import { unpackEnvelope, unpackMiniblock } from './sign'
 import { EmittedEvents } from './client'
 import { StreamStateView_Space } from './streamStateView_Space'
 import { StreamStateView_Channel } from './streamStateView_Channel'
@@ -259,7 +257,7 @@ export class StreamStateView {
     }
 
     private appendStreamAndCookie(
-        streamAndCookie: StreamAndCookie,
+        streamAndCookie: ParsedStreamAndCookie,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): {
         appended: StreamTimelineEvent[]
@@ -269,8 +267,7 @@ export class StreamStateView {
         const appended: StreamTimelineEvent[] = []
         const updated: StreamTimelineEvent[] = []
         const confirmed: ConfirmedTimelineEvent[] = []
-        for (const unparsedEvent of streamAndCookie.events) {
-            const parsedEvent = unpackEnvelope(unparsedEvent)
+        for (const parsedEvent of streamAndCookie.events) {
             const existingEvent = this.events.get(parsedEvent.hashStr)
             if (existingEvent) {
                 existingEvent.remoteEvent = parsedEvent
@@ -433,7 +430,7 @@ export class StreamStateView {
     }
 
     initialize(
-        streamAndCookie: StreamAndCookie,
+        streamAndCookie: ParsedStreamAndCookie,
         snapshot: Snapshot,
         miniblocks: ParsedMiniblock[],
         emitter: TypedEmitter<EmittedEvents> | undefined,
@@ -489,7 +486,7 @@ export class StreamStateView {
     }
 
     appendEvents(
-        streamAndCookie: StreamAndCookie,
+        streamAndCookie: ParsedStreamAndCookie,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
         const { appended, updated, confirmed } = this.appendStreamAndCookie(
@@ -504,12 +501,11 @@ export class StreamStateView {
     }
 
     prependEvents(
-        miniblocks: Miniblock[],
+        miniblocks: ParsedMiniblock[],
         terminus: boolean,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
-        const unpackedMiniblocks = miniblocks.map((mb) => unpackMiniblock(mb))
-        const prependedFull = unpackedMiniblocks.flatMap((mb) =>
+        const prependedFull = miniblocks.flatMap((mb) =>
             mb.events.map((parsedEvent, i) =>
                 makeRemoteTimelineEvent({
                     parsedEvent,

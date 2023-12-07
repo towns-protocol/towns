@@ -48,7 +48,13 @@ import {
     makeUserToDeviceStreamId,
     userIdFromAddress,
 } from './id'
-import { SignerContext, makeEvent, unpackStreamResponse } from './sign'
+import {
+    SignerContext,
+    makeEvent,
+    unpackMiniblock,
+    unpackStreamAndCookie,
+    unpackStreamResponse,
+} from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
@@ -837,8 +843,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                         this.logSync('called syncStreams', { syncPos, sync })
                         for await (const syncedStream of sync) {
                             this.logSync('got syncStreams', syncedStream)
-                            const streamAndCookie = syncedStream.stream
-                            if (streamAndCookie !== undefined) {
+                            if (syncedStream.stream !== undefined) {
+                                const streamAndCookie = unpackStreamAndCookie(syncedStream.stream)
                                 const streamId = streamAndCookie.nextSyncCookie?.streamId || ''
                                 this.logSync(
                                     'sync RESULTS for stream',
@@ -857,7 +863,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                                 }
                                 stream.appendEvents(streamAndCookie)
                             } else {
-                                this.logSync('sync RESULTS no stream', streamAndCookie)
+                                this.logSync('sync RESULTS no stream', syncedStream)
                             }
                         }
                         this.logSync('finished syncStreams', syncPos)
@@ -1350,7 +1356,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             fromInclusive,
             toExclusive,
         })
-        stream.prependEvents(response.miniblocks, response.terminus)
+        const miniblocks = response.miniblocks.map((m) => unpackMiniblock(m))
+        stream.prependEvents(miniblocks, response.terminus)
         return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
     }
 
@@ -1376,7 +1383,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 fromInclusive,
                 toExclusive,
             })
-            stream.prependEvents(response.miniblocks, response.terminus)
+            const miniblocks = response.miniblocks.map((m) => unpackMiniblock(m))
+            stream.prependEvents(miniblocks, response.terminus)
         }
     }
 

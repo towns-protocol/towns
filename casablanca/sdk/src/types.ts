@@ -30,6 +30,7 @@ import {
     UserToDevicePayload_MegolmSessions,
     CommonPayload_KeyFulfillment,
     CommonPayload_KeySolicitation,
+    SyncCookie,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
@@ -126,6 +127,12 @@ export function makeRemoteTimelineEvent(params: {
 export interface ParsedMiniblock {
     hash: Uint8Array
     header: MiniblockHeader
+    events: ParsedEvent[]
+}
+
+export interface ParsedStreamAndCookie {
+    nextSyncCookie: SyncCookie
+    startSyncCookie?: SyncCookie
     events: ParsedEvent[]
 }
 

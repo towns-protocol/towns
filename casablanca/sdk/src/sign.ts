@@ -19,7 +19,7 @@ import {
     publicKeyToUint8Array,
 } from './crypto/crypto'
 import { genIdBlob, userIdFromAddress } from './id'
-import { ParsedEvent, ParsedMiniblock } from './types'
+import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie } from './types'
 import { bin_equal, bin_fromHexString, bin_toHexString } from './binary'
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 
@@ -153,13 +153,13 @@ export const unpackStreamResponse = (
     response: CreateStreamResponse | GetStreamResponse,
 ): {
     snapshot: Snapshot
-    streamAndCookie: StreamAndCookie
+    streamAndCookie: ParsedStreamAndCookie
     miniblocks: ParsedMiniblock[]
     prevSnapshotMiniblockNum: bigint
+    eventIds: string[]
 } => {
-    const streamAndCookie = response.stream
-    assert(streamAndCookie !== undefined, 'bad stream')
-    assert(streamAndCookie.nextSyncCookie !== undefined, 'bad stream: no cookie')
+    assert(response.stream !== undefined, 'bad stream')
+    const streamAndCookie = unpackStreamAndCookie(response.stream)
     assert(
         response.miniblocks.length > 0,
         `bad stream: no blocks ${streamAndCookie.nextSyncCookie.streamId}`,
@@ -171,12 +171,28 @@ export const unpackStreamResponse = (
         snapshot !== undefined,
         `bad block: snapshot is undefined ${streamAndCookie.nextSyncCookie.streamId}`,
     )
+    const eventIds = [
+        ...miniblocks.flatMap(
+            (mb) => mb.events.map((e) => e.hashStr),
+            streamAndCookie.events.map((e) => e.hashStr),
+        ),
+    ]
 
     return {
         streamAndCookie,
         snapshot,
         miniblocks,
         prevSnapshotMiniblockNum,
+        eventIds,
+    }
+}
+
+export const unpackStreamAndCookie = (streamAndCookie: StreamAndCookie): ParsedStreamAndCookie => {
+    assert(streamAndCookie.nextSyncCookie !== undefined, 'bad stream: no cookie')
+    return {
+        events: unpackEnvelopes(streamAndCookie.events),
+        nextSyncCookie: streamAndCookie.nextSyncCookie,
+        startSyncCookie: streamAndCookie.startSyncCookie,
     }
 }
 
