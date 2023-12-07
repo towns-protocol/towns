@@ -86,9 +86,14 @@ export const SpaceMentions = () => {
                                 return (
                                     m.type === 'mention' && (
                                         <IsolatedMessageItem
+                                            hoverable
+                                            border
                                             result={m}
                                             key={m.event.eventId}
                                             userId={userId}
+                                            padding="md"
+                                            borderRadius="md"
+                                            boxShadow="card"
                                         />
                                     )
                                 )

@@ -44,7 +44,7 @@ export const IsolatedMessageItem = (
         highligtTerms?: string[]
     } & BoxProps,
 ) => {
-    const { result, padding = { touch: 'md', default: 'lg' } } = props
+    const { result, padding = { touch: 'md', default: 'lg' }, ...boxProps } = props
     const { isTouch } = useDevice()
     const { slug: spaceSlug } = useSpaceId() ?? {}
     const { slug: channelSlug } = result.channel.id
@@ -91,6 +91,7 @@ export const IsolatedMessageItem = (
             overflow="hidden"
             background={isTouch ? 'inherit' : props.selected ? 'level3' : 'level2'}
             elevate={!isTouch}
+            {...boxProps}
         >
             <MessageLayout
                 relativeDate
