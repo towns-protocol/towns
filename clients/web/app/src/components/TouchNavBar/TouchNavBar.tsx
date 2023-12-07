@@ -1,5 +1,6 @@
 import React from 'react'
 import { Box, Paragraph, Stack } from '@ui'
+import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
 
 type Props = {
     children?: React.ReactNode
@@ -11,42 +12,57 @@ type Props = {
 export const TouchNavBar = (props: Props) => {
     const centerContent = typeof props.children === 'string'
     const hasSideContent = !!props.contentLeft || !!props.contentRight
+    const { offset } = useVisualViewportContext()
     return (
-        <Box elevateReadability paddingTop="safeAreaInsetTop">
-            <Stack
-                borderBottom
-                height={props.extraHeight ? 'x7' : 'x5'}
-                justifyContent="end"
-                paddingY="sm"
+        <>
+            {/* placeholder space */}
+            <Stack paddingTop="safeAreaInsetTop" height={props.extraHeight ? 'x7' : 'x5'} />
+            {/* absolute position to adapt to virtual keyboard */}
+            <Box
+                elevateReadability
+                width="100%"
+                paddingTop="safeAreaInsetTop"
+                style={{
+                    position: 'absolute',
+                    top: `calc(${offset ?? 0}px - var(--tabbar-vertical-offset, 0))`,
+                }}
+                zIndex="tooltipsAbove"
             >
-                <Stack horizontal justifyContent="center" height="100%">
-                    {hasSideContent && (
-                        <Box centerContent width="x10">
-                            {props.contentLeft}
-                        </Box>
-                    )}
-                    <Stack
-                        grow
-                        position="relative"
-                        overflow="hidden"
-                        justifyContent="center"
-                        alignItems={centerContent ? 'center' : undefined}
-                    >
-                        {centerContent ? (
-                            <Paragraph truncate strong color="default" size="lg">
-                                {props.children}
-                            </Paragraph>
-                        ) : (
-                            props.children
+                <Stack
+                    borderBottom
+                    height={props.extraHeight ? 'x7' : 'x5'}
+                    justifyContent="end"
+                    paddingY="sm"
+                >
+                    <Stack horizontal justifyContent="center" height="100%">
+                        {hasSideContent && (
+                            <Box centerContent width="x10">
+                                {props.contentLeft}
+                            </Box>
+                        )}
+                        <Stack
+                            grow
+                            position="relative"
+                            overflow="hidden"
+                            justifyContent="center"
+                            alignItems={centerContent ? 'center' : undefined}
+                        >
+                            {centerContent ? (
+                                <Paragraph truncate strong color="default" size="lg">
+                                    {props.children}
+                                </Paragraph>
+                            ) : (
+                                props.children
+                            )}
+                        </Stack>
+                        {hasSideContent && (
+                            <Box centerContent width="x8">
+                                {props.contentRight}
+                            </Box>
                         )}
                     </Stack>
-                    {hasSideContent && (
-                        <Box centerContent width="x8">
-                            {props.contentRight}
-                        </Box>
-                    )}
                 </Stack>
-            </Stack>
-        </Box>
+            </Box>
+        </>
     )
 }
