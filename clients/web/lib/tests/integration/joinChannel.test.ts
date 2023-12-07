@@ -1,3 +1,7 @@
+/**
+ * @group casablanaca
+ */
+
 import {
     registerAndStartClients,
     registerAndStartClient,
@@ -24,7 +28,8 @@ test('create a public space and a public room, and have user join', async () => 
     ])) as RoomIdentifier
 
     const memberNftAddress = getMemberNftAddress(bob.chainId)
-    const memberNftToken = createExternalTokenStruct([memberNftAddress])[0]
+    expect(memberNftAddress).toBeDefined()
+    const memberNftToken = createExternalTokenStruct([memberNftAddress!])[0]
     const roleIdentifier: RoleIdentifier | undefined = await bob.createRole(
         spaceId.networkId,
         'newRoleName',
