@@ -16,7 +16,9 @@ export const TouchNavBar = (props: Props) => {
     return (
         <>
             {/* placeholder space */}
-            <Stack paddingTop="safeAreaInsetTop" height={props.extraHeight ? 'x7' : 'x5'} />
+            <Stack paddingTop="safeAreaInsetTop">
+                <Stack minHeight={props.extraHeight ? 'x7' : 'x5'} />
+            </Stack>
             {/* absolute position to adapt to virtual keyboard */}
             <Box
                 elevateReadability
@@ -26,7 +28,6 @@ export const TouchNavBar = (props: Props) => {
                     position: 'absolute',
                     top: `calc(${offset ?? 0}px - var(--tabbar-vertical-offset, 0))`,
                 }}
-                zIndex="tooltipsAbove"
             >
                 <Stack
                     borderBottom

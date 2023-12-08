@@ -132,7 +132,7 @@ const GDMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
     const title = useUserList({ userIds, excludeSelf: true, maxNames: 3 }).join('')
 
     return (
-        <Text fontSize="md" color="default">
+        <Text truncate fontSize="md" color="default">
             {title}
         </Text>
     )
