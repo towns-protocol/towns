@@ -1,5 +1,5 @@
 /**
- * @group casablanaca
+ * @group casablanca
  */
 
 import {
