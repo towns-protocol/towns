@@ -5,7 +5,6 @@ import (
 	"casablanca/node/config"
 	"casablanca/node/dlog"
 	"casablanca/node/events"
-	"casablanca/node/shared"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -20,8 +19,7 @@ import (
 type PushNotification interface {
 	SendPushNotification(
 		ctx context.Context,
-		streamInfo *shared.StreamInfo,
-		streamView *events.StreamView,
+		channel events.StreamView,
 		senderId string, // sender of the event
 	)
 }
@@ -29,6 +27,8 @@ type PushNotification interface {
 type pushNotificationImpl struct {
 	cfg *config.PushNotificationConfig
 }
+
+var _ PushNotification = (*pushNotificationImpl)(nil)
 
 func MakePushNotification(ctx context.Context, cfg *config.PushNotificationConfig) PushNotification {
 	log := dlog.CtxLog(ctx)
@@ -44,26 +44,28 @@ func MakePushNotification(ctx context.Context, cfg *config.PushNotificationConfi
 
 func (p pushNotificationImpl) SendPushNotification(
 	ctx context.Context,
-	streamInfo *shared.StreamInfo,
-	streamView *events.StreamView,
+	channel events.StreamView,
 	senderId string,
 ) {
 	go p.sendNotificationRequest(
 		ctx,
-		streamInfo,
-		streamView,
+		channel,
 		senderId,
 	)
 }
 
 func (p pushNotificationImpl) sendNotificationRequest(
 	ctx context.Context,
-	channelInfo *shared.StreamInfo,
-	channelView *events.StreamView,
+	channel events.StreamView,
 	senderId string,
 ) {
 	log := dlog.CtxLog(ctx)
-	users, err := getUsersToNotify(channelView, senderId)
+	var spaceId string
+	if channelInfo, err := events.ChannelInceptionFromView(channel); err == nil {
+		spaceId = channelInfo.SpaceId
+	}
+
+	users, err := getUsersToNotify(channel, senderId)
 	if err != nil {
 		log.Error("PushNotification failed to get channel members", "error", err)
 		return
@@ -76,14 +78,14 @@ func (p pushNotificationImpl) sendNotificationRequest(
 	payload := notificationPayload{
 		NotificationType: NewMessage.String(),
 		Content: notificationNewMessage{
-			SpaceId:   channelInfo.SpaceId,
-			ChannelId: channelInfo.ChannelId,
+			SpaceId:   spaceId,
+			ChannelId: channel.StreamId(),
 			SenderId:  senderId,
 		},
 	}
 	reqParams := NotificationRequestParams{
-		SpaceId:   channelInfo.SpaceId,
-		ChannelId: channelInfo.ChannelId,
+		SpaceId:   spaceId,
+		ChannelId: channel.StreamId(),
 		Sender:    senderId,
 		Users:     users,
 		Payload:   payload,
@@ -175,10 +177,10 @@ func (p NotificationRequestParams) NewReader() (*bytes.Reader, error) {
 }
 
 func getUsersToNotify(
-	streamView *events.StreamView,
+	channel events.StreamView,
 	senderId string,
 ) ([]string, error) {
-	joinableView := (*streamView).(events.JoinableStreamView)
+	joinableView := channel.(events.JoinableStreamView)
 	// get the channel membership
 	members, err := joinableView.GetChannelMembers()
 	if err != nil {

@@ -5,7 +5,6 @@ import (
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/protocol"
-	"casablanca/node/shared"
 	"casablanca/node/storage"
 	"context"
 	"testing"
@@ -28,19 +27,18 @@ type StreamContext_T struct {
 	t           *testing.T
 	Context     context.Context
 	StreamCache events.StreamCache
-	StreamInfo  *shared.StreamInfo
-	SyncStream  *events.SyncStream
-	StreamView  *events.StreamView
+	SyncStream  events.SyncStream
+	StreamView  events.StreamView
 }
 
 func (s *StreamContext_T) Refresh() *StreamContext_T {
 	// force a new miniblock to be created so that the stream view is updated
-	(*s.SyncStream).MakeMiniblock(s.Context)
+	s.SyncStream.MakeMiniblock(s.Context)
 	// reload the stream and the view
-	syncStream, streamView, err := s.StreamCache.GetStream(s.Context, (*s.StreamView).StreamId())
+	syncStream, streamView, err := s.StreamCache.GetStream(s.Context, s.StreamView.StreamId())
 	assert.NoError(s.t, err)
-	s.SyncStream = &syncStream
-	s.StreamView = &streamView
+	s.SyncStream = syncStream
+	s.StreamView = streamView
 	return s
 }
 
@@ -69,16 +67,13 @@ func MakeChannelStreamContext_T(
 	assert.NoError(t, err)
 	syncStream, streamView, err := streamCache.CreateStream(ctx, channelStreamId, mb)
 	assert.NoError(t, err)
-	info, err := events.StreamInfoFromInceptionPayload(streamView.InceptionPayload(), channelStreamId, userId)
-	assert.NoError(t, err)
 
 	return &StreamContext_T{
 		t:           t,
 		Context:     ctx,
 		StreamCache: streamCache,
-		StreamInfo:  info,
-		SyncStream:  &syncStream,
-		StreamView:  &streamView,
+		SyncStream:  syncStream,
+		StreamView:  streamView,
 	}
 }
 
@@ -89,8 +84,8 @@ func JoinChannel_T(
 ) *StreamContext_T {
 	t := t_Context.t
 	ctx := t_Context.Context
-	syncStream := *t_Context.SyncStream
-	streamView := *t_Context.StreamView
+	syncStream := t_Context.SyncStream
+	streamView := t_Context.StreamView
 	prevMiniblockHash := streamView.LastBlock().Hash
 	for _, user := range users {
 		err := syncStream.AddEvent(
@@ -120,8 +115,8 @@ func LeaveChannel_T(
 ) *StreamContext_T {
 	t := t_Context.t
 	ctx := t_Context.Context
-	syncStream := *t_Context.SyncStream
-	streamView := *t_Context.StreamView
+	syncStream := t_Context.SyncStream
+	streamView := t_Context.StreamView
 	prevHash := streamView.LastBlock().Hash
 	for _, user := range users {
 		err := syncStream.AddEvent(

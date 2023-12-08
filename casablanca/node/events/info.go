@@ -6,46 +6,17 @@ import (
 	"casablanca/node/shared"
 )
 
-func StreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string, userId string) (*shared.StreamInfo, error) {
-	if payload == nil {
-		return nil, RiverError(Err_STREAM_NO_INCEPTION_EVENT, "no inception payload for stream", "streamId", streamId)
+func ChannelFromInception(i IsInceptionPayload) (*ChannelPayload_Inception, error) {
+	c, ok := i.(*ChannelPayload_Inception)
+	if ok {
+		return c, nil
+	} else {
+		return nil, RiverError(Err_WRONG_STREAM_TYPE, "Expected channel stream", "streamId", i.GetStreamId())
 	}
+}
 
-	switch inception := payload.(type) {
-	case *UserPayload_Inception:
-		return &shared.StreamInfo{
-			SpaceId:    inception.StreamId,
-			StreamType: shared.User,
-		}, nil
-	case *ChannelPayload_Inception:
-		return &shared.StreamInfo{
-			SpaceId:    inception.SpaceId,
-			ChannelId:  inception.StreamId,
-			StreamType: shared.Channel,
-		}, nil
-	case *GdmChannelPayload_Inception:
-		return &shared.StreamInfo{
-			SpaceId:    inception.StreamId,
-			StreamType: shared.GDMChannel,
-		}, nil
-	case *DmChannelPayload_Inception:
-		return &shared.StreamInfo{
-			SpaceId:    inception.StreamId,
-			StreamType: shared.DMChannel,
-		}, nil
-	case *SpacePayload_Inception:
-		return &shared.StreamInfo{
-			SpaceId:    inception.StreamId,
-			StreamType: shared.Space,
-		}, nil
-	case *UserSettingsPayload_Inception:
-		return &shared.StreamInfo{
-			SpaceId:    inception.StreamId,
-			StreamType: shared.UserSettings,
-		}, nil
-	default:
-		return nil, RiverError(Err_STREAM_BAD_EVENT, "unimplemented stream type").Func("StreamInfoFromInceptionPayload")
-	}
+func ChannelInceptionFromView(v StreamView) (*ChannelPayload_Inception, error) {
+	return ChannelFromInception(v.InceptionPayload())
 }
 
 func DMStreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string) (*shared.DMStreamInfo, error) {

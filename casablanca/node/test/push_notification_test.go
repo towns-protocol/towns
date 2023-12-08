@@ -100,7 +100,6 @@ func TestPushNotification_JoinedMembers(t *testing.T) {
 	// send a push notification
 	notification.SendPushNotification(
 		t_context.Context,
-		t_context.StreamInfo,
 		t_context.StreamView,
 		alice,
 	)
@@ -165,7 +164,6 @@ func TestPushNotification_RemainingMembers(t *testing.T) {
 	// send a push notification
 	notification.SendPushNotification(
 		t_context.Context,
-		t_context.StreamInfo,
 		t_context.StreamView,
 		alice,
 	)

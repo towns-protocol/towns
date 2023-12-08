@@ -128,7 +128,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		return nil, 0, nil, err
 	}
 
-	var townsContract auth.AuthChecker
+	var authChecker auth.AuthChecker
 	if cfg.UseContract {
 		baseChain, err := crypto.NewReadOnlyBlockchain(ctx, &cfg.BaseChain)
 		if err != nil {
@@ -137,7 +137,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		}
 
 		log.Info("Using River Auth", "chain_config", cfg.BaseChain)
-		townsContract, err = auth.NewChainAuth(
+		authChecker, err = auth.NewChainAuth(
 			ctx,
 			baseChain,
 			&cfg.TownsArchitectContract,
@@ -151,7 +151,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		}
 	} else {
 		log.Warn("Using fake auth for testing")
-		townsContract = auth.NewFakeAuthChecker()
+		authChecker = auth.NewFakeAuthChecker()
 	}
 
 	notification := nodes.MakePushNotification(
@@ -205,7 +205,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	streamService := &Service{
 		cache:          cache,
-		townsContract:  townsContract,
+		authChecker:    authChecker,
 		wallet:         wallet,
 		exitSignal:     exitSignal,
 		nodeRegistry:   nodeRegistry,

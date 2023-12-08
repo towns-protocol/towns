@@ -13,8 +13,6 @@ import (
 	"github.com/bufbuild/connect-go"
 	connect_go "github.com/bufbuild/connect-go"
 	"golang.org/x/exp/slog"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	. "casablanca/node/base"
 	. "casablanca/node/shared"
@@ -593,28 +591,23 @@ func (s *Service) createStream_Media(
 		return nil, err
 	}
 
-	info, err := StreamInfoFromInceptionPayload(channelStreamView.InceptionPayload(), inception.ChannelId, user)
-	if err != nil {
-		return nil, err
-	}
-
 	if ValidChannelStreamId(inception.GetChannelId()) {
-		allowed, err := s.townsContract.IsAllowed(
-			ctx,
-			auth.AuthorizationArgs{
-				StreamId:   inception.ChannelId,
-				UserId:     user,
-				Permission: auth.PermissionWrite,
-			},
-			info,
-		)
-
+		channelInception, err := ChannelFromInception(channelStreamView.InceptionPayload())
 		if err != nil {
 			return nil, err
 		}
 
-		if !allowed {
-			return nil, RiverError(Err_PERMISSION_DENIED, "user is not allowed to write to stream", "user", user)
+		err = s.authChecker.CheckPermission(
+			ctx,
+			auth.NewAuthCheckArgsForChannel(
+				channelInception.SpaceId,
+				inception.ChannelId,
+				user,
+				auth.PermissionWrite,
+			),
+		)
+		if err != nil {
+			return nil, err
 		}
 
 		// check if user is a member of the channel
@@ -625,7 +618,6 @@ func (s *Service) createStream_Media(
 		if !member {
 			return nil, RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
 		}
-
 	} else if CheckDMStreamId(inception.GetChannelId()) {
 		_, streamView, err := s.loadStream(ctx, inception.GetChannelId())
 		if err != nil {
@@ -676,23 +668,12 @@ func (s *Service) authAddRemoveChannelsInSpace(
 		return err
 	}
 
-	allowed, err := s.townsContract.IsAllowed(
+	err = s.authChecker.CheckPermission(
 		ctx,
-		auth.AuthorizationArgs{
-			StreamId:   spaceId,
-			UserId:     userId,
-			Permission: auth.PermissionAddRemoveChannels,
-		},
-		&StreamInfo{
-			SpaceId:    spaceId,
-			StreamType: Space,
-		},
+		auth.NewAuthCheckArgsForSpace(spaceId, userId, auth.PermissionAddRemoveChannels),
 	)
 	if err != nil {
 		return err
-	}
-	if !allowed {
-		return status.Errorf(codes.PermissionDenied, "user %s is not allowed to create channels in space %s", userId, spaceId)
 	}
 	return nil
 }

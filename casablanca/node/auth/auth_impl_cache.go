@@ -15,8 +15,8 @@ type entitlementCache struct {
 	// Not using expirable version, as it retains the cache hits for a min TTL, but
 	// then continues to return that value as long as a hit happens in that tTL window.
 	// We want to return the value only if the cache is fresh, and not continue to return
-	positiveCache    *lru.ARCCache[AuthorizationArgs, entitlementCacheValue]
-	negativeCache    *lru.ARCCache[AuthorizationArgs, entitlementCacheValue]
+	positiveCache    *lru.ARCCache[AuthCheckArgs, entitlementCacheValue]
+	negativeCache    *lru.ARCCache[AuthCheckArgs, entitlementCacheValue]
 	positiveCacheTTL time.Duration
 	negativeCacheTTL time.Duration
 }
@@ -40,12 +40,12 @@ func newEntitlementCache(ctx context.Context, cfg *config.ChainConfig) (*entitle
 		negativeCacheSize = cfg.NegativeEntitlementCacheSize
 	}
 	// Need to figure out how to determine the size of the cache
-	positiveCache, err := lru.NewARC[AuthorizationArgs, entitlementCacheValue](positiveCacheSize)
+	positiveCache, err := lru.NewARC[AuthCheckArgs, entitlementCacheValue](positiveCacheSize)
 	if err != nil {
 		log.Error("error creating auth_impl positive cache", "error", err)
 		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
 	}
-	negativeCache, err := lru.NewARC[AuthorizationArgs, entitlementCacheValue](negativeCacheSize)
+	negativeCache, err := lru.NewARC[AuthCheckArgs, entitlementCacheValue](negativeCacheSize)
 	if err != nil {
 		log.Error("error creating auth_impl negative cache", "error", err)
 		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
@@ -68,43 +68,47 @@ func newEntitlementCache(ctx context.Context, cfg *config.ChainConfig) (*entitle
 	}, nil
 }
 
-func (ec *entitlementCache) executeUsingCache(key AuthorizationArgs, onMiss func() (bool, error)) (bool, error) {
-
+// Returns: result, isCacheHit, error
+func (ec *entitlementCache) executeUsingCache(
+	ctx context.Context,
+	key *AuthCheckArgs,
+	onMiss func(context.Context, *AuthCheckArgs) (bool, error),
+) (bool, bool, error) {
 	// Check positive cache first
-	if val, ok := ec.positiveCache.Get(key); ok {
+	if val, ok := ec.positiveCache.Get(*key); ok {
 		// Positive cache is only valid for 15 minutes
 		if time.Since(val.Timestamp) < ec.positiveCacheTTL {
-			return val.Allowed, nil
+			return val.Allowed, true, nil
 		} else {
 			// Positive cache key is stale, remove it
-			ec.positiveCache.Remove(key)
+			ec.positiveCache.Remove(*key)
 		}
 	}
 
 	// Check negative cache
-	if val, ok := ec.negativeCache.Get(key); ok {
+	if val, ok := ec.negativeCache.Get(*key); ok {
 		// Negative cache is only valid for 2 seconds, basically one block
 		if time.Since(val.Timestamp) < ec.negativeCacheTTL {
-			return val.Allowed, nil
+			return val.Allowed, true, nil
 		} else {
 			// Negative cache key is stale, remove it
-			ec.negativeCache.Remove(key)
+			ec.negativeCache.Remove(*key)
 		}
 	}
 
 	// Cache miss, execute the closure
-	isAllowed, err := onMiss()
+	isAllowed, err := onMiss(ctx, key)
 	if err != nil {
-		return false, err
+		return false, false, err
 	}
 
 	// Store the result in the appropriate cache
 	cacheVal := entitlementCacheValue{Allowed: isAllowed, Timestamp: time.Now()}
 	if isAllowed {
-		ec.positiveCache.Add(key, cacheVal)
+		ec.positiveCache.Add(*key, cacheVal)
 	} else {
-		ec.negativeCache.Add(key, cacheVal)
+		ec.negativeCache.Add(*key, cacheVal)
 	}
 
-	return isAllowed, nil
+	return isAllowed, false, nil
 }

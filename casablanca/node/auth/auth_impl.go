@@ -6,11 +6,8 @@ import (
 	"casablanca/node/crypto"
 	"casablanca/node/dlog"
 	"casablanca/node/infra"
-	"casablanca/node/protocol"
-	"casablanca/node/shared"
+	. "casablanca/node/protocol"
 	"context"
-	_ "embed"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -18,24 +15,72 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type AuthorizationArgs struct {
-	StreamId   string
-	UserId     string
-	Permission Permission
+type AuthChecker interface {
+	CheckPermission(ctx context.Context, args *AuthCheckArgs) error
 }
 
-type AuthChecker interface {
-	IsAllowed(ctx context.Context, args AuthorizationArgs, info *shared.StreamInfo) (bool, error)
+func NewAuthCheckArgsForSpace(spaceId string, userId string, permission Permission) *AuthCheckArgs {
+	return &AuthCheckArgs{
+		kind:       authCheckKindSpace,
+		spaceId:    spaceId,
+		principal:  common.HexToAddress(userId),
+		permission: permission,
+	}
+}
+
+func NewAuthCheckArgsForChannel(spaceId string, channelId string, userId string, permission Permission) *AuthCheckArgs {
+	return &AuthCheckArgs{
+		kind:       authCheckKindChannel,
+		spaceId:    spaceId,
+		channelId:  channelId,
+		principal:  common.HexToAddress(userId),
+		permission: permission,
+	}
+}
+
+type authCheckKind int
+
+const (
+	authCheckKindSpace authCheckKind = iota
+	authCheckKindChannel
+	authCheckKindSpaceEnabled
+	authCheckKindChannelEnabled
+)
+
+type AuthCheckArgs struct {
+	kind       authCheckKind
+	spaceId    string
+	channelId  string
+	principal  common.Address
+	permission Permission
+}
+
+// Replcaces principal with given wallet and returns new copy of args.
+func (args *AuthCheckArgs) withWallet(wallet common.Address) *AuthCheckArgs {
+	ret := *args
+	ret.principal = wallet
+	return &ret
+}
+
+func newArgsForEnabledSpace(spaceId string) *AuthCheckArgs {
+	return &AuthCheckArgs{
+		kind:    authCheckKindSpaceEnabled,
+		spaceId: spaceId,
+	}
+}
+
+func newArgsForEnabledChannel(spaceId string, channelId string) *AuthCheckArgs {
+	return &AuthCheckArgs{
+		kind:      authCheckKindChannelEnabled,
+		spaceId:   spaceId,
+		channelId: channelId,
+	}
 }
 
 const (
 	DEFAULT_REQUEST_TIMEOUT_MS = 5000
 	DEFAULT_MAX_WALLETS        = 10
 )
-
-// TODO: RiverError
-var ErrSpaceDisabled = errors.New("space disabled")
-var ErrChannelDisabled = errors.New("channel disabled")
 
 var (
 	isEntitledToChannelCacheHit  = infra.NewSuccessMetrics("is_entitled_to_channel_cache_hit", contractCalls)
@@ -56,6 +101,8 @@ type chainAuth struct {
 	contractCallsTimeoutMs int
 	entitlementCache       *entitlementCache
 }
+
+var _ AuthChecker = (*chainAuth)(nil)
 
 func NewChainAuth(
 	ctx context.Context,
@@ -97,142 +144,149 @@ func NewChainAuth(
 	}, nil
 }
 
-func (ca *chainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, streamInfo *shared.StreamInfo) (bool, error) {
-	log := dlog.CtxLog(ctx)
-
-	userIdentifier := CreateUserIdentifier(args.UserId)
-
-	result, err := ca.entitlementCache.executeUsingCache(args, func() (bool, error) {
-		return ca.checkEntitiement(ctx, userIdentifier.AccountAddress, args.Permission, streamInfo)
-	})
+func (ca *chainAuth) CheckPermission(ctx context.Context, args *AuthCheckArgs) error {
+	// TODO: counter for cache hits here?
+	result, _, err := ca.entitlementCache.executeUsingCache(
+		ctx,
+		args,
+		ca.checkEntitiement,
+	)
 	if err != nil {
-		log.Error("error checking user entitlement", "error", err)
-		return false, WrapRiverError(protocol.Err_CANNOT_CHECK_ENTITLEMENTS, err)
+		return AsRiverError(err).Func("IsAllowed")
 	}
-	return result, nil
+	if !result {
+		return RiverError(Err_PERMISSION_DENIED, "Permission denied", "spaceId", args.spaceId, "channelId", args.channelId, "userId", args.principal, "permission", args.permission.String()).Func("IsAllowed")
+	}
+	return nil
 }
 
-func (ca *chainAuth) isWalletAllowed(ctx context.Context, wallet common.Address, permission Permission, streamInfo *shared.StreamInfo) (bool, error) {
-	// Check if user is entitled to space / channel.
-	switch streamInfo.StreamType {
-	case shared.Space:
-		return ca.isEntitledToSpace(streamInfo, wallet, permission)
-	case shared.Channel:
-		return ca.isEntitledToChannel(streamInfo, wallet, permission)
-	case shared.DMChannel:
-		fallthrough
-	case shared.GDMChannel:
-		fallthrough
-	case shared.User:
-		fallthrough
-	case shared.UserSettings:
-		fallthrough
-	case shared.Unknown:
-		fallthrough
-	case shared.InvalidStreamType:
-		fallthrough
-	default:
-		return false, fmt.Errorf("unhandled stream type: %s", streamInfo.StreamType)
+func (ca *chainAuth) isWalletAllowed(ctx context.Context, args *AuthCheckArgs) (bool, error) {
+	if args.kind == authCheckKindSpace {
+		return ca.isEntitledToSpace(ctx, args)
+	} else if args.kind == authCheckKindChannel {
+		return ca.isEntitledToChannel(ctx, args)
+	} else {
+		return false, RiverError(Err_INTERNAL, "Unknown auth check kind").Func("isWalletAllowed")
 	}
 }
 
-func (ca *chainAuth) isEntitledToSpace(streamInfo *shared.StreamInfo, user common.Address, permission Permission) (bool, error) {
-	disabledCacheHit := true
-	// Intentionally use a const for the permission and userid here, as we want to check if the space is enabled, not if the user is entitled to it.
-	isEnabled, err := ca.entitlementCache.executeUsingCache(AuthorizationArgs{UserId: "all", StreamId: streamInfo.SpaceId, Permission: 0}, func() (bool, error) {
-		// This is awkward as we want enabled to be cached for 15 minutes, but the API returns the inverse
-		disabledCacheHit = false
-		isDisabled, err := ca.spaceContract.IsSpaceDisabled(streamInfo.SpaceId)
-		return !isDisabled, err
+func (ca *chainAuth) isSpaceEnabledUncached(ctx context.Context, args *AuthCheckArgs) (bool, error) {
+	// This is awkward as we want enabled to be cached for 15 minutes, but the API returns the inverse
+	isDisabled, err := ca.spaceContract.IsSpaceDisabled(args.spaceId)
+	return !isDisabled, err
+}
 
-	})
+func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, spaceId string) error {
+	// TODO: right now this check happens for every wallet, but it needs to be done only once.
+	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(ctx, newArgsForEnabledSpace(spaceId), ca.isSpaceEnabledUncached)
 	if err != nil {
-		return false, err
+		return err
 	}
-
-	if disabledCacheHit {
+	if cacheHit {
 		isSpaceEnabledCacheHit.PassInc()
 	} else {
 		isSpaceEnabledCacheMiss.PassInc()
 	}
 
-	if !isEnabled {
-		return false, ErrSpaceDisabled
-	}
-
-	cacheHit := true
-	isEntitled, err := ca.entitlementCache.executeUsingCache(AuthorizationArgs{UserId: user.String(), StreamId: streamInfo.ChannelId, Permission: permission}, func() (bool, error) {
-		// space entitlement check.
-		cacheHit = false
-		return ca.spaceContract.IsEntitledToSpace(
-			streamInfo.SpaceId,
-			user,
-			permission,
-		)
-	})
-	if err != nil {
-		return false, err
-	}
-
-	if cacheHit {
-		isEntitledToSpaceCacheHit.PassInc()
+	if isEnabled {
+		return nil
 	} else {
-		isEntitledToSpaceCacheMiss.PassInc()
+		return RiverError(Err_SPACE_DISABLED, "Space is disabled", "spaceId", spaceId).Func("isEntitledToSpace")
 	}
-	return isEntitled, nil
 }
 
-func (ca *chainAuth) isEntitledToChannel(streamInfo *shared.StreamInfo, user common.Address, permission Permission) (bool, error) {
-	disabledCacheHit := true
+func (ca *chainAuth) isChannelEnabledUncached(ctx context.Context, args *AuthCheckArgs) (bool, error) {
+	// This is awkward as we want enabled to be cached for 15 minutes, but the API returns the inverse
+	isDisabled, err := ca.spaceContract.IsChannelDisabled(args.spaceId, args.channelId)
+	return !isDisabled, err
+}
 
-	// Intentionally use a const for th
-	isEnabled, err := ca.entitlementCache.executeUsingCache(AuthorizationArgs{UserId: "all", StreamId: streamInfo.SpaceId, Permission: 0}, func() (bool, error) {
-		disabledCacheHit = false
-		// This is awkward as we want enabled to be cached for 15 minutes, but the API returns the inverse
-		isDisabled, err := ca.spaceContract.IsChannelDisabled(streamInfo.SpaceId, streamInfo.ChannelId)
-		return !isDisabled, err
-	})
-
+func (ca *chainAuth) checkChannelEnabled(ctx context.Context, spaceId string, channelId string) error {
+	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(ctx, newArgsForEnabledChannel(spaceId, channelId), ca.isChannelEnabledUncached)
 	if err != nil {
-		return false, err
+		return err
 	}
-
-	if disabledCacheHit {
+	if cacheHit {
 		isChannelEnabledCacheHit.PassInc()
 	} else {
 		isChannelEnabledCacheMiss.PassInc()
 	}
 
-	if !isEnabled {
-		return false, ErrSpaceDisabled
+	if isEnabled {
+		return nil
+	} else {
+		return RiverError(Err_CHANNEL_DISABLED, "Channel is disabled", "spaceId", spaceId, "channelId", channelId).Func("checkChannelEnabled")
+	}
+}
+
+func (ca *chainAuth) isEntitledToSpaceUncached(ctx context.Context, args *AuthCheckArgs) (bool, error) {
+	return ca.spaceContract.IsEntitledToSpace(
+		args.spaceId,
+		args.principal,
+		args.permission,
+	)
+}
+
+func (ca *chainAuth) isEntitledToSpace(ctx context.Context, args *AuthCheckArgs) (bool, error) {
+	if args.kind != authCheckKindSpace {
+		return false, RiverError(Err_INTERNAL, "Wrong auth check kind")
 	}
 
-	cacheHit := true
-	isEntitled, err := ca.entitlementCache.executeUsingCache(AuthorizationArgs{UserId: user.String(), StreamId: streamInfo.ChannelId, Permission: permission}, func() (bool, error) {
-		// channel entitlement check.
-		cacheHit = false
-		return ca.spaceContract.IsEntitledToChannel(
-			streamInfo.SpaceId,
-			streamInfo.ChannelId,
-			user,
-			permission,
-		)
-	})
+	// TODO: right now this check happens for every wallet, but it needs to be done only once.
+	err := ca.checkSpaceEnabled(ctx, args.spaceId)
 	if err != nil {
 		return false, err
 	}
 
+	isEntitled, cacheHit, err := ca.entitlementCache.executeUsingCache(ctx, args, ca.isEntitledToSpaceUncached)
+	if err != nil {
+		return false, err
+	}
+	if cacheHit {
+		isEntitledToSpaceCacheHit.PassInc()
+	} else {
+		isEntitledToSpaceCacheMiss.PassInc()
+	}
+
+	return isEntitled, nil
+}
+
+func (ca *chainAuth) isEntitledToChannelUncached(ctx context.Context, args *AuthCheckArgs) (bool, error) {
+	return ca.spaceContract.IsEntitledToChannel(
+		args.spaceId,
+		args.channelId,
+		args.principal,
+		args.permission,
+	)
+}
+
+func (ca *chainAuth) isEntitledToChannel(ctx context.Context, args *AuthCheckArgs) (bool, error) {
+	if args.kind != authCheckKindChannel {
+		return false, RiverError(Err_INTERNAL, "Wrong auth check kind")
+	}
+
+	// TODO: right now this check happens for every wallet, but it needs to be done only once.
+	err := ca.checkChannelEnabled(ctx, args.spaceId, args.channelId)
+	if err != nil {
+		return false, err
+	}
+
+	isEntitled, cacheHit, err := ca.entitlementCache.executeUsingCache(ctx, args, ca.isEntitledToChannelUncached)
+	if err != nil {
+		return false, err
+	}
 	if cacheHit {
 		isEntitledToChannelCacheHit.PassInc()
 	} else {
 		isEntitledToChannelCacheMiss.PassInc()
 	}
+
 	return isEntitled, nil
 }
 
-type EntitlementCheckResult struct {
-	Allowed bool
-	Err     error
+type entitlementCheckResult struct {
+	allowed bool
+	err     error
 }
 
 func (ca *chainAuth) getLinkedWallets(ctx context.Context, rootKey common.Address) ([]common.Address, error) {
@@ -260,14 +314,14 @@ func (ca *chainAuth) getLinkedWallets(ctx context.Context, rootKey common.Addres
  * If any of the wallets is entitled, the user is entitled and all inflight requests are cancelled.
  * If any of the operations fail before getting positive result, the whole operation fails.
  */
-func (ca *chainAuth) checkEntitiement(ctx context.Context, rootKey common.Address, permission Permission, streamInfo *shared.StreamInfo) (bool, error) {
+func (ca *chainAuth) checkEntitiement(ctx context.Context, args *AuthCheckArgs) (bool, error) {
 	log := dlog.CtxLog(ctx)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
 	defer cancel()
 
 	// We need to check the root key and all linked wallets.
-	resultsChan := make(chan EntitlementCheckResult, ca.linkedWalletsLimit+1)
+	resultsChan := make(chan entitlementCheckResult, ca.linkedWalletsLimit+1)
 	var wg sync.WaitGroup
 
 	// Get linked wallets and check them in parallel.
@@ -278,15 +332,15 @@ func (ca *chainAuth) checkEntitiement(ctx context.Context, rootKey common.Addres
 		// (see https://pkg.go.dev/sync#WaitGroup)
 		// We are adding new goroutines to the WaitGroup in the loop below, so we need to make sure that the counter is always > 0.
 		defer wg.Done()
-		wallets, err := ca.getLinkedWallets(ctx, rootKey)
+		wallets, err := ca.getLinkedWallets(ctx, args.principal)
 		if err != nil {
-			log.Error("error getting all wallets", "rootKey", rootKey.Hex(), "error", err)
-			resultsChan <- EntitlementCheckResult{Allowed: false, Err: err}
+			log.Error("error getting all wallets", "rootKey", args.principal, "error", err)
+			resultsChan <- entitlementCheckResult{allowed: false, err: err}
 			return
 		}
 		if len(wallets) > ca.linkedWalletsLimit {
-			log.Error("too many wallets linked to the root key", "rootKey", rootKey.Hex(), "wallets", len(wallets))
-			resultsChan <- EntitlementCheckResult{Allowed: false, Err: fmt.Errorf("too many wallets linked to the root key: %d", len(wallets)-1)}
+			log.Error("too many wallets linked to the root key", "rootKey", args.principal, "wallets", len(wallets))
+			resultsChan <- entitlementCheckResult{allowed: false, err: fmt.Errorf("too many wallets linked to the root key: %d", len(wallets)-1)}
 			return
 		}
 		// Check all wallets in parallel.
@@ -294,8 +348,8 @@ func (ca *chainAuth) checkEntitiement(ctx context.Context, rootKey common.Addres
 			wg.Add(1)
 			go func(address common.Address) {
 				defer wg.Done()
-				result, err := ca.isWalletAllowed(ctx, address, permission, streamInfo)
-				resultsChan <- EntitlementCheckResult{Allowed: result, Err: err}
+				result, err := ca.isWalletAllowed(ctx, args.withWallet(address))
+				resultsChan <- entitlementCheckResult{allowed: result, err: err}
 			}(wallet)
 		}
 	}()
@@ -304,8 +358,8 @@ func (ca *chainAuth) checkEntitiement(ctx context.Context, rootKey common.Addres
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		result, err := ca.isWalletAllowed(ctx, rootKey, permission, streamInfo)
-		resultsChan <- EntitlementCheckResult{Allowed: result, Err: err}
+		result, err := ca.isWalletAllowed(ctx, args)
+		resultsChan <- entitlementCheckResult{allowed: result, err: err}
 	}()
 
 	go func() {
@@ -314,7 +368,7 @@ func (ca *chainAuth) checkEntitiement(ctx context.Context, rootKey common.Addres
 	}()
 
 	for opResult := range resultsChan {
-		if opResult.Err != nil {
+		if opResult.err != nil {
 			// we don't check for context cancellation error here because
 			// * if it is a timeout it has to propagate
 			// * the explicit cancel happens only here, so it is not possible.
@@ -322,9 +376,9 @@ func (ca *chainAuth) checkEntitiement(ctx context.Context, rootKey common.Addres
 			// Cancel all inflight requests.
 			cancel()
 			// Any error is a failure.
-			return false, opResult.Err
+			return false, opResult.err
 		}
-		if opResult.Allowed {
+		if opResult.allowed {
 			// We have the result we need, cancel all inflight requests.
 			cancel()
 

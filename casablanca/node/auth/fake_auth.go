@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"casablanca/node/shared"
 	"context"
 )
 
@@ -14,6 +13,6 @@ type fakeAuthChecker struct{}
 
 var _ AuthChecker = (*fakeAuthChecker)(nil)
 
-func (a *fakeAuthChecker) IsAllowed(ctx context.Context, args AuthorizationArgs, info *shared.StreamInfo) (bool, error) {
-	return true, nil
+func (a *fakeAuthChecker) CheckPermission(ctx context.Context, args *AuthCheckArgs) error {
+	return nil
 }

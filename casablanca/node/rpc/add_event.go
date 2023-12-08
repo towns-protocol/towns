@@ -344,27 +344,6 @@ func (s *Service) addChannelMessage(ctx context.Context, stream AddableStream, v
 		return err
 	}
 
-	info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, user)
-	if err != nil {
-		return err
-	}
-
-	allowed, err := s.townsContract.IsAllowed(
-		ctx,
-		auth.AuthorizationArgs{
-			StreamId:   streamId,
-			UserId:     user,
-			Permission: auth.PermissionWrite,
-		},
-		info,
-	)
-	if err != nil {
-		return err
-	}
-	if !allowed {
-		return RiverError(Err_PERMISSION_DENIED, "user is not allowed to write to stream", "user", user)
-	}
-
 	// check if user is a member of the channel
 	member, err := s.checkMembership(ctx, view, user)
 	if err != nil {
@@ -372,6 +351,24 @@ func (s *Service) addChannelMessage(ctx context.Context, stream AddableStream, v
 	}
 	if !member {
 		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
+	}
+
+	channelInfo, err := ChannelInceptionFromView(view)
+	if err != nil {
+		return err
+	}
+
+	err = s.authChecker.CheckPermission(
+		ctx,
+		auth.NewAuthCheckArgsForChannel(
+			channelInfo.SpaceId,
+			streamId,
+			user,
+			auth.PermissionWrite,
+		),
+	)
+	if err != nil {
+		return err
 	}
 
 	err = stream.AddEvent(ctx, parsedEvent)
@@ -383,7 +380,7 @@ func (s *Service) addChannelMessage(ctx context.Context, stream AddableStream, v
 		// Client connection session may be closed while the node is sending the
 		// notification request. It causes random context cancellation. Using
 		// context.Background() to avoid this issue.
-		s.notification.SendPushNotification(context.Background(), info, &view, user)
+		s.notification.SendPushNotification(context.Background(), view, user)
 	}
 	return nil
 }
@@ -411,20 +408,15 @@ func (s *Service) addDMChannelMessage(ctx context.Context, stream AddableStream,
 	}
 	// send push notification if it is enabled. fire-and-forget.
 	if s.notification != nil {
-		info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, userId)
-		if err != nil {
-			return err
-		}
 		// Client connection session may be closed while the node is sending the
 		// notification request. It causes random context cancellation. Using
 		// context.Background() to avoid this issue.
-		s.notification.SendPushNotification(context.Background(), info, &view, userId)
+		s.notification.SendPushNotification(context.Background(), view, userId)
 	}
 	return nil
 }
 
 func (s *Service) addGDMChannelMessage(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
-	streamId := view.StreamId()
 	userId, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
@@ -444,14 +436,10 @@ func (s *Service) addGDMChannelMessage(ctx context.Context, stream AddableStream
 	}
 	// send push notification if it is enabled. fire-and-forget.
 	if s.notification != nil {
-		info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, userId)
-		if err != nil {
-			return err
-		}
 		// Client connection session may be closed while the node is sending the
 		// notification request. It causes random context cancellation. Using
 		// context.Background() to avoid this issue.
-		s.notification.SendPushNotification(context.Background(), info, &view, userId)
+		s.notification.SendPushNotification(context.Background(), view, userId)
 	}
 	return nil
 }
@@ -521,7 +509,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream AddableStream, 
 		return err
 	}
 
-	permission := auth.PermissionUndefined
+	var permission auth.Permission
 	switch membership.Op {
 	case MembershipOp_SO_INVITE:
 		if member {
@@ -548,30 +536,34 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream AddableStream, 
 		permission = auth.PermissionRead
 
 	case MembershipOp_SO_UNSPECIFIED:
-		permission = auth.PermissionUndefined
+		fallthrough
+
+	default:
+		return RiverError(Err_BAD_EVENT, "Need valid membership op", "op", membership.Op)
 	}
 
-	if permission != auth.PermissionUndefined {
-		info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, userId)
-		if err != nil {
-			return err
-		}
-
-		allowed, err := s.townsContract.IsAllowed(
-			ctx,
-			auth.AuthorizationArgs{
-				StreamId:   streamId,
-				UserId:     userId,
-				Permission: permission,
-			},
-			info,
+	var args *auth.AuthCheckArgs
+	switch i := view.InceptionPayload().(type) {
+	case *SpacePayload_Inception:
+		args = auth.NewAuthCheckArgsForSpace(
+			streamId,
+			userId,
+			permission,
 		)
-		if err != nil {
-			return err
-		}
-		if !allowed {
-			return RiverError(Err_PERMISSION_DENIED, "user is not allowed to write to stream", "user", userId)
-		}
+	case *ChannelPayload_Inception:
+		args = auth.NewAuthCheckArgsForChannel(
+			i.SpaceId,
+			streamId,
+			userId,
+			permission,
+		)
+	default:
+		return RiverError(Err_INTERNAL, "Must be space or channel")
+	}
+
+	err = s.authChecker.CheckPermission(ctx, args)
+	if err != nil {
+		return err
 	}
 
 	err = stream.AddEvent(ctx, parsedEvent)
@@ -583,7 +575,6 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream AddableStream, 
 }
 
 func (s *Service) addDMMembershipEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
-
 	streamId := view.StreamId()
 	inceptionPayload := view.InceptionPayload()
 	info, err := DMStreamInfoFromInceptionPayload(inceptionPayload, streamId)
@@ -628,7 +619,6 @@ func (s *Service) addDMMembershipEvent(ctx context.Context, stream AddableStream
 }
 
 func (s *Service) addGDMMembershipEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
-
 	streamId := view.StreamId()
 	creatorUserId, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
