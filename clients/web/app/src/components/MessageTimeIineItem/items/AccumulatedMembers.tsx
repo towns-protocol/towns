@@ -8,6 +8,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { AvatarStack } from 'routes/AvatarStack'
+import { getNameListFromUsers } from '@components/UserList/UserList'
 import { AccumulatedRoomMemberRenderEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 type Props = {
@@ -26,6 +27,9 @@ const Verbs = {
 export const AccumulatedRoomMemberEvent = (props: Props) => {
     const { usersMap } = useAllKnownUsers()
     const { event, channelName, userId, channelEncrypted: isChannelEncrypted } = props
+
+    const isAddedEvent = event.membershipType === Membership.Invite
+
     const avatarUsers = useMemo(
         () =>
             uniqBy(
@@ -34,8 +38,8 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
                     userId: e.content.userId,
                 })),
                 (e) => e.userId,
-            ).filter(({ userId: _userId }) => userId !== _userId),
-        [event.events, userId],
+            ).filter(({ userId: _userId }) => isAddedEvent || userId !== _userId),
+        [event.events, isAddedEvent, userId],
     )
 
     const message = useMemo(() => {
@@ -47,6 +51,19 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
             event.membershipType !== Membership.Invite
         ) {
             return
+        }
+
+        // in GDMs we display 'X added Y,Z and others' instead of invites and joins
+        if (isAddedEvent) {
+            const senderId = event.events[0]?.sender.id
+            const sender = usersMap[senderId]
+
+            const senderDisplayName =
+                senderId === userId ? 'You' : getPrettyDisplayName(sender)?.displayName
+
+            const users = event.events.map((e) => usersMap[e.content.userId])
+            const list = getNameListFromUsers(users, userId)
+            return `${senderDisplayName} added ${list}`
         }
 
         const verb = channelName
@@ -81,7 +98,15 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
             verb,
         )
         return names
-    }, [channelName, event.events, event.membershipType, isChannelEncrypted, userId, usersMap])
+    }, [
+        channelName,
+        event.events,
+        event.membershipType,
+        isAddedEvent,
+        isChannelEncrypted,
+        userId,
+        usersMap,
+    ])
 
     return (
         <Stack

@@ -291,10 +291,17 @@ export const getEventsByDate = (
                     })
                 }
             } else if (isRoomMember(event) && channelType !== 'dm') {
+                if (channelType === 'gdm' && event.content.membership === Membership.Join) {
+                    return result
+                }
+
                 let accumulatedEvents = renderEvents.find(
                     (e) =>
                         e.type === RenderEventType.AccumulatedRoomMembers &&
-                        e.membershipType === event.content.membership,
+                        e.membershipType === event.content.membership &&
+                        // separate groups by who invited/added the user to
+                        // channel for GDMs (e.g. x added y, y added x and z)
+                        (channelType !== 'gdm' || e.events[0].sender.id === event.sender.id),
                 ) as AccumulatedRoomMemberRenderEvent | undefined
 
                 if (!accumulatedEvents) {
@@ -313,7 +320,7 @@ export const getEventsByDate = (
                         e.events = e.events.filter((e) => e.content.userId !== event.content.userId)
                     }
                 })
-                renderEvents.sort((a, b) =>
+                renderEvents.sort((a) =>
                     a.type === RenderEventType.AccumulatedRoomMembers
                         ? a.membershipType === Membership.Invite
                             ? -1
@@ -348,6 +355,7 @@ export const getEventsByDate = (
             g.events.some(
                 (e) =>
                     e.type === RenderEventType.ChannelHeader ||
+                    e.type === RenderEventType.AccumulatedRoomMembers ||
                     (e.type === RenderEventType.UserMessages &&
                         // keep redacted messages with replies
                         !e.events.every((e) => e.isRedacted && !replyMap?.[e.eventId])),

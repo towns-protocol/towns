@@ -1,5 +1,6 @@
 import React, { useMemo, useRef } from 'react'
-import { useAllKnownUsers } from 'use-zion-client'
+import { firstBy } from 'thenby'
+import { User, useAllKnownUsers } from 'use-zion-client'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 type UserName = {
@@ -60,4 +61,52 @@ export const useUserList = (params: Props) => {
             ? renderUser({ ...f, key: f.userId })
             : f.displayName
     })
+}
+
+const SORT_CURRENT_USER = {
+    first: -1,
+    last: 1,
+    not: 0,
+} as const
+
+/**
+ *
+ */
+export const getNameListFromUsers = (
+    users: User[],
+    currentUserId?: string,
+    options: {
+        maxNames?: number
+    } = {},
+) => {
+    const { maxNames = 3 } = options
+    const sortCurrentUser = users.length > maxNames ? 'first' : 'last'
+
+    const mappedUsers = users
+        .slice()
+        .sort(
+            firstBy((u: User) =>
+                u?.userId === currentUserId ? SORT_CURRENT_USER[sortCurrentUser] : 0,
+            ).thenBy((u: User) => u?.displayName, -1),
+        )
+        .map((u?: User) =>
+            u?.userId === currentUserId ? 'you' : getPrettyDisplayName(u).displayName,
+        )
+
+    const truncateUsers =
+        mappedUsers.length > maxNames
+            ? mappedUsers
+                  .slice(0, maxNames - 1)
+                  .concat([`${mappedUsers.length - maxNames - 1} others`])
+            : mappedUsers
+
+    return truncateUsers.reduce(
+        (acc, name, index, arr) =>
+            index === 0
+                ? name
+                : index === arr.length - 1
+                ? `${acc} and ${name}`
+                : `${acc}, ${name}`,
+        '',
+    )
 }
