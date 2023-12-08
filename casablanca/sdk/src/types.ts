@@ -136,6 +136,13 @@ export interface ParsedStreamAndCookie {
     events: ParsedEvent[]
 }
 
+export interface KeySolicitationContent {
+    deviceKey: string
+    fallbackKey: string
+    isNewDevice: boolean
+    sessionIds: string[]
+}
+
 export function isCiphertext(text: string): boolean {
     const cipherRegex = /^[A-Za-z0-9+/]{16,}$/
     // suffices to check prefix of chars for ciphertext

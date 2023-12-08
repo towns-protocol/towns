@@ -1,0 +1,150 @@
+import { isDefined } from './check'
+import { Client } from './client'
+import { dlog } from './dlog'
+import { genId, makeSpaceStreamId } from './id'
+import { TestClientOpts, makeTestClient, waitFor } from './util.test'
+
+const log = dlog('csb:test:decryptionExtensions')
+
+describe('DecryptionExtensions', () => {
+    let clients: Client[] = []
+    const makeAndStartClient = async (opts?: TestClientOpts) => {
+        const client = await makeTestClient(opts)
+        await client.initializeUser()
+        await client.startSync()
+        log('started client', client.userId)
+        clients.push(client)
+        return client
+    }
+
+    const sendMessage = async (client: Client, streamId: string, body: string) => {
+        log('sendMessage', client.userId, streamId, body)
+        await client.waitForStream(streamId)
+        await client.sendMessage(streamId, body)
+    }
+
+    const getDecryptedChannelMessages = async (
+        client: Client,
+        streamId: string,
+    ): Promise<string[]> => {
+        const stream = client.stream(streamId) ?? (await client.waitForStream(streamId))
+        return stream.view.timeline
+            .map((e) => {
+                // for tests, return decrypted content
+                if (
+                    e.decryptedContent?.kind === 'channelMessage' &&
+                    e.decryptedContent.content.payload?.case === 'post' &&
+                    e.decryptedContent.content.payload?.value?.content?.case === 'text'
+                ) {
+                    return e.decryptedContent.content.payload?.value?.content?.value?.body
+                }
+                // and local content
+                if (
+                    e.localEvent?.channelMessage?.payload?.case === 'post' &&
+                    e.localEvent?.channelMessage?.payload?.value?.content?.case === 'text'
+                ) {
+                    return e.localEvent?.channelMessage?.payload?.value?.content?.value?.body
+                }
+                return undefined
+            })
+            .filter(isDefined)
+    }
+
+    // soon
+    // const getDecryptionErrors = async (client: Client, streamId: string): Promise<string[]> => {
+    // }
+
+    const waitForMessages = async (client: Client, streamId: string, bodys: string[]) => {
+        log('waitForMessages', client.userId, streamId, bodys)
+        return waitFor(
+            async () => {
+                const messages = await getDecryptedChannelMessages(client, streamId)
+                expect(messages).toEqual(bodys)
+            },
+            { timeoutMS: 10000 },
+        )
+    }
+
+    beforeEach(async () => {})
+    afterEach(async () => {
+        for (const client of clients) {
+            await client.stop()
+        }
+        clients = []
+    })
+
+    test('shareKeysWithNewDevices', async () => {
+        const bob1 = await makeAndStartClient({ deviceId: 'bob1' })
+        const alice1 = await makeAndStartClient({ deviceId: 'alice1' })
+
+        // create a dm and send a message
+        const { streamId } = await bob1.createDMChannel(alice1.userId)
+        await sendMessage(bob1, streamId, 'hello')
+
+        // wait for the message to arrive and decrypt
+        await expect(waitForMessages(alice1, streamId, ['hello'])).toResolve()
+
+        // boot up alice on a second device
+        const alice2 = await makeAndStartClient({
+            context: alice1.signerContext,
+            deviceId: 'alice2',
+        })
+
+        // alice gets keys sent via new device message
+        await expect(waitForMessages(alice2, streamId, ['hello'])).toResolve()
+
+        // stop alice2 so she's offline
+        alice2.stop()
+
+        // send a second message
+        const bob2 = await makeAndStartClient({
+            context: bob1.signerContext,
+            deviceId: 'bob2',
+        })
+        await sendMessage(bob2, streamId, 'whats up')
+
+        // the message should get decrypted on alice1
+        await expect(waitForMessages(bob1, streamId, ['hello', 'whats up'])).toResolve()
+        await expect(waitForMessages(alice1, streamId, ['hello', 'whats up'])).toResolve()
+
+        // start alice2 back up
+        const alice2_restarted = await makeAndStartClient({
+            context: alice1.signerContext,
+            deviceId: 'alice2',
+        })
+
+        // she should have the keys because bob2 should share with existing memebers
+        await expect(waitForMessages(alice2_restarted, streamId, ['hello', 'whats up'])).toResolve()
+    })
+
+    // users aren't online at the same time
+    test('bobIsntOnlineToShareKeys', async () => {
+        // have two people come up, go offline, then two more people come up
+        const bob1 = await makeAndStartClient({ deviceId: 'bob1' })
+        const spaceId = makeSpaceStreamId('bobs-space-' + genId())
+        await bob1.createSpace(spaceId)
+        const { streamId: channelId } = await bob1.createChannel(spaceId, 'bob1sChannel', '')
+        await sendMessage(bob1, channelId, 'its bob')
+        await bob1.stop()
+
+        // alice comes up, joins the space and channel, and sends a message
+        const alice1 = await makeAndStartClient({ deviceId: 'alice1' })
+        await alice1.joinStream(spaceId)
+        await alice1.joinStream(channelId)
+        await expect(waitForMessages(alice1, channelId, [])).toResolve() // alice doesn't see the messsage if bob isn't online to send keys
+        await sendMessage(alice1, channelId, 'its alice')
+        // aellis there's a race here, alice could send the message before the retry for the decryption happens
+        // either way it should pass... but if it gets flaky maybe we broke newDevice vs session key solicitations
+        await expect(waitForMessages(alice1, channelId, ['its alice'])).toResolve() // alice doesn't see the messsage if bob isn't online to send keys
+
+        // bob comes back online, same device
+        const bob1IsBack = await makeAndStartClient({
+            context: bob1.signerContext,
+            deviceId: 'bob1',
+        })
+        await expect(waitForMessages(bob1IsBack, channelId, ['its bob', 'its alice'])).toResolve()
+
+        // alice should get keys and decrypt bobs message
+        await expect(waitForMessages(alice1, channelId, ['its bob', 'its alice'])).toResolve()
+    })
+})

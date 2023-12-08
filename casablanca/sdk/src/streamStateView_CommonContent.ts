@@ -3,20 +3,18 @@ import {
     Snapshot,
     MiniblockHeader,
     CommonPayload,
-    CommonPayload_Snapshot_Solicitations,
     CommonPayload_KeySolicitation,
     CommonPayload_KeyFulfillment,
 } from '@river/proto'
 import { EmittedEvents } from './client'
-import { ParsedEvent } from './types'
+import { KeySolicitationContent, ParsedEvent } from './types'
 import { logNever } from './check'
-import { PlainMessage } from '@bufbuild/protobuf'
 import { removeCommon } from './utils'
 
 // common payloads exist in all streams, this data structure helps aggregates them
 export class StreamStateView_CommonContent {
     readonly streamId: string
-    solicitations: Record<string, CommonPayload_Snapshot_Solicitations> = {}
+    solicitations: Record<string, KeySolicitationContent[]> = {}
 
     constructor(streamId: string) {
         this.streamId = streamId
@@ -26,9 +24,19 @@ export class StreamStateView_CommonContent {
         if (!snapshot.common) {
             return
         }
-        this.solicitations = snapshot.common.solicitations
+        // copy protobuf over to avoid mutating the original protobuf
+        this.solicitations = Object.entries(snapshot.common.solicitations).reduce((acc, kv) => {
+            const [key, solicitations] = kv
+            acc[key] = solicitations.events.map((s) => ({
+                deviceKey: s.deviceKey,
+                fallbackKey: s.fallbackKey,
+                isNewDevice: s.isNewDevice,
+                sessionIds: [...s.sessionIds],
+            }))
+            return acc
+        }, {} as Record<string, KeySolicitationContent[]>)
         for (const [userId, solicitation] of Object.entries(this.solicitations)) {
-            for (const event of solicitation.events) {
+            for (const event of solicitation) {
                 emitter?.emit('newKeySolicitation', this.streamId, userId, event)
             }
         }
@@ -71,14 +79,19 @@ export class StreamStateView_CommonContent {
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         if (!this.solicitations[creator]) {
-            this.solicitations[creator] = new CommonPayload_Snapshot_Solicitations({
-                events: [solicitation],
-            } satisfies PlainMessage<CommonPayload_Snapshot_Solicitations>)
+            this.solicitations[creator] = [
+                {
+                    deviceKey: solicitation.deviceKey,
+                    fallbackKey: solicitation.fallbackKey,
+                    isNewDevice: solicitation.isNewDevice,
+                    sessionIds: [...solicitation.sessionIds],
+                },
+            ]
         } else {
-            this.solicitations[creator].events = this.solicitations[creator].events.filter(
+            this.solicitations[creator] = this.solicitations[creator].filter(
                 (x) => x.deviceKey !== solicitation.deviceKey,
             )
-            this.solicitations[creator].events.push(solicitation)
+            this.solicitations[creator].push(solicitation)
         }
         emitter?.emit('newKeySolicitation', this.streamId, creator, solicitation)
     }
@@ -87,21 +100,20 @@ export class StreamStateView_CommonContent {
         fulfillment: CommonPayload_KeyFulfillment,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
-        if (this.solicitations[fulfillment.userId]) {
-            for (const event of this.solicitations[fulfillment.userId].events) {
-                if (event.deviceKey === fulfillment.deviceKey) {
-                    fulfillment.sessionIds.sort()
-                    event.sessionIds = removeCommon(event.sessionIds, fulfillment.sessionIds)
-                    event.isNewDevice = false
-                    emitter?.emit(
-                        'updatedKeySolicitation',
-                        this.streamId,
-                        fulfillment.userId,
-                        event,
-                    )
-                    break
-                }
-            }
+        const index = this.solicitations[fulfillment.userId]?.findIndex(
+            (x) => x.deviceKey === fulfillment.deviceKey,
+        )
+        if (index === undefined || index === -1) {
+            return
         }
+        const prev = this.solicitations[fulfillment.userId][index]
+        const newEvent = {
+            deviceKey: prev.deviceKey,
+            fallbackKey: prev.fallbackKey,
+            isNewDevice: false,
+            sessionIds: [...removeCommon(prev.sessionIds, fulfillment.sessionIds)],
+        }
+        this.solicitations[fulfillment.userId][index] = newEvent
+        emitter?.emit('updatedKeySolicitation', this.streamId, fulfillment.userId, newEvent)
     }
 }

@@ -3,11 +3,11 @@ import {
     SnapshotCaseType,
     FullyReadMarker,
     UserToDevicePayload_MegolmSessions,
-    CommonPayload_KeySolicitation,
 } from '@river/proto'
 import {
     ConfirmedTimelineEvent,
     DecryptedTimelineEvent,
+    KeySolicitationContent,
     LocalTimelineEvent,
     RemoteTimelineEvent,
     StreamTimelineEvent,
@@ -56,12 +56,12 @@ export type StreamEvents = {
     newKeySolicitation: (
         streamId: string,
         fromUserId: string,
-        event: CommonPayload_KeySolicitation,
+        event: KeySolicitationContent,
     ) => void
     updatedKeySolicitation: (
         streamId: string,
         fromUserId: string,
-        event: CommonPayload_KeySolicitation,
+        event: KeySolicitationContent,
     ) => void
     eventDecrypted: (
         streamId: string,

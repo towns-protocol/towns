@@ -87,16 +87,23 @@ export const makeUserContextFromWallet = async (wallet: ethers.Wallet): Promise<
     }
 }
 
-export const makeTestClient = async (opts?: {
+export interface TestClientOpts {
     url?: string
     context?: SignerContext
     entitlementsDelegate?: EntitlementsDelegate
-}): Promise<Client> => {
+    deviceId?: string
+}
+
+export const makeTestClient = async (opts?: TestClientOpts): Promise<Client> => {
     const url = opts?.url ?? TEST_URL
     const context = opts?.context ?? (await makeRandomUserContext())
     const entitlementsDelegate = opts?.entitlementsDelegate ?? new MockEntitlementsDelegate()
+    const deviceId = opts?.deviceId ? `-${opts.deviceId}` : ''
+    const userId = userIdFromAddress(context.creatorAddress)
+    const dbName = `database-${userId}${deviceId}`
+
     // create a new client with store(s)
-    const cryptoStore = RiverDbManager.getCryptoDb(userIdFromAddress(context.creatorAddress))
+    const cryptoStore = RiverDbManager.getCryptoDb(userId, dbName)
     return new Client(
         context,
         makeStreamRpcClient(url),

@@ -1617,10 +1617,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         eventId: string,
         encryptedContent: EncryptedContent,
     ): Promise<DecryptedTimelineEvent | undefined> {
+        this.logCall('decryptMegolmEvent', streamId, eventId, encryptedContent)
         const stream = this.stream(streamId)
-        if (!stream) {
-            return undefined
-        }
+        check(isDefined(stream), 'stream not found')
         const cleartext = await this.cleartextForMegolmEvent(streamId, eventId, encryptedContent)
         switch (encryptedContent.kind) {
             case 'text': {
@@ -1692,6 +1691,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         )
         check(sessions[0].streamId === streamId, 'streamId mismatch')
 
+        this.logCall('share', { from: this.userId, to: toDevices })
         const userDevice = this.userDeviceKey()
 
         const sessionIds = sessions.map((session) => session.sessionId)

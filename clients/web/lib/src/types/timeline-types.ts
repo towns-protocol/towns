@@ -378,8 +378,13 @@ export function getFallbackContent(
                 content.message
             }`
         case ZTEvent.Fulfillment:
-            return `Fulfillment sessionIds: ${content.sessionIds.join(',')}, from: ${content.from}`
+            return `Fulfillment sessionIds: ${
+                content.sessionIds.length ? content.sessionIds.join(',') : '[]'
+            }, from: ${content.from} to: ${content.deviceKey}`
         case ZTEvent.KeySolicitation:
+            if (content.isNewDevice) {
+                return `KeySolicitation deviceKey: ${content.deviceKey}, newDevice: true`
+            }
             return `KeySolicitation deviceKey: ${content.deviceKey} sessionIds: ${content.sessionIds.length}`
         default:
             staticAssertNever(content)

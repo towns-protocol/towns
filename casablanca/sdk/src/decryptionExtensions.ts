@@ -1,20 +1,19 @@
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
+import chunk from 'lodash/chunk'
 import { Permission } from '@river/web3'
 import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
 import { MEGOLM_ALGORITHM, MegolmSession, UserDevice } from './crypto/olmLib'
-import {
-    CommonPayload_KeySolicitation,
-    SessionKeys,
-    UserToDevicePayload_MegolmSessions,
-} from '@river/proto'
+import { SessionKeys, UserToDevicePayload_MegolmSessions } from '@river/proto'
 import { check, isDefined } from './check'
-import { dlog } from './dlog'
-import { make_CommonPayload_KeyFulfillment, make_CommonPayload_KeySolicitation } from './types'
-import { removeCommon } from './utils'
-
-const log = dlog('csb:decryption', { defaultEnabled: true })
+import { dlog, dlogError, DLogger } from './dlog'
+import {
+    KeySolicitationContent,
+    make_CommonPayload_KeyFulfillment,
+    make_CommonPayload_KeySolicitation,
+} from './types'
+import { shortenHexString } from './binary'
 
 export interface EntitlementsDelegate {
     isEntitled(
@@ -28,7 +27,7 @@ export interface EntitlementsDelegate {
 export enum DecryptionStatus {
     initializing,
     updating,
-    processingNewKeys,
+    processingNewMegolmSessions,
     decryptingEvents,
     retryingDecryption,
     requestingKeys,
@@ -54,7 +53,7 @@ interface DecryptionRetryItem {
 interface KeySolicitationItem {
     streamId: string
     fromUserId: string
-    solicitation: CommonPayload_KeySolicitation
+    solicitation: KeySolicitationContent
     respondAfter: Date
 }
 
@@ -70,12 +69,12 @@ interface MissingKeysItem {
  * 2. Decrypt new to-device messages
  * 3. Decrypt encrypted content
  * 4. Retry decryption failures, request keys for failed decryption
- * 5. Respond to key requests
+ * 5. Respond to key solicitations
  *
  *
  * Notes:
  * If in the future we started snapshotting the eventNum of the last message sent by every user,
- * we could use that to determine the order we send out keys, and the order that we reply to key requests.
+ * we could use that to determine the order we send out keys, and the order that we reply to key solicitations.
  *
  * It should be easy to introduce a priority stream, where we decrypt messages from that stream first, before
  * anything else, so the messages show up quicky in the ui that the user is looking at.
@@ -84,6 +83,11 @@ interface MissingKeysItem {
  */
 export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitter<DecryptionEvents>) {
     public status: DecryptionStatus = DecryptionStatus.initializing
+    private log: {
+        debug: DLogger
+        info: DLogger
+        error: DLogger
+    }
     private onStopFn?: () => void
     private queues = {
         priorityTasks: new Array<() => Promise<void>>(),
@@ -106,6 +110,18 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         private userDevice: UserDevice,
     ) {
         super()
+        const shortId = shortenHexString(
+            this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
+        )
+        const shortKey = shortenHexString(userDevice.deviceKey)
+        const logId = `${shortId}:${shortKey}`
+        this.log = {
+            debug: dlog('csb:decryption:debug', { defaultEnabled: false }).extend(logId),
+            info: dlog('csb:decryption', { defaultEnabled: true }).extend(logId),
+            error: dlogError('csb:decryption:error').extend(logId),
+        }
+
+        this.log.debug('new DecryptionExtensions', { userDevice })
         const onNewMegolmSessions = (
             sessions: UserToDevicePayload_MegolmSessions,
             _senderId: string,
@@ -130,16 +146,20 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         const onKeySolicitation = (
             streamId: string,
             fromUserId: string,
-            keySolicitation: CommonPayload_KeySolicitation,
+            keySolicitation: KeySolicitationContent,
         ) => {
             if (keySolicitation.deviceKey === this.userDevice.deviceKey) {
+                this.log.debug('ignoring key solicitation for our own device')
                 return
             }
-            removeItem(
-                this.queues.keySolicitations,
+            const index = this.queues.keySolicitations.findIndex(
                 (x) => x.solicitation.deviceKey === keySolicitation.deviceKey,
             )
+            if (index > -1) {
+                this.queues.keySolicitations.splice(index, 1)
+            }
             if (keySolicitation.sessionIds.length > 0 || keySolicitation.isNewDevice) {
+                this.log.debug('new key solicitation', keySolicitation)
                 this.queues.keySolicitations.push({
                     streamId,
                     fromUserId,
@@ -167,6 +187,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
 
     start() {
         check(!this.started, 'start() called twice, please re-instantiate instead')
+        this.log.debug('starting')
         this.started = true
         // enqueue a task to download new to-device messages
         this.queues.priorityTasks.push(() => this.client.downloadNewToDeviceMessages())
@@ -182,7 +203,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
 
     private setStatus(status: DecryptionStatus) {
         if (this.status !== status) {
-            log(`status changed ${DecryptionStatus[status]}`)
+            this.log.info(`status changed ${DecryptionStatus[status]}`)
             this.status = status
             this.emit('statusChanged', status)
         }
@@ -199,7 +220,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         this.timeoutId = setTimeout(() => {
             this.inProgressTick = this.tick()
             this.inProgressTick
-                .catch((e) => log('ProcessTick Error', e))
+                .catch((e) => this.log.error('ProcessTick Error', e))
                 .finally(() => {
                     this.timeoutId = undefined
                     this.checkStartTicking()
@@ -216,7 +237,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             try {
                 await this.inProgressTick
             } catch (e) {
-                log('ProcessTick Error2', e)
+                this.log.error('ProcessTick Error while stopping', e)
             } finally {
                 this.inProgressTick = undefined
             }
@@ -235,7 +256,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
 
         const session = this.queues.newMegolmSession.shift()
         if (session) {
-            this.setStatus(DecryptionStatus.processingNewKeys)
+            this.setStatus(DecryptionStatus.processingNewMegolmSessions)
             return this.processNewMegolmSession(session)
         }
 
@@ -270,9 +291,11 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     private async processNewMegolmSession(
         session: UserToDevicePayload_MegolmSessions,
     ): Promise<void> {
+        this.log.debug('processNewMegolmSession', session)
         // check if this message is to our device
         const ciphertext = session.ciphertexts[this.userDevice.deviceKey]
         if (!ciphertext) {
+            this.log.debug('skipping, no session for our device')
             return
         }
         // check if it contains any keys we need
@@ -285,6 +308,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             }
         }
         if (!neededKeyIndexs.length) {
+            this.log.debug('skipping, we have all the keys')
             return
         }
         // decrypt the message
@@ -299,7 +323,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             algorithm: MEGOLM_ALGORITHM,
         }))
         // import the sessions
-        log('importing megolm sessions count: ', sessions.length)
+        this.log.info('importing megolm sessions count: ', sessions.length)
         await this.client.importRoomKeys(session.streamId, sessions)
         // re-enqueue any decryption failures with these ids
         for (const session of sessions) {
@@ -317,6 +341,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     }
 
     private async processEncryptedContentItem(item: EncryptedContentItem): Promise<void> {
+        this.log.debug('processEncryptedContentItem', item)
         try {
             check(isDefined(this.client.userToDeviceStreamId), 'userToDeviceStreamId not found')
             const toDeviceStream = this.client.stream(this.client.userToDeviceStreamId)
@@ -327,12 +352,14 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                     item.encryptedContent.content.sessionId,
                 )
             ) {
+                this.log.debug('skipping, session is pending in to device stream')
                 // if we have a pending session for this key, waiting for confirmation then we can't decrypt it yet
                 this.queues.decryptionRetries.push({
                     event: item,
                     retryAt: new Date(Date.now() + 1000), // give it 1 seconds for miniblockblock to confirm
                 })
             } else {
+                this.log.debug('decrypting content')
                 await this.client.decryptMegolmEvent(
                     item.streamId,
                     item.eventId,
@@ -340,6 +367,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                 )
             }
         } catch (e) {
+            this.log.debug('failed to decrypt', e)
             // todo, update the view to show the event as failed decryption with a reason https://linear.app/hnt-labs/issue/HNT-3934/new-decryption-extensions-update-streamtimelineevent-with-decryption
             // todo, only retry on missing key errors https://linear.app/hnt-labs/issue/HNT-3933/new-decryptionextensions-only-retry-errors-where-keys-are-missing
             this.queues.decryptionRetries.push({
@@ -352,8 +380,10 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     private async processDecryptionRetry(retryItem: DecryptionRetryItem): Promise<void> {
         const item = retryItem.event
         try {
+            this.log.debug('retrying decryption', item)
             await this.client.decryptMegolmEvent(item.streamId, item.eventId, item.encryptedContent)
         } catch (e) {
+            this.log.debug('failed to decrypt on retry', e)
             // todo, update the view to show the event as failed decryption with a reason https://linear.app/hnt-labs/issue/HNT-3934/new-decryption-extensions-update-streamtimelineevent-with-decryption
             // todo, only retry on missing key errors https://linear.app/hnt-labs/issue/HNT-3933/new-decryptionextensions-only-retry-errors-where-keys-are-missing
             const streamId = item.streamId
@@ -375,6 +405,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     }
 
     private async processMissingKeys(item: MissingKeysItem): Promise<void> {
+        this.log.debug('processing missing keys', item)
         const streamId = item.streamId
         const missingSessionIds = takeFirst(
             100,
@@ -388,12 +419,12 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         if (!stream) {
             return
         }
-        const solicitedEvents = stream.view.commonContent.solicitations[this.userId]?.events ?? []
+        const solicitedEvents = stream.view.commonContent.solicitations[this.userId] ?? []
         const existingKeyRequest = solicitedEvents.find(
             (x) => x.deviceKey === this.userDevice.deviceKey,
         )
         if (sortedArraysEqual(existingKeyRequest?.sessionIds ?? [], missingSessionIds)) {
-            log('already requested keys for this session')
+            this.log.debug('already requested keys for this session')
             return
         }
         const knownSessionIds =
@@ -407,7 +438,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             isNewDevice,
             sessionIds: isNewDevice ? [] : missingSessionIds,
         })
-        log('requesting keys', {
+        this.log.info('requesting keys', {
             isNewDevice,
             sessionIds: missingSessionIds.length,
         })
@@ -415,24 +446,25 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
     }
 
     private async processKeySolicitation(item: KeySolicitationItem): Promise<void> {
-        log('processing key request', item)
+        this.log.debug('processing key solicitation', item)
         const streamId = item.streamId
         const stream = this.client.stream(streamId)
         check(isDefined(stream), 'stream not found')
         const knownSessionIds =
-            (await this.client.cryptoBackend?.olmDevice?.getInboundGroupSessionIds(streamId)) ?? []
+            (await this.client.cryptoBackend?.olmDevice.getInboundGroupSessionIds(streamId)) ?? []
 
         knownSessionIds.sort()
-        const requestedSessionIds = item.solicitation.sessionIds.sort()
+        const requestedSessionIds = new Set(item.solicitation.sessionIds.sort())
         const replySessionIds = item.solicitation.isNewDevice
             ? knownSessionIds
-            : removeCommon(requestedSessionIds, knownSessionIds)
+            : knownSessionIds.filter((x) => requestedSessionIds.has(x))
         if (replySessionIds.length === 0) {
+            this.log.debug('processing key solicitation: no keys to reply with')
             return
         }
 
         if (!stream.view.userIsEntitledToKeyExchange(this.client.userId)) {
-            log('user is not a member of the room and cannot request keys')
+            this.log.info('user is not a member of the room and cannot request keys')
             return
         }
         if (stream.view.contentKind === 'channelContent') {
@@ -444,7 +476,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                 Permission.Read,
             )
             if (!entitlements) {
-                log('user is not entitled to key exchange')
+                this.log.info('user is not entitled to key exchange')
                 return
             }
         }
@@ -458,7 +490,9 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                 sessions.push(megolmSession)
             }
         }
-        log('processing key request', {
+        this.log.debug('processing key solicitation with', {
+            to: item.fromUserId,
+            toDevice: item.solicitation.deviceKey,
             requestedCount: item.solicitation.sessionIds.length,
             replyIds: replySessionIds.length,
             sessions: sessions.length,
@@ -475,7 +509,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
 
         await this.client.makeEventAndAddToStream(streamId, fulfillment)
 
-        const chunked = chunkArray(sessions, 100)
+        const chunked = chunk(sessions, 100)
         for (const chunk of chunked) {
             await this.client.encryptAndShareMegolmSessions(streamId, chunk, {
                 [item.fromUserId]: [
@@ -498,6 +532,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         const numMembers = stream.view.getMemberships().joinedUsers.size
         const maxWaitTimeSeconds = Math.max(5, Math.min(30, numMembers))
         const waitTime = maxWaitTimeSeconds * 1000 * Math.random() // this could be much better
+        this.log.debug('getRespondDelayMSForKeySolicitation', { streamId, userId, waitTime })
         return waitTime
     }
 }
@@ -532,17 +567,6 @@ function sortedArraysEqual(a: string[], b: string[]): boolean {
         }
     }
     return true
-}
-
-function chunkArray<T>(array: T[], chunkSize: number): T[][] {
-    const chunks: T[][] = []
-
-    for (let i = 0; i < array.length; i += chunkSize) {
-        const chunk = array.slice(i, i + chunkSize)
-        chunks.push(chunk)
-    }
-
-    return chunks
 }
 
 function takeFirst<T>(count: number, array: T[]): T[] {
