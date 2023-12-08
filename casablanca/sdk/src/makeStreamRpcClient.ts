@@ -63,22 +63,24 @@ const interceptor: (transportId: number) => Interceptor = (transportId: number) 
                 total += e.total
                 error += e.error ?? 0
             }
-            logCallsHistogram(
-                'RPC stats for transportId=',
-                transportId,
-                'interval=',
-                interval,
-                'total=',
-                total,
-                'error=',
-                error,
-                'intervalMs=',
-                histogramIntervalMs,
-                '\n',
-                sortObjectKey(callHistogram),
-            )
-            for (const key in callHistogram) {
-                callHistogram[key].interval = 0
+            if (interval > 0) {
+                logCallsHistogram(
+                    'RPC stats for transportId=',
+                    transportId,
+                    'interval=',
+                    interval,
+                    'total=',
+                    total,
+                    'error=',
+                    error,
+                    'intervalMs=',
+                    histogramIntervalMs,
+                    '\n',
+                    sortObjectKey(callHistogram),
+                )
+                for (const key in callHistogram) {
+                    callHistogram[key].interval = 0
+                }
             }
         }
     }, histogramIntervalMs)
