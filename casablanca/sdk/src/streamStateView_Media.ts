@@ -7,7 +7,7 @@ import {
     MiniblockHeader,
 } from '@river/proto'
 import { check, logNever } from './check'
-import { ParsedEvent } from './types'
+import { RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
@@ -43,9 +43,13 @@ export class StreamStateView_Media extends StreamStateView_IContent {
         // nothing to do
     }
 
-    appendEvent(event: ParsedEvent, _emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'mediaPayload')
-        const payload: MediaPayload = event.event.payload.value
+    appendEvent(
+        event: RemoteTimelineEvent,
+        _cleartext: string | undefined,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'mediaPayload')
+        const payload: MediaPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -65,8 +69,12 @@ export class StreamStateView_Media extends StreamStateView_IContent {
         }
     }
 
-    prependEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+    prependEvent(
+        event: RemoteTimelineEvent,
+        cleartext: string | undefined,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
         // append / prepend are identical for media content
-        this.appendEvent(event, emitter)
+        this.appendEvent(event, cleartext, emitter)
     }
 }

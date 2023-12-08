@@ -10,7 +10,7 @@ import {
     UserSettingsPayload_Snapshot,
 } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
-import { ParsedEvent } from './types'
+import { RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import { check, logNever } from './check'
 import { StreamEvents } from './streamEvents'
@@ -45,9 +45,13 @@ export class StreamStateView_UserSettings extends StreamStateView_IContent {
         // nothing to do
     }
 
-    prependEvent(event: ParsedEvent, _emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'userSettingsPayload')
-        const payload: UserSettingsPayload = event.event.payload.value
+    prependEvent(
+        event: RemoteTimelineEvent,
+        _cleartext: string | undefined,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'userSettingsPayload')
+        const payload: UserSettingsPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -61,9 +65,13 @@ export class StreamStateView_UserSettings extends StreamStateView_IContent {
         }
     }
 
-    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'userSettingsPayload')
-        const payload: UserSettingsPayload = event.event.payload.value
+    appendEvent(
+        event: RemoteTimelineEvent,
+        cleartext: string | undefined,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'userSettingsPayload')
+        const payload: UserSettingsPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break

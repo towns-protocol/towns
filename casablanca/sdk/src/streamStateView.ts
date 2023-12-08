@@ -218,8 +218,7 @@ export class StreamStateView {
         snapshot: Snapshot,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
-        this.commonContent.initialize(snapshot, emitter)
-
+        // first initialize content specific data
         switch (snapshot.content.case) {
             case 'channelContent':
                 this.channelContent.initialize(snapshot, snapshot.content.value, emitter)
@@ -254,10 +253,14 @@ export class StreamStateView {
             default:
                 logNever(snapshot.content)
         }
+
+        // then initialize common content
+        this.commonContent.initialize(snapshot, emitter)
     }
 
     private appendStreamAndCookie(
         streamAndCookie: ParsedStreamAndCookie,
+        cleartexts: Record<string, string> | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): {
         appended: StreamTimelineEvent[]
@@ -280,7 +283,11 @@ export class StreamStateView {
                     confirmedEventNum: undefined,
                 })
                 this.timeline.push(event)
-                const newlyConfirmed = this.processAppendedEvent(event, emitter)
+                const newlyConfirmed = this.processAppendedEvent(
+                    event,
+                    cleartexts?.[event.hashStr],
+                    emitter,
+                )
                 appended.push(event)
                 if (newlyConfirmed) {
                     confirmed.push(...newlyConfirmed)
@@ -293,6 +300,7 @@ export class StreamStateView {
 
     private processAppendedEvent(
         timelineEvent: RemoteTimelineEvent,
+        cleartext: string | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): ConfirmedTimelineEvent[] | undefined {
         check(!this.events.has(timelineEvent.hashStr))
@@ -331,12 +339,12 @@ export class StreamStateView {
                     }
                     break
                 case 'commonPayload':
-                    this.commonContent.appendEvent(event, payload.value, emitter)
+                    this.commonContent.appendCommonContent(event, payload.value, emitter)
                     break
                 case undefined:
                     break
                 default:
-                    this.getContent().appendEvent(event, emitter)
+                    this.getContent().appendEvent(timelineEvent, cleartext, emitter)
             }
         } catch (e) {
             logError(`StreamStateView::Error appending event ${event.hashStr}`, e)
@@ -346,6 +354,7 @@ export class StreamStateView {
 
     private processPrependedEvent(
         timelineEvent: RemoteTimelineEvent,
+        cleartext: string | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         check(!this.events.has(timelineEvent.hashStr))
@@ -362,7 +371,7 @@ export class StreamStateView {
                     this.prevSnapshotMiniblockNum = payload.value.prevSnapshotMiniblockNum
                     break
                 case 'commonPayload':
-                    this.commonContent.prependEvent(event, payload.value, emitter)
+                    this.commonContent.prependCommonContent(event, payload.value, emitter)
                     break
                 case undefined:
                     logError(
@@ -371,7 +380,7 @@ export class StreamStateView {
                     )
                     break
                 default:
-                    this.getContent().prependEvent(event, emitter)
+                    this.getContent().prependEvent(timelineEvent, cleartext, emitter)
             }
         } catch (e) {
             logError(`StreamStateView::Error prepending event ${event.hashStr}`, e)
@@ -433,6 +442,7 @@ export class StreamStateView {
         streamAndCookie: ParsedStreamAndCookie,
         snapshot: Snapshot,
         miniblocks: ParsedMiniblock[],
+        cleartexts: Record<string, string> | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         check(miniblocks.length > 0, `Stream has no miniblocks ${this.streamId}`, Err.STREAM_EMPTY)
@@ -467,12 +477,12 @@ export class StreamStateView {
         this.timeline.push(...block0Events)
         for (let i = block0Events.length - 1; i >= 0; i--) {
             const event = block0Events[i]
-            this.processPrependedEvent(event, emitter)
+            this.processPrependedEvent(event, cleartexts?.[event.hashStr], emitter)
         }
         // append the new block events
         this.timeline.push(...rest)
         for (const event of rest) {
-            this.processAppendedEvent(event, emitter)
+            this.processAppendedEvent(event, cleartexts?.[event.hashStr], emitter)
         }
         // initialize the lastEventNum
         const lastBlock = miniblocks[miniblocks.length - 1]
@@ -480,17 +490,19 @@ export class StreamStateView {
         // and the prev miniblock has (if there were more than 1 miniblocks, this should already be set)
         this.prevMiniblockHash = lastBlock.hash
         // append the minipool events
-        this.appendStreamAndCookie(streamAndCookie, emitter)
+        this.appendStreamAndCookie(streamAndCookie, cleartexts, emitter)
         // let everyone know
         emitter?.emit('streamInitialized', this.streamId, this.contentKind)
     }
 
     appendEvents(
         streamAndCookie: ParsedStreamAndCookie,
+        cleartexts: Record<string, string> | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
         const { appended, updated, confirmed } = this.appendStreamAndCookie(
             streamAndCookie,
+            cleartexts,
             emitter,
         )
         emitter?.emit('streamUpdated', this.streamId, this.contentKind, {
@@ -502,6 +514,7 @@ export class StreamStateView {
 
     prependEvents(
         miniblocks: ParsedMiniblock[],
+        cleartexts: Record<string, string> | undefined,
         terminus: boolean,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
@@ -530,7 +543,8 @@ export class StreamStateView {
         this.timeline.unshift(...prepended)
         // prepend the new block events in reverse order
         for (let i = prepended.length - 1; i >= 0; i--) {
-            this.processPrependedEvent(prepended[i], emitter)
+            const event = prepended[i]
+            this.processPrependedEvent(event, cleartexts?.[event.hashStr], emitter)
         }
 
         if (this.miniblockInfo && terminus) {

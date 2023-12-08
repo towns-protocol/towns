@@ -3,7 +3,7 @@ import { MiniblockHeader } from '@river/proto'
 import { EmittedEvents } from './client'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 import { StreamEvents } from './streamEvents'
-import { ParsedEvent } from './types'
+import { RemoteTimelineEvent } from './types'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 
 export class StreamStateView_UnknownContent extends StreamStateView_IContent {
@@ -19,11 +19,19 @@ export class StreamStateView_UnknownContent extends StreamStateView_IContent {
         // ...
     }
 
-    prependEvent(_event: ParsedEvent, _emitter: TypedEmitter<StreamEvents> | undefined): void {
+    prependEvent(
+        _event: RemoteTimelineEvent,
+        _cleartext: string | undefined,
+        _emitter: TypedEmitter<StreamEvents> | undefined,
+    ): void {
         throw new Error(`Unknown content type`)
     }
 
-    appendEvent(_event: ParsedEvent, _emitter: TypedEmitter<StreamEvents> | undefined): void {
+    appendEvent(
+        _event: RemoteTimelineEvent,
+        _cleartext: string | undefined,
+        _emitter: TypedEmitter<StreamEvents> | undefined,
+    ): void {
         throw new Error(`Unknown content type`)
     }
 }

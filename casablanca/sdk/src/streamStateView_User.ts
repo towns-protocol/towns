@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { ParsedEvent } from './types'
+import { ParsedEvent, RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import {
     MembershipOp,
@@ -43,9 +43,13 @@ export class StreamStateView_User extends StreamStateView_IContent {
         // nothing to do
     }
 
-    prependEvent(event: ParsedEvent, _emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'userPayload')
-        const payload: UserPayload = event.event.payload.value
+    prependEvent(
+        event: RemoteTimelineEvent,
+        _cleartext: string | undefined,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'userPayload')
+        const payload: UserPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -59,9 +63,13 @@ export class StreamStateView_User extends StreamStateView_IContent {
         }
     }
 
-    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'userPayload')
-        const payload: UserPayload = event.event.payload.value
+    appendEvent(
+        event: RemoteTimelineEvent,
+        cleartext: string | undefined,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'userPayload')
+        const payload: UserPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break

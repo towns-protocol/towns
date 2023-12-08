@@ -68,8 +68,8 @@ describe('signInFromGlobalStorageHooks', () => {
         const isConnected = screen.getByTestId('isConnected')
         const loginStatus = screen.getByTestId('loginStatus')
         const dbs = await indexedDB.databases()
-        // one for casablanca crypto
-        expect(dbs.length).toEqual(1)
+        // one for casablanca crypto, one for persistent storage
+        expect(dbs.length).toEqual(2)
         await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()))
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
     }) // end test
@@ -204,7 +204,7 @@ describe('signInFromGlobalStorageHooks', () => {
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
 
         const dbs = await indexedDB.databases()
-        // should not create an additional db
-        expect(dbs.length).toEqual(1)
+        // should not create an additional db, one for persistent storage
+        expect(dbs.length).toEqual(2)
     })
 }) // end describe

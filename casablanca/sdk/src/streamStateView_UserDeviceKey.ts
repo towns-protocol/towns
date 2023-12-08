@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { ParsedEvent } from './types'
+import { RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import {
     MiniblockHeader,
@@ -44,13 +44,21 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_IContent {
         // nothing to do
     }
 
-    prependEvent(_event: ParsedEvent, _emitter: TypedEmitter<EmittedEvents> | undefined): void {
+    prependEvent(
+        _event: RemoteTimelineEvent,
+        _cleartext: string | undefined,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
         // nohing to do
     }
 
-    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'userDeviceKeyPayload')
-        const payload: UserDeviceKeyPayload = event.event.payload.value
+    appendEvent(
+        event: RemoteTimelineEvent,
+        cleartext: string | undefined,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'userDeviceKeyPayload')
+        const payload: UserDeviceKeyPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break

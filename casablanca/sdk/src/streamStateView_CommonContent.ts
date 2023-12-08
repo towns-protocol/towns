@@ -38,7 +38,7 @@ export class StreamStateView_CommonContent {
         // nothing to do
     }
 
-    prependEvent(
+    prependCommonContent(
         _event: ParsedEvent,
         _payload: CommonPayload,
         _emitter: TypedEmitter<EmittedEvents> | undefined,
@@ -46,7 +46,7 @@ export class StreamStateView_CommonContent {
         // nothing to do
     }
 
-    appendEvent(
+    appendCommonContent(
         event: ParsedEvent,
         payload: CommonPayload,
         emitter: TypedEmitter<EmittedEvents> | undefined,

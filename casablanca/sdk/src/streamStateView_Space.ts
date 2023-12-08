@@ -1,7 +1,7 @@
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
-import { ParsedEvent } from './types'
+import { RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import {
     ChannelOp,
@@ -54,9 +54,13 @@ export class StreamStateView_Space extends StreamStateView_IContent {
         this.userMetadata.onMiniblockHeader(blockHeader, emitter)
     }
 
-    prependEvent(event: ParsedEvent, _emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'spacePayload')
-        const payload: SpacePayload = event.event.payload.value
+    prependEvent(
+        event: RemoteTimelineEvent,
+        _cleartext: string | undefined,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'spacePayload')
+        const payload: SpacePayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -79,9 +83,13 @@ export class StreamStateView_Space extends StreamStateView_IContent {
         }
     }
 
-    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'spacePayload')
-        const payload: SpacePayload = event.event.payload.value
+    appendEvent(
+        event: RemoteTimelineEvent,
+        cleartext: string | undefined,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'spacePayload')
+        const payload: SpacePayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break

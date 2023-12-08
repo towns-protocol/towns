@@ -1,6 +1,6 @@
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView_Membership } from './streamStateView_Membership'
-import { ParsedEvent } from './types'
+import { RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import {
     ChannelPayload,
@@ -36,17 +36,24 @@ export class StreamStateView_Channel extends StreamStateView_IContent {
         this.memberships.onMiniblockHeader(blockHeader, emitter)
     }
 
-    prependEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'channelPayload')
-        const payload: ChannelPayload = event.event.payload.value
+    prependEvent(
+        event: RemoteTimelineEvent,
+        cleartext: string | undefined,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'channelPayload')
+        const payload: ChannelPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
             case 'message':
-                emitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
-                    kind: 'channelMessage',
-                    content: payload.content.value,
-                })
+                this.decryptEvent(
+                    'channelMessage',
+                    event,
+                    payload.content.value,
+                    cleartext,
+                    emitter,
+                )
                 break
             case 'membership':
                 // nothing to do, membership was conveyed in the snapshot
@@ -58,17 +65,24 @@ export class StreamStateView_Channel extends StreamStateView_IContent {
         }
     }
 
-    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'channelPayload')
-        const payload: ChannelPayload = event.event.payload.value
+    appendEvent(
+        event: RemoteTimelineEvent,
+        cleartext: string | undefined,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'channelPayload')
+        const payload: ChannelPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
             case 'message':
-                emitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
-                    kind: 'channelMessage',
-                    content: payload.content.value,
-                })
+                this.decryptEvent(
+                    'channelMessage',
+                    event,
+                    payload.content.value,
+                    cleartext,
+                    emitter,
+                )
                 break
             case 'membership':
                 this.memberships.appendMembershipEvent(

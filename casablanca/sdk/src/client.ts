@@ -261,9 +261,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         streamId: string,
         response: GetStreamResponse | CreateStreamResponse,
     ): Promise<void> {
-        const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
+        const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum, eventIds } =
             unpackStreamResponse(response)
 
+        const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
         const stream = new Stream(
             this.userId,
             streamId,
@@ -273,7 +274,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             this.logEmitFromStream,
         )
         this.streams.set(streamId, stream)
-        stream.initialize(streamAndCookie, snapshot, miniblocks)
+        stream.initialize(streamAndCookie, snapshot, miniblocks, cleartexts)
     }
 
     async initializeUser(): Promise<void> {
@@ -600,8 +601,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             events: [inceptionEvent],
             streamId: streamId,
         })
-        const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
+        const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum, eventIds } =
             unpackStreamResponse(response)
+        const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
         const stream = new Stream(
             this.userId,
             streamId,
@@ -613,7 +615,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         // TODO: add support for creating/getting a stream without syncing (HNT-2686)
         this.streams.set(streamId, stream)
-        stream.initialize(streamAndCookie, snapshot, miniblocks)
+        stream.initialize(streamAndCookie, snapshot, miniblocks, cleartexts)
         return { streamId: streamId }
     }
 
@@ -728,7 +730,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 snapshot,
                 prevSnapshotMiniblockNum,
             )
-            streamView.initialize(streamAndCookie, snapshot, miniblocks, undefined)
+            streamView.initialize(streamAndCookie, snapshot, miniblocks, undefined, undefined)
             return streamView
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)
@@ -744,14 +746,22 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 this.logCall('initStream', streamId, 'already initialized')
                 return stream
             } else {
+                // <Async> do async work here
                 const response = await this.rpcClient.getStream({ streamId })
+                const {
+                    streamAndCookie,
+                    snapshot,
+                    miniblocks,
+                    prevSnapshotMiniblockNum,
+                    eventIds,
+                } = unpackStreamResponse(response)
+                const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
+                // </Async> end async work
                 const previousStream = this.stream(streamId)
                 if (previousStream) {
                     this.logCall('initStream', streamId, 'RACE: already initialized')
                     return previousStream
                 } else {
-                    const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
-                        unpackStreamResponse(response)
                     this.logCall('initStream', streamAndCookie)
                     const stream = new Stream(
                         this.userId,
@@ -762,7 +772,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                         this.logEmitFromStream,
                     )
                     this.streams.set(streamId, stream)
-                    stream.initialize(streamAndCookie, snapshot, miniblocks)
+                    stream.initialize(streamAndCookie, snapshot, miniblocks, cleartexts)
                     // Blip sync here to make sure it also monitors new stream
                     this.blipSync()
                     return stream
@@ -861,7 +871,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                                     this.logSync('sync got stream', streamId, 'NOT FOUND')
                                     throwWithCode("Sync got stream that wasn't requested")
                                 }
-                                stream.appendEvents(streamAndCookie)
+                                const cleartexts = await this.persistenceStore.getCleartexts(
+                                    streamAndCookie.events.map((e) => e.hashStr),
+                                )
+                                stream.appendEvents(streamAndCookie, cleartexts)
                             } else {
                                 this.logSync('sync RESULTS no stream', syncedStream)
                             }
@@ -1357,7 +1370,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             toExclusive,
         })
         const miniblocks = response.miniblocks.map((m) => unpackMiniblock(m))
-        stream.prependEvents(miniblocks, response.terminus)
+        const eventIds = miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
+        const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
+        stream.prependEvents(miniblocks, cleartexts, response.terminus)
         return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
     }
 
@@ -1384,7 +1399,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 toExclusive,
             })
             const miniblocks = response.miniblocks.map((m) => unpackMiniblock(m))
-            stream.prependEvents(miniblocks, response.terminus)
+            const eventIds = miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
+            const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
+            stream.prependEvents(miniblocks, cleartexts, response.terminus)
         }
     }
 

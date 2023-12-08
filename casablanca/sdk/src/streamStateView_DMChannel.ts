@@ -9,7 +9,7 @@ import {
 import { EmittedEvents } from './client'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
-import { ParsedEvent } from './types'
+import { ParsedEvent, RemoteTimelineEvent } from './types'
 import { check, logNever } from './check'
 
 export class StreamStateView_DMChannel extends StreamStateView_IContent {
@@ -39,20 +39,27 @@ export class StreamStateView_DMChannel extends StreamStateView_IContent {
         this.memberships.onMiniblockHeader(blockHeader, emitter)
     }
 
-    appendEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'dmChannelPayload')
-        const payload: DmChannelPayload = event.event.payload.value
+    appendEvent(
+        event: RemoteTimelineEvent,
+        cleartext: string | undefined,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'dmChannelPayload')
+        const payload: DmChannelPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
-                this.updateLastEvent(event)
+                this.updateLastEvent(event.remoteEvent)
                 break
 
             case 'message':
-                emitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
-                    kind: 'channelMessage',
-                    content: payload.content.value,
-                })
-                this.updateLastEvent(event)
+                this.decryptEvent(
+                    'channelMessage',
+                    event,
+                    payload.content.value,
+                    cleartext,
+                    emitter,
+                )
+                this.updateLastEvent(event.remoteEvent)
                 break
 
             case 'membership':
@@ -69,18 +76,25 @@ export class StreamStateView_DMChannel extends StreamStateView_IContent {
         }
     }
 
-    prependEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'dmChannelPayload')
-        const payload: DmChannelPayload = event.event.payload.value
+    prependEvent(
+        event: RemoteTimelineEvent,
+        cleartext: string | undefined,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'dmChannelPayload')
+        const payload: DmChannelPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
-                this.updateLastEvent(event)
+                this.updateLastEvent(event.remoteEvent)
                 break
             case 'message':
-                emitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
-                    kind: 'channelMessage',
-                    content: payload.content.value,
-                })
+                this.decryptEvent(
+                    'channelMessage',
+                    event,
+                    payload.content.value,
+                    cleartext,
+                    emitter,
+                )
                 break
             case 'membership':
                 // nothing to do, membership was conveyed in the snapshot

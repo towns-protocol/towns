@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { ParsedEvent } from './types'
+import { ParsedEvent, RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import {
     MiniblockHeader,
@@ -52,9 +52,13 @@ export class StreamStateView_UserToDevice extends StreamStateView_IContent {
         }
     }
 
-    prependEvent(event: ParsedEvent, emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'userToDevicePayload')
-        const payload: UserToDevicePayload = event.event.payload.value
+    prependEvent(
+        event: RemoteTimelineEvent,
+        cleartext: string | undefined,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'userToDevicePayload')
+        const payload: UserToDevicePayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -70,9 +74,13 @@ export class StreamStateView_UserToDevice extends StreamStateView_IContent {
         }
     }
 
-    appendEvent(event: ParsedEvent, _emitter: TypedEmitter<EmittedEvents> | undefined): void {
-        check(event.event.payload.case === 'userToDevicePayload')
-        const payload: UserToDevicePayload = event.event.payload.value
+    appendEvent(
+        event: RemoteTimelineEvent,
+        _cleartext: string | undefined,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        check(event.remoteEvent.event.payload.case === 'userToDevicePayload')
+        const payload: UserToDevicePayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -83,7 +91,7 @@ export class StreamStateView_UserToDevice extends StreamStateView_IContent {
                 }
                 break
             case 'ack':
-                this.updateDeviceSummary(event, payload.content.value)
+                this.updateDeviceSummary(event.remoteEvent, payload.content.value)
                 break
             case undefined:
                 break

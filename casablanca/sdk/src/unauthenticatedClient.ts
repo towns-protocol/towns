@@ -42,7 +42,8 @@ export class UnauthenticatedClient {
                 snapshot,
                 prevSnapshotMiniblockNum,
             )
-            streamView.initialize(streamAndCookie, snapshot, miniblocks, undefined)
+
+            streamView.initialize(streamAndCookie, snapshot, miniblocks, undefined, undefined)
             return streamView
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)

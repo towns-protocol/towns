@@ -11,7 +11,6 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     readonly clientEmitter: TypedEmitter<EmittedEvents>
     readonly logEmitFromStream: DLogger
     readonly view: StreamStateView
-    readonly foreignUserStream: boolean
 
     constructor(
         userId: string,
@@ -20,13 +19,11 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         prevSnapshotMiniblockNum: bigint,
         clientEmitter: TypedEmitter<EmittedEvents>,
         logEmitFromStream: DLogger,
-        foreignUserStream?: boolean,
     ) {
         super()
         this.clientEmitter = clientEmitter
         this.logEmitFromStream = logEmitFromStream
         this.view = new StreamStateView(userId, streamId, snapshot, prevSnapshotMiniblockNum)
-        this.foreignUserStream = foreignUserStream ?? false
     }
 
     get streamId(): string {
@@ -41,16 +38,24 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         streamAndCookie: ParsedStreamAndCookie,
         snapshot: Snapshot,
         miniblocks: ParsedMiniblock[],
+        cleartexts: Record<string, string> | undefined,
     ): void {
-        this.view.initialize(streamAndCookie, snapshot, miniblocks, this)
+        this.view.initialize(streamAndCookie, snapshot, miniblocks, cleartexts, this)
     }
 
-    appendEvents(streamAndCookie: ParsedStreamAndCookie): void {
-        this.view.appendEvents(streamAndCookie, this)
+    appendEvents(
+        streamAndCookie: ParsedStreamAndCookie,
+        cleartexts: Record<string, string> | undefined,
+    ): void {
+        this.view.appendEvents(streamAndCookie, cleartexts, this)
     }
 
-    prependEvents(miniblocks: ParsedMiniblock[], terminus: boolean) {
-        this.view.prependEvents(miniblocks, terminus, this)
+    prependEvents(
+        miniblocks: ParsedMiniblock[],
+        cleartexts: Record<string, string> | undefined,
+        terminus: boolean,
+    ) {
+        this.view.prependEvents(miniblocks, cleartexts, terminus, this)
     }
 
     emit<E extends keyof EmittedEvents>(event: E, ...args: Parameters<EmittedEvents[E]>): boolean {
