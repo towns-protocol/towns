@@ -28,6 +28,7 @@ describe('util.test', () => {
         try {
             r = await waitFor(() => {
                 expect(i).toEqual(4)
+                return i
             })
         } catch (err: any) {
             const errorMsg = stripAnsiColors(String(err))
@@ -35,7 +36,6 @@ describe('util.test', () => {
                 'Error: expect(received).toEqual(expected) // deep equality\n\nExpected: 4\nReceived: 0',
             )
         }
-
         expect(r).toBeUndefined()
     })
 

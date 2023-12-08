@@ -246,7 +246,7 @@ export function waitFor<T>(
     callback: (() => T) | (() => Promise<T>),
     options: { timeoutMS: number } = { timeoutMS: 5000 },
 ): Promise<T | undefined> {
-    const errorContext: Error = new Error(
+    const timeoutContext: Error = new Error(
         'waitFor timed out after ' + options.timeoutMS.toString() + 'ms',
     )
     return new Promise((resolve, reject) => {
@@ -259,14 +259,14 @@ export function waitFor<T>(
         function onDone(result?: T) {
             clearInterval(intervalId)
             clearInterval(timeoutId)
-            if (result) {
+            if (result || promiseStatus === 'resolved') {
                 resolve(result)
             } else {
                 reject(lastError)
             }
         }
         function onTimeout() {
-            lastError = lastError ?? errorContext
+            lastError = lastError ?? timeoutContext
             onDone()
         }
         function checkCallback() {
@@ -282,14 +282,17 @@ export function waitFor<T>(
                         },
                         (err) => {
                             promiseStatus = 'rejected'
-                            lastError = err
+                            // splat the error to get a stack trace, i don't know why this works
+                            lastError = {
+                                ...err,
+                            }
                         },
                     )
                 } else {
                     promiseStatus = 'resolved'
                     resolve(result)
                 }
-            } catch (err) {
+            } catch (err: any) {
                 lastError = err
             }
         }
