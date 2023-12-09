@@ -627,7 +627,7 @@ export class ZionClient implements EntitlementsDelegate {
         return Promise.any(allPromises).catch(() => false)
     }
 
-    private async isWalletEntitled(
+    public async isWalletEntitled(
         spaceId: string | undefined,
         channelId: string | undefined,
         wallet: string,
@@ -970,27 +970,26 @@ export class ZionClient implements EntitlementsDelegate {
      * - mints membership if needed
      * - joins the space
      *************************************************/
-    public async joinTown(spaceId: RoomIdentifier, signer: ethers.Signer | undefined) {
-        if (!signer) {
-            throw new SignerUndefinedError()
-        }
-
-        const wallet = await signer.getAddress()
-        console.log('[joinTown] getAddress', wallet)
-
-        try {
-            if (await this.spaceDapp.hasTownMembership(spaceId.networkId, wallet)) {
-                return await this.joinRoom(spaceId)
-            }
-        } catch (error) {
-            const decodeError = this.getDecodedErrorForSpaceFactory(spaceId.networkId)
-            console.error('[joinTown] hasTownMembership failed', decodeError)
-            throw new Error(decodeError.message)
-        }
+    public async joinTown(spaceId: RoomIdentifier, signer: ethers.Signer) {
         console.log('[joinTown] minting membership')
 
-        await this.mintMembershipTransaction(spaceId, signer)
-        console.log('[joinTown] minted membership')
+        try {
+            await this.mintMembershipTransaction(spaceId, signer)
+            console.log('[joinTown] minted membership')
+        } catch (error: unknown) {
+            if (
+                error &&
+                typeof error === 'object' &&
+                'name' in error &&
+                typeof error.name === 'string' &&
+                error.name.match('Membership__AlreadyMember')
+            ) {
+                console.log('[joinTown] already member')
+            } else {
+                console.error('[joinTown] mint membership failed', error)
+                throw error
+            }
+        }
 
         const room = await this.joinRoom(spaceId)
         console.log('[joinTown] room', room)
@@ -1000,22 +999,57 @@ export class ZionClient implements EntitlementsDelegate {
     /************************************************
      * mintMembershipTransaction
      *************************************************/
-    public async mintMembershipTransaction(
-        spaceId: RoomIdentifier,
-        signer: ethers.Signer | undefined,
-    ) {
-        if (!signer) {
-            throw new SignerUndefinedError()
-        }
-        const wallet = await signer.getAddress()
+    public async mintMembershipTransaction(spaceId: RoomIdentifier, signer: ethers.Signer) {
+        console.log('[mintMembershipTransaction] start')
 
-        console.log('[mintMembershipTransaction] getAddress', wallet)
-
+        const rootWallet = (await signer?.getAddress()) ?? ''
         try {
-            const transaction = await this.spaceDapp.joinTown(spaceId.networkId, wallet, signer)
-            console.log(`[mintMembershipTransaction] transaction created`, transaction)
+            // If any of the linked wallets are entitled, we can join the room
+            // get linked wallets includes the root wallet
+            const wallets = await this.getLinkedWallets(rootWallet)
+            const allPromises = wallets.map(async (wallet) => {
+                const isEntitled = await this.isEntitled(
+                    spaceId.networkId,
+                    undefined,
+                    wallet,
+                    Permission.JoinTown,
+                )
+                if (isEntitled) {
+                    return wallet
+                } else {
+                    throw new Error('not entitled')
+                }
+            })
+            allPromises.push(
+                (async () => {
+                    const isEntitled = await this.isEntitled(
+                        spaceId.networkId,
+                        undefined,
+                        rootWallet,
+                        Permission.JoinTown,
+                    )
+                    if (isEntitled) {
+                        return rootWallet
+                    } else {
+                        throw new Error('not entitled')
+                    }
+                })(),
+            )
+            // This will throw an AggregateError if none of the wallets are entitled
+            const entitledWallet = await Promise.any(allPromises)
+
+            const transaction = await this.spaceDapp.joinTown(
+                spaceId.networkId,
+                entitledWallet,
+                signer,
+            )
             await transaction.wait()
         } catch (error) {
+            if (error instanceof AggregateError) {
+                const err = new Error('execution reverted')
+                err.name = 'Entitlement__NotAllowed'
+                throw err
+            }
             console.error('[mintMembershipTransaction] failed', error)
             const decodeError = await this.getDecodedErrorForSpace(spaceId.networkId, error)
             console.error('[mintMembershipAndJoinRoom] failed', decodeError)

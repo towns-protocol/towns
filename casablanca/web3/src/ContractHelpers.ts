@@ -69,18 +69,18 @@ export function balanceOfMockNFT(
 
 export const foundryMockNftAddress = getContractsInfo(31337).mockErc721aAddress
 
-export function getMemberNftAddress(chainId: number): string | null {
+export function getTestGatingNftAddress(chainId: number): string | null {
     const contractInfo = getContractsInfo(chainId)
     if (!contractInfo) {
-        throw new Error(`Contract info for chainId ${chainId} is not found.`)
+        throw new Error(`Contract info testGatingNFT for chainId ${chainId} is not found.`)
     }
-    return contractInfo.memberTokenAddress ?? null
+    return contractInfo.testGatingTokenAddress ?? null
 }
 
 export function getPioneerNftAddress(chainId: number): string {
     const contractInfo = getContractsInfo(chainId)
     if (!contractInfo) {
-        throw new Error(`Contract info for chainId ${chainId} is not found.`)
+        throw new Error(`Contract info for PrioneerNFT chainId ${chainId} is not found.`)
     }
     return contractInfo.pioneerTokenAddress
 }

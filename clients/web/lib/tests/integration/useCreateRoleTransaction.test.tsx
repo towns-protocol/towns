@@ -22,7 +22,7 @@ import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import {
     createExternalTokenStruct,
-    getMemberNftAddress,
+    getTestGatingNftAddress,
     BasicRoleInfo,
     Permission,
     createMembershipStruct,
@@ -47,9 +47,9 @@ describe('useCreateRoleTransaction', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const memberNftAddress = getMemberNftAddress(chainId)
-        if (!memberNftAddress) {
-            throw new Error('memberNftAddress is undefined')
+        const testGatingNftAddress = getTestGatingNftAddress(chainId)
+        if (!testGatingNftAddress) {
+            throw new Error('testGatingNftAddress is undefined')
         }
         // create a view for alice
         // make sure alice has some funds
@@ -64,7 +64,7 @@ describe('useCreateRoleTransaction', () => {
                         spaceName={spaceName}
                         roleName={roleName}
                         permissions={permissions}
-                        councilNftAddress={memberNftAddress}
+                        councilNftAddress={testGatingNftAddress}
                         newRolePermissions={moderatorPermissions}
                         newRoleName={moderatorRoleName}
                         newRoleTokens={moderatorTokens}
@@ -79,7 +79,7 @@ describe('useCreateRoleTransaction', () => {
             () => expect(clientRunning).toHaveTextContent('true'),
             TestConstants.DecaDefaultWaitForTimeout,
         )
-        if (!memberNftAddress) {
+        if (!testGatingNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements
@@ -116,7 +116,7 @@ describe('useCreateRoleTransaction', () => {
         // verify the moderator user exists
         await assertUsers(rolesElement, moderatorRoleName, moderatorUsers)
         // verify the council token entitlement is not present
-        assertNoNft(rolesElement, moderatorRoleName, memberNftAddress)
+        assertNoNft(rolesElement, moderatorRoleName, testGatingNftAddress)
     }) // end test
 }) // end describe
 

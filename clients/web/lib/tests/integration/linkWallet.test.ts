@@ -2,8 +2,9 @@
  * @group casablanca
  */
 import { Wallet } from 'ethers'
-import { registerAndStartClients } from './helpers/TestUtils'
+import { createTestSpaceGatedByTownAndZionNfts, registerAndStartClients } from './helpers/TestUtils'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { Permission } from '@river/web3'
 describe('Link Wallet', () => {
     test('link wallet', async () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
@@ -61,6 +62,48 @@ describe('Link Wallet', () => {
         // check that the wallet is linked
         const bob_wallets = await bob.getLinkedWallets(bobAddress)
         expect(bob_wallets).toContain(await metamaskWallet.getAddress())
+    })
+    test('link join wallet', async () => {
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        const metamaskWallet = await generateNewWallet()
+
+        const tx_link = await bob.linkWallet(bob.provider.wallet, metamaskWallet)
+        if (tx_link.transaction?.hash) {
+            await alice.opts.web3Provider?.waitForTransaction(tx_link.transaction?.hash)
+        }
+        expect(tx_link.error).toBeUndefined()
+        expect(tx_link.transaction?.hash).toBeDefined()
+
+        const bobAddress = bob.getUserId()
+        await alice.fundWallet()
+        await bob.fundWallet()
+
+        // check that the wallet is linked
+        const wallets = await bob.getLinkedWallets(bobAddress!)
+        expect(wallets).toContain(await metamaskWallet.getAddress())
+
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])
+
+        const joinTx = await alice.spaceDapp.joinTown(
+            spaceId!.networkId,
+            metamaskWallet.address,
+            alice.wallet,
+        )
+
+        if (joinTx?.hash) {
+            await alice.opts.web3Provider?.waitForTransaction(joinTx?.hash)
+        }
+
+        const isEntitledToSpace = await bob.isEntitled(
+            spaceId!.networkId,
+            undefined,
+            bob.wallet.address,
+            Permission.Read,
+        )
+        expect(isEntitledToSpace).toBeTruthy()
     })
 })
 

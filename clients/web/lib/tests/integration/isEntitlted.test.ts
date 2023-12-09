@@ -14,7 +14,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { getAccountAddress } from '../../src/types/user-identifier'
 import {
     createExternalTokenStruct,
-    getMemberNftAddress,
+    getTestGatingNftAddress,
     Permission,
     TokenEntitlementDataTypes,
 } from '@river/web3'
@@ -88,8 +88,12 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         )
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
-        const memberNftAddress = getMemberNftAddress(alice.chainId)
-        const tokens = createExternalTokenStruct([memberNftAddress!])
+        const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
+        if (!testGatingNftAddress) {
+            throw new Error('testGatingNftAddress is undefined')
+        }
+
+        const tokens = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
@@ -125,8 +129,12 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
-        const memberNftAddress = getMemberNftAddress(alice.chainId)
-        const tokens = createExternalTokenStruct([memberNftAddress!])
+        const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
+        if (!testGatingNftAddress) {
+            throw new Error('testGatingNftAddress is undefined')
+        }
+
+        const tokens = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
@@ -242,8 +250,12 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
-        const memberNftAddress = getMemberNftAddress(alice.chainId)
-        const tokens = createExternalTokenStruct([memberNftAddress!])
+        const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
+        if (!testGatingNftAddress) {
+            throw new Error('testGatingNftAddress is undefined')
+        }
+
+        const tokens = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
@@ -289,8 +301,11 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
-        const memberNftAddress = getMemberNftAddress(alice.chainId)
-        const tokens = createExternalTokenStruct([memberNftAddress!])
+        const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
+        if (!testGatingNftAddress) {
+            throw new Error('testGatingNftAddress is undefined')
+        }
+        const tokens = createExternalTokenStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(
@@ -340,7 +355,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
-        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = [] // createExternalTokenStruct([memberNftAddress!])
+        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = [] // createExternalTokenStruct([testGatingNftAddress!])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(

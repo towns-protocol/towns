@@ -3,7 +3,7 @@
 import { ethers } from 'ethers'
 import { waitForOptions } from '@testing-library/react'
 import { getJsonProvider, parseOptInt } from './TestUtils'
-import { MemberNFT } from '@river/web3'
+import { TestGatingNFT } from '@river/web3'
 
 export class TestConstants {
     public static readonly EveryoneAddress = '0x0000000000000000000000000000000000000001'
@@ -21,8 +21,8 @@ export class TestConstants {
             const wallet = await this.getWalletWithoutNft()
             const { provider } = wallet
 
-            const memberNft = new MemberNFT(31337, provider, wallet)
-            await memberNft.publicMint(wallet.address)
+            const testGatingNft = new TestGatingNFT(31337, provider, wallet)
+            await testGatingNft.publicMint(wallet.address)
 
             return wallet
         } catch (e) {

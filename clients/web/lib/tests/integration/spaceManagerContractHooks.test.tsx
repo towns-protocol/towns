@@ -19,7 +19,7 @@ import { makeUniqueName } from 'use-zion-client/tests/integration/helpers/TestUt
 import { useCreateSpaceTransaction } from 'use-zion-client/src/hooks/use-create-space-transaction'
 import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
 import { useZionClient } from 'use-zion-client/src/hooks/use-zion-client'
-import { createMembershipStruct, getMemberNftAddress, Permission } from '@river/web3'
+import { createMembershipStruct, getTestGatingNftAddress, Permission } from '@river/web3'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -38,7 +38,7 @@ describe('spaceManagerContractHooks', () => {
         const TestComponent = () => {
             // basic space
             const { chainId } = useZionClient()
-            const zionTokenAddress = chainId ? getMemberNftAddress(chainId) : undefined
+            const zionTokenAddress = chainId ? getTestGatingNftAddress(chainId) : undefined
             const spaceTransaction = useCreateSpaceTransaction()
             const { createSpaceTransactionWithRole } = spaceTransaction
             // spaces

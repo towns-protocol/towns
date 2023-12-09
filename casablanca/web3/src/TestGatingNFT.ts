@@ -1,9 +1,9 @@
 import { ethers, BigNumber } from 'ethers'
 import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 
-import { MemberNFTShim } from './v3/MemberNFTShim'
+import { TestGatingNFTShim } from './v3/TestGatingNFTShim'
 
-export interface MemberNFTContractState {
+export interface TestGatingNFTContractState {
     contractBalance: BigNumber
     mintReward: BigNumber
     contractAddress: string
@@ -11,16 +11,16 @@ export interface MemberNFTContractState {
 }
 // jterzis note 10/2023: Member.sol contract has been deprecated and so this class is no longer used
 // in new network environments.
-export class MemberNFT {
+export class TestGatingNFT {
     private readonly contractsInfo: IStaticContractsInfo
-    public readonly memberNFTShim: MemberNFTShim
+    public readonly testGatingNFTShim: TestGatingNFTShim
     private readonly signer: ethers.Signer
 
     constructor(chainId: number, provider: ethers.providers.Provider, signer: ethers.Signer) {
         this.signer = signer
         this.contractsInfo = getContractsInfo(chainId)
-        this.memberNFTShim = new MemberNFTShim(
-            this.contractsInfo.memberTokenAddress ?? '',
+        this.testGatingNFTShim = new TestGatingNFTShim(
+            this.contractsInfo.testGatingTokenAddress ?? '',
             chainId,
             provider,
         )
@@ -28,8 +28,8 @@ export class MemberNFT {
 
     public async publicMint(address: string) {
         try {
-            const mintPrice = await this.memberNFTShim.read.MINT_PRICE()
-            const receipt = await this.memberNFTShim
+            const mintPrice = await this.testGatingNFTShim.read.MINT_PRICE()
+            const receipt = await this.testGatingNFTShim
                 .write(this.signer)
                 .publicMint(address, { value: mintPrice })
             await receipt.wait()

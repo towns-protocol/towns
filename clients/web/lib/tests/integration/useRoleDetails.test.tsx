@@ -19,7 +19,12 @@ import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
-import { getMemberNftAddress, BasicRoleInfo, Permission, createMembershipStruct } from '@river/web3'
+import {
+    getTestGatingNftAddress,
+    BasicRoleInfo,
+    Permission,
+    createMembershipStruct,
+} from '@river/web3'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 /**
  * This test suite tests the useRoles hook.
@@ -35,9 +40,9 @@ describe('useRoleDetails', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const memberNftAddress = getMemberNftAddress(chainId)
-        if (!memberNftAddress) {
-            throw new Error('memberNftAddress is undefined')
+        const testGatingNftAddress = getTestGatingNftAddress(chainId)
+        if (!testGatingNftAddress) {
+            throw new Error('testGatingNftAddress is undefined')
         }
         // create a view for alice
         // make sure alice has some funds
@@ -52,7 +57,7 @@ describe('useRoleDetails', () => {
                         spaceName={spaceName}
                         roleName={roleName}
                         permissions={permissions}
-                        councilNftAddress={memberNftAddress}
+                        councilNftAddress={testGatingNftAddress}
                     />
                 </>
             </ZionTestApp>,
@@ -60,7 +65,7 @@ describe('useRoleDetails', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
-        if (!memberNftAddress) {
+        if (!testGatingNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements
@@ -100,7 +105,7 @@ describe('useRoleDetails', () => {
         // verify the permissions
         await assertPermissions(rolesElement, roleName, permissions)
         // verify the token entitlement on the minter role - gated by the member nft address
-        await assertNft(rolesElement, 'Minter', memberNftAddress, 1)
+        await assertNft(rolesElement, 'Minter', testGatingNftAddress, 1)
         // verify the token entitlement on the member role - gated by the space membership token address
         await assertNft(rolesElement, roleName, membershipTokenAddress.textContent, 1)
     }) // end test

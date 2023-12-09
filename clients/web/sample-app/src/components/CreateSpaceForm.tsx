@@ -11,7 +11,7 @@ import {
     useWeb3Context,
     useZionClient,
 } from 'use-zion-client'
-import { Permission, getMemberNftAddress, getPioneerNftAddress, mintMockNFT } from '@river/web3'
+import { Permission, getPioneerNftAddress, getTestGatingNftAddress, mintMockNFT } from '@river/web3'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ethers } from 'ethers'
 import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
@@ -85,7 +85,7 @@ export const CreateSpaceForm = (props: Props) => {
 
     const councilNftAddress = useMemo(() => {
         if (chainId) {
-            return getMemberNftAddress(chainId)
+            return getTestGatingNftAddress(chainId)
         }
     }, [chainId])
 

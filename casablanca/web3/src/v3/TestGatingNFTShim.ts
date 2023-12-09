@@ -13,7 +13,7 @@ import { ethers } from 'ethers'
 import LocalhostAbi from '@towns/generated/localhost/abis/Member.abi.json' assert { type: 'json' }
 import BaseGoerliAbi from '@towns/generated/base_goerli/abis/Member.abi.json' assert { type: 'json' }
 
-export class MemberNFTShim extends BaseContractShim<
+export class TestGatingNFTShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,

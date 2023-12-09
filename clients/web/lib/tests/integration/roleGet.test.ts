@@ -14,7 +14,7 @@ import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
 import {
     createExternalTokenStruct,
-    getMemberNftAddress,
+    getTestGatingNftAddress,
     getPioneerNftAddress,
     Permission,
     RoleDetails,
@@ -138,7 +138,7 @@ describe('get role details', () => {
         const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
             spaceId.networkId,
         )
-        const councilNftAddress = getMemberNftAddress(alice.chainId)
+        const councilNftAddress = getTestGatingNftAddress(alice.chainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
@@ -228,7 +228,7 @@ describe('get role details', () => {
         }
         // create new role in space
         const permissions = [Permission.Read, Permission.Write, Permission.Redact]
-        const councilNftAddress = getMemberNftAddress(alice.chainId)
+        const councilNftAddress = getTestGatingNftAddress(alice.chainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }

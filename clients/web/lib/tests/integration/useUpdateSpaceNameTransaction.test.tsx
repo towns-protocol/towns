@@ -17,7 +17,7 @@ import { useUpdateSpaceNameTransaction } from '../../src/hooks/use-update-space-
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
-import { createMembershipStruct, getMemberNftAddress } from '@river/web3'
+import { createMembershipStruct, getTestGatingNftAddress } from '@river/web3'
 import { useSpaceName } from '../../src/hooks/use-space-data'
 
 /**
@@ -33,7 +33,7 @@ describe('useUpdateSpaceNameTransaction', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const memberNftAddress = getMemberNftAddress(chainId)
+        const testGatingNftAddress = getTestGatingNftAddress(chainId)
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()
@@ -50,7 +50,7 @@ describe('useUpdateSpaceNameTransaction', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
-        if (!memberNftAddress) {
+        if (!testGatingNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements

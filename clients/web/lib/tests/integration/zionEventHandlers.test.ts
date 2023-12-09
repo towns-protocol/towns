@@ -12,7 +12,7 @@ import { waitFor } from '@testing-library/dom'
 import { sleep } from '../../src/utils/zion-utils'
 import {
     createExternalTokenStruct,
-    getMemberNftAddress,
+    getTestGatingNftAddress,
     ITownArchitectBase,
     Permission,
 } from '@river/web3'
@@ -39,13 +39,13 @@ describe('Zion event handlers test', () => {
         const createSpaceInfo = {
             name: alice.makeUniqueName(),
         }
-        const memberNftAddress = getMemberNftAddress(alice.chainId)
-        if (!memberNftAddress) {
-            throw new Error('memberNftAddress is undefined')
+        const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
+        if (!testGatingNftAddress) {
+            throw new Error('testGatingNftAddress is undefined')
         }
-        expect(memberNftAddress).toBeDefined()
-        expect(memberNftAddress).not.toBe('')
-        const tokens = createExternalTokenStruct([memberNftAddress])
+        expect(testGatingNftAddress).toBeDefined()
+        expect(testGatingNftAddress).not.toBe('')
+        const tokens = createExternalTokenStruct([testGatingNftAddress])
         const membership: ITownArchitectBase.MembershipStruct = {
             settings: {
                 name: 'Member',

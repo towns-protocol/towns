@@ -91,7 +91,7 @@ export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
     const [joinComplete, setJoinComplete] = React.useState(false)
     const joiningRooms = useRef(false)
     useEffect(() => {
-        if (clientRunning && !joiningRooms.current) {
+        if (clientRunning && !joiningRooms.current && signer) {
             joiningRooms.current = true
             void (async () => {
                 await joinTown(spaceId, signer)
@@ -123,7 +123,7 @@ export const RegisterAndJoin = (props: {
     const { signer } = useWeb3Context()
 
     useEffect(() => {
-        if (clientRunning && !didExecute.current) {
+        if (clientRunning && !didExecute.current && signer) {
             setJoinStatus((prev) => ({ ...prev, ['executing']: true }))
             didExecute.current = true
             void (async () => {

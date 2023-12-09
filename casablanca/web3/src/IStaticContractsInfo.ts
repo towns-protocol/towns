@@ -16,7 +16,7 @@ export interface IStaticContractsInfo {
     townFactoryAddress: Address
     townOwnerAddress: Address
     mockErc721aAddress: Address
-    memberTokenAddress?: Address
+    testGatingTokenAddress?: Address // For tesing token gating scenarios
     pioneerTokenAddress: Address
     walletLinkAddress: Address
 }
@@ -25,7 +25,7 @@ const localhostContractsInfo: IStaticContractsInfo = {
     townFactoryAddress: LocalhostTownFactoryAddress.address as Address,
     townOwnerAddress: LocalhostTownOwnerAddress.address as Address,
     mockErc721aAddress: LocalhostMockNFTAddress.address as Address,
-    memberTokenAddress: LocalhostMemberAddress.address as Address,
+    testGatingTokenAddress: LocalhostMemberAddress.address as Address,
     pioneerTokenAddress: LocalhostPioneerAddress.address as Address,
     walletLinkAddress: LocalhostWalletLinkAddress.address as Address,
 }

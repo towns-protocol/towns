@@ -16,7 +16,7 @@ import {
     Permission,
     createExternalTokenStruct,
     getFilteredRolesFromSpace,
-    getMemberNftAddress,
+    getTestGatingNftAddress,
     ITownArchitectBase,
 } from '@river/web3'
 
@@ -145,8 +145,8 @@ export async function createTestSpaceGatedByTownAndZionNfts(
         throw new Error('client.walletAddress is undefined')
     }
 
-    const memberNftAddress = getMemberNftAddress(client.chainId)
-    const tokens = createExternalTokenStruct([memberNftAddress ?? ''])
+    const testGatingNftAddress = getTestGatingNftAddress(client.chainId)
+    const tokens = createExternalTokenStruct([testGatingNftAddress ?? ''])
 
     console.log('createTestSpaceGatedByTownAndZionNfts tokens', tokens)
 

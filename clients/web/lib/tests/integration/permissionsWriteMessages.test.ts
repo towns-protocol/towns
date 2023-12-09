@@ -11,7 +11,7 @@ import {
     createTestSpaceGatedByTownNft,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { Permission, createExternalTokenStruct, getMemberNftAddress } from '@river/web3'
+import { Permission, createExternalTokenStruct, getTestGatingNftAddress } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 
@@ -36,7 +36,7 @@ describe('write messages', () => {
         const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
             spaceId.networkId,
         )
-        const councilNftAddress = getMemberNftAddress(alice.chainId)
+        const councilNftAddress = getTestGatingNftAddress(alice.chainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }

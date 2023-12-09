@@ -25,6 +25,8 @@ const config: JestConfigWithTsJest = {
     modulePathIgnorePatterns: ['/dist/'],
     testPathIgnorePatterns: ['/dist/', '/node_modules/'],
     testTimeout: 60000,
+    coverageProvider: 'v8',
+    coverageReporters: ['json', 'html'],
 }
 
 export default config

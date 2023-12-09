@@ -20,7 +20,7 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateChannelTransaction } from '../../src/hooks/use-update-channel-transaction'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import { createMembershipStruct, getMemberNftAddress, Permission } from '@river/web3'
+import { createMembershipStruct, getTestGatingNftAddress, Permission } from '@river/web3'
 /**
  * This test suite tests the useRoles hook.
  */
@@ -40,7 +40,7 @@ describe('useUpdateChannelTransaction', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const memberNftAddress = getMemberNftAddress(chainId)
+        const testGatingNftAddress = getTestGatingNftAddress(chainId)
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()
@@ -54,7 +54,7 @@ describe('useUpdateChannelTransaction', () => {
                         spaceName={spaceName}
                         spaceRoleName={spaceRoleName}
                         permissions={permissions}
-                        nftAddress={memberNftAddress}
+                        nftAddress={testGatingNftAddress}
                         channelName={channelName}
                         channelTopic={channelTopic}
                         updatedChannelName={updatedChannelName}
@@ -66,7 +66,7 @@ describe('useUpdateChannelTransaction', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
-        if (!memberNftAddress) {
+        if (!testGatingNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements

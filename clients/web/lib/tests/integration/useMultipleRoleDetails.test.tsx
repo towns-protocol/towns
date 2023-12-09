@@ -16,7 +16,12 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
-import { getMemberNftAddress, BasicRoleInfo, Permission, createMembershipStruct } from '@river/web3'
+import {
+    getTestGatingNftAddress,
+    BasicRoleInfo,
+    Permission,
+    createMembershipStruct,
+} from '@river/web3'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 
 /**
@@ -38,8 +43,8 @@ describe('useRoleDetails', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const memberNftAddress = getMemberNftAddress(chainId)
-        if (!memberNftAddress) {
+        const testGatingNftAddress = getTestGatingNftAddress(chainId)
+        if (!testGatingNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         // create a view for alice
@@ -55,7 +60,7 @@ describe('useRoleDetails', () => {
                         spaceNames={[spaceNameA, spaceNameB]}
                         roleName={[roleNameA, roleNameB]}
                         permissions={[permissionsA, permissionsB]}
-                        councilNftAddress={memberNftAddress}
+                        councilNftAddress={testGatingNftAddress}
                     />
                 </>
             </ZionTestApp>,
@@ -63,7 +68,7 @@ describe('useRoleDetails', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
-        if (!memberNftAddress) {
+        if (!testGatingNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements

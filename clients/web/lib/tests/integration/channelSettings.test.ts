@@ -32,7 +32,7 @@ describe('channel settings', () => {
         const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
             spaceId.networkId,
         )
-        // const memberNftAddress = getMemberNftAddress(alice.chainId)
+        // const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
         const memberRole: RoleEntitlements = {
             roleId: 3, // dummy
             name: 'Member',

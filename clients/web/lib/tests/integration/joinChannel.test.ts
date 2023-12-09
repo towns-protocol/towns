@@ -9,7 +9,7 @@ import {
     createTestSpaceGatedByTownAndZionNfts,
 } from './helpers/TestUtils'
 
-import { Permission, createExternalTokenStruct, getMemberNftAddress } from '@river/web3'
+import { Permission, createExternalTokenStruct, getTestGatingNftAddress } from '@river/web3'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { RoleIdentifier } from '../../src/types/web3-types'
@@ -27,14 +27,17 @@ test('create a public space and a public room, and have user join', async () => 
         Permission.Write,
     ])) as RoomIdentifier
 
-    const memberNftAddress = getMemberNftAddress(bob.chainId)
-    expect(memberNftAddress).toBeDefined()
-    const memberNftToken = createExternalTokenStruct([memberNftAddress!])[0]
+    const testGatingNftAddress = getTestGatingNftAddress(bob.chainId)
+    expect(testGatingNftAddress).toBeDefined()
+    if (!testGatingNftAddress) {
+        throw new Error('testGatingNftAddress is undefined')
+    }
+    const testGatingNftToken = createExternalTokenStruct([testGatingNftAddress])[0]
     const roleIdentifier: RoleIdentifier | undefined = await bob.createRole(
         spaceId.networkId,
         'newRoleName',
         [Permission.Read, Permission.Write],
-        [memberNftToken],
+        [testGatingNftToken],
         [],
     )
 

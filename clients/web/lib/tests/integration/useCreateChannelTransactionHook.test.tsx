@@ -22,7 +22,7 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useTransactionStore } from '../../src/store/use-transactions-store'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import { createMembershipStruct, getMemberNftAddress, Permission } from '@river/web3'
+import { createMembershipStruct, getTestGatingNftAddress, Permission } from '@river/web3'
 
 describe('useCreateChannelTransactionHook', () => {
     test('user can create channel', async () => {
@@ -32,8 +32,8 @@ describe('useCreateChannelTransactionHook', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const memberNftAddress = getMemberNftAddress(chainId)
-        if (!memberNftAddress) {
+        const testGatingNftAddress = getTestGatingNftAddress(chainId)
+        if (!testGatingNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         const spaceName = makeUniqueName('alice')
@@ -127,7 +127,7 @@ describe('useCreateChannelTransactionHook', () => {
                                 Permission.Write,
                                 Permission.AddRemoveChannels,
                             ],
-                            tokenAddresses: [memberNftAddress],
+                            tokenAddresses: [testGatingNftAddress],
                         }),
                     )
                 }

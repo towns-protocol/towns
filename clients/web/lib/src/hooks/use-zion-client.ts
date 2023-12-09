@@ -138,10 +138,7 @@ interface ZionClientImpl {
     leaveRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<void>
     logout: () => Promise<void>
     loginWithWalletToCasablanca: (statement: string) => Promise<void>
-    joinTown: (
-        spaceId: RoomIdentifier,
-        signer: ethers.Signer | undefined,
-    ) => Promise<Room | undefined>
+    joinTown: (spaceId: RoomIdentifier, signer: ethers.Signer) => Promise<Room | undefined>
     redactEvent: (roomId: RoomIdentifier, eventId: string, reason?: string) => Promise<void>
     registerWalletWithCasablanca: (statement: string) => Promise<void>
     resetFullyReadMarkers: () => void

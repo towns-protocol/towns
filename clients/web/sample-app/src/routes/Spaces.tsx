@@ -18,7 +18,7 @@ export const Spaces = () => {
     const { signer } = useWeb3Context()
 
     const onClickJoinSpace = useCallback(async () => {
-        if (spaceId) {
+        if (spaceId && signer) {
             await joinTown(spaceId, signer)
         } else {
             console.error('No spaceId')

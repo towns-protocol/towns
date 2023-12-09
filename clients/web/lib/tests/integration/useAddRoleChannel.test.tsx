@@ -23,7 +23,12 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { getMemberNftAddress, BasicRoleInfo, Permission, createMembershipStruct } from '@river/web3'
+import {
+    getTestGatingNftAddress,
+    BasicRoleInfo,
+    Permission,
+    createMembershipStruct,
+} from '@river/web3'
 
 /**
  * This test suite tests the useAddRolesToChannel hook.
@@ -41,7 +46,7 @@ describe('useAddRolesToChannel', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const memberNftAddress = getMemberNftAddress(chainId)
+        const testGatingNftAddress = getTestGatingNftAddress(chainId)
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()
@@ -54,7 +59,7 @@ describe('useAddRolesToChannel', () => {
                         channelName={channelName}
                         roleName={roleName}
                         permissions={permissions}
-                        councilNftAddress={memberNftAddress}
+                        councilNftAddress={testGatingNftAddress}
                     />
                 </>
             </ZionTestApp>,
@@ -62,7 +67,7 @@ describe('useAddRolesToChannel', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
-        if (!memberNftAddress) {
+        if (!testGatingNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
 

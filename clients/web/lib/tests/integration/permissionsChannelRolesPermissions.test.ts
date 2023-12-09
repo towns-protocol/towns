@@ -13,7 +13,7 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { TestConstants } from './helpers/TestConstants'
-import { Permission, createExternalTokenStruct, getMemberNftAddress } from '@river/web3'
+import { Permission, createExternalTokenStruct, getTestGatingNftAddress } from '@river/web3'
 import { RoleIdentifier } from '../../src/types/web3-types'
 
 describe('channel with roles and permissions', () => {
@@ -89,16 +89,16 @@ describe('channel with roles and permissions', () => {
             Permission.Write,
         ])) as RoomIdentifier
 
-        const memberNftAddress = getMemberNftAddress(alice.chainId)
-        if (!memberNftAddress) {
-            throw new Error('memberNftAddress is undefined')
+        const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
+        if (!testGatingNftAddress) {
+            throw new Error('testGatingNftAddress is undefined')
         }
-        const memberNftToken = createExternalTokenStruct([memberNftAddress])[0]
+        const testGatingNftToken = createExternalTokenStruct([testGatingNftAddress])[0]
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             spaceId.networkId,
             'newRoleName',
             [Permission.Read, Permission.Write],
-            [memberNftToken],
+            [testGatingNftToken],
             [],
         )
         if (!roleIdentifier) {

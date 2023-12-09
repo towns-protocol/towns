@@ -1,7 +1,7 @@
 import { AnimatePresence } from 'framer-motion'
 import uniqBy from 'lodash/uniqBy'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { getMemberNftAddress } from 'use-zion-client'
+import { getTestGatingNftAddress } from 'use-zion-client'
 import { Address } from 'wagmi'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { FadeIn, FadeInBox } from '@components/Transitions'
@@ -75,7 +75,7 @@ export function TokensList({
     singleContractAddress?: string
 }) {
     const { chainId } = useEnvironment()
-    const zionTokenAddress = useMemo(() => getMemberNftAddress(chainId), [chainId])
+    const zionTokenAddress = useMemo(() => getTestGatingNftAddress(chainId), [chainId])
     const showTokenSearch = !singleContractAddress
 
     const {

@@ -17,7 +17,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
 import {
     createExternalTokenStruct,
-    getMemberNftAddress,
+    getTestGatingNftAddress,
     Permission,
     TokenEntitlementDataTypes,
 } from '@river/web3'
@@ -42,7 +42,7 @@ describe('delete role', () => {
         }
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
-        const newNftAddress = getMemberNftAddress(alice.chainId)
+        const newNftAddress = getTestGatingNftAddress(alice.chainId)
         if (!newNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }

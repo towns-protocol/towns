@@ -23,7 +23,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import {
     createExternalTokenStruct,
-    getMemberNftAddress,
+    getTestGatingNftAddress,
     BasicRoleInfo,
     Permission,
     createMembershipStruct,
@@ -57,8 +57,8 @@ describe('useUpdateRoleTransaction', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const memberNftAddress = getMemberNftAddress(chainId)
-        if (!memberNftAddress) {
+        const testGatingNftAddress = getTestGatingNftAddress(chainId)
+        if (!testGatingNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         // create a view for alice
@@ -74,7 +74,7 @@ describe('useUpdateRoleTransaction', () => {
                         spaceName={spaceName}
                         roleName={roleName}
                         permissions={permissions}
-                        councilNftAddress={memberNftAddress}
+                        councilNftAddress={testGatingNftAddress}
                         newRolePermissions={moderatorPermissions}
                         newRoleName={moderatorRoleName}
                         newRoleTokens={moderatorTokens}
@@ -90,7 +90,7 @@ describe('useUpdateRoleTransaction', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
-        if (!memberNftAddress) {
+        if (!testGatingNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements
@@ -139,7 +139,7 @@ describe('useUpdateRoleTransaction', () => {
         // verify the moderator user has changed
         await assertUsers(rolesElement, moderatorRoleName, updatedModeratorUsers)
         // verify token entitlement has not changed
-        assertNoNft(rolesElement, moderatorRoleName, memberNftAddress)
+        assertNoNft(rolesElement, moderatorRoleName, testGatingNftAddress)
     }) // end test
 }) // end describe
 
