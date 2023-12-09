@@ -2,7 +2,7 @@ import {
   MentionRequestParams,
   ReplyToRequestParams,
 } from '../src/request-interfaces'
-import { createTestMocks, mockPreparedStatements } from './mock-utils'
+import { createTestMocks, mockDbStatements } from './mock-utils'
 
 import { NotificationType } from '../src/types'
 import { handleRequest } from '../src'
@@ -27,8 +27,10 @@ describe('tag-handlers', () => {
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const { insertIntoNotificationTag: mockStatement } =
-      mockPreparedStatements(DB)
+    const { insertIntoNotificationTag: mockStatement } = mockDbStatements(
+      DB,
+      {},
+    )
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 
@@ -70,8 +72,10 @@ describe('tag-handlers', () => {
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const { insertIntoNotificationTag: mockStatement } =
-      mockPreparedStatements(DB)
+    const { insertIntoNotificationTag: mockStatement } = mockDbStatements(
+      DB,
+      {},
+    )
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 

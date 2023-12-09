@@ -2,19 +2,13 @@ import {
   AddSubscriptionRequestParams,
   NotifyRequestParams,
 } from '../src/request-interfaces'
-import {
-  createRequest,
-  createTestMocks,
-  mockPreparedStatements,
-} from './mock-utils'
-import { jest } from '@jest/globals'
+import { createRequest, createTestMocks, mockDbStatements } from './mock-utils'
 
-import { MockProxy } from 'jest-mock-extended'
 import { NotificationType } from '../src/types'
-import { QueryResultsMutedUsers } from '../src/notify-users-handlers'
 import { WebPushSubscription } from '../src/web-push/web-push-types'
 import { createFakeWebPushSubscription } from './fake-data'
 import { handleRequest } from '../src'
+import { jest } from '@jest/globals'
 
 describe('notify-users-handlers', () => {
   test('/api/notify-users', async () => {
@@ -42,12 +36,12 @@ describe('notify-users-handlers', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(addParams),
     })
-    const { selectMutedUsers: mockStatement } = mockPreparedStatements(DB)
+    mockDbStatements(DB, {
+      spaceId,
+      channelId,
+    })
     // add the subscription
     await handleRequest(addRequest, env, ctx)
-    // mock the query results for the user settings
-    mockMutedUsers(mockStatement, [])
-    const bindSpy = jest.spyOn(mockStatement, 'bind')
 
     // Act
     // create the request to notify the user
@@ -87,13 +81,11 @@ describe('notify-users-handlers', () => {
     const response = await handleRequest(notifyRequest, env, ctx)
 
     // Assert
-    // verify that arguments are binded to the sql statement in the expected order.
-    expect(bindSpy).toBeCalledWith(spaceId, channelId)
     expect(response.status).toBe(200)
     const notificationsSentCount = await response.text()
     console.log('notificationsSentCount', notificationsSentCount)
-    // one user is notified
-    expect(notificationsSentCount).toBe('1')
+    // by default, no users receive notifications unless they are mentioned, or replied to.
+    expect(notificationsSentCount).toBe('0')
   })
 
   test('/api/notify-users notification is muted', async () => {
@@ -121,12 +113,16 @@ describe('notify-users-handlers', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(addParams),
     })
-    const { selectMutedUsers: mockStatement } = mockPreparedStatements(DB)
-    // add the subscription
-    await handleRequest(addRequest, env, ctx)
     // mock the query results for the user settings
     // notification is muted. No users to notify.
-    mockMutedUsers(mockStatement, [recipient])
+    const { selectMutedUsers: mockStatement } = mockDbStatements(DB, {
+      spaceId,
+      channelId,
+      replyToUsers: [recipient],
+      mutedUsers: [recipient],
+    })
+    // add the subscription
+    await handleRequest(addRequest, env, ctx)
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 
     // Act
@@ -175,26 +171,166 @@ describe('notify-users-handlers', () => {
     // no users to notify
     expect(notificationsSentCount).toBe('0')
   })
-})
 
-function mockMutedUsers(
-  mockStatement: MockProxy<D1PreparedStatement>,
-  mutedUsers: string[],
-): MockProxy<D1PreparedStatement> {
-  const results: QueryResultsMutedUsers[] = []
-  mockStatement.bind.mockImplementation(() => {
-    mutedUsers.forEach((r) => {
-      results.push({
-        userId: r,
-        info: 'muted users',
-      })
+  test.skip('/api/notify-users for replyTo', async () => {
+    // Arrange
+    const fetchMock = getMiniflareFetchMock()
+    fetchMock.disableNetConnect()
+    const spaceId = `Town${Date.now()}`
+    const channelId = `!channelId${Date.now()}`
+    const sender = `0xAlice${Date.now()}`
+    const replyToUser = `0xBob${Date.now()}`
+    const subscriptionObject = createFakeWebPushSubscription()
+    const addParams: AddSubscriptionRequestParams = {
+      userId: sender,
+      subscriptionObject,
+    }
+    // create the request to add the push subscription
+    const {
+      request: addRequest,
+      env,
+      DB,
+      ctx,
+    } = createTestMocks({
+      route: '/api/add-subscription',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(addParams),
     })
-    return mockStatement
+    const { selectFromNotificationTag: mockStatement } = mockDbStatements(DB, {
+      spaceId,
+      channelId,
+      replyToUsers: [replyToUser],
+    })
+    // add the subscription
+    await handleRequest(addRequest, env, ctx)
+    const bindSpy = jest.spyOn(mockStatement, 'bind')
+
+    // Act
+    // create the request to notify the user
+    const payload = {
+      notificationType: NotificationType.NewMessage,
+      content: {
+        topic: channelId,
+        options: {
+          body: `ID: ${Math.floor(Math.random() * 100)}`,
+        },
+      },
+    }
+    const notifyParams: NotifyRequestParams = {
+      sender,
+      users: [replyToUser],
+      payload,
+      spaceId,
+      channelId,
+    }
+    // create the notification request
+    const notifyRequest = createRequest(env, {
+      route: '/api/notify-users',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(notifyParams),
+    })
+    // mock the response from the web push server
+    const fakeSubscription =
+      createFakeWebPushSubscription() as WebPushSubscription
+    const fakeServerUrl = new URL(fakeSubscription.endpoint)
+    const endpoint = fetchMock.get(fakeServerUrl.origin)
+    endpoint
+      .intercept({ method: 'POST', path: fakeServerUrl.pathname })
+      .reply(201, 'OK')
+
+    // send the notification request
+    const response = await handleRequest(notifyRequest, env, ctx)
+
+    // Assert
+    // verify that arguments are binded to the sql statement in the expected order.
+    expect(bindSpy).toBeCalledWith(channelId)
+    expect(response.status).toBe(200)
+    const notificationsSentCount = await response.text()
+    console.log('notificationsSentCount', notificationsSentCount)
+    // user notified
+    expect(notificationsSentCount).toBe('1')
   })
-  mockStatement.all.mockResolvedValue({
-    results: results as unknown as QueryResultsMutedUsers[][],
-    success: true,
-    meta: {},
+
+  test.skip('/api/notify-users for mention', async () => {
+    // Arrange
+    const fetchMock = getMiniflareFetchMock()
+    fetchMock.disableNetConnect()
+    const spaceId = `Town${Date.now()}`
+    const channelId = `!channelId${Date.now()}`
+    const sender = `0xAlice${Date.now()}`
+    const mentionUser = `0xBob${Date.now()}`
+    const subscriptionObject = createFakeWebPushSubscription()
+    const addParams: AddSubscriptionRequestParams = {
+      userId: sender,
+      subscriptionObject,
+    }
+    // create the request to add the push subscription
+    const {
+      request: addRequest,
+      env,
+      DB,
+      ctx,
+    } = createTestMocks({
+      route: '/api/add-subscription',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(addParams),
+    })
+    const { selectFromNotificationTag: mockStatement } = mockDbStatements(DB, {
+      spaceId,
+      channelId,
+      mentionUsers: [mentionUser],
+    })
+    // add the subscription
+    await handleRequest(addRequest, env, ctx)
+    const bindSpy = jest.spyOn(mockStatement, 'bind')
+
+    // Act
+    // create the request to notify the user
+    const payload = {
+      notificationType: NotificationType.NewMessage,
+      content: {
+        topic: channelId,
+        options: {
+          body: `ID: ${Math.floor(Math.random() * 100)}`,
+        },
+      },
+    }
+    const notifyParams: NotifyRequestParams = {
+      sender,
+      users: [mentionUser],
+      payload,
+      spaceId,
+      channelId,
+    }
+    // create the notification request
+    const notifyRequest = createRequest(env, {
+      route: '/api/notify-users',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(notifyParams),
+    })
+    // mock the response from the web push server
+    const fakeSubscription =
+      createFakeWebPushSubscription() as WebPushSubscription
+    const fakeServerUrl = new URL(fakeSubscription.endpoint)
+    const endpoint = fetchMock.get(fakeServerUrl.origin)
+    endpoint
+      .intercept({ method: 'POST', path: fakeServerUrl.pathname })
+      .reply(201, 'OK')
+
+    // send the notification request
+    const response = await handleRequest(notifyRequest, env, ctx)
+
+    // Assert
+    // verify that arguments are binded to the sql statement in the expected order.
+    expect(bindSpy).toBeCalledWith(channelId)
+    expect(response.status).toBe(200)
+    const notificationsSentCount = await response.text()
+    console.log('notificationsSentCount', notificationsSentCount)
+    // user notified
+    expect(notificationsSentCount).toBe('1')
   })
-  return mockStatement
-}
+})

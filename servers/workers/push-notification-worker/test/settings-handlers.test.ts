@@ -4,13 +4,12 @@ import {
   SaveSettingsRequestParams,
 } from '../src/request-interfaces'
 import {
-  Membership,
   Mute,
   UserSettings,
   UserSettingsChannel,
   UserSettingsSpace,
 } from '../src/types'
-import { createTestMocks, mockPreparedStatements } from './mock-utils'
+import { createTestMocks, mockDbStatements } from './mock-utils'
 
 import { handleRequest } from '../src'
 import { jest } from '@jest/globals'
@@ -19,19 +18,22 @@ describe('settings-handlers', () => {
   test('PUT /api/notification-settings -> saveSettings', async () => {
     // Arrange
     const userId = `0xAlice${Date.now()}`
+    const spaceId = `0xSpace${Date.now()}`
+    const channelId = `channel${Date.now()}`
     const spaceSettings: UserSettingsSpace = {
-      spaceId: `0xSpace${Date.now()}`,
-      spaceMembership: Membership.Joined,
+      spaceId,
       spaceMute: Mute.Default,
     }
     const channelSettings: UserSettingsChannel = {
-      spaceId: `0xSpace${Date.now()}`,
-      channelId: `0xChannel${Date.now()}`,
-      channelMembership: Membership.Joined,
+      spaceId,
+      channelId,
       channelMute: Mute.Default,
     }
     const userSettings: UserSettings = {
       userId,
+      directMessage: true,
+      mention: true,
+      replyTo: true,
       spaceSettings: [spaceSettings],
       channelSettings: [channelSettings],
     }
@@ -46,9 +48,16 @@ describe('settings-handlers', () => {
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const { insertIntoUserSettingsSpace, insertIntoUserSettingsChannel } =
-      mockPreparedStatements(DB)
+    const {
+      insertIntoUserSettings,
+      insertIntoUserSettingsSpace,
+      insertIntoUserSettingsChannel,
+    } = mockDbStatements(DB, {
+      spaceId,
+      channelId,
+    })
     const prepareSpy = jest.spyOn(DB, 'prepare')
+    const bindInsertSettingsSpy = jest.spyOn(insertIntoUserSettings, 'bind')
     const bindInsertSpaceSpy = jest.spyOn(insertIntoUserSettingsSpace, 'bind')
     const bindInsertChannelSpy = jest.spyOn(
       insertIntoUserSettingsChannel,
@@ -61,23 +70,30 @@ describe('settings-handlers', () => {
     // Assert
     expect(response.status).toBe(204)
     expect(prepareSpy).toBeCalledWith(
-      expect.stringContaining(
-        'INSERT INTO UserSettingsSpace' ||
-          expect.stringContaining('INSERT INTO UserSettingsChannel'),
-      ),
+      expect.stringContaining('INSERT INTO UserSettings '),
+    )
+    expect(prepareSpy).toBeCalledWith(
+      expect.stringContaining('INSERT INTO UserSettingsSpace'),
+    )
+    expect(prepareSpy).toBeCalledWith(
+      expect.stringContaining('INSERT INTO UserSettingsChannel'),
     )
     // verify that arguments are binded to the sql statement in the expected order.
+    expect(bindInsertSettingsSpy).toBeCalledWith(
+      userId,
+      userSettings.directMessage ? 1 : 0,
+      userSettings.mention ? 1 : 0,
+      userSettings.replyTo ? 1 : 0,
+    )
     expect(bindInsertSpaceSpy).toBeCalledWith(
       spaceSettings.spaceId,
       userId,
-      spaceSettings.spaceMembership,
       spaceSettings.spaceMute,
     )
     expect(bindInsertChannelSpy).toBeCalledWith(
       channelSettings.spaceId,
       channelSettings.channelId,
       userId,
-      channelSettings.channelMembership,
       channelSettings.channelMute,
     )
   })
@@ -96,7 +112,7 @@ describe('settings-handlers', () => {
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const { deleteFromUserSettings: mockStatement } = mockPreparedStatements(DB)
+    const { deleteFromUserSettings: mockStatement } = mockDbStatements(DB, {})
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 
@@ -126,7 +142,7 @@ describe('settings-handlers', () => {
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const { selectFromUserSettings: mockStatement } = mockPreparedStatements(DB)
+    const { selectFromUserSettings: mockStatement } = mockDbStatements(DB, {})
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 

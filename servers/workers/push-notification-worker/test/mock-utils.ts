@@ -1,13 +1,18 @@
 import { MockProxy, mock } from 'jest-mock-extended'
+import { Mute, NotificationType, UserSettings } from '../src/types'
 import {
   QueryResultUserSettings,
+  QueryResultUserSettingsAny,
   QueryResultUserSettingsChannel,
   QueryResultUserSettingsSpace,
 } from '../src/settings-handlers'
 
 import { Env } from '../src'
 import { QueryResultNotificationTag } from '../src/tag-handlers'
-import { Membership, Mute, UserSettings } from '../src/types'
+import {
+  QueryResultsDoNotDisturbUser,
+  QueryResultsMutedUser,
+} from '../src/notify-users-handlers'
 import { createFakeWebPushSubscription } from './fake-data'
 
 export interface TestMocks {
@@ -88,19 +93,48 @@ function modifyHeaders(
   return headers
 }
 
-export function mockPreparedStatements(DB: MockProxy<D1Database>) {
+export interface MockDbOptions {
+  spaceId?: string
+  channelId?: string
+  replyToUsers?: string[]
+  mentionUsers?: string[]
+  dndReplyToUsers?: string[]
+  dndMentionUsers?: string[]
+  mutedUsers?: string[]
+}
+
+export function mockDbStatements(
+  DB: MockProxy<D1Database>,
+  {
+    spaceId = '',
+    channelId = '',
+    replyToUsers = [],
+    mentionUsers = [],
+    dndReplyToUsers = [],
+    dndMentionUsers = [],
+    mutedUsers = [],
+  }: MockDbOptions,
+) {
   const mockStatement = mockDummyStatement()
   const insertIntoPushSubscription = mockDummyStatement()
   const deleteFromPushSubscription = mockDummyStatement()
   const selectFromPushSubscription = mockSelectFromPushSubscription()
   const insertIntoNotificationTag = mockDummyStatement()
   const deleteFromNotificationTag = mockDummyStatement()
-  const selectFromNotificationTag = mockSelectFromNotificationTag()
+  const selectFromNotificationTag = mockSelectFromNotificationTag(
+    spaceId,
+    channelId,
+    replyToUsers,
+    mentionUsers,
+  )
+  const insertIntoUserSettings = mockDummyStatement()
   const insertIntoUserSettingsSpace = mockDummyStatement()
   const insertIntoUserSettingsChannel = mockDummyStatement()
   const deleteFromUserSettings = mockDummyStatement()
   const selectFromUserSettings = mockSelectFromUserSettings()
-  const selectMutedUsers = mockDummyStatement()
+  const selectMutedUsers = mockMutedUsers(mutedUsers)
+  const selectDndReplyToUsers = mockSelectDndReplyToUsers(dndReplyToUsers)
+  const selectDndMentionUsers = mockSelectDndMentionUsers(dndMentionUsers)
 
   DB.prepare.mockImplementation((query: string) => {
     if (query.includes('SELECT') && query.includes('FROM PushSubscription')) {
@@ -118,31 +152,44 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
       return insertIntoNotificationTag
     } else if (query.includes('DELETE FROM NotificationTag')) {
       return deleteFromNotificationTag
+    } else if (query.includes('INSERT INTO UserSettings ')) {
+      // DO NOT DELETE the extra whitespace at the end
+      return insertIntoUserSettings
     } else if (query.includes('INSERT INTO UserSettingsSpace')) {
       return insertIntoUserSettingsSpace
     } else if (query.includes('INSERT INTO UserSettingsChannel')) {
       return insertIntoUserSettingsChannel
     } else if (query.includes('DELETE FROM UserSettings')) {
       return deleteFromUserSettings
+    } else if (query.includes('muted users')) {
+      return selectMutedUsers
+    } else if (query.includes('dnd replyTo users')) {
+      return selectDndReplyToUsers
+    } else if (query.includes('dnd mention users')) {
+      return selectDndMentionUsers
     } else if (
+      // this needs to be last to allow the other queries to be mocked
       query.includes('SELECT') &&
       query.includes('FROM UserSettings')
     ) {
       return selectFromUserSettings
-    } else if (query.includes('muted users')) {
-      return selectMutedUsers
     }
     return mockStatement
   })
 
   DB.batch.mockImplementation(
-    (statements: D1PreparedStatement[]): Promise<D1Result<unknown>[]> => {
+    async (statements: D1PreparedStatement[]): Promise<D1Result<unknown>[]> => {
       const results: D1Result<unknown>[] = []
       for (const statement of statements) {
         if (statement === selectFromNotificationTag) {
-          selectFromNotificationTag.all().then((r) => {
-            results.push(r)
-          })
+          const r = await selectFromNotificationTag.run()
+          results.push(r)
+        } else if (statement === selectFromUserSettings) {
+          const r = await selectFromUserSettings.run()
+          results.push(r)
+        } else if (statement === selectMutedUsers) {
+          const r = await selectMutedUsers.run()
+          results.push(r)
         } else {
           const r: D1Result<unknown> = {
             results: [],
@@ -157,18 +204,20 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
   )
 
   return {
-    mockStatement,
     insertIntoPushSubscription,
     deleteFromPushSubscription,
     selectFromPushSubscription,
     insertIntoNotificationTag,
     selectFromNotificationTag,
     deleteFromNotificationTag,
+    insertIntoUserSettings,
     insertIntoUserSettingsSpace,
     insertIntoUserSettingsChannel,
     deleteFromUserSettings,
     selectFromUserSettings,
     selectMutedUsers,
+    selectDndReplyToUsers,
+    selectDndMentionUsers,
   }
 }
 
@@ -221,22 +270,90 @@ function mockDummyStatement(): MockProxy<D1PreparedStatement> {
   return mockStatement
 }
 
-function mockSelectFromNotificationTag(): MockProxy<D1PreparedStatement> {
+function mockSelectFromNotificationTag(
+  spaceId: string = '',
+  channelId: string = '',
+  replyToUsers: string[] = [],
+  mentionUsers: string[] = [],
+): MockProxy<D1PreparedStatement> {
   const mockStatement = mock<D1PreparedStatement>()
-  const result: QueryResultNotificationTag[] = []
-  mockStatement.bind.mockImplementation(
-    (spaceId: string, channelId: string, userId: string, tag: string) => {
-      result.push({
+  const results: QueryResultNotificationTag[] = []
+  mockStatement.bind.mockImplementation(() => {
+    replyToUsers.forEach((userId) => {
+      const r = {
+        userId,
         spaceId,
         channelId,
+        tag: NotificationType.ReplyTo,
+      }
+      results.push(r)
+    })
+    mentionUsers.forEach((userId) => {
+      const r = {
         userId,
-        tag,
-      })
-      return mockStatement
-    },
-  )
+        spaceId,
+        channelId,
+        tag: NotificationType.Mention,
+      }
+      results.push(r)
+    })
+    return mockStatement
+  })
   mockStatement.all.mockResolvedValue({
-    results: [result] as unknown as QueryResultNotificationTag[][],
+    results: [results] as unknown as QueryResultNotificationTag[][],
+    success: true,
+    meta: {},
+  })
+  mockStatement.run.mockResolvedValue({
+    results: [results] as unknown as QueryResultNotificationTag[][],
+    success: true,
+    meta: {},
+  })
+  return mockStatement
+}
+
+function mockSelectDndReplyToUsers(
+  dndReplyToUsers: string[],
+): MockProxy<D1PreparedStatement> {
+  const mockStatement = mock<D1PreparedStatement>()
+  const results: QueryResultsDoNotDisturbUser[] = []
+  mockStatement.bind.mockImplementation(() => {
+    dndReplyToUsers.forEach((userId) => {
+      results.push({ userId })
+    })
+    return mockStatement
+  })
+  mockStatement.all.mockResolvedValue({
+    results: results as unknown as QueryResultsDoNotDisturbUser[][],
+    success: true,
+    meta: {},
+  })
+  mockStatement.run.mockResolvedValue({
+    results: [results] as unknown as QueryResultsDoNotDisturbUser[][],
+    success: true,
+    meta: {},
+  })
+  return mockStatement
+}
+
+function mockSelectDndMentionUsers(
+  dndMentionUsers: string[],
+): MockProxy<D1PreparedStatement> {
+  const mockStatement = mock<D1PreparedStatement>()
+  const results: QueryResultsDoNotDisturbUser[] = []
+  mockStatement.bind.mockImplementation(() => {
+    dndMentionUsers.forEach((userId) => {
+      results.push({ userId })
+    })
+    return mockStatement
+  })
+  mockStatement.all.mockResolvedValue({
+    results: results as unknown as QueryResultsDoNotDisturbUser[][],
+    success: true,
+    meta: {},
+  })
+  mockStatement.run.mockResolvedValue({
+    results: [results] as unknown as QueryResultsDoNotDisturbUser[][],
     success: true,
     meta: {},
   })
@@ -245,26 +362,54 @@ function mockSelectFromNotificationTag(): MockProxy<D1PreparedStatement> {
 
 function mockSelectFromUserSettings(): MockProxy<D1PreparedStatement> {
   const mockStatement = mock<D1PreparedStatement>()
-  const results: QueryResultUserSettings[][] = []
+  const results: QueryResultUserSettingsAny[] = []
   mockStatement.bind.mockImplementation((userId: string) => {
+    const userSettings: QueryResultUserSettings = {
+      userId,
+      replyTo: 1,
+      mention: 1,
+      directMessage: 1,
+    }
     const spaceSettings: QueryResultUserSettingsSpace = {
       userId,
       spaceId: '',
-      spaceMembership: Membership.Joined,
       spaceMute: Mute.Default,
     }
     const channelSettings: QueryResultUserSettingsChannel = {
       userId,
       spaceId: '',
       channelId: '',
-      channelMembership: Membership.Joined,
       channelMute: Mute.Default,
     }
-    results.push([spaceSettings], [channelSettings])
+    results.push(userSettings, spaceSettings, channelSettings)
     return mockStatement
   })
   mockStatement.run.mockResolvedValue({
-    results: results as unknown as QueryResultUserSettings[],
+    results: [results] as unknown as QueryResultUserSettingsAny[][],
+    success: true,
+    meta: {},
+  })
+  return mockStatement
+}
+
+function mockMutedUsers(mutedUsers: string[]): MockProxy<D1PreparedStatement> {
+  const mockStatement = mockDummyStatement()
+  const results: QueryResultsMutedUser[] = []
+  mockStatement.bind.mockImplementation(() => {
+    mutedUsers.forEach((r) => {
+      results.push({
+        userId: r,
+      })
+    })
+    return mockStatement
+  })
+  mockStatement.all.mockResolvedValue({
+    results: [results] as unknown as QueryResultsMutedUser[][],
+    success: true,
+    meta: {},
+  })
+  mockStatement.run.mockResolvedValue({
+    results: [results] as unknown as QueryResultsMutedUser[][],
     success: true,
     meta: {},
   })

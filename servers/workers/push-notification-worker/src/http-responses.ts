@@ -3,6 +3,11 @@ export function create204Response() {
   return new Response(null, { status: 204 })
 }
 
+export function create404Response() {
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+  return new Response('Not Found', { status: 404 })
+}
+
 export function create422Response() {
   // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422
   return new Response('Unprocessable Content', { status: 422 })

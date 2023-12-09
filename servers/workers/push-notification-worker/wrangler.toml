@@ -1,7 +1,7 @@
 name = "push-notification-worker"
 main = "src/index.ts"
 account_id = "9840f8a36a817b103e00e29a0e2bad6f"
-compatibility_date = "2023-10-30"
+compatibility_date = "2023-07-10"
 node_compat = true
 logpush = true
 

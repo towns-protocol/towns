@@ -1,4 +1,4 @@
-import { createTestMocks, mockPreparedStatements } from './mock-utils'
+import { createTestMocks, mockDbStatements } from './mock-utils'
 
 import { AddSubscriptionRequestParams } from '../src/request-interfaces'
 import { createFakeWebPushSubscription } from './fake-data'
@@ -22,8 +22,10 @@ describe('subscription-handlers', () => {
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const { insertIntoPushSubscription: mockStatement } =
-      mockPreparedStatements(DB)
+    const { insertIntoPushSubscription: mockStatement } = mockDbStatements(
+      DB,
+      {},
+    )
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 
@@ -59,8 +61,10 @@ describe('subscription-handlers', () => {
       body: JSON.stringify(params),
     })
     // replace with mocks to spy on
-    const { deleteFromPushSubscription: mockStatement } =
-      mockPreparedStatements(DB)
+    const { deleteFromPushSubscription: mockStatement } = mockDbStatements(
+      DB,
+      {},
+    )
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 

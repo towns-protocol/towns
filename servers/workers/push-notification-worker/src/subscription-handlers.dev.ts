@@ -1,4 +1,4 @@
-import { Membership, Mute } from './types'
+import { Mute } from './types'
 
 import { Env } from './index'
 
@@ -70,6 +70,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
   }
 
   const ALICE_ID = '0xAlice'
+  const BOB_ID = '0xBob'
   const SPACE_ID = '!spaceId-1'
   const CHANNEL_ID = '!channelId-1'
   const html = `
@@ -148,6 +149,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       const subscription = await registration.pushManager.getSubscription();
       console.log('Sending unsubscribe request to server...');
       await sendToServer('/api/remove-subscription', 'POST', { subscriptionObject: subscription, userId: '${ALICE_ID}' });
+      await sendToServer('/api/remove-subscription', 'POST', { subscriptionObject: subscription, userId: '${BOB_ID}' });
       console.log('Sent unsubscribe request to server.');
       console.log('Unsubscribing from push notifications...')
       await subscription.unsubscribe();
@@ -173,7 +175,8 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     };
     const notifyParams = {
       sender: '${ALICE_ID}',
-      users: ['${ALICE_ID}'], // send to self
+      //users: ['${ALICE_ID}', ${BOB_ID}], // send to self
+      users: ['${BOB_ID}'], // send to self
       payload,
       spaceId: '${SPACE_ID}',
       channelId: '${CHANNEL_ID}',
@@ -214,17 +217,18 @@ export function getDefaultRouteDev(request: Request, env: Env) {
 
   async function getSettings() {
     const output = document.getElementById('output');
+    const userId = '${ALICE_ID}';
     const getSettingsParams = {
-      userId: '${ALICE_ID}',
+      userId,
     }
     try {
-      console.log('Getting notification settings for ${ALICE_ID}...');
+      console.log('Getting notification settings for ' + userId);
       const response = await sendToServer('/api/get-notification-settings', 'POST', getSettingsParams);
       console.log('getSettings response', response)
       if (response.status >= 200 && response.status < 300) {
-        console.log('Got notification settings for ${ALICE_ID}');
+        console.log('Got notification settings for ' + userId);
         const settings = await response.json();
-        output.textContent = 'Notification settings for ${ALICE_ID}:\\n' + JSON.stringify(settings, null, 2) + '\\n';
+        output.textContent = 'Notification settings for ' + userId +':\\n' + JSON.stringify(settings, null, 2) + '\\n';
       } else {
         console.error('Getting notification settings failed ', response);
         output.textContent += '\\nGetting notification settings failed:\\n' + '{ status: ' + response.status + ', text: ' + response.statusText + ' }\\n';
@@ -372,19 +376,18 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     <button id="deleteSettings" type="button" onclick="deleteSettings()">Delete Settings</button>
     <br><textarea id="notificationSettingsBody">
 {
-  "userSettings": {
-    "userId": "${ALICE_ID}",
-    "spaceSettings": [
-      { "spaceId": "${SPACE_ID}", "spaceMembership": "${
-    Membership.Joined
-  }", "spaceMute": "${Mute.Default}" }
-    ],
-    "channelSettings": [
-      { "spaceId": "${SPACE_ID}", "channelId": "${CHANNEL_ID}", "channelMembership": "${
-    Membership.Joined
-  }", "channelMute": "${Mute.Default}" }
-    ]
-  }
+    "userSettings": {
+      "userId": "${ALICE_ID}",
+      "directMessage": "true",
+      "mention": "true",
+      "replyTo": "true",
+      "spaceSettings": [{   "spaceId": "${SPACE_ID}", "spaceMute": "${
+    Mute.Default
+  }" }],
+      "channelSettings": [{ "spaceId": "${SPACE_ID}", "channelId": "${CHANNEL_ID}", "channelMute": "${
+    Mute.Default
+  }" }]
+    }
 }    
     </textarea>
     <h3>Output</h3>

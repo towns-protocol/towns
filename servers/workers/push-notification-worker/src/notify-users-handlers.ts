@@ -28,11 +28,41 @@ class NotifySqlStatement {
       UserSettingsChannel
     WHERE
       SpaceId = ?1 AND ChannelId = ?2 AND ChannelMute = '${Mute.Muted}';`
+  // DoNotDisturb: select all the users that don't want to be notified about replyTo
+  static SelectDnDReplyToUsers = `
+    SELECT
+      UserId AS userId,
+      'dnd replyTo users' AS info
+    FROM
+      UserSettings
+    WHERE
+      ReplyTo = 0` // no ';' because more conditions are added dynamically
+  // DoNotDisturb: select all the users that don't want to be notified about mentions
+  static SelectDnDMentionUsers = `
+    SELECT
+      UserId AS userId,
+      'dnd mention users' AS info
+    FROM
+      UserSettings
+    WHERE
+      Mention = 0` // no ';' because more conditions are added dynamically
+  // DoNotDisturb: select all the users that don't want to be notified about DMs
+  static SelectDnDDirectMessageUsers = `
+    SELECT
+      UserId AS userId,
+      'dnd directMessage users' AS info
+    FROM
+      UserSettings
+    WHERE
+      DirectMessage = false` // no ';' because more conditions are added dynamically
 }
 
-export interface QueryResultsMutedUsers {
+export interface QueryResultsMutedUser {
   userId: string
-  info: string
+}
+
+export interface QueryResultsDoNotDisturbUser {
+  userId: string
 }
 
 export enum SendPushStatus {
@@ -52,6 +82,8 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
   const allNotificationRequests: Promise<SendPushResponse>[] = []
   const taggedUsers = await getNotificationTags(params.channelId, env.DB)
   const usersToNotify = await getUsersToNotify(env.DB, taggedUsers, params)
+  // track which users we attempted to notify for debugging
+  const attemptedToNotifyUsers = new Set<string>()
   // gather all the notification requests into a single promise
   for (const user of usersToNotify) {
     const userOptions = createUserSpecificParams(taggedUsers, params, user)
@@ -67,6 +99,7 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
               allNotificationRequests.push(
                 sendNotificationViaWebPush(userOptions, subscription, env),
               )
+              attemptedToNotifyUsers.add(user)
               break
             default:
               console.error('notifyUser', 'unknown pushType', subscription)
@@ -74,6 +107,15 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
           }
         }
       }
+    }
+  }
+
+  // log the users we attempted to notify
+  console.log('attemptedToNotifyUsers', attemptedToNotifyUsers)
+  // log the users we weren't able to notify
+  for (const user of usersToNotify) {
+    if (!attemptedToNotifyUsers.has(user)) {
+      console.log('user not notified', user)
     }
   }
 
@@ -95,7 +137,11 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
       if (result.value.status === SendPushStatus.Success) {
         notificationsSentCount++
       } else {
-        console.log('failed to send notification', result.value.status)
+        console.log(
+          'failed to send notification',
+          result.value.status,
+          result.value.userId,
+        )
         // delete it from the db
         console.log(
           'delete subscription from the db',
@@ -144,28 +190,133 @@ async function getUsersToNotify(
   taggedUsers: TaggedUsers,
   params: NotifyRequestParams,
 ): Promise<string[]> {
+  if (params.users.length == 0) {
+    // nothing to do
+    return []
+  }
+
   // Notify users according to the following rules:
-  // 1. If the user is mentioned, notify them
-  // 2. If the user is participating in a reply-to thread, notify them
-  // 3. If the user muted the town or channel, do not notify them
+  // 1. If the user is mentioned, notify if the user's DND mention is false
+  // 2. If the user is participating in a reply-to thread, notify if the user's DND replyTo is false
+  // 3. If the user muted the town or channel, do not notify
   const notifyUsers = new Set<string>()
+  const mutedUsers = new Set<string>()
+  const dndReplyToUsers = new Set<string>()
+  const dndMentionUsers = new Set<string>()
+
+  const mutedUsersStatement = prepareMutedUsersStatement(
+    db,
+    params.spaceId,
+    params.channelId,
+  )
+  const dndReplyToStatement = prepareDnDReplyToUsersStatement(db, params.users)
+  const dndMentionStatement = prepareDnDMentionUsersStatement(db, params.users)
+  const [mutedUsersQuery, dndReplyToQuery, dndMentionQuery] = await Promise.all(
+    [
+      mutedUsersStatement.all(),
+      dndReplyToStatement.all(),
+      dndMentionStatement.all(),
+    ],
+  )
+  if (mutedUsersQuery.success) {
+    for (const qr of mutedUsersQuery.results) {
+      const r = qr as unknown as QueryResultsMutedUser
+      mutedUsers.add(r.userId)
+    }
+  }
+  if (dndReplyToQuery.success) {
+    for (const qr of dndReplyToQuery.results) {
+      const r = qr as unknown as QueryResultsDoNotDisturbUser
+      dndReplyToUsers.add(r.userId)
+    }
+  }
+  if (dndMentionQuery.success) {
+    for (const qr of dndMentionQuery.results) {
+      const r = qr as unknown as QueryResultsDoNotDisturbUser
+      dndMentionUsers.add(r.userId)
+    }
+  }
+
+  console.log(
+    'params.users',
+    params.users,
+    'taggedUsers',
+    taggedUsers,
+    'mutedUsers',
+    mutedUsers,
+    'dndReplyToUsers',
+    dndReplyToUsers,
+    'dndMentionUsers',
+    dndMentionUsers,
+  )
+
+  for (const user of params.users) {
+    const shouldReplyTo =
+      taggedUsers.replyToUsers.includes(user) && !dndReplyToUsers.has(user)
+    const shouldMention =
+      taggedUsers.mentionedUsers.includes(user) && !dndMentionUsers.has(user)
+    const shouldNotify =
+      (shouldReplyTo || shouldMention) && !mutedUsers.has(user)
+    console.log(
+      'user',
+      user,
+      'shouldNotify',
+      shouldNotify,
+      'shouldMention',
+      shouldMention,
+      'shouldReplyTo',
+      shouldReplyTo,
+    )
+    if (shouldNotify) {
+      notifyUsers.add(user)
+    }
+  }
+  return Array.from(notifyUsers)
+}
+
+function prepareMutedUsersStatement(
+  db: D1Database,
+  spaceId: string,
+  channelId: string,
+): D1PreparedStatement {
   const stmt = db
     .prepare(NotifySqlStatement.SelectMutedUsers)
-    .bind(params.spaceId, params.channelId)
-  const { results } = await stmt.all()
-  const mutedUsers = results as unknown[] as QueryResultsMutedUsers[]
-  params.users.forEach((user) => {
-    // Rules 1 and 2
-    if (
-      taggedUsers.mentionedUsers.includes(user) ||
-      taggedUsers.replyToUsers.includes(user)
-    ) {
-      notifyUsers.add(user)
+    .bind(spaceId, channelId)
+  return stmt
+}
+
+function prepareDnDReplyToUsersStatement(
+  db: D1Database,
+  users: string[],
+): D1PreparedStatement {
+  let sql = NotifySqlStatement.SelectDnDReplyToUsers + ' AND ('
+  for (let i = 1; i <= users.length; i++) {
+    if (i === users.length) {
+      // add the last user without the OR
+      sql += ` UserId = ?${i}`
+    } else {
+      sql += ` UserId = ?${i} OR`
     }
-    // Rule 3
-    if (!mutedUsers.some((mutedUser) => mutedUser.userId === user)) {
-      notifyUsers.add(user)
+  }
+  sql += ' );'
+  //console.log('DnDReply sql', sql)
+  return db.prepare(sql).bind(...users)
+}
+
+function prepareDnDMentionUsersStatement(
+  db: D1Database,
+  users: string[],
+): D1PreparedStatement {
+  let sql = NotifySqlStatement.SelectDnDMentionUsers + ' AND ('
+  for (let i = 1; i <= users.length; i++) {
+    if (i === users.length) {
+      // add the last user without the OR
+      sql += ` UserId = ?${i}`
+    } else {
+      sql += ` UserId = ?${i} OR`
     }
-  })
-  return Array.from(notifyUsers)
+  }
+  sql += ' );'
+  //console.log('DnDMention sql', sql)
+  return db.prepare(sql).bind(...users)
 }

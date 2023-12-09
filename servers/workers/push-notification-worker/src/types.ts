@@ -23,12 +23,6 @@ export enum NotificationType {
   ReplyTo = 'reply_to',
 }
 
-export enum Membership {
-  NotSet = '',
-  Joined = 'joined',
-  Left = 'left',
-}
-
 export function isPushType(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any,
@@ -78,14 +72,12 @@ export function isNotificationPayload(
 // relationship between town and channels
 export interface UserSettingsSpace {
   spaceId: string
-  spaceMembership: Membership
   spaceMute: Mute
 }
 
 export interface UserSettingsChannel {
   spaceId: string
   channelId: string
-  channelMembership: Membership
   channelMute: Mute
 }
 
@@ -94,6 +86,9 @@ export interface UserSettings {
   userId: UserId
   spaceSettings: UserSettingsSpace[]
   channelSettings: UserSettingsChannel[]
+  replyTo: boolean
+  mention: boolean
+  directMessage: boolean
 }
 
 export function isUserSettings(
@@ -104,6 +99,9 @@ export function isUserSettings(
     typeof args === 'object' &&
     typeof args.userId === 'string' &&
     args.userId.length > 0 && // userId is required
+    typeof args.replyTo === 'boolean' &&
+    typeof args.mention === 'boolean' &&
+    typeof args.directMessage === 'boolean' &&
     isUserSettingsSpaceArray(args.spaceSettings) &&
     isUserSettingsChannelArray(args.channelSettings)
   )
@@ -114,7 +112,6 @@ function isUserSettingsSpace(args: any): args is UserSettingsSpace {
   return (
     typeof args === 'object' &&
     typeof args.spaceId === 'string' &&
-    typeof args.spaceMembership === 'string' &&
     typeof args.spaceMute === 'string'
   )
 }
@@ -125,7 +122,6 @@ function isUserSettingsChannel(args: any): args is UserSettingsChannel {
     typeof args === 'object' &&
     typeof args.spaceId === 'string' &&
     typeof args.channelId === 'string' &&
-    typeof args.channelMembership === 'string' &&
     typeof args.channelMute === 'string'
   )
 }

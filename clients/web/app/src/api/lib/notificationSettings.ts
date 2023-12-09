@@ -5,7 +5,7 @@ import {
     GetSettingsRequestParams,
     SaveSettingsRequestParams,
 } from '@push-notification-worker/request-interfaces'
-import { Membership, Mute } from '@push-notification-worker/types'
+import { Mute } from '@push-notification-worker/types'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
 
@@ -21,17 +21,18 @@ const zSettingsData: z.ZodType<UserSettings> = z.object({
         z.object({
             channelId: z.string(),
             spaceId: z.string(),
-            channelMembership: z.nativeEnum(Membership),
             channelMute: z.nativeEnum(Mute),
         }),
     ),
     spaceSettings: z.array(
         z.object({
             spaceId: z.string(),
-            spaceMembership: z.nativeEnum(Membership),
             spaceMute: z.nativeEnum(Mute),
         }),
     ),
+    replyTo: z.boolean(),
+    mention: z.boolean(),
+    directMessage: z.boolean(),
 })
 
 async function getSettings({ userId }: Partial<GetSettingsRequestParams>): Promise<UserSettings> {
@@ -128,7 +129,6 @@ export function useSetMuteSettingForChannelOrSpace() {
 
                 const newSpaceSettings = {
                     spaceId,
-                    spaceMembership: Membership.NotSet, // placeholder for now, this prop isn't used in server
                     spaceMute: muteSetting,
                 }
 
@@ -146,7 +146,6 @@ export function useSetMuteSettingForChannelOrSpace() {
                 const newChannelSettings = {
                     channelId,
                     spaceId,
-                    channelMembership: Membership.NotSet, // placeholder for now
                     channelMute: muteSetting,
                 }
 

@@ -106,6 +106,7 @@ export async function getNotificationTags(
   channelId: string,
   DB: D1Database,
 ): Promise<TaggedUsers> {
+  console.log('getNotificationTags', 'channelId', channelId)
   // select the tagged users
   const selectTaggedUsers = DB.prepare(
     TagSqlStatement.SelectFromNotificationTag,
@@ -119,22 +120,31 @@ export async function getNotificationTags(
   // get the tagged users from the DB for this channel
   const mentionedUsers: string[] = []
   const replyToUsers: string[] = []
-  const rows = await DB.batch([selectTaggedUsers, deleteUsers])
-  if (rows && rows.length > 0) {
-    const results = rows[0].results
-    for (const row of results) {
-      const r = row as QueryResultNotificationTag
-      switch (r.tag) {
-        case NotificationType.Mention:
-          mentionedUsers.push(r.userId)
-          break
-        case NotificationType.ReplyTo:
-          replyToUsers.push(r.userId)
-          break
+  const results = await DB.batch([selectTaggedUsers, deleteUsers])
+  for (const result of results) {
+    if (result.success) {
+      console.log('getNotificationTags', 'result', result)
+      for (const row of result.results) {
+        const r0 = row as QueryResultNotificationTag
+        switch (r0.tag) {
+          case NotificationType.Mention:
+            mentionedUsers.push(r0.userId)
+            break
+          case NotificationType.ReplyTo:
+            replyToUsers.push(r0.userId)
+            break
+        }
       }
     }
   }
 
+  console.log(
+    'getNotificationTags',
+    'mentionedUsers',
+    mentionedUsers,
+    'replyToUsers',
+    replyToUsers,
+  )
   // nothing specific for the channel
   return {
     channelId,
