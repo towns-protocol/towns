@@ -159,7 +159,7 @@ const SpacesChannelComponent = (props: Props) => {
                 return
             }
             watermarkRef.current = watermark
-            onLoadMore()
+            setTimeout(onLoadMore, 0)
         },
         [onLoadMore],
     )

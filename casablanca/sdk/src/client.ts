@@ -132,6 +132,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     public cryptoStore: CryptoStore
 
     private getStreamRequests: Map<string, Promise<StreamStateView>> = new Map()
+    private getScrollbackRequests: Map<string, ReturnType<typeof this.scrollback>> = new Map()
+
     private syncLoop?: Promise<unknown>
     private syncAbort?: AbortController
     private entitlementsDelegate: EntitlementsDelegate
@@ -1349,31 +1351,49 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     async scrollback(
         streamId: string,
     ): Promise<{ terminus: boolean; firstEvent?: StreamTimelineEvent }> {
-        const stream = this.stream(streamId)
-        check(isDefined(stream), `stream not found: ${streamId}`)
-        check(isDefined(stream.view.miniblockInfo), `stream not initialized: ${streamId}`)
-        if (stream.view.miniblockInfo.terminusReached) {
-            this.logCall('scrollback', streamId, 'terminus reached')
-            return { terminus: true, firstEvent: stream.view.timeline.at(0) }
+        const currentRequest = this.getScrollbackRequests.get(streamId)
+        if (currentRequest) {
+            return currentRequest
         }
-        check(stream.view.miniblockInfo.min >= stream.view.prevSnapshotMiniblockNum)
-        this.logCall('scrollback', {
-            streamId,
-            miniblockInfo: stream.view.miniblockInfo,
-            prevSnapshotMiniblockNum: stream.view.prevSnapshotMiniblockNum,
-        })
-        const toExclusive = stream.view.miniblockInfo.min
-        const fromInclusive = stream.view.prevSnapshotMiniblockNum
-        const response = await this.rpcClient.getMiniblocks({
-            streamId,
-            fromInclusive,
-            toExclusive,
-        })
-        const miniblocks = response.miniblocks.map((m) => unpackMiniblock(m))
-        const eventIds = miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
-        const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
-        stream.prependEvents(miniblocks, cleartexts, response.terminus)
-        return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
+
+        const _scrollback = async (): Promise<{
+            terminus: boolean
+            firstEvent?: StreamTimelineEvent
+        }> => {
+            const stream = this.stream(streamId)
+            check(isDefined(stream), `stream not found: ${streamId}`)
+            check(isDefined(stream.view.miniblockInfo), `stream not initialized: ${streamId}`)
+            if (stream.view.miniblockInfo.terminusReached) {
+                this.logCall('scrollback', streamId, 'terminus reached')
+                return { terminus: true, firstEvent: stream.view.timeline.at(0) }
+            }
+            check(stream.view.miniblockInfo.min >= stream.view.prevSnapshotMiniblockNum)
+            this.logCall('scrollback', {
+                streamId,
+                miniblockInfo: stream.view.miniblockInfo,
+                prevSnapshotMiniblockNum: stream.view.prevSnapshotMiniblockNum,
+            })
+            const toExclusive = stream.view.miniblockInfo.min
+            const fromInclusive = stream.view.prevSnapshotMiniblockNum
+            const response = await this.rpcClient.getMiniblocks({
+                streamId,
+                fromInclusive,
+                toExclusive,
+            })
+            const miniblocks = response.miniblocks.map((m) => unpackMiniblock(m))
+            const eventIds = miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
+            const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
+            stream.prependEvents(miniblocks, cleartexts, response.terminus)
+            return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
+        }
+
+        try {
+            const request = _scrollback()
+            this.getScrollbackRequests.set(streamId, request)
+            return await request
+        } finally {
+            this.getScrollbackRequests.delete(streamId)
+        }
     }
 
     async downloadNewToDeviceMessages(): Promise<void> {
