@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { useMyProfile } from 'use-zion-client'
 import { isAddress } from 'viem'
 
+import { Allotment } from 'allotment'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
@@ -27,6 +28,7 @@ import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { useMeetsMembershipNftRequirements } from 'hooks/useTokensGatingMembership'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { shortAddress } from 'ui/utils/utils'
+import { MainSideBar } from '@components/SideBars'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 const log = debug('app:public-town')
@@ -135,6 +137,20 @@ export const PublicTownPage = () => {
         </>
     ) : isLoading ? (
         <WelcomeLayout debugText="fetching town data" />
+    ) : isConnected ? (
+        <Stack horizontal absoluteFill>
+            <Allotment>
+                <Allotment.Pane minSize={65} maxSize={65} preferredSize={65}>
+                    <MainSideBar />
+                </Allotment.Pane>
+                <Allotment.Pane>
+                    <Box absoluteFill centerContent>
+                        <TownNotFoundBox />
+                    </Box>
+                </Allotment.Pane>
+            </Allotment>
+            )
+        </Stack>
     ) : (
         <MessageBox>
             <TownNotFoundBox />
