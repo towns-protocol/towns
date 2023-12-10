@@ -215,11 +215,6 @@ export default [
         "internalType": "address",
         "name": "tokenEntitlementImplementation",
         "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "trustedForwarder",
-        "type": "address"
       }
     ],
     "name": "__TownArchitect_init",

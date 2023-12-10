@@ -11,7 +11,6 @@ import {Permissions} from "contracts/src/towns/facets/Permissions.sol";
 import {MembershipBase} from "./MembershipBase.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol";
-import {ERC2771RecipientBase} from "contracts/src/diamond/facets/recipient/ERC2771RecipientBase.sol";
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {Entitled} from "contracts/src/towns/facets/Entitled.sol";
 
@@ -19,19 +18,16 @@ contract MembershipFacet is
   IMembership,
   MembershipBase,
   ERC5643Base,
-  ERC2771RecipientBase,
   ReentrancyGuard,
   ERC721A,
   Entitled
 {
   function __Membership_init(
     MembershipInfo memory info,
-    address townFactory,
-    address forwarder
+    address townFactory
   ) external onlyInitializing {
     __MembershipBase_init(info, townFactory);
     __ERC721A_init_unchained(info.name, info.symbol);
-    __ERC2771RecipientBase_init(forwarder);
   }
 
   // =============================================================
@@ -220,11 +216,12 @@ contract MembershipFacet is
   // =============================================================
   function _isApprovedOrOwner(uint256 tokenId) internal view returns (bool) {
     address owner = _ownerOf(tokenId);
+    address sender = msg.sender;
 
     return
-      (_msgSender() == owner) ||
-      _isApprovedForAll(owner, _msgSender()) ||
-      _getApproved(tokenId) == _msgSender();
+      (sender == owner) ||
+      _isApprovedForAll(owner, sender) ||
+      _getApproved(tokenId) == sender;
   }
 
   // =============================================================
@@ -260,15 +257,5 @@ contract MembershipFacet is
   ) internal override {
     super._beforeTokenTransfers(from, to, startTokenId, quantity);
     _setMembershipTokenId(startTokenId, to);
-  }
-
-  function _msgSenderERC721A() internal view override returns (address) {
-    return _msgSender();
-  }
-
-  // Entitled overrides
-  // =============================================================
-  function _msgSenderEntitled() internal view override returns (address) {
-    return _msgSender();
   }
 }

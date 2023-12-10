@@ -26,15 +26,13 @@ contract TownArchitect is
   function __TownArchitect_init(
     address townOwner,
     address userEntitlementImplementation,
-    address tokenEntitlementImplementation,
-    address trustedForwarder
+    address tokenEntitlementImplementation
   ) external onlyInitializing {
     _setImplementations(
       townOwner,
       userEntitlementImplementation,
       tokenEntitlementImplementation
     );
-    _setTrustedForwarder(trustedForwarder);
   }
 
   // =============================================================

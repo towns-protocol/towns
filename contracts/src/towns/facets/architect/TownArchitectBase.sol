@@ -37,17 +37,6 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
   string internal constant MINTER_ROLE = "Minter";
 
   // =============================================================
-  //                           Forwarder
-  // =============================================================
-  function _setTrustedForwarder(address trustedForwarder) internal {
-    TownArchitectStorage.layout().trustedForwarder = trustedForwarder;
-  }
-
-  function _getTrustedForwarder() internal view returns (address) {
-    return TownArchitectStorage.layout().trustedForwarder;
-  }
-
-  // =============================================================
   //                           Towns
   // =============================================================
 
@@ -383,9 +372,6 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
               : membership.settings.feeRecipient,
             freeAllocation: membership.settings.freeAllocation,
             pricingModule: membership.settings.pricingModule
-          }),
-          forwarder: ITownProxyBase.Forwarder({
-            trustedForwarder: _getTrustedForwarder()
           })
         })
       )

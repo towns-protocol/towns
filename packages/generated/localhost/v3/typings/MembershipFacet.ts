@@ -67,7 +67,7 @@ export declare namespace IMembershipBase {
 export interface MembershipFacetInterface extends utils.Interface {
   functions: {
     "__ERC721A_init(string,string)": FunctionFragment;
-    "__Membership_init((string,string,uint256,uint256,uint64,address,address,uint256,address),address,address)": FunctionFragment;
+    "__Membership_init((string,string,uint256,uint256,uint64,address,address,uint256,address),address)": FunctionFragment;
     "_getMembershipCurrency()": FunctionFragment;
     "_getMembershipFeeRecipient()": FunctionFragment;
     "_getMembershipFreeAllocation()": FunctionFragment;
@@ -95,7 +95,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getMembershipPricingModule()": FunctionFragment;
     "getTownFactory()": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
-    "isTrustedForwarder(address)": FunctionFragment;
     "joinTown(address)": FunctionFragment;
     "name()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
@@ -147,7 +146,6 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "getMembershipPricingModule"
       | "getTownFactory"
       | "isApprovedForAll"
-      | "isTrustedForwarder"
       | "joinTown"
       | "name"
       | "ownerOf"
@@ -174,11 +172,7 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "__Membership_init",
-    values: [
-      IMembershipBase.MembershipInfoStruct,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>
-    ]
+    values: [IMembershipBase.MembershipInfoStruct, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "_getMembershipCurrency",
@@ -287,10 +281,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "isApprovedForAll",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "isTrustedForwarder",
-    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "joinTown",
@@ -477,10 +467,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "isApprovedForAll",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "isTrustedForwarder",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "joinTown", data: BytesLike): Result;
@@ -789,7 +775,6 @@ export interface MembershipFacet extends BaseContract {
     __Membership_init(
       info: IMembershipBase.MembershipInfoStruct,
       townFactory: PromiseOrValue<string>,
-      forwarder: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -892,11 +877,6 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    isTrustedForwarder(
-      forwarder: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
     joinTown(
       receiver: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
@@ -996,7 +976,6 @@ export interface MembershipFacet extends BaseContract {
   __Membership_init(
     info: IMembershipBase.MembershipInfoStruct,
     townFactory: PromiseOrValue<string>,
-    forwarder: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1092,11 +1071,6 @@ export interface MembershipFacet extends BaseContract {
   isApprovedForAll(
     owner: PromiseOrValue<string>,
     operator: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  isTrustedForwarder(
-    forwarder: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<boolean>;
 
@@ -1199,7 +1173,6 @@ export interface MembershipFacet extends BaseContract {
     __Membership_init(
       info: IMembershipBase.MembershipInfoStruct,
       townFactory: PromiseOrValue<string>,
-      forwarder: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1295,11 +1268,6 @@ export interface MembershipFacet extends BaseContract {
     isApprovedForAll(
       owner: PromiseOrValue<string>,
       operator: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    isTrustedForwarder(
-      forwarder: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
@@ -1527,7 +1495,6 @@ export interface MembershipFacet extends BaseContract {
     __Membership_init(
       info: IMembershipBase.MembershipInfoStruct,
       townFactory: PromiseOrValue<string>,
-      forwarder: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1623,11 +1590,6 @@ export interface MembershipFacet extends BaseContract {
     isApprovedForAll(
       owner: PromiseOrValue<string>,
       operator: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    isTrustedForwarder(
-      forwarder: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1731,7 +1693,6 @@ export interface MembershipFacet extends BaseContract {
     __Membership_init(
       info: IMembershipBase.MembershipInfoStruct,
       townFactory: PromiseOrValue<string>,
-      forwarder: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1849,11 +1810,6 @@ export interface MembershipFacet extends BaseContract {
     isApprovedForAll(
       owner: PromiseOrValue<string>,
       operator: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    isTrustedForwarder(
-      forwarder: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

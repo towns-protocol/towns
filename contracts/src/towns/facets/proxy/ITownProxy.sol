@@ -14,15 +14,10 @@ interface ITownProxyBase {
     uint256 tokenId;
   }
 
-  struct Forwarder {
-    address trustedForwarder;
-  }
-
   struct TownProxyInit {
     IManagedProxyBase.ManagedProxyInit managedProxy;
     TokenOwnable tokenOwnable;
     IMembershipBase.MembershipInfo membership;
-    Forwarder forwarder;
   }
 }
 

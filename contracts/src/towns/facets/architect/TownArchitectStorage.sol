@@ -16,14 +16,13 @@ library TownArchitectStorage {
 
   struct Layout {
     StringSet.Set townIds;
+    EnumerableSet.AddressSet towns;
     mapping(string townId => address townAddress) townById;
     mapping(string townId => uint256 tokenId) tokenIdByTownId;
+    mapping(address townAddress => uint256 tokenId) tokenIdByTown;
     address townToken;
     address userEntitlement;
     address tokenEntitlement;
-    address trustedForwarder;
-    EnumerableSet.AddressSet towns;
-    mapping(address => uint256) tokenIdByTown;
   }
 
   function layout() internal pure returns (Layout storage ds) {

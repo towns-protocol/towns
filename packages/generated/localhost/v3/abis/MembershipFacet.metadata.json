@@ -583,11 +583,6 @@
             "internalType": "address",
             "name": "townFactory",
             "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "forwarder",
-            "type": "address"
           }
         ],
         "name": "__Membership_init",
@@ -990,25 +985,6 @@
         "inputs": [
           {
             "internalType": "address",
-            "name": "forwarder",
-            "type": "address"
-          }
-        ],
-        "name": "isTrustedForwarder",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "",
-            "type": "bool"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
             "name": "receiver",
             "type": "address"
           }
@@ -1383,14 +1359,6 @@
         "isApprovedForAll(address,address)": {
           "details": "Returns if the `operator` is allowed to manage all of the assets of `owner`. See {setApprovalForAll}."
         },
-        "isTrustedForwarder(address)": {
-          "params": {
-            "forwarder": "The address of the Forwarder contract that is being used."
-          },
-          "returns": {
-            "_0": "isTrustedForwarder `true` if the Forwarder is trusted to forward relayed transactions by this Recipient."
-          }
-        },
         "joinTown(address)": {
           "params": {
             "receiver": "The address of the receiver"
@@ -1580,9 +1548,6 @@
         "getTownFactory()": {
           "notice": "Get the town factory"
         },
-        "isTrustedForwarder(address)": {
-          "notice": ":warning: **Warning** :warning: The Forwarder can have a full control over your Recipient. Only trust verified Forwarder."
-        },
         "joinTown(address)": {
           "notice": "Join a town"
         },
@@ -1743,30 +1708,6 @@
         "dweb:/ipfs/QmVQb23iSSbYQJqk3EB9vT5fjSp6J8Uj2AwgEaHMSkF6wa"
       ]
     },
-    "contracts/src/diamond/facets/recipient/ERC2771RecipientBase.sol": {
-      "keccak256": "0x8bc4ba2434fe953b044842bde8221e91986076bc7a2991e2326ad81eafc1c2df",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://7e7abe4d785d77b1ada045857eebe50d94643b211716789a05e618f66af91681",
-        "dweb:/ipfs/QmZhDnkSMu9TFWZhufwaG2hb6BH4MQuAXUm2FkT2Wv9xtk"
-      ]
-    },
-    "contracts/src/diamond/facets/recipient/ERC2771RecipientStorage.sol": {
-      "keccak256": "0xbc05f921c7f0d4a61bde16443d89633eef695cc86715aeab4d356c5110fba2d3",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://b35bb2b1b879c728be85655549ffe26a4f2b99c328f5b466656ffe323804f150",
-        "dweb:/ipfs/QmRFaRnhiS4RgwsSWFQzhcQge4PGBDb9oUchDTZrFPGGbs"
-      ]
-    },
-    "contracts/src/diamond/facets/recipient/IERC2771Recipient.sol": {
-      "keccak256": "0x5be5673df93a2162aa89c13802f0f4240fa889b2b8c6e57f372166d27ce779c1",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://3b276d85daa4373d0fc6e0bc6f29650903ac5b4ee00669e886bf828f5e075aaa",
-        "dweb:/ipfs/QmRrCEXA3UwKpHEHtgEhsqwfMNXy3dMVhdDUd64fTqfesM"
-      ]
-    },
     "contracts/src/diamond/facets/reentrancy/IReentrancyGuard.sol": {
       "keccak256": "0x507dfdcf6a41cf53878f7bd5ce7e1b0d6e55143eb6a797c7d898677c6ff745dd",
       "license": "Apache-2.0",
@@ -1856,11 +1797,11 @@
       ]
     },
     "contracts/src/towns/facets/Entitled.sol": {
-      "keccak256": "0x7aa843d40e4efd1a09e1ec302af382911989aba7999e1a0ec2619293b0598710",
+      "keccak256": "0xb7bd21a1076572bbcbac939f226834984a5a2878f58a22e5b5688d7c7ba1ebb4",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://75d60caab15dacfc58082c74dff1abfbb68b2415d30a88308772123ff16c5369",
-        "dweb:/ipfs/QmdAx6MjAwMWyfK8rEFWCRohff49ELCND6vxmvU8hwZzNU"
+        "bzz-raw://d7f752b93700def6c6edec3fb02da531510a0fc1f684c91c25eae9e4d61883dc",
+        "dweb:/ipfs/QmR4FFEX2YS5NTFeEJStim9M7P4cUERfxuspv7j3DdjpQm"
       ]
     },
     "contracts/src/towns/facets/Permissions.sol": {
@@ -1896,11 +1837,11 @@
       ]
     },
     "contracts/src/towns/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0x2c5c7e7b88ad2314a13c32eafcc218d588b17f1e53d85dccb4e06dceb23b0515",
+      "keccak256": "0xb1abb9c8024e5538bbfe46f7fe5fd9c965c4ecaa1c5280828ec132346fabaad1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://a3c5acfc66ba6d47db429904abed78fe98a0f8f3a225de5fd09f64cafe87d8c4",
-        "dweb:/ipfs/QmcwCvNDbw4iDn9tRpDDTuHmEskYuLgRCmUdKV8SwM7R4R"
+        "bzz-raw://034761dc80d3b895b28f6a32ee1b2996546cc3418836e68096a7ade092ad0364",
+        "dweb:/ipfs/QmUp3N1gqnqa8P3vCaK4eT7qPhg4TfUY57pFBX4ZDSgM4w"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipStorage.sol": {

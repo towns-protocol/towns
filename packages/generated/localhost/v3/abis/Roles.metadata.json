@@ -633,11 +633,11 @@
       ]
     },
     "contracts/src/towns/facets/Entitled.sol": {
-      "keccak256": "0x7aa843d40e4efd1a09e1ec302af382911989aba7999e1a0ec2619293b0598710",
+      "keccak256": "0xb7bd21a1076572bbcbac939f226834984a5a2878f58a22e5b5688d7c7ba1ebb4",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://75d60caab15dacfc58082c74dff1abfbb68b2415d30a88308772123ff16c5369",
-        "dweb:/ipfs/QmdAx6MjAwMWyfK8rEFWCRohff49ELCND6vxmvU8hwZzNU"
+        "bzz-raw://d7f752b93700def6c6edec3fb02da531510a0fc1f684c91c25eae9e4d61883dc",
+        "dweb:/ipfs/QmR4FFEX2YS5NTFeEJStim9M7P4cUERfxuspv7j3DdjpQm"
       ]
     },
     "contracts/src/towns/facets/Permissions.sol": {

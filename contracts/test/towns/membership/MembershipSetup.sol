@@ -19,7 +19,6 @@ import {TownArchitectSetup} from "contracts/test/towns/architect/TownArchitectSe
 
 // contracts
 import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipFacet.sol";
-import {MinimalForwarder} from "openzeppelin-contracts/contracts/metatx/MinimalForwarder.sol";
 
 // mocks
 import {MockERC721A} from "contracts/test/mocks/MockERC721A.sol";
@@ -47,7 +46,6 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
     ERC721AHelper erc721aHelper = new ERC721AHelper();
 
     MultiInit multiInit = new MultiInit();
-    MinimalForwarder trustedForwarder = new MinimalForwarder();
     MockERC721A mockERC721A = new MockERC721A();
 
     founder = _randomAddress();
@@ -85,8 +83,7 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
         freeAllocation: 0,
         pricingModule: address(0)
       }),
-      townFactory,
-      address(trustedForwarder)
+      townFactory
     );
     payloads[2] = abi.encodeWithSelector(
       tokenOwnableHelper.initializer(),
@@ -114,10 +111,7 @@ contract MembershipHelper is FacetHelper {
     membership = new MembershipFacet();
 
     uint256 index;
-    bytes4[] memory selectors_ = new bytes4[](20);
-
-    // Forwarder
-    selectors_[index++] = IERC2771Recipient.isTrustedForwarder.selector;
+    bytes4[] memory selectors_ = new bytes4[](19);
 
     // Minting
     selectors_[index++] = IMembership.joinTown.selector;

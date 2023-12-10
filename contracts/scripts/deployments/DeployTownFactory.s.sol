@@ -34,7 +34,6 @@ import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol"
 import {PlatformRequirementsHelper} from "contracts/test/towns/platform/requirements/PlatformRequirementsSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
-import {MinimalForwarder} from "openzeppelin-contracts/contracts/metatx/MinimalForwarder.sol";
 
 // mocks
 
@@ -73,7 +72,6 @@ contract DeployTownFactory is DiamondDeployer {
 
   // multi init
   address multiInit;
-  address forwarder;
 
   function versionName() public pure override returns (string memory) {
     return "townFactory";
@@ -96,7 +94,7 @@ contract DeployTownFactory is DiamondDeployer {
     platformReqs = address(new PlatformRequirementsFacet());
 
     multiInit = address(new MultiInit());
-    forwarder = address(new MinimalForwarder());
+
     vm.stopBroadcast();
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](totalFacets);
@@ -149,8 +147,7 @@ contract DeployTownFactory is DiamondDeployer {
       townArchitectHelper.initializer(),
       getDeployment("townOwner"), // townToken
       getDeployment("userEntitlement"), // userEntitlement
-      getDeployment("tokenEntitlement"), // tokenEntitlement
-      forwarder // forwarder
+      getDeployment("tokenEntitlement") // tokenEntitlement
     );
     initDatas[index++] = proxyManagerHelper.makeInitData(
       abi.encode(getDeployment("town"))
@@ -184,12 +181,10 @@ contract DeployTownFactory is DiamondDeployer {
     address,
     address townFactory
   ) internal override {
-    address pioneerToken = getDeployment("pioneerToken");
     address townToken = getDeployment("townOwner");
 
     vm.startBroadcast(pk);
     ITownOwner(townToken).setFactory(address(townFactory));
-    TownArchitect(townFactory).gateByToken(pioneerToken, 1);
     vm.stopBroadcast();
   }
 }
