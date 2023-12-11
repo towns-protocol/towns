@@ -18,6 +18,7 @@ import { useStore } from 'store/store'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { Panel, PanelButton } from '@components/Panel/Panel'
 import { NESTED_PROFILE_PANEL_PATHS } from 'routes'
+import { useCreateLink } from 'hooks/useCreateLink'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const navigate = useNavigate()
@@ -53,12 +54,15 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
         logout()
     })
 
+    const { createLink } = useCreateLink()
+
     const onMessageClick = useCallback(async () => {
         const streamId = await createDMChannel(profileId)
-        if (streamId) {
-            navigate(`/messages/${streamId.networkId}`)
+        const link = streamId && createLink({ messageId: streamId.networkId })
+        if (link) {
+            navigate(link + '?ref=profile')
         }
-    }, [createDMChannel, profileId, navigate])
+    }, [createDMChannel, createLink, navigate, profileId])
 
     const profileUser = useMyProfile()
     const { membersMap } = useSpaceMembers()
