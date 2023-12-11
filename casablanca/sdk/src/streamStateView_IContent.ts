@@ -3,7 +3,7 @@ import { ChannelMessage, EncryptedData } from '@river/proto'
 import { EmittedEvents } from './client'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamStateView_Membership } from './streamStateView_Membership'
-import { EncryptedContent } from './encryptedContentTypes'
+import { DecryptedContent, EncryptedContent } from './encryptedContentTypes'
 import { checkNever } from './check'
 
 export abstract class StreamStateView_IContent {
@@ -57,5 +57,13 @@ export abstract class StreamStateView_IContent {
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         this.memberships.onConfirmedEvent(event, emitter)
+    }
+
+    onDecryptedContent(
+        _eventId: string,
+        _content: DecryptedContent,
+        _emitter: TypedEmitter<EmittedEvents>,
+    ): void {
+        //
     }
 }

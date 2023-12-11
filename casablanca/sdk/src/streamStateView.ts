@@ -12,12 +12,12 @@ import TypedEmitter from 'typed-emitter'
 import { check, logNever, isDefined } from './check'
 import {
     ConfirmedTimelineEvent,
-    DecryptedTimelineEvent,
     ParsedMiniblock,
     ParsedStreamAndCookie,
     RemoteTimelineEvent,
     StreamTimelineEvent,
     isConfirmedEvent,
+    isDecryptedEvent,
     isLocalEvent,
     makeRemoteTimelineEvent,
 } from './types'
@@ -412,31 +412,28 @@ export class StreamStateView {
     }
 
     // update streeam state with successfully decrypted events by hashStr event id
-    updateDecrypted(
+    updateDecryptedContent(
         eventId: string,
         content: DecryptedContent,
         emitter: TypedEmitter<EmittedEvents>,
-    ): DecryptedTimelineEvent {
+    ) {
+        this.getContent().onDecryptedContent(eventId, content, emitter)
         const timelineEvent = this.events.get(eventId)
-        check(isDefined(timelineEvent), `Event not found ${eventId}`)
-
-        if (timelineEvent.decryptedContent !== undefined) {
-            logError(`timeline event was decrypted twice? ${eventId}`)
+        if (timelineEvent) {
+            if (timelineEvent.decryptedContent !== undefined) {
+                logError(`timeline event was decrypted twice? ${eventId}`)
+            }
+            timelineEvent.decryptedContent = content
+            check(
+                isDecryptedEvent(timelineEvent),
+                `Event is not decrypted, programmer error ${eventId}`,
+            )
+            emitter.emit('streamUpdated', this.streamId, this.contentKind, {
+                updated: [timelineEvent],
+            })
+            // dispatching eventDecrypted makes it easier to test
+            emitter.emit('eventDecrypted', this.streamId, this.contentKind, timelineEvent)
         }
-
-        timelineEvent.decryptedContent = content
-
-        emitter.emit('streamUpdated', this.streamId, this.contentKind, {
-            updated: [timelineEvent],
-        })
-        // dispatching eventDecrypted makes it easier to test
-        emitter.emit(
-            'eventDecrypted',
-            this.streamId,
-            this.contentKind,
-            timelineEvent as DecryptedTimelineEvent,
-        )
-        return timelineEvent as DecryptedTimelineEvent
     }
 
     initialize(

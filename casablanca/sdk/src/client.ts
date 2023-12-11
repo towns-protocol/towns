@@ -31,7 +31,7 @@ import { DLogger, dlog, dlogError } from './dlog'
 import { errorContains, getRpcErrorProperty, StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { assert, check, hasElements, isDefined, logNever, throwWithCode } from './check'
+import { assert, check, hasElements, isDefined, throwWithCode } from './check'
 import {
     isChannelStreamId,
     isDMChannelStreamId,
@@ -84,7 +84,6 @@ import {
     make_fake_encryptedData,
     make_UserDeviceKeyPayload_MegolmDevice,
     make_UserToDevicePayload_MegolmSessions,
-    DecryptedTimelineEvent,
 } from './types'
 import { bin_fromHexString, bin_toHexString, shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/cryptoStore'
@@ -93,11 +92,7 @@ import debug from 'debug'
 import { Stream } from './stream'
 import { Code } from '@connectrpc/connect'
 import { isIConnectError } from './utils'
-import {
-    DecryptedContent_ChannelMessage,
-    DecryptedContent_Text,
-    EncryptedContent,
-} from './encryptedContentTypes'
+import { EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { DecryptionExtensions, EntitlementsDelegate } from './decryptionExtensions'
 import { PersistenceStore } from './persistenceStore'
 
@@ -1636,31 +1631,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         streamId: string,
         eventId: string,
         encryptedContent: EncryptedContent,
-    ): Promise<DecryptedTimelineEvent | undefined> {
+    ): Promise<void> {
         this.logCall('decryptMegolmEvent', streamId, eventId, encryptedContent)
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
         const cleartext = await this.cleartextForMegolmEvent(streamId, eventId, encryptedContent)
-        switch (encryptedContent.kind) {
-            case 'text': {
-                const decryptedContent = {
-                    kind: 'text',
-                    content: cleartext,
-                } satisfies DecryptedContent_Text
-                return stream.view.updateDecrypted(eventId, decryptedContent, this)
-            }
-            case 'channelMessage': {
-                const message = ChannelMessage.fromJsonString(cleartext)
-                const decryptedContent = {
-                    kind: 'channelMessage',
-                    content: message,
-                } satisfies DecryptedContent_ChannelMessage
-                return stream.view.updateDecrypted(eventId, decryptedContent, this)
-            }
-            default:
-                logNever(encryptedContent.kind, 'unknown encryptedContent.kind')
-                return undefined
-        }
+        const decryptedContent = toDecryptedContent(encryptedContent.kind, cleartext)
+        stream.view.updateDecryptedContent(eventId, decryptedContent, this)
     }
 
     private async cleartextForMegolmEvent(
