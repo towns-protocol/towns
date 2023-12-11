@@ -75,6 +75,8 @@ module "river_db_cluster" {
   vpc_id           = local.transient_global_remote_state.vpc.vpc_id
 
   is_transient = true
+
+  count = var.is_transient_lite ? 0 : 1
 }
 
 module "river_node_1" {
