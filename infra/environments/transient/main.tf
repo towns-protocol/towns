@@ -84,6 +84,8 @@ module "river_node_1" {
 
   count = var.is_transient_lite ? 0 : 1
 
+  river_node_db = var.is_transient_lite ? null : module.river_db_cluster[0]
+
   is_transient  = true
   git_pr_number = var.git_pr_number
 
@@ -106,5 +108,4 @@ module "river_node_1" {
 
   node_number = 1
 
-  river_node_db = module.river_db_cluster
 }
