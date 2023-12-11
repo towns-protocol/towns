@@ -1,7 +1,8 @@
 import React from 'react'
 import { useAllKnownUsers } from 'use-zion-client'
+import { Link } from 'react-router-dom'
 import { Avatar } from '@components/Avatar/Avatar'
-import { Paragraph, Stack } from '@ui'
+import { Box, Paragraph, Stack } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { ZRoomCreateEvent } from '../../MessageTimeline/util/getEventsByDate'
@@ -19,13 +20,33 @@ export const RoomCreate = (props: Props) => {
 
     const creator = event.content.creator
 
-    const name = getPrettyDisplayName(usersMap[creator]).displayName
+    const creatorUser = usersMap[creator]
+    const name = getPrettyDisplayName(creatorUser).displayName
     const groupName = channelName ? `#${channelName}` : `this group`
 
-    const message = creator === userId ? `You created ${groupName}` : `${name} created ${groupName}`
+    if (!creatorUser) {
+        return (
+            <Stack centerContent paddingX="lg" paddingY="sm" color="gray2">
+                {groupName} was created
+            </Stack>
+        )
+    }
+    const message =
+        creator === userId ? (
+            `You created ${groupName}`
+        ) : (
+            <Stack display="inline">
+                <Link to={`profile/${creatorUser.userId}`}>
+                    <Box display="inline" color="default">
+                        {name}
+                    </Box>
+                </Link>
+                {` created ${groupName}`}
+            </Stack>
+        )
 
     return (
-        <Stack centerContent paddingX="lg" paddingY="md" color="gray2">
+        <Stack centerContent paddingX="lg" paddingY="sm" color="gray2">
             <Stack
                 centerContent
                 direction={{ default: 'row', mobile: 'column' }}

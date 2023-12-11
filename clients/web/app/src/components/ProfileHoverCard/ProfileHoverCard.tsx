@@ -12,7 +12,7 @@ import { Avatar } from '@components/Avatar/Avatar'
 import { Stack } from 'ui/components/Stack/Stack'
 import { Paragraph } from 'ui/components/Text/Paragraph'
 import { Tooltip } from 'ui/components/Tooltip/Tooltip'
-import { shortAddress } from 'ui/utils/utils'
+import { notUndefined, shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 type Props = {
@@ -33,6 +33,15 @@ export const ProfileHoverCard = (props: Props) => {
     const user = combinedUsers[userId]
     const userAddress = getAccountAddress(userId)
     const { data: userBio } = useGetUserBio(userAddress)
+
+    const memberOf = useMemo(() => {
+        return user?.memberOf?.length
+            ? user.memberOf
+                  .map((spaceId) => spaces.find((f) => f.id.networkId === spaceId)?.name)
+                  .filter(notUndefined)
+                  .join(',')
+            : space?.name
+    }, [space?.name, spaces, user.memberOf])
 
     return user ? (
         <Tooltip gap padding maxWidth="300">
@@ -55,14 +64,13 @@ export const ProfileHoverCard = (props: Props) => {
             </Stack>
 
             <Stack>
-                <Paragraph color="gray2" size="sm">
-                    Member of{' '}
-                    {user?.memberOf?.length
-                        ? user.memberOf.map(
-                              (spaceId) => spaces.find((f) => f.id.networkId === spaceId)?.name,
-                          )
-                        : space?.name}
-                </Paragraph>
+                {memberOf ? (
+                    <Paragraph color="gray2" size="sm">
+                        Member of {memberOf}
+                    </Paragraph>
+                ) : (
+                    <></>
+                )}
                 {userBio && (
                     <>
                         <Paragraph strong size="sm">

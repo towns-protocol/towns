@@ -20,7 +20,7 @@ export const TimelineChannelCreateEvent = (props: {
         : ''
 
     return (
-        <Stack centerContent paddingY="md">
+        <Stack centerContent>
             <Paragraph color="gray2">
                 {name} created {channelName ? `#${channelName}` : `channel`}
             </Paragraph>

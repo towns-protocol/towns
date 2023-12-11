@@ -3,12 +3,12 @@ import uniqBy from 'lodash/uniqBy'
 import { Link } from 'react-router-dom'
 import { firstBy } from 'thenby'
 import { Membership, useAllKnownUsers } from 'use-zion-client'
-import { Card, Paragraph, Stack, TooltipRenderer } from '@ui'
-import { atoms } from 'ui/styles/atoms.css'
+import { Box, Card, Paragraph, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { AvatarStack } from 'routes/AvatarStack'
 import { getNameListFromUsers } from '@components/UserList/UserList'
+import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { AccumulatedRoomMemberRenderEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 type Props = {
@@ -83,14 +83,20 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
                     }
                     return (
                         <Link key={e.content.userId} to={`profile/${e.content.userId}`}>
-                            {
-                                getPrettyDisplayName(
-                                    usersMap[e.content.userId] ?? {
-                                        userId: e.content.userId,
-                                        displayName: e.content.displayName ?? '',
-                                    },
-                                ).displayName
-                            }
+                            <Box
+                                color="default"
+                                display="inline"
+                                tooltip={<ProfileHoverCard userId={e.content.userId} />}
+                            >
+                                {
+                                    getPrettyDisplayName(
+                                        usersMap[e.content.userId] ?? {
+                                            userId: e.content.userId,
+                                            displayName: e.content.displayName ?? '',
+                                        },
+                                    ).displayName
+                                }
+                            </Box>
                         </Link>
                     )
                 })
@@ -114,7 +120,7 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
             direction={{ default: 'row', mobile: 'column' }}
             gap="sm"
             paddingX="lg"
-            paddingY="md"
+            paddingY="sm"
             color="gray2"
         >
             <AvatarStack users={avatarUsers} size="avatar_xs" />
@@ -154,13 +160,14 @@ const getNameListFromArray = (names: React.ReactNode[], verb: string, maxLength 
     return (
         <>
             {str} along with{' '}
-            <TooltipRenderer tooltip={<UserListTooltip names={originalNames.slice(1)} />}>
-                {({ triggerProps }) => (
-                    <span className={atoms({ color: 'default' })} {...triggerProps}>
-                        {originalNames.length - 1} others
-                    </span>
-                )}
-            </TooltipRenderer>
+            <Stack
+                tooltip={<UserListTooltip names={originalNames.slice(1)} />}
+                display="inline"
+                cursor="pointer"
+                color="default"
+            >
+                {originalNames.length - 1} others
+            </Stack>
         </>
     )
 }
