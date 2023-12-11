@@ -34,6 +34,14 @@ const TEST_URL_MULTI =
     'http://localhost:5175,http://localhost:5176,http://localhost:5177,http://localhost:5178,http://localhost:5179'
 
 const initTestUrls = () => {
+    if (process.env.RIVER_TEST_URLS !== undefined && process.env.RIVER_TEST_URLS !== '') {
+        const urls = process.env.RIVER_TEST_URLS.split(',')
+        log(
+            'initTestUrls, Using explicit urls from RIVER_TEST_URLS, not RIVER_TEST_CONNECT, urls=',
+            urls,
+        )
+        return urls
+    }
     const config = process.env.RIVER_TEST_CONNECT
     let urls: string[]
     if (config === 'single') {
