@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # very similar to running git clean -xd however, we don't want to remove
-# .env.local files, dendrite keys (if you're running from vs), etc
+# .env.local files, etc
 # if you want to clean everything temporary created by the build, but 
 # don't want a full reset on your dev environment, this is the script for you
 #

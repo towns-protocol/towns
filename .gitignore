@@ -27,14 +27,6 @@ abi/
 
 /docs
 
-servers/identity/localhost-key.pem
-servers/identity/localhost.pem
-servers/identity/.env
-servers/identity/identity
-servers/identity/generated
-servers/dendrite/vendor/
-servers/dendrite/zion-appservice.yaml
-
 clients/web/app/storybook-static
 
 casablanca/**/dist/
@@ -60,10 +52,6 @@ broadcast/
 **/.terraform/*
 out/
 turbo-*.log
-
-# Local dendrite contract addresses
-servers/dendrite/zion/**/localhost/addresses/*.json
-servers/dendrite/dendrite.*yaml
 
 # siwe-worker bundle
 servers/workers/siwe-worker/worker/bundle.js

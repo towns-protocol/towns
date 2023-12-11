@@ -3,6 +3,5 @@ go 1.21
 use (
 	./casablanca/node
 	./common/xchain
-	./servers/dendrite
 	./servers/xchain
 )

@@ -76,7 +76,6 @@ then
     ./casablanca/node/stop_multi.sh
 fi
 
-do_killl dendrite "$1"
 do_killl yarn "$1"
 do_killl anvil "$1"
 do_killl wrangler "$1"
