@@ -231,76 +231,6 @@ resource "aws_secretsmanager_secret_version" "river_node_wallet_credentials" {
 EOF
 }
 
-resource "aws_iam_role_policy" "ecs-to-wallet-secret-policy" {
-  name = "${local.node_name}-wallet-credentials"
-  role = aws_iam_role.ecs_task_execution_role.id
-
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${aws_secretsmanager_secret.river_node_wallet_credentials.arn}"
-        ]
-      }
-    ]
-  }
-  EOF
-}
-
-resource "aws_iam_role_policy" "ecs-to-rds-password-policy" {
-  name = "${local.node_name}-rds-password"
-  role = aws_iam_role.ecs_task_execution_role.id
-
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${aws_secretsmanager_secret.rds_river_node_password.arn}"
-        ]
-      }
-    ]
-  }
-  EOF
-}
-
-resource "aws_iam_role_policy" "ecs-to-push_notification_auth_token" {
-  name = "${local.node_name}-push-notification-auth-token"
-  role = aws_iam_role.ecs_task_execution_role.id
-
-  lifecycle {
-    ignore_changes = all
-  }
-
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${local.global_remote_state.river_global_push_notification_auth_token.arn}"
-        ]
-      }
-    ]
-  }
-  EOF
-}
-
 resource "aws_secretsmanager_secret" "river_node_home_chain_network_url" {
   name = "${local.node_name}-homechain-network-url-secret"
   tags = local.river_node_tags
@@ -311,56 +241,8 @@ resource "aws_secretsmanager_secret_version" "river_node_home_chain_network_url"
   secret_string = "DUMMY"
 }
 
-resource "aws_iam_role_policy" "ecs-to-home-chain-network-url-secret-policy" {
-  name = "${local.node_name}-home-chain-network-url-secret"
-  role = aws_iam_role.ecs_task_execution_role.id
-
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${aws_secretsmanager_secret.river_node_home_chain_network_url.arn}"
-        ]
-      }
-    ]
-  }
-  EOF
-}
-
-resource "aws_iam_role_policy" "dd_agent_api_key" {
-  name = "${local.node_name}-dd-agent-api-key"
-  role = aws_iam_role.ecs_task_execution_role.id
-
-  lifecycle {
-    ignore_changes = all
-  }
-
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${local.global_remote_state.river_global_dd_agent_api_key.arn}"
-        ]
-      }
-    ]
-  }
-  EOF
-}
-
-resource "aws_iam_role_policy" "hnt_dockerhub_access_key" {
-  name = "${local.node_name}-hnt-dockerhub-access-key-policy"
+resource "aws_iam_role_policy" "river_node_credentials" {
+  name = "${local.node_name}-node-credentials"
   role = aws_iam_role.ecs_task_execution_role.id
 
   lifecycle {
@@ -378,6 +260,51 @@ resource "aws_iam_role_policy" "hnt_dockerhub_access_key" {
         "Effect": "Allow",
         "Resource": [
           "${local.global_remote_state.hnt_dockerhub_access_key.arn}"
+        ]
+      },
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${local.global_remote_state.river_global_dd_agent_api_key.arn}"
+        ]
+      },
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${aws_secretsmanager_secret.river_node_home_chain_network_url.arn}"
+        ]
+      },
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${local.global_remote_state.river_global_push_notification_auth_token.arn}"
+        ]
+      },
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${aws_secretsmanager_secret.rds_river_node_password.arn}"
+        ]
+      },
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${aws_secretsmanager_secret.river_node_wallet_credentials.arn}"
         ]
       }
     ]
@@ -788,50 +715,6 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
     }
   }
 }
-
-### MONITORING
-
-# resource "datadog_monitor" "river_node_cpu_monitor" {
-#   count   = module.global_constants.environment == "test" ? 1 : 0
-#   name    = "${var.node_name} - CPU Usage"
-#   type    = "metric alert"
-#   message = "River Node CPU Usage is high on ${var.node_name} ${module.global_constants.sre_slack_identifier}"
-#   query   = "avg(last_5m):avg:aws.ecs.service.cpuutilization.maximum{instance:${var.node_name}} > 70"
-#   monitor_thresholds {
-#     critical          = 70
-#     critical_recovery = 30
-#   }
-
-#   notify_no_data    = false
-#   renotify_interval = 60
-
-#   tags = [
-#     "env:${module.global_constants.tags.Environment}",
-#     "service:${local.service_name}",
-#     "instance:${var.node_name}"
-#   ]
-# }
-
-# resource "datadog_monitor" "river_node_memory_monitor" {
-#   count   = module.global_constants.environment == "test" ? 1 : 0
-#   name    = "${var.node_name} - Memory Usage"
-#   type    = "metric alert"
-#   message = "River Node Memory Usage is high on ${var.node_name} ${module.global_constants.sre_slack_identifier}"
-#   query   = "avg(last_5m):avg:aws.ecs.service.memory_utilization.maximum{instance:${var.node_name}} > 70"
-#   monitor_thresholds {
-#     critical          = 70
-#     critical_recovery = 30
-#   }
-
-#   notify_no_data    = false
-#   renotify_interval = 60
-
-#   tags = [
-#     "env:${module.global_constants.tags.Environment}",
-#     "service:${local.service_name}",
-#     "instance:${var.node_name}"
-#   ]
-# }
 
 data "cloudflare_zone" "zone" {
   name = module.global_constants.primary_hosted_zone_name
