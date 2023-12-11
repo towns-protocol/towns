@@ -27,6 +27,8 @@ jobs:
             ENV: 'transient'
             TF_VAR_cloudflare_terraform_api_token: ${{ secrets.CLOUDFLARE_TERRAFORM_API_TOKEN }}
             GIT_PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+            # We need to set this to true while destroying. otherwise lite environments get confused during the deprovision step as terraform tries to delete components that don't exist. But when we set this to true, lite or not, all components are deleted.
+            IS_TRANSIENT_LITE: true
 
         steps:
             - name: Login to Docker Hub
