@@ -2,7 +2,6 @@ import TypedEmitter from 'typed-emitter'
 import { RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import {
-    MiniblockHeader,
     Snapshot,
     UserDeviceKeyPayload,
     UserDeviceKeyPayload_Inception,
@@ -38,10 +37,6 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_IContent {
         for (const value of content.megolmDevices) {
             this.addUserDeviceKey(value, emitter)
         }
-    }
-
-    onMiniblockHeader(_blockHeader: MiniblockHeader, _emitter?: TypedEmitter<EmittedEvents>): void {
-        // nothing to do
     }
 
     prependEvent(

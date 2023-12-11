@@ -321,7 +321,6 @@ export class StreamStateView {
                     )
                     this.prevMiniblockHash = event.envelope.hash
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
-                    this.getContent().onMiniblockHeader(payload.value, emitter)
                     timelineEvent.confirmedEventNum =
                         payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)
                     confirmed = []
@@ -335,6 +334,8 @@ export class StreamStateView {
                         event.miniblockNum = payload.value.miniblockNum
                         event.confirmedEventNum = payload.value.eventNumOffset + BigInt(i)
                         check(isConfirmedEvent(event), `Event is not confirmed ${eventId}`)
+                        this.getContent().onConfirmedEvent(event, emitter)
+                        this.commonContent.onConfirmedEvent(event, emitter)
                         confirmed.push(event)
                     }
                     break

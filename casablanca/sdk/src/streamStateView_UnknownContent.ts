@@ -1,6 +1,4 @@
 import TypedEmitter from 'typed-emitter'
-import { MiniblockHeader } from '@river/proto'
-import { EmittedEvents } from './client'
 import { StreamStateView_IContent } from './streamStateView_IContent'
 import { StreamEvents } from './streamEvents'
 import { RemoteTimelineEvent } from './types'
@@ -13,10 +11,6 @@ export class StreamStateView_UnknownContent extends StreamStateView_IContent {
 
     get memberships(): StreamStateView_Membership {
         throw new Error(`Unknown content type`)
-    }
-
-    onMiniblockHeader(_blockHeader: MiniblockHeader, _emitter?: TypedEmitter<EmittedEvents>): void {
-        // ...
     }
 
     prependEvent(

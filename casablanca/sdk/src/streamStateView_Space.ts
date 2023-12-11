@@ -1,14 +1,13 @@
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
-import { RemoteTimelineEvent } from './types'
+import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import {
     ChannelOp,
     ChannelProperties,
     Err,
     EncryptedData,
-    MiniblockHeader,
     Snapshot,
     SpacePayload,
     SpacePayload_Channel,
@@ -49,9 +48,12 @@ export class StreamStateView_Space extends StreamStateView_IContent {
         }
     }
 
-    onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
-        this.memberships.onMiniblockHeader(blockHeader, emitter)
-        this.userMetadata.onMiniblockHeader(blockHeader, emitter)
+    onConfirmedEvent(
+        event: ConfirmedTimelineEvent,
+        emitter: TypedEmitter<StreamEvents> | undefined,
+    ): void {
+        super.onConfirmedEvent(event, emitter)
+        this.userMetadata.onConfirmedEvent(event, emitter)
     }
 
     prependEvent(

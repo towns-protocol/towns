@@ -1,13 +1,12 @@
 import TypedEmitter from 'typed-emitter'
 import {
     Snapshot,
-    MiniblockHeader,
     CommonPayload,
     CommonPayload_KeySolicitation,
     CommonPayload_KeyFulfillment,
 } from '@river/proto'
 import { EmittedEvents } from './client'
-import { KeySolicitationContent, ParsedEvent } from './types'
+import { ConfirmedTimelineEvent, KeySolicitationContent, ParsedEvent } from './types'
 import { logNever } from './check'
 import { removeCommon } from './utils'
 
@@ -42,10 +41,6 @@ export class StreamStateView_CommonContent {
         }
     }
 
-    onMiniblockHeader(_blockHeader: MiniblockHeader, _emitter?: TypedEmitter<EmittedEvents>): void {
-        // nothing to do
-    }
-
     prependCommonContent(
         _event: ParsedEvent,
         _payload: CommonPayload,
@@ -71,6 +66,13 @@ export class StreamStateView_CommonContent {
             default:
                 logNever(payload.content, 'missing case')
         }
+    }
+
+    onConfirmedEvent(
+        _event: ConfirmedTimelineEvent,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        // nothing to do
     }
 
     private applySolicitation(

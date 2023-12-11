@@ -1,6 +1,5 @@
 import TypedEmitter from 'typed-emitter'
 import {
-    MiniblockHeader,
     DmChannelPayload_Inception,
     DmChannelPayload_Snapshot,
     Snapshot,
@@ -33,10 +32,6 @@ export class StreamStateView_DMChannel extends StreamStateView_IContent {
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         this.memberships.initialize(content.memberships, emitter)
-    }
-
-    onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
-        this.memberships.onMiniblockHeader(blockHeader, emitter)
     }
 
     appendEvent(

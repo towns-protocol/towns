@@ -4,7 +4,6 @@ import {
     GdmChannelPayload_Inception,
     GdmChannelPayload_Snapshot,
     Snapshot,
-    MiniblockHeader,
 } from '@river/proto'
 import { EmittedEvents } from './client'
 import { StreamStateView_IContent } from './streamStateView_IContent'
@@ -29,10 +28,6 @@ export class StreamStateView_GDMChannel extends StreamStateView_IContent {
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         this.memberships.initialize(content.memberships, emitter)
-    }
-
-    onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
-        this.memberships.onMiniblockHeader(blockHeader, emitter)
     }
 
     prependEvent(

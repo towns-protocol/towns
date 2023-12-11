@@ -6,7 +6,6 @@ import {
     ChannelPayload,
     ChannelPayload_Inception,
     ChannelPayload_Snapshot,
-    MiniblockHeader,
     Snapshot,
 } from '@river/proto'
 import { check, logNever } from './check'
@@ -30,10 +29,6 @@ export class StreamStateView_Channel extends StreamStateView_IContent {
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         this.memberships.initialize(content.memberships, emitter)
-    }
-
-    onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
-        this.memberships.onMiniblockHeader(blockHeader, emitter)
     }
 
     prependEvent(

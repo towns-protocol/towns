@@ -1,9 +1,9 @@
-import { Membership, MembershipOp, MiniblockHeader } from '@river/proto'
+import { Membership, MembershipOp } from '@river/proto'
 import { logNever } from './check'
 import TypedEmitter from 'typed-emitter'
 import { StreamEvents } from './streamEvents'
 import { EmittedEvents } from './client'
-import { bin_toHexString } from './binary'
+import { ConfirmedTimelineEvent } from './types'
 
 export class StreamStateView_Membership {
     readonly userId: string
@@ -31,18 +31,15 @@ export class StreamStateView_Membership {
         }
     }
 
-    /**
-     * process a miniblock header, applying membership events in order
-     */
-    onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
-        // loop over confirmed events, apply membership events in order
-        for (const eventHash of blockHeader.eventHashes) {
-            const eventId = bin_toHexString(eventHash)
-            const payload = this.pendingEvents.get(eventId)
-            if (payload) {
-                this.pendingEvents.delete(eventId)
-                this.applyMembershipEvent(payload, 'confirmed', emitter)
-            }
+    onConfirmedEvent(
+        event: ConfirmedTimelineEvent,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        const eventId = event.hashStr
+        const payload = this.pendingEvents.get(eventId)
+        if (payload) {
+            this.pendingEvents.delete(eventId)
+            this.applyMembershipEvent(payload, 'confirmed', emitter)
         }
     }
 

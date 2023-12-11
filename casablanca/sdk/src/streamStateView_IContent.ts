@@ -1,7 +1,7 @@
 import TypedEmitter from 'typed-emitter'
-import { ChannelMessage, EncryptedData, MiniblockHeader } from '@river/proto'
+import { ChannelMessage, EncryptedData } from '@river/proto'
 import { EmittedEvents } from './client'
-import { RemoteTimelineEvent } from './types'
+import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { EncryptedContent } from './encryptedContentTypes'
 import { checkNever } from './check'
@@ -9,10 +9,6 @@ import { checkNever } from './check'
 export abstract class StreamStateView_IContent {
     abstract readonly streamId: string
     abstract readonly memberships: StreamStateView_Membership
-    abstract onMiniblockHeader(
-        blockHeader: MiniblockHeader,
-        emitter?: TypedEmitter<EmittedEvents>,
-    ): void
     abstract prependEvent(
         event: RemoteTimelineEvent,
         cleartext: string | undefined,
@@ -54,5 +50,12 @@ export abstract class StreamStateView_IContent {
                 content,
             })
         }
+    }
+
+    onConfirmedEvent(
+        event: ConfirmedTimelineEvent,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        this.memberships.onConfirmedEvent(event, emitter)
     }
 }

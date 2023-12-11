@@ -1,12 +1,11 @@
 import {
     SpacePayload_WrappedEncryptedData as WrappedEncryptedData,
-    MiniblockHeader,
     EncryptedData,
 } from '@river/proto'
 import { logNever } from './check'
 import TypedEmitter from 'typed-emitter'
 import { EmittedEvents } from './client'
-import { bin_toHexString } from './binary'
+import { ConfirmedTimelineEvent } from './types'
 
 export class StreamStateView_UserMetadata {
     readonly userId: string
@@ -53,36 +52,28 @@ export class StreamStateView_UserMetadata {
         }
     }
 
-    /**
-     * process a miniblock header, applying user metadata events in order
-     */
-    onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
-        // loop over confirmed events, apply user metadata events in order
-        let i = 0
-        for (const eventHash of blockHeader.eventHashes) {
-            const eventId = bin_toHexString(eventHash)
-            let event = this.pendingUsernameEvents.get(eventId)
-            if (event) {
-                const payload = new WrappedEncryptedData({
-                    data: event.payload,
-                    eventNum: BigInt(blockHeader.eventNumOffset) + BigInt(i),
-                })
-                i++
-                this.pendingUsernameEvents.delete(eventId)
-                this.applyUserMetadataEvent(payload, event.userId, 'username', emitter)
-                continue
-            }
-            event = this.pendingDisplayNameEvents.get(eventId)
-
-            if (event) {
-                const payload = new WrappedEncryptedData({
-                    data: event.payload,
-                    eventNum: BigInt(blockHeader.eventNumOffset) + BigInt(i),
-                })
-                i++
-                this.pendingDisplayNameEvents.delete(eventId)
-                this.applyUserMetadataEvent(payload, event.userId, 'displayName', emitter)
-            }
+    onConfirmedEvent(
+        confirmedEvent: ConfirmedTimelineEvent,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        const eventId = confirmedEvent.hashStr
+        let event = this.pendingUsernameEvents.get(eventId)
+        if (event) {
+            const payload = new WrappedEncryptedData({
+                data: event.payload,
+                eventNum: confirmedEvent.eventNum,
+            })
+            this.pendingUsernameEvents.delete(eventId)
+            this.applyUserMetadataEvent(payload, event.userId, 'username', emitter)
+        }
+        event = this.pendingDisplayNameEvents.get(eventId)
+        if (event) {
+            const payload = new WrappedEncryptedData({
+                data: event.payload,
+                eventNum: confirmedEvent.eventNum,
+            })
+            this.pendingDisplayNameEvents.delete(eventId)
+            this.applyUserMetadataEvent(payload, event.userId, 'displayName', emitter)
         }
     }
 

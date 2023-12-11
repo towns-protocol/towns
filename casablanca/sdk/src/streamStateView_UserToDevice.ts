@@ -1,8 +1,7 @@
 import TypedEmitter from 'typed-emitter'
-import { ParsedEvent, RemoteTimelineEvent } from './types'
+import { ConfirmedTimelineEvent, ParsedEvent, RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import {
-    MiniblockHeader,
     Snapshot,
     UserToDevicePayload,
     UserToDevicePayload_Snapshot,
@@ -13,7 +12,6 @@ import {
 } from '@river/proto'
 import { check, logNever } from './check'
 import { StreamStateView_IContent } from './streamStateView_IContent'
-import { bin_toHexString } from './binary'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 
 export class StreamStateView_UserToDevice extends StreamStateView_IContent {
@@ -41,14 +39,16 @@ export class StreamStateView_UserToDevice extends StreamStateView_IContent {
         })
     }
 
-    onMiniblockHeader(blockHeader: MiniblockHeader, emitter?: TypedEmitter<EmittedEvents>): void {
-        for (const eventHash of blockHeader.eventHashes) {
-            const eventId = bin_toHexString(eventHash)
-            const payload = this.pendingMegolmSessions[eventId]
-            if (payload) {
-                delete this.pendingMegolmSessions[eventId]
-                this.addMegolmSessions(payload.creatorUserId, payload.value, emitter)
-            }
+    onConfirmedEvent(
+        event: ConfirmedTimelineEvent,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        super.onConfirmedEvent(event, emitter)
+        const eventId = event.hashStr
+        const payload = this.pendingMegolmSessions[eventId]
+        if (payload) {
+            delete this.pendingMegolmSessions[eventId]
+            this.addMegolmSessions(payload.creatorUserId, payload.value, emitter)
         }
     }
 

@@ -2,7 +2,6 @@ import {
     EncryptedData,
     FullyReadMarker,
     FullyReadMarkers,
-    MiniblockHeader,
     Snapshot,
     UserSettingsPayload,
     UserSettingsPayload_FullyReadMarkers,
@@ -39,10 +38,6 @@ export class StreamStateView_UserSettings extends StreamStateView_IContent {
         for (const [_, payload] of Object.entries(content.fullyReadMarkers)) {
             this.fullyReadMarkerUpdate(payload)
         }
-    }
-
-    onMiniblockHeader(_blockHeader: MiniblockHeader, _emitter?: TypedEmitter<EmittedEvents>): void {
-        // nothing to do
     }
 
     prependEvent(

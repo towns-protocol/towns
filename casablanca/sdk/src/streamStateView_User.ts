@@ -3,7 +3,6 @@ import { ParsedEvent, RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import {
     MembershipOp,
-    MiniblockHeader,
     Snapshot,
     UserPayload,
     UserPayload_Inception,
@@ -37,10 +36,6 @@ export class StreamStateView_User extends StreamStateView_IContent {
         for (const [_, payload] of Object.entries(content.memberships)) {
             this.addUserPayload_userMembership(payload, emitter)
         }
-    }
-
-    onMiniblockHeader(_blockHeader: MiniblockHeader, _emitter?: TypedEmitter<EmittedEvents>): void {
-        // nothing to do
     }
 
     prependEvent(
