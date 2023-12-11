@@ -29,35 +29,35 @@ function startDBWithTerminationListener() {
 export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     const prod = !env.DEV
     if (prod) {
-        console.log(`sw: handleNotifications() was called.`)
+        console.log(`sw:push: handleNotifications() was called.`)
     }
 
     if (prod) {
         // print the various lifecyle / event hooks for debugging
         worker.addEventListener('install', () => {
-            console.log('sw: "install" event')
+            console.log('sw:push: "install" event')
         })
 
         worker.addEventListener('pushsubscriptionchange', () => {
-            console.log('sw: "pushsubscriptionchange" event')
+            console.log('sw:push: "pushsubscriptionchange" event')
         })
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         worker.addEventListener('sync', (event: any) => {
             // returns true if the user agent will not make further
             // synchronization attempts after the current attempt.
-            console.log('sw: "sync" event, lastChance:', event.lastChance)
+            console.log('sw:push: "sync" event, lastChance:', event.lastChance)
         })
     }
 
     // `activate` fires once old service worker is gone and new one has taken control
     worker.addEventListener('activate', () => {
-        console.log('sw: "activate" event')
+        console.log('sw:push: "activate" event')
         startDBWithTerminationListener()
     })
 
     worker.addEventListener('message', async (event) => {
-        console.log('sw: "message" event', event)
+        console.log('sw:push: "message" event', event)
         const data: {
             type?: ServiceWorkerMessageType
             space?: SpaceData
@@ -74,12 +74,12 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                         try {
                             await addSpaceToIdb(space)
                         } catch (error) {
-                            console.error('sw: error adding space to idb', space, error)
+                            console.error('sw:push: error adding space to idb', space, error)
                         }
                         try {
                             await addChannelsToIdb(space)
                         } catch (error) {
-                            console.error('sw: error adding channels to idb', space, error)
+                            console.error('sw:push: error adding channels to idb', space, error)
                         }
                     }
                     break
@@ -89,7 +89,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                             await addUsersToIdb(data.membersMap)
                         } catch (error) {
                             console.error(
-                                'sw: error adding users to idb',
+                                'sw:push: error adding users to idb',
                                 {
                                     space: data.space,
                                     membersMap: data.membersMap,
@@ -100,7 +100,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     }
                     break
                 default:
-                    console.log('sw: received unknown message type', data.type)
+                    console.log('sw:push: received unknown message type', data.type)
                     break
             }
         }
@@ -108,24 +108,24 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
 
     worker.addEventListener('push', (event) => {
         async function handleEvent(event: PushEvent) {
-            console.log('sw: "push" event')
+            console.log('sw:push: "push" event')
 
             const clientVisible = await checkClientIsVisible(worker)
             if (clientVisible) {
-                console.log('sw: client is visible, not showing notification')
+                console.log('sw:push: client is visible, not showing notification')
                 return
             }
 
             if (!event.data) {
-                console.log('sw: push event contains no data')
+                console.log('sw:push: push event contains no data')
                 return
             }
             const data = event.data.text() || '{}'
-            console.log('sw: received notification', data)
+            console.log('sw:push: received notification', data)
             const notification = appNotificationFromPushEvent(data)
 
             if (!notification) {
-                console.log("sw: ''worker couldn't parse notification")
+                console.log("sw:push: ''worker couldn't parse notification")
                 return
             }
 
@@ -142,17 +142,17 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             await worker.registration.showNotification(title, options)
         }
         event.waitUntil(handleEvent(event))
-        console.log('sw: Notification shown')
+        console.log('sw:push: Notification shown')
     })
 
     worker.addEventListener('notificationclick', (event) => {
-        console.log('sw: Clicked on a notification', event)
+        console.log('sw:push: Clicked on a notification', event)
         event.notification.close()
         event.waitUntil(
             worker.clients.matchAll({ type: 'window' }).then(async (clientsArr) => {
                 const data = appNotificationFromPushEvent(event.notification.data)
                 if (!data) {
-                    console.log('sw: worker could not parse notification data')
+                    console.log('sw:push: worker could not parse notification data')
                     return
                 }
                 const pathToNavigateTo = pathFromAppNotification(data)
@@ -276,7 +276,7 @@ async function getNotificationContent(notification: AppNotification): Promise<{
         channelName = channel?.name
         senderName = sender?.name
     } catch (error) {
-        console.error('sw: error fetching space/channel name from idb', error)
+        console.error('sw:push: error fetching space/channel name from idb', error)
     }
 
     // if this device doesn't have a town name, they haven't synced this town at all yet.
@@ -311,7 +311,7 @@ async function addSpaceToIdb(space: SpaceData) {
     const cacheSpace = await idbSpaces.get(spaceId)
 
     if (!cacheSpace || cacheSpace.name !== space.name) {
-        console.log('sw: adding space to idb', spaceId)
+        console.log('sw:push: adding space to idb', spaceId)
         await idbSpaces.set({
             id: spaceId,
             name: space.name,
