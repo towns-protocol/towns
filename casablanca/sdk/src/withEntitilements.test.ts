@@ -3,7 +3,7 @@
  */
 
 import { dlog } from './dlog'
-import { makeUserContextFromWallet, makeTestClient, TEST_URL_WITH_ENTITILEMENTS } from './util.test'
+import { makeUserContextFromWallet, makeTestClient } from './util.test'
 import { genId, makeChannelStreamId, makeSpaceStreamId, makeUserStreamId } from './id'
 import { ethers } from 'ethers'
 
@@ -29,7 +29,7 @@ describe('withEntitlements', () => {
         const spaceDapp = createSpaceDapp(chainId, bobProvider)
 
         // create a user stream
-        const bob = await makeTestClient({ url: TEST_URL_WITH_ENTITILEMENTS, context: bobsContext })
+        const bob = await makeTestClient({ context: bobsContext })
         const bobsUserStreamId = makeUserStreamId(bob.userId)
         await expect(bob.initializeUser()).toResolve()
         await bob.startSync()
@@ -104,7 +104,6 @@ describe('withEntitlements', () => {
         const aliceProvider = new LocalhostWeb3Provider(alicesWallet)
         await aliceProvider.fundWallet()
         const alice = await makeTestClient({
-            url: TEST_URL_WITH_ENTITILEMENTS,
             context: alicesContext,
         })
         await alice.initializeUser()

@@ -3,7 +3,7 @@
  */
 
 import { SignerContext } from './sign'
-import { makeUserContextFromWallet, makeTestClient, TEST_URL_WITH_ENTITILEMENTS } from './util.test'
+import { makeUserContextFromWallet, makeTestClient } from './util.test'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
 import { Client } from './client'
@@ -39,7 +39,7 @@ describe('mediaWithEntitlementsTests', () => {
     beforeEach(async () => {
         bobWallet = ethers.Wallet.createRandom()
         bobContext = await makeUserContextFromWallet(bobWallet)
-        bobClient = await makeTestClient({ url: TEST_URL_WITH_ENTITILEMENTS, context: bobContext })
+        bobClient = await makeTestClient({ context: bobContext })
 
         await bobClient.initializeUser()
         await bobClient.startSync()
@@ -47,7 +47,6 @@ describe('mediaWithEntitlementsTests', () => {
         aliceWallet = ethers.Wallet.createRandom()
         aliceContext = await makeUserContextFromWallet(aliceWallet)
         aliceClient = await makeTestClient({
-            url: TEST_URL_WITH_ENTITILEMENTS,
             context: aliceContext,
         })
     })

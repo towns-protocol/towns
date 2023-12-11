@@ -14,6 +14,7 @@ import { Err, StreamService } from '@river/proto'
 import { dlog, dlogError } from './dlog'
 import { genShortId } from './id'
 
+const logInfo = dlog('csb:rpc:info', { defaultEnabled: true })
 const logCallsHistogram = dlog('csb:rpc:histogram', { defaultEnabled: true })
 const logCalls = dlog('csb:rpc:calls')
 const logProtos = dlog('csb:rpc:protos')
@@ -231,21 +232,40 @@ export function getRpcErrorProperty(err: unknown, prop: string): string | undefi
     return undefined
 }
 
-export function makeStreamRpcClient(dest: Transport | string): PromiseClient<typeof StreamService> {
+const randomUrlSelector = (urls: string) => {
+    const u = urls.split(',')
+    if (u.length === 0) {
+        throw new Error('No urls for backend provided')
+    } else if (u.length === 1) {
+        return u[0]
+    } else {
+        return u[Math.floor(Math.random() * u.length)]
+    }
+}
+
+export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
+
+export function makeStreamRpcClient(dest: Transport | string): StreamRpcClient {
     const transportId = nextRpcClientNum++
     logCallsHistogram('makeStreamRpcClient, transportId =', transportId)
     let transport: Transport
+    let url: string | undefined
     if (typeof dest === 'string') {
+        url = randomUrlSelector(dest)
+        logInfo('makeStreamRpcClient: Connecting to url=', url, ' allUrls=', dest)
         transport = createConnectTransport({
-            baseUrl: dest,
+            baseUrl: url,
             useBinaryFormat: true,
             interceptors: [interceptor(transportId)],
         })
     } else {
+        logInfo('makeStreamRpcClient: Connecting to provided transport')
         transport = dest
     }
 
-    return createPromiseClient(StreamService, transport)
+    const client: StreamRpcClient = createPromiseClient(StreamService, transport) as StreamRpcClient
+    client.url = url
+    return client
 }
 
 export type StreamRpcClientType = ReturnType<typeof makeStreamRpcClient>

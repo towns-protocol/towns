@@ -6,7 +6,6 @@ import {
     makeRandomUserContext,
     makeUserContextFromWallet,
     makeTestRpcClient,
-    TEST_URL,
     timeoutIterable,
     TEST_ENCRYPTED_MESSAGE_PROPS,
 } from './util.test'
@@ -27,7 +26,6 @@ import {
     make_UserPayload_Inception,
     ParsedEvent,
 } from './types'
-import { makeStreamRpcClient } from './makeStreamRpcClient'
 import { bobTalksToHimself } from './bob.test_util'
 import { ethers } from 'ethers'
 
@@ -60,7 +58,7 @@ describe.skip('streamRpcClient using v2 sync', () => {
 
     test('syncStreamsGetsSyncId', async () => {
         /** Arrange */
-        const alice = makeStreamRpcClient(TEST_URL)
+        const alice = makeTestRpcClient()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
         const alicesUserStreamId = makeUserStreamId(alicesUserId)
         // create account for alice
@@ -136,10 +134,10 @@ describe.skip('streamRpcClient using v2 sync', () => {
 
     test('addStreamToSyncGetsEvents', async () => {
         /** Arrange */
-        const alice = makeStreamRpcClient(TEST_URL)
+        const alice = makeTestRpcClient()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
         const alicesUserStreamId = makeUserStreamId(alicesUserId)
-        const bob = makeStreamRpcClient(TEST_URL)
+        const bob = makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamId = makeUserStreamId(bobsUserId)
         // create accounts for alice and bob
@@ -277,7 +275,7 @@ describe('streamRpcClient', () => {
 
     test('makeStreamRpcClient', async () => {
         const client = makeTestRpcClient()
-        log('makeStreamRpcClient', 'TEST_URL', TEST_URL)
+        log('makeStreamRpcClient', 'url', client.url)
         expect(client).toBeDefined()
         const result = await client.info({ debug: 'graffiti' })
         expect(result).toBeDefined()
@@ -396,11 +394,11 @@ describe('streamRpcClient', () => {
     test('aliceTalksToBob', async () => {
         log('bobAndAliceConverse start')
 
-        const bob = makeStreamRpcClient(TEST_URL)
+        const bob = makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamId = makeUserStreamId(bobsUserId)
 
-        const alice = makeStreamRpcClient(TEST_URL)
+        const alice = makeTestRpcClient()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
         const alicesUserStreamId = makeUserStreamId(alicesUserId)
 

@@ -410,7 +410,7 @@ jobs:
               run: |
                   yarn run turbo run build
                   cd casablanca/sdk
-                  RIVER_TEST_URL=http://localhost:5174 yarn test:ci
+                  yarn test:ci:multi
 
             - name: Archive River Node Logs and Settings
               if: always()

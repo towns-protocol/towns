@@ -1,7 +1,7 @@
 import { makeEvent, SignerContext, unpackEnvelopes, unpackStreamResponse } from './sign'
 import { MembershipOp } from '@river/proto'
 import { dlog } from './dlog'
-import { lastEventFiltered, makeRandomUserContext, TEST_URL } from './util.test'
+import { lastEventFiltered, makeRandomUserContext, makeTestRpcClient } from './util.test'
 import {
     genId,
     makeChannelStreamId,
@@ -19,11 +19,8 @@ import {
     make_SpacePayload_Membership,
     make_UserPayload_Inception,
 } from './types'
-import { makeStreamRpcClient } from './makeStreamRpcClient'
 
 const base_log = dlog('test:workflows')
-
-const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL)
 
 describe('workflows', () => {
     let bobsContext: SignerContext

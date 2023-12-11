@@ -27,10 +27,60 @@ import { check } from './check'
 
 const log = dlog('csb:test:util')
 
-export const TEST_URL = global.origin // global.origin is populated by 'url' in jest.config.ts
-export const TEST_URL_WITH_ENTITILEMENTS = 'http://localhost:5157'
+const TEST_URL_SINGLE = 'http://localhost:5158'
+const TEST_URL_SINGLE_ENT = 'http://localhost:5157'
+const TEST_URL_MULTI =
+    'http://localhost:5170,http://localhost:5171,http://localhost:5172,http://localhost:5173,http://localhost:5174,' +
+    'http://localhost:5175,http://localhost:5176,http://localhost:5177,http://localhost:5178,http://localhost:5179'
 
-export const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL)
+const initTestUrls = () => {
+    const config = process.env.RIVER_TEST_CONNECT
+    let urls: string[]
+    if (config === 'single') {
+        urls = [TEST_URL_SINGLE]
+    } else if (config === 'single_ent') {
+        urls = [TEST_URL_SINGLE_ENT]
+    } else if (config === 'multi') {
+        urls = TEST_URL_MULTI.split(',')
+    } else {
+        throw new Error(`invalid RIVER_TEST_CONNECT: ${config}`)
+    }
+    log('initTestUrls, RIVER_TEST_CONNECT=', config, 'urls=', urls)
+    return urls
+}
+
+const testUrls = initTestUrls()
+let curTestUrl = -1
+
+export const getNextTestUrl = () => {
+    if (testUrls.length === 1) {
+        log('getNextTestUrl, url=', testUrls[0])
+        return testUrls[0]
+    } else if (testUrls.length > 1) {
+        if (curTestUrl < 0) {
+            const seed: string | undefined = expect.getState()?.currentTestName
+            if (seed === undefined) {
+                curTestUrl = Math.floor(Math.random() * testUrls.length)
+                log('getNextTestUrl, setting to random, index=', curTestUrl)
+            } else {
+                curTestUrl =
+                    seed
+                        .split('')
+                        .map((v) => v.charCodeAt(0))
+                        .reduce((a, v) => ((a + ((a << 7) + (a << 3))) ^ v) & 0xffff) %
+                    testUrls.length
+                log('getNextTestUrl, setting based on test name=', seed, ' index=', curTestUrl)
+            }
+        }
+        curTestUrl = (curTestUrl + 1) % testUrls.length
+        log('getNextTestUrl, url=', testUrls[curTestUrl], 'index=', curTestUrl)
+        return testUrls[curTestUrl]
+    } else {
+        throw new Error('no test urls')
+    }
+}
+
+export const makeTestRpcClient = () => makeStreamRpcClient(getNextTestUrl())
 
 export const makeEvent_test = async (
     context: SignerContext,
@@ -88,14 +138,12 @@ export const makeUserContextFromWallet = async (wallet: ethers.Wallet): Promise<
 }
 
 export interface TestClientOpts {
-    url?: string
     context?: SignerContext
     entitlementsDelegate?: EntitlementsDelegate
     deviceId?: string
 }
 
 export const makeTestClient = async (opts?: TestClientOpts): Promise<Client> => {
-    const url = opts?.url ?? TEST_URL
     const context = opts?.context ?? (await makeRandomUserContext())
     const entitlementsDelegate = opts?.entitlementsDelegate ?? new MockEntitlementsDelegate()
     const deviceId = opts?.deviceId ? `-${opts.deviceId}` : ''
@@ -104,13 +152,7 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<Client> => 
 
     // create a new client with store(s)
     const cryptoStore = RiverDbManager.getCryptoDb(userId, dbName)
-    return new Client(
-        context,
-        makeStreamRpcClient(url),
-        cryptoStore,
-        entitlementsDelegate,
-        undefined,
-    )
+    return new Client(context, makeTestRpcClient(), cryptoStore, entitlementsDelegate, undefined)
 }
 
 class DonePromise {
