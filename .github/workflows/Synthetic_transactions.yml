@@ -4,6 +4,18 @@ env:
 
 on:
     workflow_dispatch: # A synthetic test which is triggered each 30 minutes
+        inputs:
+            environment_name:
+                description: 'Environment Name'
+                type: string
+                default: 'test-beta'
+    workflow_call:
+        inputs:
+            environment_name:
+                description: 'Environment Name'
+                type: string
+        secrets:
+            SLACK_CI_CHANNEL_WEBHOOK_URL: { required: true }
     schedule: # A synthetic test was scheduled
         - cron: '*/30 * * * *' # Every 30 minutes
 jobs:
@@ -45,7 +57,7 @@ jobs:
             - name: Run Synthetic Test
               run: yarn test:ci:synthetic:all
               env:
-                  RIVER_NODE_RPC_URL: https://river1-test-beta.towns.com
+                  ENVIRONMENT_NAME: ${{inputs.environment_name || 'test-beta' }} #river1-transient-{0}.towns.com
 
             # If failed, we send a slack notification
             - name: Slack notification

@@ -19,13 +19,15 @@ import {
     loginWaitTime,
     leaderKey,
     jsonRpcProviderUrl,
-    nodeRpcURL,
     fromFollowerQueueName,
     fromLeaderQueueName,
+    envName,
 } from './30MinutesSyntheticConfig'
 import { DecryptedTimelineEvent } from '../types'
 import { SnapshotCaseType } from '@river/proto'
 import { check } from '../check'
+import { createSpaceDapp } from '@river/web3'
+import { RiverSDK } from '../testSdk'
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error
 // specifically the code in ConvertersEntitlements.ts - decodeAbiParameters and encodeAbiParameters functions have an import that can't be found
@@ -53,18 +55,23 @@ describe('mirrorMessages', () => {
         'mirrorMessages',
         async () => {
             let followerLoggedIn = false
-
+            let followerJoinedTown = false
+            let commChannelId = testChannelId
             //Step 1 - Initialize worker to track follower status
             // eslint-disable-next-line
             const _leadWorker = new Worker(
                 fromFollowerQueueName,
                 // eslint-disable-next-line
                 async (command) => {
-                    const commandData = command.data as { commandType: string; messageTest: string }
+                    const commandData = command.data as { commandType: string; command: string }
                     log('commandData', commandData)
                     if (commandData.commandType === 'followerLoggedIn') {
                         followerLoggedIn = true
                         log('followerLoggedIn flag set to true')
+                    }
+                    if (commandData.commandType === 'followerJoinedTown') {
+                        followerJoinedTown = true
+                        log('followerJoinedTown flag set to true')
                     }
                     return
                 },
@@ -79,6 +86,8 @@ describe('mirrorMessages', () => {
             const provider = new ethers.providers.JsonRpcProvider(jsonRpcProviderUrl)
             const walletWithProvider = leaderWallet.connect(provider)
             const context = await makeUserContextFromWallet(walletWithProvider)
+
+            const nodeRpcURL = 'https://river1-' + envName + '.towns.com'
 
             const rpcClient = makeStreamRpcClient(nodeRpcURL)
             const userId = userIdFromAddress(context.creatorAddress)
@@ -102,7 +111,7 @@ describe('mirrorMessages', () => {
 
             await healthcheckQueueLeader.add(fromLeaderQueueName, {
                 commandType: 'leaderLoggedIn',
-                messageTest: '',
+                command: '',
             })
             log('leaderLoggedIn notification sent')
 
@@ -116,6 +125,45 @@ describe('mirrorMessages', () => {
                 },
             )
             log('Follower logged in notification recieved')
+
+            //Step 3.5 - if we run on transient environment, we need to create a town and join it
+            if (envName !== 'test-beta') {
+                log('Creating town')
+                const spaceDapp = createSpaceDapp(
+                    (await walletWithProvider.provider.getNetwork()).chainId,
+                    walletWithProvider.provider,
+                )
+
+                const riverSDK = new RiverSDK(spaceDapp, client, walletWithProvider)
+                const result = await riverSDK.createTownWithDefaultChannel(
+                    'test town',
+                    'town metadata',
+                    'test spam',
+                )
+
+                log('result', result)
+                commChannelId = result.defaultChannelStreamId
+                //If we run agains transient environment, we need to ask second client to join the town and wait for it.
+                await healthcheckQueueLeader.add(fromLeaderQueueName, {
+                    commandType: 'joinTown',
+                    command: {
+                        townId: result.spaceStreamId,
+                        channelId: result.defaultChannelStreamId,
+                    },
+                })
+
+                await waitFor(
+                    () => {
+                        expect(followerJoinedTown).toBe(true)
+                    },
+                    {
+                        timeoutMS: loginWaitTime,
+                    },
+                )
+                log('Follower logged in notification recieved')
+            } else {
+                followerJoinedTown = true
+            }
 
             //Step 4 - send message
             const done = makeDonePromise()
@@ -147,10 +195,10 @@ describe('mirrorMessages', () => {
             const isoDateString = currentDate.toISOString()
             const messageText =
                 crypto.getRandomValues(new Uint8Array(16)).toString() + ' ' + isoDateString
-            await client.sendMessage(testChannelId, messageText)
+            await client.sendMessage(commChannelId, messageText)
             await healthcheckQueueLeader.add(fromLeaderQueueName, {
                 commandType: 'messageSent',
-                messageTest: messageText,
+                command: messageText,
             })
             log('First message sent')
             //Step 5 - wait for follower to be logged in

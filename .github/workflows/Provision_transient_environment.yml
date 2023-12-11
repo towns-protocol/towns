@@ -2,7 +2,6 @@ name: Provision Transient Environment
 on:
     pull_request:
         types: [opened, synchronize, reopened, labeled, unlabeled]
-
 concurrency:
     group: ${{ github.workflow }}-provision-${{ github.ref }}
     cancel-in-progress: false
@@ -101,3 +100,12 @@ jobs:
         with:
             environment_name: ${{ format('transient-{0}', github.event.pull_request.number )}}
             docker_image_tag: ${{ format('transient-{0}-latest', github.event.pull_request.number )}}
+
+    run_synthetic_transactions_test:
+        needs: river_node_continuous_deploys
+        if: needs.check_labels.outputs.provision_full_transient_environment == 'true'
+        uses: './.github/workflows/Synthetic_transactions.yml'
+        secrets:
+            SLACK_CI_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+        with:
+            environment_name: ${{ format('transient-{0}', github.event.pull_request.number )}}

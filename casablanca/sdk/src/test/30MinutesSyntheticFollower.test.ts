@@ -20,14 +20,15 @@ import {
     followerKey,
     replySentTime,
     jsonRpcProviderUrl,
-    nodeRpcURL,
     fromFollowerQueueName,
     fromLeaderQueueName,
+    envName,
 } from './30MinutesSyntheticConfig'
 import { DecryptedContent } from '../encryptedContentTypes'
 import { SnapshotCaseType } from '@river/proto'
 import { DecryptedTimelineEvent } from '../types'
 import { check } from '../check'
+import { createSpaceDapp } from '@river/web3'
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error
 // specifically the code in ConvertersEntitlements.ts - decodeAbiParameters and encodeAbiParameters functions have an import that can't be found
@@ -56,6 +57,7 @@ describe('mirrorMessages', () => {
         async () => {
             const messagesSet: Set<string> = new Set()
             const messagesMap: Map<string, DecryptedContent> = new Map()
+            let commChannelId = testChannelId
 
             let leaderLoggedIn = false
             let replySent = false
@@ -65,8 +67,8 @@ describe('mirrorMessages', () => {
             const _followerWorker = new Worker(
                 fromLeaderQueueName,
                 // eslint-disable-next-line
-                async (command) => {
-                    const commandData = command.data as { commandType: string; messageTest: string }
+                async (message) => {
+                    const commandData = message.data as { commandType: string; command: any }
                     log('commandData', commandData)
                     if (commandData.commandType === 'leaderLoggedIn') {
                         leaderLoggedIn = true
@@ -76,7 +78,7 @@ describe('mirrorMessages', () => {
                         let eventFound = false
                         for (let i = 1; i <= 10; i++) {
                             log('Iteration ' + i + ' of 10')
-                            if (messagesSet.has(commandData.messageTest)) {
+                            if (messagesSet.has(commandData.command)) {
                                 log('Event found')
                                 eventFound = true
                                 break
@@ -87,24 +89,55 @@ describe('mirrorMessages', () => {
                             log('Event not found')
                             throw new Error('Event not found')
                         }
-                        const clearEvent = messagesMap.get(commandData.messageTest)
+                        const clearEvent = messagesMap.get(commandData.command)
                         check(clearEvent?.kind === 'channelMessage')
                         if (
                             clearEvent.content?.payload?.case === 'post' &&
                             clearEvent.content?.payload?.value?.content?.case === 'text' &&
                             clearEvent.content?.payload?.value?.content.value?.body ===
-                                commandData.messageTest
+                                commandData.command
                         ) {
                             await client.sendMessage(
-                                testChannelId,
-                                'Mirror from Bot 2: ' + commandData.messageTest,
+                                commChannelId,
+                                'Mirror from Bot 2: ' + commandData.command,
                             )
                             log(
                                 'Reply message sent with text: ',
-                                'Mirror from Bot 2: ' + commandData.messageTest,
+                                'Mirror from Bot 2: ' + commandData.command,
                             )
                             replySent = true
                         }
+                    }
+                    if (commandData.commandType === 'joinTown') {
+                        const spaceDapp = createSpaceDapp(
+                            (await walletWithProvider.provider.getNetwork()).chainId,
+                            walletWithProvider.provider,
+                        )
+                        const spaceAndChannelIds = commandData.command as {
+                            townId: string
+                            channelId: string
+                        }
+                        const hasMembership = await spaceDapp.hasTownMembership(
+                            spaceAndChannelIds.townId,
+                            walletWithProvider.address,
+                        )
+                        if (!hasMembership) {
+                            // mint membership
+                            const transaction = await spaceDapp.joinTown(
+                                spaceAndChannelIds.townId,
+                                walletWithProvider.address,
+                                walletWithProvider,
+                            )
+                            await transaction.wait()
+                        }
+
+                        await client.joinStream(spaceAndChannelIds.townId)
+                        await client.joinStream(spaceAndChannelIds.channelId)
+                        commChannelId = spaceAndChannelIds.channelId
+                        await healthcheckQueueFollower.add(fromFollowerQueueName, {
+                            commandType: 'followerJoinedTown',
+                            command: '',
+                        })
                     }
                     return
                 },
@@ -116,6 +149,8 @@ describe('mirrorMessages', () => {
             const provider = new ethers.providers.JsonRpcProvider(jsonRpcProviderUrl)
             const walletWithProvider = followerWallet.connect(provider)
             const context = await makeUserContextFromWallet(walletWithProvider)
+
+            const nodeRpcURL = 'https://river1-' + envName + '.towns.com'
 
             const rpcClient = makeStreamRpcClient(nodeRpcURL)
 
@@ -140,7 +175,7 @@ describe('mirrorMessages', () => {
 
             await healthcheckQueueFollower.add(fromFollowerQueueName, {
                 commandType: 'followerLoggedIn',
-                messageTest: '',
+                command: '',
             })
             log('followerLoggedIn notification sent')
             //Step 3 - wait for follower to be logged in
