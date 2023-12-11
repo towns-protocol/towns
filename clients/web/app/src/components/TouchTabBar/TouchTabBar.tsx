@@ -63,7 +63,7 @@ export const TouchTabBar = () => {
                         title="DMs"
                         icon={() => (
                             <Box>
-                                <Icon type="inbox" size="toolbar_icon" />
+                                <Icon type="inbox" size="toolbar_icon" padding="xxs" />
                                 {hasUnreadDMs && <Dot position="topRight" />}
                             </Box>
                         )}

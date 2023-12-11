@@ -45,7 +45,6 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { atoms } from 'ui/styles/atoms.css'
 import { vars } from 'ui/styles/vars.css'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
-import { shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useStore } from 'store/store'
 import { Avatar } from '@components/Avatar/Avatar'
@@ -288,6 +287,7 @@ export const TouchHome = () => {
                                                     )}
                                                 </>
                                             )}
+
                                             {canCreateChannel && (
                                                 <CreateChannelRow
                                                     onClick={() =>
@@ -400,14 +400,8 @@ export const TouchChannelResultRow = (props: {
 
     return (
         <NavItem to={link} padding="none">
-            <Stack
-                horizontal
-                paddingX="sm"
-                alignItems="center"
+            <NavItemContent
                 key={channelNetworkId}
-                width="100%"
-                gap="sm"
-                overflowX="hidden"
                 fontWeight={unread ? 'strong' : 'normal'}
                 color={unread ? 'default' : 'gray1'}
             >
@@ -419,7 +413,7 @@ export const TouchChannelResultRow = (props: {
                 {muted && <Icon type="muteActive" color="gray2" size="square_xs" />}
                 {mentionCount > 0 && <Badge value={mentionCount}>{mentionCount}</Badge>}
                 <SearchResultItemIcon type="arrowRight" background="inherit" color="gray2" />
-            </Stack>
+            </NavItemContent>
         </NavItem>
     )
 }
@@ -443,29 +437,24 @@ export const TouchUserResultRow = (props: { member: RoomMember }) => {
     const link = createLink({ profileId: member.userId })
 
     return (
-        <NavItem to={link} height="x6">
-            <Stack
-                horizontal
-                gap="sm"
-                key={member.userId}
-                paddingY="sm"
-                alignItems="center"
-                width="100%"
-            >
-                <Avatar size="avatar_x4" userId={member.userId} />
-                <Stack gap="sm" overflow="hidden" paddingY="xxs">
-                    <Text truncate size="sm" color="default">
-                        {getPrettyDisplayName(member).initialName}
-                    </Text>
-                    {accountAddress && (
-                        <Paragraph color="gray2" size="sm">
-                            {shortAddress(accountAddress)}
-                        </Paragraph>
-                    )}
+        <NavItem to={link} height="x6" padding="none">
+            <NavItemContent key={member.userId}>
+                <Stack horizontal gap="sm">
+                    <Avatar size="avatar_x4" userId={member.userId} />
+                    <Stack gap="sm" overflow="hidden" paddingY="xxs">
+                        <Text truncate color="default">
+                            {getPrettyDisplayName(member).displayName}
+                        </Text>
+                        {accountAddress && (
+                            <Paragraph truncate color="gray2" size="xs">
+                                {accountAddress}
+                            </Paragraph>
+                        )}
+                    </Stack>
                 </Stack>
                 <Box grow />
                 <SearchResultItemIcon type="arrowRight" background="inherit" />
-            </Stack>
+            </NavItemContent>
         </NavItem>
     )
 }
@@ -534,22 +523,13 @@ export const TouchGenericResultRow = (props: {
     badgeCount?: number
 }) => {
     return (
-        <NavItem to={props.to} height="x6">
-            <Stack
-                horizontal
-                gap="sm"
-                key={props.title}
-                paddingY="sm"
-                alignItems="center"
-                width="100%"
-                overflowX="hidden"
-            >
+        <NavItem to={props.to} padding="none">
+            <NavItemContent>
                 <SearchResultItemIcon type={props.icon} color="default" />
                 <Stack gap="sm" overflow="hidden" paddingY="xxs">
                     <Text
                         truncate
                         fontWeight={props.highlight ? 'strong' : undefined}
-                        size="sm"
                         color={props.highlight ? 'default' : 'gray1'}
                     >
                         {props.title}
@@ -560,20 +540,32 @@ export const TouchGenericResultRow = (props: {
                     <Badge value={props.badgeCount}>{props.badgeCount}</Badge>
                 )}
                 <SearchResultItemIcon type="arrowRight" background="inherit" />
-            </Stack>
+            </NavItemContent>
         </NavItem>
     )
 }
 
 const CreateChannelRow = (props: { onClick: () => void }) => {
     return (
-        <NavItem height="x6" onClick={props.onClick}>
-            <SearchResultItemIcon type="plus" color="default" />
-            <Text size="sm" color="gray1">
-                Create channel
-            </Text>
+        <NavItem padding="none" onClick={props.onClick}>
+            <NavItemContent>
+                <SearchResultItemIcon type="plus" color="default" />
+                <Text color="gray1">Create channel</Text>
+            </NavItemContent>
         </NavItem>
     )
 }
+
+const NavItemContent = (props: BoxProps) => (
+    <Stack
+        horizontal
+        paddingX="sm"
+        alignItems="center"
+        width="100%"
+        gap="sm"
+        overflowX="hidden"
+        {...props}
+    />
+)
 
 const Spacer = () => <Box height="x2" />
