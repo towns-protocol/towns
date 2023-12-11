@@ -3,10 +3,10 @@ import { Snapshot, MediaPayload, MediaPayload_Inception, MediaPayload_Snapshot }
 import { check, logNever } from './check'
 import { RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
-import { StreamStateView_IContent } from './streamStateView_IContent'
+import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 
-export class StreamStateView_Media extends StreamStateView_IContent {
+export class StreamStateView_Media extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly channelId: string
     readonly chunkCount: number

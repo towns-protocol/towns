@@ -9,11 +9,11 @@ import {
     UserDeviceKeyPayload_Snapshot,
 } from '@river/proto'
 import { check, logNever } from './check'
-import { StreamStateView_IContent } from './streamStateView_IContent'
+import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { UserDevice } from './crypto/olmLib'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 
-export class StreamStateView_UserDeviceKeys extends StreamStateView_IContent {
+export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_UserStreamMembership
     readonly streamCreatorId: string

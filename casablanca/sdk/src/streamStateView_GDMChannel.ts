@@ -6,12 +6,12 @@ import {
     Snapshot,
 } from '@river/proto'
 import { EmittedEvents } from './client'
-import { StreamStateView_IContent } from './streamStateView_IContent'
+import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { ParsedEvent, RemoteTimelineEvent } from './types'
 import { check, logNever } from './check'
 
-export class StreamStateView_GDMChannel extends StreamStateView_IContent {
+export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
     lastEventCreatedAtEpocMs = 0n

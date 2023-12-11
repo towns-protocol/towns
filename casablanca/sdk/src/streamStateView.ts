@@ -30,7 +30,7 @@ import { StreamStateView_UserDeviceKeys } from './streamStateView_UserDeviceKey'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { StreamStateView_Media } from './streamStateView_Media'
 import { StreamStateView_GDMChannel } from './streamStateView_GDMChannel'
-import { StreamStateView_IContent } from './streamStateView_IContent'
+import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_DMChannel } from './streamStateView_DMChannel'
 import { genLocalId } from './id'
 import { StreamStateView_UserToDevice } from './streamStateView_UserToDevice'
@@ -595,7 +595,7 @@ export class StreamStateView {
         return this.getContent().memberships
     }
 
-    getContent(): StreamStateView_IContent {
+    getContent(): StreamStateView_AbstractContent {
         switch (this.contentKind) {
             case 'channelContent':
                 return this.channelContent

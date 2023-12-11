@@ -6,7 +6,7 @@ import { StreamStateView_Membership } from './streamStateView_Membership'
 import { DecryptedContent, EncryptedContent } from './encryptedContentTypes'
 import { checkNever } from './check'
 
-export abstract class StreamStateView_IContent {
+export abstract class StreamStateView_AbstractContent {
     abstract readonly streamId: string
     abstract readonly memberships: StreamStateView_Membership
     abstract prependEvent(

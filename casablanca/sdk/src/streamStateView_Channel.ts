@@ -9,9 +9,9 @@ import {
     Snapshot,
 } from '@river/proto'
 import { check, logNever } from './check'
-import { StreamStateView_IContent } from './streamStateView_IContent'
+import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 
-export class StreamStateView_Channel extends StreamStateView_IContent {
+export class StreamStateView_Channel extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly spaceId?: string
     readonly memberships: StreamStateView_Membership

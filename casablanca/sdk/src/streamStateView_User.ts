@@ -11,10 +11,10 @@ import {
 } from '@river/proto'
 import { check, logNever } from './check'
 import { StreamEvents } from './streamEvents'
-import { StreamStateView_IContent } from './streamStateView_IContent'
+import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 
-export class StreamStateView_User extends StreamStateView_IContent {
+export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_UserStreamMembership
     readonly userInvitedStreams = new Set<string>()

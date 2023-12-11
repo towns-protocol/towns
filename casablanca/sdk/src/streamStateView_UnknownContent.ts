@@ -1,10 +1,10 @@
 import TypedEmitter from 'typed-emitter'
-import { StreamStateView_IContent } from './streamStateView_IContent'
+import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamEvents } from './streamEvents'
 import { RemoteTimelineEvent } from './types'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 
-export class StreamStateView_UnknownContent extends StreamStateView_IContent {
+export class StreamStateView_UnknownContent extends StreamStateView_AbstractContent {
     constructor(readonly streamId: string) {
         super()
     }

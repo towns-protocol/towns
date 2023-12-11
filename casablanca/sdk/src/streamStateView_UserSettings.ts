@@ -14,13 +14,13 @@ import { EmittedEvents } from './client'
 import { check, logNever } from './check'
 import { StreamEvents } from './streamEvents'
 import { dlog } from './dlog'
-import { StreamStateView_IContent } from './streamStateView_IContent'
+import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { toPlainMessage } from '@bufbuild/protobuf'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 
 const log = dlog('csb:stream')
 
-export class StreamStateView_UserSettings extends StreamStateView_IContent {
+export class StreamStateView_UserSettings extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_UserStreamMembership
     readonly settings = new Map<string, string>()

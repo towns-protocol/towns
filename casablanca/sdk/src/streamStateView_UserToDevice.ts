@@ -11,10 +11,10 @@ import {
     UserToDevicePayload_Ack,
 } from '@river/proto'
 import { check, logNever } from './check'
-import { StreamStateView_IContent } from './streamStateView_IContent'
+import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 
-export class StreamStateView_UserToDevice extends StreamStateView_IContent {
+export class StreamStateView_UserToDevice extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_UserStreamMembership
     deviceSummary: Record<string, UserToDevicePayload_Snapshot_DeviceSummary> = {}
