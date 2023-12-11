@@ -1,15 +1,14 @@
 import React, { useEffect, useMemo } from 'react'
 import { Outlet } from 'react-router'
-import { Membership, useZionContext } from 'use-zion-client'
+import { Membership, useSpaceData, useZionContext } from 'use-zion-client'
 import { Box } from '@ui'
-import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { PublicTownPage, TownNotFoundBox } from './PublicTownPage'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const ValidateMembership = () => {
-    const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
+    const space = useSpaceData()
     const { spaces } = useZionContext()
     const initialSyncComplete = useWaitForInitialSync()
     const spaceId = useSpaceIdFromPathname()
@@ -20,14 +19,14 @@ export const ValidateMembership = () => {
     )
 
     useEffect(() => {
-        console.log('ValidateMembership', spaceId, { chainSpaceLoading, initialSyncComplete })
-    }, [chainSpaceLoading, spaceId, initialSyncComplete])
+        console.log('ValidateMembership', spaceId, { initialSyncComplete })
+    }, [spaceId, initialSyncComplete])
 
     if (!spaceId) {
         return <Outlet />
     }
 
-    if (chainSpaceLoading || !initialSyncComplete) {
+    if (!initialSyncComplete) {
         return riverSpace ? (
             <Outlet />
         ) : (
@@ -35,7 +34,7 @@ export const ValidateMembership = () => {
         )
     }
 
-    if (!chainSpace && !space) {
+    if (!space) {
         return (
             <Box absoluteFill centerContent>
                 <TownNotFoundBox />
@@ -45,7 +44,7 @@ export const ValidateMembership = () => {
 
     const isMember = space?.membership === Membership.Join
 
-    if (!chainSpace || !isMember) {
+    if (!isMember) {
         return <PublicTownPage />
     }
 

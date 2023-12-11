@@ -1,13 +1,13 @@
 import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
+import { useSpaceData } from 'use-zion-client'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
 import { PotentiallyUnusedSuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { ShortcutModal } from '@components/Shortcuts/ShortcutModal'
 import { MainSideBar, SpaceSideBar } from '@components/SideBars'
 import { SpaceSidebarLoadingPlaceholder } from '@components/SideBars/SpaceSideBar/SpaceSideBarLoading'
 import { Box, Stack } from '@ui'
-import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { PATHS } from 'routes'
@@ -23,7 +23,7 @@ export const AppPanelLayout = () => {
     const spacesNewRoute = useMatch({ path: `/${PATHS.SPACES}/new`, end: true })
     const spacesSettingsRoute = useMatch({ path: `/${PATHS.SPACES}/:space/settings`, end: false })
 
-    const { serverSpace: space } = useContractAndServerSpaceData()
+    const space = useSpaceData()
     const config = ['spaces', 'primary-menu', 'secondary-menu', 'content']
     const { onSizesChange, sizes } = usePersistPanes(config)
 

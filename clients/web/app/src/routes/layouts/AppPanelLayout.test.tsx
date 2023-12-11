@@ -4,7 +4,6 @@ import { beforeAll, describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-zion-client'
 import { TestApp } from 'test/testUtils'
-import * as useContractAndServerSpaceDataHook from 'hooks/useContractAndServerSpaceData'
 import { AppPanelLayout } from './AppPanelLayout'
 
 const Wrapper = () => {
@@ -28,24 +27,17 @@ beforeAll(() => {
 
 describe('<AppPanelLayout />', () => {
     test('renders SpaceSideBar when a server space exists', async () => {
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
+        vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => {
             return {
-                chainSpace: undefined,
-                chainSpaceLoading: false,
-                serverSpace: {
-                    id: {
-                        slug: 'some-slug',
-                        networkId: 'some-network',
-                    },
-                    name: 'test',
-                    avatarSrc: 'test',
-                    channelGroups: [],
-                    membership: '',
-                    isLoadingChannels: false,
+                id: {
+                    slug: 'some-slug',
+                    networkId: 'some-network',
                 },
+                name: 'test',
+                avatarSrc: 'test',
+                channelGroups: [],
+                membership: '',
+                isLoadingChannels: false,
             }
         })
         render(<Wrapper />)
@@ -56,24 +48,17 @@ describe('<AppPanelLayout />', () => {
     })
 
     test('renders app version and commit hash in SpaceSideBar', async () => {
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
+        vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => {
             return {
-                chainSpace: undefined,
-                chainSpaceLoading: false,
-                serverSpace: {
-                    id: {
-                        slug: 'some-slug',
-                        networkId: 'some-network',
-                    },
-                    name: 'test',
-                    avatarSrc: 'test',
-                    channelGroups: [],
-                    membership: '',
-                    isLoadingChannels: false,
+                id: {
+                    slug: 'some-slug',
+                    networkId: 'some-network',
                 },
+                name: 'test',
+                avatarSrc: 'test',
+                channelGroups: [],
+                membership: '',
+                isLoadingChannels: false,
             }
         })
         render(<Wrapper />)
@@ -85,21 +70,8 @@ describe('<AppPanelLayout />', () => {
     })
 
     test('renders channel shimmer when a server space does not exist', async () => {
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
-            return {
-                chainSpaceLoading: false,
-                chainSpace: {
-                    address: '0x1',
-                    networkId: 'some-id',
-                    name: 'some-name',
-                    owner: '0x0',
-                    disabled: false,
-                },
-                serverSpace: undefined,
-            }
+        vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => {
+            return undefined
         })
         render(<Wrapper />)
 
