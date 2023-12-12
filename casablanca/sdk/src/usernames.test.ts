@@ -1,0 +1,90 @@
+import { EncryptedData } from '@river/proto'
+import { Usernames } from './usernames'
+import { usernameChecksum } from './utils'
+
+describe('usernameTests', () => {
+    const streamId = 'streamid1'
+    let usernames: Usernames
+    beforeEach(() => {
+        usernames = new Usernames(streamId)
+    })
+
+    test('clientCanSetUsername', async () => {
+        const username = 'bob-username1'
+        const checksum = usernameChecksum(username, streamId)
+        const encryptedData = new EncryptedData({
+            ciphertext: username,
+            checksum: checksum,
+        })
+
+        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        usernames.onDecryptedContent('eventid-1', username)
+        expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
+    })
+
+    test('clientCannotSetDuplicateUsername', async () => {
+        const username = 'bob-username1'
+        const checksum = usernameChecksum(username, streamId)
+        const encryptedData = new EncryptedData({
+            ciphertext: username,
+            checksum: checksum,
+        })
+
+        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        usernames.onDecryptedContent('eventid-1', username)
+        expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
+
+        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-2')
+        usernames.onDecryptedContent('eventid-1', username)
+        expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
+    })
+
+    test('usernameIsAvailableAfterChange', async () => {
+        const username = 'bob-username1'
+        const checksum = usernameChecksum(username, streamId)
+        const encryptedData = new EncryptedData({
+            ciphertext: username,
+            checksum: checksum,
+        })
+
+        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        usernames.onDecryptedContent('eventid-1', username)
+        expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
+
+        const username2 = 'bob-username2'
+        const checksum2 = usernameChecksum(username2, streamId)
+        const encryptedData2 = new EncryptedData({
+            ciphertext: username2,
+            checksum: checksum2,
+        })
+
+        // userid-1 changes their username
+        usernames.addEncryptedData('eventid-2', encryptedData2, 'userid-1')
+        usernames.onDecryptedContent('eventid-2', username2)
+        expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username2]]))
+
+        // userid-2 can now use the old username
+        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-2')
+        usernames.onDecryptedContent('eventid-1', username)
+
+        expect(usernames.plaintextUsernames).toEqual(
+            new Map([
+                ['userid-1', username2],
+                ['userid-2', username],
+            ]),
+        )
+    })
+
+    test('clientCannotFakeChecksum', async () => {
+        const username = 'bob-username1'
+        const checksum = 'invalid-checksum'
+        const encryptedData = new EncryptedData({
+            ciphertext: username,
+            checksum: checksum,
+        })
+
+        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        usernames.onDecryptedContent('eventid-1', username)
+        expect(usernames.plaintextUsernames).toEqual(new Map([]))
+    })
+})

@@ -1,7 +1,7 @@
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
 
-describe('displayNames', () => {
+describe('userMetadataTests', () => {
     let bobsClient: Client
     let alicesClient: Client
 
@@ -82,5 +82,48 @@ describe('displayNames', () => {
         const alicesClientDisplayNames =
             alicesClient.streams.get(streamId)?.view.spaceContent.userMetadata.plaintextDisplayNames
         expect(alicesClientDisplayNames).toEqual(expected)
+    })
+
+    test('clientCanSetUsernames', async () => {
+        await expect(bobsClient.initializeUser()).toResolve()
+        await bobsClient.startSync()
+        await expect(alicesClient.initializeUser()).toResolve()
+        await alicesClient.startSync()
+
+        const { streamId } = await bobsClient.createSpace(undefined)
+        await bobsClient.inviteUser(streamId, alicesClient.userId)
+        await expect(alicesClient.joinStream(streamId)).toResolve()
+
+        const bobPromise = makeDonePromise()
+        bobsClient.on('streamUsernameUpdated', (updatedStreamId, userId) => {
+            expect(updatedStreamId).toBe(streamId)
+            expect(userId).toBe(bobsClient.userId)
+            bobPromise.done()
+        })
+
+        const alicePromise = makeDonePromise()
+        alicesClient.on('streamUsernameUpdated', (updatedStreamId, userId) => {
+            expect(updatedStreamId).toBe(streamId)
+            expect(userId).toBe(bobsClient.userId)
+            alicePromise.done()
+        })
+
+        await bobsClient.waitForStream(streamId)
+        await alicesClient.waitForStream(streamId)
+        await bobsClient.setUsername(streamId, 'bob-username')
+
+        await bobPromise.expectToSucceed()
+        await alicePromise.expectToSucceed()
+
+        const expected = new Map<string, string>([[bobsClient.userId, 'bob-username']])
+
+        const bobClientUsernames =
+            bobsClient.streams.get(streamId)?.view.spaceContent.userMetadata.plaintextUsernames
+
+        expect(bobClientUsernames).toEqual(expected)
+
+        const alicesClientUsernames =
+            alicesClient.streams.get(streamId)?.view.spaceContent.userMetadata.plaintextUsernames
+        expect(alicesClientUsernames).toEqual(expected)
     })
 })

@@ -28,6 +28,10 @@ export function hashString(string: string): string {
     return bin_toHexString(buffer)
 }
 
+export function usernameChecksum(username: string, streamId: string) {
+    return hashString(`${username}:${streamId}`)
+}
+
 /**
  * IConnectError contains a subset of the properties in ConnectError
  */

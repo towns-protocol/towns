@@ -518,6 +518,11 @@ message EncryptedData {
     * The ID of the session used to encrypt the message.
     */
     string session_id = 4;
+
+    /**
+    * Optional checksum of the cleartext data.
+    */
+    optional string checksum = 5;
 }
 
 message SyncCookie  {

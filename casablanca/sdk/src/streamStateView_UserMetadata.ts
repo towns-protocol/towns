@@ -8,22 +8,17 @@ import { EmittedEvents } from './client'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { bin_toHexString } from './binary'
 import { StreamEvents } from './streamEvents'
+import { Usernames } from './usernames'
 
 export class StreamStateView_UserMetadata {
     readonly userId: string
     readonly streamId: string
-    // userId -> WrappedEncryptedData
-    readonly usernames = new Map<string, WrappedEncryptedData>()
+    readonly usernames: Usernames
+    get plaintextUsernames() {
+        return this.usernames.plaintextUsernames
+    }
 
-    // userId -> plaintext displayName (for convenience, tbd)
     readonly plaintextDisplayNames = new Map<string, string>()
-
-    // eventId -> EncryptedData
-    readonly pendingUsernameEvents = new Map<
-        string,
-        { payload: EncryptedData; eventId: string; userId: string }
-    >()
-
     readonly displayNameEvents = new Map<
         string,
         { encryptedData: EncryptedData; userId: string; pending: boolean }
@@ -32,6 +27,7 @@ export class StreamStateView_UserMetadata {
     constructor(userId: string, streamId: string) {
         this.userId = userId
         this.streamId = streamId
+        this.usernames = new Usernames(streamId)
     }
 
     initialize(
@@ -39,28 +35,43 @@ export class StreamStateView_UserMetadata {
         metadataType: 'username' | 'displayName',
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
-        // iterate over map adding wrapped encrypted from snapshot pertaining to users
-        for (const userId of Object.keys(userMetadata)) {
-            const payload = userMetadata[userId]
-            if (!payload.data) {
-                continue
+        // Sort the payloads — this is necessary because we want to
+        // make sure that whoever claimed a username first gets it.
+        const sortedPayloads = sortPayloads(userMetadata)
+
+        if (metadataType === 'username') {
+            for (const payload of sortedPayloads) {
+                if (!payload.wrappedEncryptedData.data) {
+                    continue
+                }
+                const eventId = bin_toHexString(payload.wrappedEncryptedData.eventHash)
+                this.usernames.addEncryptedData(
+                    eventId,
+                    payload.wrappedEncryptedData.data,
+                    payload.userId,
+                    false,
+                    undefined,
+                    emitter,
+                )
             }
-            if (metadataType == 'username') {
-                this.applyUserMetadataEvent(payload, userId, 'username', emitter)
-            } else if (metadataType == 'displayName') {
-                const eventId = bin_toHexString(payload.eventHash)
+        } else if (metadataType === 'displayName') {
+            for (const payload of sortedPayloads) {
+                if (!payload.wrappedEncryptedData.data) {
+                    continue
+                }
+                const eventId = bin_toHexString(payload.wrappedEncryptedData.eventHash)
                 this.displayNameEvents.set(eventId, {
-                    encryptedData: payload.data,
-                    userId: userId,
+                    encryptedData: payload.wrappedEncryptedData.data,
+                    userId: payload.userId,
                     pending: false,
                 })
                 emitter?.emit('newEncryptedContent', this.streamId, eventId, {
                     kind: 'text',
-                    content: payload.data,
+                    content: payload.wrappedEncryptedData.data,
                 })
-            } else {
-                logNever(metadataType)
             }
+        } else {
+            logNever(metadataType)
         }
     }
 
@@ -69,15 +80,7 @@ export class StreamStateView_UserMetadata {
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         const eventId = confirmedEvent.hashStr
-        const usernameEvent = this.pendingUsernameEvents.get(eventId)
-        if (usernameEvent) {
-            const payload = new WrappedEncryptedData({
-                data: usernameEvent.payload,
-                eventNum: confirmedEvent.eventNum,
-            })
-            this.pendingUsernameEvents.delete(eventId)
-            this.applyUserMetadataEvent(payload, usernameEvent.userId, 'username', emitter)
-        }
+        this.usernames.onConfirmEvent(eventId, emitter)
 
         const displayNameEvent = this.displayNameEvents.get(eventId)
         if (displayNameEvent) {
@@ -121,19 +124,30 @@ export class StreamStateView_UserMetadata {
                 break
             }
 
-            case 'username':
+            case 'username': {
+                this.usernames.addEncryptedData(
+                    eventId,
+                    encryptedData,
+                    userId,
+                    true,
+                    cleartext,
+                    emitter,
+                )
                 break
+            }
         }
     }
 
     onDecryptedContent(eventId: string, content: string, emitter?: TypedEmitter<EmittedEvents>) {
-        const event = this.displayNameEvents.get(eventId)
-        if (!event) {
+        const displayNameEvent = this.displayNameEvents.get(eventId)
+
+        if (displayNameEvent) {
+            this.plaintextDisplayNames.set(displayNameEvent.userId, content)
+            this.emitDisplayNameUpdated(eventId, emitter)
             return
         }
 
-        this.plaintextDisplayNames.set(event.userId, content)
-        this.emitDisplayNameUpdated(eventId, emitter)
+        this.usernames.onDecryptedContent(eventId, content, emitter)
     }
 
     emitDisplayNameUpdated(eventId: string, emitter?: TypedEmitter<EmittedEvents>) {
@@ -151,28 +165,25 @@ export class StreamStateView_UserMetadata {
             event.userId,
         )
     }
+}
 
-    /**
-     * Applies confirmed user metadata event. Either the event arose from a snapshot,
-     * or was confirmed by way of the event hash for the EncryptedData child event
-     * of the WrappedEncryptedData being included in a miniblock header.
-     *
-     */
-    private applyUserMetadataEvent(
-        payload: WrappedEncryptedData,
-        userId: string,
-        type: 'username',
-        emitter?: TypedEmitter<EmittedEvents>,
-    ) {
-        switch (type) {
-            case 'username': {
-                this.usernames.set(userId, payload)
-                emitter?.emit('streamUsernameUpdated', this.streamId, userId)
-                break
+function sortPayloads(object: {
+    [userId: string]: WrappedEncryptedData
+}): { userId: string; wrappedEncryptedData: WrappedEncryptedData }[] {
+    return Object.entries(object)
+        .map(([userId, wrappedEncryptedData]) => {
+            return {
+                userId,
+                wrappedEncryptedData,
             }
-            default: {
-                logNever(type)
+        })
+        .sort((a, b) => {
+            if (a.wrappedEncryptedData.eventNum > b.wrappedEncryptedData.eventNum) {
+                return 1
+            } else if (a.wrappedEncryptedData.eventNum < b.wrappedEncryptedData.eventNum) {
+                return -1
+            } else {
+                return 0
             }
-        }
-    }
+        })
 }

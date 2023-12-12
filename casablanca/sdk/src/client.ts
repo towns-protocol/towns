@@ -84,6 +84,7 @@ import {
     make_fake_encryptedData,
     make_UserDeviceKeyPayload_MegolmDevice,
     make_UserToDevicePayload_MegolmSessions,
+    make_SpacePayload_Username,
 } from './types'
 import { bin_fromHexString, bin_toHexString, shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/cryptoStore'
@@ -91,7 +92,7 @@ import { CryptoStore } from './crypto/store/cryptoStore'
 import debug from 'debug'
 import { Stream } from './stream'
 import { Code } from '@connectrpc/connect'
-import { isIConnectError } from './utils'
+import { usernameChecksum, isIConnectError } from './utils'
 import { EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { DecryptionExtensions, EntitlementsDelegate } from './decryptionExtensions'
 import { PersistenceStore } from './persistenceStore'
@@ -667,6 +668,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const encryptedData = await this.cryptoBackend.encryptMegolmEvent(streamId, displayName)
         const payload = make_SpacePayload_DisplayName(encryptedData)
         await this.makeEventAndAddToStream(streamId, payload, { method: 'displayName' })
+    }
+
+    async setUsername(streamId: string, username: string) {
+        check(isDefined(this.cryptoBackend))
+        const encryptedData = await this.cryptoBackend.encryptMegolmEvent(streamId, username)
+        encryptedData.checksum = usernameChecksum(username, streamId)
+        const payload = make_SpacePayload_Username(encryptedData)
+        await this.makeEventAndAddToStream(streamId, payload, { method: 'username' })
     }
 
     async waitForStream(streamId: string): Promise<Stream> {
