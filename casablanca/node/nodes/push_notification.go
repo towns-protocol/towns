@@ -5,6 +5,7 @@ import (
 	"casablanca/node/config"
 	"casablanca/node/dlog"
 	"casablanca/node/events"
+	"casablanca/node/shared"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -75,13 +76,26 @@ func (p pushNotificationImpl) sendNotificationRequest(
 		return
 	}
 	// prepare the push notification request params and payload
-	payload := notificationPayload{
-		NotificationType: NewMessage.String(),
-		Content: notificationNewMessage{
-			SpaceId:   spaceId,
-			ChannelId: channel.StreamId(),
-			SenderId:  senderId,
-		},
+	var payload notificationPayload
+	if shared.CheckDMStreamId(channel.StreamId()) || shared.ValidGDMChannelStreamId(channel.StreamId()) {
+		payload = notificationPayload{
+			NotificationType: DirectMessage.String(),
+			Content: notificationDmMessage{
+				SpaceId:    spaceId,
+				ChannelId:  channel.StreamId(),
+				SenderId:   senderId,
+				Recipients: users,
+			},
+		}
+	} else {
+		payload = notificationPayload{
+			NotificationType: NewMessage.String(),
+			Content: notificationNewMessage{
+				SpaceId:   spaceId,
+				ChannelId: channel.StreamId(),
+				SenderId:  senderId,
+			},
+		}
 	}
 	reqParams := NotificationRequestParams{
 		SpaceId:   spaceId,
@@ -121,15 +135,16 @@ func (p pushNotificationImpl) sendNotificationRequest(
 	log.Debug("PushNotification request sent", "# of members", len(users))
 }
 
-type notificationType int
+type NotificationType int
 
 const (
-	NewMessage notificationType = iota
+	NewMessage NotificationType = iota
 	Mention
 	ReplyTo
+	DirectMessage
 )
 
-func (n notificationType) String() string {
+func (n NotificationType) String() string {
 	switch n {
 	case NewMessage:
 		return "new_message"
@@ -137,6 +152,8 @@ func (n notificationType) String() string {
 		return "mention"
 	case ReplyTo:
 		return "reply_to"
+	case DirectMessage:
+		return "direct_message"
 	default:
 		return "unknown"
 	}
@@ -146,6 +163,13 @@ type notificationNewMessage struct {
 	SpaceId   string `json:"spaceId"`
 	ChannelId string `json:"channelId"`
 	SenderId  string `json:"senderId"`
+}
+
+type notificationDmMessage struct {
+	SpaceId    string   `json:"spaceId"`
+	ChannelId  string   `json:"channelId"`
+	SenderId   string   `json:"senderId"`
+	Recipients []string `json:"recipients"`
 }
 
 type notificationPayload struct {

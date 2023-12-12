@@ -277,7 +277,9 @@ function mockSelectFromNotificationTag(
   mentionUsers: string[] = [],
 ): MockProxy<D1PreparedStatement> {
   const mockStatement = mock<D1PreparedStatement>()
+  const result: QueryResultNotificationTag[][] = []
   const results: QueryResultNotificationTag[] = []
+  result.push(results)
   mockStatement.bind.mockImplementation(() => {
     replyToUsers.forEach((userId) => {
       const r = {
@@ -300,12 +302,12 @@ function mockSelectFromNotificationTag(
     return mockStatement
   })
   mockStatement.all.mockResolvedValue({
-    results: [results] as unknown as QueryResultNotificationTag[][],
+    results: results as unknown as QueryResultNotificationTag[][],
     success: true,
     meta: {},
   })
   mockStatement.run.mockResolvedValue({
-    results: [results] as unknown as QueryResultNotificationTag[][],
+    results: results as unknown as QueryResultNotificationTag[][],
     success: true,
     meta: {},
   })
@@ -404,12 +406,12 @@ function mockMutedUsers(mutedUsers: string[]): MockProxy<D1PreparedStatement> {
     return mockStatement
   })
   mockStatement.all.mockResolvedValue({
-    results: [results] as unknown as QueryResultsMutedUser[][],
+    results: results as unknown as QueryResultsMutedUser[][],
     success: true,
     meta: {},
   })
   mockStatement.run.mockResolvedValue({
-    results: [results] as unknown as QueryResultsMutedUser[][],
+    results: results as unknown as QueryResultsMutedUser[][],
     success: true,
     meta: {},
   })

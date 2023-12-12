@@ -8,7 +8,7 @@ import {
 
 import { appNotificationFromPushEvent, pathFromAppNotification } from './notificationParsers'
 import { env } from '../utils/environment'
-import { startDB } from '../idb/notificationsMeta'
+import { User, startDB } from '../idb/notificationsMeta'
 import { checkClientIsVisible } from './utils'
 
 let idbChannels: ReturnType<typeof startDB>['idbChannels'] | undefined = undefined
@@ -130,6 +130,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             }
 
             const { title, body } = await getNotificationContent(notification)
+            console.log(`sw:push: notification content { title: ${title}, body: ${body} }`)
 
             // options: https://developer.mozilla.org/en-US/docs/Web/API/Notification
             const options: NotificationOptions = {
@@ -203,6 +204,30 @@ function generateNewNotificationMessage(
     }
 }
 
+function generateDM(sender: string | undefined, recipients: string[] | undefined) {
+    let body = ''
+    switch (true) {
+        case stringHasValue(sender) && recipients?.length === 1:
+            body = `@${sender} sent you a direct message`
+            break
+        case stringHasValue(sender) && recipients && recipients.length > 1:
+            body = `@${sender} sent a message in a group you’re in`
+            break
+        case !stringHasValue(sender) && recipients?.length === 1:
+            body = `You got a direct message`
+            break
+        case !stringHasValue(sender) && recipients && recipients.length > 1:
+            body = `A group you’re in has a new message`
+            break
+        default:
+            break
+    }
+    return {
+        title: 'Direct Message',
+        body,
+    }
+}
+
 function generateMentionedMessage(
     townName: string,
     channelName: string | undefined,
@@ -262,6 +287,7 @@ async function getNotificationContent(notification: AppNotification): Promise<{
     let townName: string | undefined = undefined
     let channelName: string | undefined = undefined
     let senderName: string | undefined = undefined
+    let recipients: string[] = []
 
     if (!idbSpaces || !idbChannels || !idbUsers) {
         ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
@@ -271,6 +297,23 @@ async function getNotificationContent(notification: AppNotification): Promise<{
         const space = await idbSpaces.get(notification.content.spaceId)
         const channel = await idbChannels.get(notification.content.channelId)
         const sender = await idbUsers.get(notification.content.senderId)
+        if (
+            notification.notificationType === AppNotificationType.DirectMessage &&
+            notification.content.recipients &&
+            notification.content.recipients.length > 0
+        ) {
+            console.log('sw:push: recipients', notification.content.recipients)
+            const dbUsersPromises: Promise<User | undefined>[] = []
+            notification.content.recipients.forEach((recipientId) => {
+                if (idbUsers) {
+                    dbUsersPromises.push(idbUsers.get(recipientId))
+                }
+            })
+            const dbUsers = await Promise.all(dbUsersPromises)
+            recipients = dbUsers
+                .map((user) => user?.name)
+                .filter((name) => name !== undefined) as string[]
+        }
 
         townName = space?.name
         channelName = channel?.name
@@ -281,20 +324,29 @@ async function getNotificationContent(notification: AppNotification): Promise<{
 
     // if this device doesn't have a town name, they haven't synced this town at all yet.
     // show them a message to open the app to sync this town
-    if (!townName) {
-        return {
-            title: "Let's sync!",
-            body: "There's a new message in one of your towns. Open the app to sync with it.",
-        }
+    const noTownNameMsg = {
+        title: "Let's sync!",
+        body: "There's a new message in one of your towns. Open the app to sync with it.",
     }
 
     switch (notification.notificationType) {
+        case AppNotificationType.DirectMessage:
+            return generateDM(senderName, recipients)
         case AppNotificationType.NewMessage:
-            return generateNewNotificationMessage(townName, channelName, senderName)
+            if (townName) {
+                return generateNewNotificationMessage(townName, channelName, senderName)
+            }
+            return noTownNameMsg
         case AppNotificationType.Mention:
-            return generateMentionedMessage(townName, channelName, senderName)
+            if (townName) {
+                return generateMentionedMessage(townName, channelName, senderName)
+            }
+            return noTownNameMsg
         case AppNotificationType.ReplyTo:
-            return generateReplyToMessage(townName, channelName, senderName)
+            if (townName) {
+                return generateReplyToMessage(townName, channelName, senderName)
+            }
+            return noTownNameMsg
         default:
             return {
                 title: 'Town',

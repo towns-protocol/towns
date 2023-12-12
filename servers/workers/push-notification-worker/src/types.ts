@@ -18,9 +18,17 @@ export enum Mute {
 }
 
 export enum NotificationType {
+  DirectMessage = 'direct_message',
   Mention = 'mention',
   NewMessage = 'new_message',
   ReplyTo = 'reply_to',
+}
+
+export interface PushOptions {
+  userId: string // recipient
+  channelId: string
+  payload: NotificationPayload
+  urgency?: Urgency
 }
 
 export function isPushType(
@@ -51,7 +59,22 @@ export function isUserId(
   return typeof args === 'string' && args.length > 0
 }
 
-export type NotificationContent = object
+export interface NotificationContentBasic {
+  spaceId: string
+  channelId: string
+  senderId: string
+}
+
+export interface NotificationContentDm {
+  spaceId: string
+  channelId: string
+  senderId: string
+  recipients: string[]
+}
+
+export type NotificationContent =
+  | NotificationContentBasic
+  | NotificationContentDm
 
 export interface NotificationPayload {
   notificationType: NotificationType
@@ -65,7 +88,7 @@ export function isNotificationPayload(
   return (
     typeof args === 'object' &&
     Object.values(NotificationType).includes(args.notificationType) &&
-    typeof args.content === 'object'
+    isNotificationContent(args.content)
   )
 }
 
@@ -138,9 +161,34 @@ function isUserSettingsChannelArray(args: any): args is UserSettingsChannel[] {
   )
 }
 
-export interface PushOptions {
-  userId: string // recipient
-  channelId: string
-  payload: NotificationPayload
-  urgency?: Urgency
+function isNotificationContentBasic(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  args: any,
+): args is NotificationContentBasic {
+  return (
+    typeof args === 'object' &&
+    typeof args.spaceId === 'string' &&
+    typeof args.channelId === 'string' &&
+    typeof args.senderId === 'string'
+  )
+}
+
+function isNotificationContentDm(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  args: any,
+): args is NotificationContentDm {
+  return (
+    typeof args === 'object' &&
+    typeof args.spaceId === 'string' &&
+    typeof args.channelId === 'string' &&
+    typeof args.senderId === 'string' &&
+    Array.isArray(args.recipients)
+  )
+}
+
+function isNotificationContent(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  args: any,
+): args is NotificationContent {
+  return isNotificationContentBasic(args) || isNotificationContentDm(args)
 }

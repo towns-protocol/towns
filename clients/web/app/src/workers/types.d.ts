@@ -1,4 +1,5 @@
 export enum AppNotificationType {
+    DirectMessage = 'direct_message',
     NewMessage = 'new_message',
     Mention = 'mention',
     ReplyTo = 'reply_to',
@@ -34,7 +35,19 @@ export type AppNotificationReplyTo = {
     }
 }
 
+export type AppNotificationDM = {
+    notificationType: AppNotificationType.DirectMessage
+    topic?: string
+    content: {
+        spaceId: string
+        channelId: string
+        senderId: string
+        recipients: string[]
+    }
+}
+
 export type AppNotification =
+    | AppNotificationDM
     | AppNotificationMessage
     | AppNotificationMention
     | AppNotificationReplyTo

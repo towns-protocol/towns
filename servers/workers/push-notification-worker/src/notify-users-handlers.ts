@@ -1,4 +1,9 @@
-import { Mute, NotificationType, PushOptions } from './types'
+import {
+  Mute,
+  NotificationContentDm,
+  NotificationType,
+  PushOptions,
+} from './types'
 import {
   PushSubscriptionSqlStatement,
   deletePushSubscription,
@@ -177,11 +182,29 @@ function createUserSpecificParams(
     payload: { ...params.payload },
     urgency: params.urgency,
   }
-  if (taggedUsers.mentionedUsers.includes(userId)) {
-    userOptions.payload.notificationType = NotificationType.Mention
-  } else if (taggedUsers.replyToUsers.includes(userId)) {
-    userOptions.payload.notificationType = NotificationType.ReplyTo
+  switch (true) {
+    case taggedUsers.mentionedUsers.includes(userId):
+      userOptions.payload.notificationType = NotificationType.Mention
+      break
+    case taggedUsers.replyToUsers.includes(userId):
+      userOptions.payload.notificationType = NotificationType.ReplyTo
+      break
+    case params.payload.notificationType === NotificationType.DirectMessage:
+      {
+        const recipients = getRecipientsForDm(params)
+        const content: NotificationContentDm = {
+          spaceId: params.spaceId,
+          channelId: params.channelId,
+          senderId: params.sender,
+          recipients,
+        }
+        userOptions.payload.content = content
+      }
+      break
+    default:
+      break
   }
+  console.log('userOptions', userOptions)
   return userOptions
 }
 
@@ -255,8 +278,14 @@ async function getUsersToNotify(
       taggedUsers.replyToUsers.includes(user) && !dndReplyToUsers.has(user)
     const shouldMention =
       taggedUsers.mentionedUsers.includes(user) && !dndMentionUsers.has(user)
+    // should notify if the user is in a DM/GDM, mentioned or participating in a replyTo thread
+    // AND the user is not muted for the town or channel
     const shouldNotify =
-      (shouldReplyTo || shouldMention) && !mutedUsers.has(user)
+      (params.payload.notificationType === NotificationType.DirectMessage ||
+        shouldReplyTo ||
+        shouldMention) &&
+      !mutedUsers.has(user)
+
     console.log(
       'user',
       user,
@@ -272,6 +301,19 @@ async function getUsersToNotify(
     }
   }
   return Array.from(notifyUsers)
+}
+
+function getRecipientsForDm(params: NotifyRequestParams): string[] {
+  const recipients: string[] = []
+  if (params.payload.notificationType === NotificationType.DirectMessage) {
+    for (const user of params.users) {
+      if (user !== params.sender) {
+        recipients.push(user)
+      }
+    }
+    params.users
+  }
+  return recipients
 }
 
 function prepareMutedUsersStatement(

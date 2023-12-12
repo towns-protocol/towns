@@ -123,7 +123,6 @@ export async function getNotificationTags(
   const results = await DB.batch([selectTaggedUsers, deleteUsers])
   for (const result of results) {
     if (result.success) {
-      console.log('getNotificationTags', 'result', result)
       for (const row of result.results) {
         const r0 = row as QueryResultNotificationTag
         switch (r0.tag) {

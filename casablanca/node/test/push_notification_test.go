@@ -4,6 +4,7 @@ import (
 	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/nodes"
+	"casablanca/node/shared"
 	"casablanca/node/testutils"
 	"context"
 	"encoding/json"
@@ -16,12 +17,13 @@ import (
 )
 
 type expectPayload struct {
-	authToken     string
-	channelId     string
-	sender        string
-	spaceId       string
-	url           string
-	usersToNotify []string
+	authToken        string
+	channelId        string
+	notificationType nodes.NotificationType
+	sender           string
+	spaceId          string
+	url              string
+	usersToNotify    []string
 }
 
 func createTestServer(
@@ -41,6 +43,7 @@ func createTestServer(
 		assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 		assert.Equal(t, bearerToken, req.Header.Get("Authorization"))
 		// assert the body payload
+		assert.Equal(t, expectPayload.notificationType.String(), n.Payload.NotificationType)
 		assert.Equal(t, expectPayload.channelId, n.ChannelId)
 		assert.Equal(t, expectPayload.sender, n.Sender)
 		assert.Equal(t, expectPayload.spaceId, n.SpaceId)
@@ -78,12 +81,13 @@ func TestPushNotification_JoinedMembers(t *testing.T) {
 	// create a push notification config and the test server
 	authToken := "test"
 	expectPayload := &expectPayload{
-		authToken:     authToken,
-		channelId:     channelStreamId,
-		sender:        alice,
-		spaceId:       spaceStreamId,
-		url:           "/api/notify-users",
-		usersToNotify: others,
+		authToken:        authToken,
+		channelId:        channelStreamId,
+		notificationType: nodes.NewMessage,
+		sender:           alice,
+		spaceId:          spaceStreamId,
+		url:              "/api/notify-users",
+		usersToNotify:    others,
 	}
 	server, c := createTestServer(t, expectPayload)
 	defer server.Close()
@@ -136,12 +140,13 @@ func TestPushNotification_RemainingMembers(t *testing.T) {
 	// create a push notification config and the test server
 	authToken := "test"
 	expectPayload := &expectPayload{
-		authToken:     authToken,
-		channelId:     channelStreamId,
-		sender:        alice,
-		spaceId:       spaceStreamId,
-		url:           "/api/notify-users",
-		usersToNotify: []string{"carol"}, // because bob left the channel
+		authToken:        authToken,
+		channelId:        channelStreamId,
+		notificationType: nodes.NewMessage,
+		sender:           alice,
+		spaceId:          spaceStreamId,
+		url:              "/api/notify-users",
+		usersToNotify:    []string{"carol"}, // because bob left the channel
 	}
 	server, c := createTestServer(t, expectPayload)
 	defer server.Close()
@@ -157,6 +162,65 @@ func TestPushNotification_RemainingMembers(t *testing.T) {
 		wallet,
 		[]string{"bob"},
 	)
+	notification := nodes.MakePushNotification(
+		ctx,
+		&cfg,
+	)
+	// send a push notification
+	notification.SendPushNotification(
+		t_context.Context,
+		t_context.StreamView,
+		alice,
+	)
+	// wait for server to finish
+	<-c
+
+	/* Assert */
+	// assertions are done in the test server
+}
+
+func TestPushNotification_Dm(t *testing.T) {
+	/* Arrange */
+	ctx := context.Background()
+	wallet, _ := crypto.NewWallet(ctx)
+	alice := "alice"
+	others := []string{"bob", "carol"}
+	spaceStreamId := "space_1_streamId"
+	channelStreamId := shared.STREAM_GDM_CHANNEL_PREFIX_DASH + "_channel_1_streamId"
+	// create a channel stream
+	t_context := testutils.MakeChannelStreamContext_T(
+		t,
+		ctx,
+		wallet,
+		alice,
+		channelStreamId,
+		spaceStreamId,
+	)
+	// add others to the channel
+	t_context = testutils.JoinChannel_T(
+		t_context,
+		wallet,
+		others,
+	)
+	// create a push notification config and the test server
+	authToken := "test"
+	expectPayload := &expectPayload{
+		authToken:        authToken,
+		channelId:        channelStreamId,
+		notificationType: nodes.DirectMessage,
+		sender:           alice,
+		spaceId:          spaceStreamId,
+		url:              "/api/notify-users",
+		usersToNotify:    others,
+	}
+	server, c := createTestServer(t, expectPayload)
+	defer server.Close()
+	cfg := config.PushNotificationConfig{
+		Url:       server.URL,
+		AuthToken: authToken,
+	}
+
+	/* Act */
 	notification := nodes.MakePushNotification(
 		ctx,
 		&cfg,

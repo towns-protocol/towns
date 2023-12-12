@@ -12,7 +12,7 @@ type Channel = {
     name: string
 }
 
-type User = {
+export type User = {
     id: string
     name: string
 }

@@ -6,6 +6,7 @@ const content = z.object({
     spaceId: z.string(),
     channelId: z.string(),
     senderId: z.string(),
+    recipients: z.array(z.string()).optional(),
 })
 
 // this is obviously a bit overkill for now, but I think it can
@@ -13,6 +14,7 @@ const content = z.object({
 const notificationSchema = z
     .object({
         notificationType: z.enum([
+            AppNotificationType.DirectMessage,
             AppNotificationType.NewMessage,
             AppNotificationType.Mention,
             AppNotificationType.ReplyTo,
@@ -22,6 +24,17 @@ const notificationSchema = z
     })
     .transform((data): AppNotification | undefined => {
         switch (data.notificationType) {
+            case AppNotificationType.DirectMessage:
+                return {
+                    topic: data.topic,
+                    notificationType: AppNotificationType.DirectMessage,
+                    content: {
+                        spaceId: data.content.spaceId,
+                        channelId: data.content.channelId,
+                        senderId: data.content.senderId,
+                        recipients: data.content.recipients ?? [],
+                    },
+                }
             case AppNotificationType.NewMessage:
                 return {
                     topic: data.topic,
@@ -71,6 +84,10 @@ export function appNotificationFromPushEvent(raw: string): AppNotification | und
 
 export function pathFromAppNotification(notification: AppNotification) {
     switch (notification.notificationType) {
+        case AppNotificationType.DirectMessage:
+            return (
+                [PATHS.MESSAGES, encodeURIComponent(notification.content.channelId)].join('/') + '/'
+            )
         case AppNotificationType.NewMessage:
             return (
                 [

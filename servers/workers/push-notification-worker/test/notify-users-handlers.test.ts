@@ -4,7 +4,11 @@ import {
 } from '../src/request-interfaces'
 import { createRequest, createTestMocks, mockDbStatements } from './mock-utils'
 
-import { NotificationType } from '../src/types'
+import {
+  NotificationContentBasic,
+  NotificationPayload,
+  NotificationType,
+} from '../src/types'
 import { WebPushSubscription } from '../src/web-push/web-push-types'
 import { createFakeWebPushSubscription } from './fake-data'
 import { handleRequest } from '../src'
@@ -45,14 +49,14 @@ describe('notify-users-handlers', () => {
 
     // Act
     // create the request to notify the user
-    const payload = {
+    const content: NotificationContentBasic = {
+      spaceId,
+      channelId,
+      senderId: sender,
+    }
+    const payload: NotificationPayload = {
       notificationType: NotificationType.NewMessage,
-      content: {
-        topic: channelId,
-        options: {
-          body: `ID: ${Math.floor(Math.random() * 100)}`,
-        },
-      },
+      content,
     }
     const notifyParams: NotifyRequestParams = {
       sender,
@@ -86,6 +90,83 @@ describe('notify-users-handlers', () => {
     console.log('notificationsSentCount', notificationsSentCount)
     // by default, no users receive notifications unless they are mentioned, or replied to.
     expect(notificationsSentCount).toBe('0')
+  })
+
+  test('/api/notify-users DM', async () => {
+    // Arrange
+    const fetchMock = getMiniflareFetchMock()
+    fetchMock.disableNetConnect()
+    const spaceId = `Town${Date.now()}`
+    const channelId = `!channelId${Date.now()}`
+    const sender = `0xAlice${Date.now()}`
+    const recipient = `0xBob${Date.now()}`
+    const subscriptionObject = createFakeWebPushSubscription()
+    const addParams: AddSubscriptionRequestParams = {
+      userId: sender,
+      subscriptionObject,
+    }
+    // create the request to add the push subscription
+    const {
+      request: addRequest,
+      env,
+      DB,
+      ctx,
+    } = createTestMocks({
+      route: '/api/add-subscription',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(addParams),
+    })
+    mockDbStatements(DB, {
+      spaceId,
+      channelId,
+    })
+    // add the subscription
+    await handleRequest(addRequest, env, ctx)
+
+    // Act
+    // create the request to notify the user
+    const content: NotificationContentBasic = {
+      spaceId,
+      channelId,
+      senderId: sender,
+    }
+    const payload: NotificationPayload = {
+      notificationType: NotificationType.DirectMessage,
+      content,
+    }
+    const notifyParams: NotifyRequestParams = {
+      sender,
+      users: [recipient],
+      payload,
+      spaceId,
+      channelId,
+    }
+    // create the notification request
+    const notifyRequest = createRequest(env, {
+      route: '/api/notify-users',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(notifyParams),
+    })
+    // mock the response from the web push server
+    const fakeSubscription =
+      createFakeWebPushSubscription() as WebPushSubscription
+    const fakeServerUrl = new URL(fakeSubscription.endpoint)
+    const endpoint = fetchMock.get(fakeServerUrl.origin)
+    endpoint
+      .intercept({ method: 'POST', path: fakeServerUrl.pathname })
+      .reply(201, 'OK')
+
+    // send the notification request
+    const response = await handleRequest(notifyRequest, env, ctx)
+
+    // Assert
+    expect(response.status).toBe(200)
+    const notificationsSentCount = await response.text()
+    console.log('notificationsSentCount', notificationsSentCount)
+    // DM user should receive notification.
+    expect(notificationsSentCount).toBe('1')
   })
 
   test('/api/notify-users notification is muted', async () => {
@@ -127,14 +208,14 @@ describe('notify-users-handlers', () => {
 
     // Act
     // create the request to notify the user
-    const payload = {
+    const content: NotificationContentBasic = {
+      spaceId,
+      channelId,
+      senderId: sender,
+    }
+    const payload: NotificationPayload = {
       notificationType: NotificationType.NewMessage,
-      content: {
-        topic: channelId,
-        options: {
-          body: `ID: ${Math.floor(Math.random() * 100)}`,
-        },
-      },
+      content,
     }
     const notifyParams: NotifyRequestParams = {
       sender,
@@ -172,7 +253,7 @@ describe('notify-users-handlers', () => {
     expect(notificationsSentCount).toBe('0')
   })
 
-  test.skip('/api/notify-users for replyTo', async () => {
+  test('/api/notify-users for replyTo', async () => {
     // Arrange
     const fetchMock = getMiniflareFetchMock()
     fetchMock.disableNetConnect()
@@ -208,14 +289,14 @@ describe('notify-users-handlers', () => {
 
     // Act
     // create the request to notify the user
-    const payload = {
+    const content: NotificationContentBasic = {
+      spaceId,
+      channelId,
+      senderId: sender,
+    }
+    const payload: NotificationPayload = {
       notificationType: NotificationType.NewMessage,
-      content: {
-        topic: channelId,
-        options: {
-          body: `ID: ${Math.floor(Math.random() * 100)}`,
-        },
-      },
+      content,
     }
     const notifyParams: NotifyRequestParams = {
       sender,
@@ -253,7 +334,7 @@ describe('notify-users-handlers', () => {
     expect(notificationsSentCount).toBe('1')
   })
 
-  test.skip('/api/notify-users for mention', async () => {
+  test('/api/notify-users for mention', async () => {
     // Arrange
     const fetchMock = getMiniflareFetchMock()
     fetchMock.disableNetConnect()
@@ -289,14 +370,14 @@ describe('notify-users-handlers', () => {
 
     // Act
     // create the request to notify the user
-    const payload = {
+    const content: NotificationContentBasic = {
+      spaceId,
+      channelId,
+      senderId: sender,
+    }
+    const payload: NotificationPayload = {
       notificationType: NotificationType.NewMessage,
-      content: {
-        topic: channelId,
-        options: {
-          body: `ID: ${Math.floor(Math.random() * 100)}`,
-        },
-      },
+      content,
     }
     const notifyParams: NotifyRequestParams = {
       sender,
