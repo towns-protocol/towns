@@ -14,7 +14,6 @@ import { MockEntitlementsDelegate } from '../utils'
 import { Queue, Worker } from 'bullmq'
 import {
     testRunTimeMs,
-    testChannelId,
     connectionOptions,
     loginWaitTime,
     followerKey,
@@ -57,7 +56,7 @@ describe('mirrorMessages', () => {
         async () => {
             const messagesSet: Set<string> = new Set()
             const messagesMap: Map<string, DecryptedContent> = new Map()
-            let commChannelId = testChannelId
+            let commChannelId: string
 
             let leaderLoggedIn = false
             let replySent = false

@@ -18,7 +18,11 @@ export class RiverSDK {
         this.walletWithProvider = walletWithProvider
     }
 
-    public async createChannel(townId: string, channelName: string, channelTopic: string) {
+    public async createChannel(
+        townId: string,
+        channelName: string,
+        channelTopic: string,
+    ): Promise<string> {
         const channelStreamId = makeUniqueChannelStreamId()
         const filteredRoles = await getFilteredRolesFromSpace(this.spaceDapp, townId)
         const roleIds = []
@@ -35,6 +39,7 @@ export class RiverSDK {
         await transaction.wait()
         await this.client.createChannel(townId, channelName, channelTopic, channelStreamId)
         await this.client.joinStream(channelStreamId)
+        return channelStreamId
     }
 
     public async createTownWithDefaultChannel(
@@ -100,6 +105,40 @@ export class RiverSDK {
             spaceStreamId: spaceId.networkId,
             defaultChannelStreamId: channelId.networkId,
         }
+    }
+
+    //TODO: make it nice - it is just a hack
+    public async joinTown(townId: string) {
+        const hasMembership = await this.spaceDapp.hasTownMembership(
+            townId,
+            this.walletWithProvider.address,
+        )
+        if (!hasMembership) {
+            // mint membership
+            const transaction = await this.spaceDapp.joinTown(
+                townId,
+                this.walletWithProvider.address,
+                this.walletWithProvider,
+            )
+            await transaction.wait()
+        }
+
+        await this.client.joinStream(townId)
+    }
+
+    //TODO: make it nice - it is just a hack
+    public async joinChannel(channelId: string) {
+        await this.client.joinStream(channelId)
+    }
+
+    //TODO: make it nice - it is just a hack
+    public async getAvailableChannels(townId: string): Promise<Map<string, string>> {
+        const streamStateView = await this.client.getStream(townId)
+        const result = new Map<string, string>()
+        streamStateView.spaceContent.spaceChannelsMetadata.forEach((channelProperties, id) => {
+            result.set(id, channelProperties.name)
+        })
+        return result
     }
 }
 

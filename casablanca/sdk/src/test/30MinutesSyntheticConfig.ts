@@ -6,9 +6,6 @@ export const followerKey = '61cb187a9413019e97aee61ba84d3761f66eda8a05c00834b903
 export const followerId = '0x0d04e9fF8AF48B749Bb954CceF52d2114BaeE1aD' //Artem Privy through personal email
 export const followerUserName = 'Artem (GMail)'
 
-export const testTownId = 'SPCE-mRBcGtIhEBd2XPEt7UzMm'
-export const testChannelId = 'CHAN-bkRVGYzjj1z8q3_siGYmV'
-
 export const testRunTimeMs = 180000 // test runtime in milliseconds
 export const connectionOptions = {
     host: 'localhost', // Redis server host
@@ -18,8 +15,11 @@ export const connectionOptions = {
 export const loginWaitTime = 90000
 export const replySentTime = 90000
 
+export const testBetaName = 'test-beta'
+export const testSpamChannelName = 'test spam'
+
 export const jsonRpcProviderUrl = 'https://goerli.base.org'
-export const envName = process.env.ENVIRONMENT_NAME || 'test-beta'
+export const envName = process.env.ENVIRONMENT_NAME || testBetaName
 
 export const fromFollowerQueueName = 'healthcheckqueuefollower'
 export const fromLeaderQueueName = 'healthcheckqueueleader'

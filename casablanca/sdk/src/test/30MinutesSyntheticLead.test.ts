@@ -14,7 +14,6 @@ import { MockEntitlementsDelegate } from '../utils'
 import { Queue, Worker } from 'bullmq'
 import {
     testRunTimeMs,
-    testChannelId,
     connectionOptions,
     loginWaitTime,
     leaderKey,
@@ -22,6 +21,8 @@ import {
     fromFollowerQueueName,
     fromLeaderQueueName,
     envName,
+    testBetaName,
+    testSpamChannelName,
 } from './30MinutesSyntheticConfig'
 import { DecryptedTimelineEvent } from '../types'
 import { SnapshotCaseType } from '@river/proto'
@@ -56,7 +57,7 @@ describe('mirrorMessages', () => {
         async () => {
             let followerLoggedIn = false
             let followerJoinedTown = false
-            let commChannelId = testChannelId
+
             //Step 1 - Initialize worker to track follower status
             // eslint-disable-next-line
             const _leadWorker = new Worker(
@@ -127,43 +128,73 @@ describe('mirrorMessages', () => {
             log('Follower logged in notification recieved')
 
             //Step 3.5 - if we run on transient environment, we need to create a town and join it
-            if (envName !== 'test-beta') {
-                log('Creating town')
-                const spaceDapp = createSpaceDapp(
-                    (await walletWithProvider.provider.getNetwork()).chainId,
-                    walletWithProvider.provider,
-                )
+            //TODO: spaceDatpp creation should be moved to the test SDK
+            const spaceDapp = createSpaceDapp(
+                (await walletWithProvider.provider.getNetwork()).chainId,
+                walletWithProvider.provider,
+            )
 
-                const riverSDK = new RiverSDK(spaceDapp, client, walletWithProvider)
+            const riverSDK = new RiverSDK(spaceDapp, client, walletWithProvider)
+
+            let testTownId
+            let testChannelId
+
+            if (envName !== testBetaName) {
+                log('Creating town')
                 const result = await riverSDK.createTownWithDefaultChannel(
                     'test town',
                     'town metadata',
-                    'test spam',
+                    testSpamChannelName,
                 )
 
                 log('result', result)
-                commChannelId = result.defaultChannelStreamId
+                testChannelId = result.defaultChannelStreamId
+                testTownId = result.spaceStreamId
                 //If we run agains transient environment, we need to ask second client to join the town and wait for it.
-                await healthcheckQueueLeader.add(fromLeaderQueueName, {
-                    commandType: 'joinTown',
-                    command: {
-                        townId: result.spaceStreamId,
-                        channelId: result.defaultChannelStreamId,
-                    },
-                })
-
-                await waitFor(
-                    () => {
-                        expect(followerJoinedTown).toBe(true)
-                    },
-                    {
-                        timeoutMS: loginWaitTime,
-                    },
-                )
                 log('Follower logged in notification recieved')
             } else {
-                followerJoinedTown = true
+                const redirectLocation = await checkRedirectLocation(
+                    'https://latest-dev-town.towns.com/',
+                )
+                const regex = /\/t\/([A-Za-z0-9-]+)\//
+                const match = redirectLocation?.match(regex)
+                if (!match) {
+                    throw new Error('Redirect location is not valid')
+                }
+                testTownId = match[1]
+                await riverSDK.joinTown(testTownId)
+                const availableChannels = await riverSDK.getAvailableChannels(testTownId)
+                availableChannels.forEach((channelName, channelId) => {
+                    if (channelName === testSpamChannelName) {
+                        testChannelId = channelId
+                    }
+                })
+
+                if (!testChannelId) {
+                    testChannelId = await riverSDK.createChannel(
+                        testTownId,
+                        testSpamChannelName,
+                        testSpamChannelName,
+                    )
+                }
             }
+
+            await healthcheckQueueLeader.add(fromLeaderQueueName, {
+                commandType: 'joinTown',
+                command: {
+                    townId: testTownId,
+                    channelId: testChannelId,
+                },
+            })
+
+            await waitFor(
+                () => {
+                    expect(followerJoinedTown).toBe(true)
+                },
+                {
+                    timeoutMS: loginWaitTime,
+                },
+            )
 
             //Step 4 - send message
             const done = makeDonePromise()
@@ -195,7 +226,7 @@ describe('mirrorMessages', () => {
             const isoDateString = currentDate.toISOString()
             const messageText =
                 crypto.getRandomValues(new Uint8Array(16)).toString() + ' ' + isoDateString
-            await client.sendMessage(commChannelId, messageText)
+            await client.sendMessage(testChannelId, messageText)
             await healthcheckQueueLeader.add(fromLeaderQueueName, {
                 commandType: 'messageSent',
                 command: messageText,
@@ -216,3 +247,24 @@ describe('mirrorMessages', () => {
         testRunTimeMs * 2,
     )
 })
+
+async function checkRedirectLocation(url: string): Promise<string | null> {
+    try {
+        const response = await fetch(url, { redirect: 'manual' })
+
+        if (response.status >= 300 && response.status < 400) {
+            // The response status indicates a redirect
+            const locationHeader = response.headers.get('location')
+            if (locationHeader) {
+                // The "location" header contains the redirected URL
+                return locationHeader
+            }
+        }
+
+        // No redirect or location header found
+        return null
+    } catch (error) {
+        // Handle fetch errors here
+        return null
+    }
+}
