@@ -21,6 +21,8 @@ endif
 	@echo AWS_ACCESS_KEY_ID=$(value AWS_ACCESS_KEY_ID) >> .env
 	@echo AWS_SECRET_ACCESS_KEY=$(value AWS_SECRET_ACCESS_KEY) >> .env
 	@echo TF_VAR_cloudflare_terraform_api_token=$(value TF_VAR_cloudflare_terraform_api_token) >> .env
+	@echo TF_VAR_datadog_api_key=$(value TF_VAR_datadog_api_key) >> .env
+	@echo TF_VAR_datadog_app_key=$(value TF_VAR_datadog_app_key) >> .env
 ifeq ($(ENV), transient)
 	@echo TF_VAR_git_pr_number=$(GIT_PR_NUMBER) >> .env
 	@echo TF_VAR_is_transient_lite=$(is_transient_lite) >> .env

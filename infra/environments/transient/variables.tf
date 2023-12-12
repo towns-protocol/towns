@@ -7,6 +7,14 @@ variable "cloudflare_terraform_api_token" {
   }
 }
 
+variable "datadog_api_key" {
+  description = "Datadog API key"
+}
+
+variable "datadog_app_key" {
+  description = "Datadog APP key"
+}
+
 variable "git_pr_number" {
   description = "The GitHub Pull Request number"
   type        = number
