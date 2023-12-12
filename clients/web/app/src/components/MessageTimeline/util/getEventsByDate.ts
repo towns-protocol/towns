@@ -335,11 +335,14 @@ export const getEventsByDate = (
                     key: `channel-header-${event.eventId}`,
                     event,
                 })
-                renderEvents.push({
-                    type: RenderEventType.RoomCreate,
-                    key: `room-create-${event.eventId}`,
-                    event,
-                })
+
+                if (channelType !== 'dm') {
+                    renderEvents.push({
+                        type: RenderEventType.RoomCreate,
+                        key: `room-create-${event.eventId}`,
+                        event,
+                    })
+                }
             }
             return result
         },

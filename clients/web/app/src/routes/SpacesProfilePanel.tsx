@@ -214,7 +214,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                 </Stack>
             )}
 
-            {!isCurrentUser && (
+            {!isCurrentUser && !search.has('message') && (
                 <Stack padding gap>
                     <PanelButton onClick={onMessageClick}>
                         <Icon type="message" size="square_sm" color="gray2" />

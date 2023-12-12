@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Channel, RoomIdentifier, useChannelMembers, useDMData, useRoom } from 'use-zion-client'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
@@ -10,7 +10,6 @@ import { useChannelType } from 'hooks/useChannelType'
 import { useDevice } from 'hooks/useDevice'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { CHANNEL_INFO_PARAMS } from 'routes'
 
 type Props = {
     channel: Channel
@@ -35,6 +34,7 @@ const DesktopChannelHeader = (props: Props) => {
     })
     const isMuted = channelIsMuted || spaceIsMuted
     const channelType = useChannelType(channel.id)
+    const onInfoPressed = useInfoButton(channel, channelType)
 
     return (
         <Stack gap>
@@ -70,36 +70,36 @@ const DesktopChannelHeader = (props: Props) => {
                 overflow="hidden"
                 shrink={false}
             >
-                <Link to={`${CHANNEL_INFO_PARAMS.INFO}?${CHANNEL_INFO_PARAMS.CHANNEL}`}>
-                    <Stack
-                        horizontal
-                        border
-                        paddingX
-                        hoverable
-                        gap="sm"
-                        paddingY="sm"
-                        background="level2"
-                        alignItems="center"
-                        rounded="sm"
-                        minHeight="height_lg"
-                    >
-                        {channelType === 'channel' ? (
-                            <>
-                                <Icon type="tag" size="square_sm" color="gray2" />
-                                <Paragraph fontWeight="strong" color="default">
-                                    {channel.label}
-                                </Paragraph>
-                            </>
-                        ) : channelType === 'dm' ? (
-                            <DMTitleContent roomIdentifier={channel.id} />
-                        ) : channelType === 'gdm' ? (
-                            <GDMTitleContent roomIdentifier={channel.id} />
-                        ) : (
-                            <></>
-                        )}
-                        {isMuted && <Icon type="muteActive" size="square_sm" color="gray2" />}
-                    </Stack>
-                </Link>
+                <Stack
+                    horizontal
+                    border
+                    paddingX
+                    hoverable
+                    gap="sm"
+                    paddingY="sm"
+                    background="level2"
+                    alignItems="center"
+                    rounded="sm"
+                    minHeight="height_lg"
+                    cursor="pointer"
+                    onClick={onInfoPressed}
+                >
+                    {channelType === 'channel' ? (
+                        <>
+                            <Icon type="tag" size="square_sm" color="gray2" />
+                            <Paragraph fontWeight="strong" color="default">
+                                {channel.label}
+                            </Paragraph>
+                        </>
+                    ) : channelType === 'dm' ? (
+                        <DMTitleContent roomIdentifier={channel.id} />
+                    ) : channelType === 'gdm' ? (
+                        <GDMTitleContent roomIdentifier={channel.id} />
+                    ) : (
+                        <></>
+                    )}
+                    {isMuted && <Icon type="muteActive" size="square_sm" color="gray2" />}
+                </Stack>
 
                 {topic && <Paragraph color="gray2">{topic}</Paragraph>}
                 <Stack grow />
@@ -140,7 +140,6 @@ const GDMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
 
 const TouchChannelHeader = (props: Props) => {
     const { channel, onTouchClose } = props
-    const navigate = useNavigate()
     const spaceId = useSpaceIdFromPathname()
     const { members } = useChannelMembers()
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
@@ -153,9 +152,7 @@ const TouchChannelHeader = (props: Props) => {
 
     const isMuted = channelIsMuted || spaceIsMuted
 
-    const infoButtonPressed = useCallback(() => {
-        navigate(`info?channel`)
-    }, [navigate])
+    const infoButtonPressed = useInfoButton(channel, channelType)
 
     return (
         <Stack gap="sm">
@@ -240,4 +237,16 @@ const TouchChannelHeader = (props: Props) => {
             )}
         </Stack>
     )
+}
+
+const useInfoButton = (channel: Channel, channelType: 'channel' | 'gdm' | 'dm') => {
+    const navigate = useNavigate()
+    const { counterParty } = useDMData(channel.id)
+    return useCallback(() => {
+        if (channelType === 'dm') {
+            navigate(`profile/${counterParty}?message`)
+        } else {
+            navigate(`info?channel`)
+        }
+    }, [channelType, counterParty, navigate])
 }
