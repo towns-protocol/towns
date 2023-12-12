@@ -109,7 +109,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 		if err != nil {
 			return err
 		}
-		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, creator, eventNum)
+		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, creator, eventNum, event.Hash)
 	case *StreamEvent_ChannelPayload:
 		return update_Snapshot_Channel(iSnapshot, payload.ChannelPayload)
 	case *StreamEvent_DmChannelPayload:
@@ -139,12 +139,11 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	}
 }
 
-func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, user string, eventNum int64) error {
+func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, user string, eventNum int64, eventHash []byte) error {
 	snapshot := iSnapshot.Content.(*Snapshot_SpaceContent)
 	if snapshot == nil {
 		return errors.New("blockheader snapshot is not a space snapshot")
 	}
-
 	switch content := spacePayload.Content.(type) {
 	case *SpacePayload_Inception_:
 		return errors.New("cannot update blockheader with inception event")
@@ -164,13 +163,13 @@ func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, user
 		if snapshot.SpaceContent.Usernames == nil {
 			snapshot.SpaceContent.Usernames = make(map[string]*SpacePayload_WrappedEncryptedData)
 		}
-		snapshot.SpaceContent.Usernames[user] = &SpacePayload_WrappedEncryptedData{Data: content.Username, EventNum: eventNum}
+		snapshot.SpaceContent.Usernames[user] = &SpacePayload_WrappedEncryptedData{Data: content.Username, EventNum: eventNum, EventHash: eventHash}
 		return nil
 	case *SpacePayload_DisplayName:
 		if snapshot.SpaceContent.DisplayNames == nil {
 			snapshot.SpaceContent.DisplayNames = make(map[string]*SpacePayload_WrappedEncryptedData)
 		}
-		snapshot.SpaceContent.DisplayNames[user] = &SpacePayload_WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum}
+		snapshot.SpaceContent.DisplayNames[user] = &SpacePayload_WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
 		return nil
 	default:
 		return fmt.Errorf("unknown space payload type %T", spacePayload.Content)

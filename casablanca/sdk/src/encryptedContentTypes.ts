@@ -39,6 +39,7 @@ export function toDecryptedContent(
                 kind,
                 content: ChannelMessage.fromJsonString(content),
             } satisfies DecryptedContent_ChannelMessage
+
         default:
             // the client is responsible for this
             // we should never have a type we don't know about locally here

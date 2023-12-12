@@ -632,6 +632,7 @@ export class StreamStateView {
     userIsEntitledToKeyExchange(userId: string): boolean {
         switch (this.contentKind) {
             case 'channelContent':
+            case 'spaceContent':
                 return this.getMemberships().isMember(MembershipOp.SO_JOIN, userId)
             case 'dmChannelContent':
                 return this.dmChannelContent.participants().has(userId)

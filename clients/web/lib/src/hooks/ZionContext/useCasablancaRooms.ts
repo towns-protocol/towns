@@ -79,12 +79,14 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
         client.on('streamUserLeft', onStreamUserLeft)
         client.on('userLeftStream', onUserLeftStream)
         client.on('streamDisplayNameUpdated', onPendingDisplayNameUpdated)
+        client.on('streamPendingDisplayNameUpdated', onPendingDisplayNameUpdated)
 
         return () => {
             client.off('streamNewUserJoined', onStreamNewUserJoined)
             client.off('streamUserLeft', onStreamUserLeft)
             client.off('userLeftStream', onUserLeftStream)
             client.off('streamDisplayNameUpdated', onPendingDisplayNameUpdated)
+            client.off('streamPendingDisplayNameUpdated', onPendingDisplayNameUpdated)
             setRooms({})
         }
     }, [client, isLoading, spaceInfo])

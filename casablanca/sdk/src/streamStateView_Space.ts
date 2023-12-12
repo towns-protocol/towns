@@ -17,6 +17,7 @@ import {
 import { check, isDefined, logNever, throwWithCode } from './check'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
+import { DecryptedContent } from './encryptedContentTypes'
 
 export class StreamStateView_Space extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -105,21 +106,14 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                     emitter,
                 )
                 break
-            case 'username':
-                this.userMetadata.appendUserMetadataEvent(
-                    event.hashStr,
-                    event.creatorUserId,
-                    payload.content.value,
-                    'username',
-                    emitter,
-                )
-                break
             case 'displayName':
-                this.userMetadata.appendUserMetadataEvent(
+            case 'username':
+                this.userMetadata.appendEncryptedData(
                     event.hashStr,
-                    event.creatorUserId,
                     payload.content.value,
-                    'displayName',
+                    payload.content.case,
+                    event.creatorUserId,
+                    cleartext,
                     emitter,
                 )
                 break
@@ -165,5 +159,15 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             channelProperties = new ChannelProperties()
         }
         return channelProperties
+    }
+
+    onDecryptedContent(
+        eventId: string,
+        content: DecryptedContent,
+        emitter: TypedEmitter<StreamEvents>,
+    ): void {
+        if (content.kind === 'text') {
+            this.userMetadata.onDecryptedContent(eventId, content.content, emitter)
+        }
     }
 }

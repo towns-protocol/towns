@@ -663,7 +663,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     }
 
     async setDisplayName(streamId: string, displayName: string) {
-        const payload = make_SpacePayload_DisplayName(make_fake_encryptedData(displayName))
+        check(isDefined(this.cryptoBackend))
+        const encryptedData = await this.cryptoBackend.encryptMegolmEvent(streamId, displayName)
+        const payload = make_SpacePayload_DisplayName(encryptedData)
         await this.makeEventAndAddToStream(streamId, payload, { method: 'displayName' })
     }
 
