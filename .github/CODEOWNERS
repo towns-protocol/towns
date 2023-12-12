@@ -1,5 +1,4 @@
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
-
 ##
 ## "Code Owners" is an unfortunate name, as we do not encourage "ownership"
 ## of code per se.
@@ -22,7 +21,7 @@
 ## owner or otherwise, comments on your code at any time, please assume the best
 ## intentions and respond with care and consideration.
 ##
-## To see reviews that are waiting for your attention, 
+## To see reviews that are waiting for your attention,
 ## please visit: https://github.com/HereNotThere/harmony/pulls?q=is%3Apr+is%3Aopen+user-review-requested%3A%40me
 ##
 
@@ -31,3 +30,4 @@
 /infra @mechanical-turk
 turbo.json @mechanical-turk
 /contracts/src/node-network @mechanical-turk
+/casablanca/sdk/src/stream* @erikolsson
