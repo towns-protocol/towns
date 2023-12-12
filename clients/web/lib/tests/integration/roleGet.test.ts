@@ -286,8 +286,8 @@ describe('get role details', () => {
         const permissions = [Permission.Read, Permission.Write]
         const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
 
-        const mod1 = await TestConstants.getWalletWithMemberNft()
-        const mod2 = await TestConstants.getWalletWithMemberNft()
+        const mod1 = await TestConstants.getWalletWithTestGatingNft()
+        const mod2 = await TestConstants.getWalletWithTestGatingNft()
         const users: string[] = [mod1.address, mod2.address]
         const roleName = 'newRole1'
         const roleId: RoleIdentifier | undefined = await alice.createRole(

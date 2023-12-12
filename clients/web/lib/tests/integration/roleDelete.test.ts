@@ -28,14 +28,14 @@ describe('delete role', () => {
         const { alice } = await registerAndStartClients(['alice'])
         const bobWithNft = await registerAndStartClient(
             'bobWithNft',
-            TestConstants.getWalletWithMemberNft(),
+            TestConstants.getWalletWithTestGatingNft(),
         )
         if (!bobWithNft.walletAddress) {
             throw new Error('bobWithNft.walletAddress is undefined')
         }
         const carolWithNft = await registerAndStartClient(
             'carolWithNft',
-            TestConstants.getWalletWithMemberNft(),
+            TestConstants.getWalletWithTestGatingNft(),
         )
         if (!carolWithNft.walletAddress) {
             throw new Error('carolWithNft.walletAddress is undefined')

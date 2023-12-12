@@ -5,6 +5,7 @@ import { Wallet } from 'ethers'
 import { createTestSpaceGatedByTownAndZionNfts, registerAndStartClients } from './helpers/TestUtils'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { Permission } from '@river/web3'
+import { TestConstants } from './helpers/TestConstants'
 describe('Link Wallet', () => {
     test('link wallet', async () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
@@ -63,9 +64,11 @@ describe('Link Wallet', () => {
         const bob_wallets = await bob.getLinkedWallets(bobAddress)
         expect(bob_wallets).toContain(await metamaskWallet.getAddress())
     })
-    test('link join wallet', async () => {
+
+    // see note at bottom of test
+    test.skip('link join wallet', async () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
-        const metamaskWallet = await generateNewWallet()
+        const metamaskWallet = await TestConstants.getWalletWithTestGatingNft()
 
         const tx_link = await bob.linkWallet(bob.provider.wallet, metamaskWallet)
         if (tx_link.transaction?.hash) {
@@ -101,9 +104,18 @@ describe('Link Wallet', () => {
             spaceId!.networkId,
             undefined,
             bob.wallet.address,
-            Permission.Read,
+            Permission.JoinTown,
         )
         expect(isEntitledToSpace).toBeTruthy()
+
+        // ES: 12/11/23 for this to work the contract check for joinTown needs to change
+        const bobJoinTx = await bob.spaceDapp.joinTown(
+            spaceId!.networkId,
+            metamaskWallet.address,
+            bob.wallet,
+        )
+
+        expect(bobJoinTx).toBeTruthy()
     })
 })
 

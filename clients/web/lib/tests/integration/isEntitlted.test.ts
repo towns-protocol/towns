@@ -18,6 +18,7 @@ import {
     Permission,
     TokenEntitlementDataTypes,
 } from '@river/web3'
+import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 
 describe('isEntitledToSpace and isEntitledToChannel tests', () => {
     test('server checks isEntitledToSpace true', async () => {
@@ -25,7 +26,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         // create all the users for the test
         const bobWithNft = await registerAndStartClient(
             'bobWithNft',
-            TestConstants.getWalletWithMemberNft(),
+            TestConstants.getWalletWithTestGatingNft(),
         )
         const bobUserId = bobWithNft.getUserId() as string
         const { alice } = await registerAndStartClients(['alice'])
@@ -84,8 +85,9 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice } = await registerAndStartClients(['alice'])
         const bobWithNft = await registerAndStartClient(
             'bobWithNft',
-            TestConstants.getWalletWithMemberNft(),
+            TestConstants.getWalletWithTestGatingNft(),
         )
+
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
         const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
@@ -172,7 +174,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice } = await registerAndStartClients(['alice'])
         const bobWithNft = await registerAndStartClient(
             'bobWithNft',
-            TestConstants.getWalletWithMemberNft(),
+            TestConstants.getWalletWithTestGatingNft(),
         )
         // create a space with token entitlement to read & write
         await alice.fundWallet()
@@ -210,6 +212,94 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         expect(isEntitledToSpace).toBe(true)
     }) // end test
 
+    test('client checks isEntitledToJoinTown with a linked wallet is true', async () => {
+        /** Arrange */
+        // create all the users for the test
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        const metamaskWalletWithGatingNFT = await TestConstants.getWalletWithTestGatingNft()
+
+        const tx_link = await bob.linkWallet(bob.provider.wallet, metamaskWalletWithGatingNFT)
+        if (tx_link.transaction?.hash) {
+            await bob.opts.web3Provider?.waitForTransaction(tx_link.transaction?.hash)
+        }
+        expect(tx_link.error).toBeUndefined()
+        expect(tx_link.transaction?.hash).toBeDefined()
+
+        // create a space with token entitlement to read & write
+        await alice.fundWallet()
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])
+
+        expect(spaceId).toBeDefined()
+
+        /** Act */
+        const isAliceEntitledToSpace = await alice.isEntitled(
+            spaceId!.networkId,
+            undefined,
+            alice.wallet.address,
+            Permission.Read,
+        )
+        /** Assert */
+        expect(isAliceEntitledToSpace).toBe(true)
+
+        // test the user's entitlement to the space
+        const isEntitledToJoinTown = await bob.isEntitled(
+            spaceId!.networkId,
+            undefined,
+            bob.wallet.address,
+            Permission.JoinTown,
+        )
+
+        /** Assert */
+        expect(isEntitledToJoinTown).toBe(true)
+    }) // end test
+
+    test('client checks isEntitledToJoinTown with a linked wallet is false', async () => {
+        /** Arrange */
+        // create all the users for the test
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        const metamaskWalletWithoutGatingNft = await new ZionTestWeb3Provider().fundWallet()
+
+        const tx_link = await bob.linkWallet(bob.provider.wallet, metamaskWalletWithoutGatingNft)
+        if (tx_link.transaction?.hash) {
+            await bob.opts.web3Provider?.waitForTransaction(tx_link.transaction?.hash)
+        }
+        expect(tx_link.error).toBeUndefined()
+        expect(tx_link.transaction?.hash).toBeDefined()
+
+        // create a space with token entitlement to read & write
+        await alice.fundWallet()
+        const spaceId = await createTestSpaceGatedByTownAndZionNfts(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])
+
+        expect(spaceId).toBeDefined()
+
+        /** Act */
+        const isAliceEntitledToSpace = await alice.isEntitled(
+            spaceId!.networkId,
+            undefined,
+            alice.wallet.address,
+            Permission.Read,
+        )
+        /** Assert */
+        expect(isAliceEntitledToSpace).toBe(true)
+
+        // test the user's entitlement to the space
+        const isEntitledToJoinTown = await bob.isEntitled(
+            spaceId!.networkId,
+            undefined,
+            bob.wallet.address,
+            Permission.JoinTown,
+        )
+
+        /** Assert */
+        expect(isEntitledToJoinTown).toBe(false)
+    }) // end test
+
     test('client checks isEntitledToSpace false', async () => {
         /** Arrange */
         // create all the users for the test
@@ -243,7 +333,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice } = await registerAndStartClients(['alice'])
         const bobWithNft = await registerAndStartClient(
             'bobWithNft',
-            TestConstants.getWalletWithMemberNft(),
+            TestConstants.getWalletWithTestGatingNft(),
         )
         // convert bob's userId into its wallet address
         const bobUserId = bobWithNft.getUserId()
@@ -348,7 +438,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice } = await registerAndStartClients(['alice'])
         const bobWithNft = await registerAndStartClient(
             'bobWithNft',
-            TestConstants.getWalletWithMemberNft(),
+            TestConstants.getWalletWithTestGatingNft(),
         )
         // convert bob's userId into its wallet address
         const bobUserId = bobWithNft.getUserId()

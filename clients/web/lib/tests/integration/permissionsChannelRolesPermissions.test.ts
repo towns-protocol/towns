@@ -23,7 +23,7 @@ describe('channel with roles and permissions', () => {
         // create all the users for the test
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
-            TestConstants.getWalletWithMemberNft(),
+            TestConstants.getWalletWithTestGatingNft(),
         )
         const tokenGrantedUserId = tokenGrantedUser.getUserId() as string
         const { alice } = await registerAndStartClients(['alice'])

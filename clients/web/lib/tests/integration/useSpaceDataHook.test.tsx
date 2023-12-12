@@ -28,7 +28,10 @@ describe('useSpaceDataHook', () => {
         // create clients
         const { bob } = await registerAndStartClients(['bob'])
         // alice needs to have a valid nft in order to join bob's space / channel
-        const alice = await registerAndStartClient('alice', TestConstants.getWalletWithMemberNft())
+        const alice = await registerAndStartClient(
+            'alice',
+            TestConstants.getWalletWithTestGatingNft(),
+        )
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space

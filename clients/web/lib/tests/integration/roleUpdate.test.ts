@@ -137,7 +137,7 @@ describe('update role', () => {
         const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
         const moderatorTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // replace the current moderator with this user
-        const mod1 = await TestConstants.getWalletWithMemberNft()
+        const mod1 = await TestConstants.getWalletWithTestGatingNft()
         const moderatorUsers: string[] = [mod1.address]
         const moderatorRoleName = 'Moderator'
         const moderatorRoleId = await alice.createRole(
@@ -160,7 +160,7 @@ describe('update role', () => {
 
         /** Act */
         // add a moderator
-        const mod2 = await TestConstants.getWalletWithMemberNft()
+        const mod2 = await TestConstants.getWalletWithTestGatingNft()
         const newModeratorUsers = [...moderatorUsers, mod2.address]
         const newModeratorRole: RoleDetails = {
             id: moderatorRoleId.roleId,
@@ -232,7 +232,7 @@ describe('update role', () => {
         const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
         const moderatorTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // replace the current moderator with this user
-        const mod1 = await TestConstants.getWalletWithMemberNft()
+        const mod1 = await TestConstants.getWalletWithTestGatingNft()
         const moderatorUsers: string[] = [mod1.address]
         const moderatorRoleName = 'Moderator'
         const moderatorRoleId = await alice.createRole(
@@ -255,7 +255,7 @@ describe('update role', () => {
 
         /** Act */
         // add a moderator
-        const mod2 = await TestConstants.getWalletWithMemberNft()
+        const mod2 = await TestConstants.getWalletWithTestGatingNft()
         const newModeratorUsers = [mod2.address]
         const newModeratorRole: RoleDetails = {
             id: moderatorRoleId.roleId,

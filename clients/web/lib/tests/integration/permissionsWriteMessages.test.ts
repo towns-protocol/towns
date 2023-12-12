@@ -113,7 +113,7 @@ describe('write messages', () => {
         // create all the users for the test
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
-            TestConstants.getWalletWithMemberNft(),
+            TestConstants.getWalletWithTestGatingNft(),
         )
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
@@ -164,7 +164,7 @@ describe('write messages', () => {
         // create all the users for the test
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
-            TestConstants.getWalletWithMemberNft(),
+            TestConstants.getWalletWithTestGatingNft(),
         )
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()

@@ -16,7 +16,7 @@ export class TestConstants {
         timeout: TestConstants.DefaultWaitForTimeoutMS * 10,
     }
 
-    public static async getWalletWithMemberNft(): Promise<ethers.Wallet> {
+    public static async getWalletWithTestGatingNft(): Promise<ethers.Wallet> {
         try {
             const wallet = await this.getWalletWithoutNft()
             const { provider } = wallet

@@ -30,7 +30,10 @@ describe('userProfile', () => {
             Permission.Write,
         ])) as RoomIdentifier
         // alice needs to have a valid nft in order to join bob's space / channel
-        const alice = await registerAndStartClient('alice', TestConstants.getWalletWithMemberNft())
+        const alice = await registerAndStartClient(
+            'alice',
+            TestConstants.getWalletWithTestGatingNft(),
+        )
         // alice joins the room
         await alice.joinTown(spaceId, alice.wallet)
         // alice should see bob's user name

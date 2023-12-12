@@ -68,7 +68,7 @@ describe('On-chain channel creation tests', () => {
         /* Arrange */
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
-            TestConstants.getWalletWithMemberNft(),
+            TestConstants.getWalletWithTestGatingNft(),
         )
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()

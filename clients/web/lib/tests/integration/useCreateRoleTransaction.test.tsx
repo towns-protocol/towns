@@ -41,7 +41,7 @@ describe('useCreateRoleTransaction', () => {
         const moderatorRoleName = 'Moderator'
         const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
         const moderatorTokens: string[] = []
-        const mod1 = await TestConstants.getWalletWithMemberNft()
+        const mod1 = await TestConstants.getWalletWithTestGatingNft()
         const moderatorUsers = [mod1.address]
         const chainId = (await provider.getNetwork()).chainId
         if (!chainId) {

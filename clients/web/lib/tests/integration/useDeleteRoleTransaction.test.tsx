@@ -42,7 +42,7 @@ describe('useDeleteRoleTransaction', () => {
         const toBeDeletedRoleName = 'to-be-deleted-role'
         const toBeDeletedPermissions = [Permission.Read, Permission.Write]
         const toBeDeletedTokens: string[] = []
-        const mod1 = await TestConstants.getWalletWithMemberNft()
+        const mod1 = await TestConstants.getWalletWithTestGatingNft()
         const toBeDeletedUsers = [mod1.address]
         const chainId = (await provider.getNetwork()).chainId
         if (!chainId) {
