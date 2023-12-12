@@ -13,7 +13,7 @@ import {
     userIdFromAddress,
 } from './id'
 import { StreamRpcClientType } from './makeStreamRpcClient'
-import { makeEvent, SignerContext, unpackEnvelopes, unpackMiniblock } from './sign'
+import { makeEvent, SignerContext, unpackEnvelopes, unpackStreamResponse } from './sign'
 import {
     ParsedEvent,
     getChannelPayload,
@@ -253,20 +253,19 @@ const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: stri
 }
 
 const countStreamBlocksAndSnapshots = async (bob: StreamRpcClientType, streamId: string) => {
-    const stream = await bob.getStream({ streamId: streamId })
-    expect(stream).toBeDefined()
-    expect(stream.stream).toBeDefined()
-    expect(stream.stream?.nextSyncCookie?.streamId).toEqual(streamId)
-
-    const minipoolEventNum = stream.stream!.events.length
+    const response = await bob.getStream({ streamId: streamId })
+    expect(response).toBeDefined()
+    expect(response.stream).toBeDefined()
+    expect(response.stream?.nextSyncCookie?.streamId).toEqual(streamId)
+    const stream = unpackStreamResponse(response)
+    const minipoolEventNum = stream.streamAndCookie.events.length
     let totalEvents = minipoolEventNum
     const miniblocks = stream.miniblocks.length
     let snapshots = 0
     for (const mb of stream.miniblocks) {
         expect(mb.header).toBeDefined()
         totalEvents += mb.events.length
-        const parsedBlock = unpackMiniblock(mb)
-        if (parsedBlock.header?.snapshot !== undefined) {
+        if (mb.header?.snapshot !== undefined) {
             snapshots++
         }
     }
