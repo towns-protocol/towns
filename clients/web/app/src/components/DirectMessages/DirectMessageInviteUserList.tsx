@@ -89,6 +89,7 @@ export const DirectMessageInviteUserList = (props: {
                     {selectedUserIds.size > 0 && <Divider />}
                     <Box paddingX>
                         <TextField
+                            autoFocus
                             background="level2"
                             value={searchTerm}
                             placeholder="Search people"

@@ -100,7 +100,7 @@ export const DirectMessageList = () => {
                     })
                 ) : (
                     <Box centerContent absoluteFill padding="md" pointerEvents="none">
-                        <Paragraph color="gray2" textAlign="center">
+                        <Paragraph as="span" color="gray2" textAlign="center">
                             Click the compose button above{' '}
                             <Box
                                 display="inline-block"
