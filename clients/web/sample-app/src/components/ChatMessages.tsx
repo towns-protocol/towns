@@ -8,7 +8,7 @@ import {
     useTimelineFilter,
     useZionClient,
 } from 'use-zion-client'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AcceptInvitation } from './AcceptInvitation'
 
 interface Props {
@@ -37,20 +37,18 @@ export function ChatMessages(props: Props): JSX.Element {
     const messagesStartRef = useRef<HTMLDivElement>(null)
     const isLoadingMore = useRef<boolean>(false)
     const { eventFilter, filterEvent } = useTimelineFilter()
-    const eventFilterToggles = [
-        {
-            name: 'Fullfillments',
-            type: ZTEvent.Fulfillment,
-        },
-        {
-            name: 'Miniblocks',
-            type: ZTEvent.MiniblockHeader,
-        },
-        {
-            name: 'KeySolicitation',
-            type: ZTEvent.KeySolicitation,
-        },
-    ]
+    const eventFilterToggles = useMemo(() => {
+        const toggles = []
+        for (const e of eventFilter ?? []) {
+            toggles.push({ name: e, type: e })
+        }
+        for (const event of timeline) {
+            if (event.content?.kind && !toggles.find((x) => x.type === event.content?.kind)) {
+                toggles.push({ name: event.content.kind, type: event.content.kind })
+            }
+        }
+        return toggles.sort((a, b) => a.name.localeCompare(b.name))
+    }, [eventFilter, timeline])
 
     // auto post effect
     useEffect(() => {
@@ -178,19 +176,7 @@ export function ChatMessages(props: Props): JSX.Element {
                             onChange={() => setScrollToBottom(!scrollToBottom)}
                         />
                     </Box>
-                    <Box>
-                        <label>Filters:</label>
-                        {eventFilterToggles.map((f) => (
-                            <CheckyBox
-                                key={f.name}
-                                label={f.name}
-                                checked={!eventFilter || !eventFilter.has(f.type)}
-                                onChange={() =>
-                                    filterEvent(f.type, !eventFilter || !eventFilter.has(f.type))
-                                }
-                            />
-                        ))}
-                    </Box>
+
                     <Box>
                         {canLoadMore && (
                             <Typography
@@ -221,6 +207,19 @@ export function ChatMessages(props: Props): JSX.Element {
                                 </Typography>
                             </>
                         )}
+                    </Box>
+                    <Box>
+                        <label>Filters:</label>
+                        {eventFilterToggles.map((f) => (
+                            <CheckyBox
+                                key={f.name}
+                                label={f.name}
+                                checked={!eventFilter || !eventFilter.has(f.type)}
+                                onChange={() =>
+                                    filterEvent(f.type, !eventFilter || !eventFilter.has(f.type))
+                                }
+                            />
+                        ))}
                     </Box>
                 </>
             ) : null}
