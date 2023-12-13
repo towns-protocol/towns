@@ -3,14 +3,17 @@ set -euo pipefail
 
 PORT=$1
 NAME=$2
-TIMEOUT_SEC=${3:-20} # Set TIMEOUT_SEC to the 3rd argument, or default to 20 seconds if not provided
+ITERATIONS=${3:-200} # Set ITERATIONS to the 3rd argument, or default to 200 to wait for 20 seconds
 
 echo "Waiting for ${NAME} to launch on ${PORT} port..."
 
-if ! timeout "${TIMEOUT_SEC}" bash -c -- "while ! nc -z 127.0.0.1 ${PORT}; do sleep 0.1; done"
-then
-    echo "Failed to launch ${NAME} on ${PORT} port within ${TIMEOUT_SEC} seconds."
-    exit 1
-else
-    echo "${NAME} on ${PORT} port launched"
-fi
+for ((i=0; i<$ITERATIONS; i++)); do
+    if nc -z 127.0.0.1 ${PORT}; then
+        echo "${NAME} on ${PORT} port launched"
+        exit 0
+    fi
+    sleep 0.1
+done
+
+echo "Failed to detect launch ${NAME} on ${PORT} port."
+exit 1
