@@ -10,7 +10,8 @@ install:; forge install
 
 update:; forge update
 
-build:; forge build
+build:
+	@forge build
 
 test :; forge test
 
@@ -27,10 +28,11 @@ anvil :; anvil -m 'test test test test test test test test test test test junk'
 # ===========================
 # 				   Anvil
 # ===========================
-deploy-base-anvil :;
-	@forge build
+deploy-base-anvil-nb:
 	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
 
+deploy-base-anvil: build deploy-base-anvil-nb 
+	
 # EXAMPLE
 deploy-anvil-staging :;
 	@forge build
@@ -43,9 +45,10 @@ migrate-anvil:;
 # ===========================
 # 				 River
 # ===========================
-deploy-river-anvil :;
-	@forge build
+deploy-river-anvil-nb:
 	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url river_anvil --chain-id 31338 --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
+
+deploy-river-anvil: build deploy-river-anvil-nb
 
 deploy-river :;
 	@forge build

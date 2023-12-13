@@ -6,7 +6,12 @@ cd ../contracts
 set -a
 . .env.localhost
 set +a
-make deploy-river-anvil contract=DeployStreamRegistry
+
+if [ "$1" != "nobuild" ]; then
+    make build
+fi
+
+make deploy-river-anvil-nb contract=DeployStreamRegistry
 
 cd ..
 mkdir -p casablanca/node/run_files/addresses

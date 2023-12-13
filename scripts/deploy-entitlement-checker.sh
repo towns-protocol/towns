@@ -1,14 +1,19 @@
-#!/usr/bin/env bash
-pushd contracts
-# yarn clean
+#!/bin/bash
+set -euo pipefail
+cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+cd ../contracts
+
 set -a
 . .env.localhost
 set +a
 
-make deploy-base-anvil contract=DeployEntitlementChecker
-make deploy-base-anvil contract=DeployEntitlementGatedExample
+if [ "$1" != "nobuild" ]; then
+    make build
+fi
 
-popd
+make deploy-base-anvil-nb contract=DeployEntitlementChecker
+make deploy-base-anvil-nb contract=DeployEntitlementGatedExample
 
+cd ..
 cp packages/generated/localhost/addresses/entitlementChecker.json servers/xchain/common/localhost_entitlementChecker.json
 cp packages/generated/localhost/addresses/entitlementGatedExample.json servers/xchain/common/localhost_entitlementGatedExample.json

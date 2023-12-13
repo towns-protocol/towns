@@ -12,17 +12,24 @@ wait_for_process() {
     wait "$pid" || { echo "Error: $name (PID: $pid) failed." >&2; exit 1; }
 }
 
+# Start contract build in background
+pushd contracts
+set -a
+. .env.localhost
+set +a
+make build & BUILD_PID=$!
+popd
+
 # Start chain in background
 ./scripts/start-local-basechain.sh &
 ./scripts/start-local-riverchain.sh &
 
-# Wait for both chains to start
-./scripts/wait-for-basechain.sh
-./scripts/wait-for-riverchain.sh
+# Wait for build to finish
+wait_for_process "$BUILD_PID" "build"
 
 # Run deployements in parallel
-./scripts/deploy-base.sh & PID1=$!
-./scripts/deploy-river.sh & PID2=$!
+./scripts/deploy-base.sh nobuild & PID1=$!
+./scripts/deploy-river.sh nobuild & PID2=$!
 
 # Wait for all deployments to finish
 wait_for_process "$PID1" "deploy-base.sh"
