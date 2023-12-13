@@ -38,6 +38,7 @@ import { bin_toHexString } from './binary'
 import { StreamStateView_CommonContent } from './streamStateView_CommonContent'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
+import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
@@ -593,6 +594,10 @@ export class StreamStateView {
 
     getMemberships(): StreamStateView_Membership {
         return this.getContent().memberships
+    }
+
+    getUserMetadata(): StreamStateView_UserMetadata {
+        return this.getContent().getUserMetadata()
     }
 
     getContent(): StreamStateView_AbstractContent {

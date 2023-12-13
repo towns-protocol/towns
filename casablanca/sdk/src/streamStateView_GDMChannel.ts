@@ -8,17 +8,22 @@ import {
 import { EmittedEvents } from './client'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
-import { ParsedEvent, RemoteTimelineEvent } from './types'
+import { ConfirmedTimelineEvent, ParsedEvent, RemoteTimelineEvent } from './types'
 import { check, logNever } from './check'
+import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
+import { DecryptedContent } from './encryptedContentTypes'
+import { StreamEvents } from './streamEvents'
 
 export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
+    readonly userMetadata: StreamStateView_UserMetadata
     lastEventCreatedAtEpocMs = 0n
 
     constructor(userId: string, inception: GdmChannelPayload_Inception) {
         super()
         this.memberships = new StreamStateView_Membership(userId, inception.streamId)
+        this.userMetadata = new StreamStateView_UserMetadata(userId, inception.streamId)
         this.streamId = inception.streamId
     }
 
@@ -28,6 +33,8 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         this.memberships.initialize(content.memberships, emitter)
+        this.userMetadata.initialize(content.usernames, 'username', emitter)
+        this.userMetadata.initialize(content.displayNames, 'displayName', emitter)
     }
 
     prependEvent(
@@ -51,7 +58,9 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                 )
                 break
             case 'membership':
-                // nothing to do, membership was conveyed in the snapshot
+            case 'displayName':
+            case 'username':
+                // nothing to do, conveyed in the snapshot
                 break
             case undefined:
                 break
@@ -88,11 +97,44 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                     emitter,
                 )
                 break
+            case 'displayName':
+            case 'username':
+                this.userMetadata.appendEncryptedData(
+                    event.hashStr,
+                    payload.content.value,
+                    payload.content.case,
+                    event.creatorUserId,
+                    cleartext,
+                    emitter,
+                )
+                break
             case undefined:
                 break
             default:
                 logNever(payload.content)
         }
+    }
+
+    onDecryptedContent(
+        eventId: string,
+        content: DecryptedContent,
+        emitter: TypedEmitter<StreamEvents>,
+    ): void {
+        if (content.kind === 'text') {
+            this.userMetadata.onDecryptedContent(eventId, content.content, emitter)
+        }
+    }
+
+    onConfirmedEvent(
+        event: ConfirmedTimelineEvent,
+        emitter: TypedEmitter<StreamEvents> | undefined,
+    ): void {
+        super.onConfirmedEvent(event, emitter)
+        this.userMetadata.onConfirmedEvent(event, emitter)
+    }
+
+    getUserMetadata(): StreamStateView_UserMetadata {
+        return this.userMetadata
     }
 
     private updateLastEvent(event: ParsedEvent) {

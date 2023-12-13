@@ -489,6 +489,9 @@ function toTownsContent_ChannelPayload(
             const payload = value.content.value
             return toTownsContent_ChannelPayload_Message(payload, description)
         }
+        case 'displayName':
+        case 'username':
+            return { error: `${description} displayName/username not supported` }
         case undefined: {
             return { error: `Undefined payload case: ${description}` }
         }

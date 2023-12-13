@@ -170,4 +170,8 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             this.userMetadata.onDecryptedContent(eventId, content.content, emitter)
         }
     }
+
+    getUserMetadata(): StreamStateView_UserMetadata {
+        return this.userMetadata
+    }
 }

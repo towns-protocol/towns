@@ -202,12 +202,6 @@ message SpacePayload {
         EncryptedData channel_properties = 4;
     }
 
-    message WrappedEncryptedData {
-        EncryptedData data = 1;
-        int64 event_num = 2;
-        bytes event_hash = 3;
-    }
-
     oneof content {
         Inception inception = 1;
         Channel channel = 2;
@@ -254,6 +248,8 @@ message DmChannelPayload {
     message Snapshot {
         Inception inception = 1;
         map<string, Membership> memberships = 2;
+        map<string, WrappedEncryptedData> usernames = 3;
+        map<string, WrappedEncryptedData> display_names = 4;
     }
 
     message Inception {
@@ -267,6 +263,8 @@ message DmChannelPayload {
         Inception inception = 1;
         Membership membership = 2;
         EncryptedData message = 3;
+        EncryptedData username = 4;
+        EncryptedData display_name = 5;
     }
 }
 
@@ -277,6 +275,8 @@ message GdmChannelPayload {
     message Snapshot {
         Inception inception = 1;
         map<string, Membership> memberships = 2;
+        map<string, WrappedEncryptedData> usernames = 3;
+        map<string, WrappedEncryptedData> display_names = 4;
     }
 
     message Inception {
@@ -289,6 +289,8 @@ message GdmChannelPayload {
         Inception inception = 1;
         Membership membership = 2;
         EncryptedData message = 3;
+        EncryptedData username = 4;
+        EncryptedData display_name = 5;
     }
 }
 
@@ -523,6 +525,12 @@ message EncryptedData {
     * Optional checksum of the cleartext data.
     */
     optional string checksum = 5;
+}
+
+message WrappedEncryptedData {
+    EncryptedData data = 1;
+    int64 event_num = 2;
+    bytes event_hash = 3;
 }
 
 message SyncCookie  {

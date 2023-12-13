@@ -1,7 +1,4 @@
-import {
-    SpacePayload_WrappedEncryptedData as WrappedEncryptedData,
-    EncryptedData,
-} from '@river/proto'
+import { WrappedEncryptedData as WrappedEncryptedData, EncryptedData } from '@river/proto'
 import { logNever } from './check'
 import TypedEmitter from 'typed-emitter'
 import { EmittedEvents } from './client'

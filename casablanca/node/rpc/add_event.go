@@ -131,6 +131,12 @@ func (s *Service) addDmChannelPayload(ctx context.Context, payload *StreamEvent_
 	case *DmChannelPayload_Message:
 		return s.addDMChannelMessage(ctx, stream, streamView, parsedEvent)
 
+	case *DmChannelPayload_DisplayName:
+		return s.addDisplayNameEvent(ctx, stream, streamView, parsedEvent)
+
+	case *DmChannelPayload_Username:
+		return s.addUsernameEvent(ctx, stream, streamView, parsedEvent)
+
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
@@ -141,10 +147,19 @@ func (s *Service) addGdmChannelPayload(ctx context.Context, payload *StreamEvent
 	switch content := payload.GdmChannelPayload.Content.(type) {
 	case *GdmChannelPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
+
 	case *GdmChannelPayload_Membership:
 		return s.addGDMMembershipEvent(ctx, stream, streamView, parsedEvent, content.Membership)
+
 	case *GdmChannelPayload_Message:
 		return s.addGDMChannelMessage(ctx, stream, streamView, parsedEvent)
+
+	case *GdmChannelPayload_DisplayName:
+		return s.addDisplayNameEvent(ctx, stream, streamView, parsedEvent)
+
+	case *GdmChannelPayload_Username:
+		return s.addUsernameEvent(ctx, stream, streamView, parsedEvent)
+
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
@@ -163,10 +178,10 @@ func (s *Service) addSpacePayload(ctx context.Context, payload *StreamEvent_Spac
 		return s.updateChannel(ctx, stream, streamView, parsedEvent)
 
 	case *SpacePayload_Username:
-		return s.addUsernameEvent(ctx, stream, streamView, parsedEvent, content)
+		return s.addUsernameEvent(ctx, stream, streamView, parsedEvent)
 
 	case *SpacePayload_DisplayName:
-		return s.addDisplayNameEvent(ctx, stream, streamView, parsedEvent, content)
+		return s.addDisplayNameEvent(ctx, stream, streamView, parsedEvent)
 
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
@@ -189,7 +204,7 @@ func (s *Service) addUserPayload(ctx context.Context, payload *StreamEvent_UserP
 	}
 }
 
-func (s *Service) addUsernameEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, username *SpacePayload_Username) error {
+func (s *Service) addUsernameEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	creator, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
@@ -208,7 +223,7 @@ func (s *Service) addUsernameEvent(ctx context.Context, stream AddableStream, vi
 	return stream.AddEvent(ctx, parsedEvent)
 }
 
-func (s *Service) addDisplayNameEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent, username *SpacePayload_DisplayName) error {
+func (s *Service) addDisplayNameEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
 	creator, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err

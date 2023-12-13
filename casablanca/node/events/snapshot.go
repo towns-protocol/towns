@@ -113,9 +113,17 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	case *StreamEvent_ChannelPayload:
 		return update_Snapshot_Channel(iSnapshot, payload.ChannelPayload)
 	case *StreamEvent_DmChannelPayload:
-		return update_Snapshot_DmChannel(iSnapshot, payload.DmChannelPayload)
+		creator, err := shared.AddressHex(event.Event.CreatorAddress)
+		if err != nil {
+			return err
+		}
+		return update_Snapshot_DmChannel(iSnapshot, payload.DmChannelPayload, creator, miniblockNum, event.Hash)
 	case *StreamEvent_GdmChannelPayload:
-		return update_Snapshot_GdmChannel(iSnapshot, payload.GdmChannelPayload)
+		creator, err := shared.AddressHex(event.Event.CreatorAddress)
+		if err != nil {
+			return err
+		}
+		return update_Snapshot_GdmChannel(iSnapshot, payload.GdmChannelPayload, creator, miniblockNum, event.Hash)
 	case *StreamEvent_UserPayload:
 		return update_Snapshot_User(iSnapshot, payload.UserPayload)
 	case *StreamEvent_UserSettingsPayload:
@@ -161,15 +169,15 @@ func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, user
 		return nil
 	case *SpacePayload_Username:
 		if snapshot.SpaceContent.Usernames == nil {
-			snapshot.SpaceContent.Usernames = make(map[string]*SpacePayload_WrappedEncryptedData)
+			snapshot.SpaceContent.Usernames = make(map[string]*WrappedEncryptedData)
 		}
-		snapshot.SpaceContent.Usernames[user] = &SpacePayload_WrappedEncryptedData{Data: content.Username, EventNum: eventNum, EventHash: eventHash}
+		snapshot.SpaceContent.Usernames[user] = &WrappedEncryptedData{Data: content.Username, EventNum: eventNum, EventHash: eventHash}
 		return nil
 	case *SpacePayload_DisplayName:
 		if snapshot.SpaceContent.DisplayNames == nil {
-			snapshot.SpaceContent.DisplayNames = make(map[string]*SpacePayload_WrappedEncryptedData)
+			snapshot.SpaceContent.DisplayNames = make(map[string]*WrappedEncryptedData)
 		}
-		snapshot.SpaceContent.DisplayNames[user] = &SpacePayload_WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
+		snapshot.SpaceContent.DisplayNames[user] = &WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
 		return nil
 	default:
 		return fmt.Errorf("unknown space payload type %T", spacePayload.Content)
@@ -198,7 +206,7 @@ func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload
 	}
 }
 
-func update_Snapshot_DmChannel(iSnapshot *Snapshot, dmChannelPayload *DmChannelPayload) error {
+func update_Snapshot_DmChannel(iSnapshot *Snapshot, dmChannelPayload *DmChannelPayload, user string, eventNum int64, eventHash []byte) error {
 	snapshot := iSnapshot.Content.(*Snapshot_DmChannelContent)
 	if snapshot == nil {
 		return errors.New("blockheader snapshot is not a dm channel snapshot")
@@ -212,6 +220,18 @@ func update_Snapshot_DmChannel(iSnapshot *Snapshot, dmChannelPayload *DmChannelP
 		}
 		snapshot.DmChannelContent.Memberships[content.Membership.UserId] = content.Membership
 		return nil
+	case *DmChannelPayload_Username:
+		if snapshot.DmChannelContent.Usernames == nil {
+			snapshot.DmChannelContent.Usernames = make(map[string]*WrappedEncryptedData)
+		}
+		snapshot.DmChannelContent.Usernames[user] = &WrappedEncryptedData{Data: content.Username, EventNum: eventNum, EventHash: eventHash}
+		return nil
+	case *DmChannelPayload_DisplayName:
+		if snapshot.DmChannelContent.DisplayNames == nil {
+			snapshot.DmChannelContent.DisplayNames = make(map[string]*WrappedEncryptedData)
+		}
+		snapshot.DmChannelContent.DisplayNames[user] = &WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
+		return nil
 	case *DmChannelPayload_Message:
 		return nil
 	default:
@@ -219,7 +239,7 @@ func update_Snapshot_DmChannel(iSnapshot *Snapshot, dmChannelPayload *DmChannelP
 	}
 }
 
-func update_Snapshot_GdmChannel(iSnapshot *Snapshot, channelPayload *GdmChannelPayload) error {
+func update_Snapshot_GdmChannel(iSnapshot *Snapshot, channelPayload *GdmChannelPayload, user string, eventNum int64, eventHash []byte) error {
 	snapshot := iSnapshot.Content.(*Snapshot_GdmChannelContent)
 	if snapshot == nil {
 		return errors.New("blockheader snapshot is not a channel snapshot")
@@ -233,6 +253,18 @@ func update_Snapshot_GdmChannel(iSnapshot *Snapshot, channelPayload *GdmChannelP
 			snapshot.GdmChannelContent.Memberships = make(map[string]*Membership)
 		}
 		snapshot.GdmChannelContent.Memberships[content.Membership.UserId] = content.Membership
+		return nil
+	case *GdmChannelPayload_Username:
+		if snapshot.GdmChannelContent.Usernames == nil {
+			snapshot.GdmChannelContent.Usernames = make(map[string]*WrappedEncryptedData)
+		}
+		snapshot.GdmChannelContent.Usernames[user] = &WrappedEncryptedData{Data: content.Username, EventNum: eventNum, EventHash: eventHash}
+		return nil
+	case *GdmChannelPayload_DisplayName:
+		if snapshot.GdmChannelContent.DisplayNames == nil {
+			snapshot.GdmChannelContent.DisplayNames = make(map[string]*WrappedEncryptedData)
+		}
+		snapshot.GdmChannelContent.DisplayNames[user] = &WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
 		return nil
 	case *GdmChannelPayload_Message:
 		return nil

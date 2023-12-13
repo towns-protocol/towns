@@ -85,6 +85,10 @@ import {
     make_UserDeviceKeyPayload_MegolmDevice,
     make_UserToDevicePayload_MegolmSessions,
     make_SpacePayload_Username,
+    make_DMChannelPayload_DisplayName,
+    make_GDMChannelPayload_DisplayName,
+    make_DMChannelPayload_Username,
+    make_GDMChannelPayload_Username,
 } from './types'
 import { bin_fromHexString, bin_toHexString, shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/cryptoStore'
@@ -666,16 +670,38 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     async setDisplayName(streamId: string, displayName: string) {
         check(isDefined(this.cryptoBackend))
         const encryptedData = await this.cryptoBackend.encryptMegolmEvent(streamId, displayName)
-        const payload = make_SpacePayload_DisplayName(encryptedData)
-        await this.makeEventAndAddToStream(streamId, payload, { method: 'displayName' })
+        const makePayload = () => {
+            if (isSpaceStreamId(streamId)) {
+                return make_SpacePayload_DisplayName(encryptedData)
+            } else if (isDMChannelStreamId(streamId)) {
+                return make_DMChannelPayload_DisplayName(encryptedData)
+            } else if (isGDMChannelStreamId(streamId)) {
+                return make_GDMChannelPayload_DisplayName(encryptedData)
+            } else {
+                throw new Error(`Invalid streamId ${streamId}`)
+            }
+        }
+        await this.makeEventAndAddToStream(streamId, makePayload(), { method: 'displayName' })
     }
 
     async setUsername(streamId: string, username: string) {
         check(isDefined(this.cryptoBackend))
         const encryptedData = await this.cryptoBackend.encryptMegolmEvent(streamId, username)
         encryptedData.checksum = usernameChecksum(username, streamId)
-        const payload = make_SpacePayload_Username(encryptedData)
-        await this.makeEventAndAddToStream(streamId, payload, { method: 'username' })
+
+        const makePayload = () => {
+            if (isSpaceStreamId(streamId)) {
+                return make_SpacePayload_Username(encryptedData)
+            } else if (isDMChannelStreamId(streamId)) {
+                return make_DMChannelPayload_Username(encryptedData)
+            } else if (isGDMChannelStreamId(streamId)) {
+                return make_GDMChannelPayload_Username(encryptedData)
+            } else {
+                throw new Error(`Invalid streamId ${streamId}`)
+            }
+        }
+
+        await this.makeEventAndAddToStream(streamId, makePayload(), { method: 'username' })
     }
 
     async waitForStream(streamId: string): Promise<Stream> {

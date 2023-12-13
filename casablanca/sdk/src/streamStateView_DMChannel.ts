@@ -8,12 +8,16 @@ import {
 import { EmittedEvents } from './client'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
-import { ParsedEvent, RemoteTimelineEvent } from './types'
+import { ConfirmedTimelineEvent, ParsedEvent, RemoteTimelineEvent } from './types'
 import { check, logNever } from './check'
+import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
+import { DecryptedContent } from './encryptedContentTypes'
+import { StreamEvents } from './streamEvents'
 
 export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
+    readonly userMetadata: StreamStateView_UserMetadata
     readonly firstPartyId: string
     readonly secondPartyId: string
     lastEventCreatedAtEpocMs = 0n
@@ -21,6 +25,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     constructor(userId: string, inception: DmChannelPayload_Inception) {
         super()
         this.memberships = new StreamStateView_Membership(userId, inception.streamId)
+        this.userMetadata = new StreamStateView_UserMetadata(userId, inception.streamId)
         this.streamId = inception.streamId
         this.firstPartyId = inception.firstPartyId
         this.secondPartyId = inception.secondPartyId
@@ -32,6 +37,8 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         this.memberships.initialize(content.memberships, emitter)
+        this.userMetadata.initialize(content.usernames, 'username', emitter)
+        this.userMetadata.initialize(content.displayNames, 'displayName', emitter)
     }
 
     appendEvent(
@@ -64,6 +71,17 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                     emitter,
                 )
                 break
+            case 'displayName':
+            case 'username':
+                this.userMetadata.appendEncryptedData(
+                    event.hashStr,
+                    payload.content.value,
+                    payload.content.case,
+                    event.creatorUserId,
+                    cleartext,
+                    emitter,
+                )
+                break
             case undefined:
                 break
             default:
@@ -92,7 +110,9 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                 )
                 break
             case 'membership':
-                // nothing to do, membership was conveyed in the snapshot
+            case 'displayName':
+            case 'username':
+                // nothing to do, conveyed in the snapshot
                 break
             case undefined:
                 break
@@ -101,12 +121,34 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         }
     }
 
+    onDecryptedContent(
+        eventId: string,
+        content: DecryptedContent,
+        emitter: TypedEmitter<StreamEvents>,
+    ): void {
+        if (content.kind === 'text') {
+            this.userMetadata.onDecryptedContent(eventId, content.content, emitter)
+        }
+    }
+
+    onConfirmedEvent(
+        event: ConfirmedTimelineEvent,
+        emitter: TypedEmitter<StreamEvents> | undefined,
+    ): void {
+        super.onConfirmedEvent(event, emitter)
+        this.userMetadata.onConfirmedEvent(event, emitter)
+    }
+
     private updateLastEvent(event: ParsedEvent) {
         const createdAtEpocMs = event.event.createdAtEpocMs
         this.lastEventCreatedAtEpocMs =
             createdAtEpocMs > this.lastEventCreatedAtEpocMs
                 ? createdAtEpocMs
                 : this.lastEventCreatedAtEpocMs
+    }
+
+    getUserMetadata(): StreamStateView_UserMetadata {
+        return this.userMetadata
     }
 
     participants(): Set<string> {
