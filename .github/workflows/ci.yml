@@ -102,6 +102,11 @@ jobs:
             - name: Lint
               run: yarn lint
 
+            - name: Linting River Node
+              uses: golangci/golangci-lint-action@v3
+              with:
+                  working-directory: casablanca/node
+
             # - name: Terraform Lint
             #   run: make lint
             #   working-directory: ./infra
@@ -220,12 +225,6 @@ jobs:
                   key: ${{ runner.os }}-turbo-${{ github.run_id }}
                   restore-keys: |
                       ${{ runner.os }}-turbo-
-
-            - name: Syncpack
-              run: yarn syncpack:check
-
-            - name: Build town types
-              run: ./scripts/build-town-types.sh localhost --frozen
 
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
@@ -365,9 +364,6 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-
 
-            - name: Build town types
-              run: ./scripts/build-town-types.sh localhost --frozen
-
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
@@ -504,12 +500,6 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-
 
-            - name: Syncpack
-              run: yarn syncpack:check
-
-            - name: Build town types
-              run: ./scripts/build-town-types.sh localhost --frozen
-
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
@@ -609,11 +599,6 @@ jobs:
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
-            - name: Linting
-              uses: golangci/golangci-lint-action@v3
-              with:
-                  working-directory: casablanca/node
-
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
               working-directory: casablanca
@@ -688,11 +673,11 @@ jobs:
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
 
+            - name: Generate xchain contract bindings
+              run: ./scripts/build-town-types.sh localhost
+
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
-
-            - name: Build town contract types
-              run: ./scripts/build-town-types.sh localhost --frozen
 
             - name: Run xchain node tests
               run: go test --race ./...

@@ -1,22 +1,11 @@
-#!/bin/bash -ue
+#!/bin/bash
+set -ueo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ..
 
 CHAIN="${1:-localhost}"
 FROZEN="${2:-}"
 ABI_DIR="packages/generated/${CHAIN}/v3/abis"
-
-RIVER_DIR="casablanca/node/auth/contracts"
-RIVER_TOWNS_ARCHITECT_DIR="${RIVER_DIR}/${CHAIN}_towns_architect"
-RIVER_TOWNS_CHANNELS_DIR="${RIVER_DIR}/${CHAIN}_towns_channels"
-RIVER_TOWNS_ENTITLEMENTS_DIR="${RIVER_DIR}/${CHAIN}_towns_entitlements"
-RIVER_TOWNS_PAUSABLE_DIR="${RIVER_DIR}/${CHAIN}_towns_pausable"
-RIVER_TOWNS_DELEGATION_DIR="${RIVER_DIR}/${CHAIN}_towns_delegation"
-RIVER_TOWNS_WALLET_LINK_DIR="${RIVER_DIR}/${CHAIN}_towns_wallet_link"
-RIVER_TOWNS_STREAM_REGISTRY_DIR="${RIVER_DIR}/${CHAIN}_towns_stream_registry"
-
-XCHAIN_DIR="servers/xchain/contracts"
-XCHAIN_PACKAGE="_xchain"
 
 forge build --extra-output-files metadata --extra-output-files abi --force
 
@@ -31,12 +20,7 @@ for file in $ABI_DIR/*.abi.json; do
 done
 
 ./scripts/gen-river-node-bindings.sh $CHAIN
-
-# XChain Entitlements typings
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementChecker.sol/IEntitlementChecker.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementChecker" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementChecker.go"
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementGated.sol/IEntitlementGated.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementGated" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementGated.go"
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementRule.sol/IEntitlementRule.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementRule" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementRule.go"
-
+./scripts/gen-xchain-bindings.sh $CHAIN
 
 # Using the $FROZEN flag and git diff, we can check if this script generates any new files
 # under the $ABI_DIR directory.
