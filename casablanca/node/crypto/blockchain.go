@@ -4,8 +4,9 @@ import (
 	"context"
 	"math/big"
 
-	//. "casablanca/node/base"
+	. "casablanca/node/base"
 	"casablanca/node/config"
+	. "casablanca/node/protocol"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -27,17 +28,16 @@ func NewReadOnlyBlockchain(ctx context.Context, cfg *config.ChainConfig) (*Block
 		return nil, err
 	}
 
-	// TODO: Nexus fails on parametreless requests. Disabl chain id check until it's fixed.
-	// chainId, err := client.ChainID(ctx)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	chainId, err := client.ChainID(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	// if chainId.Uint64() != uint64(cfg.ChainId) {
-	// 	return nil, RiverError(protocol.Err_BAD_CONFIG, "Chain id mismatch",
-	// 		"configured", cfg.ChainId,
-	// 		"providerChainId", chainId.Uint64()).Func("NewROBlockchain")
-	// }
+	if chainId.Uint64() != uint64(cfg.ChainId) {
+		return nil, RiverError(Err_BAD_CONFIG, "Chain id mismatch",
+			"configured", cfg.ChainId,
+			"providerChainId", chainId.Uint64()).Func("NewROBlockchain")
+	}
 
 	return &Blockchain{
 		ChainId: big.NewInt(int64(cfg.ChainId)),
