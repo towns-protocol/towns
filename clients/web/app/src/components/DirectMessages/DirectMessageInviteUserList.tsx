@@ -1,11 +1,10 @@
-import React, { useCallback, useMemo, useState } from 'react'
-import { useAllKnownUsers, useMyProfile, useUser, useZionContext } from 'use-zion-client'
-import fuzzysort from 'fuzzysort'
-import { firstBy } from 'thenby'
 import { AnimatePresence } from 'framer-motion'
+import fuzzysort from 'fuzzysort'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { firstBy } from 'thenby'
+import { useAllKnownUsers, useMyProfile, useUser, useZionContext } from 'use-zion-client'
 import {
     Box,
-    Button,
     Checkbox,
     Divider,
     IconButton,
@@ -15,29 +14,18 @@ import {
     Text,
     TextField,
 } from '@ui'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 export const DirectMessageInviteUserList = (props: {
-    onSubmit: (userIds: Set<string>) => void
-    submitButtonTextSingleUser: string
-    submitButtonTextMultipleUsers: string
+    onSelectionChange?: (userIds: Set<string>) => void
     hiddenUserIds?: Set<string>
 }) => {
-    const {
-        onSubmit,
-        submitButtonTextSingleUser,
-        submitButtonTextMultipleUsers,
-        hiddenUserIds = new Set(),
-    } = props
+    const { onSelectionChange, hiddenUserIds = new Set() } = props
     const [searchTerm, setSearchTerm] = useState('')
     const { users, usersMap } = useAllKnownUsers()
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
     const userId = useMyProfile()?.userId
-
-    const onButtonClicked = useCallback(() => {
-        onSubmit(selectedUserIds)
-    }, [onSubmit, selectedUserIds])
 
     const toggleMember = useCallback((id: string) => {
         setSelectedUserIds((prev) => {
@@ -66,6 +54,10 @@ export const DirectMessageInviteUserList = (props: {
         .slice(0, 25)
 
     const recentUsers = useRecentUsers(userId).filter((id) => !hiddenUserIds.has(id))
+
+    useEffect(() => {
+        onSelectionChange?.(selectedUserIds)
+    }, [onSelectionChange, selectedUserIds])
 
     return (
         <Stack gap grow paddingTop="md">
@@ -119,13 +111,6 @@ export const DirectMessageInviteUserList = (props: {
                     </Stack>
                 </MotionStack>
             </AnimatePresence>
-            <Box paddingX paddingBottom="md" bottom="none" left="none" right="none">
-                <Button disabled={selectedUserIds.size === 0} tone="cta1" onClick={onButtonClicked}>
-                    {selectedUserIds.size > 1
-                        ? submitButtonTextMultipleUsers
-                        : submitButtonTextSingleUser}
-                </Button>
-            </Box>
         </Stack>
     )
 }

@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useZionClient } from 'use-zion-client'
+import { DMChannelIdentifier, useZionClient, useZionContext } from 'use-zion-client'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { Box, Button } from '@ui'
 import { DirectMessageInviteUserList } from './DirectMessageInviteUserList'
 
 type Props = {
@@ -14,38 +15,94 @@ export const CreateDirectMessage = (props: Props) => {
     const { createLink } = useCreateLink()
     const navigate = useNavigate()
 
-    const onCreateButtonClicked = useCallback(
+    const { dmChannels } = useZionContext()
+
+    const [existingChannels, setExistingChannels] = useState<DMChannelIdentifier>()
+    const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
+
+    const checkIfChannelExists = useCallback(
+        (userIds: Set<string>) =>
+            dmChannels.find(
+                (dm) =>
+                    dm.userIds.length === userIds.size && dm.userIds.every((id) => userIds.has(id)),
+            ),
+        [dmChannels],
+    )
+
+    const onSelectionChange = useCallback(
+        (selectedUserIds: Set<string>) => {
+            const existingChannel = checkIfChannelExists(selectedUserIds)
+            setExistingChannels(existingChannel)
+            setSelectedUserIds(selectedUserIds)
+        },
+        [checkIfChannelExists],
+    )
+
+    const onSubmit = useCallback(
         async (selectedUserIds: Set<string>) => {
+            const existingChannel = checkIfChannelExists(selectedUserIds)
+            if (existingChannel) {
+                const link = createLink({ messageId: existingChannel.id.slug })
+                if (link) {
+                    onDirectMessageCreated()
+                    navigate(link)
+                }
+                return
+            }
+
             if (selectedUserIds.size === 1) {
                 const first = Array.from(selectedUserIds)[0]
                 const streamId = await createDMChannel(first)
-
                 if (streamId) {
                     const link = createLink({ messageId: streamId.slug })
                     if (link) {
-                        navigate(link)
                         onDirectMessageCreated()
+                        navigate(link)
                     }
                 }
             } else {
                 const userIds = Array.from(selectedUserIds)
+
                 const streamId = await createGDMChannel(userIds)
                 if (streamId) {
                     const link = createLink({ messageId: streamId.slug })
                     if (link) {
-                        navigate(link)
                         onDirectMessageCreated()
+                        navigate(link)
                     }
                 }
             }
         },
-        [createDMChannel, createLink, navigate, onDirectMessageCreated, createGDMChannel],
+        [
+            checkIfChannelExists,
+            createDMChannel,
+            createGDMChannel,
+            createLink,
+            navigate,
+            onDirectMessageCreated,
+        ],
     )
+
+    const onCreateButtonClicked = () => {
+        void onSubmit(selectedUserIds)
+    }
+
+    const cta = `${existingChannels ? 'Open' : 'Create'} ${
+        selectedUserIds.size > 1 ? 'Group DM' : 'DM'
+    }}`
+
     return (
-        <DirectMessageInviteUserList
-            submitButtonTextSingleUser="Create DM"
-            submitButtonTextMultipleUsers="Create Group DM"
-            onSubmit={onCreateButtonClicked}
-        />
+        <>
+            <DirectMessageInviteUserList onSelectionChange={onSelectionChange} />
+            <Box paddingX paddingBottom="md" bottom="none" left="none" right="none">
+                <Button
+                    disabled={selectedUserIds.size === 0}
+                    tone="cta1"
+                    onClick={onCreateButtonClicked}
+                >
+                    {cta}
+                </Button>
+            </Box>
+        </>
     )
 }
