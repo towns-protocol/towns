@@ -14,6 +14,14 @@ contract DeployBase is DeployHelpers, Script {
 
   constructor() {
     setChain(
+      "river_anvil",
+      ChainData({
+        name: "river_anvil",
+        chainId: 31338,
+        rpcUrl: "http://localhost:8546"
+      })
+    );
+    setChain(
       "river",
       ChainData({
         name: "river",
@@ -27,7 +35,10 @@ contract DeployBase is DeployHelpers, Script {
   //                      DEPLOYMENT HELPERS
   // =============================================================
   function chainAlias() internal returns (string memory) {
-    return isAnvil() ? "localhost" : getChain(block.chainid).chainAlias;
+    return
+      isAnvil() || block.chainid == 31338
+        ? "localhost"
+        : getChain(block.chainid).chainAlias;
   }
 
   function deploymentContext() internal returns (string memory context) {

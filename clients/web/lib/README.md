@@ -18,8 +18,8 @@ And run against a local blockchain, See [Zion-Governance](https://github.com:Her
 ```bash
 #from client root
 ./scripts/start-local-casablanca.sh
-./scripts/start-local-blockchain.sh
-./scripts/deploy-zion-governance-contracts.sh
+./scripts/start-local-basechain.sh
+./scripts/deploy-towns-contracts.sh
 ./scripts/run-integration-tests.sh
 # OR - run a single tests from visual studio code via F5 or the "Jest: current file in 'web/lib/` commmand
 ```

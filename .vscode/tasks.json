@@ -242,7 +242,7 @@
     {
       "label": "BaseChain",
       "type": "shell",
-      "command": "./scripts/foundry-up.sh && ./scripts/start-local-blockchain.sh",
+      "command": "./scripts/foundry-up.sh && ./scripts/start-local-basechain.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -287,7 +287,7 @@
     {
       "label": "DeployStreamRegistry",
       "type": "shell",
-      "command": "./scripts/wait-for-blockchain.sh && ./scripts/deploy-stream-registry.sh",
+      "command": "./scripts/wait-for-basechain.sh && ./scripts/deploy-river-registry.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -297,7 +297,7 @@
     {
       "label": "DeployWalletLink",
       "type": "shell",
-      "command": "./scripts/wait-for-blockchain.sh && ./scripts/deploy-wallet-link-contracts.sh",
+      "command": "./scripts/wait-for-basechain.sh && ./scripts/deploy-wallet-link-contracts.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -307,7 +307,7 @@
     {
       "label": "DeployZionGovernance",
       "type": "shell",
-      "command": "./scripts/wait-for-blockchain.sh && ./scripts/deploy-zion-governance-contracts.sh",
+      "command": "./scripts/wait-for-basechain.sh && ./scripts/deploy-towns-contracts.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

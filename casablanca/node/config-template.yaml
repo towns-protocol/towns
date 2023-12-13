@@ -15,8 +15,8 @@ baseChain:
     chainId: 31337
     networkUrl: 'http://127.0.0.1:8545'
 riverChain:
-    chainId: 31337
-    networkUrl: 'http://127.0.0.1:8545'
+    chainId: 31338
+    networkUrl: 'http://127.0.0.1:8546'
 
 # Base contracts
 townsArchitectContract:

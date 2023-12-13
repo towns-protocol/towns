@@ -1,11 +1,12 @@
-#!/bin/bash -ue
+#!/bin/bash
+set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ../contracts
 
 set -a
 . .env.localhost
 set +a
-make deploy-anvil contract=DeployStreamRegistry
+make deploy-river-anvil contract=DeployStreamRegistry
 
 cd ..
 mkdir -p casablanca/node/run_files/addresses

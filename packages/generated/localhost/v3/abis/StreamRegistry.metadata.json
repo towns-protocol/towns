@@ -205,11 +205,11 @@
   },
   "sources": {
     "contracts/src/river/registry/StreamRegistry.sol": {
-      "keccak256": "0x312e2c5f6417c140c85c8cc6c9020bb81c3ac5642725c6a39c0a09f6d1c63d7a",
+      "keccak256": "0xb96993753638a43769f761754c4ad1725fc89104bf02ab59719d6724c4a6fca3",
       "license": "MIT",
       "urls": [
-        "bzz-raw://e9fe55d5fabd1df6af75ce71fffadaf114aa0a257a0b3963f66c1cd3c9b3b975",
-        "dweb:/ipfs/QmWwcu2eBRPSA7Uziq7EQDuGPKgZVrjCwdWaw7GAiRF8DS"
+        "bzz-raw://bedb2f472f44d739baad5ace9f4c102940e37874ac815056b5554582829d5ab2",
+        "dweb:/ipfs/QmR8bZdR7AaaaCFfeFq2w8SqLHboKEr1uA9j76TcVgpvxM"
       ]
     }
   },

@@ -4,7 +4,7 @@ tmux new-window -d -t '=harmony' -n anvil
 tmux send-keys -t '=harmony:=anvil' 'anvil' Enter
 
 tmux new-window -d -t '=harmony' -n deploy
-tmux send-keys -t '=harmony:=deploy' './scripts/deploy-zion-governance-contracts.sh' Enter
+tmux send-keys -t '=harmony:=deploy' './scripts/deploy-towns-contracts.sh' Enter
 
 tmux new-window -d -t '=harmony' -n casablanca
 tmux send-keys -t '=harmony:=casablanca' 'yarn csb:dev' Enter

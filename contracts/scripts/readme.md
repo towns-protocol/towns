@@ -83,11 +83,11 @@ This makes it easy to:
 
 # deploy the same implementation contract you used to deploy SpaceImpl
 # but with flags OVERRIDE_DEPLOYMENTS and SAVE_DEPLOYMENTS equal to 1
--> OVERRIDE_DEPLOYMENTS=1 SAVE_DEPLOYMENTS=1 make deploy-anvil contract=DeploySpaceImpl
+-> OVERRIDE_DEPLOYMENTS=1 SAVE_DEPLOYMENTS=1 make deploy-base-anvil contract=DeploySpaceImpl
 
 # next we'll deploy the script UpgradeSpaceImpl without flags
 # This will grab new and existing deployment addresses from our deployments cache and use those to interact with each other
--> make deploy-anvil contract=UpgradeSpaceImpl
+-> make deploy-base-anvil contract=UpgradeSpaceImpl
 ```
 
 ## How to deploy a new space factory implementation, a new space implementation and update space factory to point to both of these?

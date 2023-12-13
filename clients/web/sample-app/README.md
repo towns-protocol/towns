@@ -30,8 +30,8 @@ yarn start
 
 ```bash
 cp clients/web/sample-app/.env.local-sample clients/web/sample-app/.env.local
-./scripts/start-local-blockchain.sh
-./scripts/deploy-zion-governance-contracts.sh
+./scripts/start-local-basechain.sh
+./scripts/deploy-towns-contracts.sh
 ./scripts/start-local-casablanca.sh
 cd clients/web/lib
 yarn watch

@@ -109,15 +109,8 @@ jobs:
             - name: Build town types
               run: ./scripts/build-town-types.sh localhost --frozen
 
-            - name: Start anvil
-              # Start anvil in the background, and wait for it to be ready
-              run: anvil & ./scripts/wait-for-blockchain.sh
-
-            - name: Deploy local zion governance contracts
-              run: ./scripts/deploy-zion-governance-contracts.sh
-
-            - name: Deploy stream registry contracts
-              run: ./scripts/deploy-stream-registry.sh
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Unit Tests
               run: yarn test:unit
@@ -234,15 +227,8 @@ jobs:
             - name: Build town types
               run: ./scripts/build-town-types.sh localhost --frozen
 
-            - name: Start anvil
-              # Start anvil in the background, and wait for it to be ready
-              run: anvil & ./scripts/wait-for-blockchain.sh
-
-            - name: Deploy local zion governance contracts
-              run: ./scripts/deploy-zion-governance-contracts.sh
-
-            - name: Deploy stream registry contracts
-              run: ./scripts/deploy-stream-registry.sh
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -382,15 +368,8 @@ jobs:
             - name: Build town types
               run: ./scripts/build-town-types.sh localhost --frozen
 
-            - name: Start anvil
-              # Start anvil in the background, and wait for it to be ready
-              run: anvil & ./scripts/wait-for-blockchain.sh
-
-            - name: Deploy local zion governance contracts
-              run: ./scripts/deploy-zion-governance-contracts.sh
-
-            - name: Deploy stream registry contracts
-              run: ./scripts/deploy-stream-registry.sh
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -531,18 +510,8 @@ jobs:
             - name: Build town types
               run: ./scripts/build-town-types.sh localhost --frozen
 
-            - name: Start anvil
-              # Start anvil in the background, and wait for it to be ready
-              run: anvil & ./scripts/wait-for-blockchain.sh
-
-            - name: Deploy local zion governance contracts
-              run: ./scripts/deploy-zion-governance-contracts.sh
-
-            - name: Deploy registry contracts
-              run: ./scripts/deploy-wallet-link-contracts.sh
-
-            - name: Deploy stream registry contracts
-              run: ./scripts/deploy-stream-registry.sh
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -637,15 +606,8 @@ jobs:
                   node-version: '18.13.0'
                   cache: 'yarn'
 
-            - name: Start anvil
-              # Start anvil in the background, and wait for it to be ready
-              run: anvil & ./scripts/wait-for-blockchain.sh
-
-            - name: Deploy local zion governance contracts
-              run: ./scripts/deploy-entitlement-checker.sh
-
-            - name: Deploy stream registry contracts
-              run: ./scripts/deploy-stream-registry.sh
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Linting
               uses: golangci/golangci-lint-action@v3
@@ -726,15 +688,8 @@ jobs:
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
 
-            - name: Start anvil
-              # Start anvil in the background, and wait for it to be ready
-              run: anvil & ./scripts/wait-for-blockchain.sh
-
-            - name: Deploy local zion governance contracts
-              run: ./scripts/deploy-entitlement-checker.sh
-
-            - name: Deploy stream registry contracts
-              run: ./scripts/deploy-stream-registry.sh
+            - name: Start and configure blockchains
+              run: ./scripts/bc-all-start.sh
 
             - name: Build town contract types
               run: ./scripts/build-town-types.sh localhost --frozen

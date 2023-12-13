@@ -5,8 +5,8 @@ cd ../contracts
 set -a
 . .env.localhost
 set +a
-make deploy-anvil contract=DeployMultiInit
-make deploy-anvil contract=DeployWalletLink
+make deploy-base-anvil contract=DeployMultiInit
+make deploy-base-anvil contract=DeployWalletLink
 
 cd ..
 mkdir -p casablanca/node/run_files/addresses

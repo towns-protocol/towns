@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-// Deploy: ./scripts/deploy-stream-registry.sh
+// Deploy: ./scripts/deploy-river-registry.sh
 // Generate bindings: ./scripts/build-town-types.sh
 contract StreamRegistry {
   string public constant errAlreadyExists = "ALREADY_EXISTS";

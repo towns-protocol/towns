@@ -7,8 +7,8 @@
 # prerequisites:
 # yarn install
 # ./scripts/start-local-casablanca.sh
-# ./scripts/start-local-blockchain.sh
-# ./scripts/deploy-zion-governance-contracts.sh
+# ./scripts/start-local-basechain.sh
+# ./scripts/deploy-towns-contracts.sh
 #
 
 

@@ -10,4 +10,4 @@ else
   OPTS="--block-time $RIVER_BLOCK_TIME"
 fi
 
-anvil --chain-id 31338 --port 8546 $OPTS
+anvil --chain-id 31337 --port 8545 $OPTS

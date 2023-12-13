@@ -5,8 +5,8 @@ set -a
 . .env.localhost
 set +a
 
-make deploy-anvil contract=DeployEntitlementChecker
-make deploy-anvil contract=DeployEntitlementGatedExample
+make deploy-base-anvil contract=DeployEntitlementChecker
+make deploy-base-anvil contract=DeployEntitlementGatedExample
 
 popd
 

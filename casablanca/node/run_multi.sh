@@ -90,7 +90,7 @@ if [ "$RUN" == "true" ]; then
         echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
         if [ "$USE_BLOCKCHAIN_STREAM_REGISTRY" == "true" ]; then
             echo "And funding it with 1 ETH"
-            cast rpc -r http://127.0.0.1:8545 anvil_setBalance `cat ./wallet/node_address` 1000000000000000000
+            cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 1000000000000000000
         fi
         go run --race ../../node/main.go run --config config/config.yaml "${args[@]:-}" &
         popd
