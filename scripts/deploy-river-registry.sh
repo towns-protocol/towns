@@ -7,7 +7,7 @@ set -a
 . .env.localhost
 set +a
 
-if [ "$1" != "nobuild" ]; then
+if [ "${1-}" != "nobuild" ]; then
     make build
 fi
 
