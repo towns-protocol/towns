@@ -3,6 +3,12 @@ if [ -z "$ENV" ]; then
     echo "Must set ENV environment variable!"
     exit 1
 fi
+# If its running via CLI when git_pr_number provided
+if [ ! -z "$TF_VAR_git_pr_number" ]; then
+    ENV=$ENV-$TF_VAR_git_pr_number
+fi
+
+echo $ENV
 
 DYNAMODB_TABLE_NAME="here-not-there-terraform-state-lock"
 LOCK_ID="here-not-there-terraform-state/env:/$ENV/default"

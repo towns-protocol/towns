@@ -1,6 +1,5 @@
 CMD                     ?= docker compose run --rm terraform
 NOCACHECMD              ?= docker compose build --no-cache terraform
-CI_AUTOAPPROVE          ?= false
 terraform_folder		= environments/${ENV}
 terraform_workspace_name = $(ENV)
 is_transient_lite       ?= false
