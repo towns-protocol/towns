@@ -14,6 +14,7 @@ import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 import { FadeIn } from '@components/Transitions'
 import { OpenInEtherscan } from '@components/Tooltips/OpenInEtherscan'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { baseScanUrl } from '@components/Web3/utils'
 import * as styles from './SpaceSideBar.css'
 
 export const SpaceSideBarHeader = (props: {
@@ -23,7 +24,7 @@ export const SpaceSideBarHeader = (props: {
     scrollOffset: number
 }) => {
     const { opaqueHeaderBar, space } = props
-    const { chainName } = useEnvironment()
+    const { chainId } = useEnvironment()
 
     const { members } = useSpaceMembers()
     const { data: spaceInfo } = useContractSpaceInfo(space.id.networkId)
@@ -39,7 +40,7 @@ export const SpaceSideBarHeader = (props: {
 
     const onAddressClick = useEvent(() => {
         window.open(
-            `https://${chainName}.etherscan.io/address/${spaceInfo?.address}`,
+            `${baseScanUrl(chainId)}/address/${spaceInfo?.address}`,
             '_blank',
             'noopener,noreferrer',
         )

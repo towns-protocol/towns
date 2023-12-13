@@ -20,7 +20,7 @@ export const blockchainKeys = {
     hasPermission: (args: {
         spaceId?: string
         channelId?: string
-        walletAddress: string
+        walletAddress?: string
         permission: Permission
     }) => ['hasPermission', args],
     roles: (spaceId: string) => ['roles', QuerKeysEnum.FirstBySpaceIds, spaceId],

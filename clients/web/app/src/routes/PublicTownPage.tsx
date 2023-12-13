@@ -2,10 +2,11 @@ import debug from 'debug'
 import React, { Suspense, useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Link } from 'react-router-dom'
-import { useMyProfile } from 'use-zion-client'
+import { Permission, useHasPermission, useMyProfile } from 'use-zion-client'
 import { isAddress } from 'viem'
 
 import { Allotment } from 'allotment'
+import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
@@ -25,7 +26,6 @@ import { useDevice } from 'hooks/useDevice'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useJoinTown } from 'hooks/useJoinTown'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
-import { useMeetsMembershipNftRequirements } from 'hooks/useTokensGatingMembership'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { shortAddress } from 'ui/utils/utils'
 import { MainSideBar } from '@components/SideBars'
@@ -40,22 +40,35 @@ export const PublicTownPage = () => {
     const { spaceSlug } = useParams()
     // TEMPORARY joining state until hook is built for minting
     const [isJoining, setIsJoining] = useState(false)
-
+    const { isConnected, loggedInWalletAddress } = useAuth()
     const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceSlug)
     const { data: townBio } = useGetSpaceTopic(spaceSlug)
-    const { isConnected, isAuthenticatedAndConnected, isSignerReady } = useAuth()
+    const { isAuthenticatedAndConnected, isSignerReady } = useAuth()
+    const [assetModal, setAssetModal] = useState(false)
+    const showAssetModal = () => setAssetModal(true)
+    const hideAssetModal = () => setAssetModal(false)
 
-    const { data: meetsMembershipRequirements, isLoading: isLoadingMeetsMembership } =
-        useMeetsMembershipNftRequirements(spaceInfo?.networkId, isConnected)
+    const { hasPermission: meetsMembershipRequirements, isLoading: isLoadingMeetsMembership } =
+        useHasPermission({
+            spaceId: spaceInfo?.networkId,
+            walletAddress: loggedInWalletAddress,
+            permission: Permission.JoinTown,
+        })
+
     const { joinSpace, errorMessage, isNoFundsError, clearErrors } = useJoinTown(
         spaceInfo?.networkId,
     )
 
     const onJoinClick = useCallback(async () => {
-        setIsJoining(true)
-        await joinSpace()
-        setIsJoining(false)
-    }, [joinSpace])
+        if (meetsMembershipRequirements) {
+            setIsJoining(true)
+            await joinSpace()
+            setIsJoining(false)
+        } else {
+            // show asset verification modal
+            showAssetModal()
+        }
+    }, [meetsMembershipRequirements, joinSpace])
 
     const { isTouch } = useDevice()
 
@@ -95,7 +108,7 @@ export const PublicTownPage = () => {
                                                 background="level3"
                                                 message="Checking requirements"
                                             />
-                                        ) : meetsMembershipRequirements ? (
+                                        ) : (
                                             <Button
                                                 tone="cta1"
                                                 width="100%"
@@ -106,12 +119,6 @@ export const PublicTownPage = () => {
                                                 {isJoining && <ButtonSpinner />}
                                                 Join {spaceInfo.name}
                                             </Button>
-                                        ) : (
-                                            <MembershipStatusMessage
-                                                background="error"
-                                                icon="alert"
-                                                message={`You don't have the required digital assets to join this town.`}
-                                            />
                                         )
                                     ) : (
                                         <Suspense>
@@ -132,6 +139,12 @@ export const PublicTownPage = () => {
             {isNoFundsError && (
                 <ModalContainer padding="none" minWidth="350" onHide={clearErrors}>
                     <NoFundsModal onHide={clearErrors} />
+                </ModalContainer>
+            )}
+
+            {assetModal && (
+                <ModalContainer padding="none" minWidth="350" onHide={hideAssetModal}>
+                    <TokenVerification spaceId={spaceInfo.networkId} onHide={hideAssetModal} />
                 </ModalContainer>
             )}
         </>

@@ -86,6 +86,11 @@ export const buttonStyle = recipe({
                 gap: vars.space.sm,
             },
         },
+        border: {
+            level4: {
+                border: `1px solid ${vars.color.background.level4}`,
+            },
+        },
         hoverEffect: {
             none: {
                 selectors: {

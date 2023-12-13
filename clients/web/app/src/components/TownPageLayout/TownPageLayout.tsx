@@ -73,7 +73,6 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                         <Box
                                             gap="lg"
                                             direction={{ default: 'row', mobile: 'column' }}
-                                            alignItems="start"
                                         >
                                             <AnimatePresence mode="popLayout">
                                                 {/* requirements */}
@@ -106,7 +105,11 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                                         key="requirements-token"
                                                     >
                                                         <Text>You will Need</Text>
-                                                        <Box display="inline-flex" gap="sm">
+                                                        <Box
+                                                            horizontal
+                                                            display="inline-flex"
+                                                            gap="sm"
+                                                        >
                                                             {tokensGatingMembership.tokens.map(
                                                                 (token) => (
                                                                     <FetchedTokenAvatar

@@ -29,8 +29,10 @@ export type TokenAvatarProps = Partial<TokenProps> & {
     horizontal?: 'horizontal'
     layoutProps?: BoxProps
     labelProps?: {
-        size: 'sm' | 'md'
+        size?: 'sm' | 'md'
+        whiteSpace?: BoxProps['whiteSpace']
     }
+    avatarToggleClasses?: Partial<typeof avatarToggleClasses>
 }
 
 export const TokenAvatar = (props: TokenAvatarProps) => {
@@ -46,6 +48,7 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
         noCopy = true,
         layoutProps,
         labelProps,
+        avatarToggleClasses,
     } = props
     const _label = isLoading ? '' : label || shortAddress(contractAddress)
     const imageSource = useCheckImage({ src: imgSrc, contractAddress, isLoading })
@@ -79,9 +82,11 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
 
     return (
         <Box alignItems="center" maxWidth="x6" data-testid="token-avatar" gap="sm" {...layoutProps}>
-            <Box position="relative" rounded="full" background="level4">
+            <Box position="relative" rounded={layoutProps?.rounded ?? 'full'} background="level4">
                 {showLabel ? (
-                    <AvatarImageWrapper size={size}>{content()}</AvatarImageWrapper>
+                    <AvatarImageWrapper size={size} toggleClasses={avatarToggleClasses}>
+                        {content()}
+                    </AvatarImageWrapper>
                 ) : (
                     <TokenAddressTooltip
                         noCopy={noCopy}
@@ -90,7 +95,9 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
                     >
                         {(triggerProps) => (
                             <Box {...triggerProps}>
-                                <AvatarImageWrapper size={size}>{content()}</AvatarImageWrapper>
+                                <AvatarImageWrapper size={size} toggleClasses={avatarToggleClasses}>
+                                    {content()}
+                                </AvatarImageWrapper>
                             </Box>
                         )}
                     </TokenAddressTooltip>
@@ -164,12 +171,19 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
 function AvatarImageWrapper({
     children,
     size,
-}: React.PropsWithChildren<{ size: TokenAvatarProps['size'] }>) {
+    toggleClasses = {
+        circle: true,
+        noBg: true,
+    },
+}: React.PropsWithChildren<{
+    size: TokenAvatarProps['size']
+    toggleClasses?: Partial<typeof avatarToggleClasses>
+}>) {
     return (
         <Box
             display="block"
             className={clsx(
-                avatarToggleClasses({ circle: true, noBg: true }),
+                avatarToggleClasses(toggleClasses),
                 avatarAtoms({
                     size,
                 }),

@@ -63,7 +63,10 @@ export function mapToErrorMessage(error: Error | undefined) {
     const errorCode = (error?.message as any)?.code ?? ''
 
     switch (true) {
-        case errorCode === 'ACTION_REJECTED':
+        case isNotFoundRiverError(error):
+            errorText = 'River stream not found.'
+            break
+        case errorCode === 'ACTION_REJECTED' || isRejectedErrorMessage(error):
             errorText = 'Transaction rejected.'
             break
         case isLimitReachedError(error):
@@ -116,6 +119,11 @@ export function mapToErrorMessage(error: Error | undefined) {
     return fullErrorText
 }
 
+export function isNotFoundRiverError(error: Error | undefined) {
+    const _error = error as unknown as { code: number; message: string }
+    return _error?.code === 5 && _error.message.includes('5:NOT_FOUND')
+}
+
 export function isLimitReachedError(error: Error | undefined) {
     return error?.message?.includes?.('has exceeded the member cap')
 }
@@ -123,3 +131,19 @@ export function isLimitReachedError(error: Error | undefined) {
 export function isMaybeFundsError(error: Error | undefined) {
     return error?.message?.toString()?.includes('gas required exceeds allowance (0)')
 }
+
+export function isRejectedErrorMessage(error: Error | undefined) {
+    return error?.message?.toString()?.includes('user rejected transaction')
+}
+
+export function baseScanUrl(chainId: number) {
+    switch (chainId) {
+        case 31337: // just for complete url, doesn't apply to foundry
+        case 84531:
+            return 'https://goerli.basescan.org'
+        default:
+            return 'https://basescan.org'
+    }
+}
+
+export const openSeaBaseAssetUrl = 'https://opensea.io/assets/base'

@@ -168,6 +168,9 @@ const root = createGlobalTheme(':root', {
             x12: `${baseline * 12}px`,
             /** 120px */
             x15: `${baseline * 15}px`,
+            x16: `${baseline * 16}px`,
+            x17: `${baseline * 17}px`,
+            x18: `${baseline * 18}px`,
             /** 160px */
             x20: `${baseline * 20}px`,
             /** 320px */

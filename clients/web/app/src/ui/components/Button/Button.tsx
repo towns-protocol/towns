@@ -21,7 +21,10 @@ type Props = {
     'onDrag' | 'onDragEnd' | 'onDragStart' | 'onAnimationStart' | 'size' | 'color'
 > &
     StyleProps &
-    Pick<BoxProps, 'aspectRatio' | 'color' | 'fontWeight' | 'inset' | 'insetX' | 'insetY'>
+    Pick<
+        BoxProps,
+        'aspectRatio' | 'color' | 'fontWeight' | 'inset' | 'insetX' | 'insetY' | 'border'
+    >
 
 export type ButtonProps = Props
 
@@ -55,6 +58,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
                 size,
                 rounded,
                 hoverEffect,
+                border: inputProps.border,
                 // a tone can be specified here in order to transition background
                 // tone: animate || tone == 'level3' ? tone : undefined,
             })}

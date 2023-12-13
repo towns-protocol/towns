@@ -9,7 +9,7 @@ import {
     useWeb3Context,
 } from 'use-zion-client'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
-import { Box, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
+import { Box, BoxProps, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { PanelButton } from '@components/Panel/Panel'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useAuth } from 'hooks/useAuth'
@@ -130,7 +130,13 @@ export function WalletLinkingPanel() {
     )
 }
 
-function FullPanelOverlay({ text }: { text?: string }) {
+export function FullPanelOverlay({
+    text,
+    background = 'level3',
+}: {
+    text?: string
+    background?: BoxProps['background']
+}) {
     return (
         <Stack
             position="absolute"
@@ -142,9 +148,9 @@ function FullPanelOverlay({ text }: { text?: string }) {
             alignItems="center"
         >
             <Stack
-                opacity="0.8"
+                opacity="0.9"
                 position="absolute"
-                background="level3"
+                background={background}
                 width="100%"
                 height="100%"
             />
@@ -156,14 +162,16 @@ function FullPanelOverlay({ text }: { text?: string }) {
     )
 }
 
-function LinkedWallet({
+export function LinkedWallet({
     address,
     loggedInWalletAddress,
     onUnlinkClick,
+    height = 'x8',
 }: {
     address: Address
     loggedInWalletAddress: Address
     onUnlinkClick?: (address: Address) => void
+    height?: BoxProps['height']
 }) {
     const isTownsWallet = address === loggedInWalletAddress
     const townsBalance = useBalance({
@@ -178,7 +186,7 @@ function LinkedWallet({
             background="level3"
             hoverable={false}
             justifyContent="spaceBetween"
-            height="x8"
+            height={height}
         >
             <Stack gap="sm" alignItems="start">
                 <Paragraph>
@@ -224,7 +232,7 @@ function ExportWallet() {
     )
 }
 
-function useConnectThenLink({
+export function useConnectThenLink({
     signer,
     onLinkWallet,
 }: {

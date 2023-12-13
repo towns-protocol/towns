@@ -2,14 +2,21 @@ import { useQuery, useQueryClient } from '../query/queryClient'
 
 import { blockchainKeys } from '../query/query-keys'
 import { useCallback } from 'react'
-import { RoleDetails } from '@river/web3'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useSpaceDapp } from './use-space-dapp'
+import { RoleDetails } from '../types/web3-types'
 /**
  * Convience function to get space role details.
  */
 
-export function useRoleDetails(spaceId: string, roleId: number) {
+export function useRoleDetails(
+    spaceId: string,
+    roleId: number,
+): {
+    isLoading: boolean
+    roleDetails: RoleDetails | undefined | null
+    error: unknown
+} {
     const { provider, chain } = useWeb3Context()
 
     const spaceDapp = useSpaceDapp({

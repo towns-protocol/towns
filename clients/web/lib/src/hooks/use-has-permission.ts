@@ -4,11 +4,12 @@ import { useQuery } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
 import { blockchainKeys } from '../query/query-keys'
 import { Permission } from '@river/web3'
+import { isAddress } from 'ethers/lib/utils'
 
 interface Props {
     spaceId: string | undefined
     channelId?: string
-    walletAddress: string
+    walletAddress?: string
     permission: Permission
 }
 
@@ -17,7 +18,7 @@ export function useHasPermission(props: Props) {
     const { spaceId, channelId, walletAddress, permission } = props
 
     const getHasPermission = useCallback(async () => {
-        if (client) {
+        if (client && walletAddress) {
             const isEntitled = await client.isEntitled(
                 spaceId,
                 channelId,
@@ -55,7 +56,7 @@ export function useHasPermission(props: Props) {
         // options for the query.
         // query will not execute until the client is defined.
         {
-            enabled: client !== undefined,
+            enabled: client !== undefined && !!walletAddress && isAddress(walletAddress),
             refetchOnMount: true,
             // inherits default staleTime of 15 secs
             // server strictly enforces permissions in real time.
