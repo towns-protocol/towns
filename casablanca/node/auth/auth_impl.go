@@ -55,7 +55,7 @@ type AuthCheckArgs struct {
 	permission Permission
 }
 
-// Replcaces principal with given wallet and returns new copy of args.
+// Replaces principal with given wallet and returns new copy of args.
 func (args *AuthCheckArgs) withWallet(wallet common.Address) *AuthCheckArgs {
 	ret := *args
 	ret.principal = wallet
@@ -107,12 +107,12 @@ var _ AuthChecker = (*chainAuth)(nil)
 func NewChainAuth(
 	ctx context.Context,
 	blockchain *crypto.Blockchain,
-	townsArcitectCfg *config.ContractConfig,
+	townsArchitectCfg *config.ContractConfig,
 	walletLinkCfg *config.ContractConfig,
 	linkedWalletsLimit int,
 	contractCallsTimeoutMs int,
 ) (*chainAuth, error) {
-	spaceContract, err := NewSpaceContractV3(ctx, townsArcitectCfg, blockchain.Client)
+	spaceContract, err := NewSpaceContractV3(ctx, townsArchitectCfg, blockchain.Client)
 	if err != nil {
 		return nil, err
 	}

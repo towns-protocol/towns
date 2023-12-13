@@ -35,18 +35,18 @@ var EMPTY_ADDRESS = common.Address{}
 
 func NewSpaceContractV3(
 	ctx context.Context,
-	townsArcitectCfg *config.ContractConfig,
+	townsArchitectCfg *config.ContractConfig,
 	backend bind.ContractBackend,
 	//walletLinkingCfg *config.ContractConfig,
 ) (SpaceContract, error) {
-	townsArchitect, err := NewTownsArchitect(townsArcitectCfg, backend)
+	townsArchitect, err := NewTownsArchitect(townsArchitectCfg, backend)
 	if err != nil {
 		return nil, err
 	}
 
 	spaceContract := &SpaceContractV3{
 		townsArchitect: townsArchitect,
-		version:        townsArcitectCfg.Version,
+		version:        townsArchitectCfg.Version,
 		backend:        backend,
 		towns:          make(map[string]*Town),
 	}
