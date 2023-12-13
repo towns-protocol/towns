@@ -1,9 +1,5 @@
 #!/bin/bash
+set -euo pipefail
+cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-echo "Waiting for River Chain to launch on 8546..."
-
-while ! nc -z 127.0.0.1 8546; do   
-  sleep 0.1 # wait for 1/10 of the second before check again
-done
-
-echo "Base Chain launched"
+./wait-for-port.sh 8546 "River_Chain"
