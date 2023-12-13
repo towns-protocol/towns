@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { matchRoutes, useLocation, useNavigate, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
@@ -19,6 +19,9 @@ import { usePushNotifications } from 'hooks/usePushNotifications'
 import { Panel, PanelButton } from '@components/Panel/Panel'
 import { NESTED_PROFILE_PANEL_PATHS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { isTouch } from 'hooks/useDevice'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const navigate = useNavigate()
@@ -39,6 +42,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
     const { profileId = 'me' } = useParams()
     const { createDMChannel } = useZionClient()
+    const [modal, setModal] = useState<'wallets' | undefined>(undefined)
 
     const { requestPushPermission, simplifiedPermissionState } = usePushNotifications()
 
@@ -71,11 +75,15 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const isMeRoute = matchRoutes([{ path: '/me' }], location) || profileId === 'me'
 
     const onWalletLinkingClick = useEvent(() => {
-        navigate(`${location.pathname}/${NESTED_PROFILE_PANEL_PATHS.WALLETS}`, {
-            state: {
-                from: location.pathname,
-            },
-        })
+        if (isTouch()) {
+            setModal('wallets')
+        } else {
+            navigate(`${location.pathname}/${NESTED_PROFILE_PANEL_PATHS.WALLETS}`, {
+                state: {
+                    from: location.pathname,
+                },
+            })
+        }
     })
 
     const user = useMemo(
@@ -212,6 +220,12 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                         <Paragraph>Logout</Paragraph>
                     </PanelButton>
                 </Stack>
+            )}
+
+            {modal === 'wallets' && (
+                <ModalContainer touchTitle="Wallets" onHide={() => setModal(undefined)}>
+                    <WalletLinkingPanel />
+                </ModalContainer>
             )}
 
             {!isCurrentUser && !search.has('message') && (

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Fragment } from 'react'
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
 import { SpaceSettings } from '@components/SpaceSettings/SpaceSettings'
 import { PATHS } from 'routes'
@@ -42,6 +42,13 @@ const CheckRedirect = () => {
 
     return <Outlet />
 }
+
+const desktopSpaceProfilePanelRoutes = (prefix: string = 'profile') => [
+    // eslint-disable-next-line react/jsx-key
+    <Route path={`${prefix}/:profileId`} element={<SpaceProfilePanel />} />,
+    // eslint-disable-next-line react/jsx-key
+    <Route path={`${prefix}/:profileId/:nestedPanel`} element={<NestedPanel />} />,
+]
 
 export const AuthenticatedRoutes = () => {
     const { isTouch } = useDevice()
@@ -95,14 +102,7 @@ export const AuthenticatedRoutes = () => {
                                 <Route path={`${PATHS.SPACES}/:spaceSlug`}>
                                     <Route index element={<SpaceHome />} />
                                     <Route path="members" element={<SpaceMembers />}>
-                                        <Route
-                                            path="profile/:profileId"
-                                            element={<SpaceProfilePanel />}
-                                        />
-                                        <Route
-                                            path="profile/:profileId/:nestedPanel"
-                                            element={<NestedPanel />}
-                                        />
+                                        {...desktopSpaceProfilePanelRoutes()}
                                         <Route path="info" element={<InfoPanelWrapper />} />
                                     </Route>
                                     <Route path="channels/:channelSlug" element={<SpacesChannel />}>
@@ -110,14 +110,7 @@ export const AuthenticatedRoutes = () => {
                                             path="replies/:messageId"
                                             element={<SpacesChannelReplies parentRoute="../" />}
                                         />
-                                        <Route
-                                            path="profile/:profileId"
-                                            element={<SpaceProfilePanel />}
-                                        />
-                                        <Route
-                                            path="profile/:profileId/:nestedPanel"
-                                            element={<NestedPanel />}
-                                        />
+                                        {...desktopSpaceProfilePanelRoutes()}
                                         <Route path="info" element={<InfoPanelWrapper />} />
                                     </Route>
                                     <Route path="*" element={<TownRoutes />} />
@@ -135,8 +128,7 @@ const messageRoutes = (
     <Route path="messages" element={<DirectMessages />}>
         <Route path=":channelSlug" element={<DirectMessageThread />}>
             <Route path="replies/:messageId" element={<SpacesChannelReplies parentRoute="../" />} />
-            <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-            <Route path="profile/:profileId/:nestedPanel" element={<NestedPanel />} />
+            {...desktopSpaceProfilePanelRoutes()}
             <Route path="info" element={<DMInfoPanelWrapper />} />
         </Route>
     </Route>
@@ -154,8 +146,7 @@ const OutsideTownRoutes = () => {
             {/* catch all */}
             <Route element={<CheckRedirect />}>
                 <Route path="*" element={<NoJoinedSpacesFallback />}>
-                    <Route path="me" element={<SpaceProfilePanel />} />
-                    <Route path="me/:nestedPanel" element={<NestedPanel />} />
+                    {...desktopSpaceProfilePanelRoutes('me')}
                 </Route>
             </Route>
         </Routes>
@@ -168,14 +159,12 @@ const OutsideTownRoutes = () => {
 const TownRoutes = () => (
     <Routes>
         <Route path={PATHS.THREADS} element={<SpaceThreads />}>
-            <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-            <Route path="profile/:profileId/:nestedPanel" element={<NestedPanel />} />
+            {...desktopSpaceProfilePanelRoutes()}
             <Route path="info" element={<InfoPanelWrapper />} />
         </Route>
 
         <Route path="mentions" element={<SpaceMentions />}>
-            <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-            <Route path="profile/:profileId/:nestedPanel" element={<NestedPanel />} />
+            {...desktopSpaceProfilePanelRoutes()}
             <Route path="info" element={<InfoPanelWrapper />} />
         </Route>
 
@@ -200,8 +189,7 @@ const TownRoutes = () => (
 
         <Route element={<SpacesChannelRoute />}>
             <Route path="channels/:channelSlug/members" element={<ChannelMembers />}>
-                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                <Route path="profile/:profileId/:nestedPanel" element={<NestedPanel />} />
+                {...desktopSpaceProfilePanelRoutes()}
                 <Route path="info" element={<InfoPanelWrapper />} />
             </Route>
         </Route>

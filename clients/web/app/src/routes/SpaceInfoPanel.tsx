@@ -49,6 +49,7 @@ import { getInviteUrl, shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
 import { Avatar } from '@components/Avatar/Avatar'
+import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { env } from '../utils/environment'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
@@ -88,7 +89,13 @@ export const SpaceInfoPanel = () => {
 
     const { members } = useSpaceMembers()
     const [activeModal, setActiveModal] = useState<
-        'browse-channels' | 'members' | 'confirm-leave' | 'settings' | 'preview' | undefined
+        | 'browse-channels'
+        | 'members'
+        | 'confirm-leave'
+        | 'settings'
+        | 'preview'
+        | 'wallets'
+        | undefined
     >(undefined)
 
     const onHideBrowseChannels = useEvent(() => setActiveModal(undefined))
@@ -457,6 +464,12 @@ export const SpaceInfoPanel = () => {
                     >
                         <PublicTownPage />
                     </Box>
+                </ModalContainer>
+            )}
+
+            {activeModal === 'wallets' && (
+                <ModalContainer touchTitle="Wallets" onHide={() => setActiveModal(undefined)}>
+                    <WalletLinkingPanel />
                 </ModalContainer>
             )}
         </Panel>
