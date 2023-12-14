@@ -17,7 +17,7 @@ on:
         secrets:
             SLACK_CI_CHANNEL_WEBHOOK_URL: { required: true }
     schedule: # A synthetic test was scheduled
-        - cron: '*/1 * * * *' # Every 30 minutes
+        - cron: '*/1 * * * *' # Every 1 minute
 jobs:
     run_synthetic_tests:
         runs-on: synthetic-test-runner
