@@ -27,3 +27,8 @@ output "lambdas_s3_bucket" {
   description = "S3 Bucket for lambda zip packaged files"
   value       = aws_s3_bucket.hnt_lambdas
 }
+
+output "river_node_credentials_secret" {
+  description = "Secrets for river node credentials"
+  value       = module.river_node_credentials
+}

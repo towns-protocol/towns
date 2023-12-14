@@ -41,28 +41,27 @@ function generateFromPrivateKey(privateKey) {
   return Wallet.default.fromPrivateKey(EthereumUtil.toBuffer(privateKey));
 }
 
-async function getOrSetWalletPrivateKey() {
+async function findOrCreateWalletPrivateKey() {
   console.log('getting or setting wallet private key')
   const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
   const getSecretCommand = new GetSecretValueCommand({
     SecretId: process.env.RIVER_NODE_WALLET_CREDENTIALS_ARN
   })
   const secretRaw = await secretsClient.send(getSecretCommand);
-  const secretParsed = JSON.parse(secretRaw.SecretString)
+  const secretString = secretRaw.SecretString;
   let privateKey;
-  if (secretParsed.walletPathPrivateKey === 'DUMMY') {
+  if (secretString === 'DUMMY') {
     const wallet = Wallet.default.generate();
     const hexPrivateKey = wallet.getPrivateKeyString();
     privateKey = hexPrivateKey.substring(2);
     const putSecretCommand = new PutSecretValueCommand({
       SecretId: process.env.RIVER_NODE_WALLET_CREDENTIALS_ARN,
-      SecretString: JSON.stringify({
-        walletPathPrivateKey: privateKey,
-      })
+      SecretString: privateKey,
     })
     await secretsClient.send(putSecretCommand);
   } else {
-    privateKey = secretParsed.walletPathPrivateKey;
+    console.log('wallet private key already set')
+    privateKey = secretString;
   }
 
   return privateKey;
@@ -107,17 +106,63 @@ const getMasterUserCredentials = async () => {
   console.log('got master user credentials')
   return masterUserCredentials;
 }
-  
-const configureRiverDB = async ({
-  address,
-  riverUserDBConfig,
-  masterUserCredentials,
+
+const createRiverNodeSchema = async ({
+  schemaName,
+  riverUserDBConfig
 }) => {
-  console.log('configuring river db')
-  
+  // create schema if not exists
+  console.log('creating schema')
+
+  let error;
+
   const pgClient = new Client({
     host: riverUserDBConfig.HOST,
     database: riverUserDBConfig.DATABASE,
+    password: riverUserDBConfig.PASSWORD,
+    user: riverUserDBConfig.USER,
+    port: riverUserDBConfig.PORT,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  })
+
+  const createSchemaQuery = `
+    DO
+    $do$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT FROM pg_catalog.pg_namespace WHERE nspname = '${schemaName}'
+      ) THEN
+        CREATE SCHEMA ${schemaName};
+      END IF;
+    END
+    $do$
+  `;
+
+  try {
+    await pgClient.query(createSchemaQuery);
+  } catch (e) {
+    console.error('error creating schema: ', e)
+    error = e;
+  } finally {
+    await pgClient.end()
+  }
+
+  if (error) {
+    throw error;
+  }
+}
+  
+const createRiverNodeDbUser = async ({
+  riverUserDBConfig,
+  masterUserCredentials,
+}) => {
+  console.log('creating river node db user')
+  
+  const pgClient = new Client({
+    host: riverUserDBConfig.HOST,
+    database: 'postgres',
     password: masterUserCredentials.password,
     user: masterUserCredentials.username,
     port: riverUserDBConfig.PORT,
@@ -133,14 +178,69 @@ const configureRiverDB = async ({
     await pgClient.connect();
     console.log('connected')
 
-    console.log('updating db password')
-    // TODO: CREATE USER IF NOT EXISTS
-    await pgClient.query(`ALTER USER river WITH PASSWORD '${riverUserDBConfig.PASSWORD}';`)
+    // renaming legacy user
 
-    console.log('updating schema name')
-    const OLD_SCHEMA_NAME = 's0xbf2fe1d28887a0000a1541291c895a26bd7b1ddd'
-    const NEW_SCHEMA_NAME = `s${address.toLowerCase()}`
-    await pgClient.query(`ALTER SCHEMA ${OLD_SCHEMA_NAME} RENAME TO ${NEW_SCHEMA_NAME};`)
+    console.log('renaming legacy user')
+    // alter the role if it exists. old name: river, new name: river1
+    const renameLegacyUserQuery = `
+      DO
+      $do$
+      BEGIN
+        IF EXISTS (
+          SELECT FROM pg_catalog.pg_user WHERE usename = 'river'
+        ) THEN
+          ALTER ROLE river RENAME TO river1;
+        END IF;
+      END
+      $do$
+    `;
+    await pgClient.query(renameLegacyUserQuery);
+    console.log('renamed legacy user')
+
+    // create user if not exists
+    console.log('creating user')
+
+    const createUserQuery = `
+      DO
+      $do$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT FROM pg_catalog.pg_user WHERE usename = '${riverUserDBConfig.USER}'
+        ) THEN
+          CREATE USER ${riverUserDBConfig.USER} WITH PASSWORD '${riverUserDBConfig.PASSWORD}';
+        END IF;
+      END
+      $do$
+    `;
+    await pgClient.query(createUserQuery);
+    console.log('created user')
+
+    console.log('creating database if not exists')
+    // create database if not exists
+    const createDatabaseQuery = `
+      DO
+      $do$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT FROM pg_catalog.pg_database WHERE datname = '${riverUserDBConfig.DATABASE}'
+        ) THEN
+          CREATE DATABASE ${riverUserDBConfig.DATABASE};
+        END IF;
+      END
+      $do$
+    `;
+    await pgClient.query(createDatabaseQuery);
+    console.log('created database')
+
+    console.log('granting create schema to user')
+
+    const grantCreateSchemaQuery = `
+      GRANT CREATE ON DATABASE ${riverUserDBConfig.DATABASE} TO ${riverUserDBConfig.USER};
+    `;
+    await pgClient.query(grantCreateSchemaQuery);
+
+    console.log('done creating user')
+
   } catch (e) {
     error = e;
   } finally {
@@ -148,12 +248,7 @@ const configureRiverDB = async ({
   }
 
   if (error) {
-    if (error.routine === 'RenameSchema' && error.message.includes('does not exist')) {
-      console.log('Rename schema error, ignoring')
-    } else {
-      console.error('error: ', error)
-      throw error;
-    }
+    throw error;
   }
 }
 
@@ -187,17 +282,29 @@ async function findOrCreateRiverUserDBConfig() {
 
 exports.handler = async (event, context, callback) => {
   try {
+    // read the proxy shared key, and use it to write the homechain network url secret
     await setHomechainNetworkUrlSecret();
-    const privateKey = await getOrSetWalletPrivateKey()
+
+    // find or create the wallet private key, and use it to configure the db schema
+    const privateKey = await findOrCreateWalletPrivateKey()
     const wallet = generateFromPrivateKey(privateKey);
     const address = wallet.getAddressString();
+
+    // find or create the river user password, and use it to configure the river db
     const riverUserDBConfig = await findOrCreateRiverUserDBConfig();
     const masterUserCredentials = await getMasterUserCredentials();
-    await configureRiverDB({
+    await createRiverNodeDbUser({
       address,
       riverUserDBConfig,
       masterUserCredentials,
     });
+
+    // const schemaName = `s${address.toLowerCase()}`
+    // await createRiverNodeSchema({
+    //   schemaName,
+    //   riverUserDBConfig,
+    // });
+
     callback(null, 'done')
   } catch (e) {
     console.error('error: ', e)

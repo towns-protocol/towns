@@ -74,9 +74,7 @@ module "river_db_cluster" {
   count = var.is_transient_lite ? 0 : 1
 }
 
-module "river_node_1" {
-  source = "../../modules/river-node"
-
+locals {
   count = var.is_transient_lite ? 0 : 1
 
   river_node_db = var.is_transient_lite ? null : module.river_db_cluster[0]
@@ -92,15 +90,32 @@ module "river_node_1" {
     name = local.transient_global_remote_state.river_ecs_cluster.name
   }
 
-  alb_security_group_id  = local.transient_global_remote_state.river_alb.security_group_id
-  alb_dns_name           = local.transient_global_remote_state.river_alb.lb_dns_name
-  alb_https_listener_arn = local.transient_global_remote_state.river_alb.lb_https_listener_arn
-
   home_chain_id = 84531
 
   # TODO: generalize this to env name once we start deploying transient workers
   push_notification_worker_url = "https://push-notification-worker-test-beta.towns.com"
 
+}
+
+module "river_node_1" {
+  source      = "../../modules/river-node"
   node_number = 1
 
+  count         = local.count
+  river_node_db = local.river_node_db
+  is_transient  = local.is_transient
+  git_pr_number = var.git_pr_number
+
+  node_subnets = local.transient_global_remote_state.vpc.private_subnets
+  vpc_id       = local.transient_global_remote_state.vpc.vpc_id
+
+  ecs_cluster = local.ecs_cluster
+
+  alb_security_group_id  = local.transient_global_remote_state.river_alb.security_group_id
+  alb_dns_name           = local.transient_global_remote_state.river_alb.lb_dns_name
+  alb_https_listener_arn = local.transient_global_remote_state.river_alb.lb_https_listener_arn
+
+  home_chain_id = local.home_chain_id
+
+  push_notification_worker_url = local.push_notification_worker_url
 }

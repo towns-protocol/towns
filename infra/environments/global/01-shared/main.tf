@@ -90,6 +90,14 @@ resource "aws_secretsmanager_secret_version" "river_global_dd_agent_api_key" {
   secret_string = "DUMMY"
 }
 
+module "river_node_credentials" {
+  source = "../../../modules/river-node-credentials"
+
+  count = 10
+
+  node_number = count.index + 1
+}
+
 
 resource "null_resource" "lambda_npm_dependencies" {
   provisioner "local-exec" {

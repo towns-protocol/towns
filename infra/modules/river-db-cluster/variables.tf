@@ -12,8 +12,6 @@ variable "database_subnets" {
   type        = list(string)
 }
 
-
-
 variable "is_transient" {
   description = "Whether or not this db is transient"
   type        = bool

@@ -12,6 +12,8 @@ locals {
   service_name        = "river-node"
   global_remote_state = module.global_constants.global_remote_state.outputs
 
+  shared_credentials = local.global_remote_state.river_node_credentials_secret[var.node_number - 1]
+
   river_node_tags = merge(
     module.global_constants.tags,
     {
@@ -154,6 +156,7 @@ resource "aws_security_group" "post_provision_config_lambda_function_sg" {
   }
 }
 
+// TODO: delete
 resource "aws_secretsmanager_secret" "rds_river_node_password" {
   name = "${local.node_name}-postgres-db-password"
   tags = local.river_node_tags
@@ -169,7 +172,7 @@ module "post_provision_config" {
 
   river_node_name                         = local.node_name
   subnet_ids                              = var.node_subnets
-  river_node_wallet_credentials_arn       = aws_secretsmanager_secret.river_node_wallet_credentials.arn
+  river_node_wallet_credentials_arn       = local.shared_credentials.wallet_private_key.arn
   homechain_network_url_secret_arn        = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
   river_db_cluster_master_user_secret_arn = var.river_node_db.root_user_secret_arn
   river_user_db_config                    = local.river_user_db_config
@@ -222,6 +225,7 @@ resource "aws_secretsmanager_secret" "river_node_wallet_credentials" {
   tags = local.river_node_tags
 }
 
+// TODO: delete
 resource "aws_secretsmanager_secret_version" "river_node_wallet_credentials" {
   secret_id     = aws_secretsmanager_secret.river_node_wallet_credentials.id
   secret_string = <<EOF
@@ -245,14 +249,28 @@ resource "aws_iam_role_policy" "river_node_credentials" {
   name = "${local.node_name}-node-credentials"
   role = aws_iam_role.ecs_task_execution_role.id
 
-  lifecycle {
-    ignore_changes = all
-  }
-
   policy = <<-EOF
   {
     "Version": "2012-10-17",
     "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${local.shared_credentials.db_password.arn}"
+        ]
+      },
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${local.shared_credentials.wallet_private_key.arn}"
+        ]
+      },
       {
         "Action": [
           "secretsmanager:GetSecretValue"
@@ -287,24 +305,6 @@ resource "aws_iam_role_policy" "river_node_credentials" {
         "Effect": "Allow",
         "Resource": [
           "${local.global_remote_state.river_global_push_notification_auth_token.arn}"
-        ]
-      },
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${aws_secretsmanager_secret.rds_river_node_password.arn}"
-        ]
-      },
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${aws_secretsmanager_secret.river_node_wallet_credentials.arn}"
         ]
       }
     ]
@@ -376,8 +376,8 @@ locals {
     host         = var.river_node_db.rds_aurora_postgresql.cluster_endpoint
     port         = "5432"
     database     = "river"
-    user         = "river"
-    password_arn = aws_secretsmanager_secret.rds_river_node_password.arn
+    user         = "river${var.node_number}"
+    password_arn = local.shared_credentials.db_password.arn
   }
 }
 
@@ -429,11 +429,11 @@ resource "aws_ecs_task_definition" "river-fargate" {
     secrets = [
       {
         name      = "DATABASE__PASSWORD",
-        valueFrom = aws_secretsmanager_secret.rds_river_node_password.arn
+        valueFrom = local.shared_credentials.db_password.arn
       },
       {
         name      = "WALLETPRIVATEKEY"
-        valueFrom = "${aws_secretsmanager_secret.river_node_wallet_credentials.arn}:walletPathPrivateKey::"
+        valueFrom = local.shared_credentials.wallet_private_key.arn
       },
       {
         name      = "BASECHAIN__NETWORKURL"
