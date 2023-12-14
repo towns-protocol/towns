@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import { useSpaceData, useSpaceId, useSpaceMembers, useTimelineStore } from 'use-zion-client'
+import { useSpaceData, useSpaceId, useTimelineStore, useUserLookupContext } from 'use-zion-client'
 import { ResultItem } from '@components/SearchBar/SearchResultItem'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { Box, Icon, IconButton, Paragraph, Stack, TextField } from '@ui'
@@ -51,7 +51,8 @@ export const TouchSearchTab = () => {
     const spaceId = useSpaceId()
     const channels = useSpaceChannels()
     const dmChannels = useDmChannels()
-    const { members } = useSpaceMembers()
+    const { users: members } = useUserLookupContext()
+
     const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
         threadsStats,
     }))

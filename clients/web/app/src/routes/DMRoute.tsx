@@ -1,5 +1,6 @@
 import React from 'react'
 import { Outlet, useOutlet } from 'react-router'
+import { GlobalContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
@@ -8,12 +9,12 @@ export const DirectMessages = () => {
     const { isTouch } = useDevice()
     const outlet = useOutlet()
     return isTouch ? (
-        <>
+        <GlobalContextUserLookupProvider>
             <Box absoluteFill background="level1">
                 <DirectMessagesPanel />
                 <Outlet />
             </Box>
-        </>
+        </GlobalContextUserLookupProvider>
     ) : (
         outlet ?? (
             <Stack centerContent grow scroll absoluteFill>

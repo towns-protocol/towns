@@ -2,13 +2,8 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { matchRoutes, useLocation, useNavigate, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
-import {
-    getAccountAddress,
-    useAllKnownUsers,
-    useMyProfile,
-    useSpaceMembers,
-    useZionClient,
-} from 'use-zion-client'
+import { getAccountAddress, useMyProfile, useZionClient } from 'use-zion-client'
+import { useUserLookupContext } from 'use-zion-client/dist/components/UserLookupContext'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
@@ -69,8 +64,8 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     }, [createDMChannel, createLink, navigate, profileId])
 
     const profileUser = useMyProfile()
-    const { membersMap } = useSpaceMembers()
-    const { usersMap } = useAllKnownUsers()
+
+    const { usersMap } = useUserLookupContext()
     const location = useLocation()
     const isMeRoute = matchRoutes([{ path: '/me' }], location) || profileId === 'me'
 
@@ -95,9 +90,9 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                       displayName: profileUser?.displayName ?? '',
                   }
                 : profileId
-                ? membersMap[profileId] ?? usersMap[profileId]
+                ? usersMap[profileId] ?? usersMap[profileId]
                 : undefined,
-        [isMeRoute, membersMap, profileId, profileUser, usersMap],
+        [isMeRoute, profileId, profileUser, usersMap],
     )
 
     const isValid = !!user

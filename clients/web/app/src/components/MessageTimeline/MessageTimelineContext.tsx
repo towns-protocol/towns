@@ -3,11 +3,10 @@ import {
     Channel,
     RoomIdentifier,
     TimelineEvent,
-    useAllKnownUsers,
     useMyProfile,
-    useSpaceMembers,
     useTimelineReactions,
     useTimelineThreadStats,
+    useUserLookupContext,
     useZionClient,
 } from 'use-zion-client'
 import { useNavigate } from 'react-router-dom'
@@ -41,8 +40,8 @@ export const MessageTimelineContext = createContext<{
     timelineActions: ReturnType<typeof useTimelineMessageEditing>
     handleReaction: ReturnType<typeof useHandleReaction>
     sendReadReceipt: ReturnType<typeof useZionClient>['sendReadReceipt']
-    membersMap: ReturnType<typeof useSpaceMembers>['membersMap']
-    members: ReturnType<typeof useSpaceMembers>['members']
+    membersMap: ReturnType<typeof useUserLookupContext>['usersMap']
+    members: ReturnType<typeof useUserLookupContext>['users']
     onMentionClick?: (mentionName: string) => void
 } | null>(null)
 
@@ -76,14 +75,7 @@ export const MessageTimelineWrapper = (props: {
     const handleReaction = useHandleReaction(channelId)
     const isChannelEncrypted = true
 
-    let { membersMap, members } = useSpaceMembers()
-    const { users: globalMembers, usersMap: globalMembersMap } = useAllKnownUsers()
-
-    if (!spaceId) {
-        // lookup on for members globally if spaceId isn't specificed (DMs)
-        members = globalMembers
-        membersMap = globalMembersMap
-    }
+    const { usersMap, users: members } = useUserLookupContext()
 
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
@@ -125,7 +117,7 @@ export const MessageTimelineWrapper = (props: {
             sendReadReceipt,
             type,
             members,
-            membersMap,
+            membersMap: usersMap,
         }
     }, [
         userId,
@@ -144,7 +136,7 @@ export const MessageTimelineWrapper = (props: {
         sendReadReceipt,
         type,
         members,
-        membersMap,
+        usersMap,
     ])
     return (
         <ErrorBoundary FallbackComponent={MessageTimelineFallbackComponent}>

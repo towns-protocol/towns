@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 import { AuthenticationError, LoginStatus } from '../hooks/login'
-import { User, RoomMember, Room, Membership, getMembershipFor } from '../types/zion-types'
+import { RoomMember, Room, Membership, getMembershipFor } from '../types/zion-types'
 import { makeRoomIdentifier } from '../types/room-identifier'
 
 import {
@@ -31,14 +31,12 @@ export const useCasablancaStore = create<CasablancaStoreStates>((set) => ({
 }))
 
 //TODO: implement in a proper way with all fields assigned correctly
-export function toZionCasablancaUser(theUser: string | undefined): User {
+export function toZionCasablancaUser(theUser: string | undefined): RoomMember {
     return {
         userId: theUser ?? '',
+        name: theUser ?? '',
         displayName: theUser ?? '',
         avatarUrl: theUser,
-        presence: 'NA',
-        lastPresenceTs: 0,
-        currentlyActive: true,
     }
 }
 
@@ -184,8 +182,6 @@ function getMembersWithMembership(membership: Membership, stream: Stream): RoomM
             userId: userId,
             name: userId,
             displayName: displayNames?.get(userId) ?? userId,
-            membership: membership,
-            disambiguate: false,
             avatarUrl: '',
         })
     })

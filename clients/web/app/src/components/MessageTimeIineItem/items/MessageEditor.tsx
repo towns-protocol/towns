@@ -4,7 +4,7 @@ import {
     RoomMessageEvent,
     SendTextMessageOptions,
     useMyProfile,
-    useSpaceMembers,
+    useUserLookupContext,
 } from 'use-zion-client'
 import { createPortal } from 'react-dom'
 import { Box, Stack, useZLayerContext } from '@ui'
@@ -39,7 +39,7 @@ export const TimelineMessageEditor = (props: Props) => {
         timelineActions?.onCancelEditingMessage?.()
     }, [timelineActions])
 
-    const { members } = useSpaceMembers()
+    const { users: members } = useUserLookupContext()
     const userId = useMyProfile()?.userId
     const channels = useSpaceChannels()
 
@@ -53,7 +53,7 @@ export const TimelineMessageEditor = (props: Props) => {
                 displayButtons="always"
                 initialValue={initialValue}
                 channels={channels}
-                members={members}
+                users={members}
                 userId={userId}
                 onSend={onSend}
                 onCancel={onCancel}
@@ -67,7 +67,7 @@ export const TimelineMessageEditor = (props: Props) => {
                 displayButtons="always"
                 initialValue={initialValue}
                 channels={channels}
-                members={members}
+                users={members}
                 userId={userId}
                 onSend={onSend}
                 onCancel={onCancel}

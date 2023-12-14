@@ -12,7 +12,7 @@ export const ChannelUsersPill = (props: {
     channelId: RoomIdentifier
 }) => {
     const { spaceId } = props
-    const { members } = useChannelMembers()
+    const { memberIds } = useChannelMembers()
     const timelineContext = useContext(MessageTimelineContext)
 
     const lastInteractedUniqueUserIds = useMemo(() => {
@@ -24,17 +24,20 @@ export const ChannelUsersPill = (props: {
                 continue
             }
             const senderId = eventIds[i].sender.id
-            if (!lastUniqueIds.includes(senderId) && members.some((m) => m.userId === senderId)) {
+            if (
+                !lastUniqueIds.includes(senderId) &&
+                memberIds.some((userId) => userId === senderId)
+            ) {
                 lastUniqueIds.push(eventIds[i].sender.id)
             }
         }
 
         if (lastUniqueIds.length < NUM_USERS) {
-            const memberIds = members.slice(0, NUM_USERS).map((m) => m.userId)
-            return uniq(lastUniqueIds.concat(memberIds)).slice(0, NUM_USERS)
+            const maxIds = memberIds.slice(0, NUM_USERS).map((userId) => userId)
+            return uniq(maxIds.concat(memberIds)).slice(0, NUM_USERS)
         }
         return lastUniqueIds
-    }, [timelineContext?.events, members])
+    }, [timelineContext?.events, memberIds])
 
     return (
         <Stack horizontal border rounded="sm" height="height_lg" overflow="hidden">
@@ -53,7 +56,7 @@ export const ChannelUsersPill = (props: {
                             <Avatar key={userId} size="avatar_sm" userId={userId} />
                         ))}
                     </Stack>
-                    <Paragraph size="sm">{members.length}</Paragraph>
+                    <Paragraph size="sm">{memberIds.length}</Paragraph>
                 </Stack>
             </Link>
 

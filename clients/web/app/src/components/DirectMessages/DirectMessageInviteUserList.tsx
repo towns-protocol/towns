@@ -2,7 +2,7 @@ import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { firstBy } from 'thenby'
-import { useAllKnownUsers, useMyProfile, useUser, useZionContext } from 'use-zion-client'
+import { useMyProfile, useUser, useUserLookupContext, useZionContext } from 'use-zion-client'
 import {
     Box,
     Checkbox,
@@ -23,7 +23,7 @@ export const DirectMessageInviteUserList = (props: {
 }) => {
     const { onSelectionChange, hiddenUserIds = new Set() } = props
     const [searchTerm, setSearchTerm] = useState('')
-    const { users, usersMap } = useAllKnownUsers()
+    const { users, usersMap } = useUserLookupContext()
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
     const userId = useMyProfile()?.userId
 
@@ -46,7 +46,7 @@ export const DirectMessageInviteUserList = (props: {
         })
         .map((r) => r.obj.userId)
         .sort(
-            firstBy<string>((id) => usersMap[id]?.displayName.startsWith(`0x`)).thenBy(
+            firstBy<string>((id) => (usersMap[id]?.displayName.startsWith(`0x`) ? 1 : -1)).thenBy(
                 (id) => usersMap[id]?.displayName,
             ),
         )

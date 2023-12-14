@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react'
 import { firstBy } from 'thenby'
-import { User, useAllKnownUsers } from 'use-zion-client'
+import { RoomMember, useUserLookupContext } from 'use-zion-client'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 type UserName = {
@@ -27,7 +27,7 @@ export const useUserList = (params: Props) => {
     const stableRenderRef = useRef(params.renderUser)
     const renderUser = (stableRenderRef.current = params.renderUser)
 
-    const { usersMap } = useAllKnownUsers()
+    const { usersMap } = useUserLookupContext()
     const members = useMemo(() => {
         return userIds.map((u) => {
             return {
@@ -73,7 +73,7 @@ const SORT_CURRENT_USER = {
  *
  */
 export const getNameListFromUsers = (
-    users: User[],
+    users: RoomMember[],
     currentUserId?: string,
     options: {
         maxNames?: number
@@ -85,11 +85,11 @@ export const getNameListFromUsers = (
     const mappedUsers = users
         .slice()
         .sort(
-            firstBy((u: User) =>
+            firstBy((u: RoomMember) =>
                 u?.userId === currentUserId ? SORT_CURRENT_USER[sortCurrentUser] : 0,
-            ).thenBy((u: User) => u?.displayName, -1),
+            ).thenBy((u: RoomMember) => u?.displayName, -1),
         )
-        .map((u?: User) =>
+        .map((u?: RoomMember) =>
             u?.userId === currentUserId ? 'you' : getPrettyDisplayName(u).displayName,
         )
 

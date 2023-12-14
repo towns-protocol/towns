@@ -5,7 +5,7 @@ import {
     MentionResult as MessageResult,
     RoomIdentifier,
     useSpaceId,
-    useSpaceMembers,
+    useUserLookupContext,
 } from 'use-zion-client'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { MessageLayout } from '@components/MessageLayout'
@@ -51,11 +51,11 @@ export const IsolatedMessageItem = (
 
     const content = getIsRoomMessageContent(result.event)
 
-    const { membersMap, members } = useSpaceMembers()
+    const { usersMap, users } = useUserLookupContext()
     const channels = useSpaceChannels()
     const dmChannels = useDmChannels()
 
-    const sender = membersMap[result.event.sender.id]
+    const sender = usersMap[result.event.sender.id]
     const ref = React.useRef<HTMLAnchorElement>(null)
 
     const link = useMemo(() => {
@@ -109,7 +109,7 @@ export const IsolatedMessageItem = (
                 <RichTextPreview
                     key={props.highligtTerms?.join('')}
                     highlightTerms={props.highligtTerms}
-                    members={members}
+                    members={users}
                     channels={[...channels, ...dmChannels]}
                     content={getMessageBody(result.event.eventId, content)}
                     statusAnnotation={

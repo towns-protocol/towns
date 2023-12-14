@@ -11,7 +11,9 @@ import { AuthenticatedRoutes } from 'routes/AuthenticatedRoutes'
 import {
     everyoneRole,
     memberRole,
-    mockMembers,
+    mockMemberIds,
+    mockMembers as mockUsers,
+    mockUsersMap,
     roleDataWithBothRolesAssignedToChannel,
     spaceRoomIdentifier,
 } from 'test/testMocks'
@@ -139,11 +141,18 @@ vi.mock('use-zion-client', async () => {
                 error: undefined,
             }
         },
-        useSpaceMembers: () => {
+        useUserLookupContext: () => {
             return {
-                members: mockMembers,
+                users: mockUsers,
+                usersMap: mockUsersMap,
             }
         },
+        useSpaceMembers: () => {
+            return {
+                memberIds: mockMemberIds,
+            }
+        },
+
         useMultipleRoleDetails: () => {
             return {
                 data: mockDataForUseMultipleRoleDetails,

@@ -4,8 +4,8 @@ import {
     SendMessageOptions,
     ZTEvent,
     useMyProfile,
-    useSpaceMembers,
     useTimelineThread,
+    useUserLookupContext,
 } from 'use-zion-client'
 import { firstBy } from 'thenby'
 import { useLocation } from 'react-router'
@@ -88,7 +88,7 @@ export const MessageThread = (props: {
             : undefined
     }, [involvedUsers, profile?.userId])
 
-    const { members } = useSpaceMembers()
+    const { users } = useUserLookupContext()
     const userId = useMyProfile()?.userId
     const { loggedInWalletAddress } = useAuth()
     const channels = useSpaceChannels()
@@ -131,7 +131,7 @@ export const MessageThread = (props: {
                                 autoFocus={false}
                                 placeholder="Reply..."
                                 channels={channels}
-                                members={members}
+                                users={users}
                                 userId={userId}
                                 onSend={onSend}
                             />

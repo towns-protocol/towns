@@ -75,7 +75,7 @@ type Props = {
     threadId?: string // only used for giphy plugin
     threadPreview?: string
     channels: Channel[]
-    members: RoomMember[]
+    users: RoomMember[]
     userId?: string
     isFullWidthOnTouch?: boolean
 } & Pick<BoxProps, 'background'>
@@ -242,7 +242,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
     const {
         editable = true,
         userId,
-        members,
+        users: members,
         channels,
         placeholder = 'Write something ...',
         editing: isEditing,

@@ -87,7 +87,7 @@ export const SpaceInfoPanel = () => {
 
     const spaceOwner = useUser(data?.owner)
 
-    const { members } = useSpaceMembers()
+    const { memberIds } = useSpaceMembers()
     const [activeModal, setActiveModal] = useState<
         | 'browse-channels'
         | 'members'
@@ -387,7 +387,7 @@ export const SpaceInfoPanel = () => {
                 <PanelButton onClick={onMembersClick}>
                     <Icon type="people" size="square_sm" color="gray2" />
                     <Paragraph color="default">
-                        {`${members.length} member${members.length > 1 ? `s` : ``}`}
+                        {`${memberIds.length} member${memberIds.length > 1 ? `s` : ``}`}
                     </Paragraph>
                 </PanelButton>
 

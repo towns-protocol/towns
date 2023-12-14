@@ -13,11 +13,9 @@ import { SpaceInfoPanel } from './SpaceInfoPanel'
 
 const ownerUser = {
     userId: getWalletAddress(),
+    name: 'beavis',
     displayName: 'beavis',
     avatarUrl: 'https://example.com',
-    presence: 'online',
-    lastPresenceTs: 0,
-    currentlyActive: true,
 }
 
 const generateSpaceData = (networkId: string) => {
@@ -60,7 +58,7 @@ vi.mock('use-zion-client', async () => {
     const actual = (await vi.importActual('use-zion-client')) as typeof Lib
     return {
         ...actual,
-        useSpaceMembers: () => ({ members: [ownerUser] }),
+        useSpaceMembers: () => ({ memberIds: [ownerUser.userId] }),
         useAllKnownUsers: () => ({ users: [ownerUser] }),
         useUser: (userId: string) => {
             const u = actual.useUser(userId)

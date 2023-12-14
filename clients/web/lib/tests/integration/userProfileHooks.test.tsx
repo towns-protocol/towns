@@ -21,9 +21,9 @@ import { ZTEvent } from '../../src/types/timeline-types'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
-import { useMember } from '../../src/hooks/use-member'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
 import { useZionClient } from '../../src/hooks/use-zion-client'
+import { useUserLookupContext } from '../../src/components/UserLookupContext'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -32,9 +32,7 @@ describe('userProfileHooks', () => {
     test.skip('user can join a room, see username and avatar info', async () => {
         // create clients
         const { alice } = await registerAndStartClients(['alice'])
-        // set display name and avatar
-        await alice.setDisplayName("Alice's your aunt")
-        await alice.setAvatarUrl('alice.png')
+
         // create a wallet for bob
         const bobProvider = new ZionTestWeb3Provider()
         // alice needs funds to create a space
@@ -47,6 +45,11 @@ describe('userProfileHooks', () => {
                 name: makeUniqueName('alices space'),
             },
         )) as RoomIdentifier
+
+        // set display name and avatar
+        await alice.setDisplayName(alicesSpaceId.networkId, "Alice's your aunt")
+        await alice.setAvatarUrl('alice.png')
+
         //
         const alicesChannelId = (await createTestChannelWithSpaceRoles(alice, {
             name: 'alices channel',
@@ -57,12 +60,14 @@ describe('userProfileHooks', () => {
         const TestUserProfile = () => {
             const { setDisplayName, setAvatarUrl } = useZionClient()
             const myProfile = useMyProfile()
-            const alicesMemberInfo = useMember(alicesSpaceId, alice.getUserId())
+            const { usersMap } = useUserLookupContext()
+            const userId = alice.getUserId()
+            const alicesMemberInfo = userId ? usersMap[userId] : undefined
             const { timeline } = useChannelTimeline()
             const roomMessages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
             const onClickSetProfileInfo = useCallback(() => {
                 void (async () => {
-                    await setDisplayName("Bob's your uncle")
+                    await setDisplayName(alicesSpaceId.networkId, "Bob's your uncle")
                     await setAvatarUrl('bob.png')
                 })()
             }, [setDisplayName, setAvatarUrl])

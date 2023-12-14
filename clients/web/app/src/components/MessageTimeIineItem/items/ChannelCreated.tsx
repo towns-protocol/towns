@@ -1,5 +1,5 @@
 import React from 'react'
-import { useMyProfile, useSpaceMembers } from 'use-zion-client'
+import { useMyProfile, useUserLookupContext } from 'use-zion-client'
 import { Paragraph, Stack } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ZRoomCreateEvent } from '../../MessageTimeline/util/getEventsByDate'
@@ -9,9 +9,9 @@ export const TimelineChannelCreateEvent = (props: {
     channelName?: string
 }) => {
     const { event, channelName } = props
-    const { membersMap } = useSpaceMembers()
+    const { usersMap } = useUserLookupContext()
     const user = useMyProfile()
-    const creator = membersMap[event.content.creator]
+    const creator = usersMap[event.content.creator]
 
     const name = creator
         ? creator.userId === user?.userId

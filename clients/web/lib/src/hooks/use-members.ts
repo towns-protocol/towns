@@ -9,8 +9,7 @@ export function useMembers(roomId?: RoomIdentifier) {
     const room = useRoom(roomId)
     return useMemo(
         () => ({
-            members: room?.members ?? [],
-            membersMap: room?.membersMap ?? {},
+            memberIds: (room?.members ?? []).map((m) => m.userId),
         }),
         [room],
     )

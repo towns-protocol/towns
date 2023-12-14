@@ -2,8 +2,8 @@ import React, { useEffect } from 'react'
 import {
     RoomIdentifier,
     SpaceContextProvider,
-    useMembers,
     useSpaceData,
+    useUserLookupContext,
     useZionContext,
 } from 'use-zion-client'
 import { ServiceWorkerMessageType } from './types.d'
@@ -23,7 +23,7 @@ export function ServiceWorkerSpacesSyncer() {
 
 function MessageSender({ spaceId }: { spaceId: RoomIdentifier }) {
     const space = useSpaceData(spaceId)
-    const members = useMembers(spaceId)
+    const members = useUserLookupContext()
 
     useEffect(() => {
         navigator.serviceWorker.controller?.postMessage({
@@ -35,9 +35,9 @@ function MessageSender({ spaceId }: { spaceId: RoomIdentifier }) {
     useEffect(() => {
         navigator.serviceWorker.controller?.postMessage({
             type: ServiceWorkerMessageType.SpaceMembers,
-            membersMap: members.membersMap,
+            membersMap: members.usersMap,
         })
-    }, [members.membersMap, space])
+    }, [members.usersMap])
 
     return null
 }

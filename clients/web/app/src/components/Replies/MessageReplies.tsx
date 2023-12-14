@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import { ThreadStats, useChannelId, useSpaceId, useSpaceMembers } from 'use-zion-client'
+import { ThreadStats, useChannelId, useSpaceId, useUserLookupContext } from 'use-zion-client'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { Box, Paragraph, Pill, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
@@ -15,7 +15,7 @@ export const RepliesButton = (props: Props) => {
     const { threadStats, eventId, userId } = props
     const { replyCount } = threadStats
 
-    const { membersMap } = useSpaceMembers()
+    const { usersMap } = useUserLookupContext()
 
     const spaceId = useSpaceId()
     const channelId = useChannelId()
@@ -23,9 +23,9 @@ export const RepliesButton = (props: Props) => {
     const users = useMemo(
         () =>
             Array.from(threadStats.userIds)
-                .map((u) => membersMap[u])
+                .map((u) => usersMap[u])
                 .filter(notUndefined),
-        [membersMap, threadStats.userIds],
+        [usersMap, threadStats.userIds],
     )
 
     const isOwn = userId && users.some((u) => u.userId === userId)

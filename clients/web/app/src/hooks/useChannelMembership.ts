@@ -1,7 +1,9 @@
-import { useChannelMembers, useMyProfile } from 'use-zion-client'
+import { useChannelId, useMembership, useMyProfile, useRoom } from 'use-zion-client'
 
 export function useChannelMembership() {
-    const members = useChannelMembers()
     const id = useMyProfile()?.userId
-    return members.members.find((m) => m.userId === id)?.membership
+    const channelId = useChannelId()
+    const room = useRoom(channelId)
+
+    return useMembership(room?.id, id)
 }

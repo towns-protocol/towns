@@ -33,7 +33,6 @@ import {
     SendMessageOptions,
     SendTextMessageOptions,
     UpdateChannelInfo,
-    User,
 } from '../types/zion-types'
 import { RoomIdentifier, makeRoomIdentifier } from '../types/room-identifier'
 import { SignerContext } from '@river/sdk'
@@ -1263,7 +1262,7 @@ export class ZionClient implements EntitlementsDelegate {
     /************************************************
      * getUser
      ************************************************/
-    public getUser(userId: string): User | undefined {
+    public getUser(userId: string): RoomMember | undefined {
         //TODO: Make real implementation when user profile support will be implemented
         return toZionCasablancaUser(userId)
     }

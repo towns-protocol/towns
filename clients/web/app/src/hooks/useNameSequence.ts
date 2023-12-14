@@ -1,17 +1,17 @@
-import { useMyProfile, useSpaceMembers } from 'use-zion-client'
+import { useMyProfile, useUserLookupContext } from 'use-zion-client'
 import { firstBy } from 'thenby'
 import { useMemo } from 'react'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 export const useNameSequence = (users: Record<string, { eventId: string }>) => {
-    const { membersMap } = useSpaceMembers()
+    const { usersMap } = useUserLookupContext()
     const displayName = useMyProfile()?.displayName
 
     return useMemo(() => {
         return Array.from(Object.keys(users))
             .map((u) => {
-                const name = getPrettyDisplayName(membersMap[u]).displayName
+                const name = getPrettyDisplayName(usersMap[u]).displayName
                 if (!name) {
                     return undefined
                 } else if (name === displayName) {
@@ -33,5 +33,5 @@ export const useNameSequence = (users: Record<string, { eventId: string }>) => {
                         : `, `
                 }`
             }, '')
-    }, [displayName, membersMap, users])
+    }, [displayName, usersMap, users])
 }

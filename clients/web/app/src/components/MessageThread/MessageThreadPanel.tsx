@@ -4,8 +4,8 @@ import {
     useChannelContext,
     useChannelData,
     useMyProfile,
-    useSpaceMembers,
     useTimelineThread,
+    useUserLookupContext,
 } from 'use-zion-client'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
@@ -42,7 +42,8 @@ export const MessageThreadPanel = (props: Props) => {
     const onSend = (value: string, options: SendMessageOptions | undefined) => {
         sendReply(value, channelId, options, parent?.userIds)
     }
-    const { members } = useSpaceMembers()
+    const { users } = useUserLookupContext()
+
     const userId = useMyProfile()?.userId
     const { loggedInWalletAddress } = useAuth()
     const channels = useSpaceChannels()
@@ -112,7 +113,7 @@ export const MessageThreadPanel = (props: Props) => {
                             storageId={`${channelId.networkId}-${messageId}`}
                             threadId={messageId}
                             channels={channels}
-                            members={members}
+                            users={users}
                             background="level2"
                             userId={userId}
                             onSend={onSend}

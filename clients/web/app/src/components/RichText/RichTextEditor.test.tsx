@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 import { describe, expect, test } from 'vitest'
-import { Membership, SpaceContext } from 'use-zion-client'
+import { SpaceContext } from 'use-zion-client'
 import { RichTextEditor } from './RichTextEditor'
 
 const Wrapper = (props: { children?: React.ReactNode }) => {
@@ -16,7 +16,7 @@ describe('#RichTextEditor editable', () => {
     test('it should display a message', async () => {
         render(
             <Wrapper>
-                <RichTextEditor initialValue="welcome!" channels={[]} members={[]} />
+                <RichTextEditor initialValue="welcome!" channels={[]} users={[]} />
             </Wrapper>,
         )
         await screen.findByText('welcome!')
@@ -30,7 +30,7 @@ describe('#RichTextEditor editable', () => {
                     initialValue="welcome!"
                     placeholder="this field is read only"
                     channels={[]}
-                    members={[]}
+                    users={[]}
                 />
             </Wrapper>,
         )
@@ -40,12 +40,7 @@ describe('#RichTextEditor editable', () => {
     test('it should not display value if not editable', async () => {
         render(
             <Wrapper>
-                <RichTextEditor
-                    editable={false}
-                    initialValue="welcome!"
-                    channels={[]}
-                    members={[]}
-                />
+                <RichTextEditor editable={false} initialValue="welcome!" channels={[]} users={[]} />
             </Wrapper>,
         )
         expect(screen.queryByText('welcome!')).toBeNull()
@@ -59,13 +54,11 @@ describe('#RichTextEditor mention nodes', () => {
                 <RichTextEditor
                     initialValue="welcome! @ben"
                     channels={[]}
-                    members={[
+                    users={[
                         {
                             name: 'ben',
                             displayName: 'ben',
                             userId: '1',
-                            membership: Membership.Join,
-                            disambiguate: false,
                         },
                     ]}
                 />
@@ -84,13 +77,11 @@ describe('#RichTextEditor mention nodes', () => {
                 <RichTextEditor
                     initialValue={`welcome! @${displayName}`}
                     channels={[]}
-                    members={[
+                    users={[
                         {
                             name: 'user1',
                             displayName,
                             userId: '1',
-                            membership: Membership.Join,
-                            disambiguate: false,
                         },
                     ]}
                 />
@@ -109,13 +100,11 @@ describe('#RichTextEditor mention nodes', () => {
                 <RichTextEditor
                     initialValue={`welcome! @${displayName}`}
                     channels={[]}
-                    members={[
+                    users={[
                         {
                             displayName,
                             userId: '1',
-                            membership: Membership.Join,
                             name: 'name1',
-                            disambiguate: false,
                         },
                     ]}
                 />

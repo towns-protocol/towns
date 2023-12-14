@@ -1,18 +1,20 @@
 import { Client as CasablancaClient } from '@river/sdk'
-import { User } from '../../types/zion-types'
+import { RoomMember } from '../../types/zion-types'
 
-export function useCasablancaUser(userId?: string, client?: CasablancaClient): User | undefined {
+export function useCasablancaUser(
+    userId?: string,
+    client?: CasablancaClient,
+): RoomMember | undefined {
     // TODO https://linear.app/hnt-labs/issue/HNT-634/getroom-for-casablanca
     if (!userId || !client) {
         return undefined
     }
     //TODO: We need to add support of displayName, lastPresenceTs and currentlyActive on River level
     //or get rid of it completely.
-    const currentUser: User = {
+    const currentUser: RoomMember = {
         userId: userId,
+        name: userId,
         displayName: userId,
-        lastPresenceTs: 0,
-        currentlyActive: true,
     }
     return currentUser
 }

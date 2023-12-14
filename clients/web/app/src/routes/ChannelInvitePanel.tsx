@@ -10,8 +10,9 @@ const ChannelInvite = (props: { onClose: () => void }) => {
     const { onClose } = props
     const channel = useChannelId()
     const { inviteUser } = useZionClient()
-    const { members } = useChannelMembers()
-    const currentMemberIds = useMemo(() => new Set<string>(members.map((m) => m.userId)), [members])
+
+    const { memberIds } = useChannelMembers()
+    const currentMemberIds = useMemo(() => new Set<string>(memberIds), [memberIds])
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
 
     const onSubmit = useCallback(async () => {

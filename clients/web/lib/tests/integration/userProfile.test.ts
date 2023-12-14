@@ -19,9 +19,7 @@ describe('userProfile', () => {
     test('create users, update profile, create room, join, update profile', async () => {
         // create clients
         const { bob } = await registerAndStartClients(['bob'])
-        // bob sets user name and profile photo
-        await bob.setDisplayName("Bob's your uncle")
-        await bob.setAvatarUrl('https://example.com/bob.png')
+
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a room
@@ -29,6 +27,11 @@ describe('userProfile', () => {
             Permission.Read,
             Permission.Write,
         ])) as RoomIdentifier
+
+        // bob sets user name and profile photo
+        await bob.setDisplayName(spaceId.networkId, "Bob's your uncle")
+        await bob.setAvatarUrl('https://example.com/bob.png')
+
         // alice needs to have a valid nft in order to join bob's space / channel
         const alice = await registerAndStartClient(
             'alice',
@@ -50,7 +53,6 @@ describe('userProfile', () => {
         const alicesViewOfBob = alice.getRoomMember(spaceId, bob.getUserId()!)
         console.log('alice sees bob as', {
             name: alicesViewOfBob?.name,
-            disambiguate: alicesViewOfBob?.disambiguate,
             displayName: alicesViewOfBob?.displayName,
             avatarUrl: alicesViewOfBob?.avatarUrl,
         })
@@ -58,7 +60,6 @@ describe('userProfile', () => {
         const bobsViewOfAlice = bob.getRoomMember(spaceId, alice.getUserId()!)
         console.log('bob sees alice as', {
             name: bobsViewOfAlice?.name,
-            disambiguate: bobsViewOfAlice?.disambiguate,
             displayName: bobsViewOfAlice?.displayName,
             avatarUrl: bobsViewOfAlice?.avatarUrl,
         })

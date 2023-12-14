@@ -25,6 +25,7 @@ import { useDMUnreads } from '../hooks/ZionContext/useDMUnreads'
 import { useTimelineFilter } from '../store/use-timeline-filter'
 import { ZTEvent } from '../types/timeline-types'
 import { useStreamSyncActive } from '../hooks/ZionContext/useStreamSyncActive'
+import { GlobalContextUserLookupProvider } from './UserLookupContext'
 
 export type InitialSyncSortPredicate = (a: RoomIdentifier, b: RoomIdentifier) => number
 
@@ -131,7 +132,7 @@ const ContextImpl = (props: Props): JSX.Element => {
                 streamSyncActive,
             }}
         >
-            {props.children}
+            <GlobalContextUserLookupProvider>{props.children}</GlobalContextUserLookupProvider>
         </ZionContext.Provider>
     )
 }

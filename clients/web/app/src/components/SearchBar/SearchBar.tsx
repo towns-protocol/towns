@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router'
-import { useSpaceData, useSpaceId, useSpaceMembers, useTimelineStore } from 'use-zion-client'
+import { useSpaceData, useSpaceId, useTimelineStore, useUserLookupContext } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
 import { Box, Divider, Icon, Paragraph, Stack, TextField } from '@ui'
 import { useSearch } from 'hooks/useSearch'
@@ -144,7 +144,7 @@ const SearchResults = (props: { onHide: () => void; searchResults: CombinedResul
     const spaceId = useSpaceId()
     const channels = useSpaceChannels()
     const dmChannels = useDmChannels()
-    const { members } = useSpaceMembers()
+    const { users: members } = useUserLookupContext()
     const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
         threadsStats,
     }))

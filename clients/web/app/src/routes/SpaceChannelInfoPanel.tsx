@@ -27,7 +27,7 @@ import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 
 export const ChannelInfoPanel = () => {
     const { channel } = useChannelData()
-    const { members } = useChannelMembers()
+    const { memberIds } = useChannelMembers()
     const { isTouch } = useDevice()
     const spaceData = useSpaceData()
     const { loggedInWalletAddress } = useAuth()
@@ -130,7 +130,7 @@ export const ChannelInfoPanel = () => {
                 <PanelButton onClick={onMembersClick}>
                     <Icon type="people" size="square_sm" color="gray2" />
                     <Paragraph color="default">
-                        {`${members.length} member${members.length > 1 ? `s` : ``}`}
+                        {`${memberIds.length} member${memberIds.length > 1 ? `s` : ``}`}
                     </Paragraph>
                 </PanelButton>
 

@@ -89,22 +89,20 @@ const address2 = getWalletAddress()
 
 export const mockMembers: zionClient.RoomMember[] = [
     {
-        userId: `@:${
-            zionClient.createUserIdFromEthereumAddress(address1, 5).matrixUserIdLocalpart
-        }:localhost`,
+        userId: address1,
         name: 'User 1',
         displayName: 'User 1',
-        membership: zionClient.Membership.Join,
-        disambiguate: false,
     },
     {
-        userId: `@:${
-            zionClient.createUserIdFromEthereumAddress(address2, 5).matrixUserIdLocalpart
-        }:localhost`,
+        userId: address2,
         name: 'User 2',
         displayName: 'User 2',
-
-        membership: zionClient.Membership.Join,
-        disambiguate: false,
     },
 ]
+
+export const mockMemberIds = mockMembers.map((m) => m.userId)
+
+export const mockUsersMap = mockMembers.reduce((acc, curr) => {
+    acc[curr.userId] = curr
+    return acc
+}, {} as { [key: string]: zionClient.RoomMember })

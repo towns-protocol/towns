@@ -1,6 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useChannelData, useDMData, useMembers, useMyUserId, useZionClient } from 'use-zion-client'
+import {
+    useChannelData,
+    useDMData,
+    useMembers,
+    useMyUserId,
+    useUserLookupContext,
+    useZionClient,
+} from 'use-zion-client'
 import { Icon, Stack, Text } from '@ui'
 import { Panel, PanelButton } from '@components/Panel/Panel'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
@@ -20,7 +27,13 @@ export const DMChannelInfoPanel = () => {
     const { channel } = useChannelData()
     const { data } = useDMData(channel?.id)
 
-    const members = useMembers(channel?.id)
+    const { memberIds } = useMembers(channel?.id)
+    const { usersMap } = useUserLookupContext()
+    const members = useMemo(
+        () => memberIds.map((userId) => usersMap[userId]),
+        [memberIds, usersMap],
+    )
+
     const myUserId = useMyUserId()
 
     const navigate = useNavigate()
@@ -64,12 +77,12 @@ export const DMChannelInfoPanel = () => {
     }, [navigate, isTouch])
 
     const memberNamesExludingSelf = useMemo(() => {
-        return members.members?.filter((member) => member.userId !== myUserId).map((m) => m.userId)
+        return members.filter((member) => member.userId !== myUserId).map((m) => m.userId)
     }, [members, myUserId])
 
     const membersText = useUserList({ userIds: memberNamesExludingSelf }).join('')
 
-    const memberCount = members?.members.length ?? 0
+    const memberCount = members.length ?? 0
 
     return (
         <Panel modalPresentable label="Group info" onClose={onClose}>

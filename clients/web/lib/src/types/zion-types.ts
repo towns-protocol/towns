@@ -93,21 +93,10 @@ export interface Rooms {
     [slug: string]: Room
 }
 
-export interface User {
-    userId: string
-    displayName: string
-    avatarUrl?: string
-    presence?: string
-    lastPresenceTs: number
-    currentlyActive: boolean
-}
-
 export interface RoomMember {
     userId: string
     name: string
     displayName: string
-    membership: Membership
-    disambiguate?: boolean
     avatarUrl?: string
 }
 

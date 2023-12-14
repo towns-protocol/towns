@@ -12,7 +12,7 @@ type Props = {
 
 export const TouchLayoutHeader = (props: Props) => {
     const space = useSpaceData()
-    const { members } = useSpaceMembers()
+    const { memberIds } = useSpaceMembers()
     const { data: topic } = useGetSpaceTopic(space?.id.networkId)
     const currentSpaceId = space?.id
 
@@ -71,7 +71,7 @@ export const TouchLayoutHeader = (props: Props) => {
                             )}
                         </Stack>
                         <Paragraph truncate color="gray2" size="sm">
-                            {`${members.length} member${members.length > 1 ? `s` : ``}`}
+                            {`${memberIds.length} member${memberIds.length > 1 ? `s` : ``}`}
                             {topic ? ` · ${topic.toLocaleLowerCase()}` : ``}
                         </Paragraph>
                     </Stack>

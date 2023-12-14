@@ -11,7 +11,7 @@ import {
     useDMData,
     useMyMembership,
     useMyProfile,
-    useSpaceMembers,
+    useUserLookupContext,
     useZionClient,
 } from 'use-zion-client'
 import { useHotkeys } from 'react-hotkeys-hook'
@@ -108,7 +108,7 @@ const SpacesChannelComponent = (props: Props) => {
             : undefined
     }, [channelMessages, location.hash])
 
-    const { members } = useSpaceMembers()
+    const { users } = useUserLookupContext()
 
     const { loggedInWalletAddress } = useAuth()
     const userId = useMyProfile()?.userId
@@ -244,7 +244,7 @@ const SpacesChannelComponent = (props: Props) => {
                                 initialValue=""
                                 placeholder={placeholder}
                                 channels={channels}
-                                members={members}
+                                users={users}
                                 userId={userId}
                                 onSend={onSend}
                             />

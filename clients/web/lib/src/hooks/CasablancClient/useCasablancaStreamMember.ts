@@ -1,29 +1,22 @@
 import { RoomIdentifier } from '../../types/room-identifier'
-import { Membership, RoomMember } from '../../types/zion-types'
+import { Membership } from '../../types/zion-types'
 import { Stream } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { useCasablancaStream } from './useCasablancaStream'
 
-export function useCasablancaStreamMember(
+export function useCasablancaStreamMembership(
     roomId?: RoomIdentifier,
     userId?: string,
-): RoomMember | undefined {
+): Membership | undefined {
     const channelStream = useCasablancaStream(roomId)
-    const [roomMember, setRoomMember] = useState<RoomMember>()
+    const [roomMember, setRoomMember] = useState<Membership>()
 
     useEffect(() => {
         if (!userId || !roomId || !channelStream) {
             return
         }
         const updateMember = () => {
-            setRoomMember({
-                userId,
-                name: userId,
-                displayName: 'TODO. Get from casablanca stream',
-                membership: getCasablancaMembership(channelStream, userId),
-                disambiguate: false,
-                avatarUrl: undefined,
-            })
+            setRoomMember(getCasablancaMembership(channelStream, userId))
         }
 
         updateMember()

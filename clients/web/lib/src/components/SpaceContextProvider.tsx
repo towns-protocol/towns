@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo } from 'react'
 import { RoomIdentifier, toRoomIdentifier } from '../types/room-identifier'
+import { SpaceContextUserLookupProvider } from './UserLookupContext'
 
 export interface ISpaceContext {
     spaceId?: RoomIdentifier
@@ -37,5 +38,9 @@ export function SpaceContextProvider(props: Props): JSX.Element {
         [spaceId],
     )
 
-    return <SpaceContext.Provider value={spaceContext}>{props.children}</SpaceContext.Provider>
+    return (
+        <SpaceContext.Provider value={spaceContext}>
+            <SpaceContextUserLookupProvider>{props.children}</SpaceContextUserLookupProvider>
+        </SpaceContext.Provider>
+    )
 }

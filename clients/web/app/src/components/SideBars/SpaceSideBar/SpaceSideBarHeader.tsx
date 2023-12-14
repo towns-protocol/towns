@@ -26,11 +26,11 @@ export const SpaceSideBarHeader = (props: {
     const { opaqueHeaderBar, space } = props
     const { chainId } = useEnvironment()
 
-    const { members } = useSpaceMembers()
+    const { memberIds } = useSpaceMembers()
     const { data: spaceInfo } = useContractSpaceInfo(space.id.networkId)
     const myMembership = useMyMembership(space.id)
 
-    const membersCount = members.length
+    const membersCount = memberIds.length
 
     const navigate = useNavigate()
 

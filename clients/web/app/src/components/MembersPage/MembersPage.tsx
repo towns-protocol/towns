@@ -1,6 +1,11 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { RoomMember, getAccountAddress, useSpaceMembers } from 'use-zion-client'
+import {
+    RoomMember,
+    getAccountAddress,
+    useSpaceMembers,
+    useUserLookupContext,
+} from 'use-zion-client'
 import { CentralPanelLayout } from 'routes/layouts/CentralPanelLayout'
 import { shortAddress } from 'ui/utils/utils'
 import { Box, Grid, Paragraph, Stack } from '@ui'
@@ -11,11 +16,15 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
-    members?: RoomMember[]
+    memberIds: string[]
 }
 
 export const MembersPage = (props: Props) => {
-    const { members } = props
+    const { usersMap } = useUserLookupContext()
+    const members = useMemo(
+        () => props.memberIds.map((userId) => usersMap[userId]),
+        [props.memberIds, usersMap],
+    )
     return members?.length ? (
         <CentralPanelLayout>
             <Stack height="100%">
@@ -39,7 +48,9 @@ export const MembersPage = (props: Props) => {
 }
 
 export const MembersPageTouchModal = (props: { onHide: () => void }) => {
-    const { members } = useSpaceMembers()
+    const { memberIds } = useSpaceMembers()
+    const { usersMap } = useUserLookupContext()
+    const members = memberIds.map((m) => usersMap[m])
     return (
         <ModalContainer touchTitle="Members" onHide={props.onHide}>
             <Stack grow>

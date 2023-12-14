@@ -13,6 +13,7 @@ import {
     useSpaceMembers,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
+    useUserLookupContext,
 } from 'use-zion-client'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
@@ -73,7 +74,11 @@ export const TouchHome = () => {
     const [searchString, setSearchString] = useState<string>('')
     const [caretVisible, setCaretVisible] = useState<boolean>(false)
     const isLoadingChannels = space?.isLoadingChannels ?? true
-    const { members } = useSpaceMembers()
+    const { memberIds } = useSpaceMembers()
+    const { usersMap } = useUserLookupContext()
+    const members = useMemo(() => {
+        return memberIds.map((userId) => usersMap[userId])
+    }, [memberIds, usersMap])
 
     const { hasPermission: canCreateChannel } = useHasPermission({
         spaceId: space?.id.networkId,

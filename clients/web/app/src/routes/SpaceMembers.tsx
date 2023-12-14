@@ -3,6 +3,6 @@ import { useSpaceMembers } from 'use-zion-client'
 import { MembersPage } from '@components/MembersPage/MembersPage'
 
 export const SpaceMembers = () => {
-    const { members } = useSpaceMembers()
-    return <MembersPage members={members} />
+    const { memberIds } = useSpaceMembers()
+    return <MembersPage memberIds={memberIds} />
 }

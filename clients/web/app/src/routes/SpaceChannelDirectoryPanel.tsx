@@ -4,9 +4,9 @@ import { useEvent } from 'react-use-event-hook'
 import {
     RoomMember,
     getAccountAddress,
-    useAllKnownUsers,
     useChannelData,
     useChannelMembers,
+    useUserLookupContext,
 } from 'use-zion-client'
 import { isGDMChannelStreamId } from '@river/sdk'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -53,13 +53,14 @@ export const ChannelDirectoryPanel = () => {
 
 const ChannelMembers = (props: { onAddMembersClick?: () => void }) => {
     const { onAddMembersClick } = props
-    const { members } = useChannelMembers()
+    const { memberIds } = useChannelMembers()
+    const { usersMap } = useUserLookupContext()
 
     return (
         <Stack paddingY="md" minHeight="forceScroll">
             {onAddMembersClick && <AddMemberRow onClick={onAddMembersClick} />}
-            {members.map((m) => (
-                <ChannelMemberRow key={m.userId} user={m} />
+            {memberIds.map((userId) => (
+                <ChannelMemberRow key={userId} user={usersMap[userId]} />
             ))}
         </Stack>
     )
@@ -119,7 +120,7 @@ const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
         }
     }, [link, navigate])
 
-    const { usersMap } = useAllKnownUsers()
+    const { usersMap } = useUserLookupContext()
     const globalUser = usersMap[user.userId] ?? user
 
     if (!userAddress) {

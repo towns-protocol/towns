@@ -4,7 +4,7 @@ import {
     useChannelThreadStat,
     useFullyReadMarker,
     useSpaceId,
-    useSpaceMembers,
+    useUserLookupContext,
 } from 'use-zion-client'
 import { truncate } from 'lodash'
 import { Box, Paragraph, Stack } from '@ui'
@@ -52,7 +52,7 @@ const ThreadRootPreview2 = (props: { threadParentId: string; events: ZRoomMessag
     const backgroundProps = useMessageBackground(false, isHover, false)
     const spaceId = useSpaceId()
     const channelId = useChannelId()
-    const { membersMap } = useSpaceMembers()
+    const { usersMap } = useUserLookupContext()
     const threadStats = useChannelThreadStat(threadParentId)
     const fullyReadMarker = useFullyReadMarker(channelId, threadParentId)
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
@@ -86,7 +86,7 @@ const ThreadRootPreview2 = (props: { threadParentId: string; events: ZRoomMessag
             >
                 <Stack horizontal gap="xs">
                     {userIds
-                        .map((u) => membersMap[u])
+                        .map((u) => usersMap[u])
                         .filter(notUndefined)
                         .map((u) => (
                             <Avatar key={u.userId} size="avatar_xs" userId={u.userId} />

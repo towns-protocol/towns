@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import uniqBy from 'lodash/uniqBy'
 import { Link } from 'react-router-dom'
 import { firstBy } from 'thenby'
-import { Membership, useAllKnownUsers } from 'use-zion-client'
+import { Membership, useUserLookupContext } from 'use-zion-client'
 import { Box, Card, Paragraph, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -25,7 +25,7 @@ const Verbs = {
 } as const
 
 export const AccumulatedRoomMemberEvent = (props: Props) => {
-    const { usersMap } = useAllKnownUsers()
+    const { usersMap } = useUserLookupContext()
     const { event, channelName, userId, channelEncrypted: isChannelEncrypted } = props
 
     const isAddedEvent = event.membershipType === Membership.Invite

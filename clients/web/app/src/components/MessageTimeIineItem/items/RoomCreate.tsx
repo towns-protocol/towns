@@ -1,6 +1,6 @@
 import React from 'react'
-import { useAllKnownUsers } from 'use-zion-client'
 import { Link } from 'react-router-dom'
+import { useUserLookupContext } from 'use-zion-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { Box, Paragraph, Stack } from '@ui'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -15,7 +15,7 @@ type Props = {
 }
 
 export const RoomCreate = (props: Props) => {
-    const { usersMap } = useAllKnownUsers()
+    const { usersMap } = useUserLookupContext()
     const { event, channelName, userId } = props
 
     const creator = event.content.creator

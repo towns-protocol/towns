@@ -1,14 +1,9 @@
 import React, { useMemo } from 'react'
-import {
-    RoomMember,
-    getAccountAddress,
-    useAllKnownUsers,
-    useSpaceData,
-    useSpaceMembers,
-    useZionContext,
-} from 'use-zion-client'
-import { useGetUserBio } from 'hooks/useUserBio'
+import { getAccountAddress, useUserLookupContext, useZionContext } from 'use-zion-client'
 import { Avatar } from '@components/Avatar/Avatar'
+import { SpaceIcon } from '@components/SpaceIcon'
+import { ImageVariants } from '@components/UploadImage/useImageSource'
+import { useGetUserBio } from 'hooks/useUserBio'
 import { Stack } from 'ui/components/Stack/Stack'
 import { Paragraph } from 'ui/components/Text/Paragraph'
 import { Tooltip } from 'ui/components/Tooltip/Tooltip'
@@ -22,26 +17,18 @@ type Props = {
 export const ProfileHoverCard = (props: Props) => {
     const { userId } = props
     const { spaces } = useZionContext()
-    const { usersMap } = useAllKnownUsers()
-    const { membersMap } = useSpaceMembers()
-    const combinedUsers: { [userId: string]: RoomMember & { memberOf?: string[] } } = useMemo(
-        () => ({ ...usersMap, ...membersMap }),
-        [membersMap, usersMap],
-    )
-    const space = useSpaceData()
+    const { usersMap } = useUserLookupContext()
 
-    const user = combinedUsers[userId]
+    const user = usersMap[userId]
     const userAddress = getAccountAddress(userId)
     const { data: userBio } = useGetUserBio(userAddress)
 
     const memberOf = useMemo(() => {
-        return user?.memberOf?.length
-            ? user.memberOf
-                  .map((spaceId) => spaces.find((f) => f.id.networkId === spaceId)?.name)
-                  .filter(notUndefined)
-                  .join(',')
-            : space?.name
-    }, [space?.name, spaces, user.memberOf])
+        const memberOfIds = Object.keys(user?.memberOf ?? [])
+        return memberOfIds?.length
+            ? memberOfIds.map((spaceId) => spaces.find((f) => f.id.networkId === spaceId))
+            : undefined
+    }, [spaces, user.memberOf])
 
     return user ? (
         <Tooltip gap padding maxWidth="300">
@@ -60,28 +47,43 @@ export const ProfileHoverCard = (props: Props) => {
                         {getPrettyDisplayName(user).displayName}
                     </Paragraph>
                     <Paragraph color="gray2">{userAddress && shortAddress(userAddress)}</Paragraph>
+                    {memberOf ? (
+                        <Stack horizontal gap="xs">
+                            {memberOf
+                                .filter(notUndefined)
+
+                                .map((s) => (
+                                    <React.Fragment key={s.id.networkId}>
+                                        <SpaceIcon
+                                            border
+                                            letterFontSize="sm"
+                                            width="x2"
+                                            height="x2"
+                                            spaceId={s?.id.slug}
+                                            firstLetterOfSpaceName={s?.name[0]}
+                                            overrideBorderRadius="xs"
+                                            variant={ImageVariants.thumbnail50}
+                                            fadeIn={false}
+                                        />
+                                    </React.Fragment>
+                                ))}
+                        </Stack>
+                    ) : (
+                        <></>
+                    )}
                 </Stack>
             </Stack>
 
-            <Stack>
-                {memberOf ? (
-                    <Paragraph color="gray2" size="sm">
-                        Member of {memberOf}
+            {userBio && (
+                <Stack>
+                    <Paragraph strong size="sm">
+                        Bio
                     </Paragraph>
-                ) : (
-                    <></>
-                )}
-                {userBio && (
-                    <>
-                        <Paragraph strong size="sm">
-                            Bio
-                        </Paragraph>
-                        <Paragraph size="sm" color="gray1">
-                            {userBio}
-                        </Paragraph>
-                    </>
-                )}
-            </Stack>
+                    <Paragraph size="sm" color="gray1">
+                        {userBio}
+                    </Paragraph>
+                </Stack>
+            )}
         </Tooltip>
     ) : (
         <Tooltip>User info not available</Tooltip>

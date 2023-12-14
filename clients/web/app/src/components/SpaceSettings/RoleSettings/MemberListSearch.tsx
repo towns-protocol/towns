@@ -1,5 +1,10 @@
 import React, { useMemo } from 'react'
-import { RoomMember, getAccountAddress, useSpaceMembers } from 'use-zion-client'
+import {
+    RoomMember,
+    getAccountAddress,
+    useSpaceMembers,
+    useUserLookupContext,
+} from 'use-zion-client'
 import { Box, Checkbox, IconButton, MotionBox, Text, TextField } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 
@@ -28,16 +33,22 @@ export function MemberList({
     initialItems: string[]
     onUpdate: (items: string[]) => void
 }) {
-    const { members } = useSpaceMembers()
+    const { memberIds } = useSpaceMembers()
+    const { usersMap } = useUserLookupContext()
+    const members = useMemo(
+        () => memberIds.map((m) => usersMap[m] ?? { userId: m, name: m, displayName: m }),
+        [memberIds, usersMap],
+    )
 
     const membersWithAddress: ResultsWithIdForVList[] = useMemo(() => {
         const mappedMembers = members.map((m) => {
             const address = getAccountAddress(m.userId) ?? ''
+
             return {
-                userId: m.userId,
+                userId: address,
                 name: getPrettyDisplayName(m).displayName,
                 address,
-                id: m.userId,
+                id: address,
             }
         })
 

@@ -6,7 +6,7 @@ import {
     RoomIdentifier,
     useDMData,
     useSpaceId,
-    useSpaceMembers,
+    useUserLookupContext,
 } from 'use-zion-client'
 import { formatDistance } from 'date-fns'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
@@ -57,9 +57,10 @@ export const SearchMessagesResultItem = (
     const { slug: spaceSlug } = useSpaceId() ?? {}
     const content = getIsRoomMessageContent(result.event)
 
-    const { membersMap, members } = useSpaceMembers()
+    const { users, usersMap } = useUserLookupContext()
+
     const channels = useSpaceChannels()
-    const sender = membersMap[result.event.sender.id]
+    const sender = usersMap[result.event.sender.id]
     const ref = React.useRef<HTMLAnchorElement>(null)
 
     const displayName = getPrettyDisplayName(sender).displayName
@@ -128,7 +129,7 @@ export const SearchMessagesResultItem = (
                     <RichTextPreview
                         key={props.highligtTerms?.join('')}
                         highlightTerms={props.highligtTerms}
-                        members={members}
+                        members={users}
                         channels={channels}
                         content={getMessageBody(result.event.eventId, content)}
                         statusAnnotation={

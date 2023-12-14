@@ -141,7 +141,7 @@ const GDMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
 const TouchChannelHeader = (props: Props) => {
     const { channel, onTouchClose } = props
     const spaceId = useSpaceIdFromPathname()
-    const { members } = useChannelMembers()
+    const { memberIds } = useChannelMembers()
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
     const channelType = useChannelType(channel.id)
@@ -193,7 +193,7 @@ const TouchChannelHeader = (props: Props) => {
                             </Stack>
 
                             <Paragraph truncate color="gray2" size="sm">
-                                {`${members.length} member${members.length > 1 ? `s` : ``}`}
+                                {`${memberIds.length} member${memberIds.length > 1 ? `s` : ``}`}
                                 {channel.topic ? ` · ${channel.topic.toLocaleLowerCase()}` : ``}
                             </Paragraph>
                         </>

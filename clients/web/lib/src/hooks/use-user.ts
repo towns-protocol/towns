@@ -1,19 +1,18 @@
 import { useMemo } from 'react'
-import { useAllKnownUsers } from './use-all-known-users'
-import { User, RoomMember } from 'types/zion-types'
+import { RoomMember } from 'types/zion-types'
+import { useUserLookupContext } from '../components/UserLookupContext'
 
-export function useUser(userId?: string): User | RoomMember | undefined {
-    const { users } = useAllKnownUsers()
+export function useUser(userId?: string): RoomMember | undefined {
+    const { users } = useUserLookupContext()
     return useMemo(
         () =>
             userId
                 ? users.find((user) => user.userId === userId) ??
                   ({
                       userId: userId,
+                      name: userId,
                       displayName: userId,
-                      lastPresenceTs: 0,
-                      currentlyActive: true,
-                  } satisfies User)
+                  } satisfies RoomMember)
                 : undefined,
         [userId, users],
     )
