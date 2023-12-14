@@ -3,10 +3,9 @@
  */
 
 import { dlog } from './dlog'
-import { makeUserContextFromWallet, makeTestClient } from './util.test'
+import { makeUserContextFromWallet, makeTestClient, makeDonePromise } from './util.test'
 import { genId, makeChannelStreamId, makeSpaceStreamId, makeUserStreamId } from './id'
 import { ethers } from 'ethers'
-
 const { LocalhostWeb3Provider, createSpaceDapp, Permission } = await import('@river/web3')
 
 const base_log = dlog('csb:test:withEntitlements')
@@ -76,9 +75,17 @@ describe('withEntitlements', () => {
         const returnVal = await bob.createSpace(spaceId)
         expect(returnVal.streamId).toEqual(spaceId)
         // Now there must be "joined space" event in the user stream.
-        let bobUserStreamView = await bob.getStream(bobsUserStreamId)
+        const bobUserStreamView = bob.stream(bobsUserStreamId)!.view
         expect(bobUserStreamView).toBeDefined()
         expect(bobUserStreamView.userContent.userJoinedStreams).toContain(spaceId)
+
+        const waitForStreamPromise = makeDonePromise()
+        bob.on('userJoinedStream', (streamId) => {
+            if (streamId === channelId) {
+                waitForStreamPromise.done()
+            }
+        })
+
         // create the channel
         log('Bob created space, about to create channel')
         const channelProperties = 'Bobs channel properties'
@@ -90,8 +97,8 @@ describe('withEntitlements', () => {
         )
         expect(channelReturnVal.streamId).toEqual(channelId)
 
+        await waitForStreamPromise.expectToSucceed()
         // Now there must be "joined channel" event in the user stream.
-        bobUserStreamView = await bob.getStream(bobsUserStreamId)
         expect(bobUserStreamView).toBeDefined()
         expect(bobUserStreamView.userContent.userJoinedStreams).toContain(channelId)
 

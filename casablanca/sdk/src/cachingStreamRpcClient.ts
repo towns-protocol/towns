@@ -28,15 +28,40 @@ import { StreamRpcClientType } from './makeStreamRpcClient'
 import { unpackMiniblock } from './sign'
 import { ParsedMiniblock } from './types'
 import { Cache } from './cache'
+import { bin_equal } from './binary'
 
 export class CachingStreamRpcClient implements StreamRpcClientType {
     constructor(private rpcClient: PromiseClient<typeof StreamService>) {}
 
-    getStream(
+    async getStream(
         request: PartialMessage<GetStreamRequest>,
         options?: CallOptions,
     ): Promise<GetStreamResponse> {
-        return this.rpcClient.getStream(request, options)
+        if (!request.streamId) {
+            return this.rpcClient.getStream(request, options)
+        }
+
+        const cache = await Cache.open('get-stream')
+        const cacheKey = `getstream-${request.streamId}`
+
+        /**
+         * We can improve app performance and decrease the load on the nodes a bit here by checking
+         * if we have the stream in the cache.
+         */
+        const streamId = request.streamId
+        const bytes = await cache.match(cacheKey)
+        if (bytes) {
+            const cachedResponse = GetStreamResponse.fromBinary(bytes)
+            const lastMiniblockHash = await this.getLastMiniblockHash({ streamId })
+            const currentKnownHash = cachedResponse.miniblocks.at(-1)?.header?.hash
+            if (currentKnownHash && bin_equal(lastMiniblockHash.hash, currentKnownHash)) {
+                return cachedResponse
+            }
+        }
+
+        const response = await this.rpcClient.getStream(request, options)
+        await cache.put(cacheKey, response.toBinary())
+        return response
     }
 
     getMiniblocks(

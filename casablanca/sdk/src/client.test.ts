@@ -431,8 +431,11 @@ describe('clientTest', () => {
         }
 
         let channelWithContentId: string | undefined
+        const channelWithContentIdPromise = makeDonePromise()
         const onStreamInitialized = (streamId: string, streamKind: SnapshotCaseType) => {
             log('streamInitialized', streamId, streamKind)
+            channelWithContentId = streamId
+            channelWithContentIdPromise.done()
             done.runAndDoneAsync(async () => {
                 if (streamKind === 'channelContent') {
                     const channel = bobsAnotherClient.stream(streamId)!
@@ -445,7 +448,6 @@ describe('clientTest', () => {
                     )
                     expect(messages).toHaveLength(1)
                     channel.on('eventDecrypted', onChannelNewMessage)
-                    channelWithContentId = streamId
                 }
             })
         }
@@ -453,6 +455,7 @@ describe('clientTest', () => {
 
         await expect(bobsAnotherClient.initializeUser()).toResolve()
         await bobsAnotherClient.startSync()
+        await channelWithContentIdPromise.expectToSucceed()
         expect(channelWithContentId).toBeDefined()
         bobsAnotherClient.sendMessage(channelWithContentId!, 'Hello, again!')
 

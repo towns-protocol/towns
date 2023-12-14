@@ -62,6 +62,9 @@ describe('cachingStreamRpcClientTests', () => {
             toExclusive: 50n,
         })
 
+        // Reset all mock counters etc
+        jest.clearAllMocks()
+
         // We're making 2 RPC calls, the first one should be uncached and the
         // second one should be cached. The responses should be equal.
         const uncachedResponse = await cachingRpcClient.getMiniblocksUnpacked(miniblocksRequest)
@@ -87,5 +90,46 @@ describe('cachingStreamRpcClientTests', () => {
         // The cached/uncached responses must be equal
         expect(cachedResponse.unpackedMiniblocks).toEqual(uncachedResponse.unpackedMiniblocks)
         await bobClient.stopSync()
+    })
+
+    test('getStreamIsFetchedFromCache', async () => {
+        await bobClient.initializeUser()
+        await bobClient.startSync()
+
+        const { streamId: spaceId } = await bobClient.createSpace(undefined)
+        const { streamId: channelId } = await bobClient.createChannel(
+            spaceId,
+            'name',
+            'topic',
+            undefined,
+            { minEventsPerSnapshot: 0, miniblockTimeMs: 1n },
+        )
+
+        await bobClient.waitForStream(channelId)
+
+        for (let i = 0; i < 50; i++) {
+            await expect(bobClient.sendMessage(channelId, `message ${i}`)).toResolve()
+        }
+
+        // Reset all mock counters etc
+        jest.clearAllMocks()
+
+        const uncachedResponse = await bobClient.rpcClient.getStream({ streamId: channelId })
+        // The first time, we expect the cache to be empty and match to be called 1 time
+        expect(openSpy).toHaveBeenCalledTimes(1)
+        expect(matchSpy).toHaveBeenCalledTimes(1)
+
+        // `Cache.put` called once
+        expect(putSpy).toHaveBeenCalledTimes(1)
+
+        // The second time we expect a cache hit
+        const cachedResponse = await bobClient.rpcClient.getStream({ streamId: channelId })
+        expect(openSpy).toHaveBeenCalledTimes(2)
+        expect(matchSpy).toHaveBeenCalledTimes(2)
+        // `Cache.put` still called only once since this was a cache hit
+        expect(putSpy).toHaveBeenCalledTimes(1)
+
+        expect(cachedResponse).toEqual(uncachedResponse)
+        bobClient.stopSync()
     })
 })
