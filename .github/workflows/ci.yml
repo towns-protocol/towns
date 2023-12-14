@@ -65,11 +65,10 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v3
+              uses: actions/setup-go@v4
               with:
-                  go-version: '1.21'
-                  cache: true
-                  cache-dependency-path: 'servers/**/go.sum'
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
@@ -110,7 +109,9 @@ jobs:
             - name: Linting River Node
               uses: golangci/golangci-lint-action@v3
               with:
+                  version: latest
                   working-directory: casablanca/node
+                  skip-pkg-cache: true
 
             # - name: Terraform Lint
             #   run: make lint
@@ -193,13 +194,10 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v3
+              uses: actions/setup-go@v4
               with:
-                  go-version: '1.21'
-                  cache: true
-                  cache-dependency-path: |
-                      servers/**/go.sum
-                      casablanca/node/go.sum
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
@@ -331,13 +329,10 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v3
+              uses: actions/setup-go@v4
               with:
-                  go-version: '1.21'
-                  cache: true
-                  cache-dependency-path: |
-                      servers/**/go.sum
-                      casablanca/node/go.sum
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
@@ -467,13 +462,10 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v3
+              uses: actions/setup-go@v4
               with:
-                  go-version: '1.21'
-                  cache: true
-                  cache-dependency-path: |
-                      servers/**/go.sum
-                      casablanca/node/go.sum
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
@@ -602,13 +594,10 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v3
+              uses: actions/setup-go@v4
               with:
-                  go-version: '1.21'
-                  cache: true
-                  cache-dependency-path: |
-                      servers/**/go.sum
-                      casablanca/node/go.sum
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
@@ -716,13 +705,10 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v3
+              uses: actions/setup-go@v4
               with:
-                  go-version: '1.21'
-                  cache: true
-                  cache-dependency-path: |
-                      casablanca/node/go.sum
-                        - name: Setup Go
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
@@ -782,13 +768,10 @@ jobs:
               run: git submodule update --init --recursive
 
             - name: Setup Go
-              uses: actions/setup-go@v3
+              uses: actions/setup-go@v4
               with:
-                  go-version: '1.21'
-                  cache: true
-                  cache-dependency-path: |
-                      servers/xchain/go.sum
-                      common/xchain/go.sum
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
 
             - uses: actions/setup-node@v3
               with:
