@@ -39,10 +39,8 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     ): void {
         // update memberships
         this.memberships.initialize(content.memberships, emitter)
-        // update usernames
-        this.userMetadata.initialize(content.usernames, 'username', emitter)
-        // update displayNames
-        this.userMetadata.initialize(content.displayNames, 'displayName', emitter)
+
+        this.userMetadata.initialize(content.usernames, content.displayNames, emitter)
         // loop over content.channels, update space channels metadata
         for (const [_, payload] of Object.entries(content.channels)) {
             this.addSpacePayload_Channel(payload, emitter)

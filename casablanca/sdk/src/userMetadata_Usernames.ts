@@ -4,7 +4,7 @@ import { EncryptedData } from '@river/proto'
 import { usernameChecksum } from './utils'
 import { dlog } from './dlog'
 
-export class Usernames {
+export class UserMetadata_Usernames {
     log = dlog('csb:streams:usernames')
     readonly streamId: string
     readonly plaintextUsernames = new Map<string, string>()

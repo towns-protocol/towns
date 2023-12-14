@@ -1,74 +1,56 @@
 import { WrappedEncryptedData as WrappedEncryptedData, EncryptedData } from '@river/proto'
-import { logNever } from './check'
 import TypedEmitter from 'typed-emitter'
 import { EmittedEvents } from './client'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
-import { bin_toHexString } from './binary'
 import { StreamEvents } from './streamEvents'
-import { Usernames } from './usernames'
+import { UserMetadata_Usernames } from './userMetadata_Usernames'
+import { UserMetadata_DisplayNames } from './userMetadata_DisplayNames'
+import { bin_toHexString } from './binary'
 
 export class StreamStateView_UserMetadata {
     readonly userId: string
     readonly streamId: string
-    readonly usernames: Usernames
+    readonly usernames: UserMetadata_Usernames
+    readonly displayNames: UserMetadata_DisplayNames
+
     get plaintextUsernames() {
         return this.usernames.plaintextUsernames
     }
 
-    readonly plaintextDisplayNames = new Map<string, string>()
-    readonly displayNameEvents = new Map<
-        string,
-        { encryptedData: EncryptedData; userId: string; pending: boolean }
-    >()
-
     constructor(userId: string, streamId: string) {
         this.userId = userId
         this.streamId = streamId
-        this.usernames = new Usernames(streamId)
+        this.usernames = new UserMetadata_Usernames(streamId)
+        this.displayNames = new UserMetadata_DisplayNames(streamId)
     }
 
     initialize(
-        userMetadata: { [userId: string]: WrappedEncryptedData },
-        metadataType: 'username' | 'displayName',
+        usernames: { [userId: string]: WrappedEncryptedData },
+        displayNames: { [userId: string]: WrappedEncryptedData },
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
         // Sort the payloads — this is necessary because we want to
         // make sure that whoever claimed a username first gets it.
-        const sortedPayloads = sortPayloads(userMetadata)
+        const sortedUsernames = sortPayloads(usernames)
+        for (const payload of sortedUsernames) {
+            if (!payload.wrappedEncryptedData.data) {
+                continue
+            }
+            const data = payload.wrappedEncryptedData.data
+            const userId = payload.userId
+            const eventId = bin_toHexString(payload.wrappedEncryptedData.eventHash)
+            this.usernames.addEncryptedData(eventId, data, userId, false, undefined, emitter)
+        }
 
-        if (metadataType === 'username') {
-            for (const payload of sortedPayloads) {
-                if (!payload.wrappedEncryptedData.data) {
-                    continue
-                }
-                const eventId = bin_toHexString(payload.wrappedEncryptedData.eventHash)
-                this.usernames.addEncryptedData(
-                    eventId,
-                    payload.wrappedEncryptedData.data,
-                    payload.userId,
-                    false,
-                    undefined,
-                    emitter,
-                )
+        const sortedDisplayNames = sortPayloads(displayNames)
+        for (const payload of sortedDisplayNames) {
+            if (!payload.wrappedEncryptedData.data) {
+                continue
             }
-        } else if (metadataType === 'displayName') {
-            for (const payload of sortedPayloads) {
-                if (!payload.wrappedEncryptedData.data) {
-                    continue
-                }
-                const eventId = bin_toHexString(payload.wrappedEncryptedData.eventHash)
-                this.displayNameEvents.set(eventId, {
-                    encryptedData: payload.wrappedEncryptedData.data,
-                    userId: payload.userId,
-                    pending: false,
-                })
-                emitter?.emit('newEncryptedContent', this.streamId, eventId, {
-                    kind: 'text',
-                    content: payload.wrappedEncryptedData.data,
-                })
-            }
-        } else {
-            logNever(metadataType)
+            const data = payload.wrappedEncryptedData.data
+            const userId = payload.userId
+            const eventId = bin_toHexString(payload.wrappedEncryptedData.eventHash)
+            this.usernames.addEncryptedData(eventId, data, userId, false, undefined, emitter)
         }
     }
 
@@ -78,12 +60,7 @@ export class StreamStateView_UserMetadata {
     ): void {
         const eventId = confirmedEvent.hashStr
         this.usernames.onConfirmEvent(eventId, emitter)
-
-        const displayNameEvent = this.displayNameEvents.get(eventId)
-        if (displayNameEvent) {
-            this.displayNameEvents.set(eventId, { ...displayNameEvent, pending: false })
-            this.emitDisplayNameUpdated(eventId, emitter)
-        }
+        this.displayNames.onConfirmEvent(eventId, emitter)
     }
 
     prependEvent(
@@ -96,71 +73,22 @@ export class StreamStateView_UserMetadata {
 
     appendEncryptedData(
         eventId: string,
-        encryptedData: EncryptedData,
+        data: EncryptedData,
         kind: 'displayName' | 'username',
         userId: string,
         cleartext: string | undefined,
         emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
-        switch (kind) {
-            case 'displayName': {
-                this.displayNameEvents.set(eventId, {
-                    userId,
-                    encryptedData: encryptedData,
-                    pending: true,
-                })
-                if (cleartext) {
-                    this.plaintextDisplayNames.set(userId, cleartext)
-                    this.emitDisplayNameUpdated(eventId, emitter)
-                } else {
-                    emitter?.emit('newEncryptedContent', this.streamId, eventId, {
-                        kind: 'text',
-                        content: encryptedData,
-                    })
-                }
-                break
-            }
-
-            case 'username': {
-                this.usernames.addEncryptedData(
-                    eventId,
-                    encryptedData,
-                    userId,
-                    true,
-                    cleartext,
-                    emitter,
-                )
-                break
-            }
+        if (kind === 'displayName') {
+            this.displayNames.addEncryptedData(eventId, data, userId, true, cleartext, emitter)
+        } else if (kind === 'username') {
+            this.usernames.addEncryptedData(eventId, data, userId, true, cleartext, emitter)
         }
     }
 
     onDecryptedContent(eventId: string, content: string, emitter?: TypedEmitter<EmittedEvents>) {
-        const displayNameEvent = this.displayNameEvents.get(eventId)
-
-        if (displayNameEvent) {
-            this.plaintextDisplayNames.set(displayNameEvent.userId, content)
-            this.emitDisplayNameUpdated(eventId, emitter)
-            return
-        }
-
+        this.displayNames.onDecryptedContent(eventId, content, emitter)
         this.usernames.onDecryptedContent(eventId, content, emitter)
-    }
-
-    emitDisplayNameUpdated(eventId: string, emitter?: TypedEmitter<EmittedEvents>) {
-        const event = this.displayNameEvents.get(eventId)
-        if (!event) {
-            return
-        }
-        // no information to emit — we haven't decrypted the display name yet
-        if (!this.plaintextDisplayNames.has(event.userId)) {
-            return
-        }
-        emitter?.emit(
-            event.pending ? 'streamPendingDisplayNameUpdated' : 'streamDisplayNameUpdated',
-            this.streamId,
-            event.userId,
-        )
     }
 }
 

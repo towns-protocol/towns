@@ -596,7 +596,7 @@ export class StreamStateView {
         return this.getContent().memberships
     }
 
-    getUserMetadata(): StreamStateView_UserMetadata {
+    getUserMetadata(): StreamStateView_UserMetadata | undefined {
         return this.getContent().getUserMetadata()
     }
 

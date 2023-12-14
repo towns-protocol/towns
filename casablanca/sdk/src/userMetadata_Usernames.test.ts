@@ -1,12 +1,12 @@
 import { EncryptedData } from '@river/proto'
-import { Usernames } from './usernames'
+import { UserMetadata_Usernames } from './userMetadata_Usernames'
 import { usernameChecksum } from './utils'
 
-describe('usernameTests', () => {
+describe('userMetadata_UsernamesTests', () => {
     const streamId = 'streamid1'
-    let usernames: Usernames
+    let usernames: UserMetadata_Usernames
     beforeEach(() => {
-        usernames = new Usernames(streamId)
+        usernames = new UserMetadata_Usernames(streamId)
     })
 
     test('clientCanSetUsername', async () => {

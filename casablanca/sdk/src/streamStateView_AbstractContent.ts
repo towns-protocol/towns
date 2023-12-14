@@ -68,7 +68,7 @@ export abstract class StreamStateView_AbstractContent {
         //
     }
 
-    getUserMetadata(): StreamStateView_UserMetadata {
-        throw new Error(`getUsermetadata not implemented for stream id ${this.streamId}`)
+    getUserMetadata(): StreamStateView_UserMetadata | undefined {
+        return undefined
     }
 }

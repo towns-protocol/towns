@@ -37,8 +37,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         this.memberships.initialize(content.memberships, emitter)
-        this.userMetadata.initialize(content.usernames, 'username', emitter)
-        this.userMetadata.initialize(content.displayNames, 'displayName', emitter)
+        this.userMetadata.initialize(content.usernames, content.displayNames, emitter)
     }
 
     appendEvent(
