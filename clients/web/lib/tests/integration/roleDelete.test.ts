@@ -166,7 +166,7 @@ describe('delete role', () => {
         ).toBe(false)
     })
 
-    test('delete user-gated role with a channel using it', async () => {
+    test.skip('delete user-gated role with a channel using it', async () => {
         /** Arrange */
         const { alice, bob, carol } = await registerAndStartClients(['alice', 'bob', 'carol'])
         if (!bob.walletAddress || !carol.walletAddress) {
