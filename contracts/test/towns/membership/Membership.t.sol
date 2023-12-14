@@ -7,17 +7,16 @@ import {IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.so
 import {IPlatformRequirements} from "contracts/src/towns/facets/platform/requirements/IPlatformRequirements.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IMembershipPricing} from "contracts/src/towns/facets/membership/pricing/IMembershipPricing.sol";
+import {IMembershipReferral} from "contracts/src/towns/facets/membership/referral/IMembershipReferral.sol";
 
 // libraries
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
+import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 // contracts
 import {MembershipSetup} from "./MembershipSetup.sol";
 import {MockAggregatorV3} from "contracts/test/mocks/MockAggregatorV3.sol";
 import {TieredLogPricingOracle} from "contracts/src/towns/facets/membership/pricing/TieredLogPricingOracle.sol";
-
-// debugging
-import {console} from "forge-std/console.sol";
 
 contract MembershipTest is
   IMembershipBase,
@@ -26,6 +25,8 @@ contract MembershipTest is
   MembershipSetup
 {
   int256 public constant EXCHANGE_RATE = 222616000000;
+  uint256 public constant REFERRAL_CODE = 1;
+  uint256 public constant MAX_BPS = 10000;
 
   // =============================================================
   //                           Join Town
@@ -91,6 +92,74 @@ contract MembershipTest is
     vm.prank(founder);
     vm.expectRevert(Membership__InvalidMaxSupply.selector);
     membership.setMembershipLimit(1);
+  }
+
+  // =============================================================
+  //                       Join Town Referral
+  // =============================================================
+
+  function test_joinTownWithReferral() external {
+    address alice = _randomAddress();
+    address bob = _randomAddress();
+    uint256 referralCode = 1;
+
+    vm.prank(founder);
+    membership.joinTownWithReferral(alice, bob, referralCode);
+
+    assertEq(membership.balanceOf(alice), 1);
+  }
+
+  function test_joinTownWithReferral_with_price() external {
+    address alice = _randomAddress();
+    address bob = _randomAddress();
+    uint256 referralCode = 1;
+    uint256 membershipPrice = 10 ether;
+    vm.deal(founder, membershipPrice);
+
+    vm.startPrank(founder);
+    membership.setMembershipCurrency(CurrencyTransfer.NATIVE_TOKEN);
+    membership.setMembershipPrice(membershipPrice);
+    vm.stopPrank();
+
+    vm.prank(founder);
+    membership.joinTownWithReferral{value: membershipPrice}(
+      alice,
+      bob,
+      referralCode
+    );
+
+    IPlatformRequirements platformReqs = IPlatformRequirements(townFactory);
+
+    address protocol = platformReqs.getFeeRecipient();
+    uint16 bpsFee = platformReqs.getMembershipBps();
+
+    uint256 protocolFee = BasisPoints.calculate(membershipPrice, bpsFee);
+
+    // assert that alice receives a membership token
+    assertEq(membership.balanceOf(alice), 1);
+
+    // assert the protocol got its fee 10 ether - protocolFee
+    assertEq(protocol.balance, protocolFee);
+
+    // new fee is 10 ether - protocolFee
+    uint256 netMembershipPrice = membershipPrice - protocolFee;
+
+    // 10% for the referrer
+    uint16 referralBps = IMembershipReferral(address(membership))
+      .referralCodeBps(referralCode);
+    uint256 referralFee = BasisPoints.calculate(
+      netMembershipPrice,
+      referralBps
+    );
+
+    // assert the referrer got their fee
+    assertEq(bob.balance, referralFee);
+
+    // assert the founder's DAO got its fee
+    assertEq(founderDAO.balance, netMembershipPrice - referralFee);
+
+    // assert the minter's eth got taken
+    assertEq(founder.balance, 0 ether);
   }
 
   // =============================================================
@@ -169,16 +238,11 @@ contract MembershipTest is
     address protocolRecipient = IPlatformRequirements(townFactory)
       .getFeeRecipient();
     uint16 bpsFee = IPlatformRequirements(townFactory).getMembershipBps();
-    uint256 denominator = IPlatformRequirements(townFactory).getDenominator();
 
-    uint256 potentialFee = _calculatePotentialFee(
-      membershipPrice,
-      bpsFee,
-      denominator
-    );
+    uint256 potentialFee = BasisPoints.calculate(membershipPrice, bpsFee);
 
     assertEq(protocolRecipient.balance, potentialFee);
-    assertEq(townDAO.balance, membershipPrice - potentialFee);
+    assertEq(founderDAO.balance, membershipPrice - potentialFee);
 
     uint64 membershipDuration = IPlatformRequirements(townFactory)
       .getMembershipDuration();
@@ -226,17 +290,6 @@ contract MembershipTest is
     vm.prank(founder);
     vm.expectRevert(Membership__InvalidAddress.selector);
     membership.renewMembership(address(0));
-  }
-
-  function test_renewMembership_revert_NotApprovedOrOwner() external {
-    address alice = _randomAddress();
-
-    vm.prank(founder);
-    membership.joinTown(alice);
-
-    vm.prank(_randomAddress());
-    vm.expectRevert(ApprovalCallerNotOwnerNorApproved.selector);
-    membership.renewMembership(alice);
   }
 
   // =============================================================
@@ -334,14 +387,6 @@ contract MembershipTest is
   // =============================================================
   //                           Helpers
   // =============================================================
-  function _calculatePotentialFee(
-    uint256 membershipPrice,
-    uint16 bpsFee,
-    uint256 denominator
-  ) internal pure returns (uint256) {
-    return (membershipPrice * bpsFee) / denominator;
-  }
-
   function _getCentsFromWei(uint256 weiAmount) private pure returns (uint256) {
     uint256 exchangeRate = uint256(EXCHANGE_RATE); // chainlink oracle returns this value
     uint256 exchangeRateDecimals = 10 ** 8; // chainlink oracle returns this value

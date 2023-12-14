@@ -13,10 +13,12 @@ import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol";
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {Entitled} from "contracts/src/towns/facets/Entitled.sol";
+import {MembershipReferralBase} from "./referral/MembershipReferralBase.sol";
 
 contract MembershipFacet is
   IMembership,
   MembershipBase,
+  MembershipReferralBase,
   ERC5643Base,
   ReentrancyGuard,
   ERC721A,
@@ -33,42 +35,94 @@ contract MembershipFacet is
   // =============================================================
   //                           Minting
   // =============================================================
+  function _validateJoinTown(address receiver) internal view {
+    if (receiver == address(0)) revert Membership__InvalidAddress();
+    if (_balanceOf(receiver) > 0) revert Membership__AlreadyMember();
+    if (
+      _getMembershipSupplyLimit() != 0 &&
+      _totalSupply() >= _getMembershipSupplyLimit()
+    ) revert Membership__MaxSupplyReached();
+
+    // TODO: should we validate the receiver or the msg.sender?
+    _validatePermission(Permissions.JoinTown);
+  }
 
   /// @inheritdoc IMembership
   function joinTown(
     address receiver
   ) external payable nonReentrant returns (uint256 tokenId) {
-    // TODO: should we validate the receiver or just the caller?
-    _validatePermission(Permissions.JoinTown);
+    _validateJoinTown(receiver);
 
-    // if the receiver is already a member, revert
-    if (_balanceOf(receiver) > 0) revert Membership__AlreadyMember();
-
-    // // if the membership price is 0, and we have reached the membership limit, revert
-    if (
-      _getMembershipSupplyLimit() != 0 &&
-      _totalSupply() >= _getMembershipSupplyLimit()
-    ) {
-      revert Membership__MaxSupplyReached();
+    // allocate protocol and membership fees
+    uint256 membershipPrice = _getMembershipPrice(_totalMinted());
+    if (membershipPrice > 0) {
+      uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
+      uint256 surplus = membershipPrice - protocolFee;
+      if (surplus > 0)
+        _transferOut(receiver, _getMembershipFeeRecipient(), surplus);
     }
 
+    // mint membership
     tokenId = _nextTokenId();
-
-    _collectMembershipFee(receiver, _totalMinted());
     _safeMint(receiver, 1);
+
+    // set expiration of membership
+    _renewSubscription(tokenId, _getMembershipDuration());
+  }
+
+  /// @inheritdoc IMembership
+  function joinTownWithReferral(
+    address receiver,
+    address referrer,
+    uint256 referralCode
+  ) external payable nonReentrant returns (uint256 tokenId) {
+    _validateJoinTown(receiver);
+
+    // allocate protocol, membership and referral fees
+    uint256 membershipPrice = _getMembershipPrice(_totalMinted());
+    if (membershipPrice > 0) {
+      uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
+      uint256 netMembershipPrice = membershipPrice - protocolFee;
+
+      if (netMembershipPrice > 0) {
+        // calculate referral fee from net membership price
+        uint256 referralFee = _calculateReferralAmount(
+          netMembershipPrice,
+          referralCode
+        );
+        _transferOut(receiver, referrer, referralFee);
+
+        // transfer remaining amount to fee recipient
+        uint256 recipientFee = netMembershipPrice - referralFee;
+        if (recipientFee > 0)
+          _transferOut(receiver, _getMembershipFeeRecipient(), recipientFee);
+      }
+    }
+
+    // mint membership
+    tokenId = _nextTokenId();
+    _safeMint(receiver, 1);
+
+    // set expiration of membership
     _renewSubscription(tokenId, _getMembershipDuration());
   }
 
   /// @inheritdoc IMembership
   function renewMembership(address receiver) external payable nonReentrant {
     if (receiver == address(0)) revert Membership__InvalidAddress();
+    if (_balanceOf(receiver) == 0) revert Membership__InvalidAddress();
 
     uint256 tokenId = _getTokenIdByMembership(receiver);
 
-    if (!_isApprovedOrOwner(tokenId))
-      revert ApprovalCallerNotOwnerNorApproved();
+    // allocate protocol and membership fees
+    uint256 membershipPrice = _getMembershipPrice(_totalMinted()); // _getRenewalPrice(tokenId);
+    if (membershipPrice > 0) {
+      uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
+      uint256 netPrice = membershipPrice - protocolFee;
+      if (netPrice > 0)
+        _transferOut(receiver, _getMembershipFeeRecipient(), netPrice);
+    }
 
-    _collectMembershipFee(receiver, _totalMinted());
     _renewSubscription(tokenId, _getMembershipDuration());
   }
 
@@ -228,14 +282,10 @@ contract MembershipFacet is
   //                           Overrides
   // =============================================================
 
-  // ERc5643 overrides
+  // ERC5643 overrides
   /// @dev only renewable if the expiration of the current membership is less than the default duration + current time. To prevent people from renewing too early.
   function _isRenewable(uint256 tokenId) internal view override returns (bool) {
     return _expiresAt(tokenId) < _getMembershipDuration() + block.timestamp;
-  }
-
-  function abs(int x) private pure returns (int) {
-    return x >= 0 ? x : -x;
   }
 
   // ERC721A overrides

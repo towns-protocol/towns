@@ -6,6 +6,7 @@ import {IPlatformRequirementsBase} from "./IPlatformRequirements.sol";
 
 // libraries
 import {PlatformRequirementsStorage} from "./PlatformRequirementsStorage.sol";
+import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 // contracts
 
@@ -31,7 +32,7 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
 
   // Membership BPS
   function _setMembershipBps(uint16 bps) internal {
-    if (bps > _getDenominator()) revert Platform__InvalidMembershipBps();
+    if (bps > BasisPoints.MAX_BPS) revert Platform__InvalidMembershipBps();
     PlatformRequirementsStorage.layout().membershipBps = bps;
     emit PlatformMembershipBpsSet(bps);
   }

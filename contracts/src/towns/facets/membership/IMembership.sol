@@ -35,11 +35,11 @@ interface IMembershipBase {
   error Membership__InvalidMaxSupply();
   error Membership__InvalidFreeAllocation();
   error Membership__InvalidPricingModule();
-
   error Membership__AlreadyMember();
   error Membership__InsufficientPayment();
   error Membership__PriceTooLow();
   error Membership__MaxSupplyReached();
+  error Membership__InvalidTokenId();
 
   // =============================================================
   //                           Events
@@ -48,7 +48,6 @@ interface IMembershipBase {
   event MembershipLimitUpdated(uint256 indexed limit);
   event MembershipCurrencyUpdated(address indexed currency);
   event MembershipFeeRecipientUpdated(address indexed recipient);
-
   event MembershipFreeAllocationUpdated(uint256 indexed allocation);
 }
 
@@ -62,6 +61,19 @@ interface IMembership is IMembershipBase {
    * @return The token id of the membership
    */
   function joinTown(address receiver) external payable returns (uint256);
+
+  /**
+   * @notice Join a town with a referral
+   * @param receiver The address of the receiver
+   * @param referrer The address of the referrer
+   * @param referralCode The referral code
+   * @return The token id of the membership
+   */
+  function joinTownWithReferral(
+    address receiver,
+    address referrer,
+    uint256 referralCode
+  ) external payable returns (uint256);
 
   /**
    * @notice Renew a town membership

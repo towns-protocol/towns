@@ -78,4 +78,14 @@ abstract contract FacetHelper is IDiamond {
       functionSelectors.push(selectors_[i]);
     }
   }
+
+  function removeSelector(bytes4 selector) public {
+    for (uint256 i = 0; i < functionSelectors.length; i++) {
+      if (functionSelectors[i] == selector) {
+        functionSelectors[i] = functionSelectors[functionSelectors.length - 1];
+        functionSelectors.pop();
+        break;
+      }
+    }
+  }
 }

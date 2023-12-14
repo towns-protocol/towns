@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 // interfaces
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {IMembership, IMembershipBase} from "contracts/src/towns/facets/membership/IMembership.sol";
-import {IERC2771Recipient} from "contracts/src/diamond/facets/recipient/IERC2771Recipient.sol";
 
 // libraries
 
@@ -13,6 +12,7 @@ import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 import {TokenOwnableHelper} from "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
+import {MembershipReferralHelper} from "contracts/test/towns/membership/MembershipReferralSetup.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 import {TownArchitectSetup} from "contracts/test/towns/architect/TownArchitectSetup.sol";
@@ -27,7 +27,7 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
   MembershipFacet internal membership;
   address townFactory;
   address founder;
-  address townDAO;
+  address founderDAO;
 
   function setUp() public override {
     super.setUp();
@@ -44,12 +44,15 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
     IntrospectionHelper introspectionHelper = new IntrospectionHelper();
     TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
     ERC721AHelper erc721aHelper = new ERC721AHelper();
+    MembershipReferralHelper membershipReferralHelper = new MembershipReferralHelper();
 
     MultiInit multiInit = new MultiInit();
     MockERC721A mockERC721A = new MockERC721A();
 
     founder = _randomAddress();
-    townDAO = _randomAddress();
+    founderDAO = _randomAddress();
+
+    // mint nft to founder so onlyOwner works
     uint256 tokenId = mockERC721A.mintTo(founder);
 
     townArchitectSetup.setUp();
@@ -57,18 +60,20 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
 
     membershipHelper.addSelectors(erc721aHelper.selectors());
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](3);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](4);
 
     cuts[0] = introspectionHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[1] = membershipHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[2] = tokenOwnableHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[3] = membershipReferralHelper.makeCut(IDiamond.FacetCutAction.Add);
 
-    address[] memory addresses = new address[](3);
+    address[] memory addresses = new address[](4);
     addresses[0] = introspectionHelper.facet();
     addresses[1] = membershipHelper.facet();
     addresses[2] = tokenOwnableHelper.facet();
+    addresses[3] = membershipReferralHelper.facet();
 
-    bytes[] memory payloads = new bytes[](3);
+    bytes[] memory payloads = new bytes[](4);
     payloads[0] = introspectionHelper.makeInitData("");
     payloads[1] = abi.encodeWithSelector(
       membershipHelper.initializer(),
@@ -79,7 +84,7 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
         maxSupply: 0,
         duration: 0,
         currency: address(0),
-        feeRecipient: townDAO,
+        feeRecipient: founderDAO,
         freeAllocation: 0,
         pricingModule: address(0)
       }),
@@ -90,6 +95,7 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
       address(mockERC721A),
       tokenId
     );
+    payloads[3] = membershipReferralHelper.makeInitData("");
 
     return
       Diamond.InitParams({
@@ -111,10 +117,11 @@ contract MembershipHelper is FacetHelper {
     membership = new MembershipFacet();
 
     uint256 index;
-    bytes4[] memory selectors_ = new bytes4[](19);
+    bytes4[] memory selectors_ = new bytes4[](20);
 
     // Minting
     selectors_[index++] = IMembership.joinTown.selector;
+    selectors_[index++] = IMembership.joinTownWithReferral.selector;
     selectors_[index++] = IMembership.renewMembership.selector;
     selectors_[index++] = IMembership.cancelMembership.selector;
     selectors_[index++] = IMembership.expiresAt.selector;

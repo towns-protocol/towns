@@ -1197,19 +1197,19 @@
       ]
     },
     "contracts/src/towns/facets/membership/IMembership.sol": {
-      "keccak256": "0x231c86eba93e033849cc333f82b2f2bfba5160c8f68347d1a4fd7436a153cbc2",
+      "keccak256": "0xd17d26e69b848f39150ad15ca53dd614d1b41aa20626684aec71b1e36ced06c0",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://abae5242693df12e96bdedec72fd3906a5864c86339174694d3ba1b7ff4cea60",
-        "dweb:/ipfs/QmaEd1RTKhi4wk8cqMebDbJZJJ3WnFqqyvCESfVKNYRu7M"
+        "bzz-raw://169f9a2e159254baa034a19025db8821db0c1a88780d39818a684fdf9969a759",
+        "dweb:/ipfs/QmZdL8p4mPh8SfK2dygdE1Rp1QdCnkvmhnTdafxSjghxFZ"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x838a0e0695423de65d5389f5ca7b520a0d59cc44aefe423c45e4923ebbbe5be7",
+      "keccak256": "0x38ff967d76bd15b583109244d7137d7f6d1d240dda78a96d1aa5a519264e3b09",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://bfd6ea91324c1e8928b7b009a975da894e185a7e6b3ddbeac0f1737935b43233",
-        "dweb:/ipfs/QmQmKrTF8aNrSQpkeYyufbALPqGo5Jy6z1RVsz5oTuaAE1"
+        "bzz-raw://3b218f149a6cdfe453f720ad99b0f495f4d629954ae8fcd162ac7522a8796b2c",
+        "dweb:/ipfs/QmaNvJvCXb1M9LJ2kG4Em29g6oen9k1SBntzvZErSLkbik"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipStorage.sol": {
@@ -1226,6 +1226,30 @@
       "urls": [
         "bzz-raw://7615a51f285468c699e4b1f39cb73c224e587c3751d644d8f84e1bc41ffbe041",
         "dweb:/ipfs/QmUoeTd9Bmrwi5pzF34eNWBxhym8iGp94fDtxJYdrRdnTt"
+      ]
+    },
+    "contracts/src/towns/facets/membership/referral/IMembershipReferral.sol": {
+      "keccak256": "0x6036703f09bc6f914a3b34739022f9570f161e55ac993caf2ec9e4c575375249",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://00042d6b496552adf50ff66d0c69a59dbee6f89397d715bef35d25b662bffc0c",
+        "dweb:/ipfs/QmTePxtA1mkCdMbK428r3p6uZFFhhUasNn93VEy8zn1kHS"
+      ]
+    },
+    "contracts/src/towns/facets/membership/referral/MembershipReferralBase.sol": {
+      "keccak256": "0xc52c8186d56ad5ff995224b33f42a2a05a7b8f08747ba18a2e7ed20a46f7b568",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e307b1b6ad4eb3bc1450c157f1cb716981c864ff9321b21f7566673c6a91e0d9",
+        "dweb:/ipfs/QmXuc5Noh313vTkfSi9fNv7KJu9CGMGgn45AE7cSmWNPdD"
+      ]
+    },
+    "contracts/src/towns/facets/membership/referral/MembershipReferralStorage.sol": {
+      "keccak256": "0x187166d3768bc6367bf311749c0aed1bfa0d2612078c22b6d205588b4b48c077",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://5a3947fa1a3a3681f47fd2e841a41f04123dc118acf3e082fc6c0532f8ab7920",
+        "dweb:/ipfs/QmYARC7rRUySb3hYRNmtaH7vJxrLspuyrzM2E7i5yfuzNd"
       ]
     },
     "contracts/src/towns/facets/owner/ITownOwner.sol": {
@@ -1285,11 +1309,11 @@
       ]
     },
     "contracts/src/towns/facets/proxy/TownProxy.sol": {
-      "keccak256": "0x8832531d75ac135e4ec5a244d37df05de0626602721d216cc0a0e55dfff7a78c",
+      "keccak256": "0x13959587a3c94c6bd107c67d051d2c9b7a8c2de15e46cf7a573405b02ce273f5",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9ac948cbaab99e928dd8bc37602316a9942688f040dd219b104ce0525f82b3d0",
-        "dweb:/ipfs/QmQDVrrswemg9uaZP4XWRudvYNzpC5PPc5wpvZigc58DFr"
+        "bzz-raw://670bc7b7010c7fbf683f884e4f20c6bac84d1a42a9f90912b6611b821208c105",
+        "dweb:/ipfs/QmWT591pRMxkfxc12YZCy4u19xGwQH8smnnohhAUTg4MaE"
       ]
     },
     "contracts/src/towns/facets/roles/IRoles.sol": {
@@ -1330,6 +1354,14 @@
       "urls": [
         "bzz-raw://12444da1f06a0fbe6d2d564d73d6d6bc58c09496af3aeea6988c3d3f9ee81c73",
         "dweb:/ipfs/QmTkpQ6cZmRYgvLUS4mqzLvFg5nabgQjpMnVK8JENboiA3"
+      ]
+    },
+    "contracts/src/utils/libraries/BasisPoints.sol": {
+      "keccak256": "0x42404b690ab2a235c9e71b41f41b6341078e5db2550d832a00eeb1dd5997e078",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://9c779b0dd413ffcdc61c6b908c0abe2bd32dd6c7907418c45067656728bf97e2",
+        "dweb:/ipfs/QmTzNt8XkCdprX6Zb5a43va2Uk5mWwtazjBALcEyjPnoxp"
       ]
     },
     "contracts/src/utils/libraries/CurrencyTransfer.sol": {

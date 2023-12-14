@@ -96,6 +96,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getTownFactory()": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "joinTown(address)": FunctionFragment;
+    "joinTownWithReferral(address,address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
     "renewMembership(address)": FunctionFragment;
@@ -147,6 +148,7 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "getTownFactory"
       | "isApprovedForAll"
       | "joinTown"
+      | "joinTownWithReferral"
       | "name"
       | "ownerOf"
       | "renewMembership"
@@ -285,6 +287,14 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "joinTown",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "joinTownWithReferral",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
@@ -470,6 +480,10 @@ export interface MembershipFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "joinTown", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "joinTownWithReferral",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
   decodeFunctionResult(
@@ -539,6 +553,8 @@ export interface MembershipFacetInterface extends utils.Interface {
     "MembershipFreeAllocationUpdated(uint256)": EventFragment;
     "MembershipLimitUpdated(uint256)": EventFragment;
     "MembershipPriceUpdated(uint256)": EventFragment;
+    "Membership__ReferralCreated(uint256,uint16)": EventFragment;
+    "Membership__ReferralRemoved(uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Paused(address)": EventFragment;
     "SubscriptionUpdate(uint256,uint64)": EventFragment;
@@ -561,6 +577,12 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "MembershipLimitUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "MembershipPriceUpdated"): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "Membership__ReferralCreated"
+  ): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "Membership__ReferralRemoved"
+  ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "SubscriptionUpdate"): EventFragment;
@@ -688,6 +710,29 @@ export type MembershipPriceUpdatedEvent = TypedEvent<
 
 export type MembershipPriceUpdatedEventFilter =
   TypedEventFilter<MembershipPriceUpdatedEvent>;
+
+export interface Membership__ReferralCreatedEventObject {
+  code: BigNumber;
+  bps: number;
+}
+export type Membership__ReferralCreatedEvent = TypedEvent<
+  [BigNumber, number],
+  Membership__ReferralCreatedEventObject
+>;
+
+export type Membership__ReferralCreatedEventFilter =
+  TypedEventFilter<Membership__ReferralCreatedEvent>;
+
+export interface Membership__ReferralRemovedEventObject {
+  code: BigNumber;
+}
+export type Membership__ReferralRemovedEvent = TypedEvent<
+  [BigNumber],
+  Membership__ReferralRemovedEventObject
+>;
+
+export type Membership__ReferralRemovedEventFilter =
+  TypedEventFilter<Membership__ReferralRemovedEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -879,6 +924,13 @@ export interface MembershipFacet extends BaseContract {
 
     joinTown(
       receiver: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    joinTownWithReferral(
+      receiver: PromiseOrValue<string>,
+      referrer: PromiseOrValue<string>,
+      referralCode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -1079,6 +1131,13 @@ export interface MembershipFacet extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  joinTownWithReferral(
+    receiver: PromiseOrValue<string>,
+    referrer: PromiseOrValue<string>,
+    referralCode: PromiseOrValue<BigNumberish>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   name(overrides?: CallOverrides): Promise<string>;
 
   ownerOf(
@@ -1276,6 +1335,13 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    joinTownWithReferral(
+      receiver: PromiseOrValue<string>,
+      referrer: PromiseOrValue<string>,
+      referralCode: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     name(overrides?: CallOverrides): Promise<string>;
 
     ownerOf(
@@ -1449,6 +1515,22 @@ export interface MembershipFacet extends BaseContract {
       price?: PromiseOrValue<BigNumberish> | null
     ): MembershipPriceUpdatedEventFilter;
 
+    "Membership__ReferralCreated(uint256,uint16)"(
+      code?: PromiseOrValue<BigNumberish> | null,
+      bps?: null
+    ): Membership__ReferralCreatedEventFilter;
+    Membership__ReferralCreated(
+      code?: PromiseOrValue<BigNumberish> | null,
+      bps?: null
+    ): Membership__ReferralCreatedEventFilter;
+
+    "Membership__ReferralRemoved(uint256)"(
+      code?: PromiseOrValue<BigNumberish> | null
+    ): Membership__ReferralRemovedEventFilter;
+    Membership__ReferralRemoved(
+      code?: PromiseOrValue<BigNumberish> | null
+    ): Membership__ReferralRemovedEventFilter;
+
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
@@ -1595,6 +1677,13 @@ export interface MembershipFacet extends BaseContract {
 
     joinTown(
       receiver: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    joinTownWithReferral(
+      receiver: PromiseOrValue<string>,
+      referrer: PromiseOrValue<string>,
+      referralCode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1815,6 +1904,13 @@ export interface MembershipFacet extends BaseContract {
 
     joinTown(
       receiver: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    joinTownWithReferral(
+      receiver: PromiseOrValue<string>,
+      referrer: PromiseOrValue<string>,
+      referralCode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

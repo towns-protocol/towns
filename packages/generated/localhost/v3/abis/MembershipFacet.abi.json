@@ -138,6 +138,21 @@
   },
   {
     "inputs": [],
+    "name": "Membership__InvalidReferralBps",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Membership__InvalidReferralCode",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Membership__InvalidTokenId",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "Membership__MaxSupplyReached",
     "type": "error"
   },
@@ -410,6 +425,38 @@
       }
     ],
     "name": "MembershipPriceUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "code",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "bps",
+        "type": "uint16"
+      }
+    ],
+    "name": "Membership__ReferralCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "code",
+        "type": "uint256"
+      }
+    ],
+    "name": "Membership__ReferralRemoved",
     "type": "event"
   },
   {
@@ -984,6 +1031,35 @@
       }
     ],
     "name": "joinTown",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "receiver",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "referrer",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "referralCode",
+        "type": "uint256"
+      }
+    ],
+    "name": "joinTownWithReferral",
     "outputs": [
       {
         "internalType": "uint256",

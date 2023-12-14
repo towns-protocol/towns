@@ -31,9 +31,6 @@ import {ServiceStatusHelper} from "contracts/test/node-network/service-status/Se
 // utils
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 contract DeployNodeRegistry is Deployer {
   DiamondCutHelper cutHelper = new DiamondCutHelper();
   DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();

@@ -21,6 +21,11 @@ import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
+/**
+ * @title TownImplementationHelper
+ * @notice Helper contract to create an implementation of a Town
+ * @dev This contract is used for testing purposes only
+ */
 contract TownImplementationHelper {
   OwnablePendingHelper ownableHelper = new OwnablePendingHelper();
   TokenPausableHelper tokenPausableHelper = new TokenPausableHelper();

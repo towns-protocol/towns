@@ -12,6 +12,7 @@ import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {ManagedProxyBase} from "contracts/src/diamond/proxy/managed/ManagedProxyBase.sol";
 import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
 import {MembershipBase} from "contracts/src/towns/facets/membership/MembershipBase.sol";
+import {MembershipReferralBase} from "contracts/src/towns/facets/membership/referral/MembershipReferralBase.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {IntrospectionBase} from "contracts/src/diamond/facets/introspection/IntrospectionBase.sol";
 
@@ -24,6 +25,7 @@ contract TownProxy is
   TokenOwnableBase,
   ERC721ABase,
   MembershipBase,
+  MembershipReferralBase,
   Multicall
 {
   constructor(TownProxyInit memory init) {
@@ -35,6 +37,7 @@ contract TownProxy is
     );
     __ERC721ABase_init(init.membership.name, init.membership.symbol);
     __MembershipBase_init(init.membership, init.managedProxy.manager);
+    __MembershipReferralBase_init();
   }
 
   function _startTokenId() internal pure override returns (uint256) {

@@ -10,8 +10,8 @@ import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 // libraries
 import {MembershipStorage} from "./MembershipStorage.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
+import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
-// contracts
 abstract contract MembershipBase is IMembershipBase {
   function __MembershipBase_init(
     MembershipInfo memory info,
@@ -59,38 +59,31 @@ abstract contract MembershipBase is IMembershipBase {
     return MembershipStorage.layout().tokenIdByMember[member];
   }
 
-  function _collectMembershipFee(address buyer, uint256 totalMinted) internal {
-    uint256 membershipPrice = _getMembershipPrice(totalMinted);
-
-    if (membershipPrice == 0) return;
-
+  function _collectProtocolFee(
+    address buyer,
+    uint256 membershipPrice
+  ) internal returns (uint256 protocolFeeBps) {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
     IPlatformRequirements platform = IPlatformRequirements(ds.townFactory);
 
     // Compute fees and recipient addresses
-    address feeRecipient = platform.getFeeRecipient();
+    address platformRecipient = platform.getFeeRecipient();
     uint16 bpsFee = platform.getMembershipBps();
-    uint256 denominator = platform.getDenominator();
-
-    uint256 protocolFeeBps = (membershipPrice * bpsFee) / denominator;
-    uint256 surplus = membershipPrice - protocolFeeBps;
+    protocolFeeBps = BasisPoints.calculate(membershipPrice, bpsFee);
 
     //transfer the platform fee to the platform fee recipient
+    _transferOut(buyer, platformRecipient, protocolFeeBps);
+  }
+
+  function _transferOut(address from, address to, uint256 fee) internal {
+    MembershipStorage.Layout storage ds = MembershipStorage.layout();
+
+    //transfer a fee to a user
     CurrencyTransfer.transferCurrency(
       ds.membershipCurrency,
-      buyer, // from
-      feeRecipient, // to
-      protocolFeeBps
-    );
-
-    if (surplus == 0) return;
-
-    //transfer the rest to the membership fee recipient
-    CurrencyTransfer.transferCurrency(
-      ds.membershipCurrency,
-      buyer, // from
-      ds.membershipFeeRecipient, // to
-      membershipPrice - protocolFeeBps
+      from, // from
+      to, // to
+      fee
     );
   }
 
