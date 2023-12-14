@@ -572,7 +572,8 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
 resource "aws_codedeploy_app" "river-node-code-deploy-app" {
   compute_platform = "ECS"
-  name             = "${local.node_name}-codedeploy-app"
+  name             = local.node_name
+  tags             = local.river_node_tags
 }
 
 resource "aws_iam_role" "ecs_code_deploy_role" {
@@ -640,7 +641,7 @@ resource "aws_ecs_service" "river-ecs-service" {
 
 resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   app_name               = aws_codedeploy_app.river-node-code-deploy-app.name
-  deployment_group_name  = "${local.node_name}-codedeploy-deployment-group"
+  deployment_group_name  = local.node_name
   service_role_arn       = aws_iam_role.ecs_code_deploy_role.arn
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
 
