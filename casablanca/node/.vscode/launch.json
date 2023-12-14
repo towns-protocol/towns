@@ -20,7 +20,7 @@
           "mode": "auto",
           "program": "${workspaceFolder}/node/main.go",
           "args": ["run"],
-          "cwd": "${workspaceFolder}/run_files/single_no_ent"
+          "cwd": "${workspaceFolder}/run_files/single"
       }
     ]
 }

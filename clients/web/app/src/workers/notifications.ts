@@ -5,11 +5,11 @@ import {
     ServiceWorkerMessageType,
     WEB_PUSH_NAVIGATION_CHANNEL,
 } from './types.d'
-
-import { appNotificationFromPushEvent, pathFromAppNotification } from './notificationParsers'
-import { env } from '../utils/environment'
 import { User, startDB } from '../idb/notificationsMeta'
-import { checkClientIsVisible } from './utils'
+import { appNotificationFromPushEvent, pathFromAppNotification } from './notificationParsers'
+import { checkClientIsVisible, getShortenedName } from './utils'
+
+import { env } from '../utils/environment'
 
 let idbChannels: ReturnType<typeof startDB>['idbChannels'] | undefined = undefined
 let idbSpaces: ReturnType<typeof startDB>['idbSpaces'] | undefined = undefined
@@ -62,12 +62,23 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             type?: ServiceWorkerMessageType
             space?: SpaceData
             membersMap?: UserIdToMember
+            myProfile?: RoomMember
         } = event.data
 
         event.waitUntil(addData())
 
         async function addData() {
             switch (data.type) {
+                case ServiceWorkerMessageType.MyUserId:
+                    if (data.myProfile?.userId) {
+                        const userId = data.myProfile.userId
+                        try {
+                            await addMyUserIdToIdb(userId)
+                        } catch (error) {
+                            console.error('sw:push: error adding my userId to idb', userId, error)
+                        }
+                    }
+                    break
                 case ServiceWorkerMessageType.SpaceMetadata:
                     if (data.space) {
                         const space = data.space
@@ -204,26 +215,72 @@ function generateNewNotificationMessage(
     }
 }
 
-function generateDM(sender: string | undefined, recipients: string[] | undefined) {
+function generateDmTitle(sender: string | undefined, recipients: User[]): string {
+    console.log('sw:push: generateDmTitle INPUT', 'senderName', sender, 'recipients', recipients)
+    const recipientNames = recipients
+        .map((recipient) => getShortenedName(recipient.name))
+        .filter((name) => name !== undefined) as string[]
+    switch (true) {
+        case stringHasValue(sender) && recipientNames.length === 0:
+            return `${sender}`
+        case stringHasValue(sender) && recipientNames.length === 1:
+            return `${sender} and ${recipientNames[0]}`
+        case stringHasValue(sender) && recipientNames.length === 2:
+            return `${sender}, ${recipientNames[0]}, and one other`
+        case stringHasValue(sender) && recipientNames.length > 2:
+            return `${sender}, ${recipientNames[0]}, and ${recipientNames.length - 1} others`
+        case !stringHasValue(sender) && recipientNames.length === 1:
+            return `${recipientNames[0]} and one other`
+        case !stringHasValue(sender) && recipientNames.length === 2:
+            return `${recipientNames[0]}, ${recipientNames[1]}, and one other`
+        case !stringHasValue(sender) && recipientNames.length > 2:
+            return `${recipientNames[0]}, ${recipientNames[1]}, and ${
+                recipientNames.length - 1
+            } others`
+        default:
+            return 'Direct Message'
+    }
+}
+
+function generateDM(
+    myUserId: string | undefined,
+    sender: string | undefined,
+    recipients: User[] | undefined,
+) {
+    // if myUserId is available, remove it from the recipients list
+    const recipientsExcludeMe =
+        recipients?.filter((recipient) => (myUserId ? recipient.id !== myUserId : false)) ?? []
+    console.log(
+        'sw:push: recipientsExcludeMe',
+        recipientsExcludeMe,
+        'recipients',
+        recipients,
+        'myUserId',
+        myUserId,
+        'senderName',
+        sender,
+    )
+    const title = generateDmTitle(sender, recipientsExcludeMe)
     let body = ''
     switch (true) {
-        case stringHasValue(sender) && recipients?.length === 1:
+        case stringHasValue(sender) && recipientsExcludeMe?.length === 0:
             body = `@${sender} sent you a direct message`
             break
-        case stringHasValue(sender) && recipients && recipients.length > 1:
+        case stringHasValue(sender) && recipientsExcludeMe && recipientsExcludeMe.length > 1:
             body = `@${sender} sent a message in a group you’re in`
             break
-        case !stringHasValue(sender) && recipients?.length === 1:
+        case !stringHasValue(sender) && recipientsExcludeMe?.length === 0:
             body = `You got a direct message`
             break
-        case !stringHasValue(sender) && recipients && recipients.length > 1:
+        case !stringHasValue(sender) && recipientsExcludeMe && recipientsExcludeMe.length > 1:
             body = `A group you’re in has a new message`
             break
         default:
             break
     }
+    console.log('sw:push: generateDM OUTPUT', { title, body })
     return {
-        title: 'Direct Message',
+        title,
         body,
     }
 }
@@ -287,7 +344,8 @@ async function getNotificationContent(notification: AppNotification): Promise<{
     let townName: string | undefined = undefined
     let channelName: string | undefined = undefined
     let senderName: string | undefined = undefined
-    let recipients: string[] = []
+    let recipients: User[] = []
+    let myUserId: string | undefined = undefined
 
     if (!idbSpaces || !idbChannels || !idbUsers) {
         ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
@@ -297,6 +355,8 @@ async function getNotificationContent(notification: AppNotification): Promise<{
         const space = await idbSpaces.get(notification.content.spaceId)
         const channel = await idbChannels.get(notification.content.channelId)
         const sender = await idbUsers.get(notification.content.senderId)
+        const myUser = await idbUsers.get(ServiceWorkerMessageType.MyUserId)
+        myUserId = myUser?.name // this is the userId, not the displayName
         if (
             notification.notificationType === AppNotificationType.DirectMessage &&
             notification.content.recipients &&
@@ -311,13 +371,18 @@ async function getNotificationContent(notification: AppNotification): Promise<{
             })
             const dbUsers = await Promise.all(dbUsersPromises)
             recipients = dbUsers
-                .map((user) => user?.name)
-                .filter((name) => name !== undefined) as string[]
+                .map((user) => {
+                    if (user?.id && user?.name) {
+                        return user
+                    }
+                })
+                .filter((user) => user !== undefined) as User[]
         }
 
         townName = space?.name
         channelName = channel?.name
-        senderName = sender?.name
+        // transform the sender name to the shortened version
+        senderName = getShortenedName(sender?.name)
     } catch (error) {
         console.error('sw:push: error fetching space/channel name from idb', error)
     }
@@ -331,7 +396,7 @@ async function getNotificationContent(notification: AppNotification): Promise<{
 
     switch (notification.notificationType) {
         case AppNotificationType.DirectMessage:
-            return generateDM(senderName, recipients)
+            return generateDM(myUserId, senderName, recipients)
         case AppNotificationType.NewMessage:
             if (townName) {
                 return generateNewNotificationMessage(townName, channelName, senderName)
@@ -353,6 +418,17 @@ async function getNotificationContent(notification: AppNotification): Promise<{
                 body: 'New Notification',
             }
     }
+}
+
+async function addMyUserIdToIdb(userId: string) {
+    if (!idbUsers) {
+        ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
+    }
+    await idbUsers.set({
+        id: ServiceWorkerMessageType.MyUserId,
+        name: userId,
+    })
+    console.log('sw:push: added my userId to idb', userId)
 }
 
 async function addSpaceToIdb(space: SpaceData) {

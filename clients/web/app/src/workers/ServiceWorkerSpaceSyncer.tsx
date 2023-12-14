@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import {
     RoomIdentifier,
     SpaceContextProvider,
+    useMyProfile,
     useSpaceData,
     useUserLookupContext,
     useZionContext,
@@ -24,6 +25,16 @@ export function ServiceWorkerSpacesSyncer() {
 function MessageSender({ spaceId }: { spaceId: RoomIdentifier }) {
     const space = useSpaceData(spaceId)
     const members = useUserLookupContext()
+    const myProfile = useMyProfile()
+
+    useEffect(() => {
+        if (myProfile) {
+            navigator.serviceWorker.controller?.postMessage({
+                type: ServiceWorkerMessageType.MyUserId,
+                myProfile,
+            })
+        }
+    }, [myProfile])
 
     useEffect(() => {
         navigator.serviceWorker.controller?.postMessage({
