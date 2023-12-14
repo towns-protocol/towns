@@ -19,6 +19,10 @@ on:
                 description: 'Docker image tag'
                 required: true
                 default: 'latest'
+            auto_deploy:
+                description: 'Auto deploy to AWS'
+                required: true
+                default: 'true'
 
     workflow_call:
         secrets:
@@ -39,6 +43,10 @@ on:
             docker_image_tag:
                 description: 'Docker image tag'
                 type: string
+                required: true
+            auto_deploy:
+                description: 'Auto deploy to AWS'
+                type: boolean
                 required: true
 
 env:
@@ -133,6 +141,8 @@ jobs:
                   # env: # Computed via the root env block
 
     deploy:
+        # if this is a push to main, we deploy to AWS. otherwise we check if the user wants to deploy
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' || inputs.auto_deploy == 'true'
         uses: './.github/workflows/River_deploy.yml'
         needs: build
         permissions:
