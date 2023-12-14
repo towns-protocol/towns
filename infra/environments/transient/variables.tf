@@ -24,8 +24,8 @@ variable "git_pr_number" {
   }
 }
 
-variable "is_transient_lite" {
-  description = "Is this a transient lite environment?"
-  type        = bool
-  default     = false
+variable "num_nodes" {
+  description = "Number of nodes to create"
+  type        = number
+  default     = 1
 }

@@ -15,7 +15,8 @@ jobs:
         runs-on: ubuntu-latest
         permissions: write-all
         outputs:
-            provision_full_transient_environment: ${{ steps.check_labels.outputs.provision_full_transient_environment }}
+            transient_environment_type: ${{ steps.check_labels.outputs.transient_environment_type }}
+            num_nodes: ${{ steps.check_labels.outputs.num_nodes }}
         steps:
             - name: Check labels
               id: check_labels
@@ -28,8 +29,19 @@ jobs:
                           repo: context.repo.repo,
                           issue_number: context.issue.number
                       });
-                      const provision_full_transient_environment = labels.data.some(label => label.name === 'provision full transient environment');
-                      core.setOutput('provision_full_transient_environment', provision_full_transient_environment);
+                      const single_node_transient_environment = labels.data.some(label => label.name === 'single-node transient environment');
+                      const multi_node_transient_environment = labels.data.some(label => label.name === 'multi-node transient environment');
+                      const transientEnvironmentType = 
+                        multi_node_transient_environment  ? 'multi-node' :
+                        single_node_transient_environment ? 'single-node' :
+                                                            'lite';
+
+                      const numNodes = 
+                        transientEnvironmentType === 'multi-node'  ? 10 :
+                        transientEnvironmentType === 'single-node' ? 1 : 0;
+
+                      core.setOutput('transient_environment_type', transientEnvironmentType);
+                      core.setOutput('num_nodes', numNodes);
 
     provision_transient_environment:
         needs: check_labels
@@ -42,7 +54,9 @@ jobs:
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             ENV: 'transient'
             TF_VAR_cloudflare_terraform_api_token: ${{ secrets.CLOUDFLARE_TERRAFORM_API_TOKEN }}
+            TF_VAR_num_nodes: ${{ needs.check_labels.outputs.num_nodes }}
             GIT_PR_NUMBER: ${{ github.event.pull_request.number}}
+            CI_AUTOAPPROVE: true
 
         steps:
             - name: Login to Docker Hub
@@ -60,12 +74,7 @@ jobs:
 
             - name: Terraform apply
               working-directory: ./infra
-              env:
-                  CI_AUTOAPPROVE: true
-                  IS_TRANSIENT_LITE: ${{ needs.check_labels.outputs.provision_full_transient_environment != 'true' }}
-              run:
-                  make apply
-                  # If action failed, we send a slack notification
+              run: make apply
 
             - name: Slack notification
               if: failure()
@@ -94,7 +103,7 @@ jobs:
         needs: check_labels
         permissions: write-all
 
-        if: needs.check_labels.outputs.provision_full_transient_environment == 'true'
+        if: needs.check_labels.outputs.num_nodes > 0
         # TODO: only run if a change in /casablanca/node is detected
         # TODO: only deploy if the new docker image is different than what's currently active
         with:
@@ -111,7 +120,7 @@ jobs:
         needs: [check_labels, provision_transient_environment, river_node_docker]
         permissions: write-all
 
-        if: needs.check_labels.outputs.provision_full_transient_environment == 'true'
+        if: needs.check_labels.outputs.num_nodes > 0
         # TODO: only run if a change in /casablanca/node is detected
         # TODO: only deploy if the new docker image is different than what's currently active
         with:
@@ -119,8 +128,8 @@ jobs:
             docker_image_tag: ${{ format('transient-{0}-latest', github.event.pull_request.number )}}
 
     run_synthetic_transactions_test:
-        needs: river_node_continuous_deploys
-        if: needs.check_labels.outputs.provision_full_transient_environment == 'true'
+        needs: [check_labels, river_node_continuous_deploys]
+        if: needs.check_labels.outputs.num_nodes > 0
         uses: './.github/workflows/Synthetic_transactions.yml'
         secrets:
             SLACK_CI_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}

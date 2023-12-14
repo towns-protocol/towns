@@ -2,10 +2,8 @@ CMD                     ?= docker compose run --rm terraform
 NOCACHECMD              ?= docker compose build --no-cache terraform
 terraform_folder		= environments/${ENV}
 terraform_workspace_name = $(ENV)
-is_transient_lite       ?= false
 
 override CI_AUTOAPPROVE := $(if $(filter true,$(CI_AUTOAPPROVE)),-auto-approve,$(CI_AUTOAPPROVE))
-override is_transient_lite := $(if $(filter true,$(IS_TRANSIENT_LITE)),true,false)
 
 # if the ENV is set to transient, then we will use the GIT_PR_NUMBER as the workspace name
 override terraform_workspace_name := $(if $(filter transient,$(ENV)),transient-$(GIT_PR_NUMBER),$(ENV))
@@ -24,7 +22,7 @@ endif
 	@echo TF_VAR_datadog_app_key=$(value TF_VAR_datadog_app_key) >> .env
 ifeq ($(ENV), transient)
 	@echo TF_VAR_git_pr_number=$(GIT_PR_NUMBER) >> .env
-	@echo TF_VAR_is_transient_lite=$(is_transient_lite) >> .env
+	@echo TF_VAR_num_nodes=$(TF_VAR_num_nodes) >> .env
 endif
 
 

@@ -64,6 +64,10 @@ resource "cloudflare_record" "sample_app_dns" {
   ttl     = 60
 }
 
+locals {
+  create_db_cluster = var.num_nodes > 0
+}
+
 module "river_db_cluster" {
   source           = "../../modules/river-db-cluster"
   database_subnets = local.transient_global_remote_state.vpc.database_subnets
@@ -71,13 +75,11 @@ module "river_db_cluster" {
 
   is_transient = true
 
-  count = var.is_transient_lite ? 0 : 1
+  count = local.create_db_cluster ? 1 : 0
 }
 
 locals {
-  count = var.is_transient_lite ? 0 : 1
-
-  river_node_db = var.is_transient_lite ? null : module.river_db_cluster[0]
+  river_node_db = local.create_db_cluster ? module.river_db_cluster[0] : null
 
   is_transient  = true
   git_pr_number = var.git_pr_number
@@ -97,11 +99,11 @@ locals {
 
 }
 
-module "river_node_1" {
+module "river_node" {
   source      = "../../modules/river-node"
   node_number = 1
 
-  count         = local.count
+  count         = var.num_nodes
   river_node_db = local.river_node_db
   is_transient  = local.is_transient
   git_pr_number = var.git_pr_number
