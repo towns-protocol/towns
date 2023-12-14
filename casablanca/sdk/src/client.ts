@@ -47,7 +47,7 @@ import {
     makeUserToDeviceStreamId,
     userIdFromAddress,
 } from './id'
-import { SignerContext, makeEvent, unpackMiniblock, unpackStreamResponse } from './sign'
+import { SignerContext, makeEvent, unpackStreamResponse } from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
@@ -94,12 +94,13 @@ import { EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { DecryptionExtensions, EntitlementsDelegate } from './decryptionExtensions'
 import { PersistenceStore } from './persistenceStore'
 import { SyncedStreams } from './syncedStreams'
+import { CachingStreamRpcClient } from './cachingStreamRpcClient'
 
 export type EmittedEvents = StreamEvents
 
 export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
     readonly signerContext: SignerContext
-    readonly rpcClient: StreamRpcClientType
+    readonly rpcClient: CachingStreamRpcClient
     readonly userId: string
     readonly streams: SyncedStreams
 
@@ -148,7 +149,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         )
         this.entitlementsDelegate = entitlementsDelegate
         this.signerContext = signerContext
-        this.rpcClient = rpcClient
+        this.rpcClient = new CachingStreamRpcClient(rpcClient)
 
         this.userId = userIdFromAddress(signerContext.creatorAddress)
 
@@ -1254,15 +1255,17 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             })
             const toExclusive = stream.view.miniblockInfo.min
             const fromInclusive = stream.view.prevSnapshotMiniblockNum
-            const response = await this.rpcClient.getMiniblocks({
+            const response = await this.rpcClient.getMiniblocksUnpacked({
                 streamId,
                 fromInclusive,
                 toExclusive,
             })
-            const miniblocks = response.miniblocks.map((m) => unpackMiniblock(m))
-            const eventIds = miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
+
+            const eventIds = response.unpackedMiniblocks.flatMap((m) =>
+                m.events.map((e) => e.hashStr),
+            )
             const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
-            stream.prependEvents(miniblocks, cleartexts, response.terminus)
+            stream.prependEvents(response.unpackedMiniblocks, cleartexts, response.terminus)
             return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
         }
 
@@ -1292,15 +1295,17 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         if (deviceSummary.lowerBound < stream.view.miniblockInfo.min) {
             const toExclusive = stream.view.miniblockInfo.min
             const fromInclusive = deviceSummary.lowerBound
-            const response = await this.rpcClient.getMiniblocks({
+            const response = await this.rpcClient.getMiniblocksUnpacked({
                 streamId: this.userToDeviceStreamId,
                 fromInclusive,
                 toExclusive,
             })
-            const miniblocks = response.miniblocks.map((m) => unpackMiniblock(m))
-            const eventIds = miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
+
+            const eventIds = response.unpackedMiniblocks.flatMap((m) =>
+                m.events.map((e) => e.hashStr),
+            )
             const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
-            stream.prependEvents(miniblocks, cleartexts, response.terminus)
+            stream.prependEvents(response.unpackedMiniblocks, cleartexts, response.terminus)
         }
     }
 
