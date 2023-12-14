@@ -494,7 +494,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             this.signerContext,
             make_DMChannelPayload_Membership({
                 userId: userId,
-                op: MembershipOp.SO_INVITE,
+                op: MembershipOp.SO_JOIN,
             }),
         )
 
@@ -545,7 +545,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 this.signerContext,
                 make_GDMChannelPayload_Membership({
                     userId: userId,
-                    op: MembershipOp.SO_INVITE,
+                    op: MembershipOp.SO_JOIN,
                 }),
             )
             events.push(inviteEvent)

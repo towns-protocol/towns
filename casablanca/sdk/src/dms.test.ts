@@ -25,21 +25,22 @@ describe('dmsTests', () => {
         const alicesClient = await makeInitAndStartClient()
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
-        expect(stream.view.getMemberships().joinedUsers).toEqual(new Set([bobsClient.userId]))
-        expect(stream.view.getMemberships().invitedUsers).toEqual(new Set([alicesClient.userId]))
+        expect(stream.view.getMemberships().joinedUsers).toEqual(
+            new Set([bobsClient.userId, alicesClient.userId]),
+        )
     })
 
-    test('clientCanJoinAndLeaveDM', async () => {
+    test('clientsAreJoinedAutomaticallyAndCanLeaveDM', async () => {
         const bobsClient = await makeInitAndStartClient()
         const alicesClient = await makeInitAndStartClient()
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
         const stream = await bobsClient.waitForStream(streamId)
         await waitFor(() => {
             expect(stream.view.getMemberships().joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId]),
             )
         })
+
         await expect(alicesClient.leaveStream(streamId)).toResolve()
         await waitFor(() => {
             expect(stream.view.getMemberships().joinedUsers).toEqual(new Set([bobsClient.userId]))
@@ -53,7 +54,6 @@ describe('dmsTests', () => {
         await expect(bobsClient.waitForStream(streamId)).toResolve()
         await expect(bobsClient.sendMessage(streamId, 'hello')).toResolve()
 
-        await expect(alicesClient.joinStream(streamId)).toResolve()
         await expect(alicesClient.waitForStream(streamId)).toResolve()
         await expect(alicesClient.sendMessage(streamId, 'hello')).toResolve()
     })

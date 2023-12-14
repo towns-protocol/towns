@@ -301,7 +301,7 @@ func (s *Service) createStream_DMChannel(
 	if err != nil {
 		return nil, err
 	}
-	err = s.addDerivedMembershipEventToUserStream(ctx, otherUserStream, otherUserView, streamId, inviteEvent, MembershipOp_SO_INVITE)
+	err = s.addDerivedMembershipEventToUserStream(ctx, otherUserStream, otherUserView, streamId, inviteEvent, MembershipOp_SO_JOIN)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +355,7 @@ func (s *Service) createStream_GDMChannel(
 
 	// Check that all invite events belong to a real user, store in slice to avoid fetching twice.
 	for _, event := range parsedEvents[2:] {
-		if err := validateGDMChannelMembershipEvent(event, MembershipOp_SO_INVITE); err != nil {
+		if err := validateGDMChannelMembershipEvent(event, MembershipOp_SO_JOIN); err != nil {
 			return nil, err
 		}
 
@@ -391,7 +391,7 @@ func (s *Service) createStream_GDMChannel(
 			invitation.streamView,
 			streamId,
 			invitation.event,
-			MembershipOp_SO_INVITE)
+			MembershipOp_SO_JOIN)
 		if err != nil {
 			return nil, err
 		}
