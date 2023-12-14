@@ -156,17 +156,6 @@ resource "aws_security_group" "post_provision_config_lambda_function_sg" {
   }
 }
 
-// TODO: delete
-resource "aws_secretsmanager_secret" "rds_river_node_password" {
-  name = "${local.node_name}-postgres-db-password"
-  tags = local.river_node_tags
-}
-
-resource "aws_secretsmanager_secret_version" "rds_river_node_password" {
-  secret_id     = aws_secretsmanager_secret.rds_river_node_password.id
-  secret_string = "DUMMY"
-}
-
 module "post_provision_config" {
   source = "../../modules/post-provision-config"
 
@@ -218,21 +207,6 @@ resource "aws_cloudwatch_log_subscription_filter" "dd_agent_log_group_filter" {
   log_group_name  = aws_cloudwatch_log_group.dd_agent_log_group.name
   filter_pattern  = ""
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
-}
-
-resource "aws_secretsmanager_secret" "river_node_wallet_credentials" {
-  name = "${local.node_name}-wallet-key"
-  tags = local.river_node_tags
-}
-
-// TODO: delete
-resource "aws_secretsmanager_secret_version" "river_node_wallet_credentials" {
-  secret_id     = aws_secretsmanager_secret.river_node_wallet_credentials.id
-  secret_string = <<EOF
-{
-  "walletPathPrivateKey": "DUMMY"
-}
-EOF
 }
 
 resource "aws_secretsmanager_secret" "river_node_home_chain_network_url" {
