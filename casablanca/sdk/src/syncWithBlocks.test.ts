@@ -1,5 +1,4 @@
-import { ConnectError } from '@connectrpc/connect'
-import { MembershipOp } from '@river/proto'
+import { MembershipOp, StreamAndCookie, SyncOp } from '@river/proto'
 import { dlog } from './dlog'
 import {
     genId,
@@ -141,82 +140,74 @@ describe('syncWithBlocks', () => {
         log('addEvent response', { resp })
 
         // Bob starts sync on the channel
-        const abortController = new AbortController()
-        const syncStream = bob.syncStreams(
-            {
-                syncPos: [channel.stream!.nextSyncCookie!],
-            },
-            {
-                signal: abortController.signal,
-            },
-        )
+        const syncStream = bob.syncStreams({
+            syncPos: [channel.stream!.nextSyncCookie!],
+        })
 
         // If there is a message, next expect a miniblock header, and vise versa.
         let expectMessage = true
         let blocksSeen = 0
-        let abortError: ConnectError | undefined = undefined
         log('===================syncing===================')
-        try {
-            for await (const res of timeoutIterable(syncStream, 5000)) {
-                expect(res.stream).toBeDefined()
-                const parsed = unpackEnvelopes(res.stream!.events)
-                log('===================sunk===================', { parsed })
-                for (const p of parsed) {
-                    if (knownHashes.has(p.hashStr)) {
-                        continue
-                    }
-                    knownHashes.add(p.hashStr)
-
-                    if (expectMessage) {
-                        const message = getMessagePayload(p)
-                        expect(message).toBeDefined()
-                        expect(message?.ciphertext).toEqual(text)
-                        log('messageSeen', { message })
-                        expectMessage = false
-                    } else {
-                        const miniblockHeader = getMiniblockHeader(p)
-                        expect(miniblockHeader).toBeDefined()
-                        expect(miniblockHeader?.miniblockNum).toEqual(BigInt(blocksSeen + 1))
-                        expect(miniblockHeader?.eventHashes).toHaveLength(1)
-                        expect(miniblockHeader?.eventHashes[0]).toEqual(nextHash)
-
-                        if (blocksSeen > 10) {
-                            log('aborting sync')
-                            abortController.abort()
-                        }
-                        expectMessage = true
-                        text = `${text} ${blocksSeen}`
-                        log('expectMessgage', { text })
-                        blocksSeen++
-
-                        const messageEvent = await makeEvent(
-                            bobsContext,
-                            make_ChannelPayload_Message({
-                                ...TEST_ENCRYPTED_MESSAGE_PROPS,
-                                ciphertext: text,
-                            }),
-                            p.envelope.hash,
-                        )
-                        nextHash = messageEvent.hash
-                        const response = await bob.addEvent({
-                            streamId: channelId,
-                            event: messageEvent,
-                        })
-                        log('addEvent response', { response })
-                    }
-                }
+        for await (const res of timeoutIterable(syncStream, 5000)) {
+            if (res.syncOp === SyncOp.SYNC_CLOSE) {
+                // done with sync
+                break
             }
-        } catch (e) {
-            log('sync done with error', e)
-            if (e instanceof ConnectError) {
-                abortError = e
-            } else {
-                throw e
+            if (res.syncOp !== SyncOp.SYNC_UPDATE || !res.stream) {
+                // skip non-stream cookie responses
+                continue
+            }
+            const stream: StreamAndCookie | undefined = res.stream
+            expect(stream).toBeDefined()
+            const parsed = unpackEnvelopes(res.stream.events)
+            log('===================sunk===================', { parsed })
+            for (const p of parsed) {
+                if (knownHashes.has(p.hashStr)) {
+                    continue
+                }
+                knownHashes.add(p.hashStr)
+
+                if (expectMessage) {
+                    const message = getMessagePayload(p)
+                    expect(message).toBeDefined()
+                    expect(message?.ciphertext).toEqual(text)
+                    log('messageSeen', { message })
+                    expectMessage = false
+                } else {
+                    const miniblockHeader = getMiniblockHeader(p)
+                    expect(miniblockHeader).toBeDefined()
+                    expect(miniblockHeader?.miniblockNum).toEqual(BigInt(blocksSeen + 1))
+                    expect(miniblockHeader?.eventHashes).toHaveLength(1)
+                    expect(miniblockHeader?.eventHashes[0]).toEqual(nextHash)
+
+                    if (blocksSeen > 10) {
+                        log('cancel sync')
+                        await bob.cancelSync({ syncId: res.syncId })
+                        break
+                    }
+                    expectMessage = true
+                    text = `${text} ${blocksSeen}`
+                    log('expectMessgage', { text })
+                    blocksSeen++
+
+                    const messageEvent = await makeEvent(
+                        bobsContext,
+                        make_ChannelPayload_Message({
+                            ...TEST_ENCRYPTED_MESSAGE_PROPS,
+                            ciphertext: text,
+                        }),
+                        p.envelope.hash,
+                    )
+                    nextHash = messageEvent.hash
+                    const response = await bob.addEvent({
+                        streamId: channelId,
+                        event: messageEvent,
+                    })
+                    log('addEvent response', { response })
+                }
             }
         }
 
-        expect(abortError).toBeDefined()
-        expect(abortError?.message).toContain('The operation was aborted.')
         log('done')
     })
 })

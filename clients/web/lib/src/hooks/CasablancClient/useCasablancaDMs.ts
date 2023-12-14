@@ -18,7 +18,8 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
         }
 
         const updateChannels = () => {
-            const dmChannels = Array.from(casablancaClient.streams.values())
+            const dmChannels = casablancaClient.streams
+                .getStreams()
                 .filter((stream: Stream) => stream.view.contentKind === 'dmChannelContent')
                 .map(
                     (stream: Stream) =>
@@ -35,7 +36,8 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                         } satisfies DMChannelIdentifier),
                 )
 
-            const gdmChannels = Array.from(casablancaClient.streams.values())
+            const gdmChannels = casablancaClient.streams
+                .getStreams()
                 .filter((stream: Stream) => stream.view.contentKind === 'gdmChannelContent')
                 .map(
                     (stream: Stream) =>

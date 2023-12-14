@@ -12,7 +12,6 @@ import {
     ChannelMessage_Reaction,
     ChannelMessage_Redaction,
     StreamEvent,
-    SyncCookie,
     EncryptedData,
     GetStreamResponse,
     CreateStreamResponse,
@@ -31,7 +30,7 @@ import { DLogger, dlog, dlogError } from './dlog'
 import { errorContains, getRpcErrorProperty, StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { assert, check, hasElements, isDefined, throwWithCode } from './check'
+import { assert, check, hasElements, isDefined } from './check'
 import {
     isChannelStreamId,
     isDMChannelStreamId,
@@ -48,13 +47,7 @@ import {
     makeUserToDeviceStreamId,
     userIdFromAddress,
 } from './id'
-import {
-    SignerContext,
-    makeEvent,
-    unpackMiniblock,
-    unpackStreamAndCookie,
-    unpackStreamResponse,
-} from './sign'
+import { SignerContext, makeEvent, unpackMiniblock, unpackStreamResponse } from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
@@ -100,11 +93,7 @@ import { usernameChecksum, isIConnectError } from './utils'
 import { EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { DecryptionExtensions, EntitlementsDelegate } from './decryptionExtensions'
 import { PersistenceStore } from './persistenceStore'
-
-const enum AbortReason {
-    SHUTDOWN = 'SHUTDOWN',
-    BLIP = 'BLIP',
-}
+import { SyncedStreams } from './syncedStreams'
 
 export type EmittedEvents = StreamEvents
 
@@ -112,13 +101,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     readonly signerContext: SignerContext
     readonly rpcClient: StreamRpcClientType
     readonly userId: string
+    readonly streams: SyncedStreams
 
     streamSyncActive = false
     userStreamId?: string
     userSettingsStreamId?: string
     userDeviceKeyStreamId?: string
     userToDeviceStreamId?: string
-    readonly streams: Map<string, Stream> = new Map()
 
     private readonly logCall: DLogger
     private readonly logSync: DLogger
@@ -133,9 +122,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     private getStreamRequests: Map<string, Promise<StreamStateView>> = new Map()
     private getScrollbackRequests: Map<string, ReturnType<typeof this.scrollback>> = new Map()
-
-    private syncLoop?: Promise<unknown>
-    private syncAbort?: AbortController
     private entitlementsDelegate: EntitlementsDelegate
     private decryptionExtensions?: DecryptionExtensions
     private persistenceStore: PersistenceStore
@@ -181,6 +167,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.persistenceStore = new PersistenceStore(
             `persistence-${cryptoStore.name.replace('database-', '')}`,
         )
+        this.streams = new SyncedStreams(this.userId, this.rpcClient, this.persistenceStore, this)
         this.logCall('new Client')
     }
 
@@ -437,7 +424,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             events: [inceptionEvent, joinEvent],
             streamId: spaceId,
         })
-
         return { streamId: streamId }
     }
 
@@ -477,7 +463,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             events: [inceptionEvent, joinEvent],
             streamId: channelId,
         })
-
         return { streamId: channelId }
     }
 
@@ -806,9 +791,17 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                         this.logEmitFromStream,
                     )
                     this.streams.set(streamId, stream)
+                    stream.on('streamInitialized', () => {
+                        const addToSync = async () => {
+                            // add to the sync subscription to monitor the new stream
+                            await this.streams.addStreamToSync(streamAndCookie.nextSyncCookie)
+                        }
+                        addToSync().catch((err) => {
+                            // log an error. Let the main sync loop handle retries.
+                            this.logError('addStreamToSync failed', err)
+                        })
+                    })
                     stream.initialize(streamAndCookie, snapshot, miniblocks, cleartexts)
-                    // Blip sync here to make sure it also monitors new stream
-                    this.blipSync()
                     return stream
                 }
             }
@@ -832,172 +825,26 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     private onLeftStream = async (streamId: string): Promise<void> => {
         this.logEvent('onLeftStream', streamId)
-        // TODO: implement
+        return await this.streams.removeStreamFromSync(streamId)
     }
 
-    async startSync(opt?: { onFailure?: (err: unknown) => void }): Promise<void> {
+    async startSync(opt?: { onFailure?: (err: unknown) => void }): Promise<unknown> {
         const { onFailure } = opt ?? {}
-        this.logSync('sync START')
         assert(this.userStreamId !== undefined, 'streamId must be set')
-
-        this.syncLoop = (async (): Promise<unknown> => {
-            this.logSync('sync syncLoop started')
-            try {
-                let iteration = 0
-                let running = true
-                let retryCount = 0
-                while (running) {
-                    this.emit('streamSyncActive', true)
-                    this.streamSyncActive = true
-
-                    const abortController = new AbortController()
-                    this.syncAbort = abortController
-
-                    this.logSync('sync ITERATION start', iteration++)
-                    const syncPos: PlainMessage<SyncCookie>[] = []
-                    this.streams.forEach((stream: Stream) => {
-                        // TODO: jterzis as an optimization in the future,
-                        // prune foreign user streams that are created to send
-                        // to_device messages.
-                        const syncCookie = stream.view.syncCookie
-                        if (syncCookie !== undefined) {
-                            syncPos.push(syncCookie)
-                            this.logSync(
-                                'sync CALL',
-                                'stream=',
-                                stream.streamId,
-                                'syncCookie=',
-                                syncCookie,
-                            )
-                        }
-                    })
-
-                    assert(syncPos.length > 0, 'TODO: hande this case')
-                    try {
-                        this.logSync('starting syncStreams', syncPos)
-
-                        const sync = this.rpcClient.syncStreams(
-                            {
-                                syncPos,
-                            },
-                            {
-                                signal: abortController.signal,
-                            },
-                        )
-                        this.logSync('called syncStreams', { syncPos, sync })
-                        for await (const syncedStream of sync) {
-                            this.logSync('got syncStreams', syncedStream)
-                            if (syncedStream.stream !== undefined) {
-                                const streamAndCookie = unpackStreamAndCookie(syncedStream.stream)
-                                const streamId = streamAndCookie.nextSyncCookie?.streamId || ''
-                                this.logSync(
-                                    'sync RESULTS for stream',
-                                    streamId,
-                                    'events=',
-                                    streamAndCookie.events.length,
-                                    'nextSyncCookie=',
-                                    streamAndCookie.nextSyncCookie,
-                                    'startSyncCookie=',
-                                    streamAndCookie.startSyncCookie,
-                                )
-                                const stream = this.streams.get(streamId)
-                                if (stream === undefined) {
-                                    this.logSync('sync got stream', streamId, 'NOT FOUND')
-                                    throwWithCode("Sync got stream that wasn't requested")
-                                }
-                                const cleartexts = await this.persistenceStore.getCleartexts(
-                                    streamAndCookie.events.map((e) => e.hashStr),
-                                )
-                                stream.appendEvents(streamAndCookie, cleartexts)
-                            } else {
-                                this.logSync('sync RESULTS no stream', syncedStream)
-                            }
-                        }
-                        this.logSync('finished syncStreams', syncPos)
-                        // On sucessful sync, reset retryCount
-                        retryCount = 0
-                        this.syncAbort = undefined
-                        this.logSync('sync ITERATION end', iteration)
-                    } catch (err) {
-                        this.emit('streamSyncActive', false)
-                        this.streamSyncActive = false
-                        switch (abortController.signal.reason) {
-                            case AbortReason.SHUTDOWN:
-                                running = false
-                                break
-                            case AbortReason.BLIP:
-                                this.logSync('caught BLIP')
-                                break
-                            default: {
-                                this.logSync('sync error', err)
-                                retryCount++
-                                if (retryCount > 5) {
-                                    throw err
-                                }
-                                const delay = 2 ** retryCount * 100
-                                this.logSync('sync error, retrying in', delay, 'ms')
-                                await new Promise<void>((resolve) => {
-                                    let abortListener: (() => void) | undefined = undefined
-                                    const timout = setTimeout(() => {
-                                        if (abortListener) {
-                                            abortController.signal.removeEventListener(
-                                                'abort',
-                                                abortListener,
-                                            )
-                                        }
-                                        resolve()
-                                    }, delay)
-                                    abortListener = () => {
-                                        clearTimeout(timout)
-                                        resolve()
-                                    }
-                                    abortController.signal.addEventListener('abort', abortListener)
-                                })
-                                if (abortController.signal.reason === AbortReason.SHUTDOWN) {
-                                    running = false
-                                }
-                                break
-                            }
-                        }
-                    }
-                    this.logSync('sync RESULTS processed from response')
-                }
-            } catch (err) {
-                this.logSync('sync failure', err)
-                onFailure?.(err)
-                this.emit('streamSyncActive', false)
-                this.streamSyncActive = false
-                return err
-            }
+        try {
+            this.streams.startSync()
             return undefined
-        })()
-        this.logSync('sync END')
+        } catch (err) {
+            this.logSync('sync failure', err)
+            onFailure?.(err)
+            this.emit('streamSyncActive', false)
+            this.streamSyncActive = false
+            return err
+        }
     }
 
     async stopSync(): Promise<unknown> {
-        let err: unknown = undefined
-        this.logSync('sync STOP CALLED')
-        if (this.syncAbort) {
-            this.syncAbort.abort(AbortReason.SHUTDOWN)
-            this.syncAbort = undefined
-            err = await this.syncLoop
-            this.syncLoop = undefined
-        } else {
-            this.logSync('sync STOP: no sync running')
-        }
-        this.logSync('sync STOP DONE')
-        return err
-    }
-
-    blipSync(): void {
-        this.logSync('sync BLIP CALLED')
-        if (this.syncAbort) {
-            this.syncAbort.abort(AbortReason.BLIP)
-            this.syncAbort = undefined
-        } else {
-            this.logSync('sync BLIP: no sync running')
-        }
-        this.logSync('sync BLIP DONE')
+        return this.streams.stopSync()
     }
 
     emit<E extends keyof EmittedEvents>(event: E, ...args: Parameters<EmittedEvents[E]>): boolean {

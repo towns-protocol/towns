@@ -443,7 +443,12 @@ func TestMethods(t *testing.T) {
 		}
 
 		syncRes.Receive()
+		// verify the first message is new a sync
+		syncRes.Receive()
 		msg := syncRes.Msg()
+		assert.NotNil(t, msg.SyncId, "expected non-nil sync id")
+		assert.True(t, len(msg.SyncId) > 0, "expected non-empty sync id")
+		msg = syncRes.Msg()
 		syncCancel()
 
 		if msg.Stream == nil {

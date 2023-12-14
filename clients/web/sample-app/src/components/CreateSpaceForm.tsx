@@ -9,7 +9,6 @@ import {
     useCasablancaStore,
     useCreateSpaceTransaction,
     useWeb3Context,
-    useZionClient,
 } from 'use-zion-client'
 import { Permission, getPioneerNftAddress, getTestGatingNftAddress, mintMockNFT } from '@river/web3'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -35,7 +34,6 @@ export const CreateSpaceForm = (props: Props) => {
     const { chainName, chainId } = useEnvironment()
     const { chain: walletChain } = useNetwork()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
-    const { blip } = useZionClient()
     const { signer } = useWeb3Context()
 
     const [formValue, setFormValue] = useState<FormValues>({
@@ -170,10 +168,6 @@ export const CreateSpaceForm = (props: Props) => {
         MembershipRequirement,
     })
 
-    const onBlipSync = useCallback(() => {
-        blip()
-    }, [blip])
-
     return (
         <Box
             display="flex"
@@ -275,21 +269,6 @@ export const CreateSpaceForm = (props: Props) => {
                     accounts.map((accountId) => (
                         <LocalhostWalletInfo accountId={accountId} key={accountId} />
                     ))}
-                {(chain?.id === localhost.id ||
-                    chain?.id === foundry.id ||
-                    chain?.id === hardhat.id) && (
-                    <Box
-                        display="grid"
-                        flexDirection="column"
-                        alignItems="center"
-                        marginTop="20px"
-                        padding="20px"
-                    >
-                        <Button variant="contained" color="primary" onClick={onBlipSync}>
-                            River Debug, Tirgger Blip Sync
-                        </Button>
-                    </Box>
-                )}
             </Box>
         </Box>
     )

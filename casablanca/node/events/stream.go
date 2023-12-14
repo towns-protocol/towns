@@ -29,7 +29,7 @@ type Stream interface {
 }
 
 type SyncResultReceiver interface {
-	OnUpdate(r *SyncStreamsResponse)
+	OnUpdate(r *StreamAndCookie)
 	OnSyncError(err error)
 }
 
@@ -276,11 +276,11 @@ func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) error {
 
 func (s *streamImpl) notifySubscribers(envelopes []*Envelope, newSyncCookie *SyncCookie, prevSyncCookie *SyncCookie) {
 	if s.receivers != nil && s.receivers.Cardinality() > 0 {
-		resp := SyncStreamsResponseFromStreamAndCookie(&StreamAndCookie{
+		resp := &StreamAndCookie{
 			Events:          envelopes,
 			NextSyncCookie:  newSyncCookie,
 			StartSyncCookie: prevSyncCookie,
-		})
+		}
 		for receiver := range s.receivers.Iter() {
 			receiver.OnUpdate(resp)
 		}
@@ -350,15 +350,12 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 				envelopes = append(envelopes, e.Envelope)
 			}
 			receiver.OnUpdate(
-				SyncStreamsResponseFromStreamAndCookie(
-					&StreamAndCookie{
-						Events:          envelopes,
-						NextSyncCookie:  s.view.SyncCookie(s.params.Wallet.AddressStr),
-						StartSyncCookie: cookie,
-					},
-				),
+				&StreamAndCookie{
+					Events:          envelopes,
+					NextSyncCookie:  s.view.SyncCookie(s.params.Wallet.AddressStr),
+					StartSyncCookie: cookie,
+				},
 			)
-
 		}
 		return nil
 	} else {
@@ -396,19 +393,17 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 
 		if len(envelopes) > 0 {
 			receiver.OnUpdate(
-				SyncStreamsResponseFromStreamAndCookie(
-					&StreamAndCookie{
-						Events:         envelopes,
-						NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
-						StartSyncCookie: &SyncCookie{
-							NodeAddress:       cookie.NodeAddress,
-							StreamId:          cookie.StreamId,
-							MinipoolGen:       cookie.MinipoolGen,
-							MinipoolSlot:      0,
-							PrevMiniblockHash: s.view.blocks[miniblockIndex].header().PrevMiniblockHash,
-						},
+				&StreamAndCookie{
+					Events:         envelopes,
+					NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
+					StartSyncCookie: &SyncCookie{
+						NodeAddress:       cookie.NodeAddress,
+						StreamId:          cookie.StreamId,
+						MinipoolGen:       cookie.MinipoolGen,
+						MinipoolSlot:      0,
+						PrevMiniblockHash: s.view.blocks[miniblockIndex].header().PrevMiniblockHash,
 					},
-				),
+				},
 			)
 		}
 		return nil

@@ -194,14 +194,14 @@ export function useSpaceNames(client?: CasablancaClient) {
         provider,
     })
 
-    const isEnabled = spaceDapp && client && client.streams.size > 0
+    const isEnabled = spaceDapp && client && client.streams.size() > 0
 
-    const streamSize = client?.streams.size
+    const streamSize = client?.streams.size()
     const spaceIds = useMemo(() => {
         if (!isEnabled || !client || streamSize == 0) {
             return []
         }
-        return Array.from(client.streams.keys()).filter((stream) => isSpaceStreamId(stream))
+        return client.streams.getStreamIds().filter((id) => isSpaceStreamId(id))
     }, [isEnabled, client, streamSize])
 
     const getSpaceNames = useCallback(

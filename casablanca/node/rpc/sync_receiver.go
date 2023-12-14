@@ -12,7 +12,7 @@ import (
 type syncReceiver struct {
 	ctx     context.Context
 	cancel  context.CancelFunc
-	channel chan *SyncStreamsResponse
+	channel chan *StreamAndCookie
 
 	mu         sync.Mutex
 	firstError error
@@ -20,7 +20,7 @@ type syncReceiver struct {
 
 var _ SyncResultReceiver = (*syncReceiver)(nil)
 
-func (s *syncReceiver) OnUpdate(r *SyncStreamsResponse) {
+func (s *syncReceiver) OnUpdate(r *StreamAndCookie) {
 	if s.ctx.Err() != nil {
 		return
 	}
@@ -30,7 +30,7 @@ func (s *syncReceiver) OnUpdate(r *SyncStreamsResponse) {
 		return
 	default:
 		err :=
-			RiverError(Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.Stream.NextSyncCookie.StreamId).
+			RiverError(Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.NextSyncCookie.StreamId).
 				Func("OnUpdate").
 				LogWarn(dlog.CtxLog(s.ctx))
 		s.setErrorAndCancel(err)
@@ -62,7 +62,7 @@ func (s *syncReceiver) getError() error {
 	return s.firstError
 }
 
-func (s *syncReceiver) Dispatch(sender syncResponse) {
+func (s *syncReceiver) Dispatch(sender syncStream) {
 	log := dlog.CtxLog(s.ctx)
 
 	for {
@@ -72,14 +72,14 @@ func (s *syncReceiver) Dispatch(sender syncResponse) {
 			s.setErrorAndCancel(err)
 			log.Debug("SyncStreams: context done", "err", err)
 			return
-		case resp := <-s.channel:
-			log.Debug("SyncStreams: received update in forward loop", "resp", resp)
+		case data := <-s.channel:
+			log.Debug("SyncStreams: received update in forward loop", "data", data)
+			resp := SyncStreamsResponseFromStreamAndCookie(data)
 			if err := sender.Send(resp); err != nil {
 				s.setErrorAndCancel(err)
-				log.Debug("SyncStreams: failed to send update", "resp", resp, "err", err)
+				log.Debug("SyncStreams: failed to send update", "resp", data, "err", err)
 				return
 			}
 		}
 	}
-
 }

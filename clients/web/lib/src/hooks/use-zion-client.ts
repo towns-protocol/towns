@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/unbound-method */
-import { useMemo, useCallback } from 'react'
+import { useMemo } from 'react'
 import { FullyReadMarker } from '@river/proto'
 import {
     ChannelTransactionContext,
@@ -172,7 +172,6 @@ interface ZionClientImpl {
         name: string,
         signer: ethers.Signer | undefined,
     ) => Promise<TransactionContext<void> | undefined>
-    blip: () => void
     linkWallet: (
         rootKey: ethers.Signer,
         wallet: ethers.Signer,
@@ -195,19 +194,17 @@ export function useZionClient(): ZionClientImpl {
         loginWithWalletToCasablanca,
         registerWalletWithCasablanca,
     } = useCasablancaWalletSignIn()
-    const { client, casablancaClient } = useZionContext()
+    const { client } = useZionContext()
     const clientRunning = useMemo(() => client !== undefined, [client])
     const logout = useLogout()
     const sendReadReceipt = useSendReadReceipt(client)
     const resetFullyReadMarkers = useResetFullyReadMarkers()
-    const blip = useCallback(() => casablancaClient?.blipSync(), [casablancaClient])
 
     return {
         chainId: client?.opts.chainId,
         client,
         clientRunning,
         spaceDapp: client?.spaceDapp,
-        blip: blip,
         createSpaceTransaction: useWithCatch(client?.createSpaceTransaction),
         waitForCreateSpaceTransaction: useWithCatch(client?.waitForCreateSpaceTransaction),
         createMediaStream: useWithCatch(client?.createMediaStream),

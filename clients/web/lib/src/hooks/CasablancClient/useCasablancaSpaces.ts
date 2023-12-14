@@ -16,7 +16,8 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
         }
 
         const updateSpaces = () => {
-            const streams = Array.from(casablancaClient.streams.values())
+            const streams = casablancaClient.streams
+                .getStreams()
                 .filter((stream: Stream) => stream.view.contentKind === 'spaceContent')
                 .filter((stream: Stream) => {
                     const memberships = stream.view.getMemberships()

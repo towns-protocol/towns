@@ -604,7 +604,8 @@ message SyncStreamsRequest {
 
 message SyncStreamsResponse {
     string sync_id = 1;
-    StreamAndCookie stream = 2;
+    SyncOp sync_op = 2;
+    StreamAndCookie stream = 3;
 }
 
 message AddStreamToSyncRequest {
@@ -621,11 +622,11 @@ message RemoveStreamFromSyncRequest {
 
 message RemoveStreamFromSyncResponse {}
 
-message RemoveSyncRequest {
+message CancelSyncRequest {
     string sync_id = 1;
 }
 
-message RemoveSyncResponse {}
+message CancelSyncResponse {}
 
 message InfoRequest {
     string debug = 1;
@@ -643,11 +644,17 @@ service StreamService {
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
     rpc AddStreamToSync(AddStreamToSyncRequest) returns (AddStreamToSyncResponse);
+    rpc CancelSync(CancelSyncRequest) returns (CancelSyncResponse);
     rpc RemoveStreamFromSync(RemoveStreamFromSyncRequest) returns (RemoveStreamFromSyncResponse);
-    rpc RemoveSync(RemoveSyncRequest) returns (RemoveSyncResponse);
     rpc Info(InfoRequest) returns (InfoResponse);
 }
 
+enum SyncOp {
+    SYNC_UNSPECIFIED = 0;
+    SYNC_NEW = 1; // new sync
+    SYNC_CLOSE = 2; // close the sync
+    SYNC_UPDATE = 3; // update from server
+}
 
 enum MembershipOp {
     SO_UNSPECIFIED = 0;

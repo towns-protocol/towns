@@ -6232,6 +6232,7 @@ __metadata:
     fake-indexeddb: ^4.0.1
     jest: ^29.6.2
     jest-extended: ^4.0.1
+    jest-mock-extended: ^3.0.4
     jest-runner-groups: ^2.2.0
     lodash: ^4.17.21
     nanoid: ^4.0.0

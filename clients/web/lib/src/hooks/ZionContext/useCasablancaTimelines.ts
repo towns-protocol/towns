@@ -144,7 +144,7 @@ export function useCasablancaTimelines(
         //Initialize events that already exist in the client before the listeners started
         const timelineEvents: Map<string, TimelineEvent[]> = new Map()
         //Step 1: get all the events which are already in the river before listeners started
-        casablancaClient?.streams.forEach((stream) => {
+        casablancaClient?.streams.getStreams().forEach((stream) => {
             if (hasTimelineContent(stream.view.contentKind)) {
                 streamIds.add(stream.streamId)
                 timelineEvents.set(stream.streamId, [])

@@ -1,4 +1,4 @@
-import { SignerContext, _impl_makeEvent_impl_ } from './sign'
+import { SignerContext, _impl_makeEvent_impl_, unpackEnvelopes } from './sign'
 
 import { dlog } from './dlog'
 import {
@@ -7,6 +7,8 @@ import {
     StreamEvent,
     ChannelMessage,
     SnapshotCaseType,
+    SyncStreamsResponse,
+    SyncOp,
 } from '@river/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
@@ -354,6 +356,47 @@ export function waitFor<T>(
             }
         }
     })
+}
+
+export async function waitForSyncStreams(
+    syncStreams: AsyncIterable<SyncStreamsResponse>,
+    matcher: (res: SyncStreamsResponse) => boolean,
+    timeout: number = 200000,
+): Promise<SyncStreamsResponse> {
+    for await (const res of timeoutIterable(syncStreams, timeout)) {
+        if (matcher(res)) {
+            return res
+        }
+    }
+    throw new Error('waitFor: timeout')
+}
+
+export async function waitForSyncStreamsMessage(
+    syncStreams: AsyncIterable<SyncStreamsResponse>,
+    message: string,
+    timeout: number = 2000,
+): Promise<SyncStreamsResponse> {
+    return waitForSyncStreams(
+        syncStreams,
+        (res) => {
+            if (res.syncOp === SyncOp.SYNC_UPDATE) {
+                const stream = res.stream
+                if (stream) {
+                    const env = unpackEnvelopes(stream.events)
+                    for (const e of env) {
+                        if (e.event.payload.case === 'channelPayload') {
+                            const p = e.event.payload.value.content
+                            if (p.case === 'message' && p.value.ciphertext === message) {
+                                return true
+                            }
+                        }
+                    }
+                }
+            }
+            return false
+        },
+        timeout,
+    )
 }
 
 export function getChannelMessagePayload(event?: ChannelMessage) {

@@ -39,7 +39,8 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
 
         const setInitialState = () => {
             setRooms({})
-            const allChannelsAndSpaces = Array.from(client.streams.keys())
+            const allChannelsAndSpaces = client.streams
+                .getStreamIds()
                 .filter((stream) => {
                     return (
                         isSpaceStreamId(stream) ||

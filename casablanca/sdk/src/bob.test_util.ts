@@ -1,5 +1,5 @@
 import { makeEvent, SignerContext, unpackEnvelopes, unpackStreamResponse } from './sign'
-import { MembershipOp, SyncStreamsResponse, Envelope } from '@river/proto'
+import { MembershipOp, SyncStreamsResponse, Envelope, SyncOp } from '@river/proto'
 import { DLogger } from './dlog'
 import {
     lastEventFiltered,
@@ -7,6 +7,8 @@ import {
     makeTestRpcClient,
     sendFlush,
     TEST_ENCRYPTED_MESSAGE_PROPS,
+    waitForSyncStreams,
+    waitForSyncStreamsMessage,
 } from './util.test'
 import {
     genId,
@@ -144,49 +146,44 @@ export const bobTalksToHimself = async (
     }
 
     log('Bob starts sync with sync cookie=', channel.stream?.nextSyncCookie)
-    const abortController = new AbortController()
 
     let syncCookie = channel.stream!.nextSyncCookie!
-    const bobSyncStreamIterable: AsyncIterable<SyncStreamsResponse> = bob.syncStreams(
-        {
-            syncPos: [syncCookie],
-        },
-        {
-            signal: abortController.signal,
-        },
-    )
-    const bobSyncStream = bobSyncStreamIterable[Symbol.asyncIterator]()
-    // Next bit is tricky. Iterator needs to be started before AddEvent
-    // for sync to hit the wire.
-    let syncResultPromise = bobSyncStream.next()
+    const bobSyncStreamIterable: AsyncIterable<SyncStreamsResponse> = bob.syncStreams({
+        syncPos: [syncCookie],
+    })
+    await expect(
+        waitForSyncStreams(
+            bobSyncStreamIterable,
+            (res) => res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined,
+        ),
+    ).toResolve()
 
     if (flush || presync) {
         log('Flush or presync, wait for sync to return initial events')
-        const syncResultI = await syncResultPromise
-
-        const syncResult = syncResultI.value as SyncStreamsResponse
-        expect(syncResult).toBeDefined()
-        expect(syncResult.stream).toBeDefined()
-        expect(syncResult.stream?.nextSyncCookie?.streamId).toEqual(channelId)
+        const syncResult = await waitForSyncStreamsMessage(bobSyncStreamIterable, 'presync')
+        expect(syncResult?.stream).toBeDefined()
+        const stream = syncResult.stream
+        expect(stream).toBeDefined()
+        if (!stream) {
+            throw new Error('stream is undefined')
+        }
+        expect(stream.nextSyncCookie?.streamId).toEqual(channelId)
 
         // If we flushed, the sync cookie instance is different,
         // and first two events in the channel are returned immediately.
         // If presync event is posted as well, it is returned as well.
         if (flush) {
-            expect(syncResult.stream?.startSyncCookie?.minipoolGen).not.toEqual(
-                syncCookie.minipoolGen,
-            )
+            expect(stream.startSyncCookie?.minipoolGen).not.toEqual(syncCookie.minipoolGen)
 
-            expect(syncResult.stream?.events).toEqual(
+            expect(stream.events).toEqual(
                 presync ? [...channelEvents, presyncEvent] : channelEvents,
             )
         } else {
-            expect(syncResult.stream?.startSyncCookie).toEqual(syncCookie)
-            expect(syncResult.stream?.events).toEqual([presyncEvent])
+            expect(stream.startSyncCookie).toEqual(syncCookie)
+            expect(stream?.events).toEqual([presyncEvent])
         }
 
-        syncCookie = syncResult.stream!.nextSyncCookie!
-        syncResultPromise = bobSyncStream.next()
+        syncCookie = stream.nextSyncCookie!
     }
 
     // Bob succesdfully posts a message
@@ -202,24 +199,22 @@ export const bobTalksToHimself = async (
         }),
         hashResponse.hash,
     )
-    const addEventPromise = bob.addEvent({
+    await bob.addEvent({
         streamId: channelId,
         event: helloEvent,
     })
 
-    const [syncResultI] = await Promise.all([syncResultPromise, addEventPromise])
     log('Bob waits for sync to complete')
-
-    const syncResult = syncResultI.value as SyncStreamsResponse
-    expect(syncResult).toBeDefined()
-    expect(syncResult.stream).toBeDefined()
-    expect(syncResult.stream?.nextSyncCookie?.streamId).toEqual(channelId)
-    expect(syncResult.stream?.startSyncCookie).toEqual(syncCookie)
-    expect(syncResult.stream?.events).toEqual([helloEvent])
+    const syncResult = await waitForSyncStreamsMessage(bobSyncStreamIterable, 'hello')
+    expect(syncResult?.stream).toBeDefined()
+    const stream = syncResult?.stream
+    expect(stream).toBeDefined()
+    expect(stream?.nextSyncCookie?.streamId).toEqual(channelId)
+    expect(stream?.startSyncCookie).toEqual(syncCookie)
+    expect(stream?.events).toEqual([helloEvent])
 
     log('stopping sync')
-    abortController.abort()
-    await expect(bobSyncStream.next()).toReject()
+    await bob.cancelSync({ syncId: syncResult.syncId })
 
     log("Bob can't post event without previous event hashes")
     await maybeFlush()

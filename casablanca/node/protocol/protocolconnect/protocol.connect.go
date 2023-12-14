@@ -52,12 +52,12 @@ const (
 	// StreamServiceAddStreamToSyncProcedure is the fully-qualified name of the StreamService's
 	// AddStreamToSync RPC.
 	StreamServiceAddStreamToSyncProcedure = "/river.StreamService/AddStreamToSync"
+	// StreamServiceCancelSyncProcedure is the fully-qualified name of the StreamService's CancelSync
+	// RPC.
+	StreamServiceCancelSyncProcedure = "/river.StreamService/CancelSync"
 	// StreamServiceRemoveStreamFromSyncProcedure is the fully-qualified name of the StreamService's
 	// RemoveStreamFromSync RPC.
 	StreamServiceRemoveStreamFromSyncProcedure = "/river.StreamService/RemoveStreamFromSync"
-	// StreamServiceRemoveSyncProcedure is the fully-qualified name of the StreamService's RemoveSync
-	// RPC.
-	StreamServiceRemoveSyncProcedure = "/river.StreamService/RemoveSync"
 	// StreamServiceInfoProcedure is the fully-qualified name of the StreamService's Info RPC.
 	StreamServiceInfoProcedure = "/river.StreamService/Info"
 )
@@ -71,8 +71,8 @@ type StreamServiceClient interface {
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
 	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.ServerStreamForClient[protocol.SyncStreamsResponse], error)
 	AddStreamToSync(context.Context, *connect_go.Request[protocol.AddStreamToSyncRequest]) (*connect_go.Response[protocol.AddStreamToSyncResponse], error)
+	CancelSync(context.Context, *connect_go.Request[protocol.CancelSyncRequest]) (*connect_go.Response[protocol.CancelSyncResponse], error)
 	RemoveStreamFromSync(context.Context, *connect_go.Request[protocol.RemoveStreamFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error)
-	RemoveSync(context.Context, *connect_go.Request[protocol.RemoveSyncRequest]) (*connect_go.Response[protocol.RemoveSyncResponse], error)
 	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
 }
 
@@ -121,14 +121,14 @@ func NewStreamServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 			baseURL+StreamServiceAddStreamToSyncProcedure,
 			opts...,
 		),
+		cancelSync: connect_go.NewClient[protocol.CancelSyncRequest, protocol.CancelSyncResponse](
+			httpClient,
+			baseURL+StreamServiceCancelSyncProcedure,
+			opts...,
+		),
 		removeStreamFromSync: connect_go.NewClient[protocol.RemoveStreamFromSyncRequest, protocol.RemoveStreamFromSyncResponse](
 			httpClient,
 			baseURL+StreamServiceRemoveStreamFromSyncProcedure,
-			opts...,
-		),
-		removeSync: connect_go.NewClient[protocol.RemoveSyncRequest, protocol.RemoveSyncResponse](
-			httpClient,
-			baseURL+StreamServiceRemoveSyncProcedure,
 			opts...,
 		),
 		info: connect_go.NewClient[protocol.InfoRequest, protocol.InfoResponse](
@@ -148,8 +148,8 @@ type streamServiceClient struct {
 	addEvent             *connect_go.Client[protocol.AddEventRequest, protocol.AddEventResponse]
 	syncStreams          *connect_go.Client[protocol.SyncStreamsRequest, protocol.SyncStreamsResponse]
 	addStreamToSync      *connect_go.Client[protocol.AddStreamToSyncRequest, protocol.AddStreamToSyncResponse]
+	cancelSync           *connect_go.Client[protocol.CancelSyncRequest, protocol.CancelSyncResponse]
 	removeStreamFromSync *connect_go.Client[protocol.RemoveStreamFromSyncRequest, protocol.RemoveStreamFromSyncResponse]
-	removeSync           *connect_go.Client[protocol.RemoveSyncRequest, protocol.RemoveSyncResponse]
 	info                 *connect_go.Client[protocol.InfoRequest, protocol.InfoResponse]
 }
 
@@ -188,14 +188,14 @@ func (c *streamServiceClient) AddStreamToSync(ctx context.Context, req *connect_
 	return c.addStreamToSync.CallUnary(ctx, req)
 }
 
+// CancelSync calls river.StreamService.CancelSync.
+func (c *streamServiceClient) CancelSync(ctx context.Context, req *connect_go.Request[protocol.CancelSyncRequest]) (*connect_go.Response[protocol.CancelSyncResponse], error) {
+	return c.cancelSync.CallUnary(ctx, req)
+}
+
 // RemoveStreamFromSync calls river.StreamService.RemoveStreamFromSync.
 func (c *streamServiceClient) RemoveStreamFromSync(ctx context.Context, req *connect_go.Request[protocol.RemoveStreamFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error) {
 	return c.removeStreamFromSync.CallUnary(ctx, req)
-}
-
-// RemoveSync calls river.StreamService.RemoveSync.
-func (c *streamServiceClient) RemoveSync(ctx context.Context, req *connect_go.Request[protocol.RemoveSyncRequest]) (*connect_go.Response[protocol.RemoveSyncResponse], error) {
-	return c.removeSync.CallUnary(ctx, req)
 }
 
 // Info calls river.StreamService.Info.
@@ -212,8 +212,8 @@ type StreamServiceHandler interface {
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
 	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest], *connect_go.ServerStream[protocol.SyncStreamsResponse]) error
 	AddStreamToSync(context.Context, *connect_go.Request[protocol.AddStreamToSyncRequest]) (*connect_go.Response[protocol.AddStreamToSyncResponse], error)
+	CancelSync(context.Context, *connect_go.Request[protocol.CancelSyncRequest]) (*connect_go.Response[protocol.CancelSyncResponse], error)
 	RemoveStreamFromSync(context.Context, *connect_go.Request[protocol.RemoveStreamFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error)
-	RemoveSync(context.Context, *connect_go.Request[protocol.RemoveSyncRequest]) (*connect_go.Response[protocol.RemoveSyncResponse], error)
 	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
 }
 
@@ -258,14 +258,14 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.Handle
 		svc.AddStreamToSync,
 		opts...,
 	)
+	streamServiceCancelSyncHandler := connect_go.NewUnaryHandler(
+		StreamServiceCancelSyncProcedure,
+		svc.CancelSync,
+		opts...,
+	)
 	streamServiceRemoveStreamFromSyncHandler := connect_go.NewUnaryHandler(
 		StreamServiceRemoveStreamFromSyncProcedure,
 		svc.RemoveStreamFromSync,
-		opts...,
-	)
-	streamServiceRemoveSyncHandler := connect_go.NewUnaryHandler(
-		StreamServiceRemoveSyncProcedure,
-		svc.RemoveSync,
 		opts...,
 	)
 	streamServiceInfoHandler := connect_go.NewUnaryHandler(
@@ -289,10 +289,10 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.Handle
 			streamServiceSyncStreamsHandler.ServeHTTP(w, r)
 		case StreamServiceAddStreamToSyncProcedure:
 			streamServiceAddStreamToSyncHandler.ServeHTTP(w, r)
+		case StreamServiceCancelSyncProcedure:
+			streamServiceCancelSyncHandler.ServeHTTP(w, r)
 		case StreamServiceRemoveStreamFromSyncProcedure:
 			streamServiceRemoveStreamFromSyncHandler.ServeHTTP(w, r)
-		case StreamServiceRemoveSyncProcedure:
-			streamServiceRemoveSyncHandler.ServeHTTP(w, r)
 		case StreamServiceInfoProcedure:
 			streamServiceInfoHandler.ServeHTTP(w, r)
 		default:
@@ -332,12 +332,12 @@ func (UnimplementedStreamServiceHandler) AddStreamToSync(context.Context, *conne
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.AddStreamToSync is not implemented"))
 }
 
-func (UnimplementedStreamServiceHandler) RemoveStreamFromSync(context.Context, *connect_go.Request[protocol.RemoveStreamFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.RemoveStreamFromSync is not implemented"))
+func (UnimplementedStreamServiceHandler) CancelSync(context.Context, *connect_go.Request[protocol.CancelSyncRequest]) (*connect_go.Response[protocol.CancelSyncResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.CancelSync is not implemented"))
 }
 
-func (UnimplementedStreamServiceHandler) RemoveSync(context.Context, *connect_go.Request[protocol.RemoveSyncRequest]) (*connect_go.Response[protocol.RemoveSyncResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.RemoveSync is not implemented"))
+func (UnimplementedStreamServiceHandler) RemoveStreamFromSync(context.Context, *connect_go.Request[protocol.RemoveStreamFromSyncRequest]) (*connect_go.Response[protocol.RemoveStreamFromSyncResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("river.StreamService.RemoveStreamFromSync is not implemented"))
 }
 
 func (UnimplementedStreamServiceHandler) Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {

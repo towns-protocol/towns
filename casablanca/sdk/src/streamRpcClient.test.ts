@@ -1,5 +1,5 @@
 import { makeEvent, makeEvents, SignerContext, unpackEnvelopes } from './sign'
-import { MembershipOp, SyncStreamsResponse, SyncCookie } from '@river/proto'
+import { MembershipOp, SyncStreamsResponse, SyncCookie, SyncOp } from '@river/proto'
 import { dlog } from './dlog'
 import {
     makeEvent_test,
@@ -8,6 +8,7 @@ import {
     makeTestRpcClient,
     timeoutIterable,
     TEST_ENCRYPTED_MESSAGE_PROPS,
+    waitForSyncStreams,
 } from './util.test'
 import {
     genId,
@@ -45,9 +46,7 @@ async function readSyncStreams(
     }
 }
 
-// disabled until v2 sync is working end-to-end.
-// to run the suite, server must be started with NewSyncHandler(..., SyncVersion=2) in server.go
-describe.skip('streamRpcClient using v2 sync', () => {
+describe('streamRpcClient using v2 sync', () => {
     let alicesContext: SignerContext
     let bobsContext: SignerContext
 
@@ -110,23 +109,28 @@ describe.skip('streamRpcClient using v2 sync', () => {
                 op: MembershipOp.SO_JOIN,
             }),
         )
-        await alice.createStream({
+        const alicesStream = await alice.createStream({
             events: [channelInceptionEvent, event],
             streamId: channelId,
         })
 
         /** Act */
         // alice calls syncStreams, and waits for the syncId in the response stream
-        const aliceSyncStreams: AsyncIterable<SyncStreamsResponse> = alice.syncStreams({
-            syncPos: [],
-        })
-        // alice reads the syncId from the response stream
         let syncId: string | undefined = undefined
-        await readSyncStreams(aliceSyncStreams, function (resp: SyncStreamsResponse) {
-            syncId = resp.syncId
-            //log('syncStreams', 'resp', resp)
-            return true // handled
+        const syncCookie = alicesStream.stream!.nextSyncCookie!
+        const aliceStreamIterable: AsyncIterable<SyncStreamsResponse> = alice.syncStreams({
+            syncPos: [syncCookie],
         })
+        await expect(
+            waitForSyncStreams(
+                aliceStreamIterable,
+                (res) => {
+                    syncId = res.syncId
+                    return res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined
+                },
+                20000000,
+            ),
+        ).toResolve()
 
         /** Assert */
         expect(syncId).toBeDefined()
@@ -200,7 +204,7 @@ describe.skip('streamRpcClient using v2 sync', () => {
                 op: MembershipOp.SO_JOIN,
             }),
         )
-        await alice.createStream({
+        const alicesChannel = await alice.createStream({
             events: [channelInceptionEvent, event],
             streamId: channelId,
         })
@@ -223,6 +227,7 @@ describe.skip('streamRpcClient using v2 sync', () => {
                 op: MembershipOp.SO_JOIN,
                 userId: bobsUserId,
             }),
+            alicesChannel.miniblocks.at(-1)?.header?.hash,
         )
         await bob.addEvent({
             streamId: channelId,
@@ -241,6 +246,7 @@ describe.skip('streamRpcClient using v2 sync', () => {
                 ...TEST_ENCRYPTED_MESSAGE_PROPS,
                 ciphertext: 'hello',
             }),
+            alicesChannel.miniblocks.at(-1)?.header?.hash,
         )
         await alice.addEvent({
             streamId: channelId,
@@ -891,8 +897,8 @@ const waitForEvent = async (
     matcher: (e: ParsedEvent) => boolean,
 ): Promise<SyncCookie> => {
     for await (const res of timeoutIterable(syncStream, 2000)) {
-        const stream = res.stream!
-        if (stream.nextSyncCookie?.streamId === streamId) {
+        const stream = res.stream
+        if (stream?.nextSyncCookie?.streamId === streamId) {
             const events = unpackEnvelopes(stream.events)
             for (const e of events) {
                 if (matcher(e)) {

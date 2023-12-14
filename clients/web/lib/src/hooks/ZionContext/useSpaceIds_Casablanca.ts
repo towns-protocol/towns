@@ -23,7 +23,8 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
         const userId = casablancaClient.userId
 
         const updateSpaces = () => {
-            const streams = Array.from(casablancaClient.streams.values())
+            const streams = casablancaClient.streams
+                .getStreams()
                 .filter((stream) => stream.view.contentKind === 'spaceContent')
                 .sort((a, b) => a.view.streamId.localeCompare(b.view.streamId))
             const joined = streams
