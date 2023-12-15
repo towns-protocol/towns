@@ -8,175 +8,175 @@ import type { IChannel, IChannelInterface } from "../IChannel";
 
 const _abi = [
   {
+    type: "function",
+    name: "addRoleToChannel",
     inputs: [
       {
-        internalType: "string",
         name: "channelId",
         type: "string",
+        internalType: "string",
       },
       {
-        internalType: "uint256",
         name: "roleId",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
-    name: "addRoleToChannel",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "createChannel",
     inputs: [
       {
-        internalType: "string",
         name: "channelId",
         type: "string",
+        internalType: "string",
       },
       {
-        internalType: "string",
         name: "metadata",
         type: "string",
+        internalType: "string",
       },
       {
-        internalType: "uint256[]",
         name: "roleIds",
         type: "uint256[]",
+        internalType: "uint256[]",
       },
     ],
-    name: "createChannel",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "getChannel",
     inputs: [
       {
-        internalType: "string",
         name: "channelId",
         type: "string",
+        internalType: "string",
       },
     ],
-    name: "getChannel",
     outputs: [
       {
-        components: [
-          {
-            internalType: "string",
-            name: "id",
-            type: "string",
-          },
-          {
-            internalType: "bool",
-            name: "disabled",
-            type: "bool",
-          },
-          {
-            internalType: "string",
-            name: "metadata",
-            type: "string",
-          },
-          {
-            internalType: "uint256[]",
-            name: "roleIds",
-            type: "uint256[]",
-          },
-        ],
-        internalType: "struct IChannelBase.Channel",
         name: "channel",
         type: "tuple",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getChannels",
-    outputs: [
-      {
+        internalType: "struct IChannelBase.Channel",
         components: [
           {
-            internalType: "string",
             name: "id",
             type: "string",
+            internalType: "string",
           },
           {
-            internalType: "bool",
             name: "disabled",
             type: "bool",
+            internalType: "bool",
           },
           {
-            internalType: "string",
             name: "metadata",
             type: "string",
+            internalType: "string",
           },
           {
-            internalType: "uint256[]",
             name: "roleIds",
             type: "uint256[]",
+            internalType: "uint256[]",
           },
         ],
-        internalType: "struct IChannelBase.Channel[]",
-        name: "channels",
-        type: "tuple[]",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
-    inputs: [
+    type: "function",
+    name: "getChannels",
+    inputs: [],
+    outputs: [
       {
-        internalType: "string",
-        name: "channelId",
-        type: "string",
+        name: "channels",
+        type: "tuple[]",
+        internalType: "struct IChannelBase.Channel[]",
+        components: [
+          {
+            name: "id",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "disabled",
+            type: "bool",
+            internalType: "bool",
+          },
+          {
+            name: "metadata",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "roleIds",
+            type: "uint256[]",
+            internalType: "uint256[]",
+          },
+        ],
       },
     ],
-    name: "removeChannel",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
+    stateMutability: "view",
   },
   {
+    type: "function",
+    name: "removeChannel",
     inputs: [
       {
-        internalType: "string",
         name: "channelId",
         type: "string",
+        internalType: "string",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "removeRoleFromChannel",
+    inputs: [
+      {
+        name: "channelId",
+        type: "string",
+        internalType: "string",
       },
       {
-        internalType: "uint256",
         name: "roleId",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
-    name: "removeRoleFromChannel",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "updateChannel",
     inputs: [
       {
-        internalType: "string",
         name: "channelId",
         type: "string",
+        internalType: "string",
       },
       {
-        internalType: "string",
         name: "metadata",
         type: "string",
+        internalType: "string",
       },
       {
-        internalType: "bool",
         name: "disabled",
         type: "bool",
+        internalType: "bool",
       },
     ],
-    name: "updateChannel",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
 ] as const;
 

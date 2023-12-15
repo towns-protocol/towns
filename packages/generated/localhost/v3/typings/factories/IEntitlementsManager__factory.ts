@@ -11,172 +11,172 @@ import type {
 
 const _abi = [
   {
+    type: "function",
+    name: "addEntitlementModule",
     inputs: [
       {
-        internalType: "address",
         name: "entitlement",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "addEntitlementModule",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "addImmutableEntitlements",
     inputs: [
       {
-        internalType: "address[]",
         name: "entitlements",
         type: "address[]",
+        internalType: "address[]",
       },
     ],
-    name: "addImmutableEntitlements",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "getEntitlement",
     inputs: [
       {
-        internalType: "address",
         name: "entitlement",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "getEntitlement",
     outputs: [
       {
-        components: [
-          {
-            internalType: "string",
-            name: "name",
-            type: "string",
-          },
-          {
-            internalType: "address",
-            name: "moduleAddress",
-            type: "address",
-          },
-          {
-            internalType: "string",
-            name: "moduleType",
-            type: "string",
-          },
-          {
-            internalType: "bool",
-            name: "isImmutable",
-            type: "bool",
-          },
-        ],
-        internalType: "struct IEntitlementsManagerBase.Entitlement",
         name: "entitlements",
         type: "tuple",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getEntitlements",
-    outputs: [
-      {
+        internalType: "struct IEntitlementsManagerBase.Entitlement",
         components: [
           {
-            internalType: "string",
             name: "name",
             type: "string",
+            internalType: "string",
           },
           {
-            internalType: "address",
             name: "moduleAddress",
             type: "address",
+            internalType: "address",
           },
           {
-            internalType: "string",
             name: "moduleType",
             type: "string",
+            internalType: "string",
           },
           {
-            internalType: "bool",
             name: "isImmutable",
             type: "bool",
+            internalType: "bool",
           },
         ],
-        internalType: "struct IEntitlementsManagerBase.Entitlement[]",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getEntitlements",
+    inputs: [],
+    outputs: [
+      {
         name: "entitlements",
         type: "tuple[]",
+        internalType: "struct IEntitlementsManagerBase.Entitlement[]",
+        components: [
+          {
+            name: "name",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "moduleAddress",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "moduleType",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "isImmutable",
+            type: "bool",
+            internalType: "bool",
+          },
+        ],
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "isEntitledToChannel",
     inputs: [
       {
-        internalType: "string",
         name: "channelId",
         type: "string",
+        internalType: "string",
       },
       {
-        internalType: "address",
         name: "user",
         type: "address",
+        internalType: "address",
       },
       {
-        internalType: "string",
         name: "permission",
         type: "string",
+        internalType: "string",
       },
     ],
-    name: "isEntitledToChannel",
     outputs: [
       {
-        internalType: "bool",
         name: "",
         type: "bool",
+        internalType: "bool",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
-      {
-        internalType: "string",
-        name: "permission",
-        type: "string",
-      },
-    ],
+    type: "function",
     name: "isEntitledToTown",
+    inputs: [
+      {
+        name: "user",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "permission",
+        type: "string",
+        internalType: "string",
+      },
+    ],
     outputs: [
       {
-        internalType: "bool",
         name: "",
         type: "bool",
+        internalType: "bool",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "removeEntitlementModule",
     inputs: [
       {
-        internalType: "address",
         name: "entitlement",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "removeEntitlementModule",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
 ] as const;
 

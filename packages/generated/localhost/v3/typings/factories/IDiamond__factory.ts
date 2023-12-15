@@ -8,9 +8,9 @@ import type { IDiamond, IDiamondInterface } from "../IDiamond";
 
 const _abi = [
   {
-    inputs: [],
-    name: "Diamond_UnsupportedFunction",
     type: "error",
+    name: "Diamond_UnsupportedFunction",
+    inputs: [],
   },
 ] as const;
 

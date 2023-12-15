@@ -1,6 +1,6 @@
 name: 'Run Towns Load Tests'
 env:
-    FOUNDRY_VERSION: nightly-d369d2486f85576eec4ca41d277391dfdae21ba7
+    FOUNDRY_VERSION: nightly-6fcbbd866bc0f8a988471eb5588b8de33578bc74
 
 on:
     workflow_dispatch: # A load test was manually triggered

@@ -11,306 +11,306 @@ import type {
 
 const _abi = [
   {
+    type: "constructor",
     inputs: [],
     stateMutability: "nonpayable",
-    type: "constructor",
   },
   {
-    inputs: [],
-    name: "Entitlement__InvalidValue",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "Entitlement__NotAllowed",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "Entitlement__ValueAlreadyExists",
-    type: "error",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "previousAdmin",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "address",
-        name: "newAdmin",
-        type: "address",
-      },
-    ],
-    name: "AdminChanged",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "beacon",
-        type: "address",
-      },
-    ],
-    name: "BeaconUpgraded",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "uint8",
-        name: "version",
-        type: "uint8",
-      },
-    ],
-    name: "Initialized",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "implementation",
-        type: "address",
-      },
-    ],
-    name: "Upgraded",
-    type: "event",
-  },
-  {
-    inputs: [],
+    type: "function",
     name: "TOWN_ADDRESS",
+    inputs: [],
     outputs: [
       {
-        internalType: "address",
         name: "",
         type: "address",
+        internalType: "address",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
-    inputs: [],
+    type: "function",
     name: "description",
+    inputs: [],
     outputs: [
       {
-        internalType: "string",
         name: "",
         type: "string",
+        internalType: "string",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "getEntitlementDataByRoleId",
     inputs: [
       {
-        internalType: "uint256",
         name: "roleId",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
-    name: "getEntitlementDataByRoleId",
     outputs: [
       {
-        internalType: "bytes[]",
         name: "",
         type: "bytes[]",
+        internalType: "bytes[]",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "initialize",
     inputs: [
       {
-        internalType: "address",
         name: "_space",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "initialize",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "isEntitled",
     inputs: [
       {
-        internalType: "string",
         name: "channelId",
         type: "string",
+        internalType: "string",
       },
       {
-        internalType: "address",
         name: "user",
         type: "address",
+        internalType: "address",
       },
       {
-        internalType: "bytes32",
         name: "permission",
         type: "bytes32",
+        internalType: "bytes32",
       },
     ],
-    name: "isEntitled",
     outputs: [
       {
-        internalType: "bool",
         name: "",
         type: "bool",
+        internalType: "bool",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
-    inputs: [],
+    type: "function",
     name: "moduleType",
+    inputs: [],
     outputs: [
       {
-        internalType: "string",
         name: "",
         type: "string",
+        internalType: "string",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
-    inputs: [],
+    type: "function",
     name: "name",
+    inputs: [],
     outputs: [
       {
-        internalType: "string",
         name: "",
         type: "string",
+        internalType: "string",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
-    inputs: [],
+    type: "function",
     name: "proxiableUUID",
+    inputs: [],
     outputs: [
       {
-        internalType: "bytes32",
         name: "",
         type: "bytes32",
+        internalType: "bytes32",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "roleId",
-        type: "uint256",
-      },
-      {
-        internalType: "bytes",
-        name: "entitlementData",
-        type: "bytes",
-      },
-    ],
+    type: "function",
     name: "removeEntitlement",
-    outputs: [
-      {
-        internalType: "bytes32",
-        name: "entitlementId",
-        type: "bytes32",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
     inputs: [
       {
-        internalType: "uint256",
         name: "roleId",
         type: "uint256",
+        internalType: "uint256",
       },
       {
-        internalType: "bytes",
         name: "entitlementData",
         type: "bytes",
+        internalType: "bytes",
       },
     ],
-    name: "setEntitlement",
     outputs: [
       {
-        internalType: "bytes32",
         name: "entitlementId",
         type: "bytes32",
+        internalType: "bytes32",
       },
     ],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "setEntitlement",
     inputs: [
       {
-        internalType: "bytes4",
+        name: "roleId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "entitlementData",
+        type: "bytes",
+        internalType: "bytes",
+      },
+    ],
+    outputs: [
+      {
+        name: "entitlementId",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+    ],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "supportsInterface",
+    inputs: [
+      {
         name: "interfaceId",
         type: "bytes4",
+        internalType: "bytes4",
       },
     ],
-    name: "supportsInterface",
     outputs: [
       {
-        internalType: "bool",
         name: "",
         type: "bool",
+        internalType: "bool",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "upgradeTo",
     inputs: [
       {
-        internalType: "address",
         name: "newImplementation",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "upgradeTo",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "upgradeToAndCall",
     inputs: [
       {
-        internalType: "address",
         name: "newImplementation",
         type: "address",
+        internalType: "address",
       },
       {
-        internalType: "bytes",
         name: "data",
         type: "bytes",
+        internalType: "bytes",
       },
     ],
-    name: "upgradeToAndCall",
     outputs: [],
     stateMutability: "payable",
-    type: "function",
+  },
+  {
+    type: "event",
+    name: "AdminChanged",
+    inputs: [
+      {
+        name: "previousAdmin",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+      {
+        name: "newAdmin",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "BeaconUpgraded",
+    inputs: [
+      {
+        name: "beacon",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "Initialized",
+    inputs: [
+      {
+        name: "version",
+        type: "uint8",
+        indexed: false,
+        internalType: "uint8",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "Upgraded",
+    inputs: [
+      {
+        name: "implementation",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "error",
+    name: "Entitlement__InvalidValue",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Entitlement__NotAllowed",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Entitlement__ValueAlreadyExists",
+    inputs: [],
   },
 ] as const;
 

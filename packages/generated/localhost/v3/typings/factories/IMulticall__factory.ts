@@ -8,23 +8,23 @@ import type { IMulticall, IMulticallInterface } from "../IMulticall";
 
 const _abi = [
   {
+    type: "function",
+    name: "multicall",
     inputs: [
       {
-        internalType: "bytes[]",
         name: "data",
         type: "bytes[]",
+        internalType: "bytes[]",
       },
     ],
-    name: "multicall",
     outputs: [
       {
-        internalType: "bytes[]",
         name: "results",
         type: "bytes[]",
+        internalType: "bytes[]",
       },
     ],
     stateMutability: "nonpayable",
-    type: "function",
   },
 ] as const;
 

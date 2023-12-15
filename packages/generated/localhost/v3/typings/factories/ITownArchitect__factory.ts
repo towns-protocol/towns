@@ -11,510 +11,510 @@ import type {
 
 const _abi = [
   {
-    inputs: [],
-    name: "TownArchitect__InvalidAddress",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "TownArchitect__InvalidNetworkId",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "TownArchitect__InvalidStringLength",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "TownArchitect__NotContract",
-    type: "error",
-  },
-  {
-    anonymous: false,
+    type: "function",
+    name: "computeTown",
     inputs: [
       {
-        indexed: true,
-        internalType: "address",
-        name: "townCreator",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "uint256",
-        name: "townId",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "address",
-        name: "town",
-        type: "address",
-      },
-    ],
-    name: "TownCreated",
-    type: "event",
-  },
-  {
-    inputs: [
-      {
-        internalType: "string",
         name: "townId",
         type: "string",
+        internalType: "string",
       },
       {
-        components: [
-          {
-            components: [
-              {
-                internalType: "string",
-                name: "name",
-                type: "string",
-              },
-              {
-                internalType: "string",
-                name: "symbol",
-                type: "string",
-              },
-              {
-                internalType: "uint256",
-                name: "price",
-                type: "uint256",
-              },
-              {
-                internalType: "uint256",
-                name: "maxSupply",
-                type: "uint256",
-              },
-              {
-                internalType: "uint64",
-                name: "duration",
-                type: "uint64",
-              },
-              {
-                internalType: "address",
-                name: "currency",
-                type: "address",
-              },
-              {
-                internalType: "address",
-                name: "feeRecipient",
-                type: "address",
-              },
-              {
-                internalType: "uint256",
-                name: "freeAllocation",
-                type: "uint256",
-              },
-              {
-                internalType: "address",
-                name: "pricingModule",
-                type: "address",
-              },
-            ],
-            internalType: "struct IMembershipBase.MembershipInfo",
-            name: "settings",
-            type: "tuple",
-          },
-          {
-            components: [
-              {
-                internalType: "bool",
-                name: "everyone",
-                type: "bool",
-              },
-              {
-                components: [
-                  {
-                    internalType: "address",
-                    name: "contractAddress",
-                    type: "address",
-                  },
-                  {
-                    internalType: "uint256",
-                    name: "quantity",
-                    type: "uint256",
-                  },
-                  {
-                    internalType: "bool",
-                    name: "isSingleToken",
-                    type: "bool",
-                  },
-                  {
-                    internalType: "uint256[]",
-                    name: "tokenIds",
-                    type: "uint256[]",
-                  },
-                ],
-                internalType: "struct ITokenEntitlement.ExternalToken[]",
-                name: "tokens",
-                type: "tuple[]",
-              },
-              {
-                internalType: "address[]",
-                name: "users",
-                type: "address[]",
-              },
-            ],
-            internalType: "struct ITownArchitectBase.MembershipRequirements",
-            name: "requirements",
-            type: "tuple",
-          },
-          {
-            internalType: "string[]",
-            name: "permissions",
-            type: "string[]",
-          },
-        ],
-        internalType: "struct ITownArchitectBase.Membership",
         name: "membership",
         type: "tuple",
-      },
-    ],
-    name: "computeTown",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
+        internalType: "struct ITownArchitectBase.Membership",
         components: [
           {
-            internalType: "string",
-            name: "id",
-            type: "string",
-          },
-          {
-            internalType: "string",
-            name: "name",
-            type: "string",
-          },
-          {
-            internalType: "string",
-            name: "uri",
-            type: "string",
-          },
-          {
+            name: "settings",
+            type: "tuple",
+            internalType: "struct IMembershipBase.MembershipInfo",
             components: [
               {
-                components: [
-                  {
-                    internalType: "string",
-                    name: "name",
-                    type: "string",
-                  },
-                  {
-                    internalType: "string",
-                    name: "symbol",
-                    type: "string",
-                  },
-                  {
-                    internalType: "uint256",
-                    name: "price",
-                    type: "uint256",
-                  },
-                  {
-                    internalType: "uint256",
-                    name: "maxSupply",
-                    type: "uint256",
-                  },
-                  {
-                    internalType: "uint64",
-                    name: "duration",
-                    type: "uint64",
-                  },
-                  {
-                    internalType: "address",
-                    name: "currency",
-                    type: "address",
-                  },
-                  {
-                    internalType: "address",
-                    name: "feeRecipient",
-                    type: "address",
-                  },
-                  {
-                    internalType: "uint256",
-                    name: "freeAllocation",
-                    type: "uint256",
-                  },
-                  {
-                    internalType: "address",
-                    name: "pricingModule",
-                    type: "address",
-                  },
-                ],
-                internalType: "struct IMembershipBase.MembershipInfo",
-                name: "settings",
-                type: "tuple",
+                name: "name",
+                type: "string",
+                internalType: "string",
               },
               {
+                name: "symbol",
+                type: "string",
+                internalType: "string",
+              },
+              {
+                name: "price",
+                type: "uint256",
+                internalType: "uint256",
+              },
+              {
+                name: "maxSupply",
+                type: "uint256",
+                internalType: "uint256",
+              },
+              {
+                name: "duration",
+                type: "uint64",
+                internalType: "uint64",
+              },
+              {
+                name: "currency",
+                type: "address",
+                internalType: "address",
+              },
+              {
+                name: "feeRecipient",
+                type: "address",
+                internalType: "address",
+              },
+              {
+                name: "freeAllocation",
+                type: "uint256",
+                internalType: "uint256",
+              },
+              {
+                name: "pricingModule",
+                type: "address",
+                internalType: "address",
+              },
+            ],
+          },
+          {
+            name: "requirements",
+            type: "tuple",
+            internalType: "struct ITownArchitectBase.MembershipRequirements",
+            components: [
+              {
+                name: "everyone",
+                type: "bool",
+                internalType: "bool",
+              },
+              {
+                name: "tokens",
+                type: "tuple[]",
+                internalType: "struct ITokenEntitlement.ExternalToken[]",
                 components: [
                   {
-                    internalType: "bool",
-                    name: "everyone",
+                    name: "contractAddress",
+                    type: "address",
+                    internalType: "address",
+                  },
+                  {
+                    name: "quantity",
+                    type: "uint256",
+                    internalType: "uint256",
+                  },
+                  {
+                    name: "isSingleToken",
                     type: "bool",
+                    internalType: "bool",
                   },
                   {
-                    components: [
-                      {
-                        internalType: "address",
-                        name: "contractAddress",
-                        type: "address",
-                      },
-                      {
-                        internalType: "uint256",
-                        name: "quantity",
-                        type: "uint256",
-                      },
-                      {
-                        internalType: "bool",
-                        name: "isSingleToken",
-                        type: "bool",
-                      },
-                      {
-                        internalType: "uint256[]",
-                        name: "tokenIds",
-                        type: "uint256[]",
-                      },
-                    ],
-                    internalType: "struct ITokenEntitlement.ExternalToken[]",
-                    name: "tokens",
-                    type: "tuple[]",
-                  },
-                  {
-                    internalType: "address[]",
-                    name: "users",
-                    type: "address[]",
+                    name: "tokenIds",
+                    type: "uint256[]",
+                    internalType: "uint256[]",
                   },
                 ],
-                internalType:
-                  "struct ITownArchitectBase.MembershipRequirements",
-                name: "requirements",
-                type: "tuple",
               },
               {
-                internalType: "string[]",
-                name: "permissions",
-                type: "string[]",
+                name: "users",
+                type: "address[]",
+                internalType: "address[]",
               },
             ],
-            internalType: "struct ITownArchitectBase.Membership",
-            name: "membership",
-            type: "tuple",
           },
           {
-            components: [
-              {
-                internalType: "string",
-                name: "id",
-                type: "string",
-              },
-              {
-                internalType: "string",
-                name: "metadata",
-                type: "string",
-              },
-            ],
-            internalType: "struct ITownArchitectBase.ChannelInfo",
-            name: "channel",
-            type: "tuple",
+            name: "permissions",
+            type: "string[]",
+            internalType: "string[]",
           },
         ],
-        internalType: "struct ITownArchitectBase.TownInfo",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "createTown",
+    inputs: [
+      {
         name: "townInfo",
         type: "tuple",
+        internalType: "struct ITownArchitectBase.TownInfo",
+        components: [
+          {
+            name: "id",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "name",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "uri",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "membership",
+            type: "tuple",
+            internalType: "struct ITownArchitectBase.Membership",
+            components: [
+              {
+                name: "settings",
+                type: "tuple",
+                internalType: "struct IMembershipBase.MembershipInfo",
+                components: [
+                  {
+                    name: "name",
+                    type: "string",
+                    internalType: "string",
+                  },
+                  {
+                    name: "symbol",
+                    type: "string",
+                    internalType: "string",
+                  },
+                  {
+                    name: "price",
+                    type: "uint256",
+                    internalType: "uint256",
+                  },
+                  {
+                    name: "maxSupply",
+                    type: "uint256",
+                    internalType: "uint256",
+                  },
+                  {
+                    name: "duration",
+                    type: "uint64",
+                    internalType: "uint64",
+                  },
+                  {
+                    name: "currency",
+                    type: "address",
+                    internalType: "address",
+                  },
+                  {
+                    name: "feeRecipient",
+                    type: "address",
+                    internalType: "address",
+                  },
+                  {
+                    name: "freeAllocation",
+                    type: "uint256",
+                    internalType: "uint256",
+                  },
+                  {
+                    name: "pricingModule",
+                    type: "address",
+                    internalType: "address",
+                  },
+                ],
+              },
+              {
+                name: "requirements",
+                type: "tuple",
+                internalType:
+                  "struct ITownArchitectBase.MembershipRequirements",
+                components: [
+                  {
+                    name: "everyone",
+                    type: "bool",
+                    internalType: "bool",
+                  },
+                  {
+                    name: "tokens",
+                    type: "tuple[]",
+                    internalType: "struct ITokenEntitlement.ExternalToken[]",
+                    components: [
+                      {
+                        name: "contractAddress",
+                        type: "address",
+                        internalType: "address",
+                      },
+                      {
+                        name: "quantity",
+                        type: "uint256",
+                        internalType: "uint256",
+                      },
+                      {
+                        name: "isSingleToken",
+                        type: "bool",
+                        internalType: "bool",
+                      },
+                      {
+                        name: "tokenIds",
+                        type: "uint256[]",
+                        internalType: "uint256[]",
+                      },
+                    ],
+                  },
+                  {
+                    name: "users",
+                    type: "address[]",
+                    internalType: "address[]",
+                  },
+                ],
+              },
+              {
+                name: "permissions",
+                type: "string[]",
+                internalType: "string[]",
+              },
+            ],
+          },
+          {
+            name: "channel",
+            type: "tuple",
+            internalType: "struct ITownArchitectBase.ChannelInfo",
+            components: [
+              {
+                name: "id",
+                type: "string",
+                internalType: "string",
+              },
+              {
+                name: "metadata",
+                type: "string",
+                internalType: "string",
+              },
+            ],
+          },
+        ],
       },
     ],
-    name: "createTown",
     outputs: [
       {
-        internalType: "address",
         name: "",
         type: "address",
+        internalType: "address",
       },
     ],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "gateByToken",
     inputs: [
       {
-        internalType: "address",
         name: "token",
         type: "address",
+        internalType: "address",
       },
       {
-        internalType: "uint256",
         name: "quantity",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
-    name: "gateByToken",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "address",
-        name: "town",
-        type: "address",
-      },
-    ],
+    type: "function",
     name: "getTokenIdByTown",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [
       {
-        internalType: "string",
-        name: "townId",
-        type: "string",
-      },
-    ],
-    name: "getTokenIdByTownId",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getTownArchitectImplementations",
-    outputs: [
-      {
-        internalType: "address",
-        name: "townToken",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "userEntitlementImplementation",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "tokenEntitlementImplementation",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "string",
-        name: "townId",
-        type: "string",
-      },
-    ],
-    name: "getTownById",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "token",
-        type: "address",
-      },
-    ],
-    name: "isTokenGated",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
         name: "town",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "isTown",
     outputs: [
       {
-        internalType: "bool",
         name: "",
-        type: "bool",
+        type: "uint256",
+        internalType: "uint256",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "getTokenIdByTownId",
     inputs: [
       {
-        internalType: "address",
+        name: "townId",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getTownArchitectImplementations",
+    inputs: [],
+    outputs: [
+      {
         name: "townToken",
         type: "address",
+        internalType: "address",
       },
       {
-        internalType: "address",
         name: "userEntitlementImplementation",
         type: "address",
+        internalType: "address",
       },
       {
-        internalType: "address",
         name: "tokenEntitlementImplementation",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "setTownArchitectImplementations",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
+    stateMutability: "view",
   },
   {
+    type: "function",
+    name: "getTownById",
     inputs: [
       {
-        internalType: "address",
-        name: "token",
-        type: "address",
+        name: "townId",
+        type: "string",
+        internalType: "string",
       },
     ],
-    name: "ungateByToken",
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "isTokenGated",
+    inputs: [
+      {
+        name: "token",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "isTown",
+    inputs: [
+      {
+        name: "town",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "setTownArchitectImplementations",
+    inputs: [
+      {
+        name: "townToken",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "userEntitlementImplementation",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "tokenEntitlementImplementation",
+        type: "address",
+        internalType: "address",
+      },
+    ],
     outputs: [],
     stateMutability: "nonpayable",
+  },
+  {
     type: "function",
+    name: "ungateByToken",
+    inputs: [
+      {
+        name: "token",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "event",
+    name: "TownCreated",
+    inputs: [
+      {
+        name: "townCreator",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "townId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+      {
+        name: "town",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "error",
+    name: "TownArchitect__InvalidAddress",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "TownArchitect__InvalidNetworkId",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "TownArchitect__InvalidStringLength",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "TownArchitect__NotContract",
+    inputs: [],
   },
 ] as const;
 

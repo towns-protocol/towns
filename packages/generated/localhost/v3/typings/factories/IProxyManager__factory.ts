@@ -8,60 +8,60 @@ import type { IProxyManager, IProxyManagerInterface } from "../IProxyManager";
 
 const _abi = [
   {
+    type: "function",
+    name: "getImplementation",
     inputs: [
       {
-        internalType: "address",
-        name: "implementation",
-        type: "address",
-      },
-    ],
-    name: "ProxyManager__NotContract",
-    type: "error",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "implementation",
-        type: "address",
-      },
-    ],
-    name: "ProxyManager__ImplementationSet",
-    type: "event",
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes4",
         name: "selector",
         type: "bytes4",
+        internalType: "bytes4",
       },
     ],
-    name: "getImplementation",
     outputs: [
       {
-        internalType: "address",
         name: "",
         type: "address",
+        internalType: "address",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "setImplementation",
     inputs: [
       {
-        internalType: "address",
         name: "implementation",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "setImplementation",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
+  },
+  {
+    type: "event",
+    name: "ProxyManager__ImplementationSet",
+    inputs: [
+      {
+        name: "implementation",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "error",
+    name: "ProxyManager__NotContract",
+    inputs: [
+      {
+        name: "implementation",
+        type: "address",
+        internalType: "address",
+      },
+    ],
   },
 ] as const;
 

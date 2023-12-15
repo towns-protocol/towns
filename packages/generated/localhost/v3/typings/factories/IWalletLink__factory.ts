@@ -8,196 +8,196 @@ import type { IWalletLink, IWalletLinkInterface } from "../IWalletLink";
 
 const _abi = [
   {
-    inputs: [],
-    name: "WalletLink__InvalidSignature",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "wallet",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "rootKey",
-        type: "address",
-      },
-    ],
-    name: "WalletLink__LinkAlreadyExists",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "wallet",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "rootKey",
-        type: "address",
-      },
-    ],
-    name: "WalletLink__NotLinked",
-    type: "error",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "wallet",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "address",
-        name: "rootKey",
-        type: "address",
-      },
-    ],
-    name: "LinkWalletToRootKey",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "wallet",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "address",
-        name: "secondWallet",
-        type: "address",
-      },
-    ],
-    name: "RemoveLink",
-    type: "event",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "rootKey",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "wallet",
-        type: "address",
-      },
-    ],
+    type: "function",
     name: "checkIfLinked",
+    inputs: [
+      {
+        name: "rootKey",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "wallet",
+        type: "address",
+        internalType: "address",
+      },
+    ],
     outputs: [
       {
-        internalType: "bool",
         name: "",
         type: "bool",
+        internalType: "bool",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "getLatestNonceForRootKey",
     inputs: [
       {
-        internalType: "address",
         name: "rootKey",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "getLatestNonceForRootKey",
     outputs: [
       {
-        internalType: "uint256",
         name: "",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "getRootKeyForWallet",
     inputs: [
       {
-        internalType: "address",
         name: "wallet",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "getRootKeyForWallet",
     outputs: [
       {
-        internalType: "address",
         name: "rootKey",
         type: "address",
+        internalType: "address",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "getWalletsByRootKey",
     inputs: [
       {
-        internalType: "address",
         name: "rootKey",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "getWalletsByRootKey",
     outputs: [
       {
-        internalType: "address[]",
         name: "wallets",
         type: "address[]",
+        internalType: "address[]",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "linkWalletToRootKey",
     inputs: [
       {
-        internalType: "address",
         name: "rootKey",
         type: "address",
+        internalType: "address",
       },
       {
-        internalType: "bytes",
         name: "rootKeySignature",
         type: "bytes",
+        internalType: "bytes",
       },
       {
-        internalType: "uint256",
         name: "nonce",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
-    name: "linkWalletToRootKey",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "removeLink",
     inputs: [
       {
-        internalType: "address",
         name: "wallet",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "removeLink",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
+  },
+  {
+    type: "event",
+    name: "LinkWalletToRootKey",
+    inputs: [
+      {
+        name: "wallet",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+      {
+        name: "rootKey",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "RemoveLink",
+    inputs: [
+      {
+        name: "wallet",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+      {
+        name: "secondWallet",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "error",
+    name: "WalletLink__InvalidSignature",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "WalletLink__LinkAlreadyExists",
+    inputs: [
+      {
+        name: "wallet",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "rootKey",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "WalletLink__NotLinked",
+    inputs: [
+      {
+        name: "wallet",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "rootKey",
+        type: "address",
+        internalType: "address",
+      },
+    ],
   },
 ] as const;
 

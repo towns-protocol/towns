@@ -8,391 +8,391 @@ import type { IRoles, IRolesInterface } from "../IRoles";
 
 const _abi = [
   {
-    inputs: [],
-    name: "Roles__EntitlementAlreadyExists",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "Roles__EntitlementDoesNotExist",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "Roles__InvalidEntitlementAddress",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "Roles__InvalidPermission",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "Roles__PermissionAlreadyExists",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "Roles__PermissionDoesNotExist",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "Roles__RoleDoesNotExist",
-    type: "error",
-  },
-  {
-    anonymous: false,
+    type: "function",
+    name: "addPermissionsToRole",
     inputs: [
       {
-        indexed: true,
-        internalType: "address",
-        name: "creator",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "uint256",
         name: "roleId",
         type: "uint256",
-      },
-    ],
-    name: "RoleCreated",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "remover",
-        type: "address",
-      },
-      {
-        indexed: true,
         internalType: "uint256",
-        name: "roleId",
-        type: "uint256",
-      },
-    ],
-    name: "RoleRemoved",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "updater",
-        type: "address",
       },
       {
-        indexed: true,
-        internalType: "uint256",
-        name: "roleId",
-        type: "uint256",
-      },
-    ],
-    name: "RoleUpdated",
-    type: "event",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "roleId",
-        type: "uint256",
-      },
-      {
-        internalType: "string[]",
         name: "permissions",
         type: "string[]",
+        internalType: "string[]",
       },
     ],
-    name: "addPermissionsToRole",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "addRoleToEntitlement",
     inputs: [
       {
-        internalType: "uint256",
         name: "roleId",
         type: "uint256",
+        internalType: "uint256",
       },
       {
-        components: [
-          {
-            internalType: "address",
-            name: "module",
-            type: "address",
-          },
-          {
-            internalType: "bytes",
-            name: "data",
-            type: "bytes",
-          },
-        ],
-        internalType: "struct IRolesBase.CreateEntitlement",
         name: "entitlement",
         type: "tuple",
-      },
-    ],
-    name: "addRoleToEntitlement",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "string",
-        name: "roleName",
-        type: "string",
-      },
-      {
-        internalType: "string[]",
-        name: "permissions",
-        type: "string[]",
-      },
-      {
+        internalType: "struct IRolesBase.CreateEntitlement",
         components: [
           {
-            internalType: "address",
             name: "module",
             type: "address",
+            internalType: "address",
           },
           {
-            internalType: "bytes",
             name: "data",
             type: "bytes",
+            internalType: "bytes",
           },
         ],
-        internalType: "struct IRolesBase.CreateEntitlement[]",
-        name: "entitlements",
-        type: "tuple[]",
       },
     ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "createRole",
+    inputs: [
+      {
+        name: "roleName",
+        type: "string",
+        internalType: "string",
+      },
+      {
+        name: "permissions",
+        type: "string[]",
+        internalType: "string[]",
+      },
+      {
+        name: "entitlements",
+        type: "tuple[]",
+        internalType: "struct IRolesBase.CreateEntitlement[]",
+        components: [
+          {
+            name: "module",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "data",
+            type: "bytes",
+            internalType: "bytes",
+          },
+        ],
+      },
+    ],
     outputs: [
       {
-        internalType: "uint256",
         name: "roleId",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "getPermissionsByRoleId",
     inputs: [
       {
-        internalType: "uint256",
         name: "roleId",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
-    name: "getPermissionsByRoleId",
     outputs: [
       {
-        internalType: "string[]",
         name: "permissions",
         type: "string[]",
+        internalType: "string[]",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "getRoleById",
     inputs: [
       {
-        internalType: "uint256",
         name: "roleId",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
-    name: "getRoleById",
     outputs: [
       {
-        components: [
-          {
-            internalType: "uint256",
-            name: "id",
-            type: "uint256",
-          },
-          {
-            internalType: "string",
-            name: "name",
-            type: "string",
-          },
-          {
-            internalType: "bool",
-            name: "disabled",
-            type: "bool",
-          },
-          {
-            internalType: "string[]",
-            name: "permissions",
-            type: "string[]",
-          },
-          {
-            internalType: "address[]",
-            name: "entitlements",
-            type: "address[]",
-          },
-        ],
-        internalType: "struct IRolesBase.Role",
         name: "role",
         type: "tuple",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getRoles",
-    outputs: [
-      {
+        internalType: "struct IRolesBase.Role",
         components: [
           {
-            internalType: "uint256",
             name: "id",
             type: "uint256",
+            internalType: "uint256",
           },
           {
-            internalType: "string",
             name: "name",
             type: "string",
+            internalType: "string",
           },
           {
-            internalType: "bool",
             name: "disabled",
             type: "bool",
+            internalType: "bool",
           },
           {
-            internalType: "string[]",
             name: "permissions",
             type: "string[]",
+            internalType: "string[]",
           },
           {
-            internalType: "address[]",
             name: "entitlements",
             type: "address[]",
+            internalType: "address[]",
           },
         ],
-        internalType: "struct IRolesBase.Role[]",
-        name: "roles",
-        type: "tuple[]",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "roleId",
-        type: "uint256",
-      },
-      {
-        internalType: "string[]",
-        name: "permissions",
-        type: "string[]",
-      },
-    ],
-    name: "removePermissionsFromRole",
-    outputs: [],
-    stateMutability: "nonpayable",
     type: "function",
-  },
-  {
-    inputs: [
+    name: "getRoles",
+    inputs: [],
+    outputs: [
       {
-        internalType: "uint256",
-        name: "roleId",
-        type: "uint256",
-      },
-    ],
-    name: "removeRole",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "roleId",
-        type: "uint256",
-      },
-      {
+        name: "roles",
+        type: "tuple[]",
+        internalType: "struct IRolesBase.Role[]",
         components: [
           {
-            internalType: "address",
-            name: "module",
-            type: "address",
+            name: "id",
+            type: "uint256",
+            internalType: "uint256",
           },
           {
-            internalType: "bytes",
-            name: "data",
-            type: "bytes",
+            name: "name",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "disabled",
+            type: "bool",
+            internalType: "bool",
+          },
+          {
+            name: "permissions",
+            type: "string[]",
+            internalType: "string[]",
+          },
+          {
+            name: "entitlements",
+            type: "address[]",
+            internalType: "address[]",
           },
         ],
-        internalType: "struct IRolesBase.CreateEntitlement",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "removePermissionsFromRole",
+    inputs: [
+      {
+        name: "roleId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "permissions",
+        type: "string[]",
+        internalType: "string[]",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "removeRole",
+    inputs: [
+      {
+        name: "roleId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "removeRoleFromEntitlement",
+    inputs: [
+      {
+        name: "roleId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
         name: "entitlement",
         type: "tuple",
-      },
-    ],
-    name: "removeRoleFromEntitlement",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "roleId",
-        type: "uint256",
-      },
-      {
-        internalType: "string",
-        name: "roleName",
-        type: "string",
-      },
-      {
-        internalType: "string[]",
-        name: "permissions",
-        type: "string[]",
-      },
-      {
+        internalType: "struct IRolesBase.CreateEntitlement",
         components: [
           {
-            internalType: "address",
             name: "module",
             type: "address",
+            internalType: "address",
           },
           {
-            internalType: "bytes",
             name: "data",
             type: "bytes",
+            internalType: "bytes",
           },
         ],
-        internalType: "struct IRolesBase.CreateEntitlement[]",
-        name: "entitlements",
-        type: "tuple[]",
       },
     ],
-    name: "updateRole",
     outputs: [],
     stateMutability: "nonpayable",
+  },
+  {
     type: "function",
+    name: "updateRole",
+    inputs: [
+      {
+        name: "roleId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "roleName",
+        type: "string",
+        internalType: "string",
+      },
+      {
+        name: "permissions",
+        type: "string[]",
+        internalType: "string[]",
+      },
+      {
+        name: "entitlements",
+        type: "tuple[]",
+        internalType: "struct IRolesBase.CreateEntitlement[]",
+        components: [
+          {
+            name: "module",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "data",
+            type: "bytes",
+            internalType: "bytes",
+          },
+        ],
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "event",
+    name: "RoleCreated",
+    inputs: [
+      {
+        name: "creator",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "roleId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "RoleRemoved",
+    inputs: [
+      {
+        name: "remover",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "roleId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "RoleUpdated",
+    inputs: [
+      {
+        name: "updater",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "roleId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "error",
+    name: "Roles__EntitlementAlreadyExists",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Roles__EntitlementDoesNotExist",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Roles__InvalidEntitlementAddress",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Roles__InvalidPermission",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Roles__PermissionAlreadyExists",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Roles__PermissionDoesNotExist",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Roles__RoleDoesNotExist",
+    inputs: [],
   },
 ] as const;
 

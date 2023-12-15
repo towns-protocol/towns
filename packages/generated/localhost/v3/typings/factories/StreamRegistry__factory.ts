@@ -11,158 +11,158 @@ import type {
 
 const _abi = [
   {
+    type: "function",
+    name: "allocateStream",
     inputs: [
       {
-        components: [
-          {
-            internalType: "string",
-            name: "streamId",
-            type: "string",
-          },
-          {
-            internalType: "address[]",
-            name: "nodes",
-            type: "address[]",
-          },
-          {
-            internalType: "bytes32",
-            name: "genesisMiniblockHash",
-            type: "bytes32",
-          },
-        ],
-        internalType: "struct StreamRegistry.Stream",
         name: "newStream",
         type: "tuple",
+        internalType: "struct StreamRegistry.Stream",
+        components: [
+          {
+            name: "streamId",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "nodes",
+            type: "address[]",
+            internalType: "address[]",
+          },
+          {
+            name: "genesisMiniblockHash",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+        ],
       },
     ],
-    name: "allocateStream",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
-    inputs: [],
+    type: "function",
     name: "errAlreadyExists",
+    inputs: [],
     outputs: [
       {
-        internalType: "string",
         name: "",
         type: "string",
+        internalType: "string",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
-    inputs: [],
+    type: "function",
     name: "errNotFound",
-    outputs: [
-      {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [],
-    name: "errOutOfBounds",
     outputs: [
       {
-        internalType: "string",
         name: "",
         type: "string",
+        internalType: "string",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "errOutOfBounds",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getStream",
     inputs: [
       {
-        internalType: "string",
         name: "_streamId",
         type: "string",
+        internalType: "string",
       },
     ],
-    name: "getStream",
     outputs: [
       {
-        components: [
-          {
-            internalType: "string",
-            name: "streamId",
-            type: "string",
-          },
-          {
-            internalType: "address[]",
-            name: "nodes",
-            type: "address[]",
-          },
-          {
-            internalType: "bytes32",
-            name: "genesisMiniblockHash",
-            type: "bytes32",
-          },
-        ],
-        internalType: "struct StreamRegistry.Stream",
         name: "",
         type: "tuple",
+        internalType: "struct StreamRegistry.Stream",
+        components: [
+          {
+            name: "streamId",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "nodes",
+            type: "address[]",
+            internalType: "address[]",
+          },
+          {
+            name: "genesisMiniblockHash",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+        ],
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "getStreamByIndex",
     inputs: [
       {
-        internalType: "uint256",
         name: "index",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
-    name: "getStreamByIndex",
     outputs: [
       {
-        components: [
-          {
-            internalType: "string",
-            name: "streamId",
-            type: "string",
-          },
-          {
-            internalType: "address[]",
-            name: "nodes",
-            type: "address[]",
-          },
-          {
-            internalType: "bytes32",
-            name: "genesisMiniblockHash",
-            type: "bytes32",
-          },
-        ],
-        internalType: "struct StreamRegistry.Stream",
         name: "",
         type: "tuple",
+        internalType: "struct StreamRegistry.Stream",
+        components: [
+          {
+            name: "streamId",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "nodes",
+            type: "address[]",
+            internalType: "address[]",
+          },
+          {
+            name: "genesisMiniblockHash",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+        ],
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
-    inputs: [],
+    type: "function",
     name: "getStreamsLength",
+    inputs: [],
     outputs: [
       {
-        internalType: "uint256",
         name: "",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
 ] as const;
 

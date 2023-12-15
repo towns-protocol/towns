@@ -8,188 +8,188 @@ import type { IDiamondCut, IDiamondCutInterface } from "../IDiamondCut";
 
 const _abi = [
   {
-    inputs: [
-      {
-        internalType: "bytes4",
-        name: "selector",
-        type: "bytes4",
-      },
-    ],
-    name: "DiamondCut_FunctionAlreadyExists",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "facet",
-        type: "address",
-      },
-    ],
-    name: "DiamondCut_FunctionDoesNotExist",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes4",
-        name: "selector",
-        type: "bytes4",
-      },
-    ],
-    name: "DiamondCut_FunctionFromSameFacetAlreadyExists",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "DiamondCut_ImmutableFacet",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "init",
-        type: "address",
-      },
-    ],
-    name: "DiamondCut_InvalidContract",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "facet",
-        type: "address",
-      },
-    ],
-    name: "DiamondCut_InvalidFacet",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "DiamondCut_InvalidFacetCutAction",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "DiamondCut_InvalidFacetCutLength",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "facet",
-        type: "address",
-      },
-      {
-        internalType: "bytes4",
-        name: "selector",
-        type: "bytes4",
-      },
-    ],
-    name: "DiamondCut_InvalidFacetRemoval",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "facet",
-        type: "address",
-      },
-    ],
-    name: "DiamondCut_InvalidFacetSelectors",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "DiamondCut_InvalidSelector",
-    type: "error",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        components: [
-          {
-            internalType: "address",
-            name: "facetAddress",
-            type: "address",
-          },
-          {
-            internalType: "enum IDiamond.FacetCutAction",
-            name: "action",
-            type: "uint8",
-          },
-          {
-            internalType: "bytes4[]",
-            name: "functionSelectors",
-            type: "bytes4[]",
-          },
-        ],
-        indexed: false,
-        internalType: "struct IDiamond.FacetCut[]",
-        name: "facetCuts",
-        type: "tuple[]",
-      },
-      {
-        indexed: false,
-        internalType: "address",
-        name: "init",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "bytes",
-        name: "initPayload",
-        type: "bytes",
-      },
-    ],
-    name: "DiamondCut",
-    type: "event",
-  },
-  {
-    inputs: [
-      {
-        components: [
-          {
-            internalType: "address",
-            name: "facetAddress",
-            type: "address",
-          },
-          {
-            internalType: "enum IDiamond.FacetCutAction",
-            name: "action",
-            type: "uint8",
-          },
-          {
-            internalType: "bytes4[]",
-            name: "functionSelectors",
-            type: "bytes4[]",
-          },
-        ],
-        internalType: "struct IDiamond.FacetCut[]",
-        name: "facetCuts",
-        type: "tuple[]",
-      },
-      {
-        internalType: "address",
-        name: "init",
-        type: "address",
-      },
-      {
-        internalType: "bytes",
-        name: "initPayload",
-        type: "bytes",
-      },
-    ],
+    type: "function",
     name: "diamondCut",
+    inputs: [
+      {
+        name: "facetCuts",
+        type: "tuple[]",
+        internalType: "struct IDiamond.FacetCut[]",
+        components: [
+          {
+            name: "facetAddress",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "action",
+            type: "uint8",
+            internalType: "enum IDiamond.FacetCutAction",
+          },
+          {
+            name: "functionSelectors",
+            type: "bytes4[]",
+            internalType: "bytes4[]",
+          },
+        ],
+      },
+      {
+        name: "init",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "initPayload",
+        type: "bytes",
+        internalType: "bytes",
+      },
+    ],
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
+  },
+  {
+    type: "event",
+    name: "DiamondCut",
+    inputs: [
+      {
+        name: "facetCuts",
+        type: "tuple[]",
+        indexed: false,
+        internalType: "struct IDiamond.FacetCut[]",
+        components: [
+          {
+            name: "facetAddress",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "action",
+            type: "uint8",
+            internalType: "enum IDiamond.FacetCutAction",
+          },
+          {
+            name: "functionSelectors",
+            type: "bytes4[]",
+            internalType: "bytes4[]",
+          },
+        ],
+      },
+      {
+        name: "init",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+      {
+        name: "initPayload",
+        type: "bytes",
+        indexed: false,
+        internalType: "bytes",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "error",
+    name: "DiamondCut_FunctionAlreadyExists",
+    inputs: [
+      {
+        name: "selector",
+        type: "bytes4",
+        internalType: "bytes4",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "DiamondCut_FunctionDoesNotExist",
+    inputs: [
+      {
+        name: "facet",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "DiamondCut_FunctionFromSameFacetAlreadyExists",
+    inputs: [
+      {
+        name: "selector",
+        type: "bytes4",
+        internalType: "bytes4",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "DiamondCut_ImmutableFacet",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "DiamondCut_InvalidContract",
+    inputs: [
+      {
+        name: "init",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "DiamondCut_InvalidFacet",
+    inputs: [
+      {
+        name: "facet",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "DiamondCut_InvalidFacetCutAction",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "DiamondCut_InvalidFacetCutLength",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "DiamondCut_InvalidFacetRemoval",
+    inputs: [
+      {
+        name: "facet",
+        type: "address",
+        internalType: "address",
+      },
+      {
+        name: "selector",
+        type: "bytes4",
+        internalType: "bytes4",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "DiamondCut_InvalidFacetSelectors",
+    inputs: [
+      {
+        name: "facet",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "DiamondCut_InvalidSelector",
+    inputs: [],
   },
 ] as const;
 

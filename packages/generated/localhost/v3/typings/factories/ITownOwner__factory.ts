@@ -8,169 +8,169 @@ import type { ITownOwner, ITownOwnerInterface } from "../ITownOwner";
 
 const _abi = [
   {
-    inputs: [],
-    name: "TownOwner__OnlyFactoryAllowed",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "TownOwner__OnlyTownOwnerAllowed",
-    type: "error",
-  },
-  {
-    anonymous: false,
+    type: "function",
+    name: "getTownInfo",
     inputs: [
       {
-        indexed: false,
-        internalType: "address",
-        name: "factory",
-        type: "address",
-      },
-    ],
-    name: "TownOwner__SetFactory",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "town",
-        type: "address",
-      },
-    ],
-    name: "TownOwner__UpdateTown",
-    type: "event",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
         name: "townAddress",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "getTownInfo",
     outputs: [
       {
-        components: [
-          {
-            internalType: "string",
-            name: "name",
-            type: "string",
-          },
-          {
-            internalType: "string",
-            name: "uri",
-            type: "string",
-          },
-          {
-            internalType: "uint256",
-            name: "tokenId",
-            type: "uint256",
-          },
-          {
-            internalType: "string",
-            name: "networkId",
-            type: "string",
-          },
-          {
-            internalType: "uint256",
-            name: "createdAt",
-            type: "uint256",
-          },
-        ],
-        internalType: "struct ITownOwnerBase.Town",
         name: "",
         type: "tuple",
+        internalType: "struct ITownOwnerBase.Town",
+        components: [
+          {
+            name: "name",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "uri",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "tokenId",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "networkId",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "createdAt",
+            type: "uint256",
+            internalType: "uint256",
+          },
+        ],
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "mintTown",
     inputs: [
       {
-        internalType: "string",
         name: "name",
         type: "string",
+        internalType: "string",
       },
       {
-        internalType: "string",
         name: "uri",
         type: "string",
+        internalType: "string",
       },
       {
-        internalType: "string",
         name: "networkId",
         type: "string",
+        internalType: "string",
       },
       {
-        internalType: "address",
         name: "townAddress",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "mintTown",
     outputs: [
       {
-        internalType: "uint256",
         name: "tokenId",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
-    inputs: [],
+    type: "function",
     name: "nextTokenId",
+    inputs: [],
     outputs: [
       {
-        internalType: "uint256",
         name: "",
         type: "uint256",
+        internalType: "uint256",
       },
     ],
     stateMutability: "view",
-    type: "function",
   },
   {
+    type: "function",
+    name: "setFactory",
     inputs: [
       {
-        internalType: "address",
         name: "factory",
         type: "address",
+        internalType: "address",
       },
     ],
-    name: "setFactory",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "updateTownInfo",
     inputs: [
       {
-        internalType: "address",
         name: "townAddress",
         type: "address",
+        internalType: "address",
       },
       {
-        internalType: "string",
         name: "name",
         type: "string",
+        internalType: "string",
       },
       {
-        internalType: "string",
         name: "uri",
         type: "string",
+        internalType: "string",
       },
     ],
-    name: "updateTownInfo",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
+  },
+  {
+    type: "event",
+    name: "TownOwner__SetFactory",
+    inputs: [
+      {
+        name: "factory",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "TownOwner__UpdateTown",
+    inputs: [
+      {
+        name: "town",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "error",
+    name: "TownOwner__OnlyFactoryAllowed",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "TownOwner__OnlyTownOwnerAllowed",
+    inputs: [],
   },
 ] as const;
 

@@ -1,156 +1,156 @@
 export default [
   {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "streamId",
-            "type": "string"
-          },
-          {
-            "internalType": "address[]",
-            "name": "nodes",
-            "type": "address[]"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "genesisMiniblockHash",
-            "type": "bytes32"
-          }
-        ],
-        "internalType": "struct StreamRegistry.Stream",
-        "name": "newStream",
-        "type": "tuple"
-      }
-    ],
+    "type": "function",
     "name": "allocateStream",
+    "inputs": [
+      {
+        "name": "newStream",
+        "type": "tuple",
+        "internalType": "struct StreamRegistry.Stream",
+        "components": [
+          {
+            "name": "streamId",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "nodes",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "genesisMiniblockHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ]
+      }
+    ],
     "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "stateMutability": "nonpayable"
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "errAlreadyExists",
+    "inputs": [],
     "outputs": [
       {
-        "internalType": "string",
         "name": "",
-        "type": "string"
+        "type": "string",
+        "internalType": "string"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "stateMutability": "view"
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "errNotFound",
+    "inputs": [],
     "outputs": [
       {
-        "internalType": "string",
         "name": "",
-        "type": "string"
+        "type": "string",
+        "internalType": "string"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "stateMutability": "view"
   },
   {
-    "inputs": [],
+    "type": "function",
     "name": "errOutOfBounds",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_streamId",
-        "type": "string"
-      }
-    ],
-    "name": "getStream",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "streamId",
-            "type": "string"
-          },
-          {
-            "internalType": "address[]",
-            "name": "nodes",
-            "type": "address[]"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "genesisMiniblockHash",
-            "type": "bytes32"
-          }
-        ],
-        "internalType": "struct StreamRegistry.Stream",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "index",
-        "type": "uint256"
-      }
-    ],
-    "name": "getStreamByIndex",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "streamId",
-            "type": "string"
-          },
-          {
-            "internalType": "address[]",
-            "name": "nodes",
-            "type": "address[]"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "genesisMiniblockHash",
-            "type": "bytes32"
-          }
-        ],
-        "internalType": "struct StreamRegistry.Stream",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
-    "name": "getStreamsLength",
     "outputs": [
       {
-        "internalType": "uint256",
         "name": "",
-        "type": "uint256"
+        "type": "string",
+        "internalType": "string"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getStream",
+    "inputs": [
+      {
+        "name": "_streamId",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct StreamRegistry.Stream",
+        "components": [
+          {
+            "name": "streamId",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "nodes",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "genesisMiniblockHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getStreamByIndex",
+    "inputs": [
+      {
+        "name": "index",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct StreamRegistry.Stream",
+        "components": [
+          {
+            "name": "streamId",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "nodes",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "genesisMiniblockHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getStreamsLength",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
   }
 ] as const
