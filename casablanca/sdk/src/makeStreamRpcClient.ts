@@ -13,6 +13,7 @@ import { createConnectTransport } from '@connectrpc/connect-web'
 import { Err, StreamService } from '@river/proto'
 import { dlog, dlogError } from './dlog'
 import { genShortId } from './id'
+import { isIConnectError } from './utils'
 
 const logInfo = dlog('csb:rpc:info', { defaultEnabled: true })
 const logCallsHistogram = dlog('csb:rpc:histogram', { defaultEnabled: true })
@@ -130,8 +131,17 @@ const interceptor: (transportId: number) => Interceptor = (transportId: number) 
                 }
                 return res
             } catch (e) {
-                logError(req.method.name, 'ERROR', id, e)
-                updateHistogram(req.method.name, streamId, true)
+                // ignore NotFound errors for GetStream
+                if (
+                    !(
+                        req.method.name === 'GetStream' &&
+                        isIConnectError(e) &&
+                        e.code === Number(Err.NOT_FOUND)
+                    )
+                ) {
+                    logError(req.method.name, 'ERROR', id, e)
+                    updateHistogram(req.method.name, streamId, true)
+                }
                 throw e
             }
         }

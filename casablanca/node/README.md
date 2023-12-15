@@ -29,3 +29,9 @@ If you get Docker errors when running tests:
 # Code Conventions
 
 See [conventions](conventions.md)
+
+# Other Tools
+
+You need jq to run the run_multi.sh script
+
+    brew install jq

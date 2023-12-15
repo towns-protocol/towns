@@ -844,8 +844,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
     }
 
-    async stopSync(): Promise<unknown> {
-        return this.streams.stopSync()
+    async stopSync() {
+        await this.streams.stopSync()
     }
 
     emit<E extends keyof EmittedEvents>(event: E, ...args: Parameters<EmittedEvents[E]>): boolean {

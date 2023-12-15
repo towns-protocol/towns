@@ -205,7 +205,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
 
         try {
             syncLoop: while (continueIteration.has(this.syncState)) {
-                this.logSync('sync ITERATION start', iteration++)
+                this.logSync('sync ITERATION start', ++iteration)
 
                 // get cookies from all streams to sync
                 const syncCookies = Array.from(this.streams.values())

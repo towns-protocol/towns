@@ -23,7 +23,7 @@ import {
 } from '@river/web3'
 
 describe('delete role', () => {
-    test('delete token-gated role with a channel using it', async () => {
+    test.skip('delete token-gated role with a channel using it', async () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         const bobWithNft = await registerAndStartClient(

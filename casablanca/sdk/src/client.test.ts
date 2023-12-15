@@ -182,9 +182,8 @@ describe('clientTest', () => {
 
         let failureCount = 0
         const testError = new TypeError('fetch failed')
-        let stopError: unknown
         const stopSync = async function () {
-            stopError = await alicesClient.stopSync()
+            await alicesClient.stopSync()
             done.done()
         }
         const spy = jest
@@ -206,7 +205,6 @@ describe('clientTest', () => {
         await alicesClient.startSync()
 
         await expect(done.expectToSucceed()).toResolve()
-        expect(stopError).toBe(undefined)
         spy.mockRestore()
     })
 
@@ -255,9 +253,8 @@ describe('clientTest', () => {
         const done = makeDonePromise()
 
         let failureCount = 0
-        let stopErr: unknown
         const stopSync = async function () {
-            stopErr = await alicesClient.stopSync()
+            await alicesClient.stopSync()
             done.done()
         }
         const testError = new TypeError('fetch failed')
@@ -281,7 +278,6 @@ describe('clientTest', () => {
         await alicesClient.startSync()
 
         await expect(done.expectToSucceed()).toResolve()
-        expect(stopErr).toBe(undefined)
         spy.mockRestore()
     })
 
