@@ -131,11 +131,14 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
     public async stopSync(): Promise<unknown> {
         this.logSync('sync STOP CALLED')
         let err: unknown = undefined
-        if (this.syncState === SyncState.Syncing) {
+        const beforeCancel = this.syncState
+        this.onCancel()
+        if (beforeCancel === SyncState.Syncing) {
             const syncId = this.syncId
-            if (syncId) {
+            const syncLoop = this.syncLoop
+            if (syncId && syncLoop) {
                 try {
-                    await this.rpcClient.cancelSync({ syncId })
+                    await Promise.allSettled([this.rpcClient.cancelSync({ syncId }), syncLoop])
                 } catch (e) {
                     if (!isConnectError(e)) {
                         err = e
@@ -144,10 +147,6 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                     }
                 }
             }
-        }
-        if (this.syncState !== SyncState.NotSyncing) {
-            // force cancelation of the sync loop if it has not stopped
-            this.onCancel()
         }
         this.logSync('sync STOP DONE')
         return err
@@ -335,6 +334,13 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
             this.setSyncState(SyncState.Starting)
             this.logSync('starting sync loop')
             this.emit('syncStarting')
+        } else {
+            this.logSync(
+                'onNew: invalid state transition',
+                this.syncState,
+                '->',
+                SyncState.Starting,
+            )
         }
     }
 
@@ -346,6 +352,8 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
             this.currentRetryCount = 0
             this.logSync('onSyncing', 'syncId', this.syncId)
             this.emit('syncing', this.syncId)
+        } else {
+            this.logSync('onNew: invalid state transition', this.syncState, '->', SyncState.Syncing)
         }
     }
 
@@ -361,6 +369,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                 try {
                     const streamAndCookie = unpackStreamAndCookie(syncStream)
                     const streamId = streamAndCookie.nextSyncCookie?.streamId || ''
+                    /*
                     this.logSync(
                         'sync RESULTS for stream',
                         streamId,
@@ -371,6 +380,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                         'startSyncCookie=',
                         streamAndCookie.startSyncCookie,
                     )
+                    */
                     const stream = this.streams.get(streamId)
                     if (stream === undefined) {
                         this.logSync('sync got stream', streamId, 'NOT FOUND')
@@ -387,6 +397,13 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
             } else {
                 this.logSync('sync RESULTS no stream', syncStream)
             }
+        } else {
+            this.logSync(
+                'onUpdate: invalid state transition',
+                this.syncState,
+                '->',
+                SyncState.Syncing,
+            )
         }
     }
 
@@ -398,6 +415,13 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
             this.abortRetry = undefined
             this.logSync('onCancel')
             this.emit('syncCanceling', this.syncId)
+        } else {
+            this.logSync(
+                'onCancel: invalid state transition',
+                this.syncState,
+                '->',
+                SyncState.Canceling,
+            )
         }
     }
 
@@ -415,6 +439,13 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
             this.syncId = ''
             this.logSync('onStop')
             this.emit('syncStopped')
+        } else {
+            this.logSync(
+                'onStopped: invalid state transition',
+                this.syncState,
+                '->',
+                SyncState.NotSyncing,
+            )
         }
     }
 
