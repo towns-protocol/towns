@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch River server",
+            "name": "Launch River server (entitlement)",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -20,7 +20,7 @@
           "mode": "auto",
           "program": "${workspaceFolder}/node/main.go",
           "args": ["run"],
-          "cwd": "${workspaceFolder}/run_files/single"
+          "cwd": "${workspaceFolder}/run_files/single_no_ent"
       }
     ]
 }

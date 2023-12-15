@@ -281,16 +281,20 @@ func (s *syncSubscriptionImpl) Dispatch(res *connect_go.ServerStream[protocol.Sy
 			s.setErrorAndCancel(err)
 			log.Debug("SyncStreams: context done", "err", err)
 			return
-		case data := <-s.dataChannel:
+		case data, ok := <-s.dataChannel:
 			log.Debug("SyncStreams:syncSubscriptionImpl:Dispatch received response in dispatch loop", "syncId", s.syncId, "data", data)
-			// gather the response metadata + content, and send it
-			resp := events.SyncStreamsResponseFromStreamAndCookie(data)
-			resp.SyncId = s.syncId
-			resp.SyncOp = protocol.SyncOp_SYNC_UPDATE
-			if err := res.Send(resp); err != nil {
-				log.Info("SyncStreams:syncSubscriptionImpl:Dispatch error sending response", "syncId", s.syncId, "err", err)
-				s.setErrorAndCancel(err)
-				return
+			if ok {
+				// gather the response metadata + content, and send it
+				resp := events.SyncStreamsResponseFromStreamAndCookie(data)
+				resp.SyncId = s.syncId
+				resp.SyncOp = protocol.SyncOp_SYNC_UPDATE
+				if err := res.Send(resp); err != nil {
+					log.Info("SyncStreams:syncSubscriptionImpl:Dispatch error sending response", "syncId", s.syncId, "err", err)
+					s.setErrorAndCancel(err)
+					return
+				}
+			} else {
+				log.Debug("SyncStreams:syncSubscriptionImpl:Dispatch data channel closed", "syncId", s.syncId)
 			}
 		case control := <-s.controlChannel:
 			log.Debug("SyncStreams:syncSubscriptionImpl Dispatch received control message", "syncId", s.syncId, "control", control)
