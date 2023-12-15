@@ -91,14 +91,22 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
     // isActiveSyncEvents is used to filter
     // the list of events to emit to the client
     private isActiveSyncEvents = new Set([
-        SyncState.Starting.toString(),
-        SyncState.Syncing.toString(),
-        SyncState.Retrying.toString(),
-        SyncState.Canceling.toString(),
-        SyncState.NotSyncing.toString(),
+        'syncing',
+        'syncCanceling',
+        'syncRetrying',
+        'syncStarting',
+        'syncStopped',
     ])
     public emit<E extends keyof SyncEvents>(event: E, ...args: Parameters<SyncEvents[E]>): boolean {
         this.logStream(event, ...args)
+        this.log(
+            'emitSyncEvent',
+            this.isActiveSyncEvents.has(event.toString()),
+            'syncState',
+            this.syncState,
+            'isSyncing',
+            this.syncState === SyncState.Syncing,
+        )
         if (this.isActiveSyncEvents.has(event.toString())) {
             const isSyncing = this.syncState === SyncState.Syncing
             this.clientEmitter.emit('streamSyncActive', isSyncing)
@@ -132,9 +140,9 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
 
     public startSync(): void {
         if (this.syncId) {
-            this.logSync('already syncing with syncId', this.syncId)
+            this.log('already syncing with syncId', this.syncId)
         }
-        this.logSync('sync START')
+        this.log('sync START')
         const syncLoop = async (): Promise<void> => {
             return this.runSyncLoop()
         }
@@ -142,7 +150,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
     }
 
     public async stopSync(): Promise<unknown> {
-        this.logSync('sync STOP CALLED')
+        this.log('sync STOP CALLED')
         let err: unknown = undefined
         const beforeCancel = this.syncState
         this.onCancel()
@@ -155,13 +163,13 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                 } catch (e) {
                     if (!isConnectError(e)) {
                         err = e
-                        this.logSync('sync STOP ERROR', err)
+                        this.log('sync STOP ERROR', err)
                         this.emit('syncError', this.syncId, err)
                     }
                 }
             }
         }
-        this.logSync('sync STOP DONE')
+        this.log('sync STOP DONE')
         return err
     }
 
@@ -177,7 +185,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                 this.onError(err)
             }
         } else {
-            this.logSync(
+            this.log(
                 'addStreamToSync: not in "syncing" state; let main sync loop handle this with its streams map',
                 syncCookie.streamId,
             )
@@ -203,12 +211,12 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
         }
         stream.removeAllListeners()
         this.streams.delete(streamId)
-        this.logSync('removed stream from sync', streamId)
+        this.log('removed stream from sync', streamId)
     }
 
     private async runSyncLoop(): Promise<void> {
         if (this.syncState !== SyncState.NotSyncing) {
-            this.logSync('ERROR: sync loop already running')
+            this.log('ERROR: sync loop already running')
             return
         }
         // fresh sync
@@ -217,7 +225,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
 
         try {
             syncLoop: while (continueIteration.has(this.syncState)) {
-                this.logSync('sync ITERATION start', ++iteration)
+                this.log('sync ITERATION start', ++iteration)
 
                 // get cookies from all streams to sync
                 const syncCookies = Array.from(this.streams.values())
@@ -232,11 +240,11 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                         syncPos: syncCookies,
                     })
 
-                    this.logSync('syncing streams')
+                    this.log('syncing streams')
 
                     // from here on, read sync commands and data from the streams iterator
                     for await (const res of streams) {
-                        this.logSync(
+                        this.log(
                             'got syncStreams response',
                             'syncOp',
                             res.syncOp,
@@ -266,17 +274,17 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                                 break
                         }
                     }
-                    this.logSync('read loop ended')
+                    this.log('read loop ended')
                 } catch (err) {
                     this.onError(err)
                     await this.onRetry()
                 }
             }
         } catch (err) {
-            this.logSync('ERROR: sync loop', err)
+            this.log('ERROR: sync loop', err)
             this.emit('syncError', this.syncId, err)
         }
-        this.logSync('sync loop stopped ITERATION', iteration)
+        this.log('sync loop stopped ITERATION', iteration)
         this.onStopped()
     }
 
@@ -292,7 +300,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
         if (!stateConstraints[this._syncState].has(newState)) {
             throw this.logInvalidStateAndReturnError(this._syncState, newState)
         }
-        this.logSync('syncState', this._syncState, '->', newState)
+        this.log('syncState', this._syncState, '->', newState)
         this._syncState = newState
     }
 
@@ -313,7 +321,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                     ? MAX_RETRY_COUNT
                     : this.currentRetryCount + 1
             const retryDelay = 2 ** nextRetryCount * 1000 // 2^n seconds
-            this.logSync(
+            this.log(
                 'sync error, retrying in',
                 retryDelay,
                 'ms',
@@ -345,15 +353,10 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
     private onStarting(): void {
         if (stateConstraints[this.syncState].has(SyncState.Starting)) {
             this.setSyncState(SyncState.Starting)
-            this.logSync('starting sync loop')
+            this.log('starting sync loop')
             this.emit('syncStarting')
         } else {
-            this.logSync(
-                'onNew: invalid state transition',
-                this.syncState,
-                '->',
-                SyncState.Starting,
-            )
+            this.log('onNew: invalid state transition', this.syncState, '->', SyncState.Starting)
         }
     }
 
@@ -363,10 +366,10 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
             this.syncId = syncId
             // On sucessful sync, reset retryCount
             this.currentRetryCount = 0
-            this.logSync('onSyncing', 'syncId', this.syncId)
+            this.log('onSyncing', 'syncId', this.syncId)
             this.emit('syncing', this.syncId)
         } else {
-            this.logSync('onNew: invalid state transition', this.syncState, '->', SyncState.Syncing)
+            this.log('onNew: invalid state transition', this.syncState, '->', SyncState.Syncing)
         }
     }
 
@@ -383,7 +386,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                     const streamAndCookie = unpackStreamAndCookie(syncStream)
                     const streamId = streamAndCookie.nextSyncCookie?.streamId || ''
                     /*
-                    this.logSync(
+                    this.log(
                         'sync RESULTS for stream',
                         streamId,
                         'events=',
@@ -396,7 +399,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                     */
                     const stream = this.streams.get(streamId)
                     if (stream === undefined) {
-                        this.logSync('sync got stream', streamId, 'NOT FOUND')
+                        this.log('sync got stream', streamId, 'NOT FOUND')
                         this.onError(new Error(`stream not found ${streamId}`))
                     } else {
                         const cleartexts = await this.persistenceStore.getCleartexts(
@@ -408,15 +411,10 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                     this.onError(err)
                 }
             } else {
-                this.logSync('sync RESULTS no stream', syncStream)
+                this.log('sync RESULTS no stream', syncStream)
             }
         } else {
-            this.logSync(
-                'onUpdate: invalid state transition',
-                this.syncState,
-                '->',
-                SyncState.Syncing,
-            )
+            this.log('onUpdate: invalid state transition', this.syncState, '->', SyncState.Syncing)
         }
     }
 
@@ -426,10 +424,10 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
             // reset sync states
             this.abortRetry?.()
             this.abortRetry = undefined
-            this.logSync('onCancel')
+            this.log('onCancel')
             this.emit('syncCanceling', this.syncId)
         } else {
-            this.logSync(
+            this.log(
                 'onCancel: invalid state transition',
                 this.syncState,
                 '->',
@@ -450,10 +448,10 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
             this.streams.clear()
             this.syncLoop = undefined
             this.syncId = ''
-            this.logSync('onStop')
+            this.log('onStop')
             this.emit('syncStopped')
         } else {
-            this.logSync(
+            this.log(
                 'onStopped: invalid state transition',
                 this.syncState,
                 '->',
@@ -463,13 +461,19 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
     }
 
     private onError(err: unknown): void {
-        this.logSync('onError', err)
+        this.log('onError', err)
         this.emit('syncError', this.syncId, err)
     }
 
     private logInvalidStateAndReturnError(currentState: SyncState, newState: SyncState): Error {
-        this.logSync(`invalid state transition ${currentState} -> ${newState}`)
+        this.log(`invalid state transition ${currentState} -> ${newState}`)
         return new Error(`invalid state transition ${currentState} -> ${newState}`)
+    }
+
+    private log(...args: unknown[]): void {
+        // eslint-disable-next-line no-console
+        console.log('sync:', ...args)
+        this.logSync(...args)
     }
 }
 
