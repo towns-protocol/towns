@@ -46,7 +46,7 @@ export class StreamStateView_UserMetadata {
             const data = payload.wrappedEncryptedData.data
             const userId = payload.userId
             const eventId = bin_toHexString(payload.wrappedEncryptedData.eventHash)
-            this.usernames.addEncryptedData(eventId, data, userId, false, undefined, emitter)
+            this.displayNames.addEncryptedData(eventId, data, userId, false, undefined, emitter)
         }
     }
 
