@@ -17,3 +17,9 @@ variable "is_transient" {
   type        = bool
   default     = false
 }
+
+variable "is_cloned" {
+  description = "Whether or not this db is a cow db"
+  type        = bool
+  default     = false
+}

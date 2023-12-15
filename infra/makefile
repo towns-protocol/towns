@@ -8,6 +8,9 @@ override CI_AUTOAPPROVE := $(if $(filter true,$(CI_AUTOAPPROVE)),-auto-approve,$
 # if the ENV is set to transient, then we will use the GIT_PR_NUMBER as the workspace name
 override terraform_workspace_name := $(if $(filter transient,$(ENV)),transient-$(GIT_PR_NUMBER),$(ENV))
 
+# add default value in case of undefined TF_VAR_num_nodes
+override TF_VAR_num_nodes := $(if $(value TF_VAR_num_nodes),$(value TF_VAR_num_nodes),1)
+
 env:
 	@cat /dev/null > .env
 	echo "ENV=$(ENV)" >> .env

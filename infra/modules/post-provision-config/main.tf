@@ -5,6 +5,14 @@ module "global_constants" {
 locals {
   rpc_proxy_global_access_key_arn        = module.global_constants.transient_global_remote_state.outputs.rpc_proxy_global_access_key.arn
   post_provision_config_lambda_s3_object = module.global_constants.global_remote_state.outputs.post_provision_config_lambda_s3_object
+  tags = merge(
+    module.global_constants.tags,
+    {
+      Service     = "post-provision-config-lambda"
+      Node_Number = var.river_node_number
+      Node_Name   = var.river_node_name
+    }
+  )
 }
 
 
@@ -29,8 +37,8 @@ module "post_provision_config_lambda_function" {
   vpc_subnet_ids         = var.subnet_ids
   vpc_security_group_ids = [var.security_group_id]
   attach_network_policy  = true
-
-  tags = module.global_constants.tags
+  tags                   = local.tags
+  cloudwatch_logs_tags   = local.tags
 
   create_role = true
 
@@ -105,4 +113,12 @@ module "post_provision_config_lambda_function" {
       ]
     }
   EOT
+}
+
+
+resource "aws_cloudwatch_log_subscription_filter" "log_group_filter" {
+  name            = "${var.river_node_name}-post-provision-config"
+  log_group_name  = module.post_provision_config_lambda_function.lambda_cloudwatch_log_group_name
+  filter_pattern  = ""
+  destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }

@@ -159,6 +159,7 @@ resource "aws_security_group" "post_provision_config_lambda_function_sg" {
 module "post_provision_config" {
   source = "../../modules/post-provision-config"
 
+  river_node_number                       = var.node_number
   river_node_name                         = local.node_name
   subnet_ids                              = var.node_subnets
   river_node_wallet_credentials_arn       = local.shared_credentials.wallet_private_key.arn
@@ -168,7 +169,6 @@ module "post_provision_config" {
   rds_cluster_resource_id                 = var.river_node_db.rds_aurora_postgresql.cluster_resource_id
   vpc_id                                  = var.vpc_id
   security_group_id                       = aws_security_group.post_provision_config_lambda_function_sg.id
-
 }
 
 locals {
@@ -323,11 +323,19 @@ resource "aws_lb_target_group" "green" {
   tags = local.river_node_tags
 }
 
+locals {
+  # we modulo by 50000 to avoid going over the max.
+  # we multiply by 10 to give room for at most 10 nodes.
+  # we add the node number to give each node a unique priority.
+  transient_lb_listener_priority = (var.git_pr_number * 10 + var.node_number) % 50000
+  lb_listener_priority           = var.is_transient ? local.transient_lb_listener_priority : 1
+}
+
 resource "aws_lb_listener_rule" "host_rule" {
   listener_arn = var.alb_https_listener_arn
 
   # set the priority dynamically to avoid conflicts with
-  priority = var.is_transient ? var.git_pr_number : 1
+  priority = local.lb_listener_priority
 
   lifecycle {
     ignore_changes = [action]

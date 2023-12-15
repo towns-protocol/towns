@@ -155,3 +155,4 @@ jobs:
         with:
             environment_name: ${{ needs.build.outputs.environment_name }}
             docker_image_tag: ${{ needs.build.outputs.release_version }}
+            node_number: 1

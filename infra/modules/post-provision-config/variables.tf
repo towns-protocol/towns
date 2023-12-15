@@ -3,8 +3,13 @@ variable "river_node_name" {
   type        = string
   validation {
     condition     = var.river_node_name != ""
-    error_message = "The node name cannot be empty."
+    error_message = "The river node name cannot be empty."
   }
+}
+
+variable "river_node_number" {
+  description = "The number assigned to the node. i.e 1 for river-1-test-beta.towns.com"
+  type        = number
 }
 
 variable "vpc_id" {

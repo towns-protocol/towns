@@ -7,7 +7,7 @@ locals {
     module.global_constants.tags, {
       Service = "river-postgres-db"
   })
-  restore_to_point_in_time = var.is_transient ? {
+  restore_to_point_in_time = (var.is_transient && var.is_cloned) ? {
     source_cluster_identifier  = "arn:aws:rds:us-east-1:211286738967:cluster:test-beta-river-db-postgresql-cluster"
     restore_type               = "copy-on-write"
     use_latest_restorable_time = true

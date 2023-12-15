@@ -11,6 +11,10 @@ on:
                 description: 'Docker image tag to deploy'
                 required: true
                 default: 'latest'
+            node_number:
+                description: 'Number of nodes to deploy'
+                type: number
+                default: 1
 
     workflow_call:
         inputs:
@@ -22,6 +26,10 @@ on:
                 description: 'Docker image tag to deploy'
                 required: true
                 type: string
+            node_number:
+                description: 'Number of nodes to deploy'
+                type: number
+                default: 1
         secrets:
             AWS_ACCESS_KEY_ID:
                 description: 'AWS access key id'
@@ -34,7 +42,7 @@ on:
                 required: true
 
 concurrency:
-    group: ${{ github.workflow }}-deploy-${{ github.ref }}
+    group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.node_number }}
     cancel-in-progress: true
 
 env:
@@ -64,11 +72,13 @@ jobs:
               env:
                   ENVIRONMENT_NAME: ${{ inputs.environment_name }}
                   DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
+                  NODE_NUMBER: ${{ inputs.node_number }}
               run: ./scripts/create-river-task-definition.sh
 
             - name: Deploy service
               env:
                   ENVIRONMENT_NAME: ${{ inputs.environment_name }}
+                  NODE_NUMBER: ${{ inputs.node_number }}
               run: ./scripts/deploy-river-task-definition.sh
 
             # If action failed, we send a slack notification

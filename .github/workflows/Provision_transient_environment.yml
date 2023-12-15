@@ -9,14 +9,12 @@ concurrency:
 
 jobs:
     check_labels:
-        # a step that checks if the PR has the label "provision full transient environment"
-        # if present, it will trigger the full transient environment workflow
-        # otherwise, it will trigger the transient lite workflow
         runs-on: ubuntu-latest
         permissions: write-all
         outputs:
             transient_environment_type: ${{ steps.check_labels.outputs.transient_environment_type }}
             num_nodes: ${{ steps.check_labels.outputs.num_nodes }}
+            continuous_deploy_iterations: ${{ steps.check_labels.outputs.continuous_deploy_iterations }}
         steps:
             - name: Check labels
               id: check_labels
@@ -40,8 +38,12 @@ jobs:
                         transientEnvironmentType === 'multi-node'  ? 10 :
                         transientEnvironmentType === 'single-node' ? 1 : 0;
 
+                      // using the numNodes, we can compute the matrix strategy for the river_node_continuous_deploys job
+                      const continuousDeployIterations = Array.from(Array(numNodes).keys()).map(i => i + 1);
+
                       core.setOutput('transient_environment_type', transientEnvironmentType);
                       core.setOutput('num_nodes', numNodes);
+                      core.setOutput('continuous_deploy_iterations', JSON.stringify(continuousDeployIterations));
 
     provision_transient_environment:
         needs: check_labels
@@ -123,9 +125,13 @@ jobs:
         if: needs.check_labels.outputs.num_nodes > 0
         # TODO: only run if a change in /casablanca/node is detected
         # TODO: only deploy if the new docker image is different than what's currently active
+        strategy:
+            matrix:
+                iteration: ${{ fromJson(needs.check_labels.outputs.continuous_deploy_iterations) }}
         with:
             environment_name: ${{ format('transient-{0}', github.event.pull_request.number )}}
             docker_image_tag: ${{ format('transient-{0}-latest', github.event.pull_request.number )}}
+            node_number: ${{ matrix.iteration }}
 
     run_synthetic_transactions_test:
         needs: [check_labels, river_node_continuous_deploys]

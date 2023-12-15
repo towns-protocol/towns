@@ -10,16 +10,21 @@ if [ -z "$ENVIRONMENT_NAME" ]; then
     exit 1
 fi
 
-
 if [ -z "$DOCKER_IMAGE_TAG" ]; then
     echo "ERROR: The docker image tag env var is required"
     exit 1
 fi
 
+if [ -z "$NODE_NUMBER" ]; then
+    echo "ERROR: The NODE_NUMBER env var is required"
+    exit 1
+fi
+
 echo "ENVIRONMENT_NAME: ${ENVIRONMENT_NAME}"
 echo "DOCKER_IMAGE_TAG: ${DOCKER_IMAGE_TAG}"
+echo "NODE_NUMBER: ${NODE_NUMBER}"
 
-NODE_NAME="river1"
+NODE_NAME="river${NODE_NUMBER}"
 
 TASK_DEFINITION_FAMILY="${NODE_NAME}-${ENVIRONMENT_NAME}-fargate"
 CURRENT_TASK_DEFINITION_FILENAME="$( pwd )/current-task-definition.json"

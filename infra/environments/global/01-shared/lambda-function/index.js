@@ -215,22 +215,19 @@ const createRiverNodeDbUser = async ({
     await pgClient.query(createUserQuery);
     console.log('created user')
 
-    console.log('creating database if not exists')
-    // create database if not exists
-    const createDatabaseQuery = `
-      DO
-      $do$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT FROM pg_catalog.pg_database WHERE datname = '${riverUserDBConfig.DATABASE}'
-        ) THEN
-          CREATE DATABASE ${riverUserDBConfig.DATABASE};
-        END IF;
-      END
-      $do$
-    `;
-    await pgClient.query(createDatabaseQuery);
-    console.log('created database')
+    try {
+      console.log('creating database')
+      const createDatabaseQuery = `CREATE DATABASE ${riverUserDBConfig.DATABASE};`;
+      await pgClient.query(createDatabaseQuery);
+      console.log('created database')
+    } catch (e) {
+      if (e.code !== '42P04') {
+        console.error('error creating database: ', e)
+        throw e;
+      } else {
+        console.log('database already exists')
+      }
+    }
 
     console.log('granting create schema to user')
 

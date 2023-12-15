@@ -9,9 +9,14 @@ if [ -z "$ENVIRONMENT_NAME" ]; then
     echo "ERROR: The ENVIRONMENT_NAME env var is required"
     exit 1
 fi
+if [ -z "$NODE_NUMBER" ]; then
+    echo "ERROR: The NODE_NUMBER env var is required"
+    exit 1
+fi
 
 echo "ENVIRONMENT_NAME: ${ENVIRONMENT_NAME}"
-NODE_NAME="river1"
+echo "NODE_NUMBER: ${NODE_NUMBER}"
+NODE_NAME="river${NODE_NUMBER}"
 
 CODE_DEPLOY_APP_NAME="${NODE_NAME}-${ENVIRONMENT_NAME}"
 CODE_DEPLOY_GROUP_NAME="${NODE_NAME}-${ENVIRONMENT_NAME}"

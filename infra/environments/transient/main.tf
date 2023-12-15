@@ -75,10 +75,19 @@ module "river_db_cluster" {
 
   is_transient = true
 
+  # for now, we're just hardcoding this logic here.
+  # if a transient environment is multi-node, then it's a fresh & clean db.
+  # if it's single-node, then it's a cow clone.
+  is_cloned = var.num_nodes == 1
+
   count = local.create_db_cluster ? 1 : 0
 }
 
-locals {
+module "river_node" {
+  source      = "../../modules/river-node"
+  count       = var.num_nodes
+  node_number = count.index + 1
+
   river_node_db = local.create_db_cluster ? module.river_db_cluster[0] : null
 
   is_transient  = true
@@ -97,27 +106,7 @@ locals {
   # TODO: generalize this to env name once we start deploying transient workers
   push_notification_worker_url = "https://push-notification-worker-test-beta.towns.com"
 
-}
-
-module "river_node" {
-  source      = "../../modules/river-node"
-  node_number = 1
-
-  count         = var.num_nodes
-  river_node_db = local.river_node_db
-  is_transient  = local.is_transient
-  git_pr_number = var.git_pr_number
-
-  node_subnets = local.transient_global_remote_state.vpc.private_subnets
-  vpc_id       = local.transient_global_remote_state.vpc.vpc_id
-
-  ecs_cluster = local.ecs_cluster
-
   alb_security_group_id  = local.transient_global_remote_state.river_alb.security_group_id
   alb_dns_name           = local.transient_global_remote_state.river_alb.lb_dns_name
   alb_https_listener_arn = local.transient_global_remote_state.river_alb.lb_https_listener_arn
-
-  home_chain_id = local.home_chain_id
-
-  push_notification_worker_url = local.push_notification_worker_url
 }

@@ -9,7 +9,8 @@ check_pr_label() {
     # Variables
     local pr_number="$1"
 
-    desired_label="provision full transient environment"
+    single_node_label="single-node transient environment"
+    multi_node_label="multi-node transient environment"
 
     # Validate input
     if [ -z "$pr_number" ]; then
@@ -23,8 +24,8 @@ check_pr_label() {
     # Fetch PR labels
     local labels=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$api_url" | jq -r '.[].name')
 
-    # Check if desired label is set
-    if echo "$labels" | grep -q "$desired_label"; then
+    # Check if the single or multi node label is present
+    if [[ $labels =~ $single_node_label ]] || [[ $labels =~ $multi_node_label ]]; then
         echo "true"
     else
         echo "false"
@@ -89,12 +90,13 @@ if [ "$IS_PULL_REQUEST" = true ]; then
     transient_river_node_url="https://river1-transient-${pr_number}.towns.com"
     test_beta_river_node_url="https://river1-test-beta.towns.com"
 
+
     if [ "$is_fully_provisioned" = true ]; then
         echo "Setting VITE_CASABLANCA_HOMESERVER_URL to $transient_river_node_url"
-        river_node_url="$transient_river_node_url"
+        export VITE_CASABLANCA_HOMESERVER_URL="$transient_river_node_url"
     else
         echo "Setting VITE_CASABLANCA_HOMESERVER_URL to $test_beta_river_node_url"
-        river_node_url="$test_beta_river_node_url"
+        export VITE_CASABLANCA_HOMESERVER_URL="$test_beta_river_node_url"
     fi
     
     curl  \
@@ -103,7 +105,7 @@ if [ "$IS_PULL_REQUEST" = true ]; then
         --header "accept: application/json" \
         --header "authorization: Bearer $RENDER_API_KEY" \
         --header "content-type: application/json" \
-        --data '[{"key":"VITE_CASABLANCA_HOMESERVER_URL","value":"'"$river_node_url"'"},{"key":"VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER","value":"'"$pr_number"'"}]'
+        --data '[{"key":"VITE_CASABLANCA_HOMESERVER_URL","value":"'"$VITE_CASABLANCA_HOMESERVER_URL"'"},{"key":"VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER","value":"'"$pr_number"'"}]'
 
         
 else
