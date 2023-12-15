@@ -1,0 +1,59 @@
+name: 'Run SDK Load Tests'
+env:
+    FOUNDRY_VERSION: nightly-d369d2486f85576eec4ca41d277391dfdae21ba7
+
+on:
+    workflow_dispatch: # A load test was manually triggered
+    schedule: # A load test was scheduled
+        - cron: '0 9 * * *'  # Run at 01:00 PST (09:00 UTC)
+
+jobs:
+    run_load_tests:
+        runs-on: load-testing-runner
+        timeout-minutes: 240
+        services:
+            redis:
+                image: redis:latest
+                ports:
+                    - '6379:6379'
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - name: Install Forge modules
+              run: ./scripts/install-deps.sh
+
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '18.13.0'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Build town types
+              run: ./scripts/build-town-types.sh localhost --frozen
+
+            - name: Run Load Tests S2
+              if: github.event.schedule == '0 9 * * *'
+              run: yarn test:ci:load-tests-s2
+            # If failed, we send a slack notification
+            - name: Slack notification
+              if: failure()
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'Load Tests'
+                  SLACK_ICON_EMOJI: ':test_tube:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'Load Test Failure <@>Zhaolong Zhong'
