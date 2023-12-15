@@ -13,7 +13,8 @@ import { SpaceInfoPanel } from './SpaceInfoPanel'
 
 const ownerUser = {
     userId: getWalletAddress(),
-    name: 'beavis',
+    username: 'beavis',
+    usernameConfirmed: true,
     displayName: 'beavis',
     avatarUrl: 'https://example.com',
 }

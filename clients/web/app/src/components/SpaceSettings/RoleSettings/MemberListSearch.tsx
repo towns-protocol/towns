@@ -19,7 +19,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { TokenClickParameters } from '@components/Tokens/types'
 import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 import { Avatar } from '@components/Avatar/Avatar'
-type MyRoomMember = Pick<RoomMember, 'userId' | 'name'>
+type MyRoomMember = Pick<RoomMember, 'userId' | 'username'>
 
 type ResultsWithIdForVList = {
     id: string
@@ -46,7 +46,7 @@ export function MemberList({
 
             return {
                 userId: address,
-                name: getPrettyDisplayName(m).displayName,
+                username: getPrettyDisplayName(m).displayName,
                 address,
                 id: address,
             }
@@ -56,7 +56,7 @@ export function MemberList({
             id: EVERYONE_ADDRESS,
             address: EVERYONE_ADDRESS,
             userId: EVERYONE_ADDRESS,
-            name: 'Everyone',
+            username: 'Everyone',
         }
         return [everyone, ...mappedMembers]
     }, [members])
@@ -204,7 +204,7 @@ function SelectedMemberItem({
                     onClick={(e) => onClick({ contractAddress: address, tokenIds: [] }, e)}
                 />
             </Box>
-            <Text size="sm">{member?.name ? member.name : shortAddress(address)}</Text>
+            <Text size="sm">{member?.username ? member.username : shortAddress(address)}</Text>
         </Box>
     )
 }
@@ -228,7 +228,7 @@ function MemberCheckbox({
                     <MemberCheckboxLabel
                         userId={item.userId}
                         contractAddress={item.address ?? ''}
-                        label={item.name}
+                        label={item.username}
                     />
                 }
                 checked={selectedItems.includes(item.address)}

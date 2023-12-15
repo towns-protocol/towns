@@ -56,7 +56,8 @@ describe('#RichTextEditor mention nodes', () => {
                     channels={[]}
                     users={[
                         {
-                            name: 'ben',
+                            username: 'ben',
+                            usernameConfirmed: true,
                             displayName: 'ben',
                             userId: '1',
                         },
@@ -79,7 +80,8 @@ describe('#RichTextEditor mention nodes', () => {
                     channels={[]}
                     users={[
                         {
-                            name: 'user1',
+                            username: 'user1',
+                            usernameConfirmed: true,
                             displayName,
                             userId: '1',
                         },
@@ -104,7 +106,8 @@ describe('#RichTextEditor mention nodes', () => {
                         {
                             displayName,
                             userId: '1',
-                            name: 'name1',
+                            username: 'name1',
+                            usernameConfirmed: true,
                         },
                     ]}
                 />

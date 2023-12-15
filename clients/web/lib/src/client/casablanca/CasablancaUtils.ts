@@ -16,18 +16,19 @@ export function toZionRoomFromStream(stream: Stream, userId: string): Room {
         membership = Membership.Join
     }
 
-    const displayNames = stream.view.getUserMetadata()?.displayNames.plaintextDisplayNames
+    const metadata = stream.view.getUserMetadata()
 
-    const members: RoomMember[] = Array.from(
-        stream.view.getMemberships().joinedUsers,
-        (userId) => ({
+    const members: RoomMember[] = Array.from(stream.view.getMemberships().joinedUsers, (userId) => {
+        const info = metadata?.userInfo(userId)
+        return {
             userId: userId,
             membership: Membership.Join,
-            name: userId,
-            displayName: displayNames?.get(userId) ?? '',
+            username: info?.username ?? '',
+            usernameConfirmed: info?.usernameConfirmed ?? false,
+            displayName: info?.displayName ?? '',
             disambiguate: false,
-        }),
-    )
+        }
+    })
 
     const memberMap = members.reduce((acc, member) => {
         acc[member.userId] = member

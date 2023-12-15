@@ -1260,6 +1260,16 @@ export class ZionClient implements EntitlementsDelegate {
     }
 
     /************************************************
+     * getIsUsernameAvailable
+     ************************************************/
+    public async getIsUsernameAvailable(streamId: string, username: string): Promise<boolean> {
+        if (!this.casablancaClient) {
+            throw new Error('No casablanca client')
+        }
+        return await this.casablancaClient.isUsernameAvailable(streamId, username)
+    }
+
+    /************************************************
      * getUser
      ************************************************/
     public getUser(userId: string): RoomMember | undefined {
@@ -1288,6 +1298,16 @@ export class ZionClient implements EntitlementsDelegate {
             throw new Error('No casablanca client')
         }
         await this.casablancaClient.setDisplayName(streamId, displayName)
+    }
+
+    /************************************************
+     * setUsername
+     ************************************************/
+    public async setUsername(streamId: string, username: string): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('No casablanca client')
+        }
+        await this.casablancaClient.setUsername(streamId, username)
     }
 
     /************************************************

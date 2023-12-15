@@ -690,6 +690,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         await this.makeEventAndAddToStream(streamId, makePayload(), { method: 'username' })
     }
 
+    async isUsernameAvailable(streamId: string, username: string): Promise<boolean> {
+        const stream = this.streams.get(streamId)
+        check(isDefined(stream), 'stream not found')
+        return (
+            stream.view.getUserMetadata()?.usernames.cleartextUsernameAvailable(username) ?? false
+        )
+    }
+
     async waitForStream(streamId: string): Promise<Stream> {
         this.logCall('waitForStream', streamId)
         let stream = this.stream(streamId)

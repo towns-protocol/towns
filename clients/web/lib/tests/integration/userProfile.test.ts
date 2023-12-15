@@ -41,7 +41,9 @@ describe('userProfile', () => {
         await alice.joinTown(spaceId, alice.wallet)
         // alice should see bob's user name
         await waitFor(() =>
-            expect(alice.getRoomMember(spaceId, bob.getUserId()!)?.name).toBe("Bob's your uncle"),
+            expect(alice.getRoomMember(spaceId, bob.getUserId()!)?.username).toBe(
+                "Bob's your uncle",
+            ),
         )
         // alice should see bob's profile photo
         await waitFor(() =>
@@ -52,14 +54,14 @@ describe('userProfile', () => {
         // log alice's view of bob
         const alicesViewOfBob = alice.getRoomMember(spaceId, bob.getUserId()!)
         console.log('alice sees bob as', {
-            name: alicesViewOfBob?.name,
+            username: alicesViewOfBob?.username,
             displayName: alicesViewOfBob?.displayName,
             avatarUrl: alicesViewOfBob?.avatarUrl,
         })
         // log bob's view of alice
         const bobsViewOfAlice = bob.getRoomMember(spaceId, alice.getUserId()!)
         console.log('bob sees alice as', {
-            name: bobsViewOfAlice?.name,
+            username: bobsViewOfAlice?.username,
             displayName: bobsViewOfAlice?.displayName,
             avatarUrl: bobsViewOfAlice?.avatarUrl,
         })
@@ -70,7 +72,9 @@ describe('userProfile', () => {
         })
         // bob should see alices new user name
         await waitFor(() =>
-            expect(bob.getRoomMember(spaceId, alice.getUserId()!)?.name).toBe("Alice's your aunt"),
+            expect(bob.getRoomMember(spaceId, alice.getUserId()!)?.username).toBe(
+                "Alice's your aunt",
+            ),
         )
         // alice should see bob's profile photo
         await waitFor(() =>

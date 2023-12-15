@@ -60,34 +60,25 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
         setInitialState()
 
         // subscribe to changes
-        const onStreamNewUserJoined = (streamId: string) => {
+        const onStreamUpdated = (streamId: string) => {
             updateState(streamId)
         }
 
-        const onStreamUserLeft = (streamId: string) => {
-            updateState(streamId)
-        }
-
-        const onUserLeftStream = (streamId: string) => {
-            updateState(streamId)
-        }
-
-        const onPendingDisplayNameUpdated = (streamId: string) => {
-            updateState(streamId)
-        }
-
-        client.on('streamNewUserJoined', onStreamNewUserJoined)
-        client.on('streamUserLeft', onStreamUserLeft)
-        client.on('userLeftStream', onUserLeftStream)
-        client.on('streamDisplayNameUpdated', onPendingDisplayNameUpdated)
-        client.on('streamPendingDisplayNameUpdated', onPendingDisplayNameUpdated)
-
+        client.on('streamNewUserJoined', onStreamUpdated)
+        client.on('streamUserLeft', onStreamUpdated)
+        client.on('userLeftStream', onStreamUpdated)
+        client.on('streamDisplayNameUpdated', onStreamUpdated)
+        client.on('streamPendingDisplayNameUpdated', onStreamUpdated)
+        client.on('streamUsernameUpdated', onStreamUpdated)
+        client.on('streamPendingUsernameUpdated', onStreamUpdated)
         return () => {
-            client.off('streamNewUserJoined', onStreamNewUserJoined)
-            client.off('streamUserLeft', onStreamUserLeft)
-            client.off('userLeftStream', onUserLeftStream)
-            client.off('streamDisplayNameUpdated', onPendingDisplayNameUpdated)
-            client.off('streamPendingDisplayNameUpdated', onPendingDisplayNameUpdated)
+            client.off('streamNewUserJoined', onStreamUpdated)
+            client.off('streamUserLeft', onStreamUpdated)
+            client.off('userLeftStream', onStreamUpdated)
+            client.off('streamDisplayNameUpdated', onStreamUpdated)
+            client.off('streamPendingDisplayNameUpdated', onStreamUpdated)
+            client.off('streamUsernameUpdated', onStreamUpdated)
+            client.off('streamPendingUsernameUpdated', onStreamUpdated)
             setRooms({})
         }
     }, [client, isLoading, spaceInfo])

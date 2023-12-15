@@ -13,10 +13,6 @@ export class StreamStateView_UserMetadata {
     readonly usernames: UserMetadata_Usernames
     readonly displayNames: UserMetadata_DisplayNames
 
-    get plaintextUsernames() {
-        return this.usernames.plaintextUsernames
-    }
-
     constructor(userId: string, streamId: string) {
         this.userId = userId
         this.streamId = streamId
@@ -89,6 +85,19 @@ export class StreamStateView_UserMetadata {
     onDecryptedContent(eventId: string, content: string, emitter?: TypedEmitter<EmittedEvents>) {
         this.displayNames.onDecryptedContent(eventId, content, emitter)
         this.usernames.onDecryptedContent(eventId, content, emitter)
+    }
+
+    userInfo(userId: string): {
+        username: string
+        usernameConfirmed: boolean
+        displayName: string
+    } {
+        const usernameInfo = this.usernames.info(userId)
+        const displayNameInfo = this.displayNames.info(userId)
+        return {
+            ...usernameInfo,
+            ...displayNameInfo,
+        }
     }
 }
 

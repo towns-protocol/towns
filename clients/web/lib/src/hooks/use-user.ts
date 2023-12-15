@@ -10,7 +10,8 @@ export function useUser(userId?: string): RoomMember | undefined {
                 ? users.find((user) => user.userId === userId) ??
                   ({
                       userId: userId,
-                      name: userId,
+                      username: userId,
+                      usernameConfirmed: true,
                       displayName: userId,
                   } satisfies RoomMember)
                 : undefined,

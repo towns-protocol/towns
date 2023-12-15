@@ -5,6 +5,8 @@ import { Box } from '@ui'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
+import { SetUsernameForm } from '@components/SetUsernameForm/SetUsernameForm'
+import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
 import { PublicTownPage, TownNotFoundBox } from './PublicTownPage'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
@@ -13,6 +15,7 @@ export const ValidateMembership = () => {
     const { spaces } = useZionContext()
     const initialSyncComplete = useWaitForInitialSync()
     const spaceId = useSpaceIdFromPathname()
+    const { confirmed: usernameConfirmed } = useUsernameConfirmed()
 
     const riverSpace = useMemo(
         () => spaces.find((s) => s.id.networkId === spaceId),
@@ -49,5 +52,10 @@ export const ValidateMembership = () => {
         return <PublicTownPage />
     }
 
-    return <Outlet />
+    return (
+        <>
+            <Outlet />
+            {!usernameConfirmed && <SetUsernameForm spaceData={space} />}
+        </>
+    )
 }

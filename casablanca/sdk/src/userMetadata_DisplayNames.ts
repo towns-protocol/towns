@@ -115,4 +115,10 @@ export class UserMetadata_DisplayNames {
             pending: pending,
         })
     }
+
+    info(userId: string): {
+        displayName: string
+    } {
+        return { displayName: this.plaintextDisplayNames.get(userId) ?? '' }
+    }
 }

@@ -5,7 +5,8 @@ import { useSpaceContext } from './SpaceContextProvider'
 
 export type LookupUser = {
     userId: string
-    name: string
+    username: string
+    usernameConfirmed: boolean
     displayName: string
     avatarUrl?: string
     memberOf?: MemberOf

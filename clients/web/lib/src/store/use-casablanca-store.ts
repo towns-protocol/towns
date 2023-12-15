@@ -34,7 +34,8 @@ export const useCasablancaStore = create<CasablancaStoreStates>((set) => ({
 export function toZionCasablancaUser(theUser: string | undefined): RoomMember {
     return {
         userId: theUser ?? '',
-        name: theUser ?? '',
+        username: theUser ?? '',
+        usernameConfirmed: true,
         displayName: theUser ?? '',
         avatarUrl: theUser,
     }
@@ -120,10 +121,12 @@ function toZionMembers(stream: Stream): {
 } {
     const members: RoomMember[] = getMembersWithMembership(Membership.Join, stream)
 
-    const displayNames = stream.view.getUserMetadata()?.displayNames.plaintextDisplayNames
-
+    const metadata = stream.view.getUserMetadata()
     const membersMap = members.reduce((result, x) => {
-        x.displayName = displayNames?.get(x.userId) ?? (x.displayName || x.name)
+        const info = metadata?.userInfo(x.userId)
+        x.displayName = info?.displayName ?? (x.displayName || x.username)
+        x.username = info?.username ?? ''
+        x.usernameConfirmed = info?.usernameConfirmed ?? false
         result[x.userId] = x
         return result
     }, {} as { [userId: string]: RoomMember })
@@ -150,7 +153,7 @@ function getMembersWithMembership(membership: Membership, stream: Stream): RoomM
         throw new Error('Invalid streamId: ' + streamId)
     }
 
-    const displayNames = stream.view.getUserMetadata()?.displayNames.plaintextDisplayNames
+    const metadata = stream.view.getUserMetadata()
     const members: RoomMember[] = []
 
     let users: Set<string>
@@ -171,10 +174,12 @@ function getMembersWithMembership(membership: Membership, stream: Stream): RoomM
 
     //TODO: construct roommembers from userId in a proper way
     users.forEach((userId) => {
+        const info = metadata?.userInfo(userId)
         members.push({
             userId: userId,
-            name: userId,
-            displayName: displayNames?.get(userId) ?? userId,
+            username: info?.username ?? userId,
+            usernameConfirmed: info?.usernameConfirmed ?? false,
+            displayName: info?.displayName ?? userId,
             avatarUrl: '',
         })
     })

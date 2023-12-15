@@ -131,6 +131,7 @@ interface ZionClientImpl {
         message: string,
         options: SendTextMessageOptions | undefined,
     ) => Promise<void>
+    getIsUsernameAvailable: (streamId: string, username: string) => Promise<boolean | undefined>
     getIsWalletRegisteredWithCasablanca: () => Promise<boolean>
     getServerVersions: () => Promise<IZionServerVersions | undefined>
     inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>
@@ -164,6 +165,7 @@ interface ZionClientImpl {
     sendReadReceipt: (marker: FullyReadMarker) => Promise<void>
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
     setDisplayName: (streamId: string, displayName: string) => Promise<void>
+    setUsername: (streamId: string, username: string) => Promise<void>
     setRoomName: (roomId: RoomIdentifier, roomName: string) => Promise<void>
     setRoomTopic: (roomId: RoomIdentifier, roomTopic: string) => Promise<void>
     getRoomTopic: (roomId: RoomIdentifier) => Promise<string | undefined>
@@ -228,6 +230,7 @@ export function useZionClient(): ZionClientImpl {
         waitForUpdateSpaceNameTransaction: useWithCatch(client?.waitForUpdateSpaceNameTransaction),
         updateSpaceNameTransaction: useWithCatch(client?.updateSpaceNameTransaction),
         editMessage: useWithCatch(client?.editMessage),
+        getIsUsernameAvailable: useWithCatch(client?.getIsUsernameAvailable),
         getIsWalletRegisteredWithCasablanca,
         getServerVersions: useWithCatch(client?.getServerVersions),
         inviteUser: useWithCatch(client?.inviteUser),
@@ -245,6 +248,7 @@ export function useZionClient(): ZionClientImpl {
         sendMediaPayload: useWithCatch(client?.sendMediaPayload),
         sendReadReceipt: useWithCatch(sendReadReceipt),
         setDisplayName: useWithCatch(client?.setDisplayName),
+        setUsername: useWithCatch(client?.setUsername),
         setRoomName: useWithCatch(client?.setRoomName),
         setRoomTopic: useWithCatch(client?.setRoomTopic),
         getRoomTopic: useWithCatch(client?.getRoomTopic),

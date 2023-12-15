@@ -89,6 +89,11 @@ export class UserMetadata_Usernames {
         this.emitUsernameUpdated(eventId, emitter)
     }
 
+    cleartextUsernameAvailable(username: string): boolean {
+        const checksum = usernameChecksum(username, this.streamId)
+        return this.usernameAvailable(checksum)
+    }
+
     usernameAvailable(checksum: string): boolean {
         return !this.checksums.has(checksum)
     }
@@ -153,5 +158,24 @@ export class UserMetadata_Usernames {
             encryptedData: encryptedData,
             pending: pending,
         })
+    }
+
+    info(userId: string): {
+        username: string
+        usernameConfirmed: boolean
+    } {
+        const name = this.plaintextUsernames.get(userId) ?? ''
+        const eventId = this.userIdToEventId.get(userId)
+        if (!eventId) {
+            return {
+                username: '',
+                usernameConfirmed: false,
+            }
+        }
+        const pending = this.usernameEvents.get(eventId)?.pending ?? true
+        return {
+            username: name,
+            usernameConfirmed: !pending,
+        }
     }
 }

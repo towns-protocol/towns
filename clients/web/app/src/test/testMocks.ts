@@ -90,12 +90,14 @@ const address2 = getWalletAddress()
 export const mockMembers: zionClient.RoomMember[] = [
     {
         userId: address1,
-        name: 'User 1',
+        username: 'User 1',
+        usernameConfirmed: true,
         displayName: 'User 1',
     },
     {
         userId: address2,
-        name: 'User 2',
+        username: 'User 2',
+        usernameConfirmed: true,
         displayName: 'User 2',
     },
 ]

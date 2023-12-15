@@ -13,7 +13,8 @@ export function useCasablancaUser(
     //or get rid of it completely.
     const currentUser: RoomMember = {
         userId: userId,
-        name: userId,
+        username: userId,
+        usernameConfirmed: true,
         displayName: userId,
     }
     return currentUser

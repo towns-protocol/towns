@@ -226,7 +226,7 @@ describe('userMetadataTests', () => {
 
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getUserMetadata()!.plaintextUsernames).toEqual(expected)
+            expect(streamView.getUserMetadata()!.usernames.plaintextUsernames).toEqual(expected)
         }
     })
 
@@ -270,7 +270,7 @@ describe('userMetadataTests', () => {
 
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getUserMetadata()?.plaintextUsernames).toEqual(expected)
+            expect(streamView.getUserMetadata()?.usernames.plaintextUsernames).toEqual(expected)
         }
     })
 
@@ -328,7 +328,7 @@ describe('userMetadataTests', () => {
 
         for (const client of [bobsClient, alicesClient, evesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getUserMetadata()!.plaintextUsernames).toEqual(expected)
+            expect(streamView.getUserMetadata()!.usernames.plaintextUsernames).toEqual(expected)
         }
     })
 })

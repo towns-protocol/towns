@@ -95,7 +95,8 @@ export interface Rooms {
 
 export interface RoomMember {
     userId: string
-    name: string
+    username: string
+    usernameConfirmed: boolean
     displayName: string
     avatarUrl?: string
 }
