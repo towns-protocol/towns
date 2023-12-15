@@ -93,7 +93,7 @@ import { usernameChecksum, isIConnectError } from './utils'
 import { EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { DecryptionExtensions, EntitlementsDelegate } from './decryptionExtensions'
 import { PersistenceStore } from './persistenceStore'
-import { SyncedStreams } from './syncedStreams'
+import { SyncState, SyncedStreams } from './syncedStreams'
 import { CachingStreamRpcClient } from './cachingStreamRpcClient'
 
 export type EmittedEvents = StreamEvents
@@ -104,7 +104,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     readonly userId: string
     readonly streams: SyncedStreams
 
-    streamSyncActive = false
     userStreamId?: string
     userSettingsStreamId?: string
     userDeviceKeyStreamId?: string
@@ -170,6 +169,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         )
         this.streams = new SyncedStreams(this.userId, this.rpcClient, this.persistenceStore, this)
         this.logCall('new Client')
+    }
+
+    get streamSyncActive(): boolean {
+        return this.streams.syncState === SyncState.Syncing
     }
 
     get cryptoEnabled(): boolean {
@@ -847,7 +850,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             this.logSync('sync failure', err)
             onFailure?.(err)
             this.emit('streamSyncActive', false)
-            this.streamSyncActive = false
             return err
         }
     }

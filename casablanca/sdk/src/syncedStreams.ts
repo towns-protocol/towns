@@ -88,8 +88,21 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
         this.logStream = dlog('csb:cl:sync:v2:stream').extend(shortId)
     }
 
+    // isActiveSyncEvents is used to filter
+    // the list of events to emit to the client
+    private isActiveSyncEvents = new Set([
+        SyncState.Starting.toString(),
+        SyncState.Syncing.toString(),
+        SyncState.Retrying.toString(),
+        SyncState.Canceling.toString(),
+        SyncState.NotSyncing.toString(),
+    ])
     public emit<E extends keyof SyncEvents>(event: E, ...args: Parameters<SyncEvents[E]>): boolean {
         this.logStream(event, ...args)
+        if (this.isActiveSyncEvents.has(event)) {
+            const isSyncing = this.syncState === SyncState.Syncing
+            this.clientEmitter.emit('streamSyncActive', isSyncing)
+        }
         return super.emit(event, ...args)
     }
 
@@ -267,7 +280,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
         this.onStopped()
     }
 
-    private get syncState(): SyncState {
+    public get syncState(): SyncState {
         return this._syncState
     }
 
