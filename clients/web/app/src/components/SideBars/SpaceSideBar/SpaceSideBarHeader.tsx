@@ -145,14 +145,14 @@ export const SpaceSideBarHeader = (props: {
                 zIndex="above"
                 height="x8"
                 ref={props.headerRef}
+                borderBottom={opaqueHeaderBar ? 'accent' : 'none'}
             >
                 <Stack
                     position="absolute"
                     bottom="none"
                     background="level1"
                     boxShadow="medium"
-                    borderBottom={opaqueHeaderBar ? 'default' : 'none'}
-                    height="x20"
+                    height="x8"
                     width="100%"
                     pointerEvents="none"
                     style={{ opacity: 1 - props.scrollOffset }}
