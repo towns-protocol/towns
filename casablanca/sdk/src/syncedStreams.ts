@@ -99,7 +99,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
     ])
     public emit<E extends keyof SyncEvents>(event: E, ...args: Parameters<SyncEvents[E]>): boolean {
         this.logStream(event, ...args)
-        if (this.isActiveSyncEvents.has(event)) {
+        if (this.isActiveSyncEvents.has(event.toString())) {
             const isSyncing = this.syncState === SyncState.Syncing
             this.clientEmitter.emit('streamSyncActive', isSyncing)
         }

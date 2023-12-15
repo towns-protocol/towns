@@ -4,6 +4,7 @@ import { usePrivyWagmi } from '@privy-io/wagmi-connector'
 import { Box, Button, Icon, Paragraph, Text, TextButton } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { useNetworkStatus } from 'hooks/useNetworkStatus'
 
 export function BetaDebugger() {
     const { signer } = useWeb3Context()
@@ -14,6 +15,7 @@ export function BetaDebugger() {
     const hide = () => setIsVisible(false)
     const { errorMessage, clearSiteData } = useClearSiteData()
     const { streamSyncActive } = useZionContext()
+    const { isOffline } = useNetworkStatus()
 
     useEffect(() => {
         if (signer) {
@@ -40,7 +42,7 @@ export function BetaDebugger() {
                     width="x1"
                     height="x1"
                     rounded="full"
-                    background={streamSyncActive ? 'cta1' : 'error'}
+                    background={streamSyncActive && !isOffline ? 'cta1' : 'error'}
                 />
                 <Text size="xs">
                     Signer: {shortAddress(signerAddress ?? '')} <br />
