@@ -21,9 +21,10 @@ export function getPrettyDisplayName(user: UserWithDisplayName | undefined) {
 
 export const _getPrettyDisplayName = memoize((name?: string, userId?: string) => {
     if (!name) {
+        const name = userId ? shortAddress(userId) : 'Unknown User'
         return {
-            displayName: 'Unknown User',
-            initialName: 'Unknown User',
+            displayName: name,
+            initialName: name,
             suffix: undefined,
         }
     }
