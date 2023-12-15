@@ -16,6 +16,7 @@ import {
 } from '@ui'
 import { Avatar } from '@components/Avatar/Avatar'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { usePersistOrder } from 'hooks/usePersistOrder'
 
 export const DirectMessageInviteUserList = (props: {
     onSelectionChange?: (userIds: Set<string>) => void
@@ -53,7 +54,9 @@ export const DirectMessageInviteUserList = (props: {
         .filter((id) => id !== userId && !hiddenUserIds.has(id))
         .slice(0, 25)
 
-    const recentUsers = useRecentUsers(userId).filter((id) => !hiddenUserIds.has(id))
+    const recentUsers = usePersistOrder(
+        useRecentUsers(userId).filter((id) => !hiddenUserIds.has(id)),
+    )
 
     useEffect(() => {
         onSelectionChange?.(selectedUserIds)
