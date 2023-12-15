@@ -29,7 +29,7 @@ export function hashString(string: string): string {
 }
 
 export function usernameChecksum(username: string, streamId: string) {
-    return hashString(`${username}:${streamId}`)
+    return hashString(`${username.toLowerCase()}:${streamId}`)
 }
 
 /**

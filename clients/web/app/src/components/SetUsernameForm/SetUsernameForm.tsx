@@ -1,7 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { SpaceData, useZionClient } from 'use-zion-client'
+import { AnimatePresence } from 'framer-motion'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { Box, Button, Stack, Text, TextField } from '@ui'
+import { Box, Button, MotionText, Stack, Text, TextField } from '@ui'
+import { validateUsername } from './validateUsername'
 
 export type Props = {
     spaceData: SpaceData
@@ -10,7 +12,6 @@ export type Props = {
 export const SetUsernameForm = (props: Props) => {
     const { spaceData } = props
     const { setUsername, getIsUsernameAvailable } = useZionClient()
-
     const [value, setValue] = useState<string>('')
     const [usernameAvailable, setUsernameAvailable] = useState<boolean>(true)
     const onTextFieldChange = useCallback(
@@ -28,13 +29,20 @@ export const SetUsernameForm = (props: Props) => {
         await setUsername(spaceData.id.networkId, value).then(() => {})
     }, [setUsername, spaceData.id.networkId, value])
 
+    const usernameValid = useMemo(() => {
+        return validateUsername(value)
+    }, [value])
+
     const submitButtonEnabled = useMemo(() => {
-        return value.length > 2 && usernameAvailable
-    }, [value, usernameAvailable])
+        return usernameValid && usernameAvailable
+    }, [usernameAvailable, usernameValid])
+
+    // don't show the error message as the user starts typing
+    const showInvalidUsernameError = value.length > 2 && !usernameValid
 
     return (
         <ModalContainer onHide={() => {}}>
-            <Stack gap padding width="100%">
+            <Stack gap padding>
                 <Text size="md" textAlign="center" fontWeight="strong">
                     Welcome to
                 </Text>
@@ -58,11 +66,30 @@ export const SetUsernameForm = (props: Props) => {
                     value={value}
                     onChange={onTextFieldChange}
                 />
-                {!usernameAvailable && (
-                    <Text color="error">
-                        This username is taken in this town already. Please choose another.
-                    </Text>
-                )}
+                <AnimatePresence>
+                    {!usernameAvailable && (
+                        <MotionText
+                            color="error"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            This username is taken in this town already. Please choose another.
+                        </MotionText>
+                    )}
+
+                    {showInvalidUsernameError && (
+                        <MotionText
+                            color="error"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            Your username must be between 3 and 16 characters <br />
+                            and can only contain letters, numbers, and underscores.
+                        </MotionText>
+                    )}
+                </AnimatePresence>
                 <Box paddingTop="md">
                     <Button disabled={!submitButtonEnabled} tone="cta1" onClick={onSubmit}>
                         Join Town
