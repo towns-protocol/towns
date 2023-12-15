@@ -1,39 +1,36 @@
 import React from 'react'
 import { MentionResult, SpaceData, useMyChannels } from 'use-zion-client'
-import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
-import { Box, IconButton, MotionStack, Stack } from '@ui'
-import { useSizeContext } from 'ui/hooks/useSizeContext'
+import { IconButton } from '@ui'
+import { SidebarListLayout } from './SidebarListLayout'
 
-// This is a list of the synced, joined Matrix channels
-export const SyncedChannelList = (props: {
+export const ChannelList = (props: {
     space: SpaceData
     mentions: MentionResult[]
     canCreateChannel: boolean | undefined
     onShowCreateChannel?: () => void
 }) => {
-    const sizeContext = useSizeContext()
-    const isSmall = sizeContext.lessThan(120)
     const { mentions, space, onShowCreateChannel, canCreateChannel } = props
-
     const channelGroups = useMyChannels(space)
 
     return (
         <>
             {channelGroups.map((group) => (
-                <MotionStack key={group.label} display={isSmall ? 'none' : 'flex'}>
-                    <ChannelGroupHeader label={group.label}>
-                        {canCreateChannel && (
+                <SidebarListLayout
+                    key={group.label}
+                    label={group.label}
+                    channels={group.channels}
+                    headerContent={
+                        canCreateChannel && (
                             <IconButton
                                 icon="plus"
                                 tooltip="New channel"
                                 tooltipOptions={{ immediate: true }}
                                 onClick={onShowCreateChannel}
                             />
-                        )}
-                    </ChannelGroupHeader>
-                    {group.channels?.map((channel) => {
-                        const key = `${group.label}/${channel.id.slug}`
+                        )
+                    }
+                    itemRenderer={(channel) => {
                         // only unread mentions at the channel root
                         const mentionCount = mentions.reduce(
                             (count, m) =>
@@ -44,31 +41,16 @@ export const SyncedChannelList = (props: {
                         )
                         return (
                             <ChannelNavItem
-                                key={key}
-                                id={key}
+                                key={channel.id.networkId}
+                                id={channel.id.networkId}
                                 space={space}
                                 channel={channel}
                                 mentionCount={mentionCount}
                             />
                         )
-                    })}
-                </MotionStack>
+                    }}
+                />
             ))}
         </>
     )
 }
-
-const ChannelGroupHeader = (props: { label: string; children?: React.ReactNode }) => (
-    <Stack
-        horizontal
-        alignItems="center"
-        justifyContent="spaceBetween"
-        paddingRight="sm"
-        height="height_lg"
-    >
-        <Box style={{ transform: 'translateY(2px)' }}>
-            <ChannelNavGroup>{props.label}</ChannelNavGroup>
-        </Box>
-        {props.children}
-    </Stack>
-)

@@ -105,6 +105,7 @@ export const AuthenticatedRoutes = () => {
                                         {...desktopSpaceProfilePanelRoutes()}
                                         <Route path="info" element={<InfoPanelWrapper />} />
                                     </Route>
+                                    {messageRoutes}
                                     <Route path="channels/:channelSlug" element={<SpacesChannel />}>
                                         <Route
                                             path="replies/:messageId"

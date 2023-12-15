@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
-import { RoomMember } from 'types/zion-types'
-import { useUserLookupContext } from '../components/UserLookupContext'
+import { LookupUser, useUserLookupContext } from '../components/UserLookupContext'
 
-export function useUser(userId?: string): RoomMember | undefined {
+export function useUser(userId?: string): LookupUser | undefined {
     const { users } = useUserLookupContext()
     return useMemo(
         () =>
@@ -13,7 +12,7 @@ export function useUser(userId?: string): RoomMember | undefined {
                       username: userId,
                       usernameConfirmed: true,
                       displayName: userId,
-                  } satisfies RoomMember)
+                  } satisfies LookupUser)
                 : undefined,
         [userId, users],
     )

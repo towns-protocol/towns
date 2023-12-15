@@ -4,19 +4,21 @@ import { Icon, IconName } from 'ui/components/Icon'
 import { TooltipOptions } from 'ui/components/Tooltip/TooltipRenderer'
 import { NavItem } from './_NavItem'
 
-export const ActionNavItem = (props: {
+type Props = {
     id?: string
     badge?: React.ReactNode
-    label: string
+    label: React.ReactNode
     link?: string
-    icon?: IconName
+    icon?: IconName | React.ReactNode
     highlight?: boolean
     tooltip?: React.ReactNode
     tooltipOptions?: TooltipOptions
     minHeight?: BoxProps['minHeight']
     onClick?: (e: React.MouseEvent) => void
     children?: React.ReactNode
-}) => {
+}
+
+export const ActionNavItem = (props: Props) => {
     const {
         icon,
         id,
@@ -30,6 +32,9 @@ export const ActionNavItem = (props: {
         minHeight,
         children,
     } = props
+
+    const isIconName = (icon: Props['icon']): icon is IconName => typeof icon === 'string'
+
     return (
         <NavItem
             tooltip={tooltip}
@@ -42,7 +47,7 @@ export const ActionNavItem = (props: {
             minHeight={minHeight}
             onClick={onClick}
         >
-            {icon && (
+            {(isIconName(icon) && (
                 <Icon
                     type={icon}
                     padding="line"
@@ -50,7 +55,8 @@ export const ActionNavItem = (props: {
                     color="gray2"
                     size="square_lg"
                 />
-            )}
+            )) ||
+                icon}
             <ButtonText
                 fontWeight={isHighlight ? 'strong' : undefined}
                 color={isHighlight ? 'default' : undefined}

@@ -5,11 +5,15 @@ import { LetterStylesVariantProps } from '@components/IconInitials/IconInitials.
 import { Box, Paragraph } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 
-export const GroupDMIcon = (props: {
+type Props = {
     roomIdentifier: RoomIdentifier
     letterFontSize?: LetterStylesVariantProps
     width?: 'x3' | 'x4' | 'x6'
-}) => {
+}
+
+export type GroupDMIconProps = Props
+
+export const GroupDMIcon = (props: Props) => {
     const { counterParty, data } = useDMData(props.roomIdentifier)
     const userIds = useMemo(
         () => (data?.isGroup ? data.userIds : [counterParty].filter(notUndefined)),
@@ -21,7 +25,7 @@ export const GroupDMIcon = (props: {
 
 const REMAINING_PLACEHOLDER = 'REMAINING_PLACEHOLDER'
 
-type Props = {
+type AvatarGroupProps = {
     userIds?: string[]
     width?: 'x3' | 'x4' | 'x6'
 }
@@ -35,14 +39,14 @@ const constellations = [
     // single avatar
     [{ size: 1.0 }],
     // 2 avatars
-    [{ size: 0.4 }, { size: 0.4 }],
+    [{ size: 0.5 }, { size: 0.5 }],
     // 3 avatars
-    [{ size: 0.38 }, { size: 0.38 }, { size: 0.38 }],
+    [{ size: 0.4 }, { size: 0.38 }, { size: 0.4 }],
 ]
 
 const fontScale = { x3: 0.5, x4: 0.4, x6: 0.6 }
 
-const AvatarGroup = (props: Props) => {
+const AvatarGroup = (props: AvatarGroupProps) => {
     const { userIds, width = 'x6' } = props
     // note: profile should already have been removed from userIds
     if (!userIds?.length) {
@@ -67,11 +71,11 @@ const AvatarGroup = (props: Props) => {
         slots.splice(1, 0, REMAINING_PLACEHOLDER)
     }
 
-    const startAngle = slots.length === 2 ? 0.333 : 2
+    const startAngle = slots.length === 2 ? -1.3 : 1.3
 
     return (
         <Box position="relative" minWidth={width} height={width} rounded="full">
-            <Box background="level3" width="100%" height="100%" rounded="full">
+            <Box width="100%" height="100%" rounded="full">
                 {slots.slice(0, 3).map((userId, i) => {
                     const radius = `calc(${constellation[i].size} * 50%`
 

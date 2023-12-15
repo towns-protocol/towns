@@ -8,6 +8,7 @@ import {
     RoomMember,
     SpaceData,
     getAccountAddress,
+    useDMLatestMessage,
     useHasPermission,
     useSpaceData,
     useSpaceMembers,
@@ -15,14 +16,24 @@ import {
     useSpaceUnreadThreadMentions,
     useUserLookupContext,
 } from 'use-zion-client'
+import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
+import { Avatar } from '@components/Avatar/Avatar'
+import {
+    DirectMessageIcon,
+    DirectMessageName,
+} from '@components/DirectMessages/DirectMessageListItem'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
+import { ModalContainer } from '@components/Modals/ModalContainer'
 import { NavItem } from '@components/NavItem/_NavItem'
+import { useSpaceDms } from '@components/SideBars/SpaceSideBar/DirectMessageChannelList'
 import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { TouchLayoutHeader } from '@components/TouchLayoutHeader/TouchLayoutHeader'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
+import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { VisualViewportContextProvider } from '@components/VisualViewportContext/VisualViewportContext'
+import { CreateChannelFormModal } from '@components/Web3/CreateChannelForm/CreateChannelForm'
 import {
     Badge,
     Box,
@@ -39,19 +50,15 @@ import {
     Text,
     TextField,
 } from '@ui'
+import { useAuth } from 'hooks/useAuth'
 import { useChannelsWithMentionCountsAndUnread } from 'hooks/useChannelsWithMentionCountsAndUnread'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { PersistAndFadeWelcomeLogo } from 'routes/layouts/WelcomeLayout'
+import { useStore } from 'store/store'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { atoms } from 'ui/styles/atoms.css'
 import { vars } from 'ui/styles/vars.css'
-import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { useStore } from 'store/store'
-import { Avatar } from '@components/Avatar/Avatar'
-import { useAuth } from 'hooks/useAuth'
-import { CreateChannelFormModal } from '@components/Web3/CreateChannelForm/CreateChannelForm'
-import { ModalContainer } from '@components/Modals/ModalContainer'
 import { AllChannelsList, ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
@@ -298,6 +305,10 @@ export const TouchHome = () => {
                                                 </>
                                             )}
 
+                                            <BrowseChannelRow
+                                                onClick={() => setActiveOverlay('browse-channels')}
+                                            />
+
                                             {canCreateChannel && (
                                                 <CreateChannelRow
                                                     onClick={() =>
@@ -306,9 +317,12 @@ export const TouchHome = () => {
                                                 />
                                             )}
 
-                                            <BrowseChannelRow
-                                                onClick={() => setActiveOverlay('browse-channels')}
-                                            />
+                                            {space && (
+                                                <>
+                                                    <SectionHeader title="Direct Messages" />
+                                                    <DirectMessageChannelList />
+                                                </>
+                                            )}
 
                                             {filteredMembers.length > 0 && (
                                                 <>
@@ -401,12 +415,49 @@ const ChannelList = (props: {
     )
 }
 
+const DirectMessageChannelList = () => {
+    const { spaceDms, dmUnreadChannelIds } = useSpaceDms()
+
+    return (
+        <Stack>
+            {spaceDms.map((c) => (
+                <DirectMessageItem
+                    key={c.id.networkId}
+                    channel={c}
+                    unread={dmUnreadChannelIds.has(c.id.networkId)}
+                />
+            ))}
+        </Stack>
+    )
+}
+
+const DirectMessageItem = (props: { channel: DMChannelIdentifier; unread: boolean }) => {
+    const { channel, unread } = props
+    const { unreadCount } = useDMLatestMessage(channel.id)
+    return (
+        <TouchChannelResultRow
+            key={channel.id.networkId}
+            channelNetworkId={channel.id.networkId}
+            name={<DirectMessageName channel={channel} />}
+            unread={unread}
+            mentionCount={unreadCount}
+            muted={false}
+            icontElement={
+                <Box width="x4">
+                    <DirectMessageIcon channel={channel} width="x4" />
+                </Box>
+            }
+        />
+    )
+}
+
 export const TouchChannelResultRow = (props: {
     channelNetworkId: string
-    name: string
+    name: React.ReactNode
     unread: boolean
     mentionCount: number
     muted: boolean
+    icontElement?: React.ReactNode
 }) => {
     const { channelNetworkId, name, unread, mentionCount, muted } = props
     const { createLink } = useCreateLink()
@@ -419,7 +470,7 @@ export const TouchChannelResultRow = (props: {
                 fontWeight={unread ? 'strong' : 'normal'}
                 color={unread ? 'default' : 'gray1'}
             >
-                <SearchResultItemIcon type="tag" />
+                {props.icontElement ?? <SearchResultItemIcon type="tag" />}
                 <Text truncate textAlign="left">
                     {name}
                 </Text>
@@ -477,9 +528,7 @@ const SectionHeader = (props: { title: string }) => {
     const { title } = props
     return (
         <Box paddingX paddingTop="md" paddingBottom="sm">
-            <Text color="gray2" textTransform="uppercase">
-                {title}
-            </Text>
+            <Text color="gray2">{title}</Text>
         </Box>
     )
 }

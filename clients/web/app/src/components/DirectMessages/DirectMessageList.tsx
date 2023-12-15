@@ -92,7 +92,7 @@ export const DirectMessageList = () => {
                             <DirectMessageListItem
                                 key={channel.id.slug}
                                 channel={channel}
-                                highlighted={channelId === channel.id.slug}
+                                selected={channelId === channel.id.slug}
                                 unread={dmUnreadChannelIds.has(channel.id.slug)}
                                 onSelect={selectMessage}
                             />

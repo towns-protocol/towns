@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import {
     Membership,
@@ -9,7 +9,6 @@ import {
     useSpaceMentions,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
-    useZionClient,
 } from 'use-zion-client'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
@@ -20,13 +19,13 @@ import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { FadeIn, FadeInBox } from '@components/Transitions'
 import { useAuth } from 'hooks/useAuth'
-import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { SideBar } from '../_SideBar'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
-import { SyncedChannelList } from './SyncedChannelList'
+import { ChannelList } from './ChannelList'
+import { DirectMessageChannelList } from './DirectMessageChannelList'
 
 type Props = {
     space: SpaceData
@@ -35,7 +34,6 @@ type Props = {
 
 export const SpaceSideBar = (props: Props) => {
     const { space } = props
-    const { client } = useZionClient()
     const { loggedInWalletAddress } = useAuth()
 
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
@@ -47,7 +45,6 @@ export const SpaceSideBar = (props: Props) => {
     })
     const setDismissedGettingStarted = useStore((state) => state.setDismissedGettingStarted)
     const dismissedGettingStartedMap = useStore((state) => state.dismissedGettingStartedMap)
-    const channels = useSpaceChannels()
 
     const [isCreateChannelModalVisible, setCreateChannelModalVisible] = useState(false)
     const onHideCreateChannel = useEvent(() => setCreateChannelModalVisible(false))
@@ -81,20 +78,9 @@ export const SpaceSideBar = (props: Props) => {
     const headerRef = useRef<HTMLElement>(null)
     const onScroll = (e: React.UIEvent) => {
         const headerY = headerRef.current?.getBoundingClientRect()?.top ?? -1
-        setScrollOffset(Math.max(0, Math.min(headerY - 16, 50)) / 50)
+        setScrollOffset(Math.max(0, Math.min(headerY - 58, 50)) / 50)
         setHasScrolledPastHeader(headerY > -1 && headerY <= 0)
     }
-
-    const isMemberOfAnyChannel = useMemo(() => {
-        if (!client) {
-            return false
-        }
-
-        return channels.some((channel) => {
-            const roomData = client?.getRoomData(channel.id)
-            return roomData?.membership === Membership.Join
-        })
-    }, [client, channels])
 
     return (
         <SideBar data-testid="space-sidebar" height="100%" onScroll={onScroll}>
@@ -159,13 +145,14 @@ export const SpaceSideBar = (props: Props) => {
                                 link={`/${PATHS.SPACES}/${space.id.slug}/mentions`}
                                 minHeight="x5"
                             />
-                            <SyncedChannelList
+                            <ChannelList
                                 key={space.id.networkId}
                                 space={space}
                                 mentions={mentions}
                                 canCreateChannel={canCreateChannel}
                                 onShowCreateChannel={onShowCreateChannel}
                             />
+
                             <ActionNavItem
                                 icon="search"
                                 id="browseChannels"
@@ -173,7 +160,8 @@ export const SpaceSideBar = (props: Props) => {
                                 minHeight="x5"
                                 onClick={onShowBrowseChannels}
                             />
-                            {!isMemberOfAnyChannel && canCreateChannel && (
+
+                            {canCreateChannel && (
                                 <ActionNavItem
                                     icon="plus"
                                     id="newChannel"
@@ -181,6 +169,7 @@ export const SpaceSideBar = (props: Props) => {
                                     onClick={onShowCreateChannel}
                                 />
                             )}
+                            <DirectMessageChannelList />
                         </FadeIn>
                     )}
                 </Stack>
