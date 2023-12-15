@@ -51,7 +51,8 @@ import { useStore } from 'store/store'
 import { Avatar } from '@components/Avatar/Avatar'
 import { useAuth } from 'hooks/useAuth'
 import { CreateChannelFormModal } from '@components/Web3/CreateChannelForm/CreateChannelForm'
-import { ChannelItem } from '../AllChannelsList/AllChannelsList'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { AllChannelsList, ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
 
@@ -65,7 +66,7 @@ const variants = {
     exit: { opacity: 0 },
 }
 
-type Overlay = undefined | 'main-panel' | 'create-channel'
+type Overlay = undefined | 'main-panel' | 'create-channel' | 'browse-channels'
 
 export const TouchHome = () => {
     const space = useSpaceData()
@@ -136,6 +137,10 @@ export const TouchHome = () => {
     }, [members, searchString])
 
     const [activeOverlay, setActiveOverlay] = useState<Overlay>(undefined)
+
+    const onHideOverlay = useCallback(() => {
+        setActiveOverlay(undefined)
+    }, [])
 
     const onDisplayMainPanel = useCallback(() => {
         setActiveOverlay('main-panel')
@@ -301,6 +306,10 @@ export const TouchHome = () => {
                                                 />
                                             )}
 
+                                            <BrowseChannelRow
+                                                onClick={() => setActiveOverlay('browse-channels')}
+                                            />
+
                                             {filteredMembers.length > 0 && (
                                                 <>
                                                     <Spacer />
@@ -330,14 +339,14 @@ export const TouchHome = () => {
                     <PersistAndFadeWelcomeLogo />
                 </TouchTabBarLayout>
                 <AnimatePresence>
-                    {activeOverlay === 'main-panel' && (
-                        <TouchHomeOverlay onClose={() => setActiveOverlay(undefined)} />
-                    )}
+                    {activeOverlay === 'main-panel' && <TouchHomeOverlay onClose={onHideOverlay} />}
                     {activeOverlay === 'create-channel' && space?.id && (
-                        <CreateChannelFormModal
-                            spaceId={space.id}
-                            onHide={() => setActiveOverlay(undefined)}
-                        />
+                        <CreateChannelFormModal spaceId={space.id} onHide={onHideOverlay} />
+                    )}
+                    {activeOverlay === 'browse-channels' && (
+                        <ModalContainer touchTitle="Browse channels" onHide={onHideOverlay}>
+                            <AllChannelsList onHideBrowseChannels={onHideOverlay} />
+                        </ModalContainer>
                     )}
                 </AnimatePresence>
             </VisualViewportContextProvider>
@@ -556,6 +565,17 @@ const CreateChannelRow = (props: { onClick: () => void }) => {
             <NavItemContent>
                 <SearchResultItemIcon type="plus" color="default" />
                 <Text color="gray1">Create channel</Text>
+            </NavItemContent>
+        </NavItem>
+    )
+}
+
+const BrowseChannelRow = (props: { onClick: () => void }) => {
+    return (
+        <NavItem padding="none" onClick={props.onClick}>
+            <NavItemContent>
+                <SearchResultItemIcon type="search" color="default" />
+                <Text color="gray1">Browse channels</Text>
             </NavItemContent>
         </NavItem>
     )
