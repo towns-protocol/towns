@@ -38,29 +38,43 @@ contract MigrateMembership is Migration {
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](3);
 
-    bytes4[] memory selectorsToAdd = new bytes4[](1);
-    selectorsToAdd[0] = MembershipFacet.joinTownWithReferral.selector;
-
-    cuts[index++] = IDiamond.FacetCut({
-      facetAddress: membership,
-      action: IDiamond.FacetCutAction.Add,
-      functionSelectors: selectorsToAdd
-    });
-
-    // remove selector we just added from membership so we don't get an error when replacing other selectors
-    membershipHelper.removeSelector(
-      MembershipFacet.joinTownWithReferral.selector
-    );
-
+    // Replace the membership facet
     cuts[index++] = IDiamond.FacetCut({
       facetAddress: membership,
       action: IDiamond.FacetCutAction.Replace,
       functionSelectors: membershipHelper.selectors()
     });
 
+    // Add the membership referral facet's new selector
+    bytes4[] memory newReferralSelectors = new bytes4[](3);
+    newReferralSelectors[0] = MembershipReferralFacet
+      .calculateReferralAmount
+      .selector;
+    newReferralSelectors[1] = MembershipReferralFacet
+      .createReferralCodeWithTime
+      .selector;
+    newReferralSelectors[2] = MembershipReferralFacet.referralCodeTime.selector;
+
     cuts[index++] = IDiamond.FacetCut({
       facetAddress: membershipReferral,
       action: IDiamond.FacetCutAction.Add,
+      functionSelectors: newReferralSelectors
+    });
+
+    // Replace the membership referral facet with the new one
+    membershipReferralHelper.removeSelector(
+      MembershipReferralFacet.calculateReferralAmount.selector
+    );
+    membershipReferralHelper.removeSelector(
+      MembershipReferralFacet.createReferralCodeWithTime.selector
+    );
+    membershipReferralHelper.removeSelector(
+      MembershipReferralFacet.referralCodeTime.selector
+    );
+
+    cuts[index++] = IDiamond.FacetCut({
+      facetAddress: membershipReferral,
+      action: IDiamond.FacetCutAction.Replace,
       functionSelectors: membershipReferralHelper.selectors()
     });
 

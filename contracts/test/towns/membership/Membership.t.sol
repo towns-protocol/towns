@@ -94,6 +94,18 @@ contract MembershipTest is
     membership.setMembershipLimit(1);
   }
 
+  function test_joinTown_revert_already_member() external {
+    address alice = _randomAddress();
+    address bob = _randomAddress();
+
+    vm.prank(founder);
+    membership.joinTown(alice);
+
+    vm.prank(alice);
+    vm.expectRevert(Membership__AlreadyMember.selector);
+    membership.joinTown(bob);
+  }
+
   // =============================================================
   //                       Join Town Referral
   // =============================================================
@@ -101,7 +113,7 @@ contract MembershipTest is
   function test_joinTownWithReferral() external {
     address alice = _randomAddress();
     address bob = _randomAddress();
-    uint256 referralCode = 1;
+    uint256 referralCode = 123;
 
     vm.prank(founder);
     membership.joinTownWithReferral(alice, bob, referralCode);
@@ -112,7 +124,7 @@ contract MembershipTest is
   function test_joinTownWithReferral_with_price() external {
     address alice = _randomAddress();
     address bob = _randomAddress();
-    uint256 referralCode = 1;
+    uint256 referralCode = 123;
     uint256 membershipPrice = 10 ether;
     vm.deal(founder, membershipPrice);
 

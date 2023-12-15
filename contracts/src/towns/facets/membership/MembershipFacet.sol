@@ -37,6 +37,7 @@ contract MembershipFacet is
   // =============================================================
   function _validateJoinTown(address receiver) internal view {
     if (receiver == address(0)) revert Membership__InvalidAddress();
+    if (_balanceOf(msg.sender) > 0) revert Membership__AlreadyMember();
     if (_balanceOf(receiver) > 0) revert Membership__AlreadyMember();
     if (
       _getMembershipSupplyLimit() != 0 &&

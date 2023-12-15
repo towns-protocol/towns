@@ -555,6 +555,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "MembershipPriceUpdated(uint256)": EventFragment;
     "Membership__ReferralCreated(uint256,uint16)": EventFragment;
     "Membership__ReferralRemoved(uint256)": EventFragment;
+    "Membership__ReferralTimeCreated(uint256,uint16,uint256,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Paused(address)": EventFragment;
     "SubscriptionUpdate(uint256,uint64)": EventFragment;
@@ -582,6 +583,9 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "Membership__ReferralRemoved"
+  ): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "Membership__ReferralTimeCreated"
   ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
@@ -733,6 +737,20 @@ export type Membership__ReferralRemovedEvent = TypedEvent<
 
 export type Membership__ReferralRemovedEventFilter =
   TypedEventFilter<Membership__ReferralRemovedEvent>;
+
+export interface Membership__ReferralTimeCreatedEventObject {
+  code: BigNumber;
+  bps: number;
+  startTime: BigNumber;
+  endTime: BigNumber;
+}
+export type Membership__ReferralTimeCreatedEvent = TypedEvent<
+  [BigNumber, number, BigNumber, BigNumber],
+  Membership__ReferralTimeCreatedEventObject
+>;
+
+export type Membership__ReferralTimeCreatedEventFilter =
+  TypedEventFilter<Membership__ReferralTimeCreatedEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -1530,6 +1548,19 @@ export interface MembershipFacet extends BaseContract {
     Membership__ReferralRemoved(
       code?: PromiseOrValue<BigNumberish> | null
     ): Membership__ReferralRemovedEventFilter;
+
+    "Membership__ReferralTimeCreated(uint256,uint16,uint256,uint256)"(
+      code?: PromiseOrValue<BigNumberish> | null,
+      bps?: null,
+      startTime?: null,
+      endTime?: null
+    ): Membership__ReferralTimeCreatedEventFilter;
+    Membership__ReferralTimeCreated(
+      code?: PromiseOrValue<BigNumberish> | null,
+      bps?: null,
+      startTime?: null,
+      endTime?: null
+    ): Membership__ReferralTimeCreatedEventFilter;
 
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,

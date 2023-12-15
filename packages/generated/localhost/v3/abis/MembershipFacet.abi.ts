@@ -148,6 +148,11 @@ export default [
   },
   {
     "inputs": [],
+    "name": "Membership__InvalidReferralTime",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "Membership__InvalidTokenId",
     "type": "error"
   },
@@ -457,6 +462,37 @@ export default [
       }
     ],
     "name": "Membership__ReferralRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "code",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "bps",
+        "type": "uint16"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "startTime",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "endTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "Membership__ReferralTimeCreated",
     "type": "event"
   },
   {

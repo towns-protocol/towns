@@ -30,4 +30,16 @@ contract TokenOwnableHelper is FacetHelper {
   function initializer() public pure override returns (bytes4) {
     return TokenOwnableFacet.__Ownable_init.selector;
   }
+
+  function makeInitData(
+    address token,
+    uint256 tokenId
+  ) public pure returns (bytes memory) {
+    return
+      abi.encodeWithSelector(
+        TokenOwnableFacet.__Ownable_init.selector,
+        token,
+        tokenId
+      );
+  }
 }

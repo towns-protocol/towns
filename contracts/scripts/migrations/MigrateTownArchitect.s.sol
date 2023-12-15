@@ -11,45 +11,26 @@ import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {Migration} from "../common/Migration.s.sol";
 
 import {TownArchitectHelper} from "contracts/test/towns/architect/TownArchitectSetup.sol";
-import {PlatformRequirementsHelper} from "contracts/test/towns/platform/requirements/PlatformRequirementsSetup.sol";
 
 import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";
-import {PlatformRequirementsFacet} from "contracts/src/towns/facets/platform/requirements/PlatformRequirementsFacet.sol";
 
 contract MigrateTownArchitect is Migration {
   TownArchitectHelper townArchitectHelper = new TownArchitectHelper();
-  PlatformRequirementsHelper platformReqsHelper =
-    new PlatformRequirementsHelper();
 
   function __migration(uint256 deployerPK, address) public override {
     address diamond = getDeployment("townFactory");
+    uint256 index = 0;
 
     vm.startBroadcast(deployerPK);
     address townArchitect = address(new TownArchitect());
-    address platformReqs = address(new PlatformRequirementsFacet());
     vm.stopBroadcast();
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](3);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
 
-    cuts[0] = IDiamond.FacetCut({
+    cuts[index++] = IDiamond.FacetCut({
       facetAddress: townArchitect,
       action: IDiamond.FacetCutAction.Replace,
       functionSelectors: townArchitectHelper.selectors()
-    });
-
-    cuts[1] = IDiamond.FacetCut({
-      facetAddress: platformReqs,
-      action: IDiamond.FacetCutAction.Replace,
-      functionSelectors: platformReqsHelper.selectors()
-    });
-
-    bytes4[] memory selectorsToRemove = new bytes4[](1);
-    selectorsToRemove[0] = PlatformRequirementsFacet.getDenominator.selector;
-
-    cuts[2] = IDiamond.FacetCut({
-      facetAddress: platformReqs,
-      action: IDiamond.FacetCutAction.Remove,
-      functionSelectors: selectorsToRemove
     });
 
     vm.startBroadcast(deployerPK);

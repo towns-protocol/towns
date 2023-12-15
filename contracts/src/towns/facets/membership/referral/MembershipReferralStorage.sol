@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 // interfaces
+import {IMembershipReferralBase} from "./IMembershipReferral.sol";
 
 // libraries
 
@@ -13,6 +14,7 @@ library MembershipReferralStorage {
 
   struct Layout {
     mapping(uint256 => uint16) referralCodes;
+    mapping(uint256 => IMembershipReferralBase.TimeData) referralCodeTimes;
   }
 
   function layout() internal pure returns (Layout storage l) {
