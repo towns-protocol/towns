@@ -3,6 +3,7 @@ import { SpaceData, useZionClient } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Box, Button, MotionText, Stack, Text, TextField } from '@ui'
+import { useSetUsername } from 'hooks/useSetUsername'
 import { validateUsername } from './validateUsername'
 
 export type Props = {
@@ -11,7 +12,10 @@ export type Props = {
 
 export const SetUsernameForm = (props: Props) => {
     const { spaceData } = props
-    const { setUsername, getIsUsernameAvailable } = useZionClient()
+    const { getIsUsernameAvailable } = useZionClient()
+    const { setUsername } = useSetUsername()
+    const [requestInFlight, setRequestInFlight] = useState<boolean>(false)
+
     const [value, setValue] = useState<string>('')
     const [usernameAvailable, setUsernameAvailable] = useState<boolean>(true)
     const onTextFieldChange = useCallback(
@@ -26,16 +30,22 @@ export const SetUsernameForm = (props: Props) => {
     )
 
     const onSubmit = useCallback(async () => {
-        await setUsername(spaceData.id.networkId, value).then(() => {})
-    }, [setUsername, spaceData.id.networkId, value])
+        setRequestInFlight(true)
+        // If we succeed, we'll be redirected to the space. If not, we'll stay on this page.
+        try {
+            await setUsername(spaceData.id.networkId, value)
+        } catch (e) {
+            setRequestInFlight(false)
+        }
+    }, [setUsername, spaceData.id.networkId, value, setRequestInFlight])
 
     const usernameValid = useMemo(() => {
         return validateUsername(value)
     }, [value])
 
     const submitButtonEnabled = useMemo(() => {
-        return usernameValid && usernameAvailable
-    }, [usernameAvailable, usernameValid])
+        return usernameValid && usernameAvailable && !requestInFlight
+    }, [usernameAvailable, usernameValid, requestInFlight])
 
     // don't show the error message as the user starts typing
     const showInvalidUsernameError = value.length > 2 && !usernameValid
@@ -61,6 +71,7 @@ export const SetUsernameForm = (props: Props) => {
                 <Text fontWeight="strong">Username</Text>
                 <Text color="gray2">This is the username you will be using for this town.</Text>
                 <TextField
+                    disabled={requestInFlight}
                     placeholder="Enter your username"
                     background="level2"
                     value={value}
@@ -92,7 +103,7 @@ export const SetUsernameForm = (props: Props) => {
                 </AnimatePresence>
                 <Box paddingTop="md">
                     <Button disabled={!submitButtonEnabled} tone="cta1" onClick={onSubmit}>
-                        Join Town
+                        {requestInFlight ? 'Joining Town' : 'Join Town'}
                     </Button>
                 </Box>
             </Stack>

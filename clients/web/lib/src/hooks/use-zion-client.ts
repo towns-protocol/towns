@@ -165,7 +165,6 @@ interface ZionClientImpl {
     sendReadReceipt: (marker: FullyReadMarker) => Promise<void>
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
     setDisplayName: (streamId: string, displayName: string) => Promise<void>
-    setUsername: (streamId: string, username: string) => Promise<void>
     setRoomName: (roomId: RoomIdentifier, roomName: string) => Promise<void>
     setRoomTopic: (roomId: RoomIdentifier, roomTopic: string) => Promise<void>
     getRoomTopic: (roomId: RoomIdentifier) => Promise<string | undefined>
@@ -248,7 +247,6 @@ export function useZionClient(): ZionClientImpl {
         sendMediaPayload: useWithCatch(client?.sendMediaPayload),
         sendReadReceipt: useWithCatch(sendReadReceipt),
         setDisplayName: useWithCatch(client?.setDisplayName),
-        setUsername: useWithCatch(client?.setUsername),
         setRoomName: useWithCatch(client?.setRoomName),
         setRoomTopic: useWithCatch(client?.setRoomTopic),
         getRoomTopic: useWithCatch(client?.getRoomTopic),

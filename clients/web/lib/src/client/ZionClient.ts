@@ -1301,16 +1301,6 @@ export class ZionClient implements EntitlementsDelegate {
     }
 
     /************************************************
-     * setUsername
-     ************************************************/
-    public async setUsername(streamId: string, username: string): Promise<void> {
-        if (!this.casablancaClient) {
-            throw new Error('No casablanca client')
-        }
-        await this.casablancaClient.setUsername(streamId, username)
-    }
-
-    /************************************************
      * avatarUrl
      ************************************************/
     // eslint-disable-next-line @typescript-eslint/require-await
