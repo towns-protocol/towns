@@ -37,7 +37,7 @@ export const DirectMessageListItem = (props: {
                     : info.text
             case 'encrypted':
                 return (
-                    <Box paddingY="xs">
+                    <Box grow horizontal paddingY="xs" width="200" shrink={false}>
                         <TimelineEncryptedContent event={{ createdAtEpocMs: 0 }} />
                     </Box>
                 )

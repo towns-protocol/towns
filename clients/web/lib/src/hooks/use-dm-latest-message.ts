@@ -4,7 +4,7 @@ import { TimelineEvent, TimelineEvent_OneOf, ZTEvent } from '../types/timeline-t
 
 import { MessageType } from '../types/zion-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export type MostRecentMessageInfo_OneOf =
     | MostRecentMessageInfoMedia
@@ -63,7 +63,34 @@ export function useDMLatestMessage(roomId: RoomIdentifier) {
         }
         return { latest, unreadCount }
     }, [hasRelevantUnreadMarker, timeline, unreadMarker?.eventId])
-    return latestMessage
+
+    const [latest, setLatest] = useState(latestMessage)
+
+    useEffect(() => {
+        const TIMEOUT = 1000 * 10
+        const update = () => {
+            setLatest((prev) =>
+                // keep previous message until a fresh encrypted message gets
+                // decrypted (unless its slow to decrypt and timeouts)
+                latestMessage.latest?.info?.kind !== 'encrypted' ||
+                latestMessage.latest.createdAtEpocMs < Date.now() - TIMEOUT
+                    ? latestMessage
+                    : prev,
+            )
+        }
+        const info = latestMessage.latest?.info
+        if (info && info.kind !== 'encrypted') {
+            update()
+        } else {
+            // double check in a little while
+            const timeout = setTimeout(update, TIMEOUT)
+            return () => {
+                clearTimeout(timeout)
+            }
+        }
+    }, [latestMessage])
+
+    return latest
 }
 
 function toMostRecentMessageInfo(

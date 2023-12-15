@@ -4,6 +4,7 @@ import { vars } from 'ui/styles/vars.css'
 export const main = style({
     marginTop: '-4px',
     height: 15,
+    width: '100%',
 })
 
 export const hoverBackground = style({
