@@ -115,10 +115,14 @@ const SpacesChannelComponent = (props: Props) => {
 
     const channels = useSpaceChannels()
 
-    const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
-
     const isDmOrGDM =
         isDMChannelStreamId(channelId.networkId) || isGDMChannelStreamId(channelId.networkId)
+
+    const { isChannelWritable } = useIsChannelWritable(
+        isDmOrGDM ? undefined : spaceId,
+        channelId,
+        loggedInWalletAddress,
+    )
 
     const { counterParty, data } = useDMData(channelId)
 
