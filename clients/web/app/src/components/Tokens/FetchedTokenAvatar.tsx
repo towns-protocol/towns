@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 import { useTokenMetadata } from 'api/lib/collectionMetadata'
-import { useGetPioneerNftAddress } from 'hooks/useGetPioneerNftAddress'
 import { TokenAvatar, TokenAvatarProps } from './TokenAvatar'
 
 type Props = {
@@ -33,7 +32,6 @@ export function FetchedTokenAvatar({
     const isLoading = isFetched ? false : failureCount === 0
     const _tokenIds = useMemo(() => tokenIds ?? [], [tokenIds])
     const _showUnknownLabel = showUnknownLabel && !isLoading && !data?.name
-    const pioneerAddress = useGetPioneerNftAddress()
 
     return (
         <TokenAvatar
@@ -45,13 +43,7 @@ export function FetchedTokenAvatar({
             isLoading={isLoading}
             imgSrc={data?.imageUrl}
             size={size ?? 'avatar_md'}
-            label={
-                _showUnknownLabel
-                    ? pioneerAddress?.toLowerCase() === address.toLowerCase()
-                        ? 'Pioneer'
-                        : 'Unknown NFT'
-                    : data?.name
-            }
+            label={_showUnknownLabel ? 'Unknown NFT' : data?.name}
             noLabel={noLabel}
             avatarToggleClasses={avatarToggleClasses}
         />

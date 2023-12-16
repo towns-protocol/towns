@@ -8,7 +8,6 @@ import {
     avatarImageStyle,
     avatarToggleClasses,
 } from '@components/Avatar/Avatar.css'
-import { useGetPioneerNftAddress } from 'hooks/useGetPioneerNftAddress'
 import { shortAddress } from 'ui/utils/utils'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
@@ -241,7 +240,6 @@ function useCheckImage({
     isLoading?: boolean
 }) {
     const [imageSource, setImageSource] = React.useState<string | undefined>(undefined)
-    const pioneerAddress = useGetPioneerNftAddress()
 
     useEffect(() => {
         if (isLoading) {
@@ -250,12 +248,6 @@ function useCheckImage({
 
         if (tokenAvatarImageSourceMap.has(contractAddress)) {
             setImageSource(tokenAvatarImageSourceMap.get(contractAddress))
-            return
-        }
-
-        if (contractAddress.toLowerCase() === pioneerAddress?.toLowerCase()) {
-            setImageSource(`/placeholders/pioneer_thumb300.avif`)
-            tokenAvatarImageSourceMap.set(contractAddress, `/placeholders/pioneer_thumb300.avif`)
             return
         }
 
@@ -291,6 +283,6 @@ function useCheckImage({
             setImageSource(FALLBACK)
             tokenAvatarImageSourceMap.set(contractAddress, FALLBACK)
         }
-    }, [src, contractAddress, pioneerAddress, isLoading])
+    }, [src, contractAddress, isLoading])
     return imageSource
 }

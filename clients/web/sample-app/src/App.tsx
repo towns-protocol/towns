@@ -7,7 +7,6 @@ import { SetSignerFromWalletClient } from '@towns/privy'
 import { Thread } from 'routes/Thread'
 import { Threads } from 'routes/Threads'
 import { Mentions } from 'routes/Mentions'
-import { AlphaAccessMainPage } from 'routes/AlphaAccess'
 import { Login } from '@components/Login'
 import { VersionsPage } from 'routes/VersionsPage'
 import { useEnvironment } from 'hooks/use-environment'
@@ -45,7 +44,6 @@ export const App = () => {
                         <>
                             <SetSignerFromWalletClient chainId={chainId} />
                             <Routes>
-                                <Route path="/alpha-access" element={<AlphaAccessMainPage />} />
                                 <Route path="/versions" element={<VersionsPage />} />
                                 <Route element={<MainLayout />}>
                                     <Route element={<AuthenticatedContent />}>
