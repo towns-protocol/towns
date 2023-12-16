@@ -13,6 +13,9 @@ export VITE_APP_RELEASE_VERSION=$RENDER_GIT_COMMIT
 
 export PREVIEW_DOMAIN_SUFFIX="app-preview.towns.com"
 
-./scripts/setup-render-preview-environment.sh
+source ./scripts/setup-render-preview-environment.sh
+
+echo "Build: Previous step set VITE_CASABLANCA_HOMESERVER_URL to $VITE_CASABLANCA_HOMESERVER_URL"
+
 yarn install
 yarn harmonyweb:build

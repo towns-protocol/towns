@@ -11,6 +11,6 @@ export NODE_OPTIONS="--max-old-space-size=32768 --max_semi_space_size=128 --use-
 
 export PREVIEW_DOMAIN_SUFFIX="sample-app-preview.towns.com"
 
-./scripts/setup-render-preview-environment.sh
+source ./scripts/setup-render-preview-environment.sh
 yarn install
 yarn sampleapp:build
