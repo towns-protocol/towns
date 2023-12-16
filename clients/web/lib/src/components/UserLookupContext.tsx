@@ -1,6 +1,6 @@
 import React, { createContext, useMemo } from 'react'
 import { MemberOf, useAllKnownUsers } from '../hooks/use-all-known-users'
-import { useRoom } from '../hooks/use-room'
+import { useRoom, useRoomWithStreamId } from '../hooks/use-room'
 import { useSpaceContext } from './SpaceContextProvider'
 
 export type LookupUser = {
@@ -62,6 +62,34 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
             return parentContext
         }
     }, [members, parentContext, spaceId])
+
+    return <UserLookupContext.Provider value={value}>{props.children}</UserLookupContext.Provider>
+}
+
+export const DMChannelContextUserLookupProvider = (props: {
+    channelId: string
+    children: React.ReactNode
+}) => {
+    const { channelId } = props
+
+    const room = useRoomWithStreamId(channelId)
+    const parentContext = useUserLookupContext()
+
+    const value = useMemo(() => {
+        if (room) {
+            const users = room.members.map((member) => ({
+                ...member,
+                memberOf: parentContext?.usersMap[member.userId]?.memberOf,
+            }))
+            const usersMap = users.reduce((acc, user) => {
+                acc[user.userId] = user
+                return acc
+            }, {} as { [key: string]: LookupUser })
+            return { users, usersMap }
+        } else {
+            return { users: [], usersMap: {} }
+        }
+    }, [room, parentContext])
 
     return <UserLookupContext.Provider value={value}>{props.children}</UserLookupContext.Provider>
 }

@@ -9,6 +9,11 @@ export function useRoom(roomId?: RoomIdentifier): Room | undefined {
     return useMemo(() => (roomId ? rooms[roomId.networkId] : undefined), [roomId, rooms])
 }
 
+export function useRoomWithStreamId(streamId?: string): Room | undefined {
+    const { rooms } = useZionContext()
+    return useMemo(() => (streamId ? rooms[streamId] : undefined), [streamId, rooms])
+}
+
 export function useRoomNames(roomIds: RoomIdentifier[]): Record<string, string> {
     const { rooms } = useZionContext()
     const roomIdsRef = useRef<RoomIdentifier[]>([])
