@@ -43,7 +43,7 @@ export const PublicTownPage = () => {
     const { isConnected, loggedInWalletAddress } = useAuth()
     const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceSlug)
     const { data: townBio } = useGetSpaceTopic(spaceSlug)
-    const { isAuthenticatedAndConnected, isSignerReady } = useAuth()
+    const { isAuthenticatedAndConnected } = useAuth()
     const [assetModal, setAssetModal] = useState(false)
     const showAssetModal = () => setAssetModal(true)
     const hideAssetModal = () => setAssetModal(false)
@@ -102,7 +102,7 @@ export const PublicTownPage = () => {
                             buttonContent={
                                 <Box grow>
                                     {isAuthenticatedAndConnected ? (
-                                        isLoadingMeetsMembership || !isSignerReady ? (
+                                        isLoadingMeetsMembership ? (
                                             <MembershipStatusMessage
                                                 spinner
                                                 background="level3"

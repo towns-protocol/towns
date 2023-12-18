@@ -250,14 +250,17 @@ describe('CreateChannelForm', () => {
         })
 
         await waitFor(async () => {
-            return expect(createChannelSpy).toHaveBeenCalledWith({
-                name: 'test-channel',
-                parentSpaceId: {
-                    networkId: '',
-                    slug: '',
+            return expect(createChannelSpy).toHaveBeenCalledWith(
+                {
+                    name: 'test-channel',
+                    parentSpaceId: {
+                        networkId: '',
+                        slug: '',
+                    },
+                    roleIds: [7, 8],
                 },
-                roleIds: [7, 8],
-            })
+                {},
+            )
         })
     })
 

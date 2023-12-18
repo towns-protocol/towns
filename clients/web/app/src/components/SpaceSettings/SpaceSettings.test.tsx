@@ -477,6 +477,7 @@ describe(
                     [Lib.Permission.Read],
                     [],
                     [EVERYONE_ADDRESS],
+                    {},
                 )
             })
 
@@ -488,6 +489,7 @@ describe(
                     [],
                     [],
                     [EVERYONE_ADDRESS],
+                    {},
                 )
             })
 
@@ -501,6 +503,7 @@ describe(
                         createTokenEntitlementStruct({ contractAddress: addr }),
                     ),
                     [],
+                    {},
                 )
             })
 
@@ -547,6 +550,7 @@ describe(
                 expect(deleteRoleTransactionSpy).toHaveBeenCalledWith(
                     spaceRoomIdentifier.networkId,
                     memberRole.roleId.toNumber(),
+                    {},
                 )
             })
         })

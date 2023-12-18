@@ -50,6 +50,7 @@ describe('createSpaceChannelHooks', () => {
                             permissions: [],
                             tokenAddresses: [],
                         }),
+                        aliceProvider.wallet,
                     )
                     setSpaceId(result?.data?.spaceId)
                     console.log('onClickCreateSpace', { name, result })
@@ -68,13 +69,13 @@ describe('createSpaceChannelHooks', () => {
                         roleIds: [],
                     }
 
-                    await createChannelTransaction(createRoomInfo)
+                    await createChannelTransaction(createRoomInfo, aliceProvider.wallet)
                     console.log('onClickCreateChannel', name)
                 })()
             }, [createChannelTransaction, spaceId])
             return (
                 <>
-                    <RegisterWallet />
+                    <RegisterWallet signer={aliceProvider.wallet} />
                     <button onClick={onClickCreateSpace}>createSpace</button>
                     <button onClick={onClickCreateChannel}>createChannel</button>
                     <div data-testid="seenStates"></div>

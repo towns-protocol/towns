@@ -27,6 +27,7 @@ import {
     Permission,
     createMembershipStruct,
 } from '@river/web3'
+import { TSigner } from '../../src/types/web3-types'
 
 /**
  * This test suite tests the useRoles hook.
@@ -59,7 +60,7 @@ describe('useCreateRoleTransaction', () => {
         render(
             <ZionTestApp provider={provider}>
                 <>
-                    <RegisterWallet />
+                    <RegisterWallet signer={provider.wallet} />
                     <TestComponent
                         spaceName={spaceName}
                         roleName={roleName}
@@ -69,6 +70,7 @@ describe('useCreateRoleTransaction', () => {
                         newRoleName={moderatorRoleName}
                         newRoleTokens={moderatorTokens}
                         newRoleUsers={moderatorUsers}
+                        signer={provider.wallet}
                     />
                 </>
             </ZionTestApp>,
@@ -130,6 +132,7 @@ function TestComponent(args: {
     newRolePermissions: Permission[]
     newRoleTokens: string[]
     newRoleUsers: string[]
+    signer: TSigner
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
     const { createSpaceTransactionWithRole, data: txData, transactionStatus } = spaceTransaction
@@ -150,6 +153,7 @@ function TestComponent(args: {
                     permissions: args.permissions,
                     tokenAddresses: [args.councilNftAddress],
                 }),
+                args.signer,
             )
         }
 
@@ -159,6 +163,7 @@ function TestComponent(args: {
         args.permissions,
         args.roleName,
         args.spaceName,
+        args.signer,
         createSpaceTransactionWithRole,
     ])
     // handle click to create a role
@@ -170,6 +175,7 @@ function TestComponent(args: {
                 args.newRolePermissions,
                 createExternalTokenStruct(args.newRoleTokens),
                 args.newRoleUsers,
+                args.signer,
             )
         }
 
@@ -181,6 +187,7 @@ function TestComponent(args: {
         args.newRoleUsers,
         createRoleTransaction,
         spaceNetworkId,
+        args.signer,
     ])
     // the view
     return (

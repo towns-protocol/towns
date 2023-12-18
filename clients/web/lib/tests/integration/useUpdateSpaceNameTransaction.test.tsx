@@ -19,6 +19,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { createMembershipStruct, getTestGatingNftAddress } from '@river/web3'
 import { useSpaceName } from '../../src/hooks/use-space-data'
+import { TSigner } from '../../src/types/web3-types'
 
 /**
  * This test suite tests the useUpdateSpaceNameTransaction hook.
@@ -42,8 +43,12 @@ describe('useUpdateSpaceNameTransaction', () => {
         render(
             <ZionTestApp provider={provider}>
                 <>
-                    <RegisterWallet />
-                    <TestComponent originalSpaceName={spaceName} newSpaceName={newSpaceName} />
+                    <RegisterWallet signer={provider.wallet} />
+                    <TestComponent
+                        originalSpaceName={spaceName}
+                        newSpaceName={newSpaceName}
+                        signer={provider.wallet}
+                    />
                 </>
             </ZionTestApp>,
         )
@@ -87,7 +92,11 @@ describe('useUpdateSpaceNameTransaction', () => {
 }) // end describe
 
 // helper function to create a test component
-function TestComponent(args: { originalSpaceName: string; newSpaceName: string }): JSX.Element {
+function TestComponent(args: {
+    originalSpaceName: string
+    newSpaceName: string
+    signer: TSigner
+}): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
     const {
         createSpaceTransactionWithRole,
@@ -111,18 +120,19 @@ function TestComponent(args: { originalSpaceName: string; newSpaceName: string }
                     permissions: [],
                     tokenAddresses: [],
                 }),
+                args.signer,
             )
         }
         void handleClick()
-    }, [args.originalSpaceName, createSpaceTransactionWithRole])
+    }, [args.originalSpaceName, createSpaceTransactionWithRole, args.signer])
 
     // handle click to update space name
     const onClickUpdateSpaceName = useCallback(() => {
         const handleClick = async () => {
-            await updateSpaceNameTransaction(spaceNetworkId, args.newSpaceName)
+            await updateSpaceNameTransaction(spaceNetworkId, args.newSpaceName, args.signer)
         }
         void handleClick()
-    }, [updateSpaceNameTransaction, spaceNetworkId, args.newSpaceName])
+    }, [updateSpaceNameTransaction, spaceNetworkId, args.newSpaceName, args.signer])
     // the view
     return (
         <>

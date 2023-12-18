@@ -93,6 +93,7 @@ export {
     BlockchainTransactionType,
     isNullAddress,
     type TokenEntitlementStruct,
+    type TSigner,
 } from './types/web3-types'
 export type { UserIdentifier } from './types/user-identifier'
 export {

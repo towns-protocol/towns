@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { matchPath, useNavigate } from 'react-router'
 import { LoginStatus, useMyProfile } from 'use-zion-client'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { Button, ErrorMessage, Icon, MotionBox, Paragraph, Stack, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { PATHS } from 'routes'
@@ -58,10 +59,12 @@ export const RegisterForm = () => {
         loginStatus,
         myProfile,
     })
+    const getSigner = useGetEmbeddedSigner()
 
     const onSubmit = useCallback(
         (data: { displayName: string; profilePic: FileList | undefined }) => {
             ;(async () => {
+                const signer = await getSigner()
                 try {
                     if (!isConnected) {
                         console.error("Wallet not connected, shouldn't be on this page")
@@ -96,7 +99,7 @@ export const RegisterForm = () => {
                     }
 
                     if (loginStatus === LoginStatus.LoggedOut) {
-                        await registerWallet()
+                        await registerWallet(signer)
                     }
 
                     // TODO: displayNames can only be set on a towns-level at the moment
@@ -127,6 +130,7 @@ export const RegisterForm = () => {
             registerWallet,
             // setDisplayName,
             upload,
+            getSigner,
         ],
     )
 

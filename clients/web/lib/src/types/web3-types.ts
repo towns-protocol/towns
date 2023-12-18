@@ -7,6 +7,7 @@ import {
     RoleDetails as R_RoleDetails,
     ISpaceDapp as R_ISpaceDapp,
 } from '@river/web3'
+import { Signer } from 'ethers'
 
 export const NULL_ADDRESS: Address = '0x0000000000000000000000000000000000000000'
 
@@ -27,6 +28,7 @@ export interface RoleIdentifier {
 }
 
 export type TProvider = ReturnType<typeof useEthersProvider>
+export type TSigner = Signer
 
 export enum BlockchainTransactionType {
     CreateSpace = 'createSpace',

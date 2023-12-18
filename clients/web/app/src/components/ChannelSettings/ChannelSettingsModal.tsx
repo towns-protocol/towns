@@ -12,6 +12,7 @@ import {
     useUpdateChannelTransaction,
 } from 'use-zion-client'
 import React, { useCallback, useMemo, useState } from 'react'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { Box, Button, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
@@ -99,8 +100,14 @@ export function ChannelSettingsForm({
         }
     }, [transactionError, transactionHash])
 
+    const getSigner = useGetEmbeddedSigner()
+
     const onSubmit = useCallback(
         async (changes: FormState) => {
+            const signer = await getSigner()
+            if (!signer) {
+                throw new SignerUndefinedError()
+            }
             if (transactionUIState === TransactionUIState.None) {
                 const name = changes[FormStateKeys.name]
                 const description = changes[FormStateKeys.description]
@@ -112,7 +119,7 @@ export function ChannelSettingsForm({
                     updatedChannelTopic: description,
                     updatedRoleIds: roleIds.map((roleId) => Number(roleId)),
                 }
-                const txResult = await updateChannelTransaction(channelInfo)
+                const txResult = await updateChannelTransaction(channelInfo, signer)
                 console.log('[ChannelSettingsModal] txResult', txResult)
                 if (txResult?.status === TransactionStatus.Success) {
                     invalidateQuery()
@@ -127,6 +134,7 @@ export function ChannelSettingsForm({
             spaceId,
             transactionUIState,
             updateChannelTransaction,
+            getSigner,
         ],
     )
 

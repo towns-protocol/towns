@@ -34,6 +34,7 @@ import { useTimelineThread } from '../../src/hooks/use-timeline-thread'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useTimeline } from '../../src/hooks/use-timeline'
 import { TestConstants } from './helpers/TestConstants'
+import { TSigner } from '../../src/types/web3-types'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -91,7 +92,7 @@ describe('sendThreadedMessageHooks', () => {
         )
 
         // render bob's app
-        const TestChannelComponent = () => {
+        const TestChannelComponent = ({ signer }: { signer: TSigner }) => {
             const { sendMessage, editMessage, sendReadReceipt } = useZionClient()
             const threadRoots = useSpaceThreadRoots()
             const { timeline: channelTimeline } = useChannelTimeline()
@@ -249,7 +250,11 @@ describe('sendThreadedMessageHooks', () => {
 
             return (
                 <>
-                    <RegisterAndJoin spaceId={spaceId} channelIds={[channel_1, channel_2]} />
+                    <RegisterAndJoin
+                        spaceId={spaceId}
+                        channelIds={[channel_1, channel_2]}
+                        signer={signer}
+                    />
                     <button onClick={sendInitialMessages}>sendInitialMessages</button>
                     <button onClick={editChannel2Message1}>editChannel2Message1</button>
                     <button onClick={markAllAsRead}>markAllAsRead</button>
@@ -310,7 +315,7 @@ describe('sendThreadedMessageHooks', () => {
             <ZionTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={spaceId}>
                     <ChannelContextProvider channelId={channel_1}>
-                        <TestChannelComponent />
+                        <TestChannelComponent signer={bobProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
             </ZionTestApp>,

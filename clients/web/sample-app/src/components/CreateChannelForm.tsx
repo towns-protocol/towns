@@ -9,6 +9,7 @@ import {
 } from 'use-zion-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { BigNumber } from 'ethers'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { ChannelRoleSettings, RolesSettings } from 'routes/ChannelRoleSettings'
 
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
@@ -43,7 +44,14 @@ export function CreateChannelForm(props: Props): JSX.Element {
         setRoles(roles)
     }, [])
 
+    const getSigner = useGetEmbeddedSigner()
+
     const onClickCreateChannel = useAsyncButtonCallback(async () => {
+        const signer = await getSigner()
+        if (!signer) {
+            console.error('No signer')
+            return
+        }
         const createRoomInfo: CreateChannelInfo = {
             name: channelName,
             parentSpaceId: parentSpaceId,
@@ -60,7 +68,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
             }
         }
 
-        await createChannelTransaction(createRoomInfo)
+        await createChannelTransaction(createRoomInfo, signer)
     }, [createChannelTransaction, onClick, parentSpaceId, channelName])
 
     useEffect(() => {

@@ -28,6 +28,7 @@ import {
     Permission,
     createMembershipStruct,
 } from '@river/web3'
+import { TSigner } from '../../src/types/web3-types'
 
 /**
  * This test suite tests the useRoles hook.
@@ -60,8 +61,9 @@ describe('useDeleteRoleTransaction', () => {
         render(
             <ZionTestApp provider={provider}>
                 <>
-                    <RegisterWallet />
+                    <RegisterWallet signer={provider.wallet} />
                     <TestComponent
+                        signer={provider.wallet}
                         spaceName={spaceName}
                         roleName={roleName}
                         permissions={permissions}
@@ -138,6 +140,7 @@ function TestComponent(args: {
     newRolePermissions: Permission[]
     newRoleTokens: string[]
     newRoleUsers: string[]
+    signer: TSigner
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
     const {
@@ -165,6 +168,7 @@ function TestComponent(args: {
                     permissions: args.permissions,
                     tokenAddresses: [args.councilNftAddress],
                 }),
+                args.signer,
             )
         }
         void handleClick()
@@ -174,6 +178,7 @@ function TestComponent(args: {
         args.roleName,
         args.spaceName,
         createSpaceTransactionWithRole,
+        args.signer,
     ])
     // handle click to create a role
     const onClickCreateRole = useCallback(() => {
@@ -184,6 +189,7 @@ function TestComponent(args: {
                 args.newRolePermissions,
                 createExternalTokenStruct(args.newRoleTokens),
                 args.newRoleUsers,
+                args.signer,
             )
         }
         void handleClick()
@@ -194,14 +200,15 @@ function TestComponent(args: {
         args.newRoleUsers,
         createRoleTransaction,
         spaceNetworkId,
+        args.signer,
     ])
     // handle click to update a role
     const onClickDeleteRole = useCallback(() => {
         const handleClick = async () => {
-            await deleteRoleTransaction(spaceNetworkId, roleId)
+            await deleteRoleTransaction(spaceNetworkId, roleId, args.signer)
         }
         void handleClick()
-    }, [deleteRoleTransaction, spaceNetworkId, roleId])
+    }, [deleteRoleTransaction, spaceNetworkId, roleId, args.signer])
     // the view
     return (
         <>

@@ -8,8 +8,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { blockchainKeys } from '../query/query-keys'
 import { toError } from '../types/error-types'
 import { useQueryClient } from '../query/queryClient'
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
+import { TSigner } from '../types/web3-types'
 
 /**
  * Hook to add a role to a channel with a transaction.
@@ -21,7 +21,6 @@ export function useAddRoleToChannelTransaction() {
     const isTransacting = useRef<boolean>(false)
     const { addRoleToChannelTransaction, waitForAddRoleToChannelTransaction } = useZionClient()
     const queryClient = useQueryClient()
-    const { signer } = useWeb3Context()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -34,7 +33,12 @@ export function useAddRoleToChannelTransaction() {
     }, [transactionContext])
 
     const _addRoleToChannelTransaction = useCallback(
-        async function (spaceNetworkId: string, channelNetworkId: string, roleId: number) {
+        async function (
+            spaceNetworkId: string,
+            channelNetworkId: string,
+            roleId: number,
+            signer: TSigner,
+        ) {
             if (isTransacting.current) {
                 // Transaction already in progress
                 return
@@ -81,7 +85,7 @@ export function useAddRoleToChannelTransaction() {
                 isTransacting.current = false
             }
         },
-        [addRoleToChannelTransaction, signer, waitForAddRoleToChannelTransaction, queryClient],
+        [addRoleToChannelTransaction, waitForAddRoleToChannelTransaction, queryClient],
     )
 
     useEffect(() => {

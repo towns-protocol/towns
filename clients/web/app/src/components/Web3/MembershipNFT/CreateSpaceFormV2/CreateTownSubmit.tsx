@@ -4,7 +4,6 @@ import {
     Permission,
     makeRoomIdentifier,
     useCreateSpaceTransaction,
-    useWeb3Context,
     useZionClient,
 } from 'use-zion-client'
 import { useNavigate } from 'react-router'
@@ -13,6 +12,7 @@ import { ethers } from 'ethers'
 import headlessToast, { Toast, toast } from 'react-hot-toast/headless'
 import { Address } from 'wagmi'
 import { datadogRum } from '@datadog/browser-rum'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { Box, Icon, IconButton, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
 import { toTransactionUIStates } from 'hooks/TransactionUIState'
@@ -36,7 +36,7 @@ export function CreateTownSubmit({
     panelType: PanelType | undefined
     setTransactionDetails: ({ isTransacting }: TransactionDetails) => void
 }) {
-    const { signer } = useWeb3Context()
+    const getSigner = useGetEmbeddedSigner()
     const { spaceDapp } = useZionClient()
 
     const { data, isLoading, error, createSpaceTransactionWithRole, transactionStatus } =
@@ -112,6 +112,7 @@ export function CreateTownSubmit({
                 const createSpaceInfo: CreateSpaceInfo = {
                     name: spaceName ?? '',
                 }
+                const signer = await getSigner()
                 if (!signer) {
                     console.error('Cannot create space. No signer.')
                     return undefined
@@ -149,7 +150,11 @@ export function CreateTownSubmit({
                 // close the panel
                 setPanelType(undefined)
 
-                const result = await createSpaceTransactionWithRole(createSpaceInfo, requirements)
+                const result = await createSpaceTransactionWithRole(
+                    createSpaceInfo,
+                    requirements,
+                    signer,
+                )
                 if (result?.error) {
                     toast.custom(
                         (t) => (
@@ -233,7 +238,7 @@ export function CreateTownSubmit({
         navigate,
         setPanelType,
         setTransactionDetails,
-        signer,
+        getSigner,
         spaceDapp,
         uploadImage,
         uploadSpaceBio,

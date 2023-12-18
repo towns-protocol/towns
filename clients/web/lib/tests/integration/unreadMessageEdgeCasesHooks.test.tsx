@@ -22,6 +22,7 @@ import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 import { TestConstants } from './helpers/TestConstants'
+import { TSigner } from '../../src/types/web3-types'
 
 // make sure things like deleting messages don't cause the unread count to go bad
 describe('unreadMessageCountEdgeCases', () => {
@@ -46,7 +47,7 @@ describe('unreadMessageCountEdgeCases', () => {
         })) as RoomIdentifier
 
         // create a veiw for bob
-        const TestComponent = () => {
+        const TestComponent = ({ signer }: { signer: TSigner }) => {
             const { sendReadReceipt } = useZionClient()
             const { spaceUnreads } = useZionContext()
             const channelFullyReadMarker = useFullyReadMarker(channelId)
@@ -66,7 +67,7 @@ describe('unreadMessageCountEdgeCases', () => {
             }
             return (
                 <>
-                    <RegisterAndJoinSpace spaceId={spaceId} channelId={channelId} />
+                    <RegisterAndJoinSpace spaceId={spaceId} channelId={channelId} signer={signer} />
                     <button onClick={onMarkAsRead}>mark as read</button>
                     <div data-testid="spaceHasUnread">
                         {spaceHasUnread === undefined ? 'undefined' : spaceHasUnread.toString()}
@@ -92,7 +93,7 @@ describe('unreadMessageCountEdgeCases', () => {
             <ZionTestApp provider={bob.provider}>
                 <SpaceContextProvider spaceId={spaceId}>
                     <ChannelContextProvider channelId={channelId}>
-                        <TestComponent />
+                        <TestComponent signer={bob.provider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
             </ZionTestApp>,

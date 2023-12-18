@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useZionClient } from './use-zion-client'
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useCasablancaCredentials } from './use-casablanca-credentials'
+import { TSigner } from 'types/web3-types'
 
 const loginMsgToSign = `Click to sign in and accept the Towns Terms of Service.`
 export const registerWalletMsgToSign = `Click to register and accept the Towns Terms of Service.`
@@ -21,15 +21,20 @@ export function useConnectivity() {
         userOnWrongNetworkForSignIn,
         logout: _logout,
     } = useZionClient()
-    const { activeWalletAddress } = useWeb3Context()
 
-    const login = useCallback(async () => {
-        return await loginWithWalletToCasablanca(loginMsgToSign)
-    }, [loginWithWalletToCasablanca])
+    const login = useCallback(
+        async (signer: TSigner) => {
+            return await loginWithWalletToCasablanca(loginMsgToSign, signer)
+        },
+        [loginWithWalletToCasablanca],
+    )
 
-    const register = useCallback(async () => {
-        return await registerWalletWithCasablanca(registerWalletMsgToSign)
-    }, [registerWalletWithCasablanca])
+    const register = useCallback(
+        async (signer: TSigner) => {
+            return await registerWalletWithCasablanca(registerWalletMsgToSign, signer)
+        },
+        [registerWalletWithCasablanca],
+    )
 
     const getIsWalletRegistered = useCallback(() => {
         return getIsWalletRegisteredWithCasablanca()
@@ -44,7 +49,6 @@ export function useConnectivity() {
         logout,
         register,
         getIsWalletRegistered,
-        activeWalletAddress,
         loggedInWalletAddress,
         isAuthenticated, // matrix status
         loginStatus,

@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react'
-import { RoomIdentifier, makeRoomIdentifier, useWeb3Context, useZionClient } from 'use-zion-client'
+import { RoomIdentifier, makeRoomIdentifier, useZionClient } from 'use-zion-client'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { isLimitReachedError, isMaybeFundsError, mapToErrorMessage } from '@components/Web3/utils'
 
 export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () => void) => {
     const { client } = useZionClient()
-    const { signer } = useWeb3Context()
+    const getSigner = useGetEmbeddedSigner()
     const [errorDetails, setErrorDetails] = useState<{
         maxLimitReached: boolean
         isNoFundsError: boolean
@@ -26,6 +27,7 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
 
     const joinSpace = useCallback(async () => {
         clearErrors()
+        const signer = await getSigner()
         if (client && spaceId && signer) {
             const roomIdentifier: RoomIdentifier = makeRoomIdentifier(spaceId)
             try {
@@ -69,7 +71,7 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
                 }
             }
         }
-    }, [client, spaceId, onSuccessfulJoin, signer])
+    }, [client, spaceId, onSuccessfulJoin, getSigner])
 
     return { joinSpace, errorMessage, clearErrors, ...errorDetails }
 }

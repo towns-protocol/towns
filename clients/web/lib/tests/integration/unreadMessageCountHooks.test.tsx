@@ -24,6 +24,7 @@ import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useZionContext } from '../../src/components/ZionContextProvider'
+import { TSigner } from '../../src/types/web3-types'
 
 describe('unreadMessageCountHooks', () => {
     test('user can join a room, see messages, and send messages', async () => {
@@ -54,7 +55,7 @@ describe('unreadMessageCountHooks', () => {
         }
 
         // create a veiw for bob
-        const TestComponent = () => {
+        const TestComponent = ({ signer }: { signer: TSigner }) => {
             const { joinRoom, joinTown, sendMessage, sendReadReceipt } = useZionClient()
             const { spaceUnreads, spaceUnreadChannelIds } = useZionContext()
             const spaceFullyReadmarker = useFullyReadMarker(janesSpaceId)
@@ -97,7 +98,7 @@ describe('unreadMessageCountHooks', () => {
 
             return (
                 <>
-                    <RegisterWallet />
+                    <RegisterWallet signer={signer} />
                     <div data-testid="spaceMembership"> {mySpaceMembership} </div>
                     <div data-testid="channelMembership"> {myChannelMembership} </div>
                     <button onClick={onClickJoinSpace}>join space</button>
@@ -137,7 +138,7 @@ describe('unreadMessageCountHooks', () => {
             <ZionTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
                     <ChannelContextProvider channelId={janesChannelId}>
-                        <TestComponent />
+                        <TestComponent signer={bobProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
             </ZionTestApp>,

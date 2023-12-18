@@ -53,7 +53,7 @@ describe('signInFromGlobalStorageHooks', () => {
         const TestComponent = () => {
             return (
                 <>
-                    <LoginWithWallet />
+                    <LoginWithWallet signer={alice.provider.wallet} />
                 </>
             )
         }
@@ -194,7 +194,7 @@ describe('signInFromGlobalStorageHooks', () => {
         console.log('$$$$ #5 test logging back in after logout should have the same deviceId')
         render(
             <ZionTestApp provider={provider}>
-                <LoginWithWallet />
+                <LoginWithWallet signer={provider.wallet} />
             </ZionTestApp>,
         )
         // get our test elements

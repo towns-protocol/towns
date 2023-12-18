@@ -20,6 +20,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { LoginWithWallet } from './helpers/TestComponents'
+import { TSigner } from '../../src/types/web3-types'
 
 // TODO: https://linear.app/hnt-labs/issue/HNT-1587/testsintegrationspacehierarchyhookstesttsx
 describe('spaceHierarchyHooks', () => {
@@ -54,12 +55,12 @@ describe('spaceHierarchyHooks', () => {
         // alice joins the room
         await alice.joinTown(spaceId, alice.wallet)
         // create a power levels view for bob
-        const SpaceChannelsContent = () => {
+        const SpaceChannelsContent = ({ signer }: { signer: TSigner }) => {
             const space = useSpaceData()
             // content
             return (
                 <>
-                    <LoginWithWallet />
+                    <LoginWithWallet signer={signer} />
                     <div data-testid="spaceId">{space?.id.networkId}</div>
                     <div>
                         <div>SPACE INFO:</div>
@@ -83,7 +84,7 @@ describe('spaceHierarchyHooks', () => {
         render(
             <ZionTestApp provider={bob.provider}>
                 <SpaceContextProvider spaceId={spaceId}>
-                    <SpaceChannelsContent />
+                    <SpaceChannelsContent signer={bob.provider.wallet} />
                 </SpaceContextProvider>
             </ZionTestApp>,
         )

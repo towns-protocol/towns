@@ -29,6 +29,7 @@ import { useChannelId } from '../../src/hooks/use-channel-id'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { TestConstants } from './helpers/TestConstants'
+import { TSigner } from '../../src/types/web3-types'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -62,7 +63,7 @@ describe('sendMessageHooks', () => {
             })) as RoomIdentifier
         }
         // create a veiw for bob
-        const TestRoomMessages = () => {
+        const TestRoomMessages = ({ signer }: { signer: TSigner }) => {
             const { sendMessage, editMessage, redactEvent } = useZionClient()
             const channelId = useChannelId()
             const { timeline } = useChannelTimeline()
@@ -128,7 +129,11 @@ describe('sendMessageHooks', () => {
             }, [])
             return (
                 <>
-                    <RegisterAndJoinSpace spaceId={janesSpaceId} channelId={janesChannelId} />
+                    <RegisterAndJoinSpace
+                        spaceId={janesSpaceId}
+                        channelId={janesChannelId}
+                        signer={signer}
+                    />
                     <button onClick={onClickSendMessage}>Send Message</button>
                     <button onClick={onEdit}>Edit</button>
                     <button onClick={onRedact}>Redact</button>
@@ -158,7 +163,7 @@ describe('sendMessageHooks', () => {
             <ZionTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
                     <ChannelContextProvider channelId={janesChannelId!}>
-                        <TestRoomMessages />
+                        <TestRoomMessages signer={bobProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
             </ZionTestApp>,

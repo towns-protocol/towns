@@ -30,6 +30,7 @@ import { useChannelReactions } from '../../src/hooks/use-channel-reactions'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { TestConstants } from './helpers/TestConstants'
+import { TSigner } from '../../src/types/web3-types'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -58,7 +59,7 @@ describe('sendReactionHooks', () => {
             roleIds: [],
         })) as RoomIdentifier
         // create a veiw for bob
-        const TestRoomMessages = () => {
+        const TestRoomMessages = ({ signer }: { signer: TSigner }) => {
             const { sendReaction } = useZionClient()
             const channelId = useChannelId()
             const { timeline } = useChannelTimeline()
@@ -82,7 +83,11 @@ describe('sendReactionHooks', () => {
             )
             return (
                 <>
-                    <RegisterAndJoinSpace spaceId={janesSpaceId} channelId={janesChannelId} />
+                    <RegisterAndJoinSpace
+                        spaceId={janesSpaceId}
+                        channelId={janesChannelId}
+                        signer={signer}
+                    />
                     <button onClick={onSendReaction}>React</button>
                     // hard coding indexes to jump to jane's membership join event
                     <div data-testid="message0">
@@ -102,7 +107,7 @@ describe('sendReactionHooks', () => {
             <ZionTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
                     <ChannelContextProvider channelId={janesChannelId}>
-                        <TestRoomMessages />
+                        <TestRoomMessages signer={bobProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
             </ZionTestApp>,

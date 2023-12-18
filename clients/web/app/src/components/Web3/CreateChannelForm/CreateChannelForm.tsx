@@ -12,6 +12,7 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router'
 import { z } from 'zod'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { Box, Button, Checkbox, ErrorMessage, FormRender, Icon, Stack, Text, TextField } from '@ui'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
@@ -156,6 +157,7 @@ export const CreateChannelForm = (props: Props) => {
             ? [firstRoleIDWithReadPermission]
             : [],
     }
+    const getSigner = useGetEmbeddedSigner()
 
     return rolesWithDetails ? (
         <FormRender<FormState>
@@ -163,12 +165,16 @@ export const CreateChannelForm = (props: Props) => {
             defaultValues={defaultValues}
             mode="onChange"
             onSubmit={async ({ name, roleIds }) => {
+                const signer = await getSigner()
                 const channelInfo = {
                     name: name,
                     parentSpaceId: props.spaceId,
                     roleIds: roleIds.map((roleId) => Number(roleId)),
                 }
-                const txResult = await createChannelTransaction(channelInfo)
+                if (!signer) {
+                    throw new SignerUndefinedError()
+                }
+                const txResult = await createChannelTransaction(channelInfo, signer)
                 console.log('[CreateChannelForm]', 'createChannelTransaction result', txResult)
                 if (txResult?.status === TransactionStatus.Success) {
                     invalidateQuery()

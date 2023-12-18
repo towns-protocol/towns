@@ -2,7 +2,6 @@ import React from 'react'
 import { LoginStatus } from 'use-zion-client'
 import { useAuth } from 'hooks/useAuth'
 import { Box, FancyButton } from '@ui'
-import { useSwitchNetworkToast } from 'hooks/useSwitchNetworkToast'
 import { useErrorToast } from 'hooks/useErrorToast'
 
 export function LoginComponent() {
@@ -10,18 +9,15 @@ export function LoginComponent() {
         login,
         loginError,
         riverLoginStatus: libLoginStatus,
-        isLoggingInPostPrivySuccess,
+        isAutoLoggingInToRiver,
     } = useAuth()
 
-    const isSwitchNetworkToastVisible = useSwitchNetworkToast({
-        postCta: 'to login.',
-    })
     const errorMessage = loginError ? loginError.message : undefined
 
     const isBusy =
         libLoginStatus === LoginStatus.LoggingIn ||
         libLoginStatus === LoginStatus.Registering ||
-        isLoggingInPostPrivySuccess
+        isAutoLoggingInToRiver
 
     useErrorToast({
         errorMessage,
@@ -31,12 +27,7 @@ export function LoginComponent() {
     return (
         <Box centerContent gap="lg">
             <Box width="100%">
-                <FancyButton
-                    cta
-                    disabled={isSwitchNetworkToastVisible || isBusy}
-                    spinner={isBusy}
-                    onClick={login}
-                >
+                <FancyButton cta disabled={isBusy} spinner={isBusy} onClick={login}>
                     {isBusy ? 'Logging In...' : 'Login'}
                 </FancyButton>
             </Box>

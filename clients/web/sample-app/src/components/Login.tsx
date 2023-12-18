@@ -9,17 +9,12 @@ import {
     Theme,
     Typography,
 } from '@mui/material'
-import {
-    LoginStatus,
-    useCasablancaStore,
-    useConnectivity,
-    useWeb3Context,
-    useZionClient,
-} from 'use-zion-client'
+import { LoginStatus, useCasablancaStore, useConnectivity, useZionClient } from 'use-zion-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { makeStyles } from '@mui/styles'
 import { usePrivy } from '@privy-io/react-auth'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { useEnvironment } from 'hooks/use-environment'
 import { EnvironmentSelect } from './EnvironmentSelect'
 import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
@@ -31,7 +26,6 @@ export function Login(): JSX.Element {
     const [showError, setShowError] = useState<string | undefined>(undefined)
     const { loginError: casablancaLoginError } = useCasablancaStore()
     const { authenticated: privyAuthenticated } = usePrivy()
-    const { isConnected } = useWeb3Context()
 
     const onCloseAlert = useCallback(function () {
         setShowError(undefined)
@@ -50,7 +44,7 @@ export function Login(): JSX.Element {
             <Box sx={{ display: 'grid' }}>
                 <EnvironmentSelect />
                 <PrivyInfo />
-                {(isConnected || privyAuthenticated) && <NetworkInfo />}
+                {privyAuthenticated && <NetworkInfo />}
             </Box>
             <Snackbar
                 open={showError ? true : false}
@@ -69,12 +63,14 @@ function NetworkInfo() {
     const { loginWithWalletToCasablanca } = useZionClient()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
     const { casablancaUrl } = useEnvironment()
+    const getSigner = useGetEmbeddedSigner()
 
     const onLoginCasablanca = useCallback(
         async function () {
-            loginWithWalletToCasablanca(loginMsgToSign)
+            const signer = await getSigner()
+            loginWithWalletToCasablanca(loginMsgToSign, signer)
         },
-        [loginWithWalletToCasablanca],
+        [loginWithWalletToCasablanca, getSigner],
     )
 
     const casablancaButton = useMemo(() => {
@@ -136,7 +132,6 @@ function PrivyInfo() {
     const {
         //login: riverLogin,
         //logout: riverLogout,
-        activeWalletAddress,
         loggedInWalletAddress,
         isAuthenticated: riverIsAuthenticated,
         loginError,
@@ -149,14 +144,12 @@ function PrivyInfo() {
             privyReady,
             privyAuthenticated,
             riverLoginStatus,
-            activeWalletAddress,
             loggedInWalletAddress,
             riverIsAuthenticated,
             loginError,
             userOnWrongNetworkForSignIn,
         })
     }, [
-        activeWalletAddress,
         loggedInWalletAddress,
         loginError,
         privyAuthenticated,

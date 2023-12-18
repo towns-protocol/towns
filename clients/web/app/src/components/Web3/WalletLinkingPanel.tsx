@@ -1,12 +1,11 @@
 import React, { useState } from 'react'
 import { Address, useBalance } from 'wagmi'
 import { useConnectWallet, usePrivy, useWallets } from '@privy-io/react-auth'
-import { useEmbeddedWallet } from '@towns/privy'
+import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
 import {
     useLinkWalletTransaction,
     useLinkedWallets,
     useUnlinkWalletTransaction,
-    useWeb3Context,
 } from 'use-zion-client'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
 import { Box, BoxProps, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
@@ -49,10 +48,9 @@ export function WalletLinkingPanel() {
         unlinkWalletTransaction,
         error: errorUnlinkWallet,
     } = useUnlinkWalletTransaction()
-    const { signer } = useWeb3Context()
+    const getSigner = useGetEmbeddedSigner()
 
     const onLinkClick = useConnectThenLink({
-        signer,
         onLinkWallet: linkWalletTransaction,
     })
 
@@ -67,6 +65,7 @@ export function WalletLinkingPanel() {
     })
 
     async function onUnlinkClick(addressToUnlink: Address) {
+        const signer = await getSigner()
         if (!signer || !connectedWallets) {
             return
         }
@@ -233,19 +232,19 @@ function ExportWallet() {
 }
 
 export function useConnectThenLink({
-    signer,
     onLinkWallet,
 }: {
-    signer: ReturnType<typeof useWeb3Context>['signer']
     onLinkWallet: (
         ...args: Parameters<ReturnType<typeof useLinkWalletTransaction>['linkWalletTransaction']>
     ) => void
 }) {
     const embeddedWallet = useEmbeddedWallet()
     const { setActiveWallet } = usePrivyWagmi()
+    const getSigner = useGetEmbeddedSigner()
 
     const { connectWallet } = useConnectWallet({
         onSuccess: async (wallet) => {
+            const rootSigner = await getSigner()
             if (!embeddedWallet) {
                 console.error('no embedded wallet')
                 return
@@ -256,7 +255,7 @@ export function useConnectThenLink({
                 console.error('Could not set active wallet')
                 return
             }
-            onLinkWallet(signer, (await wallet.getEthersProvider()).getSigner())
+            onLinkWallet(rootSigner, (await wallet.getEthersProvider()).getSigner())
         },
     })
 

@@ -8,6 +8,7 @@ import {
     useUpdateSpaceNameTransaction,
 } from 'use-zion-client'
 import { z } from 'zod'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { Box, Button, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'
 import { TransactionButton } from '@components/TransactionButton'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -52,8 +53,14 @@ export const SpaceNameModal = (props: Props) => {
 
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(data))
 
+    const getSigner = useGetEmbeddedSigner()
+
     const onSubmit = useCallback(
         async (changes: FormState) => {
+            const signer = await getSigner()
+            if (!signer) {
+                throw new SignerUndefinedError()
+            }
             if (!data?.networkId) {
                 return
             }
@@ -61,13 +68,14 @@ export const SpaceNameModal = (props: Props) => {
             const txResult = await updateSpaceNameTransaction(
                 data?.networkId,
                 changes[FormStateKeys.name],
+                signer,
             )
             console.log('[SpaceNameModal] txResult', txResult)
             if (txResult?.status === TransactionStatus.Success) {
                 onHide()
             }
         },
-        [data, updateSpaceNameTransaction, onHide],
+        [data?.networkId, updateSpaceNameTransaction, getSigner, onHide],
     )
 
     const hasTransactionError = Boolean(

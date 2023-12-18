@@ -6,10 +6,9 @@ import {
 } from '../client/ZionClientTypes'
 import { useCallback, useMemo, useRef, useState } from 'react'
 
-import { BlockchainTransactionType } from '../types/web3-types'
+import { BlockchainTransactionType, TSigner } from '../types/web3-types'
 import { CreateSpaceInfo } from '../types/zion-types'
 import { useTransactionStore } from '../store/use-transactions-store'
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
 import { ITownArchitectBase } from '@river/web3'
 /**
@@ -22,7 +21,6 @@ export function useCreateSpaceTransaction() {
         CreateSpaceTransactionContext | undefined
     >(undefined)
     const isTransacting = useRef<boolean>(false)
-    const { signer } = useWeb3Context()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -38,6 +36,7 @@ export function useCreateSpaceTransaction() {
         async function (
             createInfo: CreateSpaceInfo,
             membershipInfo: ITownArchitectBase.MembershipStruct,
+            signer: TSigner,
         ): Promise<CreateSpaceTransactionContext | undefined> {
             if (isTransacting.current) {
                 // Transaction already in progress
@@ -92,7 +91,7 @@ export function useCreateSpaceTransaction() {
             }
             return transactionResult
         },
-        [createSpaceTransaction, signer, waitForCreateSpaceTransaction],
+        [createSpaceTransaction, waitForCreateSpaceTransaction],
     )
 
     return {

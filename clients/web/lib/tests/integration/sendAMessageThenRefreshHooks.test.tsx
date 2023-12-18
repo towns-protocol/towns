@@ -19,6 +19,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { TestConstants } from './helpers/TestConstants'
 import { Membership } from '../../src/types/zion-types'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
+import { TSigner } from '../../src/types/web3-types'
 
 describe('sendAMessageThenRefresh.hooks', () => {
     // test that when loading a user that is participating in a channel, the existing channel messages decrypt and render properly
@@ -53,7 +54,7 @@ describe('sendAMessageThenRefresh.hooks', () => {
         const janesProvider = jane.provider
         await jane.logout()
         // create a veiw for bob
-        const TestRoomMessages = () => {
+        const TestRoomMessages = ({ signer }: { signer: TSigner }) => {
             const channelId = useChannelId()
             const myChannelMembership = useMyMembership(channelId)
             const { timeline } = useChannelTimeline()
@@ -75,7 +76,7 @@ describe('sendAMessageThenRefresh.hooks', () => {
             }, [])
             return (
                 <>
-                    <LoginWithWallet />
+                    <LoginWithWallet signer={signer} />
                     <div data-testid="channelId">{channelId.networkId}</div>
                     <div data-testid="channelMembership">{myChannelMembership}</div>
                     <div data-testid="message0">
@@ -95,7 +96,7 @@ describe('sendAMessageThenRefresh.hooks', () => {
             <ZionTestApp provider={janesProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
                     <ChannelContextProvider channelId={janesChannelId}>
-                        <TestRoomMessages />
+                        <TestRoomMessages signer={janesProvider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
             </ZionTestApp>,

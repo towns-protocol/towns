@@ -18,7 +18,6 @@ import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@river/sdk'
 import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
 import { useCasablancaRooms } from '../hooks/ZionContext/useCasablancaRooms'
-import { ethers } from 'ethers'
 import { useCasablancaDMs } from '../hooks/CasablancClient/useCasablancaDMs'
 import { DMChannelIdentifier } from '../types/dm-channel-identifier'
 import { useDMUnreads } from '../hooks/ZionContext/useDMUnreads'
@@ -66,7 +65,6 @@ interface Props extends ZionOpts {
     enableSpaceRootUnreads?: boolean
     timelineFilter?: Set<ZTEvent>
     children: JSX.Element
-    web3Signer?: ethers.Signer
     initalSyncSortPredicate?: InitialSyncSortPredicate
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
 }
@@ -75,10 +73,10 @@ export function ZionContextProvider({
     QueryClientProvider = QueryProvider,
     ...props
 }: Props): JSX.Element {
-    const { web3Signer, ...contextProps } = props
+    const { ...contextProps } = props
     return (
         <QueryClientProvider>
-            <Web3ContextProvider chainId={contextProps.chainId} web3Signer={web3Signer}>
+            <Web3ContextProvider chainId={contextProps.chainId}>
                 <ContextImpl {...contextProps}></ContextImpl>
             </Web3ContextProvider>
         </QueryClientProvider>

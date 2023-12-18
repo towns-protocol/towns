@@ -3,10 +3,10 @@ import {
     useLinkWalletTransaction,
     useLinkedWallets,
     useUnlinkWalletTransaction,
-    useWeb3Context,
 } from 'use-zion-client'
 import { Address } from 'wagmi'
 import { useWallets } from '@privy-io/react-auth'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { Button, Grid, Icon, IconButton, MotionBox, Stack, Text } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useAuth } from 'hooks/useAuth'
@@ -23,12 +23,12 @@ import { CopyButton, OpenSeaButton } from './Buttons'
 import { TokenBox } from './TokenBox'
 
 export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide: () => void }) {
-    const { signer } = useWeb3Context()
     const { data: linkedWallets } = useLinkedWallets()
     const { loggedInWalletAddress } = useAuth()
     const { data: tokensGatingMembership } = useTokensGatingMembership(spaceId)
     const tokensLength = tokensGatingMembership?.tokens.length ?? 0
     const maxWidth = tokensLength > 2 ? 'auto' : '400'
+    const getSigner = useGetEmbeddedSigner()
 
     const {
         isLoading: isLoadingUnlinkingWallet,
@@ -43,6 +43,7 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
     const { wallets: connectedWallets } = useWallets()
 
     async function onUnlinkClick(addressToUnlink: Address) {
+        const signer = await getSigner()
         if (!signer || !connectedWallets) {
             return
         }
@@ -89,7 +90,6 @@ function Content({
 }: PropsWithChildren<{
     tokensGatingMembership: TokenGatingMembership
 }>) {
-    const { signer } = useWeb3Context()
     const tokensLength = tokensGatingMembership.tokens.length
     const { chainId } = useEnvironment()
     const columns = isTouch() ? 1 : tokensLength > 2 ? 3 : tokensLength > 1 ? 2 : 1
@@ -109,7 +109,6 @@ function Content({
     } = useLinkWalletTransaction()
 
     const connectWalletThenLink = useConnectThenLink({
-        signer,
         onLinkWallet: linkWalletTransaction,
     })
     const singleTokenAddress =

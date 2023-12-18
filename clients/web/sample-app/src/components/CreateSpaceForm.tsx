@@ -7,12 +7,14 @@ import {
     RoomIdentifier,
     TransactionStatus,
     useCasablancaStore,
+    useConnectivity,
     useCreateSpaceTransaction,
     useWeb3Context,
 } from 'use-zion-client'
 import { Permission, getPioneerNftAddress, getTestGatingNftAddress, mintMockNFT } from '@river/web3'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ethers } from 'ethers'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
 import { useEnvironment } from 'hooks/use-environment'
 import { createTokenEntitlmentStruct } from 'utils/contractHelpers'
@@ -30,11 +32,12 @@ type FormValues = {
 }
 
 export const CreateSpaceForm = (props: Props) => {
-    const { chain, accounts } = useWeb3Context()
+    const { chain } = useWeb3Context()
+    const { loggedInWalletAddress } = useConnectivity()
     const { chainName, chainId } = useEnvironment()
     const { chain: walletChain } = useNetwork()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
-    const { signer } = useWeb3Context()
+    const getSigner = useGetEmbeddedSigner()
 
     const [formValue, setFormValue] = useState<FormValues>({
         spaceName: '',
@@ -121,6 +124,8 @@ export const CreateSpaceForm = (props: Props) => {
         const createSpaceInfo: CreateSpaceInfo = {
             name: formValue.spaceName,
         }
+        const signer = await getSigner()
+
         if (!signer) {
             console.error('Cannot create space. No signer.')
             return undefined
@@ -147,8 +152,8 @@ export const CreateSpaceForm = (props: Props) => {
             },
         }
 
-        await createSpaceTransactionWithRole(createSpaceInfo, requirements)
-    }, [formValue, signer, createSpaceTransactionWithRole, councilNftAddress, pioneerNftAddress])
+        await createSpaceTransactionWithRole(createSpaceInfo, requirements, signer)
+    }, [formValue, getSigner, createSpaceTransactionWithRole, councilNftAddress, pioneerNftAddress])
 
     useEffect(() => {
         if (transactionStatus === TransactionStatus.Success && txData) {
@@ -266,9 +271,9 @@ export const CreateSpaceForm = (props: Props) => {
                 {(chain?.id === localhost.id ||
                     chain?.id === foundry.id ||
                     chain?.id === hardhat.id) &&
-                    accounts.map((accountId) => (
-                        <LocalhostWalletInfo accountId={accountId} key={accountId} />
-                    ))}
+                    loggedInWalletAddress && (
+                        <LocalhostWalletInfo accountId={loggedInWalletAddress} />
+                    )}
             </Box>
         </Box>
     )

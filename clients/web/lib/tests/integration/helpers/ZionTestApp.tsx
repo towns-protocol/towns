@@ -62,7 +62,6 @@ export const ZionTestApp = (props: Props) => {
                 chainId={foundry.id}
                 QueryClientProvider={TestQueryClientProvider}
                 logNamespaceFilter="" // "csb:*" A bit too much for tests, better way to set?
-                web3Signer={provider.wallet}
                 verbose={true}
             >
                 <>

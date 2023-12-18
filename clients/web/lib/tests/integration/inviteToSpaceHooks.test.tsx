@@ -94,7 +94,7 @@ describe.skip('inviteToSpace', () => {
             }
             return (
                 <>
-                    <LoginWithWallet />
+                    <LoginWithWallet signer={bobProvider.wallet} />
                     <button onClick={onClickAcceptInvite1}>Accept Invite 1</button>
                     <button onClick={onClickAcceptInvite2}>Accept Invite 2</button>
                     <button onClick={onClickAcceptInvite3}>Accept Invite 3</button>

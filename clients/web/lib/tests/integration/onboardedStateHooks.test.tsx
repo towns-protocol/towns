@@ -30,7 +30,7 @@ describe('onboardedStateHooksTest', () => {
             }, [onboardingState])
             return (
                 <>
-                    <LoginWithWallet />
+                    <LoginWithWallet signer={alice.provider.wallet} />
                     <div data-testid="seenStates">{seenStates.join(',')}</div>
                 </>
             )

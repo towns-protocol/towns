@@ -13,7 +13,7 @@ const PRIVY_ID = import.meta.env.VITE_PRIVY_ID ?? ''
 
 const SUPPORTED_CHAINS = [goerli, sepolia, foundry, baseGoerli, localhost]
 
-const wagmiChainsConfig = configureChains(
+export const wagmiChainsConfig = configureChains(
     SUPPORTED_CHAINS,
     ALCHEMY_KEY ? [alchemyProvider({ apiKey: ALCHEMY_KEY }), publicProvider()] : [publicProvider()],
     { retryCount: 5 },

@@ -19,8 +19,8 @@
         "@mui/icons-material": "^5.10.9",
         "@mui/material": "^5.10.10",
         "@mui/styles": "^5.10.10",
-        "@privy-io/react-auth": "^1.44.0",
-        "@privy-io/wagmi-connector": "0.1.7-beta.1",
+        "@privy-io/react-auth": "^1.51.1",
+        "@privy-io/wagmi-connector": "^0.1.8",
         "@river/web3": "workspace:^",
         "@towns/generated": "workspace:^",
         "@towns/privy": "workspace:^",
@@ -40,7 +40,7 @@
         "siwe": "^1.1.6",
         "typescript": "^5.1.6",
         "use-zion-client": "workspace:^",
-        "wagmi": "^1.4.7",
+        "wagmi": "^1.4.12",
         "zustand": "^4.3.3"
     },
     "devDependencies": {

@@ -23,6 +23,7 @@ import {
     createMembershipStruct,
 } from '@river/web3'
 import { useZionClient } from '../../src/hooks/use-zion-client'
+import { TSigner } from '../../src/types/web3-types'
 
 /**
  * This test suite tests the useRoles hook.
@@ -55,12 +56,13 @@ describe('useRoleDetails', () => {
         render(
             <ZionTestApp provider={provider}>
                 <>
-                    <RegisterWallet />
+                    <RegisterWallet signer={provider.wallet} />
                     <TestComponentMultiple
                         spaceNames={[spaceNameA, spaceNameB]}
                         roleName={[roleNameA, roleNameB]}
                         permissions={[permissionsA, permissionsB]}
                         councilNftAddress={testGatingNftAddress}
+                        signer={provider.wallet}
                     />
                 </>
             </ZionTestApp>,
@@ -139,6 +141,7 @@ function TestComponentMultiple(args: {
     roleName: string[]
     permissions: Permission[][]
     councilNftAddress: string
+    signer: TSigner
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
     const { createSpaceTransactionWithRole, data: txData, transactionStatus } = spaceTransaction
@@ -155,6 +158,7 @@ function TestComponentMultiple(args: {
                     permissions: args.permissions[0],
                     tokenAddresses: [args.councilNftAddress],
                 }),
+                args.signer,
             )
 
             await createSpaceTransactionWithRole(
@@ -166,6 +170,7 @@ function TestComponentMultiple(args: {
                     permissions: args.permissions[1],
                     tokenAddresses: [args.councilNftAddress],
                 }),
+                args.signer,
             )
         }
 
@@ -176,6 +181,7 @@ function TestComponentMultiple(args: {
         args.roleName,
         args.spaceNames,
         createSpaceTransactionWithRole,
+        args.signer,
     ])
     // the view
     return (

@@ -202,13 +202,16 @@ describe('CreateChannelForm', () => {
         })
 
         await waitFor(async () => {
-            return expect(updateChannelTransactionSpy).toHaveBeenCalledWith({
-                channelId: channelRoomIdentifier,
-                parentSpaceId: spaceRoomIdentifier,
-                updatedChannelName: 'some channel',
-                updatedChannelTopic: 'channel topic',
-                updatedRoleIds: [7],
-            })
+            return expect(updateChannelTransactionSpy).toHaveBeenCalledWith(
+                {
+                    channelId: channelRoomIdentifier,
+                    parentSpaceId: spaceRoomIdentifier,
+                    updatedChannelName: 'some channel',
+                    updatedChannelTopic: 'channel topic',
+                    updatedRoleIds: [7],
+                },
+                {},
+            )
         })
     })
 
@@ -274,13 +277,16 @@ describe('CreateChannelForm', () => {
         })
 
         await waitFor(async () => {
-            return expect(updateChannelTransactionSpy).toHaveBeenCalledWith({
-                channelId: channelRoomIdentifier,
-                parentSpaceId: spaceRoomIdentifier,
-                updatedChannelName: 'some channel',
-                updatedChannelTopic: 'channel topic',
-                updatedRoleIds: [8],
-            })
+            return expect(updateChannelTransactionSpy).toHaveBeenCalledWith(
+                {
+                    channelId: channelRoomIdentifier,
+                    parentSpaceId: spaceRoomIdentifier,
+                    updatedChannelName: 'some channel',
+                    updatedChannelTopic: 'channel topic',
+                    updatedRoleIds: [8],
+                },
+                {},
+            )
         })
     })
 })

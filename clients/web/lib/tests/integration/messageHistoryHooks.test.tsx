@@ -23,6 +23,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { sleep } from '../../src/utils/zion-utils'
 import { Permission } from '@river/web3'
 import { ZTEvent } from '../../src/types/timeline-types'
+import { TSigner } from '../../src/types/web3-types'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -62,7 +63,7 @@ describe('messageHistoryHooks', () => {
             }
 
             // create a veiw for alice
-            const TestComponent = () => {
+            const TestComponent = ({ signer }: { signer: TSigner }) => {
                 const { scrollback } = useZionClient()
                 const { timeline } = useChannelTimeline()
                 const messages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
@@ -71,7 +72,11 @@ describe('messageHistoryHooks', () => {
                 }, [scrollback])
                 return (
                     <>
-                        <RegisterAndJoinSpace spaceId={spaceId} channelId={channelId} />
+                        <RegisterAndJoinSpace
+                            spaceId={spaceId}
+                            channelId={channelId}
+                            signer={signer}
+                        />
                         <button onClick={onClickScrollback}>Scrollback</button>
                         <div data-testid="messageslength">
                             {messages.length > 0 ? messages.length.toString() : 'empty'}
@@ -87,7 +92,7 @@ describe('messageHistoryHooks', () => {
                 <ZionTestApp provider={aliceProvider}>
                     <SpaceContextProvider spaceId={spaceId}>
                         <ChannelContextProvider channelId={channelId}>
-                            <TestComponent />
+                            <TestComponent signer={aliceProvider.wallet} />
                         </ChannelContextProvider>
                     </SpaceContextProvider>
                 </ZionTestApp>,

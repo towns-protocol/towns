@@ -29,6 +29,7 @@ import {
     Permission,
     createMembershipStruct,
 } from '@river/web3'
+import { TSigner } from '../../src/types/web3-types'
 
 /**
  * This test suite tests the useAddRolesToChannel hook.
@@ -53,13 +54,13 @@ describe('useAddRolesToChannel', () => {
         render(
             <ZionTestApp provider={provider}>
                 <>
-                    <RegisterWallet />
+                    <RegisterWallet signer={provider.wallet} />
                     <TestComponent
                         spaceName={spaceName}
                         channelName={channelName}
                         roleName={roleName}
                         permissions={permissions}
-                        councilNftAddress={testGatingNftAddress}
+                        councilNftAddress={testGatingNftAddress ?? ''}
                     />
                 </>
             </ZionTestApp>,
@@ -137,6 +138,7 @@ function TestComponent(args: {
     roleName: string
     permissions: Permission[]
     councilNftAddress: string
+    signer: TSigner
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
     const {
@@ -194,6 +196,7 @@ function TestComponent(args: {
                     permissions: args.permissions,
                     tokenAddresses: [args.councilNftAddress],
                 }),
+                args.signer,
             )
         }
         void handleClick()
@@ -203,21 +206,25 @@ function TestComponent(args: {
         args.roleName,
         args.spaceName,
         createSpaceTransactionWithRole,
+        args.signer,
     ])
     // handle click to create a channel
     const onClickCreateChannel = useCallback(() => {
         const handleClick = async () => {
             if (spaceId) {
-                await createChannelTransaction({
-                    name: args.channelName,
-                    parentSpaceId: spaceId,
-                    roleIds: [],
-                })
+                await createChannelTransaction(
+                    {
+                        name: args.channelName,
+                        parentSpaceId: spaceId,
+                        roleIds: [],
+                    },
+                    args.signer,
+                )
             }
         }
         void handleClick()
         console.log(`onClickCreateChannel: spaceId: `, spaceId?.networkId)
-    }, [spaceId, createChannelTransaction, args.channelName])
+    }, [spaceId, createChannelTransaction, args.channelName, args.signer])
 
     useEffect(() => {
         console.log('TestComponent', 'createChannelTransactionStates', {
@@ -240,11 +247,16 @@ function TestComponent(args: {
         console.log('!!!! onClickAddRoleToChannel', { roleIds, channelId, spaceNetworkId })
         const handleClick = async () => {
             if (channelId) {
-                await addRoleToChannelTransaction(spaceNetworkId, channelId.networkId, roleIds[0])
+                await addRoleToChannelTransaction(
+                    spaceNetworkId,
+                    channelId.networkId,
+                    roleIds[0],
+                    args.signer,
+                )
             }
         }
         void handleClick()
-    }, [addRoleToChannelTransaction, roleIds, channelId, spaceNetworkId])
+    }, [addRoleToChannelTransaction, roleIds, channelId, spaceNetworkId, args.signer])
     // the view
     return (
         <>

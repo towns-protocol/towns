@@ -23,6 +23,7 @@ import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useTransactionStore } from '../../src/store/use-transactions-store'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { createMembershipStruct, getTestGatingNftAddress, Permission } from '@river/web3'
+import { TSigner } from '../../src/types/web3-types'
 
 describe('useCreateChannelTransactionHook', () => {
     test('user can create channel', async () => {
@@ -68,7 +69,7 @@ describe('useCreateChannelTransactionHook', () => {
             )
         }
 
-        const TestComponent = () => {
+        const TestComponent = ({ signer }: { signer: TSigner }) => {
             const spaceTransaction = useCreateSpaceTransaction()
             const {
                 createSpaceTransactionWithRole,
@@ -129,11 +130,12 @@ describe('useCreateChannelTransactionHook', () => {
                             ],
                             tokenAddresses: [testGatingNftAddress],
                         }),
+                        signer,
                     )
                 }
 
                 void handleClick()
-            }, [createSpaceTransactionWithRole])
+            }, [createSpaceTransactionWithRole, signer])
 
             // callback to create a channel with zion token entitlement
             const onClickCreateChannel = useCallback(() => {
@@ -143,14 +145,14 @@ describe('useCreateChannelTransactionHook', () => {
                         parentSpaceId,
                         roleIds,
                     }
-                    const channelInfo = await createChannelTransaction(createRoomInfo)
+                    const channelInfo = await createChannelTransaction(createRoomInfo, signer)
                     console.log(channelInfo)
                 }
 
                 if (spaceId) {
                     void handleClick(spaceId)
                 }
-            }, [createChannelTransaction, roleIds, spaceId])
+            }, [createChannelTransaction, roleIds, spaceId, signer])
 
             useEffect(() => {
                 console.log('useCreateChannelTransactionHook', 'createChannelTransactionStates', {
@@ -206,8 +208,8 @@ describe('useCreateChannelTransactionHook', () => {
         render(
             <ZionTestApp provider={provider}>
                 <>
-                    <RegisterWallet />
-                    <TestComponent />
+                    <RegisterWallet signer={provider.wallet} />
+                    <TestComponent signer={provider.wallet} />
                 </>
             </ZionTestApp>,
         )

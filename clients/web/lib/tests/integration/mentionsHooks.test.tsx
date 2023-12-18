@@ -24,6 +24,7 @@ import { useChannelNotificationCounts } from '../../src/hooks/use-channel-notifi
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { TestConstants } from './helpers/TestConstants'
+import { TSigner } from '../../src/types/web3-types'
 
 describe('mentionsHooks', () => {
     test('user can see mentions, and can see mentions after login', async () => {
@@ -57,7 +58,7 @@ describe('mentionsHooks', () => {
         await alice.logout()
 
         // create a veiw for alice
-        const TestComponent = () => {
+        const TestComponent = ({ signer }: { signer: TSigner }) => {
             const channelNotis = useChannelNotificationCounts(channelId)
             const { timeline } = useChannelTimeline()
             const marker = useFullyReadMarker(channelId)
@@ -69,7 +70,7 @@ describe('mentionsHooks', () => {
             }, [marker, sendReadReceipt])
             return (
                 <>
-                    <LoginWithWallet />
+                    <LoginWithWallet signer={signer} />
                     <button onClick={onClickMarkAsRead}>markAsRead</button>
                     <div data-testid="notificationCounts">
                         mentions:{channelNotis.mentions.toString()}
@@ -94,7 +95,7 @@ describe('mentionsHooks', () => {
             <ZionTestApp provider={alice.provider}>
                 <SpaceContextProvider spaceId={spaceId}>
                     <ChannelContextProvider channelId={channelId}>
-                        <TestComponent />
+                        <TestComponent signer={alice.provider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
             </ZionTestApp>,

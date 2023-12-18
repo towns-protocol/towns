@@ -21,6 +21,7 @@ export const useLogout = () => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } catch (ex: any) {
                     console.error('Error logging out:', (ex as Error)?.stack)
+                    throw new Error('Error logging out')
                 }
             }
 

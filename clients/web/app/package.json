@@ -18,6 +18,7 @@
     "dependencies": {
         "@amplitude/analytics-browser": "1.8.0",
         "@capsizecss/vanilla-extract": "^1.0.0",
+        "@cassiozen/usestatemachine": "^1.0.1",
         "@datadog/browser-logs": "^4.48.1",
         "@datadog/browser-rum": "^5.2.0",
         "@emoji-mart/data": "^1.1.2",
@@ -35,8 +36,8 @@
         "@lexical/selection": "^0.12.4",
         "@lexical/utils": "^0.12.4",
         "@ngneat/falso": "^6.1.0",
-        "@privy-io/react-auth": "^1.44.0",
-        "@privy-io/wagmi-connector": "0.1.7-beta.1",
+        "@privy-io/react-auth": "^1.51.1",
+        "@privy-io/wagmi-connector": "^0.1.8",
         "@react-hook/resize-observer": "^1.2.6",
         "@river/proto": "workspace:^",
         "@river/web3": "workspace:^",
@@ -82,7 +83,7 @@
         "ua-parser-js": "^1.0.33",
         "use-zion-client": "workspace:^",
         "vanilla-classnames": "^0.1.0",
-        "wagmi": "^1.4.7",
+        "wagmi": "^1.4.12",
         "yet-another-react-lightbox": "^3.12.2",
         "zod": "^3.21.4",
         "zustand": "^4.3.3"

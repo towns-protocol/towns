@@ -5,12 +5,11 @@ import {
 } from '../client/ZionClientTypes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { BlockchainTransactionType } from '../types/web3-types'
+import { BlockchainTransactionType, TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useQueryClient } from '../query/queryClient'
 import { useTransactionStore } from '../store/use-transactions-store'
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
 
 /**
@@ -23,7 +22,6 @@ export function useDeleteRoleTransaction() {
     const isTransacting = useRef<boolean>(false)
     const { deleteRoleTransaction, waitForDeleteRoleTransaction } = useZionClient()
     const queryClient = useQueryClient()
-    const { signer } = useWeb3Context()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -40,6 +38,7 @@ export function useDeleteRoleTransaction() {
         async function (
             spaceNetworkId: string,
             roleId: number,
+            signer: TSigner,
         ): Promise<TransactionContext<void> | undefined> {
             if (isTransacting.current) {
                 console.warn('deleteRoleTransaction', 'transaction already in progress')
@@ -91,7 +90,7 @@ export function useDeleteRoleTransaction() {
             }
             return transactionResult
         },
-        [deleteRoleTransaction, queryClient, signer, waitForDeleteRoleTransaction],
+        [deleteRoleTransaction, queryClient, waitForDeleteRoleTransaction],
     )
 
     useEffect(() => {

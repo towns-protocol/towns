@@ -3,8 +3,8 @@ import { RoomIdentifier } from '../../../src/types/room-identifier'
 import { useCasablancaCredentials } from '../../../src/hooks/use-casablanca-credentials'
 import { useMyMembership } from '../../../src/hooks/use-my-membership'
 import { useZionClient } from '../../../src/hooks/use-zion-client'
-import { useWalletStatus, useWeb3Context } from '../../../src/components/Web3ContextProvider'
-import { WalletStatus } from '../../../src/types/web3-types'
+import { useWeb3Context } from '../../../src/components/Web3ContextProvider'
+import { TSigner, WalletStatus } from '../../../src/types/web3-types'
 import { useCreateSpaceTransaction } from '../../../src/hooks/use-create-space-transaction'
 import { useCreateChannelTransaction } from '../../../src/hooks/use-create-channel-transaction'
 import { useAddRoleToChannelTransaction } from '../../../src/hooks/use-add-role-channel-transaction'
@@ -13,10 +13,11 @@ import { useCreateRoleTransaction } from '../../../src/hooks/use-create-role-tra
 import { useDeleteRoleTransaction } from '../../../src/hooks/use-delete-role-transaction'
 import { useUpdateRoleTransaction } from '../../../src/hooks/use-update-role-transaction'
 import { useUpdateSpaceNameTransaction } from '../../../src/hooks/use-update-space-name-transaction'
+import { useAccount } from 'wagmi'
 
-export const RegisterWallet = () => {
+export const RegisterWallet = ({ signer }: { signer: TSigner }) => {
     const { isConnected } = useWeb3Context()
-    const walletStatus = useWalletStatus()
+    const walletStatus = useAccount().status
     const riverCridentials = useCasablancaCredentials()
     const loginStatus = riverCridentials.loginStatus
     const loginError = riverCridentials.loginError
@@ -30,11 +31,11 @@ export const RegisterWallet = () => {
         if (walletStatus === WalletStatus.Connected && !registeringWallet.current) {
             registeringWallet.current = true
             void (async () => {
-                await registerWalletWithCasablanca('login...')
+                await registerWalletWithCasablanca('login...', signer)
                 setRegisteredWallet(true)
             })()
         }
-    }, [registerWalletWithCasablanca, walletStatus])
+    }, [signer, registerWalletWithCasablanca, walletStatus])
     return (
         <>
             <div data-testid="isConnected">{isConnected.toString()}</div>
@@ -48,9 +49,9 @@ export const RegisterWallet = () => {
     )
 }
 
-export const LoginWithWallet = () => {
+export const LoginWithWallet = ({ signer }: { signer: TSigner }) => {
     const { isConnected } = useWeb3Context()
-    const walletStatus = useWalletStatus()
+    const walletStatus = useAccount().status
     const riverCridentials = useCasablancaCredentials()
     const loginStatus = riverCridentials.loginStatus
     const loginError = riverCridentials.loginError
@@ -61,11 +62,11 @@ export const LoginWithWallet = () => {
         if (walletStatus === WalletStatus.Connected && !logingInWithWallet.current) {
             logingInWithWallet.current = true
             void (async () => {
-                await loginWithWalletToCasablanca('login...')
+                await loginWithWalletToCasablanca('login...', signer)
                 logingInWithWallet.current = false
             })()
         }
-    }, [loginWithWalletToCasablanca, walletStatus])
+    }, [loginWithWalletToCasablanca, walletStatus, signer])
     return (
         <>
             <div data-testid="isConnected">{isConnected.toString()}</div>
@@ -78,6 +79,7 @@ export const LoginWithWallet = () => {
 }
 
 interface RegisterAndJoinSpaceProps {
+    signer: TSigner
     spaceId: RoomIdentifier
     channelId: RoomIdentifier
 }
@@ -85,25 +87,24 @@ interface RegisterAndJoinSpaceProps {
 export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
     const { spaceId, channelId } = props
     const { clientRunning, joinRoom, joinTown } = useZionClient()
-    const { signer } = useWeb3Context()
     const mySpaceMembership = useMyMembership(spaceId)
     const myChannelMembership = useMyMembership(channelId)
     const [joinComplete, setJoinComplete] = React.useState(false)
     const joiningRooms = useRef(false)
     useEffect(() => {
-        if (clientRunning && !joiningRooms.current && signer) {
+        if (clientRunning && !joiningRooms.current && props.signer) {
             joiningRooms.current = true
             void (async () => {
-                await joinTown(spaceId, signer)
+                await joinTown(spaceId, props.signer)
                 await joinRoom(channelId)
                 setJoinComplete(true)
                 joiningRooms.current = false
             })()
         }
-    }, [channelId, clientRunning, joinRoom, joinTown, signer, spaceId])
+    }, [channelId, clientRunning, joinRoom, joinTown, props.signer, spaceId])
     return (
         <>
-            <RegisterWallet />
+            <RegisterWallet signer={props.signer} />
             <div data-testid="spaceMembership"> {mySpaceMembership} </div>
             <div data-testid="channelMembership"> {myChannelMembership} </div>
             <div data-testid="joinComplete">{joinComplete ? 'true' : 'false'}</div>
@@ -112,6 +113,7 @@ export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
 }
 
 export const RegisterAndJoin = (props: {
+    signer: TSigner
     spaceId: RoomIdentifier
     channelIds: RoomIdentifier[]
 }) => {
@@ -120,14 +122,13 @@ export const RegisterAndJoin = (props: {
     const { clientRunning, joinTown, joinRoom } = useZionClient()
     const [joinStatus, setJoinStatus] = useState<Record<string, boolean>>({})
     const [joinComplete, setJoinComplete] = React.useState(false)
-    const { signer } = useWeb3Context()
 
     useEffect(() => {
-        if (clientRunning && !didExecute.current && signer) {
+        if (clientRunning && !didExecute.current && props.signer) {
             setJoinStatus((prev) => ({ ...prev, ['executing']: true }))
             didExecute.current = true
             void (async () => {
-                await joinTown(spaceId, signer)
+                await joinTown(spaceId, props.signer)
                 setJoinStatus((prev) => ({ ...prev, [spaceId.networkId]: true }))
                 for (const roomId of channelIds) {
                     await joinRoom(roomId)
@@ -137,10 +138,10 @@ export const RegisterAndJoin = (props: {
                 setJoinComplete(true)
             })()
         }
-    }, [clientRunning, joinTown, channelIds, spaceId, joinRoom, signer])
+    }, [clientRunning, joinTown, channelIds, spaceId, joinRoom, props.signer])
     return (
         <>
-            <RegisterWallet />
+            <RegisterWallet signer={props.signer} />
             <div data-testid="joinStatus">{JSON.stringify(joinStatus)}</div>
             <div data-testid="joinComplete">{joinComplete ? 'true' : 'false'}</div>
         </>

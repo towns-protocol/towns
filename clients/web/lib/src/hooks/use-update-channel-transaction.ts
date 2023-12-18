@@ -6,13 +6,12 @@ import {
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { BlockchainTransactionType } from '../types/web3-types'
+import { BlockchainTransactionType, TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { UpdateChannelInfo } from 'types/zion-types'
 import { removeSyncedEntitledChannelsQueriesForSpace } from '../query/removeSyncedEntitledChannelQueries'
 import { useQueryClient } from '../query/queryClient'
 import { useTransactionStore } from '../store/use-transactions-store'
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
 
 /**
@@ -24,7 +23,6 @@ export function useUpdateChannelTransaction() {
     >(undefined)
     const isTransacting = useRef<boolean>(false)
     const { updateChannelTransaction, waitForUpdateChannelTransaction } = useZionClient()
-    const { signer } = useWeb3Context()
     const queryClient = useQueryClient()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
@@ -41,6 +39,7 @@ export function useUpdateChannelTransaction() {
     const _updateChannelTransaction = useCallback(
         async function (
             updateChannelInfo: UpdateChannelInfo,
+            signer: TSigner,
         ): Promise<ChannelUpdateTransactionContext | undefined> {
             if (isTransacting.current) {
                 console.warn('useUpdateChannelTransaction', 'Transaction already in progress')
@@ -99,7 +98,7 @@ export function useUpdateChannelTransaction() {
             }
             return transactionResult
         },
-        [queryClient, signer, updateChannelTransaction, waitForUpdateChannelTransaction],
+        [queryClient, updateChannelTransaction, waitForUpdateChannelTransaction],
     )
 
     useEffect(() => {

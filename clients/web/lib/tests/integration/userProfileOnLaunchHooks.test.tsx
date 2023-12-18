@@ -27,7 +27,7 @@ describe('userProfileOnLaunchHooks', () => {
             const myProfile = useMyProfile()
             return (
                 <>
-                    <LoginWithWallet />
+                    <LoginWithWallet signer={aliceProvider.wallet} />
                     <div data-testid="myProfileName">{myProfile?.displayName ?? 'unknown'}</div>
                     <div data-testid="myProfileAvatar">{myProfile?.avatarUrl ?? 'unknown'}</div>
                 </>

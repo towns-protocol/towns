@@ -26,6 +26,7 @@ import {
     createMembershipStruct,
 } from '@river/web3'
 import { useZionClient } from '../../src/hooks/use-zion-client'
+import { TSigner } from '../../src/types/web3-types'
 /**
  * This test suite tests the useRoles hook.
  */
@@ -52,12 +53,13 @@ describe('useRoleDetails', () => {
         render(
             <ZionTestApp provider={provider}>
                 <>
-                    <RegisterWallet />
+                    <RegisterWallet signer={provider.wallet} />
                     <TestComponent
                         spaceName={spaceName}
                         roleName={roleName}
                         permissions={permissions}
                         councilNftAddress={testGatingNftAddress}
+                        signer={provider.wallet}
                     />
                 </>
             </ZionTestApp>,
@@ -117,6 +119,7 @@ function TestComponent(args: {
     roleName: string
     permissions: Permission[]
     councilNftAddress: string
+    signer: TSigner
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
     const { createSpaceTransactionWithRole, data: txData, transactionStatus } = spaceTransaction
@@ -137,6 +140,7 @@ function TestComponent(args: {
                     permissions: args.permissions,
                     tokenAddresses: [args.councilNftAddress],
                 }),
+                args.signer,
             )
         }
 
@@ -146,6 +150,7 @@ function TestComponent(args: {
         args.permissions,
         args.roleName,
         args.spaceName,
+        args.signer,
         createSpaceTransactionWithRole,
     ])
     // the view

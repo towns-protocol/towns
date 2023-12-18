@@ -4,7 +4,7 @@ import { useLocation } from 'react-router'
 import { InitialSyncSortPredicate, ZTEvent, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
 
-import { SetSignerFromWalletClient } from '@towns/privy'
+import { EmbeddedSignerContextProvider } from '@towns/privy'
 import { Notifications } from '@components/Notifications/Notifications'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
@@ -64,9 +64,8 @@ export const App = () => {
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
         >
-            <>
+            <EmbeddedSignerContextProvider chainId={environment.chainId}>
                 <BetaDebugger />
-                <SetSignerFromWalletClient chainId={environment.chainId} />
                 <AuthContextProvider>
                     <FaviconBadge />
                     <AppBadge />
@@ -100,7 +99,7 @@ export const App = () => {
                     <Notifications />
                     <ServiceWorkerSpacesSyncer />
                 </AuthContextProvider>
-            </>
+            </EmbeddedSignerContextProvider>
         </ZionContextProvider>
     )
 }

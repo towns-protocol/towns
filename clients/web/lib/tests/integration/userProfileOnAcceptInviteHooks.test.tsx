@@ -42,7 +42,7 @@ describe('userProfileOnAcceptInviteHooks', () => {
             const myMembership = useMyMembership(roomId)
             return (
                 <>
-                    <LoginWithWallet />
+                    <LoginWithWallet signer={alice.wallet} />
                     <div data-testid="myProfileName">{myProfile?.displayName ?? 'unknown'}</div>
                     <div data-testid="invitesCount">
                         {invites.length > 0 ? invites.length.toString() : 'none'}

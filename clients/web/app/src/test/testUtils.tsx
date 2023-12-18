@@ -12,6 +12,7 @@ import { publicProvider } from 'wagmi/providers/public'
 import { PrivyWagmiConnector } from '@privy-io/wagmi-connector'
 import { ZLayerProvider } from '@ui'
 import { AuthContextProvider } from 'hooks/useAuth'
+import { env } from 'utils'
 
 type TestAppProps = {
     children: JSX.Element
@@ -46,7 +47,7 @@ export const TestApp = (props: TestAppProps) => {
         <PrivyWagmiConnector wagmiChainsConfig={chainsConfig}>
             <ZLayerProvider>
                 <Lib.ZionContextProvider
-                    casablancaServerUrl=""
+                    casablancaServerUrl={env.VITE_CASABLANCA_HOMESERVER_URL}
                     chainId={31337}
                     {...props.zionContextProviderProps}
                 >
@@ -87,7 +88,6 @@ export function mockUseConnectivity(): ReturnType<typeof Lib.useConnectivity> {
         logout: () => Promise.resolve(),
         register: () => Promise.resolve(),
         getIsWalletRegistered: () => Promise.resolve(true),
-        activeWalletAddress: '0x6789',
         loggedInWalletAddress: '0x1234',
         isAuthenticated: true, // matrix status
         loginStatus: Lib.LoginStatus.LoggedIn,

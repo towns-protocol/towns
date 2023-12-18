@@ -20,6 +20,7 @@ import { useCreateSpaceTransaction } from 'use-zion-client/src/hooks/use-create-
 import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
 import { useZionClient } from 'use-zion-client/src/hooks/use-zion-client'
 import { createMembershipStruct, getTestGatingNftAddress, Permission } from '@river/web3'
+import { TSigner } from '../../src/types/web3-types'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -35,7 +36,7 @@ describe('spaceManagerContractHooks', () => {
         const tokenGatedSpaceName = makeUniqueName('alice')
         // create a veiw for alice
 
-        const TestComponent = () => {
+        const TestComponent = ({ signer }: { signer: TSigner }) => {
             // basic space
             const { chainId } = useZionClient()
             const zionTokenAddress = chainId ? getTestGatingNftAddress(chainId) : undefined
@@ -57,13 +58,14 @@ describe('spaceManagerContractHooks', () => {
                             permissions: [],
                             tokenAddresses: [],
                         }),
+                        signer,
                     )
                     console.log('spaceManagerContractHooks onClickCreateSpace', spaceName)
 
                     setCreatedSpace(true)
                 }
                 void handleClick()
-            }, [createSpaceTransactionWithRole])
+            }, [createSpaceTransactionWithRole, signer])
             const [createSpaceWithZionMemberRole, setCreateSpaceWithZionMemberRole] =
                 useState<boolean>(false)
 
@@ -82,6 +84,7 @@ describe('spaceManagerContractHooks', () => {
                             permissions: [Permission.Read, Permission.Write],
                             tokenAddresses: [zionTokenAddress],
                         }),
+                        signer,
                     )
                     console.log(
                         'spaceManagerContractHooks createSpaceTransactionWithRole',
@@ -90,7 +93,7 @@ describe('spaceManagerContractHooks', () => {
                     setCreateSpaceWithZionMemberRole(true)
                 }
                 void handleClick()
-            }, [createSpaceTransactionWithRole, zionTokenAddress])
+            }, [createSpaceTransactionWithRole, zionTokenAddress, signer])
 
             useEffect(() => {
                 console.log('TestComponent', 'render', { spaceTransaction })
@@ -99,7 +102,7 @@ describe('spaceManagerContractHooks', () => {
             // the view
             return (
                 <>
-                    <RegisterWallet />
+                    <RegisterWallet signer={signer} />
                     <button onClick={onClickCreateSpace}>Create Space</button>
                     <button onClick={onClickCreateSpaceWithZionMemberRole}>
                         Create Token-Gated Space
@@ -116,7 +119,7 @@ describe('spaceManagerContractHooks', () => {
         // render it
         render(
             <ZionTestApp provider={provider}>
-                <TestComponent />
+                <TestComponent signer={provider.wallet} />
             </ZionTestApp>,
         )
         // get our test elements

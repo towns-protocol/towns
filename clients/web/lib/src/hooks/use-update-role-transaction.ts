@@ -6,11 +6,10 @@ import {
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { BlockchainTransactionType } from '../types/web3-types'
+import { BlockchainTransactionType, TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
 import { useTransactionStore } from '../store/use-transactions-store'
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
 import { TokenEntitlementDataTypes, Permission } from '@river/web3'
 
@@ -24,7 +23,6 @@ export function useUpdateRoleTransaction() {
     const isTransacting = useRef<boolean>(false)
     const { updateRoleTransaction, waitForUpdateRoleTransaction } = useZionClient()
     const queryClient = useQueryClient()
-    const { signer } = useWeb3Context()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -45,6 +43,7 @@ export function useUpdateRoleTransaction() {
             permissions: Permission[],
             tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
             users: string[],
+            signer: TSigner,
         ): Promise<TransactionContext<void> | undefined> {
             if (isTransacting.current) {
                 console.warn('useUpdateRoleTransaction', 'Transaction already in progress')
@@ -107,7 +106,7 @@ export function useUpdateRoleTransaction() {
             }
             return transactionResult
         },
-        [queryClient, signer, updateRoleTransaction, waitForUpdateRoleTransaction],
+        [queryClient, updateRoleTransaction, waitForUpdateRoleTransaction],
     )
 
     useEffect(() => {

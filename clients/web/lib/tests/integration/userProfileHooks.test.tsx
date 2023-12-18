@@ -23,6 +23,7 @@ import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
 import { useZionClient } from '../../src/hooks/use-zion-client'
+import { TSigner } from '../../src/types/web3-types'
 import { useUserLookupContext } from '../../src/components/UserLookupContext'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
@@ -57,7 +58,7 @@ describe('userProfileHooks', () => {
             roleIds: [],
         })) as RoomIdentifier
         // create a veiw for bob
-        const TestUserProfile = () => {
+        const TestUserProfile = ({ signer }: { signer: TSigner }) => {
             const { setDisplayName, setAvatarUrl } = useZionClient()
             const myProfile = useMyProfile()
             const { usersMap } = useUserLookupContext()
@@ -73,7 +74,11 @@ describe('userProfileHooks', () => {
             }, [setDisplayName, setAvatarUrl])
             return (
                 <>
-                    <RegisterAndJoinSpace spaceId={alicesSpaceId} channelId={alicesChannelId} />
+                    <RegisterAndJoinSpace
+                        spaceId={alicesSpaceId}
+                        channelId={alicesChannelId}
+                        signer={signer}
+                    />
                     <button onClick={onClickSetProfileInfo}>Set Profile Info</button>
                     <div data-testid="myProfileName">{myProfile?.displayName ?? 'unknown'}</div>
                     <div data-testid="myProfileAvatar">{myProfile?.avatarUrl ?? 'unknown'}</div>
@@ -99,7 +104,7 @@ describe('userProfileHooks', () => {
             <ZionTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={alicesSpaceId}>
                     <ChannelContextProvider channelId={alicesChannelId}>
-                        <TestUserProfile />
+                        <TestUserProfile signer={alice.provider.wallet} />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
             </ZionTestApp>,

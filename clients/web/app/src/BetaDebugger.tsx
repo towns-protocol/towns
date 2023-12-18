@@ -1,29 +1,29 @@
 import React, { useEffect, useState } from 'react'
-import { useWeb3Context, useZionContext } from 'use-zion-client'
+import { useZionContext } from 'use-zion-client'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
-import { Box, Button, Icon, Paragraph, Text, TextButton } from '@ui'
+import { useEmbeddedWallet } from '@towns/privy'
+import { Box, Button, Paragraph, Text, TextButton } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { useNetworkStatus } from 'hooks/useNetworkStatus'
 
 export function BetaDebugger() {
-    const { signer } = useWeb3Context()
-    const [signerAddress, setSignerAddress] = useState<string | undefined>()
     const { wallet: activeWallet } = usePrivyWagmi()
+    const embeddedWallet = useEmbeddedWallet()
     const [isVisible, setIsVisible] = useState(false)
     const show = () => setIsVisible(true)
     const hide = () => setIsVisible(false)
     const { errorMessage, clearSiteData } = useClearSiteData()
     const { streamSyncActive } = useZionContext()
+    const [mismatchedActiveWallet, setMismatchedActiveWallet] = useState(false)
     const { isOffline } = useNetworkStatus()
 
     useEffect(() => {
-        if (signer) {
-            signer.getAddress().then(setSignerAddress)
-        } else {
-            setSignerAddress(undefined)
+        if (!activeWallet?.address || !embeddedWallet?.address) {
+            return
         }
-    }, [signer])
+        setMismatchedActiveWallet(activeWallet?.address !== embeddedWallet?.address)
+    }, [activeWallet?.address, embeddedWallet?.address])
 
     return (
         <Box paddingTop="safeAreaInsetTop" position="topLeft">
@@ -44,20 +44,10 @@ export function BetaDebugger() {
                     rounded="full"
                     background={streamSyncActive && !isOffline ? 'cta1' : 'error'}
                 />
-                <Text size="xs">
-                    Signer: {shortAddress(signerAddress ?? '')} <br />
-                </Text>
-                <Box position="relative" width="height_sm" aspectRatio="1/1">
-                    <Icon
-                        position="topLeft"
-                        display="inline-block"
-                        size="square_xxs"
-                        type={signer ? 'check' : 'alert'}
-                        color={signer ? 'cta1' : 'error'}
-                    />
-                </Box>
 
-                <Text size="xs">Active wallet: {shortAddress(activeWallet?.address ?? '')}</Text>
+                <Text size="xs" color={mismatchedActiveWallet ? 'error' : 'default'}>
+                    Active wallet: {shortAddress(activeWallet?.address ?? '')}
+                </Text>
                 <Box pointerEvents="all">
                     <TextButton color="error" onClick={show}>
                         <Paragraph size="xs">Reset</Paragraph>

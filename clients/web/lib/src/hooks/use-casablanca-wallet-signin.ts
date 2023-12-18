@@ -1,15 +1,16 @@
 import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useCredentialStore } from '../store/use-credential-store'
-import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 import { LoginStatus } from './login'
 import { bin_toHexString } from '@river/sdk'
+import { TSigner } from 'types/web3-types'
+import { Address } from 'wagmi'
+import { SignerUndefinedError } from '../types/error-types'
 
 export function useCasablancaWalletSignIn() {
     const { clientSingleton } = useZionContext()
-    const { activeWalletAddress, signer } = useWeb3Context()
     const { setCasablancaCredentials } = useCredentialStore()
     const { setLoginError, setLoginStatus } = useCasablancaStore()
 
@@ -19,17 +20,18 @@ export function useCasablancaWalletSignIn() {
     }, [])
 
     const loginWithWalletToCasablanca = useCallback(
-        async (_statement: string) => {
+        async (_statement: string, signer: TSigner) => {
             if (!clientSingleton) {
                 throw new Error('Zion client not initialized')
             }
-            if (!activeWalletAddress) {
-                throw new Error('No active wallet')
+            if (!signer) {
+                throw new SignerUndefinedError()
             }
             if (!clientSingleton.opts.casablancaServerUrl) {
                 throw new Error('Casablanca server url not set')
             }
             const delegateWallet = ethers.Wallet.createRandom()
+            const wallet = (await signer.getAddress()) as Address
             try {
                 const casablancaContext = await clientSingleton.signCasablancaDelegate(
                     delegateWallet,
@@ -43,7 +45,7 @@ export function useCasablancaWalletSignIn() {
                     delegateSig: casablancaContext.delegateSig
                         ? bin_toHexString(casablancaContext.delegateSig)
                         : undefined,
-                    loggedInWalletAddress: activeWalletAddress,
+                    loggedInWalletAddress: wallet,
                 })
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
@@ -58,20 +60,13 @@ export function useCasablancaWalletSignIn() {
                 setLoginStatus(LoginStatus.LoggedOut)
             }
         },
-        [
-            activeWalletAddress,
-            clientSingleton,
-            setCasablancaCredentials,
-            setLoginError,
-            setLoginStatus,
-            signer,
-        ],
+        [clientSingleton, setCasablancaCredentials, setLoginError, setLoginStatus],
     )
 
     const registerWalletWithCasablanca = useCallback(
-        async (statement: string) => {
+        async (statement: string, signer: TSigner) => {
             // currently we don't need to register? you can just login with your wallet
-            return loginWithWalletToCasablanca(statement)
+            return loginWithWalletToCasablanca(statement, signer)
         },
         [loginWithWalletToCasablanca],
     )

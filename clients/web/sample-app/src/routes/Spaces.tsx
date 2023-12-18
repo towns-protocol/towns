@@ -1,4 +1,5 @@
 import { Button, Divider, Theme, Typography } from '@mui/material'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import React, { useCallback } from 'react'
 import { Outlet, useParams } from 'react-router-dom'
 import {
@@ -6,7 +7,6 @@ import {
     useSpaceContext,
     useSpaceData,
     useSpaceFromContract,
-    useWeb3Context,
     useZionClient,
 } from 'use-zion-client'
 
@@ -15,15 +15,16 @@ export const Spaces = () => {
     const { joinTown } = useZionClient()
     const { spaceId } = useSpaceContext()
     const space = useSpaceData()
-    const { signer } = useWeb3Context()
+    const getSigner = useGetEmbeddedSigner()
 
     const onClickJoinSpace = useCallback(async () => {
+        const signer = await getSigner()
         if (spaceId && signer) {
             await joinTown(spaceId, signer)
         } else {
             console.error('No spaceId')
         }
-    }, [joinTown, signer, spaceId])
+    }, [joinTown, getSigner, spaceId])
 
     // console.log("SPACE CONTENT", space?.id.networkId, channelSlug);
     if (space && channelSlug) {

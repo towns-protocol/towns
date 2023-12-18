@@ -28,6 +28,7 @@ import {
     Permission,
     createMembershipStruct,
 } from '@river/web3'
+import { TSigner } from '../../src/types/web3-types'
 
 /**
  * This test suite tests the useRoles hook.
@@ -69,7 +70,7 @@ describe('useUpdateRoleTransaction', () => {
         render(
             <ZionTestApp provider={provider}>
                 <>
-                    <RegisterWallet />
+                    <RegisterWallet signer={provider.wallet} />
                     <TestComponent
                         spaceName={spaceName}
                         roleName={roleName}
@@ -83,6 +84,7 @@ describe('useUpdateRoleTransaction', () => {
                         updatedRolePermissions={updatedModeratorPermissions} // updated
                         updatedRoleTokens={moderatorTokens} // no change
                         updatedRoleUsers={updatedModeratorUsers} // updated
+                        signer={provider.wallet}
                     />
                 </>
             </ZionTestApp>,
@@ -157,6 +159,7 @@ function TestComponent(args: {
     updatedRolePermissions: Permission[]
     updatedRoleTokens: string[]
     updatedRoleUsers: string[]
+    signer: TSigner
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
     const {
@@ -184,6 +187,7 @@ function TestComponent(args: {
                     permissions: args.permissions,
                     tokenAddresses: [args.councilNftAddress],
                 }),
+                args.signer,
             )
         }
         void handleClick()
@@ -193,6 +197,7 @@ function TestComponent(args: {
         args.roleName,
         args.spaceName,
         createSpaceTransactionWithRole,
+        args.signer,
     ])
     // handle click to create a role
     const onClickCreateRole = useCallback(() => {
@@ -203,6 +208,7 @@ function TestComponent(args: {
                 args.newRolePermissions,
                 createExternalTokenStruct(args.newRoleTokens),
                 args.newRoleUsers,
+                args.signer,
             )
         }
         void handleClick()
@@ -213,6 +219,7 @@ function TestComponent(args: {
         args.newRoleUsers,
         createRoleTransaction,
         spaceNetworkId,
+        args.signer,
     ])
     // handle click to update a role
     const onClickUpdateRole = useCallback(() => {
@@ -224,6 +231,7 @@ function TestComponent(args: {
                 args.updatedRolePermissions,
                 createExternalTokenStruct(args.updatedRoleTokens),
                 args.updatedRoleUsers,
+                args.signer,
             )
         }
         void handleClick()

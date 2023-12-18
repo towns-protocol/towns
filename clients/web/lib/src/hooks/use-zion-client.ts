@@ -29,10 +29,10 @@ import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers
 import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
-import { ethers } from 'ethers'
 import { create } from 'zustand'
 import { ITownArchitectBase, ISpaceDapp, TokenEntitlementDataTypes, Permission } from '@river/web3'
 import { isTestEnv } from '@river/sdk'
+import { TSigner } from 'types/web3-types'
 
 export type ZionErrorStoreState = {
     errors: string[]
@@ -58,14 +58,14 @@ interface ZionClientImpl {
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
         membership: ITownArchitectBase.MembershipStruct,
-        signer: ethers.Signer | undefined,
+        signer: TSigner | undefined,
     ) => Promise<CreateSpaceTransactionContext | undefined>
     waitForCreateSpaceTransaction: (
         context: CreateSpaceTransactionContext | undefined,
     ) => Promise<CreateSpaceTransactionContext | undefined>
     createChannelTransaction: (
         createChannelInfo: CreateChannelInfo,
-        signer: ethers.Signer | undefined,
+        signer: TSigner | undefined,
     ) => Promise<ChannelTransactionContext | undefined>
     waitForCreateChannelTransaction: (
         createChannelInfo: CreateChannelInfo,
@@ -73,7 +73,7 @@ interface ZionClientImpl {
     ) => Promise<ChannelTransactionContext | undefined>
     updateChannelTransaction: (
         updateChannelInfo: UpdateChannelInfo,
-        signer: ethers.Signer | undefined,
+        signer: TSigner | undefined,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
     createDMChannel: (userId: string) => Promise<RoomIdentifier | undefined>
     createGDMChannel: (userIds: string[]) => Promise<RoomIdentifier | undefined>
@@ -87,7 +87,7 @@ interface ZionClientImpl {
         permissions: Permission[],
         tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
-        signer: ethers.Signer | undefined,
+        signer: TSigner | undefined,
     ) => Promise<RoleTransactionContext | undefined>
     waitForCreateRoleTransaction: (
         context: RoleTransactionContext | undefined,
@@ -96,7 +96,7 @@ interface ZionClientImpl {
         spaceNetworkId: string,
         channelNetworkId: string,
         roleId: number,
-        signer: ethers.Signer | undefined,
+        signer: TSigner | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     waitForAddRoleToChannelTransaction: (
         context: TransactionContext<void> | undefined,
@@ -108,7 +108,7 @@ interface ZionClientImpl {
         permissions: Permission[],
         tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
-        signer: ethers.Signer | undefined,
+        signer: TSigner | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     waitForUpdateRoleTransaction: (
         context: TransactionContext<void> | undefined,
@@ -119,7 +119,7 @@ interface ZionClientImpl {
     deleteRoleTransaction: (
         spaceNetworkId: string,
         roleId: number,
-        signer: ethers.Signer | undefined,
+        signer: TSigner | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     waitForDeleteRoleTransaction: (
         context: TransactionContext<void> | undefined,
@@ -138,10 +138,10 @@ interface ZionClientImpl {
     joinRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<Room | undefined>
     leaveRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<void>
     logout: () => Promise<void>
-    loginWithWalletToCasablanca: (statement: string) => Promise<void>
-    joinTown: (spaceId: RoomIdentifier, signer: ethers.Signer) => Promise<Room | undefined>
+    loginWithWalletToCasablanca: (statement: string, signer: TSigner) => Promise<void>
+    joinTown: (spaceId: RoomIdentifier, signer: TSigner) => Promise<Room | undefined>
     redactEvent: (roomId: RoomIdentifier, eventId: string, reason?: string) => Promise<void>
-    registerWalletWithCasablanca: (statement: string) => Promise<void>
+    registerWalletWithCasablanca: (statement: string, signer: TSigner) => Promise<void>
     resetFullyReadMarkers: () => void
     scrollback: (
         roomId: RoomIdentifier,
@@ -171,14 +171,14 @@ interface ZionClientImpl {
     updateSpaceNameTransaction: (
         spaceId: string,
         name: string,
-        signer: ethers.Signer | undefined,
+        signer: TSigner | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     linkWallet: (
-        rootKey: ethers.Signer,
-        wallet: ethers.Signer,
+        rootKey: TSigner,
+        wallet: TSigner,
     ) => Promise<WalletLinkTransactionContext | undefined>
     removeLink: (
-        rootKey: ethers.Signer,
+        rootKey: TSigner,
         walletAddress: string,
     ) => Promise<WalletLinkTransactionContext | undefined>
     getLinkedWallets: (rootKey: string) => Promise<string[] | undefined>

@@ -22,7 +22,7 @@ describe('userProfileOnboardingHooks', () => {
             const myProfile = useMyProfile()
             return (
                 <>
-                    <RegisterWallet />
+                    <RegisterWallet signer={aliceProvider.wallet} />
                     <div data-testid="myProfileName">{myProfile?.displayName ?? 'unknown'}</div>
                 </>
             )

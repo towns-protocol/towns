@@ -69,7 +69,7 @@ describe('useSpaceDataHook', () => {
             }, [client])
             return (
                 <>
-                    <LoginWithWallet />
+                    <LoginWithWallet signer={alice.provider.wallet} />
                     <div data-testid="userIdContent">{profile?.userId}</div>
                     <button
                         onClick={() => {

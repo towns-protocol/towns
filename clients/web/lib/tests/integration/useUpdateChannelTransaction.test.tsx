@@ -21,6 +21,7 @@ import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateChannelTransaction } from '../../src/hooks/use-update-channel-transaction'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { createMembershipStruct, getTestGatingNftAddress, Permission } from '@river/web3'
+import { TSigner } from '../../src/types/web3-types'
 /**
  * This test suite tests the useRoles hook.
  */
@@ -49,16 +50,17 @@ describe('useUpdateChannelTransaction', () => {
         render(
             <ZionTestApp provider={provider}>
                 <>
-                    <RegisterWallet />
+                    <RegisterWallet signer={provider.wallet} />
                     <TestComponent
                         spaceName={spaceName}
                         spaceRoleName={spaceRoleName}
                         permissions={permissions}
-                        nftAddress={testGatingNftAddress}
+                        nftAddress={testGatingNftAddress ?? ''}
                         channelName={channelName}
                         channelTopic={channelTopic}
                         updatedChannelName={updatedChannelName}
                         updatedChannelTopic={updatedChannelTopic}
+                        signer={provider.wallet}
                     />
                 </>
             </ZionTestApp>,
@@ -144,6 +146,7 @@ function TestComponent(args: {
     nftAddress: string
     updatedChannelName: string
     updatedChannelTopic: string
+    signer: TSigner
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
     const {
@@ -188,6 +191,7 @@ function TestComponent(args: {
                     permissions: args.permissions,
                     tokenAddresses: [args.nftAddress],
                 }),
+                args.signer,
             )
         }
         void handleClick()
@@ -196,6 +200,7 @@ function TestComponent(args: {
         args.permissions,
         args.spaceName,
         args.spaceRoleName,
+        args.signer,
         createSpaceTransactionWithRole,
     ])
     // handle click to create a channel
@@ -208,11 +213,18 @@ function TestComponent(args: {
                     roleIds,
                     topic: args.channelTopic,
                 }
-                await createChannelTransaction(createRoomInfo)
+                await createChannelTransaction(createRoomInfo, args.signer)
             }
         }
         void handleClick()
-    }, [spaceId, args.channelName, args.channelTopic, roleIds, createChannelTransaction])
+    }, [
+        spaceId,
+        args.channelName,
+        args.channelTopic,
+        roleIds,
+        createChannelTransaction,
+        args.signer,
+    ])
     // handle click to update a role
     const onClickUpdateChannel = useCallback(() => {
         const handleClick = async () => {
@@ -224,7 +236,7 @@ function TestComponent(args: {
                     updatedRoleIds: roleIds,
                     updatedChannelTopic: args.updatedChannelTopic,
                 }
-                await updateChannelTransaction(updateChannelInfo)
+                await updateChannelTransaction(updateChannelInfo, args.signer)
                 console.log('updateChannelTransaction called')
             } else {
                 console.warn('spaceId or channelId is undefined')
@@ -238,6 +250,7 @@ function TestComponent(args: {
         roleIds,
         spaceId,
         updateChannelTransaction,
+        args.signer,
     ])
     // the view
     return (

@@ -1,11 +1,13 @@
 import React, { useEffect } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import {
+    TSigner,
     TransactionStatus,
     useCreateRoleTransaction,
     useDeleteRoleTransaction,
     useUpdateRoleTransaction,
 } from 'use-zion-client'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { createTokenEntitlementStruct } from '@components/Web3/utils'
 import { useSettingsRolesStore } from '../store/hooks/settingsRolesStore'
 import { useSettingsTransactionsStore } from '../store/hooks/settingsTransactionStore'
@@ -69,7 +71,7 @@ export const UpdateRoleTransaction = ({ role, spaceId }: TransactionHookProps) =
         transactionStatus,
         role,
         spaceId,
-        transactionAction: () => {
+        transactionAction: (signer) => {
             action(
                 spaceId,
                 +role.metadata.id,
@@ -82,6 +84,7 @@ export const UpdateRoleTransaction = ({ role, spaceId }: TransactionHookProps) =
                     }),
                 ),
                 role.metadata.users,
+                signer,
             )
         },
     })
@@ -102,7 +105,7 @@ export const CreateRoleTransaction = ({ role, spaceId }: TransactionHookProps) =
         transactionStatus,
         role,
         spaceId,
-        transactionAction: () => {
+        transactionAction: (signer) => {
             action(
                 spaceId,
                 role.metadata.name,
@@ -114,6 +117,7 @@ export const CreateRoleTransaction = ({ role, spaceId }: TransactionHookProps) =
                     }),
                 ),
                 role.metadata.users,
+                signer,
             )
         },
     })
@@ -135,8 +139,8 @@ export const DeleteRoleTransaction = ({ role, spaceId }: TransactionHookProps) =
         transactionStatus,
         role,
         spaceId,
-        transactionAction: () => {
-            action(spaceId, +role.metadata.id)
+        transactionAction: (signer) => {
+            action(spaceId, +role.metadata.id, signer)
         },
     })
 
@@ -161,7 +165,7 @@ function useSetupTxStatesAndAction({
     error: Error | undefined
     transactionHash: string | undefined
     transactionStatus: TransactionStatus | undefined
-    transactionAction: () => void
+    transactionAction: (signer: TSigner) => void
 }) {
     const setPendingTransaction = useSettingsTransactionsStore(
         (state) => state.setPendingTransaction,
@@ -173,6 +177,7 @@ function useSetupTxStatesAndAction({
     const removePotentialTransaction = useSettingsTransactionsStore(
         (state) => state.removePotentialTransaction,
     )
+    const getSigner = useGetEmbeddedSigner()
 
     useEffect(() => {
         // once we have an error
@@ -200,12 +205,16 @@ function useSetupTxStatesAndAction({
         }
     }, [transactionHash, role, setPendingTransaction, transactionStatus])
 
-    return useEvent(() => {
+    return useEvent(async () => {
         if (!spaceId) {
+            return
+        }
+        const signer = await getSigner()
+        if (!signer) {
             return
         }
         // when the user clicks "save", save the role to the settings state
         setPotentialTransaction(role)
-        transactionAction()
+        transactionAction(signer)
     })
 }

@@ -48,7 +48,7 @@ describe('onboardingStateHooks', () => {
 
             return (
                 <>
-                    <RegisterWallet />
+                    <RegisterWallet signer={aliceProvider.wallet} />
                     <button onClick={onClickSetDisplayName}>Set Display Name</button>
                     <button onClick={onClickSetAvatarUrl}>Set Avatar Url</button>
                     <div data-testid="seenStates">{seenStates.join(',')}</div>
