@@ -52,6 +52,7 @@ module "post_provision_config_lambda_function" {
       USER         = var.river_user_db_config.user
       PASSWORD_ARN = var.river_user_db_config.password_arn
     })
+    HOME_CHAIN_ID                           = var.home_chain_id
     RIVER_NODE_WALLET_CREDENTIALS_ARN       = var.river_node_wallet_credentials_arn
     RIVER_DB_CLUSTER_MASTER_USER_SECRET_ARN = var.river_db_cluster_master_user_secret_arn
     RPC_PROXY_GLOBAL_ACCESS_KEY_ARN         = local.rpc_proxy_global_access_key_arn

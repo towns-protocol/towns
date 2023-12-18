@@ -87,3 +87,8 @@ variable "river_db_cluster_master_user_secret_arn" {
     error_message = "The river db cluster master user secret arn cannot be empty."
   }
 }
+
+variable "home_chain_id" {
+  description = "The chain id of the home chain"
+  type        = string
+}

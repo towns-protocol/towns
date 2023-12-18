@@ -6,8 +6,6 @@ const crypto = require('crypto');
 const Wallet = require('ethereumjs-wallet');
 const EthereumUtil = require('ethereumjs-util');
 
-const CHAIN_ID = 84531;
-const BASE_URL = `https://nexus-rpc-worker-test-beta.towns.com/${CHAIN_ID}`
 
 function generatePassword(length = 12) {
   return crypto.randomBytes(length).toString('base64').slice(0, length);
@@ -70,26 +68,24 @@ async function findOrCreateWalletPrivateKey() {
 async function setHomechainNetworkUrlSecret() {
   console.log('setting homechain network url secret - start')
   const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
-  const getHomeChainUrlSecretCommand = new GetSecretValueCommand({
-    SecretId: process.env.HOME_CHAIN_NETWORK_URL_SECRET_ARN
+  console.log('getting global proxy key secret')
+  const getGlobalProxyKeyCommand = new GetSecretValueCommand({
+    SecretId: process.env.RPC_PROXY_GLOBAL_ACCESS_KEY_ARN
   })
-  console.log('getting homechain network url secret')
-  const homeChainUrlSecret = (await secretsClient.send(getHomeChainUrlSecretCommand)).SecretString;
-  if (homeChainUrlSecret === 'DUMMY') {
-    console.log('getting global proxy key secret')
-    const getGlobalProxyKeyCommand = new GetSecretValueCommand({
-      SecretId: process.env.RPC_PROXY_GLOBAL_ACCESS_KEY_ARN
-    })
-    const globalProxyKeySecret = (await secretsClient.send(getGlobalProxyKeyCommand)).SecretString;
+  const globalProxyKeySecret = (await secretsClient.send(getGlobalProxyKeyCommand)).SecretString;
 
-    const setHomechainNetworkUrlSecretCommand = new PutSecretValueCommand({
-      SecretId: process.env.HOME_CHAIN_NETWORK_URL_SECRET_ARN,
-      SecretString: `${BASE_URL}?key=${globalProxyKeySecret}`,
-    })
-
-    console.log('actually setting homechain network url secret')
-    await secretsClient.send(setHomechainNetworkUrlSecretCommand);
+  const { HOME_CHAIN_ID } = process.env;
+  if (!HOME_CHAIN_ID || HOME_CHAIN_ID.length === 0) {
+    throw new Error('HOME_CHAIN_ID not set')
   }
+  const BASE_URL = `https://nexus-rpc-worker-test-beta.towns.com/${HOME_CHAIN_ID}`
+  const setHomechainNetworkUrlSecretCommand = new PutSecretValueCommand({
+    SecretId: process.env.HOME_CHAIN_NETWORK_URL_SECRET_ARN,
+    SecretString: `${BASE_URL}?key=${globalProxyKeySecret}`,
+  })
+
+  console.log('actually setting homechain network url secret')
+  await secretsClient.send(setHomechainNetworkUrlSecretCommand);
   console.log('done setting homechain network url secret')
 }
 

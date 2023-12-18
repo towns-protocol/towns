@@ -42,11 +42,6 @@ variable "alb_dns_name" {
   type        = string
 }
 
-variable "home_chain_id" {
-  description = "The chain id of the home chain"
-  type        = string
-}
-
 variable "push_notification_worker_url" {
   description = "The url of the push notification worker"
   type        = string

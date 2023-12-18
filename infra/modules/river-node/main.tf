@@ -43,6 +43,9 @@ locals {
   river_node_memory = local.total_memory - local.dd_agent_memory
 
   ephemeral_storage_size_in_gib = var.is_transient ? 21 : 100
+
+  ## TODO: update to 84532 for sepolia migration
+  home_chain_id = "84531"
 }
 
 terraform {
@@ -169,6 +172,7 @@ module "post_provision_config" {
   rds_cluster_resource_id                 = var.river_node_db.rds_aurora_postgresql.cluster_resource_id
   vpc_id                                  = var.vpc_id
   security_group_id                       = aws_security_group.post_provision_config_lambda_function_sg.id
+  home_chain_id                           = local.home_chain_id
 }
 
 locals {
@@ -436,7 +440,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
     environment = [
       {
         name  = "BASECHAIN__CHAINID",
-        value = var.home_chain_id
+        value = local.home_chain_id
       },
       {
         name  = "METRICS__ENABLED",
@@ -509,6 +513,22 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         name  = "DATABASE__EXTRA"
         value = "?sslmode=disable&pool_max_conns=1000"
+      },
+      {
+        name  = "TOWNSARCHITECTCONTRACT__ADDRESS"
+        value = "0xbd88207DB1561e353824FC1Dd43Aa79f365fEbA0"
+      },
+      {
+        name  = "TOWNSARCHITECTCONTRACT__VERSION"
+        value = "v3"
+      },
+      {
+        name  = "WALLETLINKCONTRACT__ADDRESS"
+        value = "0x2855EeA53ae6118aac6E636b00fb27b7D6aF78cb"
+      },
+      {
+        name  = "WALLETLINKCONTRACT__VERSION"
+        value = "v3"
       }
     ]
     logConfiguration = {

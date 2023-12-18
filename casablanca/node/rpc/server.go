@@ -91,20 +91,6 @@ func createStore(ctx context.Context, dbConfig config.DatabaseConfig, storageTyp
 func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet) (func(), int, chan error, error) {
 	log := dlog.CtxLog(ctx)
 
-	// TODO: Temp hack to support main env with old config.
-	// Inject contract addreeses for Base Goerli.
-	if cfg.BaseChain.ChainId == 84531 {
-		cfg.TownsArchitectContract = config.ContractConfig{
-			Address: "0xbd88207DB1561e353824FC1Dd43Aa79f365fEbA0",
-			Version: "v3",
-		}
-		cfg.WalletLinkContract = config.ContractConfig{
-			Address: "0x2855EeA53ae6118aac6E636b00fb27b7D6aF78cb",
-			Version: "v3",
-		}
-		log.Warn("Using hardcoded contract addresses for Base Goerli (TODO: move to env)", "newConfig", cfg)
-	}
-
 	privKey := cfg.WalletPrivateKey
 	cfg.WalletPrivateKey = ""
 

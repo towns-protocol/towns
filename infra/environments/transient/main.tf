@@ -101,8 +101,6 @@ module "river_node" {
     name = local.transient_global_remote_state.river_ecs_cluster.name
   }
 
-  home_chain_id = 84531
-
   # TODO: generalize this to env name once we start deploying transient workers
   push_notification_worker_url = "https://push-notification-worker-test-beta.towns.com"
 
