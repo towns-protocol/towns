@@ -12,6 +12,7 @@ if [ "${1-}" != "nobuild" ]; then
 fi
 
 # V3 Contracts
+make deploy-base-anvil-nb contract=DeployMultiInit
 make deploy-base-anvil-nb contract=DeployPioneer
 make deploy-base-anvil-nb contract=DeployTownOwner
 make deploy-base-anvil-nb contract=DeployUserEntitlement

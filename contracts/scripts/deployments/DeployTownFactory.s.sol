@@ -70,9 +70,6 @@ contract DeployTownFactory is DiamondDeployer {
   address pausable;
   address platformReqs;
 
-  // multi init
-  address multiInit;
-
   function versionName() public pure override returns (string memory) {
     return "townFactory";
   }
@@ -92,8 +89,6 @@ contract DeployTownFactory is DiamondDeployer {
     ownable = address(new OwnableFacet());
     pausable = address(new PausableFacet());
     platformReqs = address(new PlatformRequirementsFacet());
-
-    multiInit = address(new MultiInit());
 
     vm.stopBroadcast();
 
@@ -167,7 +162,7 @@ contract DeployTownFactory is DiamondDeployer {
     return
       Diamond.InitParams({
         baseFacets: cuts,
-        init: multiInit,
+        init: getDeployment("multiInit"),
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
           initAddresses,

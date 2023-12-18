@@ -63,8 +63,6 @@ contract DeployTown is DiamondDeployer {
   address membership;
   address town;
 
-  address multiInit;
-
   function versionName() public pure override returns (string memory) {
     return "town";
   }
@@ -84,7 +82,6 @@ contract DeployTown is DiamondDeployer {
     tokenPausable = address(new TokenPausableFacet());
     introspection = address(new IntrospectionFacet());
     membership = address(new MembershipFacet());
-    multiInit = address(new MultiInit());
     vm.stopBroadcast();
 
     membershipHelper.addSelectors(erc721aHelper.selectors());
@@ -142,7 +139,7 @@ contract DeployTown is DiamondDeployer {
     return
       Diamond.InitParams({
         baseFacets: cuts,
-        init: multiInit,
+        init: getDeployment("multiInit"),
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
           initAddresses,

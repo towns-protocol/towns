@@ -29,6 +29,14 @@ contract DeployBase is DeployHelpers, Script {
         rpcUrl: "https://towns-devnet.rpc.caldera.xyz/http"
       })
     );
+    setChain(
+      "base_sepolia",
+      ChainData({
+        name: "base_sepolia",
+        chainId: 84532,
+        rpcUrl: "https://sepolia.base.org"
+      })
+    );
   }
 
   // =============================================================
