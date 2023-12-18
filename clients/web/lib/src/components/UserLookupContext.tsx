@@ -13,6 +13,7 @@ export type LookupUser = {
 }
 
 export type UserLookupContextType = {
+    streamId?: string
     users: LookupUser[]
     usersMap: { [key: string]: LookupUser }
 }
@@ -57,7 +58,11 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
                 acc[user.userId] = user
                 return acc
             }, {} as { [key: string]: LookupUser })
-            return { users, usersMap }
+            return {
+                streamId: spaceId.networkId,
+                users,
+                usersMap,
+            }
         } else {
             return parentContext
         }
@@ -67,29 +72,65 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
 }
 
 export const DMChannelContextUserLookupProvider = (props: {
-    channelId: string
+    channelId: string | undefined
     children: React.ReactNode
+    fallbackToParentContext?: boolean
 }) => {
     const { channelId } = props
 
     const room = useRoomWithStreamId(channelId)
     const parentContext = useUserLookupContext()
+    const spaceId = parentContext?.streamId
 
     const value = useMemo(() => {
-        if (room) {
-            const users = room.members.map((member) => ({
-                ...member,
-                memberOf: parentContext?.usersMap[member.userId]?.memberOf,
-            }))
-            const usersMap = users.reduce((acc, user) => {
-                acc[user.userId] = user
-                return acc
-            }, {} as { [key: string]: LookupUser })
-            return { users, usersMap }
-        } else {
-            return { users: [], usersMap: {} }
+        if (!room) {
+            return {
+                users: [],
+                usersMap: {},
+            }
         }
-    }, [room, parentContext])
+        const users = room.members.map((member) => ({
+            ...member,
+            memberOf: parentContext?.usersMap[member.userId]?.memberOf,
+        }))
+
+        // opportunistically fill in displayName from parent context if
+        // allowed. This is designed for the DM channels within spaces
+        if (props.fallbackToParentContext) {
+            users.forEach((user) => {
+                if (!user.username && !user.displayName && user.memberOf) {
+                    // find the first (not necesarilly the best, since that
+                    // would be subjective) alternative that has a displayName
+                    const firstMatch = Object.values(user.memberOf)
+                        .sort((a, b) =>
+                            !spaceId
+                                ? 0
+                                : Math.sign(
+                                      spaceCompare(a.spaceId, spaceId) -
+                                          spaceCompare(b.spaceId, spaceId),
+                                  ),
+                        )
+                        .find((m) => m.displayName)
+                    if (firstMatch) {
+                        user.username = firstMatch.username
+                        user.displayName = firstMatch.displayName
+                    }
+                }
+            })
+        }
+        const usersMap = users.reduce((acc, user) => {
+            acc[user.userId] = user
+            return acc
+        }, {} as { [key: string]: LookupUser })
+        return {
+            streamId: channelId,
+            users,
+            usersMap,
+        }
+    }, [room, props.fallbackToParentContext, channelId, parentContext?.usersMap, spaceId])
 
     return <UserLookupContext.Provider value={value}>{props.children}</UserLookupContext.Provider>
 }
+
+const spaceCompare = (memberStreamId: string, currentStreamId: string) =>
+    memberStreamId === currentStreamId ? -1 : 1

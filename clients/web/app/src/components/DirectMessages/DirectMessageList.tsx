@@ -9,6 +9,7 @@ import React, {
 } from 'react'
 import { useLocation, useMatch, useNavigate } from 'react-router'
 import { DMChannelIdentifier, useTimelineStore, useZionContext } from 'use-zion-client'
+import { DMChannelContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
 import { ResultItem } from '@components/SearchBar/SearchResultItem'
 import { Box, Icon, IconButton, Paragraph, Stack, TextField } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
@@ -71,31 +72,45 @@ export const DirectMessageList = () => {
                 {searchResults.length > 0 ? (
                     <SearchContext.Provider value="messages">
                         {searchResults.map((s, index, items) => (
-                            <ResultItem
+                            <DMChannelContextUserLookupProvider
+                                fallbackToParentContext
                                 key={s.item.key}
-                                result={s}
-                                misc={miscProps}
-                                paddingY="sm"
-                                paddingX="sm"
-                                rounded="sm"
-                                background={
-                                    s.item.type === 'dmMessage' && hashId === s.item.key
-                                        ? 'level2'
-                                        : 'level1'
+                                channelId={
+                                    s.item.type === 'dmMessage' ? s.item.channelId : undefined
                                 }
-                            />
+                            >
+                                <ResultItem
+                                    key={s.item.key}
+                                    result={s}
+                                    misc={miscProps}
+                                    paddingY="sm"
+                                    paddingX="sm"
+                                    rounded="sm"
+                                    background={
+                                        s.item.type === 'dmMessage' && hashId === s.item.key
+                                            ? 'level2'
+                                            : 'level1'
+                                    }
+                                />
+                            </DMChannelContextUserLookupProvider>
                         ))}
                     </SearchContext.Provider>
                 ) : channels.length > 0 ? (
                     channels.map((channel) => {
                         return (
-                            <DirectMessageListItem
-                                key={channel.id.slug}
-                                channel={channel}
-                                selected={channelId === channel.id.slug}
-                                unread={dmUnreadChannelIds.has(channel.id.slug)}
-                                onSelect={selectMessage}
-                            />
+                            <DMChannelContextUserLookupProvider
+                                fallbackToParentContext
+                                key={channel.id.networkId}
+                                channelId={channel.id.networkId}
+                            >
+                                <DirectMessageListItem
+                                    key={channel.id.networkId}
+                                    channel={channel}
+                                    selected={channelId === channel.id.slug}
+                                    unread={dmUnreadChannelIds.has(channel.id.slug)}
+                                    onSelect={selectMessage}
+                                />
+                            </DMChannelContextUserLookupProvider>
                         )
                     })
                 ) : (

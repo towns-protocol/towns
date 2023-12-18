@@ -4,7 +4,9 @@ import { RoomMember } from 'types/zion-types'
 
 export type MemberOf = {
     [spaceId: string]: {
+        spaceId: string
         userId: string
+        username: string
         displayName: string
         avatarUrl?: string
     }
@@ -33,7 +35,7 @@ export function useAllKnownUsers() {
                 for (const member of room.members) {
                     const existingMember = users.get(member.userId)
                     const memberOf = existingMember?.memberOf ?? {}
-                    memberOf[spaceId] = { ...member }
+                    memberOf[spaceId] = { spaceId, ...member }
                     users.set(member.userId, { ...member, memberOf })
                 }
             }

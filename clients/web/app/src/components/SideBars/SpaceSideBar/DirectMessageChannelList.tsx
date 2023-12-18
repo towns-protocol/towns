@@ -5,6 +5,7 @@ import {
     useSpaceMembers,
     useZionContext,
 } from 'use-zion-client'
+import { DMChannelContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
 import {
     DirectMessageIcon,
     DirectMessageName,
@@ -42,19 +43,25 @@ const CondensedChannelNavItem = (props: { channel: DMChannelIdentifier; unread: 
     const { createLink } = useCreateLink()
     const { unreadCount } = useDMLatestMessage(channel.id)
     return (
-        <ActionNavItem
-            badge={unread && <Badge value={unreadCount} />}
-            key={channel.id.slug}
-            icon={
-                <Box width="x4" shrink={false}>
-                    <DirectMessageIcon channel={channel} width="x4" />
-                </Box>
-            }
-            id={channel.id.slug}
-            label={<DirectMessageName channel={channel} />}
-            highlight={unread}
-            link={createLink({ messageId: channel.id.slug })}
-            minHeight="x5"
-        />
+        <DMChannelContextUserLookupProvider
+            fallbackToParentContext
+            key={channel.id.networkId}
+            channelId={channel.id.networkId}
+        >
+            <ActionNavItem
+                badge={unread && <Badge value={unreadCount} />}
+                key={channel.id.networkId}
+                icon={
+                    <Box width="x4" shrink={false}>
+                        <DirectMessageIcon channel={channel} width="x4" />
+                    </Box>
+                }
+                id={channel.id.slug}
+                label={<DirectMessageName channel={channel} />}
+                highlight={unread}
+                link={createLink({ messageId: channel.id.slug })}
+                minHeight="x5"
+            />
+        </DMChannelContextUserLookupProvider>
     )
 }
