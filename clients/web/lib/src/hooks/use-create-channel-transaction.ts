@@ -70,7 +70,7 @@ export function useCreateChannelTransaction() {
                             hash: transactionResult.transaction?.hash as `0x${string}`,
                             type: BlockchainTransactionType.CreateChannel,
                             data: {
-                                parentSpaceId: createInfo.parentSpaceId.networkId,
+                                parentSpaceId: createInfo.parentSpaceId.streamId,
                                 spaceId: transactionResult.data,
                             },
                         })

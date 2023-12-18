@@ -6,7 +6,7 @@ export function useFullyReadMarker(
     channelId?: RoomIdentifier,
     threadParentId?: string,
 ): FullyReadMarker | undefined {
-    const id = threadParentId ?? channelId?.networkId
+    const id = threadParentId ?? channelId?.streamId
     const fullyReadMarker: FullyReadMarker | undefined = useFullyReadMarkerStore((state) =>
         id ? state.markers[id] : undefined,
     )

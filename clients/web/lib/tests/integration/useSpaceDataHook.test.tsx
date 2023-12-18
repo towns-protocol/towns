@@ -93,7 +93,7 @@ describe('useSpaceDataHook', () => {
             }, [space])
             return (
                 <>
-                    <div data-testid="spaceId">{space?.id.networkId}</div>
+                    <div data-testid="spaceId">{space?.id.streamId}</div>
                     <div>
                         <div>SPACE INFO:</div>
                         {JSON.stringify(

@@ -229,7 +229,7 @@ export async function createTestChannelWithSpaceRoles(
         // For testing, get the roles from the space and select all of them.
         const filteredRoles = await getFilteredRolesFromSpace(
             client.spaceDapp,
-            createChannelInfo.parentSpaceId.networkId,
+            createChannelInfo.parentSpaceId.streamId,
         )
         for (const r of filteredRoles) {
             createChannelInfo.roleIds.push(BigNumber.from(r.roleId).toNumber())
@@ -253,7 +253,7 @@ export async function createTestChannelWithSpaceRoles(
             hash: txContext.transaction?.hash as `0x${string}`,
             type: BlockchainTransactionType.CreateChannel,
             data: {
-                parentSpaceId: createChannelInfo.parentSpaceId.networkId,
+                parentSpaceId: createChannelInfo.parentSpaceId.streamId,
                 spaceId: txContext.data,
             },
         })

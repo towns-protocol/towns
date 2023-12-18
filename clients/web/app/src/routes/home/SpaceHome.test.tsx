@@ -17,8 +17,7 @@ vi.mock('react-router', async () => {
 
 const mockSpaceData: Lib.SpaceData = {
     id: {
-        slug: 'some-slug',
-        networkId: 'some-network',
+        streamId: 'some-stream-id',
     },
     name: 'test space',
     avatarSrc: 'test',
@@ -28,8 +27,7 @@ const mockSpaceData: Lib.SpaceData = {
             channels: [
                 {
                     id: {
-                        slug: 'some-channel-slug',
-                        networkId: 'some-network',
+                        streamId: 'some-channel-stream-id',
                     },
                     label: 'general',
                 },
@@ -53,8 +51,7 @@ const Wrapper = () => {
         <TestApp>
             <Lib.SpaceContextProvider
                 spaceId={{
-                    slug: 'some-slug',
-                    networkId: 'some-network',
+                    streamId: 'some-stream-id',
                 }}
             >
                 <SpaceHome />
@@ -122,7 +119,7 @@ describe('<SpaceHome />', () => {
 
         await waitFor(
             () => {
-                expect(navigateSpy).toHaveBeenCalledWith(`/${PATHS.SPACES}/some-slug/threads/`)
+                expect(navigateSpy).toHaveBeenCalledWith(`/${PATHS.SPACES}/some-stream-id/threads/`)
             },
             {
                 timeout: 4000,
@@ -160,7 +157,7 @@ describe('<SpaceHome />', () => {
         await waitFor(
             () => {
                 expect(navigateSpy).toHaveBeenCalledWith(
-                    `/${PATHS.SPACES}/some-slug/channels/some-channel-slug/`,
+                    `/${PATHS.SPACES}/some-stream-id/channels/some-channel-stream-id/`,
                 )
             },
             {

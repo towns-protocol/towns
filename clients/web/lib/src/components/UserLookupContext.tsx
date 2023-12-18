@@ -59,7 +59,7 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
                 return acc
             }, {} as { [key: string]: LookupUser })
             return {
-                streamId: spaceId.networkId,
+                streamId: spaceId.streamId,
                 users,
                 usersMap,
             }

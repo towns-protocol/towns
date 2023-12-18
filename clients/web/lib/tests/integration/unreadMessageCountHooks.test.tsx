@@ -60,7 +60,7 @@ describe('unreadMessageCountHooks', () => {
             const { spaceUnreads, spaceUnreadChannelIds } = useZionContext()
             const spaceFullyReadmarker = useFullyReadMarker(janesSpaceId)
             const channelFullyReadMarker = useFullyReadMarker(janesChannelId)
-            const spaceHasUnread = spaceUnreads[janesSpaceId.networkId]
+            const spaceHasUnread = spaceUnreads[janesSpaceId.streamId]
             const mySpaceMembership = useMyMembership(janesSpaceId)
             const myChannelMembership = useMyMembership(janesChannelId)
             const { timeline } = useChannelTimeline()
@@ -94,7 +94,7 @@ describe('unreadMessageCountHooks', () => {
                 return `${e.fallbackContent} eventId: ${e.eventId}`
             }
 
-            const listOfChannelsWithUnreads = spaceUnreadChannelIds[janesSpaceId.networkId]
+            const listOfChannelsWithUnreads = spaceUnreadChannelIds[janesSpaceId.streamId]
 
             return (
                 <>

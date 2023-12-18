@@ -206,7 +206,7 @@ export class ZionTestClient extends ZionClient {
     }
 
     public async waitForStream(roomId: RoomIdentifier): Promise<void> {
-        await this.casablancaClient?.waitForStream(roomId.networkId)
+        await this.casablancaClient?.waitForStream(roomId.streamId)
     }
     /************************************************
      * getLatestEvent
@@ -218,7 +218,7 @@ export class ZionTestClient extends ZionClient {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        const stream = this.casablancaClient.stream(roomId.networkId)
+        const stream = this.casablancaClient.stream(roomId.streamId)
         const userId = this.casablancaClient.userId
         if (!stream) {
             throw new Error('stream is undefined')
@@ -276,7 +276,7 @@ export class ZionTestClient extends ZionClient {
     }
 
     public logEvents(roomId: RoomIdentifier) {
-        this.log(`events for ${roomId.networkId}`, this.getEventsDescription(roomId))
+        this.log(`events for ${roomId.streamId}`, this.getEventsDescription(roomId))
     }
 
     public getEventsDescription(roomId: RoomIdentifier): string {

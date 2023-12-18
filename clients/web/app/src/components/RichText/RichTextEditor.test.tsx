@@ -6,8 +6,7 @@ import { RichTextEditor } from './RichTextEditor'
 
 const Wrapper = (props: { children?: React.ReactNode }) => {
     const spaceId = {
-        slug: '',
-        networkId: '',
+        streamId: '',
     }
     return <SpaceContext.Provider value={{ spaceId }}>{props.children}</SpaceContext.Provider>
 }

@@ -6,7 +6,7 @@ const EMPTY_TIMELINE: TimelineEvent[] = []
 
 export function useTimeline(roomId?: RoomIdentifier) {
     const timeline = useTimelineStore((state: TimelineStoreStates) =>
-        roomId ? state.timelines[roomId.networkId] : undefined,
+        roomId ? state.timelines[roomId.streamId] : undefined,
     )
     return {
         timeline: timeline ?? EMPTY_TIMELINE,

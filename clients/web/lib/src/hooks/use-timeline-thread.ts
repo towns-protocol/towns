@@ -18,15 +18,15 @@ export function useTimelineThread(
             eventId
                 ? {
                       parent:
-                          state.threadsStats[roomId.networkId]?.[eventId] ??
+                          state.threadsStats[roomId.streamId]?.[eventId] ??
                           toDummyThreadStats(
                               dummyThreadStatCache,
-                              state.timelines[roomId.networkId]?.find((e) => e.eventId === eventId),
+                              state.timelines[roomId.streamId]?.find((e) => e.eventId === eventId),
                           ),
-                      messages: state.threads[roomId.networkId]?.[eventId] ?? EMPTY_TIMELINE,
+                      messages: state.threads[roomId.streamId]?.[eventId] ?? EMPTY_TIMELINE,
                   }
                 : { parent: undefined, messages: EMPTY_TIMELINE },
-        [eventId, roomId.networkId],
+        [eventId, roomId.streamId],
     )
     return useTimelineStore(callback)
 }

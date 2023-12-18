@@ -65,14 +65,14 @@ export const AllChannelsList = ({
                     >
                         {channels?.map((channel) => (
                             <ChannelContextProvider
-                                key={channel.id.networkId}
-                                channelId={channel.id.networkId}
+                                key={channel.id.streamId}
+                                channelId={channel.id.streamId}
                             >
                                 <Stack>
                                     <ChannelItem
                                         space={space}
                                         name={channel.label}
-                                        channelNetworkId={channel.id.networkId}
+                                        channelNetworkId={channel.id.streamId}
                                     />
                                 </Stack>
                             </ChannelContextProvider>
@@ -133,37 +133,37 @@ export const ChannelItem = ({
         })
 
         const indexOfThisChannel = flatChannels.findIndex(
-            (c) => c.id.networkId === channelIdentifier.networkId,
+            (c) => c.id.streamId === channelIdentifier.streamId,
         )
 
         if (isJoined) {
-            await leaveRoom(channelIdentifier, space.id.networkId)
-            if (currentChannelId === channelIdentifier.networkId) {
+            await leaveRoom(channelIdentifier, space.id.streamId)
+            if (currentChannelId === channelIdentifier.streamId) {
                 // leaving the last channel
                 if (joinedChannels.length === 1) {
-                    setTownRouteBookmark(space.id.slug, '')
-                    navigate(`/${PATHS.SPACES}/${space.id.slug}/`)
+                    setTownRouteBookmark(space.id.streamId, '')
+                    navigate(`/${PATHS.SPACES}/${space.id.streamId}/`)
                 }
                 // go to the next channel
                 else if (indexOfThisChannel === 0) {
                     navigate(
-                        `/${PATHS.SPACES}/${space.id.slug}/${PATHS.CHANNELS}/${
-                            joinedChannels[indexOfThisChannel + 1].id.slug
+                        `/${PATHS.SPACES}/${space.id.streamId}/${PATHS.CHANNELS}/${
+                            joinedChannels[indexOfThisChannel + 1].id.streamId
                         }/`,
                     )
                 }
                 // go to the previous channel
                 else {
                     navigate(
-                        `/${PATHS.SPACES}/${space.id.slug}/${PATHS.CHANNELS}/${
-                            flatChannels[indexOfThisChannel - 1].id.slug
+                        `/${PATHS.SPACES}/${space.id.streamId}/${PATHS.CHANNELS}/${
+                            flatChannels[indexOfThisChannel - 1].id.streamId
                         }/`,
                     )
                 }
             }
         } else {
             try {
-                const room = await client?.joinRoom(channelIdentifier, space.id.networkId)
+                const room = await client?.joinRoom(channelIdentifier, space.id.streamId)
                 if (!room) {
                     console.error('[AllChannelsList]', 'cannot join channel', room)
                     throw new Error('cannot join channel')

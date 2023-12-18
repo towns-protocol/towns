@@ -110,7 +110,7 @@ export const MessageThreadPanel = (props: Props) => {
                             editable={!!isChannelWritable}
                             displayButtons="on-focus"
                             placeholder="Reply..."
-                            storageId={`${channelId.networkId}-${messageId}`}
+                            storageId={`${channelId.streamId}-${messageId}`}
                             threadId={messageId}
                             channels={channels}
                             users={users}

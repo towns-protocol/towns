@@ -31,16 +31,16 @@ const createMessageLink = (
     threadId?: string,
     spaceId?: string,
 ) => {
-    if (isDMChannelStreamId(channelId.networkId) || isGDMChannelStreamId(channelId.networkId)) {
+    if (isDMChannelStreamId(channelId.streamId) || isGDMChannelStreamId(channelId.streamId)) {
         return isTouch
-            ? `/${PATHS.SPACES}/${spaceId}/${PATHS.MESSAGES}/${channelId.networkId}/#${eventId}`
-            : `/${PATHS.MESSAGES}/${channelId.networkId}/#${eventId}`
+            ? `/${PATHS.SPACES}/${spaceId}/${PATHS.MESSAGES}/${channelId.streamId}/#${eventId}`
+            : `/${PATHS.MESSAGES}/${channelId.streamId}/#${eventId}`
     }
 
     if (!spaceId) {
         return undefined
     }
-    const channelSegment = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId.networkId}/`
+    const channelSegment = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId.streamId}/`
     const threadSegment = threadId ? `${PATHS.REPLIES}/${threadId}/` : ``
     const eventSegment = `#${eventId}`
     return `${channelSegment}${threadSegment}${eventSegment}`
@@ -54,7 +54,7 @@ export const SearchMessagesResultItem = (
     } & BoxProps,
 ) => {
     const { result } = props
-    const { slug: spaceSlug } = useSpaceId() ?? {}
+    const { streamId: spaceSlug } = useSpaceId() ?? {}
     const content = getIsRoomMessageContent(result.event)
 
     const { users, usersMap } = useUserLookupContext()

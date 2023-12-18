@@ -8,7 +8,7 @@ export function useDMData(roomId?: RoomIdentifier) {
 
     const { dmChannels } = useZionContext()
     const data = useMemo(() => {
-        return dmChannels.find((dm) => dm.id.networkId === roomId?.networkId)
+        return dmChannels.find((dm) => dm.id.streamId === roomId?.streamId)
     }, [dmChannels, roomId])
 
     const counterParty = useMemo(() => {

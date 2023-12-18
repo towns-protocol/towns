@@ -86,8 +86,7 @@ describe('sendThreadedMessageHooks', () => {
 
         // 3 chnannels should exist b/c of default channel
         await waitFor(
-            async () =>
-                expect((await jane.spaceDapp.getChannels(spaceId.networkId)).length).toBe(3),
+            async () => expect((await jane.spaceDapp.getChannels(spaceId.streamId)).length).toBe(3),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
 
@@ -260,9 +259,9 @@ describe('sendThreadedMessageHooks', () => {
                     <button onClick={markAllAsRead}>markAllAsRead</button>
                     <div data-testid="info">
                         {JSON.stringify({
-                            channel_1: channel_1.networkId,
-                            channel_2: channel_2.networkId,
-                            spaceId: spaceId.networkId,
+                            channel_1: channel_1.streamId,
+                            channel_2: channel_2.streamId,
+                            spaceId: spaceId.streamId,
                         })}
                     </div>
                     <div data-testid="spaceNotifications">

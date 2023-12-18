@@ -90,7 +90,7 @@ describe.skip('inviteToSpace', () => {
             }, [joinTown])
             // format for easy reading
             function formatSpace(s: SpaceItem) {
-                return `${s.id.networkId}: ${s.name}`
+                return `${s.id.streamId}: ${s.name}`
             }
             return (
                 <>
@@ -102,7 +102,7 @@ describe.skip('inviteToSpace', () => {
                         {spaces.map((space) => formatSpace(space)).join('\n')}
                     </div>
                     <div data-testid="allInvites">
-                        {invitedToIds.map((id) => id.networkId).join('\n')}
+                        {invitedToIds.map((id) => id.streamId).join('\n')}
                     </div>
                     <div data-testid="myMembership1">{myMembership1}</div>
                     <div data-testid="myMembership2">{myMembership2}</div>
@@ -133,7 +133,7 @@ describe.skip('inviteToSpace', () => {
         })
 
         // wait the invite to show up
-        await waitFor(() => expect(allInvites).toHaveTextContent(janesSpaceId_1.networkId))
+        await waitFor(() => expect(allInvites).toHaveTextContent(janesSpaceId_1.streamId))
         await waitFor(() => expect(myMembership1).toHaveTextContent(Membership.Invite))
 
         // accept the invite
@@ -148,7 +148,7 @@ describe.skip('inviteToSpace', () => {
         await jane.inviteUser(janesChannelId_2, bobUserId)
 
         // wait for the invite to show up
-        await waitFor(() => expect(allInvites).toHaveTextContent(janesSpaceId_2.networkId))
+        await waitFor(() => expect(allInvites).toHaveTextContent(janesSpaceId_2.streamId))
         // expect the space to still render
         await waitFor(() => expect(allSpaces).toHaveTextContent(janes_space_1))
 

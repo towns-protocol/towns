@@ -30,29 +30,29 @@ export function AppDrawer(props: Props): JSX.Element {
 
     const onClickSpace = (spaceId: RoomIdentifier) => {
         console.log('onClickSpace', spaceId)
-        navigate('/spaces/' + spaceId.slug + '/')
+        navigate('/spaces/' + spaceId.streamId + '/')
     }
 
     const onClickThreads = (spaceId: RoomIdentifier) => {
         console.log('onClickThreads', spaceId)
-        navigate('/spaces/' + spaceId.slug + '/threads/')
+        navigate('/spaces/' + spaceId.streamId + '/threads/')
     }
 
     const onClickMentions = (spaceId: RoomIdentifier) => {
         console.log('onClickMentions', spaceId)
-        navigate('/spaces/' + spaceId.slug + '/mentions/')
+        navigate('/spaces/' + spaceId.streamId + '/mentions/')
     }
 
     const onClickChannel = (spaceId: RoomIdentifier, channelId: RoomIdentifier) => {
         console.log('onClickChannel', spaceId, channelId)
-        navigate('/spaces/' + spaceId.slug + '/channels/' + channelId.slug + '/')
+        navigate('/spaces/' + spaceId.streamId + '/channels/' + channelId.streamId + '/')
     }
 
     const onClickInvite = (invite: InviteData) => {
         if (invite.spaceParentId) {
-            navigate('/spaces/' + invite.spaceParentId.slug + '/channels/' + invite.id.slug)
+            navigate('/spaces/' + invite.spaceParentId.streamId + '/channels/' + invite.id.streamId)
         } else {
-            navigate('/spaces/' + invite.id.slug)
+            navigate('/spaces/' + invite.id.streamId)
         }
     }
 

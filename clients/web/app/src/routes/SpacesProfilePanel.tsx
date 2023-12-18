@@ -57,7 +57,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
 
     const onMessageClick = useCallback(async () => {
         const streamId = await createDMChannel(profileId)
-        const link = streamId && createLink({ messageId: streamId.networkId })
+        const link = streamId && createLink({ messageId: streamId.streamId })
         if (link) {
             navigate(link + '?ref=profile')
         }

@@ -23,21 +23,21 @@ export const SetUsernameForm = (props: Props) => {
             setValue(e.target.value)
             setUsernameAvailable(true)
             const usernameAvailable =
-                (await getIsUsernameAvailable(spaceData.id.networkId, e.target.value)) ?? false
+                (await getIsUsernameAvailable(spaceData.id.streamId, e.target.value)) ?? false
             setUsernameAvailable(usernameAvailable)
         },
-        [setValue, setUsernameAvailable, getIsUsernameAvailable, spaceData.id.networkId],
+        [setValue, setUsernameAvailable, getIsUsernameAvailable, spaceData.id.streamId],
     )
 
     const onSubmit = useCallback(async () => {
         setRequestInFlight(true)
         // If we succeed, we'll be redirected to the space. If not, we'll stay on this page.
         try {
-            await setUsername(spaceData.id.networkId, value)
+            await setUsername(spaceData.id.streamId, value)
         } catch (e) {
             setRequestInFlight(false)
         }
-    }, [setUsername, spaceData.id.networkId, value, setRequestInFlight])
+    }, [setUsername, spaceData.id.streamId, value, setRequestInFlight])
 
     const usernameValid = useMemo(() => {
         return validateUsername(value)

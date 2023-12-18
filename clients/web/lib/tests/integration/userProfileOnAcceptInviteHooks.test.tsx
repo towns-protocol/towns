@@ -47,7 +47,7 @@ describe('userProfileOnAcceptInviteHooks', () => {
                     <div data-testid="invitesCount">
                         {invites.length > 0 ? invites.length.toString() : 'none'}
                     </div>
-                    <div data-testid="roomId">{roomId?.networkId ?? 'none'}</div>
+                    <div data-testid="roomId">{roomId?.streamId ?? 'none'}</div>
                     <div data-testid="myMembership">{myMembership}</div>
                     <button onClick={() => void joinTown(roomId, alice.wallet)}>
                         Accept Invite

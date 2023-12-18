@@ -29,8 +29,8 @@ const DesktopChannelHeader = (props: Props) => {
     const topic = useRoom(channel.id)?.topic
 
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
-        spaceId: spaceId?.networkId,
-        channelId: channel.id.networkId,
+        spaceId: spaceId?.streamId,
+        channelId: channel.id.streamId,
     })
     const isMuted = channelIsMuted || spaceIsMuted
     const channelType = useChannelType(channel.id)
@@ -147,7 +147,7 @@ const TouchChannelHeader = (props: Props) => {
     const channelType = useChannelType(channel.id)
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
         spaceId: spaceId,
-        channelId: channel?.id.networkId,
+        channelId: channel?.id.streamId,
     })
 
     const isMuted = channelIsMuted || spaceIsMuted

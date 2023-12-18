@@ -53,7 +53,7 @@ function useSpacesFromContractWithAddress(myWalletAddress?: string): UseSpaceFro
             // get all the entitlement status for each space
             // create an array of promises to get all the entitlement status for each space
             const isEntitledPromises = spaceRooms.map((s: SpaceItem) =>
-                spaceDapp.isEntitledToSpace(s.id.networkId, myWalletAddress, Permission.Read),
+                spaceDapp.isEntitledToSpace(s.id.streamId, myWalletAddress, Permission.Read),
             )
             // Wait for all the promises to resolve
             const entitledSpaces = await Promise.all(isEntitledPromises)
@@ -84,7 +84,7 @@ function useSpacesFromContractWithAddress(myWalletAddress?: string): UseSpaceFro
             /* get all the space info */
             // create an array of promises to get all the space info
             const getSpaceInfoPromises = spaceItems.map((s: SpaceItem) =>
-                spaceDapp.getSpaceInfo(s.id.networkId),
+                spaceDapp.getSpaceInfo(s.id.streamId),
             )
             // Wait for all the promises to resolve
             const entitledSpaces = await Promise.all(getSpaceInfoPromises)
@@ -127,5 +127,5 @@ export function useSpaceFromContract(spaceId?: RoomIdentifier): {
     space: SpaceIdentifier | undefined
 } {
     const { spaces, isLoading, isError } = useSpacesFromContract()
-    return { isLoading, isError, space: spaces.find((x) => x.networkId === spaceId?.networkId) }
+    return { isLoading, isError, space: spaces.find((x) => x.networkId === spaceId?.streamId) }
 }

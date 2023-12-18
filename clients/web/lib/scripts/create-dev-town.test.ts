@@ -48,8 +48,8 @@ test('create dev town', async () => {
         await harmonyHotWallet.registerWalletAndStartClient()
     }
     // create a space
-    const { slug } = (await createDevTown(harmonyHotWallet))!
-    const inviteLink = `https://app-test-beta.towns.com/t/${slug}/?invite`
+    const { streamId } = (await createDevTown(harmonyHotWallet))!
+    const inviteLink = `https://app-test-beta.towns.com/t/${streamId}/?invite`
 
     // export the invite link into a json file:
 

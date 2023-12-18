@@ -16,8 +16,8 @@ import { PATHS } from 'routes'
 
 const ChannelLink = ({ channel }: { channel: Channel }) => {
     const spaceData = useSpaceData()
-    const spaceSlug = spaceData?.id.slug
-    const channelSlug = channel.id.slug
+    const spaceSlug = spaceData?.id.streamId
+    const channelSlug = channel.id.streamId
     return (
         <NavLink
             to={`/${PATHS.SPACES}/${spaceSlug}/${PATHS.CHANNELS}/${channelSlug}`}

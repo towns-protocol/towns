@@ -14,7 +14,7 @@ export const ChannelsIndex = () => {
 
     const goToRoom = useCallback(
         (spaceId: RoomIdentifier, channelId: RoomIdentifier) => {
-            navigate('/spaces/' + spaceId.slug + '/channels/' + channelId.slug + '/')
+            navigate('/spaces/' + spaceId.streamId + '/channels/' + channelId.streamId + '/')
         },
         [navigate],
     )

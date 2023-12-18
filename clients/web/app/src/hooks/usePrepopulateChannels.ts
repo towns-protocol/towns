@@ -25,7 +25,7 @@ const checkMaxReached = (eventCount: number, eventTimestamp?: number) => {
     return maxEventsReached || maxDateReached
 }
 
-const shortId = (id: RoomIdentifier) => id.networkId.slice(0, 8)
+const shortId = (id: RoomIdentifier) => id.streamId.slice(0, 8)
 
 export const usePrepopulateChannels = (channelIds: RoomIdentifier[]) => {
     const { scrollback } = useZionClient()
@@ -34,12 +34,12 @@ export const usePrepopulateChannels = (channelIds: RoomIdentifier[]) => {
     const channelQueueRef = useRef<RoomIdentifier[]>([])
 
     const getChannelQueueStatus = useCallback(
-        (id: RoomIdentifier) => channelStatusRef.current[id.networkId],
+        (id: RoomIdentifier) => channelStatusRef.current[id.streamId],
         [],
     )
 
     const getChannelEvents = useCallback((id: RoomIdentifier) => {
-        return useTimelineStore.getState().timelines?.[id.networkId] ?? []
+        return useTimelineStore.getState().timelines?.[id.streamId] ?? []
     }, [])
 
     const scrollbackChannel = useCallback(
@@ -98,7 +98,7 @@ export const usePrepopulateChannels = (channelIds: RoomIdentifier[]) => {
         const running = queue.find((id) => getChannelQueueStatus(id).statusName === 'loading')
 
         if (running) {
-            info(`queue: skipping, task already running (${running.networkId.slice(0, 6)})`)
+            info(`queue: skipping, task already running (${running.streamId.slice(0, 6)})`)
             // make sure we only focus on one item at a time
             return
         }
@@ -120,7 +120,7 @@ export const usePrepopulateChannels = (channelIds: RoomIdentifier[]) => {
         log(`prepopulateChannels()  ${channelIds.length} new`, channelIds.map(shortId))
         channelQueueRef.current = channelIds
         channelStatusRef.current = channelQueueRef.current.reduce((acc, id) => {
-            acc[id.networkId] = acc[id.networkId] ?? {
+            acc[id.streamId] = acc[id.streamId] ?? {
                 id,
                 firstEventId: undefined,
                 statusName: 'pending',

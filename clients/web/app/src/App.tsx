@@ -43,11 +43,11 @@ export const App = () => {
     const initalSyncSortPredicate: InitialSyncSortPredicate = useCallback((a, b) => {
         const bookmark = useStore.getState().spaceIdBookmark
         // if directly navigating to a space, prioritize it
-        if (routeOnLoad.current.includes(a.slug)) {
+        if (routeOnLoad.current.includes(a.streamId)) {
             return -1
         }
         // if there's a bookmark, prioritize it, as long as there's not also a direct navigation
-        if (bookmark === a.slug && !routeOnLoad.current.includes(b.slug)) {
+        if (bookmark === a.streamId && !routeOnLoad.current.includes(b.streamId)) {
             return -1
         }
         return 1

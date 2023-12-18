@@ -52,10 +52,10 @@ const schema = z.object({
 
 export const CreateChannelForm = (props: Props) => {
     const { onCreateChannel, onHide } = props
-    const { data: roles } = useContractRoles(props.spaceId.networkId)
+    const { data: roles } = useContractRoles(props.spaceId.streamId)
     const roledIds = useMemo(() => roles?.map((r) => r.roleId) ?? [], [roles])
     const { data: _rolesDetails, invalidateQuery } = useMultipleRoleDetails(
-        props.spaceId.networkId,
+        props.spaceId.streamId,
         roledIds,
     )
     const rolesWithDetails = useMemo(() => {
@@ -248,7 +248,7 @@ export const CreateChannelForm = (props: Props) => {
 
                             <Box flexDirection="row" justifyContent="start" paddingTop="sm">
                                 <Link
-                                    to={`/${PATHS.SPACES}/${props.spaceId.slug}/${PATHS.SETTINGS}`}
+                                    to={`/${PATHS.SPACES}/${props.spaceId.streamId}/${PATHS.SETTINGS}`}
                                 >
                                     <Button onClick={onHide}>
                                         <Icon type="plus" size="square_sm" />
@@ -317,7 +317,7 @@ export const CreateChannelFormContainer = ({ spaceId, onHide }: Omit<Props, 'onC
     const onCreateChannel = useCallback(
         (roomId: RoomIdentifier) => {
             console.log('[CreateChannelForm]', 'onCreateChannel', roomId)
-            navigate(`/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.CHANNELS}/${roomId.slug}/`)
+            navigate(`/${PATHS.SPACES}/${spaceId?.streamId}/${PATHS.CHANNELS}/${roomId.streamId}/`)
             onHide()
         },
         [navigate, spaceId, onHide],

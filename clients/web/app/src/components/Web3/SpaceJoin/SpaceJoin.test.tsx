@@ -56,8 +56,7 @@ describe.skip('<SpaceJoin />', () => {
         joinRoomSpy.mockReturnValueOnce(
             Promise.resolve({
                 id: {
-                    slug: 'some-slug',
-                    networkId: 'some-network',
+                    streamId: 'some-stream-id',
                 },
                 name: 'doodles',
                 membership: Lib.Membership.Join,
@@ -87,8 +86,7 @@ describe.skip('<SpaceJoin />', () => {
 
         await waitFor(() => {
             expect(joinRoomSpy).toHaveBeenCalledWith({
-                networkId: 'doodles-id',
-                slug: 'doodles-id',
+                streamId: 'doodles-id',
             })
         })
 
@@ -114,8 +112,7 @@ describe.skip('<SpaceJoin />', () => {
 
         await waitFor(() => {
             expect(joinRoomSpy).toHaveBeenCalledWith({
-                networkId: 'doodles-id',
-                slug: 'doodles-id',
+                streamId: 'doodles-id',
             })
         })
 
@@ -142,8 +139,7 @@ describe.skip('<SpaceJoin />', () => {
 
         await waitFor(() => {
             expect(joinRoomSpy).toHaveBeenCalledWith({
-                networkId: 'doodles-id',
-                slug: 'doodles-id',
+                streamId: 'doodles-id',
             })
         })
 

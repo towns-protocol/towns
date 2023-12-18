@@ -43,7 +43,7 @@ describe('On-chain channel creation tests', () => {
         ])) as RoomIdentifier
 
         const roleIds: number[] = []
-        const allowedRoles = await getFilteredRolesFromSpace(alice.spaceDapp, roomId.networkId)
+        const allowedRoles = await getFilteredRolesFromSpace(alice.spaceDapp, roomId.streamId)
         for (const r of allowedRoles) {
             roleIds.push(r.roleId)
         }

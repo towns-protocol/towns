@@ -15,8 +15,8 @@ export const ChannelSettings = () => {
         if (!spaceId) {
             return
         }
-        navigate(`/${PATHS.SPACES}/${spaceId.slug}/channels/${channelId.slug}/`)
-    }, [channelId.slug, navigate, spaceId])
+        navigate(`/${PATHS.SPACES}/${spaceId.streamId}/channels/${channelId.streamId}/`)
+    }, [channelId.streamId, navigate, spaceId])
 
     const onInviteClicked = useCallback(
         async (
@@ -25,7 +25,7 @@ export const ChannelSettings = () => {
             inviteeUserId: string,
         ) => {
             await inviteUser(roomId ?? spaceId, inviteeUserId)
-            navigate(`/${PATHS.SPACES}/${spaceId.slug}/`)
+            navigate(`/${PATHS.SPACES}/${spaceId.streamId}/`)
         },
         [inviteUser, navigate],
     )

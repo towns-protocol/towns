@@ -5,6 +5,6 @@ import { ThreadStats } from '../types/timeline-types'
 export function useChannelThreadStat(threadParetId: string): ThreadStats | undefined {
     const { channelId } = useChannelContext()
     return useTimelineStore(
-        (state: TimelineStoreStates) => state.threadsStats[channelId.networkId]?.[threadParetId],
+        (state: TimelineStoreStates) => state.threadsStats[channelId.streamId]?.[threadParetId],
     )
 }

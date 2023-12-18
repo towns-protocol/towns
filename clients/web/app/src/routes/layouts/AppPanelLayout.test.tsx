@@ -11,8 +11,7 @@ const Wrapper = () => {
         <TestApp>
             <Lib.SpaceContextProvider
                 spaceId={{
-                    slug: 'some-slug',
-                    networkId: 'some-network',
+                    streamId: 'some-stream-id',
                 }}
             >
                 <AppPanelLayout />
@@ -30,8 +29,7 @@ describe('<AppPanelLayout />', () => {
         vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => {
             return {
                 id: {
-                    slug: 'some-slug',
-                    networkId: 'some-network',
+                    streamId: 'some-stream-id',
                 },
                 name: 'test',
                 avatarSrc: 'test',
@@ -51,8 +49,7 @@ describe('<AppPanelLayout />', () => {
         vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => {
             return {
                 id: {
-                    slug: 'some-slug',
-                    networkId: 'some-network',
+                    streamId: 'some-stream-id',
                 },
                 name: 'test',
                 avatarSrc: 'test',

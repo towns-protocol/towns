@@ -63,8 +63,8 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
     const onCreateSpace = useCallback(
         (roomIdentifier: RoomIdentifier) => {
             analytics.track('create_space', {
-                slug: roomIdentifier.slug,
-                networkId: roomIdentifier.networkId,
+                slug: roomIdentifier.streamId,
+                networkId: roomIdentifier.streamId,
             })
         },
         [analytics],
@@ -74,15 +74,15 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
         (roomId: RoomIdentifier, spaceId: RoomIdentifier) => {
             if (isEqual(roomId, spaceId)) {
                 analytics.track('join_space', {
-                    slug: roomId.slug,
-                    networkId: roomId.networkId,
-                    spaceId: spaceId.slug,
+                    slug: roomId.streamId,
+                    networkId: roomId.streamId,
+                    spaceId: spaceId.streamId,
                 })
             } else {
                 analytics.track('join_channel', {
-                    slug: roomId.slug,
-                    networkId: roomId.networkId,
-                    spaceId: spaceId.slug,
+                    slug: roomId.streamId,
+                    networkId: roomId.streamId,
+                    spaceId: spaceId.streamId,
                 })
             }
         },
@@ -93,12 +93,12 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
         (roomId: RoomIdentifier, body: string, sendMessageOptions?: SendMessageOptions) => {
             const isURL = getUrls(body).length > 0
             analytics.track('send_message', {
-                slug: roomId.slug,
-                networkId: roomId.networkId,
+                slug: roomId.streamId,
+                networkId: roomId.streamId,
                 messageType: sendMessageOptions?.messageType,
                 isInThread: !!sendMessageOptions?.threadId,
                 isURL,
-                spaceId: sendMessageOptions?.parentSpaceId?.slug,
+                spaceId: sendMessageOptions?.parentSpaceId?.streamId,
             })
         },
         [analytics],

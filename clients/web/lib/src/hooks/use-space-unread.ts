@@ -7,5 +7,5 @@ export function useSpaceUnread(): boolean {
     if (!spaceId) {
         return false
     }
-    return spaceUnreads[spaceId.networkId] ?? false
+    return spaceUnreads[spaceId.streamId] ?? false
 }

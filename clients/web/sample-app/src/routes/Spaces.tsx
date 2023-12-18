@@ -38,7 +38,7 @@ export const Spaces = () => {
         return (
             <>
                 <h1>{space.name}</h1>
-                <h3>id: {space.id.networkId}</h3>
+                <h3>id: {space.id.streamId}</h3>
                 <Divider />
                 <Outlet />
             </>
@@ -47,7 +47,7 @@ export const Spaces = () => {
         return (
             <>
                 <h1>Unknown space Id</h1>
-                <h3>id: {spaceId.networkId}</h3>
+                <h3>id: {spaceId.streamId}</h3>
                 <Divider />
                 <MissingSpaceInfo spaceId={spaceId} onJoinRoom={onClickJoinSpace} />
             </>

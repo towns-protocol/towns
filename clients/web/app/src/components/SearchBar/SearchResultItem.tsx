@@ -54,13 +54,13 @@ export const ResultItem = (
 
         case 'channel': {
             const link = createLink({
-                spaceId: miscProps.spaceId?.networkId,
-                channelId: item.source.id.networkId,
+                spaceId: miscProps.spaceId?.streamId,
+                channelId: item.source.id.streamId,
             })
 
             return isTouch ? (
                 <TouchChannelResultRow
-                    channelNetworkId={item.source.id.networkId}
+                    channelNetworkId={item.source.id.streamId}
                     name={item.source.label}
                     unread={item.source.unread}
                     mentionCount={item.source.mentionCount}
@@ -138,11 +138,11 @@ const MessageResultItem = (props: {
 
     const { threadsStats, channels } = misc
 
-    const channel = channels.find((c) => c.id.networkId === props.channelId)
+    const channel = channels.find((c) => c.id.streamId === props.channelId)
 
     const threadStat =
         channel && event.threadParentId
-            ? threadsStats[channel.id.networkId]?.[event.threadParentId]
+            ? threadsStats[channel.id.streamId]?.[event.threadParentId]
             : undefined
 
     const result = useMemo(

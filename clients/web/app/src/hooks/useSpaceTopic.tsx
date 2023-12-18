@@ -29,7 +29,7 @@ export async function getSpaceTopic(roomId: string): Promise<string> {
 
 export async function setSpaceTopic(roomId: RoomIdentifier, topic: string): Promise<void> {
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
-    const url = `${GATEWAY_SERVER_URL}/space/${roomId.networkId}/bio`
+    const url = `${GATEWAY_SERVER_URL}/space/${roomId.streamId}/bio`
     await axiosClient.post(url, JSON.stringify({ bio: topic }), {
         withCredentials: true,
     })
@@ -78,7 +78,7 @@ export const useSetSpaceTopic = (
 
     return useMutation(_setSpaceTopic, {
         onSuccess: async () => {
-            return queryClient.invalidateQueries(['roomTopic', roomId?.networkId])
+            return queryClient.invalidateQueries(['roomTopic', roomId?.streamId])
         },
         onError: (error) => {
             console.error('[useSetSpaceTopic] error', error)

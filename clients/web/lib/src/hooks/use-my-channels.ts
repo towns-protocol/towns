@@ -17,7 +17,7 @@ export function useMyChannels(space?: SpaceData) {
     const filterUnjoinedChannels = useCallback(
         (channels: Channel[]) => {
             return channels.filter((channel) => {
-                return casablancaChannelIds.has(channel.id.networkId)
+                return casablancaChannelIds.has(channel.id.streamId)
             })
         },
         [casablancaChannelIds],
@@ -49,7 +49,7 @@ function useMyMembershipsCasablanca(channelIds: RoomIdentifier[]) {
         if (!userId) {
             return
         }
-        const inChannelIdSet = new Set(channelIds.map((channelId) => channelId.networkId))
+        const inChannelIdSet = new Set(channelIds.map((channelId) => channelId.streamId))
         const updateState = () => {
             const memberships = new Set(
                 channelIds
@@ -61,7 +61,7 @@ function useMyMembershipsCasablanca(channelIds: RoomIdentifier[]) {
                             return false
                         }
                     })
-                    .map((channelId) => channelId.networkId),
+                    .map((channelId) => channelId.streamId),
             )
             setIsMemberOf((prev) => {
                 if (isEqual(prev, memberships)) {

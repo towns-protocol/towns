@@ -95,7 +95,7 @@ describe('channel with roles and permissions', () => {
         }
         const testGatingNftToken = createExternalTokenStruct([testGatingNftAddress])[0]
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
-            spaceId.networkId,
+            spaceId.streamId,
             'newRoleName',
             [Permission.Read, Permission.Write],
             [testGatingNftToken],

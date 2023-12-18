@@ -21,8 +21,8 @@ export const ChannelSettingsCard = (props: Props) => {
     const { channelId, spaceId, channelName } = props
     const { loggedInWalletAddress } = useAuth()
     const { hasPermission: canEditChannel } = useHasPermission({
-        spaceId: spaceId.networkId,
-        channelId: channelId.networkId,
+        spaceId: spaceId.streamId,
+        channelId: channelId.streamId,
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.ModifySpaceSettings,
     })
@@ -33,13 +33,13 @@ export const ChannelSettingsCard = (props: Props) => {
     const { leaveRoom } = useZionClient()
 
     const onLeaveClick = useEvent(async () => {
-        setTownRouteBookmark(spaceId.slug, '')
-        await leaveRoom(channelId, spaceId.slug)
-        navigate(`/${PATHS.SPACES}/${spaceId.slug}/`)
+        setTownRouteBookmark(spaceId.streamId, '')
+        await leaveRoom(channelId, spaceId.streamId)
+        navigate(`/${PATHS.SPACES}/${spaceId.streamId}/`)
     })
 
     const onInfoClick = useEvent(() => {
-        navigate(`/${PATHS.SPACES}/${spaceId.slug}/channels/${channelId.slug}/info?channel`)
+        navigate(`/${PATHS.SPACES}/${spaceId.streamId}/channels/${channelId.streamId}/info?channel`)
     })
 
     const onEditClick = useEvent(() => {

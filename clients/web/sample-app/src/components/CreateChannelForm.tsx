@@ -23,7 +23,7 @@ interface Props {
 export function CreateChannelForm(props: Props): JSX.Element {
     const [channelName, setChannelName] = useState<string>('')
     const [roles, setRoles] = useState<RolesSettings>({})
-    const { spaceRoles } = useRoles(props.parentSpaceId.networkId)
+    const { spaceRoles } = useRoles(props.parentSpaceId.streamId)
     const { onClick, parentSpaceId } = props
     const {
         isLoading,
@@ -122,7 +122,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
                     marginTop="20px"
                 >
                     <ChannelRoleSettings
-                        spaceId={parentSpaceId.networkId}
+                        spaceId={parentSpaceId.streamId}
                         onChangeValue={onChangeRoles}
                     />
                 </Box>

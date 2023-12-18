@@ -30,7 +30,7 @@ export const isForbiddenError = (error: Error): boolean => {
 }
 
 export const getInviteUrl = (spaceId: RoomIdentifier | undefined) =>
-    `${window.location.protocol}//${window.location.host}/${PATHS.SPACES}/${spaceId?.slug}/?invite`
+    `${window.location.protocol}//${window.location.host}/${PATHS.SPACES}/${spaceId?.streamId}/?invite`
 
 type Entries<T> = {
     [K in keyof T]: [K, T[K]]

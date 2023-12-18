@@ -16,7 +16,7 @@ export function UserDisplayNameForm(): JSX.Element {
 
     const onClickSave = useAsyncButtonCallback(async () => {
         if (spaceId) {
-            void setDisplayName(spaceId.networkId, displayNameEdit)
+            void setDisplayName(spaceId.streamId, displayNameEdit)
             setDisplayNameEdit('')
         } else {
             console.error('spaceId is required to set a display name')

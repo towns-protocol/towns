@@ -21,8 +21,7 @@ const Wrapper = ({
         <TestApp>
             <CreateChannelForm
                 spaceId={{
-                    slug: '',
-                    networkId: '',
+                    streamId: '',
                 }}
                 onCreateChannel={onCreateChannel}
                 onHide={onHide}
@@ -254,8 +253,7 @@ describe('CreateChannelForm', () => {
                 {
                     name: 'test-channel',
                     parentSpaceId: {
-                        networkId: '',
-                        slug: '',
+                        streamId: '',
                     },
                     roleIds: [7, 8],
                 },

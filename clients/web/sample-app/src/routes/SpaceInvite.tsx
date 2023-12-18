@@ -12,7 +12,7 @@ export function SpaceInvite() {
     const onClickSendInvite = useCallback(
         async (spaceId: RoomIdentifier, inviteeId: string) => {
             await inviteUser(spaceId, inviteeId)
-            navigate('/spaces/' + spaceId.slug + '/')
+            navigate('/spaces/' + spaceId.streamId + '/')
         },
         [inviteUser, navigate],
     )

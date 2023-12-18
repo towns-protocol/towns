@@ -19,7 +19,7 @@ export function Invites(props: Props): JSX.Element {
             </Typography>
             <List>
                 {invites.map((r) => (
-                    <ListItem button key={r.id.slug} onClick={() => onClickInvite(r)}>
+                    <ListItem button key={r.id.streamId} onClick={() => onClickInvite(r)}>
                         <ListItemText>{r.name}</ListItemText>
                     </ListItem>
                 ))}

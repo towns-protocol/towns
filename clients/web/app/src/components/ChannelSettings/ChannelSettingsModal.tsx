@@ -44,7 +44,7 @@ export function ChannelSettingsForm({
     preventCloseMessage: string | undefined
 }): JSX.Element {
     const room = useRoom(channelId)
-    const { data, isLoading, invalidateQuery } = useAllRoleDetails(spaceId.networkId)
+    const { data, isLoading, invalidateQuery } = useAllRoleDetails(spaceId.streamId)
 
     const rolesWithDetails = useMemo((): RoleCheckboxProps[] | undefined => {
         if (isLoading) {
@@ -54,7 +54,7 @@ export function ChannelSettingsForm({
             ?.filter((role) => role.permissions.includes(Permission.Read))
             .map((role) => {
                 const channelHasRole = role.channels.some(
-                    (c) => c.channelNetworkId === channelId.networkId,
+                    (c) => c.channelNetworkId === channelId.streamId,
                 )
                 return {
                     ...role,
@@ -62,7 +62,7 @@ export function ChannelSettingsForm({
                     tokenAddresses: role.tokens.map((token) => token.contractAddress as string),
                 }
             })
-    }, [data, channelId.networkId, isLoading])
+    }, [data, channelId.streamId, isLoading])
 
     const defaultValues = useMemo((): FormState => {
         if (room) {
@@ -341,7 +341,7 @@ export function ChannelSettingsModal({
 
     return (
         <ModalContainer
-            key={`${spaceId.networkId}_${channelId.networkId}}`}
+            key={`${spaceId.streamId}_${channelId.streamId}}`}
             touchTitle="Edit Channel"
             onHide={_onHide}
         >

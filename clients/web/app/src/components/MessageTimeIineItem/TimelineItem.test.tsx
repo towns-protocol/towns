@@ -68,14 +68,12 @@ const Wrapper = ({ messageContent }: { messageContent: MessageContent }) => {
                 value={{
                     userId: '',
                     spaceId: {
-                        slug: '',
-                        networkId: '',
+                        streamId: '',
                     },
                     isChannelEncrypted: false,
                     channels: [],
                     channelId: {
-                        slug: '',
-                        networkId: '',
+                        streamId: '',
                     },
                     events: [],
                     messageRepliesMap: {},

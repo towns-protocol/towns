@@ -14,7 +14,7 @@ export function ServiceWorkerSpacesSyncer() {
     return (
         <>
             {Object.values(spaceHierarchies).map(({ root }) => (
-                <SpaceContextProvider key={root.id.networkId} spaceId={root.id}>
+                <SpaceContextProvider key={root.id.streamId} spaceId={root.id}>
                     <MessageSender spaceId={root.id} />
                 </SpaceContextProvider>
             ))}

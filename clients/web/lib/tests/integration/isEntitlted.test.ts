@@ -104,7 +104,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         )) as RoomIdentifier
         // create a channel with token entitlement to read & write
         const roleId: RoleIdentifier | undefined = (await alice.createRole(
-            spaceId.networkId,
+            spaceId.streamId,
             `newRole${Date.now()}`,
             permissions,
             tokens,
@@ -122,7 +122,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         /** Act */
         /** Assert */
         // join the town. let the server enforce the channel entitlement check
-        await waitForWithRetries(() => bobWithNft.joinRoom(channelId, spaceId.networkId))
+        await waitForWithRetries(() => bobWithNft.joinRoom(channelId, spaceId.streamId))
     }) // end test
 
     test('server checks isEntitledToChannel false', async () => {
@@ -145,7 +145,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         )) as RoomIdentifier
         // create a channel with token entitlement to read & write
         const roleId: RoleIdentifier | undefined = (await alice.createRole(
-            spaceId.networkId,
+            spaceId.streamId,
             `newRole${Date.now()}`,
             permissions,
             tokens,
@@ -163,7 +163,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         /** Act */
         // join the town. let the server enforce the channel entitlement check
         /** Assert */
-        await expect(bob.joinRoom(channelId, spaceId.networkId)).rejects.toThrow(
+        await expect(bob.joinRoom(channelId, spaceId.streamId)).rejects.toThrow(
             new RegExp('Unauthorised|permission_denied'),
         )
     }) // end test
@@ -184,7 +184,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         ])
 
         const transaction = await bobWithNft.spaceDapp.joinTown(
-            spaceId!.networkId,
+            spaceId!.streamId,
             bobWithNft.wallet.address,
             bobWithNft.wallet,
         )
@@ -193,7 +193,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         expect(receipt.status).toBe(1)
         /** Act */
         const isAliceEntitledToSpace = await alice.isEntitled(
-            spaceId!.networkId,
+            spaceId!.streamId,
             undefined,
             alice.wallet.address,
             Permission.Read,
@@ -202,7 +202,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         expect(isAliceEntitledToSpace).toBe(true)
         // test the user's entitlement to the space
         const isEntitledToSpace = await bobWithNft.isEntitled(
-            spaceId!.networkId,
+            spaceId!.streamId,
             undefined,
             bobWithNft.wallet.address,
             Permission.Read,
@@ -236,7 +236,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
 
         /** Act */
         const isAliceEntitledToSpace = await alice.isEntitled(
-            spaceId!.networkId,
+            spaceId!.streamId,
             undefined,
             alice.wallet.address,
             Permission.Read,
@@ -246,7 +246,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
 
         // test the user's entitlement to the space
         const isEntitledToJoinTown = await bob.isEntitled(
-            spaceId!.networkId,
+            spaceId!.streamId,
             undefined,
             bob.wallet.address,
             Permission.JoinTown,
@@ -280,7 +280,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
 
         /** Act */
         const isAliceEntitledToSpace = await alice.isEntitled(
-            spaceId!.networkId,
+            spaceId!.streamId,
             undefined,
             alice.wallet.address,
             Permission.Read,
@@ -290,7 +290,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
 
         // test the user's entitlement to the space
         const isEntitledToJoinTown = await bob.isEntitled(
-            spaceId!.networkId,
+            spaceId!.streamId,
             undefined,
             bob.wallet.address,
             Permission.JoinTown,
@@ -317,7 +317,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         /** Act */
         // test the user's entitlement to the space
         const isEntitledToSpace = await bob.isEntitled(
-            spaceId.networkId,
+            spaceId.streamId,
             undefined,
             bobAccountAddress,
             Permission.Read,
@@ -354,7 +354,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         )) as RoomIdentifier
         // create a channel with token entitlement to read & write
         const roleId: RoleIdentifier | undefined = (await alice.createRole(
-            spaceId.networkId,
+            spaceId.streamId,
             `newRole${Date.now()}`,
             permissions,
             tokens,
@@ -372,8 +372,8 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         /** Act */
         // test the user's entitlement to the space
         const isEntitledToChannel = await bobWithNft.isEntitled(
-            spaceId.networkId,
-            channelId.networkId,
+            spaceId.streamId,
+            channelId.streamId,
             bobAccountAddress,
             Permission.Read,
         )
@@ -404,7 +404,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         )) as RoomIdentifier
         // create a channel with token entitlement to read & write
         const roleId: RoleIdentifier | undefined = (await alice.createRole(
-            spaceId.networkId,
+            spaceId.streamId,
             `newRole${Date.now()}`,
             permissions,
             tokens,
@@ -422,8 +422,8 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         /** Act */
         // test the user's entitlement to the space
         const isEntitledToChannel = await bob.isEntitled(
-            spaceId.networkId,
-            channelId.networkId,
+            spaceId.streamId,
+            channelId.streamId,
             bobAccountAddress,
             Permission.Read,
         )
@@ -455,7 +455,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const roleName = `newRole${Date.now()}`
         // create a channel with token entitlement to read & write
         const roleId = await alice.createRole(
-            spaceId.networkId,
+            spaceId.streamId,
             roleName,
             permissions,
             tokens,
@@ -477,8 +477,8 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         /** Act */
         // test the user's entitlement to the space
         const isEntitledToChannel = await bobWithNft.isEntitled(
-            spaceId.networkId,
-            channelId!.networkId,
+            spaceId.streamId,
+            channelId!.streamId,
             bobAccountAddress,
             Permission.Read,
         )
@@ -487,7 +487,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         expect(isEntitledToChannel).toBe(false)
 
         await alice.updateRoleTransaction(
-            spaceId.networkId,
+            spaceId.streamId,
             roleId!.roleId,
             roleName,
             permissions,
@@ -498,8 +498,8 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         /** Act */
         // test the user's entitlement to the space
         const isNowEntitledToChannel = await bobWithNft.isEntitled(
-            spaceId.networkId,
-            channelId!.networkId,
+            spaceId.streamId,
+            channelId!.streamId,
             bobAccountAddress,
             Permission.Read,
         )

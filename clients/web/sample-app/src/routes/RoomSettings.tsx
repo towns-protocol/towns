@@ -10,7 +10,7 @@ export const RoomSettings = () => {
     const targetId = channelSlug || spaceSlug
     const roomId = targetId ? makeRoomIdentifier(targetId) : undefined
     const room = useRoom(roomId)
-    const matrixRoom = roomId ? matrixClient?.getRoom(roomId.networkId) : undefined
+    const matrixRoom = roomId ? matrixClient?.getRoom(roomId.streamId) : undefined
     const joinRule = matrixRoom ? matrixRoom.getJoinRule() : 'unknown'
 
     return room ? (
@@ -20,7 +20,7 @@ export const RoomSettings = () => {
                 <b>RoomName:</b> {room.name}
             </p>
             <p>
-                <b>RoomId:</b> {room.id.networkId}
+                <b>RoomId:</b> {room.id.streamId}
             </p>
             <p>
                 <b>IsSpaceRoom:</b> {room.isSpaceRoom ? 'true' : 'false'}

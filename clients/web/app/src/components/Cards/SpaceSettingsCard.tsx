@@ -27,9 +27,9 @@ export const SpaceSettingsCard = (props: Props) => {
     }, [closeCard, leaveRoom, navigate, spaceId])
 
     const onSettingsClick = useCallback(() => {
-        navigate(`/${PATHS.SPACES}/${spaceId.slug}/settings`)
+        navigate(`/${PATHS.SPACES}/${spaceId.streamId}/settings`)
         closeCard()
-    }, [closeCard, navigate, spaceId.slug])
+    }, [closeCard, navigate, spaceId.streamId])
 
     return (
         <Box position="relative">

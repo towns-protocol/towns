@@ -22,24 +22,24 @@ export const SpacesIndex = () => {
     const [clipboarded, setClipboarded] = useState(false)
 
     const onClickSettings = useCallback(() => {
-        if (space?.id.slug) {
-            navigate('/spaces/' + space.id.slug + '/settings')
+        if (space?.id.streamId) {
+            navigate('/spaces/' + space.id.streamId + '/settings')
         }
-    }, [space?.id.slug, navigate])
+    }, [space?.id.streamId, navigate])
 
     const onCreateChannelClick = useCallback(() => {
-        navigate('/spaces/' + space?.id.slug + '/channels/new')
-    }, [navigate, space?.id.slug])
+        navigate('/spaces/' + space?.id.streamId + '/channels/new')
+    }, [navigate, space?.id.streamId])
 
     const onClickCopy = useCallback(() => {
-        const text = `${window.location.protocol}//${window.location.host}/spaces/${space?.id.slug}/`
+        const text = `${window.location.protocol}//${window.location.host}/spaces/${space?.id.streamId}/`
         navigator.clipboard.writeText(text).then(() => {
             setClipboarded(true)
             setTimeout(() => {
                 setClipboarded(false)
             }, 1000)
         })
-    }, [space?.id.slug])
+    }, [space?.id.streamId])
 
     const onClickLeaveSpace = useCallback(async () => {
         if (space?.id) {

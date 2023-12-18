@@ -32,7 +32,10 @@ export const DirectMessageChannelList = () => {
             label="Direct Messages"
             channels={spaceDms}
             itemRenderer={(c) => (
-                <CondensedChannelNavItem channel={c} unread={dmUnreadChannelIds.has(c.id.slug)} />
+                <CondensedChannelNavItem
+                    channel={c}
+                    unread={dmUnreadChannelIds.has(c.id.streamId)}
+                />
             )}
         />
     )
@@ -45,8 +48,8 @@ const CondensedChannelNavItem = (props: { channel: DMChannelIdentifier; unread: 
     return (
         <DMChannelContextUserLookupProvider
             fallbackToParentContext
-            key={channel.id.networkId}
-            channelId={channel.id.networkId}
+            key={channel.id.streamId}
+            channelId={channel.id.streamId}
         >
             <ActionNavItem
                 badge={unread && <Badge value={unreadCount} />}
@@ -56,10 +59,10 @@ const CondensedChannelNavItem = (props: { channel: DMChannelIdentifier; unread: 
                         <DirectMessageIcon channel={channel} width="x4" />
                     </Box>
                 }
-                id={channel.id.slug}
+                id={channel.id.streamId}
                 label={<DirectMessageName channel={channel} />}
                 highlight={unread}
-                link={createLink({ messageId: channel.id.slug })}
+                link={createLink({ messageId: channel.id.streamId })}
                 minHeight="x5"
             />
         </DMChannelContextUserLookupProvider>

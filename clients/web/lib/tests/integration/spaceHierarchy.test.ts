@@ -59,7 +59,7 @@ describe('spaceHierarchy', () => {
         // can she join it?
         await waitForWithRetries(() => alice.joinRoom(roomId))
         const alice_roomInfo = alice.getRoomData(roomId)
-        expect(alice_roomInfo?.id.networkId).toEqual(roomId.networkId)
+        expect(alice_roomInfo?.id.streamId).toEqual(roomId.streamId)
     })
     test('create a private space and a public room, have user join space and search for space childs', async () => {
         // create clients
@@ -110,6 +110,6 @@ describe('spaceHierarchy', () => {
         // can she join it?
         await waitForWithRetries(() => alice.joinRoom(roomId))
         const alice_roomInfo = alice.getRoomData(roomId)
-        expect(alice_roomInfo?.id.networkId).toEqual(roomId.networkId)
+        expect(alice_roomInfo?.id.streamId).toEqual(roomId.streamId)
     })
 })

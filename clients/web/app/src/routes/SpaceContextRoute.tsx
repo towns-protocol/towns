@@ -27,7 +27,7 @@ export const SpaceContextRoute = () => {
 const SpaceContext = () => {
     const { serverSpace: space, chainSpace } = useContractAndServerSpaceData()
 
-    const spaceSlug = space?.id.slug
+    const spaceSlug = space?.id.streamId
     const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
 
     const setTitle = useSetDocTitle()
@@ -99,7 +99,7 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined) => {
         if (paramsChannelId) {
             if (space) {
                 const channels = space.channelGroups.flatMap((g) => g.channels)
-                const channel = channels.find((c) => c.id.networkId === paramsChannelId)
+                const channel = channels.find((c) => c.id.streamId === paramsChannelId)
                 return {
                     type: 'channel',
                     channel,

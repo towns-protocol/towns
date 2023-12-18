@@ -2,8 +2,7 @@ import { SpaceData } from '../../src/types/zion-types'
 
 export const mockSpaceData: SpaceData = {
     id: {
-        slug: 'mockSpaceId',
-        networkId: 'mockSpaceId',
+        streamId: 'mockSpaceId',
     },
     name: 'Mock Space',
     avatarSrc: '',
@@ -14,8 +13,7 @@ export const mockSpaceData: SpaceData = {
                 {
                     label: 'Mock Channel',
                     id: {
-                        slug: 'mockChannel1',
-                        networkId: 'mockChannel1',
+                        streamId: 'mockChannel1',
                     },
                 },
             ],
@@ -35,8 +33,7 @@ export const mockSpaceDataWith2Channels: SpaceData = {
                 {
                     label: 'Mock Channel 2',
                     id: {
-                        slug: 'mockChannel2',
-                        networkId: 'mockChannel2',
+                        streamId: 'mockChannel2',
                     },
                 },
             ],

@@ -20,10 +20,9 @@ const ownerUser = {
 }
 
 const generateSpaceData = (networkId: string) => {
-    const slug = encodeURIComponent(networkId)
+    const streamId = networkId
     const roomIdentifier = {
-        slug,
-        networkId,
+        streamId,
     }
     const spaceData = {
         id: roomIdentifier,
@@ -36,7 +35,7 @@ const generateSpaceData = (networkId: string) => {
 
     const onChainSpaceInfo = {
         address: getWalletAddress(),
-        networkId: roomIdentifier.networkId,
+        networkId: roomIdentifier.streamId,
         name: spaceData.name,
         owner: ownerUser.userId,
         disabled: false,

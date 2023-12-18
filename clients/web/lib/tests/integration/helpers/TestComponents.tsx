@@ -129,10 +129,10 @@ export const RegisterAndJoin = (props: {
             didExecute.current = true
             void (async () => {
                 await joinTown(spaceId, props.signer)
-                setJoinStatus((prev) => ({ ...prev, [spaceId.networkId]: true }))
+                setJoinStatus((prev) => ({ ...prev, [spaceId.streamId]: true }))
                 for (const roomId of channelIds) {
                     await joinRoom(roomId)
-                    setJoinStatus((prev) => ({ ...prev, [roomId.networkId]: true }))
+                    setJoinStatus((prev) => ({ ...prev, [roomId.streamId]: true }))
                 }
 
                 setJoinComplete(true)

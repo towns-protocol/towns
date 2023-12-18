@@ -61,7 +61,7 @@ describe('spaceHierarchyHooks', () => {
             return (
                 <>
                     <LoginWithWallet signer={signer} />
-                    <div data-testid="spaceId">{space?.id.networkId}</div>
+                    <div data-testid="spaceId">{space?.id.streamId}</div>
                     <div>
                         <div>SPACE INFO:</div>
                         {JSON.stringify(
@@ -106,7 +106,7 @@ describe('spaceHierarchyHooks', () => {
         })
         await waitFor(
             async () =>
-                expect((await alice.spaceDapp.getChannels(spaceId.networkId)).length).toBe(3),
+                expect((await alice.spaceDapp.getChannels(spaceId.streamId)).length).toBe(3),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
         // wait for the space child count to change

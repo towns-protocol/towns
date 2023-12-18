@@ -20,8 +20,7 @@ const Wrapper = () => {
         <TestApp>
             <Lib.SpaceContextProvider
                 spaceId={{
-                    slug: 'some-slug',
-                    networkId: 'some-network',
+                    streamId: 'some-stream-id',
                 }}
             >
                 <TouchHome />
@@ -32,8 +31,7 @@ const Wrapper = () => {
 
 const mockSpaceData: Lib.SpaceData = {
     id: {
-        slug: 'some-slug',
-        networkId: 'some-network',
+        streamId: 'some-stream-id',
     },
     name: 'test space',
     avatarSrc: 'test',
@@ -43,8 +41,7 @@ const mockSpaceData: Lib.SpaceData = {
             channels: [
                 {
                     id: {
-                        slug: 'some-channel-slug',
-                        networkId: 'some-network',
+                        streamId: 'some-stream-id',
                     },
                     label: 'general',
                 },
@@ -120,7 +117,7 @@ describe('<TouchHome />', () => {
                     {
                         isJoined: true,
                         label: 'general',
-                        id: { networkId: 'some-network', slug: 'some-network' },
+                        id: { streamId: 'some-stream-id' },
                         disabled: false,
                         mentionCount: 0,
                         unread: false,

@@ -33,7 +33,7 @@ export function AppDrawerSpaces(props: Props): JSX.Element {
             <List>
                 {spaces.map((s) => (
                     <SpaceListItem
-                        key={s.id.slug}
+                        key={s.id.streamId}
                         space={s}
                         selectedSpaceId={selectedSpaceId}
                         selectedChannelId={selectedChannelId}
@@ -67,7 +67,7 @@ const SpaceListItem = (props: {
         onClickChannel,
     } = props
     const isSelectedSpace = (id: RoomIdentifier) => {
-        return id.networkId === selectedSpaceId?.networkId
+        return id.streamId === selectedSpaceId?.streamId
     }
     const spaceNotifications = useSpaceNotificationCounts(space.id)
     const spaceData = useSpaceData(space.id)
@@ -83,7 +83,7 @@ const SpaceListItem = (props: {
     )
 
     return (
-        <ListItem button key={space.id.slug} onClick={() => onClickSpace(space.id)}>
+        <ListItem button key={space.id.streamId} onClick={() => onClickSpace(space.id)}>
             <ListItemText>
                 {formatNameWithUnreads(space)}
                 {isSelectedSpace(space.id) && spaceData && (
@@ -91,7 +91,7 @@ const SpaceListItem = (props: {
                         <ListItem
                             button
                             selected={false}
-                            key={space.id.slug + '_threads'}
+                            key={space.id.streamId + '_threads'}
                             onClick={(e) => {
                                 e.stopPropagation()
                                 onClickThreads(space.id)
@@ -102,7 +102,7 @@ const SpaceListItem = (props: {
                         <ListItem
                             button
                             selected={false}
-                            key={space.id.slug + '_mentions'}
+                            key={space.id.streamId + '_mentions'}
                             onClick={(e) => {
                                 e.stopPropagation()
                                 onClickMentions(space.id)
@@ -110,10 +110,10 @@ const SpaceListItem = (props: {
                         >
                             Mentions
                         </ListItem>
-                        <Divider key={space.id.slug + '_threadsDivider'} />
+                        <Divider key={space.id.streamId + '_threadsDivider'} />
                         {spaceData?.channelGroups.at(0)?.channels.map((c) => (
                             <ChannelListItem
-                                key={c.id.slug}
+                                key={c.id.streamId}
                                 spaceId={space.id}
                                 channel={c}
                                 selectedChannelId={selectedChannelId}
@@ -135,7 +135,7 @@ const ChannelListItem = (props: {
 }) => {
     const { spaceId, channel, selectedChannelId, onClickChannel } = props
     const isSelectedChannel = (id: RoomIdentifier) => {
-        return id.networkId === selectedChannelId?.networkId
+        return id.streamId === selectedChannelId?.streamId
     }
     const channelNotifications = useChannelNotificationCounts(channel.id)
     const formatChannelNameWithUnreads = useCallback(
@@ -152,7 +152,7 @@ const ChannelListItem = (props: {
         <ListItem
             button
             selected={isSelectedChannel(channel.id)}
-            key={channel.id.slug}
+            key={channel.id.streamId}
             onClick={(e) => {
                 e.stopPropagation()
                 onClickChannel(spaceId, channel.id)

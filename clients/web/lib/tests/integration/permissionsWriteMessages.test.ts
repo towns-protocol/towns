@@ -34,7 +34,7 @@ describe('write messages', () => {
         }
 
         const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
-            spaceId.networkId,
+            spaceId.streamId,
         )
         const councilNftAddress = getTestGatingNftAddress(alice.chainId)
         if (!councilNftAddress) {
@@ -45,7 +45,7 @@ describe('write messages', () => {
 
         // update the member role so only council nft holders can write
         await bob.updateRoleTransaction(
-            spaceId.networkId,
+            spaceId.streamId,
             2,
             'Member',
             [Permission.Read, Permission.Write],
@@ -56,7 +56,7 @@ describe('write messages', () => {
 
         // create read only role
         await bob.createRoleTransaction(
-            spaceId.networkId,
+            spaceId.streamId,
             'Read only',
             [Permission.Read],
             [membershipToken],

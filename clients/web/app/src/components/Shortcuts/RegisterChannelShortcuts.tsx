@@ -9,7 +9,7 @@ export const RegisterChannelShortcuts = () => {
     const space = useSpaceData()
     const groups = useMyChannels(space)
     const channels = useMemo(() => groups.flatMap((c) => c.channels), [groups])
-    const channelId = useChannelId()?.networkId
+    const channelId = useChannelId()?.streamId
 
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
@@ -18,11 +18,13 @@ export const RegisterChannelShortcuts = () => {
         if (!space?.id) {
             return
         }
-        const currentChannelIndex = channels.findIndex((s) => s.id.networkId === channelId)
+        const currentChannelIndex = channels.findIndex((s) => s.id.streamId === channelId)
         const numChannels = channels.length
 
         const index = (currentChannelIndex + increment + numChannels) % numChannels
-        navigate(`/${PATHS.SPACES}/${space.id.slug}/${PATHS.CHANNELS}/${channels[index].id.slug}/`)
+        navigate(
+            `/${PATHS.SPACES}/${space.id.streamId}/${PATHS.CHANNELS}/${channels[index].id.streamId}/`,
+        )
     }
 
     useShortcut('NavigateToPreviousChannel', () => {
@@ -38,7 +40,7 @@ export const RegisterChannelShortcuts = () => {
         }
 
         const path = createLink({
-            spaceId: space.id.networkId,
+            spaceId: space.id.streamId,
             channelId: channelId,
             panel: 'channelInfo',
         })
@@ -52,7 +54,7 @@ export const RegisterChannelShortcuts = () => {
             return
         }
         const path = createLink({
-            spaceId: space.id.networkId,
+            spaceId: space.id.streamId,
             channelId: channelId,
             panel: 'channelDirectory',
         })

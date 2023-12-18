@@ -6,8 +6,8 @@ export const useIsChannelWritable = (
     loggedInWalletAddress: string | undefined,
 ) => {
     const { hasPermission, isLoading } = useHasPermission({
-        spaceId: spaceId?.networkId,
-        channelId: channelId.networkId,
+        spaceId: spaceId?.streamId,
+        channelId: channelId.streamId,
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.Write,
     })

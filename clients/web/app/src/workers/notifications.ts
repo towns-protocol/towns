@@ -435,7 +435,7 @@ async function addSpaceToIdb(space: SpaceData) {
     if (!idbSpaces) {
         ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
     }
-    const spaceId = space.id.networkId
+    const spaceId = space.id.streamId
     const cacheSpace = await idbSpaces.get(spaceId)
 
     if (!cacheSpace || cacheSpace.name !== space.name) {
@@ -452,16 +452,16 @@ async function addChannelsToIdb(space: SpaceData) {
         ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
     }
     const channels = space.channelGroups.flatMap((cg) => cg.channels)
-    const allIdbChannelsForSpace = await idbChannels.getAllFromIndex('bySpace', space.id.networkId)
+    const allIdbChannelsForSpace = await idbChannels.getAllFromIndex('bySpace', space.id.streamId)
 
     const missingItems = channels.filter(
         (channel) =>
-            !allIdbChannelsForSpace.some((idbChannel) => idbChannel.id === channel.id.networkId),
+            !allIdbChannelsForSpace.some((idbChannel) => idbChannel.id === channel.id.streamId),
     )
     const nameChangedItems = channels.filter((channel) =>
         allIdbChannelsForSpace.some(
             (idbChannel) =>
-                idbChannel.id === channel.id.networkId && idbChannel.name !== channel.label,
+                idbChannel.id === channel.id.streamId && idbChannel.name !== channel.label,
         ),
     )
     const itemsToUpdate = missingItems.concat(nameChangedItems)
@@ -472,9 +472,9 @@ async function addChannelsToIdb(space: SpaceData) {
         await Promise.all([
             ...itemsToUpdate.map((item) =>
                 store.put?.({
-                    id: item.id.networkId,
+                    id: item.id.streamId,
                     name: item.label,
-                    parentSpaceId: space.id.networkId,
+                    parentSpaceId: space.id.streamId,
                 }),
             ),
             tx.done,

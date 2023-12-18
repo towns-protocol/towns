@@ -18,13 +18,11 @@ import { ChannelSettingsForm } from './ChannelSettingsModal'
 const CHANNEL_ID = 'channel1'
 const SPACE_ID = 'town1'
 const spaceRoomIdentifier = {
-    slug: SPACE_ID,
-    networkId: SPACE_ID,
+    streamId: SPACE_ID,
 }
 
 const channelRoomIdentifier = {
-    slug: CHANNEL_ID,
-    networkId: CHANNEL_ID,
+    streamId: CHANNEL_ID,
 }
 
 const Wrapper = ({

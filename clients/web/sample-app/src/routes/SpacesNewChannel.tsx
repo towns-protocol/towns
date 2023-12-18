@@ -9,7 +9,7 @@ export const SpacesNewChannel = () => {
     const navigate = useNavigate()
     const onSpaceCreated = useCallback(
         (roomId: RoomIdentifier, membership: Membership) => {
-            navigate('/spaces/' + spaceId?.slug + '/channels/' + roomId.slug + '/')
+            navigate('/spaces/' + spaceId?.streamId + '/channels/' + roomId.streamId + '/')
         },
         [navigate, spaceId],
     )

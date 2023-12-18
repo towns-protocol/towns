@@ -11,13 +11,11 @@ const CHANNEL_ID = 'channel1'
 const SPACE_ID = 'town1'
 
 export const spaceRoomIdentifier = {
-    slug: SPACE_ID,
-    networkId: SPACE_ID,
+    streamId: SPACE_ID,
 }
 
 export const channelRoomIdentifier = {
-    slug: CHANNEL_ID,
-    networkId: CHANNEL_ID,
+    streamId: CHANNEL_ID,
 }
 
 type ContractRole = {
@@ -41,7 +39,7 @@ export const channelDataForRole: {
     disabled: boolean
 } = {
     name: 'Channel 1',
-    channelNetworkId: channelRoomIdentifier.networkId,
+    channelNetworkId: channelRoomIdentifier.streamId,
     disabled: false,
 }
 

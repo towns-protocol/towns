@@ -6,7 +6,7 @@ const EMPTY_THREAD_STATS: Record<string, ThreadStats> = {}
 
 export function useTimelineThreadStats(roomId?: RoomIdentifier): Record<string, ThreadStats> {
     const threadStats = useTimelineStore((state: TimelineStoreStates) =>
-        roomId ? state.threadsStats[roomId.networkId] : undefined,
+        roomId ? state.threadsStats[roomId.streamId] : undefined,
     )
     return threadStats ?? EMPTY_THREAD_STATS
 }

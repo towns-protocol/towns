@@ -77,8 +77,7 @@ describe('<SpaceHome />', () => {
         spacesMock = [
             {
                 id: {
-                    slug: '123',
-                    networkId: '123',
+                    streamId: '123',
                 },
                 name: '123',
                 avatarSrc: '',

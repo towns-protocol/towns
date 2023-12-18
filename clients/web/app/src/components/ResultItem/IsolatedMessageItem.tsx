@@ -27,11 +27,11 @@ const createMessageLink = (
     threadId?: string,
 ) => {
     if (isTouch) {
-        if (isDMChannelStreamId(channelId.networkId) || isGDMChannelStreamId(channelId.networkId)) {
-            return `/${PATHS.SPACES}/${spaceId}/${PATHS.MESSAGES}/${channelId.networkId}/#${eventId}`
+        if (isDMChannelStreamId(channelId.streamId) || isGDMChannelStreamId(channelId.streamId)) {
+            return `/${PATHS.SPACES}/${spaceId}/${PATHS.MESSAGES}/${channelId.streamId}/#${eventId}`
         }
     }
-    const channelSegment = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId.networkId}/`
+    const channelSegment = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId.streamId}/`
     const threadSegment = threadId ? `${PATHS.REPLIES}/${threadId}/` : ``
     const eventSegment = `#${eventId}`
     return `${channelSegment}${threadSegment}${eventSegment}`
@@ -46,8 +46,8 @@ export const IsolatedMessageItem = (
 ) => {
     const { result, padding = { touch: 'md', default: 'lg' }, ...boxProps } = props
     const { isTouch } = useDevice()
-    const { slug: spaceSlug } = useSpaceId() ?? {}
-    const { slug: channelSlug } = result.channel.id
+    const { streamId: spaceSlug } = useSpaceId() ?? {}
+    const { streamId: channelSlug } = result.channel.id
 
     const content = getIsRoomMessageContent(result.event)
 

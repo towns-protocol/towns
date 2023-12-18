@@ -11,7 +11,7 @@ export const SpaceGettingStarted = () => {
     const space = useSpaceData()
     const { loggedInWalletAddress } = useAuth()
     const { hasPermission: owner, isLoading } = useHasPermission({
-        spaceId: space?.id?.networkId ?? '',
+        spaceId: space?.id?.streamId ?? '',
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.Owner,
     })
@@ -23,9 +23,9 @@ export const SpaceGettingStarted = () => {
             return
         }
         if (!owner) {
-            navigate(`/${PATHS.SPACES}/${space?.id?.slug}/${PATHS.THREADS}`)
+            navigate(`/${PATHS.SPACES}/${space?.id?.streamId}/${PATHS.THREADS}`)
         }
-    }, [owner, isLoading, navigate, space?.id?.slug])
+    }, [owner, isLoading, navigate, space?.id?.streamId])
 
     return (
         <CentralPanelLayout>

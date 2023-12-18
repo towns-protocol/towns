@@ -69,11 +69,11 @@ export const SpaceInfoPanel = () => {
     const channels = useSpaceChannels()
     const { loggedInWalletAddress } = useAuth()
 
-    const { data } = useContractSpaceInfo(space?.id?.networkId)
+    const { data } = useContractSpaceInfo(space?.id?.streamId)
     const address = data?.address ?? ''
     const navigate = useNavigate()
     const { hasPermission: canEdit } = useHasPermission({
-        spaceId: space?.id.networkId ?? '',
+        spaceId: space?.id.streamId ?? '',
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.ModifySpaceSettings,
     })
@@ -81,7 +81,7 @@ export const SpaceInfoPanel = () => {
     const [isEdit, setIsEdit] = useState(false)
     const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null)
     const textAreaRef = useRef<HTMLTextAreaElement>(null)
-    const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(space?.id.networkId)
+    const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(space?.id.streamId)
 
     const { mutate, isLoading: isSettingSpaceTopic } = useSetSpaceTopic(space?.id)
 
@@ -157,7 +157,7 @@ export const SpaceInfoPanel = () => {
 
     const spaceID = useSpaceId()
     const { spaceIsMuted, spaceMuteSetting } = useMuteSettings({
-        spaceId: spaceID?.networkId,
+        spaceId: spaceID?.streamId,
     })
     const { mutate: mutateNotificationSettings, isLoading: isSettingNotification } =
         useSetMuteSettingForChannelOrSpace()
@@ -168,7 +168,7 @@ export const SpaceInfoPanel = () => {
         }
         // setSpaceMuted(spaceID.networkId, !spaceIsMuted)
         mutateNotificationSettings({
-            spaceId: spaceID.networkId,
+            spaceId: spaceID.streamId,
             muteSetting: toggleMuteSetting(spaceMuteSetting),
         })
     }, [spaceID, mutateNotificationSettings, spaceMuteSetting])
@@ -177,12 +177,12 @@ export const SpaceInfoPanel = () => {
         if (isTouch) {
             setActiveModal('members')
         } else {
-            navigate(`/${PATHS.SPACES}/${spaceID?.slug}/members/info`)
+            navigate(`/${PATHS.SPACES}/${spaceID?.streamId}/members/info`)
         }
-    }, [isTouch, navigate, spaceID?.slug])
+    }, [isTouch, navigate, spaceID?.streamId])
 
     const onSettingsClick = useEvent(() => {
-        navigate(`/${PATHS.SPACES}/${spaceID?.slug}/settings`)
+        navigate(`/${PATHS.SPACES}/${spaceID?.streamId}/settings`)
     })
 
     const onLeaveClick = useCallback(() => {
@@ -228,7 +228,7 @@ export const SpaceInfoPanel = () => {
                                 type="spaceIcon"
                                 formFieldName="spaceIcon"
                                 canEdit={Boolean(canEdit)}
-                                resourceId={space.id.networkId}
+                                resourceId={space.id.streamId}
                                 setError={setError}
                                 register={register}
                                 formState={formState}
@@ -236,7 +236,7 @@ export const SpaceInfoPanel = () => {
                             >
                                 <TownContractOpener>
                                     <InteractiveSpaceIcon
-                                        spaceId={space.id.networkId}
+                                        spaceId={space.id.streamId}
                                         size="lg"
                                         spaceName={space.name}
                                         address={address}

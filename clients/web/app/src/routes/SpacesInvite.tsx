@@ -12,8 +12,8 @@ export const SpacesInvite = () => {
     const navigate = useNavigate()
 
     const onCancelClicked = useCallback(() => {
-        navigate(space?.id.slug ? `/${PATHS.SPACES}/${space.id.slug}` : '/')
-    }, [navigate, space?.id.slug])
+        navigate(space?.id.streamId ? `/${PATHS.SPACES}/${space.id.streamId}` : '/')
+    }, [navigate, space?.id.streamId])
 
     const onInviteClicked = useCallback(
         async (
@@ -22,7 +22,7 @@ export const SpacesInvite = () => {
             inviteeUserId: string,
         ) => {
             await inviteUser(spaceId, inviteeUserId)
-            navigate(`/${PATHS.SPACES}/${spaceId.slug}/`)
+            navigate(`/${PATHS.SPACES}/${spaceId.streamId}/`)
         },
         [inviteUser, navigate],
     )

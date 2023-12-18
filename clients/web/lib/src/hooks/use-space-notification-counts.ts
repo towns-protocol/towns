@@ -6,8 +6,8 @@ export function useSpaceNotificationCounts(spaceId: RoomIdentifier): {
     mentions: number
 } {
     const { spaceUnreads, spaceMentions } = useZionContext() // aellis 11.2022 this should come out of the context
-    const isUnread = spaceUnreads[spaceId.networkId] ?? false
-    const mentions = spaceMentions[spaceId.networkId] ?? 0
+    const isUnread = spaceUnreads[spaceId.streamId] ?? false
+    const mentions = spaceMentions[spaceId.streamId] ?? 0
     return {
         isUnread,
         mentions: mentions,

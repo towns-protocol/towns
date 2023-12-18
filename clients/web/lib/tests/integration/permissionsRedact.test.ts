@@ -29,7 +29,7 @@ describe.skip('redact messages', () => {
             throw new Error('spaceId is undefined')
         }
         // create a channel for reading and writing
-        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceId.networkId)
+        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceId.streamId)
         const channelId = await alice.createChannel(
             {
                 name: 'test channel',
@@ -81,7 +81,7 @@ describe.skip('redact messages', () => {
             throw new Error('spaceId is undefined')
         }
         // create a channel for reading and writing
-        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceId.networkId)
+        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceId.streamId)
         const channelId = await alice.createChannel(
             {
                 name: 'test channel',
@@ -138,7 +138,7 @@ describe.skip('redact messages', () => {
             throw new Error('spaceId is undefined')
         }
         // get the roles for channel creation later
-        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceId.networkId)
+        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceId.streamId)
         // create the moderator role with the permission to redact messages
         const permissions = [Permission.Read, Permission.Write, Permission.Redact]
         // add bob to the moderator role
@@ -147,7 +147,7 @@ describe.skip('redact messages', () => {
         }
         const users: string[] = [bob.walletAddress]
         const moderatorRoleId = await alice.createRole(
-            spaceId.networkId,
+            spaceId.streamId,
             'moderator',
             permissions,
             [],

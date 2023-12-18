@@ -48,7 +48,7 @@ describe('userProfileHooks', () => {
         )) as RoomIdentifier
 
         // set display name and avatar
-        await alice.setDisplayName(alicesSpaceId.networkId, "Alice's your aunt")
+        await alice.setDisplayName(alicesSpaceId.streamId, "Alice's your aunt")
         await alice.setAvatarUrl('alice.png')
 
         //
@@ -68,7 +68,7 @@ describe('userProfileHooks', () => {
             const roomMessages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
             const onClickSetProfileInfo = useCallback(() => {
                 void (async () => {
-                    await setDisplayName(alicesSpaceId.networkId, "Bob's your uncle")
+                    await setDisplayName(alicesSpaceId.streamId, "Bob's your uncle")
                     await setAvatarUrl('bob.png')
                 })()
             }, [setDisplayName, setAvatarUrl])

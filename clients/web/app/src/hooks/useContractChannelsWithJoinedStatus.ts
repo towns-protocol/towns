@@ -9,7 +9,7 @@ export const useContractChannelsWithJoinedStatus = () => {
     // matrix doesn't always sync left rooms. For example if you leave a room, and all other members leave it too. And there may be other unexpected cases.
     // matrix sdk .syncLeftRooms() returns empty array
     // so using blockchain data to get all the channels
-    const { data: contractChannels } = useContractChannels(space?.id.networkId)
+    const { data: contractChannels } = useContractChannels(space?.id.streamId)
     const matrixSyncedChannels = useSpaceChannels()
 
     const contractChannelsWithJoinedStatus = useMemo(() => {
@@ -17,9 +17,7 @@ export const useContractChannelsWithJoinedStatus = () => {
             return []
         }
         return contractChannels.map((c) => {
-            const syncedEq = matrixSyncedChannels?.find(
-                (m) => m.id.networkId === c.channelNetworkId,
-            )
+            const syncedEq = matrixSyncedChannels?.find((m) => m.id.streamId === c.channelNetworkId)
             if (!syncedEq) {
                 return {
                     ...c,

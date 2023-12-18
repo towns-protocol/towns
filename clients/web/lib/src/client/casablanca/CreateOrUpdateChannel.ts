@@ -12,7 +12,7 @@ export async function createCasablancaChannel(
     streamSettings?: PlainMessage<StreamSettings>,
 ): Promise<RoomIdentifier> {
     const { streamId } = await client.createChannel(
-        spaceId.networkId,
+        spaceId.streamId,
         channelName,
         channelTopic,
         networkId,

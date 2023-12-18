@@ -153,7 +153,7 @@ function TestComponent(args: {
     const { createRoleTransaction, data } = createRoleTransactionInfo
     const deleteRoleTransactionInfo = useDeleteRoleTransaction()
     const { deleteRoleTransaction } = deleteRoleTransactionInfo
-    const spaceNetworkId = spaceId ? spaceId.networkId : ''
+    const spaceNetworkId = spaceId ? spaceId.streamId : ''
     const roleIdentifier = data?.roleId
     const roleId = useMemo(() => roleIdentifier?.roleId ?? -1, [roleIdentifier])
     // handle click to create a space

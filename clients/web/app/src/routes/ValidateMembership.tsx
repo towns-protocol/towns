@@ -18,7 +18,7 @@ export const ValidateMembership = () => {
     const { confirmed: usernameConfirmed } = useUsernameConfirmed()
 
     const riverSpace = useMemo(
-        () => spaces.find((s) => s.id.networkId === spaceId),
+        () => spaces.find((s) => s.id.streamId === spaceId),
         [spaceId, spaces],
     )
 

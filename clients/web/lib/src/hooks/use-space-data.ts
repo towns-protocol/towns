@@ -33,8 +33,8 @@ export function useSpaceData(inSpaceId?: RoomIdentifier): SpaceData | undefined 
     // with local data and hope the channel names come out right.
     const spaceRoom = useRoom(spaceId)
     const spaceHierarchy = useMemo(
-        () => (spaceId?.networkId ? spaceHierarchies[spaceId.networkId] : undefined),
-        [spaceId?.networkId, spaceHierarchies],
+        () => (spaceId?.streamId ? spaceHierarchies[spaceId.streamId] : undefined),
+        [spaceId?.streamId, spaceHierarchies],
     )
     const spaceRoomNames = useRoomNames(spaceHierarchy?.children.map((c) => c.id) ?? [])
     // casablanca is much simpler, just get the data from the stream
@@ -69,7 +69,7 @@ export function useInvites(): InviteData[] {
                     }
                     return formatInvite(
                         room,
-                        getParentSpaceId(id.networkId, spaceHierarchies),
+                        getParentSpaceId(id.streamId, spaceHierarchies),
                         '/placeholders/nft_29.png',
                     )
                 })
@@ -89,7 +89,10 @@ export const useInviteData = (slug: string | undefined) => {
     return useMemo(
         () =>
             invites.find((invite) => {
-                return invite.id.slug === slug || invite.id.slug === encodeURIComponent(slug || '')
+                return (
+                    invite.id.streamId === slug ||
+                    invite.id.streamId === encodeURIComponent(slug || '')
+                )
             }),
         [invites, slug],
     )
@@ -97,7 +100,7 @@ export const useInviteData = (slug: string | undefined) => {
 
 function getParentSpaceId(roomId: string, spaces: SpaceHierarchies): RoomIdentifier | undefined {
     const hasChild = (space: SpaceHierarchy, id: string) =>
-        space.children.some((child) => child.id.networkId === id)
+        space.children.some((child) => child.id.streamId === id)
 
     const parentId = Object.values(spaces).find((space) => hasChild(space, roomId))?.root.id
     return parentId
@@ -154,7 +157,7 @@ function formatInvite(
 }
 
 function formatChannel(spaceChild: SpaceChild, roomNames: Record<string, string>): Channel {
-    const roomName = roomNames[spaceChild.id.networkId]
+    const roomName = roomNames[spaceChild.id.streamId]
     return {
         id: spaceChild.id,
         label: roomName ?? spaceChild.name ?? '',
@@ -279,7 +282,7 @@ export function useSpaceName(spaceId: string) {
 function useSpaceRollup(streamId: RoomIdentifier | undefined): SpaceData | undefined {
     const { casablancaClient } = useZionContext()
     const stream = useCasablancaStream(streamId)
-    const { isLoading, spaceName, error } = useSpaceName(streamId?.networkId ?? '')
+    const { isLoading, spaceName, error } = useSpaceName(streamId?.streamId ?? '')
     const [space, setSpace] = useState<SpaceData | undefined>(undefined)
 
     useEffect(() => {

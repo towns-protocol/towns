@@ -245,7 +245,7 @@ export class ZionClient implements EntitlementsDelegate {
                 if (!this.casablancaClient) {
                     throw new Error("Casablanca client doesn't exist")
                 }
-                await createCasablancaSpace(this.casablancaClient, spaceId.networkId)
+                await createCasablancaSpace(this.casablancaClient, spaceId.streamId)
                 console.log('[waitForCreateSpaceTransaction] Space stream created', spaceId)
 
                 await this.createSpaceDefaultChannelRoom(spaceId, 'general', channelId)
@@ -296,10 +296,10 @@ export class ZionClient implements EntitlementsDelegate {
         try {
             transaction = await this.spaceDapp.createSpace(
                 {
-                    spaceId: spaceId.networkId,
+                    spaceId: spaceId.streamId,
                     spaceName: createSpaceInfo.name,
                     spaceMetadata: createSpaceInfo.name,
-                    channelId: channelId.networkId,
+                    channelId: channelId.streamId,
                     channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
                     membership,
                 },
@@ -360,7 +360,7 @@ export class ZionClient implements EntitlementsDelegate {
             parentSpaceId,
             roleIds: [],
         }
-        return await this.createChannelRoom(channelInfo, channelId?.networkId)
+        return await this.createChannelRoom(channelInfo, channelId?.streamId)
     }
 
     /************************************************
@@ -404,9 +404,9 @@ export class ZionClient implements EntitlementsDelegate {
 
         try {
             transaction = await this.spaceDapp.createChannel(
-                createChannelInfo.parentSpaceId.networkId,
+                createChannelInfo.parentSpaceId.streamId,
                 createChannelInfo.name,
-                roomId.networkId,
+                roomId.streamId,
                 createChannelInfo.roleIds,
                 signer,
             )
@@ -414,7 +414,7 @@ export class ZionClient implements EntitlementsDelegate {
         } catch (err) {
             console.error('[createChannelTransaction] error', err)
             error = await this.getDecodedErrorForSpace(
-                createChannelInfo.parentSpaceId.networkId,
+                createChannelInfo.parentSpaceId.streamId,
                 err,
             )
         }
@@ -439,14 +439,14 @@ export class ZionClient implements EntitlementsDelegate {
                 const roomId = txnContext.data
                 // wait until the channel is minted on-chain
                 // before creating the stream
-                await this.createChannelRoom(createChannelInfo, roomId.networkId)
+                await this.createChannelRoom(createChannelInfo, roomId.streamId)
                 console.log('[waitForCreateChannelTransaction] Channel stream created', roomId)
             }
         }
 
         if (txnContext.error) {
             txnContext.error = await this.getDecodedErrorForSpace(
-                createChannelInfo.parentSpaceId.networkId,
+                createChannelInfo.parentSpaceId.streamId,
                 txnContext.error,
             )
         }
@@ -474,8 +474,8 @@ export class ZionClient implements EntitlementsDelegate {
             if (updateChannelInfo.updatedChannelName && updateChannelInfo.updatedRoleIds) {
                 transaction = await this.spaceDapp.updateChannel(
                     {
-                        spaceId: updateChannelInfo.parentSpaceId.networkId,
-                        channelId: updateChannelInfo.channelId.networkId,
+                        spaceId: updateChannelInfo.parentSpaceId.streamId,
+                        channelId: updateChannelInfo.channelId.streamId,
                         channelName: updateChannelInfo.updatedChannelName,
                         roleIds: updateChannelInfo.updatedRoleIds,
                     },
@@ -488,7 +488,7 @@ export class ZionClient implements EntitlementsDelegate {
         } catch (err) {
             console.error('[updateChannelTransaction]', err)
             error = await this.spaceDapp.parseSpaceError(
-                updateChannelInfo.parentSpaceId.networkId,
+                updateChannelInfo.parentSpaceId.streamId,
                 err,
             )
         }
@@ -525,10 +525,10 @@ export class ZionClient implements EntitlementsDelegate {
         }
         await updateCasablancaChannel(
             this.casablancaClient,
-            updateChannelInfo.parentSpaceId.networkId,
+            updateChannelInfo.parentSpaceId.streamId,
             updateChannelInfo.updatedChannelName,
             updateChannelInfo.updatedChannelTopic ?? '',
-            updateChannelInfo.channelId.networkId,
+            updateChannelInfo.channelId.streamId,
         )
     }
 
@@ -923,7 +923,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
-        await this.casablancaClient.inviteUser(roomId.networkId, userId)
+        await this.casablancaClient.inviteUser(roomId.streamId, userId)
     }
 
     /************************************************
@@ -933,7 +933,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
-        await this.casablancaClient.leaveStream(roomId.networkId)
+        await this.casablancaClient.leaveStream(roomId.streamId)
     }
 
     /************************************************
@@ -951,7 +951,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
-        const stream = await this.casablancaClient.joinStream(roomId.networkId, opts)
+        const stream = await this.casablancaClient.joinStream(roomId.streamId, opts)
         let parentId = roomId
         if (stream.view.contentKind === 'channelContent' && stream.view.channelContent.spaceId) {
             parentId = makeRoomIdentifier(stream.view.channelContent.spaceId)
@@ -1004,7 +1004,7 @@ export class ZionClient implements EntitlementsDelegate {
             const wallets = await this.getLinkedWallets(rootWallet)
             const allPromises = wallets.map(async (wallet) => {
                 const isEntitled = await this.isEntitled(
-                    spaceId.networkId,
+                    spaceId.streamId,
                     undefined,
                     wallet,
                     Permission.JoinTown,
@@ -1018,7 +1018,7 @@ export class ZionClient implements EntitlementsDelegate {
             allPromises.push(
                 (async () => {
                     const isEntitled = await this.isEntitled(
-                        spaceId.networkId,
+                        spaceId.streamId,
                         undefined,
                         rootWallet,
                         Permission.JoinTown,
@@ -1034,7 +1034,7 @@ export class ZionClient implements EntitlementsDelegate {
             const entitledWallet = await Promise.any(allPromises)
 
             const transaction = await this.spaceDapp.joinTown(
-                spaceId.networkId,
+                spaceId.streamId,
                 entitledWallet,
                 signer,
             )
@@ -1046,7 +1046,7 @@ export class ZionClient implements EntitlementsDelegate {
                 throw err
             }
             console.error('[mintMembershipTransaction] failed', error)
-            const decodeError = await this.getDecodedErrorForSpace(spaceId.networkId, error)
+            const decodeError = await this.getDecodedErrorForSpace(spaceId.streamId, error)
             console.error('[mintMembershipAndJoinRoom] failed', decodeError)
             throw decodeError
         }
@@ -1062,8 +1062,8 @@ export class ZionClient implements EntitlementsDelegate {
     ) {
         if (this.pushNotificationClient && options?.parentSpaceId) {
             await this.pushNotificationClient.sendNotificationTagIfAny(
-                options.parentSpaceId.networkId,
-                roomId.networkId,
+                options.parentSpaceId.streamId,
+                roomId.streamId,
                 options,
             )
         }
@@ -1075,7 +1075,7 @@ export class ZionClient implements EntitlementsDelegate {
             case undefined:
             case MessageType.Text:
                 {
-                    await this.casablancaClient.sendChannelMessage_Text(roomId.networkId, {
+                    await this.casablancaClient.sendChannelMessage_Text(roomId.streamId, {
                         threadId: options?.threadId,
                         threadPreview: options?.threadPreview,
                         content: {
@@ -1086,7 +1086,7 @@ export class ZionClient implements EntitlementsDelegate {
                 }
                 break
             case MessageType.Image:
-                await this.casablancaClient.sendChannelMessage_Image(roomId.networkId, {
+                await this.casablancaClient.sendChannelMessage_Image(roomId.streamId, {
                     threadId: options?.threadId,
                     threadPreview: options?.threadPreview,
                     content: {
@@ -1097,7 +1097,7 @@ export class ZionClient implements EntitlementsDelegate {
                 })
                 break
             case MessageType.GM:
-                await this.casablancaClient.sendChannelMessage_GM(roomId.networkId, {
+                await this.casablancaClient.sendChannelMessage_GM(roomId.streamId, {
                     threadId: options?.threadId,
                     threadPreview: options?.threadPreview,
                     content: {
@@ -1106,7 +1106,7 @@ export class ZionClient implements EntitlementsDelegate {
                 })
                 break
             case MessageType.EmbeddedMedia:
-                await this.casablancaClient.sendChannelMessage_EmbeddedMedia(roomId.networkId, {
+                await this.casablancaClient.sendChannelMessage_EmbeddedMedia(roomId.streamId, {
                     threadId: options.threadId,
                     threadPreview: options.threadPreview,
                     content: {
@@ -1122,7 +1122,7 @@ export class ZionClient implements EntitlementsDelegate {
                 })
                 break
             case MessageType.ChunkedMedia:
-                await this.casablancaClient.sendChannelMessage_Media(roomId.networkId, {
+                await this.casablancaClient.sendChannelMessage_Media(roomId.streamId, {
                     threadId: options?.threadId,
                     threadPreview: options?.threadPreview,
                     content: {
@@ -1183,7 +1183,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
-        await this.casablancaClient.sendChannelMessage_Reaction(roomId.networkId, {
+        await this.casablancaClient.sendChannelMessage_Reaction(roomId.streamId, {
             reaction,
             refEventId: eventId,
         })
@@ -1203,7 +1203,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        return await this.casablancaClient.sendChannelMessage_Edit_Text(roomId.networkId, eventId, {
+        return await this.casablancaClient.sendChannelMessage_Edit_Text(roomId.streamId, eventId, {
             threadId: originalEventContent.inReplyTo,
             threadPreview: originalEventContent.threadPreview,
             content: {
@@ -1220,7 +1220,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        await this.casablancaClient.sendChannelMessage_Redaction(roomId.networkId, {
+        await this.casablancaClient.sendChannelMessage_Redaction(roomId.streamId, {
             refEventId: eventId,
             reason,
         })
@@ -1236,7 +1236,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client is undefined')
         }
-        await this.casablancaClient.sendFullyReadMarkers(channelId.networkId, content)
+        await this.casablancaClient.sendFullyReadMarkers(channelId.streamId, content)
     }
 
     /************************************************
@@ -1246,7 +1246,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        const stream = this.casablancaClient.stream(roomId.networkId)
+        const stream = this.casablancaClient.stream(roomId.streamId)
         return stream ? toZionRoomFromStream(stream, this.casablancaClient.userId) : undefined
     }
 
@@ -1349,10 +1349,10 @@ export class ZionClient implements EntitlementsDelegate {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        const result = await this.casablancaClient.scrollback(roomId.networkId)
+        const result = await this.casablancaClient.scrollback(roomId.streamId)
         return {
             terminus: result.terminus,
-            eventCount: this.casablancaClient?.stream(roomId.networkId)?.view?.timeline.length ?? 0,
+            eventCount: this.casablancaClient?.stream(roomId.streamId)?.view?.timeline.length ?? 0,
             firstEventId: result.firstEvent?.hashStr,
             firstEventTimestamp: result.firstEvent
                 ? Number(result.firstEvent.createdAtEpocMs)

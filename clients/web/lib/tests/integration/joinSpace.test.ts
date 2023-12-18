@@ -27,7 +27,7 @@ test('create space, and have user join ', async () => {
 
     // alice joins the space
     await alice.joinTown(spaceId, alice.wallet)
-    expect(alice.getRoomData(spaceId)?.id.networkId).toEqual(spaceId.networkId)
+    expect(alice.getRoomData(spaceId)?.id.streamId).toEqual(spaceId.streamId)
 })
 
 test('create space, and have user that already has membership NFT join ', async () => {
@@ -46,5 +46,5 @@ test('create space, and have user that already has membership NFT join ', async 
     await alice.mintMembershipTransaction(spaceId, alice.wallet)
     // alice joins the space
     await alice.joinTown(spaceId, alice.wallet)
-    expect(alice.getRoomData(spaceId)?.id.networkId).toEqual(spaceId.networkId)
+    expect(alice.getRoomData(spaceId)?.id.streamId).toEqual(spaceId.streamId)
 })

@@ -89,7 +89,7 @@ export const TouchHome = () => {
     }, [memberIds, usersMap])
 
     const { hasPermission: canCreateChannel } = useHasPermission({
-        spaceId: space?.id.networkId,
+        spaceId: space?.id.streamId,
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.AddRemoveChannels,
     })
@@ -153,7 +153,7 @@ export const TouchHome = () => {
         setActiveOverlay('main-panel')
     }, [])
 
-    const { imageSrc } = useImageSource(space?.id.slug ?? '', ImageVariants.thumbnail300)
+    const { imageSrc } = useImageSource(space?.id.streamId ?? '', ImageVariants.thumbnail300)
 
     const hasResult = filteredChannels.length > 0 || filteredMembers.length > 0
 
@@ -393,19 +393,19 @@ const ChannelList = (props: {
             {channels.map((c) =>
                 c.isJoined ? (
                     <TouchChannelResultRow
-                        key={c.id.networkId}
-                        channelNetworkId={c.id.networkId}
+                        key={c.id.streamId}
+                        channelNetworkId={c.id.streamId}
                         name={c.label}
                         unread={c.unread}
                         mentionCount={c.mentionCount}
                         muted={c.muted}
                     />
                 ) : (
-                    <Box padding="sm" key={c.id.networkId}>
+                    <Box padding="sm" key={c.id.streamId}>
                         <ChannelItem
-                            key={c.id.networkId}
+                            key={c.id.streamId}
                             space={space}
-                            channelNetworkId={c.id.networkId}
+                            channelNetworkId={c.id.streamId}
                             name={c.label}
                         />
                     </Box>
@@ -422,9 +422,9 @@ const DirectMessageChannelList = () => {
         <Stack>
             {spaceDms.map((c) => (
                 <DirectMessageItem
-                    key={c.id.networkId}
+                    key={c.id.streamId}
                     channel={c}
-                    unread={dmUnreadChannelIds.has(c.id.networkId)}
+                    unread={dmUnreadChannelIds.has(c.id.streamId)}
                 />
             ))}
         </Stack>
@@ -436,8 +436,8 @@ const DirectMessageItem = (props: { channel: DMChannelIdentifier; unread: boolea
     const { unreadCount } = useDMLatestMessage(channel.id)
     return (
         <TouchChannelResultRow
-            key={channel.id.networkId}
-            channelNetworkId={channel.id.networkId}
+            key={channel.id.streamId}
+            channelNetworkId={channel.id.streamId}
             name={<DirectMessageName channel={channel} />}
             unread={unread}
             mentionCount={unreadCount}

@@ -20,7 +20,7 @@ export function useDMUnreads(
         const updateUnread = () => {
             const unreadChannelIds = new Set<string>()
             const markers = useFullyReadMarkerStore.getState().markers
-            const channelIds = new Set([...dmIds.map((dm) => dm.id.networkId)])
+            const channelIds = new Set([...dmIds.map((dm) => dm.id.streamId)])
 
             Object.values(markers).forEach((marker) => {
                 if (marker.isUnread && channelIds.has(marker.channelId)) {

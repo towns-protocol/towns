@@ -54,7 +54,9 @@ export const MessageTimeline = (props: Props) => {
     const repliesMap = timelineContext?.messageRepliesMap
     const channelId = timelineContext?.channelId
     const isChannelEncrypted = timelineContext?.isChannelEncrypted
-    const channelName = timelineContext?.channels.find((c) => c.id.slug === channelId?.slug)?.label
+    const channelName = timelineContext?.channels.find(
+        (c) => c.id.streamId === channelId?.streamId,
+    )?.label
     const userId = timelineContext?.userId
     const { isTouch } = useDevice()
     const [isCollapsed, setCollapsed] = useState(props.collapsed ?? false)
@@ -536,7 +538,7 @@ export const MessageTimeline = (props: Props) => {
                     item.type === 'header'
                 }
                 containerRef={props.containerRef}
-                key={channelId?.networkId}
+                key={channelId?.streamId}
                 groupIds={groupIds}
                 pointerEvents={isTouch && tabBarHidden ? 'none' : undefined}
                 itemRenderer={itemRenderer}

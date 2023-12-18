@@ -106,7 +106,7 @@ function TestComponent(args: {
     const spaceId = txData?.spaceId
     const updateSpaceNameTransactionInfo = useUpdateSpaceNameTransaction()
     const { updateSpaceNameTransaction } = updateSpaceNameTransactionInfo
-    const spaceNetworkId = spaceId ? spaceId.networkId : ''
+    const spaceNetworkId = spaceId ? spaceId.streamId : ''
 
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
@@ -146,7 +146,7 @@ function TestComponent(args: {
             {spaceTransactionStatus === TransactionStatus.Success && (
                 <SpaceContextProvider spaceId={spaceId}>
                     <>
-                        <SpacesComponent spaceId={spaceId?.networkId} />
+                        <SpacesComponent spaceId={spaceId?.streamId} />
                     </>
                 </SpaceContextProvider>
             )}

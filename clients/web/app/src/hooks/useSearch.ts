@@ -17,7 +17,7 @@ export const useSearch = (searchTerms: string) => {
     const indexedChannels = useMemo(
         () =>
             channelsWithMentionCountsAndUnread.map((c) => ({
-                key: `channel-${c.id.networkId}`,
+                key: `channel-${c.id.streamId}`,
                 type: 'channel' as const,
                 body: c.label,
                 source: c,

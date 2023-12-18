@@ -52,7 +52,7 @@ describe('unreadMessageCountEdgeCases', () => {
             const { spaceUnreads } = useZionContext()
             const channelFullyReadMarker = useFullyReadMarker(channelId)
             const { timeline } = useChannelTimeline()
-            const spaceHasUnread = spaceUnreads[spaceId.networkId]
+            const spaceHasUnread = spaceUnreads[spaceId.streamId]
             const messages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
             // send message
             const onMarkAsRead = useCallback(() => {

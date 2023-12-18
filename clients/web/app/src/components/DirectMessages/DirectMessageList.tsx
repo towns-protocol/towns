@@ -51,7 +51,7 @@ export const DirectMessageList = () => {
               .filter((r) => r.item.type === 'dmMessage')
               .map((r) => {
                   return dmChannelIds.find(
-                      (c) => r.item.type === 'dmMessage' && c.id.slug === r.item.channelId,
+                      (c) => r.item.type === 'dmMessage' && c.id.streamId === r.item.channelId,
                   )
               })
               .filter(notUndefined)
@@ -100,14 +100,14 @@ export const DirectMessageList = () => {
                         return (
                             <DMChannelContextUserLookupProvider
                                 fallbackToParentContext
-                                key={channel.id.networkId}
-                                channelId={channel.id.networkId}
+                                key={channel.id.streamId}
+                                channelId={channel.id.streamId}
                             >
                                 <DirectMessageListItem
-                                    key={channel.id.networkId}
+                                    key={channel.id.streamId}
                                     channel={channel}
-                                    selected={channelId === channel.id.slug}
-                                    unread={dmUnreadChannelIds.has(channel.id.slug)}
+                                    selected={channelId === channel.id.streamId}
+                                    unread={dmUnreadChannelIds.has(channel.id.streamId)}
                                     onSelect={selectMessage}
                                 />
                             </DMChannelContextUserLookupProvider>

@@ -38,7 +38,7 @@ export const schema = z.object({
 export const SpaceNameModal = (props: Props) => {
     const { onHide } = props
     const space = useSpaceData()
-    const { data } = useContractSpaceInfo(space?.id?.networkId)
+    const { data } = useContractSpaceInfo(space?.id?.streamId)
 
     const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
     const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()

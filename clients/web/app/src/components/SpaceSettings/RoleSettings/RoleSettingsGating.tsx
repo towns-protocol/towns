@@ -187,7 +187,7 @@ const TokenRenderer = (props: TokenRendererProps) => {
 
     const { data: isMembershipNft } = useIsMembershipNftAddress({
         address: props.item.contractAddress as Address,
-        spaceId: spaceId?.networkId,
+        spaceId: spaceId?.streamId,
     })
 
     const onClick = useEvent(() => {

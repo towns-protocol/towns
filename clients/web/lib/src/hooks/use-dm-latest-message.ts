@@ -32,7 +32,7 @@ type LatestMessageInfo = {
 
 export function useDMLatestMessage(roomId: RoomIdentifier) {
     const { timeline } = useTimeline(roomId)
-    const unreadMarker = useFullyReadMarkerStore((state) => state.markers[roomId.networkId])
+    const unreadMarker = useFullyReadMarkerStore((state) => state.markers[roomId.streamId])
 
     // let's not count unreads if the timeline doesn't yet contain the event marked as unread
     const hasRelevantUnreadMarker =

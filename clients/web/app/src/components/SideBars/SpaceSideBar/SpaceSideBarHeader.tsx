@@ -27,7 +27,7 @@ export const SpaceSideBarHeader = (props: {
     const { chainId } = useEnvironment()
 
     const { memberIds } = useSpaceMembers()
-    const { data: spaceInfo } = useContractSpaceInfo(space.id.networkId)
+    const { data: spaceInfo } = useContractSpaceInfo(space.id.streamId)
     const myMembership = useMyMembership(space.id)
 
     const membersCount = memberIds.length
@@ -35,7 +35,7 @@ export const SpaceSideBarHeader = (props: {
     const navigate = useNavigate()
 
     const onMembersClick = useEvent(() => {
-        navigate(`/${PATHS.SPACES}/${space.id.slug}/members`)
+        navigate(`/${PATHS.SPACES}/${space.id.streamId}/members`)
     })
 
     const onAddressClick = useEvent(() => {
@@ -50,7 +50,7 @@ export const SpaceSideBarHeader = (props: {
 
     const onTokenClick = useEvent(() => {
         const path = createLink({
-            spaceId: space.id.networkId,
+            spaceId: space.id.streamId,
             panel: 'townInfo',
         })
 
@@ -127,9 +127,9 @@ export const SpaceSideBarHeader = (props: {
                 <Box height="x2" />
                 {space ? (
                     <InteractiveSpaceIcon
-                        key={space.id.networkId}
+                        key={space.id.streamId}
                         size="sm"
-                        spaceId={space.id.networkId}
+                        spaceId={space.id.streamId}
                         address={spaceInfo?.address}
                         spaceName={space.name}
                     />

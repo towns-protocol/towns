@@ -63,7 +63,7 @@ export const useSendFileMessage = () => {
             const encryptionResult = await encryptAESGCM(data)
             const chunkCount = Math.ceil(encryptionResult.ciphertext.length / CHUNK_SIZE)
 
-            const streamId = await createMediaStream(channelId.networkId, chunkCount)
+            const streamId = await createMediaStream(channelId.streamId, chunkCount)
             if (!streamId) {
                 throw new Error('Failed to create media stream')
             }

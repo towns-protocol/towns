@@ -11,15 +11,15 @@ export const useOpenMessageThread = (spaceId?: RoomIdentifier, channelId?: RoomI
         (eventId: string) => {
             const link = createLink({
                 threadId: eventId,
-                spaceId: spaceId?.slug,
-                channelId: channelId?.slug,
+                spaceId: spaceId?.streamId,
+                channelId: channelId?.streamId,
             })
 
             if (link) {
                 navigate(link)
             }
         },
-        [channelId?.slug, navigate, spaceId?.slug, createLink],
+        [channelId?.streamId, navigate, spaceId?.streamId, createLink],
     )
     return {
         onOpenMessageThread,

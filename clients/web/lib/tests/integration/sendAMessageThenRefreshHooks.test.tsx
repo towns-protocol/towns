@@ -77,7 +77,7 @@ describe('sendAMessageThenRefresh.hooks', () => {
             return (
                 <>
                     <LoginWithWallet signer={signer} />
-                    <div data-testid="channelId">{channelId.networkId}</div>
+                    <div data-testid="channelId">{channelId.streamId}</div>
                     <div data-testid="channelMembership">{myChannelMembership}</div>
                     <div data-testid="message0">
                         {messages.length > 0 ? formatMessage(messages[0]) : 'empty'}

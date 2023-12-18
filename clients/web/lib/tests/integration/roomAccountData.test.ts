@@ -55,8 +55,8 @@ describe('roomAccountData', () => {
             .find((event) => event.content.body === 'GM Bob')!
 
         const fullyRead: Record<string, FullyReadMarker> = {
-            [channelId.networkId]: {
-                channelId: channelId.networkId,
+            [channelId.streamId]: {
+                channelId: channelId.streamId,
                 threadParentId: undefined,
                 eventId: event.eventId,
                 eventNum: event.eventNum,

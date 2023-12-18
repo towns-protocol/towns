@@ -71,7 +71,7 @@ describe('Zion event handlers test', () => {
 
         expect(eventHandlerResult).toBeDefined()
         expect(eventHandlerResult?.roomIdentifier).toBeDefined()
-        expect(eventHandlerResult?.roomIdentifier.networkId).toBeDefined()
+        expect(eventHandlerResult?.roomIdentifier.streamId).toBeDefined()
     })
 
     test('onJoinRoom', async () => {

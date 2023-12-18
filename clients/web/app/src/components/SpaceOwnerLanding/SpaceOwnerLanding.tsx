@@ -46,7 +46,7 @@ export const SpaceOwnerLanding = () => {
                         You now hold the key to your town square. You and your community members can
                         chat freely here and own your communication. You can configure your settings
                         and moderation{' '}
-                        <Link to={`/${PATHS.SPACES}/${space?.id.slug}/${PATHS.SETTINGS}`}>
+                        <Link to={`/${PATHS.SPACES}/${space?.id.streamId}/${PATHS.SETTINGS}`}>
                             <Text color="cta1" size="lg" display="inline-block">
                                 here
                             </Text>

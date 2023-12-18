@@ -20,7 +20,7 @@ export function useAllKnownUsers() {
     const { spaces, rooms } = useZionContext()
 
     const users = useMemo(() => {
-        const spaceIds = spaces.map((space) => space.id.networkId)
+        const spaceIds = spaces.map((space) => space.id.streamId)
         // The same user can be a member of multiple spaces.
         // The Map makes sure we only return 1 instance of each user.
         const users = new Map<

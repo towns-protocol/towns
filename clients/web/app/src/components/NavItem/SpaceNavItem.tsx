@@ -31,15 +31,15 @@ export const SpaceNavItem = (props: Props) => {
     const { isTouch } = useDevice()
     const notificationCounts = useSpaceNotificationCounts(id)
     const mentions = notificationCounts.mentions
-    const newMessages = useShowHasUnreadBadgeForSpaceId(id.networkId)
+    const newMessages = useShowHasUnreadBadgeForSpaceId(id.streamId)
     const sizeContext = useSizeContext()
     // TODO: use tokens
     const isSmall = sizeContext.lessThan(180)
 
     return (
         <NavItem
-            id={id.slug}
-            to={isInvite ? `/invites/${id.slug}/` : `/${PATHS.SPACES}/${id.slug}/`}
+            id={id.streamId}
+            to={isInvite ? `/invites/${id.streamId}/` : `/${PATHS.SPACES}/${id.streamId}/`}
             exact={exact}
             forceMatch={forceMatch}
             activeBackground={isTouch ? 'level2' : 'level3'}
@@ -58,7 +58,7 @@ export const SpaceNavItem = (props: Props) => {
                     width="x4"
                     minWidth="x4"
                     aspectRatio="1/1"
-                    spaceId={id.networkId}
+                    spaceId={id.streamId}
                     background="level1"
                     rounded="xs"
                     variant="thumbnail100"

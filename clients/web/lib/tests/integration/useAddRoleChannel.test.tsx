@@ -160,7 +160,7 @@ function TestComponent(args: {
     const { addRoleToChannelTransaction, transactionStatus: addRoleToChannelTxStatus } =
         addRoleTransaction
     const spaceId = spaceTxnData?.spaceId
-    const spaceNetworkId = spaceId ? spaceId.networkId : ''
+    const spaceNetworkId = spaceId ? spaceId.streamId : ''
     const { spaceRoles } = useRoles(spaceNetworkId)
 
     const [addedRoleToChannel, setAddedRoleToChannel] = useState(false)
@@ -223,7 +223,7 @@ function TestComponent(args: {
             }
         }
         void handleClick()
-        console.log(`onClickCreateChannel: spaceId: `, spaceId?.networkId)
+        console.log(`onClickCreateChannel: spaceId: `, spaceId?.streamId)
     }, [spaceId, createChannelTransaction, args.channelName, args.signer])
 
     useEffect(() => {
@@ -249,7 +249,7 @@ function TestComponent(args: {
             if (channelId) {
                 await addRoleToChannelTransaction(
                     spaceNetworkId,
-                    channelId.networkId,
+                    channelId.streamId,
                     roleIds[0],
                     args.signer,
                 )
@@ -316,7 +316,7 @@ function ChannelComponent({ channelId }: { channelId: RoomIdentifier }): JSX.Ele
             {channel && (
                 <ChannelContextProvider channelId={channelId}>
                     <>
-                        <div key={channel.id.networkId}>channelName:{channel.label}</div>{' '}
+                        <div key={channel.id.streamId}>channelName:{channel.label}</div>{' '}
                     </>
                 </ChannelContextProvider>
             )}

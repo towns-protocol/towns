@@ -26,7 +26,7 @@ export const ProfileHoverCard = (props: Props) => {
     const memberOf = useMemo(() => {
         const memberOfIds = Object.keys(user?.memberOf ?? [])
         return memberOfIds?.length
-            ? memberOfIds.map((spaceId) => spaces.find((f) => f.id.networkId === spaceId))
+            ? memberOfIds.map((spaceId) => spaces.find((f) => f.id.streamId === spaceId))
             : undefined
     }, [spaces, user.memberOf])
 
@@ -53,13 +53,13 @@ export const ProfileHoverCard = (props: Props) => {
                                 .filter(notUndefined)
 
                                 .map((s) => (
-                                    <React.Fragment key={s.id.networkId}>
+                                    <React.Fragment key={s.id.streamId}>
                                         <SpaceIcon
                                             border
                                             letterFontSize="sm"
                                             width="x2"
                                             height="x2"
-                                            spaceId={s?.id.slug}
+                                            spaceId={s?.id.streamId}
                                             firstLetterOfSpaceName={s?.name[0]}
                                             overrideBorderRadius="xs"
                                             variant={ImageVariants.thumbnail50}

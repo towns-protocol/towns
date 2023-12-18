@@ -116,7 +116,7 @@ const SpacesChannelComponent = (props: Props) => {
     const channels = useSpaceChannels()
 
     const isDmOrGDM =
-        isDMChannelStreamId(channelId.networkId) || isGDMChannelStreamId(channelId.networkId)
+        isDMChannelStreamId(channelId.streamId) || isGDMChannelStreamId(channelId.streamId)
 
     const { isChannelWritable } = useIsChannelWritable(
         isDmOrGDM ? undefined : spaceId,
@@ -188,19 +188,19 @@ const SpacesChannelComponent = (props: Props) => {
                 </>
             ) : showJoinChannel ? (
                 <Box absoluteFill centerContent padding="lg">
-                    <Button key={channelId.slug} size="button_lg" onClick={onJoinChannel}>
+                    <Button key={channelId.streamId} size="button_lg" onClick={onJoinChannel}>
                         <Text truncate>Join #{channel.label}</Text>
                     </Button>
                 </Box>
             ) : (
                 <MediaDropContextProvider
-                    key={channelId.slug}
+                    key={channelId.streamId}
                     title={imageUploadTitle}
                     id="channel"
                     disableDrop={!isChannelWritable}
                 >
                     <MessageTimelineWrapper
-                        key={channelId.slug}
+                        key={channelId.streamId}
                         spaceId={spaceId}
                         channelId={channelId}
                         events={channelMessages}
@@ -242,8 +242,8 @@ const SpacesChannelComponent = (props: Props) => {
                                 editable={!!isChannelWritable}
                                 background={isChannelWritable ? 'level2' : 'level1'}
                                 displayButtons={isTouch ? 'on-focus' : 'always'}
-                                key={channelId.networkId}
-                                storageId={channel.id.networkId}
+                                key={channelId.streamId}
+                                storageId={channel.id.streamId}
                                 autoFocus={!hasThreadOpen && !isTouch}
                                 initialValue=""
                                 placeholder={placeholder}

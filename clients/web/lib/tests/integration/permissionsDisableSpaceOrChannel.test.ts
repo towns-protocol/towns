@@ -19,7 +19,7 @@ describe.skip('disable channel', () => {
         await alice.fundWallet()
 
         const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
-        const spaceNetworkId: string | undefined = roomId?.networkId
+        const spaceNetworkId: string | undefined = roomId?.streamId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
         const success: boolean | undefined = await alice.setSpaceAccess(
@@ -46,7 +46,7 @@ describe.skip('disable channel', () => {
         if (!roomId) {
             throw new Error('roomId should be defined')
         }
-        const spaceNetworkId = roomId.networkId
+        const spaceNetworkId = roomId.streamId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
         const disabled: boolean | undefined = await alice.setSpaceAccess(
@@ -77,7 +77,7 @@ describe.skip('disable channel', () => {
         await bob.fundWallet()
 
         const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [Permission.Read])
-        const spaceNetworkId: string | undefined = roomId?.networkId
+        const spaceNetworkId: string | undefined = roomId?.streamId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
         const error = await getError<Error>(async function () {

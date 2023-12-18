@@ -6,7 +6,7 @@ import isEqual from 'lodash/isEqual'
 
 export function useRoom(roomId?: RoomIdentifier): Room | undefined {
     const { rooms } = useZionContext()
-    return useMemo(() => (roomId ? rooms[roomId.networkId] : undefined), [roomId, rooms])
+    return useMemo(() => (roomId ? rooms[roomId.streamId] : undefined), [roomId, rooms])
 }
 
 export function useRoomWithStreamId(streamId?: string): Room | undefined {
@@ -30,13 +30,13 @@ export function useRoomNames(roomIds: RoomIdentifier[]): Record<string, string> 
         setStableRooms((prev) => {
             const needsUpdate =
                 stableRoomIds.find(
-                    (id) => !isEqual(prev[id.networkId], rooms[id.networkId]?.name),
+                    (id) => !isEqual(prev[id.streamId], rooms[id.streamId]?.name),
                 ) !== undefined
             if (needsUpdate) {
                 return stableRoomIds.reduce((acc, id) => {
-                    const room = rooms[id.networkId]
+                    const room = rooms[id.streamId]
                     if (room !== undefined) {
-                        acc[id.networkId] = room.name
+                        acc[id.streamId] = room.name
                     }
                     return acc
                 }, {} as Record<string, string>)

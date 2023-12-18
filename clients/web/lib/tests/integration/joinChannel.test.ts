@@ -34,7 +34,7 @@ test('create a public space and a public room, and have user join', async () => 
     }
     const testGatingNftToken = createExternalTokenStruct([testGatingNftAddress])[0]
     const roleIdentifier: RoleIdentifier | undefined = await bob.createRole(
-        spaceId.networkId,
+        spaceId.streamId,
         'newRoleName',
         [Permission.Read, Permission.Write],
         [testGatingNftToken],
@@ -65,5 +65,5 @@ test('create a public space and a public room, and have user join', async () => 
     // can she join it?
     await waitForWithRetries(() => alice.joinRoom(channelId))
     const alice_roomInfo = alice.getRoomData(channelId)
-    expect(alice_roomInfo?.id.networkId).toEqual(channelId.networkId)
+    expect(alice_roomInfo?.id.streamId).toEqual(channelId.streamId)
 })

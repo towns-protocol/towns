@@ -61,13 +61,13 @@ describe('space invite', () => {
         ])
 
         const isEntitledRead = await alice.isEntitled(
-            roomId?.networkId as string,
+            roomId?.streamId as string,
             '',
             alice.provider.wallet.address,
             Permission.Read,
         )
         const isEntitledWrite = await alice.isEntitled(
-            roomId?.networkId as string,
+            roomId?.streamId as string,
             '',
             alice.provider.wallet.address,
             Permission.Write,
@@ -107,13 +107,13 @@ describe('space invite', () => {
         await tokenGrantedUser.mintMembershipTransaction(roomId, tokenGrantedUser.wallet)
 
         const isEntitledRead = await tokenGrantedUser.isEntitled(
-            roomId?.networkId,
+            roomId?.streamId,
             '',
             tokenGrantedUser.provider.wallet.address,
             Permission.Read,
         )
         const isEntitledWrite = await tokenGrantedUser.isEntitled(
-            roomId?.networkId,
+            roomId?.streamId,
             '',
             tokenGrantedUser.provider.wallet.address,
             Permission.Write,

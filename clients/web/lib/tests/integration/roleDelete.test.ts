@@ -57,7 +57,7 @@ describe('delete role', () => {
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
-        const spaceId = roomId.networkId
+        const spaceId = roomId.streamId
         // create a new role
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             spaceId,
@@ -119,7 +119,7 @@ describe('delete role', () => {
         console.log("!!!! bobWithNft's done trying to join !!!", {
             error,
             spaceId,
-            channelId: channel.networkId,
+            channelId: channel.streamId,
             receipt,
             rejoinedRoom,
         })
@@ -159,7 +159,7 @@ describe('delete role', () => {
         expect(
             await bobWithNft.spaceDapp.isEntitledToChannel(
                 spaceId,
-                channel.networkId,
+                channel.streamId,
                 bobWithNft.walletAddress,
                 Permission.Read,
             ),
@@ -186,7 +186,7 @@ describe('delete role', () => {
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
-        const spaceId = roomId.networkId
+        const spaceId = roomId.streamId
         // create a new role
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             spaceId,
@@ -246,7 +246,7 @@ describe('delete role', () => {
         console.log("!!!! bob's done trying to join !!!", {
             error,
             spaceId,
-            channelId: channel.networkId,
+            channelId: channel.streamId,
             receipt,
             rejoinedRoom,
         })
@@ -280,7 +280,7 @@ describe('delete role', () => {
         expect(
             await bob.spaceDapp.isEntitledToChannel(
                 spaceId,
-                channel.networkId,
+                channel.streamId,
                 bob.walletAddress,
                 Permission.Read,
             ),
@@ -310,7 +310,7 @@ describe('delete role', () => {
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
-        const spaceId = roomId.networkId
+        const spaceId = roomId.streamId
         // create a new role
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             spaceId,
