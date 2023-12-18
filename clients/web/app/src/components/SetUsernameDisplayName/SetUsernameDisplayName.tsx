@@ -206,6 +206,20 @@ const EditableInputField = (props: {
 }) => {
     const { title, value, placeholder, error, maxLength, onChange, onFocus, onBlur } = props
     const charsRemaining = maxLength - value.length
+    const [isEditing, setIsEditing] = useState<boolean>(false)
+    const editingStateChanged = useCallback(
+        (active: boolean) => {
+            setIsEditing(active)
+            if (active) {
+                onFocus()
+            } else {
+                onBlur()
+            }
+        },
+        [setIsEditing, onBlur, onFocus],
+    )
+
+    const charLimitExceeded = charsRemaining < 0
     return (
         <Stack gap="sm">
             <Text color="default" fontWeight="medium">
@@ -222,12 +236,19 @@ const EditableInputField = (props: {
                         placeholder={placeholder}
                         // need to manually override paddingright for the chars remaining to fit
                         style={{ paddingRight: '20px' }}
+                        autoCorrect="off"
                         onChange={onChange}
-                        onFocus={onFocus}
-                        onBlur={onBlur}
+                        onFocus={() => editingStateChanged(true)}
+                        onBlur={() => editingStateChanged(false)}
                     />
-                    <Box centerContent height="100%" position="absolute" right="sm">
-                        <Text color={charsRemaining < 0 ? 'error' : 'gray2'} size="xs">
+                    <Box
+                        centerContent
+                        height="100%"
+                        position="absolute"
+                        right="sm"
+                        visibility={isEditing || charLimitExceeded ? 'visible' : 'hidden'}
+                    >
+                        <Text color={charLimitExceeded ? 'error' : 'gray2'} size="xs">
                             {charsRemaining.toString()}
                         </Text>
                     </Box>
