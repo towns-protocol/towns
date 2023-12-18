@@ -201,6 +201,7 @@ export type SendChunkedMediaMessageOptions = ThreadIdOptions & {
         mimetype: string
         widthPixels: number
         heightPixels: number
+        filename: string
     }
     thumbnail: {
         info: {

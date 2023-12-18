@@ -1,6 +1,13 @@
 import { useCallback, useState } from 'react'
-import { MessageType, RoomIdentifier, encryptAESGCM, useZionClient } from 'use-zion-client'
+import {
+    MessageType,
+    RoomIdentifier,
+    SendChunkedMediaMessageOptions,
+    encryptAESGCM,
+    useZionClient,
+} from 'use-zion-client'
 import imageCompression from 'browser-image-compression'
+import { isMediaMimeType } from 'utils/isMediaMimeType'
 
 /* 
 The encryption limit is 65536*3/4 = 49152 chars (olmDevice.ts)
@@ -9,12 +16,12 @@ The encryption limit is 65536*3/4 = 49152 chars (olmDevice.ts)
 const MAX_EMBEDDED_SIZE = 35 * 1024
 const CHUNK_SIZE = 500_000
 
-export const useSendImageMessage = () => {
+export const useSendFileMessage = () => {
     const { sendMessage, createMediaStream, sendMediaPayload } = useZionClient()
     const [sendingMessage, setSendingMessage] = useState<boolean>(false)
 
     function shouldCompressFile(file: File): boolean {
-        return file.type !== 'image/gif'
+        return file.type !== 'image/gif' && isMediaMimeType(file.type)
     }
 
     const sendEmbeddedImage = useCallback(
@@ -68,15 +75,40 @@ export const useSendImageMessage = () => {
                 await sendMediaPayload(streamId, chunk, chunkIndex++)
             }
 
-            // 0.025MB / 128px is an arbitrary limit for the thumbnail — it's way below the encryption limit
-            const thumbnail = await imageCompression(file, {
-                maxSizeMB: 0.025,
-                maxWidthOrHeight: 128,
-            })
-            const { width: thumbnailWidth, height: thumbnailHeight } = await imageSize(thumbnail)
-            const thumbnailBuffer = await thumbnail.arrayBuffer()
-            const thumbnailBytes = new Uint8Array(thumbnailBuffer)
+            let thumbnailInfo: SendChunkedMediaMessageOptions['thumbnail']
+            if (isMediaMimeType(file.type)) {
+                // 0.025MB / 128px is an arbitrary limit for the thumbnail — it's way below the encryption limit
+                const thumbnail = await imageCompression(file, {
+                    maxSizeMB: 0.025,
+                    maxWidthOrHeight: 128,
+                })
+                const { width: thumbnailWidth, height: thumbnailHeight } = await imageSize(
+                    thumbnail,
+                )
+                const thumbnailBuffer = await thumbnail.arrayBuffer()
+                const thumbnailBytes = new Uint8Array(thumbnailBuffer)
 
+                thumbnailInfo = {
+                    info: {
+                        mimetype: mimetype,
+                        widthPixels: thumbnailWidth,
+                        heightPixels: thumbnailHeight,
+                        sizeBytes: BigInt(thumbnailBytes.length),
+                    },
+
+                    content: thumbnailBytes,
+                }
+            } else {
+                thumbnailInfo = {
+                    info: {
+                        mimetype: mimetype,
+                        widthPixels: 0,
+                        heightPixels: 0,
+                        sizeBytes: BigInt(0),
+                    },
+                    content: new Uint8Array(0),
+                }
+            }
             setProgress(1)
 
             await sendMessage(channelId, '', {
@@ -89,16 +121,9 @@ export const useSendImageMessage = () => {
                     widthPixels: width,
                     heightPixels: height,
                     sizeBytes: BigInt(encryptionResult.ciphertext.length),
+                    filename: file.name,
                 },
-                thumbnail: {
-                    info: {
-                        mimetype: mimetype,
-                        widthPixels: thumbnailWidth,
-                        heightPixels: thumbnailHeight,
-                        sizeBytes: BigInt(thumbnailBytes.length),
-                    },
-                    content: thumbnailBytes,
-                },
+                thumbnail: thumbnailInfo,
                 threadId: threadId,
             })
             setProgress(0)
@@ -118,7 +143,7 @@ export const useSendImageMessage = () => {
         })
     }
 
-    const sendImageMessage = useCallback(
+    const uploadImageFile = useCallback(
         async (
             channelId: RoomIdentifier,
             file: File,
@@ -154,6 +179,37 @@ export const useSendImageMessage = () => {
             }
         },
         [sendEmbeddedImage, sendChunkedImage],
+    )
+
+    const uploadFile = useCallback(
+        async (
+            channelId: RoomIdentifier,
+            file: File,
+            setProgress: (progress: number) => void,
+            threadId?: string,
+        ) => {
+            //
+            const buffer = await file.arrayBuffer()
+            const bytes = new Uint8Array(buffer)
+            await sendChunkedImage(bytes, 0, 0, file.type, channelId, setProgress, file, threadId)
+        },
+        [sendChunkedImage],
+    )
+
+    const sendImageMessage = useCallback(
+        async (
+            channelId: RoomIdentifier,
+            file: File,
+            setProgress: (progress: number) => void,
+            threadId?: string,
+        ) => {
+            if (isMediaMimeType(file.type)) {
+                await uploadImageFile(channelId, file, setProgress, threadId)
+            } else {
+                await uploadFile(channelId, file, setProgress, threadId)
+            }
+        },
+        [uploadImageFile, uploadFile],
     )
 
     return { sendImageMessage, sendingMessage }

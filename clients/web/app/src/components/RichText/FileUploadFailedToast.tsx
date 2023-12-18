@@ -2,7 +2,7 @@ import React from 'react'
 import headlessToast, { Toast } from 'react-hot-toast/headless'
 import { Box, Button, Icon, Text } from '@ui'
 
-export const ImageUploadFailedToast = ({ toast, message }: { toast: Toast; message: string }) => {
+export const FileUploadFailedToast = ({ toast, message }: { toast: Toast; message: string }) => {
     return (
         <Box horizontal gap width="300">
             <Icon color="error" type="alert" />

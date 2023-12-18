@@ -53,7 +53,8 @@ message ChannelMessage {
                 string mimetype = 1;
                 int64 sizeBytes = 2;
                 int32 widthPixels = 3;
-                int32 heightPixels = 4;   
+                int32 heightPixels = 4;
+                string filename = 5;
             }
                          
             message EmbeddedMedia {

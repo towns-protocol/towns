@@ -1,11 +1,44 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
 import { decryptAESGCM } from '../utils/crypto-utils'
+import { Client } from '@river/sdk'
 
 type Props = {
     streamId: string
     iv: Uint8Array
     secretKey: Uint8Array
+}
+async function getObjectURL(
+    streamId: string,
+    casablancaClient: Client,
+    iv: Uint8Array,
+    secretKey: Uint8Array,
+    useCache: boolean,
+): Promise<string | undefined> {
+    const cache = await caches.open('chunked-media')
+    const response = await cache.match(streamId)
+    if (response) {
+        const blob = await response.blob()
+        return URL.createObjectURL(blob)
+    }
+
+    if (!casablancaClient) {
+        return undefined
+    }
+
+    const stream = await casablancaClient.getStream(streamId)
+    const data = stream.mediaContent.chunks.reduce((acc, chunk) => {
+        return new Uint8Array([...acc, ...chunk])
+    }, new Uint8Array())
+
+    const decrypted = await decryptAESGCM(data, iv, secretKey)
+
+    const blob = new Blob([decrypted])
+    const objectURL = URL.createObjectURL(blob)
+    if (useCache) {
+        await cache.put(streamId, new Response(blob))
+    }
+    return objectURL
 }
 
 export function useChunkedMedia(props: Props) {
@@ -18,32 +51,8 @@ export function useChunkedMedia(props: Props) {
             return
         }
 
-        async function getObjectURL(): Promise<string | undefined> {
-            const cache = await caches.open('chunked-media')
-            const response = await cache.match(streamId)
-            if (response) {
-                const blob = await response.blob()
-                return URL.createObjectURL(blob)
-            }
-
-            if (!casablancaClient) {
-                return undefined
-            }
-
-            const stream = await casablancaClient.getStream(streamId)
-            const data = stream.mediaContent.chunks.reduce((acc, chunk) => {
-                return new Uint8Array([...acc, ...chunk])
-            }, new Uint8Array())
-
-            const decrypted = await decryptAESGCM(data, props.iv, props.secretKey)
-
-            const blob = new Blob([decrypted])
-            const objectURL = URL.createObjectURL(blob)
-            await cache.put(streamId, new Response(blob))
-            return objectURL
-        }
-
-        getObjectURL()
+        const download = getObjectURL(streamId, casablancaClient, props.iv, props.secretKey, true)
+        download
             .then((objectURL) => {
                 setObjectURL(objectURL)
             })
@@ -53,4 +62,18 @@ export function useChunkedMedia(props: Props) {
     }, [casablancaClient, setObjectURL, streamId, props.iv, props.secretKey])
 
     return { objectURL }
+}
+
+export function useDownloadFile(props: Props) {
+    const { streamId } = props
+    const { casablancaClient } = useZionContext()
+
+    const downloadFile = useCallback(async () => {
+        if (!casablancaClient) {
+            return
+        }
+        return getObjectURL(streamId, casablancaClient, props.iv, props.secretKey, false)
+    }, [casablancaClient, streamId, props.iv, props.secretKey])
+
+    return { downloadFile }
 }

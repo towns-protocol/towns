@@ -11,7 +11,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useDevice } from 'hooks/useDevice'
 import { TooltipRenderer } from '@ui'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
-import { ChunkedMedia } from '@components/ChunkedMedia/ChunkedMedia'
+import { ChunkedFile } from '@components/ChunkedMedia/ChunkedMedia'
 import { EmbeddedMedia } from '@components/EmbeddedMedia/EmbeddedMedia'
 import { QUERY_PARAMS } from 'routes'
 import { SendStatus } from '@components/MessageLayout/SendStatusIndicator'
@@ -146,10 +146,11 @@ export const MessageItem = (props: Props) => {
                         onClick={onMediaClick}
                     />
                 ) : event.content.msgType === MessageType.ChunkedMedia ? (
-                    <ChunkedMedia
+                    <ChunkedFile
                         mimetype={event.content.content.mimetype}
                         width={event.content.content.widthPixels}
                         height={event.content.content.heightPixels}
+                        filename={event.content.content.filename}
                         streamId={event.content.content.streamId}
                         iv={event.content.content.iv}
                         secretKey={event.content.content.secretKey}

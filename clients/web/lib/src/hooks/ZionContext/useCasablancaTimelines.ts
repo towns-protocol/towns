@@ -658,6 +658,7 @@ function toTownsContent_ChannelPayload_Message_Post(
                         mimetype: value.content.value.info?.mimetype,
                         widthPixels: value.content.value.info?.widthPixels,
                         heightPixels: value.content.value.info?.heightPixels,
+                        filename: value.content.value.info?.filename,
                         sizeBytes: value.content.value.info?.sizeBytes,
                         iv: value.content.value.encryption.value?.iv,
                         secretKey: value.content.value.encryption.value?.secretKey,

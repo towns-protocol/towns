@@ -1116,6 +1116,7 @@ export class ZionClient implements EntitlementsDelegate {
                             mimetype: options.info.mimetype,
                             widthPixels: options.info.widthPixels,
                             heightPixels: options.info.heightPixels,
+                            filename: '',
                         },
                     },
                 })
@@ -1131,6 +1132,7 @@ export class ZionClient implements EntitlementsDelegate {
                             mimetype: options.info.mimetype,
                             widthPixels: options.info.widthPixels,
                             heightPixels: options.info.heightPixels,
+                            filename: options.info.filename,
                         },
                         encryption: {
                             case: 'aesgcm',
@@ -1145,6 +1147,7 @@ export class ZionClient implements EntitlementsDelegate {
                                 mimetype: options.thumbnail.info.mimetype,
                                 widthPixels: options.thumbnail.info.widthPixels,
                                 heightPixels: options.thumbnail.info.heightPixels,
+                                filename: '',
                             },
                             content: options.thumbnail.content,
                         },

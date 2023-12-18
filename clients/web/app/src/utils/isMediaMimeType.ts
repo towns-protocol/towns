@@ -13,8 +13,6 @@ const allowedMimeTypes = [
     'image/apng',
 ]
 
-export function filterAllowedMediaFiles(files: File[]): File[] {
-    return files.filter((file) => {
-        return allowedMimeTypes.includes(file.type)
-    })
+export function isMediaMimeType(mimetype: string): boolean {
+    return allowedMimeTypes.includes(mimetype)
 }

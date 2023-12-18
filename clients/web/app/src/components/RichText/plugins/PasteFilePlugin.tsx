@@ -6,23 +6,28 @@ import { uniqueId } from 'lodash'
 import { useChannelId, useSpaceId } from 'use-zion-client'
 import { useEvent } from 'react-use-event-hook'
 import { AnimatePresence } from 'framer-motion'
-import { Box, IconButton, MotionBox, Stack } from '@ui'
-import { useSendImageMessage } from 'hooks/useSendImageMessage'
+import { Box, IconButton, MotionBox, Stack, Text } from '@ui'
+import { useSendFileMessage } from 'hooks/useSendFileMessage'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
-import { filterAllowedMediaFiles } from 'utils/filterAllowedMediaFiles'
+import { isMediaMimeType } from 'utils/isMediaMimeType'
 
 type Props = {
     threadId?: string
-    isSendingImages: boolean
-    setIsSendingImages: (sending: boolean) => void
-    setImageCount: (count: number) => void
+    isSendingFiles: boolean
+    setIsSendingFiles: (sending: boolean) => void
+    setFileCount: (count: number) => void
     showErrorMessage: (message: string) => void
 }
 
-export const PasteImagePlugin = (props: Props) => {
+export const PasteFilePlugin = (props: Props) => {
     const mediaDropContext = useMediaDropContext()
-    const { isSendingImages, setImageCount, showErrorMessage, threadId } = props
-    const [imageFiles, setImageFiles] = useState<PastedImage[]>([])
+    const {
+        isSendingFiles: isSendingImages,
+        setFileCount: setImageCount,
+        showErrorMessage,
+        threadId,
+    } = props
+    const [imageFiles, setImageFiles] = useState<PastedFile[]>([])
     const [editor] = useLexicalComposerContext()
 
     useEffect(() => {
@@ -37,16 +42,12 @@ export const PasteImagePlugin = (props: Props) => {
         // sent automatically
 
         const prev = imageFiles
-        const filteredFiles = filterAllowedMediaFiles(files)
-        if (filteredFiles.length !== files.length) {
-            showErrorMessage('Error uploading media. File type is not supported.')
-        }
-        for (const file of filteredFiles) {
+        for (const file of files) {
             if (prev.length > MAX_IMAGE_COUNT) {
                 break
             }
             const id = uniqueId()
-            const pastedImage: PastedImage = { id, imageFile: file }
+            const pastedImage: PastedFile = { id, file: file }
             prev.push(pastedImage)
         }
         setImageFiles([...prev])
@@ -85,12 +86,12 @@ export const PasteImagePlugin = (props: Props) => {
                 <AnimatePresence>
                     {imageFiles.map((imageFile, index) => {
                         return (
-                            <PastedImage
+                            <PastedFile
                                 key={imageFile.id}
                                 {...imageFile}
                                 threadId={threadId}
                                 shouldSend={index === 0 && isSendingImages}
-                                removeImageFile={removeImageFile}
+                                removeFile={removeImageFile}
                                 waitingToSend={index !== 0 && isSendingImages}
                                 showErrorMessage={showErrorMessage}
                             />
@@ -102,34 +103,28 @@ export const PasteImagePlugin = (props: Props) => {
     )
 }
 
-type PastedImage = {
+type PastedFile = {
     id: string
-    imageFile: File
+    file: File
 }
 
-type PastedImageProps = PastedImage & {
+type PastedFileProps = PastedFile & {
     threadId?: string
     shouldSend: boolean
     waitingToSend: boolean
-    removeImageFile: (id: string) => void
+    removeFile: (id: string) => void
     showErrorMessage: (message: string) => void
 }
 
-const PastedImage = (props: PastedImageProps) => {
+const PastedFile = (props: PastedFileProps) => {
     const spaceId = useSpaceId()
     const channelId = useChannelId()
-    const { sendImageMessage } = useSendImageMessage()
+    const { sendImageMessage } = useSendFileMessage()
     const [progress, setProgress] = useState(0)
 
-    const {
-        id,
-        imageFile,
-        removeImageFile,
-        shouldSend,
-        waitingToSend,
-        threadId,
-        showErrorMessage,
-    } = props
+    const { id, file, removeFile, shouldSend, waitingToSend, threadId, showErrorMessage } = props
+
+    const showImagePreview = isMediaMimeType(file.type)
     const [objectURL, setObjectURL] = useState<string | undefined>(undefined)
     const uploadInProgress = useRef(false)
 
@@ -142,8 +137,8 @@ const PastedImage = (props: PastedImageProps) => {
             uploadInProgress.current = true
 
             try {
-                await sendImageMessage(channelId, imageFile, setProgress, threadId)
-                removeImageFile(id)
+                await sendImageMessage(channelId, file, setProgress, threadId)
+                removeFile(id)
             } catch (err) {
                 console.error(err)
                 showErrorMessage('Oops! We had trouble uploading your image.')
@@ -161,8 +156,8 @@ const PastedImage = (props: PastedImageProps) => {
         channelId,
         id,
         spaceId,
-        imageFile,
-        removeImageFile,
+        file,
+        removeFile,
         sendImageMessage,
         setProgress,
         threadId,
@@ -171,15 +166,15 @@ const PastedImage = (props: PastedImageProps) => {
 
     useEffect(() => {
         ;(async () => {
-            if (!imageFile) {
+            if (!file) {
                 setObjectURL(undefined)
                 return
             }
 
-            const objectURL = URL.createObjectURL(new Blob([await imageFile.arrayBuffer()]))
+            const objectURL = URL.createObjectURL(new Blob([await file.arrayBuffer()]))
             setObjectURL(objectURL)
         })()
-    }, [imageFile, setObjectURL])
+    }, [file, setObjectURL])
 
     return (
         <MotionBox
@@ -191,20 +186,28 @@ const PastedImage = (props: PastedImageProps) => {
             position="relative"
             layout="position"
         >
-            <Box
-                role="img"
-                width="100"
-                height="100"
-                background="level3"
-                style={{
-                    backgroundImage: `url(${objectURL})`,
-                    backgroundPosition: 'center',
-                    backgroundSize: 'cover',
-                    backgroundRepeat: 'no-repeat',
-                }}
-                rounded="sm"
-                opacity={waitingToSend || shouldSend ? '0.5' : 'opaque'}
-            />
+            {showImagePreview ? (
+                <Box
+                    role="img"
+                    width="100"
+                    height="100"
+                    background="level3"
+                    style={{
+                        backgroundImage: `url(${objectURL})`,
+                        backgroundPosition: 'center',
+                        backgroundSize: 'cover',
+                        backgroundRepeat: 'no-repeat',
+                    }}
+                    rounded="sm"
+                    opacity={waitingToSend || shouldSend ? '0.5' : 'opaque'}
+                />
+            ) : (
+                <Box padding paddingRight="lg" border="level3" rounded="sm">
+                    <Text size="sm" fontWeight="medium">
+                        {file.name}
+                    </Text>
+                </Box>
+            )}
 
             {!shouldSend && (
                 <IconButton
@@ -213,7 +216,7 @@ const PastedImage = (props: PastedImageProps) => {
                     position="topRight"
                     tooltip="Remove"
                     tooltipOptions={{ immediate: true }}
-                    onClick={() => removeImageFile(id)}
+                    onClick={() => removeFile(id)}
                 />
             )}
 

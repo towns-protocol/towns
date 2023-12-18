@@ -56,9 +56,9 @@ import { TabIndentationPlugin } from './plugins/TabIndentationPlugin'
 import { MentionHoverPlugin } from './plugins/MentionHoverPlugin'
 import { RichTextBottomToolbar } from './RichTextBottomToolbar'
 import { singleEmojiMessage } from './RichTextEditor.css'
-import { PasteImagePlugin } from './plugins/PasteImagePlugin'
+import { PasteFilePlugin } from './plugins/PasteFilePlugin'
 import { HightlightNode, createHighlightTransformer } from './nodes/HightlightNode'
-import { ImageUploadFailedToast } from './ImageUploadFailedToast'
+import { FileUploadFailedToast } from './FileUploadFailedToast'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -254,8 +254,8 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
     const { transformers } = useTransformers({ members, channels })
     const { isTouch } = useDevice()
     const [isEditorEmpty, setIsEditorEmpty] = useState(true)
-    const [imageCount, setImageCount] = useState(0)
-    const [isSendingImages, setIsSendingImages] = useState<boolean>(false)
+    const [fileCount, setFileCount] = useState(0)
+    const [isSendingFiles, setIsSendingFiles] = useState<boolean>(false)
     const { protocol } = useEnvironment()
 
     const userInput = useStore((state) =>
@@ -293,28 +293,28 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
         setIsAttemptingSend(true)
     }, [])
 
-    const sendImage = useCallback(() => {
-        if (imageCount === 0) {
+    const sendFile = useCallback(() => {
+        if (fileCount === 0) {
             return
         }
-        setIsSendingImages(true)
-    }, [imageCount, setIsSendingImages])
+        setIsSendingFiles(true)
+    }, [fileCount, setIsSendingFiles])
 
     const showErrorMessage = useCallback((message: string) => {
-        setIsSendingImages(false)
+        setIsSendingFiles(false)
         toast.custom((t) => {
-            return <ImageUploadFailedToast toast={t} message={message} />
+            return <FileUploadFailedToast toast={t} message={message} />
         })
     }, [])
 
     const imageCountUpdated = useCallback(
         (count: number) => {
-            setImageCount(count)
-            if (imageCount === 0) {
-                setIsSendingImages(false)
+            setFileCount(count)
+            if (fileCount === 0) {
+                setIsSendingFiles(false)
             }
         },
-        [setImageCount, imageCount, setIsSendingImages],
+        [setFileCount, fileCount, setIsSendingFiles],
     )
 
     if (!editable) {
@@ -376,9 +376,9 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                             isEditing={isEditing ?? false}
                             isEditorEmpty={isEditorEmpty}
                             setIsEditorEmpty={setIsEditorEmpty}
-                            hasImage={imageCount > 0}
+                            hasImage={fileCount > 0}
                             key="markdownplugin"
-                            onSendImage={sendImage}
+                            onSendImage={sendFile}
                             onSend={onSendCb}
                             onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
                             onCancel={props.onCancel}
@@ -388,10 +388,10 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
 
                 <Stack gap shrink paddingX paddingBottom="sm">
                     {protocol === SpaceProtocol.Casablanca && (
-                        <PasteImagePlugin
-                            isSendingImages={isSendingImages}
-                            setIsSendingImages={setIsSendingImages}
-                            setImageCount={imageCountUpdated}
+                        <PasteFilePlugin
+                            isSendingFiles={isSendingFiles}
+                            setIsSendingFiles={setIsSendingFiles}
+                            setFileCount={imageCountUpdated}
                             threadId={props.threadId}
                             showErrorMessage={showErrorMessage}
                         />
