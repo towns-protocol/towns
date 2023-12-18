@@ -6,9 +6,11 @@ import (
 	. "casablanca/node/protocol"
 	. "casablanca/node/protocol/protocolconnect"
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/bufbuild/connect-go"
@@ -90,6 +92,52 @@ func LoadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAdd
 			local:   local,
 		}
 		n.nodes[node.Address] = nn
+		n.nodesFlat = append(n.nodesFlat, nn)
+	}
+	if !localFound {
+		return nil, RiverError(Err_UNKNOWN_NODE, "Local node not found in registry", "localAddress", localNodeAddress)
+	}
+	return n, nil
+}
+
+func NewNodeRegistryFromCsv(ctx context.Context, nodeRegistryCsv string, localNodeAddress string) (*nodeRegistryImpl, error) {
+	log := dlog.CtxLog(ctx)
+
+	r := csv.NewReader(strings.NewReader(nodeRegistryCsv))
+	r.Comment = '#'
+	r.FieldsPerRecord = 2
+	r.TrimLeadingSpace = true
+	records, err := r.ReadAll()
+	if err != nil {
+		return nil, WrapRiverError(Err_BAD_CONFIG, err).Message("Failed to parse node registry CSV").Func("NewNodeRegistryFromCsv")
+	}
+
+	log.Info("Node Registry CSV parsed", "records", records, "localAddress", localNodeAddress)
+
+	n := &nodeRegistryImpl{
+		nodes:      make(map[string]*nodeRecord),
+		nodesFlat:  make([]*nodeRecord, 0, len(records)),
+		httpClient: &http.Client{},
+	}
+	localFound := false
+	for _, node := range records {
+		addr, err := AddressStrToEthAddress(node[0])
+		if err != nil {
+			return nil, AsRiverError(err).Func("NewNodeRegistryFromCsv")
+		}
+		addrStr := EthAddressToAddressStr(addr)
+
+		local := false
+		if addrStr == localNodeAddress {
+			local = true
+			localFound = true
+		}
+		nn := &nodeRecord{
+			address: addrStr,
+			url:     node[1],
+			local:   local,
+		}
+		n.nodes[addrStr] = nn
 		n.nodesFlat = append(n.nodesFlat, nn)
 	}
 	if !localFound {

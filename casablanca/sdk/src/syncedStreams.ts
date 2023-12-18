@@ -471,8 +471,6 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
     }
 
     private log(...args: unknown[]): void {
-        // eslint-disable-next-line no-console
-        console.log('sync:', ...args)
         this.logSync(...args)
     }
 }

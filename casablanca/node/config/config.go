@@ -45,13 +45,18 @@ type Config struct {
 	// Path to .json file with node registry (to be moved to blockchain).
 	NodeRegistry string
 
+	// If set, use instead of trying to load from filesystem.
+	// Makes configuring node by env vars easier.
+	NodeRegistryCsv string
+
 	// Feature flags
 	// Used to disable functionality for some testing setups.
 	UseContract                 bool
 	UseBlockChainStreamRegistry bool
 	SyncVersion                 int
 
-	// What is this and why is it here?
+	// If set, use instead of trying to load from filesystem.
+	// Makes configuring node by env vars easier.
 	WalletPrivateKey string
 }
 

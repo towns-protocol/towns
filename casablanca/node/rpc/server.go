@@ -30,16 +30,19 @@ import (
 
 type Cleanup func(context.Context) error
 
-func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAddress string) (nodes.NodeRegistry, error) {
+func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, nodeRegistryCsv string, localNodeAddress string) (nodes.NodeRegistry, error) {
 	log := dlog.CtxLog(ctx)
 
-	if nodeRegistryPath == "" {
+	if nodeRegistryCsv != "" {
+		log.Info("Node registry constructed from CSV", "csb", nodeRegistryCsv)
+		return nodes.NewNodeRegistryFromCsv(ctx, nodeRegistryCsv, localNodeAddress)
+	} else if nodeRegistryPath != "" {
+		log.Info("Loading node registry", "path", nodeRegistryPath)
+		return nodes.LoadNodeRegistry(ctx, nodeRegistryPath, localNodeAddress)
+	} else {
 		log.Warn("No node registry path specified, running in single node configuration")
 		return nodes.MakeSingleNodeRegistry(ctx, localNodeAddress), nil
 	}
-
-	log.Info("Loading node registry", "path", nodeRegistryPath)
-	return nodes.LoadNodeRegistry(ctx, nodeRegistryPath, localNodeAddress)
 }
 
 func getDbURL(dbConfig config.DatabaseConfig) string {
@@ -102,11 +105,18 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		log.Warn("Using hardcoded contract addresses for Base Goerli (TODO: move to env)", "newConfig", cfg)
 	}
 
+	privKey := cfg.WalletPrivateKey
+	cfg.WalletPrivateKey = ""
+
 	log.Info("Starting server", "config", cfg)
 
+	var err error
 	if wallet == nil {
-		var err error
-		wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
+		if privKey != "" {
+			wallet, err = crypto.NewWalletFromPrivKey(ctx, privKey)
+		} else {
+			wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
+		}
 		if err != nil {
 			return nil, 0, nil, err
 		}
@@ -161,6 +171,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	nodeRegistry, err := loadNodeRegistry(
 		ctx,
 		cfg.NodeRegistry,
+		cfg.NodeRegistryCsv,
 		wallet.AddressStr,
 	)
 	if err != nil {
