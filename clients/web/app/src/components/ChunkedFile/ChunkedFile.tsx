@@ -28,25 +28,30 @@ export const ChunkedFile = (props: Props) => {
 const ChunkedFileDownload = (props: Props) => {
     const { filename, mimetype } = props
     const { downloadFile } = useDownloadFile(props)
-    const onDownloadClicked = useCallback(async () => {
-        const objectURL = await downloadFile()
-        if (!objectURL) {
-            return
-        }
+    const onDownloadClicked = useCallback(
+        async (event: React.MouseEvent) => {
+            event.preventDefault()
+            event.stopPropagation()
+            const objectURL = await downloadFile()
+            if (!objectURL) {
+                return
+            }
 
-        // based on https://pqina.nl/blog/how-to-prompt-the-user-to-download-a-file-instead-of-navigating-to-it/
-        const link = document.createElement('a')
-        link.style.display = 'none'
-        link.href = objectURL
-        link.download = filename
+            // based on https://pqina.nl/blog/how-to-prompt-the-user-to-download-a-file-instead-of-navigating-to-it/
+            const link = document.createElement('a')
+            link.style.display = 'none'
+            link.href = objectURL
+            link.download = filename
 
-        document.body.appendChild(link)
-        link.click()
-        setTimeout(() => {
-            URL.revokeObjectURL(link.href)
-            link.parentNode?.removeChild(link)
-        }, 0)
-    }, [downloadFile, filename])
+            document.body.appendChild(link)
+            link.click()
+            setTimeout(() => {
+                URL.revokeObjectURL(link.href)
+                link.parentNode?.removeChild(link)
+            }, 0)
+        },
+        [downloadFile, filename],
+    )
 
     return (
         <Stack horizontal>
