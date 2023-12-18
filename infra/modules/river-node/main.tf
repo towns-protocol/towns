@@ -331,7 +331,7 @@ locals {
   # we modulo by 50000 to avoid going over the max.
   # we multiply by 10 to give room for at most 10 nodes.
   # we add the node number to give each node a unique priority.
-  transient_lb_listener_priority = (var.git_pr_number * 10 + var.node_number) % 50000
+  transient_lb_listener_priority = ((var.is_transient ? var.git_pr_number : 0) * 10 + var.node_number) % 50000
   lb_listener_priority           = var.is_transient ? local.transient_lb_listener_priority : 1
 }
 
