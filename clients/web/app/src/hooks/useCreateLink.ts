@@ -18,6 +18,10 @@ const profilePaths = [
         replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/profile/:profileId`,
     },
     {
+        path: `/${PATHS.SPACES}/:spaceId/${PATHS.MESSAGES}/:channelId/:channelPanel?/:channelPanelParam?`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.MESSAGES}/:channelId/profile/:profileId`,
+    },
+    {
         path: `/${PATHS.SPACES}/:spaceId/home/profile?/:profileId?`,
         replace: `/${PATHS.SPACES}/:spaceId/profile/:profileId`,
     },
