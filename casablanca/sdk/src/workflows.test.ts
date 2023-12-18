@@ -109,7 +109,10 @@ describe('workflows', () => {
         userResponse = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userResponse.stream).toBeDefined()
         joinPayload = lastEventFiltered(
-            unpackEnvelopes(userResponse.stream!.events),
+            [
+                ...unpackStreamResponse(userResponse).miniblocks.flatMap((x) => x.events),
+                ...unpackEnvelopes(userResponse.stream!.events),
+            ],
             getUserPayload_Membership,
         )
 
