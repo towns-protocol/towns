@@ -14,7 +14,7 @@
 		"test": "yarn test:unit"
 	},
 	"dependencies": {
-		"@whatsgood/nexus": "0.2.1"
+		"@whatsgood/nexus": "0.8.0"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20230710.1",

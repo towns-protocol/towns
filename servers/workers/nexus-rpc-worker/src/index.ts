@@ -1,8 +1,8 @@
-import { NexusServer } from '@whatsgood/nexus'
+import { Nexus } from '@whatsgood/nexus'
 
 type Env = Record<string, string>
 
-const server = NexusServer.create<Env>({
+const server = Nexus.create<Env>({
 	providers: (ctx) => [
 		{
 			name: 'alchemy',
@@ -11,6 +11,7 @@ const server = NexusServer.create<Env>({
 	],
 	globalAccessKey: (ctx) => ctx.NEXUS_GLOBAL_ACCESS_KEY,
 	chains: [84531, 84532],
+	logger: console,
 })
 
 export const worker = { fetch: server.fetch }
