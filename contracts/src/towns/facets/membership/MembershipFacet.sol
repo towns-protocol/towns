@@ -44,8 +44,8 @@ contract MembershipFacet is
       _totalSupply() >= _getMembershipSupplyLimit()
     ) revert Membership__MaxSupplyReached();
 
-    // TODO: should we validate the receiver or the msg.sender?
-    _validatePermission(Permissions.JoinTown);
+    // validate the receiver is allowed to join the town
+    _validatePermission(Permissions.JoinTown, receiver);
   }
 
   /// @inheritdoc IMembership

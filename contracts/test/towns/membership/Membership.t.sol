@@ -31,30 +31,23 @@ contract MembershipTest is
   // =============================================================
   //                           Join Town
   // =============================================================
-  function test_joinTown() external {
-    address alice = _randomAddress();
-
-    vm.prank(founder);
+  function test_joinTown_only() external {
+    vm.prank(alice);
     membership.joinTown(alice);
-
     assertEq(membership.balanceOf(alice), 1);
   }
 
   function test_joinTown_revert_NotAllowed() external {
-    address alice = _randomAddress();
-
-    vm.prank(alice);
+    vm.prank(bob);
     vm.expectRevert(Entitlement__NotAllowed.selector);
-    membership.joinTown(alice);
+    membership.joinTown(bob);
   }
 
   function test_joinTown_revert_AlreadyMember() external {
-    address alice = _randomAddress();
-
-    vm.prank(founder);
+    vm.prank(alice);
     membership.joinTown(alice);
 
-    vm.prank(founder);
+    vm.prank(alice);
     vm.expectRevert(Membership__AlreadyMember.selector);
     membership.joinTown(alice);
   }
@@ -66,17 +59,18 @@ contract MembershipTest is
     assertTrue(membership.getMembershipPrice() == 0);
     assertTrue(membership.getMembershipLimit() == 1);
 
-    address alice = _randomAddress();
-
-    vm.prank(founder);
-    membership.joinTown(_randomAddress());
+    vm.prank(alice);
+    membership.joinTown(alice);
 
     vm.prank(founder);
     vm.expectRevert(Membership__MaxSupplyReached.selector);
-    membership.joinTown(alice);
+    membership.joinTown(_randomAddress());
   }
 
   function test_joinTown_revert_when_updating_maxSupply() external {
+    vm.prank(diamond);
+    entitlement.setEntitlement(1, abi.encode(bob));
+
     vm.prank(founder);
     membership.setMembershipLimit(2);
 
@@ -84,10 +78,10 @@ contract MembershipTest is
     assertTrue(membership.getMembershipLimit() == 2);
 
     vm.prank(founder);
-    membership.joinTown(_randomAddress());
+    membership.joinTown(alice);
 
     vm.prank(founder);
-    membership.joinTown(_randomAddress());
+    membership.joinTown(bob);
 
     vm.prank(founder);
     vm.expectRevert(Membership__InvalidMaxSupply.selector);
@@ -95,7 +89,6 @@ contract MembershipTest is
   }
 
   function test_joinTown_revert_already_member() external {
-    address alice = _randomAddress();
     address bob = _randomAddress();
 
     vm.prank(founder);
@@ -111,7 +104,6 @@ contract MembershipTest is
   // =============================================================
 
   function test_joinTownWithReferral() external {
-    address alice = _randomAddress();
     address bob = _randomAddress();
     uint256 referralCode = 123;
 
@@ -122,7 +114,6 @@ contract MembershipTest is
   }
 
   function test_joinTownWithReferral_with_price() external {
-    address alice = _randomAddress();
     address bob = _randomAddress();
     uint256 referralCode = 123;
     uint256 membershipPrice = 10 ether;
@@ -189,7 +180,6 @@ contract MembershipTest is
     uint256 membershipPrice = membership.getMembershipPrice();
 
     vm.deal(founder, 2 ether);
-    address alice = _randomAddress();
 
     vm.prank(founder);
     membership.joinTown{value: membershipPrice}(alice);
@@ -238,8 +228,6 @@ contract MembershipTest is
     membership.setMembershipPrice(membershipPrice);
     vm.stopPrank();
 
-    address alice = _randomAddress();
-
     vm.prank(founder);
     vm.deal(founder, membershipPrice);
     uint256 tokenId = membership.joinTown{value: membershipPrice}(alice);
@@ -269,8 +257,6 @@ contract MembershipTest is
   //                           Renew Membership
   // =============================================================
   function test_renewMembership() external {
-    address alice = _randomAddress();
-
     uint64 membershipDuration = IPlatformRequirements(townFactory)
       .getMembershipDuration();
     uint256 membershipExpirationDate = block.timestamp + membershipDuration;
@@ -308,8 +294,6 @@ contract MembershipTest is
   //                       Cancel Membership
   // =============================================================
   function test_cancelMembership() external {
-    address alice = _randomAddress();
-
     vm.prank(founder);
     uint256 tokenId = membership.joinTown(alice);
 
@@ -322,8 +306,6 @@ contract MembershipTest is
   }
 
   function test_cancelMembership_revert_NotApprovedOrOwner() external {
-    address alice = _randomAddress();
-
     vm.prank(founder);
     uint256 tokenId = membership.joinTown(alice);
 

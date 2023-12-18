@@ -1962,11 +1962,11 @@
       ]
     },
     "contracts/src/towns/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0x1840591e81b0cccc6c14cb7f5e1cbe4dd6ade168f58c320e8731ac75d4c2b8d0",
+      "keccak256": "0x8e755885b016df5ac3c129554dcb5a7a79f548007ec13b1f15cb6d96a09bce95",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b0debfd0dbb5115360aeef3e3576334abb7a497bb41340d71486e1dec3790cd2",
-        "dweb:/ipfs/QmNPqg28RJdwH9Qo8sgiudYEx81AmjtdSreYajQHJvWsmt"
+        "bzz-raw://1bd1b18799cd54e35eed4466aba123bd426239c2731f17cd07db4eb4cf384043",
+        "dweb:/ipfs/QmTfkQuURhaBjTPiXP969oMExxgi4k1mdtUj6GQYw3EAVL"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipStorage.sol": {
