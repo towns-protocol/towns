@@ -10,7 +10,7 @@ const server = NexusServer.create<Env>({
 		},
 	],
 	globalAccessKey: (ctx) => ctx.NEXUS_GLOBAL_ACCESS_KEY,
-	chains: [84531],
+	chains: [84531, 84532],
 })
 
 export const worker = { fetch: server.fetch }
