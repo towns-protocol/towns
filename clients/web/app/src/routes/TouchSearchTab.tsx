@@ -127,19 +127,19 @@ export const TouchSearchTab = () => {
                         ) : (
                             searchResults.map((s, index, items) => {
                                 const result = (
-                                    <ResultItem result={s} key={s.item.key} misc={miscProps} />
+                                    <ResultItem
+                                        result={s}
+                                        key={s.item.key}
+                                        misc={miscProps}
+                                        background="level1"
+                                    />
                                 )
                                 const prevItemType = items[index - 1]?.item.type
                                 if (s.item.type !== prevItemType) {
                                     return (
                                         <>
-                                            <Box
-                                                borderBottom
-                                                paddingX="md"
-                                                paddingY="md"
-                                                key={s.item.type}
-                                            >
-                                                <Paragraph strong>
+                                            <Box paddingX="md" paddingY="sm" key={s.item.type}>
+                                                <Paragraph size="sm" color="gray2">
                                                     {getSectionTitle(s.item.type)}
                                                 </Paragraph>
                                             </Box>

@@ -78,6 +78,16 @@ export const TouchTabBar = () => {
                 )}
 
                 <TabBarItem
+                    title="Search"
+                    icon={() => <Icon type="search" size="toolbar_icon" />}
+                    to={`/${PATHS.SPACES}/${space.id.streamId}/${PATHS.SEARCH}`}
+                    scrollToTopId={TouchScrollToTopScrollId.SearchTabScrollId}
+                    onPressTwice={() => {
+                        document.getElementById(TouchScrollToTopScrollId.SearchTabInputId)?.focus()
+                    }}
+                />
+
+                <TabBarItem
                     title="You"
                     icon={(highlighted) => (
                         <Box rounded="full" border={highlighted ? 'iconHighlighted' : 'iconIdle'}>

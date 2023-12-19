@@ -120,7 +120,7 @@ export const SearchMessagesResultItem = (
                     <Avatar userId={sender?.userId} size="avatar_md" />
                 </Box>
             ) : (
-                <Box width="x4">
+                <Box width="x4" paddingY="xxs">
                     <Avatar userId={sender?.userId} size="avatar_x4" />
                 </Box>
             )}

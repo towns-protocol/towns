@@ -131,8 +131,9 @@ const MessageResultItem = (props: {
     highlightedTerms?: string[]
     channelId: string
     misc: { members: RoomMember[]; channels: Channel[]; threadsStats: ThreadStatsMap }
+    isolatedLayout?: boolean
 }) => {
-    const { event, misc } = props
+    const { event, misc, isolatedLayout } = props
     const { isTouch } = useDevice()
     const userId = useMyProfile()?.userId
 
@@ -160,7 +161,7 @@ const MessageResultItem = (props: {
         [channel, event, threadStat?.parentEvent],
     )
 
-    return !result ? undefined : isTouch && result ? (
+    return !result ? undefined : isolatedLayout && isTouch && result ? (
         <Box inset="sm">
             <IsolatedMessageItem result={result} />
         </Box>
