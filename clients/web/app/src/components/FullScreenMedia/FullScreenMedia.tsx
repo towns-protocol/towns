@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo } from 'react'
-import { MessageType, TimelineEvent, ZTEvent } from 'use-zion-client'
 import { useSearchParams } from 'react-router-dom'
+import { MessageType, TimelineEvent, ZTEvent } from 'use-zion-client'
 import { Lightbox, ViewCallbackProps } from 'yet-another-react-lightbox'
-import { Icon } from '@ui'
 import { QUERY_PARAMS } from 'routes'
-import { FullScreenMediaItem } from './FullScreenMediaItem'
+import { atoms } from 'ui/styles/atoms.css'
+import { Icon } from '@ui'
 import 'yet-another-react-lightbox/styles.css'
 import { fullScreenMediaStyle } from './FullScreeenMedia.css'
+import { FullScreenMediaItem } from './FullScreenMediaItem'
 
 type Props = {
     events: TimelineEvent[]
@@ -94,7 +95,7 @@ export const FullScreenMedia = (props: Props) => {
             animation={{
                 navigation: 350,
             }}
-            className={fullScreenMediaStyle}
+            className={`${atoms({ zIndex: 'tooltips' })} ${fullScreenMediaStyle}`}
             styles={{ toolbar: { paddingTop: 'calc(env(safe-area-inset-top) + 10px)' } }}
         />
     )

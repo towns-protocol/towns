@@ -1,5 +1,6 @@
 import { defineProperties } from '@vanilla-extract/sprinkles'
-import { lightTheme, vars } from 'ui/styles/vars.css'
+import { globalStyle, style } from '@vanilla-extract/css'
+import { lightTheme, vars, zIndexVar, zLayerVar } from 'ui/styles/vars.css'
 import { responsivePropertiesMixin } from 'ui/styles/breakpoints'
 
 export const border = {
@@ -76,6 +77,12 @@ export const flexGrow = {
     x8: 8,
     x9: 9,
 } as const
+
+export const zIndexClass = style({})
+
+globalStyle(`${zIndexClass}`, {
+    zIndex: `calc(${zLayerVar} * 100 + ${zIndexVar})`,
+})
 
 export const boxProperties = defineProperties({
     ...responsivePropertiesMixin,

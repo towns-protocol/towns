@@ -32,7 +32,7 @@ export function BetaDebugger() {
                 paddingLeft="xs"
                 paddingTop="xs"
                 fontSize="xs"
-                zIndex="tooltipsAbove"
+                zIndex="debug"
                 background="level1"
                 pointerEvents="none"
                 alignItems="center"

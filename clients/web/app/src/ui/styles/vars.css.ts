@@ -2,6 +2,7 @@ import {
     assignVars,
     createGlobalTheme,
     createThemeContract,
+    createVar,
     globalStyle,
     style,
 } from '@vanilla-extract/css'
@@ -20,6 +21,9 @@ export const globalPreventTransitions = style({})
 globalStyle(`${globalPreventTransitions} *`, {
     transition: 'none!important',
 })
+
+export const zLayerVar = createVar()
+export const zIndexVar = createVar()
 
 const responsiveMeasurements = {
     mobileFonts: {
@@ -369,11 +373,37 @@ const root = createGlobalTheme(':root', {
     } as const,
 
     zIndex: {
-        above: '1',
-        ui: '100',
-        uiAbove: '101',
-        tooltips: '10000',
-        tooltipsAbove: '10001',
+        above: {
+            vars: {
+                [zIndexVar]: `5`,
+            },
+        },
+        ui: {
+            vars: {
+                [zIndexVar]: `10`,
+            },
+        },
+        uiAbove: {
+            vars: {
+                [zIndexVar]: `11`,
+            },
+        },
+        tooltips: {
+            vars: {
+                [zIndexVar]: `20`,
+            },
+        },
+        tooltipsAbove: {
+            vars: {
+                [zIndexVar]: `21`,
+            },
+        },
+        debug: {
+            vars: {
+                [zLayerVar]: `100`,
+                [zIndexVar]: `1`,
+            },
+        },
     } as const,
 })
 

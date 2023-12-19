@@ -6,11 +6,11 @@ import { useDevice } from 'hooks/useDevice'
 import { transitions } from 'ui/transitions/transitions'
 import { useSafeEscapeKeyCancellation } from 'hooks/useSafeEscapeKeyCancellation'
 import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
+import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { Box, BoxProps } from '../../ui/components/Box/Box'
 import { IconButton } from '../../ui/components/IconButton/IconButton'
 import { Stack } from '../../ui/components/Stack/Stack'
 import { useZLayerContext } from '../../ui/components/ZLayer/ZLayer'
-import { MotionStack } from '../../ui/components/Motion/MotionComponents'
 
 type Props = {
     children: React.ReactNode
@@ -113,7 +113,7 @@ const TouchPanel = (props: Props) => {
     ) : (
         <AnimatePresence>
             {modalPresented && (
-                <MotionStack
+                <ZLayerBox
                     absoluteFill
                     initial={{ x: '100%' }}
                     animate={{ x: '0%' }}
@@ -138,7 +138,7 @@ const TouchPanel = (props: Props) => {
                     <Box scroll scrollbars grow>
                         {props.children}
                     </Box>
-                </MotionStack>
+                </ZLayerBox>
             )}
         </AnimatePresence>
     )

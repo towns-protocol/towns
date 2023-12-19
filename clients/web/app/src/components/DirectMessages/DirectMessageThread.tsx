@@ -6,9 +6,12 @@ import { DMChannelContextUserLookupProvider } from 'use-zion-client/dist/compone
 import { Stack } from '@ui'
 import { SpacesChannel } from 'routes/SpacesChannel'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { SpacesChannelAnimated } from 'routes/SpacesChannelAnimated'
+import { useDevice } from 'hooks/useDevice'
 
 export const DirectMessageThread = () => {
     const { createLink } = useCreateLink()
+    const { isTouch } = useDevice()
     const navigate = useNavigate()
     const [search] = useSearchParams()
     const { channelSlug } = useParams()
@@ -32,7 +35,7 @@ export const DirectMessageThread = () => {
                     fallbackToParentContext
                     channelId={channelSlug ?? ''}
                 >
-                    <SpacesChannel onTouchClose={onBack} />
+                    {isTouch ? <SpacesChannelAnimated /> : <SpacesChannel onTouchClose={onBack} />}
                 </DMChannelContextUserLookupProvider>
             </SpaceContextProvider>
         </Stack>

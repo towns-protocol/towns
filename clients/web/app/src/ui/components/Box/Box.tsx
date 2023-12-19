@@ -10,6 +10,7 @@ import {
     hoverActiveClass,
     hoverableClass,
 } from 'ui/styles/properties/colorProperties.css'
+import { zIndexClass } from 'ui/styles/properties/boxProperties.css'
 
 const shorthands = {
     border: [{ border: 'default' }, { border: 'none' }],
@@ -144,6 +145,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
             [containerWithGapClass]: props.gap && props.gap !== vars.space.none,
             [scrollContainerClass]: scroll,
             [scrollbarsClass]: scrollbars,
+            [zIndexClass]: props.zIndex,
             [debugClass]: debug,
         },
         className,

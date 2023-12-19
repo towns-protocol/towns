@@ -22,6 +22,7 @@ export const TouchNavBar = (props: Props) => {
             {/* absolute position to adapt to virtual keyboard */}
             <Box
                 elevateReadability
+                zIndex="uiAbove"
                 width="100%"
                 paddingTop="safeAreaInsetTop"
                 style={{
