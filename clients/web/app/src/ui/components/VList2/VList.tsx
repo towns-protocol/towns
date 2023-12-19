@@ -917,7 +917,19 @@ export function VList<T>(props: Props<T>) {
         }
     }, [isScrolling, pointerEvents])
 
-    const offscreenY = offscreenFocusMarker ? itemCache.current[offscreenFocusMarker]?.y ?? -1 : -1
+    const [offscreenY, setOffscreenY] = useState(-1)
+
+    useEffect(() => {
+        let offset = -1
+        if (offscreenFocusMarker) {
+            const cacheItem = itemCache.current[offscreenFocusMarker]
+            if (cacheItem) {
+                offset = cacheItem.y
+            }
+        }
+        setOffscreenY(offset)
+    }, [offscreenFocusMarker])
+
     const onOffscreenMarkerClick = useCallback(() => {
         if (props.focusItem) {
             internalScrollRef.current = true
