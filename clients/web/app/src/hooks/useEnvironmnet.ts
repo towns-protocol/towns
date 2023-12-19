@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Chain } from 'wagmi'
-import { baseGoerli } from 'wagmi/chains'
+import { baseSepolia } from 'wagmi/chains'
 import { getChainName } from 'use-zion-client'
 import { env } from 'utils'
 import { foundryClone } from 'foundryChain'
@@ -42,8 +42,8 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         id: TownsEnvironment.RiverTest,
         name: 'River Test',
         casablancaUrl: 'https://river1-test-beta.towns.com',
-        chainId: 84531,
-        chain: baseGoerli,
+        chainId: 84532,
+        chain: baseSepolia,
         protocol: SpaceProtocol.Casablanca,
     },
 ]

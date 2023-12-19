@@ -96,6 +96,10 @@ if [ "$IS_PULL_REQUEST" = true ]; then
         echo "Setting VITE_CASABLANCA_HOMESERVER_URL to $test_beta_river_node_url"
         export VITE_CASABLANCA_HOMESERVER_URL="$test_beta_river_node_url"
     fi
+
+    # TODO: remove the VITE_CHAIN_ID env var from here post-migration.
+
+    export VITE_CHAIN_ID="84532"
     
     curl  \
         --request PUT \
@@ -103,7 +107,7 @@ if [ "$IS_PULL_REQUEST" = true ]; then
         --header "accept: application/json" \
         --header "authorization: Bearer $RENDER_API_KEY" \
         --header "content-type: application/json" \
-        --data '[{"key":"VITE_CASABLANCA_HOMESERVER_URL","value":"'"$VITE_CASABLANCA_HOMESERVER_URL"'"},{"key":"VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER","value":"'"$pr_number"'"}]'
+        --data '[{"key":"VITE_CASABLANCA_HOMESERVER_URL","value":"'"$VITE_CASABLANCA_HOMESERVER_URL"'"},{"key":"VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER","value":"'"$pr_number"'"}, {"key":"VITE_CHAIN_ID","value":"'"$VITE_CHAIN_ID"'"}]'
 
         
 else

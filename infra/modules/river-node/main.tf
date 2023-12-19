@@ -44,8 +44,7 @@ locals {
 
   ephemeral_storage_size_in_gib = var.is_transient ? 21 : 100
 
-  ## TODO: update to 84532 for sepolia migration
-  home_chain_id = "84531"
+  home_chain_id = "84532"
 }
 
 terraform {
@@ -507,7 +506,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "TOWNSARCHITECTCONTRACT__ADDRESS"
-        value = "0xbd88207DB1561e353824FC1Dd43Aa79f365fEbA0"
+        value = "0x57E7c90CE73e327c863AD88909C3F73F5543F609"
       },
       {
         name  = "TOWNSARCHITECTCONTRACT__VERSION"
@@ -515,7 +514,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "WALLETLINKCONTRACT__ADDRESS"
-        value = "0x2855EeA53ae6118aac6E636b00fb27b7D6aF78cb"
+        value = "0xC4a2453c36e107C57c149d933435ee0a4031D526"
       },
       {
         name  = "WALLETLINKCONTRACT__VERSION"

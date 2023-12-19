@@ -1,4 +1,4 @@
-import { Chain, baseGoerli, foundry } from 'wagmi/chains'
+import { Chain, baseSepolia, foundry } from 'wagmi/chains'
 
 export enum TownsEnvironment {
     Prod = 'prod',
@@ -26,7 +26,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         id: TownsEnvironment.TestBeta,
         name: 'Test Beta',
         casablancaUrl: 'https://river1-test-beta.towns.com',
-        chain: baseGoerli,
-        chainId: baseGoerli.id,
+        chain: baseSepolia,
+        chainId: baseSepolia.id,
     },
 ]

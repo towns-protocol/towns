@@ -18,7 +18,7 @@ export const replySentTime = 90000
 export const testBetaName = 'test-beta'
 export const testSpamChannelName = 'test spam'
 
-export const jsonRpcProviderUrl = 'https://goerli.base.org'
+export const jsonRpcProviderUrl = 'https://sepolia.base.org'
 export const envName = process.env.ENVIRONMENT_NAME || testBetaName
 
 export const fromFollowerQueueName = 'healthcheckqueuefollower'

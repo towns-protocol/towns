@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { configureChains } from 'wagmi'
-import { baseGoerli, localhost } from 'wagmi/chains'
+import { baseGoerli, baseSepolia, localhost } from 'wagmi/chains'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
 import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
@@ -22,7 +22,7 @@ if (env.VITE_CF_TUNNEL_PREFIX) {
     }
 }
 
-const SUPPORTED_CHAINS = [foundryClone, baseGoerli, localhost]
+const SUPPORTED_CHAINS = [foundryClone, baseGoerli, baseSepolia, localhost]
 
 const wagmiChainsConfig = configureChains(
     SUPPORTED_CHAINS,
