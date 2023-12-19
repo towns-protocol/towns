@@ -1,4 +1,4 @@
-import { getAccountAddress } from 'use-zion-client'
+import { getAccountAddress, useSpaceData } from 'use-zion-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
@@ -32,6 +32,7 @@ enum InputId {
 export const UserProfile = (props: Props) => {
     const { userId, canEdit, center, info, userAddress, userBio } = props
     const { loggedInWalletAddress } = useAuth()
+    const spaceData = useSpaceData()
 
     const { mutateAsync: mutateAsyncBio } = useSetUserBio(userAddress)
 
@@ -110,7 +111,11 @@ export const UserProfile = (props: Props) => {
                     )}
                 </FormRender>
             </Stack>
-            {canEdit && <SetUsernameDisplayName />}
+            {canEdit && spaceData && (
+                <SetUsernameDisplayName
+                    titleProperties={{ kind: 'space', spaceName: spaceData.name }}
+                />
+            )}
 
             <Stack padding rounded="sm" background="level2">
                 {walletContent()}

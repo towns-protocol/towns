@@ -37,7 +37,24 @@ const validateDisplayName = (displayName: string) => {
     return displayName.length < 33
 }
 
-export const SetUsernameDisplayName = () => {
+type TitleProperties = DMTitleProperties | GDMTitleProperties | SpaceTitleProperties
+
+export type DMTitleProperties = {
+    kind: 'dm'
+    counterPartyName: string
+}
+
+export type GDMTitleProperties = {
+    kind: 'gdm'
+}
+
+export type SpaceTitleProperties = {
+    kind: 'space'
+    spaceName: string
+}
+
+export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties }) => {
+    const { titleProperties } = props
     const [isEditing, setIsEditing] = useState<boolean>(false)
     const streamId = useCurrentStreamID()
     const { user } = useMyUserInfo(streamId)
@@ -139,13 +156,25 @@ export const SetUsernameDisplayName = () => {
         )
     }, [user, dirtyDisplayName, dirtyUsername])
 
+    const titlePrefix = useMemo(() => {
+        switch (titleProperties.kind) {
+            case 'space':
+                return `In ${titleProperties.spaceName}`
+            case 'dm':
+                return `In this DM between ${titleProperties.counterPartyName}`
+            case 'gdm':
+                return `In this group`
+        }
+    }, [titleProperties])
+
     if (!user) {
         return null
     }
+
     return (
         <Stack padding gap background="level2" rounded="sm">
             <Text size="sm" color="gray2">
-                In this context, you appear as:
+                {titlePrefix}, you appear as:
             </Text>
 
             <EditableInputField

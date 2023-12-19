@@ -16,7 +16,11 @@ import { useDevice } from 'hooks/useDevice'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useUserList } from '@components/UserList/UserList'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { SetUsernameDisplayName } from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
+import {
+    DMTitleProperties,
+    GDMTitleProperties,
+    SetUsernameDisplayName,
+} from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { GDMChannelPermissionsModal } from './GDMChannelPermissions'
 
@@ -83,14 +87,33 @@ export const DMChannelInfoPanel = () => {
     }, [members, myUserId])
 
     const membersText = useUserList({ userIds: memberNamesExludingSelf }).join('')
-
     const memberCount = members.length ?? 0
 
+    const usernameProperties = useMemo(() => {
+        if (!data) {
+            return undefined
+        }
+        if (data.isGroup) {
+            return {
+                kind: 'gdm',
+            } satisfies GDMTitleProperties
+        } else {
+            return {
+                kind: 'dm',
+                counterPartyName: membersText,
+            } satisfies DMTitleProperties
+        }
+    }, [data, membersText])
+
+    const title = data ? (data.isGroup ? 'Group Info' : 'Direct Message') : ''
+
     return (
-        <Panel modalPresentable label="Group info" onClose={onClose}>
+        <Panel modalPresentable label={title} onClose={onClose}>
             <DMChannelContextUserLookupProvider channelId={channelSlug ?? ''}>
                 <Stack gap padding>
-                    <SetUsernameDisplayName />
+                    {usernameProperties && (
+                        <SetUsernameDisplayName titleProperties={usernameProperties} />
+                    )}
                     <Stack gap padding background="level2" rounded="sm">
                         <Text fontWeight="medium" color="default">
                             {membersText}
