@@ -10,6 +10,8 @@ import { useChannelType } from 'hooks/useChannelType'
 import { useDevice } from 'hooks/useDevice'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { AvatarGroup } from '@components/DirectMessages/GroupDMIcon'
+import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
     channel: Channel
@@ -120,9 +122,12 @@ const DMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
         return undefined
     }
     return (
-        <Text truncate fontSize="md" fontWeight="medium" color="default">
-            {title}
-        </Text>
+        <>
+            <Avatar userId={userIds[0]} size="avatar_sm" />
+            <Text truncate fontSize="md" fontWeight="medium" color="default">
+                {title}
+            </Text>
+        </>
     )
 }
 
@@ -132,9 +137,12 @@ const GDMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
     const title = useUserList({ userIds, excludeSelf: true, maxNames: 3 }).join('')
 
     return (
-        <Text truncate fontSize="md" color="default">
-            {title}
-        </Text>
+        <>
+            <AvatarGroup userIds={userIds} width="x3" />
+            <Text truncate fontSize="md" color="default">
+                {title}
+            </Text>
+        </>
     )
 }
 
