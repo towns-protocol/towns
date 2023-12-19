@@ -170,6 +170,7 @@ const TownRoutes = () => (
         </Route>
 
         <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />}>
+            {...desktopSpaceProfilePanelRoutes()}
             <Route path="info" element={<InfoPanelWrapper />} />
         </Route>
 
