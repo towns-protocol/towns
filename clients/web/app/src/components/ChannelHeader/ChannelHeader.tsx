@@ -34,7 +34,7 @@ const DesktopChannelHeader = (props: Props) => {
     })
     const isMuted = channelIsMuted || spaceIsMuted
     const channelType = useChannelType(channel.id)
-    const onInfoPressed = useInfoButton(channel, channelType)
+    const onInfoPressed = useChannelInfoButton()
 
     return (
         <Stack gap>
@@ -152,7 +152,7 @@ const TouchChannelHeader = (props: Props) => {
 
     const isMuted = channelIsMuted || spaceIsMuted
 
-    const infoButtonPressed = useInfoButton(channel, channelType)
+    const infoButtonPressed = useChannelInfoButton()
 
     return (
         <Stack gap="sm">
@@ -239,14 +239,9 @@ const TouchChannelHeader = (props: Props) => {
     )
 }
 
-const useInfoButton = (channel: Channel, channelType: 'channel' | 'gdm' | 'dm') => {
+const useChannelInfoButton = () => {
     const navigate = useNavigate()
-    const { counterParty } = useDMData(channel.id)
     return useCallback(() => {
-        if (channelType === 'dm') {
-            navigate(`profile/${counterParty}?message`)
-        } else {
-            navigate(`info?channel`)
-        }
-    }, [channelType, counterParty, navigate])
+        navigate(`info?channel`)
+    }, [navigate])
 }
