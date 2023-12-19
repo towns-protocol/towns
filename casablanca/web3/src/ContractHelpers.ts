@@ -77,14 +77,6 @@ export function getTestGatingNftAddress(chainId: number): string | null {
     return contractInfo.testGatingTokenAddress ?? null
 }
 
-export function getPioneerNftAddress(chainId: number): string {
-    const contractInfo = getContractsInfo(chainId)
-    if (!contractInfo) {
-        throw new Error(`Contract info for PrioneerNFT chainId ${chainId} is not found.`)
-    }
-    return contractInfo.pioneerTokenAddress
-}
-
 export async function getFilteredRolesFromSpace<V extends Versions = TDefaultVersion>(
     spaceDapp: ISpaceDapp<V>,
     spaceNetworkId: string,

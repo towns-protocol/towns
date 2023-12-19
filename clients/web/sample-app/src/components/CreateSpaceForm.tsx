@@ -11,7 +11,7 @@ import {
     useCreateSpaceTransaction,
     useWeb3Context,
 } from 'use-zion-client'
-import { Permission, getPioneerNftAddress, getTestGatingNftAddress, mintMockNFT } from '@river/web3'
+import { Permission, getTestGatingNftAddress, mintMockNFT } from '@river/web3'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ethers } from 'ethers'
 import { useGetEmbeddedSigner } from '@towns/privy'
@@ -90,12 +90,6 @@ export const CreateSpaceForm = (props: Props) => {
         }
     }, [chainId])
 
-    const pioneerNftAddress = useMemo(() => {
-        if (chainId) {
-            return getPioneerNftAddress(chainId)
-        }
-    }, [chainId])
-
     const onClickCreateSpace = useCallback(async () => {
         let tokenAddresses: string[] = []
         const memberPermissions: Permission[] = [Permission.Read, Permission.Write]
@@ -109,13 +103,6 @@ export const CreateSpaceForm = (props: Props) => {
                     return undefined
                 }
                 tokenAddresses = [councilNftAddress]
-                break
-            case MembershipRequirement.PioneerNFT:
-                if (!pioneerNftAddress) {
-                    console.error('Cannot create space. No Pioneer NFT address.')
-                    return undefined
-                }
-                tokenAddresses = [pioneerNftAddress]
                 break
             default:
                 throw new Error('Unhandled membership requirement')
@@ -153,7 +140,7 @@ export const CreateSpaceForm = (props: Props) => {
         }
 
         await createSpaceTransactionWithRole(createSpaceInfo, requirements, signer)
-    }, [formValue, getSigner, createSpaceTransactionWithRole, councilNftAddress, pioneerNftAddress])
+    }, [formValue, getSigner, createSpaceTransactionWithRole, councilNftAddress])
 
     useEffect(() => {
         if (transactionStatus === TransactionStatus.Success && txData) {
@@ -169,7 +156,6 @@ export const CreateSpaceForm = (props: Props) => {
         transactionStatus,
         chainId,
         councilNftAddress,
-        pioneerNftAddress,
         MembershipRequirement,
     })
 

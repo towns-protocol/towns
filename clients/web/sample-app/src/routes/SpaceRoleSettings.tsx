@@ -3,7 +3,6 @@ import React, { useCallback, useState } from 'react'
 export enum MembershipRequirement {
     Everyone = 'Everyone',
     MemberNFT = 'MemberNFT',
-    PioneerNFT = 'PioneerNFT',
 }
 
 interface Props {
@@ -25,10 +24,6 @@ export function SpaceRoleSettings(props: Props): JSX.Element {
                 case MembershipRequirement.MemberNFT:
                     setMembershipRequirement(MembershipRequirement.MemberNFT)
                     props.onChangeValue(MembershipRequirement.MemberNFT)
-                    break
-                case MembershipRequirement.PioneerNFT:
-                    setMembershipRequirement(MembershipRequirement.PioneerNFT)
-                    props.onChangeValue(MembershipRequirement.PioneerNFT)
                     break
                 default:
                     console.error('Unknown membership requirement')
@@ -58,14 +53,6 @@ export function SpaceRoleSettings(props: Props): JSX.Element {
                     checked={membershipRequirement === MembershipRequirement.MemberNFT}
                 />{' '}
                 Member NFT
-                <input
-                    readOnly
-                    type="radio"
-                    value={MembershipRequirement.PioneerNFT}
-                    name="membershipRequirement"
-                    checked={membershipRequirement === MembershipRequirement.PioneerNFT}
-                />{' '}
-                Pioneer NFT
             </fieldset>
         </div>
     )

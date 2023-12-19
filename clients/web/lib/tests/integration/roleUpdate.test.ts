@@ -16,7 +16,7 @@ import {
     Permission,
     TokenEntitlementDataTypes,
     createExternalTokenStruct,
-    getPioneerNftAddress,
+    getContractsInfo,
 } from '@river/web3'
 
 describe('update role', () => {
@@ -84,9 +84,9 @@ describe('update role', () => {
         // change the role details
         const newRoleName = 'newRoleName'
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
-        const pioneerNftAddress = getPioneerNftAddress(alice.chainId)
+        const mockNFTAddress = getContractsInfo(alice.chainId).mockErc721aAddress
         // test space was created with council token. replace with zioneer token
-        const newTokens = createExternalTokenStruct([pioneerNftAddress])
+        const newTokens = createExternalTokenStruct([mockNFTAddress])
         const transaction = await alice.spaceDapp.updateRole(
             {
                 spaceNetworkId: spaceNetworkId,

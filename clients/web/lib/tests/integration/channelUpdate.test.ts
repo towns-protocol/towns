@@ -12,7 +12,7 @@ import {
 
 import { ContractReceipt } from 'ethers'
 import { RoleIdentifier } from '../../src/types/web3-types'
-import { createExternalTokenStruct, getPioneerNftAddress, Permission } from '@river/web3'
+import { createExternalTokenStruct, getContractsInfo, Permission } from '@river/web3'
 
 // TODO: skip for now, refactor to accommodate new contracts
 // https://linear.app/hnt-labs/issue/HNT-1641/testsintegrationchannelupdatetestts
@@ -138,9 +138,9 @@ describe.skip('channel update', () => {
         // create another role
         const newRoleName = `role${Date.now()}`
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
-        const pioneerNftAddress = getPioneerNftAddress(alice.chainId)
+        const mockNFTAddress = getContractsInfo(alice.chainId).mockErc721aAddress
         // test space was created with council token. replace with zioneer token
-        const newTokens = createExternalTokenStruct([pioneerNftAddress])
+        const newTokens = createExternalTokenStruct([mockNFTAddress])
         const users: string[] = []
         const newRoleId: RoleIdentifier | undefined = await alice.createRole(
             spaceId.streamId,

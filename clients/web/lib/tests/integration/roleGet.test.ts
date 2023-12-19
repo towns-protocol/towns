@@ -15,10 +15,10 @@ import { TestConstants } from './helpers/TestConstants'
 import {
     createExternalTokenStruct,
     getTestGatingNftAddress,
-    getPioneerNftAddress,
     Permission,
     RoleDetails,
     TokenEntitlementDataTypes,
+    getContractsInfo,
 } from '@river/web3'
 
 describe('get role details', () => {
@@ -232,8 +232,8 @@ describe('get role details', () => {
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
-        const pioneerNftAddress = getPioneerNftAddress(alice.chainId)
-        const tokens = createExternalTokenStruct([councilNftAddress, pioneerNftAddress])
+        const mockNFTAddress = getContractsInfo(alice.chainId).mockErc721aAddress
+        const tokens = createExternalTokenStruct([councilNftAddress, mockNFTAddress])
         const expectedCouncilToken = tokens[0]
         const expectedZioneerToken = tokens[1]
         const users: string[] = []
