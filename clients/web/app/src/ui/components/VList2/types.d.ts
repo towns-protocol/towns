@@ -17,4 +17,5 @@ type FocusOption = {
     align: 'start' | 'end'
     force?: boolean
     sticky?: boolean
+    margin?: number
 }

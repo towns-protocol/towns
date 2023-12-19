@@ -238,7 +238,10 @@ export function VList<T>(props: Props<T>) {
         const focus = focusItemRef.current
 
         if (focus && focusedItem) {
-            const y = focus?.align === 'end' ? focusedItem.y + focusedItem.height : focusedItem.y
+            const y =
+                focus?.align === 'end'
+                    ? focusedItem.y + focusedItem.height + (focus?.margin ?? 0)
+                    : focusedItem.y - (focus?.margin ?? 0)
             return y + (focus?.align === 'end' ? padding - vh : 0)
         }
 

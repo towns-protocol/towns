@@ -1,5 +1,5 @@
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
-import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { MutableRefObject, useCallback, useMemo, useRef } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { Outlet, useLocation, useParams } from 'react-router'
 import {
@@ -167,11 +167,6 @@ const SpacesChannelComponent = (props: Props) => {
         },
         [onLoadMore],
     )
-
-    useEffect(() => {
-        // load more when opening the channel
-        onLoadMore()
-    }, [onLoadMore])
 
     const showJoinChannel = myMembership !== Membership.Join && !isDmOrGDM
     const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM

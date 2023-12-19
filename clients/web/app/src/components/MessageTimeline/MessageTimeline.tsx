@@ -449,7 +449,12 @@ export const MessageTimeline = (props: Props) => {
         [listItems],
     )
 
-    const { focusItem } = useFocusMessage(listItems, props.highlightId, userId)
+    const { focusItem } = useFocusMessage(
+        listItems,
+        props.highlightId,
+        userId,
+        fullyPersistedRef.current,
+    )
 
     const { visualViewportScrolled: tabBarHidden } = useVisualViewportContext()
 
