@@ -17,7 +17,7 @@ export enum Mute {
   Default = 'default',
 }
 
-export enum NotificationType {
+export enum NotificationKind {
   DirectMessage = 'direct_message',
   Mention = 'mention',
   NewMessage = 'new_message',
@@ -59,25 +59,30 @@ export function isUserId(
   return typeof args === 'string' && args.length > 0
 }
 
-export interface NotificationContentBasic {
+export interface NotificationContentMessage {
+  kind:
+    | NotificationKind.NewMessage
+    | NotificationKind.ReplyTo
+    | NotificationKind.Mention
   spaceId: string
   channelId: string
   senderId: string
+  event: object
 }
 
 export interface NotificationContentDm {
-  spaceId: string
+  kind: NotificationKind.DirectMessage
   channelId: string
   senderId: string
   recipients: string[]
+  event: object
 }
 
 export type NotificationContent =
-  | NotificationContentBasic
+  | NotificationContentMessage
   | NotificationContentDm
 
 export interface NotificationPayload {
-  notificationType: NotificationType
   content: NotificationContent
 }
 
@@ -85,11 +90,7 @@ export function isNotificationPayload(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any,
 ): args is NotificationPayload {
-  return (
-    typeof args === 'object' &&
-    Object.values(NotificationType).includes(args.notificationType) &&
-    isNotificationContent(args.content)
-  )
+  return typeof args === 'object' && isNotificationContent(args.content)
 }
 
 // relationship between town and channels
@@ -161,28 +162,32 @@ function isUserSettingsChannelArray(args: any): args is UserSettingsChannel[] {
   )
 }
 
-function isNotificationContentBasic(
+export function isNotificationContentMessage(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any,
-): args is NotificationContentBasic {
+): args is NotificationContentMessage {
   return (
     typeof args === 'object' &&
+    Object.values(NotificationKind).includes(args.kind) &&
     typeof args.spaceId === 'string' &&
     typeof args.channelId === 'string' &&
-    typeof args.senderId === 'string'
+    typeof args.senderId === 'string' &&
+    typeof args.event === 'object'
   )
 }
 
-function isNotificationContentDm(
+export function isNotificationContentDm(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any,
 ): args is NotificationContentDm {
   return (
     typeof args === 'object' &&
-    typeof args.spaceId === 'string' &&
+    NotificationKind.DirectMessage.toString() === args.kind &&
     typeof args.channelId === 'string' &&
     typeof args.senderId === 'string' &&
-    Array.isArray(args.recipients)
+    Array.isArray(args.recipients) &&
+    args.recipients.every((user: unknown) => isUserId(user)) &&
+    typeof args.event === 'object'
   )
 }
 
@@ -190,5 +195,5 @@ function isNotificationContent(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any,
 ): args is NotificationContent {
-  return isNotificationContentBasic(args) || isNotificationContentDm(args)
+  return isNotificationContentMessage(args) || isNotificationContentDm(args)
 }

@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,13 +18,13 @@ import (
 )
 
 type expectPayload struct {
-	authToken        string
-	channelId        string
-	notificationType nodes.NotificationType
-	sender           string
-	spaceId          string
-	url              string
-	usersToNotify    []string
+	authToken     string
+	channelId     string
+	kind          nodes.NotificationKind
+	sender        string
+	spaceId       string
+	url           string
+	usersToNotify []string
 }
 
 func createTestServer(
@@ -33,26 +34,85 @@ func createTestServer(
 	c := make(chan int)
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		defer close(c)
-		var n nodes.NotificationRequestParams
 		bearerToken := fmt.Sprintf("Bearer %s", expectPayload.authToken)
-		err := json.NewDecoder(req.Body).Decode(&n)
-		assert.NoError(t, err)
 		// assert the headers
 		assert.Equal(t, expectPayload.url, req.URL.Path)
 		assert.Equal(t, "POST", req.Method)
 		assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 		assert.Equal(t, bearerToken, req.Header.Get("Authorization"))
 		// assert the body payload
-		assert.Equal(t, expectPayload.notificationType.String(), n.Payload.NotificationType)
-		assert.Equal(t, expectPayload.channelId, n.ChannelId)
-		assert.Equal(t, expectPayload.sender, n.Sender)
-		assert.Equal(t, expectPayload.spaceId, n.SpaceId)
-		assert.ElementsMatch(t, expectPayload.usersToNotify, n.Users)
+		body, err := io.ReadAll(req.Body)
+		assert.NoError(t, err)
+		assertPayload(t, expectPayload, body)
 		// Send back the response
 		rw.WriteHeader(http.StatusOK)
 		c <- 0 // signal that the server is done
 	}))
 	return server, c
+}
+
+func assertPayload(
+	t *testing.T,
+	expectPayload *expectPayload,
+	data []byte,
+) {
+	var v map[string]any
+	err := json.Unmarshal(data, &v)
+	assert.NoError(t, err)
+	// assert the json matches the NotificationRequestParams struct
+	assert.Equal(t, expectPayload.sender, v["sender"].(string))
+	users := v["users"].([]any)
+	assertRecipients(t, expectPayload.usersToNotify, users)
+	payload := v["payload"].(map[string]any)
+	content := payload["content"].(map[string]any)
+	kind := content["kind"].(string)
+	switch kind {
+	case nodes.NewMessage.String():
+		assert.Equal(t, expectPayload.kind.String(), kind)
+		assert.Equal(t, expectPayload.spaceId, content["spaceId"].(string))
+		assert.Equal(t, expectPayload.channelId, content["channelId"].(string))
+		assert.Equal(t, expectPayload.sender, content["senderId"].(string))
+		event := content["event"].(map[string]any)
+		assertEvent(t, event)
+	case nodes.DirectMessage.String():
+		assert.Equal(t, expectPayload.kind.String(), kind)
+		nilSpaceId := content["spaceId"]
+		assert.Nil(t, nilSpaceId, "direct messages should not have a spaceId")
+		assert.Equal(t, expectPayload.channelId, content["channelId"].(string))
+		assert.Equal(t, expectPayload.sender, content["senderId"].(string))
+		recipients := content["recipients"].([]any)
+		assertRecipients(t, expectPayload.usersToNotify, recipients)
+		event := content["event"].(map[string]any)
+		assertEvent(t, event)
+	default:
+		assert.Failf(t, "unknown notification kind: %s", kind)
+	}
+}
+
+func assertRecipients(
+	t *testing.T,
+	expectRecipients []string,
+	data []any,
+) {
+	var users []string
+	for _, u := range data {
+		users = append(users, u.(string))
+	}
+	assert.EqualValues(t, expectRecipients, users)
+}
+
+func assertEvent(
+	t *testing.T,
+	event map[string]any,
+) {
+	assert.NotNil(t, event)
+	assert.NotNil(t, event["creator_address"])
+	assert.NotNil(t, event["salt"])
+	assert.NotNil(t, event["prev_miniblock_hash"])
+	assert.NotNil(t, event["Payload"])
+	payload := event["Payload"].(map[string]any)
+	assert.NotNil(t, payload)
+	assert.NotNil(t, payload["ChannelPayload"])
 }
 
 func TestPushNotification_JoinedMembers(t *testing.T) {
@@ -81,13 +141,13 @@ func TestPushNotification_JoinedMembers(t *testing.T) {
 	// create a push notification config and the test server
 	authToken := "test"
 	expectPayload := &expectPayload{
-		authToken:        authToken,
-		channelId:        channelStreamId,
-		notificationType: nodes.NewMessage,
-		sender:           alice,
-		spaceId:          spaceStreamId,
-		url:              "/api/notify-users",
-		usersToNotify:    others,
+		authToken:     authToken,
+		channelId:     channelStreamId,
+		kind:          nodes.NewMessage,
+		sender:        alice,
+		spaceId:       spaceStreamId,
+		url:           "/api/notify-users",
+		usersToNotify: others,
 	}
 	server, c := createTestServer(t, expectPayload)
 	defer server.Close()
@@ -97,6 +157,12 @@ func TestPushNotification_JoinedMembers(t *testing.T) {
 	}
 
 	/* Act */
+	// post a new message
+	parsedEvent, _ := testutils.PostMessage_T(
+		t_context,
+		wallet,
+		"hello",
+	)
 	notification := nodes.MakePushNotification(
 		ctx,
 		&cfg,
@@ -106,6 +172,7 @@ func TestPushNotification_JoinedMembers(t *testing.T) {
 		t_context.Context,
 		t_context.StreamView,
 		alice,
+		parsedEvent.Event,
 	)
 	// wait for server to finish
 	<-c
@@ -140,13 +207,13 @@ func TestPushNotification_RemainingMembers(t *testing.T) {
 	// create a push notification config and the test server
 	authToken := "test"
 	expectPayload := &expectPayload{
-		authToken:        authToken,
-		channelId:        channelStreamId,
-		notificationType: nodes.NewMessage,
-		sender:           alice,
-		spaceId:          spaceStreamId,
-		url:              "/api/notify-users",
-		usersToNotify:    []string{"carol"}, // because bob left the channel
+		authToken:     authToken,
+		channelId:     channelStreamId,
+		kind:          nodes.NewMessage,
+		sender:        alice,
+		spaceId:       spaceStreamId,
+		url:           "/api/notify-users",
+		usersToNotify: []string{"carol"}, // because bob left the channel
 	}
 	server, c := createTestServer(t, expectPayload)
 	defer server.Close()
@@ -162,6 +229,12 @@ func TestPushNotification_RemainingMembers(t *testing.T) {
 		wallet,
 		[]string{"bob"},
 	)
+	// post a new message
+	parsedEvent, _ := testutils.PostMessage_T(
+		t_context,
+		wallet,
+		"hello",
+	)
 	notification := nodes.MakePushNotification(
 		ctx,
 		&cfg,
@@ -171,6 +244,7 @@ func TestPushNotification_RemainingMembers(t *testing.T) {
 		t_context.Context,
 		t_context.StreamView,
 		alice,
+		parsedEvent.Event,
 	)
 	// wait for server to finish
 	<-c
@@ -185,7 +259,7 @@ func TestPushNotification_Dm(t *testing.T) {
 	wallet, _ := crypto.NewWallet(ctx)
 	alice := "alice"
 	others := []string{"bob", "carol"}
-	spaceStreamId := "space_1_streamId"
+	spaceStreamId := ""
 	channelStreamId := shared.STREAM_GDM_CHANNEL_PREFIX_DASH + "_channel_1_streamId"
 	// create a channel stream
 	t_context := testutils.MakeChannelStreamContext_T(
@@ -205,13 +279,13 @@ func TestPushNotification_Dm(t *testing.T) {
 	// create a push notification config and the test server
 	authToken := "test"
 	expectPayload := &expectPayload{
-		authToken:        authToken,
-		channelId:        channelStreamId,
-		notificationType: nodes.DirectMessage,
-		sender:           alice,
-		spaceId:          spaceStreamId,
-		url:              "/api/notify-users",
-		usersToNotify:    others,
+		authToken:     authToken,
+		channelId:     channelStreamId,
+		kind:          nodes.DirectMessage,
+		sender:        alice,
+		spaceId:       spaceStreamId,
+		url:           "/api/notify-users",
+		usersToNotify: others,
 	}
 	server, c := createTestServer(t, expectPayload)
 	defer server.Close()
@@ -221,6 +295,12 @@ func TestPushNotification_Dm(t *testing.T) {
 	}
 
 	/* Act */
+	// post a new message
+	parsedEvent, _ := testutils.PostMessage_T(
+		t_context,
+		wallet,
+		"hello",
+	)
 	notification := nodes.MakePushNotification(
 		ctx,
 		&cfg,
@@ -230,6 +310,7 @@ func TestPushNotification_Dm(t *testing.T) {
 		t_context.Context,
 		t_context.StreamView,
 		alice,
+		parsedEvent.Event,
 	)
 	// wait for server to finish
 	<-c

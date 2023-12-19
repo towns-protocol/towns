@@ -139,6 +139,35 @@ func LeaveChannel_T(
 	return t_Context.Refresh()
 }
 
+func PostMessage_T(
+	t_Context *StreamContext_T,
+	wallet *crypto.Wallet,
+	message string,
+) (*events.ParsedEvent, *StreamContext_T) {
+	t := t_Context.t
+	ctx := t_Context.Context
+	syncStream := t_Context.SyncStream
+	streamView := t_Context.StreamView
+	prevMiniblockHash := streamView.LastBlock().Hash
+	parsedEvent := ParsedEvent_T(
+		t,
+		MakeEnvelopeWithPayload_T(
+			t,
+			wallet,
+			events.Make_ChannelPayload_Message(
+				message,
+			),
+			prevMiniblockHash,
+		),
+	)
+	err := syncStream.AddEvent(
+		ctx,
+		parsedEvent,
+	)
+	assert.NoError(t, err)
+	return parsedEvent, t_Context.Refresh()
+}
+
 func ParsedEvent_T(t *testing.T, envelope *protocol.Envelope) *events.ParsedEvent {
 	parsed, err := events.ParseEvent(envelope)
 	if err != nil {

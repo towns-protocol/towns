@@ -4,7 +4,7 @@ import {
 } from '../src/request-interfaces'
 import { createTestMocks, mockDbStatements } from './mock-utils'
 
-import { NotificationType } from '../src/types'
+import { NotificationKind } from '../src/types'
 import { handleRequest } from '../src'
 import { jest } from '@jest/globals'
 
@@ -49,7 +49,7 @@ describe('tag-handlers', () => {
         spaceId,
         channelId,
         userId,
-        NotificationType.Mention,
+        NotificationKind.Mention,
       )
     }
   })
@@ -94,7 +94,7 @@ describe('tag-handlers', () => {
         spaceId,
         channelId,
         userId,
-        NotificationType.ReplyTo,
+        NotificationKind.ReplyTo,
       )
     }
   })

@@ -5,6 +5,7 @@ import (
 	"casablanca/node/config"
 	"casablanca/node/dlog"
 	"casablanca/node/events"
+	"casablanca/node/protocol"
 	"casablanca/node/shared"
 	"context"
 	"encoding/json"
@@ -22,6 +23,7 @@ type PushNotification interface {
 		ctx context.Context,
 		channel events.StreamView,
 		senderId string, // sender of the event
+		event *protocol.StreamEvent,
 	)
 }
 
@@ -47,11 +49,13 @@ func (p pushNotificationImpl) SendPushNotification(
 	ctx context.Context,
 	channel events.StreamView,
 	senderId string,
+	event *protocol.StreamEvent,
 ) {
 	go p.sendNotificationRequest(
 		ctx,
 		channel,
 		senderId,
+		event,
 	)
 }
 
@@ -59,6 +63,7 @@ func (p pushNotificationImpl) sendNotificationRequest(
 	ctx context.Context,
 	channel events.StreamView,
 	senderId string,
+	event *protocol.StreamEvent,
 ) {
 	log := dlog.CtxLog(ctx)
 	var spaceId string
@@ -76,33 +81,32 @@ func (p pushNotificationImpl) sendNotificationRequest(
 		return
 	}
 	// prepare the push notification request params and payload
-	var payload notificationPayload
+	var payload NotificationPayload
 	if shared.CheckDMStreamId(channel.StreamId()) || shared.ValidGDMChannelStreamId(channel.StreamId()) {
-		payload = notificationPayload{
-			NotificationType: DirectMessage.String(),
-			Content: notificationDmMessage{
-				SpaceId:    spaceId,
+		payload = NotificationPayload{
+			Content: &NotificationDirectMessage{
+				Kind:       DirectMessage.String(),
 				ChannelId:  channel.StreamId(),
 				SenderId:   senderId,
 				Recipients: users,
+				Event:      event,
 			},
 		}
 	} else {
-		payload = notificationPayload{
-			NotificationType: NewMessage.String(),
-			Content: notificationNewMessage{
+		payload = NotificationPayload{
+			Content: &NotificationNewMessage{
+				Kind:      NewMessage.String(),
 				SpaceId:   spaceId,
 				ChannelId: channel.StreamId(),
 				SenderId:  senderId,
+				Event:     event,
 			},
 		}
 	}
 	reqParams := NotificationRequestParams{
-		SpaceId:   spaceId,
-		ChannelId: channel.StreamId(),
-		Sender:    senderId,
-		Users:     users,
-		Payload:   payload,
+		Sender:  senderId,
+		Users:   users,
+		Payload: payload,
 	}
 	// create the body as a stream
 	body, err := reqParams.NewReader()
@@ -135,16 +139,16 @@ func (p pushNotificationImpl) sendNotificationRequest(
 	log.Debug("PushNotification request sent", "# of members", len(users))
 }
 
-type NotificationType int
+type NotificationKind int
 
 const (
-	NewMessage NotificationType = iota
+	NewMessage NotificationKind = iota
 	Mention
 	ReplyTo
 	DirectMessage
 )
 
-func (n NotificationType) String() string {
+func (n NotificationKind) String() string {
 	switch n {
 	case NewMessage:
 		return "new_message"
@@ -159,31 +163,39 @@ func (n NotificationType) String() string {
 	}
 }
 
-type notificationNewMessage struct {
-	SpaceId   string `json:"spaceId"`
-	ChannelId string `json:"channelId"`
-	SenderId  string `json:"senderId"`
+type NotificationContent interface {
+	IsNotificationPayload_Content()
 }
 
-type notificationDmMessage struct {
-	SpaceId    string   `json:"spaceId"`
-	ChannelId  string   `json:"channelId"`
-	SenderId   string   `json:"senderId"`
-	Recipients []string `json:"recipients"`
+type NotificationNewMessage struct {
+	Kind      string                `json:"kind"`
+	SpaceId   string                `json:"spaceId"`
+	ChannelId string                `json:"channelId"`
+	SenderId  string                `json:"senderId"`
+	Event     *protocol.StreamEvent `json:"event"`
 }
 
-type notificationPayload struct {
-	NotificationType string `json:"notificationType"`
-	Content          any    `json:"content"`
+type NotificationDirectMessage struct {
+	Kind       string                `json:"kind"`
+	ChannelId  string                `json:"channelId"`
+	SenderId   string                `json:"senderId"`
+	Recipients []string              `json:"recipients"`
+	Event      *protocol.StreamEvent `json:"event"`
+}
+
+type NotificationPayload struct {
+	Content NotificationContent `json:"content"`
 }
 
 type NotificationRequestParams struct {
-	SpaceId   string              `json:"spaceId"`
-	ChannelId string              `json:"channelId"`
-	Sender    string              `json:"sender"`
-	Users     []string            `json:"users"`
-	Payload   notificationPayload `json:"payload"`
+	Sender  string              `json:"sender"`
+	Users   []string            `json:"users"`
+	Payload NotificationPayload `json:"payload"`
 }
+
+func (n *NotificationNewMessage) IsNotificationPayload_Content() {}
+
+func (n *NotificationDirectMessage) IsNotificationPayload_Content() {}
 
 func (p NotificationRequestParams) String() string {
 	data, err := json.Marshal(p)

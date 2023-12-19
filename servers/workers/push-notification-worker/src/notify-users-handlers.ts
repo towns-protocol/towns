@@ -1,8 +1,10 @@
 import {
   Mute,
   NotificationContentDm,
-  NotificationType,
+  NotificationKind,
   PushOptions,
+  isNotificationContentDm,
+  isNotificationContentMessage,
 } from './types'
 import {
   PushSubscriptionSqlStatement,
@@ -85,13 +87,24 @@ export interface SendPushResponse {
 
 export async function notifyUsers(params: NotifyRequestParams, env: Env) {
   const allNotificationRequests: Promise<SendPushResponse>[] = []
-  const taggedUsers = await getNotificationTags(params.channelId, env.DB)
-  const usersToNotify = await getUsersToNotify(env.DB, taggedUsers, params)
+  const channelId = getChannelId(params)
+  const taggedUsers = await getNotificationTags(channelId, env.DB)
+  const usersToNotify = await getUsersToNotify(
+    env.DB,
+    channelId,
+    taggedUsers,
+    params,
+  )
   // track which users we attempted to notify for debugging
   const attemptedToNotifyUsers = new Set<string>()
   // gather all the notification requests into a single promise
   for (const user of usersToNotify) {
-    const userOptions = createUserSpecificParams(taggedUsers, params, user)
+    const userOptions = createUserSpecificParams(
+      channelId,
+      taggedUsers,
+      params,
+      user,
+    )
     const stmt = env.DB.prepare(
       PushSubscriptionSqlStatement.SelectPushSubscriptions,
     ).bind(user)
@@ -172,33 +185,33 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
 }
 
 function createUserSpecificParams(
+  channelId: string,
   taggedUsers: TaggedUsers,
   params: NotifyRequestParams,
   userId: string,
 ): PushOptions {
   const userOptions: PushOptions = {
     userId,
-    channelId: params.channelId,
+    channelId,
     payload: { ...params.payload },
     urgency: params.urgency,
   }
   switch (true) {
     case taggedUsers.mentionedUsers.includes(userId):
-      userOptions.payload.notificationType = NotificationType.Mention
+      userOptions.payload.content.kind = NotificationKind.Mention
       break
     case taggedUsers.replyToUsers.includes(userId):
-      userOptions.payload.notificationType = NotificationType.ReplyTo
+      userOptions.payload.content.kind = NotificationKind.ReplyTo
       break
-    case params.payload.notificationType === NotificationType.DirectMessage:
+    case params.payload.content.kind === NotificationKind.DirectMessage:
       {
-        const recipients = getRecipientsForDm(params)
-        const content: NotificationContentDm = {
-          spaceId: params.spaceId,
-          channelId: params.channelId,
-          senderId: params.sender,
-          recipients,
+        if (isNotificationContentDm(params.payload.content)) {
+          const content = params.payload.content
+          content.recipients = getRecipientsForDm(params)
+          userOptions.payload.content = content
+        } else {
+          console.error('createUserSpecificParams', 'invalid content', params)
         }
-        userOptions.payload.content = content
       }
       break
     default:
@@ -210,6 +223,7 @@ function createUserSpecificParams(
 
 async function getUsersToNotify(
   db: D1Database,
+  channelId: string,
   taggedUsers: TaggedUsers,
   params: NotifyRequestParams,
 ): Promise<string[]> {
@@ -227,11 +241,11 @@ async function getUsersToNotify(
   const dndReplyToUsers = new Set<string>()
   const dndMentionUsers = new Set<string>()
 
-  const mutedUsersStatement = prepareMutedUsersStatement(
-    db,
-    params.spaceId,
-    params.channelId,
-  )
+  let spaceId = ''
+  if (isNotificationContentMessage(params.payload.content)) {
+    spaceId = params.payload.content.spaceId
+  }
+  const mutedUsersStatement = prepareMutedUsersStatement(db, spaceId, channelId)
   const dndReplyToStatement = prepareDnDReplyToUsersStatement(db, params.users)
   const dndMentionStatement = prepareDnDMentionUsersStatement(db, params.users)
   const [mutedUsersQuery, dndReplyToQuery, dndMentionQuery] = await Promise.all(
@@ -281,7 +295,7 @@ async function getUsersToNotify(
     // should notify if the user is in a DM/GDM, mentioned or participating in a replyTo thread
     // AND the user is not muted for the town or channel
     const shouldNotify =
-      (params.payload.notificationType === NotificationType.DirectMessage ||
+      (params.payload.content.kind === NotificationKind.DirectMessage ||
         shouldReplyTo ||
         shouldMention) &&
       !mutedUsers.has(user)
@@ -305,7 +319,7 @@ async function getUsersToNotify(
 
 function getRecipientsForDm(params: NotifyRequestParams): string[] {
   const recipients: string[] = []
-  if (params.payload.notificationType === NotificationType.DirectMessage) {
+  if (params.payload.content.kind === NotificationKind.DirectMessage) {
     for (const user of params.users) {
       if (user !== params.sender) {
         recipients.push(user)
@@ -361,4 +375,15 @@ function prepareDnDMentionUsersStatement(
   sql += ' );'
   //console.log('DnDMention sql', sql)
   return db.prepare(sql).bind(...users)
+}
+
+function getChannelId(params: NotifyRequestParams): string {
+  let channelId = ''
+  if (
+    isNotificationContentMessage(params.payload.content) ||
+    isNotificationContentDm(params.payload.content)
+  ) {
+    channelId = params.payload.content.channelId
+  }
+  return channelId
 }

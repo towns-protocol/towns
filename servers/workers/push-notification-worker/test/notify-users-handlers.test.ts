@@ -5,9 +5,10 @@ import {
 import { createRequest, createTestMocks, mockDbStatements } from './mock-utils'
 
 import {
-  NotificationContentBasic,
+  NotificationContentDm,
+  NotificationContentMessage,
   NotificationPayload,
-  NotificationType,
+  NotificationKind,
 } from '../src/types'
 import { WebPushSubscription } from '../src/web-push/web-push-types'
 import { createFakeWebPushSubscription } from './fake-data'
@@ -49,21 +50,20 @@ describe('notify-users-handlers', () => {
 
     // Act
     // create the request to notify the user
-    const content: NotificationContentBasic = {
+    const content: NotificationContentMessage = {
+      kind: NotificationKind.NewMessage,
       spaceId,
       channelId,
       senderId: sender,
+      event: {},
     }
     const payload: NotificationPayload = {
-      notificationType: NotificationType.NewMessage,
       content,
     }
     const notifyParams: NotifyRequestParams = {
       sender,
       users: [recipient],
       payload,
-      spaceId,
-      channelId,
     }
     // create the notification request
     const notifyRequest = createRequest(env, {
@@ -126,21 +126,20 @@ describe('notify-users-handlers', () => {
 
     // Act
     // create the request to notify the user
-    const content: NotificationContentBasic = {
-      spaceId,
+    const content: NotificationContentDm = {
+      kind: NotificationKind.DirectMessage,
       channelId,
       senderId: sender,
+      recipients: [],
+      event: {},
     }
     const payload: NotificationPayload = {
-      notificationType: NotificationType.DirectMessage,
       content,
     }
     const notifyParams: NotifyRequestParams = {
       sender,
       users: [recipient],
       payload,
-      spaceId,
-      channelId,
     }
     // create the notification request
     const notifyRequest = createRequest(env, {
@@ -208,21 +207,20 @@ describe('notify-users-handlers', () => {
 
     // Act
     // create the request to notify the user
-    const content: NotificationContentBasic = {
+    const content: NotificationContentMessage = {
+      kind: NotificationKind.NewMessage,
       spaceId,
       channelId,
       senderId: sender,
+      event: {},
     }
     const payload: NotificationPayload = {
-      notificationType: NotificationType.NewMessage,
       content,
     }
     const notifyParams: NotifyRequestParams = {
       sender,
       users: [recipient],
       payload,
-      spaceId,
-      channelId,
     }
     // create the notification request
     const notifyRequest = createRequest(env, {
@@ -289,21 +287,20 @@ describe('notify-users-handlers', () => {
 
     // Act
     // create the request to notify the user
-    const content: NotificationContentBasic = {
+    const content: NotificationContentMessage = {
+      kind: NotificationKind.NewMessage,
       spaceId,
       channelId,
       senderId: sender,
+      event: {},
     }
     const payload: NotificationPayload = {
-      notificationType: NotificationType.NewMessage,
       content,
     }
     const notifyParams: NotifyRequestParams = {
       sender,
       users: [replyToUser],
       payload,
-      spaceId,
-      channelId,
     }
     // create the notification request
     const notifyRequest = createRequest(env, {
@@ -370,21 +367,20 @@ describe('notify-users-handlers', () => {
 
     // Act
     // create the request to notify the user
-    const content: NotificationContentBasic = {
+    const content: NotificationContentMessage = {
+      kind: NotificationKind.NewMessage,
       spaceId,
       channelId,
       senderId: sender,
+      event: {},
     }
     const payload: NotificationPayload = {
-      notificationType: NotificationType.NewMessage,
       content,
     }
     const notifyParams: NotifyRequestParams = {
       sender,
       users: [mentionUser],
       payload,
-      spaceId,
-      channelId,
     }
     // create the notification request
     const notifyRequest = createRequest(env, {

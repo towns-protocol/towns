@@ -1,3 +1,5 @@
+import { StreamEvent } from '@river/proto'
+
 export enum AppNotificationType {
     DirectMessage = 'direct_message',
     NewMessage = 'new_message',
@@ -6,43 +8,46 @@ export enum AppNotificationType {
 }
 
 export type AppNotificationMessage = {
-    notificationType: AppNotificationType.NewMessage
     topic?: string
     content: {
+        kind: AppNotificationType.NewMessage
         spaceId: string
         channelId: string
         senderId: string
+        event: StreamEvent
     }
 }
 
 export type AppNotificationMention = {
-    notificationType: AppNotificationType.Mention
     topic?: string
     content: {
+        kind: AppNotificationType.Mention
         spaceId: string
         channelId: string
         senderId: string
+        event: StreamEvent
     }
 }
 
 export type AppNotificationReplyTo = {
-    notificationType: AppNotificationType.ReplyTo
     topic?: string
     content: {
+        kind: AppNotificationType.ReplyTo
         spaceId: string
         channelId: string
         senderId: string
+        event: StreamEvent
     }
 }
 
 export type AppNotificationDM = {
-    notificationType: AppNotificationType.DirectMessage
     topic?: string
     content: {
-        spaceId: string
+        kind: AppNotificationType.DirectMessage
         channelId: string
         senderId: string
         recipients: string[]
+        event: StreamEvent
     }
 }
 

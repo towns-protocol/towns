@@ -1,5 +1,5 @@
 import { MockProxy, mock } from 'jest-mock-extended'
-import { Mute, NotificationType, UserSettings } from '../src/types'
+import { Mute, NotificationKind, UserSettings } from '../src/types'
 import {
   QueryResultUserSettings,
   QueryResultUserSettingsAny,
@@ -286,7 +286,7 @@ function mockSelectFromNotificationTag(
         userId,
         spaceId,
         channelId,
-        tag: NotificationType.ReplyTo,
+        tag: NotificationKind.ReplyTo,
       }
       results.push(r)
     })
@@ -295,7 +295,7 @@ function mockSelectFromNotificationTag(
         userId,
         spaceId,
         channelId,
-        tag: NotificationType.Mention,
+        tag: NotificationKind.Mention,
       }
       results.push(r)
     })

@@ -352,13 +352,16 @@ async function getNotificationContent(notification: AppNotification): Promise<{
     }
 
     try {
-        const space = await idbSpaces.get(notification.content.spaceId)
+        const space =
+            notification.content.kind !== AppNotificationType.DirectMessage
+                ? await idbSpaces.get(notification.content.spaceId)
+                : undefined
         const channel = await idbChannels.get(notification.content.channelId)
         const sender = await idbUsers.get(notification.content.senderId)
         const myUser = await idbUsers.get(ServiceWorkerMessageType.MyUserId)
         myUserId = myUser?.name // this is the userId, not the displayName
         if (
-            notification.notificationType === AppNotificationType.DirectMessage &&
+            notification.content.kind === AppNotificationType.DirectMessage &&
             notification.content.recipients &&
             notification.content.recipients.length > 0
         ) {
@@ -394,7 +397,7 @@ async function getNotificationContent(notification: AppNotification): Promise<{
         body: "There's a new message in one of your towns. Open the app to sync with it.",
     }
 
-    switch (notification.notificationType) {
+    switch (notification.content.kind) {
         case AppNotificationType.DirectMessage:
             return generateDM(myUserId, senderName, recipients)
         case AppNotificationType.NewMessage:

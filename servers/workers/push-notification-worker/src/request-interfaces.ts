@@ -48,8 +48,6 @@ export interface NotifyRequestParams {
   sender: string
   users: string[]
   payload: NotificationPayload
-  spaceId: string
-  channelId: string
   /* push options */
   urgency?: Urgency
 }
@@ -59,8 +57,6 @@ export function isNotifyRequestParams(
   params: any,
 ): params is NotifyRequestParams {
   return (
-    typeof params.spaceId === 'string' &&
-    typeof params.channelId === 'string' &&
     typeof params.sender === 'string' &&
     Array.isArray(params.users) &&
     params.users?.length > 0 &&

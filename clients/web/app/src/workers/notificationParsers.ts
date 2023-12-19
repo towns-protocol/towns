@@ -1,68 +1,81 @@
 import * as z from 'zod'
+import { StreamEvent } from '@river/proto'
 import { PATHS } from '../routes'
 import { AppNotification, AppNotificationType } from './types.d'
 
-const content = z.object({
+const contentMessage = z.object({
+    kind: z.enum([
+        AppNotificationType.NewMessage,
+        AppNotificationType.Mention,
+        AppNotificationType.ReplyTo,
+    ]),
     spaceId: z.string(),
     channelId: z.string(),
     senderId: z.string(),
-    recipients: z.array(z.string()).optional(),
+    event: z.unknown(),
 })
+
+const contentDm = z.object({
+    kind: z.enum([AppNotificationType.DirectMessage]),
+    channelId: z.string(),
+    senderId: z.string(),
+    recipients: z.array(z.string()),
+    event: z.unknown(),
+})
+
+const content = z.discriminatedUnion('kind', [contentMessage, contentDm])
 
 // this is obviously a bit overkill for now, but I think it can
 // be helpful as we add more notification types
 const notificationSchema = z
     .object({
-        notificationType: z.enum([
-            AppNotificationType.DirectMessage,
-            AppNotificationType.NewMessage,
-            AppNotificationType.Mention,
-            AppNotificationType.ReplyTo,
-        ]),
         content: content,
         topic: z.string().optional(),
     })
     .transform((data): AppNotification | undefined => {
-        switch (data.notificationType) {
+        switch (data.content.kind) {
             case AppNotificationType.DirectMessage:
                 return {
                     topic: data.topic,
-                    notificationType: AppNotificationType.DirectMessage,
                     content: {
-                        spaceId: data.content.spaceId,
+                        kind: AppNotificationType.DirectMessage,
                         channelId: data.content.channelId,
                         senderId: data.content.senderId,
                         recipients: data.content.recipients ?? [],
+                        event: data.content.event as StreamEvent,
                     },
                 }
             case AppNotificationType.NewMessage:
                 return {
                     topic: data.topic,
-                    notificationType: AppNotificationType.NewMessage,
                     content: {
-                        spaceId: data.content.spaceId,
+                        kind: AppNotificationType.NewMessage,
+                        spaceId: data.content.spaceId ?? '',
                         channelId: data.content.channelId,
                         senderId: data.content.senderId,
+                        event: data.content.event as StreamEvent,
                     },
                 }
             case AppNotificationType.Mention:
                 return {
                     topic: data.topic,
-                    notificationType: AppNotificationType.Mention,
                     content: {
-                        spaceId: data.content.spaceId,
+                        kind: AppNotificationType.Mention,
+                        spaceId: data.content.spaceId ?? '',
                         channelId: data.content.channelId,
                         senderId: data.content.senderId,
+                        event: data.content.event as StreamEvent,
                     },
                 }
             case AppNotificationType.ReplyTo:
                 return {
                     topic: data.topic,
-                    notificationType: AppNotificationType.ReplyTo,
                     content: {
-                        spaceId: data.content.spaceId,
+                        kind: AppNotificationType.ReplyTo,
+                        spaceId: data.content.spaceId ?? '',
                         channelId: data.content.channelId,
                         senderId: data.content.senderId,
+                        event: data.content.event as StreamEvent,
                     },
                 }
             default:
@@ -83,7 +96,7 @@ export function appNotificationFromPushEvent(raw: string): AppNotification | und
 }
 
 export function pathFromAppNotification(notification: AppNotification) {
-    switch (notification.notificationType) {
+    switch (notification.content.kind) {
         case AppNotificationType.DirectMessage:
             return (
                 [PATHS.MESSAGES, encodeURIComponent(notification.content.channelId)].join('/') + '/'

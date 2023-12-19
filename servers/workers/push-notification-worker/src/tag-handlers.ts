@@ -2,7 +2,7 @@ import {
   MentionRequestParams,
   ReplyToRequestParams,
 } from './request-interfaces'
-import { NotificationType, UserId } from './types'
+import { NotificationKind, UserId } from './types'
 import { create204Response, create422Response } from './http-responses'
 
 import { printDbResultInfo } from './sql'
@@ -62,7 +62,7 @@ export async function tagMentionUsers(
       params.spaceId,
       params.channelId,
       user,
-      NotificationType.Mention,
+      NotificationKind.Mention,
     ),
   )
   const rows = await db.batch(bindedStatements)
@@ -87,7 +87,7 @@ export async function tagReplyToUser(
       params.spaceId,
       params.channelId,
       user,
-      NotificationType.ReplyTo,
+      NotificationKind.ReplyTo,
     ),
   )
   const rows = await db.batch(bindedStatements)
@@ -126,10 +126,10 @@ export async function getNotificationTags(
       for (const row of result.results) {
         const r0 = row as QueryResultNotificationTag
         switch (r0.tag) {
-          case NotificationType.Mention:
+          case NotificationKind.Mention:
             mentionedUsers.push(r0.userId)
             break
-          case NotificationType.ReplyTo:
+          case NotificationKind.ReplyTo:
             replyToUsers.push(r0.userId)
             break
         }
