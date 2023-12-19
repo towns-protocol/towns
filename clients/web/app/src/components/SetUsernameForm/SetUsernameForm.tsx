@@ -71,6 +71,7 @@ export const SetUsernameForm = (props: Props) => {
                 <Text fontWeight="strong">Username</Text>
                 <Text color="gray2">This is the username you will be using for this town.</Text>
                 <TextField
+                    autoFocus
                     disabled={requestInFlight}
                     placeholder="Enter your username"
                     background="level2"
