@@ -56,7 +56,7 @@ vi.mock('hooks/useRequireTransactionNetwork', () => {
     return {
         useRequireTransactionNetwork: () => ({
             isTransactionNetwork: true,
-            name: 'Goerli',
+            name: 'Sepolia',
             switchNetwork: () => null,
         }),
     }

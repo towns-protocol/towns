@@ -1,5 +1,5 @@
-import { localhost, baseGoerli, baseSepolia } from 'viem/chains'
-import { LOCALHOST_CHAIN_ID, BASE_GOERLI, BASE_SEPOLIA } from '../Web3Constants'
+import { localhost, baseSepolia } from 'viem/chains'
+import { LOCALHOST_CHAIN_ID, BASE_SEPOLIA } from '../Web3Constants'
 import {
     Abi,
     Address,
@@ -17,15 +17,13 @@ import { SpaceDappTransaction } from './types'
 export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 
 type Abis = {
-    readonly localhostAbi: Abi
-    readonly goerliAbi: Abi
-    readonly sepoliaAbi: Abi
+    readonly [chainId: number]: Abi
 }
 
 export class BaseContractShim<TAbis extends Abis> {
     public readonly address: Address
     public readonly chainId: number
-    public readonly abi: TAbis['localhostAbi'] | TAbis['sepoliaAbi']
+    public readonly abi: TAbis[31337] | TAbis[84532]
     private publicClient: PublicClient | undefined
 
     constructor(
@@ -191,24 +189,16 @@ export class BaseContractShim<TAbis extends Abis> {
 }
 
 function getAbiForChain<TAbi extends Abis>(chainId: number, abis: TAbi) {
-    switch (chainId) {
-        case LOCALHOST_CHAIN_ID:
-            return abis.localhostAbi
-        case BASE_GOERLI:
-            return abis.goerliAbi
-        case BASE_SEPOLIA:
-            return abis.sepoliaAbi
-        default:
-            throw new Error(`Unsupported chainId ${chainId}`)
+    if (!abis[chainId]) {
+        throw new Error(`Unsupported chainId ${chainId}`)
     }
+    return abis[chainId]
 }
 
 function getChain(chainId: number): Chain {
     switch (chainId) {
         case LOCALHOST_CHAIN_ID:
             return localhost
-        case BASE_GOERLI:
-            return baseGoerli
         case BASE_SEPOLIA:
             return baseSepolia
         default:

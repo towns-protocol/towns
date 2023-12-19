@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { baseGoerli, baseSepolia, foundry, goerli, localhost, sepolia } from 'wagmi/chains'
+import { baseSepolia, foundry, localhost } from 'wagmi/chains'
 import { configureChains } from 'wagmi'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
@@ -11,7 +11,7 @@ import { ENVIRONMENTS } from 'utils/environment'
 const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_API_KEY ?? ''
 const PRIVY_ID = import.meta.env.VITE_PRIVY_ID ?? ''
 
-const SUPPORTED_CHAINS = [goerli, sepolia, foundry, baseGoerli, baseSepolia, localhost]
+const SUPPORTED_CHAINS = [foundry, baseSepolia, localhost]
 
 export const wagmiChainsConfig = configureChains(
     SUPPORTED_CHAINS,

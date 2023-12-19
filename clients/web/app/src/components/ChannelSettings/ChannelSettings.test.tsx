@@ -99,7 +99,7 @@ describe('CreateChannelForm', () => {
             vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
                 isReady: true,
                 isTransactionNetwork: true,
-                name: 'Goerli',
+                name: 'Sepolia',
                 switchNetwork: () => null,
             })
 
@@ -162,7 +162,7 @@ describe('CreateChannelForm', () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isReady: true,
             isTransactionNetwork: true,
-            name: 'Goerli',
+            name: 'Sepolia',
             switchNetwork: () => null,
         })
 
@@ -217,7 +217,7 @@ describe('CreateChannelForm', () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isReady: true,
             isTransactionNetwork: true,
-            name: 'Goerli',
+            name: 'Sepolia',
             switchNetwork: () => null,
         })
 

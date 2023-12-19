@@ -4,10 +4,6 @@ import LocalhostMockNFTAddress from '@towns/generated/localhost/addresses/mockNF
 import LocalhostMemberAddress from '@towns/generated/localhost/addresses/member.json' assert { type: 'json' }
 import LocalhostWalletLinkAddress from '@towns/generated/localhost/addresses/walletLink.json' assert { type: 'json' }
 
-import BaseGoerliTownFactoryAddress from '@towns/generated/base_goerli/addresses/townFactory.json' assert { type: 'json' }
-import BaseGoerliTownOwnerAddress from '@towns/generated/base_goerli/addresses/townOwner.json' assert { type: 'json' }
-import BaseGoerliWalletLinkAddress from '@towns/generated/base_goerli/addresses/walletLink.json' assert { type: 'json' }
-
 import BaseSepoliaTownFactoryAddress from '@towns/generated/base_sepolia/addresses/townFactory.json' assert { type: 'json' }
 import BaseSepoliaTownOwnerAddress from '@towns/generated/base_sepolia/addresses/townOwner.json' assert { type: 'json' }
 import BaseSepoliaWalletLinkAddress from '@towns/generated/base_sepolia/addresses/walletLink.json' assert { type: 'json' }
@@ -30,13 +26,6 @@ const localhostContractsInfo: IStaticContractsInfo = {
     walletLinkAddress: LocalhostWalletLinkAddress.address as Address,
 }
 
-const baseGoerliContractsInfo: IStaticContractsInfo = {
-    townFactoryAddress: BaseGoerliTownFactoryAddress.address as Address,
-    townOwnerAddress: BaseGoerliTownOwnerAddress.address as Address,
-    mockErc721aAddress: '' as Address,
-    walletLinkAddress: BaseGoerliWalletLinkAddress.address as Address,
-}
-
 const baseSepoliaContractsInfo: IStaticContractsInfo = {
     townFactoryAddress: BaseSepoliaTownFactoryAddress.address as Address,
     townOwnerAddress: BaseSepoliaTownOwnerAddress.address as Address,
@@ -50,8 +39,6 @@ export function getContractsInfo(chainId: number): IStaticContractsInfo {
         case 0:
         case 31337:
             return localhostContractsInfo
-        case 84531:
-            return baseGoerliContractsInfo
         case 84532:
             return baseSepoliaContractsInfo
         default:

@@ -65,7 +65,7 @@ describe('CreateChannelForm', () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isReady: true,
             isTransactionNetwork: true,
-            name: 'Goerli',
+            name: 'Sepolia',
             switchNetwork: () => null,
         })
 
@@ -108,7 +108,7 @@ describe('CreateChannelForm', () => {
             isReady: true,
 
             isTransactionNetwork: true,
-            name: 'Goerli',
+            name: 'Sepolia',
             switchNetwork: () => null,
         })
         vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
@@ -147,7 +147,7 @@ describe('CreateChannelForm', () => {
             isReady: true,
 
             isTransactionNetwork: false,
-            name: 'Goerli',
+            name: 'Sepolia',
             switchNetwork: () => null,
         })
         vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
@@ -175,7 +175,7 @@ describe('CreateChannelForm', () => {
             isReady: true,
 
             isTransactionNetwork: true,
-            name: 'Goerli',
+            name: 'Sepolia',
 
             switchNetwork: () => null,
         })
@@ -209,7 +209,7 @@ describe('CreateChannelForm', () => {
             isReady: true,
 
             isTransactionNetwork: true,
-            name: 'Goerli',
+            name: 'Sepolia',
 
             switchNetwork: () => null,
         })
@@ -267,7 +267,7 @@ describe('CreateChannelForm', () => {
             isReady: true,
 
             isTransactionNetwork: true,
-            name: 'Goerli',
+            name: 'Sepolia',
             switchNetwork: () => null,
         })
 
@@ -315,7 +315,7 @@ describe('CreateChannelForm', () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isReady: true,
             isTransactionNetwork: true,
-            name: 'Goerli',
+            name: 'Sepolia',
             switchNetwork: () => null,
         })
 

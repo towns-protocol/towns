@@ -63,7 +63,7 @@ export const testHandlers = [
     rest.get('https://www.walletlink.org/rpc', (_req, res, ctx) => {
         return res(ctx.status(200), ctx.json('empty'))
     }),
-    rest.post('https://rpc.ankr.com/eth_goerli', (_req, res, ctx) => {
+    rest.post('https://rpc.ankr.com/eth_sepolia', (_req, res, ctx) => {
         return res(ctx.status(200), ctx.json('empty'))
     }),
     rest.post('http://localhost:8545/', (_req, res, ctx) => {

@@ -8,7 +8,7 @@ export const loadTestReceiverTimeout = 1050000 // sending 10000 message will tak
 export const loadTestSignalCheckInterval = 100
 export const defaultWaitForTimeout = 10000 // refer DefaultWaitForTimeoutMS in TestConstants.ts
 
-export const jsonRpcProviderUrl = 'https://goerli.base.org'
+export const jsonRpcProviderUrl = 'https://sepolia.base.org'
 export const nodeRpcURL = 'https://river1-test-beta.towns.com'
 
 export const connectionOptions = {

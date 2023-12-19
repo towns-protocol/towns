@@ -7,7 +7,6 @@ import { useMemo } from 'react'
 import { TokenProps, TokenType } from '@components/Tokens/types'
 import { env } from 'utils'
 import {
-    fetchBaseGoerli,
     fetchBaseSepolia,
     fetchVitalikTokens,
     useNetworkForNftApi,
@@ -85,8 +84,8 @@ async function getLocalHostTokens(
     zionTokenAddress: string | null,
     alchmeyNetwork: string,
 ) {
-    // to test with a big list of tokens, add ?vitalikTokens to the url, or ?goerli to use the goerli testnet
-    if (fetchVitalikTokens || fetchBaseGoerli || fetchBaseSepolia) {
+    // to test with a big list of tokens, add ?vitalikTokens to the url, or ?base_sepolia to use the base_sepolia testnet
+    if (fetchVitalikTokens || fetchBaseSepolia) {
         return getTokenContractsForAddress(wallet, zionTokenAddress, alchmeyNetwork)
     }
 
