@@ -664,6 +664,10 @@ resource "aws_ecs_service" "river-ecs-service" {
     assign_public_ip = true
   }
 
+  timeouts {
+    create = "60m"
+    delete = "60m"
+  }
   tags = local.river_node_tags
 }
 

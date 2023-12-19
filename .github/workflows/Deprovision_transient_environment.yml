@@ -19,7 +19,7 @@ jobs:
     deprovision_transient_environment:
         permissions: write-all
         runs-on: ubuntu-latest-8-cores
-        timeout-minutes: 40
+        timeout-minutes: 60
 
         env:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
