@@ -3,6 +3,7 @@ import fuzzysort from 'fuzzysort'
 import React, { useCallback, useMemo, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router'
 import {
+    ChannelContextProvider,
     Permission,
     RoomIdentifier,
     RoomMember,
@@ -401,13 +402,15 @@ const ChannelList = (props: {
                         muted={c.muted}
                     />
                 ) : (
-                    <Box padding="sm" key={c.id.streamId}>
-                        <ChannelItem
-                            key={c.id.streamId}
-                            space={space}
-                            channelNetworkId={c.id.streamId}
-                            name={c.label}
-                        />
+                    <Box paddingY="sm" paddingX="md" key={c.id.streamId}>
+                        <ChannelContextProvider channelId={c.id}>
+                            <ChannelItem
+                                key={c.id.streamId}
+                                space={space}
+                                channelNetworkId={c.id.streamId}
+                                name={c.label}
+                            />
+                        </ChannelContextProvider>
                     </Box>
                 ),
             )}
