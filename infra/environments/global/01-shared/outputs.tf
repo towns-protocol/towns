@@ -32,3 +32,9 @@ output "river_node_credentials_secret" {
   description = "Secrets for river node credentials"
   value       = module.river_node_credentials
 }
+
+output "ecr" {
+  description = "ECR repository"
+  value       = module.ecr
+}
+

@@ -41,8 +41,7 @@ TASK_DEF="$( jq '.taskDefinition' ${CURRENT_TASK_DEFINITION_FILENAME} )"
 TASK_DEF_WITHOUT_UNWANTED_KEYS="$( jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' <<< ${TASK_DEF} )"
 
 # Update the image in the task definition using the DOCKER_IMAGE_TAG variable
-
-TASK_DEF_WITH_UPDATED_IMAGE="$( jq '.containerDefinitions[0].image = "docker.io/herenotthere/river-node:'${DOCKER_IMAGE_TAG}'"' <<< ${TASK_DEF_WITHOUT_UNWANTED_KEYS} )"
+TASK_DEF_WITH_UPDATED_IMAGE="$( jq '.containerDefinitions[0].image = "'${AWS_ACCOUNT_ID}'.dkr.ecr.'${AWS_REGION}'.amazonaws.com/river-node:'${DOCKER_IMAGE_TAG}'"' <<< ${TASK_DEF_WITHOUT_UNWANTED_KEYS} )"
 
 # Save the updated task definition
 echo $TASK_DEF_WITH_UPDATED_IMAGE > $NEW_TASK_DEFINITION_FILENAME

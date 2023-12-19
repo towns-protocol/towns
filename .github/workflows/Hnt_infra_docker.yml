@@ -30,27 +30,25 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v3
 
-            - name: Set up QEMU
-              uses: docker/setup-qemu-action@v2
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v2
-            - name: Login to Docker Hub
-              uses: docker/login-action@v3
+            - name: Setup AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
               with:
-                  username: ${{ secrets.DOCKER_HUB_USERNAME }}
-                  password: ${{ secrets.DOCKER_HUB_TOKEN }}
+                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                aws-region: us-east-1
 
-            - name: Docker Build
-              uses: docker/build-push-action@v4
-              with:
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-                  context: ./infra
-                  file: ./infra/Dockerfile
-                  platforms: ${{ env.PLATFORMS }}
-                  push: true
-                  tags: |
-                      ${{ env.DOCKER_NAMESPACE }}/hnt-infra:latest
+            - name: Login to Amazon ECR
+              id: login-aws-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+
+            - name: Build and push infra image to Amazon ECR
+              env:
+                ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
+                ECR_REPOSITORY: hnt-infra
+              run: |
+                cd ./infra
+                docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+                docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
             # If action failed, we send a slack notification
             - name: Slack notification
@@ -66,4 +64,3 @@ jobs:
                           "commit": "${{ github.sha }}",
                           "actor": "${{ github.actor }}"
                       }
-                  # env: # Computed via the root env block

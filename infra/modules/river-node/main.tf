@@ -181,6 +181,9 @@ locals {
 
 # Invoking the lambda function one RDS is created to configure the DB
 resource "null_resource" "invoke_lambda" {
+  triggers = {
+    lambda_last_modified = module.post_provision_config.lambda_function.lambda_function_last_modified
+  }
   provisioner "local-exec" {
     command = "aws lambda invoke --function-name ${local.function_name} /dev/null"
   }
@@ -247,15 +250,6 @@ resource "aws_iam_role_policy" "river_node_credentials" {
         "Effect": "Allow",
         "Resource": [
           "${local.shared_credentials.wallet_private_key.arn}"
-        ]
-      },
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${local.global_remote_state.hnt_dockerhub_access_key.arn}"
         ]
       },
       {
@@ -392,8 +386,9 @@ resource "aws_ecs_task_definition" "river-fargate" {
   pid_mode = null
 
   container_definitions = jsonencode([{
-    name      = "river-node"
-    image     = "docker.io/herenotthere/river-node:latest"
+    name  = "river-node"
+    image = "${local.global_remote_state.ecr.repository_url_map["river-node"]}:latest"
+
     essential = true
     portMappings = [{
       containerPort = 5157
@@ -407,10 +402,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
     cpu    = local.river_node_cpu
     memory = local.river_node_memory
-
-    repositoryCredentials = {
-      credentialsParameter = local.global_remote_state.hnt_dockerhub_access_key.arn
-    },
 
     secrets = [
       {
@@ -542,7 +533,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
     },
     {
       name      = "dd-agent"
-      image     = "docker.io/datadog/agent:7"
+      image     = "public.ecr.aws/datadog/agent:7"
       essential = true
       portMappings = [{
         "containerPort" : 8126,

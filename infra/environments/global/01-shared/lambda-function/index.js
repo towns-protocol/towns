@@ -217,11 +217,11 @@ const createRiverNodeDbUser = async ({
       await pgClient.query(createDatabaseQuery);
       console.log('created database')
     } catch (e) {
-      if (e.code !== '42P04') {
+      if (e.code == '42P04' || e.code == '23505') {
+        console.log('database already exists')
+      } else {
         console.error('error creating database: ', e)
         throw e;
-      } else {
-        console.log('database already exists')
       }
     }
 
