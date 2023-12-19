@@ -111,4 +111,21 @@ describe('userMetadata_UsernamesTests', () => {
         usernames.onDecryptedContent('eventid-1', username)
         expect(usernames.plaintextUsernames).toEqual(new Map([]))
     })
+
+    test('encryptedFlagsAreReturnedWhenEncrypted', async () => {
+        const username = 'bob-username1'
+        const checksum = usernameChecksum(username, streamId)
+        const encryptedData = new EncryptedData({
+            ciphertext: username,
+            checksum: checksum,
+        })
+
+        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        const info = usernames.info('userid-1')
+        expect(info.usernameEncrypted).toEqual(true)
+
+        usernames.onDecryptedContent('eventid-1', username)
+        const infoAfterDecrypt = usernames.info('userid-1')
+        expect(infoAfterDecrypt.usernameEncrypted).toEqual(false)
+    })
 })

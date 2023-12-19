@@ -42,4 +42,19 @@ describe('userMetadata_DisplayNamesTests', () => {
             ]),
         )
     })
+
+    test('encryptedFlagsAreReturnedWhenEncrypted', async () => {
+        const displayName = 'bob-username1'
+        const encryptedData = new EncryptedData({
+            ciphertext: displayName,
+        })
+
+        displayNames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        const info = displayNames.info('userid-1')
+        expect(info.displayNameEncrypted).toEqual(true)
+
+        displayNames.onDecryptedContent('eventid-1', displayName)
+        const infoAfterDecrypt = displayNames.info('userid-1')
+        expect(infoAfterDecrypt.displayNameEncrypted).toEqual(false)
+    })
 })

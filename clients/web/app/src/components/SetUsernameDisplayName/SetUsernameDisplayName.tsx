@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useMyUserId, useZionClient, useZionContext } from 'use-zion-client'
+import { useMyUserId, useZionClient } from 'use-zion-client'
 import { useParams } from 'react-router'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { Box, Button, Stack, Text, TextButton, TextField } from '@ui'
 import { validateUsername } from '@components/SetUsernameForm/validateUsername'
 import { useSetUsername } from 'hooks/useSetUsername'
+import { useUserInfo } from 'hooks/useUserInfo'
 
 const useCurrentStreamID = () => {
     const { spaceSlug, channelSlug } = useParams()
@@ -14,23 +15,6 @@ const useCurrentStreamID = () => {
         }
     }
     return spaceSlug
-}
-
-const useMyUserInfo = (streamId?: string) => {
-    const { casablancaClient } = useZionContext()
-    const myUserId = useMyUserId()
-    const [user, setUser] = useState<{ username: string; displayName: string } | undefined>(
-        undefined,
-    )
-    useEffect(() => {
-        if (!streamId || !myUserId) {
-            return
-        }
-        const stream = casablancaClient?.streams.get(streamId)?.view
-        const info = stream?.getUserMetadata()?.userInfo(myUserId)
-        setUser(info)
-    }, [casablancaClient, myUserId, setUser, streamId])
-    return { user }
 }
 
 const validateDisplayName = (displayName: string) => {
@@ -57,7 +41,8 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
     const { titleProperties } = props
     const [showEditFields, setShowEditFields] = useState<boolean>(false)
     const streamId = useCurrentStreamID()
-    const { user } = useMyUserInfo(streamId)
+    const myUserId = useMyUserId()
+    const { user } = useUserInfo(streamId, myUserId)
 
     const { setUsername } = useSetUsername()
     const { setDisplayName } = useZionClient()

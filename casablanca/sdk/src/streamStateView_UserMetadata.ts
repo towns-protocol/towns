@@ -90,7 +90,9 @@ export class StreamStateView_UserMetadata {
     userInfo(userId: string): {
         username: string
         usernameConfirmed: boolean
+        usernameEncrypted: boolean
         displayName: string
+        displayNameEncrypted: boolean
     } {
         const usernameInfo = this.usernames.info(userId)
         const displayNameInfo = this.displayNames.info(userId)

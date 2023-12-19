@@ -163,6 +163,7 @@ export class UserMetadata_Usernames {
     info(userId: string): {
         username: string
         usernameConfirmed: boolean
+        usernameEncrypted: boolean
     } {
         const name = this.plaintextUsernames.get(userId) ?? ''
         const eventId = this.userIdToEventId.get(userId)
@@ -170,12 +171,15 @@ export class UserMetadata_Usernames {
             return {
                 username: '',
                 usernameConfirmed: false,
+                usernameEncrypted: false,
             }
         }
         const pending = this.usernameEvents.get(eventId)?.pending ?? true
+        const encrypted = this.usernameEvents.has(eventId) && !this.plaintextUsernames.has(userId)
         return {
             username: name,
             usernameConfirmed: !pending,
+            usernameEncrypted: encrypted,
         }
     }
 }

@@ -118,7 +118,12 @@ export class UserMetadata_DisplayNames {
 
     info(userId: string): {
         displayName: string
+        displayNameEncrypted: boolean
     } {
-        return { displayName: this.plaintextDisplayNames.get(userId) ?? '' }
+        const displayName = this.plaintextDisplayNames.get(userId) ?? ''
+        const displayNameEncrypted =
+            !this.plaintextDisplayNames.has(userId) && this.userIdToEventId.has(userId)
+
+        return { displayName, displayNameEncrypted }
     }
 }
