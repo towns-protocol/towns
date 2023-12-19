@@ -380,7 +380,10 @@ export const MessageTimeline = (props: Props) => {
                     }
                 }
 
-                if (prev.chunkCount <= 2) {
+                if (
+                    prev.chunkCount <= 2 ||
+                    (fullyReadMarker?.isUnread && curr.key === fullyReadMarker?.eventId)
+                ) {
                     // index until which collapsed section ends
                     prev.collapseEndIndex = index
                 }
@@ -411,7 +414,15 @@ export const MessageTimeline = (props: Props) => {
         }
 
         return { listItems, numHidden }
-    }, [allListItems, flatGroups.length, groupByUser, isCollapsed, timelineContext?.type])
+    }, [
+        allListItems,
+        flatGroups.length,
+        fullyReadMarker?.eventId,
+        fullyReadMarker?.isUnread,
+        groupByUser,
+        isCollapsed,
+        timelineContext?.type,
+    ])
 
     const hasUnreadMarker = fullyPersistedRef.current
     const [isUnreadMarkerFaded, setIsUnreadMarkerFaded] = useState(false)
