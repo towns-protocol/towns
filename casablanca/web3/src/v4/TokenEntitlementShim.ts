@@ -1,5 +1,6 @@
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/TokenEntitlement.abi'
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/TokenEntitlement.abi'
+import BaseSepoliaAbi from '@towns/generated/base_sepolia/v3/abis/TokenEntitlement.abi'
 
 import { BaseContractShim } from './BaseContractShim'
 import { Address, PublicClient } from 'viem'
@@ -9,7 +10,8 @@ import { TokenEntitlementDataTypes } from './types'
 
 const abis = {
     localhostAbi: LocalhostAbi,
-    testnetAbi: BaseGoerliAbi,
+    goerliAbi: BaseGoerliAbi,
+    sepoliaAbi: BaseSepoliaAbi,
 } as const
 
 export class TokenEntitlementShim

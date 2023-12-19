@@ -141,6 +141,8 @@ export function baseScanUrl(chainId: number) {
         case 31337: // just for complete url, doesn't apply to foundry
         case 84531:
             return 'https://goerli.basescan.org'
+        case 84532:
+            return 'https://sepolia-explorer.base.org'
         default:
             return 'https://basescan.org'
     }

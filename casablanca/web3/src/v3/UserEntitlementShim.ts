@@ -6,13 +6,16 @@ import {
     UserEntitlement as BaseGoerliContract,
     UserEntitlementInterface as BaseGoerliInterface,
 } from '@towns/generated/base_goerli/v3/typings/UserEntitlement'
-
-import { BaseContractShim } from './BaseContractShim'
+import {
+    UserEntitlement as BaseSepoliaContract,
+    UserEntitlementInterface as BaseSepoliaInterface,
+} from '@towns/generated/base_sepolia/v3/typings/UserEntitlement'
 
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/UserEntitlement.abi.json' assert { type: 'json' }
-
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/UserEntitlement.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@towns/generated/base_sepolia/v3/abis/UserEntitlement.abi.json' assert { type: 'json' }
 
+import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { decodeUsers } from '../ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
@@ -22,7 +25,9 @@ export class UserEntitlementShim
         LocalhostContract,
         LocalhostInterface,
         BaseGoerliContract,
-        BaseGoerliInterface
+        BaseGoerliInterface,
+        BaseSepoliaContract,
+        BaseSepoliaInterface
     >
     implements EntitlementModule
 {
@@ -30,6 +35,7 @@ export class UserEntitlementShim
         super(address, chainId, provider, {
             localhostAbi: LocalhostAbi,
             baseGoerliAbi: BaseGoerliAbi,
+            baseSepoliaAbi: BaseSepoliaAbi,
         })
     }
 

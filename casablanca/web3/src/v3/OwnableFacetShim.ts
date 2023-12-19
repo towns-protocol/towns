@@ -6,24 +6,31 @@ import {
     OwnableFacet as BaseGoerliContract,
     OwnableFacetInterface as BaseGoerliInterface,
 } from '@towns/generated/base_goerli/v3/typings/OwnableFacet'
+import {
+    OwnableFacet as BaseSepoliaContract,
+    OwnableFacetInterface as BaseSepoliaInterface,
+} from '@towns/generated/base_sepolia/v3/typings/OwnableFacet'
 
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/OwnableFacet.abi.json' assert { type: 'json' }
-
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/OwnableFacet.abi.json' assert { type: 'json' }
-import { ethers } from 'ethers'
+import BaseSepoliaAbi from '@towns/generated/base_sepolia/v3/abis/OwnableFacet.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
+import { ethers } from 'ethers'
 
 export class OwnableFacetShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,
-    BaseGoerliInterface
+    BaseGoerliInterface,
+    BaseSepoliaContract,
+    BaseSepoliaInterface
 > {
     constructor(address: string, chainId: number, provider: ethers.providers.Provider | undefined) {
         super(address, chainId, provider, {
             localhostAbi: LocalhostAbi,
             baseGoerliAbi: BaseGoerliAbi,
+            baseSepoliaAbi: BaseSepoliaAbi,
         })
     }
 }

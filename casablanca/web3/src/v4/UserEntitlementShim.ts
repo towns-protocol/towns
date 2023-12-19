@@ -1,5 +1,6 @@
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/UserEntitlement.abi'
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/UserEntitlement.abi'
+import BaseSepoliaAbi from '@towns/generated/base_sepolia/v3/abis/UserEntitlement.abi'
 
 import { decodeUsers } from '../ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
@@ -8,7 +9,8 @@ import { BaseContractShim } from './BaseContractShim'
 
 const abis = {
     localhostAbi: LocalhostAbi,
-    testnetAbi: BaseGoerliAbi,
+    goerliAbi: BaseGoerliAbi,
+    sepoliaAbi: BaseSepoliaAbi,
 } as const
 export class UserEntitlementShim
     extends BaseContractShim<typeof abis>

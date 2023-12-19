@@ -1,12 +1,14 @@
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/Channels.abi'
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/Channels.abi'
+import BaseSepoliaAbi from '@towns/generated/base_sepolia/v3/abis/Channels.abi'
 
 import { Address, PublicClient } from 'viem'
 import { BaseContractShim } from './BaseContractShim'
 
 const abis = {
     localhostAbi: LocalhostAbi,
-    testnetAbi: BaseGoerliAbi,
+    goerliAbi: BaseGoerliAbi,
+    sepoliaAbi: BaseSepoliaAbi,
 } as const
 
 export class IChannelShim extends BaseContractShim<typeof abis> {

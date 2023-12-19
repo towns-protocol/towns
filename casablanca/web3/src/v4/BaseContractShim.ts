@@ -1,5 +1,5 @@
-import { localhost, baseGoerli } from 'viem/chains'
-import { LOCALHOST_CHAIN_ID, BASE_GOERLI } from '../Web3Constants'
+import { localhost, baseGoerli, baseSepolia } from 'viem/chains'
+import { LOCALHOST_CHAIN_ID, BASE_GOERLI, BASE_SEPOLIA } from '../Web3Constants'
 import {
     Abi,
     Address,
@@ -18,13 +18,14 @@ export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 
 type Abis = {
     readonly localhostAbi: Abi
-    readonly testnetAbi: Abi
+    readonly goerliAbi: Abi
+    readonly sepoliaAbi: Abi
 }
 
 export class BaseContractShim<TAbis extends Abis> {
     public readonly address: Address
     public readonly chainId: number
-    public readonly abi: TAbis['localhostAbi'] | TAbis['testnetAbi']
+    public readonly abi: TAbis['localhostAbi'] | TAbis['sepoliaAbi']
     private publicClient: PublicClient | undefined
 
     constructor(
@@ -194,7 +195,9 @@ function getAbiForChain<TAbi extends Abis>(chainId: number, abis: TAbi) {
         case LOCALHOST_CHAIN_ID:
             return abis.localhostAbi
         case BASE_GOERLI:
-            return abis.testnetAbi
+            return abis.goerliAbi
+        case BASE_SEPOLIA:
+            return abis.sepoliaAbi
         default:
             throw new Error(`Unsupported chainId ${chainId}`)
     }
@@ -206,6 +209,8 @@ function getChain(chainId: number): Chain {
             return localhost
         case BASE_GOERLI:
             return baseGoerli
+        case BASE_SEPOLIA:
+            return baseSepolia
         default:
             throw new Error(`Unsupported chainId ${chainId}`)
     }

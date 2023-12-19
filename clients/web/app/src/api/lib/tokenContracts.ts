@@ -6,7 +6,12 @@ import { ethers } from 'ethers'
 import { useMemo } from 'react'
 import { TokenProps, TokenType } from '@components/Tokens/types'
 import { env } from 'utils'
-import { fetchGoerli, fetchVitalikTokens, useNetworkForNftApi } from 'hooks/useNetworkForNftApi'
+import {
+    fetchBaseGoerli,
+    fetchBaseSepolia,
+    fetchVitalikTokens,
+    useNetworkForNftApi,
+} from 'hooks/useNetworkForNftApi'
 import { getTokenType } from '@components/Web3/checkTokenType'
 import { axiosClient } from '../apiClient'
 
@@ -81,7 +86,7 @@ async function getLocalHostTokens(
     alchmeyNetwork: string,
 ) {
     // to test with a big list of tokens, add ?vitalikTokens to the url, or ?goerli to use the goerli testnet
-    if (fetchVitalikTokens || fetchGoerli) {
+    if (fetchVitalikTokens || fetchBaseGoerli || fetchBaseSepolia) {
         return getTokenContractsForAddress(wallet, zionTokenAddress, alchmeyNetwork)
     }
 

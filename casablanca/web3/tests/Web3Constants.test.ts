@@ -1,12 +1,12 @@
 import debug from 'debug'
-import { GOERLI } from '../src/Web3Constants'
+import { BASE_SEPOLIA } from '../src/Web3Constants'
 import { LocalhostWeb3Provider } from '../src/Utils'
 const log = debug('web3:test')
 
 describe('Web3Constants', () => {
     ;``
-    test('GOERLI', () => {
-        expect(GOERLI).toBe(5)
+    test('BASE_SEPOLIA', () => {
+        expect(BASE_SEPOLIA).toBe(84532)
     })
 
     test('instantiate provider', () => {

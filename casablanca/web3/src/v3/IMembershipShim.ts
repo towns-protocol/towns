@@ -8,22 +8,31 @@ import {
     MembershipFacetInterface as BaseGoerliInterface,
 } from '@towns/generated/base_goerli/v3/typings/MembershipFacet'
 
+import {
+    MembershipFacet as BaseSepoliaContract,
+    MembershipFacetInterface as BaseSepoliaInterface,
+} from '@towns/generated/base_sepolia/v3/typings/MembershipFacet'
+
 import { BaseContractShim } from '../v3/BaseContractShim'
 import { ethers } from 'ethers'
 
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/MembershipFacet.abi.json' assert { type: 'json' }
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/MembershipFacet.abi.json' assert { type: 'json' }
+import BaseSepoliaAbi from '@towns/generated/base_sepolia/v3/abis/MembershipFacet.abi.json' assert { type: 'json' }
 
 export class IMembershipShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     BaseGoerliContract,
-    BaseGoerliInterface
+    BaseGoerliInterface,
+    BaseSepoliaContract,
+    BaseSepoliaInterface
 > {
     constructor(address: string, chainId: number, provider: ethers.providers.Provider | undefined) {
         super(address, chainId, provider, {
             localhostAbi: LocalhostAbi,
             baseGoerliAbi: BaseGoerliAbi,
+            baseSepoliaAbi: BaseSepoliaAbi,
         })
     }
 

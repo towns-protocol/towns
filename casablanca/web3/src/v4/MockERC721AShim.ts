@@ -1,12 +1,14 @@
 import LocalhostAbi from '@towns/generated/localhost/v3/abis/MockERC721A.abi'
 import BaseGoerliAbi from '@towns/generated/base_goerli/v3/abis/MockERC721A.abi'
+import BaseSepoliaAbi from '@towns/generated/base_sepolia/v3/abis/MockERC721A.abi'
 
 import { BaseContractShim } from './BaseContractShim'
 import { Address, PublicClient } from 'viem'
 
 const abis = {
     localhostAbi: LocalhostAbi,
-    testnetAbi: BaseGoerliAbi,
+    goerliAbi: BaseGoerliAbi,
+    sepoliaAbi: BaseSepoliaAbi,
 } as const
 export class MockERC721AShim extends BaseContractShim<typeof abis> {
     constructor(address: Address, chainId: number, client: PublicClient | undefined) {
