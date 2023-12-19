@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+import {Deployer} from "../common/Deployer.s.sol";
 import {StreamRegistry} from "contracts/src/river/registry/StreamRegistry.sol";
 
 contract DeployStreamRegistry is Deployer {

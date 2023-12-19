@@ -1,6 +1,6 @@
 name: 'Reset_environment'
 env:
-    FOUNDRY_VERSION: nightly-3d6bfddf1e9335c623ba47b590da532f8d785ef4
+    FOUNDRY_VERSION: nightly-73fb616bca68507a705456458899ff5b2232a948
     ENVIRONMENT_NAME: ${{ github.event_name == 'schedule' && 'test-beta' || github.event.inputs.environment }}
 
 on:

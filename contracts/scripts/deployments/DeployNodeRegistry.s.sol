@@ -7,7 +7,7 @@ import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 //libraries
 
 //contracts
-import {Deployer} from "./common/Deployer.s.sol";
+import {Deployer} from "../common/Deployer.s.sol";
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // facets
