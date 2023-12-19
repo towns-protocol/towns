@@ -198,7 +198,7 @@ const useSelectMessage = (dmChannels: DMChannelIdentifier[], messageId?: string)
     // auto select first message if needed
     useEffect(() => {
         if (!hasInitRef.current && !isTouch && !messageId && dmChannels.length > 0) {
-            const link = createLink({ messageId: dmChannels[0].id.slug })
+            const link = createLink({ messageId: dmChannels[0].id.streamId })
             if (link) {
                 navigate(link)
             }

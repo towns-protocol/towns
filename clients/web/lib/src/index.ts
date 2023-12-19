@@ -13,7 +13,7 @@ export {
 export { useWeb3Context } from './components/Web3ContextProvider'
 export { walletClientToSigner, useEthersSigner } from './hooks/Web3Context/useEthersSigner'
 export { AutojoinChannels } from './components/AutojoinChannels'
-export type { DMChannelIdentifier } from 'types/dm-channel-identifier'
+export type { DMChannelIdentifier } from './types/dm-channel-identifier'
 
 export { LoginStatus } from './hooks/login'
 export * from './hooks/ZionContext/onboarding/IOnboardingState'

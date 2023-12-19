@@ -53,7 +53,7 @@ const CondensedChannelNavItem = (props: { channel: DMChannelIdentifier; unread: 
         >
             <ActionNavItem
                 badge={unread && <Badge value={unreadCount} />}
-                key={channel.id.networkId}
+                key={channel.id.streamId}
                 icon={
                     <Box width="x4" shrink={false}>
                         <DirectMessageIcon channel={channel} width="x4" />
