@@ -6,7 +6,7 @@ cd ..
 CHAIN="${1:-localhost}"
 
 if [ -z ${ABIGEN_VERSION+x} ]; then
-  ABIGEN_VERSION="v1.12.2"
+  ABIGEN_VERSION="v1.13.6"
 fi
 
 XCHAIN_DIR="servers/xchain/contracts"

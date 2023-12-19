@@ -8,7 +8,7 @@ if [ "$VERSION" = "localhost" ]; then
 fi
 
 if [ -z ${ABIGEN_VERSION+x} ]; then
-  ABIGEN_VERSION="v1.12.2"
+  ABIGEN_VERSION="v1.13.6"
 fi
 
 generate_go() {
