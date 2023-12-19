@@ -15,6 +15,7 @@ jobs:
             transient_environment_type: ${{ steps.check_labels.outputs.transient_environment_type }}
             num_nodes: ${{ steps.check_labels.outputs.num_nodes }}
             continuous_deploy_iterations: ${{ steps.check_labels.outputs.continuous_deploy_iterations }}
+            is_db_cloned: ${{ steps.check_labels.outputs.is_db_cloned }}
         steps:
             - name: Check labels
               id: check_labels
@@ -27,8 +28,9 @@ jobs:
                           repo: context.repo.repo,
                           issue_number: context.issue.number
                       });
-                      const single_node_transient_environment = labels.data.some(label => label.name === 'single-node transient environment');
-                      const multi_node_transient_environment = labels.data.some(label => label.name === 'multi-node transient environment');
+                      const single_node_transient_environment = labels.data.some(label => label.name.includes('single-node'));
+                      const multi_node_transient_environment = labels.data.some(label => label.name.includes('multi-node'));
+                      const is_db_cloned = labels.data.some(label => label.name.includes('clone'));
                       const transientEnvironmentType = 
                         multi_node_transient_environment  ? 'multi-node' :
                         single_node_transient_environment ? 'single-node' :
@@ -44,6 +46,7 @@ jobs:
                       core.setOutput('transient_environment_type', transientEnvironmentType);
                       core.setOutput('num_nodes', numNodes);
                       core.setOutput('continuous_deploy_iterations', JSON.stringify(continuousDeployIterations));
+                      core.setOutput('is_db_cloned', is_db_cloned);
 
     provision_transient_environment:
         needs: check_labels
@@ -57,6 +60,7 @@ jobs:
             ENV: 'transient'
             TF_VAR_cloudflare_terraform_api_token: ${{ secrets.CLOUDFLARE_TERRAFORM_API_TOKEN }}
             TF_VAR_num_nodes: ${{ needs.check_labels.outputs.num_nodes }}
+            TF_VAR_is_db_cloned: ${{ needs.check_labels.outputs.is_db_cloned }}
             GIT_PR_NUMBER: ${{ github.event.pull_request.number}}
             CI_AUTOAPPROVE: true
 

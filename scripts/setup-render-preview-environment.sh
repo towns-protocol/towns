@@ -9,9 +9,6 @@ check_pr_label() {
     # Variables
     local pr_number="$1"
 
-    single_node_label="single-node transient environment"
-    multi_node_label="multi-node transient environment"
-
     # Validate input
     if [ -z "$pr_number" ]; then
         echo "Usage: <pr_number>"
@@ -24,8 +21,9 @@ check_pr_label() {
     # Fetch PR labels
     local labels=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$api_url" | jq -r '.[].name')
 
-    # Check if the single or multi node label is present
-    if [[ $labels =~ $single_node_label ]] || [[ $labels =~ $multi_node_label ]]; then
+    # Return true if any of the labels contains the string "single-node" or "multi-node".
+    # Otherwise, return false.
+    if [[ $labels == *"single-node"* ]] || [[ $labels == *"multi-node"* ]]; then
         echo "true"
     else
         echo "false"

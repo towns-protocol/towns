@@ -27,8 +27,9 @@ jobs:
             ENV: 'transient'
             TF_VAR_cloudflare_terraform_api_token: ${{ secrets.CLOUDFLARE_TERRAFORM_API_TOKEN }}
             GIT_PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
-            # We need to set this to 0 while destroying. otherwise lite environments get confused during the deprovision step as terraform tries to delete components that don't exist. But when we set this to true, lite or not, all components are deleted.
+            # We need to set these 2 while destroying. otherwise lite environments get confused during the deprovision step as terraform tries to delete components that don't exist. But when we set these, lite or not, all components are deleted.
             TF_VAR_num_nodes: 0
+            TF_VAR_is_db_cloned: false
 
         steps:
             - name: Login to Docker Hub

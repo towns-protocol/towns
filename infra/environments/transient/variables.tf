@@ -29,3 +29,9 @@ variable "num_nodes" {
   type        = number
   default     = 1
 }
+
+variable "is_db_cloned" {
+  description = "Whether to clone the reference db or start with a fresh one"
+  type        = bool
+  default     = false
+}

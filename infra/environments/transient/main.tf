@@ -78,7 +78,7 @@ module "river_db_cluster" {
   # for now, we're just hardcoding this logic here.
   # if a transient environment is multi-node, then it's a fresh & clean db.
   # if it's single-node, then it's a cow clone.
-  is_cloned = var.num_nodes == 1
+  is_cloned = var.is_db_cloned
 
   count = local.create_db_cluster ? 1 : 0
 }
