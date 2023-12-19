@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMyUserId, useZionClient, useZionContext } from 'use-zion-client'
 import { useParams } from 'react-router'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
-import { Box, Button, Stack, Text, TextField } from '@ui'
+import { Box, Button, Stack, Text, TextButton, TextField } from '@ui'
 import { validateUsername } from '@components/SetUsernameForm/validateUsername'
 import { useSetUsername } from 'hooks/useSetUsername'
 
@@ -55,7 +55,7 @@ export type SpaceTitleProperties = {
 
 export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties }) => {
     const { titleProperties } = props
-    const [isEditing, setIsEditing] = useState<boolean>(false)
+    const [showEditFields, setShowEditFields] = useState<boolean>(false)
     const streamId = useCurrentStreamID()
     const { user } = useMyUserInfo(streamId)
 
@@ -90,17 +90,6 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
         }
     }, [user?.username, user?.displayName, setDirtyUsername, setDirtyDisplayName])
 
-    const onFocus = useCallback(() => {
-        setIsEditing(true)
-    }, [setIsEditing])
-
-    const onBlur = useCallback(() => {
-        if (dirtyDisplayName !== user?.displayName || dirtyUsername !== user?.username) {
-            return
-        }
-        setIsEditing(false)
-    }, [setIsEditing, dirtyDisplayName, dirtyUsername, user])
-
     const onSave = useCallback(async () => {
         if (!streamId) {
             return
@@ -111,14 +100,14 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
         if (dirtyDisplayName !== user?.displayName && validateDisplayName(dirtyDisplayName)) {
             await setDisplayName(streamId, dirtyDisplayName)
         }
-        setIsEditing(false)
+        setShowEditFields(false)
     }, [user, setUsername, streamId, dirtyUsername, dirtyDisplayName, setDisplayName])
 
     const onCancel = useCallback(() => {
         setDirtyUsername(user?.username ?? '')
         setDirtyDisplayName(user?.displayName ?? '')
-        setIsEditing(false)
-    }, [setDirtyDisplayName, setDirtyUsername, setIsEditing, user])
+        setShowEditFields(false)
+    }, [setDirtyDisplayName, setDirtyUsername, setShowEditFields, user])
 
     const onDisplayNameChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -177,29 +166,40 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                 {titlePrefix}, you appear as:
             </Text>
 
-            <EditableInputField
-                title="Username"
-                value={dirtyUsername}
-                error={usernameErrorMessage}
-                maxLength={16}
-                placeholder="Enter username"
-                onChange={onUsernameChange}
-                onFocus={onFocus}
-                onBlur={onBlur}
-            />
-            <EditableInputField
-                title="Display name"
-                value={dirtyDisplayName}
-                error={displayNameErrorMessage}
-                placeholder="Enter display name"
-                maxLength={32}
-                onChange={onDisplayNameChange}
-                onFocus={onFocus}
-                onBlur={onBlur}
-            />
+            {showEditFields ? (
+                <>
+                    <EditableInputField
+                        title="Username"
+                        value={dirtyUsername}
+                        error={usernameErrorMessage}
+                        maxLength={16}
+                        placeholder="Enter username"
+                        onChange={onUsernameChange}
+                    />
+                    <EditableInputField
+                        title="Display name"
+                        value={dirtyDisplayName}
+                        error={displayNameErrorMessage}
+                        placeholder="Enter display name"
+                        maxLength={32}
+                        onChange={onDisplayNameChange}
+                    />
+                </>
+            ) : (
+                <Text>
+                    {user.displayName.length > 0 || user.displayName.length > 0 ? (
+                        <>
+                            {user.displayName.length > 0 && user.displayName}
+                            <strong> @{user.username}</strong>
+                        </>
+                    ) : (
+                        <>No username set</>
+                    )}
+                </Text>
+            )}
             <Stack horizontal>
                 <Box grow />
-                {isEditing && (
+                {showEditFields ? (
                     <>
                         <Button size="button_xs" tone="level2" onClick={onCancel}>
                             <Text color="gray2" size="sm">
@@ -217,6 +217,8 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                             </Text>
                         </Button>
                     </>
+                ) : (
+                    <TextButton onClick={() => setShowEditFields(true)}>Edit</TextButton>
                 )}
             </Stack>
         </Stack>
@@ -230,22 +232,15 @@ const EditableInputField = (props: {
     error?: string
     maxLength: number
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-    onFocus: () => void
-    onBlur: () => void
 }) => {
-    const { title, value, placeholder, error, maxLength, onChange, onFocus, onBlur } = props
+    const { title, value, placeholder, error, maxLength, onChange } = props
     const charsRemaining = maxLength - value.length
     const [isEditing, setIsEditing] = useState<boolean>(false)
     const editingStateChanged = useCallback(
         (active: boolean) => {
             setIsEditing(active)
-            if (active) {
-                onFocus()
-            } else {
-                onBlur()
-            }
         },
-        [setIsEditing, onBlur, onFocus],
+        [setIsEditing],
     )
 
     const charLimitExceeded = charsRemaining < 0
