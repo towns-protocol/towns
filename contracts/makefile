@@ -33,6 +33,10 @@ deploy-base-anvil-nb:
 
 deploy-base-anvil: build deploy-base-anvil-nb
 
+interact-base-anvil :;
+	@forge build
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
+
 # EXAMPLE
 deploy-anvil-staging :;
 	@forge build
