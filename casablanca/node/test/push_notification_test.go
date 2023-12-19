@@ -98,7 +98,7 @@ func assertRecipients(
 	for _, u := range data {
 		users = append(users, u.(string))
 	}
-	assert.EqualValues(t, expectRecipients, users)
+	assert.ElementsMatch(t, expectRecipients, users)
 }
 
 func assertEvent(
