@@ -3,10 +3,9 @@ pragma solidity ^0.8.19;
 
 // interfaces
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
-import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
 
 // helpers
-import {Deployer} from "../common/Deployer.s.sol";
+import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -23,9 +22,9 @@ import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupe
 import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 import {MockERC721A} from "contracts/test/mocks/MockERC721A.sol";
 
-contract DeployMockNFT is Deployer {
+contract DeployMockNFT is DiamondDeployer {
   // helpers
-  DiamondCutHelper cutHelper = new DiamondCutHelper();
+  DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
   DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
   IntrospectionHelper introspectionHelper = new IntrospectionHelper();
   ERC721AHelper erc721aHelper = new ERC721AHelper();
@@ -42,32 +41,29 @@ contract DeployMockNFT is Deployer {
   address introspection;
   address erc721aMock;
 
-  address multiInit;
-
   function versionName() public pure override returns (string memory) {
     return "mockNFT";
   }
 
-  function __deploy(
+  function diamondInitParams(
     uint256 deployerPK,
     address
-  ) public override returns (address) {
-    address townFactory = getDeployment("townFactory");
-
+  ) public override returns (Diamond.InitParams memory) {
     vm.startBroadcast(deployerPK);
     diamondCut = address(new DiamondCutFacet());
     diamondLoupe = address(new DiamondLoupeFacet());
     introspection = address(new IntrospectionFacet());
     erc721aMock = address(new MockERC721A());
-    multiInit = address(new MultiInit());
     vm.stopBroadcast();
 
     erc721aMockHelper.addSelectors(erc721aHelper.selectors());
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](totalFacets);
-    uint256 index;
 
-    cuts[index++] = cutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add);
+    cuts[index++] = diamondCutHelper.makeCut(
+      diamondCut,
+      IDiamond.FacetCutAction.Add
+    );
     cuts[index++] = loupeHelper.makeCut(
       diamondLoupe,
       IDiamond.FacetCutAction.Add
@@ -81,16 +77,16 @@ contract DeployMockNFT is Deployer {
       IDiamond.FacetCutAction.Add
     );
 
-    index = 0;
+    _resetIndex();
 
     addresses[index++] = diamondCut;
     addresses[index++] = diamondLoupe;
     addresses[index++] = introspection;
     addresses[index++] = erc721aMock;
 
-    index = 0;
+    _resetIndex();
 
-    payloads[index++] = cutHelper.makeInitData("");
+    payloads[index++] = diamondCutHelper.makeInitData("");
     payloads[index++] = loupeHelper.makeInitData("");
     payloads[index++] = introspectionHelper.makeInitData("");
     payloads[index++] = erc721aMockHelper.makeInitData(
@@ -98,24 +94,15 @@ contract DeployMockNFT is Deployer {
       "MERC721A"
     );
 
-    vm.startBroadcast(deployerPK);
-    address mockERC721A = address(
-      new Diamond(
-        Diamond.InitParams({
-          baseFacets: cuts,
-          init: multiInit,
-          initData: abi.encodeWithSelector(
-            MultiInit.multiInit.selector,
-            addresses,
-            payloads
-          )
-        })
-      )
-    );
-
-    ITownArchitect(townFactory).gateByToken(mockERC721A, 1);
-    vm.stopBroadcast();
-
-    return mockERC721A;
+    return
+      Diamond.InitParams({
+        baseFacets: cuts,
+        init: getDeployment("multiInit"),
+        initData: abi.encodeWithSelector(
+          MultiInit.multiInit.selector,
+          addresses,
+          payloads
+        )
+      });
   }
 }
