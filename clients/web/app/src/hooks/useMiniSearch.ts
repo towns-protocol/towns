@@ -38,11 +38,11 @@ export const useMiniSearch = (_messages: EventDocument[], _search: string) => {
     }, [filteredMessages, miniSearch])
 
     const results = useMemo(() => {
-        if (!filteredMessages?.length || search.length <= 1) {
+        if (!filteredMessages?.length || search.length < 1) {
             return []
         }
         return miniSearch.search(search, {
-            fuzzy: 0.2,
+            fuzzy: search.length < 4 ? 0.1 : 0.3,
             combineWith: 'AND',
             prefix: true,
         })
