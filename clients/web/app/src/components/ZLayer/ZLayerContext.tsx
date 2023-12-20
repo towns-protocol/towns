@@ -18,6 +18,7 @@ export const ZLayerBox = forwardRef<HTMLDivElement, MotionBoxProps>(
                         [zLayerVar]: `${parentZ}`,
                     })}
                     ref={ref}
+                    zIndex="layer"
                 >
                     {children}
                 </MotionBox>

@@ -6,6 +6,7 @@ import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
+import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const DirectMessages = () => {
@@ -23,7 +24,9 @@ export const DirectMessages = () => {
         <GlobalContextUserLookupProvider>
             <Box absoluteFill background="level1">
                 <DirectMessagesPanel />
-                <Outlet />
+                <ZLayerBox>
+                    <Outlet />
+                </ZLayerBox>
             </Box>
         </GlobalContextUserLookupProvider>
     ) : (

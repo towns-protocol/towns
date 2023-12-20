@@ -373,6 +373,11 @@ const root = createGlobalTheme(':root', {
     } as const,
 
     zIndex: {
+        layer: {
+            vars: {
+                [zIndexVar]: `0`,
+            },
+        },
         above: {
             vars: {
                 [zIndexVar]: `5`,

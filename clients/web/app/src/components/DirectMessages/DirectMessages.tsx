@@ -3,6 +3,7 @@ import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/Tou
 import { Box, BoxProps, Icon, IconButton, IconName, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { CreateDirectMessage } from './CreateDirectMessage'
 import { DirectMessageList } from './DirectMessageList'
 
@@ -49,12 +50,12 @@ const MessageListPanel = ({
     hideNavigation: boolean
 }) => {
     return (
-        <Stack height="100%">
+        <ZLayerBox height="100%">
             {!hideNavigation && (
                 <PanelHeader label="Direct Messages" actionIcon="compose" onAction={onNavAction} />
             )}
             <DirectMessageList />
-        </Stack>
+        </ZLayerBox>
     )
 }
 
