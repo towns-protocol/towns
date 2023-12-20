@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import { configureChains } from 'wagmi'
 import { baseSepolia, localhost } from 'wagmi/chains'
-import { alchemyProvider } from 'wagmi/providers/alchemy'
+import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
 import { publicProvider } from 'wagmi/providers/public'
 import { PrivyProvider as TownsPrivyProvider } from '@towns/privy'
 import { env } from 'utils'
@@ -26,8 +26,24 @@ const SUPPORTED_CHAINS = [foundryClone, baseSepolia, localhost]
 
 const wagmiChainsConfig = configureChains(
     SUPPORTED_CHAINS,
-    env.VITE_ALCHEMY_API_KEY
-        ? [alchemyProvider({ apiKey: env.VITE_ALCHEMY_API_KEY }), publicProvider()]
+    env.VITE_PROVIDER_HTTP_URL
+        ? [
+              jsonRpcProvider({
+                  rpc: (chain) => {
+                      if (chain.id === foundryClone.id) {
+                          const httpUrl = chain.rpcUrls.default.http[0]
+                          return {
+                              http: httpUrl,
+                          }
+                      }
+                      return {
+                          webSocket: env.VITE_PROVIDER_WS_URL,
+                          http: env.VITE_PROVIDER_HTTP_URL ?? '',
+                      }
+                  },
+              }),
+              publicProvider(),
+          ]
         : [publicProvider()],
     { retryCount: 5 },
 )
