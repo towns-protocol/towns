@@ -69,6 +69,10 @@ deploy-base-sepolia :;
 	@forge build
 	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
 
+migrate-base-sepolia:;
+	@forge build
+	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
+
 interact-base-sepolia :;
 	@forge build
 	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${PRIVATE_KEY} --broadcast --watch
@@ -81,9 +85,7 @@ verify-base-sepolia :;
 	@forge build
 	@forge verify-contract ${address} ${contract} --chain-id 84532
 
-migrate-base-sepolia:;
-	@forge build
-	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
+
 
 # ===========================
 # 				 Base Goerli
