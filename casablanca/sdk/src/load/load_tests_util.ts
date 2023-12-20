@@ -156,12 +156,12 @@ export const startMessageSendingWindow = (
     messagesSentPerUserMap: Map<string, Set<string>>,
     windownDuration: number,
 ): void => {
+    const recipients = clients.map((client) => client.userId)
     for (let i = 0; i < clients.length; i++) {
-        const client = clients[i]
-        const recipients = getRecipients(client.userId, clients)
+        const senderClient = clients[i]
         sendMessageAfterRandomDelay(
             contentKind,
-            client,
+            senderClient,
             recipients,
             channelId,
             windowIndex.toString(),
@@ -173,7 +173,7 @@ export const startMessageSendingWindow = (
 
 export const sendMessageAfterRandomDelay = (
     contentKind: string,
-    client: Client,
+    senderClient: Client,
     recipients: string[],
     channelId: string,
     windowIndex: string,
@@ -184,7 +184,7 @@ export const sendMessageAfterRandomDelay = (
     setTimeout(() => {
         void sendMessageAsync(
             contentKind,
-            client,
+            senderClient,
             recipients,
             channelId,
             windowIndex,
@@ -196,7 +196,7 @@ export const sendMessageAfterRandomDelay = (
 
 const sendMessageAsync = async (
     contentKind: string,
-    client: Client,
+    senderClient: Client,
     recipients: string[],
     streamId: string,
     windowIndex: string,
@@ -207,10 +207,13 @@ const sendMessageAsync = async (
     const prefix = `${streamId}:${Date.now()}`
     // streamId:startTimestamp:messageBody
     const newMessage = `${prefix}:Message<${contentKind}> from client<${
-        client.userId
+        senderClient.userId
     }>, window<${windowIndex}>, ${getCurrentTime()} with delay ${randomDelayInSec}s`
 
     for (const recipientUserId of recipients) {
+        if (recipientUserId === senderClient.userId) {
+            continue
+        }
         const userStreamKey = getUserStreamKey(recipientUserId, streamId)
         let messagesSet = messagesSentPerUserMap.get(userStreamKey)
         if (!messagesSet) {
@@ -220,7 +223,7 @@ const sendMessageAsync = async (
         messagesSet.add(newMessage)
     }
 
-    await client.sendMessage(streamId, newMessage)
+    await senderClient.sendMessage(streamId, newMessage)
 }
 
 export function getRecipients(excludedUserId: string, clients: Client[]): string[] {
@@ -264,4 +267,12 @@ export function extractComponents(inputString: string): {
     const messageBody = inputString.substring(secondColon + 1, secondColon)
 
     return { streamId, startTimestamp, messageBody }
+}
+
+export function getRandomElement<T>(arr: T[]): T | undefined {
+    if (arr.length === 0) {
+        return undefined
+    }
+    const randomIndex = Math.floor(Math.random() * arr.length)
+    return arr[randomIndex]
 }
