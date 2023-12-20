@@ -58,8 +58,7 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
             const senderId = event.events[0]?.sender.id
             const sender = usersMap[senderId]
 
-            const senderDisplayName =
-                senderId === userId ? 'You' : getPrettyDisplayName(sender)?.displayName
+            const senderDisplayName = senderId === userId ? 'You' : getPrettyDisplayName(sender)
 
             const users = event.events.map((e) => usersMap[e.content.userId])
             const list = getNameListFromUsers(users, userId)
@@ -88,14 +87,12 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
                                 display="inline"
                                 tooltip={<ProfileHoverCard userId={e.content.userId} />}
                             >
-                                {
-                                    getPrettyDisplayName(
-                                        usersMap[e.content.userId] ?? {
-                                            userId: e.content.userId,
-                                            displayName: e.content.displayName ?? '',
-                                        },
-                                    ).displayName
-                                }
+                                {getPrettyDisplayName(
+                                    usersMap[e.content.userId] ?? {
+                                        userId: e.content.userId,
+                                        displayName: e.content.displayName ?? '',
+                                    },
+                                )}
                             </Box>
                         </Link>
                     )

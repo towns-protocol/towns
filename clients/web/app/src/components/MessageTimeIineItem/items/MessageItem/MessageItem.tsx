@@ -7,7 +7,6 @@ import {
     RedactedMessageLayout,
 } from '@components/MessageLayout/MessageLayout'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useDevice } from 'hooks/useDevice'
 import { TooltipRenderer } from '@ui'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
@@ -216,7 +215,6 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     } = timelineContext
 
     const user = membersMap[sender.id]
-    const displayName = getPrettyDisplayName(user).displayName
 
     const isOwn = event.content?.kind == ZTEvent.RoomMessage && sender.id === userId
 
@@ -252,7 +250,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             eventId={event.eventId}
             displayContext={displayContext}
             isChannelWritable={isChannelWritable}
-            name={displayName}
+            user={user}
             paddingTop={displayContext === 'head' || displayContext === 'single' ? 'md' : 'sm'}
             paddingBottom={displayContext === 'tail' || displayContext === 'single' ? 'md' : 'sm'}
             paddingX={isTouch ? 'md' : 'lg'}

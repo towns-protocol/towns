@@ -7,7 +7,9 @@ export type LookupUser = {
     userId: string
     username: string
     usernameConfirmed: boolean
+    usernameEncrypted: boolean
     displayName: string
+    displayNameEncrypted: boolean
     avatarUrl?: string
     memberOf?: MemberOf
 }

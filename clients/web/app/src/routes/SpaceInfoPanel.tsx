@@ -355,8 +355,7 @@ export const SpaceInfoPanel = () => {
                                             gap="paragraph"
                                         >
                                             <Paragraph truncate data-testid="owner">
-                                                {spaceOwner &&
-                                                    getPrettyDisplayName(spaceOwner).displayName}
+                                                {spaceOwner && getPrettyDisplayName(spaceOwner)}
                                             </Paragraph>
 
                                             {data?.owner && (

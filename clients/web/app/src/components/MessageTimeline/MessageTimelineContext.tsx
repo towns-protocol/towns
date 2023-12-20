@@ -83,7 +83,7 @@ export const MessageTimelineWrapper = (props: {
     const onMentionClick = useCallback(
         (mentionName: string) => {
             const profileId = members?.find(
-                (m) => getPrettyDisplayName(m).displayName === mentionName.trim(),
+                (m) => getPrettyDisplayName(m) === mentionName.trim(),
             )?.userId
             if (!profileId) {
                 return

@@ -154,7 +154,7 @@ export class MentionNode extends TextNode {
 }
 
 export function $createMentionNode(mentionName: string, userId: string): MentionNode {
-    const prettyDisplayName = getPrettyDisplayName({ displayName: mentionName, userId }).displayName
+    const prettyDisplayName = getPrettyDisplayName({ displayName: mentionName, userId })
     const mentionNode = new MentionNode(mentionName, prettyDisplayName, userId)
     mentionNode.setMode('segmented').toggleDirectionless()
     return $applyNodeReplacement(mentionNode)

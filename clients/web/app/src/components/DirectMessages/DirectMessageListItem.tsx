@@ -165,11 +165,9 @@ const LastDirectMessageContent = (props: {
             return '📷'
         case 'text':
             return latestUser
-                ? `${
-                      myUserId === latestUser.userId
-                          ? 'you'
-                          : getPrettyDisplayName(latestUser).displayName
-                  }: ${info.text}`
+                ? `${myUserId === latestUser.userId ? 'you' : getPrettyDisplayName(latestUser)}: ${
+                      info.text
+                  }`
                 : info.text
         case 'encrypted':
             return (

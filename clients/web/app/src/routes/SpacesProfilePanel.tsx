@@ -122,7 +122,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                     center
                     key={user.userId}
                     userId={user.userId}
-                    displayName={getPrettyDisplayName(user).displayName}
+                    displayName={getPrettyDisplayName(user)}
                     userAddress={userAddress}
                     userBio={userBio}
                     canEdit={canEdit}

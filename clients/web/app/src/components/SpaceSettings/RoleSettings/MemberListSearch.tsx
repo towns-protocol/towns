@@ -46,7 +46,7 @@ export function MemberList({
 
             return {
                 userId: address,
-                username: getPrettyDisplayName(m).displayName,
+                username: getPrettyDisplayName(m),
                 address,
                 id: address,
             }

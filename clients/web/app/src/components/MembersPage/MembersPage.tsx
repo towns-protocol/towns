@@ -81,9 +81,9 @@ const GridProfile = ({ member }: { member: RoomMember }) => {
                         />
                     </Box>
 
-                    <Box tooltip={getPrettyDisplayName(member).initialName}>
+                    <Box tooltip={getPrettyDisplayName(member)}>
                         <Paragraph truncate textAlign="center">
-                            {getPrettyDisplayName(member).initialName}
+                            {getPrettyDisplayName(member)}
                         </Paragraph>
                     </Box>
                 </Stack>

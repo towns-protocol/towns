@@ -25,7 +25,9 @@ export function toZionRoomFromStream(stream: Stream, userId: string): Room {
             membership: Membership.Join,
             username: info?.username ?? '',
             usernameConfirmed: info?.usernameConfirmed ?? false,
+            usernameEncrypted: info?.usernameEncrypted ?? false,
             displayName: info?.displayName ?? '',
+            displayNameEncrypted: info?.displayNameEncrypted ?? false,
             disambiguate: false,
         }
     })

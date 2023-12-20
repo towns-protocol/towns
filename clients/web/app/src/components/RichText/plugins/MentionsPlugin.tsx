@@ -249,7 +249,7 @@ class MentionTypeaheadOption extends MenuOption {
 
     constructor(displayName: string, userId: string, isSelf = false) {
         super(displayName)
-        this.displayName = getPrettyDisplayName({ displayName, userId }).displayName
+        this.displayName = getPrettyDisplayName({ displayName, userId })
         this.userId = userId
         this.isSelf = isSelf
     }

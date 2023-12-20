@@ -90,13 +90,17 @@ export const mockMembers: zionClient.RoomMember[] = [
         userId: address1,
         username: 'User 1',
         usernameConfirmed: true,
+        usernameEncrypted: false,
         displayName: 'User 1',
+        displayNameEncrypted: false,
     },
     {
         userId: address2,
         username: 'User 2',
         usernameConfirmed: true,
+        usernameEncrypted: false,
         displayName: 'User 2',
+        displayNameEncrypted: false,
     },
 ]
 

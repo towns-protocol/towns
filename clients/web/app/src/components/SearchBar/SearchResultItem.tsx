@@ -43,9 +43,7 @@ export const ResultItem = (
                     <ItemContainer>
                         <Avatar userId={item.source.userId} size="avatar_x4" />
                         <Box centerContent>
-                            <Paragraph strong>
-                                {getPrettyDisplayName(item.source).displayName}
-                            </Paragraph>
+                            <Paragraph strong>{getPrettyDisplayName(item.source)}</Paragraph>
                         </Box>
                     </ItemContainer>
                 </Link>

@@ -167,7 +167,7 @@ const MediaSenderInfo = (props: { userId: string; timestamp?: number }) => {
             <Avatar userId={props.userId} />
             <Stack gap="sm">
                 <Text fontWeight="medium" color="default">
-                    {prettyName.displayName}
+                    {prettyName}
                 </Text>
                 <Text color="gray2" size="sm">
                     {date}

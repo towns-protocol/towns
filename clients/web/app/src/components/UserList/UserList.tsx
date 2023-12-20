@@ -32,7 +32,7 @@ export const useUserList = (params: Props) => {
         return userIds.map((u) => {
             return {
                 userId: u,
-                displayName: getPrettyDisplayName(usersMap[u] ?? { name: u })?.displayName,
+                displayName: getPrettyDisplayName(usersMap[u] ?? { name: u }),
             }
         })
     }, [usersMap, userIds])
@@ -89,9 +89,7 @@ export const getNameListFromUsers = (
                 u?.userId === currentUserId ? SORT_CURRENT_USER[sortCurrentUser] : 0,
             ).thenBy((u: RoomMember) => u?.displayName, -1),
         )
-        .map((u?: RoomMember) =>
-            u?.userId === currentUserId ? 'you' : getPrettyDisplayName(u).displayName,
-        )
+        .map((u?: RoomMember) => (u?.userId === currentUserId ? 'you' : getPrettyDisplayName(u)))
 
     const truncateUsers =
         mappedUsers.length > maxNames

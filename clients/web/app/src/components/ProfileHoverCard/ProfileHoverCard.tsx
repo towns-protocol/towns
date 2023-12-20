@@ -44,7 +44,7 @@ export const ProfileHoverCard = (props: Props) => {
                 </Stack>
                 <Stack justifyContent="center" gap="sm">
                     <Paragraph truncate strong>
-                        {getPrettyDisplayName(user).displayName}
+                        {getPrettyDisplayName(user)}
                     </Paragraph>
                     <Paragraph color="gray2">{userAddress && shortAddress(userAddress)}</Paragraph>
                     {memberOf ? (

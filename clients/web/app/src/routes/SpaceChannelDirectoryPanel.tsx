@@ -142,7 +142,7 @@ const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
                 </Box>
                 <Stack grow gap="paragraph" overflow="hidden">
                     <Paragraph truncate color="default">
-                        {getPrettyDisplayName(globalUser).displayName}
+                        {getPrettyDisplayName(globalUser)}
                     </Paragraph>
                     {userAddress && (
                         <ClipboardCopy

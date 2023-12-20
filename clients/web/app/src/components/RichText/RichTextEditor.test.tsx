@@ -57,7 +57,9 @@ describe('#RichTextEditor mention nodes', () => {
                         {
                             username: 'ben',
                             usernameConfirmed: true,
+                            usernameEncrypted: false,
                             displayName: 'ben',
+                            displayNameEncrypted: false,
                             userId: '1',
                         },
                     ]}
@@ -81,7 +83,9 @@ describe('#RichTextEditor mention nodes', () => {
                         {
                             username: 'user1',
                             usernameConfirmed: true,
+                            usernameEncrypted: false,
                             displayName,
+                            displayNameEncrypted: false,
                             userId: '1',
                         },
                     ]}
@@ -104,9 +108,11 @@ describe('#RichTextEditor mention nodes', () => {
                     users={[
                         {
                             displayName,
+                            displayNameEncrypted: false,
                             userId: '1',
                             username: 'name1',
                             usernameConfirmed: true,
+                            usernameEncrypted: false,
                         },
                     ]}
                 />

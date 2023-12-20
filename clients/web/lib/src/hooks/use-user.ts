@@ -11,7 +11,9 @@ export function useUser(userId?: string): LookupUser | undefined {
                       userId: userId,
                       username: userId,
                       usernameConfirmed: true,
+                      usernameEncrypted: false,
                       displayName: userId,
+                      displayNameEncrypted: false,
                   } satisfies LookupUser)
                 : undefined,
         [userId, users],

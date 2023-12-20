@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { MessageReactions, RoomIdentifier, ThreadStats } from 'use-zion-client'
 import { Link } from 'react-router-dom'
 import debug from 'debug'
+import { LookupUser } from 'use-zion-client/dist/components/UserLookupContext'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'
@@ -26,7 +27,7 @@ type Props = {
     userId?: string | null
     senderId?: string
     avatarSize?: AvatarAtoms['size']
-    name: string
+    user?: LookupUser
     displayContext?: 'single' | 'head' | 'body' | 'tail'
     messageSourceAnnotation?: string
     messageBody?: string
@@ -62,7 +63,7 @@ export const MessageLayout = (props: Props) => {
         senderId,
         eventId,
         avatarSize = 'avatar_md',
-        name,
+        user,
         messageBody,
         messageSourceAnnotation,
         channelId,
@@ -188,7 +189,7 @@ export const MessageLayout = (props: Props) => {
                         alignItems="end"
                     >
                         {/* display name with tooltip */}
-                        {name && senderId && (
+                        {senderId && (
                             <Box
                                 tooltip={
                                     isTouch ? undefined : <ProfileHoverCard userId={senderId} />
@@ -196,10 +197,10 @@ export const MessageLayout = (props: Props) => {
                             >
                                 {profileLink ? (
                                     <Link to={profileLink ?? ''} tabIndex={-1}>
-                                        <UserName name={name} />
+                                        <UserName user={user} />
                                     </Link>
                                 ) : (
-                                    <UserName name={name} />
+                                    <UserName user={user} />
                                 )}
                             </Box>
                         )}
@@ -314,12 +315,11 @@ export const MessageLayout = (props: Props) => {
     )
 }
 
-const UserName = ({ name }: { name: string }) => {
-    const { displayName } = getPrettyDisplayName({ displayName: name, userId: '' })
-
+const UserName = ({ user }: { user?: LookupUser }) => {
+    const name = user ? getPrettyDisplayName(user) : ''
     return (
         <Text truncate fontWeight="strong" color="default" as="span">
-            {displayName}&nbsp;
+            {name}&nbsp;
         </Text>
     )
 }

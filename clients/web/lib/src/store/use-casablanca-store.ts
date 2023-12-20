@@ -36,7 +36,9 @@ export function toZionCasablancaUser(theUser: string | undefined): RoomMember {
         userId: theUser ?? '',
         username: theUser ?? '',
         usernameConfirmed: true,
+        usernameEncrypted: false,
         displayName: theUser ?? '',
+        displayNameEncrypted: false,
         avatarUrl: theUser,
     }
 }
@@ -179,7 +181,9 @@ function getMembersWithMembership(membership: Membership, stream: Stream): RoomM
             userId: userId,
             username: info?.username ?? userId,
             usernameConfirmed: info?.usernameConfirmed ?? false,
+            usernameEncrypted: info?.usernameEncrypted ?? false,
             displayName: info?.displayName ?? userId,
+            displayNameEncrypted: info?.displayNameEncrypted ?? false,
             avatarUrl: '',
         })
     })

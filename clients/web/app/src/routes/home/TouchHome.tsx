@@ -511,7 +511,7 @@ export const TouchUserResultRow = (props: { member: RoomMember }) => {
                     <Avatar size="avatar_x4" userId={member.userId} />
                     <Stack gap="sm" overflow="hidden" paddingY="xxs">
                         <Text truncate color="default">
-                            {getPrettyDisplayName(member).displayName}
+                            {getPrettyDisplayName(member)}
                         </Text>
                         {accountAddress && (
                             <Paragraph truncate color="gray2" size="xs">

@@ -15,7 +15,9 @@ const ownerUser = {
     userId: getWalletAddress(),
     username: 'beavis',
     usernameConfirmed: true,
+    usernameEncrypted: false,
     displayName: 'beavis',
+    displayNameEncrypted: false,
     avatarUrl: 'https://example.com',
 }
 
@@ -105,9 +107,7 @@ describe('<SpaceHome />', () => {
         await screen.findByTestId('upload-image-container')
         screen.getByText(spaceData.name)
 
-        expect(screen.getByTestId('owner')).toHaveTextContent(
-            getPrettyDisplayName(ownerUser).displayName,
-        )
+        expect(screen.getByTestId('owner')).toHaveTextContent(getPrettyDisplayName(ownerUser))
 
         screen.getByText(/1 member/gi)
     })

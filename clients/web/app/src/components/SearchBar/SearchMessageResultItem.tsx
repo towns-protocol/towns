@@ -63,7 +63,7 @@ export const SearchMessagesResultItem = (
     const sender = usersMap[result.event.sender.id]
     const ref = React.useRef<HTMLAnchorElement>(null)
 
-    const displayName = getPrettyDisplayName(sender).displayName
+    const displayName = getPrettyDisplayName(sender)
 
     const { isTouch } = useDevice()
 

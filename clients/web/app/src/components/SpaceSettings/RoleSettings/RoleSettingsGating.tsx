@@ -157,9 +157,7 @@ const MemberRenderer = (props: { item: string; onRemoveItem: (id: string) => voi
         >
             {avatarContent()}
             <Text>
-                {props.item === EVERYONE_ADDRESS
-                    ? 'Everyone'
-                    : getPrettyDisplayName(member).displayName}
+                {props.item === EVERYONE_ADDRESS ? 'Everyone' : getPrettyDisplayName(member)}
             </Text>
             <Text color="gray2">
                 {props.item === EVERYONE_ADDRESS

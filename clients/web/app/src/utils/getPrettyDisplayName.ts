@@ -1,10 +1,10 @@
 import { memoize } from 'lodash'
-import { getAccountAddress } from 'use-zion-client'
 import { shortAddress } from 'ui/utils/utils'
 
 interface UserWithDisplayName {
     userId: string
     displayName: string
+    username?: string
 }
 
 /**
@@ -13,56 +13,27 @@ interface UserWithDisplayName {
  * this method will return the display name with a cleaner suffix
  */
 
-export function getPrettyDisplayName(user: UserWithDisplayName | undefined) {
+export function getPrettyDisplayName(user: UserWithDisplayName | undefined): string {
     const name = !user ? undefined : user.displayName
     // memoized result
-    return _getPrettyDisplayName(user?.userId, name)
+    return _getPrettyDisplayName(name, user?.username, user?.userId)
 }
 
 export const _getPrettyDisplayName = memoize(
-    (userId?: string, name?: string) => {
-        if (!name) {
-            const name = userId ? shortAddress(userId) : 'Unknown User'
-            return {
-                displayName: name,
-                initialName: name,
-                suffix: undefined,
-            }
-        }
-        // first check if the name matches the pattern we're looking for
-        const matchSuffix = name.match(/\s+\(@eip[a-z0-9=]+(0x[0-9a-f]{40}):.+\)$/)
-
-        if (!matchSuffix) {
-            // If name is an address, shorten it
-            let shortenedName: string
-            const matchAddress = name.match(/0x[0-9a-fA-F]{40}/)
-            if (matchAddress) {
-                shortenedName = shortAddress(name)
-            } else {
-                shortenedName = name.length > 20 ? name.slice(0, 20) + '…' : name
-            }
-
-            return {
-                displayName: shortenedName,
-                initialName: name,
-                suffix: undefined,
-            }
+    (name?: string, username?: string, userId?: string) => {
+        if (name && name.length > 0) {
+            return name
         }
 
-        // clean up then name
-        const initialName = name.replace(matchSuffix[0], '')
-
-        // even though the address is encoded in the name we want to use the actual
-        // userId to prevent from faking it
-        const address = userId ? getAccountAddress(userId) : undefined
-
-        const suffix = address ? ` (${shortAddress(address)})` : undefined
-
-        return {
-            displayName: initialName + (suffix ? ` ${suffix}` : ''),
-            initialName: initialName,
-            suffix: suffix,
+        if (username && username.length > 0) {
+            return username
         }
+
+        if (userId) {
+            return shortAddress(userId)
+        }
+
+        return 'Unknown User'
     },
-    (userId, name) => (userId ? userId : '') + (name ? name : ''),
+    (name, username, userId) => (userId ?? '') + (username ?? '') + (name ?? ''),
 )

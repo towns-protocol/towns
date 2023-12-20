@@ -15,7 +15,9 @@ export function useCasablancaUser(
         userId: userId,
         username: userId,
         usernameConfirmed: true,
+        usernameEncrypted: false,
         displayName: userId,
+        displayNameEncrypted: false,
     }
     return currentUser
 }

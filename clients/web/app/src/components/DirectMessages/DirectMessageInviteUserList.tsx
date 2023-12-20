@@ -145,7 +145,7 @@ const Participant = (props: ParticipantProps & { selected: boolean }) => {
         >
             <Avatar userId={userId} size="avatar_x4" />
             <Text truncate fontWeight="medium">
-                {getPrettyDisplayName(profile).displayName}
+                {getPrettyDisplayName(profile)}
             </Text>
             <Box grow />
             <Checkbox name="" checked={selected} onChange={onClick} />
@@ -183,7 +183,7 @@ const SelectedParticipant = (props: ParticipantProps) => {
                 />
             </Box>
             <Text truncate fontWeight="medium" fontSize="sm">
-                {getPrettyDisplayName(profile).displayName}
+                {getPrettyDisplayName(profile)}
             </Text>
         </MotionStack>
     )

@@ -21,7 +21,7 @@ export const RoomCreate = (props: Props) => {
     const creator = event.content.creator
 
     const creatorUser = usersMap[creator]
-    const name = getPrettyDisplayName(creatorUser).displayName
+    const name = getPrettyDisplayName(creatorUser)
     const groupName = channelName ? `#${channelName}` : `this group`
 
     if (!creatorUser) {
