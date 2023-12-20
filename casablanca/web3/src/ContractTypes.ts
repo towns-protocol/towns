@@ -14,6 +14,7 @@ import {
     TokenEntitlementDataTypes as TokenEntitlementDataTypesV4,
     ITownArchitectBase as ITownArchitectBaseV4,
     IRolesBase as IRolesBaseV4,
+    IMembershipBase as IMembershipBaseV4,
 } from './v4/types'
 
 export enum Permission {
@@ -58,6 +59,10 @@ type UserEntitlementShim<Version = TDefaultVersion> = Version extends 'v3'
 type MembershipInfoStruct<Version = TDefaultVersion> = Version extends 'v3'
     ? IMembershipBaseV3.MembershipInfoStruct
     : ITownArchitectBaseV4['MembershipInfoStruct']
+
+type TotalSupplyOutputStruct<Version = TDefaultVersion> = Version extends 'v3'
+    ? { totalSupply: number }
+    : { totalSupply: IMembershipBaseV4['TotalSupplyOutput'] }
 
 export type MembershipStruct<Version = TDefaultVersion> = Version extends 'v3'
     ? ITownArchitectBaseV3.MembershipStruct
@@ -176,4 +181,9 @@ export function isStringArray(
 export type MembershipInfo<V extends Versions = TDefaultVersion> = Pick<
     MembershipInfoStruct<V>,
     'maxSupply' | 'currency' | 'feeRecipient' | 'price'
+>
+
+export type TotalSupplyInfo<V extends Versions = TDefaultVersion> = Pick<
+    TotalSupplyOutputStruct<V>,
+    'totalSupply'
 >

@@ -3,6 +3,7 @@ import TownOwnerLocalhostAbi from '@towns/generated/localhost/v3/abis/TownOwner.
 import RolesLocalhostAbi from '@towns/generated/localhost/v3/abis/Roles.abi'
 import TownArchitectLocalhostAbi from '@towns/generated/localhost/v3/abis/TownArchitect.abi'
 import TokenEntitlementLocalhostAbi from '@towns/generated/localhost/v3/abis/TokenEntitlement.abi'
+import MembershipFacetLocalhostAbi from '@towns/generated/localhost/v3/abis/MembershipFacet.abi'
 
 import {
     Abi,
@@ -40,6 +41,9 @@ export interface IChannelBase {
 
 export interface ITownOwnerBase {
     TownStruct: ContractFunctionOutputs<typeof TownOwnerLocalhostAbi, 'getTownInfo'>[0]
+}
+export interface IMembershipBase {
+    TotalSupplyOutput: ContractFunctionOutputs<typeof MembershipFacetLocalhostAbi, 'totalSupply'>[0]
 }
 
 export interface IRolesBase {

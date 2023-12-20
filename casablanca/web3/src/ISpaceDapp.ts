@@ -9,6 +9,7 @@ import {
     Permission,
     RoleDetails,
     Versions,
+    TotalSupplyInfo,
 } from './ContractTypes'
 
 import { SpaceInfo } from './SpaceInfo'
@@ -132,6 +133,7 @@ export interface ISpaceDapp<V extends Versions = TDefaultVersion> {
         signer: SignerType<V>,
     ) => Promise<TransactionType<V>>
     hasTownMembership: (spaceId: string, wallet: StringOrAddress<V>) => Promise<boolean>
+    getMembershipSupply: (spaceId: string) => Promise<TotalSupplyInfo<V>>
     getMembershipInfo: (spaceId: string) => Promise<MembershipInfo<V>>
     getWalletLink: () => V extends 'v3' ? WalletLinkV3 : WalletLinkV4
 }

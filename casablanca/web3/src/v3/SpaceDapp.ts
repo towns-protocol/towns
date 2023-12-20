@@ -337,6 +337,16 @@ export class SpaceDapp implements ISpaceDapp<'v3'> {
         return town.Membership.hasMembership(address)
     }
 
+    public async getMembershipSupply(spaceId: string) {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const totalSupply = await town.Membership.read.totalSupply()
+
+        return { totalSupply: totalSupply.toNumber() }
+    }
+
     public async getMembershipInfo(spaceId: string) {
         const town = await this.getTown(spaceId)
         if (!town) {

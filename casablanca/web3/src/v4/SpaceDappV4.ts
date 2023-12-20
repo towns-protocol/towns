@@ -423,6 +423,17 @@ export class SpaceDapp implements ISpaceDapp<'v4'> {
         }
     }
 
+    public async getMembershipSupply(spaceId: string) {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const supply = await town.Membership.read({
+            functionName: 'totalSupply',
+        })
+        return { totalSupply: supply }
+    }
+
     public getWalletLink() {
         return this.walletLink
     }
