@@ -254,11 +254,7 @@ export const MessageLayout = (props: Props) => {
                             }
                         >
                             {hasReplies && (
-                                <RepliesButton
-                                    eventId={eventId}
-                                    threadStats={replies}
-                                    userId={userId}
-                                />
+                                <RepliesButton eventId={eventId} threadStats={replies} />
                             )}
                             {hasReactions ? (
                                 <Reactions

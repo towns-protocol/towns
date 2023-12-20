@@ -1,5 +1,11 @@
 import React, { useCallback, useMemo } from 'react'
-import { ThreadStats, useChannelId, useSpaceId, useUserLookupContext } from 'use-zion-client'
+import {
+    ThreadStats,
+    useChannelId,
+    useFullyReadMarker,
+    useSpaceId,
+    useUserLookupContext,
+} from 'use-zion-client'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { Box, Paragraph, Pill, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
@@ -8,11 +14,10 @@ import { Avatar } from '@components/Avatar/Avatar'
 type Props = {
     threadStats: ThreadStats
     eventId: string
-    userId?: string | null
 }
 
 export const RepliesButton = (props: Props) => {
-    const { threadStats, eventId, userId } = props
+    const { threadStats, eventId } = props
     const { replyCount } = threadStats
 
     const { usersMap } = useUserLookupContext()
@@ -28,14 +33,14 @@ export const RepliesButton = (props: Props) => {
         [usersMap, threadStats.userIds],
     )
 
-    const isOwn = userId && users.some((u) => u.userId === userId)
+    const isUnread = useFullyReadMarker(channelId, eventId)?.isUnread
 
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
 
     const onClick = useCallback(() => onOpenMessageThread(eventId), [onOpenMessageThread, eventId])
 
     return (
-        <Pill rounded="sm" height={{ default: 'x4' }} border={isOwn ? 'accent' : undefined}>
+        <Pill rounded="sm" height={{ default: 'x4' }} border={isUnread ? 'accent' : undefined}>
             <Box shrink centerContent horizontal gap="sm" cursor="pointer" onClick={onClick}>
                 <Stack horizontal gap="xs">
                     {users.slice(0, 3).map((u) => (
