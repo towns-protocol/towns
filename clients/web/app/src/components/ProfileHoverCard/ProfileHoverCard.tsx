@@ -8,7 +8,7 @@ import { Stack } from 'ui/components/Stack/Stack'
 import { Paragraph } from 'ui/components/Text/Paragraph'
 import { Tooltip } from 'ui/components/Tooltip/Tooltip'
 import { notUndefined, shortAddress } from 'ui/utils/utils'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { Text } from '@ui'
 
 type Props = {
     userId: string
@@ -31,59 +31,64 @@ export const ProfileHoverCard = (props: Props) => {
     }, [spaces, user.memberOf])
 
     return user ? (
-        <Tooltip gap padding maxWidth="300">
-            <Stack horizontal gap>
-                <Stack
-                    width="x10"
-                    aspectRatio="1/1"
-                    position="relative"
-                    rounded="full"
-                    overflow="hidden"
-                >
-                    <Avatar userId={userId} size="avatar_100" />
-                </Stack>
-                <Stack justifyContent="center" gap="sm">
-                    <Paragraph truncate strong>
-                        {getPrettyDisplayName(user)}
-                    </Paragraph>
-                    <Paragraph color="gray2">{userAddress && shortAddress(userAddress)}</Paragraph>
-                    {memberOf ? (
-                        <Stack horizontal gap="xs">
-                            {memberOf
-                                .filter(notUndefined)
+        <Tooltip gap maxWidth="300" background="level2" border="level3">
+            <Stack gap padding="sm">
+                <Stack horizontal gap>
+                    <Avatar userId={userId} size="avatar_lg" />
 
-                                .map((s) => (
-                                    <React.Fragment key={s.id.streamId}>
-                                        <SpaceIcon
-                                            border
-                                            letterFontSize="sm"
-                                            width="x2"
-                                            height="x2"
-                                            spaceId={s?.id.streamId}
-                                            firstLetterOfSpaceName={s?.name[0]}
-                                            overrideBorderRadius="xs"
-                                            variant={ImageVariants.thumbnail50}
-                                            fadeIn={false}
-                                        />
-                                    </React.Fragment>
-                                ))}
-                        </Stack>
-                    ) : (
-                        <></>
-                    )}
+                    <Stack justifyContent="center" gap="sm">
+                        {user.displayName.length > 0 && (
+                            <Paragraph truncate strong color="default">
+                                {user.displayName}
+                            </Paragraph>
+                        )}
+
+                        {user.username.length > 0 && (
+                            <Paragraph truncate color="gray2">
+                                @{user.username}
+                            </Paragraph>
+                        )}
+
+                        <Paragraph color="gray2" size="md">
+                            {userAddress && shortAddress(userAddress)}
+                        </Paragraph>
+                    </Stack>
                 </Stack>
+                {memberOf ? (
+                    <Stack horizontal gap="xs" color="gray1" alignItems="center">
+                        {memberOf.filter(notUndefined).map((s) => (
+                            <React.Fragment key={s.id.streamId}>
+                                <SpaceIcon
+                                    border
+                                    letterFontSize="sm"
+                                    width="x3"
+                                    height="x3"
+                                    spaceId={s?.id.streamId}
+                                    firstLetterOfSpaceName={s?.name[0]}
+                                    overrideBorderRadius="xs"
+                                    variant={ImageVariants.thumbnail50}
+                                    fadeIn={false}
+                                />
+                            </React.Fragment>
+                        ))}
+                        <Text size="md" color="gray2">
+                            member of {memberOf.length} town{memberOf.length > 1 ? 's' : ''}
+                        </Text>
+                    </Stack>
+                ) : (
+                    <></>
+                )}
+                {userBio && (
+                    <Stack>
+                        <Paragraph strong size="md">
+                            Bio
+                        </Paragraph>
+                        <Paragraph size="md" color="gray2">
+                            {userBio}
+                        </Paragraph>
+                    </Stack>
+                )}
             </Stack>
-
-            {userBio && (
-                <Stack>
-                    <Paragraph strong size="sm">
-                        Bio
-                    </Paragraph>
-                    <Paragraph size="sm" color="gray1">
-                        {userBio}
-                    </Paragraph>
-                </Stack>
-            )}
         </Tooltip>
     ) : (
         <Tooltip>User info not available</Tooltip>
