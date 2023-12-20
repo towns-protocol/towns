@@ -52,7 +52,7 @@
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
         "test": "turbo test",
         "test:unit": "turbo test:unit -- --silent",
-        "workers:build": "turbo build --filter amp-worker --filter gateway-worker --filter siwe-worker --filter token-worker --filter unfurl-worker --filter push-notification-worker --filter jwt-worker"
+        "workers:build": "turbo build --filter gateway-worker --filter siwe-worker --filter token-worker --filter unfurl-worker --filter push-notification-worker --filter jwt-worker"
     },
     "devDependencies": {
         "@typechain/ethers-v5": "^10.1.1",

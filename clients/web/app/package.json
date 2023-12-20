@@ -16,7 +16,6 @@
         "vitest-preview": "vitest-preview"
     },
     "dependencies": {
-        "@amplitude/analytics-browser": "1.8.0",
         "@capsizecss/vanilla-extract": "^1.0.0",
         "@cassiozen/usestatemachine": "^1.0.1",
         "@datadog/browser-logs": "^4.48.1",

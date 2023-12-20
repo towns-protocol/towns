@@ -6,7 +6,6 @@ import { Helmet } from 'react-helmet'
 
 import { EmbeddedSignerContextProvider } from '@towns/privy'
 import { Notifications } from '@components/Notifications/Notifications'
-import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useWindowListener } from 'hooks/useWindowListener'
@@ -85,14 +84,10 @@ export const App = () => {
                             }
                         />
                     </Helmet>
-                    <AnalyticsProvider>
-                        <>
-                            {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && (
-                                <DebugBar {...environment} />
-                            )}
-                            <AllRoutes />
-                        </>
-                    </AnalyticsProvider>
+                    <>
+                        {env.DEV && !env.VITE_DISABLE_DEBUG_BARS && <DebugBar {...environment} />}
+                        <AllRoutes />
+                    </>
                     {!env.VITE_DISABLE_DEBUG_BARS && (
                         <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
                     )}

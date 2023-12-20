@@ -1,12 +1,9 @@
 import { useConnectivity } from 'use-zion-client'
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
 import { toast } from 'react-hot-toast/headless'
-
-import { keccak256 } from 'ethers/lib/utils.js'
 import { useLogin, usePrivy } from '@privy-io/react-auth'
 import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
-import { useAnalytics } from './useAnalytics'
 import { useAutoLoginToRiverIfEmbeddedWallet } from './useAutoLoginToRiverIfEmbeddedWallet'
 
 export const registerWalletMsgToSign = `Click to register and accept the Towns Terms of Service.`
@@ -155,17 +152,8 @@ function usePrivyLoginWithErrorHandler({
 }: {
     loggedInWalletAddress: AuthContext['loggedInWalletAddress']
 }) {
-    const { track, setUserId, getUserId } = useAnalytics()
-
     const { login: privyLogin } = useLogin({
         onError: (error) => {
-            const userId = getUserId()
-            if (userId == undefined) {
-                setUserId(keccak256(loggedInWalletAddress as string).substring(0, 34))
-            }
-            track('wallet_connect_error', {
-                error,
-            })
             toast.custom(
                 (t) => {
                     return (

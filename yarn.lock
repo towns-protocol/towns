@@ -33,64 +33,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@amplitude/analytics-browser@npm:1.8.0":
-  version: 1.8.0
-  resolution: "@amplitude/analytics-browser@npm:1.8.0"
-  dependencies:
-    "@amplitude/analytics-client-common": ^0.5.4
-    "@amplitude/analytics-core": ^0.11.4
-    "@amplitude/analytics-types": ^0.16.0
-    "@amplitude/ua-parser-js": ^0.7.31
-    tslib: ^2.4.1
-  checksum: d1cdaedbcb9ce3e39e4ac596b74c8f91fc55c5f140c2bdcec842ebba81325c716c271acd925568ed6630f6918691b93089d22279f98a0de19f7ef259d9589096
-  languageName: node
-  linkType: hard
-
-"@amplitude/analytics-client-common@npm:^0.5.4":
-  version: 0.5.4
-  resolution: "@amplitude/analytics-client-common@npm:0.5.4"
-  dependencies:
-    "@amplitude/analytics-connector": ^1.4.5
-    "@amplitude/analytics-core": ^0.11.4
-    "@amplitude/analytics-types": ^0.16.0
-    tslib: ^2.4.1
-  checksum: 5d6c801f9d247842bd50c4faea93a4d4e0b2e6195957fa74b681963ee852acc0739a4e24d5393410bccbb6aa3bfa95912cf144d8d8fac7f6db42a80b760253eb
-  languageName: node
-  linkType: hard
-
-"@amplitude/analytics-connector@npm:^1.4.5":
-  version: 1.4.6
-  resolution: "@amplitude/analytics-connector@npm:1.4.6"
-  dependencies:
-    "@amplitude/ua-parser-js": 0.7.31
-  checksum: 0a2acfa54e02b405e1b66ec522aa5802f938f525ad0e81a864f9370b53a3a18f166962d891a5372c12938ec7c3fbbb3453304261845bd57e5617963c8285c2dc
-  languageName: node
-  linkType: hard
-
-"@amplitude/analytics-core@npm:^0.11.4":
-  version: 0.11.4
-  resolution: "@amplitude/analytics-core@npm:0.11.4"
-  dependencies:
-    "@amplitude/analytics-types": ^0.16.0
-    tslib: ^2.4.1
-  checksum: a96b557a356a752cd04d4d4133e67fe92088dfbd3f0a61d587105e8aea0ff6de9e3245f7cf86a1e36edcf0b396e32359f63554fda2d1a5057aeb125396eb009d
-  languageName: node
-  linkType: hard
-
-"@amplitude/analytics-types@npm:^0.16.0":
-  version: 0.16.0
-  resolution: "@amplitude/analytics-types@npm:0.16.0"
-  checksum: 046af5e2cd9ca652754cd95390f4edf51fe50ecd9e004d09456b9aef8158dc20cee890ce2209d51aad6af2e399fc46ca7c70bd9d92da15702878c74c9a122ec4
-  languageName: node
-  linkType: hard
-
-"@amplitude/ua-parser-js@npm:0.7.31, @amplitude/ua-parser-js@npm:^0.7.31":
-  version: 0.7.31
-  resolution: "@amplitude/ua-parser-js@npm:0.7.31"
-  checksum: c72e7c8656dd77a6c2ece9e3817929022aeadf731470e53fecddce03232d87977fd5b09d76c570a2a5bed97f5dd463fe6379aac7a6c4b2d2393f14486d385eec
-  languageName: node
-  linkType: hard
-
 "@ampproject/remapping@npm:^2.2.0":
   version: 2.2.0
   resolution: "@ampproject/remapping@npm:2.2.0"
@@ -9371,30 +9313,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"amp-worker@workspace:servers/workers/amp-worker":
-  version: 0.0.0-use.local
-  resolution: "amp-worker@workspace:servers/workers/amp-worker"
-  dependencies:
-    "@cloudflare/workers-types": ^4.20230710.1
-    "@towns/generated": "workspace:^"
-    "@types/jest": ^29.5.3
-    "@typescript-eslint/eslint-plugin": ^6.10.0
-    "@typescript-eslint/parser": ^6.10.0
-    concurrently: ^8.0.1
-    eslint: ^8.53.0
-    jest: ^29.6.2
-    jest-environment-miniflare: ^2.14.0
-    miniflare: ^3.20230710.0
-    prettier: ^2.8.8
-    ts-jest: ^29.1.1
-    ts-loader: ^9.4.2
-    typescript: ^5.1.6
-    wait-on: ^7.0.1
-    worker-common: "workspace:^"
-    wrangler: ^3.2.0
-  languageName: unknown
-  linkType: soft
-
 "another-json@npm:^0.2.0":
   version: 0.2.0
   resolution: "another-json@npm:0.2.0"
@@ -11135,26 +11053,6 @@ __metadata:
     semver: ^7.3.2
     well-known-symbols: ^2.0.0
   checksum: 749153ba711492feb7c3d2f5bb04c107157440b3e39509bd5dd19ee7b3ac751d1e4cd75796d9f702e0a713312dbc661421c68aa4a2c34d5f6d91f47e3a1c64a6
-  languageName: node
-  linkType: hard
-
-"concurrently@npm:^8.0.1":
-  version: 8.0.1
-  resolution: "concurrently@npm:8.0.1"
-  dependencies:
-    chalk: ^4.1.2
-    date-fns: ^2.29.3
-    lodash: ^4.17.21
-    rxjs: ^7.8.0
-    shell-quote: ^1.8.0
-    spawn-command: 0.0.2-1
-    supports-color: ^8.1.1
-    tree-kill: ^1.2.2
-    yargs: ^17.7.1
-  bin:
-    conc: dist/bin/concurrently.js
-    concurrently: dist/bin/concurrently.js
-  checksum: cce10ab1bbd7fd099300234637cdbc8e12622a5fe53f8dd31dcd9562d9803f25d3d0410bdb6fffd54e8f4e11b852366c03994bd319843cce70e449c8a8a69526
   languageName: node
   linkType: hard
 
@@ -14947,7 +14845,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "harmonyweb@workspace:clients/web/app"
   dependencies:
-    "@amplitude/analytics-browser": 1.8.0
     "@capsizecss/vanilla-extract": ^1.0.0
     "@cassiozen/usestatemachine": ^1.0.1
     "@datadog/browser-logs": ^4.48.1
@@ -21900,13 +21797,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shell-quote@npm:^1.8.0":
-  version: 1.8.1
-  resolution: "shell-quote@npm:1.8.1"
-  checksum: 5f01201f4ef504d4c6a9d0d283fa17075f6770bfbe4c5850b074974c68062f37929ca61700d95ad2ac8822e14e8c4b990ca0e6e9272e64befd74ce5e19f0736b
-  languageName: node
-  linkType: hard
-
 "side-channel@npm:^1.0.4":
   version: 1.0.4
   resolution: "side-channel@npm:1.0.4"
@@ -22254,13 +22144,6 @@ __metadata:
   version: 1.4.8
   resolution: "sourcemap-codec@npm:1.4.8"
   checksum: b57981c05611afef31605732b598ccf65124a9fcb03b833532659ac4d29ac0f7bfacbc0d6c5a28a03e84c7510e7e556d758d0bb57786e214660016fb94279316
-  languageName: node
-  linkType: hard
-
-"spawn-command@npm:0.0.2-1":
-  version: 0.0.2-1
-  resolution: "spawn-command@npm:0.0.2-1"
-  checksum: 2cac8519332193d1ed37d57298c4a1f73095e9edd20440fbab4aa47f531da83831734f2b51c44bb42b2747bf3485dec3fa2b0a1003f74c67561f2636622e328b
   languageName: node
   linkType: hard
 
@@ -22777,7 +22660,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"supports-color@npm:^8.0.0, supports-color@npm:^8.1.1":
+"supports-color@npm:^8.0.0":
   version: 8.1.1
   resolution: "supports-color@npm:8.1.1"
   dependencies:
@@ -23244,15 +23127,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tree-kill@npm:^1.2.2":
-  version: 1.2.2
-  resolution: "tree-kill@npm:1.2.2"
-  bin:
-    tree-kill: cli.js
-  checksum: 49117f5f410d19c84b0464d29afb9642c863bc5ba40fcb9a245d474c6d5cc64d1b177a6e6713129eb346b40aebb9d4631d967517f9fbe8251c35b21b13cd96c7
-  languageName: node
-  linkType: hard
-
 "treeify@npm:^1.1.0":
   version: 1.1.0
   resolution: "treeify@npm:1.1.0"
@@ -23433,7 +23307,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.0.0, tslib@npm:^2.1.0, tslib@npm:^2.2.0, tslib@npm:^2.3.1, tslib@npm:^2.4.0, tslib@npm:^2.4.1, tslib@npm:^2.5.0":
+"tslib@npm:^2.0.0, tslib@npm:^2.1.0, tslib@npm:^2.2.0, tslib@npm:^2.3.1, tslib@npm:^2.4.0, tslib@npm:^2.5.0":
   version: 2.5.3
   resolution: "tslib@npm:2.5.3"
   checksum: 88902b309afaf83259131c1e13da1dceb0ad1682a213143a1346a649143924d78cf3760c448b84d796938fd76127183894f8d85cbb3bf9c4fddbfcc140c0003c
@@ -26120,7 +25994,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs@npm:^17.3.1, yargs@npm:^17.5.1, yargs@npm:^17.7.1":
+"yargs@npm:^17.3.1, yargs@npm:^17.5.1":
   version: 17.7.2
   resolution: "yargs@npm:17.7.2"
   dependencies:

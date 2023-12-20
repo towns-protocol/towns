@@ -46,7 +46,6 @@ fi
 
 export CF_ENV=$ENVIRONMENT
 
-AMP_WORKER_PATH="servers/workers/amp-worker"
 GATEWAY_WORKER_PATH="servers/workers/gateway-worker"
 PUSH_NOTIFICATION_WORKER_PATH="servers/workers/push-notification-worker"
 SIWE_WORKER_PATH="servers/workers/siwe-worker"
@@ -57,7 +56,6 @@ RPC_PROXY_WORKER_PATH="servers/workers/nexus-rpc-worker"
 
 declare -a WORKER_PATHS=(
     $JWT_WORKER_PATH
-    $AMP_WORKER_PATH
     $SIWE_WORKER_PATH
     $PUSH_NOTIFICATION_WORKER_PATH
     $TOKEN_WORKER_PATH
