@@ -172,7 +172,7 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                 </>
             ) : (
                 <Text>
-                    {user.displayName.length > 0 || user.displayName.length > 0 ? (
+                    {user.displayName.length > 0 || user.username.length > 0 ? (
                         <>
                             {user.displayName.length > 0 && user.displayName}
                             <strong> @{user.username}</strong>
