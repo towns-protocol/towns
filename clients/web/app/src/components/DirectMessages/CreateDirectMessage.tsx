@@ -89,7 +89,7 @@ export const CreateDirectMessage = (props: Props) => {
 
     const cta = `${existingChannels ? 'Open' : 'Create'} ${
         selectedUserIds.size > 1 ? 'Group DM' : 'DM'
-    }}`
+    }`
 
     return (
         <>
