@@ -47,6 +47,8 @@ describe('gdmsTests', () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).toResolve()
+        await expect(alicesClient.waitForStream(streamId)).toResolve()
+        await expect(charliesClient.waitForStream(streamId)).toResolve()
 
         await expect(bobsClient.sendMessage(streamId, 'greetings')).toResolve()
         await expect(alicesClient.sendMessage(streamId, 'hello!')).toResolve()
@@ -96,6 +98,7 @@ describe('gdmsTests', () => {
         const userIds = [alicesClient.userId, charliesClient.userId]
         const { streamId } = await bobsClient.createGDMChannel(userIds)
         await expect(bobsClient.waitForStream(streamId)).toResolve()
+        await expect(alicesClient.waitForStream(streamId)).toResolve()
         await expect(alicesClient.inviteUser(streamId, chucksClient.userId)).toResolve()
     })
 
