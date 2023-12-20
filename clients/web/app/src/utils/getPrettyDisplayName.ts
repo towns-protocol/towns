@@ -16,50 +16,53 @@ interface UserWithDisplayName {
 export function getPrettyDisplayName(user: UserWithDisplayName | undefined) {
     const name = !user ? undefined : user.displayName
     // memoized result
-    return _getPrettyDisplayName(name, user?.userId)
+    return _getPrettyDisplayName(user?.userId, name)
 }
 
-export const _getPrettyDisplayName = memoize((name?: string, userId?: string) => {
-    if (!name) {
-        const name = userId ? shortAddress(userId) : 'Unknown User'
+export const _getPrettyDisplayName = memoize(
+    (userId?: string, name?: string) => {
+        if (!name) {
+            const name = userId ? shortAddress(userId) : 'Unknown User'
+            return {
+                displayName: name,
+                initialName: name,
+                suffix: undefined,
+            }
+        }
+        // first check if the name matches the pattern we're looking for
+        const matchSuffix = name.match(/\s+\(@eip[a-z0-9=]+(0x[0-9a-f]{40}):.+\)$/)
+
+        if (!matchSuffix) {
+            // If name is an address, shorten it
+            let shortenedName: string
+            const matchAddress = name.match(/0x[0-9a-fA-F]{40}/)
+            if (matchAddress) {
+                shortenedName = shortAddress(name)
+            } else {
+                shortenedName = name.length > 20 ? name.slice(0, 20) + '…' : name
+            }
+
+            return {
+                displayName: shortenedName,
+                initialName: name,
+                suffix: undefined,
+            }
+        }
+
+        // clean up then name
+        const initialName = name.replace(matchSuffix[0], '')
+
+        // even though the address is encoded in the name we want to use the actual
+        // userId to prevent from faking it
+        const address = userId ? getAccountAddress(userId) : undefined
+
+        const suffix = address ? ` (${shortAddress(address)})` : undefined
+
         return {
-            displayName: name,
-            initialName: name,
-            suffix: undefined,
+            displayName: initialName + (suffix ? ` ${suffix}` : ''),
+            initialName: initialName,
+            suffix: suffix,
         }
-    }
-    // first check if the name matches the pattern we're looking for
-    const matchSuffix = name.match(/\s+\(@eip[a-z0-9=]+(0x[0-9a-f]{40}):.+\)$/)
-
-    if (!matchSuffix) {
-        // If name is an address, shorten it
-        let shortenedName: string
-        const matchAddress = name.match(/0x[0-9a-fA-F]{40}/)
-        if (matchAddress) {
-            shortenedName = shortAddress(name)
-        } else {
-            shortenedName = name.length > 20 ? name.slice(0, 20) + '…' : name
-        }
-
-        return {
-            displayName: shortenedName,
-            initialName: name,
-            suffix: undefined,
-        }
-    }
-
-    // clean up then name
-    const initialName = name.replace(matchSuffix[0], '')
-
-    // even though the address is encoded in the name we want to use the actual
-    // userId to prevent from faking it
-    const address = userId ? getAccountAddress(userId) : undefined
-
-    const suffix = address ? ` (${shortAddress(address)})` : undefined
-
-    return {
-        displayName: initialName + (suffix ? ` ${suffix}` : ''),
-        initialName: initialName,
-        suffix: suffix,
-    }
-})
+    },
+    (userId, name) => (userId ? userId : '') + (name ? name : ''),
+)
