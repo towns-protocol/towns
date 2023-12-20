@@ -42,7 +42,7 @@ export const DirectMessageInviteUserList = (props: {
 
     const filteredUserIds = fuzzysort
         .go(searchTerm, users, {
-            key: 'displayName',
+            keys: ['displayName', 'username'],
             all: true,
         })
         .map((r) => r.obj.userId)
