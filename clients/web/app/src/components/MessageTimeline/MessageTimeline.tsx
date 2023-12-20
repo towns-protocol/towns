@@ -476,7 +476,7 @@ export const MessageTimeline = (props: Props) => {
             ) : r.type === 'expander' ? (
                 <Box paddingX="md" paddingY="md">
                     <Box cursor="pointer" onClick={onExpandClick}>
-                        <Paragraph color="accent">Show {numHidden} more messages</Paragraph>
+                        <Paragraph color="default">Show {numHidden} more messages</Paragraph>
                     </Box>
                 </Box>
             ) : r.type === 'fully-read' ? (

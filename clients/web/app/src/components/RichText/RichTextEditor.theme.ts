@@ -91,7 +91,7 @@ export const theme: EditorThemeClasses = {
         fontWeight: 'strong',
     }),
     link: atoms({
-        color: 'accent',
+        color: 'cta2',
     }),
     list: {
         ul: ul,

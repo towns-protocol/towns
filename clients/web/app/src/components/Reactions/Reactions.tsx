@@ -123,8 +123,9 @@ const Reaction = (props: {
                 centerContent
                 position="relative"
                 rounded="lg"
-                border={isOwn ? 'accent' : undefined}
                 gap="xs"
+                background={isOwn ? 'level3' : undefined}
+                border={isOwn ? 'none' : undefined}
                 onClick={onClick}
             >
                 <Text size="md" fontSize={{ desktop: 'mds', mobile: 'xs' }}>
