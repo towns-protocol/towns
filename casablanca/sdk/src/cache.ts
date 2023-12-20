@@ -15,6 +15,14 @@ export class Cache {
     }
 
     async put(request: string, data: Uint8Array) {
-        await this.storage?.put(request, new Response(new Blob([data])))
+        await this.storage?.put(
+            request,
+            new Response(new Blob([data]), {
+                headers: {
+                    'Content-Type': 'application/octet-stream',
+                    'Content-Length': data.length.toString(),
+                },
+            }),
+        )
     }
 }

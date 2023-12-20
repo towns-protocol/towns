@@ -13,8 +13,6 @@ import {
     ChannelMessage_Redaction,
     StreamEvent,
     EncryptedData,
-    GetStreamResponse,
-    CreateStreamResponse,
     StreamSettings,
     ChannelMessage_Post_Content_EmbeddedMedia,
     FullyReadMarkers,
@@ -30,7 +28,7 @@ import { DLogger, dlog, dlogError } from './dlog'
 import { errorContains, getRpcErrorProperty, StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { assert, check, hasElements, isDefined } from './check'
+import { assert, check, isDefined } from './check'
 import {
     isChannelStreamId,
     isDMChannelStreamId,
@@ -82,6 +80,7 @@ import {
     make_GDMChannelPayload_DisplayName,
     make_DMChannelPayload_Username,
     make_GDMChannelPayload_Username,
+    ParsedStreamResponse,
 } from './types'
 import { bin_fromHexString, bin_toHexString, shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/cryptoStore'
@@ -198,7 +197,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     private async initUserStream(
         userStreamId: string,
-        response: GetStreamResponse | CreateStreamResponse,
+        response: ParsedStreamResponse,
     ): Promise<void> {
         assert(this.userStreamId === undefined, 'streamId must not be set')
         this.userStreamId = userStreamId
@@ -225,7 +224,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     private async initUserSettingsStream(
         userSettingsStreamId: string,
-        response: GetStreamResponse | CreateStreamResponse,
+        response: ParsedStreamResponse,
     ): Promise<void> {
         assert(this.userSettingsStreamId === undefined, 'streamId must not be set')
         this.userSettingsStreamId = userSettingsStreamId
@@ -234,7 +233,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     private async initUserDeviceKeyStream(
         userDeviceKeyStreamId: string,
-        response: GetStreamResponse | CreateStreamResponse,
+        response: ParsedStreamResponse,
     ): Promise<void> {
         assert(this.userDeviceKeyStreamId === undefined, 'streamId must not be set')
         this.userDeviceKeyStreamId = userDeviceKeyStreamId
@@ -243,7 +242,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     private async initUserToDeviceStream(
         userToDeviceStreamId: string,
-        response: GetStreamResponse | CreateStreamResponse,
+        response: ParsedStreamResponse,
     ): Promise<void> {
         assert(this.userToDeviceStreamId === undefined, 'streamId must not be set')
         this.userToDeviceStreamId = userToDeviceStreamId
@@ -252,10 +251,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     private async initStreamFromResponse(
         streamId: string,
-        response: GetStreamResponse | CreateStreamResponse,
+        response: ParsedStreamResponse,
     ): Promise<void> {
         const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum, eventIds } =
-            unpackStreamResponse(response)
+            response
 
         const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
         const stream = new Stream(
@@ -303,9 +302,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     }
 
     // special wrapper around rpcClient.getStream which catches NOT_FOUND errors but re-throws everything else
-    private async getUserStream(streamId: string): Promise<GetStreamResponse | undefined> {
+    private async getUserStream(streamId: string): Promise<ParsedStreamResponse | undefined> {
         try {
-            const response = await this.rpcClient.getStream({ streamId })
+            const response = await this.rpcClient.getStreamUnpacked({ streamId })
             return response
         } catch (e) {
             if (isIConnectError(e) && e.code === Number(Err.NOT_FOUND)) {
@@ -316,7 +315,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
     }
 
-    private async createUserStream(userStreamId: string): Promise<CreateStreamResponse> {
+    private async createUserStream(userStreamId: string): Promise<ParsedStreamResponse> {
         const userEvents = [
             await makeEvent(
                 this.signerContext,
@@ -325,15 +324,16 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 }),
             ),
         ]
-        return await this.rpcClient.createStream({
+        const response = await this.rpcClient.createStream({
             events: userEvents,
             streamId: userStreamId,
         })
+        return unpackStreamResponse(response)
     }
 
     private async createUserDeviceKeyStream(
         userDeviceKeyStreamId: string,
-    ): Promise<CreateStreamResponse> {
+    ): Promise<ParsedStreamResponse> {
         const userDeviceKeyEvents = [
             await makeEvent(
                 this.signerContext,
@@ -350,15 +350,16 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             ),
         ]
 
-        return await this.rpcClient.createStream({
+        const response = await this.rpcClient.createStream({
             events: userDeviceKeyEvents,
             streamId: userDeviceKeyStreamId,
         })
+        return unpackStreamResponse(response)
     }
 
     private async createUserToDeviceStream(
         userToDeviceStreamId: string,
-    ): Promise<CreateStreamResponse> {
+    ): Promise<ParsedStreamResponse> {
         const userToDeviceEvents = [
             await makeEvent(
                 this.signerContext,
@@ -378,15 +379,16 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             ),
         ]
 
-        return await this.rpcClient.createStream({
+        const response = await this.rpcClient.createStream({
             events: userToDeviceEvents,
             streamId: userToDeviceStreamId,
         })
+        return unpackStreamResponse(response)
     }
 
     private async createUserSettingsStream(
         userSettingsStreamId: string,
-    ): Promise<CreateStreamResponse> {
+    ): Promise<ParsedStreamResponse> {
         const userSettingsEvents = [
             await makeEvent(
                 this.signerContext,
@@ -396,10 +398,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             ),
         ]
 
-        return await this.rpcClient.createStream({
+        const response = await this.rpcClient.createStream({
             events: userSettingsEvents,
             streamId: userSettingsStreamId,
         })
+        return unpackStreamResponse(response)
     }
 
     async createSpace(spaceId: string | undefined): Promise<{ streamId: string }> {
@@ -750,18 +753,21 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     private async _getStream(streamId: string): Promise<StreamStateView> {
         try {
             this.logCall('getStream', streamId)
-            const response = await this.rpcClient.getStream({ streamId })
-            this.logCall('getStream', response.stream)
-            check(isDefined(response.stream) && hasElements(response.miniblocks), 'got bad stream')
-            const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
-                unpackStreamResponse(response)
+            const response = await this.rpcClient.getStreamUnpacked({ streamId })
+
             const streamView = new StreamStateView(
                 this.userId,
                 streamId,
-                snapshot,
-                prevSnapshotMiniblockNum,
+                response.snapshot,
+                response.prevSnapshotMiniblockNum,
             )
-            streamView.initialize(streamAndCookie, snapshot, miniblocks, undefined, undefined)
+            streamView.initialize(
+                response.streamAndCookie,
+                response.snapshot,
+                response.miniblocks,
+                undefined,
+                undefined,
+            )
             return streamView
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)
@@ -778,27 +784,21 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 return stream
             } else {
                 // <Async> do async work here
-                const response = await this.rpcClient.getStream({ streamId })
-                const {
-                    streamAndCookie,
-                    snapshot,
-                    miniblocks,
-                    prevSnapshotMiniblockNum,
-                    eventIds,
-                } = unpackStreamResponse(response)
-                const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
+                const response = await this.rpcClient.getStreamUnpacked({ streamId })
+
+                const cleartexts = await this.persistenceStore.getCleartexts(response.eventIds)
                 // </Async> end async work
                 const previousStream = this.stream(streamId)
                 if (previousStream) {
                     this.logCall('initStream', streamId, 'RACE: already initialized')
                     return previousStream
                 } else {
-                    this.logCall('initStream', streamAndCookie)
+                    this.logCall('initStream', response.streamAndCookie)
                     const stream = new Stream(
                         this.userId,
                         streamId,
-                        snapshot,
-                        prevSnapshotMiniblockNum,
+                        response.snapshot,
+                        response.prevSnapshotMiniblockNum,
                         this,
                         this.logEmitFromStream,
                     )
@@ -806,14 +806,21 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     stream.on('streamInitialized', () => {
                         const addToSync = async () => {
                             // add to the sync subscription to monitor the new stream
-                            await this.streams.addStreamToSync(streamAndCookie.nextSyncCookie)
+                            await this.streams.addStreamToSync(
+                                response.streamAndCookie.nextSyncCookie,
+                            )
                         }
                         addToSync().catch((err) => {
                             // log an error. Let the main sync loop handle retries.
                             this.logError('addStreamToSync failed', err)
                         })
                     })
-                    stream.initialize(streamAndCookie, snapshot, miniblocks, cleartexts)
+                    stream.initialize(
+                        response.streamAndCookie,
+                        response.snapshot,
+                        response.miniblocks,
+                        cleartexts,
+                    )
                     return stream
                 }
             }

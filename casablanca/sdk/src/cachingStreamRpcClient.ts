@@ -18,31 +18,46 @@ import {
     InfoResponse,
     SyncStreamsRequest,
     SyncStreamsResponse,
-    Miniblock,
     CancelSyncRequest,
     CancelSyncResponse,
+    CachedMiniblock,
+    CachedEvent,
+    CachedStreamResponse,
+    CachedStreamAndCookie,
 } from '@river/proto'
 import { PromiseClient, CallOptions } from '@connectrpc/connect'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { StreamRpcClientType } from './makeStreamRpcClient'
-import { unpackMiniblock } from './sign'
-import { ParsedMiniblock } from './types'
+import { unpackMiniblock, unpackStreamResponse } from './sign'
+import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie, ParsedStreamResponse } from './types'
 import { Cache } from './cache'
 import { bin_equal } from './binary'
+import { isDefined } from './check'
+import { dlog } from './dlog'
 
 export class CachingStreamRpcClient implements StreamRpcClientType {
+    log = dlog('csb:streams:rpc-cache')
+
     constructor(private rpcClient: PromiseClient<typeof StreamService>) {}
 
     async getStream(
         request: PartialMessage<GetStreamRequest>,
         options?: CallOptions,
     ): Promise<GetStreamResponse> {
+        return this.rpcClient.getStream(request, options)
+    }
+
+    async getStreamUnpacked(
+        request: PartialMessage<GetStreamRequest>,
+        options?: CallOptions,
+    ): Promise<ParsedStreamResponse> {
         if (!request.streamId) {
-            return this.rpcClient.getStream(request, options)
+            const response = await this.rpcClient.getStream(request, options)
+            return unpackStreamResponse(response)
         }
 
         const cache = await Cache.open('get-stream')
-        const cacheKey = `getstream-${request.streamId}`
+        const cacheKey = `/getstreamunpacked-${request.streamId}`
 
         /**
          * We can improve app performance and decrease the load on the nodes a bit here by checking
@@ -51,17 +66,29 @@ export class CachingStreamRpcClient implements StreamRpcClientType {
         const streamId = request.streamId
         const bytes = await cache.match(cacheKey)
         if (bytes) {
-            const cachedResponse = GetStreamResponse.fromBinary(bytes)
-            const lastMiniblockHash = await this.getLastMiniblockHash({ streamId })
-            const currentKnownHash = cachedResponse.miniblocks.at(-1)?.header?.hash
-            if (currentKnownHash && bin_equal(lastMiniblockHash.hash, currentKnownHash)) {
-                return cachedResponse
+            try {
+                const cachedResponse = CachedStreamResponse.fromBinary(bytes)
+                const parsedResponse = cachedStreamResponseToGetStreamResponse(cachedResponse)
+
+                if (parsedResponse) {
+                    const lastMiniblockHash = await this.getLastMiniblockHash({ streamId })
+                    const currentKnownHash = parsedResponse.miniblocks.at(-1)?.hash
+                    if (currentKnownHash && bin_equal(lastMiniblockHash.hash, currentKnownHash)) {
+                        this.log('Cache hit for stream', streamId)
+                        return parsedResponse
+                    }
+                }
+            } catch (_) {
+                this.log('Deserialization error for stream', streamId)
             }
         }
 
         const response = await this.rpcClient.getStream(request, options)
-        await cache.put(cacheKey, response.toBinary())
-        return response
+        const parsedResponse = unpackStreamResponse(response)
+
+        const cachedResponse = parsedStreamToCachedStream(parsedResponse)
+        await cache.put(cacheKey, cachedResponse.toBinary())
+        return parsedResponse
     }
 
     getMiniblocks(
@@ -144,7 +171,7 @@ export class CachingStreamRpcClient implements StreamRpcClientType {
         }
 
         function genKey(miniblockNum: bigint) {
-            return `miniblock-${miniblockNum}-${request.streamId}`
+            return `/unpacked-miniblock-${miniblockNum}-${request.streamId}`
         }
 
         /**
@@ -158,24 +185,33 @@ export class CachingStreamRpcClient implements StreamRpcClientType {
         const fromInclusive = request.fromInclusive
         const streamId = request.streamId
         let toExclusive = request.toExclusive
-        const cachedMiniblocks: ParsedMiniblock[] = []
+        const parsedMiniblocks: ParsedMiniblock[] = []
         if (cache) {
             for (let i = toExclusive - 1n; i >= fromInclusive; i = i - 1n) {
                 const key = genKey(i)
                 const bytes = await cache.match(key)
-                if (bytes) {
-                    const cachedMiniblock = Miniblock.fromBinary(bytes)
-                    // Insert the found miniblock at the first position of the array
-                    cachedMiniblocks.push(unpackMiniblock(cachedMiniblock))
-                    toExclusive = i
-                } else {
+                try {
+                    if (bytes) {
+                        const cachedMiniblock = CachedMiniblock.fromBinary(bytes)
+                        const unpackedMiniblock = cachedMiniblockToMiniblock(cachedMiniblock)
+                        if (!unpackedMiniblock) {
+                            break
+                        }
+
+                        // Insert the found miniblock at the first position of the array
+                        parsedMiniblocks.push(unpackedMiniblock)
+                        toExclusive = i
+                    } else {
+                        break
+                    }
+                } catch (_) {
                     break
                 }
             }
         }
         // The miniblocks have been fetched backwards from the cache,
         // need to reverse the array to get them in the correct order
-        cachedMiniblocks.reverse()
+        parsedMiniblocks.reverse()
 
         /**
          * This means that we had _all_ the miniblocks cached, so we can return them immediately.
@@ -183,7 +219,7 @@ export class CachingStreamRpcClient implements StreamRpcClientType {
          */
         if (toExclusive === fromInclusive) {
             return {
-                unpackedMiniblocks: cachedMiniblocks,
+                unpackedMiniblocks: parsedMiniblocks,
                 terminus: toExclusive === 0n,
             }
         }
@@ -196,8 +232,9 @@ export class CachingStreamRpcClient implements StreamRpcClientType {
         const unpackedMiniblocks: ParsedMiniblock[] = []
         for (const miniblock of response.miniblocks) {
             const unpackedMiniblock = unpackMiniblock(miniblock)
+            const unpacked = parsedMiniblockToCachedMiniblock(unpackedMiniblock)
             unpackedMiniblocks.push(unpackedMiniblock)
-            await cache.put(genKey(unpackedMiniblock.header.miniblockNum), miniblock.toBinary())
+            await cache.put(genKey(unpackedMiniblock.header.miniblockNum), unpacked.toBinary())
         }
 
         /**
@@ -205,7 +242,102 @@ export class CachingStreamRpcClient implements StreamRpcClientType {
          */
         return {
             terminus: response.terminus,
-            unpackedMiniblocks: [...unpackedMiniblocks, ...cachedMiniblocks],
+            unpackedMiniblocks: [...unpackedMiniblocks, ...parsedMiniblocks],
         }
     }
+}
+
+function cachedEventToParsedEvent(event: CachedEvent): ParsedEvent | undefined {
+    if (!event.event || !event.envelope) {
+        return undefined
+    }
+    return {
+        event: event.event,
+        envelope: event.envelope,
+        hashStr: event.hashStr,
+        prevMiniblockHashStr:
+            event.prevMiniblockHashStr.length > 0 ? event.prevMiniblockHashStr : undefined,
+        creatorUserId: event.creatorUserId,
+    }
+}
+
+function cachedStreamResponseToGetStreamResponse(
+    response: CachedStreamResponse,
+): ParsedStreamResponse | undefined {
+    if (!response.streamAndCookie || !response.snapshot) {
+        return undefined
+    }
+    const streamAndCookie = cachedStreamAndCookieToParsedStreamAndCookie(response.streamAndCookie)
+    if (!streamAndCookie) {
+        return undefined
+    }
+    return {
+        streamAndCookie: streamAndCookie,
+        snapshot: response.snapshot,
+        miniblocks: response.miniblocks.map(cachedMiniblockToMiniblock).filter(isDefined),
+        prevSnapshotMiniblockNum: response.prevSnapshotMiniblockNum,
+        eventIds: response.eventIds,
+    }
+}
+
+function cachedStreamAndCookieToParsedStreamAndCookie(
+    response: CachedStreamAndCookie,
+): ParsedStreamAndCookie | undefined {
+    if (!response.nextSyncCookie) {
+        return undefined
+    }
+    return {
+        events: response.events.map(cachedEventToParsedEvent).filter(isDefined),
+        nextSyncCookie: response.nextSyncCookie,
+        startSyncCookie: response.startSyncCookie,
+    }
+}
+
+function cachedMiniblockToMiniblock(miniblock: CachedMiniblock): ParsedMiniblock | undefined {
+    if (!miniblock.header) {
+        return undefined
+    }
+    return {
+        hash: miniblock.hash,
+        header: miniblock.header,
+        events: miniblock.events.map(cachedEventToParsedEvent).filter(isDefined),
+    }
+}
+
+function parsedStreamToCachedStream(response: ParsedStreamResponse) {
+    return new CachedStreamResponse({
+        streamAndCookie: parsedStreamAndCookieToCachedStreamAndCookie(response.streamAndCookie),
+        snapshot: response.snapshot,
+        miniblocks: response.miniblocks.map(parsedMiniblockToCachedMiniblock),
+        prevSnapshotMiniblockNum: response.prevSnapshotMiniblockNum,
+        eventIds: response.eventIds,
+    })
+}
+
+function parsedStreamAndCookieToCachedStreamAndCookie(
+    response: ParsedStreamAndCookie,
+): CachedStreamAndCookie {
+    return new CachedStreamAndCookie({
+        events: response.events.map(parsedEventToCachedEvent),
+        nextSyncCookie: response.nextSyncCookie,
+        startSyncCookie: response.startSyncCookie,
+    })
+}
+
+function parsedMiniblockToCachedMiniblock(miniblock: ParsedMiniblock) {
+    return new CachedMiniblock({
+        hash: miniblock.hash,
+        header: miniblock.header,
+        events: miniblock.events.map(parsedEventToCachedEvent),
+    })
+}
+
+function parsedEventToCachedEvent(event: ParsedEvent) {
+    return new CachedEvent({
+        event: event.event,
+        envelope: event.envelope,
+        hashStr: event.hashStr,
+        prevMiniblockHashStr: event.prevMiniblockHashStr,
+        creatorUserId: event.creatorUserId,
+    })
 }

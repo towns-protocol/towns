@@ -114,7 +114,9 @@ describe('cachingStreamRpcClientTests', () => {
         // Reset all mock counters etc
         jest.clearAllMocks()
 
-        const uncachedResponse = await bobClient.rpcClient.getStream({ streamId: channelId })
+        const uncachedResponse = await bobClient.rpcClient.getStreamUnpacked({
+            streamId: channelId,
+        })
         // The first time, we expect the cache to be empty and match to be called 1 time
         expect(openSpy).toHaveBeenCalledTimes(1)
         expect(matchSpy).toHaveBeenCalledTimes(1)
@@ -123,7 +125,7 @@ describe('cachingStreamRpcClientTests', () => {
         expect(putSpy).toHaveBeenCalledTimes(1)
 
         // The second time we expect a cache hit
-        const cachedResponse = await bobClient.rpcClient.getStream({ streamId: channelId })
+        const cachedResponse = await bobClient.rpcClient.getStreamUnpacked({ streamId: channelId })
         expect(openSpy).toHaveBeenCalledTimes(2)
         expect(matchSpy).toHaveBeenCalledTimes(2)
         // `Cache.put` still called only once since this was a cache hit

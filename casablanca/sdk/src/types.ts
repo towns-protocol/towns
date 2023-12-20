@@ -31,6 +31,7 @@ import {
     CommonPayload_KeyFulfillment,
     CommonPayload_KeySolicitation,
     SyncCookie,
+    Snapshot,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
@@ -134,6 +135,14 @@ export interface ParsedStreamAndCookie {
     nextSyncCookie: SyncCookie
     startSyncCookie?: SyncCookie
     events: ParsedEvent[]
+}
+
+export interface ParsedStreamResponse {
+    snapshot: Snapshot
+    streamAndCookie: ParsedStreamAndCookie
+    miniblocks: ParsedMiniblock[]
+    prevSnapshotMiniblockNum: bigint
+    eventIds: string[]
 }
 
 export interface KeySolicitationContent {

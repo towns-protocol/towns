@@ -8,7 +8,6 @@ import {
     GetStreamResponse,
     CreateStreamResponse,
     StreamAndCookie,
-    Snapshot,
 } from '@river/proto'
 import { assert, check, hasElements, isDefined } from './check'
 import {
@@ -19,7 +18,7 @@ import {
     publicKeyToUint8Array,
 } from './crypto/crypto'
 import { genIdBlob, userIdFromAddress } from './id'
-import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie } from './types'
+import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie, ParsedStreamResponse } from './types'
 import { bin_equal, bin_fromHexString, bin_toHexString } from './binary'
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 
@@ -151,13 +150,7 @@ export const checkDelegateSig = (
 
 export const unpackStreamResponse = (
     response: CreateStreamResponse | GetStreamResponse,
-): {
-    snapshot: Snapshot
-    streamAndCookie: ParsedStreamAndCookie
-    miniblocks: ParsedMiniblock[]
-    prevSnapshotMiniblockNum: bigint
-    eventIds: string[]
-} => {
+): ParsedStreamResponse => {
     assert(response.stream !== undefined, 'bad stream')
     const streamAndCookie = unpackStreamAndCookie(response.stream)
     assert(
