@@ -6,6 +6,7 @@ on:
     workflow_dispatch: # A load test was manually triggered
     schedule: # A load test was scheduled
         - cron: '0 9 * * *'  # Run at 01:00 PST (09:00 UTC)
+        - cron: '0 10 * * *'  # Run at 02:00 PST (10:00 UTC)
 
 jobs:
     run_load_tests:
@@ -46,6 +47,9 @@ jobs:
             - name: Run Load Tests S2
               if: github.event.schedule == '0 9 * * *'
               run: yarn test:ci:load-tests-s2
+            - name: Run Load Tests S3
+              if: github.event.schedule == '0 10 * * *'
+              run: yarn test:ci:load-tests-s3
             # If failed, we send a slack notification
             - name: Slack notification
               if: failure()
