@@ -40,6 +40,8 @@ interface IMembershipBase {
   error Membership__PriceTooLow();
   error Membership__MaxSupplyReached();
   error Membership__InvalidTokenId();
+  error Membership__NotRenewable();
+  error Membership__NotExpired();
 
   // =============================================================
   //                           Events
@@ -138,6 +140,15 @@ interface IMembership is IMembershipBase {
    * @return The membership price
    */
   function getMembershipPrice() external view returns (uint256);
+
+  /**
+   * @notice Get the membership renewal price
+   * @param tokenId The token id of the membership
+   * @return The membership renewal price
+   */
+  function getMembershipRenewalPrice(
+    uint256 tokenId
+  ) external view returns (uint256);
 
   // =============================================================
   //                           Allocation

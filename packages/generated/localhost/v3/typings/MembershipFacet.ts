@@ -93,6 +93,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getMembershipLimit()": FunctionFragment;
     "getMembershipPrice()": FunctionFragment;
     "getMembershipPricingModule()": FunctionFragment;
+    "getMembershipRenewalPrice(uint256)": FunctionFragment;
     "getTownFactory()": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "joinTown(address)": FunctionFragment;
@@ -145,6 +146,7 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "getMembershipLimit"
       | "getMembershipPrice"
       | "getMembershipPricingModule"
+      | "getMembershipRenewalPrice"
       | "getTownFactory"
       | "isApprovedForAll"
       | "joinTown"
@@ -275,6 +277,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getMembershipPricingModule",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getMembershipRenewalPrice",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "getTownFactory",
@@ -469,6 +475,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getMembershipPricingModule",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getMembershipRenewalPrice",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -932,6 +942,11 @@ export interface MembershipFacet extends BaseContract {
 
     getMembershipPricingModule(overrides?: CallOverrides): Promise<[string]>;
 
+    getMembershipRenewalPrice(
+      tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     getTownFactory(overrides?: CallOverrides): Promise<[string]>;
 
     isApprovedForAll(
@@ -1136,6 +1151,11 @@ export interface MembershipFacet extends BaseContract {
 
   getMembershipPricingModule(overrides?: CallOverrides): Promise<string>;
 
+  getMembershipRenewalPrice(
+    tokenId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   getTownFactory(overrides?: CallOverrides): Promise<string>;
 
   isApprovedForAll(
@@ -1339,6 +1359,11 @@ export interface MembershipFacet extends BaseContract {
     getMembershipPrice(overrides?: CallOverrides): Promise<BigNumber>;
 
     getMembershipPricingModule(overrides?: CallOverrides): Promise<string>;
+
+    getMembershipRenewalPrice(
+      tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     getTownFactory(overrides?: CallOverrides): Promise<string>;
 
@@ -1698,6 +1723,11 @@ export interface MembershipFacet extends BaseContract {
 
     getMembershipPricingModule(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getMembershipRenewalPrice(
+      tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getTownFactory(overrides?: CallOverrides): Promise<BigNumber>;
 
     isApprovedForAll(
@@ -1922,6 +1952,11 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getMembershipPricingModule(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getMembershipRenewalPrice(
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

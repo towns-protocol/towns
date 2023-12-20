@@ -166,6 +166,25 @@ abstract contract MembershipBase is IMembershipBase {
     return ds.membershipPrice;
   }
 
+  function _setMembershipRenewalPrice(
+    uint256 tokenId,
+    uint256 pricePaid
+  ) internal {
+    MembershipStorage.layout().renewalPriceByTokenId[tokenId] = pricePaid;
+  }
+
+  function _getMembershipRenewalPrice(
+    uint256 tokenId,
+    uint256 totalMinted
+  ) internal view returns (uint256) {
+    MembershipStorage.Layout storage ds = MembershipStorage.layout();
+
+    if (ds.renewalPriceByTokenId[tokenId] > 0)
+      return ds.renewalPriceByTokenId[tokenId];
+
+    return _getMembershipPrice(totalMinted);
+  }
+
   // =============================================================
   //                           Allocation
   // =============================================================

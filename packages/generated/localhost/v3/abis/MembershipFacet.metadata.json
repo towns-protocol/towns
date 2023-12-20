@@ -169,6 +169,16 @@
       },
       {
         "inputs": [],
+        "name": "Membership__NotExpired",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Membership__NotRenewable",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "Membership__PriceTooLow",
         "type": "error"
       },
@@ -1028,6 +1038,25 @@
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getMembershipRenewalPrice",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "getTownFactory",
         "outputs": [
@@ -1463,6 +1492,14 @@
             "_0": "The membership pricing module"
           }
         },
+        "getMembershipRenewalPrice(uint256)": {
+          "params": {
+            "tokenId": "The token id of the membership"
+          },
+          "returns": {
+            "_0": "The membership renewal price"
+          }
+        },
         "getTownFactory()": {
           "returns": {
             "_0": "The town factory"
@@ -1666,6 +1703,9 @@
         },
         "getMembershipPricingModule()": {
           "notice": "Get the membership pricing module"
+        },
+        "getMembershipRenewalPrice(uint256)": {
+          "notice": "Get the membership renewal price"
         },
         "getTownFactory()": {
           "notice": "Get the town factory"
@@ -1946,35 +1986,35 @@
       ]
     },
     "contracts/src/towns/facets/membership/IMembership.sol": {
-      "keccak256": "0xd17d26e69b848f39150ad15ca53dd614d1b41aa20626684aec71b1e36ced06c0",
+      "keccak256": "0x63678437e167dec611a88e7d720130e17d09417b6fa284768383270ce4ed97b3",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://169f9a2e159254baa034a19025db8821db0c1a88780d39818a684fdf9969a759",
-        "dweb:/ipfs/QmZdL8p4mPh8SfK2dygdE1Rp1QdCnkvmhnTdafxSjghxFZ"
+        "bzz-raw://9d3a2a059f003a2f1e546f79a1363b3f1ba8662ada33c18a8cfd3d2a81936714",
+        "dweb:/ipfs/QmeehhZsuHMq1V86SC1jm1ca4nYdF2Ua8YWE6khPj9mw2c"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x38ff967d76bd15b583109244d7137d7f6d1d240dda78a96d1aa5a519264e3b09",
+      "keccak256": "0x1f579ab0402547c75bd91cb17cf90fcff00a996bf0fc58da719b633c2c514f85",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3b218f149a6cdfe453f720ad99b0f495f4d629954ae8fcd162ac7522a8796b2c",
-        "dweb:/ipfs/QmaNvJvCXb1M9LJ2kG4Em29g6oen9k1SBntzvZErSLkbik"
+        "bzz-raw://fe61449f320a5b1375f9ddc6ba249843dd967564cd488688554e3c41cf581fff",
+        "dweb:/ipfs/QmWBcp15i4E7N2iThW7R5FqcMJDDfmXtsgo1nh5nZiHCen"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0x8e755885b016df5ac3c129554dcb5a7a79f548007ec13b1f15cb6d96a09bce95",
+      "keccak256": "0xd27bf945e5126604bfc093e762f41f50fc3255b88cd312d41577c1dbffd7bb4f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1bd1b18799cd54e35eed4466aba123bd426239c2731f17cd07db4eb4cf384043",
-        "dweb:/ipfs/QmTfkQuURhaBjTPiXP969oMExxgi4k1mdtUj6GQYw3EAVL"
+        "bzz-raw://da1e0d5d4726ee78fd3a62536e1e60658d657c2c773ec97b1c50c29ab4f84614",
+        "dweb:/ipfs/QmZjeufRiMivv47k4LkzzqUA3ZBLn9j6HN6nj5Z1bcX2St"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipStorage.sol": {
-      "keccak256": "0xbaffc6e176bd530e811ee46b167f95899cca0bae5fa5a0faff42432bff896b98",
+      "keccak256": "0x7a7bdabfebf79e95eb0462ff8efbb21db0c1a45ef1e3937906436ba24744e5af",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://dfe9a8d15a30c272962daba744b50c073611023196e7f7d5d677456990f28f1d",
-        "dweb:/ipfs/QmXYkoKXhFiKFauosed5XnuiB2uSmrnqBwQc7jCn3v1Hvy"
+        "bzz-raw://a53c992bb20bf3e91f84fb0cfb51fbb60c578d85f86347f61b622db502359a1b",
+        "dweb:/ipfs/QmZoGSKpKTXS6PT7pTpwEsXvgEbvzYh9YRDnYRsav16LiR"
       ]
     },
     "contracts/src/towns/facets/membership/pricing/IMembershipPricing.sol": {

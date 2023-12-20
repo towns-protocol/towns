@@ -284,10 +284,76 @@ contract MembershipTest is
     );
   }
 
+  function test_renewMembership_with_price() external {
+    uint256 membershipPrice = 1 ether;
+
+    // set the membership price and currency
+    vm.startPrank(founder);
+    membership.setMembershipCurrency(CurrencyTransfer.NATIVE_TOKEN);
+    membership.setMembershipPrice(membershipPrice);
+    vm.stopPrank();
+
+    // join the town
+    vm.prank(alice);
+    vm.deal(alice, membershipPrice);
+    uint256 tokenId = membership.joinTown{value: membershipPrice}(alice);
+
+    // calculate membership expiration date
+    uint64 membershipDuration = IPlatformRequirements(townFactory)
+      .getMembershipDuration();
+    uint256 membershipExpirationDate = block.timestamp + membershipDuration;
+
+    // assert the membership expiration date is correct
+    assertEq(membership.expiresAt(tokenId), membershipExpirationDate);
+
+    // warp to the expiration date
+    vm.warp(membershipExpirationDate);
+
+    // assert alice is no longer a member
+    assertEq(membership.balanceOf(alice), 0);
+
+    // update membership price to 2 ether
+    vm.prank(founder);
+    membership.setMembershipPrice(membershipPrice + 1 ether);
+
+    // calculate the renewal price
+    uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
+
+    // assert the renewal price is the same as the original price paid for membership
+    assertEq(renewalPrice, membershipPrice);
+
+    // assert alice has enough funds to renew
+    vm.prank(alice);
+    vm.deal(alice, renewalPrice);
+    membership.renewMembership{value: renewalPrice}(alice);
+
+    assertEq(
+      membership.expiresAt(tokenId),
+      membershipExpirationDate + membershipDuration
+    );
+  }
+
   function test_renewMembership_revert_InvalidAddress() external {
     vm.prank(founder);
     vm.expectRevert(Membership__InvalidAddress.selector);
     membership.renewMembership(address(0));
+  }
+
+  function test_renewMembership_revert_NotMember() external {
+    vm.prank(alice);
+    vm.expectRevert(Membership__NotRenewable.selector);
+    membership.renewMembership(alice);
+  }
+
+  function test_renewMembership_revert_NotExpired() external {
+    vm.prank(alice);
+    membership.joinTown(alice);
+
+    assertEq(membership.balanceOf(alice), 1);
+
+    vm.prank(alice);
+    vm.expectRevert(Membership__NotExpired.selector);
+    membership.renewMembership(alice);
   }
 
   // =============================================================

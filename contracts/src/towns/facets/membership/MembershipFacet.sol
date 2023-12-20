@@ -54,9 +54,15 @@ contract MembershipFacet is
   ) external payable nonReentrant returns (uint256 tokenId) {
     _validateJoinTown(receiver);
 
+    // get token id
+    tokenId = _nextTokenId();
+
     // allocate protocol and membership fees
     uint256 membershipPrice = _getMembershipPrice(_totalMinted());
     if (membershipPrice > 0) {
+      // set renewal price for token
+      _setMembershipRenewalPrice(tokenId, membershipPrice);
+
       uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
       uint256 surplus = membershipPrice - protocolFee;
       if (surplus > 0)
@@ -64,7 +70,6 @@ contract MembershipFacet is
     }
 
     // mint membership
-    tokenId = _nextTokenId();
     _safeMint(receiver, 1);
 
     // set expiration of membership
@@ -79,9 +84,16 @@ contract MembershipFacet is
   ) external payable nonReentrant returns (uint256 tokenId) {
     _validateJoinTown(receiver);
 
+    // get token id
+    tokenId = _nextTokenId();
+
     // allocate protocol, membership and referral fees
     uint256 membershipPrice = _getMembershipPrice(_totalMinted());
+
     if (membershipPrice > 0) {
+      // set renewal price for referral
+      _setMembershipRenewalPrice(tokenId, membershipPrice);
+
       uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
       uint256 netMembershipPrice = membershipPrice - protocolFee;
 
@@ -101,7 +113,6 @@ contract MembershipFacet is
     }
 
     // mint membership
-    tokenId = _nextTokenId();
     _safeMint(receiver, 1);
 
     // set expiration of membership
@@ -111,12 +122,19 @@ contract MembershipFacet is
   /// @inheritdoc IMembership
   function renewMembership(address receiver) external payable nonReentrant {
     if (receiver == address(0)) revert Membership__InvalidAddress();
-    if (_balanceOf(receiver) == 0) revert Membership__InvalidAddress();
+    if (_balanceOf(receiver) == 0) revert Membership__NotRenewable();
 
     uint256 tokenId = _getTokenIdByMembership(receiver);
 
+    // should we wait for expiration to renew?
+    if (!_isRenewable(tokenId)) revert Membership__NotExpired();
+
     // allocate protocol and membership fees
-    uint256 membershipPrice = _getMembershipPrice(_totalMinted()); // _getRenewalPrice(tokenId);
+    uint256 membershipPrice = _getMembershipRenewalPrice(
+      tokenId,
+      _totalMinted()
+    );
+
     if (membershipPrice > 0) {
       uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
       uint256 netPrice = membershipPrice - protocolFee;
@@ -186,6 +204,13 @@ contract MembershipFacet is
   /// @inheritdoc IMembership
   function getMembershipPrice() external view returns (uint256) {
     return _getMembershipPrice(_totalMinted());
+  }
+
+  /// @inheritdoc IMembership
+  function getMembershipRenewalPrice(
+    uint256 tokenId
+  ) external view returns (uint256) {
+    return _getMembershipRenewalPrice(tokenId, _totalMinted());
   }
 
   // =============================================================

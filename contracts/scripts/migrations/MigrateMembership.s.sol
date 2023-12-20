@@ -12,7 +12,6 @@ import {Migration} from "../common/Migration.s.sol";
 
 // facets
 import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipFacet.sol";
-import {MembershipReferralFacet} from "contracts/src/towns/facets/membership/referral/MembershipReferralFacet.sol";
 
 // helpers
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
@@ -35,7 +34,22 @@ contract MigrateMembership is Migration {
 
     membershipHelper.addSelectors(erc721aHelper.selectors());
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
+
+    bytes4[] memory newSelectors = new bytes4[](1);
+    newSelectors[0] = MembershipFacet.getMembershipRenewalPrice.selector;
+
+    // Add new selector to membership
+    cuts[index++] = IDiamond.FacetCut({
+      facetAddress: membership,
+      action: IDiamond.FacetCutAction.Add,
+      functionSelectors: newSelectors
+    });
+
+    // remove old selector from membership
+    membershipHelper.removeSelector(
+      MembershipFacet.getMembershipRenewalPrice.selector
+    );
 
     // Replace the membership facet
     cuts[index++] = IDiamond.FacetCut({

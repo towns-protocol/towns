@@ -152,7 +152,7 @@ contract MembershipHelper is FacetHelper {
     membership = new MembershipFacet();
 
     uint256 index;
-    bytes4[] memory selectors_ = new bytes4[](20);
+    bytes4[] memory selectors_ = new bytes4[](21);
 
     // Minting
     selectors_[index++] = IMembership.joinTown.selector;
@@ -172,6 +172,7 @@ contract MembershipHelper is FacetHelper {
     // Pricing
     selectors_[index++] = IMembership.setMembershipPrice.selector;
     selectors_[index++] = IMembership.getMembershipPrice.selector;
+    selectors_[index++] = IMembership.getMembershipRenewalPrice.selector;
 
     // Allocation
     selectors_[index++] = IMembership.setMembershipFreeAllocation.selector;

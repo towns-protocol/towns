@@ -22,6 +22,7 @@ library MembershipStorage {
     uint64 membershipDuration;
     uint256 freeAllocation;
     address pricingModule;
+    mapping(uint256 => uint256) renewalPriceByTokenId;
   }
 
   function layout() internal pure returns (Layout storage l) {
