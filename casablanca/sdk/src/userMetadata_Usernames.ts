@@ -9,6 +9,7 @@ export class UserMetadata_Usernames {
     readonly streamId: string
     readonly plaintextUsernames = new Map<string, string>()
     readonly userIdToEventId = new Map<string, string>()
+    readonly confirmedUserIds = new Set<string>()
     readonly usernameEvents = new Map<
         string,
         { encryptedData: EncryptedData; userId: string; pending: boolean }
@@ -49,6 +50,11 @@ export class UserMetadata_Usernames {
                 content: encryptedData,
             })
         }
+
+        if (!pending) {
+            this.confirmedUserIds.add(userId)
+        }
+
         this.emitUsernameUpdated(eventId, emitter)
     }
 
@@ -58,6 +64,7 @@ export class UserMetadata_Usernames {
             return
         }
         this.usernameEvents.set(eventId, { ...event, pending: false })
+        this.confirmedUserIds.add(event.userId)
 
         // if we don't have the plaintext username, no need to emit an event
         if (this.plaintextUsernames.has(event.userId)) {
@@ -174,11 +181,10 @@ export class UserMetadata_Usernames {
                 usernameEncrypted: false,
             }
         }
-        const pending = this.usernameEvents.get(eventId)?.pending ?? true
         const encrypted = this.usernameEvents.has(eventId) && !this.plaintextUsernames.has(userId)
         return {
             username: name,
-            usernameConfirmed: !pending,
+            usernameConfirmed: this.confirmedUserIds.has(userId),
             usernameEncrypted: encrypted,
         }
     }
