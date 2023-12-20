@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.23;
 
 import {IAccessControlList, AccessControlStatus} from "./IAccessControlList.sol";
 import {AccessControlListBase} from "./AccessControlListBase.sol";

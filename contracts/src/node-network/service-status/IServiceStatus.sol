@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.23;
 
 enum ServiceStatus {
   EXCLUDED, // can't activate on its own, needs to be included first.

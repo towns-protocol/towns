@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.23;
 
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {EntitlementChecker} from "contracts/src/crosschain/checker/EntitlementChecker.sol";

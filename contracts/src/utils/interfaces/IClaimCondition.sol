@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.20;
+pragma solidity 0.8.23;
 
 /// @title Claim condition interface
 /// @notice A claim condition is a set of criteria that must be met for a claim to be valid. At any moment there is only one claim condition active.

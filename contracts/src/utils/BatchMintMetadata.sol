@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.23;
 
 /// @title BatchMintMetadata
 /// @dev This contract is used to set the metadata for a batch of tokens all at once. This is enabled by storing a single
