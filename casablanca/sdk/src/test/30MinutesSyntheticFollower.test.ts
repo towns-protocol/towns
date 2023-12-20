@@ -195,7 +195,7 @@ describe('mirrorMessages', () => {
                     contentKind: SnapshotCaseType,
                     event: DecryptedTimelineEvent,
                 ): void => {
-                    done.runAsync(async () => {
+                    done.runAndDoneAsync(async () => {
                         // await client.decryptEventIfNeeded(event)
                         const clearEvent = event.decryptedContent
                         check(clearEvent.kind === 'channelMessage')
@@ -221,6 +221,7 @@ describe('mirrorMessages', () => {
                     timeoutMS: replySentTime,
                 },
             )
+            client.stopSync()
             log('Successfully done')
         },
         testRunTimeMs * 2,
