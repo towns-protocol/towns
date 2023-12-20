@@ -115,6 +115,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     private readonly logEvent: DLogger
     private readonly logError: DLogger
     private readonly logInfo: DLogger
+    private readonly logDebug: DLogger
 
     public cryptoBackend?: Crypto
     public cryptoStore: CryptoStore
@@ -162,6 +163,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.logEvent = dlog('csb:cl:event').extend(shortId)
         this.logError = dlogError('csb:cl:error').extend(shortId)
         this.logInfo = dlog('csb:cl:info', { defaultEnabled: true }).extend(shortId)
+        this.logDebug = dlog('csb:cl:debug').extend(shortId)
         this.cryptoStore = cryptoStore
         this.persistenceStore = new PersistenceStore(
             `persistence-${cryptoStore.name.replace('database-', '')}`,
@@ -1553,10 +1555,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     ): Promise<string> {
         const cached = await this.persistenceStore.getCleartext(eventId)
         if (cached) {
-            this.logInfo('Cache hit for cleartext', eventId)
+            this.logDebug('Cache hit for cleartext', eventId)
             return cached
         }
-        this.logInfo('Cache miss for cleartext', eventId)
+        this.logDebug('Cache miss for cleartext', eventId)
 
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
