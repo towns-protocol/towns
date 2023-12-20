@@ -1,5 +1,5 @@
 import { makeUserContextFromWallet } from '../util.test'
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { makeStreamRpcClient } from '../makeStreamRpcClient'
 import { userIdFromAddress } from '../id'
 import { Client } from '../client'
@@ -7,6 +7,10 @@ import { RiverSDK } from '../testSdk'
 import { RiverDbManager } from '../riverDbManager'
 import { MockEntitlementsDelegate } from '../utils'
 import { ISpaceDapp, createSpaceDapp } from '@river/web3'
+import { dlog } from '../dlog'
+import { minimalBalance } from './loadconfig'
+
+const log = dlog('csb:test:loadTests')
 
 type ClientWalletInfo = {
     client: Client
@@ -112,6 +116,7 @@ export async function createClientSpaceAndChannel(
     },
     jsonRpcProviderUrl: string,
     nodeRpcURL: string,
+    createExtraChannel: boolean = false,
 ): Promise<ClientSpaceChannelInfo> {
     const clientWalletInfo = await createAndStartClient(account, jsonRpcProviderUrl, nodeRpcURL)
     const client = clientWalletInfo.client
@@ -122,23 +127,28 @@ export async function createClientSpaceAndChannel(
     const spaceDapp = createSpaceDapp(chainId, provider)
 
     const balance = await walletWithProvider.getBalance()
-    const minBalanceRequired = ethers.utils.parseEther('0.01')
-    expect(balance.gte(minBalanceRequired)).toBe(true)
+    const minimalWeiValue = BigNumber.from(BigInt(Math.floor(minimalBalance * 1e18)))
+    log(`balanceInETH<${walletWithProvider.address}>`, ethers.utils.formatEther(balance))
+    expect(balance.gte(minimalWeiValue)).toBeTruthy()
+
     const riverSDK = new RiverSDK(spaceDapp, client, walletWithProvider)
 
     // create space
     const createTownReturnVal = await riverSDK.createTownWithDefaultChannel('load-tests', '')
     const spaceStreamId = createTownReturnVal.spaceStreamId
 
-    // create channel
-    const channelStreamId = await riverSDK.createChannel(
-        spaceStreamId,
-        'load-tests',
-        'load-tests topic',
-    )
-
     const spaceId = spaceStreamId
-    const channelId = channelStreamId
+    let channelId = createTownReturnVal.defaultChannelStreamId
+
+    if (createExtraChannel) {
+        // create channel
+        const channelStreamId = await riverSDK.createChannel(
+            spaceStreamId,
+            'load-tests',
+            'load-tests topic',
+        )
+        channelId = channelStreamId
+    }
 
     return {
         client: client,
@@ -226,12 +236,6 @@ const sendMessageAsync = async (
     await senderClient.sendMessage(streamId, newMessage)
 }
 
-export function getRecipients(excludedUserId: string, clients: Client[]): string[] {
-    return clients
-        .filter((client) => client.userId !== excludedUserId)
-        .map((client) => client.userId)
-}
-
 export function getCurrentTime(): string {
     const currentDate = new Date()
     const isoFormattedTime = currentDate.toISOString()
@@ -275,4 +279,22 @@ export function getRandomElement<T>(arr: T[]): T | undefined {
     }
     const randomIndex = Math.floor(Math.random() * arr.length)
     return arr[randomIndex]
+}
+
+export function getRandomSubset<T>(arr: T[], subsetSize: number): T[] {
+    if (arr.length === 0 || subsetSize <= 0) {
+        return []
+    }
+
+    if (subsetSize >= arr.length) {
+        return [...arr]
+    }
+
+    const shuffled = arr.slice()
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+
+    return shuffled.slice(0, subsetSize)
 }

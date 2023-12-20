@@ -10,6 +10,7 @@ export const defaultWaitForTimeout = 10000 // refer DefaultWaitForTimeoutMS in T
 
 export const jsonRpcProviderUrl = 'https://sepolia.base.org'
 export const nodeRpcURL = 'https://river1-test-beta.towns.com'
+export const minimalBalance = 0.01 // ETH
 
 export const connectionOptions = {
     host: 'localhost', // Redis server host

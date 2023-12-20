@@ -8,6 +8,7 @@ on:
         - cron: '0 9 * * *'  # Run at 01:00 PST (09:00 UTC)
         - cron: '0 10 * * *'  # Run at 02:00 PST (10:00 UTC)
         - cron: '0 11 * * *'  # Run at 03:00 PST (11:00 UTC)
+        - cron: '0 12 * * *'  # Run at 04:00 PST (12:00 UTC)
 
 jobs:
     run_load_tests:
@@ -54,6 +55,9 @@ jobs:
             - name: Run Load Tests S3.1
               if: github.event.schedule == '0 11 * * *'
               run: yarn test:ci:load-tests-s3.1
+            - name: Run Load Tests S4.1
+              if: github.event.schedule == '0 12 * * *'
+              run: yarn test:ci:load-tests-s4.1
             # If failed, we send a slack notification
             - name: Slack notification
               if: failure()
