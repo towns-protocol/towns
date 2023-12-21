@@ -9,6 +9,7 @@ import {
 } from 'use-zion-client'
 import { firstBy } from 'thenby'
 import { useLocation } from 'react-router'
+import { LookupUser } from 'use-zion-client/dist/components/UserLookupContext'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
@@ -41,6 +42,7 @@ export const MessageThread = (props: {
     const showGallery = galleryThreadId === parentId || galleryId === parentId
 
     const messages = useThrottledValue(unthrottledMessages, 1000)
+    const { usersMap } = useUserLookupContext()
 
     const { sendReply } = useSendReply(parentId, parentMessage?.fallbackContent)
 
@@ -56,18 +58,16 @@ export const MessageThread = (props: {
     )
 
     const involvedUsers = useMemo(() => {
-        return Object.values(
-            messagesWithParent.reduce((users, m) => {
-                if (m.content?.kind === ZTEvent.RoomMessage && m.sender?.id) {
-                    users[m.sender.id] = {
-                        userId: m.sender.id,
-                        displayName: m.sender.displayName,
-                    }
-                }
-                return users
-            }, {} as { [key: string]: { userId: string; displayName: string } }),
-        )
-    }, [messagesWithParent])
+        const userIds = messagesWithParent
+            .filter((m) => m.content?.kind === ZTEvent.RoomMessage)
+            .map((m) => m.sender?.id)
+            .filter((id) => id)
+
+        return userIds.reduce((users, id) => {
+            users[id] = usersMap[id]
+            return users
+        }, {} as { [key: string]: LookupUser })
+    }, [messagesWithParent, usersMap])
 
     const usernames = useMemo(() => {
         const names = Object.values(involvedUsers)
