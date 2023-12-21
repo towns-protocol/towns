@@ -11,8 +11,11 @@ import {
 } from './id'
 import { makeDonePromise, makeTestClient, waitFor, getChannelMessagePayload } from './util.test'
 import {
+    CancelSyncRequest,
+    CancelSyncResponse,
     ChannelMessage,
     SnapshotCaseType,
+    SyncOp,
     SyncStreamsRequest,
     SyncStreamsResponse,
 } from '@river/proto'
@@ -32,25 +35,63 @@ import { UserDevice } from './crypto/olmLib'
 
 const log = dlog('csb:test')
 
-function makeMockSyncResponses(count: number) {
-    const obj = {
-        [Symbol.asyncIterator]:
-            async function* asyncGenerator(): AsyncGenerator<SyncStreamsResponse> {
-                const responses = []
-                for (let i = 0; i < count; i++) {
-                    responses.push(
-                        Promise.resolve(
-                            new SyncStreamsResponse({
-                                stream: { events: [] },
-                            }),
-                        ),
-                    )
-                }
-                while (responses.length) {
-                    yield await responses.shift()!
-                }
-            },
+const createMockSyncGenerator = (shouldFail: () => boolean, updateEmitted?: () => void) => {
+    let syncCanceled = false
+    let syncStarted = false
+
+    const generatorFunction = () => {
+        if (shouldFail()) {
+            updateEmitted?.()
+            syncStarted = false
+            syncCanceled = false
+            throw new TypeError('fetch failed')
+        }
+        if (syncCanceled) {
+            log('emitting close')
+            return Promise.resolve(
+                new SyncStreamsResponse({
+                    syncId: 'mockSyncId',
+                    syncOp: SyncOp.SYNC_CLOSE,
+                }),
+            )
+        }
+        if (!syncStarted) {
+            syncStarted = true
+            log('emitting new')
+            return Promise.resolve(
+                new SyncStreamsResponse({
+                    syncId: 'mockSyncId',
+                    syncOp: SyncOp.SYNC_NEW,
+                }),
+            )
+        } else {
+            log('emitting junk')
+            updateEmitted?.()
+            return Promise.resolve(
+                new SyncStreamsResponse({
+                    syncId: 'mockSyncId',
+                    syncOp: SyncOp.SYNC_UPDATE,
+                    stream: { events: [], nextSyncCookie: {}, startSyncCookie: {} },
+                }),
+            )
+        }
     }
+
+    generatorFunction.setSyncCancelled = () => {
+        syncCanceled = true
+    }
+
+    return generatorFunction
+}
+function makeMockSyncGenerator(generator: () => Promise<SyncStreamsResponse>) {
+    const obj = {
+        [Symbol.asyncIterator]: async function* asyncGenerator() {
+            while (true) {
+                yield generator()
+            }
+        },
+    }
+
     return obj
 }
 
@@ -144,120 +185,60 @@ describe('clientTest', () => {
 
     test('clientsCanBeClosedNoSync', async () => {})
 
-    test('clientsNotifiedOnSyncFailure', async () => {
+    test('clientsRetryOnSyncErrorDuringStart', async () => {
         await expect(alicesClient.initializeUser()).toResolve()
         const done = makeDonePromise()
 
-        const testError = new Error('test error')
+        let syncOpCount = 0
 
+        const generator = createMockSyncGenerator(() => syncOpCount++ < 2)
         const spy = jest
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
-                (_request: PartialMessage<SyncStreamsRequest>, _options?: CallOptions) => {
-                    log('syncStreams')
-                    throw testError
+                (
+                    _request: PartialMessage<SyncStreamsRequest>,
+                    _options?: CallOptions,
+                ): AsyncIterable<SyncStreamsResponse> => {
+                    return makeMockSyncGenerator(generator)
                 },
             )
 
-        let syncError: unknown
-        alicesClient.streams.on('syncError', (_syncId, err) => {
-            syncError = err
-            const stopSync = async function () {
-                await alicesClient.streams.stopSync()
+        alicesClient.on('streamSyncActive', (active: boolean) => {
+            if (active) {
                 done.done()
             }
-            stopSync()
-        })
-
-        await alicesClient.startSync()
-
-        await expect(done.expectToSucceed()).toResolve()
-        expect(syncError).toBe(testError)
-        spy.mockRestore()
-    })
-
-    test('clientsRetryOnSyncError', async () => {
-        await expect(alicesClient.initializeUser()).toResolve()
-        const done = makeDonePromise()
-
-        let failureCount = 0
-        const testError = new TypeError('fetch failed')
-        const stopSync = async function () {
-            await alicesClient.stopSync()
-            done.done()
-        }
-        const spy = jest
-            .spyOn(alicesClient.rpcClient, 'syncStreams')
-            .mockImplementation(
-                (
-                    _request: PartialMessage<SyncStreamsRequest>,
-                    _options?: CallOptions,
-                ): AsyncIterable<SyncStreamsResponse> => {
-                    if (failureCount++ < 2) {
-                        throw testError
-                    } else {
-                        stopSync()
-                        return makeMockSyncResponses(2)
-                    }
-                },
-            )
-
-        await alicesClient.startSync()
-
-        await expect(done.expectToSucceed()).toResolve()
-        spy.mockRestore()
-    })
-
-    test('clientsRetries3SyncError', async () => {
-        await expect(alicesClient.initializeUser()).toResolve()
-        const done = makeDonePromise()
-
-        let failureCount = 0
-        let syncError: unknown
-        let stopErr: unknown
-        const stopSync = async function () {
-            stopErr = await alicesClient.stopSync()
-            done.done()
-        }
-        const testError = new TypeError('fetch failed')
-        const spy = jest
-            .spyOn(alicesClient.rpcClient, 'syncStreams')
-            .mockImplementation(
-                (
-                    _request: PartialMessage<SyncStreamsRequest>,
-                    _options?: CallOptions,
-                ): AsyncIterable<SyncStreamsResponse> => {
-                    if (++failureCount < 3) {
-                        throw testError
-                    } else {
-                        stopSync()
-                        throw testError
-                    }
-                },
-            )
-
-        alicesClient.streams.on('syncError', (_syncId, err) => {
-            syncError = err
         })
         await alicesClient.startSync()
 
         await expect(done.expectToSucceed()).toResolve()
-        expect(failureCount).toBe(3)
-        expect(syncError).toBe(testError)
-        expect(stopErr).toBe(undefined)
+        const cancelSyncSpy = jest
+            .spyOn(alicesClient.rpcClient, 'cancelSync')
+            .mockImplementation(
+                (
+                    request: PartialMessage<CancelSyncRequest>,
+                    _options?: CallOptions,
+                ): Promise<CancelSyncResponse> => {
+                    log('mocked cancelSync', request)
+                    generator.setSyncCancelled()
+                    return Promise.resolve(new CancelSyncResponse({}))
+                },
+            )
+
+        await alicesClient.stopSync()
         spy.mockRestore()
+        cancelSyncSpy.mockRestore()
     })
 
     test('clientsResetsRetryCountAfterSyncSuccess', async () => {
         await expect(alicesClient.initializeUser()).toResolve()
         const done = makeDonePromise()
 
-        let failureCount = 0
-        const stopSync = async function () {
-            await alicesClient.stopSync()
-            done.done()
-        }
-        const testError = new TypeError('fetch failed')
+        let syncOpCount = 0
+
+        const generator = createMockSyncGenerator(
+            () => syncOpCount > 2 && syncOpCount < 4,
+            () => syncOpCount++,
+        )
         const spy = jest
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
@@ -265,74 +246,35 @@ describe('clientTest', () => {
                     _request: PartialMessage<SyncStreamsRequest>,
                     _options?: CallOptions,
                 ): AsyncIterable<SyncStreamsResponse> => {
-                    if (failureCount++ < 3) {
-                        throw testError
-                    } else if (failureCount === 3) {
-                        return makeMockSyncResponses(0)
-                    } else {
-                        stopSync()
-                        return makeMockSyncResponses(0)
-                    }
+                    return makeMockSyncGenerator(generator)
                 },
             )
+
+        alicesClient.on('streamSyncActive', (active: boolean) => {
+            if (syncOpCount > 3 && active) {
+                done.done()
+            }
+        })
         await alicesClient.startSync()
 
         await expect(done.expectToSucceed()).toResolve()
-        spy.mockRestore()
-    })
-
-    test('clientsCanBeStoppedDuringErrorRetry', async () => {
-        await expect(alicesClient.initializeUser()).toResolve()
-        const testError = new Error('test error')
-        const done = makeDonePromise()
-
-        let stopErr: unknown
-        const stopSync = async function () {
-            stopErr = await alicesClient.stopSync()
-        }
-        const spy = jest
-            .spyOn(alicesClient.rpcClient, 'syncStreams')
+        const cancelSyncSpy = jest
+            .spyOn(alicesClient.rpcClient, 'cancelSync')
             .mockImplementation(
-                (_request: PartialMessage<SyncStreamsRequest>, _options?: CallOptions) => {
-                    done.done()
-                    throw testError
+                (
+                    request: PartialMessage<CancelSyncRequest>,
+                    _options?: CallOptions,
+                ): Promise<CancelSyncResponse> => {
+                    log('mocked cancelSync', request)
+                    generator.setSyncCancelled()
+                    return Promise.resolve(new CancelSyncResponse({}))
                 },
             )
 
-        alicesClient.streams.on('syncRetrying', () => {
-            stopSync()
-        })
-
-        await alicesClient.startSync()
-
-        await expect(done.expectToSucceed()).toResolve()
-        expect(stopErr).toBe(undefined)
+        await alicesClient.stopSync()
         spy.mockRestore()
+        cancelSyncSpy.mockRestore()
     })
-
-    test('clientsCanBeClosedAfterSync', async () => {
-        await expect(bobsClient.initializeUser()).toResolve()
-        await expect(alicesClient.initializeUser()).toResolve()
-        const aliceDone = makeDonePromise()
-        const bobDone = makeDonePromise()
-        bobsClient.streams.on('syncing', () => {
-            const bobStopSync = async function () {
-                await bobsClient.stopSync()
-            }
-            bobStopSync().then(() => bobDone.done())
-        })
-        alicesClient.streams.on('syncing', () => {
-            const aliceStopSync = async function () {
-                await alicesClient.stopSync()
-            }
-            aliceStopSync().then(() => aliceDone.done())
-        })
-        await bobsClient.startSync()
-        await alicesClient.startSync()
-        await expect(aliceDone.expectToSucceed()).toResolve()
-        await expect(bobDone.expectToSucceed()).toResolve()
-    })
-
     test('clientCreatesStreamsForNewUser', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
         expect(bobsClient.streams.size()).toEqual(4)
@@ -453,7 +395,7 @@ describe('clientTest', () => {
         await bobsAnotherClient.startSync()
         await channelWithContentIdPromise.expectToSucceed()
         expect(channelWithContentId).toBeDefined()
-        bobsAnotherClient.sendMessage(channelWithContentId!, 'Hello, again!')
+        await bobsAnotherClient.sendMessage(channelWithContentId!, 'Hello, again!')
 
         await done.expectToSucceed()
 

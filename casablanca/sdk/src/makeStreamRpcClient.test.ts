@@ -6,10 +6,8 @@ describe('protocol', () => {
         const client = makeTestRpcClient()
         expect(client).toBeDefined()
 
-        const abortController = new AbortController()
         const response: InfoResponse = await client.info(new InfoRequest({}), {
             timeoutMs: 10000,
-            signal: abortController.signal,
         })
         expect(response).toBeDefined()
         expect(response.graffiti).toEqual('Towns.com node welcomes you!')

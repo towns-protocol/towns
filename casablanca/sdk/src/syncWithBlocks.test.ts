@@ -23,7 +23,7 @@ import {
     TEST_ENCRYPTED_MESSAGE_PROPS,
     makeRandomUserContext,
     makeTestRpcClient,
-    timeoutIterable,
+    iterableWrapper,
 } from './util.test'
 
 const log = dlog('csb:test:syncWithBlocks')
@@ -148,7 +148,7 @@ describe('syncWithBlocks', () => {
         let expectMessage = true
         let blocksSeen = 0
         log('===================syncing===================')
-        for await (const res of timeoutIterable(syncStream, 5000)) {
+        for await (const res of iterableWrapper(syncStream)) {
             if (res.syncOp === SyncOp.SYNC_CLOSE) {
                 // done with sync
                 break

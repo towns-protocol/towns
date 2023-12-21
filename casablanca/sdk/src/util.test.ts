@@ -21,7 +21,6 @@ import { ethers } from 'ethers'
 import { RiverDbManager } from './riverDbManager'
 import { StreamRpcClientType, makeStreamRpcClient } from './makeStreamRpcClient'
 import assert from 'assert'
-import { setTimeout } from 'timers/promises'
 import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
 import { EntitlementsDelegate } from './decryptionExtensions'
@@ -239,25 +238,15 @@ export const sendFlush = async (client: StreamRpcClientType): Promise<void> => {
     assert(r.graffiti === 'cache flushed')
 }
 
-export async function* timeoutIterable<T>(
+export async function* iterableWrapper<T>(
     iterable: AsyncIterable<T>,
-    timeoutMs: number,
 ): AsyncGenerator<T, void, unknown> {
     const iterator = iterable[Symbol.asyncIterator]()
-    const controller = new AbortController()
 
     while (true) {
-        const result = await Promise.race([
-            iterator.next(),
-            setTimeout(timeoutMs, 'timeout', { signal: controller.signal }),
-        ])
+        const result = await iterator.next()
 
         if (typeof result === 'string') {
-            return
-        }
-
-        if (result.done) {
-            controller.abort()
             return
         }
 
@@ -265,18 +254,6 @@ export async function* timeoutIterable<T>(
     }
 }
 
-export async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
-    const controller = new AbortController()
-
-    const timeoutPromise = setTimeout(timeoutMs, 'timeout', { signal: controller.signal })
-
-    const result = await Promise.race([promise, timeoutPromise])
-    if (typeof result === 'string') {
-        throw new Error('promise timeout')
-    }
-    controller.abort()
-    return result
-}
 // For example, use like this:
 //
 //    joinPayload = lastEventFiltered(
@@ -361,9 +338,8 @@ export function waitFor<T>(
 export async function waitForSyncStreams(
     syncStreams: AsyncIterable<SyncStreamsResponse>,
     matcher: (res: SyncStreamsResponse) => boolean,
-    timeout: number = 200000,
 ): Promise<SyncStreamsResponse> {
-    for await (const res of timeoutIterable(syncStreams, timeout)) {
+    for await (const res of iterableWrapper(syncStreams)) {
         if (matcher(res)) {
             return res
         }
@@ -374,29 +350,24 @@ export async function waitForSyncStreams(
 export async function waitForSyncStreamsMessage(
     syncStreams: AsyncIterable<SyncStreamsResponse>,
     message: string,
-    timeout: number = 2000,
 ): Promise<SyncStreamsResponse> {
-    return waitForSyncStreams(
-        syncStreams,
-        (res) => {
-            if (res.syncOp === SyncOp.SYNC_UPDATE) {
-                const stream = res.stream
-                if (stream) {
-                    const env = unpackEnvelopes(stream.events)
-                    for (const e of env) {
-                        if (e.event.payload.case === 'channelPayload') {
-                            const p = e.event.payload.value.content
-                            if (p.case === 'message' && p.value.ciphertext === message) {
-                                return true
-                            }
+    return waitForSyncStreams(syncStreams, (res) => {
+        if (res.syncOp === SyncOp.SYNC_UPDATE) {
+            const stream = res.stream
+            if (stream) {
+                const env = unpackEnvelopes(stream.events)
+                for (const e of env) {
+                    if (e.event.payload.case === 'channelPayload') {
+                        const p = e.event.payload.value.content
+                        if (p.case === 'message' && p.value.ciphertext === message) {
+                            return true
                         }
                     }
                 }
             }
-            return false
-        },
-        timeout,
-    )
+        }
+        return false
+    })
 }
 
 export function getChannelMessagePayload(event?: ChannelMessage) {

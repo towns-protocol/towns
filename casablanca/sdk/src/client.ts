@@ -272,7 +272,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     }
 
     async initializeUser(): Promise<void> {
-        this.logCall('initializeUser')
+        this.logCall('initializeUser', this.userId)
         assert(this.userStreamId === undefined, 'already initialized')
         await this.initCrypto()
         check(isDefined(this.decryptionExtensions), 'decryptionExtensions must be defined')
@@ -853,7 +853,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const { onFailure } = opt ?? {}
         assert(this.userStreamId !== undefined, 'streamId must be set')
         try {
-            this.streams.startSync()
+            await this.streams.startSync()
             return undefined
         } catch (err) {
             this.logSync('sync failure', err)
@@ -1613,6 +1613,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 }
                 const toStreamId: string = makeUserToDeviceStreamId(userId)
                 const miniblockHash = await this.getStreamLastMiniblockHash(toStreamId)
+                this.logCall("encryptAndShareMegolmSessions: sent to user's devices", {
+                    toStreamId,
+                    deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
+                })
                 await this.makeEventWithHashAndAddToStream(
                     toStreamId,
                     make_UserToDevicePayload_MegolmSessions({
@@ -1623,13 +1627,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     }),
                     miniblockHash,
                 )
-                this.logCall("encryptAndShareMegolmSessions: sent to user's devices", userId)
             } catch (error) {
                 this.logError('encryptAndShareMegolmSessions: ERROR', error)
+                return undefined
             }
         })
 
-        return (await Promise.all(promises)).flat()
+        await Promise.all(promises)
     }
 
     // Encrypt event using Megolm.

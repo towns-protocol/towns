@@ -6,7 +6,7 @@ import {
     makeRandomUserContext,
     makeUserContextFromWallet,
     makeTestRpcClient,
-    timeoutIterable,
+    iterableWrapper,
     TEST_ENCRYPTED_MESSAGE_PROPS,
     waitForSyncStreams,
 } from './util.test'
@@ -118,19 +118,18 @@ describe('streamRpcClient using v2 sync', () => {
         // alice calls syncStreams, and waits for the syncId in the response stream
         let syncId: string | undefined = undefined
         const syncCookie = alicesStream.stream!.nextSyncCookie!
+
         const aliceStreamIterable: AsyncIterable<SyncStreamsResponse> = alice.syncStreams({
             syncPos: [syncCookie],
         })
         await expect(
-            waitForSyncStreams(
-                aliceStreamIterable,
-                (res) => {
-                    syncId = res.syncId
-                    return res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined
-                },
-                20000000,
-            ),
+            waitForSyncStreams(aliceStreamIterable, (res) => {
+                syncId = res.syncId
+                return res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined
+            }),
         ).toResolve()
+
+        await alice.cancelSync({ syncId })
 
         /** Assert */
         expect(syncId).toBeDefined()
@@ -217,8 +216,10 @@ describe('streamRpcClient using v2 sync', () => {
         // bob reads the syncId from the response stream
         let syncId: string | undefined = undefined
         for await (const resp of bobSyncStreams) {
-            syncId = resp.syncId
-            break
+            if (resp.syncOp === SyncOp.SYNC_NEW) {
+                syncId = resp.syncId
+                break
+            }
         }
         // bob joins the channel
         event = await makeEvent(
@@ -267,6 +268,7 @@ describe('streamRpcClient using v2 sync', () => {
         /** Assert */
         expect(syncId).toBeTruthy()
         expect(messagesReceived).toEqual(2)
+        await bob.cancelSync({ syncId })
     })
 })
 
@@ -516,15 +518,18 @@ describe('streamRpcClient', () => {
         })
         if (!userAlice.stream) throw new Error('userAlice stream not found')
         let aliceSyncCookie = userAlice.stream.nextSyncCookie
-        const aliceAbortController = new AbortController()
-        const aliceSyncStreams = alice.syncStreams(
-            {
-                syncPos: aliceSyncCookie ? [aliceSyncCookie] : [],
-            },
-            {
-                signal: aliceAbortController.signal,
-            },
-        )
+        const aliceSyncStreams = alice.syncStreams({
+            syncPos: aliceSyncCookie ? [aliceSyncCookie] : [],
+        })
+
+        let syncId
+
+        await expect(
+            waitForSyncStreams(aliceSyncStreams, (res) => {
+                syncId = res.syncId
+                return res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined
+            }),
+        ).toResolve()
 
         // Bob invites Alice to the channel
         event = await makeEvent(
@@ -551,20 +556,6 @@ describe('streamRpcClient', () => {
                 e.event.payload?.value.content.value.inviterId === bobsUserId,
         )
 
-        aliceAbortController.abort()
-
-        const aliceAbortControllerUserStream = new AbortController()
-
-        // Alice syncs her user stream again
-        const userSyncStream = alice.syncStreams(
-            {
-                syncPos: [aliceSyncCookie],
-            },
-            {
-                signal: aliceAbortControllerUserStream.signal,
-            },
-        )
-
         // Alice joins the channel
         event = await makeEvent(
             alicesContext,
@@ -581,7 +572,7 @@ describe('streamRpcClient', () => {
 
         // Alice sees derived join event in her user stream
         aliceSyncCookie = await waitForEvent(
-            userSyncStream,
+            aliceSyncStreams,
             alicesUserStreamId,
             (e) =>
                 e.event.payload?.case === 'userPayload' &&
@@ -589,8 +580,6 @@ describe('streamRpcClient', () => {
                 e.event.payload?.value.content.value.op === MembershipOp.SO_JOIN &&
                 e.event.payload?.value.content.value.streamId === channelId,
         )
-
-        aliceAbortControllerUserStream.abort()
 
         // Alice reads previouse messages from the channel
         const channel = await alice.getStream({ streamId: channelId })
@@ -605,16 +594,10 @@ describe('streamRpcClient', () => {
         })
         expect(messageCount).toEqual(1)
 
-        const aliceAbortControllerMultipleStreams = new AbortController()
-
-        const userAndChannelStreamSync = alice.syncStreams(
-            {
-                syncPos: [aliceSyncCookie, channel.stream.nextSyncCookie!],
-            },
-            {
-                signal: aliceAbortControllerMultipleStreams.signal,
-            },
-        )
+        await alice.addStreamToSync({
+            syncId,
+            syncPos: channel.stream.nextSyncCookie!,
+        })
 
         // Bob posts another message
         event = await makeEvent(
@@ -633,7 +616,7 @@ describe('streamRpcClient', () => {
         // Alice sees the message in the channel stream
         await expect(
             waitForEvent(
-                userAndChannelStreamSync,
+                aliceSyncStreams,
                 channelId,
                 (e) =>
                     e.event.payload?.case === 'channelPayload' &&
@@ -642,7 +625,7 @@ describe('streamRpcClient', () => {
             ),
         ).toResolve()
 
-        aliceAbortControllerMultipleStreams.abort()
+        await alice.cancelSync({ syncId })
     })
 
     test('cantAddWithBadHash', async () => {
@@ -896,7 +879,7 @@ const waitForEvent = async (
     streamId: string,
     matcher: (e: ParsedEvent) => boolean,
 ): Promise<SyncCookie> => {
-    for await (const res of timeoutIterable(syncStream, 2000)) {
+    for await (const res of iterableWrapper(syncStream)) {
         const stream = res.stream
         if (stream?.nextSyncCookie?.streamId === streamId) {
             const events = unpackEnvelopes(stream.events)
@@ -907,5 +890,5 @@ const waitForEvent = async (
             }
         }
     }
-    throw new Error('waitForEvent: timeout')
+    throw new Error('unreachable')
 }

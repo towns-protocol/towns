@@ -1,6 +1,6 @@
 import { Client } from './client'
 import { DLogger, dlog } from './dlog'
-import { makeTestClient, withTimeout } from './util.test'
+import { makeTestClient } from './util.test'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 import { MembershipOp, SnapshotCaseType } from '@river/proto'
 import { DecryptedTimelineEvent } from './types'
@@ -243,10 +243,7 @@ export const converse = async (conversation: string[][], testName: string): Prom
                         ),
                     )
                     log(`conversation step execute ${msg_idx}`, msg, [...expected])
-                    await withTimeout(
-                        drivers[msg_idx].step(channelId, conv_idx, expected, msg),
-                        60000,
-                    )
+                    await drivers[msg_idx].step(channelId, conv_idx, expected, msg)
                     log(
                         `${testName} conversation step after send conv: ${conv_idx} msg: ${msg_idx}`,
                         msg,

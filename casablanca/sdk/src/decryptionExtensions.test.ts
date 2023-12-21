@@ -12,13 +12,12 @@ describe('DecryptionExtensions', () => {
         const client = await makeTestClient(opts)
         await client.initializeUser()
         await client.startSync()
-        log('started client', client.userId)
+        log('started client', client.userId, client.signerContext)
         clients.push(client)
         return client
     }
 
     const sendMessage = async (client: Client, streamId: string, body: string) => {
-        log('sendMessage', client.userId, streamId, body)
         await client.waitForStream(streamId)
         await client.sendMessage(streamId, body)
     }
@@ -80,6 +79,7 @@ describe('DecryptionExtensions', () => {
         // create a dm and send a message
         const { streamId } = await bob1.createDMChannel(alice1.userId)
         await sendMessage(bob1, streamId, 'hello')
+        await expect(alice1.waitForStream(streamId)).toResolve()
 
         // wait for the message to arrive and decrypt
         await expect(waitForMessages(alice1, streamId, ['hello'])).toResolve()
@@ -90,17 +90,23 @@ describe('DecryptionExtensions', () => {
             deviceId: 'alice2',
         })
 
+        // This wait takes over 5s, we should address
+        await expect(alice2.waitForStream(streamId)).toResolve()
+
         // alice gets keys sent via new device message
         await expect(waitForMessages(alice2, streamId, ['hello'])).toResolve()
 
         // stop alice2 so she's offline
-        alice2.stop()
+        await alice2.stop()
 
         // send a second message
         const bob2 = await makeAndStartClient({
             context: bob1.signerContext,
             deviceId: 'bob2',
         })
+
+        await expect(bob2.waitForStream(streamId)).toResolve()
+
         await sendMessage(bob2, streamId, 'whats up')
 
         // the message should get decrypted on alice1
@@ -112,6 +118,8 @@ describe('DecryptionExtensions', () => {
             context: alice1.signerContext,
             deviceId: 'alice2',
         })
+
+        await expect(alice2_restarted.waitForStream(streamId)).toResolve()
 
         // she should have the keys because bob2 should share with existing memebers
         await expect(waitForMessages(alice2_restarted, streamId, ['hello', 'whats up'])).toResolve()

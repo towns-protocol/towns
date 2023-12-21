@@ -21,9 +21,9 @@ describe('deviceKeyMessageTest', () => {
 
     test('bobUploadsDeviceKeys', async () => {
         log('bobUploadsDeviceKeys')
+        await bobsClient.initializeUser()
+        await alicesClient.initializeUser()
         // Bob gets created, starts syncing, and uploads his device keys.
-        await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
         const bobsUserId = bobsClient.userId
         const bobSelfToDevice = makeDonePromise()
         bobsClient.once(
@@ -37,6 +37,8 @@ describe('deviceKeyMessageTest', () => {
                 })
             },
         )
+        await bobsClient.startSync()
+        await alicesClient.startSync()
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
         await bobSelfToDevice.expectToSucceed()
     })

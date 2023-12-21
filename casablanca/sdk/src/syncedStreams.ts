@@ -2,21 +2,19 @@ import { DLogger, dlog } from './dlog'
 import { SyncCookie, SyncOp, SyncStreamsResponse } from '@river/proto'
 
 import { EmittedEvents } from './client'
-import EventEmitter from 'events'
 import { PersistenceStore } from './persistenceStore'
 import { Stream } from './stream'
 import { StreamRpcClientType } from './makeStreamRpcClient'
-import { SyncEvents } from './syncEvents'
 import TypedEmitter from 'typed-emitter'
 import { shortenHexString } from './binary'
 import { unpackStreamAndCookie } from './sign'
 
 export enum SyncState {
-    Canceling = 'Canceling',
-    NotSyncing = 'NotSyncing',
-    Retrying = 'Retrying',
-    Starting = 'Starting',
-    Syncing = 'Syncing',
+    Canceling = 'Canceling', // syncLoop, maybe syncId if was syncing, not is was starting or retrying
+    NotSyncing = 'NotSyncing', // no syncLoop
+    Retrying = 'Retrying', // syncLoop set, no syncId
+    Starting = 'Starting', // syncLoop set, no syncId
+    Syncing = 'Syncing', // syncLoop and syncId
 }
 
 /**
@@ -38,14 +36,17 @@ export enum SyncState {
 const stateConstraints: Record<SyncState, Set<SyncState>> = {
     [SyncState.NotSyncing]: new Set([SyncState.Starting]),
     [SyncState.Starting]: new Set([SyncState.Syncing, SyncState.Retrying, SyncState.Canceling]),
-    [SyncState.Syncing]: new Set([SyncState.Canceling, SyncState.Retrying, SyncState.Syncing]),
-    [SyncState.Retrying]: new Set([SyncState.Canceling, SyncState.Syncing, SyncState.Retrying]),
+    [SyncState.Syncing]: new Set([SyncState.Canceling, SyncState.Retrying]),
+    [SyncState.Retrying]: new Set([
+        SyncState.Starting,
+        SyncState.Canceling,
+        SyncState.Syncing,
+        SyncState.Retrying,
+    ]),
     [SyncState.Canceling]: new Set([SyncState.NotSyncing]),
 }
 
-const continueIteration = new Set([SyncState.Starting, SyncState.Retrying])
-
-export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncEvents>) {
+export class SyncedStreams {
     // userId is the current user id
     private readonly userId: string
     // mapping of stream id to stream
@@ -57,18 +58,26 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
     private readonly clientEmitter: TypedEmitter<EmittedEvents>
     private readonly persistenceStore: PersistenceStore
 
+    // Starting the client creates the syncLoop
+    // While a syncLoop exists, the client tried to keep the syncLoop connected, and if it reconnects, it
+    // will restart sync for all Streams
+    // on stop, the syncLoop will be cancelled if it is runnign and removed once it stops
+    private syncLoop?: Promise<number>
+
     // syncId is used to add and remove streams from the sync subscription
-    private syncId: string = ''
-    // a handle to the current sync loop
-    private syncLoop?: Promise<unknown>
+    // The syncId is only set once a connection is established
+    // On retry, it is cleared
+    // After being cancelled, it is cleared
+    private syncId?: string
+
     // rpcClient is used to receive sync updates from the server
     private rpcClient: StreamRpcClientType
     // syncState is used to track the current sync state
     private _syncState: SyncState = SyncState.NotSyncing
     // retry logic
-    private retryPromise: Promise<void> | undefined
     private abortRetry: (() => void) | undefined
     private currentRetryCount: number = 0
+    private forceStopSyncStreams: (() => void) | undefined
 
     constructor(
         userId: string,
@@ -76,7 +85,6 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
         persistenceStore: PersistenceStore,
         clientEmitter: TypedEmitter<EmittedEvents>,
     ) {
-        super()
         this.userId = userId
         this.rpcClient = rpcClient
         this.persistenceStore = persistenceStore
@@ -84,34 +92,8 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
         const shortId = shortenHexString(
             this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
         )
-        this.logSync = dlog('csb:cl:sync:v2').extend(shortId)
-        this.logStream = dlog('csb:cl:sync:v2:stream').extend(shortId)
-    }
-
-    // isActiveSyncEvents is used to filter
-    // the list of events to emit to the client
-    private isActiveSyncEvents = new Set([
-        'syncing',
-        'syncCanceling',
-        'syncRetrying',
-        'syncStarting',
-        'syncStopped',
-    ])
-    public emit<E extends keyof SyncEvents>(event: E, ...args: Parameters<SyncEvents[E]>): boolean {
-        this.logStream(event, ...args)
-        this.log(
-            'emitSyncEvent',
-            this.isActiveSyncEvents.has(event.toString()),
-            'syncState',
-            this.syncState,
-            'isSyncing',
-            this.syncState === SyncState.Syncing,
-        )
-        if (this.isActiveSyncEvents.has(event.toString())) {
-            const isSyncing = this.syncState === SyncState.Syncing
-            this.clientEmitter.emit('streamSyncActive', isSyncing)
-        }
-        return super.emit(event, ...args)
+        this.logSync = dlog('csb:cl:sync').extend(shortId)
+        this.logStream = dlog('csb:cl:sync:stream').extend(shortId)
     }
 
     public has(streamId: string): boolean {
@@ -123,6 +105,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
     }
 
     public set(streamId: string, stream: Stream): void {
+        this.log('stream set', streamId)
         this.streams.set(streamId, stream)
     }
 
@@ -138,51 +121,65 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
         return Array.from(this.streams.keys())
     }
 
-    public startSync(): void {
-        if (this.syncId) {
-            this.log('already syncing with syncId', this.syncId)
-        }
-        this.log('sync START')
-        const syncLoop = async (): Promise<void> => {
-            return this.runSyncLoop()
-        }
-        this.syncLoop = syncLoop()
+    public async startSync() {
+        return await this.createSyncLoop()
     }
 
-    public async stopSync(): Promise<unknown> {
+    public async stopSync() {
         this.log('sync STOP CALLED')
-        let err: unknown = undefined
-        const beforeCancel = this.syncState
-        this.onCancel()
-        if (beforeCancel === SyncState.Syncing) {
+        if (stateConstraints[this.syncState].has(SyncState.Canceling)) {
             const syncId = this.syncId
             const syncLoop = this.syncLoop
-            if (syncId && syncLoop) {
-                try {
-                    await Promise.allSettled([this.rpcClient.cancelSync({ syncId }), syncLoop])
-                } catch (e) {
-                    if (!isConnectError(e)) {
-                        err = e
-                        this.log('sync STOP ERROR', err)
-                        this.emit('syncError', this.syncId, err)
-                    }
-                }
+            const syncState = this.syncState
+            this.setSyncState(SyncState.Canceling)
+            try {
+                this.abortRetry?.()
+                // Give the server 5 seconds to respond to the cancelSync RPC before forceStopSyncStreams
+                const breakTimeout = syncId
+                    ? setTimeout(() => {
+                          this.log('calling forceStopSyncStreams', syncId)
+                          this.forceStopSyncStreams?.()
+                      }, 5000)
+                    : undefined
+
+                this.log('stopSync syncState', syncState)
+                this.log('stopSync syncLoop', syncLoop)
+                this.log('stopSync syncId', syncId)
+                const result = await Promise.allSettled([
+                    syncId ? await this.rpcClient.cancelSync({ syncId }) : undefined,
+                    syncLoop,
+                ])
+                this.log('syncLoop awaited', syncId, result)
+                clearTimeout(breakTimeout)
+            } catch (e) {
+                this.log('sync STOP ERROR', e)
             }
+            this.log('sync STOP DONE', syncId)
+        } else {
+            this.log(`WARN: stopSync called from invalid state ${this.syncState}`)
         }
-        this.log('sync STOP DONE')
-        return err
     }
 
     // adds stream to the sync subscription
     public async addStreamToSync(syncCookie: SyncCookie): Promise<void> {
+        /*
+        const stream = this.streams.has(syncCookie.streamId)
+        
+        if (stream) {
+            this.log('addStreamToSync streamId already syncing', syncCookie)
+            return
+        }
+        */
         if (this.syncState === SyncState.Syncing) {
             try {
                 await this.rpcClient.addStreamToSync({
                     syncId: this.syncId,
                     syncPos: syncCookie,
                 })
+                this.log('addedStreamToSync', syncCookie)
             } catch (err) {
-                this.onError(err)
+                // Trigger restart of sync loop
+                this.log(`addStreamToSync error`, err)
             }
         } else {
             this.log(
@@ -196,6 +193,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
     public async removeStreamFromSync(streamId: string): Promise<void> {
         const stream = this.streams.get(streamId)
         if (!stream) {
+            this.log('removeStreamFromSync streamId not found', streamId)
             // no such stream
             return
         }
@@ -206,86 +204,154 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                     streamId: streamId,
                 })
             } catch (err) {
-                this.onError(err)
+                // Trigger restart of sync loop
+                this.log('removeStreamFromSync err', err)
             }
+            stream.removeAllListeners()
+            this.streams.delete(streamId)
+            this.log('removed stream from sync', streamId)
+        } else {
+            this.log(
+                'removeStreamFromSync: not in "syncing" state; let main sync loop handle this with its streams map',
+                streamId,
+            )
         }
-        stream.removeAllListeners()
-        this.streams.delete(streamId)
-        this.log('removed stream from sync', streamId)
     }
 
-    private async runSyncLoop(): Promise<void> {
-        if (this.syncState !== SyncState.NotSyncing) {
-            this.log('ERROR: sync loop already running')
-            return
-        }
-        // fresh sync
-        this.onStarting()
-        let iteration = 0
+    private async createSyncLoop() {
+        return new Promise<void>((resolve, reject) => {
+            if (stateConstraints[this.syncState].has(SyncState.Starting)) {
+                this.setSyncState(SyncState.Starting)
+                this.log('starting sync loop')
+            } else {
+                this.log(
+                    'runSyncLoop: invalid state transition',
+                    this.syncState,
+                    '->',
+                    SyncState.Starting,
+                )
+                reject(new Error('invalid state transition'))
+            }
 
-        try {
-            syncLoop: while (continueIteration.has(this.syncState)) {
-                this.log('sync ITERATION start', ++iteration)
+            if (this.syncLoop) {
+                reject(new Error('createSyncLoop called while a loop exists'))
+            }
 
-                // get cookies from all streams to sync
-                const syncCookies = Array.from(this.streams.values())
-                    .map((stream) => stream.view.syncCookie)
-                    .filter((syncCookie) => syncCookie) as SyncCookie[]
+            this.syncLoop = (async (): Promise<number> => {
+                let iteration = 0
+
+                this.log('sync loop created')
+                resolve()
 
                 try {
-                    // syncId needs to be reset before starting a new syncStreams
-                    // syncStreams() should return a new syncId
-                    this.syncId = ''
-                    const streams = this.rpcClient.syncStreams({
-                        syncPos: syncCookies,
-                    })
-
-                    this.log('syncing streams')
-
-                    // from here on, read sync commands and data from the streams iterator
-                    for await (const res of streams) {
-                        this.log(
-                            'got syncStreams response',
-                            'syncOp',
-                            res.syncOp,
-                            'syncId',
-                            res.syncId,
-                        )
-                        if (!res.syncId || !res.syncOp) {
-                            this.onError(new Error('missing syncId or syncOp'))
-                            continue
+                    while (
+                        this.syncState === SyncState.Starting ||
+                        this.syncState === SyncState.Syncing ||
+                        this.syncState === SyncState.Retrying
+                    ) {
+                        this.log('sync ITERATION start', ++iteration, this.syncState)
+                        if (this.syncState === SyncState.Retrying) {
+                            this.setSyncState(SyncState.Starting)
                         }
-                        switch (res.syncOp) {
-                            case SyncOp.SYNC_CLOSE:
-                                this.onCancel()
-                                break syncLoop
-                            case SyncOp.SYNC_NEW:
-                                this.onNew(res.syncId)
-                                break
-                            case SyncOp.SYNC_UPDATE:
-                                await this.onUpdate(res)
-                                break
-                            default:
-                                this.onError(
-                                    new Error(
-                                        `unknown syncOp { syncId: ${this.syncId}, syncOp: ${res.syncOp} }`,
-                                    ),
+
+                        // get cookies from all the known streams to sync
+                        const syncCookies = Array.from(this.streams.values())
+                            .map((stream) => stream.view.syncCookie)
+                            .filter((syncCookie) => syncCookie) as SyncCookie[]
+
+                        try {
+                            // syncId needs to be reset before starting a new syncStreams
+                            // syncStreams() should return a new syncId
+                            this.syncId = undefined
+                            const streams = this.rpcClient.syncStreams({
+                                syncPos: syncCookies,
+                            })
+
+                            const iterator = streams[Symbol.asyncIterator]()
+
+                            while (
+                                this.syncState === SyncState.Syncing ||
+                                this.syncState === SyncState.Starting
+                            ) {
+                                const breakSyncStreamsPromise = new Promise<void>(
+                                    (resolve) =>
+                                        (this.forceStopSyncStreams = () => {
+                                            this.log('forceStopSyncStreams called')
+                                            resolve()
+                                        }),
                                 )
-                                break
+                                const { value, done } = await Promise.race([
+                                    iterator.next(),
+                                    breakSyncStreamsPromise.then(() => ({
+                                        value: undefined,
+                                        done: true,
+                                    })),
+                                ])
+                                this.forceStopSyncStreams = undefined
+                                if (done || value === undefined) {
+                                    this.log('exiting syncStreams', done, value)
+                                    // exit the syncLoop, it's done
+                                    return iteration
+                                }
+
+                                this.log(
+                                    'got syncStreams response',
+                                    'syncOp',
+                                    value.syncOp,
+                                    'syncId',
+                                    value.syncId,
+                                )
+
+                                if (!value.syncId || !value.syncOp) {
+                                    this.log('missing syncId or syncOp', value)
+                                    continue
+                                }
+                                switch (value.syncOp) {
+                                    case SyncOp.SYNC_NEW:
+                                        this.syncStarted(value.syncId)
+                                        break
+                                    case SyncOp.SYNC_CLOSE:
+                                        this.syncClosed()
+                                        break
+                                    case SyncOp.SYNC_UPDATE:
+                                        await this.onUpdate(value)
+                                        break
+                                    default:
+                                        this.log(
+                                            `unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
+                                        )
+                                        break
+                                }
+                            }
+                        } catch (err) {
+                            this.log('syncLoop error', err)
+                            await this.attemptRetry()
                         }
                     }
-                    this.log('read loop ended')
-                } catch (err) {
-                    this.onError(err)
-                    await this.onRetry()
+                } finally {
+                    this.log('sync loop stopping ITERATION', iteration)
+                    if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
+                        this.setSyncState(SyncState.NotSyncing)
+                        this.streams.forEach((stream) => {
+                            stream.removeAllListeners()
+                        })
+                        this.streams.clear()
+                        this.abortRetry = undefined
+                        this.syncId = undefined
+                        this.clientEmitter.emit('streamSyncActive', false)
+                    } else {
+                        this.log(
+                            'onStopped: invalid state transition',
+                            this.syncState,
+                            '->',
+                            SyncState.NotSyncing,
+                        )
+                    }
+                    this.log('sync loop stopped ITERATION', iteration)
                 }
-            }
-        } catch (err) {
-            this.log('ERROR: sync loop', err)
-            this.emit('syncError', this.syncId, err)
-        }
-        this.log('sync loop stopped ITERATION', iteration)
-        this.onStopped()
+                return iteration
+            })()
+        })
     }
 
     public get syncState(): SyncState {
@@ -294,8 +360,7 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
 
     private setSyncState(newState: SyncState) {
         if (this._syncState === newState) {
-            // no state change
-            return
+            throw new Error('setSyncState called for the existing state')
         }
         if (!stateConstraints[this._syncState].has(newState)) {
             throw this.logInvalidStateAndReturnError(this._syncState, newState)
@@ -304,21 +369,25 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
         this._syncState = newState
     }
 
-    private async onRetry(): Promise<void> {
+    // The sync loop will keep retrying until it is shutdown, it has no max attempts
+    private async attemptRetry(): Promise<void> {
+        this.log(`attemptRetry`, this.syncState)
         if (stateConstraints[this.syncState].has(SyncState.Retrying)) {
-            if (this.retryPromise) {
-                return this.retryPromise
+            if (this.syncState !== SyncState.Retrying) {
+                this.setSyncState(SyncState.Retrying)
+                this.syncId = undefined
+                this.clientEmitter.emit('streamSyncActive', false)
             }
-            this.setSyncState(SyncState.Retrying)
+
             // currentRetryCount will increment until MAX_RETRY_COUNT. Then it will stay
             // fixed at this value
             // 3 retries = 2^3 = 8 seconds
             // 5 retries = 2^5 = 32 seconds
             // 8 retries = 2^8 = 256 seconds (~4 min)
-            const MAX_RETRY_COUNT = 2
+            const MAX_RETRY_DELAY_FACTOR = 2
             const nextRetryCount =
-                this.currentRetryCount >= MAX_RETRY_COUNT
-                    ? MAX_RETRY_COUNT
+                this.currentRetryCount >= MAX_RETRY_DELAY_FACTOR
+                    ? MAX_RETRY_DELAY_FACTOR
                     : this.currentRetryCount + 1
             const retryDelay = 2 ** nextRetryCount * 1000 // 2^n seconds
             this.log(
@@ -330,51 +399,59 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                 ', nextRetryCount:',
                 nextRetryCount,
                 ', MAX_RETRY_COUNT:',
-                MAX_RETRY_COUNT,
+                MAX_RETRY_DELAY_FACTOR,
                 '}',
             )
             this.currentRetryCount = nextRetryCount
-            this.retryPromise = new Promise<void>((resolve) => {
+
+            await new Promise<void>((resolve) => {
                 const timeout = setTimeout(() => {
-                    this.retryPromise = undefined
+                    this.abortRetry = undefined
                     resolve()
                 }, retryDelay)
                 this.abortRetry = () => {
                     clearTimeout(timeout)
-                    this.retryPromise = undefined
+                    this.abortRetry = undefined
                     resolve()
                 }
             })
-            this.emit('syncRetrying', retryDelay)
-            return this.retryPromise
-        }
-    }
-
-    private onStarting(): void {
-        if (stateConstraints[this.syncState].has(SyncState.Starting)) {
-            this.setSyncState(SyncState.Starting)
-            this.log('starting sync loop')
-            this.emit('syncStarting')
         } else {
-            this.log('onNew: invalid state transition', this.syncState, '->', SyncState.Starting)
+            throw new Error('attemptRetry from invalid state')
         }
     }
 
-    private onNew(syncId: string): void {
-        if (stateConstraints[this.syncState].has(SyncState.Syncing)) {
+    private syncStarted(syncId: string): void {
+        if (!this.syncId && stateConstraints[this.syncState].has(SyncState.Syncing)) {
             this.setSyncState(SyncState.Syncing)
             this.syncId = syncId
             // On sucessful sync, reset retryCount
             this.currentRetryCount = 0
-            this.log('onSyncing', 'syncId', this.syncId)
-            this.emit('syncing', this.syncId)
+            this.log('syncStarted', 'syncId', this.syncId)
+            this.clientEmitter.emit('streamSyncActive', true)
+            this.log('emitted streamSyncActive', true)
         } else {
-            this.log('onNew: invalid state transition', this.syncState, '->', SyncState.Syncing)
+            this.log(
+                'syncStarted: invalid state transition',
+                this.syncState,
+                '->',
+                SyncState.Syncing,
+            )
+            //throw new Error('syncStarted: invalid state transition')
+        }
+    }
+
+    private syncClosed() {
+        if (this.syncState === SyncState.Canceling) {
+            this.log('server acknowledged our close atttempt', this.syncId)
+        } else {
+            this.log('server cancelled unepexectedly, go through the retry loop', this.syncId)
+            this.setSyncState(SyncState.Retrying)
         }
     }
 
     private async onUpdate(res: SyncStreamsResponse): Promise<void> {
-        if (stateConstraints[this.syncState].has(SyncState.Syncing)) {
+        // Until we've completed canceling, accept responses
+        if (this.syncState === SyncState.Syncing || this.syncState === SyncState.Canceling) {
             if (this.syncId != res.syncId) {
                 throw new Error(
                     `syncId mismatch; has:'${this.syncId}', got:${res.syncId}'. Throw away update.`,
@@ -400,7 +477,6 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                     const stream = this.streams.get(streamId)
                     if (stream === undefined) {
                         this.log('sync got stream', streamId, 'NOT FOUND')
-                        this.onError(new Error(`stream not found ${streamId}`))
                     } else {
                         const cleartexts = await this.persistenceStore.getCleartexts(
                             streamAndCookie.events.map((e) => e.hashStr),
@@ -408,61 +484,19 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
                         stream.appendEvents(streamAndCookie, cleartexts)
                     }
                 } catch (err) {
-                    this.onError(err)
+                    this.log('onUpdate error', err)
                 }
             } else {
                 this.log('sync RESULTS no stream', syncStream)
             }
         } else {
-            this.log('onUpdate: invalid state transition', this.syncState, '->', SyncState.Syncing)
-        }
-    }
-
-    private onCancel(): void {
-        if (stateConstraints[this.syncState].has(SyncState.Canceling)) {
-            this.setSyncState(SyncState.Canceling)
-            // reset sync states
-            this.abortRetry?.()
-            this.abortRetry = undefined
-            this.log('onCancel')
-            this.emit('syncCanceling', this.syncId)
-        } else {
             this.log(
-                'onCancel: invalid state transition',
+                'onUpdate: invalid state',
                 this.syncState,
-                '->',
-                SyncState.Canceling,
+                'should have been',
+                SyncState.Syncing,
             )
         }
-    }
-
-    private onStopped(): void {
-        if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
-            this.setSyncState(SyncState.NotSyncing)
-            // reset sync states
-            this.abortRetry?.()
-            this.abortRetry = undefined
-            this.streams.forEach((stream) => {
-                stream.removeAllListeners()
-            })
-            this.streams.clear()
-            this.syncLoop = undefined
-            this.syncId = ''
-            this.log('onStop')
-            this.emit('syncStopped')
-        } else {
-            this.log(
-                'onStopped: invalid state transition',
-                this.syncState,
-                '->',
-                SyncState.NotSyncing,
-            )
-        }
-    }
-
-    private onError(err: unknown): void {
-        this.log('onError', err)
-        this.emit('syncError', this.syncId, err)
     }
 
     private logInvalidStateAndReturnError(currentState: SyncState, newState: SyncState): Error {
@@ -473,14 +507,4 @@ export class SyncedStreams extends (EventEmitter as new () => TypedEmitter<SyncE
     private log(...args: unknown[]): void {
         this.logSync(...args)
     }
-}
-
-function isConnectError(err: unknown): boolean {
-    return (
-        err !== null &&
-        typeof err === 'object' &&
-        'name' in err &&
-        typeof err.name === 'string' &&
-        err.name === 'ConnectError'
-    )
 }
