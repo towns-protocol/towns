@@ -9,7 +9,6 @@ import {
     TimelineEvent,
     ZTEvent,
 } from 'use-zion-client'
-import { FullyReadMarker } from '@river/proto'
 import { ExperimentsState } from 'store/experimentsStore'
 
 export enum RenderEventType {
@@ -21,7 +20,7 @@ export enum RenderEventType {
     AccumulatedRoomMembers = 'AccumulatedRoomMembers',
     RoomCreate = 'RoomCreate',
     ChannelHeader = 'ChannelHeader',
-    FullyRead = 'FullyRead',
+    NewDivider = 'NewDivider',
     ThreadUpdate = 'ThreadUpdate',
 }
 
@@ -103,11 +102,9 @@ export interface RoomCreateRenderEvent extends BaseEvent {
     event: ZRoomCreateEvent
 }
 
-export interface FullyReadRenderEvent extends BaseEvent {
-    type: RenderEventType.FullyRead
+export interface NewDividerRenderEvent extends BaseEvent {
+    type: RenderEventType.NewDivider
     key: string
-    event: FullyReadMarker
-    isHidden: boolean
 }
 
 export interface ThreadUpdateRenderEvent extends BaseEvent {
@@ -155,7 +152,7 @@ export type RenderEvent =
     | AccumulatedRoomMemberRenderEvent
     | ChannelHeaderRenderEvent
     | EncryptedMessageRenderEvent
-    | FullyReadRenderEvent
+    | NewDividerRenderEvent
     | MessageRenderEvent
     | RedactedMessageRenderEvent
     | RoomCreateRenderEvent
@@ -187,7 +184,7 @@ const createRelativeDateUtil = () => {
 export const getEventsByDate = (
     events: TimelineEvent[],
     channelType: 'channel' | 'dm' | 'gdm',
-    fullyReadMarker?: FullyReadMarker,
+    fullyReadMarkerEventId?: string,
     isThread?: boolean,
     replyMap?: Record<string, ThreadStats>,
     experiments?: ExperimentsState,
@@ -228,7 +225,7 @@ export const getEventsByDate = (
              * accumulate messages by the same user
              */
             if (isRoomMessage(event) || isEncryptedRoomMessage(event)) {
-                if (fullyReadMarker?.eventId === event.eventId) {
+                if (fullyReadMarkerEventId === event.eventId) {
                     if (
                         // TODO: if we add readmarkers to more events than
                         // messages this should get refactored
@@ -239,16 +236,14 @@ export const getEventsByDate = (
                                 r.type === RenderEventType.RedactedMessage,
                         )
                     ) {
-                        // show date as "new" since first message appears to be unread
                         group.isNew = true
+                        // show date as "new" since first message appears to be unread
+                    } else {
+                        renderEvents.push({
+                            type: RenderEventType.NewDivider,
+                            key: `newdivider-${event.eventId}`,
+                        })
                     }
-                    renderEvents.push({
-                        type: RenderEventType.FullyRead,
-                        key: `fully-read-${event.eventId}`,
-                        event: fullyReadMarker,
-                        // hidden since message is shown within the date-group marker
-                        isHidden: !!group.isNew,
-                    })
                 }
 
                 const prevEvent = renderEvents[renderEvents.length - 1]

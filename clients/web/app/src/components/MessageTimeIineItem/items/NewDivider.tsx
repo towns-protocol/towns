@@ -1,52 +1,28 @@
-import React, { useEffect, useMemo } from 'react'
-import { useInView } from 'react-intersection-observer'
-import { FullyReadMarker } from '@river/proto'
-import { useStore } from 'store/store'
+import React, { useMemo } from 'react'
 import { Box, BoxProps, Paragraph, Stack } from '@ui'
 
 type Props = {
-    onMarkAsRead: (fullyReadMarker: FullyReadMarker) => void
-    fullyReadMarker: FullyReadMarker
     faded?: boolean
     hidden?: boolean
 } & BoxProps
 
+const style = { top: -12 }
+
 export const NewDivider = (props: Props) => {
-    const {
-        fullyReadMarker,
-        hidden: isHidden,
-        faded: isNewFaded,
-        onMarkAsRead,
-        ...boxProps
-    } = props
-
-    const isWindowActive = useStore((state) => state.isWindowFocused)
-
-    const { ref, inView } = useInView({
-        threshold: 0,
-        triggerOnce: true,
-    })
-
-    useEffect(() => {
-        if (fullyReadMarker.isUnread && inView && isWindowActive) {
-            const timeout = setTimeout(() => {
-                onMarkAsRead(fullyReadMarker)
-            }, 100)
-            return () => {
-                clearTimeout(timeout)
-            }
-        }
-    }, [onMarkAsRead, fullyReadMarker.isUnread, isWindowActive, inView, fullyReadMarker])
+    const { faded: isNewFaded, ...boxProps } = props
 
     const opacityStyle = useMemo(
-        () => (isNewFaded ? { opacity: 0.33, transition: `opacity 1s` } : undefined),
+        () => (isNewFaded ? { opacity: 0.33, transition: `opacity 1s`, ...style } : style),
         [isNewFaded],
     )
 
-    return fullyReadMarker ? (
-        !isHidden ? (
+    return (
+        <Stack grow horizontal position="relative" width="100%" style={{ height: 0 }}>
             <Stack
                 horizontal
+                zIndex="above"
+                width="100%"
+                position="absolute"
                 gap="sm"
                 paddingY="sm"
                 alignItems="center"
@@ -56,14 +32,12 @@ export const NewDivider = (props: Props) => {
                 style={opacityStyle}
             >
                 <Box grow borderBottom="accent" />
-                <Box centerContent color="accent" ref={ref}>
-                    <Paragraph size="sm">NEW</Paragraph>
+                <Box centerContent color="accent">
+                    <Paragraph size="xs" fontWeight="medium">
+                        NEW
+                    </Paragraph>
                 </Box>
             </Stack>
-        ) : (
-            <div ref={ref} />
-        )
-    ) : (
-        <></>
+        </Stack>
     )
 }

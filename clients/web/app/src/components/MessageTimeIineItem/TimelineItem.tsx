@@ -64,7 +64,7 @@ export const MessageTimelineItem = React.memo(
                 return <TimelineThreadUpdates events={itemData.events} key={itemData.key} />
             }
 
-            case RenderEventType.FullyRead: {
+            case RenderEventType.NewDivider: {
                 return null
             }
 

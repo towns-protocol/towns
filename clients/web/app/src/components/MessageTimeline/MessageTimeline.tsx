@@ -18,6 +18,7 @@ import { useStore } from 'store/store'
 import { VList } from 'ui/components/VList2/VList'
 import { notUndefined } from 'ui/utils/utils'
 import { useChannelType } from 'hooks/useChannelType'
+import { FullyReadObserver } from '@components/MessageTimeIineItem/items/FullyReadObserver'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
 import { MessageTimelineType, useTimelineContext } from './MessageTimelineContext'
@@ -103,35 +104,49 @@ export const MessageTimeline = (props: Props) => {
         isStartupRef.current = false
     }
 
-    const fullyReadMarker = useFullyReadMarker(channelId, timelineContext?.threadParentId)
+    let fullyReadMarker = useFullyReadMarker(channelId, timelineContext?.threadParentId)
+
+    if (!fullyReadMarker?.isUnread) {
+        // dismiss inactive fullyReadMarkers
+        fullyReadMarker = undefined
+    }
+
     const experiments = useExperimentsStore()
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    //                                                                  initialize variables
+    //
 
     const isWindowActive = useStore((state) => state.isWindowFocused)
 
-    const fullyPersistedRef = useRef<FullyReadMarker>()
     // if a marker is shown once it will keep displaying until timeline gets
     // unmounted despite the marker flipping to unread
-    fullyPersistedRef.current =
-        !fullyPersistedRef.current && !fullyReadMarker?.isUnread
-            ? undefined
-            : isWindowActive && fullyPersistedRef.current
-            ? fullyPersistedRef.current
-            : fullyReadMarker
+    const [fullreadMarkerPersisted, setFullyReadMarkerPersisted] = useState(() =>
+        fullyReadMarker?.isUnread ? fullyReadMarker : undefined,
+    )
+    const [initialFullyReadMarker] = useState(() =>
+        fullyReadMarker?.isUnread ? fullyReadMarker : undefined,
+    )
 
-    const fullyReadPersisted = fullyPersistedRef.current
+    const isWindowActiveRef = useRef(isWindowActive)
+    isWindowActiveRef.current = isWindowActive
 
     useEffect(() => {
-        if (fullyReadPersisted) {
-            // ensure a receipt can be sent if the fully-read marker gets replaced
+        if (!isWindowActiveRef.current) {
+            setFullyReadMarkerPersisted(fullyReadMarker)
+            setIsUnreadMarkerFaded(false)
+        }
+    }, [fullyReadMarker])
+
+    useEffect(() => {
+        if (fullyReadMarker?.isUnread) {
             isSentRef.current = false
         }
-    }, [fullyReadPersisted])
+    }, [fullyReadMarker?.isUnread])
 
     const isSentRef = useRef(fullyReadMarker && !fullyReadMarker.isUnread)
+
     const { sendReadReceipt } = useZionClient()
+
     const onMarkAsRead = useCallback(
         (fullyReadMarker: FullyReadMarker) => {
             if (isSentRef.current) {
@@ -153,13 +168,21 @@ export const MessageTimeline = (props: Props) => {
             getEventsByDate(
                 events,
                 channelType,
-                fullyReadPersisted,
+                fullreadMarkerPersisted?.eventId,
                 isThread,
                 repliesMap,
                 experiments,
                 groupByUser,
             ),
-        [events, channelType, fullyReadPersisted, isThread, repliesMap, experiments, groupByUser],
+        [
+            channelType,
+            events,
+            experiments,
+            fullreadMarkerPersisted?.eventId,
+            groupByUser,
+            isThread,
+            repliesMap,
+        ],
     )
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -307,8 +330,8 @@ export const MessageTimeline = (props: Props) => {
                 }
                 return e.type === 'group' && groupByDate
                     ? ({ key: e.key, type: 'group', date: e.date, isNew: e.isNew } as const)
-                    : e.type === RenderEventType.FullyRead
-                    ? ({ key: e.key, type: 'fully-read', item: e } as const)
+                    : e.type === RenderEventType.NewDivider
+                    ? ({ key: e.key, type: 'new-divider', item: e } as const)
                     : e.type === RenderEventType.ThreadUpdate
                     ? ({ key: e.key, type: 'thread-update', item: e } as const)
                     : e.type !== 'group'
@@ -327,7 +350,7 @@ export const MessageTimeline = (props: Props) => {
         const listItems = [...allListItems]
         if (timelineContext?.type === MessageTimelineType.Channel) {
             listItems.unshift({ key: 'header', type: 'header' } as const)
-        } else if (isThreadOrigin && listItems.length > 1 && listItems[1]?.type !== 'fully-read') {
+        } else if (isThreadOrigin && listItems.length > 1 && listItems[1]?.type !== 'new-divider') {
             listItems.splice(1, 0, { key: 'divider', type: 'divider' } as const)
         }
 
@@ -424,11 +447,11 @@ export const MessageTimeline = (props: Props) => {
         timelineContext?.type,
     ])
 
-    const hasUnreadMarker = fullyPersistedRef.current
+    const hasUnreadMarker = !!fullreadMarkerPersisted
     const [isUnreadMarkerFaded, setIsUnreadMarkerFaded] = useState(false)
 
     useEffect(() => {
-        if (hasUnreadMarker) {
+        if (hasUnreadMarker && isWindowActive) {
             const timeout = setTimeout(() => {
                 setIsUnreadMarkerFaded(true)
             }, 3000)
@@ -436,7 +459,7 @@ export const MessageTimeline = (props: Props) => {
                 clearTimeout(timeout)
             }
         }
-    }, [hasUnreadMarker])
+    }, [hasUnreadMarker, isWindowActive])
 
     const groupIds = useMemo(
         () =>
@@ -453,65 +476,99 @@ export const MessageTimeline = (props: Props) => {
         listItems,
         props.highlightId,
         userId,
-        fullyPersistedRef.current,
+        initialFullyReadMarker,
     )
 
     const { visualViewportScrolled: tabBarHidden } = useVisualViewportContext()
 
     const itemRenderer = useCallback(
         (r: ListItem, measureRef?: React.RefObject<HTMLDivElement> | undefined) => {
-            return r.type === 'header' ? (
-                <>{props.prepend}</>
-            ) : r.type === 'group' ? (
-                <DateDivider
-                    label={r.date}
-                    ref={measureRef}
-                    new={r.isNew}
-                    faded={isUnreadMarkerFaded}
-                />
-            ) : r.type === 'divider' ? (
-                <Box paddingX="md" paddingY="md" display={isTouch ? 'none' : 'flex'}>
-                    <Divider space="none" />
-                </Box>
-            ) : r.type === 'expander' ? (
-                <Box paddingX="md" paddingY="md">
-                    <Box cursor="pointer" onClick={onExpandClick}>
-                        <Paragraph color="default">Show {numHidden} more messages</Paragraph>
-                    </Box>
-                </Box>
-            ) : r.type === 'fully-read' ? (
-                <NewDivider
-                    fullyReadMarker={r.item.event}
-                    hidden={r.item.isHidden}
-                    faded={isUnreadMarkerFaded}
-                    paddingX={timelineContext?.type === MessageTimelineType.Channel ? 'lg' : 'md'}
-                    onMarkAsRead={onMarkAsRead}
-                />
-            ) : r.item.type === RenderEventType.ChannelHeader ? (
-                props.header ?? <></>
-            ) : (
-                <MessageTimelineItem
-                    itemData={r.item}
-                    highlight={r.key === props.highlightId}
-                    userId={userId}
-                    channelName={channelName}
-                    channelEncrypted={isChannelEncrypted}
-                />
-            )
+            switch (r.type) {
+                case 'header': {
+                    return <>{props.prepend}</>
+                }
+                case 'group': {
+                    return (
+                        <DateDivider
+                            label={r.date}
+                            ref={measureRef}
+                            new={r.isNew}
+                            faded={isUnreadMarkerFaded}
+                        />
+                    )
+                }
+                case 'divider': {
+                    return (
+                        <Box paddingX="md" paddingY="md" display={isTouch ? 'none' : 'flex'}>
+                            <Divider space="none" />
+                        </Box>
+                    )
+                }
+                case 'expander': {
+                    return (
+                        <Box paddingX="md" paddingY="md">
+                            <Box cursor="pointer" onClick={onExpandClick}>
+                                <Paragraph color="default">
+                                    Show {numHidden} more messages
+                                </Paragraph>
+                            </Box>
+                        </Box>
+                    )
+                }
+                case 'new-divider': {
+                    return (
+                        <NewDivider
+                            faded={isUnreadMarkerFaded}
+                            paddingX={
+                                timelineContext?.type === MessageTimelineType.Channel ? 'lg' : 'md'
+                            }
+                        />
+                    )
+                }
+
+                default: {
+                    if (r.item.type === RenderEventType.ChannelHeader) {
+                        return props.header ?? <></>
+                    }
+
+                    const message = (
+                        <MessageTimelineItem
+                            itemData={r.item}
+                            highlight={r.key === props.highlightId}
+                            userId={userId}
+                            channelName={channelName}
+                            channelEncrypted={isChannelEncrypted}
+                        />
+                    )
+
+                    return fullyReadMarker?.eventId === r.key ? (
+                        <>
+                            <FullyReadObserver
+                                fullyReadMarker={fullyReadMarker}
+                                onMarkAsRead={onMarkAsRead}
+                            />
+                            {message}
+                        </>
+                    ) : (
+                        message
+                    )
+                }
+            }
         },
         [
-            props.prepend,
+            channelName,
+            fullyReadMarker,
+            isChannelEncrypted,
+            isTouch,
+            isUnreadMarkerFaded,
+            numHidden,
+            onExpandClick,
+            onMarkAsRead,
             props.header,
             props.highlightId,
-            isUnreadMarkerFaded,
-            isTouch,
-            onExpandClick,
-            numHidden,
+            props.prepend,
             timelineContext?.type,
-            onMarkAsRead,
             userId,
-            channelName,
-            isChannelEncrypted,
         ],
     )
 
@@ -529,7 +586,7 @@ export const MessageTimeline = (props: Props) => {
                     background="cta1"
                     boxShadow="medium"
                 >
-                    <Paragraph fontWeight="medium">New content</Paragraph>
+                    <Paragraph fontWeight="medium">New messages</Paragraph>
                     <Paragraph fontWeight="medium">↓</Paragraph>
                 </Box>
             </Box>

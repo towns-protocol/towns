@@ -33,7 +33,9 @@ export const DateDivider = React.forwardRef<HTMLElement, Props>((props, ref) => 
                         paddingRight="lg"
                         style={opacityStyle}
                     >
-                        <Paragraph size="sm">NEW</Paragraph>
+                        <Paragraph size="xs" fontWeight="medium">
+                            NEW
+                        </Paragraph>
                     </Box>
                 )}
             </Box>

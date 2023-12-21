@@ -1,7 +1,7 @@
 import {
     EncryptedMessageRenderEvent,
-    FullyReadRenderEvent,
     MessageRenderEvent,
+    NewDividerRenderEvent,
     RedactedMessageRenderEvent,
     RenderEvent,
     ThreadUpdateRenderEvent,
@@ -14,7 +14,7 @@ export type ListItem =
     | { key: string; type: 'header' }
     | { key: string; type: 'group'; date: string; isNew?: boolean }
     | { key: string; type: 'user-messages'; item: UserMessagesRenderEvent }
-    | { key: string; type: 'fully-read'; item: FullyReadRenderEvent }
+    | { key: string; type: 'new-divider'; item: NewDividerRenderEvent }
     | {
           key: string
           type: 'message'
