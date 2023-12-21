@@ -174,25 +174,6 @@ const createRiverNodeDbUser = async ({
     await pgClient.connect();
     console.log('connected')
 
-    // renaming legacy user
-
-    console.log('renaming legacy user')
-    // alter the role if it exists. old name: river, new name: river1
-    const renameLegacyUserQuery = `
-      DO
-      $do$
-      BEGIN
-        IF EXISTS (
-          SELECT FROM pg_catalog.pg_user WHERE usename = 'river'
-        ) THEN
-          ALTER ROLE river RENAME TO river1;
-        END IF;
-      END
-      $do$
-    `;
-    await pgClient.query(renameLegacyUserQuery);
-    console.log('renamed legacy user')
-
     // create user if not exists
     console.log('creating user')
 
@@ -227,16 +208,38 @@ const createRiverNodeDbUser = async ({
 
     console.log('granting create schema to user')
 
+    await pgClient.query('SELECT pg_advisory_lock(1);'); // 1 is an arbitrary lock ID
     const grantCreateSchemaQuery = `
       GRANT CREATE ON DATABASE ${riverUserDBConfig.DATABASE} TO ${riverUserDBConfig.USER};
     `;
-    await pgClient.query(grantCreateSchemaQuery);
+
+    // run the query above with 5 retry attempts:
+    const executeCreateQuery = async () => {
+      let attempt = 0;
+      let error;
+      while (attempt < 5) {
+        try {
+          await pgClient.query(grantCreateSchemaQuery);
+          break;
+        } catch (e) {
+          console.warn(`error executing create query attempt: ${attempt}`, e)
+          error = e;
+          attempt++;
+        }
+      }
+      if (error) {
+        throw error;
+      }
+    }
+
+    await executeCreateQuery()
 
     console.log('done creating user')
 
   } catch (e) {
     error = e;
   } finally {
+    await pgClient.query('SELECT pg_advisory_unlock(1);');
     await pgClient.end()
   }
 
@@ -286,6 +289,9 @@ exports.handler = async (event, context, callback) => {
     // find or create the river user password, and use it to configure the river db
     const riverUserDBConfig = await findOrCreateRiverUserDBConfig();
     const masterUserCredentials = await getMasterUserCredentials();
+
+    console.log('node wallet address: ', address)
+
     await createRiverNodeDbUser({
       address,
       riverUserDBConfig,

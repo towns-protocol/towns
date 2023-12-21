@@ -53,6 +53,12 @@ variable "is_transient" {
   default     = false
 }
 
+variable "is_multi_node" {
+  description = "Whether or not this node is in multi-node mode"
+  type        = bool
+  default     = false
+}
+
 variable "river_node_db" {
   description = "The river node db module"
   type        = any

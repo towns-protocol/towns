@@ -96,6 +96,8 @@ module "river_node" {
   node_subnets = local.transient_global_remote_state.vpc.private_subnets
   vpc_id       = local.transient_global_remote_state.vpc.vpc_id
 
+  is_multi_node = var.num_nodes > 1
+
   ecs_cluster = {
     id   = local.transient_global_remote_state.river_ecs_cluster.id
     name = local.transient_global_remote_state.river_ecs_cluster.name

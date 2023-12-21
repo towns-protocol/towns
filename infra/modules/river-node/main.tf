@@ -519,6 +519,27 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         name  = "WALLETLINKCONTRACT__VERSION"
         value = "v3"
+      },
+      {
+        name  = "MODE"
+        value = var.is_multi_node ? "multi-node" : "single-node"
+      },
+      {
+        # TODO: remove this env var after migrating to the actual ndoe registry smart contract
+        name  = "NODEREGISTRYCSV"
+        value = <<-EOF
+        #address,url
+        0xbf2fe1d28887a0000a1541291c895a26bd7b1ddd,https://river1-${terraform.workspace}.towns.com,
+        0x43eace8e799497f8206e579f7ccd1ec41770d099,https://river2-${terraform.workspace}.towns.com,
+        0x4e9baef70f7505fda609967870b8b489af294796,https://river3-${terraform.workspace}.towns.com,
+        0xae2ef76c62c199bc49bb38db99b29726bd8a8e53,https://river4-${terraform.workspace}.towns.com,
+        0xc4f042cd5aef82db8c089ad0cc4dd7d26b2684cb,https://river5-${terraform.workspace}.towns.com,
+        0x9bb3b35bbf3fa8030ccdb31030cf78039a0d0d9b,https://river6-${terraform.workspace}.towns.com,
+        0x582c64ba11bf70e0bac39988cd3bf0b8f40bdec4,https://river7-${terraform.workspace}.towns.com,
+        0x9df6e5f15ec682ca58df6d2a831436973f98fe60,https://river8-${terraform.workspace}.towns.com,
+        0xb79facbfc07bff49cd2e2971305da0df7aca9bf8,https://river9-${terraform.workspace}.towns.com,
+        0xa278267f396a317c5bb583f47f7f2792bc00d3b3,https://river10-${terraform.workspace}.towns.com
+        EOF
       }
     ]
     logConfiguration = {
