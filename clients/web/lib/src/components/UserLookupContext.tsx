@@ -103,7 +103,8 @@ export const DMChannelContextUserLookupProvider = (props: {
                 if (!user.username && !user.displayName && user.memberOf) {
                     // find the first (not necesarilly the best, since that
                     // would be subjective) alternative that has a displayName
-                    const firstMatch = Object.values(user.memberOf)
+                    const matches = Object.values(user.memberOf)
+                        .filter((u) => u.displayName.length > 0 || u.username.length > 0)
                         .sort((a, b) =>
                             !spaceId
                                 ? 0
@@ -112,10 +113,10 @@ export const DMChannelContextUserLookupProvider = (props: {
                                           spaceCompare(b.spaceId, spaceId),
                                   ),
                         )
-                        .find((m) => m.displayName)
-                    if (firstMatch) {
-                        user.username = firstMatch.username
-                        user.displayName = firstMatch.displayName
+
+                    if (matches.length > 0) {
+                        user.username = matches[0].username
+                        user.displayName = matches[0].displayName
                     }
                 }
             })
