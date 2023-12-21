@@ -12,7 +12,7 @@ on:
                 required: true
                 default: 'latest'
             node_number:
-                description: 'Number of nodes to deploy'
+                description: 'Node number'
                 type: number
                 default: 1
 
@@ -27,7 +27,7 @@ on:
                 required: true
                 type: string
             node_number:
-                description: 'Number of nodes to deploy'
+                description: 'Node number'
                 type: number
                 default: 1
         secrets:
