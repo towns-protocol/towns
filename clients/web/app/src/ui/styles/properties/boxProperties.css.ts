@@ -7,6 +7,7 @@ export const border = {
     none: `none`,
     default: `1px solid ${vars.color.background.level3}`,
     faint: `1px solid ${vars.color.background.level2}`,
+    strongFaint: `2px solid ${vars.color.background.level2}`,
     level3: `1px solid ${vars.color.background.level3}`,
     level4: `1px solid ${vars.color.background.level4}`,
     quote: `2px solid ${vars.color.background.level3}`,
