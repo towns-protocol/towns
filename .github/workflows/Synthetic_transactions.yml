@@ -1,6 +1,6 @@
 name: 'Run Synthetic Transactions'
 env:
-    FOUNDRY_VERSION: nightly-eb2141c6b756e06437b837294d6fa485cb3916ef
+    FOUNDRY_VERSION: nightly
 
 on:
     workflow_dispatch: # A synthetic test which is triggered each 30 minutes
