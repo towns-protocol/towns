@@ -1,6 +1,6 @@
 name: 'Run SDK Load Tests'
 env:
-    FOUNDRY_VERSION: nightly-73fb616bca68507a705456458899ff5b2232a948
+    FOUNDRY_VERSION: nightly-eb2141c6b756e06437b837294d6fa485cb3916ef
 
 on:
     workflow_dispatch: # A load test was manually triggered
