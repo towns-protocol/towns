@@ -1,11 +1,9 @@
-import { getAccountAddress, useSpaceData } from 'use-zion-client'
+import { getAccountAddress, useSpaceData, useUserLookupContext } from 'use-zion-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
-import { Box, FormRender, Paragraph, Stack, TextButton } from '@ui'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { Box, FormRender, Paragraph, Stack, Text, TextButton } from '@ui'
 import { useSetUserBio } from 'hooks/useUserBio'
-import { shortAddress } from 'ui/utils/utils'
 import { useAuth } from 'hooks/useAuth'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { Spinner } from '@components/Spinner'
@@ -14,6 +12,7 @@ import { InvalidCookieNotification } from '@components/Notifications/InvalidCook
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { Avatar } from '@components/Avatar/Avatar'
 import { SetUsernameDisplayName } from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
+import { UserWalletContent } from './UserWalletContent'
 
 type Props = {
     displayName: string
@@ -33,6 +32,8 @@ export const UserProfile = (props: Props) => {
     const { userId, canEdit, center, info, userAddress, userBio } = props
     const { loggedInWalletAddress } = useAuth()
     const spaceData = useSpaceData()
+    const { usersMap } = useUserLookupContext()
+    const user = userId ? usersMap[userId] : undefined
 
     const { mutateAsync: mutateAsyncBio } = useSetUserBio(userAddress)
 
@@ -64,20 +65,6 @@ export const UserProfile = (props: Props) => {
             }
         }
     })
-
-    const walletContent = () => {
-        if (userAddress) {
-            return (
-                <Box horizontal justifyContent="spaceBetween">
-                    <ClipboardCopy
-                        label={shortAddress(userAddress)}
-                        clipboardContent={userAddress}
-                    />
-                </Box>
-            )
-        }
-        return null
-    }
 
     return (
         <Stack grow padding gap paddingBottom="none" position="relative">
@@ -111,15 +98,27 @@ export const UserProfile = (props: Props) => {
                     )}
                 </FormRender>
             </Stack>
-            {canEdit && spaceData && (
-                <SetUsernameDisplayName
-                    titleProperties={{ kind: 'space', spaceName: spaceData.name }}
-                />
+
+            {canEdit ? (
+                <>
+                    {spaceData && (
+                        <SetUsernameDisplayName
+                            titleProperties={{ kind: 'space', spaceName: spaceData.name }}
+                        />
+                    )}
+                </>
+            ) : (
+                <Stack padding gap rounded="sm" background="level2">
+                    {user && (
+                        <>
+                            {user.displayName.length > 0 && <Text>{user.displayName}</Text>}
+                            <Text color="gray2">@{user.username}</Text>
+                        </>
+                    )}
+                    <UserWalletContent userId={userId} />
+                </Stack>
             )}
 
-            <Stack padding rounded="sm" background="level2">
-                {walletContent()}
-            </Stack>
             <Stack grow gap>
                 <EditModeContainer
                     inputId={InputId.Bio}

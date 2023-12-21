@@ -6,6 +6,7 @@ import { Box, Button, Stack, Text, TextButton, TextField } from '@ui'
 import { validateUsername } from '@components/SetUsernameForm/validateUsername'
 import { useSetUsername } from 'hooks/useSetUsername'
 import { useUserInfo } from 'hooks/useUserInfo'
+import { UserWalletContent } from '@components/UserProfile/UserWalletContent'
 
 const useCurrentStreamID = () => {
     const { spaceSlug, channelSlug } = useParams()
@@ -182,9 +183,10 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                     )}
                 </Text>
             )}
-            <Stack horizontal>
-                <Box grow />
-                {showEditFields ? (
+            {showEditFields && (
+                <Stack horizontal>
+                    <Box grow />
+
                     <>
                         <Button size="button_xs" tone="level2" onClick={onCancel}>
                             <Text color="gray2" size="sm">
@@ -202,7 +204,12 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                             </Text>
                         </Button>
                     </>
-                ) : (
+                </Stack>
+            )}
+            <Stack horizontal centerContent>
+                <UserWalletContent userId={myUserId} />
+                <Box grow />
+                {!showEditFields && (
                     <TextButton onClick={() => setShowEditFields(true)}>Edit</TextButton>
                 )}
             </Stack>
