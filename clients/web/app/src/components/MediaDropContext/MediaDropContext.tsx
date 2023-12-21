@@ -1,7 +1,10 @@
 import React, { createContext, useCallback, useContext, useState } from 'react'
+import { toast } from 'react-hot-toast/headless'
 import { Box, Heading, Icon, Stack } from '@ui'
 import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
 import { useDevice } from 'hooks/useDevice'
+import { FileUploadFailedToast } from '@components/RichText/FileUploadFailedToast'
+import { isMediaMimeType } from 'utils/isMediaMimeType'
 
 const MediaDropContext = createContext<{
     files: File[]
@@ -38,7 +41,29 @@ export const MediaDropContextProvider = ({
         if (event.dataTransfer.files.length < 1) {
             return
         }
-        setFiles([...event.dataTransfer.files])
+        const filteredFiles: File[] = []
+        for (const file of event.dataTransfer.files) {
+            // Images are compressed, so we don't need to check their filesize here
+            // with the exception of gifs, which are not compressed before upload
+            if (file.type !== 'image/gif' && isMediaMimeType(file.type)) {
+                filteredFiles.push(file)
+                continue
+            }
+
+            if (file.size > 5_000_000) {
+                toast.custom((t) => {
+                    return (
+                        <FileUploadFailedToast
+                            toast={t}
+                            message="File size exceeds maximum limit of 5mb."
+                        />
+                    )
+                })
+            } else {
+                filteredFiles.push(file)
+            }
+        }
+        setFiles(filteredFiles)
     }, [])
 
     const onDragEnter = useCallback((e: React.DragEvent<HTMLElement>) => {
