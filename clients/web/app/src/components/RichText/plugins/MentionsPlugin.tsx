@@ -37,6 +37,7 @@ export const MentionsPlugin = (props: Props) => {
 
     const options = useMemo(() => {
         return props.members
+            .map((m) => ({ ...m, displayName: getPrettyDisplayName(m) }))
             .map((m) =>
                 m.displayName
                     ? new MentionTypeaheadOption(m.displayName, m.userId, m.userId === props.userId)
