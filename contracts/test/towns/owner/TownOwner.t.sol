@@ -13,9 +13,9 @@ import {Validator__InvalidStringLength, Validator__InvalidByteLength, Validator_
 import {TownOwnerSetup} from "./TownOwnerSetup.sol";
 
 contract TownOwnerTest is ITownOwnerBase, IOwnableBase, TownOwnerSetup {
-  string name = "Awesome Town";
-  string uri = "ipfs://town-name";
-  string networkId = "1";
+  string internal name = "Awesome Town";
+  string internal uri = "ipfs://town-name";
+  string internal networkId = "1";
 
   // ------------ mintTown ------------
   function test_mintTown() external {

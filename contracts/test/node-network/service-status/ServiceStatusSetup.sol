@@ -21,9 +21,12 @@ abstract contract ServiceStatusSetup is FacetTest {
   ServiceStatusFacet internal serviceStatusFacet;
   AccessControlListFacet internal accessControlListFacet;
   NodeRegistryFacet internal nodeRegistryFacet;
+  address internal operator1;
 
   function setUp() public override {
     super.setUp();
+
+    operator1 = _randomAddress();
 
     vm.prank(deployer);
     serviceStatusFacet = ServiceStatusFacet(diamond);

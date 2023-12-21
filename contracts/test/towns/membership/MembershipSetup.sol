@@ -32,15 +32,15 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
   MockSimpleEntitlement internal entitlement;
   EntitlementsManager internal manager;
 
-  address townFactory;
-  address founder;
-  address founderDAO;
+  address internal townFactory;
+  address internal founder;
+  address internal founderDAO;
 
   // entitled user
-  address alice;
+  address internal alice;
 
   // non-entitled user
-  address bob;
+  address internal bob;
 
   function setUp() public override {
     founder = _randomAddress();

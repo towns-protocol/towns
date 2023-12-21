@@ -17,7 +17,7 @@ import {MembershipReferralFacet} from "contracts/src/towns/facets/membership/ref
 
 abstract contract MembershipReferralSetup is FacetTest {
   MembershipReferralFacet internal referrals;
-  address townOwner;
+  address internal townOwner;
 
   function setUp() public override {
     super.setUp();

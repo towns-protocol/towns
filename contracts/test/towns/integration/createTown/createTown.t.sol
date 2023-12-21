@@ -21,7 +21,7 @@ import {Permissions} from "contracts/src/towns/facets/Permissions.sol";
 // contracts
 import {TownArchitectSetup} from "contracts/test/towns/architect/TownArchitectSetup.sol";
 
-contract Integration_CreateTown is
+contract IntegrationCreateTown is
   TownArchitectSetup,
   IRolesBase,
   ITownArchitectBase

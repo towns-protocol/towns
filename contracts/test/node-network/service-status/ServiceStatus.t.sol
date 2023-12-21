@@ -10,13 +10,10 @@ import {ServiceStatusSetup} from "./ServiceStatusSetup.sol";
 import {ServiceStatus} from "contracts/src/node-network/service-status/IServiceStatus.sol";
 import {Wallets} from "../helpers/Wallets.sol";
 import {RegisterNode, Node} from "contracts/src/node-network/registry/INodeRegistry.sol";
-import {console2} from "forge-std/console2.sol";
-import "forge-std/Test.sol";
 
 contract ServiceStatusTest is ServiceStatusSetup, Wallets {
   bytes4 internal constant SOME_IP_ADDRESS = hex"7f000001";
   uint16 internal constant SOME_PORT = 54321;
-  address operator1 = vm.addr(1);
 
   function _registerNode() internal {
     vm.startPrank(operator1);

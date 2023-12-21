@@ -27,21 +27,21 @@ import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
  * @dev This contract is used for testing purposes only
  */
 contract TownImplementationHelper {
-  OwnablePendingHelper ownableHelper = new OwnablePendingHelper();
-  TokenPausableHelper tokenPausableHelper = new TokenPausableHelper();
-  TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
-  DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
-  DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
-  EntitlementsHelper entitlementsHelper = new EntitlementsHelper();
-  RolesHelper rolesHelper = new RolesHelper();
-  ChannelsHelper channelsHelper = new ChannelsHelper();
-  MembershipHelper membershipHelper = new MembershipHelper();
-  ERC721AHelper erc721aHelper = new ERC721AHelper();
+  OwnablePendingHelper internal ownableHelper = new OwnablePendingHelper();
+  TokenPausableHelper internal tokenPausableHelper = new TokenPausableHelper();
+  TokenOwnableHelper internal tokenOwnableHelper = new TokenOwnableHelper();
+  DiamondCutHelper internal diamondCutHelper = new DiamondCutHelper();
+  DiamondLoupeHelper internal diamondLoupeHelper = new DiamondLoupeHelper();
+  EntitlementsHelper internal entitlementsHelper = new EntitlementsHelper();
+  RolesHelper internal rolesHelper = new RolesHelper();
+  ChannelsHelper internal channelsHelper = new ChannelsHelper();
+  MembershipHelper internal membershipHelper = new MembershipHelper();
+  ERC721AHelper internal erc721aHelper = new ERC721AHelper();
 
-  MultiInit multiInit = new MultiInit();
+  MultiInit internal multiInit = new MultiInit();
 
-  address[] initAddresses = new address[](3);
-  bytes[] initDatas = new bytes[](3);
+  address[] internal initAddresses = new address[](3);
+  bytes[] internal initDatas = new bytes[](3);
 
   function createImplementation(address owner) external returns (Diamond) {
     uint256 cutCount = 8;

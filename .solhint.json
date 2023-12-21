@@ -15,6 +15,7 @@
         "no-empty-blocks": "off",
         "no-inline-assembly": "off",
         "avoid-low-level-calls": "off",
+        "avoid-tx-origin": "off",
         "no-console": "off",
         "func-name-mixedcase": "off",
         "max-states-count": "off",
