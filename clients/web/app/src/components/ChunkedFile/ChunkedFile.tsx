@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useChunkedMedia } from 'use-zion-client'
 import { useDownloadFile } from 'use-zion-client/dist/hooks/use-chunked-media'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
-import { Box, Button, Stack, Text } from '@ui'
+import { Box, Button, Icon, Stack, Text } from '@ui'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 
 type Props = {
@@ -57,25 +57,31 @@ const ChunkedFileDownload = (props: Props) => {
         <Stack horizontal>
             <Stack
                 horizontal
+                gap
+                paddingX="md"
+                paddingY="sm"
                 width="auto"
-                padding="sm"
                 border="level3"
-                rounded="xs"
+                rounded="sm"
                 pointerEvents="auto"
                 cursor="pointer"
                 alignItems="center"
-                gap="lg"
+                onClick={onDownloadClicked}
             >
-                <Stack gap="sm" onClick={onDownloadClicked}>
-                    <Text fontWeight="strong" color="default" size="sm">
+                <Icon type="file" size="square_md" color="gray2" />
+                <Stack gap="sm">
+                    <Text fontWeight="medium" color="default" size="md">
                         {filename}
                     </Text>
-                    <Text color="gray2" size="xs">
+                    <Text color="gray2" size="sm">
                         {mimetype}
                     </Text>
                 </Stack>
-                <Button tone="level3" size="button_sm" onClick={onDownloadClicked}>
-                    Download
+                <Button tone="level2" color="gray2" border="level3" size="button_sm" rounded="sm">
+                    <Stack horizontal>
+                        <Icon type="download" color="gray2" size="square_sm" />
+                    </Stack>
+                    <Text fontWeight="medium">Download</Text>
                 </Button>
             </Stack>
         </Stack>

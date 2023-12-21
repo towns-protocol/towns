@@ -87,6 +87,9 @@ export const buttonStyle = recipe({
             },
         },
         border: {
+            level3: {
+                border: `1px solid ${vars.color.background.level3}`,
+            },
             level4: {
                 border: `1px solid ${vars.color.background.level4}`,
             },
