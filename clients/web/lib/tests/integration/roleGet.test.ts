@@ -138,7 +138,7 @@ describe('get role details', () => {
         const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
             spaceId.streamId,
         )
-        const councilNftAddress = getTestGatingNftAddress(alice.chainId)
+        const councilNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
@@ -228,7 +228,7 @@ describe('get role details', () => {
         }
         // create new role in space
         const permissions = [Permission.Read, Permission.Write, Permission.Redact]
-        const councilNftAddress = getTestGatingNftAddress(alice.chainId)
+        const councilNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
@@ -258,7 +258,7 @@ describe('get role details', () => {
             expect(roleDetails.id).toEqual(roleId.roleId)
             expect(roleDetails.tokens.length).toEqual(2)
             expect(roleDetails.tokens[0].contractAddress).toEqual(
-                expectedCouncilToken.contractAddress,
+                await expectedCouncilToken.contractAddress,
             )
             expect(roleDetails.tokens[0].isSingleToken).toEqual(expectedCouncilToken.isSingleToken)
             expect(roleDetails.tokens[0].tokenIds).toEqual(expectedCouncilToken.tokenIds)

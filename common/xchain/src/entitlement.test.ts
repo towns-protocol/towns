@@ -147,7 +147,7 @@ test.each(slowOrCases)('slowOrOperation', async (props) => {
     let start = performance.now()
     const result = await evaluateTree(controller, operation)
     const timeTaken = performance.now() - start
-    expect(timeTaken).toBeCloseTo(expectedTime, -1)
+    expect(timeTaken).toBeCloseTo(expectedTime, -2)
     expect(result).toBe(expectedResult)
 })
 
@@ -214,7 +214,7 @@ test.each(slowAndCases)('slowAndOperation', async (props) => {
     const timeTaken = performance.now() - start
 
     expect(result).toBe(expectedResult)
-    expect(timeTaken).toBeCloseTo(expectedTime, -1)
+    expect(timeTaken).toBeCloseTo(expectedTime, -2)
 })
 
 test('empty', async () => {

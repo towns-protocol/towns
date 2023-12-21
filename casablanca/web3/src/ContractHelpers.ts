@@ -23,6 +23,8 @@ import {
 } from './v4'
 import { isEthersProvider } from './Utils'
 
+import { getTestGatingNFTContractAddress } from './TestGatingNFT'
+
 export function mintMockNFT(
     chainId: number,
     provider: ethers.providers.Provider | PublicClient,
@@ -69,12 +71,8 @@ export function balanceOfMockNFT(
 
 export const foundryMockNftAddress = getContractsInfo(31337).mockErc721aAddress
 
-export function getTestGatingNftAddress(chainId: number): string | null {
-    const contractInfo = getContractsInfo(chainId)
-    if (!contractInfo) {
-        throw new Error(`Contract info testGatingNFT for chainId ${chainId} is not found.`)
-    }
-    return contractInfo.testGatingTokenAddress ?? null
+export async function getTestGatingNftAddress(_chainId: number): Promise<string> {
+    return await getTestGatingNFTContractAddress()
 }
 
 export async function getFilteredRolesFromSpace<V extends Versions = TDefaultVersion>(

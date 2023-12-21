@@ -90,7 +90,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
 
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
-        const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
+        const testGatingNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!testGatingNftAddress) {
             throw new Error('testGatingNftAddress is undefined')
         }
@@ -131,7 +131,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
-        const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
+        const testGatingNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!testGatingNftAddress) {
             throw new Error('testGatingNftAddress is undefined')
         }
@@ -340,7 +340,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
-        const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
+        const testGatingNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!testGatingNftAddress) {
             throw new Error('testGatingNftAddress is undefined')
         }
@@ -391,7 +391,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
-        const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
+        const testGatingNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!testGatingNftAddress) {
             throw new Error('testGatingNftAddress is undefined')
         }

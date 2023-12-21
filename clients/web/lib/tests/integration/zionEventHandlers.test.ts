@@ -39,7 +39,7 @@ describe('Zion event handlers test', () => {
         const createSpaceInfo = {
             name: alice.makeUniqueName(),
         }
-        const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
+        const testGatingNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!testGatingNftAddress) {
             throw new Error('testGatingNftAddress is undefined')
         }

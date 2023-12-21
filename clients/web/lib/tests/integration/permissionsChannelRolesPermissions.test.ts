@@ -89,7 +89,7 @@ describe('channel with roles and permissions', () => {
             Permission.Write,
         ])) as RoomIdentifier
 
-        const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
+        const testGatingNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!testGatingNftAddress) {
             throw new Error('testGatingNftAddress is undefined')
         }

@@ -41,7 +41,7 @@ describe('useRoleDetails', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const testGatingNftAddress = getTestGatingNftAddress(chainId)
+        const testGatingNftAddress = await getTestGatingNftAddress(chainId)
         if (!testGatingNftAddress) {
             throw new Error('testGatingNftAddress is undefined')
         }

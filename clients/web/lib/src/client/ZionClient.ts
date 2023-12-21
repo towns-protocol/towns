@@ -1041,6 +1041,7 @@ export class ZionClient implements EntitlementsDelegate {
             await transaction.wait()
         } catch (error) {
             if (error instanceof AggregateError) {
+                console.error('[mintMembershipTransaction] failed', error)
                 const err = new Error('execution reverted')
                 err.name = 'Entitlement__NotAllowed'
                 throw err

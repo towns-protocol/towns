@@ -18,7 +18,6 @@ import { ZionTestWeb3Provider } from 'use-zion-client/tests/integration/helpers/
 import { makeUniqueName } from 'use-zion-client/tests/integration/helpers/TestUtils'
 import { useCreateSpaceTransaction } from 'use-zion-client/src/hooks/use-create-space-transaction'
 import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
-import { useZionClient } from 'use-zion-client/src/hooks/use-zion-client'
 import { createMembershipStruct, getTestGatingNftAddress, Permission } from '@river/web3'
 import { TSigner } from '../../src/types/web3-types'
 
@@ -35,11 +34,10 @@ describe('spaceManagerContractHooks', () => {
         const spaceName = makeUniqueName('alice')
         const tokenGatedSpaceName = makeUniqueName('alice')
         // create a veiw for alice
+        const zionTokenAddress = await getTestGatingNftAddress(0)
 
         const TestComponent = ({ signer }: { signer: TSigner }) => {
             // basic space
-            const { chainId } = useZionClient()
-            const zionTokenAddress = chainId ? getTestGatingNftAddress(chainId) : undefined
             const spaceTransaction = useCreateSpaceTransaction()
             const { createSpaceTransactionWithRole } = spaceTransaction
             // spaces
@@ -93,7 +91,7 @@ describe('spaceManagerContractHooks', () => {
                     setCreateSpaceWithZionMemberRole(true)
                 }
                 void handleClick()
-            }, [createSpaceTransactionWithRole, zionTokenAddress, signer])
+            }, [createSpaceTransactionWithRole, signer])
 
             useEffect(() => {
                 console.log('TestComponent', 'render', { spaceTransaction })

@@ -145,7 +145,7 @@ export async function createTestSpaceGatedByTownAndZionNfts(
         throw new Error('client.walletAddress is undefined')
     }
 
-    const testGatingNftAddress = getTestGatingNftAddress(client.chainId)
+    const testGatingNftAddress = await getTestGatingNftAddress(client.chainId)
     const tokens = createExternalTokenStruct([testGatingNftAddress ?? ''])
 
     console.log('createTestSpaceGatedByTownAndZionNfts tokens', tokens)

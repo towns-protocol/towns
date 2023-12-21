@@ -27,7 +27,7 @@ test('create a public space and a public room, and have user join', async () => 
         Permission.Write,
     ])) as RoomIdentifier
 
-    const testGatingNftAddress = getTestGatingNftAddress(bob.chainId)
+    const testGatingNftAddress = await getTestGatingNftAddress(bob.chainId)
     expect(testGatingNftAddress).toBeDefined()
     if (!testGatingNftAddress) {
         throw new Error('testGatingNftAddress is undefined')

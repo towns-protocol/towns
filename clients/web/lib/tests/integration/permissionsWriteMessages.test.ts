@@ -36,7 +36,7 @@ describe('write messages', () => {
         const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
             spaceId.streamId,
         )
-        const councilNftAddress = getTestGatingNftAddress(alice.chainId)
+        const councilNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }

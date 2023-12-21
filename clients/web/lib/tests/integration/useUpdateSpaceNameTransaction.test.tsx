@@ -34,7 +34,7 @@ describe('useUpdateSpaceNameTransaction', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const testGatingNftAddress = getTestGatingNftAddress(chainId)
+        const testGatingNftAddress = await getTestGatingNftAddress(chainId)
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()

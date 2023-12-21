@@ -23,6 +23,7 @@ export class TestConstants {
 
             const testGatingNft = new TestGatingNFT(31337, provider, wallet)
             await testGatingNft.publicMint(wallet.address)
+            console.log('minted TestGatingNFT nft')
 
             return wallet
         } catch (e) {

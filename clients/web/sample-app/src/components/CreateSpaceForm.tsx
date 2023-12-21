@@ -11,7 +11,7 @@ import {
     useCreateSpaceTransaction,
     useWeb3Context,
 } from 'use-zion-client'
-import { Permission, getTestGatingNftAddress, mintMockNFT } from '@river/web3'
+import { Permission, getTestGatingNFTContractAddress, mintMockNFT } from '@river/web3'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ethers } from 'ethers'
 import { useGetEmbeddedSigner } from '@towns/privy'
@@ -84,11 +84,30 @@ export const CreateSpaceForm = (props: Props) => {
         [isLoading, formValue.spaceName.length],
     )
 
-    const councilNftAddress = useMemo(() => {
-        if (chainId) {
-            return getTestGatingNftAddress(chainId)
+    const [councilNftAddress, setCouncilNftAddress] = useState<`0x${string}`>()
+
+    useEffect(() => {
+        let cancel = false
+
+        ;(async () => {
+            if (!cancel) {
+                try {
+                    const address = await getTestGatingNFTContractAddress()
+                    if (!cancel) {
+                        setCouncilNftAddress(address)
+                    }
+                } catch (error) {
+                    if (!cancel) {
+                        console.error('Error fetching data:', error)
+                    }
+                }
+            }
+        })()
+
+        return () => {
+            cancel = true
         }
-    }, [chainId])
+    }, [])
 
     const onClickCreateSpace = useCallback(async () => {
         let tokenAddresses: string[] = []

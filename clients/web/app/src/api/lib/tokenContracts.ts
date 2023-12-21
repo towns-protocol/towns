@@ -1,8 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { ContractMetadata, GetCollectionsForOwnerResponse } from '@token-worker/types'
-import { Address, erc20ABI } from 'wagmi'
-import { ethers } from 'ethers'
+import { Address } from 'wagmi'
 import { useMemo } from 'react'
 import { TokenProps, TokenType } from '@components/Tokens/types'
 import { env } from 'utils'
@@ -24,7 +23,6 @@ type CachedData = {
 
 type UseTokenContractsForAdress = {
     wallet: string
-    zionTokenAddress: string | null
     enabled: boolean
     chainId: number | undefined
 }
@@ -44,20 +42,15 @@ const zSchema: z.ZodType<GetCollectionsForOwnerResponse> = z.object({
 })
 
 // Get the tokens in a user's wallet
-export function useCollectionsForOwner({
-    wallet,
-    zionTokenAddress,
-    enabled,
-    chainId,
-}: UseTokenContractsForAdress) {
+export function useCollectionsForOwner({ wallet, enabled, chainId }: UseTokenContractsForAdress) {
     const alchmeyNetwork = useNetworkForNftApi()
 
     return useQuery(
         [queryKey],
         () =>
             chainId === 31337
-                ? getLocalHostTokens(wallet, zionTokenAddress, alchmeyNetwork)
-                : getTokenContractsForAddress(wallet, zionTokenAddress, alchmeyNetwork),
+                ? getLocalHostTokens(wallet, alchmeyNetwork)
+                : getTokenContractsForAddress(wallet, alchmeyNetwork),
         {
             staleTime: 1000 * 15,
             refetchOnMount: false,
@@ -79,35 +72,21 @@ export function useCachedTokensForWallet() {
     }, [queryClient])
 }
 
-async function getLocalHostTokens(
-    wallet: string,
-    zionTokenAddress: string | null,
-    alchmeyNetwork: string,
-) {
+async function getLocalHostTokens(wallet: string, alchmeyNetwork: string) {
     // to test with a big list of tokens, add ?vitalikTokens to the url, or ?base_sepolia to use the base_sepolia testnet
     if (fetchVitalikTokens || fetchBaseSepolia) {
-        return getTokenContractsForAddress(wallet, zionTokenAddress, alchmeyNetwork)
+        return getTokenContractsForAddress(wallet, alchmeyNetwork)
     }
 
     // on local, just return the zion token, if it exists (must be anvil account)
     const tokens: TokenProps[] = []
-    if (zionTokenAddress) {
-        const balance = await getLocalZionTokenBalance(zionTokenAddress, wallet)
-        if (balance > 0) {
-            tokens.push(mapZionTokenToTokenProps(zionTokenAddress))
-        }
-    }
     return {
         tokens,
         nextPageKey: undefined,
     }
 }
 
-async function getTokenContractsForAddress(
-    wallet: string,
-    _zionTokenAddress: string | null,
-    alchmeyNetwork: string,
-) {
+async function getTokenContractsForAddress(wallet: string, alchmeyNetwork: string) {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
     const url = `${TOKENS_SERVER_URL}/api/getCollectionsForOwner/in/${alchmeyNetwork}/${wallet}`
     const response = await axiosClient.get(url)
@@ -137,20 +116,4 @@ async function mapToTokenProps(token: ContractMetadata): Promise<TokenProps> {
         contractAddress: token.address || '',
         type,
     }
-}
-
-function mapZionTokenToTokenProps(zionTokenAddress: string) {
-    return {
-        imgSrc: 'https://picsum.photos/id/99/400',
-        label: 'Zion',
-        contractAddress: zionTokenAddress,
-        type: undefined,
-    }
-}
-
-async function getLocalZionTokenBalance(zionTokenAddress: string, wallet: string) {
-    const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
-    const contract = new ethers.Contract(zionTokenAddress, erc20ABI, provider)
-    const balance = await contract.balanceOf(wallet)
-    return balance.toNumber()
 }

@@ -23,7 +23,7 @@
         "test:ci": "yarn csb:test-web-lib-done --silent",
         "test:ci-todo": "yarn csb:test-web-lib-todo --silent",
         "test:load:all": "yarn my-jest --group=integration/load --testTimeout=3000000",
-        "create-dev-town": "yarn my-jest ./scripts/create-dev-town.test.ts --testTimeout=3000000 --silent=0",
+        "create-dev-town": "yarn my-jest ./scripts/create-dev-town.test.ts --testTimeout=3000000",
         "watch": "tsc --watch"
     },
     "dependencies": {
