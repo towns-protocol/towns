@@ -288,6 +288,11 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         return Promise.resolve()
     }
 
+    /**
+     * processNewMegolmSession
+     * process new megolm sessions that were sent to our to device stream inbox
+     * re-enqueue any decryption failures with matching session id
+     */
     private async processNewMegolmSession(
         session: UserToDevicePayload_MegolmSessions,
     ): Promise<void> {
@@ -323,7 +328,12 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             algorithm: MEGOLM_ALGORITHM,
         }))
         // import the sessions
-        this.log.info('importing megolm sessions count: ', sessions.length)
+        this.log.info(
+            'importing megolm sessions streamId:',
+            session.streamId,
+            'count: ',
+            sessions.length,
+        )
         await this.client.importRoomKeys(session.streamId, sessions)
         // re-enqueue any decryption failures with these ids
         for (const session of sessions) {
@@ -340,6 +350,10 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         }
     }
 
+    /**
+     * processEncryptedContentItem
+     * try to decrypt encrytped content
+     */
     private async processEncryptedContentItem(item: EncryptedContentItem): Promise<void> {
         this.log.debug('processEncryptedContentItem', item)
         try {
@@ -359,6 +373,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                     retryAt: new Date(Date.now() + 1000), // give it 1 seconds for miniblockblock to confirm
                 })
             } else {
+                // do the work to decrypt the event
                 this.log.debug('decrypting content')
                 await this.client.decryptMegolmEvent(
                     item.streamId,
@@ -377,6 +392,10 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         }
     }
 
+    /**
+     * processDecryptionRetry
+     * retry decryption a second time for a failed decryption, keys may have arrived
+     */
     private async processDecryptionRetry(retryItem: DecryptionRetryItem): Promise<void> {
         const item = retryItem.event
         try {
@@ -404,6 +423,10 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         }
     }
 
+    /**
+     * processMissingKeys
+     * process missing keys and send key solicitations to streams
+     */
     private async processMissingKeys(item: MissingKeysItem): Promise<void> {
         this.log.debug('processing missing keys', item)
         const streamId = item.streamId
@@ -438,13 +461,21 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             isNewDevice,
             sessionIds: isNewDevice ? [] : missingSessionIds,
         })
-        this.log.info('requesting keys', {
+        this.log.info(
+            'requesting keys',
+            item.streamId,
+            'isNewDevice',
             isNewDevice,
-            sessionIds: missingSessionIds.length,
-        })
+            'sessionIds:',
+            missingSessionIds.length,
+        )
         await this.client.makeEventAndAddToStream(streamId, keySolicitation)
     }
 
+    /**
+     * processKeySolicitation
+     * process incoming key solicitations and send keys and key fulfilments
+     */
     private async processKeySolicitation(item: KeySolicitationItem): Promise<void> {
         this.log.debug('processing key solicitation', item)
         const streamId = item.streamId
