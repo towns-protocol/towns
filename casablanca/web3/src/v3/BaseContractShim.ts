@@ -158,10 +158,35 @@ export class BaseContractShim<
         if (!errorData) {
             // Case: Non blockchain error (i.e. thrown by SpaceDapp) OR unknown error
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            errorData = anyError?.data
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             errorMessage = anyError?.message
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             errorName = anyError?.name
         }
+
+        if (!errorData) {
+            // sometimes it's a stringified object under anyError.reason
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                const reason = anyError?.reason
+                if (typeof reason === 'string') {
+                    const errorMatch = reason?.match(/error\\":\{([^}]+)\}/)?.[1]
+                    if (errorMatch) {
+                        const parsedData = JSON.parse(`{${errorMatch?.replace(/\\/g, '')}}`)
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        errorData = parsedData?.data
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        errorMessage = parsedData?.message
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        errorName = parsedData?.name
+                    }
+                }
+            } catch (error) {
+                console.log('error parsing reason', error)
+            }
+        }
+
         return {
             errorData,
             errorMessage,

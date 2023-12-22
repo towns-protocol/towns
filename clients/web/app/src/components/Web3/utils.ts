@@ -111,7 +111,15 @@ export function mapToErrorMessage(error: Error | undefined) {
             errorText = 'Not allowed to create town. Your wallet may contain insufficient funds.'
             break
         default:
-            errorText = 'An unknown error occurred. Cannot save transaction.'
+            if (errorName) {
+                errorText = `${errorName}`
+            }
+            if (errorCode) {
+                errorText = `${errorText} ${errorCode}`
+            }
+            if (!errorText) {
+                errorText = 'An unknown error occurred. Cannot save transaction.'
+            }
             break
     }
     const fullErrorText = `Transaction error: ${errorText}`

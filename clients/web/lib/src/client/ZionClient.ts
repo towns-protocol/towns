@@ -1033,6 +1033,15 @@ export class ZionClient implements EntitlementsDelegate {
             // This will throw an AggregateError if none of the wallets are entitled
             const entitledWallet = await Promise.any(allPromises)
 
+            const hasMembership = await this.spaceDapp.hasTownMembership(
+                spaceId.streamId,
+                entitledWallet,
+            )
+
+            if (hasMembership) {
+                return
+            }
+
             const transaction = await this.spaceDapp.joinTown(
                 spaceId.streamId,
                 entitledWallet,
