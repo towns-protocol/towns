@@ -42,9 +42,18 @@ export const useUserList = (params: Props) => {
             return excludeSelf ? [] : ['You']
         }
 
+        const sliceIndex = members.length <= maxNames ? maxNames : maxNames - 1
         return (members as (UserName | string)[])
-            .slice(0, members.length <= maxNames ? maxNames : maxNames - 1)
-            .concat(members.length > maxNames ? 'others' : excludeSelf ? [] : 'you')
+            .slice(0, sliceIndex)
+            .concat(
+                members.length === sliceIndex
+                    ? []
+                    : members.length > sliceIndex
+                    ? `${members.length - sliceIndex} others`
+                    : excludeSelf
+                    ? []
+                    : 'you',
+            )
             .reduce((acc, m, i, arr) => {
                 if (i > 0) {
                     acc.push(i < arr.length - 1 ? ', ' : ' and ')
