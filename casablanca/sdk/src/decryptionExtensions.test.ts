@@ -1,6 +1,7 @@
 import { isDefined } from './check'
 import { Client } from './client'
 import { dlog } from './dlog'
+import { DecryptedContentError } from './encryptedContentTypes'
 import { genId, makeSpaceStreamId } from './id'
 import { TestClientOpts, makeTestClient, waitFor } from './util.test'
 
@@ -49,16 +50,38 @@ describe('DecryptionExtensions', () => {
             .filter(isDefined)
     }
 
-    // soon
-    // const getDecryptionErrors = async (client: Client, streamId: string): Promise<string[]> => {
-    // }
-
     const waitForMessages = async (client: Client, streamId: string, bodys: string[]) => {
         log('waitForMessages', client.userId, streamId, bodys)
         return waitFor(
             async () => {
                 const messages = await getDecryptedChannelMessages(client, streamId)
                 expect(messages).toEqual(bodys)
+            },
+            { timeoutMS: 10000 },
+        )
+    }
+
+    const getDecryptionErrors = async (
+        client: Client,
+        streamId: string,
+    ): Promise<DecryptedContentError[]> => {
+        const stream = client.stream(streamId) ?? (await client.waitForStream(streamId))
+        return stream.view.timeline
+            .map((e) => {
+                if (e.decryptedContentError) {
+                    return e.decryptedContentError
+                }
+                return undefined
+            })
+            .filter(isDefined)
+    }
+
+    const waitForFailures = async (client: Client, streamId: string, count: number) => {
+        log('waitForFailures', client.userId, streamId, count)
+        return waitFor(
+            async () => {
+                const errors = await getDecryptionErrors(client, streamId)
+                expect(errors.length).toEqual(count)
             },
             { timeoutMS: 10000 },
         )
@@ -90,7 +113,7 @@ describe('DecryptionExtensions', () => {
             deviceId: 'alice2',
         })
 
-        // This wait takes over 5s, we should address
+        // This wait takes over 5s
         await expect(alice2.waitForStream(streamId)).toResolve()
 
         // alice gets keys sent via new device message
@@ -139,10 +162,9 @@ describe('DecryptionExtensions', () => {
         const alice1 = await makeAndStartClient({ deviceId: 'alice1' })
         await alice1.joinStream(spaceId)
         await alice1.joinStream(channelId)
+        await expect(waitForFailures(alice1, channelId, 1)).toResolve() // alice should see a decryption error
         await expect(waitForMessages(alice1, channelId, [])).toResolve() // alice doesn't see the messsage if bob isn't online to send keys
         await sendMessage(alice1, channelId, 'its alice')
-        // aellis there's a race here, alice could send the message before the retry for the decryption happens
-        // either way it should pass... but if it gets flaky maybe we broke newDevice vs session key solicitations
         await expect(waitForMessages(alice1, channelId, ['its alice'])).toResolve() // alice doesn't see the messsage if bob isn't online to send keys
 
         // bob comes back online, same device

@@ -381,14 +381,25 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                     item.encryptedContent,
                 )
             }
-        } catch (e) {
-            this.log.debug('failed to decrypt', e)
-            // todo, update the view to show the event as failed decryption with a reason https://linear.app/hnt-labs/issue/HNT-3934/new-decryption-extensions-update-streamtimelineevent-with-decryption
-            // todo, only retry on missing key errors https://linear.app/hnt-labs/issue/HNT-3933/new-decryptionextensions-only-retry-errors-where-keys-are-missing
-            this.queues.decryptionRetries.push({
-                event: item,
-                retryAt: new Date(Date.now() + 3000), // give it 3 seconds, maybe someone will send us the key
-            })
+        } catch (err: unknown) {
+            const sessionNotFound = isSessionNotFoundError(err)
+            this.log.debug('failed to decrypt', err, 'sessionNotFound', sessionNotFound)
+
+            this.client.stream(item.streamId)?.view.updateDecryptedContentError(
+                item.eventId,
+                {
+                    missingSession: sessionNotFound,
+                    encryptedContent: item.encryptedContent,
+                    error: err,
+                },
+                this.client,
+            )
+            if (sessionNotFound) {
+                this.queues.decryptionRetries.push({
+                    event: item,
+                    retryAt: new Date(Date.now() + 3000), // give it 3 seconds, maybe someone will send us the key
+                })
+            }
         }
     }
 
@@ -401,25 +412,35 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         try {
             this.log.debug('retrying decryption', item)
             await this.client.decryptMegolmEvent(item.streamId, item.eventId, item.encryptedContent)
-        } catch (e) {
-            this.log.debug('failed to decrypt on retry', e)
-            // todo, update the view to show the event as failed decryption with a reason https://linear.app/hnt-labs/issue/HNT-3934/new-decryption-extensions-update-streamtimelineevent-with-decryption
-            // todo, only retry on missing key errors https://linear.app/hnt-labs/issue/HNT-3933/new-decryptionextensions-only-retry-errors-where-keys-are-missing
-            const streamId = item.streamId
-            const sessionId = item.encryptedContent.content.sessionId
-            if (!this.decryptionFailures[streamId]) {
-                this.decryptionFailures[streamId] = {}
-            }
-            if (!this.decryptionFailures[streamId][sessionId]) {
-                this.decryptionFailures[streamId][sessionId] = []
-            }
-            this.decryptionFailures[streamId][sessionId].push(item)
+        } catch (err) {
+            const sessionNotFound = isSessionNotFoundError(err)
+            this.log.debug('failed to decrypt on retry', err, 'sessionNotFound', sessionNotFound)
+            this.client.stream(item.streamId)?.view.updateDecryptedContentError(
+                item.eventId,
+                {
+                    missingSession: sessionNotFound,
+                    encryptedContent: item.encryptedContent,
+                    error: err,
+                },
+                this.client,
+            )
+            if (sessionNotFound) {
+                const streamId = item.streamId
+                const sessionId = item.encryptedContent.content.sessionId
+                if (!this.decryptionFailures[streamId]) {
+                    this.decryptionFailures[streamId] = {}
+                }
+                if (!this.decryptionFailures[streamId][sessionId]) {
+                    this.decryptionFailures[streamId][sessionId] = []
+                }
+                this.decryptionFailures[streamId][sessionId].push(item)
 
-            removeItem(this.queues.missingKeys, (x) => x.streamId === streamId)
-            this.queues.missingKeys.push({
-                streamId: item.streamId,
-                waitUntil: new Date(Date.now() + 1000),
-            })
+                removeItem(this.queues.missingKeys, (x) => x.streamId === streamId)
+                this.queues.missingKeys.push({
+                    streamId: item.streamId,
+                    waitUntil: new Date(Date.now() + 1000),
+                })
+            }
         }
     }
 
@@ -606,4 +627,11 @@ function takeFirst<T>(count: number, array: T[]): T[] {
         result.push(array[i])
     }
     return result
+}
+
+function isSessionNotFoundError(err: unknown): boolean {
+    if (err !== null && typeof err === 'object' && 'message' in err) {
+        return (err.message as string).includes('Session not found')
+    }
+    return false
 }

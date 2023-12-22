@@ -11,6 +11,7 @@ import {
     LocalTimelineEvent,
     StreamChange,
     DecryptedTimelineEvent,
+    RemoteTimelineEvent,
 } from '@river/sdk'
 import {
     MembershipOp,
@@ -207,7 +208,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         eventId: eventId,
         localEventId: timelineEvent.localEvent?.localId,
         eventNum: timelineEvent.eventNum,
-        status: isSender ? getEventStatus(timelineEvent) : undefined, // todo: set status for events this user sent
+        status: isSender ? getEventStatus(timelineEvent) : undefined,
         createdAtEpocMs: Number(timelineEvent.createdAtEpocMs),
         updatedAtEpocMs: undefined,
         content: content,
@@ -234,7 +235,7 @@ function toTownsContent(timelineEvent: StreamTimelineEvent): TownsContentResult 
     } else if (isDecryptedEvent(timelineEvent)) {
         return toTownsContent_fromDecryptedEvent(timelineEvent.hashStr, timelineEvent)
     } else if (isRemoteEvent(timelineEvent)) {
-        return toTownsContent_fromParsedEvent(timelineEvent.hashStr, timelineEvent.remoteEvent)
+        return toTownsContent_fromParsedEvent(timelineEvent.hashStr, timelineEvent)
     } else {
         return { error: 'unknown event content type' }
     }
@@ -278,7 +279,11 @@ function toTownsContent_fromDecryptedEvent(
     }
 }
 
-function toTownsContent_fromParsedEvent(eventId: string, message: ParsedEvent): TownsContentResult {
+function toTownsContent_fromParsedEvent(
+    eventId: string,
+    timelineEvent: RemoteTimelineEvent,
+): TownsContentResult {
+    const message = timelineEvent.remoteEvent
     const { error, description } = validateEvent(eventId, message)
     if (error) {
         return { error }
@@ -298,21 +303,21 @@ function toTownsContent_fromParsedEvent(eventId: string, message: ParsedEvent): 
         case 'channelPayload':
             return toTownsContent_ChannelPayload(
                 eventId,
-                message,
+                timelineEvent,
                 message.event.payload.value,
                 description,
             )
         case 'dmChannelPayload':
             return toTownsContent_ChannelPayload(
                 eventId,
-                message,
+                timelineEvent,
                 message.event.payload.value,
                 description,
             )
         case 'gdmChannelPayload':
             return toTownsContent_ChannelPayload(
                 eventId,
-                message,
+                timelineEvent,
                 message.event.payload.value,
                 description,
             )
@@ -456,10 +461,11 @@ function toTownsContent_UserPayload(
 
 function toTownsContent_ChannelPayload(
     eventId: string,
-    message: ParsedEvent,
+    timelineEvent: RemoteTimelineEvent,
     value: ChannelPayload | DmChannelPayload | GdmChannelPayload,
     description: string,
 ): TownsContentResult {
+    const message = timelineEvent.remoteEvent
     switch (value.content.case) {
         case 'inception': {
             return {
@@ -487,7 +493,7 @@ function toTownsContent_ChannelPayload(
         }
         case 'message': {
             const payload = value.content.value
-            return toTownsContent_ChannelPayload_Message(payload, description)
+            return toTownsContent_ChannelPayload_Message(timelineEvent, payload, description)
         }
         case 'displayName':
         case 'username':
@@ -555,17 +561,20 @@ function toTownsContent_FromChannelMessage(
 }
 
 function toTownsContent_ChannelPayload_Message(
+    timelineEvent: StreamTimelineEvent,
     payload: EncryptedData,
     description: string,
 ): TownsContentResult {
     if (isCiphertext(payload.ciphertext)) {
         return {
             // if payload is an EncryptedData message, than it is encrypted content kind
-            content: { kind: ZTEvent.RoomMessageEncrypted } satisfies RoomMessageEncryptedEvent,
+            content: {
+                kind: ZTEvent.RoomMessageEncrypted,
+                error: timelineEvent.decryptedContentError,
+            } satisfies RoomMessageEncryptedEvent,
         }
     }
     // do not handle non-encrypted messages that should be encrypted
-    //return toTownsContent_ChannelPayload_Message_from_EncryptedData(payload, description)
     return { error: `${description} message text invalid channel message` }
 }
 

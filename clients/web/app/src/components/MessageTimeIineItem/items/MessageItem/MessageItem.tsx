@@ -1,5 +1,11 @@
 import React, { useCallback, useContext, useMemo, useRef, useState } from 'react'
-import { MessageType, ThreadStats, TimelineEvent, ZTEvent } from 'use-zion-client'
+import {
+    MessageType,
+    ThreadStats,
+    TimelineEvent,
+    ZTEvent,
+    staticAssertNever,
+} from 'use-zion-client'
 import { useNavigate } from 'react-router'
 import {
     MessageLayout,
@@ -30,8 +36,10 @@ import {
 import { TimelineEncryptedContent } from './EncryptedMessageBody/EncryptedMessageBody'
 import { MessageBody } from './MessageBody/MessageBody'
 
+type ItemDataType = MessageRenderEvent | EncryptedMessageRenderEvent | RedactedMessageRenderEvent
+
 type Props = {
-    itemData: MessageRenderEvent | EncryptedMessageRenderEvent | RedactedMessageRenderEvent
+    itemData: ItemDataType
     isHighlight?: boolean
 }
 
@@ -75,7 +83,7 @@ export const MessageItem = (props: Props) => {
     const isEditing = event.eventId === timelineActions.editingMessageId
     const isSelectable = !isEncryptedMessage
 
-    const msgTypeKey = isMessage ? itemData.event.content.msgType ?? '' : ''
+    const msgTypeKey = getItemContentKey(itemData)
 
     // replies are only shown for channel messages (two levels only)
     const replies =
@@ -104,7 +112,7 @@ export const MessageItem = (props: Props) => {
             key={`${event.eventId}${event.updatedAtEpocMs ?? event.createdAtEpocMs}${msgTypeKey}`}
         >
             {isEncryptedMessage ? (
-                <TimelineEncryptedContent event={event} />
+                <TimelineEncryptedContent event={event} content={itemData.event.content} />
             ) : event.content.kind === ZTEvent.RoomMessage ? (
                 isEditing ? (
                     <>
@@ -263,3 +271,16 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         </MessageLayout>
     )
 })
+
+function getItemContentKey(itemData: ItemDataType): string {
+    switch (itemData.type) {
+        case RenderEventType.Message:
+            return itemData.event.content.msgType ?? ''
+        case RenderEventType.EncryptedMessage:
+            return itemData.event.content.error === undefined ? 'enc' : 'enc-error'
+        case RenderEventType.RedactedMessage:
+            return 'redacted'
+        default:
+            staticAssertNever(itemData)
+    }
+}

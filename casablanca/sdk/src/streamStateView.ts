@@ -36,9 +36,10 @@ import { genLocalId } from './id'
 import { StreamStateView_UserToDevice } from './streamStateView_UserToDevice'
 import { bin_toHexString } from './binary'
 import { StreamStateView_CommonContent } from './streamStateView_CommonContent'
-import { DecryptedContent } from './encryptedContentTypes'
+import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
+import isEqual from 'lodash/isEqual'
 
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
@@ -434,6 +435,22 @@ export class StreamStateView {
             })
             // dispatching eventDecrypted makes it easier to test
             emitter.emit('eventDecrypted', this.streamId, this.contentKind, timelineEvent)
+        }
+    }
+
+    // update stream with decryption status
+    updateDecryptedContentError(
+        eventId: string,
+        content: DecryptedContentError,
+        emitter: TypedEmitter<EmittedEvents>,
+    ) {
+        const timelineEvent = this.events.get(eventId)
+        if (timelineEvent && !isEqual(timelineEvent.decryptedContentError, content)) {
+            check(timelineEvent.decryptedContent === undefined, 'Event is already decrypted')
+            timelineEvent.decryptedContentError = content
+            emitter.emit('streamUpdated', this.streamId, this.contentKind, {
+                updated: [timelineEvent],
+            })
         }
     }
 

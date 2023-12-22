@@ -3,6 +3,7 @@ import { ChannelOp, FullyReadMarker, MiniblockHeader, PayloadCaseType } from '@r
 import { Channel, Membership, Mention, PowerLevels } from './zion-types'
 import { BlockchainTransaction } from './web3-types'
 import { staticAssertNever } from '../utils/zion-utils'
+import { DecryptedContentError } from '@river/sdk'
 
 /**************************************************************************
  * We're using a union type to represent the different types of events that
@@ -141,6 +142,7 @@ export interface RoomEncryptionEvent {
 
 export interface RoomMessageEncryptedEvent {
     kind: ZTEvent.RoomMessageEncrypted
+    error?: DecryptedContentError
 }
 
 export interface RoomHistoryVisibilityEvent {

@@ -36,7 +36,7 @@ import {
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
 import { bin_toHexString } from './binary'
-import { DecryptedContent } from './encryptedContentTypes'
+import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
 
 export interface LocalEvent {
     localId: string
@@ -59,6 +59,7 @@ export interface StreamTimelineEvent {
     localEvent?: LocalEvent
     remoteEvent?: ParsedEvent
     decryptedContent?: DecryptedContent
+    decryptedContentError?: DecryptedContentError
     miniblockNum?: bigint
     confirmedEventNum?: bigint
 }

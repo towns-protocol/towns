@@ -172,7 +172,10 @@ const LastDirectMessageContent = (props: {
         case 'encrypted':
             return (
                 <Box grow horizontal paddingY="xs" width="200" shrink={false}>
-                    <TimelineEncryptedContent event={{ createdAtEpocMs: 0 }} />
+                    <TimelineEncryptedContent
+                        event={{ createdAtEpocMs: 0 }}
+                        content={info.content}
+                    />
                 </Box>
             )
 

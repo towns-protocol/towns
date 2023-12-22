@@ -70,38 +70,13 @@ export abstract class DecryptionAlgorithm {
  *   to the user.
  */
 export class DecryptionError extends Error {
-    public readonly detailedString: string
-
-    public constructor(
-        public readonly code: string,
-        msg: string,
-        details?: Record<string, string | Error>,
-    ) {
+    public constructor(public readonly code: string, msg: string) {
         super(msg)
         this.code = code
         this.name = 'DecryptionError'
-        this.detailedString = detailedStringForDecryptionError(this, details)
     }
 }
 
-function detailedStringForDecryptionError(
-    err: DecryptionError,
-    details?: Record<string, string | Error>,
-): string {
-    let result = err.name + '[msg: ' + err.message
-
-    if (details) {
-        result +=
-            ', ' +
-            Object.keys(details)
-                .map((k) => {
-                    const v = details[k]
-                    return `${k}: ${v instanceof Error ? v.message : v}`
-                })
-                .join(', ')
-    }
-
-    result += ']'
-
-    return result
+export function isDecryptionError(e: Error): e is DecryptionError {
+    return e.name === 'DecryptionError'
 }

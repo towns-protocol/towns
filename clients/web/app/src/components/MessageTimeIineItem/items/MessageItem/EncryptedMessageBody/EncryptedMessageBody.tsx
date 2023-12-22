@@ -1,10 +1,11 @@
 import React from 'react'
+import { RoomMessageEncryptedEvent } from 'use-zion-client'
 import { Box, Icon, Stack, Tooltip } from '@ui'
 import * as styles from './EncryptedMessageBody.css'
 
 export const TimelineEncryptedContent = React.memo(
-    (props: { event: { createdAtEpocMs: number } }) => {
-        const { event } = props
+    (props: { event: { createdAtEpocMs: number }; content: RoomMessageEncryptedEvent }) => {
+        const { event, content } = props
 
         const width = Math.min(
             (Math.floor((Math.cos(event.createdAtEpocMs / 1000) * 0.5 + 0.5) * 4) / 4) * 250 + 200,
@@ -18,7 +19,7 @@ export const TimelineEncryptedContent = React.memo(
                     centerContent
                     gap="sm"
                     style={{ width: `min(${width}px, 100%)` }}
-                    tooltip={<DecryptionTooltip />}
+                    tooltip={<DecryptionTooltip content={content} />}
                 >
                     <Box
                         grow
@@ -39,9 +40,14 @@ export const TimelineEncryptedContent = React.memo(
     },
 )
 
-const DecryptionTooltip = () => (
+const DecryptionTooltip = (props: { content: RoomMessageEncryptedEvent }) => (
     <Tooltip centerContent gap="sm" width="250" textAlign="center">
-        This message cannot be decrypted because you don&apos;t have this user&apos;s keys.
+        {props.content.error === undefined
+            ? 'Decrypting...'
+            : props.content.error.missingSession
+            ? 'Requesting keys from your other devices and/or other members...'
+            : `This message failed to decrypt. ${getDecryptionError(props.content.error?.error)}`}
+
         <div className={styles.loader}>
             <div />
             <div />
@@ -50,3 +56,21 @@ const DecryptionTooltip = () => (
         </div>
     </Tooltip>
 )
+
+function getDecryptionError(err?: unknown): string {
+    if (err !== null && err !== undefined) {
+        if (err instanceof Error) {
+            return err.message
+        }
+        if (typeof err === 'string') {
+            return err
+        }
+        if (typeof err === 'object' && 'message' in err) {
+            return err.message as string
+        }
+        if (typeof err === 'object') {
+            return JSON.stringify(err)
+        }
+    }
+    return ''
+}

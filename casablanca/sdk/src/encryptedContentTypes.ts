@@ -46,3 +46,9 @@ export function toDecryptedContent(
             checkNever(kind)
     }
 }
+
+export interface DecryptedContentError {
+    missingSession: boolean
+    encryptedContent: EncryptedContent
+    error?: unknown
+}
