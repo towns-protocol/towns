@@ -1,6 +1,7 @@
 import React, { useContext } from 'react'
 import { clsx } from 'clsx'
 import { atoms } from 'ui/styles/atoms.css'
+import { useDevice } from 'hooks/useDevice'
 import { Box, BoxProps } from '../Box/Box'
 import * as style from './Tooltip.css'
 import { TooltipContext } from './TooltipRenderer'
@@ -10,6 +11,11 @@ export const Tooltip = ({ children, ...boxProps }: { children: React.ReactNode }
     const arrowDirection =
         tooltipContext.placement === 'horizontal' ? style.tooltipRight : style.tooltipBottom
     const { pointerEvents = 'none' } = boxProps
+    const { isTouch } = useDevice()
+
+    if (isTouch) {
+        return null
+    }
 
     children =
         typeof children === 'string' ? (
