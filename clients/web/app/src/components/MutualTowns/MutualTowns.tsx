@@ -15,7 +15,7 @@ export const MutualTowns = (props: { user: LookupUser }) => {
         return memberOfIds?.length
             ? memberOfIds.map((spaceId) => spaces.find((f) => f.id.streamId === spaceId))
             : undefined
-    }, [spaces, user.memberOf])
+    }, [spaces, user])
 
     const membersText = () => {
         if (memberOf && memberOf.length > 1) {

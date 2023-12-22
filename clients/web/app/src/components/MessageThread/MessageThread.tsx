@@ -10,6 +10,7 @@ import {
 import { firstBy } from 'thenby'
 import { useLocation } from 'react-router'
 import { LookupUser } from 'use-zion-client/dist/components/UserLookupContext'
+import { isDefined } from '@river/sdk'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
@@ -71,6 +72,7 @@ export const MessageThread = (props: {
 
     const usernames = useMemo(() => {
         const names = Object.values(involvedUsers)
+            .filter(isDefined)
             .map((u) => {
                 const isYou = u.userId === profile?.userId
                 const displayName = isYou ? 'you' : getPrettyDisplayName(u)
