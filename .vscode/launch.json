@@ -5,6 +5,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Attach to RiverNode",
+      "type": "go",
+      "request": "attach",
+      "mode": "local",
+      "processId": "river_node"
+    },
+    {
       "name": "Jest: current file in 'casablanca/mecholm/'",
       "type": "node",
       "request": "launch",

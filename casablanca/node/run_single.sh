@@ -9,10 +9,16 @@ LOG_NOCOLOR=false
 LOG_LEVEL=info
 USE_BLOCKCHAIN_STREAM_REGISTRY=true
 
+CONFIG_ONLY=false
+
 # Parse command-line options
 args=() # Collect arguments to pass to the last command
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
+        -c|--config-only)
+            CONFIG_ONLY=true
+            shift
+            ;;
         --disable_entitlements|--de)
             INSTANCE=single_no_ent
             RPC_PORT=5158
@@ -41,24 +47,32 @@ done
     REPL_FACTOR 1 \
     USE_BLOCKCHAIN_STREAM_REGISTRY $USE_BLOCKCHAIN_STREAM_REGISTRY
 
-cd ./run_files/$INSTANCE
-echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
+# Skip running the server if -c flag is provided
+if [ "$CONFIG_ONLY" = false ]; then
+  cd ./run_files/$INSTANCE
+  echo "Running instance '$INSTANCE' with extra arguments: '${args[@]:-}'"
 
-set +e
-while true; do
-  temp_file=$(mktemp)
+  # Build the executable
+  go build -o river_node -race ../../node/main.go
 
-  go run --race ../../node/main.go run "${args[@]:-}"  | tee "$temp_file"
+  set +e
+  while true; do
+    temp_file=$(mktemp)
 
-  # go run masks exit code, so exit code 22 is not making it here.
-  grep_result=$(grep "Exiting with code 22 to initiate a restart" "$temp_file")
+    # Run the built executable
+    ./river_node run "${args[@]:-}" | tee "$temp_file"
 
-  rm -f "$temp_file"
+    # Check for exit code 22
+    grep_result=$(grep "Exiting with code 22 to initiate a restart" "$temp_file")
 
-  # Use the grep_result variable in an if statement
-  if [ -n "$grep_result" ]; then
-    echo "RESTARTING"
-  else
-    break
-  fi
-done
+    rm -f "$temp_file"
+
+    if [ -n "$grep_result" ]; then
+      echo "RESTARTING"
+      # Rebuild the executable if needed
+      go build -o river_node -race ../../node/main.go
+    else
+      break
+    fi
+  done
+fi
