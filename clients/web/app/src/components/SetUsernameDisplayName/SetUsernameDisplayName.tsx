@@ -172,16 +172,20 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                     />
                 </>
             ) : (
-                <Text>
+                <>
                     {user.displayName.length > 0 || user.username.length > 0 ? (
                         <>
-                            {user.displayName.length > 0 && user.displayName}
-                            <strong> @{user.username}</strong>
+                            {user.displayName.length > 0 && (
+                                <Text fontSize="lg" fontWeight="strong">
+                                    {user.displayName}
+                                </Text>
+                            )}
+                            <Text> @{user.username}</Text>
                         </>
                     ) : (
-                        <>No username set</>
+                        <Text>No username set</Text>
                     )}
-                </Text>
+                </>
             )}
             {showEditFields && (
                 <Stack horizontal>

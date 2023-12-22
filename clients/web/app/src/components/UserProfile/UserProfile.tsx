@@ -111,8 +111,12 @@ export const UserProfile = (props: Props) => {
                 <Stack padding gap rounded="sm" background="level2">
                     {user && (
                         <>
-                            {user.displayName.length > 0 && <Text>{user.displayName}</Text>}
-                            <Text color="gray2">@{user.username}</Text>
+                            {user.displayName.length > 0 && (
+                                <Text color="default" fontSize="lg" fontWeight="strong">
+                                    {user.displayName}
+                                </Text>
+                            )}
+                            <Text color="default">@{user.username}</Text>
                         </>
                     )}
                     <UserWalletContent userId={userId} />
