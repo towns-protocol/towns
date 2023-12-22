@@ -19,6 +19,8 @@ import { Panel } from '@components/Panel/Panel'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
 import { CHANNEL_INFO_PARAMS } from 'routes'
+import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
+import { useDevice } from 'hooks/useDevice'
 import { ChannelInviteModal } from './ChannelInvitePanel'
 
 export const ChannelDirectoryPanel = () => {
@@ -108,6 +110,7 @@ const AddMemberRow = (props: { onClick: () => void }) => {
 const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
     const isValid = !!user?.userId
     const link = useCreateLink().createLink({ profileId: user.userId })
+    const { isTouch } = useDevice()
     let userAddress
     if (isValid) {
         userAddress = getAccountAddress(user.userId)
@@ -137,7 +140,10 @@ const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
             onClick={onNavigateClick}
         >
             <Stack horizontal height="height_lg" gap="md" width="100%">
-                <Box centerContent>
+                <Box
+                    centerContent
+                    tooltip={!isTouch ? <ProfileHoverCard userId={user.userId} /> : undefined}
+                >
                     <Avatar userId={user.userId} size="avatar_x4" />
                 </Box>
                 <Stack grow gap="paragraph" overflow="hidden">

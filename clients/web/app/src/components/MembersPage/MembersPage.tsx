@@ -14,6 +14,8 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Avatar } from '@components/Avatar/Avatar'
+import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
+import { useDevice } from 'hooks/useDevice'
 
 type Props = {
     memberIds: string[]
@@ -68,10 +70,16 @@ const GridProfile = ({ member }: { member: RoomMember }) => {
     const accountAddress = getAccountAddress(member.userId)
     const { createLink } = useCreateLink()
     const link = createLink({ profileId: member.userId })
+    const { isTouch } = useDevice()
 
     return (
         <LinkedContainer to={link}>
-            <Stack centerContent gap padding>
+            <Stack
+                centerContent
+                gap
+                padding
+                tooltip={!isTouch ? <ProfileHoverCard userId={member.userId} /> : undefined}
+            >
                 <Stack gap grow maxWidth="100%">
                     <Box centerContent>
                         <Avatar
