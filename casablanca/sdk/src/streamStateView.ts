@@ -39,6 +39,7 @@ import { StreamStateView_CommonContent } from './streamStateView_CommonContent'
 import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
+import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import isEqual from 'lodash/isEqual'
 
 const log = dlog('csb:streams')
@@ -617,6 +618,10 @@ export class StreamStateView {
 
     getUserMetadata(): StreamStateView_UserMetadata | undefined {
         return this.getContent().getUserMetadata()
+    }
+
+    getChannelMetadata(): StreamStateView_ChannelMetadata | undefined {
+        return this.getContent().getChannelMetadata()
     }
 
     getContent(): StreamStateView_AbstractContent {

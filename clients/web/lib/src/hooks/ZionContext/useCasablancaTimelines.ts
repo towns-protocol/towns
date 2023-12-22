@@ -273,6 +273,8 @@ function toTownsContent_fromDecryptedEvent(
             return { error: `payload contains only text: ${message.decryptedContent.content}` }
         case 'channelMessage':
             return toTownsContent_FromChannelMessage(message.decryptedContent.content, description)
+        case 'channelProperties':
+            return { error: `payload not supported: ${message.decryptedContent.kind}` }
         default:
             logNever(message.decryptedContent)
             return { error: `Unknown payload case: ${description}` }
@@ -498,6 +500,8 @@ function toTownsContent_ChannelPayload(
         case 'displayName':
         case 'username':
             return { error: `${description} displayName/username not supported` }
+        case 'channelProperties':
+            return { error: `${description} channel properties not supported` }
         case undefined: {
             return { error: `Undefined payload case: ${description}` }
         }

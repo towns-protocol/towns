@@ -474,6 +474,20 @@ export const make_GDMChannelPayload_Username = (
     }
 }
 
+export const make_GDMChannelPayload_ChannelProperties = (
+    value: PlainMessage<EncryptedData>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'gdmChannelPayload',
+        value: {
+            content: {
+                case: 'channelProperties',
+                value: value,
+            },
+        },
+    }
+}
+
 export const make_UserSettingsPayload_Inception = (
     value: PlainMessage<UserSettingsPayload_Inception>,
 ): PlainMessage<StreamEvent>['payload'] => {

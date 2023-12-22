@@ -81,6 +81,7 @@ export type StreamEvents = {
     streamDisplayNameUpdated: (streamId: string, userId: string) => void
     streamPendingUsernameUpdated: (streamId: string, userId: string) => void
     streamPendingDisplayNameUpdated: (streamId: string, userId: string) => void
+    streamChannelPropertiesUpdated: (streamId: string) => void
 }
 
 export type StreamEventKeys = keyof StreamEvents

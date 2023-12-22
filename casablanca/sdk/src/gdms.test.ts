@@ -1,4 +1,4 @@
-import { makeTestClient, createEventDecryptedPromise, waitFor } from './util.test'
+import { makeTestClient, createEventDecryptedPromise, waitFor, makeDonePromise } from './util.test'
 import { Client } from './client'
 import { dlog } from './dlog'
 import { MembershipOp } from '@river/proto'
@@ -182,6 +182,44 @@ describe('gdmsTests', () => {
 
         await bobsClient.sendMessage(streamId, 'hello')
         log('waiting for recipients to receive message')
+        await Promise.all(promises)
+    })
+
+    test('usersCanSetChannelProperties', async () => {
+        const userIds = [alicesClient.userId, charliesClient.userId, chucksClient.userId]
+        const { streamId } = await bobsClient.createGDMChannel(userIds)
+        await expect(bobsClient.waitForStream(streamId)).toResolve()
+        await expect(alicesClient.waitForStream(streamId)).toResolve()
+        await expect(charliesClient.waitForStream(streamId)).toResolve()
+        await expect(chucksClient.waitForStream(streamId)).toResolve()
+
+        const name = "Bob's GDM"
+        const topic = "Bob's GDM description"
+
+        function createChannelPropertiesPromise(client: Client) {
+            const donePromise = makeDonePromise()
+            client.on('streamChannelPropertiesUpdated', (updatedStreamId: string): void => {
+                donePromise.runAndDone(() => {
+                    expect(updatedStreamId).toEqual(streamId)
+                    const stream = client.streams.get(streamId)
+
+                    const channelMetadata = stream?.view.getChannelMetadata()
+                    const channelProperties = channelMetadata?.channelProperties
+                    expect(channelProperties).toBeDefined()
+
+                    expect(channelProperties?.name).toEqual(name)
+                    expect(channelProperties?.topic).toEqual(topic)
+                })
+            })
+            return donePromise.promise
+        }
+
+        const promises = [bobsClient, alicesClient, charliesClient, chucksClient].map(
+            createChannelPropertiesPromise,
+        )
+
+        await expect(bobsClient.updateGDMChannelProperties(streamId, name, topic)).toResolve()
+        log('waiting for members to receive new channel props')
         await Promise.all(promises)
     })
 })

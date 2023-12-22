@@ -81,6 +81,7 @@ import {
     make_DMChannelPayload_Username,
     make_GDMChannelPayload_Username,
     ParsedStreamResponse,
+    make_GDMChannelPayload_ChannelProperties,
 } from './types'
 import { bin_fromHexString, bin_toHexString, shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/cryptoStore'
@@ -635,6 +636,20 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             }),
             { method: 'updateChannel' },
         )
+    }
+
+    async updateGDMChannelProperties(streamId: string, channelName: string, channelTopic: string) {
+        this.logCall('updateGDMChannelProperties', streamId, channelName, channelTopic)
+        assert(isGDMChannelStreamId(streamId), 'streamId must be a valid GDM stream id')
+        check(isDefined(this.cryptoBackend))
+
+        const channelProps = make_ChannelProperties(channelName, channelTopic).toJsonString()
+        const encryptedData = await this.cryptoBackend.encryptMegolmEvent(streamId, channelProps)
+
+        const event = make_GDMChannelPayload_ChannelProperties(encryptedData)
+        return this.makeEventAndAddToStream(streamId, event, {
+            method: 'updateGDMChannelProperties',
+        })
     }
 
     async sendFullyReadMarkers(

@@ -160,6 +160,9 @@ func (s *Service) addGdmChannelPayload(ctx context.Context, payload *StreamEvent
 	case *GdmChannelPayload_Username:
 		return s.addUsernameEvent(ctx, stream, streamView, parsedEvent)
 
+	case *GdmChannelPayload_ChannelProperties:
+		return s.addGDMChannelPropertiesEvent(ctx, stream, streamView, parsedEvent)
+
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
@@ -455,6 +458,27 @@ func (s *Service) addGDMChannelMessage(ctx context.Context, stream AddableStream
 		// notification request. It causes random context cancellation. Using
 		// context.Background() to avoid this issue.
 		s.notification.SendPushNotification(context.Background(), view, userId, parsedEvent.Event)
+	}
+	return nil
+}
+
+func (s *Service) addGDMChannelPropertiesEvent(ctx context.Context, stream AddableStream, view StreamView, parsedEvent *ParsedEvent) error {
+	userId, err := shared.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return err
+	}
+	member, err := s.checkMembership(ctx, view, userId)
+	if err != nil {
+		return err
+	}
+
+	if !member {
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of gdm channel", "user", userId)
+	}
+
+	err = stream.AddEvent(ctx, parsedEvent)
+	if err != nil {
+		return err
 	}
 	return nil
 }

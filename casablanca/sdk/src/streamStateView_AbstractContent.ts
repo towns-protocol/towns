@@ -1,11 +1,12 @@
 import TypedEmitter from 'typed-emitter'
-import { ChannelMessage, EncryptedData } from '@river/proto'
+import { ChannelMessage, ChannelProperties, EncryptedData } from '@river/proto'
 import { EmittedEvents } from './client'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { DecryptedContent, EncryptedContent } from './encryptedContentTypes'
 import { checkNever } from './check'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
+import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 
 export abstract class StreamStateView_AbstractContent {
     abstract readonly streamId: string
@@ -42,6 +43,12 @@ export abstract class StreamStateView_AbstractContent {
                         content: cleartext,
                     }
                     break
+                case 'channelProperties':
+                    event.decryptedContent = {
+                        kind,
+                        content: ChannelProperties.fromJsonString(cleartext),
+                    }
+                    break
                 default:
                     checkNever(kind)
             }
@@ -69,6 +76,10 @@ export abstract class StreamStateView_AbstractContent {
     }
 
     getUserMetadata(): StreamStateView_UserMetadata | undefined {
+        return undefined
+    }
+
+    getChannelMetadata(): StreamStateView_ChannelMetadata | undefined {
         return undefined
     }
 }

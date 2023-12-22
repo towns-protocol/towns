@@ -266,6 +266,10 @@ func update_Snapshot_GdmChannel(iSnapshot *Snapshot, channelPayload *GdmChannelP
 		}
 		snapshot.GdmChannelContent.DisplayNames[user] = &WrappedEncryptedData{Data: content.DisplayName, EventNum: eventNum, EventHash: eventHash}
 		return nil
+	case *GdmChannelPayload_ChannelProperties:
+		snapshot.GdmChannelContent.ChannelProperties = &WrappedEncryptedData{Data: content.ChannelProperties, EventNum: eventNum, EventHash: eventHash}
+		return nil
+
 	case *GdmChannelPayload_Message:
 		return nil
 	default:
