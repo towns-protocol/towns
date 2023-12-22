@@ -1,6 +1,11 @@
 import { RoomIdentifier } from '../types/room-identifier'
 import { useTimeline } from './use-timeline'
-import { TimelineEvent, TimelineEvent_OneOf, ZTEvent } from '../types/timeline-types'
+import {
+    RoomMessageEncryptedEvent,
+    TimelineEvent,
+    TimelineEvent_OneOf,
+    ZTEvent,
+} from '../types/timeline-types'
 
 import { MessageType } from '../types/zion-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
@@ -22,6 +27,7 @@ export interface MostRecentMessageInfoText {
 
 export interface MostRecentMessageEncrypted {
     kind: 'encrypted'
+    content: RoomMessageEncryptedEvent
 }
 
 type LatestMessageInfo = {
@@ -99,6 +105,7 @@ function toMostRecentMessageInfo(
     if (content?.kind === ZTEvent.RoomMessageEncrypted) {
         return {
             kind: 'encrypted',
+            content,
         }
     }
     if (content?.kind !== ZTEvent.RoomMessage) {

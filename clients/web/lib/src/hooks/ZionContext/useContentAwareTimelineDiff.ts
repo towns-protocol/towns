@@ -255,9 +255,6 @@ function diffAdded(
 function isCountedAsUnread(event: TimelineEvent, myUserId: string): boolean {
     switch (event.content?.kind) {
         case ZTEvent.RoomMessage:
-            if (event.content?.msgType === 'm.bad.encrypted') {
-                return false
-            }
             return event.sender.id !== myUserId
         default:
             return false

@@ -26,7 +26,6 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
         key: 'string',
         displayContext: 'single',
         isHighlight: false,
-        displayEncrypted: false,
         event: {
             eventId: 'event-id',
             eventNum: 0n,

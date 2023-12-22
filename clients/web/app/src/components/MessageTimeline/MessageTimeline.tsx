@@ -257,11 +257,7 @@ export const MessageTimeline = (props: Props) => {
                 if (e.type === RenderEventType.UserMessages) {
                     // if all consecutive messages are encrypted, we can group them
                     const displayEncrypted = e.events.every(
-                        (e) =>
-                            !e.isRedacted &&
-                            ((e.content.kind === ZTEvent.RoomMessage &&
-                                e.content.msgType === 'm.bad.encrypted') ||
-                                e.content.kind === ZTEvent.RoomMessageEncrypted),
+                        (e) => e.content.kind === ZTEvent.RoomMessageEncrypted,
                     )
                     // only picks 3 messages (first and last ones) when
                     // decrypted content is showing
@@ -278,19 +274,11 @@ export const MessageTimeline = (props: Props) => {
                                 | EncryptedMessageRenderEvent
                                 | RedactedMessageRenderEvent
 
-                            // this occurs when a users has mixed encrypted and unencrypted messages
-                            const messageDisplayEncrypted =
-                                !event.isRedacted &&
-                                ((event.content.kind === ZTEvent.RoomMessage &&
-                                    event.content.msgType === 'm.bad.encrypted') ||
-                                    event.content.kind === ZTEvent.RoomMessageEncrypted)
-
                             if (isRoomMessage(event)) {
                                 item = {
                                     type: RenderEventType.Message,
                                     key: stableKey,
                                     event,
-                                    displayEncrypted: displayEncrypted || messageDisplayEncrypted,
                                     displayContext: getMessageDisplayContext(index, events.length),
                                 }
                             } else if (isRedactedRoomMessage(event)) {
@@ -299,7 +287,6 @@ export const MessageTimeline = (props: Props) => {
                                         type: RenderEventType.RedactedMessage,
                                         key: stableKey,
                                         event,
-                                        displayEncrypted: false,
                                         displayContext: getMessageDisplayContext(
                                             index,
                                             events.length,
@@ -313,7 +300,6 @@ export const MessageTimeline = (props: Props) => {
                                     type: RenderEventType.EncryptedMessage,
                                     key: stableKey,
                                     event,
-                                    displayEncrypted: true,
                                     displayContext: getMessageDisplayContext(index, events.length),
                                 }
                             }

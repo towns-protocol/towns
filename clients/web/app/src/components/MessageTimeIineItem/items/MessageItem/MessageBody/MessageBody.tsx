@@ -5,7 +5,6 @@ import { ErrorBoundary, FallbackProps } from '@components/ErrorBoundary/ErrorBou
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { getMessageBody, getUrls } from 'utils/ztevent_util'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
-import { Paragraph, Stack } from '@ui'
 import { MessageStatusAnnotation } from '@components/RichText/hooks/useInitialConfig'
 import { useDevice } from 'hooks/useDevice'
 import { useUnfurlContent } from '../../../../../api/lib/unfurl'
@@ -89,11 +88,6 @@ export const MessageBody = ({
                           <UnfurlBlock {...unfurlData} />
                       </ErrorBoundary>
                   ))}
-            {eventContent.msgType === 'm.bad.encrypted' ? (
-                <Stack cellSpacing="md">
-                    <Paragraph>Reaching out to online users for keys...</Paragraph>
-                </Stack>
-            ) : null}
         </>
     )
 }

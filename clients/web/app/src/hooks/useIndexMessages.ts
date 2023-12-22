@@ -25,7 +25,6 @@ export const useIndexMessages = () => {
                 return timelines[channel.id.streamId]
                     ?.filter(isRoomMessage)
                     .filter((e) => e.content?.body)
-                    .filter((e) => e.content?.msgType !== 'm.bad.encrypted')
                     .map((e) => ({
                         key: e.eventId,
                         type: 'message' as const,
@@ -43,7 +42,6 @@ export const useIndexMessages = () => {
                 return timelines[channel.id.streamId]
                     ?.filter(isRoomMessage)
                     .filter((e) => e.content?.body)
-                    .filter((e) => e.content?.msgType !== 'm.bad.encrypted')
                     .map((e) => ({
                         key: e.eventId,
                         type: 'dmMessage' as const,

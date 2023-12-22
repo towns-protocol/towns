@@ -69,15 +69,11 @@ export const MessageItem = (props: Props) => {
 
     const isMessage = itemData.type === RenderEventType.Message
     const isEncryptedMessage = itemData.type === RenderEventType.EncryptedMessage
-
     const isRedacted = isRedactedRoomMessage(event)
-
-    const displayEncrypted =
-        itemData.type === RenderEventType.EncryptedMessage || itemData.displayEncrypted
 
     const displayContext = isMessage || isEncryptedMessage ? itemData.displayContext : 'single'
     const isEditing = event.eventId === timelineActions.editingMessageId
-    const isSelectable = !displayEncrypted
+    const isSelectable = !isEncryptedMessage
 
     const msgTypeKey = isMessage ? itemData.event.content.msgType ?? '' : ''
 
@@ -107,7 +103,7 @@ export const MessageItem = (props: Props) => {
             replies={replies}
             key={`${event.eventId}${event.updatedAtEpocMs ?? event.createdAtEpocMs}${msgTypeKey}`}
         >
-            {displayEncrypted ? (
+            {isEncryptedMessage ? (
                 <TimelineEncryptedContent event={event} />
             ) : event.content.kind === ZTEvent.RoomMessage ? (
                 isEditing ? (

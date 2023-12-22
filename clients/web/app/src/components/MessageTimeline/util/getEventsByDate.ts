@@ -1,6 +1,7 @@
 import { firstBy } from 'thenby'
 import {
     Membership,
+    RedactedEvent,
     RoomCreateEvent,
     RoomMemberEvent,
     RoomMessageEncryptedEvent,
@@ -39,6 +40,7 @@ export type ZRoomMessageEncryptedEvent = Omit<TimelineEvent, 'content'> & {
 }
 
 export type ZRoomMessageRedactedEvent = Omit<TimelineEvent, 'content'> & {
+    content: RedactedEvent
     isRedacted: true
 }
 
@@ -58,14 +60,12 @@ export interface MessageRenderEvent extends BaseEvent {
     event: ZRoomMessageEvent
     displayContext: 'single' | 'head' | 'body' | 'tail'
     isHighlight?: boolean
-    displayEncrypted: boolean
 }
 
 export interface EncryptedMessageRenderEvent extends BaseEvent {
     type: RenderEventType.EncryptedMessage
     key: string
     event: ZRoomMessageEncryptedEvent
-    displayEncrypted: boolean
     displayContext: 'single' | 'head' | 'body' | 'tail'
 }
 
@@ -73,7 +73,6 @@ export interface RedactedMessageRenderEvent extends BaseEvent {
     type: RenderEventType.RedactedMessage
     key: string
     event: ZRoomMessageRedactedEvent
-    displayEncrypted: boolean
     displayContext: 'single' | 'head' | 'body' | 'tail'
 }
 
