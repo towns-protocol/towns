@@ -127,11 +127,11 @@ export const RichTextBottomToolbar = (props: Props) => {
                     {props.visible && (
                         <Box
                             padding="xs"
-                            tooltip={isTouch ? undefined : 'Upload image'}
+                            tooltip={isTouch ? undefined : 'Upload file'}
                             tooltipOptions={{ immediate: true, placement: 'vertical' }}
                         >
                             <MotionIcon
-                                type="camera"
+                                type="attachment"
                                 size="square_sm"
                                 color={{ hover: 'default', default: 'gray2' }}
                                 cursor="pointer"
@@ -145,7 +145,7 @@ export const RichTextBottomToolbar = (props: Props) => {
                         type="file"
                         name="image-file-input"
                         id={mediaInputId}
-                        accept="image/*"
+                        accept={isTouch ? 'image/*' : '*'}
                         style={{ display: 'none' }}
                         onChange={didSelectImages}
                     />
