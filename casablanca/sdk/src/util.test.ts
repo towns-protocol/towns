@@ -286,7 +286,7 @@ export function waitFor<T>(
         'waitFor timed out after ' + options.timeoutMS.toString() + 'ms',
     )
     return new Promise((resolve, reject) => {
-        const timeoutMS = options.timeoutMS ?? 1000
+        const timeoutMS = options.timeoutMS
         const pollIntervalMS = Math.min(timeoutMS / 2, 100)
         let lastError: any = undefined
         let promiseStatus: 'none' | 'pending' | 'resolved' | 'rejected' = 'none'
