@@ -30,7 +30,7 @@ export const DirectMessageListItem = (props: {
 
     return (
         <DirectMessageMotionContainer selected={selected} onClick={onClick}>
-            <DirectMessageIcon channel={channel} width="x3" />
+            <DirectMessageIcon channel={channel} width="x4" />
 
             <Box grow gap="sm" width="100%" overflow="hidden" height="100%" paddingY="xxs">
                 {/* first line: title and date */}
