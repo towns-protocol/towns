@@ -12,6 +12,7 @@ import { InvalidCookieNotification } from '@components/Notifications/InvalidCook
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { Avatar } from '@components/Avatar/Avatar'
 import { SetUsernameDisplayName } from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
+import { MutualTowns } from '@components/MutualTowns/MutualTowns'
 import { UserWalletContent } from './UserWalletContent'
 
 type Props = {
@@ -120,6 +121,20 @@ export const UserProfile = (props: Props) => {
                         </>
                     )}
                     <UserWalletContent userId={userId} />
+                </Stack>
+            )}
+
+            {user && (
+                <Stack
+                    horizontal
+                    gap
+                    paddingY="sm"
+                    paddingX="lg"
+                    background="level2"
+                    rounded="sm"
+                    alignItems="center"
+                >
+                    <MutualTowns user={user} />
                 </Stack>
             )}
 
