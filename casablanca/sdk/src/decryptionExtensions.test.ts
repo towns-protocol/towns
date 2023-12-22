@@ -76,8 +76,8 @@ describe('DecryptionExtensions', () => {
             .filter(isDefined)
     }
 
-    const waitForFailures = async (client: Client, streamId: string, count: number) => {
-        log('waitForFailures', client.userId, streamId, count)
+    const waitForDecryptionErrors = async (client: Client, streamId: string, count: number) => {
+        log('waitForDecryptionErrors', client.userId, streamId, count)
         return waitFor(
             async () => {
                 const errors = await getDecryptionErrors(client, streamId)
@@ -162,7 +162,7 @@ describe('DecryptionExtensions', () => {
         const alice1 = await makeAndStartClient({ deviceId: 'alice1' })
         await alice1.joinStream(spaceId)
         await alice1.joinStream(channelId)
-        await expect(waitForFailures(alice1, channelId, 1)).toResolve() // alice should see a decryption error
+        await expect(waitForDecryptionErrors(alice1, channelId, 1)).toResolve() // alice should see a decryption error
         await expect(waitForMessages(alice1, channelId, [])).toResolve() // alice doesn't see the messsage if bob isn't online to send keys
         await sendMessage(alice1, channelId, 'its alice')
         await expect(waitForMessages(alice1, channelId, ['its alice'])).toResolve() // alice doesn't see the messsage if bob isn't online to send keys
