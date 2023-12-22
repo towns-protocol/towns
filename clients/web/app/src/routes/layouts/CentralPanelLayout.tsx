@@ -25,7 +25,7 @@ export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
             <Allotment onChange={onSizesChange}>
                 <Allotment.Pane minSize={550}>
                     <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
-                        <Box absoluteFill background="level1">
+                        <Box height="100%" background="level1">
                             {children}
                         </Box>
                     </ErrorBoundary>
