@@ -5,11 +5,11 @@ import {
     isRemoteEvent,
     makeStreamRpcClient,
 } from '@river/sdk'
-import { AnimatePresence } from 'framer-motion'
-import React, { useEffect, useMemo, useState } from 'react'
+import { AnimatePresence, animate } from 'framer-motion'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Spinner } from '@components/Spinner'
 import { FadeInBox } from '@components/Transitions'
-import { Box, Heading, Icon, IconName, Paragraph, Stack, Text } from '@ui'
+import { Box, Heading, Icon, IconName, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { DAY_MS, WEEK_MS } from 'data/constants'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useDevice } from 'hooks/useDevice'
@@ -22,22 +22,27 @@ export const Activity = (props: { townId: string }) => {
     )
 
     const activities = useMemo(() => {
-        const activities: { title: string; body: string; icon?: IconName }[] = []
+        const activities: {
+            title: string
+            value: number | undefined
+            body: string
+            icon?: IconName
+        }[] = []
 
         !!channelStats?.numMessages &&
             activities.push({
                 icon: 'messageVariant',
                 title: 'In the past 24h',
-                body: `${channelStats?.numMessages} new message${
-                    channelStats?.numMessages > 1 ? 's' : ''
-                } were sent`,
+                value: channelStats?.numMessages,
+                body: `new message${channelStats?.numMessages > 1 ? 's' : ''} were sent`,
             })
 
         !!channelStats?.numActiveUsers &&
             activities.push({
                 icon: 'sun',
                 title: 'In the past 24h',
-                body: `${channelStats?.numActiveUsers} ${
+                value: channelStats?.numActiveUsers,
+                body: `${
                     channelStats.numActiveUsers > 1 ? 'people were' : 'member was'
                 } active in the town`,
             })
@@ -46,9 +51,8 @@ export const Activity = (props: { townId: string }) => {
             activities.push({
                 icon: 'treasury',
                 title: 'In the past week',
-                body: `${townStats?.numJoinedUsers} new member${
-                    townStats?.numJoinedUsers > 1 ? 's' : ''
-                } joined`,
+                value: townStats?.numJoinedUsers,
+                body: `new member${townStats?.numJoinedUsers > 1 ? 's' : ''} joined`,
             })
 
         return activities
@@ -72,10 +76,10 @@ export const Activity = (props: { townId: string }) => {
                 </FadeInBox>
             )}
 
-            <Box gap="lg" key="activities">
+            <MotionBox gap="lg" key="activities" layout="position">
                 <Stack horizontal gap alignItems="center">
                     <Heading level={3}>Activity</Heading>
-                    {isLoading && <Spinner width="height_sm" display="inline-block" />}
+                    {isLoading && <Spinner height="height_sm" />}
                 </Stack>
 
                 {activities.map((a) => (
@@ -88,41 +92,73 @@ export const Activity = (props: { townId: string }) => {
                                 {a.title}
                             </Paragraph>
                             <Text fontSize={isTouch ? 'md' : 'lg'} color="gray1">
-                                {a.body}
+                                <Counter value={a.value ?? 0} /> {a.body}
                             </Text>
                         </Box>
                     </Stack>
                 ))}
-            </Box>
+            </MotionBox>
         </AnimatePresence>
     )
+}
+
+const Counter = (props: { value: number }) => {
+    const ref = useRef<HTMLSpanElement>(null)
+    const refValue = useRef(0)
+
+    const to = props.value
+
+    useEffect(() => {
+        const controls = animate(refValue.current, to, {
+            onUpdate(value) {
+                if (ref.current) {
+                    refValue.current = value
+                    ref.current.textContent = Math.floor(value).toString()
+                }
+            },
+        })
+        return () => controls.stop()
+    }, [to])
+    return <span ref={ref} />
 }
 
 const useFetchUnauthenticatedActivity = (townId: string) => {
     const [isLoading, setIsLoading] = useState(true)
     const [members, setMembers] = useState<string[]>([])
-    const [channelStats, setChannelStats] = useState<{
-        numMessages: number
-        numActiveUsers: number
-    }>()
+    const [channelStats, setChannelStats] = useState({
+        numMessages: 0,
+        numActiveUsers: 0,
+        activeUsers: new Set<string>(),
+    })
     const [townStats, setTownStats] = useState<{ numJoinedUsers: number }>()
     const rpcUrl = useEnvironment().casablancaUrl
     useEffect(() => {
         if (!rpcUrl) {
             return
         }
+        // for hmr
+        setChannelStats({
+            numMessages: 0,
+            numActiveUsers: 0,
+            activeUsers: new Set<string>(),
+        })
+
+        setIsLoading(true)
+
         const fetch = async () => {
             try {
                 const streamId = townId
                 const rpcClient = makeStreamRpcClient(rpcUrl)
                 const client = new UnauthenticatedClient(rpcClient)
                 const stream = await client.getStream(streamId)
+
                 const { spaceContent, timeline: spaceTimeline } = stream
 
                 setMembers(Array.from(spaceContent.memberships.joinedUsers))
                 const remoteEvents: RemoteTimelineEvent[] = spaceTimeline
                     .flatMap((e) => (isRemoteEvent(e) ? e : undefined))
                     .filter(notUndefined)
+
                 const numJoinedUsers = remoteEvents
                     .filter((s) => isWithin(s.createdAtEpocMs, WEEK_MS))
                     .filter(
@@ -138,11 +174,10 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                     numJoinedUsers: Array.from(numJoinedUsers).length,
                 })
 
-                // just for testing, don't bother iterate all channels yet
-                const firstChannelId = Array.from(spaceContent.spaceChannelsMetadata.keys()).at(0)
+                const channelsIds = Array.from(spaceContent.spaceChannelsMetadata.keys())
 
-                if (firstChannelId) {
-                    const streamView = await client.getStream(firstChannelId)
+                for (const channelId of channelsIds) {
+                    const streamView = await client.getStream(channelId)
                     const channelMessages = streamView.timeline.filter(
                         (x) =>
                             isRemoteEvent(x) &&
@@ -154,16 +189,19 @@ const useFetchUnauthenticatedActivity = (townId: string) => {
                         isWithin(f.createdAtEpocMs, DAY_MS),
                     )
 
-                    const activeUsers = channelMessages
-                        .filter((f) => isWithin(f.createdAtEpocMs, DAY_MS))
-                        .reduce((acc, curr) => {
-                            acc.add(curr.creatorUserId)
-                            return acc
-                        }, new Set())
+                    setChannelStats((s) => {
+                        const activeUsers = channelMessages
+                            .filter((f) => isWithin(f.createdAtEpocMs, DAY_MS))
+                            .reduce((acc, curr) => {
+                                acc.add(curr.creatorUserId)
+                                return acc
+                            }, s.activeUsers)
 
-                    setChannelStats({
-                        numMessages: messages.length,
-                        numActiveUsers: Array.from(activeUsers).length,
+                        return {
+                            numMessages: s.numMessages + messages.length,
+                            numActiveUsers: Array.from(activeUsers).length,
+                            activeUsers,
+                        }
                     })
                 }
 
