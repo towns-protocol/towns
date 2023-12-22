@@ -4,7 +4,7 @@ import { MostRecentMessageInfo_OneOf } from 'use-zion-client/dist/hooks/use-dm-l
 import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
 import { LookupUser } from 'use-zion-client/dist/components/UserLookupContext'
 import { Avatar } from '@components/Avatar/Avatar'
-import { TimelineEncryptedContent } from '@components/MessageTimeIineItem/items/MessageItem/EncryptedMessageBody/EncryptedMessageBody'
+import { TimelineEncryptedContent } from '@components/EncryptedContent/EncryptedMessageBody'
 import { UserList } from '@components/UserList/UserList'
 import { Box, BoxProps, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { notUndefined } from 'ui/utils/utils'

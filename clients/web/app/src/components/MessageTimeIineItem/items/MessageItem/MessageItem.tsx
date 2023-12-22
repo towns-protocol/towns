@@ -33,7 +33,7 @@ import {
     RenderEventType,
     isRedactedRoomMessage,
 } from '../../../MessageTimeline/util/getEventsByDate'
-import { TimelineEncryptedContent } from './EncryptedMessageBody/EncryptedMessageBody'
+import { TimelineEncryptedContent } from '../../../EncryptedContent/EncryptedMessageBody'
 import { MessageBody } from './MessageBody/MessageBody'
 
 type ItemDataType = MessageRenderEvent | EncryptedMessageRenderEvent | RedactedMessageRenderEvent

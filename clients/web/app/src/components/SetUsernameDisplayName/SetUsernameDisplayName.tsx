@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useMyUserId, useZionClient } from 'use-zion-client'
+import { useMyUserId, useUserLookupContext, useZionClient } from 'use-zion-client'
 import { useParams } from 'react-router'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
+import { LookupUser } from 'use-zion-client/dist/components/UserLookupContext'
 import { Box, Button, Stack, Text, TextButton, TextField } from '@ui'
 import { validateUsername } from '@components/SetUsernameForm/validateUsername'
 import { useSetUsername } from 'hooks/useSetUsername'
-import { useUserInfo } from 'hooks/useUserInfo'
-import { UserWalletContent } from '@components/UserProfile/UserWalletContent'
+import { EncryptedName } from '@components/EncryptedContent/EncryptedName'
+import { shortAddress } from 'ui/utils/utils'
 
 const useCurrentStreamID = () => {
     const { spaceSlug, channelSlug } = useParams()
@@ -43,7 +44,8 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
     const [showEditFields, setShowEditFields] = useState<boolean>(false)
     const streamId = useCurrentStreamID()
     const myUserId = useMyUserId()
-    const { user } = useUserInfo(streamId, myUserId)
+    const { usersMap } = useUserLookupContext()
+    const user = myUserId ? usersMap[myUserId] : undefined
 
     const { setUsername } = useSetUsername()
     const { setDisplayName } = useZionClient()
@@ -173,18 +175,14 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                 </>
             ) : (
                 <>
-                    {user.displayName.length > 0 || user.username.length > 0 ? (
-                        <>
-                            {user.displayName.length > 0 && (
-                                <Text fontSize="lg" fontWeight="strong">
-                                    {user.displayName}
-                                </Text>
-                            )}
-                            <Text> @{user.username}</Text>
-                        </>
-                    ) : (
-                        <Text>No username set</Text>
-                    )}
+                    <Stack horizontal>
+                        <Stack gap>
+                            <UsernameDisplayNameContent user={user} />
+                        </Stack>
+                        <Box grow />
+                        <TextButton onClick={() => setShowEditFields(true)}>Edit</TextButton>
+                    </Stack>
+                    <UsernameDisplayNameEncryptedContent user={user} />
                 </>
             )}
             {showEditFields && (
@@ -210,13 +208,6 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                     </>
                 </Stack>
             )}
-            <Stack horizontal centerContent>
-                <UserWalletContent userId={myUserId} />
-                <Box grow />
-                {!showEditFields && (
-                    <TextButton onClick={() => setShowEditFields(true)}>Edit</TextButton>
-                )}
-            </Stack>
         </Stack>
     )
 }
@@ -280,5 +271,39 @@ const EditableInputField = (props: {
                 </Text>
             )}
         </Stack>
+    )
+}
+
+const UsernameDisplayNameContent = (props: { user: LookupUser }) => {
+    const { user } = props
+
+    return user.usernameEncrypted && user.displayNameEncrypted ? (
+        <>
+            <Text fontSize="lg" fontWeight="strong" color="default">
+                {shortAddress(user.userId)}
+            </Text>
+        </>
+    ) : (
+        <>
+            {!user.displayNameEncrypted && (
+                <Text color="default" fontWeight="strong">
+                    {user.displayName}
+                </Text>
+            )}
+            {!user.usernameEncrypted && <Text color="default">@{user.username}</Text>}
+        </>
+    )
+}
+
+const UsernameDisplayNameEncryptedContent = (props: { user: LookupUser }) => {
+    const { user } = props
+    return user.usernameEncrypted && user.displayNameEncrypted ? (
+        <EncryptedName message="Your username and display name are encrypted." />
+    ) : user.displayNameEncrypted ? (
+        <EncryptedName message="Your display name is encrypted." />
+    ) : user.usernameEncrypted ? (
+        <EncryptedName message="Your username is encrypted" />
+    ) : (
+        <></>
     )
 }

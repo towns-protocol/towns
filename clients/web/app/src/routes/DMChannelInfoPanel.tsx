@@ -109,7 +109,10 @@ export const DMChannelInfoPanel = () => {
 
     return (
         <Panel modalPresentable label={title} onClose={onClose}>
-            <DMChannelContextUserLookupProvider channelId={channelSlug ?? ''}>
+            <DMChannelContextUserLookupProvider
+                fallbackToParentContext
+                channelId={channelSlug ?? ''}
+            >
                 <Stack gap padding>
                     {usernameProperties && (
                         <SetUsernameDisplayName titleProperties={usernameProperties} />
