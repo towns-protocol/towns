@@ -177,4 +177,41 @@ describe('DecryptionExtensions', () => {
         // alice should get keys and decrypt bobs message
         await expect(waitForMessages(alice1, channelId, ['its bob', 'its alice'])).toResolve()
     })
+
+    test('shareKeysInMultipleStreamsToSameDevice', async () => {
+        const bob1 = await makeAndStartClient({ deviceId: 'bob1' })
+        const alice1 = await makeAndStartClient({ deviceId: 'alice1' })
+
+        const spaceId = makeSpaceStreamId('bobs-space-' + genId())
+        await bob1.createSpace(spaceId)
+        const { streamId: channel1StreamId } = await bob1.createChannel(spaceId, 'channel1', '')
+        const { streamId: channel2StreamId } = await bob1.createChannel(spaceId, 'channel1', '')
+        await sendMessage(bob1, channel1StreamId, 'hello channel 1')
+        await sendMessage(bob1, channel2StreamId, 'hello channel 2')
+
+        await expect(alice1.joinStream(spaceId)).toResolve()
+        await expect(alice1.joinStream(channel1StreamId)).toResolve()
+        await expect(alice1.joinStream(channel2StreamId)).toResolve()
+
+        // wait for the message to arrive and decrypt
+        await expect(waitForMessages(alice1, channel1StreamId, ['hello channel 1'])).toResolve()
+        await expect(waitForMessages(alice1, channel2StreamId, ['hello channel 2'])).toResolve()
+
+        // stop bob to simplify test
+        await bob1.stop()
+
+        // boot up alice on a second device
+        const alice2 = await makeAndStartClient({
+            context: alice1.signerContext,
+            deviceId: 'alice2',
+        })
+
+        // This wait takes over 5s, we should address
+        await expect(alice2.waitForStream(channel1StreamId)).toResolve()
+        await expect(alice2.waitForStream(channel2StreamId)).toResolve()
+
+        // alice gets keys sent via new device message
+        await expect(waitForMessages(alice2, channel1StreamId, ['hello channel 1'])).toResolve()
+        await expect(waitForMessages(alice2, channel2StreamId, ['hello channel 2'])).toResolve()
+    })
 })

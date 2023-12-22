@@ -153,7 +153,9 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                 return
             }
             const index = this.queues.keySolicitations.findIndex(
-                (x) => x.solicitation.deviceKey === keySolicitation.deviceKey,
+                (x) =>
+                    x.streamId === streamId &&
+                    x.solicitation.deviceKey === keySolicitation.deviceKey,
             )
             if (index > -1) {
                 this.queues.keySolicitations.splice(index, 1)
@@ -169,6 +171,8 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                     ),
                 })
                 this.checkStartTicking()
+            } else if (index > -1) {
+                this.log.debug('cleared key solicitation', keySolicitation)
             }
         }
 
@@ -467,7 +471,10 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         const existingKeyRequest = solicitedEvents.find(
             (x) => x.deviceKey === this.userDevice.deviceKey,
         )
-        if (sortedArraysEqual(existingKeyRequest?.sessionIds ?? [], missingSessionIds)) {
+        if (
+            existingKeyRequest?.isNewDevice ||
+            sortedArraysEqual(existingKeyRequest?.sessionIds ?? [], missingSessionIds)
+        ) {
             this.log.debug('already requested keys for this session')
             return
         }
@@ -498,7 +505,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
      * process incoming key solicitations and send keys and key fulfilments
      */
     private async processKeySolicitation(item: KeySolicitationItem): Promise<void> {
-        this.log.debug('processing key solicitation', item)
+        this.log.debug('processing key solicitation', item.streamId, item)
         const streamId = item.streamId
         const stream = this.client.stream(streamId)
         check(isDefined(stream), 'stream not found')
@@ -542,7 +549,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                 sessions.push(megolmSession)
             }
         }
-        this.log.debug('processing key solicitation with', {
+        this.log.debug('processing key solicitation with', item.streamId, {
             to: item.fromUserId,
             toDevice: item.solicitation.deviceKey,
             requestedCount: item.solicitation.sessionIds.length,
