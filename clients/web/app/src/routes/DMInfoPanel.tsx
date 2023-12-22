@@ -8,7 +8,10 @@ import { ChannelInvitePanel } from './ChannelInvitePanel'
 
 export const DMInfoPanelWrapper = () => {
     const [search] = useSearchParams()
-    if (search.get(CHANNEL_INFO_PARAMS.CHANNEL) !== null) {
+    if (
+        search.get(CHANNEL_INFO_PARAMS.DM_CHANNEL) !== null ||
+        search.get(CHANNEL_INFO_PARAMS.GDM_CHANNEL) !== null
+    ) {
         return <DMChannelInfoPanel />
     } else if (search.get(CHANNEL_INFO_PARAMS.DIRECTORY) !== null) {
         return <ChannelDirectoryPanel />

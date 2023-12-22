@@ -24,10 +24,15 @@ export const QUERY_PARAMS = {
 export const CHANNEL_INFO_PARAMS = {
     INFO: 'info',
     CHANNEL: 'channel',
+    DM_CHANNEL: 'dm',
+    GDM_CHANNEL: 'gdm',
     PERMISSIONS: 'permissions',
     DIRECTORY: 'directory',
     INVITE: 'invite',
 } as const
+
+export type CHANNEL_INFO_PARAMS_VALUES =
+    (typeof CHANNEL_INFO_PARAMS)[keyof typeof CHANNEL_INFO_PARAMS]
 
 export const NESTED_PROFILE_PANEL_PATHS = {
     WALLETS: 'wallets',

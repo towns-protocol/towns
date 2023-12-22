@@ -12,6 +12,7 @@ import { usePushNotifications } from 'hooks/usePushNotifications'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { AvatarGroup } from '@components/DirectMessages/GroupDMIcon'
 import { Avatar } from '@components/Avatar/Avatar'
+import type { CHANNEL_INFO_PARAMS_VALUES } from 'routes'
 
 type Props = {
     channel: Channel
@@ -36,7 +37,7 @@ const DesktopChannelHeader = (props: Props) => {
     })
     const isMuted = channelIsMuted || spaceIsMuted
     const channelType = useChannelType(channel.id)
-    const onInfoPressed = useChannelInfoButton()
+    const onInfoPressed = useChannelInfoButton(channelType)
 
     return (
         <Stack gap>
@@ -160,7 +161,7 @@ const TouchChannelHeader = (props: Props) => {
 
     const isMuted = channelIsMuted || spaceIsMuted
 
-    const infoButtonPressed = useChannelInfoButton()
+    const infoButtonPressed = useChannelInfoButton(channelType)
 
     return (
         <Stack gap="sm">
@@ -247,9 +248,9 @@ const TouchChannelHeader = (props: Props) => {
     )
 }
 
-const useChannelInfoButton = () => {
+const useChannelInfoButton = (type: CHANNEL_INFO_PARAMS_VALUES) => {
     const navigate = useNavigate()
     return useCallback(() => {
-        navigate(`info?channel`)
-    }, [navigate])
+        navigate(`info?${type}`)
+    }, [navigate, type])
 }
