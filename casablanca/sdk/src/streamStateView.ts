@@ -593,7 +593,9 @@ export class StreamStateView {
     }
 
     getMemberships(): StreamStateView_Membership {
-        return this.getContent().memberships
+        const memberships = this.getContent().memberships
+        check(isDefined(memberships), `Memberships object not defined in content ${this.streamId}`)
+        return memberships
     }
 
     getUserMetadata(): StreamStateView_UserMetadata | undefined {

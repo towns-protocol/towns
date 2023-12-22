@@ -4,7 +4,6 @@ import { check, logNever } from './check'
 import { RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { StreamStateView_Membership } from './streamStateView_Membership'
 
 export class StreamStateView_Media extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -18,11 +17,6 @@ export class StreamStateView_Media extends StreamStateView_AbstractContent {
         this.channelId = inception.channelId
         this.chunkCount = inception.chunkCount
         this.chunks = Array<Uint8Array>(inception.chunkCount)
-    }
-
-    get memberships(): StreamStateView_Membership {
-        // media streams don't have memberships
-        throw new Error(`not implemented`)
     }
 
     initialize(

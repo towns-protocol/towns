@@ -9,7 +9,7 @@ import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 
 export abstract class StreamStateView_AbstractContent {
     abstract readonly streamId: string
-    abstract readonly memberships: StreamStateView_Membership
+    readonly memberships?: StreamStateView_Membership
     abstract prependEvent(
         event: RemoteTimelineEvent,
         cleartext: string | undefined,
@@ -57,7 +57,7 @@ export abstract class StreamStateView_AbstractContent {
         event: ConfirmedTimelineEvent,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
-        this.memberships.onConfirmedEvent(event, emitter)
+        this.memberships?.onConfirmedEvent(event, emitter)
     }
 
     onDecryptedContent(
