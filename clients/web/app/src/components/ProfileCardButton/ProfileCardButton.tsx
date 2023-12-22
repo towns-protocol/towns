@@ -1,5 +1,5 @@
 import { default as React, useCallback } from 'react'
-import { useMatch, useNavigate } from 'react-router'
+import { useLocation, useMatch, useNavigate } from 'react-router'
 import { useMyProfile } from 'use-zion-client'
 import { Box } from '@ui'
 import { useAuth } from 'hooks/useAuth'
@@ -15,16 +15,19 @@ export const ProfileCardButton = () => {
     const { isAuthenticated } = useAuth()
 
     const navigate = useNavigate()
+    const location = useLocation()
 
     const { createLink: createProfileLink } = useCreateLink()
 
     const link = userId ? createProfileLink({ profileId: 'me' }) : undefined
 
     const onClick = useCallback(() => {
-        if (link) {
+        if (location.pathname.match(/profile\/me/)) {
+            navigate('../../', { relative: 'path' })
+        } else if (link) {
             navigate(link)
         }
-    }, [link, navigate])
+    }, [link, navigate, location.pathname])
 
     const hasAvatar = isAuthenticated && userId
 
