@@ -52,6 +52,33 @@ contract MembershipTest is
     membership.joinTown(alice);
   }
 
+  function test_joinTown_revert_sender_AlreadyMember() external {
+    vm.prank(alice);
+    membership.joinTown(alice);
+
+    address bob = _randomAddress();
+
+    vm.prank(alice);
+    vm.expectRevert(Membership__AlreadyMember.selector);
+    membership.joinTown(bob);
+
+    vm.prank(bob);
+    vm.expectRevert(Membership__AlreadyMember.selector);
+    membership.joinTown(alice);
+  }
+
+  function test_joinTown_revert_InvalidAddress() external {
+    vm.prank(alice);
+    vm.expectRevert(Membership__InvalidAddress.selector);
+    membership.joinTown(address(0));
+  }
+
+  function test_joinTown_revert_caller_InvalidAddress() external {
+    vm.prank(address(0));
+    vm.expectRevert(BalanceQueryForZeroAddress.selector);
+    membership.joinTown(alice);
+  }
+
   function test_joinTown_revert_LimitReached() external {
     vm.prank(founder);
     membership.setMembershipLimit(1);
