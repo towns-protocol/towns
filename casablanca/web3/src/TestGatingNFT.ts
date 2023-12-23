@@ -6,7 +6,7 @@ import { ethers } from 'ethers'
 
 import { keccak256 } from 'viem/utils'
 
-function toEIP55Address(address: `0x${string}`): `0x${string}` {
+export function toEIP55Address(address: `0x${string}`): `0x${string}` {
     const addressHash = keccak256(address.substring(2).toLowerCase() as `0x${string}`)
     let checksumAddress = '0x'
 
@@ -21,7 +21,7 @@ function toEIP55Address(address: `0x${string}`): `0x${string}` {
     return checksumAddress as `0x${string}`
 }
 
-function isEIP55Address(address: `0x${string}`): boolean {
+export function isEIP55Address(address: `0x${string}`): boolean {
     return address === toEIP55Address(address)
 }
 const client = createTestClient({
@@ -32,7 +32,11 @@ const client = createTestClient({
     .extend(publicActions)
     .extend(walletActions)
 
-function isHexString(value: any): value is `0x${string}` {
+export function isHexString(value: unknown): value is `0x${string}` {
+    // Check if the value is undefined first
+    if (value === undefined) {
+        return false
+    }
     return typeof value === 'string' && /^0x[0-9a-fA-F]+$/.test(value)
 }
 export class TestGatingNFT {

@@ -63,6 +63,7 @@ describe('Zion event handlers test', () => {
                 everyone: false,
                 tokens,
                 users: [],
+                rule: ethers.constants.AddressZero,
             },
         }
         // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.

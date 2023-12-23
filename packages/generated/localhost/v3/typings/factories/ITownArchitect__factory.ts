@@ -118,6 +118,11 @@ const _abi = [
                 type: "address[]",
                 internalType: "address[]",
               },
+              {
+                name: "rule",
+                type: "address",
+                internalType: "contract IEntitlementRule",
+              },
             ],
           },
           {
@@ -260,6 +265,11 @@ const _abi = [
                     name: "users",
                     type: "address[]",
                     internalType: "address[]",
+                  },
+                  {
+                    name: "rule",
+                    type: "address",
+                    internalType: "contract IEntitlementRule",
                   },
                 ],
               },

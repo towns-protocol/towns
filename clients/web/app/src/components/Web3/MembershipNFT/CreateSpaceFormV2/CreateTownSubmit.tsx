@@ -1,6 +1,7 @@
 import { UseFormReturn } from 'react-hook-form'
 import {
     CreateSpaceInfo,
+    MembershipStruct,
     Permission,
     makeRoomIdentifier,
     useCreateSpaceTransaction,
@@ -118,7 +119,7 @@ export function CreateTownSubmit({
                     return undefined
                 }
 
-                const requirements = {
+                const requirements: MembershipStruct = {
                     settings: {
                         name: 'Member',
                         symbol: 'MEMBER',
@@ -139,6 +140,7 @@ export function CreateTownSubmit({
                             isSingleToken: false,
                         })),
                         users: [],
+                        rule: ethers.constants.AddressZero,
                     },
                     permissions: [Permission.Read, Permission.Write],
                 }

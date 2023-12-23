@@ -12,6 +12,7 @@ import {IPausableBase, IPausable} from "contracts/src/diamond/facets/pausable/IP
 import {IGuardian} from "contracts/src/towns/facets/guardian/IGuardian.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IMembershipBase} from "contracts/src/towns/facets/membership/IMembership.sol";
+import {IEntitlementRule} from "contracts/src/crosschain/IEntitlementRule.sol";
 
 // libraries
 
@@ -249,7 +250,8 @@ contract TownArchitectTest is
         requirements: MembershipRequirements({
           everyone: false,
           tokens: new ITokenEntitlement.ExternalToken[](0),
-          users: new address[](0)
+          users: new address[](0),
+          rule: IEntitlementRule(address(0))
         }),
         permissions: new string[](0)
       }),

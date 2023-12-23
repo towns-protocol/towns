@@ -8,6 +8,7 @@ import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
 import { Client } from './client'
 import { jest } from '@jest/globals'
+import { MembershipStruct } from '@river/web3'
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error
 // specifically the code in ConvertersEntitlements.ts - decodeAbiParameters and encodeAbiParameters functions have an import that can't be found
@@ -67,7 +68,7 @@ describe('mediaWithEntitlementsTests', () => {
         const spaceDapp = createSpaceDapp(chainId, provider)
 
         // create a space stream,
-        const membershipInfo = {
+        const membershipInfo: MembershipStruct = {
             settings: {
                 name: 'Everyone',
                 symbol: 'MEMBER',
@@ -84,6 +85,7 @@ describe('mediaWithEntitlementsTests', () => {
                 everyone: true,
                 tokens: [],
                 users: [],
+                rule: ethers.constants.AddressZero,
             },
         }
 

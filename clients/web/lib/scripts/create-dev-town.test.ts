@@ -78,6 +78,7 @@ export async function createDevTown(client: ZionTestClient): Promise<RoomIdentif
             everyone: true,
             tokens: [],
             users: [],
+            rule: ethers.constants.AddressZero,
         },
     }
 

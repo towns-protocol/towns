@@ -6,6 +6,7 @@ import { dlog } from './dlog'
 import { makeUserContextFromWallet, makeTestClient, makeDonePromise } from './util.test'
 import { genId, makeChannelStreamId, makeSpaceStreamId, makeUserStreamId } from './id'
 import { ethers } from 'ethers'
+import { MembershipStruct } from '@river/web3'
 const { LocalhostWeb3Provider, createSpaceDapp, Permission } = await import('@river/web3')
 
 const base_log = dlog('csb:test:withEntitlements')
@@ -38,7 +39,7 @@ describe('withEntitlements', () => {
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
         log('Bob created user, about to create space', { spaceId, channelId })
         // first on the blockchain
-        const membershipInfo = {
+        const membershipInfo: MembershipStruct = {
             settings: {
                 name: 'Everyone',
                 symbol: 'MEMBER',
@@ -55,6 +56,7 @@ describe('withEntitlements', () => {
                 everyone: true,
                 tokens: [],
                 users: [],
+                rule: ethers.constants.AddressZero,
             },
         }
         const transaction = await spaceDapp.createSpace(

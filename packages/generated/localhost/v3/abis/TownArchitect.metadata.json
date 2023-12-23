@@ -327,6 +327,11 @@
                     "internalType": "address[]",
                     "name": "users",
                     "type": "address[]"
+                  },
+                  {
+                    "internalType": "contract IEntitlementRule",
+                    "name": "rule",
+                    "type": "address"
                   }
                 ],
                 "internalType": "struct ITownArchitectBase.MembershipRequirements",
@@ -466,6 +471,11 @@
                         "internalType": "address[]",
                         "name": "users",
                         "type": "address[]"
+                      },
+                      {
+                        "internalType": "contract IEntitlementRule",
+                        "name": "rule",
+                        "type": "address"
                       }
                     ],
                     "internalType": "struct ITownArchitectBase.MembershipRequirements",
@@ -697,7 +707,7 @@
       },
       "kind": "dev",
       "methods": {
-        "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[]),string[]),(string,string)))": {
+        "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[],address),string[]),(string,string)))": {
           "params": {
             "townInfo": "Town information"
           }
@@ -716,7 +726,7 @@
       },
       "kind": "user",
       "methods": {
-        "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[]),string[]),(string,string)))": {
+        "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[],address),string[]),(string,string)))": {
           "notice": "Creates a new town"
         }
       },
@@ -756,6 +766,14 @@
     ]
   },
   "sources": {
+    "contracts/src/crosschain/IEntitlementRule.sol": {
+      "keccak256": "0x90178615f20403ed92b5a4b4446bbaec9803df9ce52b92a225f9b7fa9bbc61ff",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://f58a5647f065997a426d39d51528fd1435ac0ed68c513c88fe7deb926ad70e6c",
+        "dweb:/ipfs/QmfYy5Aus9JThaPtnskXhNckzeVKKXB3KriBtw8XVYPUfp"
+      ]
+    },
     "contracts/src/diamond/facets/Facet.sol": {
       "keccak256": "0xecbb7e8de0dae5bdbcbda879436335abac6808bcc2e14f1f4e9efbdc77c4e8be",
       "license": "Apache-2.0",
@@ -1101,11 +1119,11 @@
       ]
     },
     "contracts/src/towns/facets/architect/ITownArchitect.sol": {
-      "keccak256": "0x04701c8f52a1dc95902903820b021ffcfc61562cafc81f5092ecda8e178f2ff6",
+      "keccak256": "0x34ed933cd9e5350b54afd9f9a0e48b3c98581e027f898e7f5955fdd8d090b05a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://83729ebb1d532474b5ea2ce87c1285a7c278c792fa38f32ce9f7661e0f349ff8",
-        "dweb:/ipfs/QmZWh4J6ve1mGi3VB674RwMnnAfGJ4suZiksUxBm9YGeSP"
+        "bzz-raw://337e82a535b6f4448a9fa21ea9c9370ad4661fc8f2c6ad06f495c7169eebc198",
+        "dweb:/ipfs/QmSAriFXQmqQck5XsZE2tNmnSvPasasKACbWZjkLnwhNUt"
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitect.sol": {

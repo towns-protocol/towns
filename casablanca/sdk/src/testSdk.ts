@@ -1,5 +1,5 @@
 import { Client } from './client'
-import { ISpaceDapp, Permission } from '@river/web3'
+import { ISpaceDapp, MembershipStruct, Permission } from '@river/web3'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 import { getFilteredRolesFromSpace } from '@river/web3/dist/ContractHelpers'
 import { BigNumber, ethers } from 'ethers'
@@ -51,7 +51,7 @@ export class RiverSDK {
         const channelId: RoomIdentifier = makeRoomIdentifier(makeUniqueChannelStreamId())
         log('Creating space: ', spaceId.networkId, ' with channel: ', channelId.networkId)
 
-        const membershipInfo = {
+        const membershipInfo: MembershipStruct = {
             settings: {
                 name: 'Everyone',
                 symbol: 'MEMBER',
@@ -73,6 +73,7 @@ export class RiverSDK {
                 everyone: true,
                 tokens: [],
                 users: [],
+                rule: ethers.constants.AddressZero,
             },
         }
 

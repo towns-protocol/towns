@@ -6,6 +6,7 @@ pragma solidity ^0.8.23;
 // libraries
 import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
 import {IMembershipBase} from "contracts/src/towns/facets/membership/IMembership.sol";
+import {IEntitlementRule} from "contracts/src/crosschain/IEntitlementRule.sol";
 
 // contracts
 interface ITownArchitectBase {
@@ -16,6 +17,7 @@ interface ITownArchitectBase {
     bool everyone;
     ITokenEntitlement.ExternalToken[] tokens;
     address[] users;
+    IEntitlementRule rule;
   }
 
   struct Membership {

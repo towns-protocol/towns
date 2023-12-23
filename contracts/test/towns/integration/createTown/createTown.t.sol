@@ -14,6 +14,7 @@ import {ITownArchitectBase} from "contracts/src/towns/facets/architect/ITownArch
 import {IMembership} from "contracts/src/towns/facets/membership/IMembership.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IMembershipBase} from "contracts/src/towns/facets/membership/IMembership.sol";
+import {IEntitlementRule} from "contracts/src/crosschain/IEntitlementRule.sol";
 
 // libraries
 import {Permissions} from "contracts/src/towns/facets/Permissions.sol";
@@ -163,7 +164,8 @@ contract IntegrationCreateTown is
         requirements: MembershipRequirements({
           everyone: false,
           tokens: new ITokenEntitlement.ExternalToken[](0),
-          users: new address[](1)
+          users: new address[](1),
+          rule: IEntitlementRule(address(0))
         }),
         permissions: new string[](1)
       }),
@@ -219,7 +221,8 @@ contract IntegrationCreateTown is
         requirements: ITownArchitectBase.MembershipRequirements({
           everyone: false,
           tokens: new ITokenEntitlement.ExternalToken[](0),
-          users: new address[](0)
+          users: new address[](0),
+          rule: IEntitlementRule(address(0))
         }),
         permissions: new string[](0)
       }),

@@ -178,6 +178,7 @@ function _createMembershipStruct({
                 everyone: tokenAddresses.length === 0,
                 tokens: createExternalTokenStruct(tokenAddresses),
                 users: [],
+                rule: ethers.constants.AddressZero,
             },
         }
     } else {
@@ -198,6 +199,7 @@ function _createMembershipStruct({
                 everyone: tokenAddresses.length === 0,
                 tokens: createExternalTokenStruct(tokenAddresses),
                 users: [],
+                rule: ethers.constants.AddressZero,
             },
         }
     }

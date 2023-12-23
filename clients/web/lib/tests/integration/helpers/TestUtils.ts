@@ -167,6 +167,7 @@ export async function createTestSpaceGatedByTownAndZionNfts(
             everyone: false,
             tokens,
             users: [],
+            rule: ethers.constants.AddressZero,
         },
     }
 
@@ -211,6 +212,7 @@ export async function createTestSpaceGatedByTownNft(
             everyone: true,
             tokens: [],
             users: [],
+            rule: ethers.constants.AddressZero,
         },
     }
 

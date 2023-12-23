@@ -11,7 +11,12 @@ import {
     useCreateSpaceTransaction,
     useWeb3Context,
 } from 'use-zion-client'
-import { Permission, getTestGatingNFTContractAddress, mintMockNFT } from '@river/web3'
+import {
+    MembershipStruct,
+    Permission,
+    getTestGatingNFTContractAddress,
+    mintMockNFT,
+} from '@river/web3'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ethers } from 'ethers'
 import { useGetEmbeddedSigner } from '@towns/privy'
@@ -136,7 +141,7 @@ export const CreateSpaceForm = (props: Props) => {
             console.error('Cannot create space. No signer.')
             return undefined
         }
-        const requirements = {
+        const requirements: MembershipStruct = {
             settings: {
                 name: 'Member',
                 symbol: 'MEMBER',
@@ -155,6 +160,7 @@ export const CreateSpaceForm = (props: Props) => {
                     createTokenEntitlmentStruct({ contractAddress: addr }),
                 ),
                 users: [],
+                rule: ethers.constants.AddressZero,
             },
         }
 
