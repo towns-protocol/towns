@@ -51,13 +51,13 @@ export const DirectMessages = () => {
  * on a touch device landing on  a desktop message route (i.e. outside of /t/:townId)
  * will redirect to the first space
  */
-const useTouchRedirect = (params: { isTouch: boolean }) => {
-    const { isTouch } = params
-
+const useTouchRedirect = ({ isTouch }: { isTouch: boolean }) => {
     const navigate = useNavigate()
-    const spaceId = useParams().spaceId
-    const channelId = useParams().channelSlug
-    const replyId = useParams().messageId
+
+    const params = useParams()
+    const spaceId = params.spaceSlug
+    const channelId = params.channelSlug
+    const replyId = params.messageId
 
     const isDesktopRoute = !spaceId
     const hasRedirectedRef = useRef(false)
@@ -76,5 +76,5 @@ const useTouchRedirect = (params: { isTouch: boolean }) => {
                 `/${PATHS.SPACES}/${firstSpaceStreamId}/${PATHS.MESSAGES}/${messageSegment}${threadSegment}`,
             )
         }
-    }, [canRedirect, firstSpaceStreamId, channelId, navigate, needsRedirect, replyId])
+    }, [canRedirect, channelId, firstSpaceStreamId, navigate, needsRedirect, replyId])
 }
