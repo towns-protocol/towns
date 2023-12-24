@@ -64,7 +64,7 @@
         "jest-canvas-mock": "^2.5.2",
         "jest-environment-jsdom": "^29.6.2",
         "jest-runner-groups": "^2.2.0",
-        "pino": "^8.7.0",
+        "pino": "^8.17.1",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "ts-jest": "^29.1.1",

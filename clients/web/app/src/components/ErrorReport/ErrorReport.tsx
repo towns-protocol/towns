@@ -12,6 +12,7 @@ import { env } from 'utils'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { useDevice } from 'hooks/useDevice'
 import { PanelButton } from '@components/Panel/Panel'
+import { bufferedLogger } from 'utils/wrappedlogger'
 
 const FormStateKeys = {
     name: 'name',
@@ -37,9 +38,10 @@ const defaultValues = {
     [FormStateKeys.comments]: '',
 }
 
-async function postCustomErrorToDatadog(data: FormState, id: string) {
+async function postCustomErrorToDatadog(data: FormState, id: string, logs: string) {
     datadogRum.addAction('user-feedback-custom-error', {
         data,
+        logs,
         id,
         timestamp: Date.now().toString(),
         location: window.location.href,
@@ -51,6 +53,8 @@ async function postCustomError(data: FormState) {
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
     const url = `${GATEWAY_SERVER_URL}/user-feedback`
     // generate a uuid for the custom error
+    const logs = bufferedLogger.getBufferAsString()
+    data.comments += `\n\nLogs:\n\n${logs}`
     const uuid = hexlify(randomBytes(16))
     const postCustom = await axiosClient.post(
         url,
@@ -59,7 +63,7 @@ async function postCustomError(data: FormState) {
             id: uuid,
         }),
     )
-    postCustomErrorToDatadog(data, uuid)
+    postCustomErrorToDatadog(data, uuid, logs)
     return postCustom
 }
 

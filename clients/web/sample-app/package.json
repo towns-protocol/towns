@@ -32,7 +32,7 @@
         "lodash": "^4.17.21",
         "matrix-js-sdk": "25.0.0-rc.1",
         "node-stdlib-browser": "^1.2.0",
-        "pino": "^8.7.0",
+        "pino": "^8.17.1",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-error-boundary": "^4.0.11",

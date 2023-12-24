@@ -18,7 +18,7 @@ mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
             title: $issueTitle
             description: $issueDescription
             teamId: "${teamId}"
-            projectId: "${bugsStableEnvironment_ProjectId}"
+            projectId: "${userFeedback_ProjectId}"
         }
     ) {
         success

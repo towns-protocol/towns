@@ -6,6 +6,13 @@ import { datadogLogs } from '@datadog/browser-logs'
 import { datadogRum } from '@datadog/browser-rum'
 import { Main } from 'Main'
 import { env } from 'utils'
+import { bufferedLogger } from 'utils/wrappedlogger'
+
+console.log = bufferedLogger.getLogger().info
+console.info = bufferedLogger.getLogger().info
+console.warn = bufferedLogger.getLogger().warn
+console.debug = bufferedLogger.getLogger().debug
+console.error = bufferedLogger.getLogger().error
 
 console.log(
     `%c\n\nTOWNS\n%c${APP_VERSION}[${APP_COMMIT_HASH}]\n${env.DEV ? 'DEV' : ''}${'\n'.repeat(3)}`,
