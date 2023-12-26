@@ -1,6 +1,7 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import {
+    DMChannelIdentifier,
     useChannelData,
     useDMData,
     useMembers,
@@ -9,7 +10,7 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { DMChannelContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
-import { Icon, Stack, Text } from '@ui'
+import { Box, Icon, Stack, Text, TextButton, TextField } from '@ui'
 import { Panel, PanelButton } from '@components/Panel/Panel'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
 import { useDevice } from 'hooks/useDevice'
@@ -118,9 +119,13 @@ export const DMChannelInfoPanel = () => {
                         <SetUsernameDisplayName titleProperties={usernameProperties} />
                     )}
                     <Stack gap padding background="level2" rounded="sm">
-                        <Text fontWeight="medium" color="default">
-                            {membersText}
-                        </Text>
+                        {data?.isGroup ? (
+                            <RoomPropertiesInputField defaultTitle={membersText} data={data} />
+                        ) : (
+                            <Text fontWeight="medium" color="default">
+                                {membersText}
+                            </Text>
+                        )}
                     </Stack>
                     <PanelButton onClick={onMembersClick}>
                         <Icon type="people" size="square_sm" color="gray2" />
@@ -158,5 +163,77 @@ export const DMChannelInfoPanel = () => {
                 )}
             </DMChannelContextUserLookupProvider>
         </Panel>
+    )
+}
+
+const RoomPropertiesInputField = (props: { defaultTitle: string; data?: DMChannelIdentifier }) => {
+    const { data, defaultTitle } = props
+    const { setRoomProperties } = useZionClient()
+    const [isEditing, setIsEditing] = useState(false)
+    const [value, setValue] = useState('hello world')
+
+    const onChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setValue(e.target.value)
+    }, [])
+
+    const onSave = useCallback(async () => {
+        if (!data?.id) {
+            return
+        }
+
+        await setRoomProperties(data?.id, value, data.properties?.topic ?? '')
+        setIsEditing(false)
+    }, [setRoomProperties, data?.id, data?.properties, value])
+
+    const onKeyDown = useCallback(
+        (e: React.KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === 'Enter') {
+                onSave()
+            } else if (e.key === 'Escape') {
+                setIsEditing(false)
+            }
+        },
+        [onSave],
+    )
+    const onBlur = useCallback(() => {
+        setValue(data?.properties?.name ?? '')
+        setIsEditing(false)
+    }, [data?.properties, setIsEditing])
+
+    useEffect(() => {
+        setValue(data?.properties?.name ?? '')
+    }, [data?.properties?.name])
+
+    return (
+        <Stack horizontal alignItems="center" gap="sm">
+            {isEditing ? (
+                <>
+                    <TextField
+                        border
+                        autoFocus
+                        background="level3"
+                        width="100%"
+                        value={value}
+                        height="height_lg"
+                        paddingX="sm"
+                        placeholder="Optional channel title"
+                        autoCorrect="off"
+                        onChange={onChange}
+                        onBlur={onBlur}
+                        onKeyDown={onKeyDown}
+                    />
+                    <Box grow />
+                    <TextButton onClick={onSave}>Save</TextButton>
+                </>
+            ) : (
+                <>
+                    <Text fontWeight="medium" color="default">
+                        {value.length > 0 ? value : defaultTitle}
+                    </Text>
+                    <Box grow />
+                    <TextButton onClick={() => setIsEditing(true)}>Edit</TextButton>
+                </>
+            )}
+        </Stack>
     )
 }

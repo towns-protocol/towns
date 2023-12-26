@@ -1318,6 +1318,13 @@ export class ZionClient implements EntitlementsDelegate {
         console.error('not implemented for casablanca', url)
     }
 
+    public async setRoomProperties(roomId: RoomIdentifier, title: string, topic: string) {
+        if (!this.casablancaClient) {
+            throw new Error('casablanca client is undefined')
+        }
+        await this.casablancaClient.updateGDMChannelProperties(roomId.streamId, title, topic)
+    }
+
     /************************************************
      * setRoomTopic
      ************************************************/

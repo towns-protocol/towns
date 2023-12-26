@@ -48,6 +48,7 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                             userIds: Array.from(
                                 stream.view.gdmChannelContent.participants(),
                             ).filter((memberUserId) => memberUserId !== userId),
+                            properties: stream.view.getChannelMetadata()?.channelProperties,
                             lastEventCreatedAtEpocMs:
                                 stream.view.gdmChannelContent.lastEventCreatedAtEpocMs,
                             isGroup: true,

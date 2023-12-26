@@ -110,8 +110,11 @@ export const DirectMessageName = (props: { channel: DMChannelIdentifier }) => {
         () => (data?.isGroup ? data.userIds : [counterParty].filter(notUndefined)),
         [counterParty, data?.isGroup, data?.userIds],
     )
+    const channelName = channel.properties?.name
 
-    return userIds ? (
+    return channelName ? (
+        <>{channelName}</>
+    ) : userIds ? (
         <UserList
             excludeSelf
             userIds={userIds}
