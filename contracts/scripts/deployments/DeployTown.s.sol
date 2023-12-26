@@ -19,6 +19,7 @@ import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsSetup.sol";
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 import {MembershipHelper} from "contracts/test/towns/membership/MembershipSetup.sol";
+import {MembershipReferralHelper} from "contracts/test/towns/membership/MembershipReferralSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 
 // Facets
@@ -32,6 +33,7 @@ import {Roles} from "contracts/src/towns/facets/roles/Roles.sol";
 import {TokenPausableFacet} from "contracts/src/diamond/facets/pausable/token/TokenPausableFacet.sol";
 import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipFacet.sol";
+import {MembershipReferralFacet} from "contracts/src/towns/facets/membership/referral/MembershipReferralFacet.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -47,9 +49,13 @@ contract DeployTown is DiamondDeployer {
   IntrospectionHelper introspectionHelper = new IntrospectionHelper();
   ERC721AHelper erc721aHelper = new ERC721AHelper();
   MembershipHelper membershipHelper = new MembershipHelper();
+  MembershipReferralHelper membershipReferralHelper =
+    new MembershipReferralHelper();
 
-  address[] initAddresses = new address[](4);
-  bytes[] initDatas = new bytes[](4);
+  uint256 initDataCount = 4;
+
+  address[] initAddresses = new address[](initDataCount);
+  bytes[] initDatas = new bytes[](initDataCount);
 
   address ownable;
   address tokenOwnable;
@@ -61,6 +67,7 @@ contract DeployTown is DiamondDeployer {
   address tokenPausable;
   address introspection;
   address membership;
+  address membershipReferral;
   address town;
 
   function versionName() public pure override returns (string memory) {
@@ -82,11 +89,12 @@ contract DeployTown is DiamondDeployer {
     tokenPausable = address(new TokenPausableFacet());
     introspection = address(new IntrospectionFacet());
     membership = address(new MembershipFacet());
+    membershipReferral = address(new MembershipReferralFacet());
     vm.stopBroadcast();
 
     membershipHelper.addSelectors(erc721aHelper.selectors());
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](9);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](10);
 
     cuts[index++] = tokenOwnableHelper.makeCut(
       tokenOwnable,
@@ -119,6 +127,10 @@ contract DeployTown is DiamondDeployer {
     );
     cuts[index++] = membershipHelper.makeCut(
       membership,
+      IDiamond.FacetCutAction.Add
+    );
+    cuts[index++] = membershipReferralHelper.makeCut(
+      membershipReferral,
       IDiamond.FacetCutAction.Add
     );
 

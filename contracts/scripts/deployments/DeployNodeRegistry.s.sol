@@ -94,7 +94,7 @@ contract DeployNodeRegistry is Deployer {
 
     datas[index++] = cutHelper.makeInitData("");
     datas[index++] = loupeHelper.makeInitData("");
-    datas[index++] = ownableHelper.makeInitData(abi.encode(address(deployer)));
+    datas[index++] = ownableHelper.makeInitData(deployer);
 
     vm.startBroadcast(deployerPK);
     address nodeRegistry = address(

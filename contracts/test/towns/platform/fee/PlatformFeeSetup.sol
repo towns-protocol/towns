@@ -43,7 +43,7 @@ abstract contract PlatformFeeSetup is FacetTest {
     initAddresses[0] = ownableHelper.facet();
     initAddresses[1] = platformFeeHelper.facet();
 
-    initDatas[0] = ownableHelper.makeInitData(abi.encode(deployer));
+    initDatas[0] = ownableHelper.makeInitData(deployer);
     initDatas[1] = abi.encodeWithSelector(
       platformFeeHelper.initializer(),
       address(deployer),

@@ -1223,11 +1223,11 @@
       ]
     },
     "contracts/src/towns/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x1f579ab0402547c75bd91cb17cf90fcff00a996bf0fc58da719b633c2c514f85",
+      "keccak256": "0xac0d70d049e4683363e335c4360e62ca26d1f1fb7a47e62e558a9f716c5a8867",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://fe61449f320a5b1375f9ddc6ba249843dd967564cd488688554e3c41cf581fff",
-        "dweb:/ipfs/QmWBcp15i4E7N2iThW7R5FqcMJDDfmXtsgo1nh5nZiHCen"
+        "bzz-raw://89ee75c289dc5e1b93c543cce1c52ea3376f5f9cb0327a84c603ff2b33aa08da",
+        "dweb:/ipfs/QmbyYkVP23G5DVvWz3TB9fFjJuWn5sHZHCKura2dg1vCgp"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipStorage.sol": {
@@ -1318,6 +1318,14 @@
         "dweb:/ipfs/QmUziav1iLXZA5NjbF41bUWXBG6CfyCgjK6ET52gE4KdLm"
       ]
     },
+    "contracts/src/towns/facets/prepay/IPrepay.sol": {
+      "keccak256": "0xd144dc5a67097ced337ac92ed6864927ec9b6defe2bb3ae6fe3afc61b584d969",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://2b8a17f6f6a56500ec8bf919076a510a5b0f6bb7b80550878624c2d34c1ed126",
+        "dweb:/ipfs/QmNTYHkYNCBbgAKjnyyqrea6YX4FeS7RNbjv2UwFFjaYej"
+      ]
+    },
     "contracts/src/towns/facets/proxy/ITownProxy.sol": {
       "keccak256": "0x155f6c0cb294e7ac6158beccbe324049f6ac6efb8116f3f368b79cb9d6f7fc78",
       "license": "Apache-2.0",
@@ -1327,11 +1335,11 @@
       ]
     },
     "contracts/src/towns/facets/proxy/TownProxy.sol": {
-      "keccak256": "0x44e349ff96e440beaf51943a71a72cf122eb717a987a00bcde492aa9fc661c0f",
+      "keccak256": "0x30bc0a09856b2201490c8833899dfcd17ef16c5017944789171dc8cd02e77e78",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f6f8b7102599c59f5b443f908b5a71812a82478ad0414b8a5974663153a56624",
-        "dweb:/ipfs/QmPzfect1RnTEP14K9LJMZtSFSgkqYHxRu7SnzEVp7WomR"
+        "bzz-raw://cde09b5582ffa7542a6eadffaa91b4021643a5ac786bc78ae89b7cc59287f40a",
+        "dweb:/ipfs/QmeqSARnvtEt3D8oXKrSM9TByk2Wde4qgQtyfaeq6Xbtue"
       ]
     },
     "contracts/src/towns/facets/roles/IRoles.sol": {

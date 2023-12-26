@@ -58,7 +58,7 @@ abstract contract DiamondCutSetup is FacetTest {
     initAddresses[3] = introspectionHelper.facet();
 
     initDatas[0] = diamondCutHelper.makeInitData("");
-    initDatas[1] = ownableHelper.makeInitData(abi.encode(deployer));
+    initDatas[1] = ownableHelper.makeInitData(deployer);
     initDatas[2] = diamondLoupeHelper.makeInitData("");
     initDatas[3] = introspectionHelper.makeInitData("");
 

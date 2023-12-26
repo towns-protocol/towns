@@ -49,7 +49,7 @@ abstract contract PlatformRequirementsSetup is FacetTest {
     initAddresses[0] = ownableHelper.facet();
     initAddresses[1] = platformReqsHelper.facet();
 
-    initDatas[0] = ownableHelper.makeInitData(abi.encode(deployer));
+    initDatas[0] = ownableHelper.makeInitData(deployer);
     initDatas[1] = abi.encodeWithSelector(
       platformReqsHelper.initializer(),
       feeRecipient,
@@ -106,5 +106,23 @@ contract PlatformRequirementsHelper is FacetHelper {
 
   function initializer() public pure override returns (bytes4) {
     return PlatformRequirementsFacet.__PlatformRequirements_init.selector;
+  }
+
+  function makeInitData(
+    address feeRecipient,
+    uint16 membershipBps,
+    uint256 membershipFee,
+    uint256 membershipMintLimit,
+    uint64 membershipDuration
+  ) public pure returns (bytes memory) {
+    return
+      abi.encodeWithSelector(
+        PlatformRequirementsFacet.__PlatformRequirements_init.selector,
+        feeRecipient,
+        membershipBps,
+        membershipFee,
+        membershipMintLimit,
+        membershipDuration
+      );
   }
 }

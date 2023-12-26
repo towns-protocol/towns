@@ -20,13 +20,19 @@ import {IEntitlementRule} from "contracts/src/crosschain/IEntitlementRule.sol";
 import {Permissions} from "contracts/src/towns/facets/Permissions.sol";
 
 // contracts
-import {TownArchitectSetup} from "contracts/test/towns/architect/TownArchitectSetup.sol";
+import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
 
-contract IntegrationCreateTown is
-  TownArchitectSetup,
-  IRolesBase,
-  ITownArchitectBase
-{
+import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";
+
+contract Integration_CreateTown is BaseSetup, IRolesBase, ITownArchitectBase {
+  TownArchitect public townArchitect;
+
+  function setUp() public override {
+    super.setUp();
+
+    townArchitect = TownArchitect(diamond);
+  }
+
   function test_create_town_with_default_channel() external {
     string memory townId = "Test";
 

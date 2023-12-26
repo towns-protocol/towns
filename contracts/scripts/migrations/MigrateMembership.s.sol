@@ -5,8 +5,6 @@ pragma solidity ^0.8.19;
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 
-//libraries
-
 //contracts
 import {Migration} from "../common/Migration.s.sol";
 
@@ -16,13 +14,10 @@ import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipF
 // helpers
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {MembershipHelper} from "contracts/test/towns/membership/MembershipSetup.sol";
-import {MembershipReferralHelper} from "contracts/test/towns/membership/MembershipReferralSetup.sol";
 
 contract MigrateMembership is Migration {
   ERC721AHelper erc721aHelper = new ERC721AHelper();
   MembershipHelper membershipHelper = new MembershipHelper();
-  MembershipReferralHelper membershipReferralHelper =
-    new MembershipReferralHelper();
 
   function __migration(uint256 deployerPK, address) public override {
     address diamond = getDeployment("town");
@@ -34,22 +29,7 @@ contract MigrateMembership is Migration {
 
     membershipHelper.addSelectors(erc721aHelper.selectors());
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
-
-    bytes4[] memory newSelectors = new bytes4[](1);
-    newSelectors[0] = MembershipFacet.getMembershipRenewalPrice.selector;
-
-    // Add new selector to membership
-    cuts[index++] = IDiamond.FacetCut({
-      facetAddress: membership,
-      action: IDiamond.FacetCutAction.Add,
-      functionSelectors: newSelectors
-    });
-
-    // remove old selector from membership
-    membershipHelper.removeSelector(
-      MembershipFacet.getMembershipRenewalPrice.selector
-    );
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
 
     // Replace the membership facet
     cuts[index++] = IDiamond.FacetCut({

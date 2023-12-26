@@ -42,7 +42,7 @@ abstract contract PausableSetup is FacetTest {
 
     bytes[] memory initDatas = new bytes[](2);
     initDatas[0] = pausableHelper.makeInitData("");
-    initDatas[1] = ownableHelper.makeInitData(abi.encode(deployer));
+    initDatas[1] = ownableHelper.makeInitData(deployer);
 
     return
       Diamond.InitParams({

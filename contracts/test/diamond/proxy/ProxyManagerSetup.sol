@@ -70,10 +70,8 @@ abstract contract ProxyManagerSetup is FacetTest {
     addresses[1] = ownableHelper.facet();
     addresses[2] = diamondLoupeHelper.facet();
 
-    payloads[0] = proxyManagerHelper.makeInitData(
-      abi.encode(address(implementation))
-    );
-    payloads[1] = ownableHelper.makeInitData(abi.encode(address(deployer)));
+    payloads[0] = proxyManagerHelper.makeInitData(address(implementation));
+    payloads[1] = ownableHelper.makeInitData(deployer);
     payloads[2] = diamondLoupeHelper.makeInitData("");
 
     return
@@ -112,12 +110,12 @@ contract ProxyManagerHelper is FacetHelper {
   }
 
   function makeInitData(
-    bytes memory implementation
-  ) public pure override returns (bytes memory) {
+    address implementation
+  ) public pure returns (bytes memory) {
     return
       abi.encodeWithSelector(
-        initializer(),
-        abi.decode(implementation, (address))
+        ProxyManager.__ProxyManager_init.selector,
+        implementation
       );
   }
 }

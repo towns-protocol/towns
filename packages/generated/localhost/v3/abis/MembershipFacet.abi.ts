@@ -126,7 +126,7 @@ export default [
     "name": "_getMembershipPrice",
     "inputs": [
       {
-        "name": "totalMinted",
+        "name": "totalSupply",
         "type": "uint256",
         "internalType": "uint256"
       }

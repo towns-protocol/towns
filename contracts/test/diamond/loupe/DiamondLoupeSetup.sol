@@ -66,7 +66,7 @@ abstract contract DiamondLoupeSetup is FacetTest {
     initDatas[0] = diamondLoupeHelper.makeInitData("");
     initDatas[1] = diamondCutHelper.makeInitData("");
     initDatas[2] = introspectionHelper.makeInitData("");
-    initDatas[3] = ownableHelper.makeInitData(abi.encode(deployer));
+    initDatas[3] = ownableHelper.makeInitData(deployer);
 
     return
       Diamond.InitParams({

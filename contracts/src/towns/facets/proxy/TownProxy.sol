@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import {ITownProxy} from "./ITownProxy.sol";
 import {IERC5643} from "contracts/src/diamond/facets/token/ERC5643/IERC5643.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IMembership} from "contracts/src/towns/facets/membership/IMembership.sol";
 
 // libraries
 
@@ -38,6 +39,7 @@ contract TownProxy is
     __ERC721ABase_init(init.membership.name, init.membership.symbol);
     __MembershipBase_init(init.membership, init.managedProxy.manager);
     __MembershipReferralBase_init();
+    _setInterfaceIds();
   }
 
   function _startTokenId() internal pure override returns (uint256) {
@@ -49,6 +51,7 @@ contract TownProxy is
     _addInterface(0x5b5e139f); // ERC165 Interface ID for ERC721Metadata
     _addInterface(type(IERC5643).interfaceId); // ERC165 Interface ID for IERC5643
     _addInterface(type(IERC173).interfaceId); // ERC165 Interface ID for IERC173
+    _addInterface(type(IMembership).interfaceId); // ERC165 Interface ID for IMembership
   }
 
   receive() external payable {}

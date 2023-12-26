@@ -55,7 +55,7 @@ abstract contract ServiceStatusSetup is FacetTest {
       Diamond.InitParams({
         baseFacets: cuts,
         init: ownableHelper.facet(),
-        initData: ownableHelper.makeInitData(abi.encode(address(deployer)))
+        initData: ownableHelper.makeInitData(deployer)
       });
   }
 }

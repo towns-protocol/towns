@@ -116,8 +116,6 @@ contract MembershipTest is
   }
 
   function test_joinTown_revert_already_member() external {
-    address bob = _randomAddress();
-
     vm.prank(founder);
     membership.joinTown(alice);
 
@@ -129,29 +127,31 @@ contract MembershipTest is
   // =============================================================
   //                       Join Town Referral
   // =============================================================
-
   function test_joinTownWithReferral() external {
-    address bob = _randomAddress();
     uint256 referralCode = 123;
 
-    vm.prank(founder);
+    vm.prank(alice);
     membership.joinTownWithReferral(alice, bob, referralCode);
 
     assertEq(membership.balanceOf(alice), 1);
   }
 
   function test_joinTownWithReferral_with_price() external {
-    address bob = _randomAddress();
     uint256 referralCode = 123;
     uint256 membershipPrice = 10 ether;
-    vm.deal(founder, membershipPrice);
+
+    // mint membership to founder
+    vm.prank(founder);
+    membership.joinTown(founder);
 
     vm.startPrank(founder);
+    membership.setMembershipFreeAllocation(1);
     membership.setMembershipCurrency(CurrencyTransfer.NATIVE_TOKEN);
     membership.setMembershipPrice(membershipPrice);
     vm.stopPrank();
 
-    vm.prank(founder);
+    vm.deal(alice, membershipPrice);
+    vm.prank(alice);
     membership.joinTownWithReferral{value: membershipPrice}(
       alice,
       bob,
@@ -189,7 +189,7 @@ contract MembershipTest is
     assertEq(founderDAO.balance, netMembershipPrice - referralFee);
 
     // assert the minter's eth got taken
-    assertEq(founder.balance, 0 ether);
+    assertEq(charlie.balance, 0 ether);
   }
 
   // =============================================================
@@ -251,16 +251,23 @@ contract MembershipTest is
     uint256 membershipPrice = 10 ether;
 
     vm.startPrank(founder);
+    membership.setMembershipFreeAllocation(1);
     membership.setMembershipCurrency(CurrencyTransfer.NATIVE_TOKEN);
     membership.setMembershipPrice(membershipPrice);
     vm.stopPrank();
 
+    // mint membership to founder
     vm.prank(founder);
-    vm.deal(founder, membershipPrice);
+    membership.joinTown(founder);
+    assertEq(membership.balanceOf(founder), 1);
+
+    // get paid joinTown
+    vm.prank(alice);
+    vm.deal(alice, membershipPrice);
     uint256 tokenId = membership.joinTown{value: membershipPrice}(alice);
 
     assertEq(membership.balanceOf(alice), 1);
-    assertEq(founder.balance, 0 ether);
+    assertEq(alice.balance, 0 ether);
 
     address protocolRecipient = IPlatformRequirements(townFactory)
       .getFeeRecipient();
@@ -316,9 +323,14 @@ contract MembershipTest is
 
     // set the membership price and currency
     vm.startPrank(founder);
+    membership.setMembershipFreeAllocation(1);
     membership.setMembershipCurrency(CurrencyTransfer.NATIVE_TOKEN);
     membership.setMembershipPrice(membershipPrice);
     vm.stopPrank();
+
+    // mint membership to founder
+    vm.prank(founder);
+    membership.joinTown(founder);
 
     // join the town
     vm.prank(alice);

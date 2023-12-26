@@ -38,7 +38,7 @@ abstract contract OwnableSetup is FacetTest {
       Diamond.InitParams({
         baseFacets: cuts,
         init: ownableHelper.facet(),
-        initData: ownableHelper.makeInitData(abi.encode(address(deployer)))
+        initData: ownableHelper.makeInitData(deployer)
       });
   }
 }
@@ -65,9 +65,7 @@ contract OwnableHelper is FacetHelper {
     return OwnableFacet.__Ownable_init.selector;
   }
 
-  function makeInitData(
-    bytes memory data
-  ) public pure override returns (bytes memory) {
-    return abi.encodeWithSelector(initializer(), abi.decode(data, (address)));
+  function makeInitData(address owner) public pure returns (bytes memory) {
+    return abi.encodeWithSelector(OwnableFacet.__Ownable_init.selector, owner);
   }
 }

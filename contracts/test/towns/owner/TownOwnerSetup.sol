@@ -41,7 +41,7 @@ contract TownOwnerSetup is FacetTest {
 
 contract TownOwnerImplementation {
   function diamondInitParams(
-    address deployer
+    address owner
   ) public returns (Diamond.InitParams memory) {
     OwnableHelper ownableHelper = new OwnableHelper();
     GuardianHelper guardianHelper = new GuardianHelper();
@@ -72,7 +72,7 @@ contract TownOwnerImplementation {
     index = 0;
 
     bytes[] memory payloads = new bytes[](3);
-    payloads[index++] = ownableHelper.makeInitData(abi.encode(deployer));
+    payloads[index++] = ownableHelper.makeInitData(owner);
     payloads[index++] = townOwnerHelper.makeInitData("TownOwner", "OWNER", "1");
     payloads[index++] = guardianHelper.makeInitData(7 days);
 

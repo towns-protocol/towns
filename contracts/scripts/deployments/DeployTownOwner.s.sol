@@ -108,7 +108,7 @@ contract DeployTownOwner is DiamondDeployer {
 
     payloads[index++] = diamondCutHelper.makeInitData("");
     payloads[index++] = diamondLoupeHelper.makeInitData("");
-    payloads[index++] = ownableHelper.makeInitData(abi.encode(deployer));
+    payloads[index++] = ownableHelper.makeInitData(deployer);
     payloads[index++] = introspectionHelper.makeInitData("");
     payloads[index++] = townOwnerHelper.makeInitData(
       "Town Owner",

@@ -6,6 +6,7 @@ import {IMembershipBase} from "./IMembership.sol";
 import {IPlatformRequirements} from "contracts/src/towns/facets/platform/requirements/IPlatformRequirements.sol";
 import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
+import {IPrepay} from "contracts/src/towns/facets/prepay/IPrepay.sol";
 
 // libraries
 import {MembershipStorage} from "./MembershipStorage.sol";
@@ -152,15 +153,27 @@ abstract contract MembershipBase is IMembershipBase {
 
   /// @dev Makes it virtual to allow other pricing strategies
   function _getMembershipPrice(
-    uint256 totalMinted
+    uint256 totalSupply
   ) public view virtual returns (uint256) {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
+
+    // get free allocation
+    uint256 freeAllocation = _getMembershipFreeAllocation();
+
+    // if the free allocation is greater than the total supply, return 0
+    if (freeAllocation > totalSupply) return 0;
+
+    // if the total supply is greater than the free allocation, but you have a prepaid balance return 0
+    if (
+      IPrepay(ds.townFactory).prepaidMembershipSupply(address(this)) >
+      totalSupply
+    ) return 0;
 
     if (ds.pricingModule != address(0))
       return
         IMembershipPricing(ds.pricingModule).getPrice(
-          _getMembershipFreeAllocation(),
-          totalMinted
+          freeAllocation,
+          totalSupply
         );
 
     return ds.membershipPrice;
@@ -175,14 +188,14 @@ abstract contract MembershipBase is IMembershipBase {
 
   function _getMembershipRenewalPrice(
     uint256 tokenId,
-    uint256 totalMinted
+    uint256 totalSupply
   ) internal view returns (uint256) {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
 
     if (ds.renewalPriceByTokenId[tokenId] > 0)
       return ds.renewalPriceByTokenId[tokenId];
 
-    return _getMembershipPrice(totalMinted);
+    return _getMembershipPrice(totalSupply);
   }
 
   // =============================================================

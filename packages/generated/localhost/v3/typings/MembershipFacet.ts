@@ -860,7 +860,7 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<[BigNumber]>;
 
     _getMembershipPrice(
-      totalMinted: PromiseOrValue<BigNumberish>,
+      totalSupply: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
@@ -1071,7 +1071,7 @@ export interface MembershipFacet extends BaseContract {
   _getMembershipFreeAllocation(overrides?: CallOverrides): Promise<BigNumber>;
 
   _getMembershipPrice(
-    totalMinted: PromiseOrValue<BigNumberish>,
+    totalSupply: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
@@ -1280,7 +1280,7 @@ export interface MembershipFacet extends BaseContract {
     _getMembershipFreeAllocation(overrides?: CallOverrides): Promise<BigNumber>;
 
     _getMembershipPrice(
-      totalMinted: PromiseOrValue<BigNumberish>,
+      totalSupply: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1643,7 +1643,7 @@ export interface MembershipFacet extends BaseContract {
     _getMembershipFreeAllocation(overrides?: CallOverrides): Promise<BigNumber>;
 
     _getMembershipPrice(
-      totalMinted: PromiseOrValue<BigNumberish>,
+      totalSupply: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1859,7 +1859,7 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     _getMembershipPrice(
-      totalMinted: PromiseOrValue<BigNumberish>,
+      totalSupply: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

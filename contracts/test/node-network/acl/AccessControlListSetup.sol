@@ -46,7 +46,7 @@ abstract contract AccessControlListSetup is FacetTest {
 
     initAddresses[0] = ownableHelper.facet();
 
-    initDatas[0] = ownableHelper.makeInitData(abi.encode(deployer));
+    initDatas[0] = ownableHelper.makeInitData(deployer);
 
     return
       Diamond.InitParams({

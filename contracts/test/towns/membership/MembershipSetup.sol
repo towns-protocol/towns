@@ -15,7 +15,7 @@ import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {MembershipReferralHelper} from "contracts/test/towns/membership/MembershipReferralSetup.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-import {TownArchitectSetup} from "contracts/test/towns/architect/TownArchitectSetup.sol";
+import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
 import {EntitlementsHelper} from "contracts/test/towns/entitlements/EntitlementsSetup.sol";
 
 // contracts
@@ -38,6 +38,7 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
 
   // entitled user
   address internal alice;
+  address internal charlie;
 
   // non-entitled user
   address internal bob;
@@ -47,6 +48,7 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
     founderDAO = _randomAddress();
     alice = _randomAddress();
     bob = _randomAddress();
+    charlie = _randomAddress();
 
     super.setUp();
     membership = MembershipFacet(address(diamond));
@@ -66,8 +68,10 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
     vm.prank(founder);
     manager.addEntitlementModule(address(entitlement));
 
-    vm.prank(diamond);
+    vm.startPrank(diamond);
     entitlement.setEntitlement(1, abi.encode(alice));
+    entitlement.setEntitlement(2, abi.encode(charlie));
+    vm.stopPrank();
   }
 
   function diamondInitParams()
@@ -75,7 +79,7 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
     override
     returns (Diamond.InitParams memory)
   {
-    TownArchitectSetup townArchitectSetup = new TownArchitectSetup();
+    BaseSetup baseSetup = new BaseSetup();
     MembershipHelper membershipHelper = new MembershipHelper();
     IntrospectionHelper introspectionHelper = new IntrospectionHelper();
     TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
@@ -89,8 +93,8 @@ abstract contract MembershipSetup is IMembershipBase, FacetTest {
     // mint nft to founder so onlyOwner works
     uint256 tokenId = mockERC721A.mintTo(founder);
 
-    townArchitectSetup.setUp();
-    townFactory = address(townArchitectSetup.townArchitect());
+    baseSetup.setUp();
+    townFactory = address(baseSetup.townFactory());
 
     membershipHelper.addSelectors(erc721aHelper.selectors());
 

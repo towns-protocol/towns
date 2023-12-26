@@ -726,7 +726,7 @@
         "inputs": [
           {
             "internalType": "uint256",
-            "name": "totalMinted",
+            "name": "totalSupply",
             "type": "uint256"
           }
         ],
@@ -1994,19 +1994,19 @@
       ]
     },
     "contracts/src/towns/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x1f579ab0402547c75bd91cb17cf90fcff00a996bf0fc58da719b633c2c514f85",
+      "keccak256": "0xac0d70d049e4683363e335c4360e62ca26d1f1fb7a47e62e558a9f716c5a8867",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://fe61449f320a5b1375f9ddc6ba249843dd967564cd488688554e3c41cf581fff",
-        "dweb:/ipfs/QmWBcp15i4E7N2iThW7R5FqcMJDDfmXtsgo1nh5nZiHCen"
+        "bzz-raw://89ee75c289dc5e1b93c543cce1c52ea3376f5f9cb0327a84c603ff2b33aa08da",
+        "dweb:/ipfs/QmbyYkVP23G5DVvWz3TB9fFjJuWn5sHZHCKura2dg1vCgp"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0xd27bf945e5126604bfc093e762f41f50fc3255b88cd312d41577c1dbffd7bb4f",
+      "keccak256": "0xa6ed321f9b062bf4017570f94852d873a6352a167e3b8c358b67757e21f20cee",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://da1e0d5d4726ee78fd3a62536e1e60658d657c2c773ec97b1c50c29ab4f84614",
-        "dweb:/ipfs/QmZjeufRiMivv47k4LkzzqUA3ZBLn9j6HN6nj5Z1bcX2St"
+        "bzz-raw://9ad1d40dd14714271d3daf438cc2dfdf5fa003d038013a971c700cda47efa554",
+        "dweb:/ipfs/QmUxSYsC5mY3uXWSNKTJkejxGRC4BAonA732VMVYJc6vuq"
       ]
     },
     "contracts/src/towns/facets/membership/MembershipStorage.sol": {
@@ -2055,6 +2055,14 @@
       "urls": [
         "bzz-raw://ee228bbd5cbaaba40e99001d5bc23e2b7f4b82647028ad383932470668ab0a12",
         "dweb:/ipfs/QmUziav1iLXZA5NjbF41bUWXBG6CfyCgjK6ET52gE4KdLm"
+      ]
+    },
+    "contracts/src/towns/facets/prepay/IPrepay.sol": {
+      "keccak256": "0xd144dc5a67097ced337ac92ed6864927ec9b6defe2bb3ae6fe3afc61b584d969",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://2b8a17f6f6a56500ec8bf919076a510a5b0f6bb7b80550878624c2d34c1ed126",
+        "dweb:/ipfs/QmNTYHkYNCBbgAKjnyyqrea6YX4FeS7RNbjv2UwFFjaYej"
       ]
     },
     "contracts/src/utils/interfaces/IWETH.sol": {

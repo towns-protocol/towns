@@ -20,6 +20,7 @@ import {ERC721Holder} from "openzeppelin-contracts/contracts/token/ERC721/utils/
 import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
 import {PausableFacet} from "contracts/src/diamond/facets/pausable/PausableFacet.sol";
 import {PlatformRequirementsFacet} from "contracts/src/towns/facets/platform/requirements/PlatformRequirementsFacet.sol";
+import {PrepayFacet} from "contracts/src/towns/facets/prepay/PrepayFacet.sol";
 
 // diamond helpers
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
@@ -32,6 +33,7 @@ import {ProxyManagerHelper} from "contracts/test/diamond/proxy/ProxyManagerSetup
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
 import {PlatformRequirementsHelper} from "contracts/test/towns/platform/requirements/PlatformRequirementsSetup.sol";
+import {PrepayHelper} from "contracts/test/towns/prepay/PrepaySetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -50,9 +52,10 @@ contract DeployTownFactory is DiamondDeployer {
   PausableHelper pausableHelper = new PausableHelper();
   PlatformRequirementsHelper platformReqsHelper =
     new PlatformRequirementsHelper();
+  PrepayHelper prepayHelper = new PrepayHelper();
 
-  uint256 totalFacets = 8;
-  uint256 totalInit = 8;
+  uint256 totalFacets = 9;
+  uint256 totalInit = 9;
 
   address[] initAddresses = new address[](totalInit);
   bytes[] initDatas = new bytes[](totalInit);
@@ -69,6 +72,7 @@ contract DeployTownFactory is DiamondDeployer {
   address ownable;
   address pausable;
   address platformReqs;
+  address prepay;
 
   function versionName() public pure override returns (string memory) {
     return "townFactory";
@@ -89,6 +93,7 @@ contract DeployTownFactory is DiamondDeployer {
     ownable = address(new OwnableFacet());
     pausable = address(new PausableFacet());
     platformReqs = address(new PlatformRequirementsFacet());
+    prepay = address(new PrepayFacet());
 
     vm.stopBroadcast();
 
@@ -120,6 +125,7 @@ contract DeployTownFactory is DiamondDeployer {
       platformReqs,
       IDiamond.FacetCutAction.Add
     );
+    cuts[index++] = prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add);
 
     _resetIndex();
 
@@ -132,6 +138,7 @@ contract DeployTownFactory is DiamondDeployer {
     initAddresses[index++] = ownable;
     initAddresses[index++] = pausable;
     initAddresses[index++] = platformReqs;
+    initAddresses[index++] = prepay;
 
     _resetIndex();
 
@@ -144,11 +151,9 @@ contract DeployTownFactory is DiamondDeployer {
       getDeployment("userEntitlement"), // userEntitlement
       getDeployment("tokenEntitlement") // tokenEntitlement
     );
-    initDatas[index++] = proxyManagerHelper.makeInitData(
-      abi.encode(getDeployment("town"))
-    );
+    initDatas[index++] = proxyManagerHelper.makeInitData(getDeployment("town"));
 
-    initDatas[index++] = ownableHelper.makeInitData(abi.encode(deployer));
+    initDatas[index++] = ownableHelper.makeInitData(deployer);
     initDatas[index++] = pausableHelper.makeInitData("");
     initDatas[index++] = abi.encodeWithSelector(
       platformReqsHelper.initializer(),
@@ -158,6 +163,7 @@ contract DeployTownFactory is DiamondDeployer {
       1_000, // membershipMintLimit
       365 days // membershipDuration
     );
+    initDatas[index++] = prepayHelper.makeInitData("");
 
     return
       Diamond.InitParams({

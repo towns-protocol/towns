@@ -36,7 +36,7 @@ contract MockDiamondHelper is TestUtils {
     addresses[1] = diamondCutHelper.facet();
     addresses[2] = diamondLoupeHelper.facet();
 
-    payloads[0] = ownableHelper.makeInitData(abi.encode(owner));
+    payloads[0] = ownableHelper.makeInitData(owner);
     payloads[1] = diamondCutHelper.makeInitData("");
     payloads[2] = diamondLoupeHelper.makeInitData("");
 

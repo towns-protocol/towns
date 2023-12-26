@@ -28,6 +28,8 @@ contract MembershipFacet is
     MembershipInfo memory info,
     address townFactory
   ) external onlyInitializing {
+    _addInterface(type(IMembership).interfaceId);
+
     __MembershipBase_init(info, townFactory);
     __ERC721A_init_unchained(info.name, info.symbol);
   }
@@ -58,7 +60,7 @@ contract MembershipFacet is
     tokenId = _nextTokenId();
 
     // allocate protocol and membership fees
-    uint256 membershipPrice = _getMembershipPrice(_totalMinted());
+    uint256 membershipPrice = _getMembershipPrice(_totalSupply());
     if (membershipPrice > 0) {
       // set renewal price for token
       _setMembershipRenewalPrice(tokenId, membershipPrice);
@@ -88,7 +90,7 @@ contract MembershipFacet is
     tokenId = _nextTokenId();
 
     // allocate protocol, membership and referral fees
-    uint256 membershipPrice = _getMembershipPrice(_totalMinted());
+    uint256 membershipPrice = _getMembershipPrice(_totalSupply());
 
     if (membershipPrice > 0) {
       // set renewal price for referral
@@ -132,7 +134,7 @@ contract MembershipFacet is
     // allocate protocol and membership fees
     uint256 membershipPrice = _getMembershipRenewalPrice(
       tokenId,
-      _totalMinted()
+      _totalSupply()
     );
 
     if (membershipPrice > 0) {
@@ -203,14 +205,14 @@ contract MembershipFacet is
 
   /// @inheritdoc IMembership
   function getMembershipPrice() external view returns (uint256) {
-    return _getMembershipPrice(_totalMinted());
+    return _getMembershipPrice(_totalSupply());
   }
 
   /// @inheritdoc IMembership
   function getMembershipRenewalPrice(
     uint256 tokenId
   ) external view returns (uint256) {
-    return _getMembershipRenewalPrice(tokenId, _totalMinted());
+    return _getMembershipRenewalPrice(tokenId, _totalSupply());
   }
 
   // =============================================================
