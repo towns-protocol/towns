@@ -1,7 +1,8 @@
-import React, { createContext, useMemo } from 'react'
+import React, { createContext, useMemo, useRef } from 'react'
 import { MemberOf, useAllKnownUsers } from '../hooks/use-all-known-users'
 import { useRoom, useRoomWithStreamId } from '../hooks/use-room'
 import { useSpaceContext } from './SpaceContextProvider'
+import isEqual from 'lodash/isEqual'
 
 export type LookupUser = {
     userId: string
@@ -14,10 +15,12 @@ export type LookupUser = {
     memberOf?: MemberOf
 }
 
+export type LookupUserMap = { [key: string]: LookupUser }
+
 export type UserLookupContextType = {
     streamId?: string
     users: LookupUser[]
-    usersMap: { [key: string]: LookupUser }
+    usersMap: LookupUserMap
 }
 
 export const UserLookupContext = createContext<UserLookupContextType | null>(null)
@@ -45,17 +48,27 @@ export const GlobalContextUserLookupProvider = (props: { children: React.ReactNo
  */
 export const SpaceContextUserLookupProvider = (props: { children: React.ReactNode }) => {
     const { spaceId } = useSpaceContext()
-    const parentContext = useUserLookupContext()
+    const { usersMap: parentContextUsersMap, users: parentContextUsers } = useUserLookupContext()
 
     const members = useRoom(spaceId)
+    const usersCache = useRef<LookupUserMap>({})
 
     const value = useMemo(() => {
         // avoid overriding parent context if spaceId isn't set (e.g DM channels)
         if (members && spaceId) {
-            const users = members.members.map((member) => ({
-                ...member,
-                memberOf: parentContext?.usersMap[member.userId]?.memberOf,
-            }))
+            const users = members.members.map((member) => {
+                const user = {
+                    ...member,
+                    memberOf: parentContextUsersMap?.[member.userId]?.memberOf,
+                }
+                const prev = usersCache.current[user.userId]
+                if (prev && isEqual(prev, user)) {
+                    return prev
+                } else {
+                    usersCache.current[user.userId] = user
+                    return user
+                }
+            })
             const usersMap = users.reduce((acc, user) => {
                 acc[user.userId] = user
                 return acc
@@ -66,9 +79,13 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
                 usersMap,
             }
         } else {
-            return parentContext
+            return {
+                streamId: spaceId?.streamId,
+                users: parentContextUsers,
+                usersMap: parentContextUsersMap,
+            }
         }
-    }, [members, parentContext, spaceId])
+    }, [members, parentContextUsers, parentContextUsersMap, spaceId])
 
     return <UserLookupContext.Provider value={value}>{props.children}</UserLookupContext.Provider>
 }

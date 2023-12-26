@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
 import { RoomMember } from 'types/zion-types'
+import isEqual from 'lodash/isEqual'
 
 export type MemberOf = {
     [spaceId: string]: {
@@ -12,23 +13,23 @@ export type MemberOf = {
     }
 }
 
+type KnownUser = RoomMember & {
+    memberOf: MemberOf
+}
+
 /**
  * @returns an array of all known users in all spaces.
  */
 
 export function useAllKnownUsers() {
     const { spaces, rooms } = useZionContext()
+    const knownUsersRef = useRef<{ [userId: string]: KnownUser }>({})
 
     const users = useMemo(() => {
         const spaceIds = spaces.map((space) => space.id.streamId)
         // The same user can be a member of multiple spaces.
         // The Map makes sure we only return 1 instance of each user.
-        const users = new Map<
-            string,
-            RoomMember & {
-                memberOf: MemberOf
-            }
-        >()
+        const users = new Map<string, KnownUser>()
         for (const spaceId of spaceIds) {
             const room = rooms[spaceId]
             if (room) {
@@ -40,7 +41,18 @@ export function useAllKnownUsers() {
                 }
             }
         }
-        return [...users.values()]
+        const retVal = [...users.values()]
+        // swap in existing users if they are the same to prevent needless rerenders
+        for (let i = 0; i < retVal.length; i++) {
+            const user = retVal[i]
+            const existingUser = knownUsersRef.current[user.userId]
+            if (existingUser && isEqual(existingUser, user)) {
+                retVal[i] = existingUser
+            } else {
+                knownUsersRef.current[user.userId] = user
+            }
+        }
+        return retVal
     }, [spaces, rooms])
 
     // in order to mimick useSpaceMembers
@@ -53,5 +65,5 @@ export function useAllKnownUsers() {
         [users],
     )
 
-    return { users, usersMap }
+    return useMemo(() => ({ users, usersMap }), [users, usersMap])
 }

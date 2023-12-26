@@ -3,11 +3,10 @@ import { LookupUser, useUserLookupContext } from '../components/UserLookupContex
 
 export function useUser(userId?: string): LookupUser | undefined {
     const { users } = useUserLookupContext()
-    return useMemo(
+    const defaultUser = useMemo(
         () =>
             userId
-                ? users.find((user) => user.userId === userId) ??
-                  ({
+                ? ({
                       userId: userId,
                       username: userId,
                       usernameConfirmed: true,
@@ -16,6 +15,11 @@ export function useUser(userId?: string): LookupUser | undefined {
                       displayNameEncrypted: false,
                   } satisfies LookupUser)
                 : undefined,
-        [userId, users],
+        [userId],
+    )
+
+    return useMemo(
+        () => users.find((user) => user.userId === userId) ?? defaultUser,
+        [defaultUser, userId, users],
     )
 }
