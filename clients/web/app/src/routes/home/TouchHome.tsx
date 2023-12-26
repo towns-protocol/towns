@@ -18,6 +18,7 @@ import {
     useUserLookupContext,
 } from 'use-zion-client'
 import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
+import { DMChannelContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
 import { Avatar } from '@components/Avatar/Avatar'
 import {
     DirectMessageIcon,
@@ -438,19 +439,25 @@ const DirectMessageItem = (props: { channel: DMChannelIdentifier; unread: boolea
     const { channel, unread } = props
     const { unreadCount } = useDMLatestMessage(channel.id)
     return (
-        <TouchChannelResultRow
+        <DMChannelContextUserLookupProvider
+            fallbackToParentContext
             key={channel.id.streamId}
-            channelNetworkId={channel.id.streamId}
-            name={<DirectMessageName channel={channel} />}
-            unread={unread}
-            mentionCount={unreadCount}
-            muted={false}
-            icontElement={
-                <Box width="x4">
-                    <DirectMessageIcon channel={channel} width="x4" />
-                </Box>
-            }
-        />
+            channelId={channel.id.streamId}
+        >
+            <TouchChannelResultRow
+                key={channel.id.streamId}
+                channelNetworkId={channel.id.streamId}
+                name={<DirectMessageName channel={channel} />}
+                unread={unread}
+                mentionCount={unreadCount}
+                muted={false}
+                icontElement={
+                    <Box width="x4">
+                        <DirectMessageIcon channel={channel} width="x4" />
+                    </Box>
+                }
+            />
+        </DMChannelContextUserLookupProvider>
     )
 }
 
