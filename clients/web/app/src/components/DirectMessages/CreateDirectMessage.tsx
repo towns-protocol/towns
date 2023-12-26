@@ -42,7 +42,7 @@ export const CreateDirectMessage = (props: Props) => {
         async (selectedUserIds: Set<string>) => {
             const existingChannel = checkIfChannelExists(selectedUserIds)
             if (existingChannel) {
-                const link = createLink({ messageId: existingChannel.id.streamId })
+                const link = createLink({ messageId: existingChannel.id })
                 if (link) {
                     onDirectMessageCreated()
                     navigate(link)
@@ -54,7 +54,7 @@ export const CreateDirectMessage = (props: Props) => {
                 const first = Array.from(selectedUserIds)[0]
                 const streamId = await createDMChannel(first)
                 if (streamId) {
-                    const link = createLink({ messageId: streamId.streamId })
+                    const link = createLink({ messageId: streamId })
                     if (link) {
                         onDirectMessageCreated()
                         navigate(link)
@@ -65,7 +65,7 @@ export const CreateDirectMessage = (props: Props) => {
 
                 const streamId = await createGDMChannel(userIds)
                 if (streamId) {
-                    const link = createLink({ messageId: streamId.streamId })
+                    const link = createLink({ messageId: streamId })
                     if (link) {
                         onDirectMessageCreated()
                         navigate(link)

@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from 'react'
-import { RoomIdentifier } from '../../types/room-identifier'
 import { Badger } from '../../utils/Badger'
 import { useZionContext } from '../../components/ZionContextProvider'
 
@@ -9,7 +8,7 @@ declare const navigator: Navigator & {
 }
 
 const getBadgeCount = (
-    invitedToIds: RoomIdentifier[],
+    invitedToIds: string[],
     spaceUnreads: Record<string, boolean>,
     spaceMentions: Record<string, number>,
 ) => {

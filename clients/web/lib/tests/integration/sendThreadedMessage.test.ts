@@ -14,7 +14,6 @@ import {
 import { Permission } from '@river/web3'
 import { waitFor } from '@testing-library/dom'
 import { RoomMessageEvent } from '../../src/types/timeline-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 
 describe('sendThreadedMessage', () => {
     // usefull for debugging or running against cloud servers
@@ -32,7 +31,7 @@ describe('sendThreadedMessage', () => {
             {
                 name: makeUniqueName('bobs space'),
             },
-        )) as RoomIdentifier
+        )) as string
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',

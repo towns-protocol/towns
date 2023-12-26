@@ -22,13 +22,13 @@ export const useIndexMessages = () => {
     const messages = useMemo(() => {
         return (channels ?? [])
             .flatMap((channel) => {
-                return timelines[channel.id.streamId]
+                return timelines[channel.id]
                     ?.filter(isRoomMessage)
                     .filter((e) => e.content?.body)
                     .map((e) => ({
                         key: e.eventId,
                         type: 'message' as const,
-                        channelId: channel.id.streamId,
+                        channelId: channel.id,
                         body: e.content?.body ?? '',
                         source: e,
                     }))
@@ -39,13 +39,13 @@ export const useIndexMessages = () => {
     const dmMessages = useMemo(() => {
         return dmChannels
             .flatMap((channel) => {
-                return timelines[channel.id.streamId]
+                return timelines[channel.id]
                     ?.filter(isRoomMessage)
                     .filter((e) => e.content?.body)
                     .map((e) => ({
                         key: e.eventId,
                         type: 'dmMessage' as const,
-                        channelId: channel.id.streamId,
+                        channelId: channel.id,
                         body: e.content?.body ?? '',
                         source: e,
                     }))

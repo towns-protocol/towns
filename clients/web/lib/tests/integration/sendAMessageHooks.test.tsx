@@ -8,7 +8,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 import { Membership } from '../../src/types/zion-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import React, { useCallback, useMemo } from 'react'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
@@ -51,16 +50,16 @@ describe('sendMessageHooks', () => {
             {
                 name: makeUniqueName('janes space'),
             },
-        )) as RoomIdentifier
+        )) as string
         // create a space
         //
-        let janesChannelId: RoomIdentifier
+        let janesChannelId: string
         if (janesSpaceId) {
             janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
                 name: 'janes channel',
                 parentSpaceId: janesSpaceId,
                 roleIds: [],
-            })) as RoomIdentifier
+            })) as string
         }
         // create a veiw for bob
         const TestRoomMessages = ({ signer }: { signer: TSigner }) => {

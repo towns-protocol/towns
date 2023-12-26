@@ -51,7 +51,7 @@ export const DirectMessageList = () => {
               .filter((r) => r.item.type === 'dmMessage')
               .map((r) => {
                   return dmChannelIds.find(
-                      (c) => r.item.type === 'dmMessage' && c.id.streamId === r.item.channelId,
+                      (c) => r.item.type === 'dmMessage' && c.id === r.item.channelId,
                   )
               })
               .filter(notUndefined)
@@ -100,14 +100,14 @@ export const DirectMessageList = () => {
                         return (
                             <DMChannelContextUserLookupProvider
                                 fallbackToParentContext
-                                key={channel.id.streamId}
-                                channelId={channel.id.streamId}
+                                key={channel.id}
+                                channelId={channel.id}
                             >
                                 <DirectMessageListItem
-                                    key={channel.id.streamId}
+                                    key={channel.id}
                                     channel={channel}
-                                    selected={channelId === channel.id.streamId}
-                                    unread={dmUnreadChannelIds.has(channel.id.streamId)}
+                                    selected={channelId === channel.id}
+                                    unread={dmUnreadChannelIds.has(channel.id)}
                                     onSelect={selectMessage}
                                 />
                             </DMChannelContextUserLookupProvider>
@@ -198,7 +198,7 @@ const useSelectMessage = (dmChannels: DMChannelIdentifier[], messageId?: string)
     // auto select first message if needed
     useEffect(() => {
         if (!hasInitRef.current && !isTouch && !messageId && dmChannels.length > 0) {
-            const link = createLink({ messageId: dmChannels[0].id.streamId })
+            const link = createLink({ messageId: dmChannels[0].id })
             if (link) {
                 navigate(link)
             }

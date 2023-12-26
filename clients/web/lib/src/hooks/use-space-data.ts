@@ -10,7 +10,6 @@ import {
     SpaceHierarchy,
     getMembershipFor,
 } from '../types/zion-types'
-import { RoomIdentifier, makeRoomIdentifier } from '../types/room-identifier'
 import { useRoom, useRoomNames } from './use-room'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
@@ -24,7 +23,7 @@ import { useQuery } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 
 /// returns default space if no space slug is provided
-export function useSpaceData(inSpaceId?: RoomIdentifier): SpaceData | undefined {
+export function useSpaceData(inSpaceId?: string): SpaceData | undefined {
     const { spaceHierarchies } = useZionContext()
     const { spaceId: contextSpaceId } = useSpaceContext()
     const spaceId = inSpaceId ?? contextSpaceId
@@ -33,8 +32,8 @@ export function useSpaceData(inSpaceId?: RoomIdentifier): SpaceData | undefined 
     // with local data and hope the channel names come out right.
     const spaceRoom = useRoom(spaceId)
     const spaceHierarchy = useMemo(
-        () => (spaceId?.streamId ? spaceHierarchies[spaceId.streamId] : undefined),
-        [spaceId?.streamId, spaceHierarchies],
+        () => (spaceId ? spaceHierarchies[spaceId] : undefined),
+        [spaceId, spaceHierarchies],
     )
     const spaceRoomNames = useRoomNames(spaceHierarchy?.children.map((c) => c.id) ?? [])
     // casablanca is much simpler, just get the data from the stream
@@ -69,7 +68,7 @@ export function useInvites(): InviteData[] {
                     }
                     return formatInvite(
                         room,
-                        getParentSpaceId(id.streamId, spaceHierarchies),
+                        getParentSpaceId(id, spaceHierarchies),
                         '/placeholders/nft_29.png',
                     )
                 })
@@ -79,7 +78,7 @@ export function useInvites(): InviteData[] {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const useInvitesForSpace = (spaceId: RoomIdentifier) => {
+export const useInvitesForSpace = (spaceId: string) => {
     // todo this doesn't work yet
     return useInvites()
 }
@@ -89,18 +88,15 @@ export const useInviteData = (slug: string | undefined) => {
     return useMemo(
         () =>
             invites.find((invite) => {
-                return (
-                    invite.id.streamId === slug ||
-                    invite.id.streamId === encodeURIComponent(slug || '')
-                )
+                return invite.id === slug || invite.id === encodeURIComponent(slug || '')
             }),
         [invites, slug],
     )
 }
 
-function getParentSpaceId(roomId: string, spaces: SpaceHierarchies): RoomIdentifier | undefined {
+function getParentSpaceId(roomId: string, spaces: SpaceHierarchies): string | undefined {
     const hasChild = (space: SpaceHierarchy, id: string) =>
-        space.children.some((child) => child.id.streamId === id)
+        space.children.some((child) => child.id === id)
 
     const parentId = Object.values(spaces).find((space) => hasChild(space, roomId))?.root.id
     return parentId
@@ -142,11 +138,7 @@ export function formatRoom(
     }
 }
 
-function formatInvite(
-    r: Room,
-    spaceParentId: RoomIdentifier | undefined,
-    avatarSrc: string,
-): InviteData {
+function formatInvite(r: Room, spaceParentId: string | undefined, avatarSrc: string): InviteData {
     return {
         id: r.id,
         name: r.name,
@@ -157,7 +149,7 @@ function formatInvite(
 }
 
 function formatChannel(spaceChild: SpaceChild, roomNames: Record<string, string>): Channel {
-    const roomName = roomNames[spaceChild.id.streamId]
+    const roomName = roomNames[spaceChild.id]
     return {
         id: spaceChild.id,
         label: roomName ?? spaceChild.name ?? '',
@@ -279,10 +271,10 @@ export function useSpaceName(spaceId: string) {
     }
 }
 
-function useSpaceRollup(streamId: RoomIdentifier | undefined): SpaceData | undefined {
+function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
     const { casablancaClient } = useZionContext()
     const stream = useCasablancaStream(streamId)
-    const { isLoading, spaceName, error } = useSpaceName(streamId?.streamId ?? '')
+    const { isLoading, spaceName, error } = useSpaceName(streamId ?? '')
     const [space, setSpace] = useState<SpaceData | undefined>(undefined)
 
     useEffect(() => {
@@ -353,7 +345,7 @@ function rollupSpace(
     const membership = getMembershipFor(userId, stream)
 
     return {
-        id: makeRoomIdentifier(stream.view.streamId),
+        id: stream.view.streamId,
         name: spaceName ?? stream.view.streamId,
         avatarSrc: '',
         channelGroups: [
@@ -371,7 +363,7 @@ function rollupSpace(
                 channels: channels
                     .sort((a, b) => a.localeCompare(b))
                     .map((c) => ({
-                        id: makeRoomIdentifier(c),
+                        id: c,
                         label: stream.view.spaceContent.spaceChannelsMetadata.get(c)?.name ?? c,
                         private: false,
                         highlight: false,

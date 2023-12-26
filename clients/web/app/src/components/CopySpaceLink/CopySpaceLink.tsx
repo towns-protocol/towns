@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { RoomIdentifier } from 'use-zion-client'
 import { Box, BoxProps, Icon, Paragraph, Tooltip } from '@ui'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { getInviteUrl } from 'ui/utils/utils'
@@ -7,7 +6,7 @@ import { TooltipBoxVariants } from './CopySpaceLink.css'
 
 export const CopySpaceLink = (
     props: {
-        spaceId: RoomIdentifier
+        spaceId: string
         color?: BoxProps['color']
         background?: BoxProps['background']
     } & TooltipBoxVariants,

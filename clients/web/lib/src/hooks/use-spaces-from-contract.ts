@@ -1,6 +1,5 @@
 import { SpaceIdentifier } from '../client/ZionClientTypes'
 import { useEffect, useMemo, useState } from 'react'
-import { RoomIdentifier } from '../types/room-identifier'
 import { SpaceItem } from '../types/zion-types'
 import { useZionClient } from './use-zion-client'
 import { useZionContext } from '../components/ZionContextProvider'
@@ -53,7 +52,7 @@ function useSpacesFromContractWithAddress(myWalletAddress?: string): UseSpaceFro
             // get all the entitlement status for each space
             // create an array of promises to get all the entitlement status for each space
             const isEntitledPromises = spaceRooms.map((s: SpaceItem) =>
-                spaceDapp.isEntitledToSpace(s.id.streamId, myWalletAddress, Permission.Read),
+                spaceDapp.isEntitledToSpace(s.id, myWalletAddress, Permission.Read),
             )
             // Wait for all the promises to resolve
             const entitledSpaces = await Promise.all(isEntitledPromises)
@@ -84,7 +83,7 @@ function useSpacesFromContractWithAddress(myWalletAddress?: string): UseSpaceFro
             /* get all the space info */
             // create an array of promises to get all the space info
             const getSpaceInfoPromises = spaceItems.map((s: SpaceItem) =>
-                spaceDapp.getSpaceInfo(s.id.streamId),
+                spaceDapp.getSpaceInfo(s.id),
             )
             // Wait for all the promises to resolve
             const entitledSpaces = await Promise.all(getSpaceInfoPromises)
@@ -121,11 +120,11 @@ function useSpacesFromContractWithAddress(myWalletAddress?: string): UseSpaceFro
     return { spaces, isLoading, isError }
 }
 
-export function useSpaceFromContract(spaceId?: RoomIdentifier): {
+export function useSpaceFromContract(spaceId?: string): {
     isLoading: boolean
     isError: boolean
     space: SpaceIdentifier | undefined
 } {
     const { spaces, isLoading, isError } = useSpacesFromContract()
-    return { isLoading, isError, space: spaces.find((x) => x.networkId === spaceId?.streamId) }
+    return { isLoading, isError, space: spaces.find((x) => x.networkId === spaceId) }
 }

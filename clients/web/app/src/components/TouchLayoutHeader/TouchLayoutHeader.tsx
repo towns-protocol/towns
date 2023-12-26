@@ -13,15 +13,15 @@ type Props = {
 export const TouchLayoutHeader = (props: Props) => {
     const space = useSpaceData()
     const { memberIds } = useSpaceMembers()
-    const { data: topic } = useGetSpaceTopic(space?.id.streamId)
+    const { data: topic } = useGetSpaceTopic(space?.id)
     const currentSpaceId = space?.id
 
     const { navigateToCurrentSpace } = useNavigateToCurrentSpaceInfo()
 
-    const hasUnread = useShowHasUnreadBadgeForOtherSpaces(currentSpaceId?.streamId)
+    const hasUnread = useShowHasUnreadBadgeForOtherSpaces(currentSpaceId)
 
     const { spaceIsMuted } = useMuteSettings({
-        spaceId: currentSpaceId?.streamId,
+        spaceId: currentSpaceId,
     })
 
     const onTokenClick = useCallback(() => {

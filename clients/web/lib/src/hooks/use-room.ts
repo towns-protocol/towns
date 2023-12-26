@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
 import { Room } from '../types/zion-types'
-import { RoomIdentifier } from '../types/room-identifier'
 import isEqual from 'lodash/isEqual'
 
-export function useRoom(roomId?: RoomIdentifier): Room | undefined {
+export function useRoom(roomId?: string): Room | undefined {
     const { rooms } = useZionContext()
-    return useMemo(() => (roomId ? rooms[roomId.streamId] : undefined), [roomId, rooms])
+    return useMemo(() => (roomId ? rooms[roomId] : undefined), [roomId, rooms])
 }
 
 export function useRoomWithStreamId(streamId?: string): Room | undefined {
@@ -14,9 +13,9 @@ export function useRoomWithStreamId(streamId?: string): Room | undefined {
     return useMemo(() => (streamId ? rooms[streamId] : undefined), [streamId, rooms])
 }
 
-export function useRoomNames(roomIds: RoomIdentifier[]): Record<string, string> {
+export function useRoomNames(roomIds: string[]): Record<string, string> {
     const { rooms } = useZionContext()
-    const roomIdsRef = useRef<RoomIdentifier[]>([])
+    const roomIdsRef = useRef<string[]>([])
     const [stableRooms, setStableRooms] = useState<Record<string, string>>({})
     const stableRoomIds = useMemo(() => {
         if (isEqual(roomIds, roomIdsRef.current)) {
@@ -29,14 +28,12 @@ export function useRoomNames(roomIds: RoomIdentifier[]): Record<string, string> 
     useEffect(() => {
         setStableRooms((prev) => {
             const needsUpdate =
-                stableRoomIds.find(
-                    (id) => !isEqual(prev[id.streamId], rooms[id.streamId]?.name),
-                ) !== undefined
+                stableRoomIds.find((id) => !isEqual(prev[id], rooms[id]?.name)) !== undefined
             if (needsUpdate) {
                 return stableRoomIds.reduce((acc, id) => {
-                    const room = rooms[id.streamId]
+                    const room = rooms[id]
                     if (room !== undefined) {
-                        acc[id.streamId] = room.name
+                        acc[id] = room.name
                     }
                     return acc
                 }, {} as Record<string, string>)

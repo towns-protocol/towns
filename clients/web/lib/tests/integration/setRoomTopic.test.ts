@@ -7,7 +7,6 @@ import {
     registerAndStartClient,
 } from './helpers/TestUtils'
 
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { getFilteredRolesFromSpace, Permission } from '@river/web3'
 
@@ -21,7 +20,7 @@ describe('On-chain channel creation tests', () => {
         const roomId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
 
         /* Act */
         await alice.setRoomTopic(roomId, 'test topic')
@@ -40,10 +39,10 @@ describe('On-chain channel creation tests', () => {
         const roomId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
 
         const roleIds: number[] = []
-        const allowedRoles = await getFilteredRolesFromSpace(alice.spaceDapp, roomId.streamId)
+        const allowedRoles = await getFilteredRolesFromSpace(alice.spaceDapp, roomId)
         for (const r of allowedRoles) {
             roleIds.push(r.roleId)
         }
@@ -54,7 +53,7 @@ describe('On-chain channel creation tests', () => {
                 roleIds,
             },
             alice.provider.wallet,
-        )) as RoomIdentifier
+        )) as string
 
         /* Act */
         await alice.setRoomTopic(channel, 'test topic')
@@ -77,7 +76,7 @@ describe('On-chain channel creation tests', () => {
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.ModifySpaceSettings,
-        ])) as RoomIdentifier
+        ])) as string
 
         await alice.inviteUser(spaceId, tokenGrantedUser.getUserId() as string)
         await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)

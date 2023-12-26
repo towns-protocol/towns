@@ -53,8 +53,8 @@ const channels = mockSpaceDataWith2Channels.channelGroups.flatMap((cg) => cg.cha
 describe('<AutojoinChannels />', () => {
     test('It joins all eligible channels when loading a space', async () => {
         const mockStreamData = {
-            [channels[0].id.streamId]: streamMock(),
-            [channels[1].id.streamId]: streamMock(),
+            [channels[0].id]: streamMock(),
+            [channels[1].id]: streamMock(),
         }
         getStreamMock.mockImplementation((streamId: string) => mockStreamData[streamId])
         render(<AutojoinChannels />)
@@ -66,8 +66,8 @@ describe('<AutojoinChannels />', () => {
     test('It does not try to join a channel that has any record of room account membership data', () => {
         jest.useFakeTimers()
         const mockStreamData = {
-            [channels[0].id.streamId]: streamMock('0x123'),
-            [channels[1].id.streamId]: streamMock('0x123'),
+            [channels[0].id]: streamMock('0x123'),
+            [channels[1].id]: streamMock('0x123'),
         }
         getStreamMock.mockImplementation((streamId: string) => mockStreamData[streamId])
         render(<AutojoinChannels />)

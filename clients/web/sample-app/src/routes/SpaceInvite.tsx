@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { RoomIdentifier, useSpaceData, useZionClient } from 'use-zion-client'
+import { useSpaceData, useZionClient } from 'use-zion-client'
 import { useNavigate } from 'react-router-dom'
 
 import { InviteForm } from '../components/InviteForm'
@@ -10,9 +10,9 @@ export function SpaceInvite() {
     const { inviteUser } = useZionClient()
 
     const onClickSendInvite = useCallback(
-        async (spaceId: RoomIdentifier, inviteeId: string) => {
+        async (spaceId: string, inviteeId: string) => {
             await inviteUser(spaceId, inviteeId)
-            navigate('/spaces/' + spaceId.streamId + '/')
+            navigate('/spaces/' + spaceId + '/')
         },
         [inviteUser, navigate],
     )

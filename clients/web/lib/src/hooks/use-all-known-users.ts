@@ -26,7 +26,7 @@ export function useAllKnownUsers() {
     const knownUsersRef = useRef<{ [userId: string]: KnownUser }>({})
 
     const users = useMemo(() => {
-        const spaceIds = spaces.map((space) => space.id.streamId)
+        const spaceIds = spaces.map((space) => space.id)
         // The same user can be a member of multiple spaces.
         // The Map makes sure we only return 1 instance of each user.
         const users = new Map<string, KnownUser>()

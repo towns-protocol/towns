@@ -25,8 +25,8 @@ export const DirectMessageListItem = (props: {
     const myUserId = useMyUserId()
 
     const onClick = useCallback(() => {
-        onSelect(channel.id.streamId)
-    }, [channel.id.streamId, onSelect])
+        onSelect(channel.id)
+    }, [channel.id, onSelect])
 
     return (
         <DirectMessageMotionContainer selected={selected} onClick={onClick}>

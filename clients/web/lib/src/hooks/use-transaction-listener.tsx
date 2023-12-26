@@ -2,7 +2,6 @@ import { BlockchainTransaction, BlockchainTransactionType } from '../types/web3-
 import { BlockchainTransactionEvent, ZTEvent } from '../types/timeline-types'
 
 import { ZionClient } from '../client/ZionClient'
-import { makeRoomIdentifier } from '../types/room-identifier'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useQueries } from '../query/queryClient'
 import { waitForTransaction } from 'wagmi/actions'
@@ -61,7 +60,7 @@ async function onSuccessfulTransaction(client: ZionClient, transaction: Blockcha
                 // Important for matrix:
                 // on a successful blockchain transaction, resync the space, so that the user will get the latest channels
                 // For casablanca it works differently and this probably is potentially not needed
-                await client.sendBlockTxn(makeRoomIdentifier(transaction.data.parentSpaceId), {
+                await client.sendBlockTxn(transaction.data.parentSpaceId, {
                     kind: ZTEvent.BlockchainTransaction,
                     content,
                 })

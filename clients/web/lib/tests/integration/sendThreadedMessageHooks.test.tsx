@@ -21,7 +21,6 @@ import {
 } from './helpers/TestUtils'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { RegisterAndJoin } from './helpers/TestComponents'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
@@ -71,22 +70,22 @@ describe('sendThreadedMessageHooks', () => {
             {
                 name: makeUniqueName('janes space'),
             },
-        )) as RoomIdentifier
+        )) as string
         // create channels
         const channel_1 = (await createTestChannelWithSpaceRoles(jane, {
             name: 'channel_1',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
         const channel_2 = (await createTestChannelWithSpaceRoles(jane, {
             name: 'channel_2',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
 
         // 3 chnannels should exist b/c of default channel
         await waitFor(
-            async () => expect((await jane.spaceDapp.getChannels(spaceId.streamId)).length).toBe(3),
+            async () => expect((await jane.spaceDapp.getChannels(spaceId)).length).toBe(3),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
 
@@ -259,9 +258,9 @@ describe('sendThreadedMessageHooks', () => {
                     <button onClick={markAllAsRead}>markAllAsRead</button>
                     <div data-testid="info">
                         {JSON.stringify({
-                            channel_1: channel_1.streamId,
-                            channel_2: channel_2.streamId,
-                            spaceId: spaceId.streamId,
+                            channel_1: channel_1,
+                            channel_2: channel_2,
+                            spaceId: spaceId,
                         })}
                     </div>
                     <div data-testid="spaceNotifications">

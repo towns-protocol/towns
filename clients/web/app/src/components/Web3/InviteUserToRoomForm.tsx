@@ -1,17 +1,12 @@
 import React, { useCallback, useState } from 'react'
-import { RoomIdentifier } from 'use-zion-client'
 import { Box, Button, Heading, Stack, TextField } from '@ui'
 
 interface Props {
     spaceName: string
-    spaceId: RoomIdentifier
+    spaceId: string
     roomName?: string
-    roomId?: RoomIdentifier
-    onInviteClicked: (
-        spaceId: RoomIdentifier,
-        roomId: RoomIdentifier | undefined,
-        inviteeUserId: string,
-    ) => void
+    roomId?: string
+    onInviteClicked: (spaceId: string, roomId: string | undefined, inviteeUserId: string) => void
     onCancelClicked: () => void
 }
 

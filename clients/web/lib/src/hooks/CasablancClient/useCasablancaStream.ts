@@ -1,12 +1,11 @@
 import { Stream } from '@river/sdk'
 import { useZionContext } from '../../components/ZionContextProvider'
 import { useEffect, useState } from 'react'
-import { RoomIdentifier } from '../../types/room-identifier'
 
-export function useCasablancaStream(streamId?: RoomIdentifier): Stream | undefined {
+export function useCasablancaStream(streamId?: string): Stream | undefined {
     const { casablancaClient } = useZionContext()
     const [stream, setStream] = useState<Stream | undefined>(() =>
-        streamId ? casablancaClient?.stream(streamId.streamId) : undefined,
+        streamId ? casablancaClient?.stream(streamId) : undefined,
     )
     useEffect(() => {
         // initial conditions
@@ -15,7 +14,7 @@ export function useCasablancaStream(streamId?: RoomIdentifier): Stream | undefin
         }
         // fetch stream first time the effect runs, if it was previously set
         // to the same reference, it shouldn't trigger any re-render according to documentation
-        const stream = casablancaClient.stream(streamId.streamId)
+        const stream = casablancaClient.stream(streamId)
         // if it exists now (in the time it took for the effect to run) we're done!
         if (stream) {
             setStream(stream)
@@ -23,8 +22,8 @@ export function useCasablancaStream(streamId?: RoomIdentifier): Stream | undefin
         }
         // callback for when stream is initialized
         const onStreamInitialized = (inStreamId: string) => {
-            if (inStreamId === streamId.streamId) {
-                const stream = casablancaClient.stream(streamId.streamId)
+            if (inStreamId === streamId) {
+                const stream = casablancaClient.stream(streamId)
                 setStream(stream)
                 casablancaClient.off('streamInitialized', onStreamInitialized)
             }

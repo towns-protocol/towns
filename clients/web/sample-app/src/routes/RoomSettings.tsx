@@ -1,16 +1,16 @@
 import React from 'react'
 import { Divider } from '@mui/material'
 import { useParams } from 'react-router-dom'
-import { makeRoomIdentifier, useRoom, useZionContext } from 'use-zion-client'
+import { useRoom, useZionContext } from 'use-zion-client'
 
 export const RoomSettings = () => {
     const { spaceSlug, channelSlug } = useParams()
     const { matrixClient } = useZionContext()
     // if we have a room id, use it, otherwise pull up the space id
     const targetId = channelSlug || spaceSlug
-    const roomId = targetId ? makeRoomIdentifier(targetId) : undefined
+    const roomId = targetId ? targetId : undefined
     const room = useRoom(roomId)
-    const matrixRoom = roomId ? matrixClient?.getRoom(roomId.streamId) : undefined
+    const matrixRoom = roomId ? matrixClient?.getRoom(roomId) : undefined
     const joinRule = matrixRoom ? matrixRoom.getJoinRule() : 'unknown'
 
     return room ? (
@@ -20,7 +20,7 @@ export const RoomSettings = () => {
                 <b>RoomName:</b> {room.name}
             </p>
             <p>
-                <b>RoomId:</b> {room.id.streamId}
+                <b>RoomId:</b> {room.id}
             </p>
             <p>
                 <b>IsSpaceRoom:</b> {room.isSpaceRoom ? 'true' : 'false'}

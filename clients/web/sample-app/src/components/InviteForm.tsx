@@ -1,12 +1,11 @@
 import { Box, Button, TextField, Theme, Typography } from '@mui/material'
 import React, { useCallback, useMemo, useState } from 'react'
-import { RoomIdentifier } from 'use-zion-client'
 
 interface Props {
-    roomId: RoomIdentifier
+    roomId: string
     roomName: string
     isSpace?: boolean
-    sendInvite: (roomId: RoomIdentifier, invitee: string) => Promise<void>
+    sendInvite: (roomId: string, invitee: string) => Promise<void>
     onClickCancel: () => void
 }
 

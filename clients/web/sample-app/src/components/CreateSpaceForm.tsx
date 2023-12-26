@@ -4,7 +4,6 @@ import { foundry, hardhat, localhost } from 'wagmi/chains'
 import {
     CreateSpaceInfo,
     Membership,
-    RoomIdentifier,
     TransactionStatus,
     useCasablancaStore,
     useConnectivity,
@@ -26,7 +25,7 @@ import { createTokenEntitlmentStruct } from 'utils/contractHelpers'
 import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
 
 interface Props {
-    onClick: (roomId: RoomIdentifier, membership: Membership) => void
+    onClick: (roomId: string, membership: Membership) => void
 }
 
 type FormValues = {

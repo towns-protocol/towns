@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Channel, RoomIdentifier, useChannelMembers, useDMData, useRoom } from 'use-zion-client'
+import { Channel, useChannelMembers, useDMData, useRoom } from 'use-zion-client'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useUserList } from '@components/UserList/UserList'
@@ -16,7 +16,7 @@ import type { CHANNEL_INFO_PARAMS_VALUES } from 'routes'
 
 type Props = {
     channel: Channel
-    spaceId: RoomIdentifier | undefined
+    spaceId: string | undefined
     onTouchClose?: () => void
 }
 
@@ -32,8 +32,8 @@ const DesktopChannelHeader = (props: Props) => {
     const topic = useRoom(channel.id)?.topic
 
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
-        spaceId: spaceId?.streamId,
-        channelId: channel.id.streamId,
+        spaceId: spaceId,
+        channelId: channel.id,
     })
     const isMuted = channelIsMuted || spaceIsMuted
     const channelType = useChannelType(channel.id)
@@ -115,7 +115,7 @@ const DesktopChannelHeader = (props: Props) => {
     )
 }
 
-const DMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
+const DMTitleContent = (props: { roomIdentifier: string }) => {
     const { counterParty } = useDMData(props.roomIdentifier)
     const userIds = useMemo(() => (counterParty ? [counterParty] : []), [counterParty])
     const title = useUserList({ userIds, excludeSelf: true }).join('')
@@ -132,7 +132,7 @@ const DMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
     )
 }
 
-const GDMTitleContent = (props: { roomIdentifier: RoomIdentifier }) => {
+const GDMTitleContent = (props: { roomIdentifier: string }) => {
     const { data } = useDMData(props.roomIdentifier)
     const userIds = useMemo(() => data?.userIds ?? [], [data?.userIds])
     const userListTitle = useUserList({ userIds, excludeSelf: true, maxNames: 3 }).join('')
@@ -156,7 +156,7 @@ const TouchChannelHeader = (props: Props) => {
     const channelType = useChannelType(channel.id)
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
         spaceId: spaceId,
-        channelId: channel?.id.streamId,
+        channelId: channel?.id,
     })
 
     const isMuted = channelIsMuted || spaceIsMuted

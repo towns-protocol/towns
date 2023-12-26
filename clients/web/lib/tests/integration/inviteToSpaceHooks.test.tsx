@@ -14,7 +14,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { LoginWithWallet } from './helpers/TestComponents'
 import { Permission } from '@river/web3'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { useZionClient } from '../../src/hooks/use-zion-client'
@@ -41,7 +40,7 @@ describe.skip('inviteToSpace', () => {
             {
                 name: janes_space_1,
             },
-        )) as RoomIdentifier
+        )) as string
         // create a second space
         const janes_space_2 = makeUniqueName('janes_space_2')
         const janesSpaceId_2 = (await createTestSpaceGatedByTownNft(
@@ -50,13 +49,13 @@ describe.skip('inviteToSpace', () => {
             {
                 name: janes_space_2,
             },
-        )) as RoomIdentifier
+        )) as string
         // and channel
         const janesChannelId_2 = (await createTestChannelWithSpaceRoles(jane, {
             name: 'janes_channel',
             parentSpaceId: janesSpaceId_2,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
         console.log('janes rooms', {
             janesSpaceId_1,
             janesSpaceId_2,
@@ -90,7 +89,7 @@ describe.skip('inviteToSpace', () => {
             }, [joinTown])
             // format for easy reading
             function formatSpace(s: SpaceItem) {
-                return `${s.id.streamId}: ${s.name}`
+                return `${s.id}: ${s.name}`
             }
             return (
                 <>
@@ -101,9 +100,7 @@ describe.skip('inviteToSpace', () => {
                     <div data-testid="allSpaces">
                         {spaces.map((space) => formatSpace(space)).join('\n')}
                     </div>
-                    <div data-testid="allInvites">
-                        {invitedToIds.map((id) => id.streamId).join('\n')}
-                    </div>
+                    <div data-testid="allInvites">{invitedToIds.map((id) => id).join('\n')}</div>
                     <div data-testid="myMembership1">{myMembership1}</div>
                     <div data-testid="myMembership2">{myMembership2}</div>
                     <div data-testid="myMembership3">{myMembership3}</div>
@@ -133,7 +130,7 @@ describe.skip('inviteToSpace', () => {
         })
 
         // wait the invite to show up
-        await waitFor(() => expect(allInvites).toHaveTextContent(janesSpaceId_1.streamId))
+        await waitFor(() => expect(allInvites).toHaveTextContent(janesSpaceId_1))
         await waitFor(() => expect(myMembership1).toHaveTextContent(Membership.Invite))
 
         // accept the invite
@@ -148,7 +145,7 @@ describe.skip('inviteToSpace', () => {
         await jane.inviteUser(janesChannelId_2, bobUserId)
 
         // wait for the invite to show up
-        await waitFor(() => expect(allInvites).toHaveTextContent(janesSpaceId_2.streamId))
+        await waitFor(() => expect(allInvites).toHaveTextContent(janesSpaceId_2))
         // expect the space to still render
         await waitFor(() => expect(allSpaces).toHaveTextContent(janes_space_1))
 

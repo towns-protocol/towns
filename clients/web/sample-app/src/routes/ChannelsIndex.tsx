@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { RoomIdentifier, useChannelId, useMyMembership } from 'use-zion-client'
+import { useChannelId, useMyMembership } from 'use-zion-client'
 import { Chat } from '../components/Chat'
 
 export const ChannelsIndex = () => {
@@ -13,8 +13,8 @@ export const ChannelsIndex = () => {
     }, [navigate])
 
     const goToRoom = useCallback(
-        (spaceId: RoomIdentifier, channelId: RoomIdentifier) => {
-            navigate('/spaces/' + spaceId.streamId + '/channels/' + channelId.streamId + '/')
+        (spaceId: string, channelId: string) => {
+            navigate('/spaces/' + spaceId + '/channels/' + channelId + '/')
         },
         [navigate],
     )

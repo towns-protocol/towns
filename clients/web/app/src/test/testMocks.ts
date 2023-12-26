@@ -10,13 +10,9 @@ import { getWalletAddress } from './testUtils'
 const CHANNEL_ID = 'channel1'
 const SPACE_ID = 'town1'
 
-export const spaceRoomIdentifier = {
-    streamId: SPACE_ID,
-}
+export const spaceRoomIdentifier = SPACE_ID
 
-export const channelRoomIdentifier = {
-    streamId: CHANNEL_ID,
-}
+export const channelRoomIdentifier = CHANNEL_ID
 
 type ContractRole = {
     roleId: BigNumber
@@ -39,7 +35,7 @@ export const channelDataForRole: {
     disabled: boolean
 } = {
     name: 'Channel 1',
-    channelNetworkId: channelRoomIdentifier.streamId,
+    channelNetworkId: channelRoomIdentifier,
     disabled: false,
 }
 

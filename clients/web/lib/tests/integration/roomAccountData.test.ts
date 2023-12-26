@@ -13,7 +13,6 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '@river/web3'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
 import { FullyReadMarker } from '@river/proto'
 
@@ -30,7 +29,7 @@ describe('roomAccountData', () => {
         const spaceId = (await createTestSpaceGatedByTownNft(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
 
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
@@ -55,8 +54,8 @@ describe('roomAccountData', () => {
             .find((event) => event.content.body === 'GM Bob')!
 
         const fullyRead: Record<string, FullyReadMarker> = {
-            [channelId.streamId]: {
-                channelId: channelId.streamId,
+            [channelId]: {
+                channelId: channelId,
                 threadParentId: undefined,
                 eventId: event.eventId,
                 eventNum: event.eventNum,

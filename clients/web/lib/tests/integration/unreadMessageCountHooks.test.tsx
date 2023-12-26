@@ -15,7 +15,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '@river/web3'
 import { RegisterWallet } from './helpers/TestComponents'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
@@ -40,13 +39,13 @@ describe('unreadMessageCountHooks', () => {
         const janesSpaceId = (await createTestSpaceGatedByTownNft(jane, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
         //
         const janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: janesSpaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
         // send 20 messages to the space after we make the channel
         // dendrite doesn't natively send space child events with state
         // if they are too far back we don't know if this room has children
@@ -60,7 +59,7 @@ describe('unreadMessageCountHooks', () => {
             const { spaceUnreads, spaceUnreadChannelIds } = useZionContext()
             const spaceFullyReadmarker = useFullyReadMarker(janesSpaceId)
             const channelFullyReadMarker = useFullyReadMarker(janesChannelId)
-            const spaceHasUnread = spaceUnreads[janesSpaceId.streamId]
+            const spaceHasUnread = spaceUnreads[janesSpaceId]
             const mySpaceMembership = useMyMembership(janesSpaceId)
             const myChannelMembership = useMyMembership(janesChannelId)
             const { timeline } = useChannelTimeline()
@@ -94,7 +93,7 @@ describe('unreadMessageCountHooks', () => {
                 return `${e.fallbackContent} eventId: ${e.eventId}`
             }
 
-            const listOfChannelsWithUnreads = spaceUnreadChannelIds[janesSpaceId.streamId]
+            const listOfChannelsWithUnreads = spaceUnreadChannelIds[janesSpaceId]
 
             return (
                 <>

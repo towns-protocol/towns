@@ -73,7 +73,7 @@ describe('casablanca', () => {
         await bob.sendMessage(channelId, 'Hello, world from Bob!')
 
         log("Bob sent a message, checking that it's received")
-        log(bob.casablancaClient?.stream(channelId.streamId)?.view)
+        log(bob.casablancaClient?.stream(channelId)?.view)
         await waitFor(async () => {
             const event = await bob.getLatestEvent<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
             log('latest event=', event)

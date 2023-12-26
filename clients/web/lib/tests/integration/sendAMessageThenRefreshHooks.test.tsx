@@ -5,7 +5,6 @@ import {
     makeUniqueName,
     registerAndStartClients,
 } from './helpers/TestUtils'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { useChannelId } from '../../src/hooks/use-channel-id'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
@@ -34,16 +33,16 @@ describe('sendAMessageThenRefresh.hooks', () => {
             {
                 name: makeUniqueName('janes space'),
             },
-        )) as RoomIdentifier
+        )) as string
         // create a space
         //
-        let janesChannelId: RoomIdentifier | undefined
+        let janesChannelId: string | undefined
         if (janesSpaceId) {
             janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
                 name: 'janes channel',
                 parentSpaceId: janesSpaceId,
                 roleIds: [],
-            })) as RoomIdentifier
+            })) as string
         }
         if (!janesChannelId) {
             throw new Error('janesChannelId not defined')
@@ -77,7 +76,7 @@ describe('sendAMessageThenRefresh.hooks', () => {
             return (
                 <>
                     <LoginWithWallet signer={signer} />
-                    <div data-testid="channelId">{channelId.streamId}</div>
+                    <div data-testid="channelId">{channelId}</div>
                     <div data-testid="channelMembership">{myChannelMembership}</div>
                     <div data-testid="message0">
                         {messages.length > 0 ? formatMessage(messages[0]) : 'empty'}

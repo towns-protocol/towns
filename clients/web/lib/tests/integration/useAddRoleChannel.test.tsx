@@ -22,7 +22,6 @@ import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     getTestGatingNftAddress,
     BasicRoleInfo,
@@ -160,7 +159,7 @@ function TestComponent(args: {
     const { addRoleToChannelTransaction, transactionStatus: addRoleToChannelTxStatus } =
         addRoleTransaction
     const spaceId = spaceTxnData?.spaceId
-    const spaceNetworkId = spaceId ? spaceId.streamId : ''
+    const spaceNetworkId = spaceId ? spaceId : ''
     const { spaceRoles } = useRoles(spaceNetworkId)
 
     const [addedRoleToChannel, setAddedRoleToChannel] = useState(false)
@@ -223,7 +222,7 @@ function TestComponent(args: {
             }
         }
         void handleClick()
-        console.log(`onClickCreateChannel: spaceId: `, spaceId?.streamId)
+        console.log(`onClickCreateChannel: spaceId: `, spaceId)
     }, [spaceId, createChannelTransaction, args.channelName, args.signer])
 
     useEffect(() => {
@@ -249,7 +248,7 @@ function TestComponent(args: {
             if (channelId) {
                 await addRoleToChannelTransaction(
                     spaceNetworkId,
-                    channelId.streamId,
+                    channelId,
                     roleIds[0],
                     args.signer,
                 )
@@ -307,7 +306,7 @@ function SpacesComponent(): JSX.Element {
     )
 }
 
-function ChannelComponent({ channelId }: { channelId: RoomIdentifier }): JSX.Element {
+function ChannelComponent({ channelId }: { channelId: string }): JSX.Element {
     const space = useSpaceData()
     // channel data
     const { channel } = useChannelData()
@@ -316,7 +315,7 @@ function ChannelComponent({ channelId }: { channelId: RoomIdentifier }): JSX.Ele
             {channel && (
                 <ChannelContextProvider channelId={channelId}>
                     <>
-                        <div key={channel.id.streamId}>channelName:{channel.label}</div>{' '}
+                        <div key={channel.id}>channelName:{channel.label}</div>{' '}
                     </>
                 </ChannelContextProvider>
             )}

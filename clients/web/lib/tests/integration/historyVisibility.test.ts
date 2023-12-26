@@ -81,7 +81,7 @@ describe('historyVisibility', () => {
         await alice.logout()
 
         await john.loginWalletAndStartClient()
-        await waitFor(() => expect(john.matrixClient?.getRoom(roomId.streamId)).toBeTruthy())
+        await waitFor(() => expect(john.matrixClient?.getRoom(roomId)).toBeTruthy())
         //
         john.logEvents(roomId)
         // and we should see the message
@@ -104,7 +104,7 @@ describe('historyVisibility', () => {
 
         await alice2.loginWalletAndStartClient()
 
-        await waitFor(() => expect(alice2.matrixClient?.getRoom(roomId.streamId)).toBeTruthy())
+        await waitFor(() => expect(alice2.matrixClient?.getRoom(roomId)).toBeTruthy())
 
         await waitFor(
             () => expect(alice2.getMessages(roomId)).toContain('Hello World!'),
@@ -124,7 +124,7 @@ describe('historyVisibility', () => {
 
         await alice3.loginWalletAndStartClient()
 
-        await waitFor(() => expect(alice3.matrixClient?.getRoom(roomId.streamId)).toBeTruthy())
+        await waitFor(() => expect(alice3.matrixClient?.getRoom(roomId)).toBeTruthy())
 
         await waitFor(
             () => expect(alice3.getMessages(roomId)).toContain('Hello World!'),

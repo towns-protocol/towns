@@ -1,12 +1,12 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import { RoomIdentifier, useZionClient } from 'use-zion-client'
+import { useZionClient } from 'use-zion-client'
 import { PATHS } from 'routes'
 import { Box, Card } from '@ui'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { MenuItem } from './MenuItem'
 
-type Props = { spaceId: RoomIdentifier; spaceName: string; canEditSettings: boolean }
+type Props = { spaceId: string; spaceName: string; canEditSettings: boolean }
 
 export const SpaceSettingsCard = (props: Props) => {
     const { spaceId, canEditSettings } = props
@@ -27,9 +27,9 @@ export const SpaceSettingsCard = (props: Props) => {
     }, [closeCard, leaveRoom, navigate, spaceId])
 
     const onSettingsClick = useCallback(() => {
-        navigate(`/${PATHS.SPACES}/${spaceId.streamId}/settings`)
+        navigate(`/${PATHS.SPACES}/${spaceId}/settings`)
         closeCard()
-    }, [closeCard, navigate, spaceId.streamId])
+    }, [closeCard, navigate, spaceId])
 
     return (
         <Box position="relative">

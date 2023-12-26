@@ -1,7 +1,7 @@
 import { useEvent } from 'react-use-event-hook'
-import { RoomIdentifier, useZionClient } from 'use-zion-client'
+import { useZionClient } from 'use-zion-client'
 
-export const useHandleReaction = (channelId: RoomIdentifier) => {
+export const useHandleReaction = (channelId: string) => {
     const { sendReaction, redactEvent } = useZionClient()
     const handleReaction = useEvent(
         (

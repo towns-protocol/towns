@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
-import { RoomIdentifier } from 'use-zion-client'
 import { z } from 'zod'
 import { env } from 'utils'
 import { axiosClient } from '../api/apiClient'
@@ -27,9 +26,9 @@ export async function getSpaceTopic(roomId: string): Promise<string> {
     return parseResult.data.bio
 }
 
-export async function setSpaceTopic(roomId: RoomIdentifier, topic: string): Promise<void> {
+export async function setSpaceTopic(roomId: string, topic: string): Promise<void> {
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
-    const url = `${GATEWAY_SERVER_URL}/space/${roomId.streamId}/bio`
+    const url = `${GATEWAY_SERVER_URL}/space/${roomId}/bio`
     await axiosClient.post(url, JSON.stringify({ bio: topic }), {
         withCredentials: true,
     })
@@ -54,7 +53,7 @@ export const useGetSpaceTopic = (networkId: string | undefined) => {
 }
 
 export const useSetSpaceTopic = (
-    roomId: RoomIdentifier | undefined,
+    roomId: string | undefined,
     {
         onError,
     }: {
@@ -65,7 +64,7 @@ export const useSetSpaceTopic = (
 
     const _setSpaceTopic = useCallback(
         // in case you cannot pass the roomId as a parameter, you can use the innerRoomId in the callback
-        ({ description, innerRoomId }: { description: string; innerRoomId?: RoomIdentifier }) => {
+        ({ description, innerRoomId }: { description: string; innerRoomId?: string }) => {
             const _id = innerRoomId ?? roomId
             if (!_id) {
                 return Promise.reject('No space id')
@@ -78,7 +77,7 @@ export const useSetSpaceTopic = (
 
     return useMutation(_setSpaceTopic, {
         onSuccess: async () => {
-            return queryClient.invalidateQueries(['roomTopic', roomId?.streamId])
+            return queryClient.invalidateQueries(['roomTopic', roomId])
         },
         onError: (error) => {
             console.error('[useSetSpaceTopic] error', error)

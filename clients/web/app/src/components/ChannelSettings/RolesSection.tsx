@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { FieldValues, UseFormRegister, UseFormReturn } from 'react-hook-form'
-import { RoleDetails, RoomIdentifier } from 'use-zion-client'
+import { RoleDetails } from 'use-zion-client'
 import { Box, Checkbox, Text } from '@ui'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { FormStateKeys } from './formConfig'
@@ -15,7 +15,7 @@ export function getCheckedValuesForRoleIdsField(rolesWithDetails: RoleCheckboxPr
 }
 
 export function RolesSection(props: {
-    spaceId: RoomIdentifier
+    spaceId: string
     rolesWithDetails: RoleCheckboxProps[]
     register: UseFormRegister<FieldValues>
     resetField: UseFormReturn['resetField']
@@ -48,7 +48,7 @@ export function RolesSection(props: {
 }
 
 function RoleDetailsComponent(props: {
-    spaceId: RoomIdentifier
+    spaceId: string
     role: RoleCheckboxProps
     register: UseFormRegister<FieldValues>
 }): JSX.Element {

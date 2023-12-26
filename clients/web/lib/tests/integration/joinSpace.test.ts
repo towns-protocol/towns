@@ -16,7 +16,6 @@ import {
     isHexString,
     publicMint,
 } from '@river/web3'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { ethers } from 'ethers'
 import { assert } from '@river/sdk'
@@ -32,11 +31,11 @@ test('create space, and have user join ', async () => {
     const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
         Permission.Read,
         Permission.Write,
-    ])) as RoomIdentifier
+    ])) as string
 
     // alice joins the space
     await alice.joinTown(spaceId, alice.wallet)
-    expect(alice.getRoomData(spaceId)?.id.streamId).toEqual(spaceId.streamId)
+    expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
 })
 
 test('create space, and have user that already has membership NFT join ', async () => {
@@ -57,7 +56,7 @@ test('create space, and have user that already has membership NFT join ', async 
     await alice.mintMembershipTransaction(spaceId, alice.wallet)
     // alice joins the space
     await alice.joinTown(spaceId, alice.wallet)
-    expect(alice.getRoomData(spaceId)?.id.streamId).toEqual(spaceId.streamId)
+    expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
 })
 
 test('join_space_gated_2_NFT', async () => {
@@ -115,9 +114,9 @@ test('join_space_gated_2_NFT', async () => {
     assert(spaceId !== undefined, 'createSpace failed')
 
     await alice.joinTown(spaceId, alice.wallet)
-    expect(alice.getRoomData(spaceId)?.id.streamId).toEqual(spaceId.streamId)
+    expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
     await bob.joinTown(spaceId, bob.wallet)
-    expect(bob.getRoomData(spaceId)?.id.streamId).toEqual(spaceId.streamId)
+    expect(bob.getRoomData(spaceId)?.id).toEqual(spaceId)
 
     await expect(carol.joinTown(spaceId, carol.wallet)).rejects.toThrow(
         new RegExp('execution reverted'),
@@ -187,7 +186,7 @@ test.skip('join_space_gated_2_NFT_2_wallet', async () => {
     assert(spaceId !== undefined, 'createSpace failed')
 
     await alice.joinTown(spaceId, alice.wallet)
-    expect(alice.getRoomData(spaceId)?.id.streamId).toEqual(spaceId.streamId)
+    expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
     await bob1.joinTown(spaceId, bob1.wallet)
-    expect(bob1.getRoomData(spaceId)?.id.streamId).toEqual(spaceId.streamId)
+    expect(bob1.getRoomData(spaceId)?.id).toEqual(spaceId)
 })

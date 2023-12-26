@@ -13,7 +13,7 @@ export const MutualTowns = (props: { user: LookupUser }) => {
     const memberOf = useMemo(() => {
         const memberOfIds = Object.keys(user?.memberOf ?? [])
         return memberOfIds?.length
-            ? memberOfIds.map((spaceId) => spaces.find((f) => f.id.streamId === spaceId))
+            ? memberOfIds.map((spaceId) => spaces.find((f) => f.id === spaceId))
             : undefined
     }, [spaces, user])
 
@@ -37,7 +37,7 @@ export const MutualTowns = (props: { user: LookupUser }) => {
     return (
         <Stack horizontal gap="xs" alignItems="center" width="100%">
             {memberOf.filter(notUndefined).map((s) => (
-                <React.Fragment key={s.id.streamId}>
+                <React.Fragment key={s.id}>
                     <Box insetLeft="sm" paddingLeft="xs">
                         <SpaceIcon
                             background="level1"
@@ -46,7 +46,7 @@ export const MutualTowns = (props: { user: LookupUser }) => {
                             letterFontSize="sm"
                             width="x4"
                             height="x4"
-                            spaceId={s?.id.streamId}
+                            spaceId={s?.id}
                             firstLetterOfSpaceName={s?.name[0]}
                             overrideBorderRadius="xs"
                             variant={ImageVariants.thumbnail50}

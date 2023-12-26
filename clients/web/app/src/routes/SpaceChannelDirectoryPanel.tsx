@@ -27,7 +27,7 @@ export const ChannelDirectoryPanel = () => {
     const { channel } = useChannelData()
     const navigate = useNavigate()
 
-    const canAddMembers = channel?.id ? isGDMChannelStreamId(channel.id.streamId) : false
+    const canAddMembers = channel?.id ? isGDMChannelStreamId(channel.id) : false
     const onClose = useEvent(() => {
         navigate('..')
     })
@@ -70,7 +70,7 @@ const ChannelMembers = (props: { onAddMembersClick?: () => void }) => {
 
 export const ChannelMembersModal = (props: { onHide: () => void }) => {
     const { channel } = useChannelData()
-    const canAddMembers = channel?.id ? isGDMChannelStreamId(channel.id.streamId) : false
+    const canAddMembers = channel?.id ? isGDMChannelStreamId(channel.id) : false
     const [inviteModalOpen, setInviteModalOpen] = React.useState(false)
     const onAddMembersClick = useCallback(() => {
         setInviteModalOpen(true)

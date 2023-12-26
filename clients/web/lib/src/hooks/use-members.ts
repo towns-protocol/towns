@@ -1,11 +1,10 @@
 import { useRoom } from './use-room'
-import { RoomIdentifier } from '../types/room-identifier'
 import { useMemo } from 'react'
 
 /**
  * Returns all members from all rooms
  */
-export function useMembers(roomId?: RoomIdentifier) {
+export function useMembers(roomId?: string) {
     const room = useRoom(roomId)
     return useMemo(
         () => ({

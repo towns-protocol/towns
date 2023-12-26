@@ -15,12 +15,10 @@ export const SpaceHome = () => {
         [space?.channelGroups],
     )
 
-    let bookmarkedRoute = useStore((s) =>
-        spaceId?.streamId ? s.townRouteBookmarks[spaceId?.streamId] : undefined,
-    )
+    let bookmarkedRoute = useStore((s) => (spaceId ? s.townRouteBookmarks[spaceId] : undefined))
 
     // verify the stored route matches the current URL scheme
-    bookmarkedRoute = matchPath(`${PATHS.SPACES}/${space?.id.streamId}/*`, bookmarkedRoute ?? '')
+    bookmarkedRoute = matchPath(`${PATHS.SPACES}/${space?.id}/*`, bookmarkedRoute ?? '')
         ? bookmarkedRoute
         : undefined
 
@@ -53,9 +51,9 @@ export const SpaceHome = () => {
                 // the worst case is that user is navigated to the threads page,
                 // and has to click on a channel once it loads in
                 // TODO: probably we should have replace this with "Space Home" or something when that is implemented/designed
-                route = `/${PATHS.SPACES}/${spaceId?.streamId}/${PATHS.THREADS}/`
+                route = `/${PATHS.SPACES}/${spaceId}/${PATHS.THREADS}/`
             } else {
-                route = `/${PATHS.SPACES}/${spaceId?.streamId}/${PATHS.CHANNELS}/${firstChannelId.streamId}/`
+                route = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${firstChannelId}/`
             }
 
             const timeout = setTimeout(() => {
@@ -66,7 +64,7 @@ export const SpaceHome = () => {
                 clearTimeout(timeout)
             }
         }
-    }, [navigate, space, spaceId?.streamId, channels])
+    }, [navigate, space, spaceId, channels])
 
     return (
         <CheckValidSpaceOrInvite>

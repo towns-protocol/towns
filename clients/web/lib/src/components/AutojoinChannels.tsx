@@ -20,17 +20,13 @@ export const AutojoinChannels = () => {
         (channel: Channel) => {
             return async () => {
                 try {
-                    await joinRoom(channel.id, space?.id.streamId)
+                    await joinRoom(channel.id, space?.id)
                 } catch (error) {
-                    console.error(
-                        '[AutoJoinChannels] joining channel failed',
-                        channel.id.streamId,
-                        error,
-                    )
+                    console.error('[AutoJoinChannels] joining channel failed', channel.id, error)
                 }
             }
         },
-        [joinRoom, space?.id.streamId],
+        [joinRoom, space?.id],
     )
 
     useEffect(() => {
@@ -41,12 +37,12 @@ export const AutojoinChannels = () => {
             // channels that are not joined and have no history of leaving
             const _channelsToJoin = await asyncFilter(channels, async (c) => {
                 try {
-                    const streamStateView = await casablancaClient.getStream(c.id.streamId)
+                    const streamStateView = await casablancaClient.getStream(c.id)
                     return streamStateView
                         ? !streamStateView.getMemberships().leftUsers.has(userId)
                         : false
                 } catch (error) {
-                    console.error('[AutoJoinChannels] fetching stream failed', c.id.streamId, error)
+                    console.error('[AutoJoinChannels] fetching stream failed', c.id, error)
                 }
                 return false
             })
@@ -60,8 +56,8 @@ export const AutojoinChannels = () => {
     useEffect(() => {
         channelsToJoin.forEach((channel) => {
             // add to queue a single time. let them run in background, even if user navigates away
-            if (!checkedChannels.current[channel.id.streamId]) {
-                checkedChannels.current[channel.id.streamId] = true
+            if (!checkedChannels.current[channel.id]) {
+                checkedChannels.current[channel.id] = true
                 enqueueTask(_joinRoom(channel))
             }
         })

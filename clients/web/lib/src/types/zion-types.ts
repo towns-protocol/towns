@@ -1,6 +1,5 @@
 import { PlainMessage } from '@bufbuild/protobuf'
 import { HistoryVisibility, IContent, MatrixEvent } from 'matrix-js-sdk'
-import { RoomIdentifier } from './room-identifier'
 import { StreamSettings } from '@river/proto'
 import { Stream } from '@river/sdk'
 
@@ -14,21 +13,21 @@ export enum Membership {
 }
 
 export interface InviteData {
-    id: RoomIdentifier
+    id: string
     name: string
     avatarSrc: string
     isSpaceRoom: boolean
-    spaceParentId?: RoomIdentifier
+    spaceParentId?: string
 }
 
 export interface ChannelData {
-    spaceId: RoomIdentifier | undefined
-    channelId: RoomIdentifier
+    spaceId: string | undefined
+    channelId: string
     channel?: Channel
 }
 
 export interface Channel {
-    id: RoomIdentifier
+    id: string
     label: string
     private?: boolean
     highlight?: boolean
@@ -42,14 +41,14 @@ export interface ChannelGroup {
 
 /// data for top level list of spaces
 export interface SpaceItem {
-    id: RoomIdentifier
+    id: string
     name: string
     avatarSrc: string
 }
 
 /// representation of a space for the UI with channels
 export interface SpaceData {
-    id: RoomIdentifier
+    id: string
     name: string
     avatarSrc: string
     channelGroups: ChannelGroup[]
@@ -67,7 +66,7 @@ export interface SpaceHierarchy {
 }
 
 export interface SpaceChild {
-    id: RoomIdentifier
+    id: string
     name: string
     avatarUrl?: string
     topic?: string
@@ -79,7 +78,7 @@ export interface SpaceChild {
 }
 
 export interface Room {
-    id: RoomIdentifier
+    id: string
     name: string
     membership: string
     members: RoomMember[]
@@ -116,7 +115,7 @@ export interface CreateSpaceInfo {
 
 export interface CreateChannelInfo {
     name: string
-    parentSpaceId: RoomIdentifier
+    parentSpaceId: string
     historyVisibility?: HistoryVisibility
     roleIds: number[]
     disableEncryption?: boolean
@@ -125,8 +124,8 @@ export interface CreateChannelInfo {
 }
 
 export interface UpdateChannelInfo {
-    parentSpaceId: RoomIdentifier
-    channelId: RoomIdentifier
+    parentSpaceId: string
+    channelId: string
     updatedChannelName?: string
     updatedRoleIds?: number[]
     updatedChannelTopic?: string
@@ -221,7 +220,7 @@ export interface SendZionReactionOptions {
 }
 
 export interface SpaceIdOptions {
-    parentSpaceId?: RoomIdentifier
+    parentSpaceId?: string
 }
 
 export type SendMessageOptionsBase =

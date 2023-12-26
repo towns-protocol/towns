@@ -7,7 +7,6 @@ import {
     registerAndStartClients,
     waitForWithRetries,
 } from './helpers/TestUtils'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
 import { sleep } from '../../src/utils/zion-utils'
 import {
@@ -22,13 +21,13 @@ describe('Zion event handlers test', () => {
     test('onCreateSpace', async () => {
         let eventHandlerResult:
             | {
-                  roomIdentifier: RoomIdentifier
+                  roomIdentifier: string
               }
             | undefined
 
         const { alice } = await registerAndStartClients(['alice'], {
             eventHandlers: {
-                onCreateSpace: (_roomIdentifier: RoomIdentifier): void => {
+                onCreateSpace: (_roomIdentifier: string): void => {
                     eventHandlerResult = {
                         roomIdentifier: _roomIdentifier,
                     }
@@ -72,13 +71,12 @@ describe('Zion event handlers test', () => {
 
         expect(eventHandlerResult).toBeDefined()
         expect(eventHandlerResult?.roomIdentifier).toBeDefined()
-        expect(eventHandlerResult?.roomIdentifier.streamId).toBeDefined()
     })
 
     test('onJoinRoom', async () => {
         let eventHandlerResult:
             | {
-                  roomId: RoomIdentifier
+                  roomId: string
               }
             | undefined
 
@@ -126,7 +124,7 @@ describe('Zion event handlers test', () => {
     test('onSendMessage', async () => {
         let eventHandlerResult:
             | {
-                  roomId: RoomIdentifier
+                  roomId: string
               }
             | undefined
 
@@ -228,7 +226,7 @@ describe('Zion event handlers test', () => {
     test('Unset onSendMessage', async () => {
         let eventHandlerResult:
             | {
-                  roomId: RoomIdentifier
+                  roomId: string
               }
             | undefined
 

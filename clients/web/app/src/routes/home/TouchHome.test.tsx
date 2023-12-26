@@ -18,11 +18,7 @@ vi.mock('react-router', async () => {
 const Wrapper = () => {
     return (
         <TestApp>
-            <Lib.SpaceContextProvider
-                spaceId={{
-                    streamId: 'some-stream-id',
-                }}
-            >
+            <Lib.SpaceContextProvider spaceId="some-stream-id">
                 <TouchHome />
             </Lib.SpaceContextProvider>
         </TestApp>
@@ -30,9 +26,7 @@ const Wrapper = () => {
 }
 
 const mockSpaceData: Lib.SpaceData = {
-    id: {
-        streamId: 'some-stream-id',
-    },
+    id: 'some-stream-id',
     name: 'test space',
     avatarSrc: 'test',
     channelGroups: [
@@ -40,9 +34,7 @@ const mockSpaceData: Lib.SpaceData = {
             label: 'group 1',
             channels: [
                 {
-                    id: {
-                        streamId: 'some-stream-id',
-                    },
+                    id: 'some-stream-id',
                     label: 'general',
                 },
             ],
@@ -117,7 +109,7 @@ describe('<TouchHome />', () => {
                     {
                         isJoined: true,
                         label: 'general',
-                        id: { streamId: 'some-stream-id' },
+                        id: 'some-stream-id',
                         disabled: false,
                         mentionCount: 0,
                         unread: false,

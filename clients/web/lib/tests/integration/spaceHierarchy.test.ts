@@ -12,7 +12,6 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '@river/web3'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 import { toSpaceHierarchy } from '../../src/hooks/ZionContext/useCasablancaSpaceHierarchies'
@@ -33,14 +32,14 @@ describe('spaceHierarchy', () => {
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
 
         // bob creates a room
         const roomId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
 
         await waitFor(() => {
             const bob_spaceInfo = toSpaceHierarchy(bob.casablancaClient!, spaceId)
@@ -59,7 +58,7 @@ describe('spaceHierarchy', () => {
         // can she join it?
         await waitForWithRetries(() => alice.joinRoom(roomId))
         const alice_roomInfo = alice.getRoomData(roomId)
-        expect(alice_roomInfo?.id.streamId).toEqual(roomId.streamId)
+        expect(alice_roomInfo?.id).toEqual(roomId)
     })
     test('create a private space and a public room, have user join space and search for space childs', async () => {
         // create clients
@@ -78,14 +77,14 @@ describe('spaceHierarchy', () => {
             {
                 name: makeUniqueName('bobs space'),
             },
-        )) as RoomIdentifier
+        )) as string
 
         // bob creates a room
         const roomId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
 
         await waitFor(() => {
             const bob_spaceInfo = toSpaceHierarchy(bob.casablancaClient!, spaceId)
@@ -110,6 +109,6 @@ describe('spaceHierarchy', () => {
         // can she join it?
         await waitForWithRetries(() => alice.joinRoom(roomId))
         const alice_roomInfo = alice.getRoomData(roomId)
-        expect(alice_roomInfo?.id.streamId).toEqual(roomId.streamId)
+        expect(alice_roomInfo?.id).toEqual(roomId)
     })
 })

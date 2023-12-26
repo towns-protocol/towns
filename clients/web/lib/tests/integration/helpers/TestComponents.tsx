@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { RoomIdentifier } from '../../../src/types/room-identifier'
 import { useCasablancaCredentials } from '../../../src/hooks/use-casablanca-credentials'
 import { useMyMembership } from '../../../src/hooks/use-my-membership'
 import { useZionClient } from '../../../src/hooks/use-zion-client'
@@ -80,8 +79,8 @@ export const LoginWithWallet = ({ signer }: { signer: TSigner }) => {
 
 interface RegisterAndJoinSpaceProps {
     signer: TSigner
-    spaceId: RoomIdentifier
-    channelId: RoomIdentifier
+    spaceId: string
+    channelId: string
 }
 
 export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
@@ -114,8 +113,8 @@ export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
 
 export const RegisterAndJoin = (props: {
     signer: TSigner
-    spaceId: RoomIdentifier
-    channelIds: RoomIdentifier[]
+    spaceId: string
+    channelIds: string[]
 }) => {
     const { spaceId, channelIds } = props
     const didExecute = useRef(false)
@@ -129,10 +128,10 @@ export const RegisterAndJoin = (props: {
             didExecute.current = true
             void (async () => {
                 await joinTown(spaceId, props.signer)
-                setJoinStatus((prev) => ({ ...prev, [spaceId.streamId]: true }))
+                setJoinStatus((prev) => ({ ...prev, [spaceId]: true }))
                 for (const roomId of channelIds) {
                     await joinRoom(roomId)
-                    setJoinStatus((prev) => ({ ...prev, [roomId.streamId]: true }))
+                    setJoinStatus((prev) => ({ ...prev, [roomId]: true }))
                 }
 
                 setJoinComplete(true)

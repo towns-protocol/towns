@@ -2,7 +2,6 @@
 /**
  * @group dendrite
  */
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
@@ -26,10 +25,10 @@ describe('userProfile', () => {
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
 
         // bob sets user name and profile photo
-        await bob.setDisplayName(spaceId.streamId, "Bob's your uncle")
+        await bob.setDisplayName(spaceId, "Bob's your uncle")
         await bob.setAvatarUrl('https://example.com/bob.png')
 
         // alice needs to have a valid nft in order to join bob's space / channel
@@ -67,7 +66,7 @@ describe('userProfile', () => {
         })
         // alice updates her profile
         await act(async () => {
-            await alice.setDisplayName(spaceId.streamId, "Alice's your aunt")
+            await alice.setDisplayName(spaceId, "Alice's your aunt")
             await alice.setAvatarUrl('https://example.com/alice.png')
         })
         // bob should see alices new user name

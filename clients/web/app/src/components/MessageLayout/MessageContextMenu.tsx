@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useRef } from 'react'
-import { RoomIdentifier, useZionClient } from 'use-zion-client'
+import { useZionClient } from 'use-zion-client'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { Box, IconButton, MotionStack, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
@@ -11,8 +11,8 @@ import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
     eventId: string
-    channelId?: RoomIdentifier
-    spaceId?: RoomIdentifier
+    channelId?: string
+    spaceId?: string
     canEdit?: boolean
     canReply?: boolean
     canReact?: boolean

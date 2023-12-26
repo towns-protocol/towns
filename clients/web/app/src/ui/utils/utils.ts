@@ -1,4 +1,3 @@
-import { RoomIdentifier } from 'use-zion-client'
 import { PATHS } from 'routes'
 
 export const toPx = (value?: string | number) => (typeof value === 'number' ? `${value}px` : value)
@@ -29,8 +28,8 @@ export const isForbiddenError = (error: Error): boolean => {
     return error.name === 'M_FORBIDDEN'
 }
 
-export const getInviteUrl = (spaceId: RoomIdentifier | undefined) =>
-    `${window.location.protocol}//${window.location.host}/${PATHS.SPACES}/${spaceId?.streamId}/?invite`
+export const getInviteUrl = (spaceId: string | undefined) =>
+    `${window.location.protocol}//${window.location.host}/${PATHS.SPACES}/${spaceId}/?invite`
 
 type Entries<T> = {
     [K in keyof T]: [K, T[K]]

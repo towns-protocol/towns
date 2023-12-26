@@ -34,11 +34,11 @@ export const NoJoinedSpacesFallback = () => {
         }
         if (spaces.length) {
             const firstSpaceId =
-                spaces.find((space) => space.id.streamId === spaceIdBookmark)?.id ?? spaces[0].id
+                spaces.find((space) => space.id === spaceIdBookmark)?.id ?? spaces[0].id
 
             const firstSpace = client.getRoomData(firstSpaceId)
             if (firstSpace?.membership === Membership.Join) {
-                navigate(`/${PATHS.SPACES}/${firstSpaceId.streamId}/`)
+                navigate(`/${PATHS.SPACES}/${firstSpaceId}/`)
             }
         }
     }, [spaces, navigate, initialSyncComplete, client, spaceIdBookmark])

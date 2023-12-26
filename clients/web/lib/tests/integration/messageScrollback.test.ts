@@ -9,7 +9,6 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '@river/web3'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 
@@ -28,7 +27,7 @@ describe('messageScrollback', () => {
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
         // send 25 messages (20 is our default initialSyncLimit)
         for (let i = 0; i < 25; i++) {
             await bob.sendMessage(spaceId, `message ${i}`)

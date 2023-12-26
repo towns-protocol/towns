@@ -14,7 +14,6 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '@river/web3'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
@@ -38,13 +37,13 @@ describe('unreadMessageCountEdgeCases', () => {
         const spaceId = (await createTestSpaceGatedByTownNft(jane, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
         //
         const channelId = (await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
 
         // create a veiw for bob
         const TestComponent = ({ signer }: { signer: TSigner }) => {
@@ -52,7 +51,7 @@ describe('unreadMessageCountEdgeCases', () => {
             const { spaceUnreads } = useZionContext()
             const channelFullyReadMarker = useFullyReadMarker(channelId)
             const { timeline } = useChannelTimeline()
-            const spaceHasUnread = spaceUnreads[spaceId.streamId]
+            const spaceHasUnread = spaceUnreads[spaceId]
             const messages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
             // send message
             const onMarkAsRead = useCallback(() => {

@@ -5,9 +5,7 @@ import { SpaceContext } from 'use-zion-client'
 import { RichTextEditor } from './RichTextEditor'
 
 const Wrapper = (props: { children?: React.ReactNode }) => {
-    const spaceId = {
-        streamId: '',
-    }
+    const spaceId = ''
     return <SpaceContext.Provider value={{ spaceId }}>{props.children}</SpaceContext.Provider>
 }
 

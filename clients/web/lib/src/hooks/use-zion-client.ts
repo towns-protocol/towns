@@ -21,7 +21,6 @@ import {
 } from '../types/zion-types'
 import { MatrixError, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
 import { RoomMessageEvent } from '../types/timeline-types'
-import { RoomIdentifier } from '../types/room-identifier'
 import { ZionClient } from '../client/ZionClient'
 import { useLogout } from '../hooks/use-logout'
 import { useMatrixWalletSignIn } from './use-matrix-wallet-sign-in'
@@ -75,8 +74,8 @@ interface ZionClientImpl {
         updateChannelInfo: UpdateChannelInfo,
         signer: TSigner | undefined,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
-    createDMChannel: (userId: string) => Promise<RoomIdentifier | undefined>
-    createGDMChannel: (userIds: string[]) => Promise<RoomIdentifier | undefined>
+    createDMChannel: (userId: string) => Promise<string | undefined>
+    createGDMChannel: (userIds: string[]) => Promise<string | undefined>
     waitForUpdateChannelTransaction: (
         context: ChannelUpdateTransactionContext | undefined,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
@@ -125,7 +124,7 @@ interface ZionClientImpl {
         context: TransactionContext<void> | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     editMessage: (
-        roomId: RoomIdentifier,
+        roomId: string,
         eventId: string,
         originalEventContent: RoomMessageEvent,
         message: string,
@@ -134,17 +133,17 @@ interface ZionClientImpl {
     getIsUsernameAvailable: (streamId: string, username: string) => Promise<boolean | undefined>
     getIsWalletRegisteredWithCasablanca: () => Promise<boolean>
     getServerVersions: () => Promise<IZionServerVersions | undefined>
-    inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>
-    joinRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<Room | undefined>
-    leaveRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<void>
+    inviteUser: (roomId: string, userId: string) => Promise<void>
+    joinRoom: (roomId: string, parentNetworkId?: string) => Promise<Room | undefined>
+    leaveRoom: (roomId: string, parentNetworkId?: string) => Promise<void>
     logout: () => Promise<void>
     loginWithWalletToCasablanca: (statement: string, signer: TSigner) => Promise<void>
-    joinTown: (spaceId: RoomIdentifier, signer: TSigner) => Promise<Room | undefined>
-    redactEvent: (roomId: RoomIdentifier, eventId: string, reason?: string) => Promise<void>
+    joinTown: (spaceId: string, signer: TSigner) => Promise<Room | undefined>
+    redactEvent: (roomId: string, eventId: string, reason?: string) => Promise<void>
     registerWalletWithCasablanca: (statement: string, signer: TSigner) => Promise<void>
     resetFullyReadMarkers: () => void
     scrollback: (
-        roomId: RoomIdentifier,
+        roomId: string,
         limit?: number,
     ) => Promise<
         | {
@@ -155,20 +154,16 @@ interface ZionClientImpl {
           }
         | undefined
     >
-    sendMessage: (
-        roomId: RoomIdentifier,
-        message: string,
-        options?: SendMessageOptions,
-    ) => Promise<void>
-    sendReaction: (roomId: RoomIdentifier, eventId: string, reaction: string) => Promise<void>
+    sendMessage: (roomId: string, message: string, options?: SendMessageOptions) => Promise<void>
+    sendReaction: (roomId: string, eventId: string, reaction: string) => Promise<void>
     sendMediaPayload: (streamId: string, data: Uint8Array, chunkIndex: number) => Promise<void>
     sendReadReceipt: (marker: FullyReadMarker) => Promise<void>
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
-    setRoomProperties: (roomId: RoomIdentifier, title: string, topic: string) => Promise<void>
+    setRoomProperties: (roomId: string, title: string, topic: string) => Promise<void>
     setDisplayName: (streamId: string, displayName: string) => Promise<void>
-    setRoomName: (roomId: RoomIdentifier, roomName: string) => Promise<void>
-    setRoomTopic: (roomId: RoomIdentifier, roomTopic: string) => Promise<void>
-    getRoomTopic: (roomId: RoomIdentifier) => Promise<string | undefined>
+    setRoomName: (roomId: string, roomName: string) => Promise<void>
+    setRoomTopic: (roomId: string, roomTopic: string) => Promise<void>
+    getRoomTopic: (roomId: string) => Promise<string | undefined>
     updateSpaceNameTransaction: (
         spaceId: string,
         name: string,

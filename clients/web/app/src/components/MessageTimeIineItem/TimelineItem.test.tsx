@@ -66,14 +66,10 @@ const Wrapper = ({ messageContent }: { messageContent: MessageContent }) => {
             <MessageTimelineContext.Provider
                 value={{
                     userId: '',
-                    spaceId: {
-                        streamId: '',
-                    },
+                    spaceId: '',
                     isChannelEncrypted: false,
                     channels: [],
-                    channelId: {
-                        streamId: '',
-                    },
+                    channelId: '',
                     events: [],
                     messageRepliesMap: {},
                     messageReactionsMap: {},

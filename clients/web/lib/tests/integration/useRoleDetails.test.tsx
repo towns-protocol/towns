@@ -125,7 +125,7 @@ function TestComponent(args: {
     const { createSpaceTransactionWithRole, data: txData, transactionStatus } = spaceTransaction
     const spaceId = txData?.spaceId
 
-    const spaceNetworkId = spaceId ? spaceId.streamId : ''
+    const spaceNetworkId = spaceId ? spaceId : ''
     const { spaces } = useSpacesFromContract()
 
     // handle click to create a space

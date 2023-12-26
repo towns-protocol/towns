@@ -1,6 +1,6 @@
 import { format, formatDistance } from 'date-fns'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { MessageReactions, RoomIdentifier, ThreadStats } from 'use-zion-client'
+import { MessageReactions, ThreadStats } from 'use-zion-client'
 import { Link } from 'react-router-dom'
 import debug from 'debug'
 import { LookupUser } from 'use-zion-client/dist/components/UserLookupContext'
@@ -41,8 +41,8 @@ type Props = {
     highlight?: boolean
     selectable?: boolean
     listView?: boolean
-    channelId?: RoomIdentifier
-    spaceId?: RoomIdentifier
+    channelId?: string
+    spaceId?: string
     children?: React.ReactNode
     onReaction?: ReturnType<typeof useHandleReaction> | null
     relativeDate?: boolean

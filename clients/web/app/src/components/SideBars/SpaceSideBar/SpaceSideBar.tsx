@@ -39,7 +39,7 @@ export const SpaceSideBar = (props: Props) => {
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const membership = useMyMembership(space?.id)
     const { hasPermission: isOwner } = useHasPermission({
-        spaceId: space.id.streamId,
+        spaceId: space.id,
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.Owner,
     })
@@ -58,7 +58,7 @@ export const SpaceSideBar = (props: Props) => {
     const unreadThreadMentions = useSpaceUnreadThreadMentions()
 
     const { hasPermission: canCreateChannel } = useHasPermission({
-        spaceId: space.id.streamId,
+        spaceId: space.id,
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.AddRemoveChannels,
     })
@@ -67,9 +67,9 @@ export const SpaceSideBar = (props: Props) => {
         (e: React.MouseEvent) => {
             e.preventDefault()
             e.stopPropagation()
-            setDismissedGettingStarted(space.id.streamId)
+            setDismissedGettingStarted(space.id)
         },
-        [setDismissedGettingStarted, space.id.streamId],
+        [setDismissedGettingStarted, space.id],
     )
 
     const [hasScrolldedPastHeader, setHasScrolledPastHeader] = useState(false)
@@ -101,13 +101,13 @@ export const SpaceSideBar = (props: Props) => {
                 <Stack paddingY="md">
                     {membership === Membership.Join && (
                         <>
-                            {isOwner && !dismissedGettingStartedMap[space.id.streamId] && (
+                            {isOwner && !dismissedGettingStartedMap[space.id] && (
                                 <Box className={styles.buttonTextParent}>
                                     <ActionNavItem
                                         icon="wand"
                                         id="getting-started"
                                         label="Getting Started"
-                                        link={`/${PATHS.SPACES}/${space.id.streamId}/${PATHS.GETTING_STARTED}`}
+                                        link={`/${PATHS.SPACES}/${space.id}/${PATHS.GETTING_STARTED}`}
                                         minHeight="x5"
                                     >
                                         <Button
@@ -128,7 +128,7 @@ export const SpaceSideBar = (props: Props) => {
                             <ActionNavItem
                                 highlight={unreadThreadsCount > 0}
                                 icon="threads"
-                                link={`/${PATHS.SPACES}/${space.id.streamId}/threads`}
+                                link={`/${PATHS.SPACES}/${space.id}/threads`}
                                 id="threads"
                                 label="Threads"
                                 badge={
@@ -142,11 +142,11 @@ export const SpaceSideBar = (props: Props) => {
                                 icon="at"
                                 id="mentions"
                                 label="Mentions"
-                                link={`/${PATHS.SPACES}/${space.id.streamId}/mentions`}
+                                link={`/${PATHS.SPACES}/${space.id}/mentions`}
                                 minHeight="x5"
                             />
                             <ChannelList
-                                key={space.id.streamId}
+                                key={space.id}
                                 space={space}
                                 mentions={mentions}
                                 canCreateChannel={canCreateChannel}

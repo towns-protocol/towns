@@ -2,8 +2,6 @@ import { BigNumberish, ContractReceipt, ContractTransaction } from 'ethers'
 import { SendMessageOptions, UpdateChannelInfo } from '../types/zion-types'
 import { RoleIdentifier, TProvider } from '../types/web3-types'
 
-import { RoomIdentifier } from '../types/room-identifier'
-
 export interface ZionOpts {
     casablancaServerUrl?: string
     chainId: number
@@ -75,12 +73,12 @@ export type TransactionContext<T> =
       }
 
 export type CreateSpaceTransactionContext = TransactionContext<{
-    spaceId: RoomIdentifier
+    spaceId: string
     spaceName?: string
-    channelId?: RoomIdentifier
+    channelId?: string
 }>
 
-export type ChannelTransactionContext = TransactionContext<RoomIdentifier>
+export type ChannelTransactionContext = TransactionContext<string>
 
 export type ChannelUpdateTransactionContext = TransactionContext<UpdateChannelInfo>
 
@@ -95,13 +93,9 @@ export type WalletLinkTransactionContext = TransactionContext<{
 }>
 
 export type ZionClientEventHandlers = {
-    onCreateSpace?: (roomId: RoomIdentifier) => void
-    onJoinRoom?: (roomId: RoomIdentifier, spaceId: RoomIdentifier) => void
-    onSendMessage?: (
-        roomId: RoomIdentifier,
-        body: string,
-        sendMessageOptions?: SendMessageOptions,
-    ) => void
+    onCreateSpace?: (roomId: string) => void
+    onJoinRoom?: (roomId: string, spaceId: string) => void
+    onSendMessage?: (roomId: string, body: string, sendMessageOptions?: SendMessageOptions) => void
     onLogin?: (auth: { userId: string }) => void
     onLogout?: (auth: { userId: string }) => void
     onRegister?: (auth: { userId: string }) => void

@@ -10,7 +10,6 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission, createExternalTokenStruct, getTestGatingNftAddress } from '@river/web3'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { RoleIdentifier } from '../../src/types/web3-types'
 
@@ -25,7 +24,7 @@ test('create a public space and a public room, and have user join', async () => 
     const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
         Permission.Read,
         Permission.Write,
-    ])) as RoomIdentifier
+    ])) as string
 
     const testGatingNftAddress = await getTestGatingNftAddress(bob.chainId)
     expect(testGatingNftAddress).toBeDefined()
@@ -34,7 +33,7 @@ test('create a public space and a public room, and have user join', async () => 
     }
     const testGatingNftToken = createExternalTokenStruct([testGatingNftAddress])[0]
     const roleIdentifier: RoleIdentifier | undefined = await bob.createRole(
-        spaceId.streamId,
+        spaceId,
         'newRoleName',
         [Permission.Read, Permission.Write],
         [testGatingNftToken],
@@ -65,5 +64,5 @@ test('create a public space and a public room, and have user join', async () => 
     // can she join it?
     await waitForWithRetries(() => alice.joinRoom(channelId))
     const alice_roomInfo = alice.getRoomData(channelId)
-    expect(alice_roomInfo?.id.streamId).toEqual(channelId.streamId)
+    expect(alice_roomInfo?.id).toEqual(channelId)
 })

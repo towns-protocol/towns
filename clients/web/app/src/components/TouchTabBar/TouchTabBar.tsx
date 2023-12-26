@@ -44,7 +44,7 @@ export const TouchTabBar = () => {
                                 inset="xxs"
                                 width="toolbar_icon"
                                 height="toolbar_icon"
-                                spaceId={space?.id.streamId}
+                                spaceId={space?.id}
                                 firstLetterOfSpaceName={space?.name[0]}
                                 overrideBorderRadius="sm"
                                 variant={ImageVariants.thumbnail50}
@@ -53,7 +53,7 @@ export const TouchTabBar = () => {
                             {showHasUnreadBadgeForCurrentSpace && <Dot position="topRight" />}
                         </Box>
                     )}
-                    to={`/${PATHS.SPACES}/${space.id.streamId}/`}
+                    to={`/${PATHS.SPACES}/${space.id}/`}
                     scrollToTopId={TouchScrollToTopScrollId.HomeTabScrollId}
                     highlightPattern={`${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/*`}
                 />
@@ -80,7 +80,7 @@ export const TouchTabBar = () => {
                 <TabBarItem
                     title="Search"
                     icon={() => <Icon type="search" size="toolbar_icon" />}
-                    to={`/${PATHS.SPACES}/${space.id.streamId}/${PATHS.SEARCH}`}
+                    to={`/${PATHS.SPACES}/${space.id}/${PATHS.SEARCH}`}
                     scrollToTopId={TouchScrollToTopScrollId.SearchTabScrollId}
                     onPressTwice={() => {
                         document.getElementById(TouchScrollToTopScrollId.SearchTabInputId)?.focus()
@@ -95,7 +95,7 @@ export const TouchTabBar = () => {
                         </Box>
                     )}
                     scrollToTopId={TouchScrollToTopScrollId.ProfileTabScrollId}
-                    to={`/${PATHS.SPACES}/${space.id.streamId}/${PATHS.PROFILE}/me`}
+                    to={`/${PATHS.SPACES}/${space.id}/${PATHS.PROFILE}/me`}
                 />
             </Stack>
             {shouldDisplayPWAPrompt && <PWATooltip onClose={closePWAPrompt} />}

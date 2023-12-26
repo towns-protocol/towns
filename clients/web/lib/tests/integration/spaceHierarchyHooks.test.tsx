@@ -14,7 +14,6 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { LoginStatus } from '../../src/hooks/login'
 import { Permission } from '@river/web3'
 import React from 'react'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -42,7 +41,7 @@ describe('spaceHierarchyHooks', () => {
             {
                 name: makeUniqueName('bobs space'),
             },
-        )) as RoomIdentifier
+        )) as string
         // and a channel
         await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
@@ -61,7 +60,7 @@ describe('spaceHierarchyHooks', () => {
             return (
                 <>
                     <LoginWithWallet signer={signer} />
-                    <div data-testid="spaceId">{space?.id.streamId}</div>
+                    <div data-testid="spaceId">{space?.id}</div>
                     <div>
                         <div>SPACE INFO:</div>
                         {JSON.stringify(
@@ -105,8 +104,7 @@ describe('spaceHierarchyHooks', () => {
             roleIds: [],
         })
         await waitFor(
-            async () =>
-                expect((await alice.spaceDapp.getChannels(spaceId.streamId)).length).toBe(3),
+            async () => expect((await alice.spaceDapp.getChannels(spaceId)).length).toBe(3),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
         // wait for the space child count to change

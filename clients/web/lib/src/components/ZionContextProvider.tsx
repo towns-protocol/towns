@@ -10,7 +10,6 @@ import { useSpaces } from '../hooks/ZionContext/useSpaces'
 import { useCasablancaSpaceHierarchies } from '../hooks/ZionContext/useCasablancaSpaceHierarchies'
 import { useZionClientListener } from '../hooks/use-zion-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/zion-types'
-import { RoomIdentifier } from '../types/room-identifier'
 import { Web3ContextProvider } from './Web3ContextProvider'
 import { useTransactionListener } from '../hooks/use-transaction-listener'
 import { QueryProvider } from './QueryProvider'
@@ -26,7 +25,7 @@ import { ZTEvent } from '../types/timeline-types'
 import { useStreamSyncActive } from '../hooks/ZionContext/useStreamSyncActive'
 import { GlobalContextUserLookupProvider } from './UserLookupContext'
 
-export type InitialSyncSortPredicate = (a: RoomIdentifier, b: RoomIdentifier) => number
+export type InitialSyncSortPredicate = (a: string, b: string) => number
 
 export interface IZionContext {
     casablancaServerUrl?: string
@@ -36,7 +35,7 @@ export interface IZionContext {
     matrixClient?: MatrixClient /// set if we're logged in and matrix client is started
     casablancaClient?: CasablancaClient /// set if we're logged in and casablanca client is started
     rooms: Record<string, Room | undefined>
-    invitedToIds: RoomIdentifier[] // ordered list of invites (spaces and channels)
+    invitedToIds: string[] // ordered list of invites (spaces and channels)
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
     spaceMentions: Record<string, number> // spaceId -> aggregated mentionCount
     spaceUnreadChannelIds: Record<string, string[]> // spaceId -> array of channelIds with unreads

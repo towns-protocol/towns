@@ -2,7 +2,6 @@ import { create } from 'zustand'
 
 import { AuthenticationError, LoginStatus } from '../hooks/login'
 import { RoomMember, Room, Membership, getMembershipFor } from '../types/zion-types'
-import { makeRoomIdentifier } from '../types/room-identifier'
 
 import {
     Client as CasablancaClient,
@@ -100,7 +99,7 @@ export function toZionCasablancaRoom(
     }
 
     return {
-        id: makeRoomIdentifier(streamId),
+        id: streamId,
         name: name,
         membership: getMembershipFor(userId, stream),
         inviter: undefined,

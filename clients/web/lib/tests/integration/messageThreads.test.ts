@@ -10,7 +10,6 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 import { Permission } from '@river/web3'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 
@@ -29,7 +28,7 @@ describe('messageThreads', () => {
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',

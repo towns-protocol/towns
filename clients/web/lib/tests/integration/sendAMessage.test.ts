@@ -14,7 +14,6 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '@river/web3'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
 import { DecryptedTimelineEvent, check } from '@river/sdk'
 import { SnapshotCaseType } from '@river/proto'
@@ -46,7 +45,7 @@ describe('sendAMessage', () => {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
 
         console.log("bob's spaceId", { spaceId, channelId })
 

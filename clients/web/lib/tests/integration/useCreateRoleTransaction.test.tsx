@@ -140,7 +140,7 @@ function TestComponent(args: {
     const { createRoleTransaction } = roleTransaction
     const spaceId = txData?.spaceId
 
-    const spaceNetworkId = spaceId ? spaceId.streamId : ''
+    const spaceNetworkId = spaceId ? spaceId : ''
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {

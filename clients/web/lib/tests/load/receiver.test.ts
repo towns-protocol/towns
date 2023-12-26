@@ -9,7 +9,6 @@ import { registerAndStartClients, waitForWithRetries } from '../integration/help
 
 import { Worker, Queue } from 'bullmq'
 import { waitFor } from '@testing-library/react'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 
 import { TestConstants } from '../integration/helpers/TestConstants'
 
@@ -20,7 +19,7 @@ describe('loadtest1', () => {
     //Test is skipped until not fully implemented
     test('create room, invite user, accept invite, and send encrypted message', async () => {
         let startSignalRecieved = false
-        let channelData: { spaceId: RoomIdentifier; channelId: RoomIdentifier }
+        let channelData: { spaceId: string; channelId: string }
         // Start listenting for message from the first part of the test which signals that data are ready
         const _worker = new Worker(
             'loadtestqueue',
@@ -28,7 +27,7 @@ describe('loadtest1', () => {
             async (job) => {
                 startSignalRecieved = true
 
-                channelData = job.data as { spaceId: RoomIdentifier; channelId: RoomIdentifier }
+                channelData = job.data as { spaceId: string; channelId: string }
                 return
             },
             { connection: connectionOptions },

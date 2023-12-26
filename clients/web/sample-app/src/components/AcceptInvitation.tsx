@@ -1,11 +1,10 @@
 import { Box, Button, Theme, Typography } from '@mui/material'
 
 import React, { useCallback } from 'react'
-import { RoomIdentifier } from 'use-zion-client'
 
 interface Props {
-    roomId: RoomIdentifier
-    joinRoom: (roomId: RoomIdentifier) => Promise<void>
+    roomId: string
+    joinRoom: (roomId: string) => Promise<void>
 }
 
 export function AcceptInvitation(props: Props): JSX.Element {

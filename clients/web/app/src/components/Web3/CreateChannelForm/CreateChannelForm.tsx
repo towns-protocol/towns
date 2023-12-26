@@ -1,6 +1,5 @@
 import {
     Permission,
-    RoomIdentifier,
     SignerUndefinedError,
     TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
@@ -30,8 +29,8 @@ import { useContractRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 
 type Props = {
-    spaceId: RoomIdentifier
-    onCreateChannel: (roomId: RoomIdentifier) => void
+    spaceId: string
+    onCreateChannel: (roomId: string) => void
     onHide: () => void
 }
 
@@ -52,12 +51,9 @@ const schema = z.object({
 
 export const CreateChannelForm = (props: Props) => {
     const { onCreateChannel, onHide } = props
-    const { data: roles } = useContractRoles(props.spaceId.streamId)
+    const { data: roles } = useContractRoles(props.spaceId)
     const roledIds = useMemo(() => roles?.map((r) => r.roleId) ?? [], [roles])
-    const { data: _rolesDetails, invalidateQuery } = useMultipleRoleDetails(
-        props.spaceId.streamId,
-        roledIds,
-    )
+    const { data: _rolesDetails, invalidateQuery } = useMultipleRoleDetails(props.spaceId, roledIds)
     const rolesWithDetails = useMemo(() => {
         return _rolesDetails?.filter((role) => role.permissions.includes(Permission.Read))
     }, [_rolesDetails])
@@ -247,9 +243,7 @@ export const CreateChannelForm = (props: Props) => {
                             })}
 
                             <Box flexDirection="row" justifyContent="start" paddingTop="sm">
-                                <Link
-                                    to={`/${PATHS.SPACES}/${props.spaceId.streamId}/${PATHS.SETTINGS}`}
-                                >
+                                <Link to={`/${PATHS.SPACES}/${props.spaceId}/${PATHS.SETTINGS}`}>
                                     <Button onClick={onHide}>
                                         <Icon type="plus" size="square_sm" />
                                         Create a new role
@@ -315,9 +309,9 @@ export const CreateChannelFormContainer = ({ spaceId, onHide }: Omit<Props, 'onC
     const navigate = useNavigate()
 
     const onCreateChannel = useCallback(
-        (roomId: RoomIdentifier) => {
+        (roomId: string) => {
             console.log('[CreateChannelForm]', 'onCreateChannel', roomId)
-            navigate(`/${PATHS.SPACES}/${spaceId?.streamId}/${PATHS.CHANNELS}/${roomId.streamId}/`)
+            navigate(`/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${roomId}/`)
             onHide()
         },
         [navigate, spaceId, onHide],

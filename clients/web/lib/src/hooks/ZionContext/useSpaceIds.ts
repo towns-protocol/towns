@@ -1,12 +1,11 @@
 import { useEffect } from 'react'
 import isEqual from 'lodash/isEqual'
-import { RoomIdentifier } from '../../types/room-identifier'
 import { create } from 'zustand'
 import { Client as CasablancaClient } from '@river/sdk'
 import { useSpacesIds_Casablanca } from './useSpaceIds_Casablanca'
 
 export type SpaceIdStore = {
-    spaceIds: RoomIdentifier[]
+    spaceIds: string[]
 }
 
 export type SpaceIdStoreInterface = SpaceIdStore & {
@@ -22,7 +21,7 @@ export const useSpaceIdStore = create<SpaceIdStoreInterface>((set) => ({
 
 /// returns a stable list of space ids (if the networkId is the same, the object reference should stay the same)
 export function useSpacesIds(casablancaClient: CasablancaClient | undefined): {
-    invitedToIds: RoomIdentifier[]
+    invitedToIds: string[]
 } {
     const { setSpaceIds } = useSpaceIdStore()
 

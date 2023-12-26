@@ -17,10 +17,7 @@ export const ValidateMembership = () => {
     const spaceId = useSpaceIdFromPathname()
     const { confirmed: usernameConfirmed } = useUsernameConfirmed()
 
-    const riverSpace = useMemo(
-        () => spaces.find((s) => s.id.streamId === spaceId),
-        [spaceId, spaces],
-    )
+    const riverSpace = useMemo(() => spaces.find((s) => s.id === spaceId), [spaceId, spaces])
 
     useEffect(() => {
         console.log('ValidateMembership', spaceId, { chainSpaceLoading, initialSyncComplete })

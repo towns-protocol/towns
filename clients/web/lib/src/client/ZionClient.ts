@@ -34,7 +34,6 @@ import {
     SendTextMessageOptions,
     UpdateChannelInfo,
 } from '../types/zion-types'
-import { RoomIdentifier, makeRoomIdentifier } from '../types/room-identifier'
 import { SignerContext } from '@river/sdk'
 import { toZionCasablancaUser } from '../store/use-casablanca-store'
 import { PushNotificationClient } from './PushNotificationClient'
@@ -245,7 +244,7 @@ export class ZionClient implements EntitlementsDelegate {
                 if (!this.casablancaClient) {
                     throw new Error("Casablanca client doesn't exist")
                 }
-                await createCasablancaSpace(this.casablancaClient, spaceId.streamId)
+                await createCasablancaSpace(this.casablancaClient, spaceId)
                 console.log('[waitForCreateSpaceTransaction] Space stream created', spaceId)
 
                 await this.createSpaceDefaultChannelRoom(spaceId, 'general', channelId)
@@ -275,7 +274,7 @@ export class ZionClient implements EntitlementsDelegate {
     private async createSpaceRoom(
         _createSpaceInfo: CreateSpaceInfo,
         networkId?: string,
-    ): Promise<RoomIdentifier> {
+    ): Promise<string> {
         if (!this.casablancaClient) {
             throw new Error("Casablanca client doesn't exist")
         }
@@ -287,8 +286,8 @@ export class ZionClient implements EntitlementsDelegate {
         membership: ITownArchitectBase.MembershipStruct,
         signer: ethers.Signer,
     ): Promise<CreateSpaceTransactionContext> {
-        const spaceId: RoomIdentifier = makeRoomIdentifier(makeUniqueSpaceStreamId())
-        const channelId: RoomIdentifier = makeRoomIdentifier(makeUniqueChannelStreamId())
+        const spaceId: string = makeUniqueSpaceStreamId()
+        const channelId: string = makeUniqueChannelStreamId()
 
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
@@ -296,10 +295,10 @@ export class ZionClient implements EntitlementsDelegate {
         try {
             transaction = await this.spaceDapp.createSpace(
                 {
-                    spaceId: spaceId.streamId,
+                    spaceId: spaceId,
                     spaceName: createSpaceInfo.name,
                     spaceMetadata: createSpaceInfo.name,
-                    channelId: channelId.streamId,
+                    channelId: channelId,
                     channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
                     membership,
                 },
@@ -333,7 +332,7 @@ export class ZionClient implements EntitlementsDelegate {
     private async createChannelRoom(
         createInfo: CreateChannelInfo,
         networkId?: string,
-    ): Promise<RoomIdentifier> {
+    ): Promise<string> {
         if (!this.casablancaClient) {
             throw new Error("createChannel: Casablanca client doesn't exist")
         }
@@ -351,16 +350,16 @@ export class ZionClient implements EntitlementsDelegate {
     }
 
     private async createSpaceDefaultChannelRoom(
-        parentSpaceId: RoomIdentifier,
+        parentSpaceId: string,
         channelName?: string,
-        channelId?: RoomIdentifier,
-    ): Promise<RoomIdentifier> {
+        channelId?: string,
+    ): Promise<string> {
         const channelInfo: CreateChannelInfo = {
             name: channelName ?? 'general',
             parentSpaceId,
             roleIds: [],
         }
-        return await this.createChannelRoom(channelInfo, channelId?.streamId)
+        return await this.createChannelRoom(channelInfo, channelId)
     }
 
     /************************************************
@@ -369,7 +368,7 @@ export class ZionClient implements EntitlementsDelegate {
     public async createChannel(
         createChannelInfo: CreateChannelInfo,
         signer: ethers.Signer | undefined,
-    ): Promise<RoomIdentifier | undefined> {
+    ): Promise<string | undefined> {
         if (!signer) {
             throw new SignerUndefinedError()
         }
@@ -395,7 +394,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!signer) {
             throw new SignerUndefinedError()
         }
-        const roomId: RoomIdentifier = makeRoomIdentifier(makeUniqueChannelStreamId())
+        const roomId: string = makeUniqueChannelStreamId()
 
         console.log('[createChannelTransaction] Channel created', roomId)
 
@@ -404,19 +403,16 @@ export class ZionClient implements EntitlementsDelegate {
 
         try {
             transaction = await this.spaceDapp.createChannel(
-                createChannelInfo.parentSpaceId.streamId,
+                createChannelInfo.parentSpaceId,
                 createChannelInfo.name,
-                roomId.streamId,
+                roomId,
                 createChannelInfo.roleIds,
                 signer,
             )
             console.log(`[createChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[createChannelTransaction] error', err)
-            error = await this.getDecodedErrorForSpace(
-                createChannelInfo.parentSpaceId.streamId,
-                err,
-            )
+            error = await this.getDecodedErrorForSpace(createChannelInfo.parentSpaceId, err)
         }
 
         return {
@@ -439,14 +435,14 @@ export class ZionClient implements EntitlementsDelegate {
                 const roomId = txnContext.data
                 // wait until the channel is minted on-chain
                 // before creating the stream
-                await this.createChannelRoom(createChannelInfo, roomId.streamId)
+                await this.createChannelRoom(createChannelInfo, roomId)
                 console.log('[waitForCreateChannelTransaction] Channel stream created', roomId)
             }
         }
 
         if (txnContext.error) {
             txnContext.error = await this.getDecodedErrorForSpace(
-                createChannelInfo.parentSpaceId.streamId,
+                createChannelInfo.parentSpaceId,
                 txnContext.error,
             )
         }
@@ -474,8 +470,8 @@ export class ZionClient implements EntitlementsDelegate {
             if (updateChannelInfo.updatedChannelName && updateChannelInfo.updatedRoleIds) {
                 transaction = await this.spaceDapp.updateChannel(
                     {
-                        spaceId: updateChannelInfo.parentSpaceId.streamId,
-                        channelId: updateChannelInfo.channelId.streamId,
+                        spaceId: updateChannelInfo.parentSpaceId,
+                        channelId: updateChannelInfo.channelId,
                         channelName: updateChannelInfo.updatedChannelName,
                         roleIds: updateChannelInfo.updatedRoleIds,
                     },
@@ -487,10 +483,7 @@ export class ZionClient implements EntitlementsDelegate {
             }
         } catch (err) {
             console.error('[updateChannelTransaction]', err)
-            error = await this.spaceDapp.parseSpaceError(
-                updateChannelInfo.parentSpaceId.streamId,
-                err,
-            )
+            error = await this.spaceDapp.parseSpaceError(updateChannelInfo.parentSpaceId, err)
         }
         return createTransactionContext({
             transaction,
@@ -525,10 +518,10 @@ export class ZionClient implements EntitlementsDelegate {
         }
         await updateCasablancaChannel(
             this.casablancaClient,
-            updateChannelInfo.parentSpaceId.streamId,
+            updateChannelInfo.parentSpaceId,
             updateChannelInfo.updatedChannelName,
             updateChannelInfo.updatedChannelTopic ?? '',
-            updateChannelInfo.channelId.streamId,
+            updateChannelInfo.channelId,
         )
     }
 
@@ -536,26 +529,26 @@ export class ZionClient implements EntitlementsDelegate {
      * DMs
      *************************************************/
 
-    public async createDMChannel(userId: string): Promise<RoomIdentifier | undefined> {
+    public async createDMChannel(userId: string): Promise<string | undefined> {
         const client = this.casablancaClient
         if (!client) {
             throw new Error('No casablanca client')
         }
         const { streamId } = await client.createDMChannel(userId)
-        return makeRoomIdentifier(streamId)
+        return streamId
     }
 
     /************************************************
      * GDMs
      *************************************************/
 
-    public async createGDMChannel(userIds: string[]): Promise<RoomIdentifier | undefined> {
+    public async createGDMChannel(userIds: string[]): Promise<string | undefined> {
         const client = this.casablancaClient
         if (!client) {
             throw new Error('No casablanca client')
         }
         const { streamId } = await client.createGDMChannel(userIds)
-        return makeRoomIdentifier(streamId)
+        return streamId
     }
 
     /************************************************
@@ -919,21 +912,21 @@ export class ZionClient implements EntitlementsDelegate {
     /************************************************
      * inviteUser
      *************************************************/
-    public async inviteUser(roomId: RoomIdentifier, userId: string) {
+    public async inviteUser(roomId: string, userId: string) {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
-        await this.casablancaClient.inviteUser(roomId.streamId, userId)
+        await this.casablancaClient.inviteUser(roomId, userId)
     }
 
     /************************************************
      * leave
      * ************************************************/
-    public async leave(roomId: RoomIdentifier, _parentNetworkId?: string): Promise<void> {
+    public async leave(roomId: string, _parentNetworkId?: string): Promise<void> {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
-        await this.casablancaClient.leaveStream(roomId.streamId)
+        await this.casablancaClient.leaveStream(roomId)
     }
 
     /************************************************
@@ -943,7 +936,7 @@ export class ZionClient implements EntitlementsDelegate {
      * @todo deprecate this in favor of separate joinTown and joinChannel functions
      *************************************************/
     public async joinRoom(
-        roomId: RoomIdentifier,
+        roomId: string,
         _parentNetworkId?: string,
         opts?: { skipWaitForMiniblockConfirmation: boolean },
     ) {
@@ -951,10 +944,10 @@ export class ZionClient implements EntitlementsDelegate {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
-        const stream = await this.casablancaClient.joinStream(roomId.streamId, opts)
+        const stream = await this.casablancaClient.joinStream(roomId, opts)
         let parentId = roomId
         if (stream.view.contentKind === 'channelContent' && stream.view.channelContent.spaceId) {
-            parentId = makeRoomIdentifier(stream.view.channelContent.spaceId)
+            parentId = stream.view.channelContent.spaceId
         }
         this._eventHandlers?.onJoinRoom?.(roomId, parentId)
         return toZionRoomFromStream(stream, this.casablancaClient.userId)
@@ -965,7 +958,7 @@ export class ZionClient implements EntitlementsDelegate {
      * - mints membership if needed
      * - joins the space
      *************************************************/
-    public async joinTown(spaceId: RoomIdentifier, signer: ethers.Signer) {
+    public async joinTown(spaceId: string, signer: ethers.Signer) {
         console.log('[joinTown] minting membership')
 
         try {
@@ -994,7 +987,7 @@ export class ZionClient implements EntitlementsDelegate {
     /************************************************
      * mintMembershipTransaction
      *************************************************/
-    public async mintMembershipTransaction(spaceId: RoomIdentifier, signer: ethers.Signer) {
+    public async mintMembershipTransaction(spaceId: string, signer: ethers.Signer) {
         console.log('[mintMembershipTransaction] start')
 
         const rootWallet = (await signer?.getAddress()) ?? ''
@@ -1004,7 +997,7 @@ export class ZionClient implements EntitlementsDelegate {
             const wallets = await this.getLinkedWallets(rootWallet)
             const allPromises = wallets.map(async (wallet) => {
                 const isEntitled = await this.isEntitled(
-                    spaceId.streamId,
+                    spaceId,
                     undefined,
                     wallet,
                     Permission.JoinTown,
@@ -1018,7 +1011,7 @@ export class ZionClient implements EntitlementsDelegate {
             allPromises.push(
                 (async () => {
                     const isEntitled = await this.isEntitled(
-                        spaceId.streamId,
+                        spaceId,
                         undefined,
                         rootWallet,
                         Permission.JoinTown,
@@ -1033,20 +1026,13 @@ export class ZionClient implements EntitlementsDelegate {
             // This will throw an AggregateError if none of the wallets are entitled
             const entitledWallet = await Promise.any(allPromises)
 
-            const hasMembership = await this.spaceDapp.hasTownMembership(
-                spaceId.streamId,
-                entitledWallet,
-            )
+            const hasMembership = await this.spaceDapp.hasTownMembership(spaceId, entitledWallet)
 
             if (hasMembership) {
                 return
             }
 
-            const transaction = await this.spaceDapp.joinTown(
-                spaceId.streamId,
-                entitledWallet,
-                signer,
-            )
+            const transaction = await this.spaceDapp.joinTown(spaceId, entitledWallet, signer)
             await transaction.wait()
         } catch (error) {
             if (error instanceof AggregateError) {
@@ -1056,7 +1042,7 @@ export class ZionClient implements EntitlementsDelegate {
                 throw err
             }
             console.error('[mintMembershipTransaction] failed', error)
-            const decodeError = await this.getDecodedErrorForSpace(spaceId.streamId, error)
+            const decodeError = await this.getDecodedErrorForSpace(spaceId, error)
             console.error('[mintMembershipAndJoinRoom] failed', decodeError)
             throw decodeError
         }
@@ -1065,15 +1051,11 @@ export class ZionClient implements EntitlementsDelegate {
     /************************************************
      * sendMessage
      *************************************************/
-    public async sendMessage(
-        roomId: RoomIdentifier,
-        message: string,
-        options?: SendMessageOptions,
-    ) {
+    public async sendMessage(roomId: string, message: string, options?: SendMessageOptions) {
         if (this.pushNotificationClient && options?.parentSpaceId) {
             await this.pushNotificationClient.sendNotificationTagIfAny(
-                options.parentSpaceId.streamId,
-                roomId.streamId,
+                options.parentSpaceId,
+                roomId,
                 options,
             )
         }
@@ -1085,7 +1067,7 @@ export class ZionClient implements EntitlementsDelegate {
             case undefined:
             case MessageType.Text:
                 {
-                    await this.casablancaClient.sendChannelMessage_Text(roomId.streamId, {
+                    await this.casablancaClient.sendChannelMessage_Text(roomId, {
                         threadId: options?.threadId,
                         threadPreview: options?.threadPreview,
                         content: {
@@ -1096,7 +1078,7 @@ export class ZionClient implements EntitlementsDelegate {
                 }
                 break
             case MessageType.Image:
-                await this.casablancaClient.sendChannelMessage_Image(roomId.streamId, {
+                await this.casablancaClient.sendChannelMessage_Image(roomId, {
                     threadId: options?.threadId,
                     threadPreview: options?.threadPreview,
                     content: {
@@ -1107,7 +1089,7 @@ export class ZionClient implements EntitlementsDelegate {
                 })
                 break
             case MessageType.GM:
-                await this.casablancaClient.sendChannelMessage_GM(roomId.streamId, {
+                await this.casablancaClient.sendChannelMessage_GM(roomId, {
                     threadId: options?.threadId,
                     threadPreview: options?.threadPreview,
                     content: {
@@ -1116,7 +1098,7 @@ export class ZionClient implements EntitlementsDelegate {
                 })
                 break
             case MessageType.EmbeddedMedia:
-                await this.casablancaClient.sendChannelMessage_EmbeddedMedia(roomId.streamId, {
+                await this.casablancaClient.sendChannelMessage_EmbeddedMedia(roomId, {
                     threadId: options.threadId,
                     threadPreview: options.threadPreview,
                     content: {
@@ -1132,7 +1114,7 @@ export class ZionClient implements EntitlementsDelegate {
                 })
                 break
             case MessageType.ChunkedMedia:
-                await this.casablancaClient.sendChannelMessage_Media(roomId.streamId, {
+                await this.casablancaClient.sendChannelMessage_Media(roomId, {
                     threadId: options?.threadId,
                     threadPreview: options?.threadPreview,
                     content: {
@@ -1177,7 +1159,7 @@ export class ZionClient implements EntitlementsDelegate {
         await this.casablancaClient.sendMediaPayload(streamId, data, chunkIndex)
     }
 
-    public async sendBlockTxn(_roomId: RoomIdentifier, _txn: BlockchainTransactionEvent) {
+    public async sendBlockTxn(_roomId: string, _txn: BlockchainTransactionEvent) {
         // blockchain transactions are not necessary, we can
         // just listen for channel events in the space stream
     }
@@ -1185,15 +1167,11 @@ export class ZionClient implements EntitlementsDelegate {
     /************************************************
      * sendReaction
      *************************************************/
-    public async sendReaction(
-        roomId: RoomIdentifier,
-        eventId: string,
-        reaction: string,
-    ): Promise<void> {
+    public async sendReaction(roomId: string, eventId: string, reaction: string): Promise<void> {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
-        await this.casablancaClient.sendChannelMessage_Reaction(roomId.streamId, {
+        await this.casablancaClient.sendChannelMessage_Reaction(roomId, {
             reaction,
             refEventId: eventId,
         })
@@ -1204,7 +1182,7 @@ export class ZionClient implements EntitlementsDelegate {
      * editMessage
      *************************************************/
     public async editMessage(
-        roomId: RoomIdentifier,
+        roomId: string,
         eventId: string,
         originalEventContent: RoomMessageEvent,
         message: string,
@@ -1213,7 +1191,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        return await this.casablancaClient.sendChannelMessage_Edit_Text(roomId.streamId, eventId, {
+        return await this.casablancaClient.sendChannelMessage_Edit_Text(roomId, eventId, {
             threadId: originalEventContent.inReplyTo,
             threadPreview: originalEventContent.threadPreview,
             content: {
@@ -1226,11 +1204,11 @@ export class ZionClient implements EntitlementsDelegate {
     /************************************************
      * redactEvent
      *************************************************/
-    public async redactEvent(roomId: RoomIdentifier, eventId: string, reason?: string) {
+    public async redactEvent(roomId: string, eventId: string, reason?: string) {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        await this.casablancaClient.sendChannelMessage_Redaction(roomId.streamId, {
+        await this.casablancaClient.sendChannelMessage_Redaction(roomId, {
             refEventId: eventId,
             reason,
         })
@@ -1239,31 +1217,28 @@ export class ZionClient implements EntitlementsDelegate {
     /************************************************
      * setRoomFullyReadData
      ************************************************/
-    public async setRoomFullyReadData(
-        channelId: RoomIdentifier,
-        content: Record<string, FullyReadMarker>,
-    ) {
+    public async setRoomFullyReadData(channelId: string, content: Record<string, FullyReadMarker>) {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client is undefined')
         }
-        await this.casablancaClient.sendFullyReadMarkers(channelId.streamId, content)
+        await this.casablancaClient.sendFullyReadMarkers(channelId, content)
     }
 
     /************************************************
      * getRoomData
      ************************************************/
-    public getRoomData(roomId: RoomIdentifier): Room | undefined {
+    public getRoomData(roomId: string): Room | undefined {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        const stream = this.casablancaClient.stream(roomId.streamId)
+        const stream = this.casablancaClient.stream(roomId)
         return stream ? toZionRoomFromStream(stream, this.casablancaClient.userId) : undefined
     }
 
     /************************************************
      * getRoomMember
      * **********************************************/
-    public getRoomMember(roomId: RoomIdentifier, userId: string): RoomMember | undefined {
+    public getRoomMember(roomId: string, userId: string): RoomMember | undefined {
         const roomData = this.getRoomData(roomId)
         return roomData?.members.find((x) => x.userId === userId)
     }
@@ -1318,18 +1293,18 @@ export class ZionClient implements EntitlementsDelegate {
         console.error('not implemented for casablanca', url)
     }
 
-    public async setRoomProperties(roomId: RoomIdentifier, title: string, topic: string) {
+    public async setRoomProperties(roomId: string, title: string, topic: string) {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        await this.casablancaClient.updateGDMChannelProperties(roomId.streamId, title, topic)
+        await this.casablancaClient.updateGDMChannelProperties(roomId, title, topic)
     }
 
     /************************************************
      * setRoomTopic
      ************************************************/
     // eslint-disable-next-line @typescript-eslint/require-await
-    public async setRoomTopic(_roomId: RoomIdentifier, _name: string): Promise<void> {
+    public async setRoomTopic(_roomId: string, _name: string): Promise<void> {
         console.error('not implemented for casablanca')
     }
 
@@ -1337,7 +1312,7 @@ export class ZionClient implements EntitlementsDelegate {
      * setRoomName
      ************************************************/
     // eslint-disable-next-line @typescript-eslint/require-await
-    public async setRoomName(_roomId: RoomIdentifier, _name: string): Promise<void> {
+    public async setRoomName(_roomId: string, _name: string): Promise<void> {
         // todo casablanca display name
         console.error('not implemented for casablanca')
     }
@@ -1346,7 +1321,7 @@ export class ZionClient implements EntitlementsDelegate {
      * getRoomTopic
      ************************************************/
     // eslint-disable-next-line @typescript-eslint/require-await
-    public async getRoomTopic(_roomId: RoomIdentifier): Promise<string> {
+    public async getRoomTopic(_roomId: string): Promise<string> {
         console.error('not implemented for casablanca')
         return ''
     }
@@ -1355,7 +1330,7 @@ export class ZionClient implements EntitlementsDelegate {
      * scrollback
      ************************************************/
     public async scrollback(
-        roomId: RoomIdentifier,
+        roomId: string,
         _limit?: number,
     ): Promise<{
         terminus: boolean
@@ -1366,10 +1341,10 @@ export class ZionClient implements EntitlementsDelegate {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        const result = await this.casablancaClient.scrollback(roomId.streamId)
+        const result = await this.casablancaClient.scrollback(roomId)
         return {
             terminus: result.terminus,
-            eventCount: this.casablancaClient?.stream(roomId.streamId)?.view?.timeline.length ?? 0,
+            eventCount: this.casablancaClient?.stream(roomId)?.view?.timeline.length ?? 0,
             firstEventId: result.firstEvent?.hashStr,
             firstEventTimestamp: result.firstEvent
                 ? Number(result.firstEvent.createdAtEpocMs)

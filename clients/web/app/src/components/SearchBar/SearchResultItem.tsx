@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Channel, RoomIdentifier, RoomMember, useMyProfile } from 'use-zion-client'
+import { Channel, RoomMember, useMyProfile } from 'use-zion-client'
 import { ThreadStatsMap } from 'use-zion-client/dist/store/use-timeline-store'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Box, BoxProps, Icon, Paragraph } from '@ui'
@@ -20,7 +20,7 @@ export const ResultItem = (
             channels: Channel[]
             members: RoomMember[]
             threadsStats: ThreadStatsMap
-            spaceId: RoomIdentifier | undefined
+            spaceId: string | undefined
         }
     } & BoxProps,
 ) => {
@@ -52,13 +52,13 @@ export const ResultItem = (
 
         case 'channel': {
             const link = createLink({
-                spaceId: miscProps.spaceId?.streamId,
-                channelId: item.source.id.streamId,
+                spaceId: miscProps.spaceId,
+                channelId: item.source.id,
             })
 
             return isTouch ? (
                 <TouchChannelResultRow
-                    channelNetworkId={item.source.id.streamId}
+                    channelNetworkId={item.source.id}
                     name={item.source.label}
                     unread={item.source.unread}
                     mentionCount={item.source.mentionCount}
@@ -137,11 +137,11 @@ const MessageResultItem = (props: {
 
     const { threadsStats, channels } = misc
 
-    const channel = channels.find((c) => c.id.streamId === props.channelId)
+    const channel = channels.find((c) => c.id === props.channelId)
 
     const threadStat =
         channel && event.threadParentId
-            ? threadsStats[channel.id.streamId]?.[event.threadParentId]
+            ? threadsStats[channel.id]?.[event.threadParentId]
             : undefined
 
     const result = useMemo(

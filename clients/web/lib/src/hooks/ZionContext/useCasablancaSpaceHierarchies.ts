@@ -3,7 +3,6 @@ import { useCasablancaSpaces } from '../CasablancClient/useCasablancaSpaces'
 import { Client as CasablancaClient } from '@river/sdk'
 import { SpaceHierarchies } from 'types/zion-types'
 import { SpaceChild } from 'types/zion-types'
-import { RoomIdentifier, makeRoomIdentifier } from '../../types/room-identifier'
 
 export function useCasablancaSpaceHierarchies(
     casablancaClient?: CasablancaClient,
@@ -23,22 +22,21 @@ export function useCasablancaSpaceHierarchies(
             //1.Add proper support for worldReadable, guestCanJoin, numjoinedMembers
             // (not critical for Unreads bur definitely required for consistency and absence of surprises)
             //2.Consider refactoring code using reduce (if it will be more readable)
-            result[spaceId.streamId] = toSpaceHierarchy(casablancaClient, spaceId)
+            result[spaceId] = toSpaceHierarchy(casablancaClient, spaceId)
         })
         return result
     }, [spaceIds, casablancaClient])
 }
 
-export function toSpaceHierarchy(casablancaClient: CasablancaClient, spaceId: RoomIdentifier) {
+export function toSpaceHierarchy(casablancaClient: CasablancaClient, spaceId: string) {
     const children: SpaceChild[] = []
     const spaceChannels = Array.from(
-        casablancaClient.stream(spaceId.streamId)?.view.spaceContent.spaceChannelsMetadata.keys() ||
-            [],
+        casablancaClient.stream(spaceId)?.view.spaceContent.spaceChannelsMetadata.keys() || [],
     )
     spaceChannels.forEach((channel) => {
         console.log(channel)
         children.push({
-            id: makeRoomIdentifier(channel),
+            id: channel,
             name: '',
             avatarUrl: '',
             topic: '',

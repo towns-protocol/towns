@@ -78,14 +78,12 @@ export function useSpaceUnreads(
                 let mentionCount = 0
                 const unreadChannelIds = new Set<string>()
                 // easy case: if the space has a fully read marker, then it's not unread
-                if (bShowSpaceRootUnreads && markers[spaceId.streamId]?.isUnread === true) {
+                if (bShowSpaceRootUnreads && markers[spaceId]?.isUnread === true) {
                     hasUnread = true
-                    mentionCount += markers[spaceId.streamId].mentions
+                    mentionCount += markers[spaceId].mentions
                 }
                 // next, check the channels & threads
-                const childIds = new Set(
-                    spaceHierarchies[spaceId.streamId]?.children.map((x) => x.id.streamId) ?? [],
-                )
+                const childIds = new Set(spaceHierarchies[spaceId]?.children.map((x) => x.id) ?? [])
                 // count all channels and threads we're patricipating in
                 Object.values(markers).forEach((marker) => {
                     if (
@@ -99,7 +97,7 @@ export function useSpaceUnreads(
                     }
                 })
 
-                updateState(spaceId.streamId, hasUnread, mentionCount, unreadChannelIds)
+                updateState(spaceId, hasUnread, mentionCount, unreadChannelIds)
             })
         }
 

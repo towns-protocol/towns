@@ -1,6 +1,5 @@
 import { Client as CasablancaClient, Stream } from '@river/sdk'
 import { useEffect, useState } from 'react'
-import { makeRoomIdentifier } from '../../types/room-identifier'
 import { SpaceItem } from '../../types/zion-types'
 import isEqual from 'lodash/isEqual'
 import { SnapshotCaseType } from '@river/proto'
@@ -27,7 +26,7 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
                 .map(
                     (stream: Stream) =>
                         ({
-                            id: makeRoomIdentifier(stream.view.streamId),
+                            id: stream.view.streamId,
                             name:
                                 spaceInfo?.find((i) => i.networkId == stream.streamId)?.name ?? '',
                             avatarSrc: '',

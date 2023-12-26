@@ -22,8 +22,8 @@ export const ChannelNavItem = (props: Props) => {
     const { id, space, channel, mentionCount = 0 } = props
     const notis = useChannelNotificationCounts(channel.id)
 
-    const link = `/${PATHS.SPACES}/${space.id.streamId}/channels/${channel.id.streamId}/`
-    const isHighlight = channel.id.streamId === channelSlug
+    const link = `/${PATHS.SPACES}/${space.id}/channels/${channel.id}/`
+    const isHighlight = channel.id === channelSlug
 
     const onHideChannelSettingsPopup = useEvent(() => {
         setShowChannelSettings(false)
@@ -36,8 +36,8 @@ export const ChannelNavItem = (props: Props) => {
     }, [onHideChannelSettingsPopup])
 
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
-        spaceId: space.id.streamId,
-        channelId: channel.id.streamId,
+        spaceId: space.id,
+        channelId: channel.id,
     })
     const isMuted = channelIsMuted || spaceIsMuted
     const showUnread = notis.isUnread && !isMuted

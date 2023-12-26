@@ -85,8 +85,7 @@ export type { EmittedTransaction } from './store/use-transactions-store'
 
 export * from './types/zion-types'
 export { Membership, MessageType } from './types/zion-types'
-export type { RoomIdentifier } from './types/room-identifier'
-export { makeRoomIdentifier, toRoomIdentifier } from './types/room-identifier'
+export { toRoomIdentifier } from './types/room-identifier'
 export * from './types/timeline-types'
 export {
     WalletStatus,

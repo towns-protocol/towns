@@ -14,7 +14,6 @@ import {
 import { waitFor } from '@testing-library/react'
 
 import { Permission } from '@river/web3'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 
 import { numberOfMessagesConfig, numClientsConfig, connectionOptions } from './loadconfig'
 
@@ -48,7 +47,7 @@ describe('loadtest1', () => {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
 
         // All other users join the space
         const joinTownPromises: Promise<unknown>[] = []

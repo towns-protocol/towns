@@ -15,7 +15,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '@river/web3'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZTEvent } from '../../src/types/timeline-types'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -45,10 +44,10 @@ describe('userProfileHooks', () => {
             {
                 name: makeUniqueName('alices space'),
             },
-        )) as RoomIdentifier
+        )) as string
 
         // set display name and avatar
-        await alice.setDisplayName(alicesSpaceId.streamId, "Alice's your aunt")
+        await alice.setDisplayName(alicesSpaceId, "Alice's your aunt")
         await alice.setAvatarUrl('alice.png')
 
         //
@@ -56,7 +55,7 @@ describe('userProfileHooks', () => {
             name: 'alices channel',
             parentSpaceId: alicesSpaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
         // create a veiw for bob
         const TestUserProfile = ({ signer }: { signer: TSigner }) => {
             const { setDisplayName, setAvatarUrl } = useZionClient()
@@ -68,7 +67,7 @@ describe('userProfileHooks', () => {
             const roomMessages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
             const onClickSetProfileInfo = useCallback(() => {
                 void (async () => {
-                    await setDisplayName(alicesSpaceId.streamId, "Bob's your uncle")
+                    await setDisplayName(alicesSpaceId, "Bob's your uncle")
                     await setAvatarUrl('bob.png')
                 })()
             }, [setDisplayName, setAvatarUrl])

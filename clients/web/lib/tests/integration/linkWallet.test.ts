@@ -91,7 +91,7 @@ describe('Link Wallet', () => {
         ])
 
         const joinTx = await alice.spaceDapp.joinTown(
-            spaceId!.streamId,
+            spaceId!,
             metamaskWallet.address,
             alice.wallet,
         )
@@ -101,7 +101,7 @@ describe('Link Wallet', () => {
         }
 
         const isEntitledToSpace = await bob.isEntitled(
-            spaceId!.streamId,
+            spaceId,
             undefined,
             bob.wallet.address,
             Permission.JoinTown,
@@ -109,11 +109,7 @@ describe('Link Wallet', () => {
         expect(isEntitledToSpace).toBeTruthy()
 
         // ES: 12/11/23 for this to work the contract check for joinTown needs to change
-        const bobJoinTx = await bob.spaceDapp.joinTown(
-            spaceId!.streamId,
-            metamaskWallet.address,
-            bob.wallet,
-        )
+        const bobJoinTx = await bob.spaceDapp.joinTown(spaceId!, metamaskWallet.address, bob.wallet)
 
         expect(bobJoinTx).toBeTruthy()
     })

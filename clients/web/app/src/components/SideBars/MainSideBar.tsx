@@ -38,10 +38,10 @@ export const MainSideBar = () => {
             </NavItem>
 
             {spaces.map((s) => (
-                <TransitionItem key={s.id.streamId}>
+                <TransitionItem key={s.id}>
                     <SpaceNavItem
                         exact={false}
-                        forceMatch={s.id.streamId === spaceId?.streamId}
+                        forceMatch={s.id === spaceId}
                         id={s.id}
                         name={s.name}
                         avatar={s.avatarSrc}
@@ -63,7 +63,7 @@ export const MainSideBar = () => {
                 />
             </TransitionItem>
             {invites.map((m) => (
-                <TransitionItem key={m.id.streamId}>
+                <TransitionItem key={m.id}>
                     <SpaceNavItem
                         isInvite
                         id={m.id}

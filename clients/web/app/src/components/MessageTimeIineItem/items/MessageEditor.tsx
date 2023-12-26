@@ -1,6 +1,5 @@
 import React, { useCallback, useContext } from 'react'
 import {
-    RoomIdentifier,
     RoomMessageEvent,
     SendTextMessageOptions,
     useMyProfile,
@@ -17,7 +16,7 @@ import { useDevice } from 'hooks/useDevice'
 type Props = {
     eventId: string
     eventContent: RoomMessageEvent
-    channelId: RoomIdentifier
+    channelId: string
     initialValue: string
 }
 

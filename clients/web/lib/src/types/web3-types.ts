@@ -1,5 +1,4 @@
 import { Address, Chain, Connector } from 'wagmi'
-import { RoomIdentifier } from './room-identifier'
 import { useEthersProvider } from '../hooks/Web3Context/useEthersProvider'
 import {
     TokenEntitlementDataTypes,
@@ -46,7 +45,7 @@ export type BlockchainTransaction = {
     hash: Address
     data?: {
         parentSpaceId?: string
-        spaceId: RoomIdentifier
+        spaceId: string
     }
     type: BlockchainTransactionType
 }

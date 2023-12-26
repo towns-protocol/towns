@@ -24,11 +24,11 @@ export const useNavigateToCurrentSpaceInfo = () => {
         let path
 
         if (isTouch) {
-            path = `/${PATHS.SPACES}/${space.id.streamId}/info`
+            path = `/${PATHS.SPACES}/${space.id}/info`
         } else if (currentChannelId) {
-            path = `/${PATHS.SPACES}/${space.id.streamId}/channels/${currentChannelId}/info`
+            path = `/${PATHS.SPACES}/${space.id}/channels/${currentChannelId}/info`
         } else if (currentSpacePathWithoutInfo) {
-            path = `/${PATHS.SPACES}/${space.id.streamId}/${currentSpacePathWithoutInfo?.params.current}/info`
+            path = `/${PATHS.SPACES}/${space.id}/${currentSpacePathWithoutInfo?.params.current}/info`
         }
 
         if (path) {

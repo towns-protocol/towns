@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Stream } from '@river/sdk'
 import { Room, RoomMember } from '../../types/zion-types'
-import { makeRoomIdentifier } from '../../types/room-identifier'
 import { Membership } from '../../types/zion-types'
 
 export function toZionRoomFromStream(stream: Stream, userId: string): Room {
@@ -38,7 +37,7 @@ export function toZionRoomFromStream(stream: Stream, userId: string): Room {
     }, {} as Record<string, RoomMember>)
 
     return {
-        id: makeRoomIdentifier(stream.streamId),
+        id: stream.streamId,
         name: '',
         membership: membership,
         inviter: '',

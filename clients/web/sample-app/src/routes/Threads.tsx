@@ -12,7 +12,7 @@ export function Threads(): JSX.Element {
         (threadRoot: ThreadResult) => {
             if (spaceId) {
                 navigate(
-                    `/spaces/${spaceId.streamId}/threads/${threadRoot.channel.id.streamId}/${threadRoot.thread.parentId}`,
+                    `/spaces/${spaceId}/threads/${threadRoot.channel.id}/${threadRoot.thread.parentId}`,
                 )
             }
         },

@@ -15,8 +15,7 @@ export function useSpaceThreadRoots(): ThreadResult[] {
         const threads = [] as ThreadResult[]
 
         channels.forEach((channel) => {
-            const channelThreadStats: Record<string, ThreadStats> =
-                threadsStats[channel.id.streamId] || {}
+            const channelThreadStats: Record<string, ThreadStats> = threadsStats[channel.id] || {}
 
             const channelThreads = Object.values(channelThreadStats)
                 .filter((thread) => thread.isParticipating)

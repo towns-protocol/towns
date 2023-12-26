@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useMemo } from 'react'
-import { RoomIdentifier, toRoomIdentifier } from '../types/room-identifier'
 import { SpaceContextUserLookupProvider } from './UserLookupContext'
 
 export interface ISpaceContext {
-    spaceId?: RoomIdentifier
+    spaceId?: string
 }
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -21,16 +20,13 @@ export function useSpaceContext(): ISpaceContext {
 }
 
 interface Props {
-    spaceId: RoomIdentifier | string | undefined
+    spaceId: string | undefined
     children: JSX.Element
 }
 
 export function SpaceContextProvider(props: Props): JSX.Element {
     // in a very safe way, memoize all space context parameters
-    const spaceId = useMemo(
-        () => (props.spaceId ? toRoomIdentifier(props.spaceId) : undefined),
-        [props.spaceId],
-    )
+    const spaceId = useMemo(() => (props.spaceId ? props.spaceId : undefined), [props.spaceId])
     const spaceContext: ISpaceContext = useMemo(
         () => ({
             spaceId: spaceId,

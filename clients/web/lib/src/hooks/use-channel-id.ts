@@ -1,7 +1,6 @@
-import { RoomIdentifier } from '../types/room-identifier'
 import { useChannelContext } from '../components/ChannelContextProvider'
 
-export function useChannelId(): RoomIdentifier {
+export function useChannelId(): string {
     const { channelId } = useChannelContext()
     return channelId
 }

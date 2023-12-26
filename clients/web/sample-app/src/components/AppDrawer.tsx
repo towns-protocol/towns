@@ -1,5 +1,5 @@
 import { Box, CssBaseline, Divider, Drawer, Toolbar } from '@mui/material'
-import { InviteData, RoomIdentifier } from 'use-zion-client'
+import { InviteData } from 'use-zion-client'
 import { Outlet, useNavigate } from 'react-router-dom'
 import React, { useCallback, useState } from 'react'
 
@@ -28,31 +28,31 @@ export function AppDrawer(props: Props): JSX.Element {
         setMobileOpen(!mobileOpen)
     }, [mobileOpen])
 
-    const onClickSpace = (spaceId: RoomIdentifier) => {
+    const onClickSpace = (spaceId: string) => {
         console.log('onClickSpace', spaceId)
-        navigate('/spaces/' + spaceId.streamId + '/')
+        navigate('/spaces/' + spaceId + '/')
     }
 
-    const onClickThreads = (spaceId: RoomIdentifier) => {
+    const onClickThreads = (spaceId: string) => {
         console.log('onClickThreads', spaceId)
-        navigate('/spaces/' + spaceId.streamId + '/threads/')
+        navigate('/spaces/' + spaceId + '/threads/')
     }
 
-    const onClickMentions = (spaceId: RoomIdentifier) => {
+    const onClickMentions = (spaceId: string) => {
         console.log('onClickMentions', spaceId)
-        navigate('/spaces/' + spaceId.streamId + '/mentions/')
+        navigate('/spaces/' + spaceId + '/mentions/')
     }
 
-    const onClickChannel = (spaceId: RoomIdentifier, channelId: RoomIdentifier) => {
+    const onClickChannel = (spaceId: string, channelId: string) => {
         console.log('onClickChannel', spaceId, channelId)
-        navigate('/spaces/' + spaceId.streamId + '/channels/' + channelId.streamId + '/')
+        navigate('/spaces/' + spaceId + '/channels/' + channelId + '/')
     }
 
     const onClickInvite = (invite: InviteData) => {
         if (invite.spaceParentId) {
-            navigate('/spaces/' + invite.spaceParentId.streamId + '/channels/' + invite.id.streamId)
+            navigate('/spaces/' + invite.spaceParentId + '/channels/' + invite.id)
         } else {
-            navigate('/spaces/' + invite.id.streamId)
+            navigate('/spaces/' + invite.id)
         }
     }
 

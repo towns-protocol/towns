@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { RoomIdentifier, makeRoomIdentifier, useZionClient } from 'use-zion-client'
+import { useZionClient } from 'use-zion-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { isLimitReachedError, isMaybeFundsError, mapToErrorMessage } from '@components/Web3/utils'
 
@@ -29,7 +29,7 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
         clearErrors()
         const signer = await getSigner()
         if (client && spaceId && signer) {
-            const roomIdentifier: RoomIdentifier = makeRoomIdentifier(spaceId)
+            const roomIdentifier = spaceId
             try {
                 // use client.joinRoom b/c it will throw an error, not the joinRoom wrapped in useWithCatch()
                 // we can keep this notEntitled state in the interm to catch some weird errors/states just in case

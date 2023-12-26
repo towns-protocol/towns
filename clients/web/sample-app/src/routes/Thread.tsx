@@ -2,7 +2,6 @@ import React, { useCallback, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import {
     ChannelContextProvider,
-    RoomIdentifier,
     useChannelId,
     useChannelThread,
     useMyMembership,
@@ -46,13 +45,13 @@ function ThreadContent(props: { threadParentId: string }): JSX.Element {
     }, [messages, parentMessage])
 
     const onClickSendMessage = useCallback(
-        (roomId: RoomIdentifier, message: string) => {
+        (roomId: string, message: string) => {
             return sendMessage(roomId, message, { threadId: threadParentId })
         },
         [sendMessage, threadParentId],
     )
 
-    const onClickJoinRoom = useCallback((roomId: RoomIdentifier) => {
+    const onClickJoinRoom = useCallback((roomId: string) => {
         throw new Error('join room from thread not implemented')
     }, [])
 

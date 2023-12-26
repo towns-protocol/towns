@@ -1,13 +1,13 @@
-import { Permission, RoomIdentifier, useHasPermission } from 'use-zion-client'
+import { Permission, useHasPermission } from 'use-zion-client'
 
 export const useIsChannelWritable = (
-    spaceId: RoomIdentifier | undefined,
-    channelId: RoomIdentifier,
+    spaceId: string | undefined,
+    channelId: string,
     loggedInWalletAddress: string | undefined,
 ) => {
     const { hasPermission, isLoading } = useHasPermission({
-        spaceId: spaceId?.streamId,
-        channelId: channelId.streamId,
+        spaceId: spaceId,
+        channelId: channelId,
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.Write,
     })

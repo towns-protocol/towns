@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { RoomIdentifier, SendMessageOptions, useChannelData, useZionClient } from 'use-zion-client'
+import { SendMessageOptions, useChannelData, useZionClient } from 'use-zion-client'
 
 export const useSendReply = (threadId?: string, threadPreview?: string) => {
     const { sendMessage } = useZionClient()
@@ -8,7 +8,7 @@ export const useSendReply = (threadId?: string, threadPreview?: string) => {
     const sendReply = useCallback(
         (
             value: string,
-            channelId: RoomIdentifier,
+            channelId: string,
             options: SendMessageOptions | undefined,
             threadParticipants?: Set<string>,
         ) => {

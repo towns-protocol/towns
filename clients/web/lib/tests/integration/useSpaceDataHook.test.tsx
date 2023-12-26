@@ -14,7 +14,6 @@ import { LoginStatus } from '../../src/hooks/login'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
 import { Permission } from '@river/web3'
 import React, { useCallback, useEffect } from 'react'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -42,7 +41,7 @@ describe('useSpaceDataHook', () => {
             {
                 name: makeUniqueName('bobs space'),
             },
-        )) as RoomIdentifier
+        )) as string
         // and a channel
         await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
@@ -93,7 +92,7 @@ describe('useSpaceDataHook', () => {
             }, [space])
             return (
                 <>
-                    <div data-testid="spaceId">{space?.id.streamId}</div>
+                    <div data-testid="spaceId">{space?.id}</div>
                     <div>
                         <div>SPACE INFO:</div>
                         {JSON.stringify(

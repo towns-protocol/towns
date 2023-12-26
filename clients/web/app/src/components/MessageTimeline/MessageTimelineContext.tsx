@@ -1,7 +1,6 @@
 import React, { createContext, useCallback, useMemo } from 'react'
 import {
     Channel,
-    RoomIdentifier,
     TimelineEvent,
     useMyProfile,
     useTimelineReactions,
@@ -27,8 +26,8 @@ export enum MessageTimelineType {
 
 export const MessageTimelineContext = createContext<{
     userId: string
-    spaceId: RoomIdentifier | undefined
-    channelId: RoomIdentifier
+    spaceId: string | undefined
+    channelId: string
     isChannelEncrypted?: boolean
     isChannelWritable?: boolean
     threadParentId?: string
@@ -55,8 +54,8 @@ export const useTimelineContext = () => {
 
 export const MessageTimelineWrapper = (props: {
     children: React.ReactNode
-    spaceId: RoomIdentifier | undefined
-    channelId: RoomIdentifier
+    spaceId: string | undefined
+    channelId: string
     events: TimelineEvent[]
     threadParentId?: string
     isChannelWritable?: boolean

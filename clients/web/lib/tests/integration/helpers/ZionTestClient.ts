@@ -11,7 +11,6 @@ import { UserIdentifier, createUserIdFromEthereumAddress } from '../../../src/ty
 
 import { CreateSpaceInfo } from '../../../src/types/zion-types'
 import { RoleIdentifier } from '../../../src/types/web3-types'
-import { RoomIdentifier } from '../../../src/types/room-identifier'
 import { ZionClient } from '../../../src/client/ZionClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ethers } from 'ethers'
@@ -99,7 +98,7 @@ export class ZionTestClient extends ZionClient {
     public async createSpace(
         createSpaceInfo: CreateSpaceInfo,
         membership: ITownArchitectBase.MembershipStruct,
-    ): Promise<RoomIdentifier | undefined> {
+    ): Promise<string | undefined> {
         const txContext = await this.createSpaceTransaction(
             createSpaceInfo,
             membership,
@@ -205,20 +204,20 @@ export class ZionTestClient extends ZionClient {
         return false // n/a for casablanca
     }
 
-    public async waitForStream(roomId: RoomIdentifier): Promise<void> {
-        await this.casablancaClient?.waitForStream(roomId.streamId)
+    public async waitForStream(roomId: string): Promise<void> {
+        await this.casablancaClient?.waitForStream(roomId)
     }
     /************************************************
      * getLatestEvent
      ************************************************/
     public getEvents(
-        roomId: RoomIdentifier,
+        roomId: string,
         options?: { excludeMiniblockHeaders?: boolean },
     ): TimelineEvent[] {
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        const stream = this.casablancaClient.stream(roomId.streamId)
+        const stream = this.casablancaClient.stream(roomId)
         const userId = this.casablancaClient.userId
         if (!stream) {
             throw new Error('stream is undefined')
@@ -233,12 +232,12 @@ export class ZionTestClient extends ZionClient {
         }
     }
 
-    public getEventsOfType(roomId: RoomIdentifier, eventType: ZTEvent): TimelineEvent[] {
+    public getEventsOfType(roomId: string, eventType: ZTEvent): TimelineEvent[] {
         return this.getEvents(roomId).filter((e) => e?.content?.kind === eventType)
     }
 
     public getEvents_Typed<T extends TimelineEvent_OneOf>(
-        roomId: RoomIdentifier,
+        roomId: string,
         eventType: T['kind'], // I can force you to pass the right type, but can't figure it out at runtime 🙈
     ): (Omit<TimelineEvent, 'content'> & {
         content: T
@@ -247,11 +246,11 @@ export class ZionTestClient extends ZionClient {
         return events.map((e) => e as Omit<TimelineEvent, 'content'> & { content: T })
     }
 
-    public getEvents_TypedRoomMessage(roomId: RoomIdentifier) {
+    public getEvents_TypedRoomMessage(roomId: string) {
         return this.getEvents_Typed<RoomMessageEvent>(roomId, ZTEvent.RoomMessage)
     }
 
-    public getMessages(roomId: RoomIdentifier): string[] {
+    public getMessages(roomId: string): string[] {
         const messages = this.getEvents_Typed<RoomMessageEvent>(roomId, ZTEvent.RoomMessage)
         const redactions = new Set(
             this.getEvents_Typed<RedactionActionEvent>(roomId, ZTEvent.RedactionActionEvent)
@@ -262,7 +261,7 @@ export class ZionTestClient extends ZionClient {
     }
 
     public async getLatestEvent<T extends TimelineEvent_OneOf>(
-        roomId: RoomIdentifier,
+        roomId: string,
         eventType: T['kind'] | undefined = ZTEvent.RoomMessage,
     ): Promise<
         | (Omit<TimelineEvent, 'content'> & {
@@ -275,11 +274,11 @@ export class ZionTestClient extends ZionClient {
         return events.at(-1)
     }
 
-    public logEvents(roomId: RoomIdentifier) {
-        this.log(`events for ${roomId.streamId}`, this.getEventsDescription(roomId))
+    public logEvents(roomId: string) {
+        this.log(`events for ${roomId}`, this.getEventsDescription(roomId))
     }
 
-    public getEventsDescription(roomId: RoomIdentifier): string {
+    public getEventsDescription(roomId: string): string {
         const events = this.getEvents(roomId)
         return events.map((e) => `${e.fallbackContent} : ${e.eventId}`).join('\n')
     }

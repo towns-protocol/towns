@@ -1,15 +1,14 @@
 import { Client as CasablancaClient } from '@river/sdk'
 import { useEffect, useState } from 'react'
-import { RoomIdentifier, makeRoomIdentifier } from '../../types/room-identifier'
 import isEqual from 'lodash/isEqual'
 import { SnapshotCaseType } from '@river/proto'
 
 export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | undefined): {
-    invitedToIds: RoomIdentifier[]
-    spaceIds: RoomIdentifier[]
+    invitedToIds: string[]
+    spaceIds: string[]
 } {
-    const [invitedToIds, setInvitedToIds] = useState<RoomIdentifier[]>([])
-    const [spaceIds, setSpaceIds] = useState<RoomIdentifier[]>([])
+    const [invitedToIds, setInvitedToIds] = useState<string[]>([])
+    const [spaceIds, setSpaceIds] = useState<string[]>([])
 
     useEffect(() => {
         if (!casablancaClient) {
@@ -29,11 +28,11 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
                 .sort((a, b) => a.view.streamId.localeCompare(b.view.streamId))
             const joined = streams
                 .filter((stream) => stream.view.getMemberships().joinedUsers.has(userId))
-                .map((stream) => makeRoomIdentifier(stream.view.streamId))
+                .map((stream) => stream.view.streamId)
 
             const invited = streams
                 .filter((stream) => stream.view.getMemberships().invitedUsers.has(userId))
-                .map((stream) => makeRoomIdentifier(stream.view.streamId))
+                .map((stream) => stream.view.streamId)
 
             setSpaceIds((prev) => {
                 if (isEqual(prev, joined)) {

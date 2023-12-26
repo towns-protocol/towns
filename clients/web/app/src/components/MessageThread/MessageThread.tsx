@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 import {
-    RoomIdentifier,
     SendMessageOptions,
     ZTEvent,
     useMyProfile,
@@ -29,8 +28,8 @@ export const MessageThread = (props: {
     userId: string
     channelLabel: string
     parentId: string
-    channelId: RoomIdentifier
-    spaceId: RoomIdentifier
+    channelId: string
+    spaceId: string
 }) => {
     const { parentId, spaceId, channelId, channelLabel } = props
     const { parent, messages: unthrottledMessages } = useTimelineThread(channelId, parentId)
@@ -129,7 +128,7 @@ export const MessageThread = (props: {
                                 threadId={parentId}
                                 displayButtons={isTouch ? 'on-focus' : 'always'}
                                 threadPreview={parentMessage?.fallbackContent}
-                                storageId={`${channelId.streamId}-${parentId}`}
+                                storageId={`${channelId}-${parentId}`}
                                 autoFocus={false}
                                 placeholder="Reply..."
                                 channels={channels}

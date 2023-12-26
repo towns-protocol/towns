@@ -5,7 +5,6 @@ import { Outlet, useNavigate } from 'react-router'
 import {
     ChannelContextProvider,
     Permission,
-    RoomIdentifier,
     RoomMember,
     SpaceData,
     getAccountAddress,
@@ -91,7 +90,7 @@ export const TouchHome = () => {
     }, [memberIds, usersMap])
 
     const { hasPermission: canCreateChannel } = useHasPermission({
-        spaceId: space?.id.streamId,
+        spaceId: space?.id,
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.AddRemoveChannels,
     })
@@ -155,7 +154,7 @@ export const TouchHome = () => {
         setActiveOverlay('main-panel')
     }, [])
 
-    const { imageSrc } = useImageSource(space?.id.streamId ?? '', ImageVariants.thumbnail300)
+    const { imageSrc } = useImageSource(space?.id ?? '', ImageVariants.thumbnail300)
 
     const hasResult = filteredChannels.length > 0 || filteredMembers.length > 0
 
@@ -381,7 +380,7 @@ const ErrorFallbackComponent = (props: { error: Error }) => {
 const ChannelList = (props: {
     space: SpaceData
     channels: {
-        id: RoomIdentifier
+        id: string
         isJoined: boolean
         label: string
         mentionCount: number
@@ -395,20 +394,20 @@ const ChannelList = (props: {
             {channels.map((c) =>
                 c.isJoined ? (
                     <TouchChannelResultRow
-                        key={c.id.streamId}
-                        channelNetworkId={c.id.streamId}
+                        key={c.id}
+                        channelNetworkId={c.id}
                         name={c.label}
                         unread={c.unread}
                         mentionCount={c.mentionCount}
                         muted={c.muted}
                     />
                 ) : (
-                    <Box paddingY="sm" paddingX="md" key={c.id.streamId}>
+                    <Box paddingY="sm" paddingX="md" key={c.id}>
                         <ChannelContextProvider channelId={c.id}>
                             <ChannelItem
-                                key={c.id.streamId}
+                                key={c.id}
                                 space={space}
-                                channelNetworkId={c.id.streamId}
+                                channelNetworkId={c.id}
                                 name={c.label}
                             />
                         </ChannelContextProvider>
@@ -425,11 +424,7 @@ const DirectMessageChannelList = () => {
     return (
         <Stack>
             {spaceDms.map((c) => (
-                <DirectMessageItem
-                    key={c.id.streamId}
-                    channel={c}
-                    unread={dmUnreadChannelIds.has(c.id.streamId)}
-                />
+                <DirectMessageItem key={c.id} channel={c} unread={dmUnreadChannelIds.has(c.id)} />
             ))}
         </Stack>
     )
@@ -441,12 +436,12 @@ const DirectMessageItem = (props: { channel: DMChannelIdentifier; unread: boolea
     return (
         <DMChannelContextUserLookupProvider
             fallbackToParentContext
-            key={channel.id.streamId}
-            channelId={channel.id.streamId}
+            key={channel.id}
+            channelId={channel.id}
         >
             <TouchChannelResultRow
-                key={channel.id.streamId}
-                channelNetworkId={channel.id.streamId}
+                key={channel.id}
+                channelNetworkId={channel.id}
                 name={<DirectMessageName channel={channel} />}
                 unread={unread}
                 mentionCount={unreadCount}

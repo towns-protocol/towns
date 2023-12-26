@@ -2,7 +2,6 @@ import { Box, TextField, Theme, Typography } from '@mui/material'
 import {
     CreateChannelInfo,
     Membership,
-    RoomIdentifier,
     TransactionStatus,
     useCreateChannelTransaction,
     useRoles,
@@ -16,14 +15,14 @@ import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
 
 interface Props {
-    parentSpaceId: RoomIdentifier
-    onClick: (roomId: RoomIdentifier, membership: Membership) => void
+    parentSpaceId: string
+    onClick: (roomId: string, membership: Membership) => void
 }
 
 export function CreateChannelForm(props: Props): JSX.Element {
     const [channelName, setChannelName] = useState<string>('')
     const [roles, setRoles] = useState<RolesSettings>({})
-    const { spaceRoles } = useRoles(props.parentSpaceId.streamId)
+    const { spaceRoles } = useRoles(props.parentSpaceId)
     const { onClick, parentSpaceId } = props
     const {
         isLoading,
@@ -121,10 +120,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
                     gridTemplateColumns="repeat(1, 1fr)"
                     marginTop="20px"
                 >
-                    <ChannelRoleSettings
-                        spaceId={parentSpaceId.streamId}
-                        onChangeValue={onChangeRoles}
-                    />
+                    <ChannelRoleSettings spaceId={parentSpaceId} onChangeValue={onChangeRoles} />
                 </Box>
                 <Box />
                 <Box display="flex" flexDirection="column" alignItems="center">

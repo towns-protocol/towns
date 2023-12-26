@@ -1,7 +1,6 @@
 import { Box, Button, Divider, TextField, Theme, Typography } from '@mui/material'
 import {
     Membership,
-    RoomIdentifier,
     TimelineEvent,
     ZTEvent,
     useFullyReadMarker,
@@ -12,12 +11,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AcceptInvitation } from './AcceptInvitation'
 
 interface Props {
-    roomId: RoomIdentifier
+    roomId: string
     threadParentId?: string
     timeline: TimelineEvent[]
     membership: string
-    sendMessage?: (roomId: RoomIdentifier, message: string) => Promise<void>
-    joinRoom: (roomId: RoomIdentifier) => Promise<void>
+    sendMessage?: (roomId: string, message: string) => Promise<void>
+    joinRoom: (roomId: string) => Promise<void>
 }
 
 export function ChatMessages(props: Props): JSX.Element {

@@ -172,7 +172,7 @@ function TestComponent(args: {
     const { createRoleTransaction, data } = createRoleTransactionInfo
     const updateRoleTransactionInfo = useUpdateRoleTransaction()
     const { updateRoleTransaction } = updateRoleTransactionInfo
-    const spaceNetworkId = spaceId ? spaceId.streamId : ''
+    const spaceNetworkId = spaceId ? spaceId : ''
     const roleIdentifier = data?.roleId
     const roleId = useMemo(() => roleIdentifier?.roleId ?? -1, [roleIdentifier])
     // handle click to create a space

@@ -17,13 +17,9 @@ import { ChannelSettingsForm } from './ChannelSettingsModal'
 
 const CHANNEL_ID = 'channel1'
 const SPACE_ID = 'town1'
-const spaceRoomIdentifier = {
-    streamId: SPACE_ID,
-}
+const spaceRoomIdentifier = SPACE_ID
 
-const channelRoomIdentifier = {
-    streamId: CHANNEL_ID,
-}
+const channelRoomIdentifier = CHANNEL_ID
 
 const Wrapper = ({
     onHide = vi.fn(),

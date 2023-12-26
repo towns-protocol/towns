@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useMemo } from 'react'
-import { makeRoomIdentifier, RoomIdentifier } from '../types/room-identifier'
 import { useSpaceId } from '../hooks/use-space-id'
 
 export interface IChannelContext {
-    channelId: RoomIdentifier
-    spaceId: RoomIdentifier | undefined
+    channelId: string
+    spaceId: string | undefined
 }
 
 export const ChannelContext = createContext<IChannelContext | undefined>(undefined)
@@ -21,7 +20,7 @@ export function useChannelContext(): IChannelContext {
 }
 
 interface Props {
-    channelId: RoomIdentifier | string
+    channelId: string
     children: JSX.Element
 }
 
@@ -29,9 +28,9 @@ export function ChannelContextProvider(props: Props): JSX.Element {
     // console.log('~~~~~ Channel Context ~~~~~~', props.channelId)
     const spaceId = useSpaceId()
     // convert the room identifier
-    const channelId: RoomIdentifier = useMemo(() => {
+    const channelId: string = useMemo(() => {
         if (typeof props.channelId === 'string') {
-            return makeRoomIdentifier(props.channelId)
+            return props.channelId
         }
         return props.channelId
     }, [props.channelId])

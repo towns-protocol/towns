@@ -16,9 +16,7 @@ vi.mock('react-router', async () => {
 })
 
 const mockSpaceData: Lib.SpaceData = {
-    id: {
-        streamId: 'some-stream-id',
-    },
+    id: 'some-stream-id',
     name: 'test space',
     avatarSrc: 'test',
     channelGroups: [
@@ -26,9 +24,7 @@ const mockSpaceData: Lib.SpaceData = {
             label: 'group 1',
             channels: [
                 {
-                    id: {
-                        streamId: 'some-channel-stream-id',
-                    },
+                    id: 'some-channel-stream-id',
                     label: 'general',
                 },
             ],
@@ -49,11 +45,7 @@ const mockChainSpace = {
 const Wrapper = () => {
     return (
         <TestApp>
-            <Lib.SpaceContextProvider
-                spaceId={{
-                    streamId: 'some-stream-id',
-                }}
-            >
+            <Lib.SpaceContextProvider spaceId="some-stream-id">
                 <SpaceHome />
             </Lib.SpaceContextProvider>
         </TestApp>

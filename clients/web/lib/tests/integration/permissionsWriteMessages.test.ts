@@ -33,9 +33,7 @@ describe('write messages', () => {
             throw new Error('Failed to create room')
         }
 
-        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
-            spaceId.streamId,
-        )
+        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(spaceId)
         const councilNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
@@ -45,7 +43,7 @@ describe('write messages', () => {
 
         // update the member role so only council nft holders can write
         await bob.updateRoleTransaction(
-            spaceId.streamId,
+            spaceId,
             2,
             'Member',
             [Permission.Read, Permission.Write],
@@ -56,7 +54,7 @@ describe('write messages', () => {
 
         // create read only role
         await bob.createRoleTransaction(
-            spaceId.streamId,
+            spaceId,
             'Read only',
             [Permission.Read],
             [membershipToken],

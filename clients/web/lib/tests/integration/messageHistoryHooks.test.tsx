@@ -3,7 +3,6 @@
  * @group casablanca
  */
 import { Membership } from '../../src/types/zion-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
@@ -42,14 +41,14 @@ describe('messageHistoryHooks', () => {
             const spaceId = (await createTestSpaceGatedByTownNft(bob, [
                 Permission.Read,
                 Permission.Write,
-            ])) as RoomIdentifier
+            ])) as string
             // create a channel
             const channelId = (await createTestChannelWithSpaceRoles(bob, {
                 name: 'bobs channel',
                 parentSpaceId: spaceId,
                 roleIds: [],
                 streamSettings: { miniblockTimeMs: 1000n, minEventsPerSnapshot: 5 },
-            })) as RoomIdentifier
+            })) as string
             //
             // send 15 messages, five first, then 10 more
             for (let i = 0; i < 5; i++) {

@@ -9,7 +9,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { LoginWithWallet } from './helpers/TestComponents'
 import { Permission } from '@river/web3'
 import React from 'react'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { useInvites } from '../../src/hooks/use-space-data'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
@@ -47,7 +46,7 @@ describe('userProfileOnAcceptInviteHooks', () => {
                     <div data-testid="invitesCount">
                         {invites.length > 0 ? invites.length.toString() : 'none'}
                     </div>
-                    <div data-testid="roomId">{roomId?.streamId ?? 'none'}</div>
+                    <div data-testid="roomId">{roomId ?? 'none'}</div>
                     <div data-testid="myMembership">{myMembership}</div>
                     <button onClick={() => void joinTown(roomId, alice.wallet)}>
                         Accept Invite
@@ -77,7 +76,7 @@ describe('userProfileOnAcceptInviteHooks', () => {
             {
                 name: bob.makeUniqueName(),
             },
-        )) as RoomIdentifier
+        )) as string
         // bob invites alice to the room
         await bob.inviteUser(roomId, alice.getUserId()!)
         // wait for the invite to show (this will transition back to 0 after the invite is accepted)

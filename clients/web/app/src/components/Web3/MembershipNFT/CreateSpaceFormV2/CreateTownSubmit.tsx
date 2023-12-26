@@ -3,7 +3,6 @@ import {
     CreateSpaceInfo,
     MembershipStruct,
     Permission,
-    makeRoomIdentifier,
     useCreateSpaceTransaction,
     useZionClient,
 } from 'use-zion-client'
@@ -58,16 +57,16 @@ export function CreateTownSubmit({
 
     const { mutate: uploadImage } = useUploadImage(undefined, {
         onError: () => {
-            if (!data?.spaceId.streamId) {
+            if (!data?.spaceId) {
                 return
             }
             const { removeLoadedResource } = useImageStore.getState()
-            removeLoadedResource(data.spaceId.streamId)
+            removeLoadedResource(data.spaceId)
             toast.custom(
                 (t) => (
                     <FailedUploadAfterSpaceCreation
                         toast={t}
-                        spaceId={data.spaceId.streamId}
+                        spaceId={data.spaceId}
                         message="There was an error uploading your town image."
                     />
                 ),
@@ -79,16 +78,16 @@ export function CreateTownSubmit({
     })
     const { mutate: uploadSpaceBio } = useSetSpaceTopic(undefined, {
         onError: () => {
-            if (!data?.spaceId.streamId) {
+            if (!data?.spaceId) {
                 return
             }
             const { removeLoadedResource } = useImageStore.getState()
-            removeLoadedResource(data.spaceId.streamId)
+            removeLoadedResource(data.spaceId)
             toast.custom(
                 (t) => (
                     <FailedUploadAfterSpaceCreation
                         toast={t}
-                        spaceId={data.spaceId.streamId}
+                        spaceId={data.spaceId}
                         message="There was an error uploading your town bio."
                     />
                 ),
@@ -179,8 +178,8 @@ export function CreateTownSubmit({
                 // TODO: upload town bio
 
                 if (result?.data) {
-                    const newPath = `/${PATHS.SPACES}/${result?.data.spaceId.streamId}/${PATHS.GETTING_STARTED}`
-                    const networkId = result.data.spaceId.streamId
+                    const newPath = `/${PATHS.SPACES}/${result?.data.spaceId}/${PATHS.GETTING_STARTED}`
+                    const networkId = result.data.spaceId
 
                     if (values.spaceIconUrl && values.spaceIconFile) {
                         const { setLoadedResource } = useImageStore.getState()
@@ -202,7 +201,7 @@ export function CreateTownSubmit({
                     const { spaceBio } = values
                     uploadSpaceBio({
                         description: spaceBio ?? '',
-                        innerRoomId: makeRoomIdentifier(networkId),
+                        innerRoomId: networkId,
                     })
 
                     let timeoutDuration = 0

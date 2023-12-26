@@ -19,13 +19,7 @@ const Wrapper = ({
 }) => {
     return (
         <TestApp>
-            <CreateChannelForm
-                spaceId={{
-                    streamId: '',
-                }}
-                onCreateChannel={onCreateChannel}
-                onHide={onHide}
-            />
+            <CreateChannelForm spaceId="" onCreateChannel={onCreateChannel} onHide={onHide} />
         </TestApp>
     )
 }
@@ -252,9 +246,7 @@ describe('CreateChannelForm', () => {
             return expect(createChannelSpy).toHaveBeenCalledWith(
                 {
                     name: 'test-channel',
-                    parentSpaceId: {
-                        streamId: '',
-                    },
+                    parentSpaceId: '',
                     roleIds: [7, 8],
                 },
                 {},

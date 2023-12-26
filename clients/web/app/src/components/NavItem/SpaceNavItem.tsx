@@ -1,5 +1,5 @@
 import React from 'react'
-import { RoomIdentifier, useSpaceNotificationCounts } from 'use-zion-client'
+import { useSpaceNotificationCounts } from 'use-zion-client'
 import { PATHS } from 'routes'
 import { Badge, Box, ButtonText, Dot, Icon } from '@ui'
 import { IconName } from 'ui/components/Icon'
@@ -10,7 +10,7 @@ import { useShowHasUnreadBadgeForSpaceId } from 'hooks/useSpaceUnreadsIgnoreMute
 import { NavItem } from './_NavItem'
 
 type Props = {
-    id: RoomIdentifier
+    id: string
     name: string
     spaceName?: string
     avatar?: string
@@ -20,7 +20,7 @@ type Props = {
     highlight?: boolean
     pinned?: boolean
     settings?: boolean
-    onSettings?: (id: RoomIdentifier) => void
+    onSettings?: (id: string) => void
     exact?: boolean
     isInvite?: boolean
     onClick?: () => void
@@ -31,15 +31,15 @@ export const SpaceNavItem = (props: Props) => {
     const { isTouch } = useDevice()
     const notificationCounts = useSpaceNotificationCounts(id)
     const mentions = notificationCounts.mentions
-    const newMessages = useShowHasUnreadBadgeForSpaceId(id.streamId)
+    const newMessages = useShowHasUnreadBadgeForSpaceId(id)
     const sizeContext = useSizeContext()
     // TODO: use tokens
     const isSmall = sizeContext.lessThan(180)
 
     return (
         <NavItem
-            id={id.streamId}
-            to={isInvite ? `/invites/${id.streamId}/` : `/${PATHS.SPACES}/${id.streamId}/`}
+            id={id}
+            to={isInvite ? `/invites/${id}/` : `/${PATHS.SPACES}/${id}/`}
             exact={exact}
             forceMatch={forceMatch}
             activeBackground={isTouch ? 'level2' : 'level3'}
@@ -58,7 +58,7 @@ export const SpaceNavItem = (props: Props) => {
                     width="x4"
                     minWidth="x4"
                     aspectRatio="1/1"
-                    spaceId={id.streamId}
+                    spaceId={id}
                     background="level1"
                     rounded="xs"
                     variant="thumbnail100"

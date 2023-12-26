@@ -23,9 +23,7 @@ const ownerUser = {
 
 const generateSpaceData = (networkId: string) => {
     const streamId = networkId
-    const roomIdentifier = {
-        streamId,
-    }
+    const roomIdentifier = streamId
     const spaceData = {
         id: roomIdentifier,
         name: 'tacos are cool',
@@ -37,7 +35,7 @@ const generateSpaceData = (networkId: string) => {
 
     const onChainSpaceInfo = {
         address: getWalletAddress(),
-        networkId: roomIdentifier.streamId,
+        networkId: roomIdentifier,
         name: spaceData.name,
         owner: ownerUser.userId,
         disabled: false,
@@ -70,7 +68,7 @@ vi.mock('use-zion-client', async () => {
     }
 })
 
-const Wrapper = ({ roomIdentifier }: { roomIdentifier: Lib.RoomIdentifier }) => {
+const Wrapper = ({ roomIdentifier }: { roomIdentifier: string }) => {
     return (
         <TestApp>
             <Lib.SpaceContextProvider spaceId={roomIdentifier}>

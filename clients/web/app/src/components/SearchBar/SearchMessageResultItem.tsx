@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom'
 import {
     EventStatus,
     MentionResult as MessageResult,
-    RoomIdentifier,
     useDMData,
     useSpaceId,
     useUserLookupContext,
@@ -26,21 +25,21 @@ import { useDevice } from 'hooks/useDevice'
 
 const createMessageLink = (
     isTouch: boolean,
-    channelId: RoomIdentifier,
+    channelId: string,
     eventId: string,
     threadId?: string,
     spaceId?: string,
 ) => {
-    if (isDMChannelStreamId(channelId.streamId) || isGDMChannelStreamId(channelId.streamId)) {
+    if (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)) {
         return isTouch
-            ? `/${PATHS.SPACES}/${spaceId}/${PATHS.MESSAGES}/${channelId.streamId}/#${eventId}`
-            : `/${PATHS.MESSAGES}/${channelId.streamId}/#${eventId}`
+            ? `/${PATHS.SPACES}/${spaceId}/${PATHS.MESSAGES}/${channelId}/#${eventId}`
+            : `/${PATHS.MESSAGES}/${channelId}/#${eventId}`
     }
 
     if (!spaceId) {
         return undefined
     }
-    const channelSegment = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId.streamId}/`
+    const channelSegment = `/${PATHS.SPACES}/${spaceId}/${PATHS.CHANNELS}/${channelId}/`
     const threadSegment = threadId ? `${PATHS.REPLIES}/${threadId}/` : ``
     const eventSegment = `#${eventId}`
     return `${channelSegment}${threadSegment}${eventSegment}`
@@ -54,7 +53,7 @@ export const SearchMessagesResultItem = (
     } & BoxProps,
 ) => {
     const { result } = props
-    const { streamId: spaceSlug } = useSpaceId() ?? {}
+    const spaceSlug = useSpaceId() ?? ''
     const content = getIsRoomMessageContent(result.event)
 
     const { users, usersMap } = useUserLookupContext()

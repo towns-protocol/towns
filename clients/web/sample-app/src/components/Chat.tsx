@@ -1,5 +1,5 @@
 import { Box, Grid, Theme, Typography } from '@mui/material'
-import { RoomIdentifier, useChannelData, useChannelTimeline, useZionClient } from 'use-zion-client'
+import { useChannelData, useChannelTimeline, useZionClient } from 'use-zion-client'
 import React, { useCallback, useState } from 'react'
 
 import { useNavigate } from 'react-router-dom'
@@ -9,10 +9,10 @@ import { SettingsButton } from './Buttons/SettingsButton'
 import { LargeToast } from './LargeToast'
 
 interface Props {
-    roomId: RoomIdentifier
+    roomId: string
     membership: string
     onClickLeaveRoom: () => void
-    goToRoom: (spaceId: RoomIdentifier, channelId: RoomIdentifier) => void
+    goToRoom: (spaceId: string, channelId: string) => void
 }
 
 export function Chat(props: Props): JSX.Element {
@@ -23,11 +23,11 @@ export function Chat(props: Props): JSX.Element {
     const [joinFailed, setJoinFailed] = useState(false)
 
     const onClickSettings = useCallback(() => {
-        if (!spaceId?.streamId) {
+        if (!spaceId) {
             throw new Error('No space id')
         }
-        navigate('/spaces/' + spaceId.streamId + '/channels/' + channelId.streamId + '/settings')
-    }, [spaceId?.streamId, channelId.streamId, navigate])
+        navigate('/spaces/' + spaceId + '/channels/' + channelId + '/settings')
+    }, [spaceId, channelId, navigate])
 
     const onClickLeaveRoom = useCallback(async () => {
         await leaveRoom(channelId)
@@ -35,14 +35,14 @@ export function Chat(props: Props): JSX.Element {
     }, [channelId, leaveRoom, props])
 
     const onClickSendMessage = useCallback(
-        async (roomId: RoomIdentifier, message: string) => {
+        async (roomId: string, message: string) => {
             await sendMessage(roomId, message)
         },
         [sendMessage],
     )
 
     const onClickJoinRoom = useCallback(
-        async (roomId: RoomIdentifier) => {
+        async (roomId: string) => {
             if (!spaceId) {
                 throw new Error('No space id')
             }

@@ -2,7 +2,6 @@
 /**
  * @group casablanca
  */
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceGatedByTownNft,
@@ -32,14 +31,14 @@ describe('channel with roles and permissions', () => {
         const spaceId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
 
         // create a channel with the same roles and permissions as the space
         const channelId = (await createTestChannelWithSpaceRoles(alice, {
             name: 'alice channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
 
         // invite user to join the channel
         await alice.inviteUser(channelId, tokenGrantedUserId)
@@ -61,14 +60,14 @@ describe('channel with roles and permissions', () => {
         const spaceId = (await createTestSpaceGatedByTownNft(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
 
         // create a channel with the same roles and permissions as the space
         const channelId = (await createTestChannelWithSpaceRoles(alice, {
             name: 'alice channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
 
         /** Act */
 
@@ -87,7 +86,7 @@ describe('channel with roles and permissions', () => {
         const spaceId = (await createTestSpaceGatedByTownNft(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
 
         const testGatingNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!testGatingNftAddress) {
@@ -95,7 +94,7 @@ describe('channel with roles and permissions', () => {
         }
         const testGatingNftToken = createExternalTokenStruct([testGatingNftAddress])[0]
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
-            spaceId.streamId,
+            spaceId,
             'newRoleName',
             [Permission.Read, Permission.Write],
             [testGatingNftToken],
@@ -109,7 +108,7 @@ describe('channel with roles and permissions', () => {
             name: 'alice channel',
             parentSpaceId: spaceId,
             roleIds: [roleIdentifier.roleId],
-        })) as RoomIdentifier
+        })) as string
         // invite user to join the channel
         await alice.inviteUser(channelId, bobUserId)
 

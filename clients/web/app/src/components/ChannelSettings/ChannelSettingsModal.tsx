@@ -1,7 +1,6 @@
 import {
     BlockchainTransactionType,
     Permission,
-    RoomIdentifier,
     SignerUndefinedError,
     TransactionStatus,
     UpdateChannelInfo,
@@ -28,8 +27,8 @@ import { ModalContainer } from '../Modals/ModalContainer'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
 
 type ChannelSettingsModalProps = {
-    spaceId: RoomIdentifier
-    channelId: RoomIdentifier
+    spaceId: string
+    channelId: string
     onHide: () => void
     onUpdatedChannel: () => void
 }
@@ -44,7 +43,7 @@ export function ChannelSettingsForm({
     preventCloseMessage: string | undefined
 }): JSX.Element {
     const room = useRoom(channelId)
-    const { data, isLoading, invalidateQuery } = useAllRoleDetails(spaceId.streamId)
+    const { data, isLoading, invalidateQuery } = useAllRoleDetails(spaceId)
 
     const rolesWithDetails = useMemo((): RoleCheckboxProps[] | undefined => {
         if (isLoading) {
@@ -53,16 +52,14 @@ export function ChannelSettingsForm({
         return data
             ?.filter((role) => role.permissions.includes(Permission.Read))
             .map((role) => {
-                const channelHasRole = role.channels.some(
-                    (c) => c.channelNetworkId === channelId.streamId,
-                )
+                const channelHasRole = role.channels.some((c) => c.channelNetworkId === channelId)
                 return {
                     ...role,
                     channelHasRole,
                     tokenAddresses: role.tokens.map((token) => token.contractAddress as string),
                 }
             })
-    }, [data, channelId.streamId, isLoading])
+    }, [data, channelId, isLoading])
 
     const defaultValues = useMemo((): FormState => {
         if (room) {
@@ -340,11 +337,7 @@ export function ChannelSettingsModal({
     }, [onHide, storedTransactions])
 
     return (
-        <ModalContainer
-            key={`${spaceId.streamId}_${channelId.streamId}}`}
-            touchTitle="Edit Channel"
-            onHide={_onHide}
-        >
+        <ModalContainer key={`${spaceId}_${channelId}}`} touchTitle="Edit Channel" onHide={_onHide}>
             <ChannelSettingsForm
                 spaceId={spaceId}
                 preventCloseMessage={transactionMessage}

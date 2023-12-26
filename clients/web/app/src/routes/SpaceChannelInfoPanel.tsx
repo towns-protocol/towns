@@ -32,8 +32,8 @@ export const ChannelInfoPanel = () => {
     const spaceData = useSpaceData()
     const { loggedInWalletAddress } = useAuth()
     const { hasPermission: canEditChannel } = useHasPermission({
-        spaceId: spaceData?.id.streamId ?? '',
-        channelId: channel?.id.streamId,
+        spaceId: spaceData?.id ?? '',
+        channelId: channel?.id,
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.ModifySpaceSettings,
     })
@@ -52,8 +52,8 @@ export const ChannelInfoPanel = () => {
         if (!channel || !spaceData) {
             return
         }
-        await leaveRoom(channel.id, spaceData.id.streamId)
-        navigate(`/${PATHS.SPACES}/${spaceData?.id.streamId}`)
+        await leaveRoom(channel.id, spaceData.id)
+        navigate(`/${PATHS.SPACES}/${spaceData?.id}`)
     })
 
     const onMembersClick = useCallback(() => {
@@ -61,10 +61,10 @@ export const ChannelInfoPanel = () => {
             setActiveModal('members')
         } else {
             navigate(
-                `/${PATHS.SPACES}/${spaceData?.id.streamId}/${PATHS.CHANNELS}/${channel?.id.streamId}/info?directory`,
+                `/${PATHS.SPACES}/${spaceData?.id}/${PATHS.CHANNELS}/${channel?.id}/info?directory`,
             )
         }
-    }, [navigate, isTouch, spaceData?.id.streamId, channel?.id.streamId])
+    }, [navigate, isTouch, spaceData?.id, channel?.id])
 
     const onShowChannelSettingsPopup = useEvent(() => {
         setActiveModal('settings')
@@ -81,8 +81,8 @@ export const ChannelInfoPanel = () => {
         useSetMuteSettingForChannelOrSpace()
 
     const { channelIsMuted, spaceIsMuted, channelMuteSetting } = useMuteSettings({
-        spaceId: spaceData?.id.streamId,
-        channelId: channel?.id.streamId,
+        spaceId: spaceData?.id,
+        channelId: channel?.id,
     })
 
     const onToggleChannelMuted = useCallback(() => {
@@ -90,8 +90,8 @@ export const ChannelInfoPanel = () => {
             return
         }
         mutateNotificationSettings({
-            spaceId: spaceData.id.streamId,
-            channelId: channel.id.streamId,
+            spaceId: spaceData.id,
+            channelId: channel.id,
             muteSetting: toggleMuteSetting(channelMuteSetting),
         })
     }, [channel, channelMuteSetting, mutateNotificationSettings, spaceData])
@@ -117,7 +117,7 @@ export const ChannelInfoPanel = () => {
                     <Paragraph strong size="lg">
                         #{channel?.label}
                     </Paragraph>
-                    <ClipboardCopy label={channel?.id.streamId ?? ''} />
+                    <ClipboardCopy label={channel?.id ?? ''} />
                 </Stack>
                 {!!info?.length &&
                     info.map((n) => (

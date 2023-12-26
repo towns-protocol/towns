@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react'
-import { RoomIdentifier, useDMData } from 'use-zion-client'
+import { useDMData } from 'use-zion-client'
 import { Box, Paragraph } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
-    roomIdentifier: RoomIdentifier
+    roomIdentifier: string
     width?: 'x3' | 'x4' | 'x6'
 }
 

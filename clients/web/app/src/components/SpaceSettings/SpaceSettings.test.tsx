@@ -90,7 +90,7 @@ vi.mock('ui/components/VList/hooks/useViewport', async () => {
 
 vi.mock('hooks/useSpaceInfoFromPathname', () => {
     return {
-        useSpaceIdFromPathname: () => spaceRoomIdentifier.streamId,
+        useSpaceIdFromPathname: () => spaceRoomIdentifier,
     }
 })
 
@@ -165,14 +165,8 @@ vi.mock('use-zion-client', async () => {
 
 const Wrapper = () => {
     return (
-        <TestApp
-            initialEntries={[`/${PATHS.SPACES}/${spaceRoomIdentifier.streamId}/${PATHS.SETTINGS}`]}
-        >
-            <Lib.SpaceContextProvider
-                spaceId={{
-                    streamId: spaceRoomIdentifier.streamId,
-                }}
-            >
+        <TestApp initialEntries={[`/${PATHS.SPACES}/${spaceRoomIdentifier}/${PATHS.SETTINGS}`]}>
+            <Lib.SpaceContextProvider spaceId={spaceRoomIdentifier}>
                 <AuthenticatedRoutes />
             </Lib.SpaceContextProvider>
         </TestApp>
@@ -379,7 +373,7 @@ describe(
 
             await waitFor(() => {
                 expect(navigateSpy).toHaveBeenCalledWith(
-                    `/${PATHS.SPACES}/${spaceRoomIdentifier.streamId}/${PATHS.SETTINGS}/${PATHS.ROLES}/${everyoneRole.roleId}/permissions`,
+                    `/${PATHS.SPACES}/${spaceRoomIdentifier}/${PATHS.SETTINGS}/${PATHS.ROLES}/${everyoneRole.roleId}/permissions`,
                 )
             })
             await checkChangesInProgressToastVisible()
@@ -471,7 +465,7 @@ describe(
 
             await waitFor(() => {
                 expect(createRoleTransactionSpy).toHaveBeenCalledWith(
-                    spaceRoomIdentifier.streamId,
+                    spaceRoomIdentifier,
                     'New Role 1',
                     [Lib.Permission.Read],
                     [],
@@ -482,7 +476,7 @@ describe(
 
             await waitFor(() => {
                 expect(updateRoleTransactionSpy).toHaveBeenCalledWith(
-                    spaceRoomIdentifier.streamId,
+                    spaceRoomIdentifier,
                     everyoneRole.roleId.toNumber(),
                     everyoneRole.name,
                     [],
@@ -494,7 +488,7 @@ describe(
 
             await waitFor(() => {
                 expect(updateRoleTransactionSpy).toHaveBeenCalledWith(
-                    spaceRoomIdentifier.streamId,
+                    spaceRoomIdentifier,
                     memberRole.roleId.toNumber(),
                     memberRole.name,
                     [Lib.Permission.Write],
@@ -547,7 +541,7 @@ describe(
 
             await waitFor(() => {
                 expect(deleteRoleTransactionSpy).toHaveBeenCalledWith(
-                    spaceRoomIdentifier.streamId,
+                    spaceRoomIdentifier,
                     memberRole.roleId.toNumber(),
                     {},
                 )

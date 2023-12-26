@@ -1,25 +1,24 @@
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Client as CasablancaClient } from '@river/sdk'
-import { RoomIdentifier, makeRoomIdentifier } from '../../types/room-identifier'
 import { StreamSettings } from '@river/proto'
 
 export async function createCasablancaChannel(
     client: CasablancaClient,
-    spaceId: RoomIdentifier,
+    spaceId: string,
     channelName: string,
     channelTopic: string,
     networkId: string,
     streamSettings?: PlainMessage<StreamSettings>,
-): Promise<RoomIdentifier> {
+): Promise<string> {
     const { streamId } = await client.createChannel(
-        spaceId.streamId,
+        spaceId,
         channelName,
         channelTopic,
         networkId,
         streamSettings,
     )
     await client.waitForStream(streamId)
-    return makeRoomIdentifier(streamId)
+    return streamId
 }
 
 export async function updateCasablancaChannel(

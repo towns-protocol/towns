@@ -21,7 +21,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '@river/web3'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
@@ -51,13 +50,13 @@ describe('sendReactionHooks', () => {
             {
                 name: makeUniqueName('janes space'),
             },
-        )) as RoomIdentifier
+        )) as string
         //
         const janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: janesSpaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
         // create a veiw for bob
         const TestRoomMessages = ({ signer }: { signer: TSigner }) => {
             const { sendReaction } = useZionClient()

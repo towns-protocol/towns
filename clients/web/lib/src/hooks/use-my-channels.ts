@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
 import { Channel, Membership, SpaceData } from '../types/zion-types'
-import { RoomIdentifier } from '../types/room-identifier'
 import isEqual from 'lodash/isEqual'
 
 export function useMyChannels(space?: SpaceData) {
@@ -17,7 +16,7 @@ export function useMyChannels(space?: SpaceData) {
     const filterUnjoinedChannels = useCallback(
         (channels: Channel[]) => {
             return channels.filter((channel) => {
-                return casablancaChannelIds.has(channel.id.streamId)
+                return casablancaChannelIds.has(channel.id)
             })
         },
         [casablancaChannelIds],
@@ -37,7 +36,7 @@ export function useMyChannels(space?: SpaceData) {
     return channelGroups
 }
 
-function useMyMembershipsCasablanca(channelIds: RoomIdentifier[]) {
+function useMyMembershipsCasablanca(channelIds: string[]) {
     const { casablancaClient, client } = useZionContext()
     const [isMemberOf, setIsMemberOf] = useState<Set<string>>(new Set())
 
@@ -49,7 +48,7 @@ function useMyMembershipsCasablanca(channelIds: RoomIdentifier[]) {
         if (!userId) {
             return
         }
-        const inChannelIdSet = new Set(channelIds.map((channelId) => channelId.streamId))
+        const inChannelIdSet = new Set(channelIds.map((channelId) => channelId))
         const updateState = () => {
             const memberships = new Set(
                 channelIds
@@ -61,7 +60,7 @@ function useMyMembershipsCasablanca(channelIds: RoomIdentifier[]) {
                             return false
                         }
                     })
-                    .map((channelId) => channelId.streamId),
+                    .map((channelId) => channelId),
             )
             setIsMemberOf((prev) => {
                 if (isEqual(prev, memberships)) {

@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from 'react'
-import { RoomIdentifier, ZTEvent, useChannelMembers } from 'use-zion-client'
+import { ZTEvent, useChannelMembers } from 'use-zion-client'
 import { Link } from 'react-router-dom'
 import { uniq } from 'lodash'
 import { Box, Paragraph, Stack } from '@ui'
@@ -7,10 +7,7 @@ import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { Avatar } from '@components/Avatar/Avatar'
 
-export const ChannelUsersPill = (props: {
-    spaceId: RoomIdentifier | undefined
-    channelId: RoomIdentifier
-}) => {
+export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId: string }) => {
     const { spaceId } = props
     const { memberIds } = useChannelMembers()
     const timelineContext = useContext(MessageTimelineContext)

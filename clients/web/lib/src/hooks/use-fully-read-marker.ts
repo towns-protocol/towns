@@ -1,12 +1,11 @@
 import { FullyReadMarker } from '@river/proto'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
-import { RoomIdentifier } from '../types/room-identifier'
 
 export function useFullyReadMarker(
-    channelId?: RoomIdentifier,
+    channelId?: string,
     threadParentId?: string,
 ): FullyReadMarker | undefined {
-    const id = threadParentId ?? channelId?.streamId
+    const id = threadParentId ?? channelId
     const fullyReadMarker: FullyReadMarker | undefined = useFullyReadMarkerStore((state) =>
         id ? state.markers[id] : undefined,
     )

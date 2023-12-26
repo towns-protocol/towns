@@ -1,4 +1,3 @@
-import { RoomIdentifier } from '../types/room-identifier'
 import { useTimeline } from './use-timeline'
 import {
     RoomMessageEncryptedEvent,
@@ -36,9 +35,9 @@ type LatestMessageInfo = {
     sender: TimelineEvent['sender']
 }
 
-export function useDMLatestMessage(roomId: RoomIdentifier) {
+export function useDMLatestMessage(roomId: string) {
     const { timeline } = useTimeline(roomId)
-    const unreadMarker = useFullyReadMarkerStore((state) => state.markers[roomId.streamId])
+    const unreadMarker = useFullyReadMarkerStore((state) => state.markers[roomId])
 
     // let's not count unreads if the timeline doesn't yet contain the event marked as unread
     const hasRelevantUnreadMarker =

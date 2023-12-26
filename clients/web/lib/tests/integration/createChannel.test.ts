@@ -3,8 +3,6 @@
  */
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import { createTestSpaceGatedByTownAndZionNfts, registerAndStartClients } from './helpers/TestUtils'
-
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { getFilteredRolesFromSpace, Permission } from '@river/web3'
 
 describe('On-chain channel creation tests', () => {
@@ -18,7 +16,7 @@ describe('On-chain channel creation tests', () => {
             Permission.Read,
             Permission.Write,
         ])
-        let channel: RoomIdentifier | undefined
+        let channel: string | undefined
 
         /* Act */
         if (roomId) {
@@ -46,12 +44,12 @@ describe('On-chain channel creation tests', () => {
         const roomId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
 
         /* Act */
         // create a channel on-chain with roles from the space
         const roleIds: number[] = []
-        const allowedRoles = await getFilteredRolesFromSpace(alice.spaceDapp, roomId.streamId)
+        const allowedRoles = await getFilteredRolesFromSpace(alice.spaceDapp, roomId)
         for (const r of allowedRoles) {
             roleIds.push(r.roleId)
         }
@@ -62,10 +60,10 @@ describe('On-chain channel creation tests', () => {
                 roleIds,
             },
             alice.provider.wallet,
-        )) as RoomIdentifier
+        )) as string
 
         /* Assert */
-        expect(channel?.streamId).toBeTruthy()
+        expect(channel).toBeTruthy()
     })
 
     test('reject create channel with duplicate roles', async () => {
@@ -77,12 +75,12 @@ describe('On-chain channel creation tests', () => {
         const roomId = (await createTestSpaceGatedByTownAndZionNfts(alice, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
 
         /* Act */
         // create a channel on-chain with roles from the space
         const roleIds: number[] = []
-        const allowedRoles = await getFilteredRolesFromSpace(alice.spaceDapp, roomId.streamId)
+        const allowedRoles = await getFilteredRolesFromSpace(alice.spaceDapp, roomId)
         for (const r of allowedRoles) {
             roleIds.push(r.roleId)
             // Duplicate the role

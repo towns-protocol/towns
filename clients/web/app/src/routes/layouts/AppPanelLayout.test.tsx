@@ -9,11 +9,7 @@ import { AppPanelLayout } from './AppPanelLayout'
 const Wrapper = () => {
     return (
         <TestApp>
-            <Lib.SpaceContextProvider
-                spaceId={{
-                    streamId: 'some-stream-id',
-                }}
-            >
+            <Lib.SpaceContextProvider spaceId="some-stream-id">
                 <AppPanelLayout />
             </Lib.SpaceContextProvider>
         </TestApp>
@@ -28,9 +24,7 @@ describe('<AppPanelLayout />', () => {
     test('renders SpaceSideBar when a server space exists', async () => {
         vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => {
             return {
-                id: {
-                    streamId: 'some-stream-id',
-                },
+                id: 'some-stream-id',
                 name: 'test',
                 avatarSrc: 'test',
                 channelGroups: [],
@@ -48,9 +42,7 @@ describe('<AppPanelLayout />', () => {
     test('renders app version and commit hash in SpaceSideBar', async () => {
         vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => {
             return {
-                id: {
-                    streamId: 'some-stream-id',
-                },
+                id: 'some-stream-id',
                 name: 'test',
                 avatarSrc: 'test',
                 channelGroups: [],

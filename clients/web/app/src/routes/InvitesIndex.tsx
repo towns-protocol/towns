@@ -16,9 +16,9 @@ export const InvitesIndex = () => {
         }
         navigate(
             invite.isSpaceRoom
-                ? `/${PATHS.SPACES}/${invite.id.streamId}/`
+                ? `/${PATHS.SPACES}/${invite.id}/`
                 : // TODO: we don't have UI for channel invites so we should either remove this or refactor once channel flow is done
-                  '/' + invite.spaceParentId?.streamId + '/channels/' + invite.id.streamId + '/',
+                  '/' + invite.spaceParentId + '/channels/' + invite.id + '/',
         )
     }, [invite, navigate])
 
@@ -38,7 +38,7 @@ export const InvitesIndex = () => {
                     <SpaceJoin
                         joinData={{
                             name: invite.name,
-                            networkId: invite.id?.streamId,
+                            networkId: invite.id,
                         }}
                         onCancel={onDecline}
                         onSuccessfulJoin={onSuccessfulJoin}

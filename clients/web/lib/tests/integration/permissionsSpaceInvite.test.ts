@@ -15,7 +15,6 @@ import { Permission } from '@river/web3'
 import { Room } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestClient } from './helpers/ZionTestClient'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { sleep } from '../../src/utils/zion-utils'
 
 describe('space invite', () => {
@@ -61,13 +60,13 @@ describe('space invite', () => {
         ])
 
         const isEntitledRead = await alice.isEntitled(
-            roomId?.streamId as string,
+            roomId as string,
             '',
             alice.provider.wallet.address,
             Permission.Read,
         )
         const isEntitledWrite = await alice.isEntitled(
-            roomId?.streamId as string,
+            roomId as string,
             '',
             alice.provider.wallet.address,
             Permission.Write,
@@ -102,18 +101,18 @@ describe('space invite', () => {
         const roomId = (await createTestSpaceGatedByTownAndZionNfts(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
 
         await tokenGrantedUser.mintMembershipTransaction(roomId, tokenGrantedUser.wallet)
 
         const isEntitledRead = await tokenGrantedUser.isEntitled(
-            roomId?.streamId,
+            roomId,
             '',
             tokenGrantedUser.provider.wallet.address,
             Permission.Read,
         )
         const isEntitledWrite = await tokenGrantedUser.isEntitled(
-            roomId?.streamId,
+            roomId,
             '',
             tokenGrantedUser.provider.wallet.address,
             Permission.Write,
@@ -289,7 +288,7 @@ describe('space invite', () => {
         // create a channel with the same roles and permissions as the space
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'alice channel',
-            parentSpaceId: spaceId as RoomIdentifier,
+            parentSpaceId: spaceId as string,
             roleIds: [],
         })
 

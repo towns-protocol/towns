@@ -61,7 +61,7 @@ export function useUpdateChannelTransaction() {
                 status: TransactionStatus.Pending,
             })
             setTransactionContext(transactionResult)
-            removeSyncedEntitledChannelsQueriesForSpace(updateChannelInfo.parentSpaceId.streamId)
+            removeSyncedEntitledChannelsQueriesForSpace(updateChannelInfo.parentSpaceId)
             try {
                 transactionResult = await updateChannelTransaction(updateChannelInfo, signer)
                 setTransactionContext(transactionResult)
@@ -79,8 +79,8 @@ export function useUpdateChannelTransaction() {
                     if (transactionResult?.status === TransactionStatus.Success) {
                         await queryClient.invalidateQueries(
                             blockchainKeys.spaceAndChannel(
-                                updateChannelInfo.parentSpaceId.streamId,
-                                updateChannelInfo.channelId.streamId,
+                                updateChannelInfo.parentSpaceId,
+                                updateChannelInfo.channelId,
                             ),
                         )
                     }

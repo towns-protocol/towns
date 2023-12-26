@@ -11,23 +11,15 @@ export function useChannelData(): ChannelData {
     const room = useRoom(channelId)
 
     const channelGroup = useMemo(
-        () =>
-            space?.channelGroups.find((g) =>
-                g.channels.find((c) => c.id.streamId === channelId.streamId),
-            ),
-        [space?.channelGroups, channelId.streamId],
+        () => space?.channelGroups.find((g) => g.channels.find((c) => c.id === channelId)),
+        [space?.channelGroups, channelId],
     )
 
     const channel = useMemo(() => {
-        const channelChild = channelGroup?.channels.find(
-            (c) => c.id.streamId === channelId.streamId,
-        )
+        const channelChild = channelGroup?.channels.find((c) => c.id === channelId)
         if (!channelChild) {
             // The channel wasn't found in a space, return a DM channel if the prefix matches
-            if (
-                isDMChannelStreamId(channelId.streamId) ||
-                isGDMChannelStreamId(channelId.streamId)
-            ) {
+            if (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)) {
                 return {
                     id: channelId,
                     label: '',

@@ -1,6 +1,6 @@
 import debug from 'debug'
 import { useCallback, useEffect, useRef } from 'react'
-import { RoomIdentifier, sleep, useTimelineStore, useZionClient } from 'use-zion-client'
+import { sleep, useTimelineStore, useZionClient } from 'use-zion-client'
 
 const info = debug('app:usePassiveScrollback')
 const log = debug('app:usePassiveScrollback')
@@ -9,7 +9,7 @@ info.enabled = false
 log.enabled = true
 
 type QueueItem = {
-    id: RoomIdentifier
+    id: string
     firstEventId?: string
     statusName: 'pending' | 'loading' | 'done' | 'error'
 }
@@ -25,25 +25,22 @@ const checkMaxReached = (eventCount: number, eventTimestamp?: number) => {
     return maxEventsReached || maxDateReached
 }
 
-const shortId = (id: RoomIdentifier) => id.streamId.slice(0, 8)
+const shortId = (id: string) => id.slice(0, 8)
 
-export const usePrepopulateChannels = (channelIds: RoomIdentifier[]) => {
+export const usePrepopulateChannels = (channelIds: string[]) => {
     const { scrollback } = useZionClient()
 
     const channelStatusRef = useRef<Record<string, QueueItem>>({})
-    const channelQueueRef = useRef<RoomIdentifier[]>([])
+    const channelQueueRef = useRef<string[]>([])
 
-    const getChannelQueueStatus = useCallback(
-        (id: RoomIdentifier) => channelStatusRef.current[id.streamId],
-        [],
-    )
+    const getChannelQueueStatus = useCallback((id: string) => channelStatusRef.current[id], [])
 
-    const getChannelEvents = useCallback((id: RoomIdentifier) => {
-        return useTimelineStore.getState().timelines?.[id.streamId] ?? []
+    const getChannelEvents = useCallback((id: string) => {
+        return useTimelineStore.getState().timelines?.[id] ?? []
     }, [])
 
     const scrollbackChannel = useCallback(
-        async (id: RoomIdentifier) => {
+        async (id: string) => {
             const status = getChannelQueueStatus(id)
             const events = getChannelEvents(id)
 
@@ -98,7 +95,7 @@ export const usePrepopulateChannels = (channelIds: RoomIdentifier[]) => {
         const running = queue.find((id) => getChannelQueueStatus(id).statusName === 'loading')
 
         if (running) {
-            info(`queue: skipping, task already running (${running.streamId.slice(0, 6)})`)
+            info(`queue: skipping, task already running (${running.slice(0, 6)})`)
             // make sure we only focus on one item at a time
             return
         }
@@ -120,7 +117,7 @@ export const usePrepopulateChannels = (channelIds: RoomIdentifier[]) => {
         log(`prepopulateChannels()  ${channelIds.length} new`, channelIds.map(shortId))
         channelQueueRef.current = channelIds
         channelStatusRef.current = channelQueueRef.current.reduce((acc, id) => {
-            acc[id.streamId] = acc[id.streamId] ?? {
+            acc[id] = acc[id] ?? {
                 id,
                 firstEventId: undefined,
                 statusName: 'pending',

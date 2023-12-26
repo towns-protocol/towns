@@ -1,8 +1,7 @@
 import { ChannelProperties } from '@river/proto'
-import { RoomIdentifier } from './room-identifier'
 
 export type DMChannelIdentifier = {
-    id: RoomIdentifier
+    id: string
     joined: boolean
     left: boolean
     userIds: string[]

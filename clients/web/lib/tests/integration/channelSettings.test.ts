@@ -29,9 +29,7 @@ describe('channel settings', () => {
             throw new Error('spaceId is undefined')
         }
 
-        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
-            spaceId.streamId,
-        )
+        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(spaceId)
         // const testGatingNftAddress = getTestGatingNftAddress(alice.chainId)
         const memberRole: RoleEntitlements = {
             roleId: 3, // dummy
@@ -50,13 +48,13 @@ describe('channel settings', () => {
         if (!spaceId) {
             throw new Error('roomId is undefined')
         }
-        const memberRoleDetails = await findRoleByName(alice, spaceId.streamId, 'Member')
+        const memberRoleDetails = await findRoleByName(alice, spaceId, 'Member')
         if (!memberRoleDetails) {
             throw new Error('memberRoleDetails is null')
         }
         // create a new role
         const moderatorRoleIdentifier: RoleIdentifier | undefined = await alice.createRole(
-            spaceId.streamId,
+            spaceId,
             moderatorRole.name,
             moderatorRole.permissions,
             moderatorRole.tokens,
@@ -82,10 +80,7 @@ describe('channel settings', () => {
 
         /** Act */
         // get the channel settings
-        const channelSettings = await alice.spaceDapp.getChannelDetails(
-            spaceId.streamId,
-            channelId.streamId,
-        )
+        const channelSettings = await alice.spaceDapp.getChannelDetails(spaceId, channelId)
 
         /** Assert */
         expect(channelSettings).not.toBeNull()
@@ -93,8 +88,8 @@ describe('channel settings', () => {
         if (!channelSettings) {
             throw new Error('channelSettings is null')
         }
-        expect(channelSettings.spaceNetworkId).toEqual(spaceId.streamId)
-        expect(channelSettings.channelNetworkId).toEqual(channelId.streamId)
+        expect(channelSettings.spaceNetworkId).toEqual(spaceId)
+        expect(channelSettings.channelNetworkId).toEqual(channelId)
         expect(channelSettings.name).toBe(channelName)
         expect(channelSettings.disabled).toBe(false)
         expect(channelSettings.roles.length).toEqual(2)

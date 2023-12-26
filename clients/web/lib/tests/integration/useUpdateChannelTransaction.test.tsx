@@ -164,7 +164,7 @@ function TestComponent(args: {
     const { updateChannelTransaction, transactionStatus: updateChannelTransactionStatus } =
         updateChannelTransactionInfo
     const spaceId = spaceTxnData?.spaceId
-    const spaceNetworkId = spaceId ? spaceId.streamId : ''
+    const spaceNetworkId = spaceId ? spaceId : ''
     // Use the roles from the parent space to create the channel
     const { spaceRoles } = useRoles(spaceNetworkId)
     // memoize the role ids
@@ -320,12 +320,10 @@ function ChannelComponent(): JSX.Element {
             {channel && (
                 <ChannelContextProvider channelId={channel.id}>
                     <>
-                        <div key={`${channel.id.streamId}_${channel.label}`}>
+                        <div key={`${channel.id}_${channel.label}`}>
                             channelName:{channel.label}
                         </div>{' '}
-                        <div key={`${channel.id.streamId}_${channelTopic}`}>
-                            channelTopic:{channelTopic}
-                        </div>{' '}
+                        <div key={`${channel.id}_${channelTopic}`}>channelTopic:{channelTopic}</div>{' '}
                     </>
                 </ChannelContextProvider>
             )}

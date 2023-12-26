@@ -50,9 +50,9 @@ export const useShowHasUnreadBadgeForOtherSpaces = (ignoredSpaceId?: string) => 
     const { spaces, spaceUnreadChannelIds } = useZionContext()
     return useMemo(() => {
         return spaces
-            .filter((space) => space.id.streamId !== ignoredSpaceId)
+            .filter((space) => space.id !== ignoredSpaceId)
             .some((space) => {
-                return showUnreadBadge(spaceUnreadChannelIds, data, space.id.streamId)
+                return showUnreadBadge(spaceUnreadChannelIds, data, space.id)
             })
     }, [spaceUnreadChannelIds, data, ignoredSpaceId, spaces])
 }
@@ -75,16 +75,15 @@ export const useShowHasUnreadBadgeForCurrentSpace = () => {
         if (
             data?.spaceSettings.some(
                 (spaceSetting) =>
-                    spaceSetting.spaceId === spaceId?.streamId &&
-                    spaceSetting.spaceMute === Mute.Muted,
+                    spaceSetting.spaceId === spaceId && spaceSetting.spaceMute === Mute.Muted,
             )
         ) {
             return false
         }
 
         for (const channel of channels) {
-            if (fullyReadMarkers.markers[channel.id.streamId]?.isUnread) {
-                if (!mutedChannelIds.has(channel.id.streamId)) {
+            if (fullyReadMarkers.markers[channel.id]?.isUnread) {
+                if (!mutedChannelIds.has(channel.id)) {
                     return true
                 }
             }

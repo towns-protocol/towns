@@ -8,13 +8,13 @@ export const RegisterMainShortcuts = () => {
     const { spaces } = useZionContext()
     const { spaceId } = useSpaceContext()
 
-    const currentSpaceIndex = spaces.findIndex((s) => s.id.streamId === spaceId?.streamId)
+    const currentSpaceIndex = spaces.findIndex((s) => s.id === spaceId)
     const numSpaces = spaces.length
     const navigate = useNavigate()
 
     const incrementSpace = (increment: -1 | 1) => {
         const index = (currentSpaceIndex + increment + numSpaces) % numSpaces
-        navigate(`/${PATHS.SPACES}/${spaces[index].id.streamId}/`)
+        navigate(`/${PATHS.SPACES}/${spaces[index].id}/`)
     }
 
     const { createLink } = useCreateLink()
@@ -50,7 +50,7 @@ export const RegisterMainShortcuts = () => {
         if (!spaceId) {
             return
         }
-        const path = createLink({ spaceId: spaceId.streamId, panel: 'townInfo' })
+        const path = createLink({ spaceId: spaceId, panel: 'townInfo' })
         if (path) {
             navigate(path)
         }

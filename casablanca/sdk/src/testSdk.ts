@@ -47,9 +47,9 @@ export class RiverSDK {
         townMetadata: string,
         defaultChannelName: string = 'general',
     ): Promise<{ spaceStreamId: string; defaultChannelStreamId: string }> {
-        const spaceId: RoomIdentifier = makeRoomIdentifier(makeUniqueSpaceStreamId())
-        const channelId: RoomIdentifier = makeRoomIdentifier(makeUniqueChannelStreamId())
-        log('Creating space: ', spaceId.networkId, ' with channel: ', channelId.networkId)
+        const spaceId: string = makeUniqueSpaceStreamId()
+        const channelId: string = makeUniqueChannelStreamId()
+        log('Creating space: ', spaceId, ' with channel: ', channelId)
 
         const membershipInfo: MembershipStruct = {
             settings: {
@@ -79,10 +79,10 @@ export class RiverSDK {
 
         const createSpaceTransaction = await this.spaceDapp.createSpace(
             {
-                spaceId: spaceId.networkId,
+                spaceId: spaceId,
                 spaceName: townName,
                 spaceMetadata: townMetadata,
-                channelId: channelId.networkId,
+                channelId: channelId,
                 channelName: defaultChannelName,
                 membership: membershipInfo,
             },
@@ -90,21 +90,16 @@ export class RiverSDK {
         )
         await createSpaceTransaction.wait()
 
-        const spaceStreamId = await this.client.createSpace(spaceId.networkId)
+        const spaceStreamId = await this.client.createSpace(spaceId)
         log('Created space by client: ', spaceStreamId)
         await this.client.joinStream(spaceStreamId.streamId)
 
-        await this.client.createChannel(
-            spaceId.networkId,
-            defaultChannelName,
-            '',
-            channelId.networkId,
-        )
-        log('Created channel by client: ', channelId.networkId)
+        await this.client.createChannel(spaceId, defaultChannelName, '', channelId)
+        log('Created channel by client: ', channelId)
         // await this.client.joinStream(channelId.networkId)
         return {
-            spaceStreamId: spaceId.networkId,
-            defaultChannelStreamId: channelId.networkId,
+            spaceStreamId: spaceId,
+            defaultChannelStreamId: channelId,
         }
     }
 
@@ -140,17 +135,5 @@ export class RiverSDK {
             result.set(id, channelProperties.name)
         })
         return result
-    }
-}
-
-type RoomIdentifier = {
-    slug: string
-    networkId: string
-}
-
-function makeRoomIdentifier(roomId: string): RoomIdentifier {
-    return {
-        slug: encodeURIComponent(roomId),
-        networkId: roomId,
     }
 }

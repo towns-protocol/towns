@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { ITownArchitectBase, Permission } from '@river/web3'
-import { RoomIdentifier } from '../src/types/room-identifier'
 import ethers from 'ethers'
 import { ZionTestClient } from '../tests/integration/helpers/ZionTestClient'
 import { Wallet } from 'ethers'
@@ -48,7 +47,7 @@ test('create dev town', async () => {
         await harmonyHotWallet.registerWalletAndStartClient()
     }
     // create a space
-    const { streamId } = (await createDevTown(harmonyHotWallet))!
+    const streamId = (await createDevTown(harmonyHotWallet))!
     const inviteLink = `https://app-test-beta.towns.com/t/${streamId}/?invite`
 
     // export the invite link into a json file:
@@ -56,7 +55,7 @@ test('create dev town', async () => {
     fs.writeFileSync('inviteLink.txt', inviteLink)
 }) // end test
 
-export async function createDevTown(client: ZionTestClient): Promise<RoomIdentifier | undefined> {
+export async function createDevTown(client: ZionTestClient): Promise<string | undefined> {
     if (!client.walletAddress) {
         throw new Error('client.walletAddress is undefined')
     }

@@ -3,7 +3,6 @@ import {
     ChannelContextProvider,
     Membership,
     SpaceData,
-    makeRoomIdentifier,
     useSpaceData,
     useZionClient,
 } from 'use-zion-client'
@@ -64,15 +63,12 @@ export const AllChannelsList = ({
                         padding="sm"
                     >
                         {channels?.map((channel) => (
-                            <ChannelContextProvider
-                                key={channel.id.streamId}
-                                channelId={channel.id.streamId}
-                            >
+                            <ChannelContextProvider key={channel.id} channelId={channel.id}>
                                 <Stack>
                                     <ChannelItem
                                         space={space}
                                         name={channel.label}
-                                        channelNetworkId={channel.id.streamId}
+                                        channelNetworkId={channel.id}
                                     />
                                 </Stack>
                             </ChannelContextProvider>
@@ -100,7 +96,7 @@ export const ChannelItem = ({
 }) => {
     const navigate = useNavigate()
     const { client, leaveRoom } = useZionClient()
-    const channelIdentifier = makeRoomIdentifier(channelNetworkId)
+    const channelIdentifier = channelNetworkId
     const currentChannelId = useChannelIdFromPathname()
     const isJoined = useChannelMembership() === Membership.Join
 
@@ -132,38 +128,36 @@ export const ChannelItem = ({
             return roomData ? roomData.membership === Membership.Join : false
         })
 
-        const indexOfThisChannel = flatChannels.findIndex(
-            (c) => c.id.streamId === channelIdentifier.streamId,
-        )
+        const indexOfThisChannel = flatChannels.findIndex((c) => c.id === channelIdentifier)
 
         if (isJoined) {
-            await leaveRoom(channelIdentifier, space.id.streamId)
-            if (currentChannelId === channelIdentifier.streamId) {
+            await leaveRoom(channelIdentifier, space.id)
+            if (currentChannelId === channelIdentifier) {
                 // leaving the last channel
                 if (joinedChannels.length === 1) {
-                    setTownRouteBookmark(space.id.streamId, '')
-                    navigate(`/${PATHS.SPACES}/${space.id.streamId}/`)
+                    setTownRouteBookmark(space.id, '')
+                    navigate(`/${PATHS.SPACES}/${space.id}/`)
                 }
                 // go to the next channel
                 else if (indexOfThisChannel === 0) {
                     navigate(
-                        `/${PATHS.SPACES}/${space.id.streamId}/${PATHS.CHANNELS}/${
-                            joinedChannels[indexOfThisChannel + 1].id.streamId
+                        `/${PATHS.SPACES}/${space.id}/${PATHS.CHANNELS}/${
+                            joinedChannels[indexOfThisChannel + 1].id
                         }/`,
                     )
                 }
                 // go to the previous channel
                 else {
                     navigate(
-                        `/${PATHS.SPACES}/${space.id.streamId}/${PATHS.CHANNELS}/${
-                            flatChannels[indexOfThisChannel - 1].id.streamId
+                        `/${PATHS.SPACES}/${space.id}/${PATHS.CHANNELS}/${
+                            flatChannels[indexOfThisChannel - 1].id
                         }/`,
                     )
                 }
             }
         } else {
             try {
-                const room = await client?.joinRoom(channelIdentifier, space.id.streamId)
+                const room = await client?.joinRoom(channelIdentifier, space.id)
                 if (!room) {
                     console.error('[AllChannelsList]', 'cannot join channel', room)
                     throw new Error('cannot join channel')

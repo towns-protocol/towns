@@ -62,7 +62,7 @@ const useTouchRedirect = ({ isTouch }: { isTouch: boolean }) => {
     const isDesktopRoute = !spaceId
     const hasRedirectedRef = useRef(false)
     const { spaces } = useZionContext()
-    const firstSpaceStreamId = spaces[0]?.id.streamId
+    const firstSpaceStreamId = spaces[0]?.id
 
     const needsRedirect = isTouch && isDesktopRoute
     const canRedirect = !hasRedirectedRef.current && !!firstSpaceStreamId

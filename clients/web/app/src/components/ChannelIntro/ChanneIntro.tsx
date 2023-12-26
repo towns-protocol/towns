@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { RoomIdentifier, useDMData } from 'use-zion-client'
+import { useDMData } from 'use-zion-client'
 import { GroupDMIcon } from '@components/DirectMessages/GroupDMIcon'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { UserList } from '@components/UserList/UserList'
@@ -9,7 +9,7 @@ import { useChannelType } from 'hooks/useChannelType'
 import { notUndefined } from 'ui/utils/utils'
 
 type Props = {
-    roomIdentifier: RoomIdentifier
+    roomIdentifier: string
     name?: string
     description?: string
 }
@@ -48,7 +48,7 @@ const RegularChannelIntro = (props: Props) => {
     )
 }
 
-export const ChannelDMIntro = (props: { roomIdentifier: RoomIdentifier }) => {
+export const ChannelDMIntro = (props: { roomIdentifier: string }) => {
     const { counterParty } = useDMData(props.roomIdentifier)
 
     const userIds = useMemo(() => [counterParty].filter(notUndefined), [counterParty])
@@ -78,7 +78,7 @@ export const ChannelDMIntro = (props: { roomIdentifier: RoomIdentifier }) => {
     )
 }
 
-export const ChannelGDMIntro = (props: { roomIdentifier: RoomIdentifier }) => {
+export const ChannelGDMIntro = (props: { roomIdentifier: string }) => {
     const { data } = useDMData(props.roomIdentifier)
 
     const userList = data?.userIds ? (

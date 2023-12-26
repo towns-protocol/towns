@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
 import {
-    RoomIdentifier,
     SpaceContextProvider,
     useMyProfile,
     useSpaceData,
@@ -14,7 +13,7 @@ export function ServiceWorkerSpacesSyncer() {
     return (
         <>
             {Object.values(spaceHierarchies).map(({ root }) => (
-                <SpaceContextProvider key={root.id.streamId} spaceId={root.id}>
+                <SpaceContextProvider key={root.id} spaceId={root.id}>
                     <MessageSender spaceId={root.id} />
                 </SpaceContextProvider>
             ))}
@@ -22,7 +21,7 @@ export function ServiceWorkerSpacesSyncer() {
     )
 }
 
-function MessageSender({ spaceId }: { spaceId: RoomIdentifier }) {
+function MessageSender({ spaceId }: { spaceId: string }) {
     const space = useSpaceData(spaceId)
     const members = useUserLookupContext()
     const myProfile = useMyProfile()

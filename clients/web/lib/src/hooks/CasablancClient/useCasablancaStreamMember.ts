@@ -1,11 +1,10 @@
-import { RoomIdentifier } from '../../types/room-identifier'
 import { Membership } from '../../types/zion-types'
 import { Stream } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { useCasablancaStream } from './useCasablancaStream'
 
 export function useCasablancaStreamMembership(
-    roomId?: RoomIdentifier,
+    roomId?: string,
     userId?: string,
 ): Membership | undefined {
     const channelStream = useCasablancaStream(roomId)

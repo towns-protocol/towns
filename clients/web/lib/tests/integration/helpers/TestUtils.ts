@@ -3,7 +3,6 @@ import { BigNumber, Wallet, ethers } from 'ethers'
 import { ZionTestClient, ZionTestClientProps } from './ZionTestClient'
 
 import { EventTimeline } from 'matrix-js-sdk'
-import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
 import { TransactionStatus } from '../../../src/client/ZionClientTypes'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ZionClient } from '../../../src/client/ZionClient'
@@ -134,7 +133,7 @@ export async function createTestSpaceGatedByTownAndZionNfts(
     client: ZionTestClient,
     rolePermissions: Permission[],
     createSpaceInfo?: CreateSpaceInfo,
-): Promise<RoomIdentifier | undefined> {
+): Promise<string | undefined> {
     if (!createSpaceInfo) {
         createSpaceInfo = {
             name: client.makeUniqueName(),
@@ -183,7 +182,7 @@ export async function createTestSpaceGatedByTownNft(
     client: ZionTestClient,
     rolePermissions: Permission[],
     createSpaceInfo?: CreateSpaceInfo,
-): Promise<RoomIdentifier | undefined> {
+): Promise<string | undefined> {
     if (!createSpaceInfo) {
         createSpaceInfo = {
             name: client.makeUniqueName(),
@@ -224,14 +223,14 @@ export async function createTestSpaceGatedByTownNft(
 export async function createTestChannelWithSpaceRoles(
     client: ZionTestClient,
     createChannelInfo: CreateChannelInfo,
-): Promise<RoomIdentifier | undefined> {
+): Promise<string | undefined> {
     if (createChannelInfo.roleIds.length === 0) {
         // In the app, the user is shown roles from the space and chooses
         // at least one role from the UI.
         // For testing, get the roles from the space and select all of them.
         const filteredRoles = await getFilteredRolesFromSpace(
             client.spaceDapp,
-            createChannelInfo.parentSpaceId.streamId,
+            createChannelInfo.parentSpaceId,
         )
         for (const r of filteredRoles) {
             createChannelInfo.roleIds.push(BigNumber.from(r.roleId).toNumber())
@@ -255,7 +254,7 @@ export async function createTestChannelWithSpaceRoles(
             hash: txContext.transaction?.hash as `0x${string}`,
             type: BlockchainTransactionType.CreateChannel,
             data: {
-                parentSpaceId: createChannelInfo.parentSpaceId.streamId,
+                parentSpaceId: createChannelInfo.parentSpaceId,
                 spaceId: txContext.data,
             },
         })

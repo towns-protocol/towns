@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import {
     MessageType,
-    RoomIdentifier,
     SendChunkedMediaMessageOptions,
     encryptAESGCM,
     useZionClient,
@@ -30,7 +29,7 @@ export const useSendFileMessage = () => {
             width: number,
             height: number,
             mimetype: string,
-            channelId: RoomIdentifier,
+            channelId: string,
             threadId?: string,
         ) => {
             await sendMessage(channelId, '', {
@@ -54,7 +53,7 @@ export const useSendFileMessage = () => {
             width: number,
             height: number,
             mimetype: string,
-            channelId: RoomIdentifier,
+            channelId: string,
             setProgress: (progress: number) => void,
             file: File,
             threadId?: string,
@@ -63,7 +62,7 @@ export const useSendFileMessage = () => {
             const encryptionResult = await encryptAESGCM(data)
             const chunkCount = Math.ceil(encryptionResult.ciphertext.length / CHUNK_SIZE)
 
-            const streamId = await createMediaStream(channelId.streamId, chunkCount)
+            const streamId = await createMediaStream(channelId, chunkCount)
             if (!streamId) {
                 throw new Error('Failed to create media stream')
             }
@@ -145,7 +144,7 @@ export const useSendFileMessage = () => {
 
     const uploadImageFile = useCallback(
         async (
-            channelId: RoomIdentifier,
+            channelId: string,
             file: File,
             setProgress: (progress: number) => void,
             threadId?: string,
@@ -183,7 +182,7 @@ export const useSendFileMessage = () => {
 
     const uploadFile = useCallback(
         async (
-            channelId: RoomIdentifier,
+            channelId: string,
             file: File,
             setProgress: (progress: number) => void,
             threadId?: string,
@@ -198,7 +197,7 @@ export const useSendFileMessage = () => {
 
     const sendImageMessage = useCallback(
         async (
-            channelId: RoomIdentifier,
+            channelId: string,
             file: File,
             setProgress: (progress: number) => void,
             threadId?: string,

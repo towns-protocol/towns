@@ -34,17 +34,15 @@ export const ChannelList = (props: {
                         // only unread mentions at the channel root
                         const mentionCount = mentions.reduce(
                             (count, m) =>
-                                m.unread &&
-                                !m.thread &&
-                                m.channel.id.streamId === channel.id.streamId
+                                m.unread && !m.thread && m.channel.id === channel.id
                                     ? count + 1
                                     : count,
                             0,
                         )
                         return (
                             <ChannelNavItem
-                                key={channel.id.streamId}
-                                id={channel.id.streamId}
+                                key={channel.id}
+                                id={channel.id}
                                 space={space}
                                 channel={channel}
                                 mentionCount={mentionCount}

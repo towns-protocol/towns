@@ -1,4 +1,4 @@
-import { RoomIdentifier, useHasPermission, useZionClient } from 'use-zion-client'
+import { useHasPermission, useZionClient } from 'use-zion-client'
 import { Permission } from '@river/web3'
 import React from 'react'
 import { useEvent } from 'react-use-event-hook'
@@ -11,8 +11,8 @@ import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { MenuItem } from '../Cards/MenuItem'
 
 type Props = {
-    spaceId: RoomIdentifier
-    channelId: RoomIdentifier
+    spaceId: string
+    channelId: string
     channelName: string
     onShowChannelSettingsPopup: () => void
 }
@@ -21,8 +21,8 @@ export const ChannelSettingsCard = (props: Props) => {
     const { channelId, spaceId, channelName } = props
     const { loggedInWalletAddress } = useAuth()
     const { hasPermission: canEditChannel } = useHasPermission({
-        spaceId: spaceId.streamId,
-        channelId: channelId.streamId,
+        spaceId: spaceId,
+        channelId: channelId,
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.ModifySpaceSettings,
     })
@@ -33,13 +33,13 @@ export const ChannelSettingsCard = (props: Props) => {
     const { leaveRoom } = useZionClient()
 
     const onLeaveClick = useEvent(async () => {
-        setTownRouteBookmark(spaceId.streamId, '')
-        await leaveRoom(channelId, spaceId.streamId)
-        navigate(`/${PATHS.SPACES}/${spaceId.streamId}/`)
+        setTownRouteBookmark(spaceId, '')
+        await leaveRoom(channelId, spaceId)
+        navigate(`/${PATHS.SPACES}/${spaceId}/`)
     })
 
     const onInfoClick = useEvent(() => {
-        navigate(`/${PATHS.SPACES}/${spaceId.streamId}/channels/${channelId.streamId}/info?channel`)
+        navigate(`/${PATHS.SPACES}/${spaceId}/channels/${channelId}/info?channel`)
     })
 
     const onEditClick = useEvent(() => {

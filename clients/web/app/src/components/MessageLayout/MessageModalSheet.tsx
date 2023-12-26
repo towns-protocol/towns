@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
 import Sheet from 'react-modal-sheet'
-import { RoomIdentifier, useZionClient } from 'use-zion-client'
+import { useZionClient } from 'use-zion-client'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { Button, Divider, Icon, IconName, Stack, Text, useZLayerContext } from '@ui'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
@@ -11,8 +11,8 @@ import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 type Props = {
     onClose: () => void
     eventId: string
-    channelId?: RoomIdentifier
-    spaceId?: RoomIdentifier
+    channelId?: string
+    spaceId?: string
     canEdit?: boolean
     canReply?: boolean
     canReact?: boolean

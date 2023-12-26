@@ -28,7 +28,7 @@ export const TouchHomeOverlay = (props: Props) => {
     const hideErrorReportModal = useEvent(() => setErrorReportModalVisible(false))
 
     const profileClicked = useCallback(() => {
-        const path = `/${PATHS.SPACES}/${spaceId?.streamId}/${PATHS.PROFILE}/me`
+        const path = `/${PATHS.SPACES}/${spaceId}/${PATHS.PROFILE}/me`
         navigate(path)
     }, [navigate, spaceId])
 
@@ -80,9 +80,9 @@ export const TouchHomeOverlay = (props: Props) => {
                     <Box minHeight="forceScroll">
                         {spaces.map((s) => (
                             <SpaceNavItem
-                                key={s.id.streamId}
+                                key={s.id}
                                 exact={false}
-                                forceMatch={s.id.streamId === spaceId?.streamId}
+                                forceMatch={s.id === spaceId}
                                 id={s.id}
                                 name={s.name}
                                 avatar={s.avatarSrc}

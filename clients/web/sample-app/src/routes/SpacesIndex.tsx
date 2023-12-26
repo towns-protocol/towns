@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import {
     Membership,
-    RoomIdentifier,
     useMyMembership,
     useSpaceData,
     useSpaceTimeline,
@@ -22,24 +21,24 @@ export const SpacesIndex = () => {
     const [clipboarded, setClipboarded] = useState(false)
 
     const onClickSettings = useCallback(() => {
-        if (space?.id.streamId) {
-            navigate('/spaces/' + space.id.streamId + '/settings')
+        if (space?.id) {
+            navigate('/spaces/' + space.id + '/settings')
         }
-    }, [space?.id.streamId, navigate])
+    }, [space?.id, navigate])
 
     const onCreateChannelClick = useCallback(() => {
-        navigate('/spaces/' + space?.id.streamId + '/channels/new')
-    }, [navigate, space?.id.streamId])
+        navigate('/spaces/' + space?.id + '/channels/new')
+    }, [navigate, space?.id])
 
     const onClickCopy = useCallback(() => {
-        const text = `${window.location.protocol}//${window.location.host}/spaces/${space?.id.streamId}/`
+        const text = `${window.location.protocol}//${window.location.host}/spaces/${space?.id}/`
         navigator.clipboard.writeText(text).then(() => {
             setClipboarded(true)
             setTimeout(() => {
                 setClipboarded(false)
             }, 1000)
         })
-    }, [space?.id.streamId])
+    }, [space?.id])
 
     const onClickLeaveSpace = useCallback(async () => {
         if (space?.id) {
@@ -53,7 +52,7 @@ export const SpacesIndex = () => {
     }, [resetFullyReadMarkers])
 
     const onClickJoinRoom = useCallback(
-        async (roomId: RoomIdentifier) => {
+        async (roomId: string) => {
             const room = await joinRoom(roomId)
             if (!room) {
                 setJoinFailed(true)

@@ -2,13 +2,7 @@ import { Button, Divider, Theme, Typography } from '@mui/material'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import React, { useCallback } from 'react'
 import { Outlet, useParams } from 'react-router-dom'
-import {
-    RoomIdentifier,
-    useSpaceContext,
-    useSpaceData,
-    useSpaceFromContract,
-    useZionClient,
-} from 'use-zion-client'
+import { useSpaceContext, useSpaceData, useSpaceFromContract, useZionClient } from 'use-zion-client'
 
 export const Spaces = () => {
     const { channelSlug } = useParams()
@@ -38,7 +32,7 @@ export const Spaces = () => {
         return (
             <>
                 <h1>{space.name}</h1>
-                <h3>id: {space.id.streamId}</h3>
+                <h3>id: {space.id}</h3>
                 <Divider />
                 <Outlet />
             </>
@@ -47,7 +41,7 @@ export const Spaces = () => {
         return (
             <>
                 <h1>Unknown space Id</h1>
-                <h3>id: {spaceId.streamId}</h3>
+                <h3>id: {spaceId}</h3>
                 <Divider />
                 <MissingSpaceInfo spaceId={spaceId} onJoinRoom={onClickJoinSpace} />
             </>
@@ -57,7 +51,7 @@ export const Spaces = () => {
     }
 }
 
-const MissingSpaceInfo = (props: { spaceId: RoomIdentifier; onJoinRoom: () => void }) => {
+const MissingSpaceInfo = (props: { spaceId: string; onJoinRoom: () => void }) => {
     const { space: spaceOnChainInfo } = useSpaceFromContract(props.spaceId)
     return spaceOnChainInfo ? (
         <>

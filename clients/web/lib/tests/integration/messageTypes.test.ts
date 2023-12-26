@@ -7,7 +7,6 @@ import {
     MessageType,
     SendImageMessageOptions,
 } from '../../src/types/zion-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     createTestSpaceGatedByTownAndZionNfts,
     makeUniqueName,
@@ -39,7 +38,7 @@ describe('messageTypes', () => {
             {
                 name: makeUniqueName('bobs room'),
             },
-        )) as RoomIdentifier
+        )) as string
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
@@ -100,7 +99,7 @@ describe('messageTypes', () => {
             {
                 name: makeUniqueName('bobs room'),
             },
-        )) as RoomIdentifier
+        )) as string
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',

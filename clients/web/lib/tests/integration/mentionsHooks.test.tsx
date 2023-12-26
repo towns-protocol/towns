@@ -4,7 +4,6 @@
 /**
  * @group casablanca
  */
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
@@ -42,13 +41,13 @@ describe('mentionsHooks', () => {
         const spaceId = (await createTestSpaceGatedByTownNft(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])) as string
         // create a channel
         const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
             roleIds: [],
-        })) as RoomIdentifier
+        })) as string
         expect(spaceId).toBeDefined()
         expect(channelId).toBeDefined()
         // alice join space and channel

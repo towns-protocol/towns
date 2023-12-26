@@ -36,7 +36,7 @@ describe('get role details', () => {
         const users: string[] = []
         const roleName = 'newRole1'
         const roleId: RoleIdentifier | undefined = await alice.createRole(
-            roomId.streamId,
+            roomId,
             roleName,
             permissions,
             tokens,
@@ -47,7 +47,7 @@ describe('get role details', () => {
         }
 
         /** Act */
-        const roleDetails = await alice.spaceDapp.getRole(roomId.streamId, roleId.roleId)
+        const roleDetails = await alice.spaceDapp.getRole(roomId, roleId.roleId)
 
         /** Assert */
         expect(roleDetails).toBeDefined()
@@ -76,7 +76,7 @@ describe('get role details', () => {
         const users: string[] = []
         const roleName = 'newRole1'
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
-            roomId.streamId,
+            roomId,
             roleName,
             permissions,
             tokens,
@@ -100,7 +100,7 @@ describe('get role details', () => {
         }
 
         /** Act */
-        const roleDetails = await alice.spaceDapp.getRole(roomId.streamId, roleIdentifier.roleId)
+        const roleDetails = await alice.spaceDapp.getRole(roomId, roleIdentifier.roleId)
 
         /** Assert */
         expect(roleDetails).toBeDefined()
@@ -112,7 +112,7 @@ describe('get role details', () => {
             expect(roleDetails.tokens.length).toEqual(0)
             expect(roleDetails.users.length).toEqual(0)
             expect(roleDetails.channels.length).toEqual(1)
-            expect(roleDetails.channels[0].channelNetworkId).toEqual(channel.streamId)
+            expect(roleDetails.channels[0].channelNetworkId).toEqual(channel)
             expect(roleDetails.channels[0].name).toEqual(channelName)
             expect(roleDetails.channels[0].disabled).toEqual(false)
         }
@@ -130,14 +130,12 @@ describe('get role details', () => {
 
         /** Act */
         // minter role is created with a JoinTown permission, and is gated by any tokens passed in the createTestSpaceGatedByTownAndZionNfts requirements config
-        const minterRole = await findRoleByName(alice, spaceId.streamId, 'Minter')
+        const minterRole = await findRoleByName(alice, spaceId, 'Minter')
         // member role is created with the permissions passed in to createTestSpaceGatedByTownAndZionNfts, and is gated by the membership token
-        const memberRole = await findRoleByName(alice, spaceId.streamId, 'Member')
+        const memberRole = await findRoleByName(alice, spaceId, 'Member')
 
         /** Assert */
-        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
-            spaceId.streamId,
-        )
+        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(spaceId)
         const councilNftAddress = await getTestGatingNftAddress(alice.chainId)
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
@@ -182,9 +180,9 @@ describe('get role details', () => {
 
         /** Act */
         // minter role is created with a JoinTown permission, and is not gated by any tokens see createTestSpaceGatedByTownNft
-        const minterRole = await findRoleByName(alice, spaceId.streamId, 'Minter')
+        const minterRole = await findRoleByName(alice, spaceId, 'Minter')
         // everyone is just another member role. member role is created with the permissions passed in to createTestSpaceGatedByTownNft, and is gated by the membership token
-        const everyoneRole = await findRoleByName(alice, spaceId.streamId, 'Everyone')
+        const everyoneRole = await findRoleByName(alice, spaceId, 'Everyone')
 
         /** Assert */
         if (!minterRole) {
@@ -193,9 +191,7 @@ describe('get role details', () => {
         if (!everyoneRole) {
             throw new Error('everyoneRole is undefined')
         }
-        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(
-            spaceId.streamId,
-        )
+        const membershipTokenAddress = await alice.spaceDapp.getTownMembershipTokenAddress(spaceId)
         const expectedMemberToken = createExternalTokenStruct([membershipTokenAddress])[0]
 
         const expectedMinterRole: RoleDetails = {
@@ -239,7 +235,7 @@ describe('get role details', () => {
         const users: string[] = []
         const roleName = 'newRole1'
         const roleId: RoleIdentifier | undefined = await alice.createRole(
-            roomId.streamId,
+            roomId,
             roleName,
             permissions,
             tokens,
@@ -250,7 +246,7 @@ describe('get role details', () => {
         }
 
         /** Act */
-        const roleDetails = await alice.spaceDapp.getRole(roomId.streamId, roleId.roleId)
+        const roleDetails = await alice.spaceDapp.getRole(roomId, roleId.roleId)
 
         /** Assert */
         expect(roleDetails).toBeDefined()
@@ -291,7 +287,7 @@ describe('get role details', () => {
         const users: string[] = [mod1.address, mod2.address]
         const roleName = 'newRole1'
         const roleId: RoleIdentifier | undefined = await alice.createRole(
-            roomId.streamId,
+            roomId,
             roleName,
             permissions,
             tokens,
@@ -302,7 +298,7 @@ describe('get role details', () => {
         }
 
         /** Act */
-        const roleDetails = await alice.spaceDapp.getRole(roomId.streamId, roleId.roleId)
+        const roleDetails = await alice.spaceDapp.getRole(roomId, roleId.roleId)
 
         /** Assert */
         expect(roleDetails).toBeDefined()

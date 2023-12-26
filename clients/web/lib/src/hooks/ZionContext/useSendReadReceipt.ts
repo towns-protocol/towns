@@ -2,7 +2,6 @@ import { useCallback } from 'react'
 import { FullyReadMarker } from '@river/proto'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { ZionClient } from '../../client/ZionClient'
-import { makeRoomIdentifier } from '../../types/room-identifier'
 
 export function useSendReadReceipt(client: ZionClient | undefined) {
     return useCallback(
@@ -42,10 +41,7 @@ export function useSendReadReceipt(client: ZionClient | undefined) {
             }, {} as Record<string, FullyReadMarker>)
 
             try {
-                await client?.setRoomFullyReadData(
-                    makeRoomIdentifier(marker.channelId),
-                    channelMarkers,
-                )
+                await client?.setRoomFullyReadData(marker.channelId, channelMarkers)
             } catch (e) {
                 console.error('Failed to set room account data', e)
             }

@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Membership, RoomIdentifier, useSpaceId } from 'use-zion-client'
+import { Membership, useSpaceId } from 'use-zion-client'
 import { CreateChannelForm } from '../components/CreateChannelForm'
 
 export const SpacesNewChannel = () => {
@@ -8,8 +8,8 @@ export const SpacesNewChannel = () => {
     const spaceId = useSpaceId()
     const navigate = useNavigate()
     const onSpaceCreated = useCallback(
-        (roomId: RoomIdentifier, membership: Membership) => {
-            navigate('/spaces/' + spaceId?.streamId + '/channels/' + roomId.streamId + '/')
+        (roomId: string, membership: Membership) => {
+            navigate('/spaces/' + spaceId + '/channels/' + roomId + '/')
         },
         [navigate, spaceId],
     )

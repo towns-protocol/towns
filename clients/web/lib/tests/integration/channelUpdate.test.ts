@@ -30,7 +30,7 @@ describe.skip('channel update', () => {
             throw new Error('spaceId is undefined')
         }
         // get current role details
-        const roleDetails = await findRoleByName(alice, spaceId.streamId, 'Member')
+        const roleDetails = await findRoleByName(alice, spaceId, 'Member')
         if (!roleDetails) {
             throw new Error('roleDetails is undefined')
         }
@@ -50,14 +50,14 @@ describe.skip('channel update', () => {
         /** Act */
         // bob tries to join the space and fails because he doesn't have the token
         const bobJoinError = await getError<MatrixError>(async function () {
-            await bob.joinRoom(channelId, spaceId.streamId)
+            await bob.joinRoom(channelId, spaceId)
         })
         // alice creates a new role with bob as a member
         if (!bob.walletAddress) {
             throw new Error('bob.walletAddress is undefined')
         }
         const newRoleId = await alice.createRole(
-            spaceId.streamId,
+            spaceId,
             roleName,
             permissions,
             roleDetails.tokens,
@@ -71,8 +71,8 @@ describe.skip('channel update', () => {
         try {
             const transaction = await alice.spaceDapp.updateChannel(
                 {
-                    spaceId: spaceId.streamId,
-                    channelId: channelId.streamId,
+                    spaceId: spaceId,
+                    channelId: channelId,
                     channelName,
                     roleIds: [newRoleId.roleId],
                 },
@@ -80,15 +80,13 @@ describe.skip('channel update', () => {
             )
             receipt = await transaction.wait()
         } catch (e) {
-            const error = await alice.spaceDapp.parseSpaceError(spaceId.streamId, e)
+            const error = await alice.spaceDapp.parseSpaceError(spaceId, e)
             console.error(error)
             // fail the test.
             throw e
         }
         // bob tries to join the space and succeeds because he is a member of the new role
-        const bobJoinedRoom = await waitForWithRetries<Room>(() =>
-            bob.joinRoom(channelId, spaceId.streamId),
-        )
+        const bobJoinedRoom = await waitForWithRetries<Room>(() => bob.joinRoom(channelId, spaceId))
 
         /** Assert */
         // verify the transaction succeeded
@@ -97,7 +95,7 @@ describe.skip('channel update', () => {
         expect(bobJoinError).not.toBeInstanceOf(NoThrownError)
         expect(bobJoinError.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
         // bob was able to join the space after the channel was updated
-        expect(bobJoinedRoom?.id.streamId).toBeTruthy()
+        expect(bobJoinedRoom?.id).toBeTruthy()
 
         try {
             await alice.logout()
@@ -119,7 +117,7 @@ describe.skip('channel update', () => {
             throw new Error('spaceId is undefined')
         }
         // get the member role
-        const memberRole = await findRoleByName(alice, spaceId.streamId, 'Member')
+        const memberRole = await findRoleByName(alice, spaceId, 'Member')
         if (!memberRole) {
             throw new Error('roleDetails is undefined')
         }
@@ -143,7 +141,7 @@ describe.skip('channel update', () => {
         const newTokens = createExternalTokenStruct([mockNFTAddress])
         const users: string[] = []
         const newRoleId: RoleIdentifier | undefined = await alice.createRole(
-            spaceId.streamId,
+            spaceId,
             newRoleName,
             newPermissions,
             newTokens,
@@ -158,14 +156,14 @@ describe.skip('channel update', () => {
         let receipt: ContractReceipt | undefined
         try {
             const transaction = await alice.spaceDapp.addRoleToChannel(
-                spaceId.streamId,
-                channelId.streamId,
+                spaceId,
+                channelId,
                 newRoleId?.roleId,
                 alice.provider.wallet,
             )
             receipt = await transaction.wait()
         } catch (e) {
-            const error = await alice.spaceDapp.parseSpaceError(spaceId.streamId, e)
+            const error = await alice.spaceDapp.parseSpaceError(spaceId, e)
             console.error(error)
             // fail the test.
             throw e
@@ -175,10 +173,7 @@ describe.skip('channel update', () => {
         // verify the transaction succeeded
         expect(receipt?.status).toEqual(1)
         // verify the channel has the new role
-        const channelDetails = await alice.spaceDapp.getChannelDetails(
-            spaceId.streamId,
-            channelId.streamId,
-        )
+        const channelDetails = await alice.spaceDapp.getChannelDetails(spaceId, channelId)
         const roleIds = channelDetails?.roles.map((role) => role.roleId)
         const roleNames = channelDetails?.roles.map((role) => role.name)
         expect(roleIds).toContain(newRoleId?.roleId)

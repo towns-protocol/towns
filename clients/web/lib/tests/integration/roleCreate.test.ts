@@ -30,7 +30,7 @@ describe('create role', () => {
         const users: string[] = []
 
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
-            roomId.streamId,
+            roomId,
             'newRole1',
             permissions,
             tokens,
@@ -61,13 +61,7 @@ describe('create role', () => {
         const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const error = await getError<Error>(async function () {
-            await tokenGrantedUser.createRole(
-                roomId.streamId,
-                'newRole1',
-                permissions,
-                tokens,
-                users,
-            )
+            await tokenGrantedUser.createRole(roomId, 'newRole1', permissions, tokens, users)
         })
 
         /* Assert */
@@ -104,7 +98,7 @@ describe('create role', () => {
         const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const roleIdentifier: RoleIdentifier | undefined = await tokenGrantedUser.createRole(
-            roomId.streamId,
+            roomId,
             'newRole1',
             permissions,
             tokens,
@@ -128,14 +122,14 @@ describe('create role', () => {
         const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
-            roomId?.streamId as string,
+            roomId as string,
             'newRole1',
             permissions,
             tokens,
             users,
         )
         const roleIdentifier2: RoleIdentifier | undefined = await alice.createRole(
-            roomId?.streamId as string,
+            roomId as string,
             'newRole2',
             permissions,
             tokens,

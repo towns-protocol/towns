@@ -8,7 +8,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
@@ -77,7 +76,7 @@ describe('useCreateChannelTransactionHook', () => {
                 transactionStatus: createSpaceTxStatus,
             } = spaceTransaction
             const spaceId = txData?.spaceId
-            const spaceNetworkId = spaceId?.streamId ? spaceId.streamId : ''
+            const spaceNetworkId = spaceId ? spaceId : ''
             const channelTransaction = useCreateChannelTransaction()
             const {
                 createChannelTransaction,
@@ -139,7 +138,7 @@ describe('useCreateChannelTransactionHook', () => {
 
             // callback to create a channel with zion token entitlement
             const onClickCreateChannel = useCallback(() => {
-                const handleClick = async (parentSpaceId: RoomIdentifier) => {
+                const handleClick = async (parentSpaceId: string) => {
                     const createRoomInfo: CreateChannelInfo = {
                         name: channelName,
                         parentSpaceId,

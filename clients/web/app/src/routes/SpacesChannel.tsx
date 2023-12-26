@@ -115,8 +115,7 @@ const SpacesChannelComponent = (props: Props) => {
 
     const channels = useSpaceChannels()
 
-    const isDmOrGDM =
-        isDMChannelStreamId(channelId.streamId) || isGDMChannelStreamId(channelId.streamId)
+    const isDmOrGDM = isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)
 
     const { isChannelWritable } = useIsChannelWritable(
         isDmOrGDM ? undefined : spaceId,
@@ -183,19 +182,19 @@ const SpacesChannelComponent = (props: Props) => {
                 </>
             ) : showJoinChannel ? (
                 <Box absoluteFill centerContent padding="lg">
-                    <Button key={channelId.streamId} size="button_lg" onClick={onJoinChannel}>
+                    <Button key={channelId} size="button_lg" onClick={onJoinChannel}>
                         <Text truncate>Join #{channel.label}</Text>
                     </Button>
                 </Box>
             ) : (
                 <MediaDropContextProvider
-                    key={channelId.streamId}
+                    key={channelId}
                     title={imageUploadTitle}
                     id="channel"
                     disableDrop={!isChannelWritable}
                 >
                     <MessageTimelineWrapper
-                        key={channelId.streamId}
+                        key={channelId}
                         spaceId={spaceId}
                         channelId={channelId}
                         events={channelMessages}
@@ -237,8 +236,8 @@ const SpacesChannelComponent = (props: Props) => {
                                 editable={!!isChannelWritable}
                                 background={isChannelWritable ? 'level2' : 'level1'}
                                 displayButtons={isTouch ? 'on-focus' : 'always'}
-                                key={channelId.streamId}
-                                storageId={channel.id.streamId}
+                                key={channelId}
+                                storageId={channel.id}
                                 autoFocus={!hasThreadOpen && !isTouch}
                                 initialValue=""
                                 placeholder={placeholder}

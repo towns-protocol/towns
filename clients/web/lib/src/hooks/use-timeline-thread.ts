@@ -1,12 +1,11 @@
 import { useCallback, useRef } from 'react'
-import { RoomIdentifier } from '../types/room-identifier'
 import { ThreadStats, TimelineEvent, ZTEvent } from '../types/timeline-types'
 import { TimelineStoreStates, useTimelineStore } from '../store/use-timeline-store'
 
 const EMPTY_TIMELINE: TimelineEvent[] = []
 
 export function useTimelineThread(
-    roomId: RoomIdentifier,
+    roomId: string,
     eventId?: string,
 ): {
     messages: TimelineEvent[]
@@ -18,15 +17,15 @@ export function useTimelineThread(
             eventId
                 ? {
                       parent:
-                          state.threadsStats[roomId.streamId]?.[eventId] ??
+                          state.threadsStats[roomId]?.[eventId] ??
                           toDummyThreadStats(
                               dummyThreadStatCache,
-                              state.timelines[roomId.streamId]?.find((e) => e.eventId === eventId),
+                              state.timelines[roomId]?.find((e) => e.eventId === eventId),
                           ),
-                      messages: state.threads[roomId.streamId]?.[eventId] ?? EMPTY_TIMELINE,
+                      messages: state.threads[roomId]?.[eventId] ?? EMPTY_TIMELINE,
                   }
                 : { parent: undefined, messages: EMPTY_TIMELINE },
-        [eventId, roomId.streamId],
+        [eventId, roomId],
     )
     return useTimelineStore(callback)
 }

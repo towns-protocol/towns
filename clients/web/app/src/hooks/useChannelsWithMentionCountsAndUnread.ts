@@ -36,16 +36,15 @@ export const useChannelsWithMentionCountsAndUnread = () => {
         return (
             data?.spaceSettings.some(
                 (spaceSetting) =>
-                    spaceSetting.spaceId === space?.id.streamId &&
-                    spaceSetting.spaceMute === Mute.Muted,
+                    spaceSetting.spaceId === space?.id && spaceSetting.spaceMute === Mute.Muted,
             ) ?? false
         )
-    }, [data, space?.id.streamId])
+    }, [data, space?.id])
 
     const mentionCountsPerChannel = useMemo(() => {
         const filteredMentions = mentions.filter((m) => m.unread && !m.thread)
         const grouped = filteredMentions.reduce((agg, m) => {
-            return agg.set(m.channel.id.streamId, (agg.get(m.channel.id.streamId) ?? 0) + 1)
+            return agg.set(m.channel.id, (agg.get(m.channel.id) ?? 0) + 1)
         }, new Map<string, number>())
         return grouped
     }, [mentions])
@@ -53,10 +52,10 @@ export const useChannelsWithMentionCountsAndUnread = () => {
     const channelsWithMentionCountsAndUnread = useMemo(() => {
         return channels
             .map((c) => {
-                const channelId = c.id.streamId
+                const channelId = c.id
                 return {
                     ...c,
-                    isJoined: joinedChannels.some((mc) => mc.id.streamId === channelId),
+                    isJoined: joinedChannels.some((mc) => mc.id === channelId),
                     mentionCount: mentionCountsPerChannel.get(channelId) ?? 0,
                     unread:
                         fullyReadMarkers.markers[channelId]?.isUnread &&

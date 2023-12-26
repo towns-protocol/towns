@@ -13,7 +13,6 @@ import { useMyChannels } from '../../src/hooks/use-my-channels'
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
 import { CreateChannelInfo } from '../../src/types/zion-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { createMembershipStruct } from '@river/web3'
@@ -33,7 +32,7 @@ describe('createSpaceChannelHooks', () => {
             const { createSpaceTransactionWithRole } = spaceTransaction
             const channelTransaction = useCreateChannelTransaction()
             const { createChannelTransaction } = channelTransaction
-            const [spaceId, setSpaceId] = useState<RoomIdentifier | undefined>(undefined)
+            const [spaceId, setSpaceId] = useState<string | undefined>(undefined)
             const spaceData = useSpaceData(spaceId)
 
             const channelGroups = useMyChannels(spaceData)

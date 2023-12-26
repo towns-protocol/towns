@@ -29,7 +29,7 @@ describe('update role', () => {
             throw new Error('roomId is undefined')
         }
         // get current role details
-        const spaceNetworkId = roomId.streamId
+        const spaceNetworkId = roomId
         const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceNetworkId)
         const roleDetails = await findRoleByName(alice, spaceNetworkId, 'Everyone', roles)
         if (!roleDetails) {
@@ -73,7 +73,7 @@ describe('update role', () => {
             throw new Error('roomId is undefined')
         }
         // get current role details
-        const spaceNetworkId = roomId.streamId
+        const spaceNetworkId = roomId
         const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceNetworkId)
         const roleDetails = await findRoleByName(alice, spaceNetworkId, 'Member', roles)
         if (!roleDetails) {
@@ -141,7 +141,7 @@ describe('update role', () => {
         const moderatorUsers: string[] = [mod1.address]
         const moderatorRoleName = 'Moderator'
         const moderatorRoleId = await alice.createRole(
-            roomId.streamId,
+            roomId,
             moderatorRoleName,
             moderatorPermissions,
             moderatorTokens,
@@ -151,7 +151,7 @@ describe('update role', () => {
             throw new Error('moderatorRoleId is undefined')
         }
         // get current role details for the Moderator role and the Member role
-        const spaceNetworkId = roomId.streamId
+        const spaceNetworkId = roomId
         let roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceNetworkId)
         const expectedMemberRole = await findRoleByName(alice, spaceNetworkId, 'Member', roles)
         if (!expectedMemberRole) {
@@ -236,7 +236,7 @@ describe('update role', () => {
         const moderatorUsers: string[] = [mod1.address]
         const moderatorRoleName = 'Moderator'
         const moderatorRoleId = await alice.createRole(
-            roomId.streamId,
+            roomId,
             moderatorRoleName,
             moderatorPermissions,
             moderatorTokens,
@@ -246,7 +246,7 @@ describe('update role', () => {
             throw new Error('moderatorRoleId is undefined')
         }
         // get current role details for the Moderator role and the Member role
-        const spaceNetworkId = roomId.streamId
+        const spaceNetworkId = roomId
         let roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceNetworkId)
         const expectedMemberRole = await findRoleByName(alice, spaceNetworkId, 'Member', roles)
         if (!expectedMemberRole) {
