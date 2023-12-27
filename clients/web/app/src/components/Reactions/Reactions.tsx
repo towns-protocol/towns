@@ -125,7 +125,7 @@ const Reaction = (props: {
                 rounded="lg"
                 gap="xs"
                 background={isOwn ? 'level3' : undefined}
-                border={isOwn ? 'none' : undefined}
+                border={isOwn ? 'textDefault' : undefined}
                 onClick={onClick}
             >
                 <Text size="md" fontSize={{ desktop: 'mds', mobile: 'xs' }}>
