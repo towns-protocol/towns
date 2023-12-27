@@ -14,7 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func run(cfg *config.Config) error {
+func run() error {
+	cfg := config.GetConfig()
 	ctx := context.Background()
 
 	pid := os.Getpid()
@@ -74,7 +75,7 @@ func init() {
 		Use:   "run",
 		Short: "Runs the node",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmdConfig)
+			return run()
 		},
 	}
 

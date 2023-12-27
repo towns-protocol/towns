@@ -21,8 +21,6 @@ var (
 	logNoColor   bool
 )
 
-var cmdConfig *config.Config
-
 var rootCmd = &cobra.Command{
 	Use:   "node",
 	Short: "Towns.com xchain node",
@@ -70,9 +68,8 @@ func initConfigAndLog() {
 			configStruct.Log.NoColor = true
 		}
 
-		// If loaded successfully, set the global config
-		cmdConfig = &configStruct
-		infra.InitLogFromConfig(&cmdConfig.Log)
+		config.SetConfig(&configStruct)
+		infra.InitLogFromConfig(&config.GetConfig().Log)
 	} else {
 		fmt.Println("No config file specified")
 	}

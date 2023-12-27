@@ -75,3 +75,4 @@ servers/xchain/contracts/*.go
 common/xchain/dist/*
 
 .envrc
+servers/xchain/run_files/*

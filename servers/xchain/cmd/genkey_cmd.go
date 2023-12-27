@@ -4,12 +4,11 @@ import (
 	"casablanca/node/crypto"
 	"context"
 	"os"
-	"servers/xchain/config"
 
 	"github.com/spf13/cobra"
 )
 
-func genkey(cfg *config.Config, overwrite bool) error {
+func genkey(overwrite bool) error {
 	ctx := context.Background()
 
 	wallet, err := crypto.NewWallet(ctx)
@@ -39,7 +38,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			return genkey(cmdConfig, overwrite)
+			return genkey(overwrite)
 		},
 	}
 

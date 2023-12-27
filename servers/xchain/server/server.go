@@ -10,6 +10,7 @@ import (
 	"casablanca/node/dlog"
 
 	xc "servers/xchain/common"
+	"servers/xchain/config"
 	e "servers/xchain/contracts"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -74,7 +75,9 @@ func RunServer(ctx context.Context, workerID int, shutdown <-chan struct{}) {
 
 func registerNode(ctx context.Context, workerID int, fromAddress common.Address, privateKey *ecdsa.PrivateKey) (*uint64, error) {
 	log := dlog.CtxLog(ctx)
-	client, err := ethclient.Dial("ws://127.0.0.1:8545")
+	chainId := big.NewInt(int64(config.GetConfig().EntitlementContract.ChainId))
+	log.Info("Registering node", "Url", config.GetConfig().EntitlementContract.Url)
+	client, err := ethclient.Dial(config.GetConfig().EntitlementContract.Url)
 	if err != nil {
 		log.Error("Failed to connect to the Ethereum", "err", err)
 		return nil, err
@@ -93,7 +96,7 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 		return nil, err
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(31337))
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
 	if err != nil {
 		log.Error("Failed NewKeyedTransactorWithChainID", "err", err)
 		return nil, err
@@ -129,7 +132,9 @@ func registerNode(ctx context.Context, workerID int, fromAddress common.Address,
 
 func unregisterNode(ctx context.Context, workerID int, fromAddress common.Address, privateKey *ecdsa.PrivateKey) {
 	log := dlog.CtxLog(ctx)
-	client, err := ethclient.Dial("ws://127.0.0.1:8545")
+	chainId := big.NewInt(int64(config.GetConfig().EntitlementContract.ChainId))
+
+	client, err := ethclient.Dial(config.GetConfig().EntitlementContract.Url)
 	if err != nil {
 		log.Error("Failed to connect to the Ethereum client", "err", err)
 		return
@@ -148,7 +153,7 @@ func unregisterNode(ctx context.Context, workerID int, fromAddress common.Addres
 		return
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(31337))
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
 	if err != nil {
 		log.Error("Failed NewKeyedTransactorWithChainID", "err", err)
 		return
@@ -176,7 +181,9 @@ func unregisterNode(ctx context.Context, workerID int, fromAddress common.Addres
 
 func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events chan *e.LocalhostIEntitlementCheckerEntitlementCheckRequested, shutdown <-chan struct{}, fromAddress common.Address, privateKey *ecdsa.PrivateKey) bool {
 	log := dlog.CtxLog(ctx)
-	client, err := ethclient.Dial("ws://127.0.0.1:8545")
+	chainId := big.NewInt(int64(config.GetConfig().EntitlementContract.ChainId))
+
+	client, err := ethclient.Dial(config.GetConfig().EntitlementContract.Url)
 	if err != nil {
 		log.Error("Failed to connect to the Ethereum client", "err", err)
 		return false
@@ -195,7 +202,7 @@ func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events ch
 		return false
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(31337))
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
 	if err != nil {
 		log.Error("Failed NewKeyedTransactorWithChainID", "err", err)
 		return false
@@ -214,10 +221,13 @@ func eventLoop(ctx context.Context, workerID int, blockNumber *uint64, events ch
 	opts := bind.WatchOpts{Start: blockNumber, Context: bc}
 	sub, err := nodeCheckerFilterer.WatchEntitlementCheckRequested(&opts, events, nil)
 	if err != nil {
-		log.Error("Failed to set up event watch", "err", err)
+		log.Error("Failed to set up event watch", "err", err, "opts", opts, "events", events)
 	}
-	defer sub.Unsubscribe()
-
+	defer func() {
+		if sub != nil {
+			sub.Unsubscribe()
+		}
+	}()
 	for !isClosed(shutdown) {
 		select {
 		case <-shutdown:

@@ -9,6 +9,7 @@ import (
 	"casablanca/node/dlog"
 
 	xc "servers/xchain/common"
+	"servers/xchain/config"
 	e "servers/xchain/contracts"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -35,7 +36,7 @@ func ClientSimulator() {
 	}
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-	client, err := ethclient.Dial("ws://127.0.0.1:8545")
+	client, err := ethclient.Dial(config.GetConfig().EntitlementContract.Url)
 	if err != nil {
 		log.Error("Failed to connect to the Ethereum client", "err", err)
 		return
@@ -48,7 +49,7 @@ func ClientSimulator() {
 		return
 	}
 
-	gatedContract, err := e.NewLocalhostIEntitlementGated(*xc.GetGatedContractAddress(), client)
+	gatedContract, err := e.NewLocalhostIEntitlementGated(*xc.GetTestContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 		return
@@ -79,7 +80,7 @@ func ClientSimulator() {
 		checkRequestedSubCh = checkRequestedSub.Err()
 	}
 
-	gatedFilter, err := e.NewLocalhostIEntitlementGatedFilterer(*xc.GetGatedContractAddress(), client)
+	gatedFilter, err := e.NewLocalhostIEntitlementGatedFilterer(*xc.GetTestContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 		return

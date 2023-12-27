@@ -5,7 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"math/big"
-	"os"
+	"servers/xchain/config"
 	"strings"
 	"sync"
 	"time"
@@ -19,61 +19,44 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-//go:embed localhost_entitlementChecker.json
-var localhost_entitlementChecker []byte
-
-//go:embed localhost_entitlementGatedExample.json
-var localhost_entitlementGatedExample []byte
-
-var EMPTY_ADDRESS = common.Address{}
-
-type ContractAddresses struct {
-	EntitlementChecker      string `json:"entitlementChecker"`
-	EntitlementGatedExample string `json:"entitlementGatedExample"`
-}
-
-type ContractAddress struct {
-	Address string `json:"address"`
-}
-
 var checkerContractAddress common.Address
-var gatedContractAddress common.Address
+var checkerContractUrl string
+
+var testContractAddress common.Address
+var testContractUrl string
 
 var loadAddressesOnce sync.Once
 
-func loadAddresses() {
-	var entitlementCheckerAddress ContractAddress
-	err := json.Unmarshal(localhost_entitlementChecker, &entitlementCheckerAddress)
-	if err != nil {
-		dlog.CtxLog(context.Background()).Error("Failed to parse localhost_entitlementChecker.json", "err", err)
-		os.Exit(1)
-	}
-
-	var entitlementGatedExampleAddress ContractAddress
-	err = json.Unmarshal(localhost_entitlementGatedExample, &entitlementGatedExampleAddress)
-	if err != nil {
-		dlog.CtxLog(context.Background()).Error("Failed to parse localhost_entitlementGatedExample.json", "err", err)
-		os.Exit(1)
-	}
-
-	checkerContractAddress = common.HexToAddress(entitlementCheckerAddress.Address)
-	gatedContractAddress = common.HexToAddress(entitlementGatedExampleAddress.Address)
+func loadConfig() {
+	cfg := config.GetConfig()
+	checkerContractAddress = common.HexToAddress(cfg.EntitlementContract.Address)
+	checkerContractUrl = cfg.EntitlementContract.Url
 }
 
 func GetCheckerContractAddress() *common.Address {
-	loadAddressesOnce.Do(loadAddresses)
+	loadAddressesOnce.Do(loadConfig)
 	return &checkerContractAddress
 }
 
-func GetGatedContractAddress() *common.Address {
-	loadAddressesOnce.Do(loadAddresses)
-	return &gatedContractAddress
+func GetCheckerContractUrl() string {
+	loadAddressesOnce.Do(loadConfig)
+	return checkerContractUrl
+}
+
+func GetTestContractAddress() *common.Address {
+	loadAddressesOnce.Do(loadConfig)
+	return &testContractAddress
+}
+
+func GetTestContractUrl() string {
+	loadAddressesOnce.Do(loadConfig)
+	return testContractUrl
 }
 
 func FundWallet(fromAddress common.Address) (err error) {
 	log := dlog.CtxLog(context.Background())
 
-	client, err := ethclient.Dial("ws://127.0.0.1:8545")
+	client, err := ethclient.Dial(GetCheckerContractUrl())
 	if err != nil {
 		log.Error("Failed to connect to the Ethereum client", "err", err)
 		return err

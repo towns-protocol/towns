@@ -42,9 +42,6 @@ if ! command -v yq &> /dev/null; then
     echo "yq installed successfully."
 fi
 
-# start this in and later wait for it to complete before starting the casablanca node
-./casablanca/scripts/launch_storage.sh &
-
 SESSION_NAME="River"
 
 # Create a new tmux session
@@ -91,7 +88,7 @@ tmpfile_river_chain=$(mktemp /tmp/anvil_river_chain.XXXXXX)
 tmpfile_base_chain=$(mktemp /tmp/anvil_base_chain.XXXXXX)
 
 # Run the scripts in the background and capture their outputs
-./scripts/deploy-river-registry.sh > "$tmpfile_river_chain" 2>&1 &
+(./scripts/deploy-river-registry.sh > "$tmpfile_river_chain" 2>&1 && ./scripts/deploy-entitlement-checker.sh >> "$tmpfile_river_chain" 2>&1) &
 pid1=$!
 (./scripts/deploy-towns-contracts.sh > "$tmpfile_base_chain" 2>&1 && ./scripts/deploy-wallet-link-contracts.sh >> "$tmpfile_base_chain" 2>&1) &
 pid2=$!
@@ -125,6 +122,9 @@ PNW_AUTH_TOKEN="Zm9v"
 yq eval ".pushNotification.url = \"$PNW_URL\"" -i $YAML_FILE
 yq eval ".pushNotification.authToken = \"$PNW_AUTH_TOKEN\"" -i $YAML_FILE
 
+# xchain nodes
+./servers/xchain/create_multi.sh
+
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
 
@@ -146,6 +146,7 @@ commands=(
     "worker_push:cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh"
     "casablanca:./casablanca/node/run_single.sh"
     "casablanca-no-entitlements:./casablanca/node/run_single.sh --disable_entitlements"
+    "xchain:./servers/xchain/launch_multi.sh"
 )
 
 # Create a Tmux window for each command
