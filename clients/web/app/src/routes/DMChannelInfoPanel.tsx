@@ -172,6 +172,8 @@ const RoomPropertiesInputField = (props: { defaultTitle: string; data?: DMChanne
     const [isEditing, setIsEditing] = useState(false)
     const [value, setValue] = useState('hello world')
 
+    const validationError = value.length < 32 ? undefined : 'Title must be less than 32 characters'
+
     const onChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setValue(e.target.value)
     }, [])
@@ -190,50 +192,63 @@ const RoomPropertiesInputField = (props: { defaultTitle: string; data?: DMChanne
             if (e.key === 'Enter') {
                 onSave()
             } else if (e.key === 'Escape') {
+                setValue(data?.properties?.name ?? '')
                 setIsEditing(false)
             }
         },
-        [onSave],
+        [onSave, data, setValue, setIsEditing],
     )
     const onBlur = useCallback(() => {
-        setValue(data?.properties?.name ?? '')
+        if (value !== data?.properties?.name) {
+            return
+        }
         setIsEditing(false)
-    }, [data?.properties, setIsEditing])
+    }, [data?.properties, setIsEditing, value])
 
     useEffect(() => {
         setValue(data?.properties?.name ?? '')
     }, [data?.properties?.name])
 
     return (
-        <Stack horizontal alignItems="center" gap="sm">
+        <>
             {isEditing ? (
-                <>
-                    <TextField
-                        border
-                        autoFocus
-                        background="level3"
-                        width="100%"
-                        value={value}
-                        height="height_lg"
-                        paddingX="sm"
-                        placeholder="Optional channel title"
-                        autoCorrect="off"
-                        onChange={onChange}
-                        onBlur={onBlur}
-                        onKeyDown={onKeyDown}
-                    />
-                    <Box grow />
-                    <TextButton onClick={onSave}>Save</TextButton>
-                </>
+                <Stack gap>
+                    <Stack horizontal alignItems="center" gap="sm">
+                        <TextField
+                            border
+                            autoFocus
+                            tone={validationError ? 'error' : 'neutral'}
+                            background="level3"
+                            width="100%"
+                            value={value}
+                            height="height_lg"
+                            paddingX="sm"
+                            placeholder="Optional channel title"
+                            autoCorrect="off"
+                            onChange={onChange}
+                            onBlur={onBlur}
+                            onKeyDown={onKeyDown}
+                        />
+                        <Box grow />
+                        <TextButton disabled={validationError !== undefined} onClick={onSave}>
+                            Save
+                        </TextButton>
+                    </Stack>
+                    {validationError && (
+                        <Text color="error" fontSize="sm">
+                            {validationError}
+                        </Text>
+                    )}
+                </Stack>
             ) : (
-                <>
+                <Stack horizontal alignItems="center" gap="sm">
                     <Text fontWeight="medium" color="default">
                         {value.length > 0 ? value : defaultTitle}
                     </Text>
                     <Box grow />
                     <TextButton onClick={() => setIsEditing(true)}>Edit</TextButton>
-                </>
+                </Stack>
             )}
-        </Stack>
+        </>
     )
 }
