@@ -89,16 +89,19 @@ export declare namespace ITownArchitectBase {
     everyone: PromiseOrValue<boolean>;
     tokens: ITokenEntitlement.ExternalTokenStruct[];
     users: PromiseOrValue<string>[];
+    rule: PromiseOrValue<string>;
   };
 
   export type MembershipRequirementsStructOutput = [
     boolean,
     ITokenEntitlement.ExternalTokenStructOutput[],
-    string[]
+    string[],
+    string
   ] & {
     everyone: boolean;
     tokens: ITokenEntitlement.ExternalTokenStructOutput[];
     users: string[];
+    rule: string;
   };
 
   export type MembershipStruct = {
@@ -152,8 +155,8 @@ export declare namespace ITownArchitectBase {
 
 export interface ITownArchitectInterface extends utils.Interface {
   functions: {
-    "computeTown(string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[]),string[]))": FunctionFragment;
-    "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[]),string[]),(string,string)))": FunctionFragment;
+    "computeTown(string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[],address),string[]))": FunctionFragment;
+    "createTown((string,string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,(address,uint256,bool,uint256[])[],address[],address),string[]),(string,string)))": FunctionFragment;
     "gateByToken(address,uint256)": FunctionFragment;
     "getTokenIdByTown(address)": FunctionFragment;
     "getTokenIdByTownId(string)": FunctionFragment;

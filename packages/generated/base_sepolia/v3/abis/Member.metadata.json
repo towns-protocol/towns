@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.20+commit.a1b79de6"
+    "version": "0.8.23+commit.f704f362"
   },
   "language": "Solidity",
   "output": {
@@ -878,19 +878,19 @@
   },
   "sources": {
     "contracts/src/tokens/Member.sol": {
-      "keccak256": "0x2527dca5799dd7ad1695db22f22c9cc35f170c8bd8def82f40e9d3f6c844ee12",
+      "keccak256": "0x3c5505dc1639b627f0b643b08d8a4a84b137ba1085c9483654446edc58e28c47",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://aed81863f971934a9b06b1e1166e2615c9d61f4d23a4c08ee3abd504347ab7e1",
-        "dweb:/ipfs/QmbxUTnQD6hFWsTxiyEoE9r4xtvY2bNrUpuEPg3iiDmdot"
+        "bzz-raw://5b7e33baf91af34a6e63f93338fc79db777e7d84074697e8bbb89a4be95d0afc",
+        "dweb:/ipfs/QmZrNG5mNNCPPh8KhZKYLPHzCFQ6JawQ6qV6ghjpTUAEBa"
       ]
     },
     "contracts/src/tokens/interfaces/IMember.sol": {
-      "keccak256": "0x2537c536bab012221427ba91c86628aa03bd37c9382a474e4e982c3a183d63c2",
+      "keccak256": "0x6159e5ecdcd2dfdb728ef1ce8ee777e5bf010e017eb71668dbb797ad33dd0e36",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://73415f6a6da57bfa138032ca2fbf0ba385ba495910fb27ed186e3e9aa0a2398c",
-        "dweb:/ipfs/QmY9DaoQBivrSpigaHkRmacmMyqZNxGQ63sHCRLAaopNCX"
+        "bzz-raw://43221be4a097bc32ebefe837bf48b2fb19448c1c22dea59d5fdb7e4fc70d6e6a",
+        "dweb:/ipfs/QmcUDJuSa8x864kUjiZqdMxXahPRKWUT3bqRhukBnDNajo"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {

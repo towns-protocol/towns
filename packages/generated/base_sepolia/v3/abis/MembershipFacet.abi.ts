@@ -126,7 +126,7 @@ export default [
     "name": "_getMembershipPrice",
     "inputs": [
       {
-        "name": "totalMinted",
+        "name": "totalSupply",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -432,6 +432,25 @@ export default [
         "name": "",
         "type": "address",
         "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getMembershipRenewalPrice",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -1291,6 +1310,16 @@ export default [
   {
     "type": "error",
     "name": "Membership__MaxSupplyReached",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Membership__NotExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Membership__NotRenewable",
     "inputs": []
   },
   {

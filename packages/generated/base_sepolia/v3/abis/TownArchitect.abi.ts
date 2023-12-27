@@ -129,6 +129,11 @@ export default [
                 "name": "users",
                 "type": "address[]",
                 "internalType": "address[]"
+              },
+              {
+                "name": "rule",
+                "type": "address",
+                "internalType": "contract IEntitlementRule"
               }
             ]
           },
@@ -271,6 +276,11 @@ export default [
                     "name": "users",
                     "type": "address[]",
                     "internalType": "address[]"
+                  },
+                  {
+                    "name": "rule",
+                    "type": "address",
+                    "internalType": "contract IEntitlementRule"
                   }
                 ]
               },

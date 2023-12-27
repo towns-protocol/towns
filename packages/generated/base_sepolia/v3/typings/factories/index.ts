@@ -16,7 +16,6 @@ export { Member__factory } from "./Member__factory";
 export { MembershipFacet__factory } from "./MembershipFacet__factory";
 export { MockERC721A__factory } from "./MockERC721A__factory";
 export { OwnableFacet__factory } from "./OwnableFacet__factory";
-export { PioneerFacet__factory } from "./PioneerFacet__factory";
 export { StreamRegistry__factory } from "./StreamRegistry__factory";
 export { TokenEntitlement__factory } from "./TokenEntitlement__factory";
 export { TokenPausableFacet__factory } from "./TokenPausableFacet__factory";
