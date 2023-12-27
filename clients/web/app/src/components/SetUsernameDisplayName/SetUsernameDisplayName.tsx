@@ -298,11 +298,11 @@ const UsernameDisplayNameContent = (props: { user: LookupUser }) => {
 const UsernameDisplayNameEncryptedContent = (props: { user: LookupUser }) => {
     const { user } = props
     return user.usernameEncrypted && user.displayNameEncrypted ? (
-        <EncryptedName message="Your username and display name are encrypted." />
+        <EncryptedName message="Your username and display name are still decrypting." />
     ) : user.displayNameEncrypted ? (
-        <EncryptedName message="Your display name is encrypted." />
+        <EncryptedName message="Your display name is still decrypting." />
     ) : user.usernameEncrypted ? (
-        <EncryptedName message="Your username is encrypted" />
+        <EncryptedName message="Your username is still decrypting." />
     ) : (
         <></>
     )
