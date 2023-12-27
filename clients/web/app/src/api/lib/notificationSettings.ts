@@ -37,16 +37,41 @@ const zSettingsData: z.ZodType<UserSettings> = z.object({
 
 async function getSettings({ userId }: Partial<GetSettingsRequestParams>): Promise<UserSettings> {
     const url = `${PUSH_WORKER_URL}/api/get-notification-settings`
-    const response = await axiosClient.post(url, {
-        userId,
-    })
-    const parseResult = zSettingsData.safeParse(response.data)
-
-    if (!parseResult.success) {
-        throw new Error(`Error parsing SaveSettingsRequestParams in ${url}:: ${parseResult.error}`)
+    if (!userId) {
+        throw new Error('userId is required')
     }
 
-    return parseResult.data
+    let userSettings: UserSettings = {
+        userId,
+        channelSettings: [],
+        spaceSettings: [],
+        replyTo: true,
+        mention: true,
+        directMessage: true,
+    }
+    try {
+        console.log('[getSettings] fetching settings', userId)
+        const response = await axiosClient.post(url, {
+            userId,
+        })
+        const parseResult = zSettingsData.safeParse(response.data)
+
+        if (!parseResult.success) {
+            console.error('[getSettings] error parsing settings', parseResult.error)
+            throw new Error(
+                `Error parsing GetSettingsRequestParams in ${url}:: ${parseResult.error}`,
+            )
+        }
+
+        userSettings = parseResult.data
+        console.log('[getSettings] settings fetched', userSettings)
+    } catch (error) {
+        console.error('[getSettings] error', error)
+        // if the user's settings is not found, create a new one
+        console.log('[getSettings] creating new settings')
+        await putSettings({ userSettings })
+    }
+    return userSettings
 }
 
 export function toggleMuteSetting(mute: Mute | undefined) {
@@ -91,7 +116,7 @@ async function putSettings({ userSettings }: SaveSettingsRequestParams) {
     const response = await axiosClient.put(url, {
         userSettings,
     })
-
+    console.log('[putSettings] settings saved')
     return response.data
 }
 
