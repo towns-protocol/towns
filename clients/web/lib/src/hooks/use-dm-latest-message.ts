@@ -35,7 +35,7 @@ type LatestMessageInfo = {
     sender: TimelineEvent['sender']
 }
 
-export function useDMLatestMessage(roomId: string) {
+export function useDMLatestMessage(roomId: string, ignoreThreads = true) {
     const { timeline } = useTimeline(roomId)
     const unreadMarker = useFullyReadMarkerStore((state) => state.markers[roomId])
 
@@ -54,7 +54,7 @@ export function useDMLatestMessage(roomId: string) {
             if (!markerReached && info && hasRelevantUnreadMarker) {
                 unreadCount++
             }
-            if (!latest && info) {
+            if (!latest && info && (!ignoreThreads || !message.threadParentId)) {
                 latest = {
                     createdAtEpocMs: message.createdAtEpocMs,
                     info: info,
@@ -67,7 +67,7 @@ export function useDMLatestMessage(roomId: string) {
             }
         }
         return { latest, unreadCount }
-    }, [hasRelevantUnreadMarker, timeline, unreadMarker?.eventId])
+    }, [hasRelevantUnreadMarker, ignoreThreads, timeline, unreadMarker?.eventId])
 
     const [latest, setLatest] = useState(latestMessage)
 

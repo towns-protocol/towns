@@ -7,6 +7,7 @@ import isEqual from 'lodash/isEqual'
 export function useDMUnreads(
     casablancaClient: CasablancaClient | undefined,
     dmIds: DMChannelIdentifier[],
+    ignoreThreads = true,
 ): { dmUnreadChannelIds: Set<string> } {
     const [state, setState] = useState<{
         dmUnreadChannelIds: Set<string>
@@ -23,7 +24,11 @@ export function useDMUnreads(
             const channelIds = new Set([...dmIds.map((dm) => dm.id)])
 
             Object.values(markers).forEach((marker) => {
-                if (marker.isUnread && channelIds.has(marker.channelId)) {
+                if (
+                    marker.isUnread &&
+                    channelIds.has(marker.channelId) &&
+                    (!ignoreThreads || !marker.threadParentId)
+                ) {
                     unreadChannelIds.add(marker.channelId)
                 }
             })
@@ -42,6 +47,6 @@ export function useDMUnreads(
         return () => {
             unsubscribe()
         }
-    }, [casablancaClient, setState, dmIds])
+    }, [casablancaClient, setState, dmIds, ignoreThreads])
     return state
 }
