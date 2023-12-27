@@ -62,7 +62,7 @@ export const AvatarGroup = (props: AvatarGroupProps) => {
                     // center offset from top-left
                     const origin = `50%`
                     // offset from center in the direction of the angle
-                    const offset = `calc(50% - (-${borderWidth * 4}px + ${size}) * 0.5 )`
+                    const offset = `calc(50% - (-${borderWidth * 2}px + ${size}) * 0.5 )`
 
                     const avatarStyle = {
                         position: 'absolute',
@@ -76,7 +76,7 @@ export const AvatarGroup = (props: AvatarGroupProps) => {
                     } as const
 
                     return (
-                        <Box border key={userId} style={avatarStyle} rounded="full">
+                        <Box key={userId} style={avatarStyle} rounded="full">
                             {userId === REMAINING_PLACEHOLDER ? (
                                 <Box
                                     centerContent
