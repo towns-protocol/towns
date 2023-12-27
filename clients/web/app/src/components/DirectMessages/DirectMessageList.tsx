@@ -60,8 +60,14 @@ export const DirectMessageList = () => {
     const dmChannels = useDmChannels()
 
     const miscProps = useMemo(
-        () => ({ channels: [...dmChannels], members: [], threadsStats, spaceId: undefined }),
-        [dmChannels, threadsStats],
+        () => ({
+            channels: [...dmChannels],
+            dmChannelIds,
+            members: [],
+            threadsStats,
+            spaceId: undefined,
+        }),
+        [dmChannelIds, dmChannels, threadsStats],
     )
 
     return (

@@ -1,5 +1,11 @@
 import React, { useCallback, useMemo } from 'react'
-import { useSpaceData, useSpaceId, useTimelineStore, useUserLookupContext } from 'use-zion-client'
+import {
+    useSpaceData,
+    useSpaceId,
+    useTimelineStore,
+    useUserLookupContext,
+    useZionContext,
+} from 'use-zion-client'
 import { ResultItem } from '@components/SearchBar/SearchResultItem'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { Box, Icon, IconButton, Paragraph, Stack, TextField } from '@ui'
@@ -51,6 +57,8 @@ export const TouchSearchTab = () => {
     const spaceId = useSpaceId()
     const channels = useSpaceChannels()
     const dmChannels = useDmChannels()
+    const { dmChannels: dmChannelIds } = useZionContext()
+
     const { users: members } = useUserLookupContext()
 
     const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
@@ -58,8 +66,14 @@ export const TouchSearchTab = () => {
     }))
 
     const miscProps = useMemo(
-        () => ({ channels: [...channels, ...dmChannels], members, threadsStats, spaceId }),
-        [channels, members, threadsStats, spaceId, dmChannels],
+        () => ({
+            channels: [...channels, ...dmChannels],
+            dmChannelIds,
+            members,
+            threadsStats,
+            spaceId,
+        }),
+        [channels, dmChannels, dmChannelIds, members, spaceId, threadsStats],
     )
     const onScroll = useCallback(() => {
         if (document.activeElement instanceof HTMLElement) {

@@ -1,6 +1,12 @@
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router'
-import { useSpaceData, useSpaceId, useTimelineStore, useUserLookupContext } from 'use-zion-client'
+import {
+    useSpaceData,
+    useSpaceId,
+    useTimelineStore,
+    useUserLookupContext,
+    useZionContext,
+} from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
 import { Box, Divider, Icon, Paragraph, Stack, TextField } from '@ui'
 import { useSearch } from 'hooks/useSearch'
@@ -144,24 +150,72 @@ const SearchResults = (props: { onHide: () => void; searchResults: CombinedResul
     const spaceId = useSpaceId()
     const channels = useSpaceChannels()
     const dmChannels = useDmChannels()
+    const { dmChannels: dmChannelIds } = useZionContext()
+
     const { users: members } = useUserLookupContext()
     const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
         threadsStats,
     }))
 
     const miscProps = useMemo(
-        () => ({ channels: [...channels, ...dmChannels], members, threadsStats, spaceId }),
-        [channels, members, threadsStats, spaceId, dmChannels],
+        () => ({
+            channels: [...channels, ...dmChannels],
+            dmChannelIds,
+            members,
+            threadsStats,
+            spaceId,
+        }),
+        [channels, dmChannelIds, dmChannels, members, spaceId, threadsStats],
     )
+
+    const [activeIndex, setActiveIndex] = useState(0)
+    const listRef = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault()
+                setActiveIndex((a) => Math.min(searchResults.length - 1, a + 1))
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault()
+                setActiveIndex((a) => Math.max(0, a - 1))
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault()
+                const el = listRef.current?.querySelector(`#search-item-${activeIndex}`)
+                const link = (el?.querySelector('a') ?? el) as HTMLElement
+                if ('click' in link) {
+                    link.click()
+                }
+            }
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => {
+            window.removeEventListener('keydown', onKeyDown)
+        }
+    }, [activeIndex, props, searchResults, searchResults.length])
+
+    useEffect(() => {
+        listRef.current?.children[activeIndex]?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+        })
+    }, [activeIndex])
 
     return (
         searchResults.length > 0 && (
             <Stack width="800" maxWidth="100%" maxHeight="100%" insetTop="xs">
                 <Stack overflow="scroll" maxHeight="500">
-                    <Box>
+                    <Box ref={listRef}>
                         {searchResults.map((s, index, items) => {
                             const result = (
-                                <ResultItem result={s} key={s.item.key} misc={miscProps} />
+                                <ResultItem
+                                    result={s}
+                                    key={s.item.key}
+                                    misc={miscProps}
+                                    selected={activeIndex === index}
+                                    id={`search-item-${index}`}
+                                />
                             )
                             const prevItemType = items[index - 1]?.item.type
                             if (s.item.type !== prevItemType) {

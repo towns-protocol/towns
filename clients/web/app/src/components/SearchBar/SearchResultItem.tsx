@@ -1,6 +1,12 @@
-import React, { useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { Channel, RoomMember, useMyProfile } from 'use-zion-client'
+import React, { useCallback, useMemo } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import {
+    Channel,
+    DMChannelIdentifier,
+    RoomMember,
+    useMyProfile,
+    useZionClient,
+} from 'use-zion-client'
 import { ThreadStatsMap } from 'use-zion-client/dist/store/use-timeline-store'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Box, BoxProps, Icon, Paragraph } from '@ui'
@@ -18,36 +24,44 @@ export const ResultItem = (
         result: CombinedResult
         misc: {
             channels: Channel[]
+            dmChannelIds: DMChannelIdentifier[]
             members: RoomMember[]
             threadsStats: ThreadStatsMap
             spaceId: string | undefined
         }
     } & BoxProps,
 ) => {
-    const { result, misc: miscProps, ...boxProps } = props
+    const { result, selected, misc: miscProps, ...boxProps } = props
     const item = result.item
+
     const { createLink } = useCreateLink()
+
+    const { dmChannelIds } = miscProps
+
+    const { createDirectMessage } = useCreateUserDM()
 
     const { isTouch } = useDevice()
 
+    boxProps.background = selected ? 'level3' : undefined
+
     switch (item.type) {
         case 'user': {
-            const link = createLink({
-                profileId: item.source.userId,
-            })
+            const userId = item.source.userId
 
             return isTouch ? (
                 <TouchUserResultRow member={item.source} />
-            ) : link ? (
-                <Link to={link}>
-                    <ItemContainer>
-                        <Avatar userId={item.source.userId} size="avatar_x4" />
-                        <Box centerContent>
-                            <Paragraph strong>{getPrettyDisplayName(item.source)}</Paragraph>
-                        </Box>
-                    </ItemContainer>
-                </Link>
-            ) : null
+            ) : (
+                <ItemContainer
+                    background={selected ? 'accent' : undefined}
+                    {...boxProps}
+                    onClick={() => void createDirectMessage(userId, dmChannelIds)}
+                >
+                    <Avatar userId={item.source.userId} size="avatar_x4" />
+                    <Box centerContent>
+                        <Paragraph strong>{getPrettyDisplayName(item.source)}</Paragraph>
+                    </Box>
+                </ItemContainer>
+            )
         }
 
         case 'channel': {
@@ -66,7 +80,7 @@ export const ResultItem = (
                 />
             ) : link ? (
                 <Link to={link}>
-                    <ItemContainer>
+                    <ItemContainer {...boxProps}>
                         <Box
                             centerContent
                             padding="sm"
@@ -98,7 +112,7 @@ export const ResultItem = (
         }
         case 'message': {
             return (
-                <ItemContainer paddingY="md">
+                <ItemContainer paddingY="md" {...boxProps}>
                     <MessageResultItem
                         event={item.source}
                         channelId={item.channelId}
@@ -170,4 +184,32 @@ const MessageResultItem = (props: {
             userId={userId}
         />
     )
+}
+
+const useCreateUserDM = () => {
+    const navigate = useNavigate()
+    const { createLink } = useCreateLink()
+
+    const { createDMChannel } = useZionClient()
+
+    const createDirectMessage = useCallback(
+        async (userId: string, dmChannelIds: DMChannelIdentifier[]) => {
+            let messageId = dmChannelIds.find(
+                (dm) => dm.userIds.length === 1 && dm.userIds[0] === userId,
+            )?.id
+
+            if (!messageId) {
+                messageId = await createDMChannel(userId)
+            }
+
+            const link = createLink({ messageId: messageId })
+
+            if (messageId && link) {
+                navigate(link)
+            }
+        },
+        [createDMChannel, createLink, navigate],
+    )
+
+    return { createDirectMessage }
 }
