@@ -95,7 +95,7 @@ const TouchPanel = (props: Props) => {
         <Sheet
             className={modalSheetClass}
             isOpen={modalPresented}
-            detent="content-height"
+            detent="full-height"
             mountPoint={mountPoint}
             onClose={closeModal}
             onCloseEnd={didCloseModal}
