@@ -6,12 +6,11 @@ import {
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { BlockchainTransactionType, TSigner } from '../types/web3-types'
+import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { UpdateChannelInfo } from 'types/zion-types'
 import { removeSyncedEntitledChannelsQueriesForSpace } from '../query/removeSyncedEntitledChannelQueries'
 import { useQueryClient } from '../query/queryClient'
-import { useTransactionStore } from '../store/use-transactions-store'
 import { useZionClient } from './use-zion-client'
 
 /**
@@ -66,13 +65,6 @@ export function useUpdateChannelTransaction() {
                 transactionResult = await updateChannelTransaction(updateChannelInfo, signer)
                 setTransactionContext(transactionResult)
                 if (transactionResult?.status === TransactionStatus.Pending) {
-                    // save it to local storage so we can track it
-                    if (transactionResult.transaction && transactionResult.data) {
-                        useTransactionStore.getState().storeTransaction({
-                            hash: transactionResult.transaction?.hash as `0x${string}`,
-                            type: BlockchainTransactionType.EditChannel,
-                        })
-                    }
                     // Wait for transaction to be mined
                     transactionResult = await waitForUpdateChannelTransaction(transactionResult)
                     setTransactionContext(transactionResult)

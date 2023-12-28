@@ -7,8 +7,6 @@ import {
 } from '../client/ZionClientTypes'
 import { ethers } from 'ethers'
 import { SignerUndefinedError, toError } from '../types/error-types'
-import { useTransactionStore } from '../store/use-transactions-store'
-import { BlockchainTransactionType } from '../types/web3-types'
 import { queryClient, useQuery } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { useConnectivity } from './use-connectivity'
@@ -104,15 +102,6 @@ function useLinkTransactionBuilder() {
                 setTransactionContext(transactionResult)
 
                 if (transactionResult?.status === TransactionStatus.Pending) {
-                    // No error and transaction is pending
-                    // Save it to local storage so we can track it
-                    if (transactionResult.transaction && transactionResult.data) {
-                        useTransactionStore.getState().storeTransaction({
-                            hash: transactionResult.transaction?.hash as `0x${string}`,
-                            type: BlockchainTransactionType.LinkWallet,
-                        })
-                    }
-
                     // Wait for transaction to be mined
                     transactionResult = await waitWalletLinkTransaction(transactionResult)
                     if (loggedInWalletAddress) {

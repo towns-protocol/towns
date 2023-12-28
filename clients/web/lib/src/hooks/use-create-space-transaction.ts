@@ -6,9 +6,8 @@ import {
 } from '../client/ZionClientTypes'
 import { useCallback, useMemo, useRef, useState } from 'react'
 
-import { BlockchainTransactionType, TSigner } from '../types/web3-types'
+import { TSigner } from '../types/web3-types'
 import { CreateSpaceInfo } from '../types/zion-types'
-import { useTransactionStore } from '../store/use-transactions-store'
 import { useZionClient } from './use-zion-client'
 import { ITownArchitectBase } from '@river/web3'
 /**
@@ -63,18 +62,6 @@ export function useCreateSpaceTransaction() {
                 setTransactionContext(transactionResult)
 
                 if (transactionResult?.status === TransactionStatus.Pending) {
-                    // No error and transaction is pending
-                    // Save it to local storage so we can track it
-                    if (transactionResult.transaction && transactionResult.data) {
-                        useTransactionStore.getState().storeTransaction({
-                            hash: transactionResult.transaction?.hash as `0x${string}`,
-                            type: BlockchainTransactionType.CreateSpace,
-                            data: {
-                                spaceId: transactionResult.data.spaceId,
-                            },
-                        })
-                    }
-
                     // Wait for transaction to be mined
                     transactionResult = await waitForCreateSpaceTransaction(transactionResult)
                     setTransactionContext(transactionResult)

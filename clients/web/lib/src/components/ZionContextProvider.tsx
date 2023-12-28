@@ -11,7 +11,6 @@ import { useCasablancaSpaceHierarchies } from '../hooks/ZionContext/useCasablanc
 import { useZionClientListener } from '../hooks/use-zion-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/zion-types'
 import { Web3ContextProvider } from './Web3ContextProvider'
-import { useTransactionListener } from '../hooks/use-transaction-listener'
 import { QueryProvider } from './QueryProvider'
 import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@river/sdk'
@@ -105,8 +104,6 @@ const ContextImpl = (props: Props): JSX.Element => {
     const dynamicTimelineFilter = useTimelineFilter((state) => state.eventFilter)
     useCasablancaTimelines(casablancaClient, dynamicTimelineFilter ?? timelineFilter)
     const casablancaOnboardingState = useOnboardingState_Casablanca(client, casablancaClient)
-
-    useTransactionListener(client, casablancaServerUrl)
 
     return (
         <ZionContext.Provider

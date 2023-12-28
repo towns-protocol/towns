@@ -1,4 +1,4 @@
-import { Address, Chain, Connector } from 'wagmi'
+import { Chain, Connector } from 'wagmi'
 import { useEthersProvider } from '../hooks/Web3Context/useEthersProvider'
 import {
     TokenEntitlementDataTypes,
@@ -7,6 +7,9 @@ import {
     ISpaceDapp as R_ISpaceDapp,
 } from '@river/web3'
 import { Signer } from 'ethers'
+
+// TODO: replace instances of wagmi/viem Address with this type
+export type Address = `0x${string}`
 
 export const NULL_ADDRESS: Address = '0x0000000000000000000000000000000000000000'
 
@@ -44,8 +47,8 @@ export enum BlockchainTransactionType {
 export type BlockchainTransaction = {
     hash: Address
     data?: {
-        parentSpaceId?: string
-        spaceId: string
+        spaceStreamId?: string
+        channeStreamId?: string
     }
     type: BlockchainTransactionType
 }

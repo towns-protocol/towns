@@ -15,7 +15,7 @@ import {
 import { SpaceInfo } from './SpaceInfo'
 import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
 import { WalletLink as WalletLinkV4 } from './v4/WalletLink'
-import { WalletClient, Address } from 'viem'
+import { WalletClient, Address, PublicClient } from 'viem'
 import { ContractTransaction, ethers } from 'ethers'
 import { SpaceDappTransaction } from './v4'
 
@@ -60,6 +60,7 @@ type TransactionType<V extends Versions> = V extends 'v3'
 type StringOrAddress<V extends Versions> = V extends 'v3' ? string : Address
 
 export interface ISpaceDapp<V extends Versions = TDefaultVersion> {
+    provider: (V extends 'v3' ? ethers.providers.Provider : PublicClient) | undefined
     addRoleToChannel: (
         spaceId: string,
         channelNetworkId: string,

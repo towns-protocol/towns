@@ -1,5 +1,5 @@
 import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 'ethers'
-import { BlockchainTransactionEvent, RoomMessageEvent } from '../types/timeline-types'
+import { RoomMessageEvent } from '../types/timeline-types'
 import {
     Client as CasablancaClient,
     RiverDbManager,
@@ -48,7 +48,7 @@ import { makeUniqueSpaceStreamId } from '@river/sdk'
 import { staticAssertNever } from '../utils/zion-utils'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
-import { RoleIdentifier, ISpaceDapp } from '../types/web3-types'
+import { RoleIdentifier, ISpaceDapp, BlockchainTransactionType, Address } from '../types/web3-types'
 import {
     createSpaceDapp,
     ITownArchitectBase,
@@ -56,6 +56,7 @@ import {
     TokenEntitlementDataTypes,
     SpaceInfo,
 } from '@river/web3'
+import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 
 /***
  * Zion Client
@@ -76,6 +77,7 @@ export class ZionClient implements EntitlementsDelegate {
     public readonly opts: ZionOpts
     public readonly name: string
     public spaceDapp: ISpaceDapp
+    public blockchainTransactionStore: BlockchainTransactionStore
     protected casablancaClient?: CasablancaClient
     private _signerContext?: SignerContext
     protected _eventHandlers?: ZionClientEventHandlers
@@ -86,6 +88,7 @@ export class ZionClient implements EntitlementsDelegate {
         this.name = name || Math.random().toString(36).substring(7)
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.spaceDapp = createSpaceDapp(opts.chainId, opts.web3Provider)
+        this.blockchainTransactionStore = new BlockchainTransactionStore(this.spaceDapp)
         this._eventHandlers = opts.eventHandlers
         if (opts.pushNotificationWorkerUrl && opts.pushNotificationAuthToken) {
             this.pushNotificationClient = new PushNotificationClient({
@@ -217,6 +220,7 @@ export class ZionClient implements EntitlementsDelegate {
      * stopClients
      *************************************************/
     public async stopClients() {
+        await this.blockchainTransactionStore.stop()
         await this.stopCasablancaClient()
     }
 
@@ -291,6 +295,12 @@ export class ZionClient implements EntitlementsDelegate {
 
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.CreateSpace,
+            data: {
+                spaceStreamId: spaceId,
+            },
+        })
 
         try {
             transaction = await this.spaceDapp.createSpace(
@@ -310,6 +320,11 @@ export class ZionClient implements EntitlementsDelegate {
             console.error('[createCasablancaSpaceTransaction] error', err)
             error = this.getDecodedErrorForSpaceFactory(err)
         }
+
+        continueStoreTx({
+            hash: transaction?.hash as Address,
+            error,
+        })
 
         return {
             transaction,
@@ -400,7 +415,13 @@ export class ZionClient implements EntitlementsDelegate {
 
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
-
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.CreateChannel,
+            data: {
+                spaceStreamId: createChannelInfo.parentSpaceId,
+                channeStreamId: roomId,
+            },
+        })
         try {
             transaction = await this.spaceDapp.createChannel(
                 createChannelInfo.parentSpaceId,
@@ -414,6 +435,11 @@ export class ZionClient implements EntitlementsDelegate {
             console.error('[createChannelTransaction] error', err)
             error = await this.getDecodedErrorForSpace(createChannelInfo.parentSpaceId, err)
         }
+
+        continueStoreTx({
+            hash: transaction?.hash as Address,
+            error,
+        })
 
         return {
             transaction,
@@ -466,6 +492,13 @@ export class ZionClient implements EntitlementsDelegate {
 
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.EditChannel,
+            data: {
+                spaceStreamId: updateChannelInfo.parentSpaceId,
+                channeStreamId: updateChannelInfo.channelId,
+            },
+        })
         try {
             if (updateChannelInfo.updatedChannelName && updateChannelInfo.updatedRoleIds) {
                 transaction = await this.spaceDapp.updateChannel(
@@ -485,6 +518,12 @@ export class ZionClient implements EntitlementsDelegate {
             console.error('[updateChannelTransaction]', err)
             error = await this.spaceDapp.parseSpaceError(updateChannelInfo.parentSpaceId, err)
         }
+
+        continueStoreTx({
+            hash: transaction?.hash as Address,
+            error,
+        })
+
         return createTransactionContext({
             transaction,
             status: !error && transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
@@ -669,6 +708,12 @@ export class ZionClient implements EntitlementsDelegate {
         }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.CreateRole,
+            data: {
+                spaceStreamId: spaceNetworkId,
+            },
+        })
 
         try {
             transaction = await this.spaceDapp.createRole(
@@ -683,6 +728,11 @@ export class ZionClient implements EntitlementsDelegate {
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
+
+        continueStoreTx({
+            hash: transaction?.hash as Address,
+            error,
+        })
 
         return {
             transaction,
@@ -769,12 +819,23 @@ export class ZionClient implements EntitlementsDelegate {
         }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.UpdateSpaceName,
+            data: {
+                spaceStreamId: spaceNetworkId,
+            },
+        })
         try {
             transaction = await this.spaceDapp.updateSpaceName(spaceNetworkId, name, signer)
             console.log(`[updateSpaceNameTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
+
+        continueStoreTx({
+            hash: transaction?.hash as Address,
+            error,
+        })
 
         return createTransactionContext({
             transaction,
@@ -797,6 +858,12 @@ export class ZionClient implements EntitlementsDelegate {
         }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.UpdateRole,
+            data: {
+                spaceStreamId: spaceNetworkId,
+            },
+        })
         try {
             transaction = await this.spaceDapp.updateRole(
                 {
@@ -813,6 +880,11 @@ export class ZionClient implements EntitlementsDelegate {
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
+        // todo: add necessary contextual data
+        continueStoreTx({
+            hash: transaction?.hash as Address,
+            error,
+        })
 
         return createTransactionContext({
             transaction,
@@ -855,12 +927,23 @@ export class ZionClient implements EntitlementsDelegate {
         }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.DeleteRole,
+            data: {
+                spaceStreamId: spaceNetworkId,
+            },
+        })
         try {
             transaction = await this.spaceDapp.deleteRole(spaceNetworkId, roleId, signer)
             console.log(`[deleteRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
+
+        continueStoreTx({
+            hash: transaction?.hash as Address,
+            error,
+        })
 
         return createTransactionContext({
             transaction,
@@ -1159,11 +1242,6 @@ export class ZionClient implements EntitlementsDelegate {
         await this.casablancaClient.sendMediaPayload(streamId, data, chunkIndex)
     }
 
-    public async sendBlockTxn(_roomId: string, _txn: BlockchainTransactionEvent) {
-        // blockchain transactions are not necessary, we can
-        // just listen for channel events in the space stream
-    }
-
     /************************************************
      * sendReaction
      *************************************************/
@@ -1365,6 +1443,9 @@ export class ZionClient implements EntitlementsDelegate {
 
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.LinkWallet,
+        })
 
         try {
             transaction = await walletLink.linkWallet(rootKey, wallet)
@@ -1373,6 +1454,10 @@ export class ZionClient implements EntitlementsDelegate {
             const parsedError = walletLink.parseError(err)
             error = parsedError
         }
+        continueStoreTx({
+            hash: transaction?.hash as Address,
+            error,
+        })
 
         return {
             transaction,
@@ -1396,6 +1481,9 @@ export class ZionClient implements EntitlementsDelegate {
 
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.UnlinkWallet,
+        })
 
         try {
             transaction = await walletLink.removeLink(rootKey, walletAddress)
@@ -1403,6 +1491,11 @@ export class ZionClient implements EntitlementsDelegate {
             const parsedError = walletLink.parseError(err)
             error = parsedError
         }
+
+        continueStoreTx({
+            hash: transaction?.hash as Address,
+            error,
+        })
 
         return {
             transaction,

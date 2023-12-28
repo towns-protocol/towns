@@ -143,7 +143,8 @@ const AccordionHeader = ({
                         {transactionData?.status === 'failed' && (
                             <Icon color="error" size="square_xs" type="alert" />
                         )}
-                        {transactionData?.status === 'pending' && <ButtonSpinner />}
+                        {(transactionData?.status === 'pending' ||
+                            transactionData?.status === 'potential') && <ButtonSpinner />}
                         {transactionData?.status === 'success' && (
                             <Icon size="square_xs" color="positive" type="check" />
                         )}

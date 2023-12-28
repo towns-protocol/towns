@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { useOnTransactionEmitted } from 'use-zion-client'
+import { useOnTransactionUpdated } from 'use-zion-client'
 import { useDefaultRolePath } from './useDefaultRolePath'
 import { NEW_ROLE_ID_PREFIX } from './SpaceSettingsRolesNav'
 import { Role } from './store/hooks/settingsRolesStore'
@@ -8,7 +8,7 @@ import { useSettingsTransactionsStore } from './store/hooks/settingsTransactionS
 
 // this hook watches the transactions a user makes from the "save changes" modal
 // it watches both for transactions that are stored in the settingsTransactionsStore,
-// and those that are emitted by the blockchain via the useOnTransactionEmitted hook.
+// and those that are emitted by the blockchain via the useOnTransactionUpdated hook.
 // it resets the store data when all transactions have been completed, and forces the roles to be refetched
 export function useTransactionEffects({
     fetchedRoles,
@@ -34,7 +34,7 @@ export function useTransactionEffects({
     const hasInProgressTransactions = Object.keys(inProgressTransactions).length > 0
 
     // when a single transaction resolves, update the transaction store
-    useOnTransactionEmitted(async (arg) => {
+    useOnTransactionUpdated(async (arg) => {
         const [id] =
             Object.entries(inProgressTransactions).find(([, data]) => {
                 return data.hash === arg.hash

@@ -25,7 +25,7 @@ import { WalletLink } from './WalletLink'
 
 export class SpaceDapp implements ISpaceDapp<'v3'> {
     private readonly chainId: number
-    private readonly provider: ethers.providers.Provider | undefined
+    public readonly provider: ethers.providers.Provider | undefined
     private readonly townRegistrar: TownRegistrar
     public readonly walletLink: WalletLink
 

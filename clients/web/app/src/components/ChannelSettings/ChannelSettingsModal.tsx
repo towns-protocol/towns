@@ -322,7 +322,7 @@ export function ChannelSettingsModal({
     onHide,
     onUpdatedChannel,
 }: ChannelSettingsModalProps): JSX.Element {
-    const storedTransactions = useTransactionStore((state) => state.transactions)
+    const storedTransactions = useTransactionStore()
     const [transactionMessage, setTransactionMessage] = useState<string | undefined>()
 
     const _onHide = useCallback(() => {

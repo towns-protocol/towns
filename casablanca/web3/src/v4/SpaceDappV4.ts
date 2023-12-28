@@ -29,11 +29,13 @@ import { WalletLink } from './WalletLink'
 export class SpaceDapp implements ISpaceDapp<'v4'> {
     private readonly townRegistrar: TownRegistrar
     public readonly walletLink: WalletLink
+    public provider: PublicClient | undefined
 
     constructor(chainId: number, client: PublicClient | undefined) {
         const contractsInfo = getContractsInfo(chainId)
         this.townRegistrar = new TownRegistrar(contractsInfo, chainId, client)
         this.walletLink = new WalletLink(contractsInfo, chainId, client)
+        this.provider = client
     }
 
     public async addRoleToChannel(

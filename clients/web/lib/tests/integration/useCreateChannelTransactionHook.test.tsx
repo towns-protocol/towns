@@ -3,7 +3,7 @@
  * @group casablanca
  */
 import { CreateChannelInfo } from 'use-zion-client/src/types/zion-types'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
@@ -88,19 +88,7 @@ describe('useCreateChannelTransactionHook', () => {
             } = channelTransaction
             // Use the roles from the parent space to create the channel
             const { spaceRoles } = useRoles(spaceNetworkId)
-            const transactions = useTransactionStore((state) => state.transactions)
-
-            const [seenTransactions, setSeenTransactions] = useState<Record<string, undefined>>({})
-
-            useEffect(() => {
-                setSeenTransactions((t) => {
-                    const newState = { ...t }
-                    Object.keys(transactions).forEach((tx) => {
-                        newState[tx] = undefined
-                    })
-                    return newState
-                })
-            }, [transactions])
+            const transactions = useTransactionStore()
 
             const roleIds = useMemo(() => {
                 const roleIds: number[] = []
@@ -192,10 +180,13 @@ describe('useCreateChannelTransactionHook', () => {
                                         )}
                                 </div>
                                 <div data-testid="transactions">
-                                    {Object.keys(transactions).length}
-                                </div>
-                                <div data-testid="seen-transactions">
-                                    {Object.keys(seenTransactions).length}
+                                    {Object.keys(transactions).map((id) => {
+                                        return (
+                                            <div data-testid={'transactionItem'} key={id}>
+                                                {JSON.stringify(transactions[id])}
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             </>
                         </SpaceContextProvider>
@@ -230,12 +221,9 @@ describe('useCreateChannelTransactionHook', () => {
             TestConstants.DecaDefaultWaitForTimeout,
         )
         const channelElement = screen.getByTestId('channel')
-        const transactions = screen.getByTestId('transactions')
-        const seenTransactions = screen.getByTestId('seen-transactions')
-        await waitFor(
-            () => expect(seenTransactions).toHaveTextContent('1'),
-            TestConstants.DecaDefaultWaitForTimeout,
-        )
+
+        const transactionItems = await screen.findAllByTestId('transactionItem')
+        expect(transactionItems.length).toBe(1)
         // wait for the space name to render
         await waitFor(
             () => expect(spaceElement).toHaveTextContent(spaceName),
@@ -245,13 +233,10 @@ describe('useCreateChannelTransactionHook', () => {
         /* Act */
         // click button to create the channel
         fireEvent.click(createChannelButton)
-        await waitFor(
-            () => expect(seenTransactions).toHaveTextContent('2'),
-            TestConstants.DoubleDefaultWaitForTimeout,
-        )
-
-        // the transaction listener should clear this transaction, and the number should go back to 0
-        await waitFor(() => expect(transactions).toHaveTextContent('0'))
+        await waitFor(() => {
+            const transactionItems = screen.getAllByTestId('transactionItem')
+            expect(transactionItems.length).toBe(2)
+        }, TestConstants.DoubleDefaultWaitForTimeout)
 
         /* Assert */
         await waitFor(

@@ -1,67 +1,49 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import EventEmitter from 'events'
-import { useEffect, useRef } from 'react'
-import { BlockchainTransaction } from '../types/web3-types'
+import { useEffect, useState, useRef, useMemo } from 'react'
+import {
+    BlockchainStoreTransactions,
+    BlockchainStoreTx,
+} from '../client/BlockchainTransactionStore'
+import { useZionClient } from '../hooks/use-zion-client'
 
-export type EmittedTransaction = BlockchainTransaction & {
-    isSuccess: boolean
+export const useTransactionStore = () => {
+    const [transactions, setTransactions] = useState<BlockchainStoreTransactions>({})
+    const { client } = useZionClient()
+    useEffect(() => {
+        const handleChange = (transactions: BlockchainStoreTransactions) => {
+            setTransactions(transactions)
+        }
+
+        client?.blockchainTransactionStore.on('transactions', handleChange)
+
+        return () => {
+            client?.blockchainTransactionStore.off('transactions', handleChange)
+        }
+    }, [client])
+
+    return transactions
 }
 
-interface TransactionsState {
-    transactions: {
-        [hash: string]: BlockchainTransaction
-    }
-    storeTransaction: (transaction: BlockchainTransaction) => void
-    deleteAndEmitTransaction: (hash: string, isSuccess: boolean) => void
-}
-
-export const TRANSACTIONS_STORE_NAME = 'towns/transactions'
-
-export const useTransactionStore = create(
-    persist<TransactionsState>(
-        (set) => ({
-            transactions: {},
-            storeTransaction: (transaction) =>
-                set((state) => {
-                    return {
-                        transactions: {
-                            ...state.transactions,
-                            [transaction.hash]: transaction,
-                        },
-                    }
-                }),
-            deleteAndEmitTransaction: (hash, isSuccess) =>
-                set((state) => {
-                    const { [hash]: toEmit, ...rest } = { ...state.transactions }
-                    TxnsEventEmitter.emitTransaction({ ...toEmit, isSuccess })
-                    return { ...state, transactions: rest }
-                }),
-        }),
-        {
-            name: TRANSACTIONS_STORE_NAME,
-            version: 1,
-        },
-    ),
-)
-
-const eventEmitter = new EventEmitter()
-
-export const TxnsEventEmitter = Object.freeze({
-    on: (fn: (args: EmittedTransaction) => void) => eventEmitter.on('transaction', fn),
-    off: (fn: (args: EmittedTransaction) => void) => eventEmitter.off('transaction', fn),
-    emitTransaction: (payload: EmittedTransaction) => eventEmitter.emit('transaction', payload),
-})
-
-export const useOnTransactionEmitted = (callback: (args: EmittedTransaction) => void) => {
+export const useOnTransactionUpdated = (callback: (args: BlockchainStoreTx) => void) => {
+    const { client } = useZionClient()
     const cbRef = useRef(callback)
     cbRef.current = callback
 
     useEffect(() => {
-        const cb = (args: EmittedTransaction) => cbRef.current(args)
-        TxnsEventEmitter.on(cb)
+        const cb = (args: BlockchainStoreTx) => cbRef.current(args)
+        client?.blockchainTransactionStore.on('updatedTransaction', cb)
         return () => {
-            TxnsEventEmitter.off(cb)
+            client?.blockchainTransactionStore.off('updatedTransaction', cb)
         }
-    }, [])
+    }, [client])
+}
+
+export const useIsTransactionPending = (type: BlockchainStoreTx['type']) => {
+    const transactions = useTransactionStore()
+    return useMemo(
+        () =>
+            Object.values(transactions).some(
+                (tx) => tx.type === type && (tx.status === 'pending' || tx.status === 'potential'),
+            ),
+        [transactions, type],
+    )
 }

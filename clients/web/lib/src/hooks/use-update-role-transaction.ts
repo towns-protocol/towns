@@ -6,10 +6,9 @@ import {
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { BlockchainTransactionType, TSigner } from '../types/web3-types'
+import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
-import { useTransactionStore } from '../store/use-transactions-store'
 import { useZionClient } from './use-zion-client'
 import { TokenEntitlementDataTypes, Permission } from '@river/web3'
 
@@ -77,13 +76,6 @@ export function useUpdateRoleTransaction() {
                 )
                 setTransactionContext(transactionResult)
                 if (transactionResult?.status === TransactionStatus.Pending) {
-                    if (transactionResult.transaction?.hash) {
-                        // todo: add necessary contextual data
-                        useTransactionStore.getState().storeTransaction({
-                            hash: transactionResult.transaction?.hash as `0x${string}`,
-                            type: BlockchainTransactionType.UpdateRole,
-                        })
-                    }
                     // Wait for transaction to be mined
                     transactionResult = await waitForUpdateRoleTransaction(transactionResult)
                     setTransactionContext(transactionResult)

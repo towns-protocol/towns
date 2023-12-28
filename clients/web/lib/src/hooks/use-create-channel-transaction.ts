@@ -7,9 +7,8 @@ import {
 } from '../client/ZionClientTypes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { BlockchainTransactionType, TSigner } from '../types/web3-types'
+import { TSigner } from '../types/web3-types'
 import { CreateChannelInfo } from '../types/zion-types'
-import { useTransactionStore } from '../store/use-transactions-store'
 import { useZionClient } from './use-zion-client'
 
 /**
@@ -62,18 +61,6 @@ export function useCreateChannelTransaction() {
                 transactionResult = await createChannelTransaction(createInfo, signer)
                 setTransactionContext(transactionResult)
                 if (transactionResult?.status === TransactionStatus.Pending) {
-                    // No error and transaction is pending
-                    // save it to local storage so we can track it
-                    if (transactionResult.transaction && transactionResult.data) {
-                        useTransactionStore.getState().storeTransaction({
-                            hash: transactionResult.transaction?.hash as `0x${string}`,
-                            type: BlockchainTransactionType.CreateChannel,
-                            data: {
-                                parentSpaceId: createInfo.parentSpaceId,
-                                spaceId: transactionResult.data,
-                            },
-                        })
-                    }
                     // Wait for transaction to be mined
                     transactionResult = await waitForCreateChannelTransaction(
                         createInfo,
