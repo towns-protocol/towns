@@ -34,6 +34,7 @@ const ChannelInvite = (props: { onClose: () => void }) => {
     return (
         <>
             <DirectMessageInviteUserList
+                isMultiSelect
                 hiddenUserIds={currentMemberIds}
                 onSelectionChange={onSelectionChange}
             />

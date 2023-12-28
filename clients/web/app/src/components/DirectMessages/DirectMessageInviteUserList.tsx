@@ -7,6 +7,7 @@ import {
     Box,
     Checkbox,
     Divider,
+    Icon,
     IconButton,
     MotionStack,
     Paragraph,
@@ -17,12 +18,15 @@ import {
 import { Avatar } from '@components/Avatar/Avatar'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { usePersistOrder } from 'hooks/usePersistOrder'
+import { useGetUserBio } from 'hooks/useUserBio'
 
 export const DirectMessageInviteUserList = (props: {
     onSelectionChange?: (userIds: Set<string>) => void
     hiddenUserIds?: Set<string>
+    isMultiSelect?: boolean
+    onToggleMultiSelect?: () => void
 }) => {
-    const { onSelectionChange, hiddenUserIds = new Set() } = props
+    const { onSelectionChange, hiddenUserIds = new Set(), isMultiSelect = false } = props
     const [searchTerm, setSearchTerm] = useState('')
     const { users, usersMap } = useUserLookupContext()
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
@@ -62,6 +66,16 @@ export const DirectMessageInviteUserList = (props: {
         onSelectionChange?.(selectedUserIds)
     }, [onSelectionChange, selectedUserIds])
 
+    const onToggleGroupDM = useCallback(() => {
+        if (props.onToggleMultiSelect) {
+            setSelectedUserIds(new Set())
+            if (!filteredUserIds.length) {
+                setSearchTerm('')
+            }
+            props.onToggleMultiSelect()
+        }
+    }, [filteredUserIds.length, props])
+
     return (
         <Stack gap grow paddingTop="md">
             <AnimatePresence mode="popLayout">
@@ -96,6 +110,29 @@ export const DirectMessageInviteUserList = (props: {
 
                 <MotionStack gap grow layout="position" position="relative">
                     <Stack scroll scrollbars gap grow absoluteFill insetTop="sm" paddingTop="md">
+                        {!isMultiSelect && (
+                            <Box
+                                paddingX
+                                horizontal
+                                gap
+                                alignItems="center"
+                                cursor="pointer"
+                                onClick={onToggleGroupDM}
+                            >
+                                <Box
+                                    centerContent
+                                    horizontal
+                                    background="level2"
+                                    rounded="full"
+                                    width="x4"
+                                    height="x4"
+                                    color="gray2"
+                                >
+                                    <Icon type="people" />
+                                </Box>
+                                <Paragraph whiteSpace="nowrap">Create new group</Paragraph>
+                            </Box>
+                        )}
                         {!searchTerm && recentUsers?.length > 0 && (
                             <Box paddingX>
                                 <Paragraph size="sm" color="gray2" fontWeight="medium">
@@ -103,11 +140,13 @@ export const DirectMessageInviteUserList = (props: {
                                 </Paragraph>
                             </Box>
                         )}
+
                         {(searchTerm ? filteredUserIds : recentUsers).map((id) => (
                             <Participant
                                 key={id}
                                 userId={id}
                                 selected={selectedUserIds.has(id)}
+                                isCheckbox={isMultiSelect}
                                 onToggle={toggleMember}
                             />
                         ))}
@@ -123,9 +162,11 @@ type ParticipantProps = {
     onToggle: (id: string) => void
 }
 
-const Participant = (props: ParticipantProps & { selected: boolean }) => {
-    const { userId, onToggle, selected } = props
+const Participant = (props: ParticipantProps & { selected: boolean; isCheckbox: boolean }) => {
+    const { userId, onToggle, selected, isCheckbox } = props
     const profile = useUser(userId)
+
+    const { data: userBio } = useGetUserBio(userId)
 
     const onClick = useCallback(() => {
         onToggle(userId)
@@ -133,6 +174,7 @@ const Participant = (props: ParticipantProps & { selected: boolean }) => {
 
     return (
         <MotionStack
+            hoverable
             horizontal
             gap
             paddingX
@@ -147,8 +189,13 @@ const Participant = (props: ParticipantProps & { selected: boolean }) => {
             <Text truncate fontWeight="medium">
                 {getPrettyDisplayName(profile)}
             </Text>
-            <Box grow />
-            <Checkbox name="" checked={selected} onChange={onClick} />
+            <Paragraph>{userBio}</Paragraph>
+            {isCheckbox && (
+                <>
+                    <Box grow />
+                    <Checkbox name="" checked={selected} onChange={onClick} />
+                </>
+            )}
         </MotionStack>
     )
 }

@@ -14,6 +14,7 @@ export const CreateDirectMessage = (props: Props) => {
     const { createDMChannel, createGDMChannel } = useZionClient()
     const { createLink } = useCreateLink()
     const navigate = useNavigate()
+    const [isGroupDM, setIsGroupDM] = useState(false)
 
     const { dmChannels } = useZionContext()
 
@@ -27,15 +28,6 @@ export const CreateDirectMessage = (props: Props) => {
                     dm.userIds.length === userIds.size && dm.userIds.every((id) => userIds.has(id)),
             ),
         [dmChannels],
-    )
-
-    const onSelectionChange = useCallback(
-        (selectedUserIds: Set<string>) => {
-            const existingChannel = checkIfChannelExists(selectedUserIds)
-            setExistingChannels(existingChannel)
-            setSelectedUserIds(selectedUserIds)
-        },
-        [checkIfChannelExists],
     )
 
     const onSubmit = useCallback(
@@ -83,26 +75,64 @@ export const CreateDirectMessage = (props: Props) => {
         ],
     )
 
+    const onSelectionChange = useCallback(
+        (selectedUserIds: Set<string>) => {
+            const existingChannel = checkIfChannelExists(selectedUserIds)
+            setExistingChannels(existingChannel)
+            if (isGroupDM) {
+                setSelectedUserIds(selectedUserIds)
+                /*
+                
+                // TODO: This opens the existing GM interactively but we
+                // currently don't have a nice way to show "new" messages
+
+                if (existingChannel) {
+                    const link = createLink({ messageId: existingChannel.id })
+                    if (link) {
+                        navigate(link)
+                    }
+                } else {
+                    const link = createLink({ messageId: 'new' })
+                    if (link) {
+                        navigate(link)
+                    }
+                }*/
+            } else {
+                onSubmit(selectedUserIds)
+            }
+        },
+        [checkIfChannelExists, isGroupDM, onSubmit],
+    )
+
     const onCreateButtonClicked = () => {
         void onSubmit(selectedUserIds)
     }
 
-    const cta = `${existingChannels ? 'Open' : 'Create'} ${
-        selectedUserIds.size > 1 ? 'Group DM' : 'DM'
-    }`
+    const cta = `${existingChannels ? 'Open' : 'Create'} Group`
+
+    const onToggleGroupDM = useCallback(() => {
+        setIsGroupDM((g) => !g)
+    }, [])
 
     return (
         <>
-            <DirectMessageInviteUserList onSelectionChange={onSelectionChange} />
-            <Box paddingX paddingBottom="md" bottom="none" left="none" right="none">
-                <Button
-                    disabled={selectedUserIds.size === 0}
-                    tone="cta1"
-                    onClick={onCreateButtonClicked}
-                >
-                    {cta}
-                </Button>
-            </Box>
+            <DirectMessageInviteUserList
+                isMultiSelect={isGroupDM}
+                onToggleMultiSelect={onToggleGroupDM}
+                onSelectionChange={onSelectionChange}
+            />
+
+            {isGroupDM && (
+                <Box paddingX paddingBottom="md" bottom="none" left="none" right="none">
+                    <Button
+                        disabled={selectedUserIds.size === 0}
+                        tone="cta1"
+                        onClick={onCreateButtonClicked}
+                    >
+                        {cta}
+                    </Button>
+                </Box>
+            )}
         </>
     )
 }
