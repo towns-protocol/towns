@@ -285,7 +285,7 @@ const UsernameDisplayNameContent = (props: { user: LookupUser }) => {
         </>
     ) : (
         <>
-            {!user.displayNameEncrypted && (
+            {!user.displayNameEncrypted && user.displayName.length > 0 && (
                 <Text color="default" fontWeight="strong">
                     {user.displayName}
                 </Text>
