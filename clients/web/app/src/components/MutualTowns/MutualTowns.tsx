@@ -20,11 +20,11 @@ export const MutualTowns = (props: { user: LookupUser }) => {
     const membersText = () => {
         if (memberOf && memberOf.length > 1) {
             if (user.userId === myUserId) {
-                return `member of ${memberOf.length} towns`
+                return `Member of ${memberOf.length} towns`
             }
             return `${memberOf.length} mutual towns`
         } else if (memberOf && memberOf.length === 1) {
-            return `member of ${memberOf[0]?.name}`
+            return `Member of ${memberOf[0]?.name}`
         } else {
             return ''
         }
@@ -51,6 +51,7 @@ export const MutualTowns = (props: { user: LookupUser }) => {
                             overrideBorderRadius="xs"
                             variant={ImageVariants.thumbnail50}
                             fadeIn={false}
+                            tooltip={s?.name}
                         />
                     </Box>
                 </React.Fragment>
