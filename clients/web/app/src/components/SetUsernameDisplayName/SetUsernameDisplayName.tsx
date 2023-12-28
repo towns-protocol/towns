@@ -157,20 +157,20 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
             {showEditFields ? (
                 <>
                     <EditableInputField
-                        title="Username"
-                        value={dirtyUsername}
-                        error={usernameErrorMessage}
-                        maxLength={16}
-                        placeholder="Enter username"
-                        onChange={onUsernameChange}
-                    />
-                    <EditableInputField
                         title="Display name"
                         value={dirtyDisplayName}
                         error={displayNameErrorMessage}
                         placeholder="Enter display name"
                         maxLength={32}
                         onChange={onDisplayNameChange}
+                    />
+                    <EditableInputField
+                        title="Username"
+                        value={dirtyUsername}
+                        error={usernameErrorMessage}
+                        maxLength={16}
+                        placeholder="Enter username"
+                        onChange={onUsernameChange}
                     />
                 </>
             ) : (
