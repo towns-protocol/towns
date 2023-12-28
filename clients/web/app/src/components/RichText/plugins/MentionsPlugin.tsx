@@ -194,28 +194,6 @@ export const AtSignMentionsRegexAliasRegex = new RegExp(
         ')$',
 )
 
-const checkForCapitalizedNameMentions = (
-    text: string,
-    minMatchLength: number,
-): MenuTextMatch | null => {
-    const match = CapitalizedNameMentionsRegex.exec(text)
-    if (match !== null) {
-        // The strategy ignores leading whitespace but we need to know it's
-        // length to add it to the leadOffset
-        const maybeLeadingWhitespace = match[1]
-
-        const matchingString = match[2]
-        if (matchingString != null && matchingString.length >= minMatchLength) {
-            return {
-                leadOffset: match.index + maybeLeadingWhitespace.length,
-                matchingString,
-                replaceableString: matchingString,
-            }
-        }
-    }
-    return null
-}
-
 const checkForAtSignMentions = (text: string, minMatchLength: number): MenuTextMatch | null => {
     let match = AtSignMentionsRegex.exec(text)
     if (match === null) {
@@ -239,8 +217,7 @@ const checkForAtSignMentions = (text: string, minMatchLength: number): MenuTextM
 }
 
 const getPossibleQueryMatch = (text: string): MenuTextMatch | null => {
-    const match = checkForAtSignMentions(text, 0)
-    return match === null ? checkForCapitalizedNameMentions(text, 3) : match
+    return checkForAtSignMentions(text, 0)
 }
 
 class MentionTypeaheadOption extends MenuOption {

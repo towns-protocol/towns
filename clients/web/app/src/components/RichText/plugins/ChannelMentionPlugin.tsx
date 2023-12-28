@@ -122,10 +122,6 @@ const DocumentChannelsMentionRegEx = {
     PUNCTUATION,
 }
 
-export const CapitalizedNameMentionsRegex = new RegExp(
-    '(^|[^#])((?:' + DocumentChannelsMentionRegEx.CHANNEL + '{' + 1 + ',})$)',
-)
-
 const PUNC = DocumentChannelsMentionRegEx.PUNCTUATION
 
 const TRIGGERS = ['#'].join('')
