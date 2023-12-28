@@ -210,9 +210,12 @@ const RoomPropertiesInputField = (props: { defaultTitle: string; data?: DMChanne
     }, [data?.properties?.name])
 
     return (
-        <>
+        <Stack gap>
+            <Text color="gray2" fontSize="sm">
+                Group name
+            </Text>
             {isEditing ? (
-                <Stack gap>
+                <>
                     <Stack horizontal alignItems="center" gap="sm">
                         <TextField
                             border
@@ -239,7 +242,7 @@ const RoomPropertiesInputField = (props: { defaultTitle: string; data?: DMChanne
                             {validationError}
                         </Text>
                     )}
-                </Stack>
+                </>
             ) : (
                 <Stack horizontal alignItems="center" gap="sm">
                     <Text fontWeight="medium" color="default">
@@ -249,6 +252,6 @@ const RoomPropertiesInputField = (props: { defaultTitle: string; data?: DMChanne
                     <TextButton onClick={() => setIsEditing(true)}>Edit</TextButton>
                 </Stack>
             )}
-        </>
+        </Stack>
     )
 }
