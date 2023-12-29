@@ -191,16 +191,19 @@ const Participant = (props: ParticipantProps & { selected: boolean; isCheckbox: 
             onClick={onClick}
         >
             <Avatar userId={userId} size="avatar_x4" />
-            <Text truncate fontWeight="medium">
-                {getPrettyDisplayName(profile)}
-            </Text>
-            <Paragraph>{userBio}</Paragraph>
-            {isCheckbox && (
-                <>
-                    <Box grow />
-                    <Checkbox name="" checked={selected} onChange={onClick} />
-                </>
-            )}
+            <Box gap="sm" overflow="hidden">
+                <Text truncate color="default">
+                    {getPrettyDisplayName(profile)}
+                </Text>
+                {userBio && (
+                    <Text truncate color="gray2" size="sm">
+                        {userBio}
+                    </Text>
+                )}
+            </Box>
+            <Box grow shrink={false} alignItems="end">
+                {isCheckbox && <Checkbox name="" checked={selected} onChange={onClick} />}
+            </Box>
         </MotionStack>
     )
 }
