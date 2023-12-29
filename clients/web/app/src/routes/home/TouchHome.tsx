@@ -320,7 +320,6 @@ export const TouchHome = () => {
 
                                             {space && (
                                                 <>
-                                                    <SectionHeader title="Direct Messages" />
                                                     <DirectMessageChannelList />
                                                 </>
                                             )}
@@ -421,12 +420,21 @@ const ChannelList = (props: {
 const DirectMessageChannelList = () => {
     const { spaceDms, dmUnreadChannelIds } = useSpaceDms()
 
-    return (
-        <Stack>
-            {spaceDms.map((c) => (
-                <DirectMessageItem key={c.id} channel={c} unread={dmUnreadChannelIds.has(c.id)} />
-            ))}
-        </Stack>
+    return spaceDms.length ? (
+        <>
+            <SectionHeader title="Direct Messages" />
+            <Stack>
+                {spaceDms.map((c) => (
+                    <DirectMessageItem
+                        key={c.id}
+                        channel={c}
+                        unread={dmUnreadChannelIds.has(c.id)}
+                    />
+                ))}
+            </Stack>
+        </>
+    ) : (
+        <></>
     )
 }
 
