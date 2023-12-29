@@ -1379,32 +1379,6 @@ export class ZionClient implements EntitlementsDelegate {
     }
 
     /************************************************
-     * setRoomTopic
-     ************************************************/
-    // eslint-disable-next-line @typescript-eslint/require-await
-    public async setRoomTopic(_roomId: string, _name: string): Promise<void> {
-        console.error('not implemented for casablanca')
-    }
-
-    /************************************************
-     * setRoomName
-     ************************************************/
-    // eslint-disable-next-line @typescript-eslint/require-await
-    public async setRoomName(_roomId: string, _name: string): Promise<void> {
-        // todo casablanca display name
-        console.error('not implemented for casablanca')
-    }
-
-    /************************************************
-     * getRoomTopic
-     ************************************************/
-    // eslint-disable-next-line @typescript-eslint/require-await
-    public async getRoomTopic(_roomId: string): Promise<string> {
-        console.error('not implemented for casablanca')
-        return ''
-    }
-
-    /************************************************
      * scrollback
      ************************************************/
     public async scrollback(

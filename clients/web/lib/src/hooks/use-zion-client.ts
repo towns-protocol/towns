@@ -161,9 +161,6 @@ interface ZionClientImpl {
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
     setRoomProperties: (roomId: string, title: string, topic: string) => Promise<void>
     setDisplayName: (streamId: string, displayName: string) => Promise<void>
-    setRoomName: (roomId: string, roomName: string) => Promise<void>
-    setRoomTopic: (roomId: string, roomTopic: string) => Promise<void>
-    getRoomTopic: (roomId: string) => Promise<string | undefined>
     updateSpaceNameTransaction: (
         spaceId: string,
         name: string,
@@ -244,9 +241,6 @@ export function useZionClient(): ZionClientImpl {
         sendReadReceipt: useWithCatch(sendReadReceipt),
         setDisplayName: useWithCatch(client?.setDisplayName),
         setRoomProperties: useWithCatch(client?.setRoomProperties),
-        setRoomName: useWithCatch(client?.setRoomName),
-        setRoomTopic: useWithCatch(client?.setRoomTopic),
-        getRoomTopic: useWithCatch(client?.getRoomTopic),
         setAvatarUrl: useWithCatch(client?.setAvatarUrl),
         linkWallet: useWithCatch(client?.linkWallet),
         removeLink: useWithCatch(client?.removeLink),
