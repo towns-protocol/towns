@@ -11,7 +11,7 @@ const config: JestConfigWithTsJest = {
     testTimeout: 60000,
     modulePathIgnorePatterns: ['/dist/'],
     testPathIgnorePatterns: ['/dist/', '/node_modules/'],
-    setupFilesAfterEnv: ['jest-extended/all'],
+    setupFilesAfterEnv: ['jest-extended/all', '<rootDir>/jest-setup.ts'],
     extensionsToTreatAsEsm: ['.ts'],
     transform: {
         '^.+\\.tsx?$': [
@@ -23,7 +23,8 @@ const config: JestConfigWithTsJest = {
     },
     moduleNameMapper: {
         'bn.js': 'bn.js',
-        'hash.js': 'hash.js',
+        // match "hash.js" but not whateverHash.js - viem has many of these which should not be
+        '\\bhash\\.js\\b': 'hash.js',
         '(.+)\\.js': '$1',
     },
     collectCoverage: true,

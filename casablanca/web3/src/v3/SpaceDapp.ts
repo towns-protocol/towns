@@ -26,7 +26,7 @@ import { WalletLink } from './WalletLink'
 export class SpaceDapp implements ISpaceDapp<'v3'> {
     private readonly chainId: number
     public readonly provider: ethers.providers.Provider | undefined
-    private readonly townRegistrar: TownRegistrar
+    protected readonly townRegistrar: TownRegistrar
     public readonly walletLink: WalletLink
 
     constructor(chainId: number, provider: ethers.providers.Provider | undefined) {
@@ -371,7 +371,7 @@ export class SpaceDapp implements ISpaceDapp<'v3'> {
         return this.walletLink
     }
 
-    private async getTown(townId: string): Promise<Town | undefined> {
+    protected getTown(townId: string): Promise<Town | undefined> {
         return this.townRegistrar.getTown(townId)
     }
 

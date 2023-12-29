@@ -440,7 +440,7 @@ export class SpaceDapp implements ISpaceDapp<'v4'> {
         return this.walletLink
     }
 
-    private async getTown(townId: string): Promise<Town | undefined> {
+    protected async getTown(townId: string): Promise<Town | undefined> {
         return this.townRegistrar.getTown(townId)
     }
 

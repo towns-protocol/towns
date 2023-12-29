@@ -21,6 +21,8 @@
         "abitype": "^0.9.10",
         "debug": "^4.3.4",
         "ethers": "^5.7.2",
+        "nanoid": "^4.0.0",
+        "userop": "^0.3.7",
         "viem": "^1.18.2"
     },
     "devDependencies": {

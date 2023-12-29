@@ -67,6 +67,10 @@ type TotalSupplyOutputStruct<Version = TDefaultVersion> = Version extends 'v3'
 export type MembershipStruct<Version = TDefaultVersion> = Version extends 'v3'
     ? ITownArchitectBaseV3.MembershipStruct
     : ITownArchitectBaseV4['MembershipStruct']
+
+export type TownInfoStruct<Version = TDefaultVersion> = Version extends 'v3'
+    ? ITownArchitectBaseV3.TownInfoStruct
+    : ITownArchitectBaseV4['TownStruct']
 /**
  * Supported entitlement modules
  */

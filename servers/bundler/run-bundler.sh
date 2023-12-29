@@ -1,7 +1,9 @@
 
 #!/bin/bash
+set -euo pipefail
+cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-sh ../../scripts/wait-for-basechain.sh
+./../../scripts/wait-for-basechain.sh
 
 # Ethereum node endpoint
 NODE_URL="http://127.0.0.1:8545"
@@ -16,7 +18,7 @@ RESPONSE=$(curl -sX POST --data "$JSON_PAYLOAD" -H "Content-Type: application/js
 # Check if the JSON response indicates the existence of the contract
 if [[ $RESPONSE == *"\"result\":\"0x\""* ]]; then
     echo "No entrypoint contract found at $CONTRACT_ADDRESS. Deploying..."
-    sh ../../scripts/deploy-account-abstraction.sh
+    ./../../scripts/deploy-account-abstraction.sh
 else
     echo "Entrypoint deployed at $CONTRACT_ADDRESS. Skipping deployment..."
 fi
