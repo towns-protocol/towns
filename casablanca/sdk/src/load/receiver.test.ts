@@ -140,7 +140,7 @@ describe('loadTestsScenario2', () => {
             await myQueue.add(loadTestShutdownQueueName, 'shut down signal')
 
             // Define metric properties
-            const METRIC_NAME = 'loadtest:receiver.execution_time'
+            const METRIC_NAME = 'sdk-loadtest:receiver.execution_time'
             const METRIC_VALUE = endTime - startTime
             const HOSTNAME = 'github-actions'
             const TAGS = 'environment:ci'

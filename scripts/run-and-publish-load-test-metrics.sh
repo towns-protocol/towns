@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 
-LOAD_TEST_PATH="./clients/web/lib"
+
+if [ -z "$LOAD_TEST_PATH" ]; then
+    echo "LOAD_TEST_PATH is not set"
+    exit 1
+fi
+
+if [ -z "$TEST_CMD" ]; then
+    echo "TEST_CMD is not set"
+    exit 1
+fi
 
 # exit if DATADOG_API_KEY is not set
 if [ -z "$DATADOG_API_KEY" ]; then
@@ -9,7 +18,7 @@ if [ -z "$DATADOG_API_KEY" ]; then
 fi
 
 pushd $LOAD_TEST_PATH
-    yarn run test:load:all
+    eval $TEST_CMD
     
     # Save the exit code of the test, so we can exit with it at the end,
     # but still post load test durations if available

@@ -104,7 +104,12 @@ jobs:
               run: yarn csb:wait:entitlements
 
             - name: Run Load Tests
-              run: DATADOG_API_KEY=${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }} ./scripts/run-and-publish-load-test-metrics.sh
+              env:
+                DATADOG_API_KEY: ${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }}
+              run: |
+                export LOAD_TEST_PATH="./clients/web/lib"
+                export TEST_CMD="yarn run test:load:all"
+                ./scripts/run-and-publish-load-test-metrics.sh
 
             # If failed, we send a slack notification
             - name: Slack notification
