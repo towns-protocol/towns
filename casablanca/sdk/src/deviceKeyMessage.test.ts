@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import debug from 'debug'
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'

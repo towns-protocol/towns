@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { EncryptedData } from '@river/proto'
 import { UserMetadata_DisplayNames } from './userMetadata_DisplayNames'
 

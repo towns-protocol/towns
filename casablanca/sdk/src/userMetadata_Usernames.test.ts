@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { EncryptedData } from '@river/proto'
 import { UserMetadata_Usernames } from './userMetadata_Usernames'
 import { usernameChecksum } from './utils'

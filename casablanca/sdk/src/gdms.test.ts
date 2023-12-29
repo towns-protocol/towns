@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { makeTestClient, createEventDecryptedPromise, waitFor, makeDonePromise } from './util.test'
 import { Client } from './client'
 import { dlog } from './dlog'

@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { isDefined } from './check'
 import { Client } from './client'
 import { dlog } from './dlog'

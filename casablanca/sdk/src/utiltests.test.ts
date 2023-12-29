@@ -1,4 +1,8 @@
 /**
+ * @group main
+ */
+
+/**
  * we can't export and describe(...) in a .test file, so this is tests for util.test.ts
  */
 

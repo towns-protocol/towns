@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { dlog } from './dlog'
 import { townsHash, townsRecoverPubKey, townsSign, townsVerifySignature } from './crypto/crypto'
 import { bin_fromHexString, bin_toHexString } from './binary'

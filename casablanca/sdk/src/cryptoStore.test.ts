@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { CryptoStore } from './crypto/store/cryptoStore'
 import { UserDevice } from './crypto/olmLib'
 import { genId } from './id'

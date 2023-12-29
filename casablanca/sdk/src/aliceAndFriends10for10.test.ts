@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { dlog } from './dlog'
 import { converse } from './testDriver.test_util'
 

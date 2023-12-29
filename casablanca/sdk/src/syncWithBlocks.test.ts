@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { MembershipOp, StreamAndCookie, SyncOp } from '@river/proto'
 import { dlog } from './dlog'
 import {

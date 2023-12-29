@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { dlog } from './dlog'
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'

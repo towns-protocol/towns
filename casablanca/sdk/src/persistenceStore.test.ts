@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { genId } from './id'
 import { PersistenceStore } from './persistenceStore'
 

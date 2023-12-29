@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import _ from 'lodash'
 import { checkDelegateSig, unpackEnvelope, makeEvent, SignerContext } from './sign'
 import { make_UserPayload_Inception } from './types'

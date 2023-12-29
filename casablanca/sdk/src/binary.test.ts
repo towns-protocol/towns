@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { bin_fromHexString, bin_fromBase64, isHexString } from './binary'
 
 describe('types', () => {

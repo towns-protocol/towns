@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { makeTestClient } from './util.test'
 import { Client } from './client'
 import { genId, makeChannelStreamId, makeDMStreamId, makeSpaceStreamId } from './id'

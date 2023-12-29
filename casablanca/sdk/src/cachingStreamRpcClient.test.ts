@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { Client } from './client'
 import { makeTestClient } from './util.test'
 import { Cache } from './cache'

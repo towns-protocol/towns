@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { makeEvent, SignerContext, unpackEnvelopes, unpackStreamResponse } from './sign'
 import { MembershipOp } from '@river/proto'
 import { dlog } from './dlog'

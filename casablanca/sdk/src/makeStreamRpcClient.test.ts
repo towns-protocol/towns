@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { InfoRequest, InfoResponse } from '@river/proto'
 import { makeTestRpcClient } from './util.test'
 

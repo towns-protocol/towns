@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 /* eslint-disable jest/no-commented-out-tests */
 import { makeEvent, unpackStreamResponse } from './sign'
 import { SyncedStreams } from './syncedStreams'

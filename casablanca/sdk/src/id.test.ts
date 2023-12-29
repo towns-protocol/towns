@@ -1,3 +1,7 @@
+/**
+ * @group main
+ */
+
 import { makeDMStreamId } from './id'
 
 describe('idTest', () => {
