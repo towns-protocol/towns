@@ -73,9 +73,11 @@ const ChunkedFileDownload = (props: Props) => {
                     <Text fontWeight="medium" color="default" size="md">
                         {filename}
                     </Text>
-                    <Text color="gray2" size="sm">
-                        {mimetype}
-                    </Text>
+                    {mimetype.length > 0 && (
+                        <Text color="gray2" size="sm">
+                            {mimetype}
+                        </Text>
+                    )}
                 </Stack>
                 <Button tone="level2" color="gray2" border="level3" size="button_sm" rounded="sm">
                     <Stack horizontal>
