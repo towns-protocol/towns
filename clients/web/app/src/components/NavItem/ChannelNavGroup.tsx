@@ -9,7 +9,7 @@ export const ChannelNavGroup = (props: { label: string; children?: React.ReactNo
         paddingRight="sm"
         height="height_lg"
     >
-        <Box style={{ transform: 'translateY(2px)' }}>
+        <Box horizontal style={{ transform: 'translateY(2px)' }} justifyContent="spaceBetween">
             <Label>{props.label}</Label>
         </Box>
         {props.children}

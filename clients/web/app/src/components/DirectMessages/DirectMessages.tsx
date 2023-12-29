@@ -38,7 +38,7 @@ export const DirectMessagesPanel = (props: DirectMessagesPanelProps) => {
     return panelMode === 'list' ? (
         <MessageListPanel hideNavigation={hideNavigation} onNavAction={onDisplayCreate} />
     ) : (
-        <NewMessagePanel hideNavigation={hideNavigation} onNavAction={onDisplayList} />
+        <CreateDirectMessagePanel hideNavigation={hideNavigation} onNavAction={onDisplayList} />
     )
 }
 
@@ -59,7 +59,7 @@ const MessageListPanel = ({
     )
 }
 
-const NewMessagePanel = ({
+const CreateDirectMessagePanel = ({
     onNavAction,
     hideNavigation,
 }: {
@@ -67,7 +67,7 @@ const NewMessagePanel = ({
     hideNavigation: boolean
 }) => {
     return (
-        <Stack height="100%">
+        <Stack gap height="100%">
             {!hideNavigation && <PanelHeader label="New Message" onClose={onNavAction} />}
             <CreateDirectMessage onDirectMessageCreated={onNavAction} />
         </Stack>

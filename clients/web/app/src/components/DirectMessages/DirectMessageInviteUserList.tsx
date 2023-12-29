@@ -32,17 +32,23 @@ export const DirectMessageInviteUserList = (props: {
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
     const userId = useMyProfile()?.userId
 
-    const toggleMember = useCallback((id: string) => {
-        setSelectedUserIds((prev) => {
-            const next = new Set(prev)
-            if (next.has(id)) {
-                next.delete(id)
-            } else {
-                next.add(id)
+    const toggleMember = useCallback(
+        (id: string) => {
+            if (!isMultiSelect && selectedUserIds.size >= 1) {
+                return
             }
-            return next
-        })
-    }, [])
+            setSelectedUserIds((prev) => {
+                const next = new Set(prev)
+                if (next.has(id)) {
+                    next.delete(id)
+                } else {
+                    next.add(id)
+                }
+                return next
+            })
+        },
+        [isMultiSelect, selectedUserIds.size],
+    )
 
     const filteredUserIds = fuzzysort
         .go(searchTerm, users, {
@@ -77,9 +83,9 @@ export const DirectMessageInviteUserList = (props: {
     }, [filteredUserIds.length, props])
 
     return (
-        <Stack gap grow paddingTop="md">
+        <Stack gap grow>
             <AnimatePresence mode="popLayout">
-                {selectedUserIds.size > 0 && (
+                {isMultiSelect && selectedUserIds.size > 0 && (
                     <Stack
                         horizontal
                         scroll
@@ -95,7 +101,7 @@ export const DirectMessageInviteUserList = (props: {
                     </Stack>
                 )}
                 <MotionStack gap key="searchterm" layout="position">
-                    {selectedUserIds.size > 0 && <Divider />}
+                    {isMultiSelect && selectedUserIds.size > 0 && <Divider />}
                     <Box paddingX>
                         <TextField
                             autoFocus
@@ -105,11 +111,10 @@ export const DirectMessageInviteUserList = (props: {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </Box>
-                    <Divider />
                 </MotionStack>
 
                 <MotionStack gap grow layout="position" position="relative">
-                    <Stack scroll scrollbars gap grow absoluteFill insetTop="sm" paddingTop="md">
+                    <Stack scroll scrollbars gap grow absoluteFill paddingBottom="md">
                         {!isMultiSelect && (
                             <Box
                                 paddingX

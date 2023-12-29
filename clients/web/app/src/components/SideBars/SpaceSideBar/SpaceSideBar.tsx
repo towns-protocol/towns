@@ -20,6 +20,8 @@ import { useStore } from 'store/store'
 import { FadeIn, FadeInBox } from '@components/Transitions'
 import { useAuth } from 'hooks/useAuth'
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
+import { CreateDirectMessage } from '@components/DirectMessages/CreateDirectMessage'
+import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { SideBar } from '../_SideBar'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
@@ -30,6 +32,11 @@ import { DirectMessageChannelList } from './DirectMessageChannelList'
 type Props = {
     space: SpaceData
     className?: string
+}
+
+enum LayoutMode {
+    Default = 'default',
+    CreateMessage = 'create-message',
 }
 
 export const SpaceSideBar = (props: Props) => {
@@ -82,6 +89,15 @@ export const SpaceSideBar = (props: Props) => {
         setHasScrolledPastHeader(headerY > -1 && headerY <= 0)
     }
 
+    const [layoutMode, setLayoutMode] = useState<LayoutMode>(LayoutMode.Default)
+
+    const onDisplayCreate = useCallback(() => {
+        setLayoutMode(LayoutMode.CreateMessage)
+    }, [])
+    const onDisplayDefault = useCallback(() => {
+        setLayoutMode(LayoutMode.Default)
+    }, [])
+
     return (
         <SideBar data-testid="space-sidebar" height="100%" onScroll={onScroll}>
             <FadeInBox grow elevateReadability className={props.className}>
@@ -98,7 +114,7 @@ export const SpaceSideBar = (props: Props) => {
                     headerRef={headerRef}
                 />
 
-                <Stack paddingY="md">
+                <Stack grow paddingY="md">
                     {membership === Membership.Join && (
                         <>
                             {isOwner && !dismissedGettingStartedMap[space.id] && (
@@ -123,6 +139,19 @@ export const SpaceSideBar = (props: Props) => {
                     )}
                     {space.isLoadingChannels ? (
                         <SidebarLoadingAnimation />
+                    ) : layoutMode === 'create-message' ? (
+                        <Box grow color="gray2">
+                            <ChannelNavGroup label="New Message">
+                                <Icon
+                                    type="close"
+                                    color="gray2"
+                                    size="square_sm"
+                                    cursor="pointer"
+                                    onClick={onDisplayDefault}
+                                />
+                            </ChannelNavGroup>
+                            <CreateDirectMessage onDirectMessageCreated={onDisplayDefault} />
+                        </Box>
                     ) : (
                         <FadeIn>
                             <ActionNavItem
@@ -169,11 +198,12 @@ export const SpaceSideBar = (props: Props) => {
                                     onClick={onShowCreateChannel}
                                 />
                             )}
-                            <DirectMessageChannelList />
+                            <DirectMessageChannelList onDisplayCreate={onDisplayCreate} />
                         </FadeIn>
                     )}
                 </Stack>
-                <Box grow gap paddingX="sm" justifyContent="end" paddingY="lg">
+
+                <Box gap paddingTop="md" paddingX="sm" paddingBottom="lg">
                     <Text textAlign="center" color="gray2" fontSize="sm">
                         Towns {APP_VERSION} ({APP_COMMIT_HASH})
                     </Text>

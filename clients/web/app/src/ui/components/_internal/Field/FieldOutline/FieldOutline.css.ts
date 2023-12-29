@@ -38,7 +38,7 @@ export const fieldTones = styleVariants({
     neutral: {
         opacity: 0,
         vars: {
-            [focusedOpacityVar]: '1',
+            [focusedOpacityVar]: '0.33',
             [focusedColorVar]: vars.color.foreground.neutral,
         },
     },
