@@ -112,8 +112,6 @@ fi
 
 # Now generate the casablanca server config
 ./casablanca/node/run_single.sh -c
-# and fund the node
-cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat casablanca/node/run_files/single/wallet/node_address` 1000000000000000000
 # and set the PNW settings in it's config
 YAML_FILE="./casablanca/node/run_files/single/config/config.yaml"
 PNW_URL="http://localhost:8787"
@@ -123,7 +121,8 @@ yq eval ".pushNotification.url = \"$PNW_URL\"" -i $YAML_FILE
 yq eval ".pushNotification.authToken = \"$PNW_AUTH_TOKEN\"" -i $YAML_FILE
 
 # xchain nodes
-./servers/xchain/create_multi.sh
+# disabled: https://linear.app/hnt-labs/issue/HNT-4317/create-multish-call-in-the-start-devsh-fails
+# ./servers/xchain/create_multi.sh
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
@@ -157,6 +156,21 @@ for cmd in "${commands[@]}"; do
     tmux send-keys -t $SESSION_NAME:"$window_name" "$command" C-m
 done
 
+# on a clean build, the run_files/single directory doesn't exist yet. It is
+# created when run_single.sh is run. Fund the wallet here so that it doesn't fail
+cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat casablanca/node/run_files/single/wallet/node_address` 1000000000000000000
 
 # Attach to the tmux session
 tmux attach -t $SESSION_NAME
+
+# test if the session has windows
+is_closed() { 
+    n=$(tmux ls 2> /dev/null | grep "^$SESSION_NAME" | wc -l)
+    [[ $n -eq 0 ]]
+}
+
+# Wait for the session to close
+if is_closed ; then
+    echo "Session $SESSION_NAME has closed; delete casablanca postgres container and volume"
+    ./casablanca/scripts/stop_storage.sh
+fi
