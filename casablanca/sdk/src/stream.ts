@@ -1,6 +1,6 @@
 import { MembershipOp, Snapshot } from '@river/proto'
 
-import { DLogger } from './dlog'
+import { DLogger } from '@river/mecholm'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView } from './streamStateView'

@@ -4,7 +4,7 @@
 
 import { Client } from './client'
 import { makeTestClient } from './util.test'
-import { dlog } from './dlog'
+import { dlog } from '@river/mecholm'
 import { SessionKeys } from '@river/proto'
 
 const log = dlog('test:clientCrypto')

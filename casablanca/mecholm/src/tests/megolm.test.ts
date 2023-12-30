@@ -1,4 +1,4 @@
-import { OlmMegolmDelegate } from '../src/olm'
+import { OlmMegolmDelegate } from '../olm'
 import debug from 'debug'
 
 const log = debug('test')

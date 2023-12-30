@@ -12,6 +12,7 @@ const config: JestConfigWithTsJest = {
     modulePathIgnorePatterns: ['/dist/'],
     testPathIgnorePatterns: ['/dist/', '/node_modules/', 'util.test.ts'],
     setupFilesAfterEnv: ['jest-extended/all'],
+    setupFiles: ['fake-indexeddb/auto'],
     extensionsToTreatAsEsm: ['.ts'],
     transform: {
         '^.+\\.tsx?$': [
@@ -26,7 +27,7 @@ const config: JestConfigWithTsJest = {
         'hash.js': 'hash.js',
         '(.+)\\.js': '$1',
         // need for mecholm/olm
-        '\\.(wasm)$': require.resolve('./tests/mock-wasm-file.js'),
+        '\\.(wasm)$': require.resolve('./src/mock-wasm-file.js'),
     },
     collectCoverage: true,
     coverageProvider: 'v8',

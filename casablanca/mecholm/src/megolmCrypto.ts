@@ -1,20 +1,21 @@
-import { dlog } from '../dlog'
-import { assertBytes } from 'ethereum-cryptography/utils'
-import { keccak256 } from 'ethereum-cryptography/keccak'
-import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
-import { check } from '../check'
-import { Client } from '../client'
-import { OLM_ALGORITHM, MEGOLM_ALGORITHM, UserDevice, MegolmSession } from './olmLib'
-import { OlmMegolmDelegate } from '@river/mecholm'
-import { OlmDevice } from './olmDevice'
 import { EncryptedData, Err } from '@river/proto'
-import { bin_fromHexString } from '../binary'
+import { MEGOLM_ALGORITHM, MegolmSession, OLM_ALGORITHM, UserDevice } from './olmLib'
+import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
+
+import { CryptoStore } from './cryptoStore'
+import { IMegolmClient } from './base'
+import { MegolmDecryption } from './megolmDecryption'
+import { MegolmEncryption } from './megolmEncryption'
+import { OlmDevice } from './olmDevice'
+import { OlmMegolmDelegate } from './olm'
+import { assertBytes } from 'ethereum-cryptography/utils'
+import { bin_fromHexString } from './binary'
+import { check } from './check'
 import { ethers } from 'ethers'
-import { CryptoStore } from './store/cryptoStore'
+import { keccak256 } from 'ethereum-cryptography/keccak'
+import { dlog } from './dlog'
 
-import { MegolmDecryption, MegolmEncryption } from './algorithms/megolm'
-
-const log = dlog('csb:crypto')
+const log = dlog('csb:megolm:crypto')
 
 // Create hash header as Uint8Array from string 'CSBLANCA'
 const HASH_HEADER = new Uint8Array([67, 83, 66, 76, 65, 78, 67, 65])
@@ -23,7 +24,7 @@ const HASH_SEPARATOR = new Uint8Array([65, 66, 67, 68, 69, 70, 71, 62])
 // Create hash footer as Uint8Array from string '<GFEDCBA'
 const HASH_FOOTER = new Uint8Array([60, 71, 70, 69, 68, 67, 66, 65])
 
-const numberToUint8Array64LE = (num: number): Uint8Array => {
+function numberToUint8Array64LE(num: number): Uint8Array {
     const result = new Uint8Array(8)
     for (let i = 0; num != 0; i++, num = num >>> 8) {
         result[i] = num & 0xff
@@ -31,17 +32,22 @@ const numberToUint8Array64LE = (num: number): Uint8Array => {
     return result
 }
 
-const pushByteToUint8Array = (arr: Uint8Array, byte: number): Uint8Array => {
+function pushByteToUint8Array(arr: Uint8Array, byte: number): Uint8Array {
     const ret = new Uint8Array(arr.length + 1)
     ret.set(arr)
     ret[arr.length] = byte
     return ret
 }
 
-export const checkSignature = (signature: Uint8Array) => assertBytes(signature, 65)
-export const checkHash = (hash: Uint8Array) => assertBytes(hash, 32)
+export function checkSignature(signature: Uint8Array) {
+    assertBytes(signature, 65)
+}
 
-export const townsHash = (data: Uint8Array): Uint8Array => {
+export function checkHash(hash: Uint8Array) {
+    assertBytes(hash, 32)
+}
+
+export function townsHash(data: Uint8Array): Uint8Array {
     assertBytes(data)
     const hasher = keccak256.create()
     hasher.update(HASH_HEADER)
@@ -52,33 +58,33 @@ export const townsHash = (data: Uint8Array): Uint8Array => {
     return hasher.digest()
 }
 
-export const townsSign = async (
+export async function townsSign(
     hash: Uint8Array,
     privateKey: Uint8Array | string,
-): Promise<Uint8Array> => {
+): Promise<Uint8Array> {
     checkHash(hash)
     // TODO(HNT-1380): why async sign doesn't work in node? Use async sign in the browser, sync sign in node?
     const [sig, recovery] = signSync(hash, privateKey, { recovered: true, der: false })
     return pushByteToUint8Array(sig, recovery)
 }
 
-export const townsVerifySignature = (
+export function townsVerifySignature(
     hash: Uint8Array,
     signature: Uint8Array,
     publicKey: Uint8Array | string,
-): boolean => {
+): boolean {
     checkHash(hash)
     checkSignature(signature)
     return verify(signature.slice(0, 64), hash, publicKey)
 }
 
-export const townsRecoverPubKey = (hash: Uint8Array, signature: Uint8Array): Uint8Array => {
+export function townsRecoverPubKey(hash: Uint8Array, signature: Uint8Array): Uint8Array {
     checkHash(hash)
     checkSignature(signature)
     return recoverPublicKey(hash, signature.slice(0, 64), signature[64])
 }
 
-export const publicKeyToAddress = (publicKey: Uint8Array): Uint8Array => {
+export function publicKeyToAddress(publicKey: Uint8Array): Uint8Array {
     assertBytes(publicKey, 64, 65)
     if (publicKey.length === 65) {
         publicKey = publicKey.slice(1)
@@ -86,7 +92,7 @@ export const publicKeyToAddress = (publicKey: Uint8Array): Uint8Array => {
     return keccak256(publicKey).slice(-20)
 }
 
-export const publicKeyToUint8Array = (publicKey: string): Uint8Array => {
+export function publicKeyToUint8Array(publicKey: string): Uint8Array {
     // Uncompressed public key in string form should start with '0x04'.
     check(
         typeof publicKey === 'string' && publicKey.startsWith('0x04') && publicKey.length === 132,
@@ -96,20 +102,20 @@ export const publicKeyToUint8Array = (publicKey: string): Uint8Array => {
     return bin_fromHexString(publicKey)
 }
 
-export const makeTownsDelegateSig = async (
+export async function makeTownsDelegateSig(
     userPrivateKey: () => Uint8Array | string,
     devicePubKey: Uint8Array,
-): Promise<Uint8Array> => {
+): Promise<Uint8Array> {
     const hash = townsHash(devicePubKey)
     check(devicePubKey.length === 65, 'Bad public key', Err.BAD_PUBLIC_KEY)
     return townsSign(hash, userPrivateKey())
 }
 
 // TODO(HNT-1380): once we switch to the new signing model, remove this function
-export const makeOldTownsDelegateSig = async (
+export async function makeOldTownsDelegateSig(
     primaryWallet: ethers.Signer,
     devicePubKey: Uint8Array | string,
-): Promise<Uint8Array> => {
+): Promise<Uint8Array> {
     if (typeof devicePubKey === 'string') {
         devicePubKey = publicKeyToUint8Array(devicePubKey)
     }
@@ -117,22 +123,19 @@ export const makeOldTownsDelegateSig = async (
     return bin_fromHexString(await primaryWallet.signMessage(devicePubKey))
 }
 
-export class Crypto {
+export class MegolmCrypto {
     private olmDelegate: OlmMegolmDelegate | undefined
 
     public readonly supportedAlgorithms: string[]
     public readonly olmDevice: OlmDevice
     public readonly megolmEncryption: MegolmEncryption
     public readonly megolmDecryption: MegolmDecryption
-
+    public readonly cryptoStore: CryptoStore
     public globalBlacklistUnverifiedDevices = false
     public globalErrorOnUnknownDevices = true
 
-    public constructor(
-        public readonly client: Client,
-        public readonly userId: string,
-        public readonly cryptoStore: CryptoStore,
-    ) {
+    public constructor(client: IMegolmClient, cryptoStore: CryptoStore) {
+        this.cryptoStore = cryptoStore
         // initialize Olm library
         this.olmDelegate = new OlmMegolmDelegate()
         // olm lib returns a Promise<void> on init, hence the catch if it rejects
@@ -144,17 +147,11 @@ export class Crypto {
         this.supportedAlgorithms = [OLM_ALGORITHM, MEGOLM_ALGORITHM]
 
         this.megolmEncryption = new MegolmEncryption({
-            userId: this.userId,
-            crypto: this,
             olmDevice: this.olmDevice,
-            baseApis: this.client,
-            config: { algorithm: OLM_ALGORITHM },
+            client,
         })
         this.megolmDecryption = new MegolmDecryption({
-            userId: this.userId,
-            crypto: this,
             olmDevice: this.olmDevice,
-            baseApis: this.client,
         })
     }
 
@@ -180,7 +177,10 @@ export class Crypto {
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    async encryptOlm(payload: string, deviceKeys: UserDevice[]): Promise<Record<string, string>> {
+    public async encryptOlm(
+        payload: string,
+        deviceKeys: UserDevice[],
+    ): Promise<Record<string, string>> {
         const ciphertextRecord: Record<string, string> = {}
         await Promise.all(
             deviceKeys.map(async (deviceKey) => {
@@ -213,7 +213,7 @@ export class Crypto {
      *     encrypted, or null if nothing was needed
      */
     public async encryptMegolmEvent(streamId: string, payload: string): Promise<EncryptedData> {
-        return this.megolmEncryption.encryptMessage(streamId, payload)
+        return this.megolmEncryption.encrypt(streamId, payload)
     }
     /**
      * Decrypt a received event using Megolm
@@ -222,7 +222,7 @@ export class Crypto {
      * Rejects with an error if there is a problem decrypting the event.
      */
     public async decryptMegolmEvent(streamId: string, content: EncryptedData) {
-        return this.megolmDecryption.decryptEvent(streamId, content)
+        return this.megolmDecryption.decrypt(streamId, content)
     }
 
     /**
@@ -237,9 +237,9 @@ export class Crypto {
             Promise.all(
                 keys.map(async (key) => {
                     try {
-                        await this.megolmDecryption.importRoomKey(streamId, key)
+                        await this.megolmDecryption.importStreamKey(streamId, key)
                     } catch {
-                        dlog(`failed to import key`)
+                        log(`failed to import key`)
                     }
                 }),
             ),

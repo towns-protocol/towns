@@ -21,14 +21,27 @@ import {
     Err,
     SessionKeys,
 } from '@river/proto'
-import { Crypto } from './crypto/crypto'
-import { OlmDevice } from './crypto/olmDevice'
-import { MegolmSession, UserDevice, UserDeviceCollection } from './crypto/olmLib'
-import { DLogger, dlog, dlogError } from './dlog'
+import {
+    bin_fromHexString,
+    bin_toHexString,
+    shortenHexString,
+    CryptoStore,
+    IMegolmClient,
+    MegolmCrypto,
+    MegolmSession,
+    OlmDevice,
+    UserDevice,
+    UserDeviceCollection,
+    DLogger,
+    dlog,
+    dlogError,
+    assert,
+    isDefined,
+    check,
+} from '@river/mecholm'
 import { errorContains, getRpcErrorProperty, StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { assert, check, isDefined } from './check'
 import {
     isChannelStreamId,
     isDMChannelStreamId,
@@ -83,8 +96,6 @@ import {
     ParsedStreamResponse,
     make_GDMChannelPayload_ChannelProperties,
 } from './types'
-import { bin_fromHexString, bin_toHexString, shortenHexString } from './binary'
-import { CryptoStore } from './crypto/store/cryptoStore'
 
 import debug from 'debug'
 import { Stream } from './stream'
@@ -98,7 +109,10 @@ import { CachingStreamRpcClient } from './cachingStreamRpcClient'
 
 export type EmittedEvents = StreamEvents
 
-export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
+export class Client
+    extends (EventEmitter as new () => TypedEmitter<EmittedEvents>)
+    implements IMegolmClient
+{
     readonly signerContext: SignerContext
     readonly rpcClient: CachingStreamRpcClient
     readonly userId: string
@@ -118,7 +132,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     private readonly logInfo: DLogger
     private readonly logDebug: DLogger
 
-    public cryptoBackend?: Crypto
+    public cryptoBackend?: MegolmCrypto
     public cryptoStore: CryptoStore
 
     private getStreamRequests: Map<string, Promise<StreamStateView>> = new Map()
@@ -1312,6 +1326,34 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
     }
 
+    /**
+     * Get the list of active devices for all users in the room
+     *
+     *
+     * @returns Promise which resolves to `null`, or an array whose
+     *     first element is a {@link DeviceInfoMap} indicating
+     *     the devices that messages should be encrypted to, and whose second
+     *     element is a map from userId to deviceId to data indicating the devices
+     *     that are in the room but that have been blocked.
+     */
+    async getDevicesInStream(stream_id: string): Promise<UserDeviceCollection> {
+        let stream: StreamStateView | undefined
+        stream = this.stream(stream_id)?.view
+        if (!stream) {
+            stream = await this.getStream(stream_id)
+        }
+        if (!stream) {
+            this.logError(`stream for room ${stream_id} not found`)
+            return {}
+        }
+        const members = Array.from(stream.getUsersEntitledToKeyExchange())
+        this.logCall(
+            `Encrypting for users (shouldEncryptForInvitedMembers:`,
+            members.map((u) => `${u} (${MembershipOp[MembershipOp.SO_JOIN]})`),
+        )
+        return await this.downloadUserDeviceInfo(members)
+    }
+
     async downloadNewToDeviceMessages(): Promise<void> {
         this.logCall('downloadNewToDeviceMessages')
         check(isDefined(this.userToDeviceStreamId))
@@ -1467,7 +1509,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         await this.cryptoStore.initialize()
 
-        const crypto = new Crypto(this, this.userId, this.cryptoStore)
+        const crypto = new MegolmCrypto(this, this.cryptoStore)
         await crypto.init()
         this.cryptoBackend = crypto
         this.decryptionExtensions = new DecryptionExtensions(

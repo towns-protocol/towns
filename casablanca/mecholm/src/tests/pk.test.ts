@@ -1,4 +1,4 @@
-import { OlmMegolmDelegate } from '../src/olm'
+import { OlmMegolmDelegate } from '../olm'
 import debug from 'debug'
 
 const log = debug('test')
@@ -51,7 +51,7 @@ describe('Pk Signing and Encryption', () => {
             throw new Error('key pairs not initialized')
         }
         let TEST_TEXT = 'test text'
-        let pubkey = decryption.generate_key()
+        const pubkey = decryption.generate_key()
         encryption.set_recipient_key(pubkey)
         let encrypted = encryption.encrypt(TEST_TEXT)
         let decrypted = decryption.decrypt(encrypted.ephemeral, encrypted.mac, encrypted.ciphertext)
@@ -70,18 +70,18 @@ describe('Pk Signing and Encryption', () => {
         if (encryption === undefined || decryption === undefined || OlmDelegate === undefined) {
             throw new Error('key pairs not initialized')
         }
-        let TEST_TEXT = 'test text'
-        let pubkey = decryption.generate_key()
+        const TEST_TEXT = 'test text'
+        const pubkey = decryption.generate_key()
         encryption.set_recipient_key(pubkey)
-        let encrypted = encryption.encrypt(TEST_TEXT)
+        const encrypted = encryption.encrypt(TEST_TEXT)
 
-        let PICKLE_KEY = 'secret_key'
-        let pickle = decryption.pickle(PICKLE_KEY)
+        const PICKLE_KEY = 'secret_key'
+        const pickle = decryption.pickle(PICKLE_KEY)
 
-        let new_decryption = OlmDelegate.createPkDecryption()
-        let new_pubkey = new_decryption.unpickle(PICKLE_KEY, pickle)
+        const new_decryption = OlmDelegate.createPkDecryption()
+        const new_pubkey = new_decryption.unpickle(PICKLE_KEY, pickle)
         expect(new_pubkey).toEqual(pubkey)
-        let decrypted = new_decryption.decrypt(
+        const decrypted = new_decryption.decrypt(
             encrypted.ephemeral,
             encrypted.mac,
             encrypted.ciphertext,

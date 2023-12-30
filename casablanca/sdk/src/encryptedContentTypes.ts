@@ -1,5 +1,5 @@
 import { ChannelMessage, ChannelProperties, EncryptedData } from '@river/proto'
-import { checkNever } from './check'
+import { checkNever } from '@river/mecholm'
 
 /*************
  * EncryptedContent

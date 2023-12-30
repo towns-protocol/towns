@@ -9,17 +9,22 @@ import {
     CreateStreamResponse,
     StreamAndCookie,
 } from '@river/proto'
-import { assert, check, hasElements, isDefined } from './check'
 import {
+    bin_equal,
+    bin_fromHexString,
+    bin_toHexString,
     townsHash,
     townsRecoverPubKey,
     townsSign,
     publicKeyToAddress,
     publicKeyToUint8Array,
-} from './crypto/crypto'
+    check,
+    isDefined,
+    assert,
+    hasElements,
+} from '@river/mecholm'
 import { genIdBlob, userIdFromAddress } from './id'
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie, ParsedStreamResponse } from './types'
-import { bin_equal, bin_fromHexString, bin_toHexString } from './binary'
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 
 /**

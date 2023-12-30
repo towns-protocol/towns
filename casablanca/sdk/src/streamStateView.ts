@@ -1,4 +1,4 @@
-import { dlog, dlogError } from './dlog'
+import { dlog, dlogError, bin_toHexString, check, isDefined, logNever } from '@river/mecholm'
 import {
     ChannelMessage,
     Err,
@@ -9,7 +9,6 @@ import {
     MembershipOp,
 } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
-import { check, logNever, isDefined } from './check'
 import {
     ConfirmedTimelineEvent,
     ParsedMiniblock,
@@ -34,7 +33,6 @@ import { StreamStateView_AbstractContent } from './streamStateView_AbstractConte
 import { StreamStateView_DMChannel } from './streamStateView_DMChannel'
 import { genLocalId } from './id'
 import { StreamStateView_UserToDevice } from './streamStateView_UserToDevice'
-import { bin_toHexString } from './binary'
 import { StreamStateView_CommonContent } from './streamStateView_CommonContent'
 import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'

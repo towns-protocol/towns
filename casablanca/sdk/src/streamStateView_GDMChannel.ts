@@ -9,11 +9,11 @@ import { EmittedEvents } from './client'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { ConfirmedTimelineEvent, ParsedEvent, RemoteTimelineEvent } from './types'
-import { check, logNever } from './check'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
+import { check, logNever } from '@river/mecholm'
 
 export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string

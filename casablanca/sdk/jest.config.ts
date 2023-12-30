@@ -29,7 +29,7 @@ const config: JestConfigWithTsJest = {
         '\\bhash\\.js\\b': 'hash.js',
         '(.+)\\.js': '$1',
         // need for mecholm/olm
-        '\\.(wasm)$': require.resolve('./src/crypto/mocks/mock-wasm-file.js'),
+        '\\.(wasm)$': require.resolve('../mecholm/src/mock-wasm-file.js'),
         msgpackr: '<rootDir>/../../node_modules/msgpackr/dist/node.cjs',
     },
     collectCoverage: true,

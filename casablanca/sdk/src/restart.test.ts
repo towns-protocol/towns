@@ -4,7 +4,7 @@
 
 import { MembershipOp } from '@river/proto'
 import { setTimeout } from 'timers/promises'
-import { dlog } from './dlog'
+import { dlog } from '@river/mecholm'
 import {
     genId,
     makeChannelStreamId,

@@ -4,11 +4,10 @@
 
 import { SnapshotCaseType } from '@river/proto'
 import { Client } from './client'
-import { DLogger, dlog } from './dlog'
+import { check, DLogger, dlog } from '@river/mecholm'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { makeDonePromise, makeTestClient, sendFlush } from './util.test'
 import { DecryptedTimelineEvent } from './types'
-import { check } from './check'
 
 const log_base = dlog('csb:test')
 

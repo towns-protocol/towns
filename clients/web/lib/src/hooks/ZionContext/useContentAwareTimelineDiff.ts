@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { FullyReadMarker } from '@river/proto'
 import {
     Client as CasablancaClient,
-    check,
     isChannelStreamId,
     isDMChannelStreamId,
     isGDMChannelStreamId,
@@ -10,6 +9,7 @@ import {
 import { TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { TimelineStore, useTimelineStore } from '../../store/use-timeline-store'
+import { check } from '@river/mecholm'
 
 export function useContentAwareTimelineDiffCasablanca(casablancaClient?: CasablancaClient) {
     useEffect(() => {

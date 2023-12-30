@@ -9,10 +9,10 @@ import {
     UserPayload_Snapshot,
     UserPayload_UserMembership,
 } from '@river/proto'
-import { check, logNever } from './check'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
+import { check, logNever } from '@river/mecholm'
 
 export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly streamId: string

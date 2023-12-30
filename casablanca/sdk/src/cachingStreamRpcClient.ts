@@ -31,9 +31,7 @@ import { StreamRpcClientType } from './makeStreamRpcClient'
 import { unpackMiniblock, unpackStreamResponse } from './sign'
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie, ParsedStreamResponse } from './types'
 import { Cache } from './cache'
-import { bin_equal } from './binary'
-import { isDefined } from './check'
-import { dlog } from './dlog'
+import { bin_equal, dlog, isDefined } from '@river/mecholm'
 
 export class CachingStreamRpcClient implements StreamRpcClientType {
     log = dlog('csb:streams:rpc-cache')

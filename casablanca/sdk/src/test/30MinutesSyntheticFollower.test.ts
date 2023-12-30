@@ -2,7 +2,7 @@
  * @group synthetic
  */
 
-import { dlog } from '../dlog'
+import { check, dlog } from '@river/mecholm'
 import { makeUserContextFromWallet, makeDonePromise, waitFor } from '../util.test'
 import { ethers } from 'ethers'
 import { jest } from '@jest/globals'
@@ -26,7 +26,6 @@ import {
 import { DecryptedContent } from '../encryptedContentTypes'
 import { SnapshotCaseType } from '@river/proto'
 import { DecryptedTimelineEvent } from '../types'
-import { check } from '../check'
 import { createSpaceDapp } from '@river/web3'
 
 // This is a temporary hack because importing viem via SpaceDapp causes a jest error

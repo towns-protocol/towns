@@ -5,11 +5,16 @@
 import _ from 'lodash'
 import { checkDelegateSig, unpackEnvelope, makeEvent, SignerContext } from './sign'
 import { make_UserPayload_Inception } from './types'
-import { bin_fromHexString, bin_toHexString } from './binary'
-import { dlog } from './dlog'
+import {
+    dlog,
+    bin_fromHexString,
+    bin_toHexString,
+    makeTownsDelegateSig,
+    makeOldTownsDelegateSig,
+    publicKeyToAddress,
+} from '@river/mecholm'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { makeUserStreamId } from './id'
-import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto/crypto'
 import { getPublicKey } from 'ethereum-cryptography/secp256k1'
 import { ethers } from 'ethers'
 import { EncryptedData, StreamEvent } from '@river/proto'

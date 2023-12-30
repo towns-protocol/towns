@@ -6,11 +6,11 @@ import { waitFor } from '@testing-library/dom'
 import {
     Client as CasablancaClient,
     RiverDbManager,
-    makeOldTownsDelegateSig,
     makeStreamRpcClient,
     MockEntitlementsDelegate,
+    SignerContext,
 } from '@river/sdk'
-import { bin_fromHexString, SignerContext } from '@river/sdk'
+import { bin_fromHexString, makeOldTownsDelegateSig } from '@river/mecholm'
 import { ethers } from 'ethers'
 import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 import {

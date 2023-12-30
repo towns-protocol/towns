@@ -8,9 +8,8 @@ import {
     UserDeviceKeyPayload_MegolmDevice,
     UserDeviceKeyPayload_Snapshot,
 } from '@river/proto'
-import { check, logNever } from './check'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { UserDevice } from './crypto/olmLib'
+import { UserDevice, check, logNever } from '@river/mecholm'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 
 export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractContent {

@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { bin_fromHexString, bin_fromBase64, isHexString } from './binary'
+import { bin_fromHexString, bin_fromBase64, isHexString } from '../binary'
 
 describe('types', () => {
     test('bin_fromHexString', () => {

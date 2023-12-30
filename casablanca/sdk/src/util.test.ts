@@ -1,6 +1,5 @@
 import { SignerContext, _impl_makeEvent_impl_, unpackEnvelopes } from './sign'
 
-import { dlog } from './dlog'
 import {
     EncryptedData,
     Envelope,
@@ -14,9 +13,16 @@ import { PlainMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
 import { userIdFromAddress } from './id'
 import { ParsedEvent, DecryptedTimelineEvent } from './types'
-import { bin_fromHexString, bin_toHexString } from './binary'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
-import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto/crypto'
+import {
+    bin_fromHexString,
+    bin_toHexString,
+    check,
+    dlog,
+    makeTownsDelegateSig,
+    makeOldTownsDelegateSig,
+    publicKeyToAddress,
+} from '@river/mecholm'
 import { ethers } from 'ethers'
 import { RiverDbManager } from './riverDbManager'
 import { StreamRpcClientType, makeStreamRpcClient } from './makeStreamRpcClient'
@@ -24,7 +30,6 @@ import assert from 'assert'
 import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
 import { EntitlementsDelegate } from './decryptionExtensions'
-import { check } from './check'
 
 const log = dlog('csb:test:util')
 

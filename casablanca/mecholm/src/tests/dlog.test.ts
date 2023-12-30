@@ -2,9 +2,9 @@
  * @group main
  */
 
-import { dlog, dlogError } from './dlog'
+import { dlog, dlogError } from '../dlog'
 import debug from 'debug'
-import { bin_fromHexString } from './binary'
+import { bin_fromHexString } from '../binary'
 
 describe('dlogTest', () => {
     test('basic', () => {

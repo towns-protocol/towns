@@ -15,7 +15,8 @@ import {
 
 import { Permission } from '@river/web3'
 import { waitFor } from '@testing-library/dom'
-import { DecryptedTimelineEvent, check } from '@river/sdk'
+import { check } from '@river/mecholm'
+import { DecryptedTimelineEvent } from '@river/sdk'
 import { SnapshotCaseType } from '@river/proto'
 
 describe('sendAMessage', () => {

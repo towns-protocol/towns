@@ -5,7 +5,7 @@ import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamEvents } from './streamEvents'
 import { UserMetadata_Usernames } from './userMetadata_Usernames'
 import { UserMetadata_DisplayNames } from './userMetadata_DisplayNames'
-import { bin_toHexString } from './binary'
+import { bin_toHexString } from '@river/mecholm'
 
 export class StreamStateView_UserMetadata {
     readonly userId: string

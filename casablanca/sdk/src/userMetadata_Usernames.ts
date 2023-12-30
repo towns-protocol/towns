@@ -2,7 +2,7 @@ import TypedEmitter from 'typed-emitter'
 import { EmittedEvents } from './client'
 import { EncryptedData } from '@river/proto'
 import { usernameChecksum } from './utils'
-import { dlog } from './dlog'
+import { dlog } from '@river/mecholm'
 
 export class UserMetadata_Usernames {
     log = dlog('csb:streams:usernames')

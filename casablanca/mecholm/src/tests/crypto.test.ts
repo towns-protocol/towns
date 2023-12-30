@@ -2,11 +2,11 @@
  * @group main
  */
 
-import { dlog } from './dlog'
-import { townsHash, townsRecoverPubKey, townsSign, townsVerifySignature } from './crypto/crypto'
-import { bin_fromHexString, bin_toHexString } from './binary'
+import { bin_fromHexString, bin_toHexString } from '../binary'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { readFileSync, writeFileSync } from 'fs'
+import { townsHash, townsRecoverPubKey, townsSign, townsVerifySignature } from '../megolmCrypto'
+import { dlog } from '../dlog'
 
 const log = dlog('test:crypto')
 
@@ -40,9 +40,10 @@ describe('crypto', () => {
             return ret
         }
 
-        const data = []
+        const data: Uint8Array[][] = []
         for (let i = 0; i <= 255; ++i) {
-            data.push(await genDataLine(new Uint8Array([i])))
+            const d = await genDataLine(new Uint8Array([i]))
+            data.push(d)
         }
         for (let len = 2; len <= 300; ++len) {
             for (let i = 0; i < 10; ++i) {

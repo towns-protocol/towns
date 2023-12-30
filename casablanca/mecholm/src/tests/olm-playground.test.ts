@@ -1,4 +1,4 @@
-import { OlmMegolmDelegate } from '../src/olm'
+import { OlmMegolmDelegate } from '../olm'
 
 describe('OlmPlayground', () => {
     const OlmDelegate = new OlmMegolmDelegate()

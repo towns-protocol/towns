@@ -2,7 +2,7 @@
  * @group load-tests-s2
  */
 
-import { dlog } from '../dlog'
+import { check, dlog } from '@river/mecholm'
 import { makeDonePromise } from '../util.test'
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { waitFor } from '@testing-library/react'
@@ -24,7 +24,6 @@ import { Queue, Worker } from 'bullmq'
 import fs from 'fs'
 import { SnapshotCaseType } from '@river/proto'
 import { DecryptedTimelineEvent } from '../types'
-import { check } from '../check'
 import { createAndStartClient } from './load_tests_util'
 import { RiverSDK } from '../testSdk'
 

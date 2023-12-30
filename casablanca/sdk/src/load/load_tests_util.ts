@@ -7,7 +7,7 @@ import { RiverSDK } from '../testSdk'
 import { RiverDbManager } from '../riverDbManager'
 import { MockEntitlementsDelegate } from '../utils'
 import { ISpaceDapp, createSpaceDapp } from '@river/web3'
-import { dlog } from '../dlog'
+import { dlog } from '@river/mecholm'
 import { minimalBalance } from './loadconfig'
 
 const log = dlog('csb:test:loadTests')

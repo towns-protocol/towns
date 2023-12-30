@@ -1,10 +1,9 @@
 import { Client } from './client'
-import { DLogger, dlog } from './dlog'
+import { check, DLogger, dlog } from '@river/mecholm'
 import { makeTestClient } from './util.test'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 import { MembershipOp, SnapshotCaseType } from '@river/proto'
 import { DecryptedTimelineEvent } from './types'
-import { check } from './check'
 
 class TestDriver {
     readonly client: Client

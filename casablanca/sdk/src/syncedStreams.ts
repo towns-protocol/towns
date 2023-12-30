@@ -1,4 +1,4 @@
-import { DLogger, dlog } from './dlog'
+import { DLogger, dlog, shortenHexString } from '@river/mecholm'
 import { SyncCookie, SyncOp, SyncStreamsResponse } from '@river/proto'
 
 import { EmittedEvents } from './client'
@@ -6,7 +6,6 @@ import { PersistenceStore } from './persistenceStore'
 import { Stream } from './stream'
 import { StreamRpcClientType } from './makeStreamRpcClient'
 import TypedEmitter from 'typed-emitter'
-import { shortenHexString } from './binary'
 import { unpackStreamAndCookie } from './sign'
 
 export enum SyncState {

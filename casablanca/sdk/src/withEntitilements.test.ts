@@ -2,7 +2,7 @@
  * @group with-entitilements
  */
 
-import { dlog } from './dlog'
+import { dlog } from '@river/mecholm'
 import { makeUserContextFromWallet, makeTestClient, makeDonePromise } from './util.test'
 import { genId, makeChannelStreamId, makeSpaceStreamId, makeUserStreamId } from './id'
 import { ethers } from 'ethers'

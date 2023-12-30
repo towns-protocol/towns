@@ -4,9 +4,9 @@ import { EmittedEvents } from './client'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { DecryptedContent, EncryptedContent } from './encryptedContentTypes'
-import { checkNever } from './check'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
+import { checkNever } from '@river/mecholm'
 
 export abstract class StreamStateView_AbstractContent {
     abstract readonly streamId: string

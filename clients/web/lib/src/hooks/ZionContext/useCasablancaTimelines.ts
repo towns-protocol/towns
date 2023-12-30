@@ -5,7 +5,6 @@ import {
     StreamTimelineEvent,
     isCiphertext,
     isRemoteEvent,
-    logNever,
     isDecryptedEvent,
     isLocalEvent,
     LocalTimelineEvent,
@@ -54,6 +53,7 @@ import {
     KeySolicitationEvent,
 } from '../../types/timeline-types'
 import { EventStatus } from 'matrix-js-sdk'
+import { logNever } from '@river/mecholm'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf

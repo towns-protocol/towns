@@ -3,7 +3,7 @@
  */
 
 import { MembershipOp, StreamAndCookie, SyncOp } from '@river/proto'
-import { dlog } from './dlog'
+import { dlog } from '@river/mecholm'
 import {
     genId,
     makeChannelStreamId,

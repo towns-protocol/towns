@@ -1,8 +1,7 @@
 import TypedEmitter from 'typed-emitter'
 import { ChannelProperties, EncryptedData, WrappedEncryptedData } from '@river/proto'
 import { EmittedEvents } from './client'
-import { bin_toHexString } from './binary'
-import { dlog } from './dlog'
+import { bin_toHexString, dlog } from '@river/mecholm'
 
 export class StreamStateView_ChannelMetadata {
     log = dlog('csb:streams:channel_metadata')

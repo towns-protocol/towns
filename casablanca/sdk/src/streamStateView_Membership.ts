@@ -1,9 +1,9 @@
 import { Membership, MembershipOp } from '@river/proto'
-import { logNever } from './check'
 import TypedEmitter from 'typed-emitter'
 import { StreamEvents } from './streamEvents'
 import { EmittedEvents } from './client'
 import { ConfirmedTimelineEvent } from './types'
+import { logNever } from '@river/mecholm'
 
 export class StreamStateView_Membership {
     readonly userId: string

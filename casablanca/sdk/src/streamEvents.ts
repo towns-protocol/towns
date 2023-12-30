@@ -12,7 +12,7 @@ import {
     RemoteTimelineEvent,
     StreamTimelineEvent,
 } from './types'
-import { UserDevice } from './crypto/olmLib'
+import { UserDevice } from '@river/mecholm'
 import { EncryptedContent } from './encryptedContentTypes'
 
 export type StreamChange = {

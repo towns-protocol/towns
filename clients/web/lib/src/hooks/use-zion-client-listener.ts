@@ -1,5 +1,6 @@
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
-import { bin_fromHexString, Client as CasablancaClient, check, SignerContext } from '@river/sdk'
+import { Client as CasablancaClient, SignerContext } from '@river/sdk'
+import { bin_fromHexString, check } from '@river/mecholm'
 import { LoginStatus } from './login'
 import { ZionClient } from '../client/ZionClient'
 import { ZionOpts } from '../client/ZionClientTypes'

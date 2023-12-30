@@ -2,12 +2,11 @@
  * @group load-tests-s3
  */
 
-import { dlog } from '../dlog'
+import { check, dlog } from '@river/mecholm'
 import { waitFor } from '../util.test'
 
 import { bobsAccount, accounts, jsonRpcProviderUrl, nodeRpcURL } from './loadconfig'
 import { Client } from '../client'
-import { check } from '../check'
 import {
     createAndStartClients,
     createClientSpaceAndChannel,

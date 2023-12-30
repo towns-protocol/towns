@@ -34,8 +34,7 @@ import {
     Snapshot,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { isDefined } from './check'
-import { bin_toHexString } from './binary'
+import { bin_toHexString, isDefined } from '@river/mecholm'
 import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
 
 export interface LocalEvent {

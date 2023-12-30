@@ -11,7 +11,7 @@ import {
 import { AnyMessage } from '@bufbuild/protobuf'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { Err, StreamService } from '@river/proto'
-import { dlog, dlogError } from './dlog'
+import { dlog, dlogError } from '@river/mecholm'
 import { genShortId } from './id'
 import { isIConnectError } from './utils'
 

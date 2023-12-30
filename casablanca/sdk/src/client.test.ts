@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { dlog } from './dlog'
+import { dlog, UserDevice, check, isDefined } from '@river/mecholm'
 import { Client } from './client'
 import {
     genId,
@@ -34,8 +34,6 @@ import {
     make_ChannelPayload_Message,
     make_CommonPayload_KeyFulfillment,
 } from './types'
-import { check, isDefined } from './check'
-import { UserDevice } from './crypto/olmLib'
 
 const log = dlog('csb:test')
 

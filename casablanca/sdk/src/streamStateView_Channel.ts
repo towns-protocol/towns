@@ -8,8 +8,8 @@ import {
     ChannelPayload_Snapshot,
     Snapshot,
 } from '@river/proto'
-import { check, logNever } from './check'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
+import { check, logNever } from '@river/mecholm'
 
 export class StreamStateView_Channel extends StreamStateView_AbstractContent {
     readonly streamId: string

@@ -2,33 +2,33 @@
  * @group main
  */
 
-import { CryptoStore } from './crypto/store/cryptoStore'
-import { UserDevice } from './crypto/olmLib'
-import { genId } from './id'
+import { CryptoStore } from '../cryptoStore'
+import { UserDevice } from '../olmLib'
+import { nanoid } from 'nanoid'
 
 describe('ClientStoreTests', () => {
     let store: CryptoStore
     beforeEach(() => {
-        const name = genId()
-        const userId = genId()
+        const name = nanoid()
+        const userId = nanoid()
         store = new CryptoStore(name, userId)
     })
 
     test('Add devices to store', async () => {
-        const userId = genId()
+        const userId = nanoid()
         const userDevice: UserDevice = {
-            deviceKey: genId(),
-            fallbackKey: genId(),
+            deviceKey: nanoid(),
+            fallbackKey: nanoid(),
         }
         await store.saveUserDevices(userId, [userDevice])
     })
 
     test('Fetch devices from store', async () => {
-        const userId = genId()
+        const userId = nanoid()
         const devices = [...Array(10).keys()].map(() => {
             const userDevice: UserDevice = {
-                deviceKey: genId(),
-                fallbackKey: genId(),
+                deviceKey: nanoid(),
+                fallbackKey: nanoid(),
             }
             return userDevice
         })
@@ -43,10 +43,10 @@ describe('ClientStoreTests', () => {
     })
 
     test('Expired devices are not fetched', async () => {
-        const userId = genId()
+        const userId = nanoid()
         const userDevice: UserDevice = {
-            deviceKey: genId(),
-            fallbackKey: genId(),
+            deviceKey: nanoid(),
+            fallbackKey: nanoid(),
         }
         const expirationMs = 500
         await store.saveUserDevices(userId, [userDevice], expirationMs)
@@ -60,10 +60,10 @@ describe('ClientStoreTests', () => {
     })
 
     test('Adding the same device id twice updates the expiration time', async () => {
-        const userId = genId()
+        const userId = nanoid()
         const userDevice: UserDevice = {
-            deviceKey: genId(),
-            fallbackKey: genId(),
+            deviceKey: nanoid(),
+            fallbackKey: nanoid(),
         }
         const expirationMs = 500
         await store.saveUserDevices(userId, [userDevice], expirationMs)
@@ -83,10 +83,10 @@ describe('ClientStoreTests', () => {
     // that expired devices are always purged on init to make sure that the DB
     // doesn't just keep growing. We still need to remember to call initialize()
     test('Expired devices are purged on init', async () => {
-        const userId = genId()
+        const userId = nanoid()
         const userDevice: UserDevice = {
-            deviceKey: genId(),
-            fallbackKey: genId(),
+            deviceKey: nanoid(),
+            fallbackKey: nanoid(),
         }
         const expirationMs = 500
         await store.saveUserDevices(userId, [userDevice], expirationMs)

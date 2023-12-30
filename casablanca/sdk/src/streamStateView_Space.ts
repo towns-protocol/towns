@@ -14,10 +14,10 @@ import {
     SpacePayload_Inception,
     SpacePayload_Snapshot,
 } from '@river/proto'
-import { check, isDefined, logNever, throwWithCode } from './check'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'
+import { check, isDefined, logNever, throwWithCode } from '@river/mecholm'
 
 export class StreamStateView_Space extends StreamStateView_AbstractContent {
     readonly streamId: string

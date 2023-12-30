@@ -3,12 +3,11 @@ import { RoomMessageEvent } from '../types/timeline-types'
 import {
     Client as CasablancaClient,
     RiverDbManager,
-    bin_fromHexString,
-    makeOldTownsDelegateSig,
     makeStreamRpcClient,
     userIdFromAddress,
     EntitlementsDelegate,
 } from '@river/sdk'
+import { bin_fromHexString, makeOldTownsDelegateSig } from '@river/mecholm'
 import { FullyReadMarker } from '@river/proto'
 import {
     ChannelTransactionContext,

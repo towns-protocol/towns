@@ -4,16 +4,23 @@ import chunk from 'lodash/chunk'
 import { Permission } from '@river/web3'
 import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
-import { MEGOLM_ALGORITHM, MegolmSession, UserDevice } from './crypto/olmLib'
+import {
+    shortenHexString,
+    MEGOLM_ALGORITHM,
+    MegolmSession,
+    UserDevice,
+    dlog,
+    dlogError,
+    DLogger,
+    check,
+    isDefined,
+} from '@river/mecholm'
 import { SessionKeys, UserToDevicePayload_MegolmSessions } from '@river/proto'
-import { check, isDefined } from './check'
-import { dlog, dlogError, DLogger } from './dlog'
 import {
     KeySolicitationContent,
     make_CommonPayload_KeyFulfillment,
     make_CommonPayload_KeySolicitation,
 } from './types'
-import { shortenHexString } from './binary'
 
 export interface EntitlementsDelegate {
     isEntitled(

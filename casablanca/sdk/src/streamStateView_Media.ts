@@ -1,9 +1,9 @@
 import TypedEmitter from 'typed-emitter'
 import { Snapshot, MediaPayload, MediaPayload_Inception, MediaPayload_Snapshot } from '@river/proto'
-import { check, logNever } from './check'
 import { RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
+import { check, logNever } from '@river/mecholm'
 
 export class StreamStateView_Media extends StreamStateView_AbstractContent {
     readonly streamId: string

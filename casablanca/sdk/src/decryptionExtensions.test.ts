@@ -2,9 +2,8 @@
  * @group main
  */
 
-import { isDefined } from './check'
 import { Client } from './client'
-import { dlog } from './dlog'
+import { dlog, isDefined } from '@river/mecholm'
 import { DecryptedContentError } from './encryptedContentTypes'
 import { genId, makeSpaceStreamId } from './id'
 import { TestClientOpts, makeTestClient, waitFor } from './util.test'

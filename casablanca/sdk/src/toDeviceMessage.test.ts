@@ -2,10 +2,9 @@
  * @group main
  */
 
-import { dlog } from './dlog'
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { UserDeviceCollection } from './crypto/olmLib'
+import { dlog, UserDeviceCollection } from '@river/mecholm'
 import { UserToDevicePayload_MegolmSessions } from '@river/proto'
 
 const log = dlog('test:toDeviceMessage')

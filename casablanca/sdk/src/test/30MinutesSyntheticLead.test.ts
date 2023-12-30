@@ -2,7 +2,7 @@
  * @group synthetic
  */
 
-import { dlog } from '../dlog'
+import { check, dlog } from '@river/mecholm'
 import { makeUserContextFromWallet, makeDonePromise, waitFor } from '../util.test'
 import { ethers } from 'ethers'
 import { jest } from '@jest/globals'
@@ -26,7 +26,6 @@ import {
 } from './30MinutesSyntheticConfig'
 import { DecryptedTimelineEvent } from '../types'
 import { SnapshotCaseType } from '@river/proto'
-import { check } from '../check'
 import { createSpaceDapp } from '@river/web3'
 import { RiverSDK } from '../testSdk'
 

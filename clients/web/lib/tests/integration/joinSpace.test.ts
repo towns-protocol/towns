@@ -18,7 +18,7 @@ import {
 } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { ethers } from 'ethers'
-import { assert } from '@river/sdk'
+import { assert } from '@river/mecholm'
 
 test('create space, and have user join ', async () => {
     // create clients

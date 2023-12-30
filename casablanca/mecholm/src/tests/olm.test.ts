@@ -1,4 +1,5 @@
-import { OlmMegolmDelegate } from '../src/olm'
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { OlmMegolmDelegate } from '../olm'
 import debug from 'debug'
 
 const log = debug('test')
@@ -99,6 +100,7 @@ describe('Olm Encryption Protocol', () => {
         const bobFallbackKey = JSON.parse(bobAccount.unpublished_fallback_key()).curve25519
         log('bobFallbackKeys', bobFallbackKey)
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const bobIdKey = JSON.parse(bobAccount?.identity_keys()).curve25519
         const otkId = Object.keys(bobFallbackKey)[0]
         // create outbound olm sessions using bob's fallback key

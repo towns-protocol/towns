@@ -1,19 +1,12 @@
 // todo: fix lint issues and remove exception see: https://linear.app/hnt-labs/issue/HNT-1721/address-linter-overrides-in-matrix-encryption-code-from-sdk
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument*/
 
-import { dlog } from '../dlog'
-import { ISessionInfo } from './store/types'
-import { CryptoStore } from './store/cryptoStore'
-import {
-    OlmMegolmDelegate,
-    Account,
-    InboundGroupSession,
-    OutboundGroupSession,
-    Utility,
-    Session,
-} from '@river/mecholm'
-import { IOutboundGroupSessionKey } from './algorithms/megolm'
+import { CryptoStore } from './cryptoStore'
+import { Account, InboundGroupSession, OutboundGroupSession, Utility, Session } from './olmTypes'
+import { OlmMegolmDelegate } from './olm'
+import { IOutboundGroupSessionKey } from './megolmTypes'
 import { MEGOLM_ALGORITHM, MegolmSession } from './olmLib'
+import { dlog } from './dlog'
 
 const log = dlog('csb:olmDevice')
 
@@ -59,6 +52,7 @@ export type OlmGroupSessionExtraData = {
 }
 
 export class OlmDevice {
+    // https://linear.app/hnt-labs/issue/HNT-4273/pick-a-better-pickle-key-in-olmdevice
     public pickleKey = 'DEFAULT_KEY' // set by consumers
 
     /** Curve25519 key for the account, unknown until we load the account from storage in init() */

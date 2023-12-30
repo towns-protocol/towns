@@ -7,30 +7,30 @@ import {
     utf8ToBytes,
 } from 'ethereum-cryptography/utils'
 
-export const bin_fromBase64 = (base64String: string): Uint8Array => {
+export function bin_fromBase64(base64String: string): Uint8Array {
     return protoBase64.dec(base64String)
 }
 
-export const bin_toBase64 = (uint8Array: Uint8Array): string => {
+export function bin_toBase64(uint8Array: Uint8Array): string {
     return protoBase64.enc(uint8Array)
 }
-export const bin_fromHexString = (hexString: string): Uint8Array => {
+export function bin_fromHexString(hexString: string): Uint8Array {
     return hexToBytes(hexString)
 }
 
-export const bin_toHexString = (uint8Array: Uint8Array): string => {
+export function bin_toHexString(uint8Array: Uint8Array): string {
     return bytesToHex(uint8Array)
 }
 
-export const bin_fromString = (str: string): Uint8Array => {
+export function bin_fromString(str: string): Uint8Array {
     return utf8ToBytes(str)
 }
 
-export const bin_toString = (buf: Uint8Array): string => {
+export function bin_toString(buf: Uint8Array): string {
     return bytesToUtf8(buf)
 }
 
-export const shortenHexString = (s: string): string => {
+export function shortenHexString(s: string): string {
     if (s.startsWith('0x')) {
         return s.length > 12 ? s.slice(0, 6) + '..' + s.slice(-4) : s
     } else {
@@ -38,17 +38,17 @@ export const shortenHexString = (s: string): string => {
     }
 }
 
-export const isHexString = (value: string): boolean => {
+export function isHexString(value: string): boolean {
     if (value.length === 0 || (value.length & 1) !== 0) {
         return false
     }
     return /^(0x)?[0-9a-fA-F]+$/.test(value)
 }
 
-export const bin_equal = (
+export function bin_equal(
     a: Uint8Array | null | undefined,
     b: Uint8Array | null | undefined,
-): boolean => {
+): boolean {
     if (
         (a === undefined || a === null || a.length === 0) &&
         (b === undefined || b === null || b.length === 0)

@@ -1,8 +1,8 @@
-import { UserDevice } from '../olmLib'
-import { InboundGroupSessionData } from '../olmDevice'
-import { AccountRecord, MegolmSessionRecord, UserDeviceRecord } from './types'
-
+import { AccountRecord, MegolmSessionRecord, UserDeviceRecord } from './storeTypes'
 import Dexie, { Table } from 'dexie'
+
+import { InboundGroupSessionData } from './olmDevice'
+import { UserDevice } from './olmLib'
 
 const DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS = 15 * 60 * 1000 // 15 minutes todo increase to like 10 days or something https://github.com/HereNotThere/harmony/pull/4222#issuecomment-1822935596
 

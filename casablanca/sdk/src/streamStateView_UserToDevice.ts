@@ -10,9 +10,9 @@ import {
     UserToDevicePayload_MegolmSessions,
     UserToDevicePayload_Ack,
 } from '@river/proto'
-import { check, logNever } from './check'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
+import { check, logNever } from '@river/mecholm'
 
 export class StreamStateView_UserToDevice extends StreamStateView_AbstractContent {
     readonly streamId: string
