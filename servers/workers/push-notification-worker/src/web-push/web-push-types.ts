@@ -13,7 +13,7 @@ export interface WebPushOptions {
   payload: object
   ttl: number
   channelId: string
-  topic: string
+  topic?: string
   urgency?: Urgency
 }
 

@@ -53,7 +53,9 @@ export async function sendNotificationViaWebPush(
       jwtData,
       payload: options.payload,
       channelId: options.channelId,
-      topic: patchTopicToEnsureSpecCompliance(options.channelId),
+      // disable topic
+      // https://linear.app/hnt-labs/issue/HNT-4314/dont-group-notification-by-channelid-to-make-each-notification-for-a
+      //topic: patchTopicToEnsureSpecCompliance(options.channelId),
       ttl,
       urgency: options.urgency ?? 'high',
     }
