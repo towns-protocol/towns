@@ -40,8 +40,11 @@ TASK_DEF="$( jq '.taskDefinition' ${CURRENT_TASK_DEFINITION_FILENAME} )"
 # Remove all the unwanted keys
 TASK_DEF_WITHOUT_UNWANTED_KEYS="$( jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' <<< ${TASK_DEF} )"
 
+#Get the ECR public repo URL based on name
+PUBLIC_ECR_URL=$(aws ecr-public describe-repositories --repository-names $ECR_REPOSITORY --query 'repositories[0].repositoryUri' --output text)
+
 # Update the image in the task definition using the DOCKER_IMAGE_TAG variable
-TASK_DEF_WITH_UPDATED_IMAGE="$( jq '.containerDefinitions[0].image = "'${AWS_ACCOUNT_ID}'.dkr.ecr.'${AWS_REGION}'.amazonaws.com/river-node:'${DOCKER_IMAGE_TAG}'"' <<< ${TASK_DEF_WITHOUT_UNWANTED_KEYS} )"
+TASK_DEF_WITH_UPDATED_IMAGE="$( jq '.containerDefinitions[0].image = "'${PUBLIC_ECR_URL}':'${DOCKER_IMAGE_TAG}'"' <<< ${TASK_DEF_WITHOUT_UNWANTED_KEYS} )"
 
 # Save the updated task definition
 echo $TASK_DEF_WITH_UPDATED_IMAGE > $NEW_TASK_DEFINITION_FILENAME

@@ -3,7 +3,7 @@ services:
   terraform:
     # build:
     #   context: .
-    image: herenotthere/hnt-infra:latest
+    image: public.ecr.aws/l8h0l2e6/hnt-infra
     volumes:
     - .:/mnt/
     - ~/.aws/:/root/.aws

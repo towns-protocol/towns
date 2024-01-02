@@ -73,8 +73,7 @@ jobs:
                   ENVIRONMENT_NAME: ${{ inputs.environment_name }}
                   DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
                   NODE_NUMBER: ${{ inputs.node_number }}
-                  AWS_ACCOUNT_ID: 211286738967
-                  AWS_REGION: us-east-1
+                  ECR_REPOSITORY: river-node
               run: ./scripts/create-river-task-definition.sh
 
             - name: Deploy service

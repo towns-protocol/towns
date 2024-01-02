@@ -386,7 +386,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
   container_definitions = jsonencode([{
     name  = "river-node"
-    image = "${local.global_remote_state.ecr.repository_url_map["river-node"]}:latest"
+    image = "${local.global_remote_state.public_ecr.repository_url_map["river-node"]}:latest"
 
     essential = true
     portMappings = [{
@@ -580,14 +580,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
         },
         {
           name  = "DD_APM_ENABLED",
-          value = "true"
-        },
-        {
-          name  = "DD_PROMETHEUS_SCRAPE_ENABLED",
-          value = "true"
-        },
-        {
-          name  = "DD_PROMETHEUS_SCRAPE_CHECKS_ENABLED",
           value = "true"
         },
         {

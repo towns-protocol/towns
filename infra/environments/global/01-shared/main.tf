@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.31.0"
     }
   }
 
@@ -151,7 +151,7 @@ resource "aws_s3_bucket_versioning" "post_provision_config_lambda_code_versionin
 
 module "ecr" {
   source  = "mattyait/ecr/aws"
-  version = "1.0.1"
+  version = "1.1.0"
 
   image_names = [
     "river-node",
@@ -165,4 +165,16 @@ module "ecr" {
   protected_tags           = ["latest"]
 
   tags = module.global_constants.tags
+}
+
+module "public_ecr" {
+  source  = "mattyait/ecr/aws"
+  version = "1.1.0"
+
+  image_names = [
+    "river-node",
+    "hnt-infra",
+  ]
+  repository_type = "public"
+  tags            = module.global_constants.tags
 }

@@ -38,3 +38,7 @@ output "ecr" {
   value       = module.ecr
 }
 
+output "public_ecr" {
+  description = "Public ECR repository"
+  value       = module.public_ecr
+}
