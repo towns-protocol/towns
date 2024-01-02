@@ -90,8 +90,8 @@ export const DirectMessageInviteUserList = (props: {
                         horizontal
                         scroll
                         paddingX
+                        gap
                         overflowX="scroll"
-                        gap="lg"
                         alignItems="center"
                         key="selected-users"
                     >
@@ -191,14 +191,14 @@ const Participant = (props: ParticipantProps & { selected: boolean; isCheckbox: 
             onClick={onClick}
         >
             <Avatar userId={userId} size="avatar_x4" />
-            <Box gap="sm" overflow="hidden">
-                <Text truncate color="default">
+            <Box gap="sm" overflow="hidden" paddingY="xs">
+                <Paragraph truncate color="default">
                     {getPrettyDisplayName(profile)}
-                </Text>
+                </Paragraph>
                 {userBio && (
-                    <Text truncate color="gray2" size="sm">
+                    <Paragraph truncate color="gray2" size="sm">
                         {userBio}
-                    </Text>
+                    </Paragraph>
                 )}
             </Box>
             <Box grow shrink={false} alignItems="end">
@@ -222,24 +222,28 @@ const SelectedParticipant = (props: ParticipantProps) => {
             gap="sm"
         >
             <Box position="relative">
-                <Avatar size="avatar_lg" userId={userId} />
-                <IconButton
-                    hoverable
-                    icon="close"
-                    size="square_xxs"
-                    position="topRight"
-                    rounded="full"
-                    background="level4"
-                    color="default"
-                    border="level3"
-                    tooltip="Remove"
-                    tooltipOptions={{ placement: 'vertical', immediate: true }}
-                    onClick={() => onToggle(userId)}
-                />
+                <Avatar size="avatar_md" userId={userId} />
+                <Box position="topRight" insetX="xxs">
+                    <IconButton
+                        hoverable
+                        icon="close"
+                        size="square_xxs"
+                        rounded="full"
+                        background="level4"
+                        color="default"
+                        border="level3"
+                        tooltip="Remove"
+                        tooltipOptions={{ placement: 'vertical', immediate: true }}
+                        onClick={() => onToggle(userId)}
+                    />
+                </Box>
             </Box>
-            <Text truncate fontWeight="medium" fontSize="sm">
-                {getPrettyDisplayName(profile)}
-            </Text>
+            <Box maxWidth="x8" height="x2" overflow="hidden" justifyContent="center">
+                <Text truncate fontWeight="medium" fontSize="xs">
+                    {getPrettyDisplayName(profile)}
+                    {getPrettyDisplayName(profile)}
+                </Text>
+            </Box>
         </MotionStack>
     )
 }
