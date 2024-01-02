@@ -40,3 +40,16 @@ func ParseEthereumAddress(address string) (common.Address, error) {
 	}
 	return common.HexToAddress(address), nil
 }
+
+func totalQuorumNum(totalNumNodes int) int {
+	return (totalNumNodes + 1) / 2
+}
+
+// Returns number of remotes that need to succeed for quorum based on where the local is present.
+func remoteQuorumNum(remotes int, local bool) int {
+	if local {
+		return totalQuorumNum(remotes+1) - 1
+	} else {
+		return totalQuorumNum(remotes)
+	}
+}

@@ -9,6 +9,7 @@ import (
 	"casablanca/node/shared"
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/bufbuild/connect-go"
 	connect_go "github.com/bufbuild/connect-go"
@@ -112,47 +113,71 @@ func (s *Service) createReplicatedStream(
 	streamId string,
 	parsedEvents []*ParsedEvent,
 ) (*CreateStreamResponse, error) {
-	log := dlog.CtxLog(ctx)
-
 	mb, err := MakeGenesisMiniblock(s.wallet, parsedEvents)
 	if err != nil {
 		return nil, err
 	}
 
-	nodeAddress, err := s.streamRegistry.AllocateStream(ctx, streamId, mb.Header.Hash)
+	nodes, err := s.streamRegistry.AllocateStream(ctx, streamId, mb.Header.Hash)
 	if err != nil {
 		return nil, err
 	}
 
-	isLocal, remotes := s.splitLocalAndRemote(ctx, nodeAddress)
+	isLocal, remotes := s.splitLocalAndRemote(ctx, nodes)
+	sender := newQuorumPool(len(remotes))
 
-	// TODO: for replicated streams fan out here.
-	var cookie *SyncCookie
+	var localSyncCookie *SyncCookie
 	if isLocal {
-		_, streamView, err := s.cache.CreateStream(ctx, streamId, mb)
-		if err != nil {
-			return nil, err
-		}
-		cookie = streamView.SyncCookie(s.wallet.AddressStr)
-	} else {
-		log.Debug("Forwarding request", "streamId", streamId, "nodeAddress", nodeAddress[0])
+		sender.GoLocal(func() error {
+			_, sv, err := s.cache.CreateStream(ctx, streamId, mb)
+			if err != nil {
+				return err
+			}
+			localSyncCookie = sv.SyncCookie(s.wallet.AddressStr)
+			return nil
+		})
+	}
 
-		stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(remotes[0])
-		if err != nil {
-			return nil, err
-		}
-		resp, err := stub.AllocateStream(
-			ctx,
-			&connect.Request[AllocateStreamRequest]{
-				Msg: &AllocateStreamRequest{
-					Miniblock: mb,
-					StreamId:  streamId,
+	var remoteSyncCookie *SyncCookie
+	var remoteSyncCookieOnce sync.Once
+	if len(remotes) > 0 {
+		for _, n := range remotes {
+			sender.GoRemote(
+				n,
+				func(node string) error {
+					stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
+					if err != nil {
+						return err
+					}
+					r, err := stub.AllocateStream(
+						ctx,
+						connect.NewRequest[AllocateStreamRequest](
+							&AllocateStreamRequest{
+								StreamId:  streamId,
+								Miniblock: mb,
+							},
+						),
+					)
+					if err != nil {
+						return err
+					}
+					remoteSyncCookieOnce.Do(func() {
+						remoteSyncCookie = r.Msg.SyncCookie
+					})
+					return nil
 				},
-			})
-		if err != nil {
-			return nil, err
+			)
 		}
-		cookie = resp.Msg.SyncCookie
+	}
+
+	err = sender.Wait()
+	if err != nil {
+		return nil, err
+	}
+
+	cookie := localSyncCookie
+	if cookie == nil {
+		cookie = remoteSyncCookie
 	}
 
 	return &CreateStreamResponse{

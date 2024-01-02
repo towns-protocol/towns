@@ -155,9 +155,10 @@ func (s *Service) addEventImpl(ctx context.Context, req *connect_go.Request[AddE
 	}
 
 	if isLocal {
-		return s.localAddEvent(ctx, req)
+		return s.localAddEvent(ctx, req, remotes)
 	}
 
+	// TODO: smarter remote select? random?
 	firstRemote := remotes[0]
 	dlog.CtxLog(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
 	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)

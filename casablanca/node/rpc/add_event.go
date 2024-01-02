@@ -21,7 +21,7 @@ var (
 	addEventRequests = infra.NewSuccessMetrics("add_event_requests", serviceRequests)
 )
 
-func (s *Service) localAddEvent(ctx context.Context, req *connect.Request[AddEventRequest]) (*connect.Response[AddEventResponse], error) {
+func (s *Service) localAddEvent(ctx context.Context, req *connect.Request[AddEventRequest], remotes []string) (*connect.Response[AddEventResponse], error) {
 	log := dlog.CtxLog(ctx)
 
 	parsedEvent, err := ParseEvent(req.Msg.Event)
@@ -32,7 +32,7 @@ func (s *Service) localAddEvent(ctx context.Context, req *connect.Request[AddEve
 
 	log.Debug("localAddEvent", "parsedEvent", parsedEvent)
 
-	err = s.addParsedEvent(ctx, req.Msg.StreamId, parsedEvent)
+	err = s.addParsedEvent(ctx, req.Msg.StreamId, parsedEvent, remotes)
 	if err == nil {
 		addEventRequests.PassInc()
 		return connect.NewResponse(&AddEventResponse{}), nil
@@ -42,12 +42,12 @@ func (s *Service) localAddEvent(ctx context.Context, req *connect.Request[AddEve
 	}
 }
 
-func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEvent *ParsedEvent) error {
+func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEvent *ParsedEvent, remotes []string) error {
 	if parsedEvent.Event.PrevMiniblockHash == nil {
 		return RiverError(Err_INVALID_ARGUMENT, "event has no prevMiniblockHash")
 	}
 
-	stream, streamView, err := s.loadStream(ctx, streamId)
+	localStream, streamView, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return err
 	}
@@ -56,6 +56,13 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	err = streamView.ValidateNextEvent(parsedEvent, &s.streamConfig.RecencyConstraints)
 	if err != nil {
 		return err
+	}
+
+	stream := &replicatedStream{
+		streamId:    streamId,
+		localStream: localStream,
+		remotes:     remotes,
+		service:     s,
 	}
 
 	// check event type

@@ -38,7 +38,7 @@ func (s *Service) NewEventReceived(ctx context.Context, req *connect.Request[New
 	log.Debug("NewEventReceived ENTER")
 	r, e := s.newEventReceived(ctx, req.Msg)
 	if e != nil {
-		return nil, AsRiverError(e).Func("AllocateStream").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+		return nil, AsRiverError(e).Func("NewEventReceived").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
 	}
 	log.Debug("NewEventReceived LEAVE", "response", r)
 	return connect.NewResponse(r), nil
