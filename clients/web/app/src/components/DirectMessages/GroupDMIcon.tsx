@@ -7,16 +7,20 @@ import { Avatar } from '@components/Avatar/Avatar'
 type Props = {
     roomIdentifier: string
     width?: 'x3' | 'x4' | 'x6'
+    latestUserId?: string
 }
 
 export type GroupDMIconProps = Props
 
 export const GroupDMIcon = (props: Props) => {
     const { counterParty, data } = useDMData(props.roomIdentifier)
-    const userIds = useMemo(
-        () => (data?.isGroup ? data.userIds : [counterParty].filter(notUndefined)),
-        [counterParty, data?.isGroup, data?.userIds],
-    )
+    const userIds = useMemo(() => {
+        const userIds = data?.isGroup ? data.userIds : [counterParty].filter(notUndefined)
+        if (props.latestUserId) {
+            userIds.sort((a) => (a === props.latestUserId ? -1 : 0))
+        }
+        return userIds
+    }, [counterParty, data?.isGroup, data?.userIds, props.latestUserId])
 
     return <AvatarGroup userIds={userIds} width={props.width} />
 }
@@ -48,7 +52,7 @@ export const AvatarGroup = (props: AvatarGroupProps) => {
 
     const { size, borderWidth, fontScale } = {
         x3: { size: '75%', fontScale: 0.5, borderWidth: 2 },
-        x4: { size: '75%', fontScale: 0.6, borderWidth: 2 },
+        x4: { size: '70%', fontScale: 0.6, borderWidth: 2 },
         x6: { size: '66%', fontScale: 0.8, borderWidth: 2 },
     }[width]
 

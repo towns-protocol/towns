@@ -30,7 +30,7 @@ export const DirectMessageListItem = (props: {
 
     return (
         <DirectMessageMotionContainer selected={selected} onClick={onClick}>
-            <DirectMessageIcon channel={channel} width="x4" />
+            <DirectMessageIcon channel={channel} width="x4" latestUserId={latestUser?.userId} />
 
             <Box grow gap="sm" width="100%" overflow="hidden" height="100%" paddingY="xxs">
                 {/* first line: title and date */}
@@ -133,6 +133,7 @@ export const DirectMessageName = (props: { channel: DMChannelIdentifier }) => {
 export const DirectMessageIcon = (props: {
     channel: DMChannelIdentifier
     width: GroupDMIconProps['width']
+    latestUserId?: string
 }) => {
     const { channel } = props
     const avatarSizeMap = {
@@ -142,7 +143,11 @@ export const DirectMessageIcon = (props: {
     } as const
     return channel.isGroup ? (
         <Box horizontal insetRight="xs">
-            <GroupDMIcon roomIdentifier={channel.id} width={props.width} />
+            <GroupDMIcon
+                roomIdentifier={channel.id}
+                width={props.width}
+                latestUserId={props.latestUserId}
+            />
         </Box>
     ) : (
         channel.userIds.map((userId) => (
