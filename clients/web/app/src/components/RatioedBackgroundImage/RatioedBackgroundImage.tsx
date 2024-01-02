@@ -1,7 +1,6 @@
 import React, { useRef } from 'react'
 import { assignInlineVars } from '@vanilla-extract/dynamic'
 import { Box, IconButton } from '@ui'
-import { vars } from 'ui/styles/vars.css'
 import { useRestrictedImageDimensions } from 'ui/hooks/useRestrictedImageDimensions'
 import { useDevice } from 'hooks/useDevice'
 import { containerStyle } from './RatioedBackgroundImage.css'
@@ -45,7 +44,6 @@ export const RatioedBackgroundImage = ({
                     // these are broken up instead of shorthand to avoid an issue with
                     // vanilla-extract in tests
                     backgroundImage: `url(${url})`,
-                    backgroundColor: vars.color.background.level3,
                     backgroundPosition: 'center',
                     backgroundSize: 'contain',
                     backgroundRepeat: 'no-repeat',
