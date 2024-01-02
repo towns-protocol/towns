@@ -227,7 +227,12 @@ function diffAdded(
             prevMarker?.mentions ?? 0 + eventSegment.filter((e) => e.isMentioned).length
         const beginUnreadWindow = prevMarker?.beginUnreadWindow ?? eventSegment[0].eventNum
         const endUnreadWindow = eventSegment[eventSegment.length - 1].eventNum
-        check(beginUnreadWindow <= endUnreadWindow, 'begin must be <= end')
+
+        if (beginUnreadWindow > endUnreadWindow) {
+            console.log('beginUnreadWindow must be <= endUnreadWindow')
+            return
+        }
+
         const firstUnread = firstUnreadEvent(
             events,
             userId,
