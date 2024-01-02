@@ -144,17 +144,23 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             console.log(`sw:push: notification content { title: ${title}, body: ${body} }`)
 
             // options: https://developer.mozilla.org/en-US/docs/Web/API/Notification
-            const options: NotificationOptions = {
-                body,
-                silent: false,
-                icon: '/pwa/maskable_icon_x192.png',
-                data,
-                tag: notification.content.channelId,
+            if (title && body) {
+                const options: NotificationOptions = {
+                    body,
+                    silent: false,
+                    icon: '/pwa/maskable_icon_x192.png',
+                    data,
+                    tag: notification.content.channelId,
+                }
+                await worker.registration.showNotification(title, options)
+                console.log('sw:push: Notification shown')
+            } else {
+                console.log(
+                    'sw:push: did not process notification content correctly. Something is missing',
+                )
             }
-            await worker.registration.showNotification(title, options)
         }
         event.waitUntil(handleEvent(event))
-        console.log('sw:push: Notification shown')
     })
 
     worker.addEventListener('notificationclick', (event) => {
@@ -338,8 +344,8 @@ function generateReplyToMessage(
 }
 
 async function getNotificationContent(notification: AppNotification): Promise<{
-    title: string
-    body: string
+    title: string | undefined
+    body: string | undefined
 }> {
     let townName: string | undefined = undefined
     let channelName: string | undefined = undefined
@@ -360,6 +366,11 @@ async function getNotificationContent(notification: AppNotification): Promise<{
         const sender = await idbUsers.get(notification.content.senderId)
         const myUser = await idbUsers.get(ServiceWorkerMessageType.MyUserId)
         myUserId = myUser?.name // this is the userId, not the displayName
+        townName = space?.name
+        channelName = channel?.name
+        // transform the sender name to the shortened version
+        senderName = getShortenedName(sender?.name)
+
         if (
             notification.content.kind === AppNotificationType.DirectMessage &&
             notification.content.recipients &&
@@ -381,20 +392,8 @@ async function getNotificationContent(notification: AppNotification): Promise<{
                 })
                 .filter((user) => user !== undefined) as User[]
         }
-
-        townName = space?.name
-        channelName = channel?.name
-        // transform the sender name to the shortened version
-        senderName = getShortenedName(sender?.name)
     } catch (error) {
-        console.error('sw:push: error fetching space/channel name from idb', error)
-    }
-
-    // if this device doesn't have a town name, they haven't synced this town at all yet.
-    // show them a message to open the app to sync this town
-    const noTownNameMsg = {
-        title: "Let's sync!",
-        body: "There's a new message in one of your towns. Open the app to sync with it.",
+        console.error('sw:push: error fetching space/channel/user names from idb', error)
     }
 
     switch (notification.content.kind) {
@@ -404,21 +403,30 @@ async function getNotificationContent(notification: AppNotification): Promise<{
             if (townName) {
                 return generateNewNotificationMessage(townName, channelName, senderName)
             }
-            return noTownNameMsg
+            return {
+                title: undefined,
+                body: undefined,
+            }
         case AppNotificationType.Mention:
             if (townName) {
                 return generateMentionedMessage(townName, channelName, senderName)
             }
-            return noTownNameMsg
+            return {
+                title: undefined,
+                body: undefined,
+            }
         case AppNotificationType.ReplyTo:
             if (townName) {
                 return generateReplyToMessage(townName, channelName, senderName)
             }
-            return noTownNameMsg
+            return {
+                title: undefined,
+                body: undefined,
+            }
         default:
             return {
-                title: 'Town',
-                body: 'New Notification',
+                title: undefined,
+                body: undefined,
             }
     }
 }
