@@ -1,5 +1,11 @@
 import { HistoryVisibility, IContent, JoinRule, RestrictedAllowType } from 'matrix-js-sdk'
-import { ChannelOp, FullyReadMarker, MiniblockHeader, PayloadCaseType } from '@river/proto'
+import {
+    ChannelOp,
+    ChannelProperties,
+    FullyReadMarker,
+    MiniblockHeader,
+    PayloadCaseType,
+} from '@river/proto'
 import { Channel, Membership, Mention, PowerLevels } from './zion-types'
 import { BlockchainTransaction } from './web3-types'
 import { staticAssertNever } from '../utils/zion-utils'
@@ -48,6 +54,7 @@ export enum ZTEvent {
     RoomMessage = 'm.room.message',
     RoomMessageEncrypted = 'm.room.encrypted',
     RoomName = 'm.room.name',
+    RoomProperties = 'm.room.properties',
     RoomPowerLevels = 'm.room.power_levels',
     RoomTopic = 'm.room.topic',
     SpaceChild = 'm.space.child',
@@ -76,6 +83,7 @@ export type TimelineEvent_OneOf =
     | RoomMessageEvent
     | RoomNameEvent
     | RoomPowerLevelsEvent
+    | RoomPropertiesEvent
     | RoomTopicEvent
     | SpaceChildEvent
     | SpaceParentEvent
@@ -129,6 +137,11 @@ export interface RoomCreateEvent {
     predecessor?: { event_id: string; room_id: string }
     type?: PayloadCaseType
     spaceId?: string // valid on casablanca channel streams
+}
+
+export interface RoomPropertiesEvent {
+    kind: ZTEvent.RoomProperties
+    properties: ChannelProperties
 }
 
 export interface RoomEncryptionEvent {
@@ -357,6 +370,8 @@ export function getFallbackContent(
             return `${senderDisplayName}: ${content.body}`
         case ZTEvent.RoomName:
             return `newValue: ${content.name}`
+        case ZTEvent.RoomProperties:
+            return `properties: ${content.properties.name ?? ''} ${content.properties.topic ?? ''}`
         case ZTEvent.SpaceUsername:
             return `username: ${content.username}`
         case ZTEvent.SpaceDisplayName:

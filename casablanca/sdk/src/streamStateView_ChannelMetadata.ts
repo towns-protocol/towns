@@ -47,6 +47,17 @@ export class StreamStateView_ChannelMetadata {
         })
     }
 
+    prependEncryptedData(
+        eventId: string,
+        data: EncryptedData,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        emitter?.emit('newEncryptedContent', this.streamId, eventId, {
+            kind: 'channelProperties',
+            content: data,
+        })
+    }
+
     onDecryptedContent(
         eventId: string,
         content: ChannelProperties,

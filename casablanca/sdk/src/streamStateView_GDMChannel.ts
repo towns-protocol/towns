@@ -66,8 +66,14 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
             case 'membership':
             case 'displayName':
             case 'username':
-            case 'channelProperties':
                 // nothing to do, conveyed in the snapshot
+                break
+            case 'channelProperties':
+                this.channelMetadata.prependEncryptedData(
+                    event.hashStr,
+                    payload.content.value,
+                    emitter,
+                )
                 break
             case undefined:
                 break

@@ -7,6 +7,7 @@ import { MessageItem } from './items/MessageItem/MessageItem'
 import { TimelineThreadUpdates } from './items/ThreadUpdates'
 import { RenderEvent, RenderEventType } from '../MessageTimeline/util/getEventsByDate'
 import { RoomCreate } from './items/RoomCreate'
+import { RoomProperties } from './items/RoomProperties'
 
 export const MessageTimelineItem = React.memo(
     (props: {
@@ -58,6 +59,10 @@ export const MessageTimelineItem = React.memo(
                         channelName={channelName}
                     />
                 )
+            }
+
+            case RenderEventType.RoomProperties: {
+                return <RoomProperties event={itemData.event} userId={userId} />
             }
 
             case RenderEventType.ThreadUpdate: {

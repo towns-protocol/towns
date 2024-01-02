@@ -6,6 +6,7 @@ import {
     RoomMemberEvent,
     RoomMessageEncryptedEvent,
     RoomMessageEvent,
+    RoomPropertiesEvent,
     ThreadStats,
     TimelineEvent,
     ZTEvent,
@@ -23,6 +24,7 @@ export enum RenderEventType {
     ChannelHeader = 'ChannelHeader',
     NewDivider = 'NewDivider',
     ThreadUpdate = 'ThreadUpdate',
+    RoomProperties = 'RoomProperties',
 }
 
 interface BaseEvent {
@@ -47,6 +49,8 @@ export type ZRoomMessageRedactedEvent = Omit<TimelineEvent, 'content'> & {
 export type ZRoomMemberEvent = Omit<TimelineEvent, 'content'> & { content: RoomMemberEvent }
 
 export type ZRoomCreateEvent = Omit<TimelineEvent, 'content'> & { content: RoomCreateEvent }
+
+export type ZRoomPropertiesEvent = Omit<TimelineEvent, 'content'> & { content: RoomPropertiesEvent }
 
 export interface UserMessagesRenderEvent extends BaseEvent {
     type: RenderEventType.UserMessages
@@ -101,6 +105,12 @@ export interface RoomCreateRenderEvent extends BaseEvent {
     event: ZRoomCreateEvent
 }
 
+export interface RoomPropertiesRenderEvent extends BaseEvent {
+    type: RenderEventType.RoomProperties
+    key: string
+    event: ZRoomPropertiesEvent
+}
+
 export interface NewDividerRenderEvent extends BaseEvent {
     type: RenderEventType.NewDivider
     key: string
@@ -114,6 +124,10 @@ export interface ThreadUpdateRenderEvent extends BaseEvent {
 
 const isRoomCreate = (event: TimelineEvent): event is ZRoomCreateEvent => {
     return event.content?.kind === ZTEvent.RoomCreate
+}
+
+const isRoomProperties = (event: TimelineEvent): event is ZRoomPropertiesEvent => {
+    return event.content?.kind === ZTEvent.RoomProperties
 }
 
 export const isRoomMessage = (event: TimelineEvent): event is ZRoomMessageEvent => {
@@ -158,6 +172,7 @@ export type RenderEvent =
     | RoomMemberRenderEvent
     | ThreadUpdateRenderEvent
     | UserMessagesRenderEvent
+    | RoomPropertiesRenderEvent
 
 const DEBUG_NO_GROUP_BY_USER = false
 
@@ -337,6 +352,12 @@ export const getEventsByDate = (
                         event,
                     })
                 }
+            } else if (isRoomProperties(event)) {
+                renderEvents.push({
+                    type: RenderEventType.RoomProperties,
+                    key: `room-properties-${event.eventId}`,
+                    event,
+                })
             }
             return result
         },
@@ -353,6 +374,7 @@ export const getEventsByDate = (
                 (e) =>
                     e.type === RenderEventType.ChannelHeader ||
                     e.type === RenderEventType.AccumulatedRoomMembers ||
+                    e.type === RenderEventType.RoomProperties ||
                     (e.type === RenderEventType.UserMessages &&
                         // keep redacted messages with replies
                         !e.events.every((e) => e.isRedacted && !replyMap?.[e.eventId])),

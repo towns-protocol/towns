@@ -25,6 +25,7 @@ import {
     GdmChannelPayload,
     ChannelMessage,
     CommonPayload,
+    ChannelProperties,
 } from '@river/proto'
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
@@ -51,6 +52,7 @@ import {
     TimelineEvent_OneOf,
     ZTEvent,
     KeySolicitationEvent,
+    RoomPropertiesEvent,
 } from '../../types/timeline-types'
 import { EventStatus } from 'matrix-js-sdk'
 import { logNever } from '@river/mecholm'
@@ -274,7 +276,7 @@ function toTownsContent_fromDecryptedEvent(
         case 'channelMessage':
             return toTownsContent_FromChannelMessage(message.decryptedContent.content, description)
         case 'channelProperties':
-            return { error: `payload not supported: ${message.decryptedContent.kind}` }
+            return toTownsContent_FromChannelProperties(message.decryptedContent.content)
         default:
             logNever(message.decryptedContent)
             return { error: `Unknown payload case: ${description}` }
@@ -500,8 +502,14 @@ function toTownsContent_ChannelPayload(
         case 'displayName':
         case 'username':
             return { error: `${description} displayName/username not supported` }
-        case 'channelProperties':
-            return { error: `${description} channel properties not supported` }
+        case 'channelProperties': {
+            const payload = value.content.value
+            return toTownsContent_ChannelPayload_ChannelProperties(
+                timelineEvent,
+                payload,
+                description,
+            )
+        }
         case undefined: {
             return { error: `Undefined payload case: ${description}` }
         }
@@ -564,6 +572,17 @@ function toTownsContent_FromChannelMessage(
     }
 }
 
+function toTownsContent_FromChannelProperties(
+    channelProperties: ChannelProperties,
+): TownsContentResult {
+    return {
+        content: {
+            kind: ZTEvent.RoomProperties,
+            properties: channelProperties,
+        } satisfies RoomPropertiesEvent,
+    }
+}
+
 function toTownsContent_ChannelPayload_Message(
     timelineEvent: StreamTimelineEvent,
     payload: EncryptedData,
@@ -580,6 +599,15 @@ function toTownsContent_ChannelPayload_Message(
     }
     // do not handle non-encrypted messages that should be encrypted
     return { error: `${description} message text invalid channel message` }
+}
+
+function toTownsContent_ChannelPayload_ChannelProperties(
+    timelineEvent: StreamTimelineEvent,
+    payload: EncryptedData,
+    description: string,
+): TownsContentResult {
+    // If the payload is encrypted, we display nothing.
+    return { error: `${description} invalid channel properties` }
 }
 
 function toTownsContent_ChannelPayload_Message_Post(
