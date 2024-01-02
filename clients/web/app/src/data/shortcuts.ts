@@ -60,6 +60,12 @@ export const Shortcuts = {
             description: 'Display channel directory',
         },
     },
+    ['Direct Messages']: {
+        CreateMessage: {
+            keys: 'Meta+Shift+K',
+            description: 'Create new message',
+        },
+    },
     Messages: {
         EditMessage: {
             keys: 'E',
@@ -101,6 +107,7 @@ export const Shortcuts = {
 export const ShortcutActions = {
     ...Shortcuts.General,
     ...Shortcuts.Navigation,
+    ...Shortcuts['Direct Messages'],
     ...Shortcuts.Messages,
     ...Shortcuts.Editor,
 }

@@ -22,6 +22,7 @@ import { useAuth } from 'hooks/useAuth'
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { CreateDirectMessage } from '@components/DirectMessages/CreateDirectMessage'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
+import { useShortcut } from 'hooks/useShortcut'
 import { SideBar } from '../_SideBar'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
@@ -97,6 +98,8 @@ export const SpaceSideBar = (props: Props) => {
     const onDisplayDefault = useCallback(() => {
         setLayoutMode(LayoutMode.Default)
     }, [])
+
+    useShortcut('CreateMessage', onDisplayCreate)
 
     return (
         <SideBar data-testid="space-sidebar" height="100%" onScroll={onScroll}>

@@ -4,6 +4,7 @@ import { Box, BoxProps, Icon, IconButton, IconName, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
+import { useShortcut } from 'hooks/useShortcut'
 import { CreateDirectMessage } from './CreateDirectMessage'
 import { DirectMessageList } from './DirectMessageList'
 
@@ -34,6 +35,8 @@ export const DirectMessagesPanel = (props: DirectMessagesPanelProps) => {
     const onDisplayCreate = useCallback(() => {
         setPanelMode('create')
     }, [])
+
+    useShortcut('CreateMessage', onDisplayCreate)
 
     return panelMode === 'list' ? (
         <MessageListPanel hideNavigation={hideNavigation} onNavAction={onDisplayCreate} />
