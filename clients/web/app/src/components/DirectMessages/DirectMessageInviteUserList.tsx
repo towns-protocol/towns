@@ -113,49 +113,55 @@ export const DirectMessageInviteUserList = (props: {
                     </Box>
                 </MotionStack>
 
-                <MotionStack gap grow layout="position" position="relative">
-                    <Stack scroll scrollbars gap grow absoluteFill paddingBottom="md">
-                        {!isMultiSelect && (
+                <MotionStack
+                    gap
+                    grow
+                    scroll
+                    scrollbars
+                    layout="position"
+                    flexBasis="300"
+                    paddingBottom="md"
+                >
+                    {!isMultiSelect && (
+                        <Box
+                            paddingX
+                            horizontal
+                            gap
+                            alignItems="center"
+                            cursor="pointer"
+                            onClick={onToggleGroupDM}
+                        >
                             <Box
-                                paddingX
+                                centerContent
                                 horizontal
-                                gap
-                                alignItems="center"
-                                cursor="pointer"
-                                onClick={onToggleGroupDM}
+                                background="level2"
+                                rounded="full"
+                                width="x4"
+                                height="x4"
+                                color="gray2"
                             >
-                                <Box
-                                    centerContent
-                                    horizontal
-                                    background="level2"
-                                    rounded="full"
-                                    width="x4"
-                                    height="x4"
-                                    color="gray2"
-                                >
-                                    <Icon type="people" />
-                                </Box>
-                                <Paragraph whiteSpace="nowrap">Create new group</Paragraph>
+                                <Icon type="people" />
                             </Box>
-                        )}
-                        {!searchTerm && recentUsers?.length > 0 && (
-                            <Box paddingX>
-                                <Paragraph size="sm" color="gray2" fontWeight="medium">
-                                    Recent
-                                </Paragraph>
-                            </Box>
-                        )}
+                            <Paragraph whiteSpace="nowrap">Create new group</Paragraph>
+                        </Box>
+                    )}
+                    {!searchTerm && recentUsers?.length > 0 && (
+                        <Box paddingX>
+                            <Paragraph size="sm" color="gray2" fontWeight="medium">
+                                Recent
+                            </Paragraph>
+                        </Box>
+                    )}
 
-                        {(searchTerm ? filteredUserIds : recentUsers).map((id) => (
-                            <Participant
-                                key={id}
-                                userId={id}
-                                selected={selectedUserIds.has(id)}
-                                isCheckbox={isMultiSelect}
-                                onToggle={toggleMember}
-                            />
-                        ))}
-                    </Stack>
+                    {(searchTerm ? filteredUserIds : recentUsers).map((id) => (
+                        <Participant
+                            key={id}
+                            userId={id}
+                            selected={selectedUserIds.has(id)}
+                            isCheckbox={isMultiSelect}
+                            onToggle={toggleMember}
+                        />
+                    ))}
                 </MotionStack>
             </AnimatePresence>
         </Stack>

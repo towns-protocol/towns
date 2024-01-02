@@ -14,7 +14,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
-import { Badge, Box, Button, Icon, Stack, Text } from '@ui'
+import { Badge, Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { FadeIn, FadeInBox } from '@components/Transitions'
@@ -145,8 +145,8 @@ export const SpaceSideBar = (props: Props) => {
                     ) : layoutMode === 'create-message' ? (
                         <Box grow color="gray2">
                             <ChannelNavGroup label="New Message">
-                                <Icon
-                                    type="close"
+                                <IconButton
+                                    icon="close"
                                     color="gray2"
                                     size="square_sm"
                                     cursor="pointer"

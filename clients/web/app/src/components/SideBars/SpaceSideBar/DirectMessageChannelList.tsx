@@ -11,7 +11,7 @@ import {
     DirectMessageName,
 } from '@components/DirectMessages/DirectMessageListItem'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
-import { Badge, Box, Icon } from '@ui'
+import { Badge, Box, IconButton } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { SidebarListLayout } from './SidebarListLayout'
 
@@ -31,9 +31,9 @@ export const DirectMessageChannelList = (props: { onDisplayCreate: () => void })
         <SidebarListLayout
             label="Direct Messages"
             headerContent={
-                <Icon
+                <IconButton
                     size="square_sm"
-                    type="compose"
+                    icon="compose"
                     color="gray2"
                     cursor="pointer"
                     onClick={props.onDisplayCreate}
