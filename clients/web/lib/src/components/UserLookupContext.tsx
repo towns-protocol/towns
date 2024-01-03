@@ -69,7 +69,7 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
                     return user
                 }
             })
-            const usersMap = users.reduce((acc, user) => {
+            const usersMap = Object.values(members.membersMap).reduce((acc, user) => {
                 acc[user.userId] = user
                 return acc
             }, {} as { [key: string]: LookupUser })
@@ -113,10 +113,15 @@ export const DMChannelContextUserLookupProvider = (props: {
             memberOf: parentContext?.usersMap[member.userId]?.memberOf,
         }))
 
+        const allUsers = Object.values(room.membersMap).map((member) => ({
+            ...member,
+            memberOf: parentContext?.usersMap[member.userId]?.memberOf,
+        }))
+
         // opportunistically fill in displayName from parent context if
         // allowed. This is designed for the DM channels within spaces
         if (props.fallbackToParentContext) {
-            users.forEach((user) => {
+            allUsers.forEach((user) => {
                 if (!user.username && !user.displayName && user.memberOf) {
                     // find the first (not necesarilly the best, since that
                     // would be subjective) alternative that has a displayName
@@ -138,7 +143,7 @@ export const DMChannelContextUserLookupProvider = (props: {
                 }
             })
         }
-        const usersMap = users.reduce((acc, user) => {
+        const usersMap = allUsers.reduce((acc, user) => {
             acc[user.userId] = user
             return acc
         }, {} as { [key: string]: LookupUser })

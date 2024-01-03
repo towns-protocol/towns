@@ -121,17 +121,8 @@ function toZionMembers(stream: Stream): {
     membersMap: { [userId: string]: RoomMember }
 } {
     const members: RoomMember[] = getMembersWithMembership(Membership.Join, stream)
-
-    const metadata = stream.view.getUserMetadata()
-    const membersMap = members.reduce((result, x) => {
-        const info = metadata?.userInfo(x.userId)
-        x.displayName = info?.displayName ?? (x.displayName || x.username)
-        x.username = info?.username ?? ''
-        x.usernameConfirmed = info?.usernameConfirmed ?? false
-        result[x.userId] = x
-        return result
-    }, {} as { [userId: string]: RoomMember })
-    return { members, membersMap }
+    const usersMap = getUsersMap(stream)
+    return { members, membersMap: usersMap }
 }
 
 /**
@@ -187,4 +178,28 @@ function getMembersWithMembership(membership: Membership, stream: Stream): RoomM
         })
     })
     return members
+}
+
+function getUsersMap(stream: Stream): { [userId: string]: RoomMember } {
+    const memberships = stream.view.getMemberships()
+    const allUsers = new Set<string>([
+        ...memberships.joinedUsers,
+        ...memberships.invitedUsers,
+        ...memberships.leftUsers,
+    ])
+
+    const metadata = stream.view.getUserMetadata()
+    const usersMap = {} as { [userId: string]: RoomMember }
+    for (const userId of allUsers) {
+        const info = metadata?.userInfo(userId)
+        usersMap[userId] = {
+            userId: userId,
+            username: info?.username ?? '',
+            usernameEncrypted: info?.usernameEncrypted ?? false,
+            usernameConfirmed: info?.usernameConfirmed ?? false,
+            displayName: info?.displayName ?? '',
+            displayNameEncrypted: info?.displayNameEncrypted ?? false,
+        }
+    }
+    return usersMap
 }
