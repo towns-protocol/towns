@@ -11,6 +11,7 @@ const config: JestConfigWithTsJest = {
     testTimeout: 60000,
     modulePathIgnorePatterns: ['/dist/'],
     testPathIgnorePatterns: ['/dist/', '/node_modules/'],
+    setupFiles: ['dotenv/config'],
     setupFilesAfterEnv: ['jest-extended/all', '<rootDir>/jest-setup.ts'],
     extensionsToTreatAsEsm: ['.ts'],
     transform: {

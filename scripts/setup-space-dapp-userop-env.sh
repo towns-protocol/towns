@@ -5,4 +5,4 @@ cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 ./wait-for-basechain.sh
 ./deploy-towns-contracts.sh
 ./deploy-wallet-link-contracts.sh
-./../servers/bundler/run-bundler.sh
+./../servers/skandha-bundler/run-bundler.sh

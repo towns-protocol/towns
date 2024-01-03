@@ -23,4 +23,4 @@ else
     echo "Entrypoint deployed at $CONTRACT_ADDRESS. Skipping deployment..."
 fi
 
-# docker compose up --build
+docker compose up --build

@@ -1,5 +1,0 @@
-{
-    "rpcUrl": "http://localhost:8545",
-    "bundlerUrl": "http://localhost:8546",
-    "paymasterUrl": "http://localhost:8547"
-}

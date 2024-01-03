@@ -1,6 +1,6 @@
 FROM node:16
 
-RUN git clone https://github.com/HereNotThere/eth-infinitism-bundler --branch evan/anvil-compat bundler
+RUN git clone https://github.com/eth-infinitism/bundler.git bundler
 WORKDIR /bundler
 
 RUN yarn install

@@ -24,7 +24,7 @@ import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
 import { WalletLink } from './WalletLink'
 
 export class SpaceDapp implements ISpaceDapp<'v3'> {
-    private readonly chainId: number
+    public readonly chainId: number
     public readonly provider: ethers.providers.Provider | undefined
     protected readonly townRegistrar: TownRegistrar
     public readonly walletLink: WalletLink

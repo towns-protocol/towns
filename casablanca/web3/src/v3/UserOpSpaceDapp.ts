@@ -2,6 +2,7 @@ import { ethers } from 'ethers'
 import { Presets, Client, UserOperationMiddlewareFn } from 'userop'
 import { SpaceDapp } from './SpaceDapp'
 import { ITownArchitectBase } from './ITownArchitectShim'
+// import { estimateGasForLocalBundler } from '../userOpUtils' // for eth-infinitism bundler, probably can remove
 
 type UserOpSpaceDappConfig = {
     chainId: number
@@ -31,8 +32,9 @@ type PaymasterConfig = {
 }
 
 type UserOpParams = {
-    toAddress: string
-    callData: string
+    toAddress?: string
+    callData?: string
+    value?: ethers.BigNumberish
     signer: ethers.Signer
     paymasterConfig?: PaymasterConfig
 }
@@ -62,6 +64,36 @@ export class UserOpSpaceDapp extends SpaceDapp {
         this.factoryAddress = factoryAddress
     }
 
+    // Initialize a builder with middleware based on paymaster config
+    //
+    // Because we are still determining exactly how we are using paymaster,
+    // and userop.js doesn't allow for add/remove a specific middleware from the middleware stack,
+    // each user operation can just initiliaze a new builder to make things simpler
+    private async initBuilder(args: UserOpParams) {
+        const { signer, paymasterConfig } = args
+
+        let paymasterMiddleware: UserOperationMiddlewareFn | undefined
+
+        if (paymasterConfig?.url) {
+            paymasterMiddleware = Presets.Middleware.verifyingPaymaster(paymasterConfig.url, {
+                type: 'payg',
+            })
+        }
+
+        return Presets.Builder.SimpleAccount.init(signer, this.rpcUrl, {
+            entryPoint: this.entryPointAddress,
+            factory: this.factoryAddress,
+            overrideBundlerRpc: this.bundlerUrl,
+            // salt?: BigNumberish;
+            // nonceKey?: number;
+            paymasterMiddleware,
+        })
+    }
+
+    public async getAbstractAccountAddress(args: UserOpParams) {
+        return (await this.initBuilder(args)).getSender()
+    }
+
     public async getTown(spaceId: string) {
         const town = await super.getTown(spaceId)
         if (!town) {
@@ -71,38 +103,43 @@ export class UserOpSpaceDapp extends SpaceDapp {
     }
 
     public async sendUserOp(args: UserOpParams) {
-        const { toAddress, callData, signer, paymasterConfig } = args
+        const { toAddress, callData, value } = args
 
-        let paymasterMiddleware: UserOperationMiddlewareFn | undefined
+        const builder = await this.initBuilder(args)
 
-        if (paymasterConfig) {
-            paymasterMiddleware = Presets.Middleware.verifyingPaymaster(paymasterConfig.url, {
-                type: 'payg',
-            })
+        if (!toAddress) {
+            throw new Error('toAddress is required')
         }
+        if (!callData) {
+            throw new Error('callData is required')
+        }
+        // local bundler and no paymaster needs to estimate gas
+        // MAYBE WE DON'T NEED THIS WITH SKANDHA BUNDLER
+        // if (this.chainId === 31337) {
+        //     const { preVerificationGas, callGasLimit, verificationGasLimit } =
+        //         await estimateGasForLocalBundler({
+        //             target: toAddress,
+        //             provider: new ethers.providers.JsonRpcProvider(this.rpcUrl),
+        //             entryPointAddress: this.entryPointAddress ?? '',
+        //             sender: builder.getSender(),
+        //             callData,
+        //             factoryAddress: this.factoryAddress ?? '',
+        //             signer,
+        //         })
 
-        const simpleAccount = await Presets.Builder.SimpleAccount.init(signer, this.rpcUrl, {
-            entryPoint: this.entryPointAddress,
-            factory: this.factoryAddress,
-            overrideBundlerRpc: this.bundlerUrl,
-            // salt?: BigNumberish;
-            // nonceKey?: number;
-            paymasterMiddleware,
-        })
+        //     builder.setPreVerificationGas(preVerificationGas)
+        //     builder.setCallGasLimit(callGasLimit)
+        //     builder.setVerificationGasLimit(verificationGasLimit)
+        // }
 
-        // TODO: simulate the userOp
-        // not sure this is necessary? unless we are getting errors from the bundler we can't decode
-        // const op = await this.userOpClient.buildUserOperation(
-        //     simpleAccount.execute(toAddress, 0, callData),
-        // )
-        // await this.userOpClient.entryPoint.simulateHandleOp(op, to, callData)
+        const userOp = builder.execute(toAddress, value ?? 0, callData)
 
-        return this.userOpClient.sendUserOperation(simpleAccount.execute(toAddress, 0, callData), {
+        return this.userOpClient.sendUserOperation(userOp, {
             onBuild: (op) => console.log('Signed UserOperation:', op),
         })
     }
 
-    async sendCreateSpaceOp(
+    public async sendCreateSpaceOp(
         args: Parameters<SpaceDapp['createSpace']>,
         paymasterConfig?: PaymasterConfig,
     ) {
@@ -135,7 +172,7 @@ export class UserOpSpaceDapp extends SpaceDapp {
         })
     }
 
-    async sendJoinTownOp(
+    public async sendJoinTownOp(
         args: Parameters<SpaceDapp['joinTown']>,
         paymasterConfig?: PaymasterConfig,
     ) {
@@ -154,6 +191,23 @@ export class UserOpSpaceDapp extends SpaceDapp {
             callData,
             signer,
             paymasterConfig,
+        })
+    }
+
+    /**
+     * This method is for running a simple test sending funds, not for app use
+     */
+    public async sendFunds(args: {
+        signer: ethers.Signer
+        recipient: string
+        value: ethers.BigNumberish
+    }) {
+        const { signer, recipient, value } = args
+        return this.sendUserOp({
+            signer,
+            toAddress: recipient,
+            callData: '0x',
+            value,
         })
     }
 
