@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Channel, useChannelMembers, useDMData, useRoom } from 'use-zion-client'
+import { Channel, useChannelMembers, useDMData, useMyUserId, useRoom } from 'use-zion-client'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useUserList } from '@components/UserList/UserList'
@@ -103,10 +103,8 @@ const DesktopChannelHeader = (props: Props) => {
                     )}
                     {isMuted && <Icon type="muteActive" size="square_sm" color="gray2" />}
                 </Stack>
-
                 {topic && <Paragraph color="gray2">{topic}</Paragraph>}
                 <Stack grow />
-
                 {channelType === 'channel' && (
                     <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
                 )}
@@ -117,14 +115,15 @@ const DesktopChannelHeader = (props: Props) => {
 
 const DMTitleContent = (props: { roomIdentifier: string }) => {
     const { counterParty } = useDMData(props.roomIdentifier)
+
     const userIds = useMemo(() => (counterParty ? [counterParty] : []), [counterParty])
-    const title = useUserList({ userIds, excludeSelf: true }).join('')
-    if (!counterParty) {
-        return undefined
-    }
+    const isSelf = !counterParty
+    const myUserId = useMyUserId()
+    const title = useUserList({ userIds, excludeSelf: true, myUserId }).join('')
+
     return (
         <>
-            <Avatar userId={userIds[0]} size="avatar_sm" />
+            <Avatar userId={isSelf ? myUserId : userIds[0]} size="avatar_sm" />
             <Text truncate fontSize="md" fontWeight="medium" color="default">
                 {title}
             </Text>

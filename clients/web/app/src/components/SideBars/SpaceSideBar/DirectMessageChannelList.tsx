@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import {
     DMChannelIdentifier,
     useDMLatestMessage,
+    useMyUserId,
     useSpaceMembers,
     useZionContext,
 } from 'use-zion-client'
@@ -51,6 +52,7 @@ const CondensedChannelNavItem = (props: { channel: DMChannelIdentifier; unread: 
     const { channel, unread } = props
     const { createLink } = useCreateLink()
     const { unreadCount } = useDMLatestMessage(channel.id)
+    const myUserId = useMyUserId()
     return (
         <DMChannelContextUserLookupProvider
             fallbackToParentContext
@@ -62,7 +64,7 @@ const CondensedChannelNavItem = (props: { channel: DMChannelIdentifier; unread: 
                 key={channel.id}
                 icon={
                     <Box width="x4" shrink={false}>
-                        <DirectMessageIcon channel={channel} width="x4" />
+                        <DirectMessageIcon channel={channel} width="x4" myUserId={myUserId} />
                     </Box>
                 }
                 id={channel.id}

@@ -12,7 +12,7 @@ type Props = {
     excludeSelf?: boolean
     maxNames?: number
     userIds: string[]
-
+    myUserId?: string
     renderUser?: (user: { userId: string; displayName: string; key: string }) => void
 }
 
@@ -22,24 +22,24 @@ export const UserList = (props: Props) => {
 }
 
 export const useUserList = (params: Props) => {
-    const { excludeSelf, userIds, maxNames = 3 } = params
+    const { myUserId, excludeSelf, userIds, maxNames = 3 } = params
 
     const stableRenderRef = useRef(params.renderUser)
     const renderUser = (stableRenderRef.current = params.renderUser)
 
     const { usersMap } = useUserLookupContext()
     const members = useMemo(() => {
-        return userIds.map((u) => {
+        return (userIds.length || !myUserId ? userIds : [myUserId]).map((u) => {
             return {
                 userId: u,
                 displayName: getPrettyDisplayName(usersMap[u] ?? { name: u }),
             }
         })
-    }, [usersMap, userIds])
+    }, [userIds, myUserId, usersMap])
 
     const fragments = useMemo(() => {
-        if (members.length === 0) {
-            return excludeSelf ? [] : ['You']
+        if (userIds.length === 0 && !myUserId) {
+            return excludeSelf ? [] : ['you']
         }
 
         const sliceIndex = members.length <= maxNames ? maxNames : maxNames - 1
@@ -61,7 +61,7 @@ export const useUserList = (params: Props) => {
                 acc.push(m)
                 return acc
             }, [] as (string | UserName)[])
-    }, [excludeSelf, maxNames, members])
+    }, [excludeSelf, maxNames, members, myUserId, userIds.length])
 
     return fragments.map((f) => {
         return typeof f === 'string'

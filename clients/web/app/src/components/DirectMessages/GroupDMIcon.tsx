@@ -6,7 +6,7 @@ import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
     roomIdentifier: string
-    width?: 'x3' | 'x4' | 'x6'
+    width?: 'x3' | 'x4' | 'x6' | 'x12'
     latestUserId?: string
 }
 
@@ -27,7 +27,7 @@ export const GroupDMIcon = (props: Props) => {
 
 type AvatarGroupProps = {
     userIds?: string[]
-    width?: 'x3' | 'x4' | 'x6'
+    width?: 'x3' | 'x4' | 'x6' | 'x12'
 }
 
 const REMAINING_PLACEHOLDER = 'REMAINING_PLACEHOLDER'
@@ -54,6 +54,7 @@ export const AvatarGroup = (props: AvatarGroupProps) => {
         x3: { size: '75%', fontScale: 0.5, borderWidth: 2 },
         x4: { size: '70%', fontScale: 0.6, borderWidth: 2 },
         x6: { size: '66%', fontScale: 0.8, borderWidth: 2 },
+        x12: { size: '60%', fontScale: 1.5, borderWidth: 4 },
     }[width]
 
     return (
