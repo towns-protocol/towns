@@ -549,12 +549,13 @@ async function tryDecryptEvent(
 
     const { event, channelId } = notification.content
     let plaintext: string | undefined
-    let cancelTimeout: () => void = () => undefined
+    let cancelTimeout: () => void
 
     const timeoutPromise = new Promise<void>((resolve, reject) => {
         // if the decryption takes too long, reject the promise
         const timeout = setTimeout(() => {
             console.log('sw:push: timed out waiting for decryption')
+            cancelTimeout = () => {}
             reject(new Error('Timed out waiting for decryption'))
         }, 1000)
         cancelTimeout = () => {

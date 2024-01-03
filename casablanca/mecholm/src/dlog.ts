@@ -1,6 +1,6 @@
 import debug, { Debugger } from 'debug'
 import { isHexString, shortenHexString, bin_toHexString } from './binary'
-import { isNode } from 'browser-or-node'
+import { isJest } from './utils'
 
 // Works as debug.enabled, but falls back on options if not explicitly set in env instead of returning false.
 debug.enabled = (ns: string): boolean => {
@@ -184,10 +184,6 @@ const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
 
     allDlogs.set(d.namespace, dlog as DLogger)
     return dlog as DLogger
-}
-
-export function isJest(): boolean {
-    return isNode && (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined)
 }
 
 /**
