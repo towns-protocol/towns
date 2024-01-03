@@ -69,7 +69,7 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
                     return user
                 }
             })
-            const usersMap = Object.values(members.membersMap).reduce((acc, user) => {
+            const usersMap = users.reduce((acc, user) => {
                 acc[user.userId] = user
                 return acc
             }, {} as { [key: string]: LookupUser })
