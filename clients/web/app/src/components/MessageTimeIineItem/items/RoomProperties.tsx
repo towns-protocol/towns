@@ -16,7 +16,7 @@ export const RoomProperties = (props: Props) => {
     const { usersMap } = useUserLookupContext()
     const { event, userId } = props
     const creator = event.sender.id
-    const groupName = event.content.properties.name || 'new name'
+    const groupName = event.content.properties.name
     const creatorUser = usersMap[creator]
     const name = getPrettyDisplayName(creatorUser)
 
@@ -28,13 +28,21 @@ export const RoomProperties = (props: Props) => {
         )
     }
 
+    const action = groupName ? (
+        <>
+            changed the group name to{' '}
+            <Text display="inline" color="default">
+                {groupName}
+            </Text>
+        </>
+    ) : (
+        'removed the group name'
+    )
+
     const message =
         creator === userId ? (
             <Stack horizontal display="inline">
-                You changed the group name to{' '}
-                <Text display="inline" color="default">
-                    {groupName}
-                </Text>
+                You {action}
             </Stack>
         ) : (
             <Stack horizontal display="inline">
@@ -43,10 +51,7 @@ export const RoomProperties = (props: Props) => {
                         {name}
                     </Box>
                 </Link>{' '}
-                changed the group name to{' '}
-                <Text display="inline" color="default">
-                    {groupName}
-                </Text>
+                {action}
             </Stack>
         )
 
