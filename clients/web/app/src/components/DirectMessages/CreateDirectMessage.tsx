@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { DMChannelIdentifier, useZionClient, useZionContext } from 'use-zion-client'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Box, Button } from '@ui'
+import { useErrorToast } from 'hooks/useErrorToast'
 import { DirectMessageInviteUserList } from './DirectMessageInviteUserList'
 
 type Props = {
@@ -30,10 +31,19 @@ export const CreateDirectMessage = (props: Props) => {
         [dmChannels],
     )
 
+    const [resetListKey, setResetListKey] = useState(0)
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
+    useErrorToast({
+        errorMessage,
+        contextMessage: 'There was an error creating the message',
+    })
+
     const onSubmit = useCallback(
         async (selectedUserIds: Set<string>) => {
+            console.log('create dm/gm: submit', Array.from(selectedUserIds).join())
             const existingChannel = checkIfChannelExists(selectedUserIds)
             if (existingChannel) {
+                console.log('create dm/gm: existingChannel', existingChannel)
                 const link = createLink({ messageId: existingChannel.id })
                 if (link) {
                     onDirectMessageCreated()
@@ -41,27 +51,41 @@ export const CreateDirectMessage = (props: Props) => {
                 }
                 return
             }
-
-            if (selectedUserIds.size === 1) {
+            if (selectedUserIds.size === 0) {
+                console.warn('create dm: submit - no users selected')
+            } else if (selectedUserIds.size === 1) {
                 const first = Array.from(selectedUserIds)[0]
+                console.log('create dm: submit', first)
                 const streamId = await createDMChannel(first)
                 if (streamId) {
+                    console.log('create dm: created stream', streamId)
                     const link = createLink({ messageId: streamId })
                     if (link) {
+                        console.log('create dm: navigating', link)
                         onDirectMessageCreated()
                         navigate(link)
                     }
+                } else {
+                    console.error('create dm: failed creating stream')
+                    setErrorMessage('failed to create dm stream')
                 }
+
+                setSelectedUserIds(new Set())
+                setResetListKey((k) => k + 1)
             } else {
                 const userIds = Array.from(selectedUserIds)
-
+                console.log('create gm: submit', userIds.join())
                 const streamId = await createGDMChannel(userIds)
                 if (streamId) {
+                    console.log('create gm: created stream', streamId)
                     const link = createLink({ messageId: streamId })
                     if (link) {
+                        console.log('create gm: navigating', link)
                         onDirectMessageCreated()
                         navigate(link)
                     }
+                } else {
+                    setErrorMessage('failed to create gm stream')
                 }
             }
         },
@@ -97,7 +121,7 @@ export const CreateDirectMessage = (props: Props) => {
                         navigate(link)
                     }
                 }*/
-            } else {
+            } else if (selectedUserIds.size === 1) {
                 onSubmit(selectedUserIds)
             }
         },
@@ -117,6 +141,7 @@ export const CreateDirectMessage = (props: Props) => {
     return (
         <>
             <DirectMessageInviteUserList
+                key={`list-${resetListKey}`}
                 isMultiSelect={isGroupDM}
                 onToggleMultiSelect={onToggleGroupDM}
                 onSelectionChange={onSelectionChange}
