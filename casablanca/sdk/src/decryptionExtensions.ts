@@ -236,7 +236,7 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
                     this.timeoutId = undefined
                     this.checkStartTicking()
                 })
-        }, this.delayMs)
+        }, this.getDelayMs())
     }
 
     private async stopTicking() {
@@ -252,6 +252,14 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
             } finally {
                 this.inProgressTick = undefined
             }
+        }
+    }
+
+    private getDelayMs() {
+        if (this.queues.newMegolmSession.length > 0) {
+            return 0
+        } else {
+            return this.delayMs
         }
     }
 
