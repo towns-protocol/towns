@@ -56,12 +56,6 @@ func (s *syncReceiver) setErrorAndCancel(err error) {
 	s.cancel()
 }
 
-func (s *syncReceiver) getError() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.firstError
-}
-
 func (s *syncReceiver) Dispatch(sender syncStream) {
 	log := dlog.CtxLog(s.ctx)
 

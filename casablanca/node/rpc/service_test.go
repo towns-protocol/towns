@@ -250,7 +250,6 @@ func testServerAndClient(
 		Port:        1234,
 		Database:    config.DatabaseConfig{Url: dbUrl},
 		StorageType: "postgres",
-		SyncVersion: syncVersion,
 		Stream: config.StreamConfig{
 			Media: config.MediaStreamConfig{
 				MaxChunkCount: 100,

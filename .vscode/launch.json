@@ -22,7 +22,17 @@
       "console": "integratedTerminal",
     },
     {
-      "name": "Jest: current file in 'casablanca/sdk/'",
+      "name": "Jest: current file in 'casablanca/sdk/' (multi)",
+      "type": "node",
+      "request": "launch",
+      "env": { "NODE_ENV": "development", "RIVER_TEST_CONNECT": "multi", "DEBUG": "csb:*,test:*", "DEBUG_DEPTH":"10" },
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
+      "args": ["${file}", "--config", "${workspaceFolder}/casablanca/sdk/jest.config.ts", "-i", "--no-cache", "--forceExit"],
+      "console": "integratedTerminal",
+    },
+    {
+      "name": "Jest: current file in 'casablanca/sdk/' (single)",
       "type": "node",
       "request": "launch",
       "env": { "NODE_ENV": "development", "RIVER_TEST_CONNECT": "single", "DEBUG": "csb:*,test:*", "DEBUG_DEPTH":"10" },

@@ -53,7 +53,6 @@ type Config struct {
 	// Used to disable functionality for some testing setups.
 	UseContract                 bool
 	UseBlockChainStreamRegistry bool
-	SyncVersion                 int
 
 	// If set, use instead of trying to load from filesystem.
 	// Makes configuring node by env vars easier.
