@@ -53,6 +53,7 @@
         "clsx": "^1.2.1",
         "date-fns": "^2.29.3",
         "debug": "^4.3.4",
+        "dexie": "^3.2.4",
         "emoji-mart": "^5.5.2",
         "ethers": "^5.7.2",
         "framer-motion": "^10.12.4",

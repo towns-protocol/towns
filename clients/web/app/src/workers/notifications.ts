@@ -9,7 +9,9 @@ import { User, startDB } from '../idb/notificationsMeta'
 import { appNotificationFromPushEvent, pathFromAppNotification } from './notificationParsers'
 import { checkClientIsVisible, getShortenedName } from './utils'
 
+import { decryptWithMegolm } from './mecholmDecryption'
 import { env } from '../utils/environment'
+import { getEncryptedData } from './data_transforms'
 
 let idbChannels: ReturnType<typeof startDB>['idbChannels'] | undefined = undefined
 let idbSpaces: ReturnType<typeof startDB>['idbSpaces'] | undefined = undefined
@@ -199,21 +201,24 @@ function generateNewNotificationMessage(
     townName: string,
     channelName: string | undefined,
     sender: string | undefined,
+    plaintext: string | undefined,
 ) {
-    let body = ''
-    switch (true) {
-        case stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} posted a new message in #${channelName}`
-            break
-        case stringHasValue(channelName) && !stringHasValue(sender):
-            body = `There's a new message in #${channelName}`
-            break
-        case !stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} posted a new message in ${townName}`
-            break
-        default:
-            body = `There's a new message in ${townName}`
-            break
+    let body = plaintext
+    if (!body) {
+        switch (true) {
+            case stringHasValue(channelName) && stringHasValue(sender):
+                body = `@${sender} posted a new message in #${channelName}`
+                break
+            case stringHasValue(channelName) && !stringHasValue(sender):
+                body = `There's a new message in #${channelName}`
+                break
+            case !stringHasValue(channelName) && stringHasValue(sender):
+                body = `@${sender} posted a new message in ${townName}`
+                break
+            default:
+                body = `There's a new message in ${townName}`
+                break
+        }
     }
     return {
         title: townName,
@@ -252,6 +257,7 @@ function generateDM(
     myUserId: string | undefined,
     sender: string | undefined,
     recipients: User[] | undefined,
+    plaintext: string | undefined,
 ) {
     // if myUserId is available, remove it from the recipients list
     const recipientsExcludeMe =
@@ -267,22 +273,25 @@ function generateDM(
         sender,
     )
     const title = generateDmTitle(sender, recipientsExcludeMe)
-    let body = ''
-    switch (true) {
-        case stringHasValue(sender) && recipientsExcludeMe?.length === 0:
-            body = `@${sender} sent you a direct message`
-            break
-        case stringHasValue(sender) && recipientsExcludeMe && recipientsExcludeMe.length > 1:
-            body = `@${sender} sent a message in a group you’re in`
-            break
-        case !stringHasValue(sender) && recipientsExcludeMe?.length === 0:
-            body = `You got a direct message`
-            break
-        case !stringHasValue(sender) && recipientsExcludeMe && recipientsExcludeMe.length > 1:
-            body = `A group you’re in has a new message`
-            break
-        default:
-            break
+    let body = plaintext
+    if (!body) {
+        switch (true) {
+            case stringHasValue(sender) && recipientsExcludeMe?.length === 0:
+                body = `@${sender} sent you a direct message`
+                break
+            case stringHasValue(sender) && recipientsExcludeMe && recipientsExcludeMe.length > 1:
+                body = `@${sender} sent a message in a group you’re in`
+                break
+            case !stringHasValue(sender) && recipientsExcludeMe?.length === 0:
+                body = `You got a direct message`
+                break
+            case !stringHasValue(sender) && recipientsExcludeMe && recipientsExcludeMe.length > 1:
+                body = `A group you’re in has a new message`
+                break
+            default:
+                body = `You got a direct message`
+                break
+        }
     }
     console.log('sw:push: generateDM OUTPUT', { title, body })
     return {
@@ -295,21 +304,24 @@ function generateMentionedMessage(
     townName: string,
     channelName: string | undefined,
     sender: string | undefined,
+    plaintext: string | undefined,
 ) {
-    let body = ''
-    switch (true) {
-        case stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} mentioned you in #${channelName}`
-            break
-        case stringHasValue(channelName) && !stringHasValue(sender):
-            body = `You got mentioned in #${channelName}`
-            break
-        case !stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} mentioned you in ${townName}`
-            break
-        default:
-            body = `You got mentioned in ${townName}`
-            break
+    let body = plaintext
+    if (!body) {
+        switch (true) {
+            case stringHasValue(channelName) && stringHasValue(sender):
+                body = `@${sender} mentioned you in #${channelName}`
+                break
+            case stringHasValue(channelName) && !stringHasValue(sender):
+                body = `You got mentioned in #${channelName}`
+                break
+            case !stringHasValue(channelName) && stringHasValue(sender):
+                body = `@${sender} mentioned you in ${townName}`
+                break
+            default:
+                body = `You got mentioned in ${townName}`
+                break
+        }
     }
     return {
         title: townName,
@@ -321,21 +333,24 @@ function generateReplyToMessage(
     townName: string,
     channelName: string | undefined,
     sender: string | undefined,
+    plaintext: string | undefined,
 ) {
-    let body = ''
-    switch (true) {
-        case stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} replied to a thread in #${channelName} that you're participating in`
-            break
-        case stringHasValue(channelName) && !stringHasValue(sender):
-            body = `A thread in #${channelName} that you're participating in has a new reply`
-            break
-        case !stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} replied to a thread that you're a part of in ${townName}`
-            break
-        default:
-            body = `A thread you're a part of in ${townName} has a new reply`
-            break
+    let body = plaintext
+    if (!body) {
+        switch (true) {
+            case stringHasValue(channelName) && stringHasValue(sender):
+                body = `@${sender} replied to a thread in #${channelName} that you're participating in`
+                break
+            case stringHasValue(channelName) && !stringHasValue(sender):
+                body = `A thread in #${channelName} that you're participating in has a new reply`
+                break
+            case !stringHasValue(channelName) && stringHasValue(sender):
+                body = `@${sender} replied to a thread that you're a part of in ${townName}`
+                break
+            default:
+                body = `A thread you're a part of in ${townName} has a new reply`
+                break
+        }
     }
     return {
         title: townName,
@@ -396,12 +411,15 @@ async function getNotificationContent(notification: AppNotification): Promise<{
         console.error('sw:push: error fetching space/channel/user names from idb', error)
     }
 
+    // try to decrypt, if we can't, return undefined, and the notification will be a generic message
+    const plaintext = myUserId ? await tryDecryptEvent(myUserId, notification) : undefined
+
     switch (notification.content.kind) {
         case AppNotificationType.DirectMessage:
-            return generateDM(myUserId, senderName, recipients)
+            return generateDM(myUserId, senderName, recipients, plaintext)
         case AppNotificationType.NewMessage:
             if (townName) {
-                return generateNewNotificationMessage(townName, channelName, senderName)
+                return generateNewNotificationMessage(townName, channelName, senderName, plaintext)
             }
             return {
                 title: undefined,
@@ -409,7 +427,7 @@ async function getNotificationContent(notification: AppNotification): Promise<{
             }
         case AppNotificationType.Mention:
             if (townName) {
-                return generateMentionedMessage(townName, channelName, senderName)
+                return generateMentionedMessage(townName, channelName, senderName, plaintext)
             }
             return {
                 title: undefined,
@@ -417,7 +435,7 @@ async function getNotificationContent(notification: AppNotification): Promise<{
             }
         case AppNotificationType.ReplyTo:
             if (townName) {
-                return generateReplyToMessage(townName, channelName, senderName)
+                return generateReplyToMessage(townName, channelName, senderName, plaintext)
             }
             return {
                 title: undefined,
@@ -518,4 +536,55 @@ async function addUsersToIdb(membersMap: { [userId: string]: RoomMember | undefi
 
 function stringHasValue(s: string | undefined): boolean {
     return s !== undefined && s.length > 0
+}
+
+async function tryDecryptEvent(
+    userId: string,
+    notification: AppNotification,
+): Promise<string | undefined> {
+    console.log('sw:push: tryDecryptEvent', userId, notification)
+    if (!userId) {
+        return undefined
+    }
+
+    const { event, channelId } = notification.content
+    let plaintext: string | undefined
+    let cancelTimeout: () => void = () => undefined
+
+    const timeoutPromise = new Promise<void>((resolve, reject) => {
+        // if the decryption takes too long, reject the promise
+        const timeout = setTimeout(() => {
+            console.log('sw:push: timed out waiting for decryption')
+            reject(new Error('Timed out waiting for decryption'))
+        }, 1000)
+        cancelTimeout = () => {
+            clearTimeout(timeout)
+            resolve()
+        }
+    })
+
+    // attempt to decrypt the data
+    const decryptPromise = async function () {
+        try {
+            console.log('sw:push: tryDecryptEvent', event)
+            const encryptedData = getEncryptedData(event)
+            plaintext = await decryptWithMegolm(userId, channelId, encryptedData)
+            console.log('sw:push: decrypted plaintext', plaintext)
+            return plaintext
+        } catch (error) {
+            console.error('sw:push: error decrypting', error)
+            return undefined
+        } finally {
+            cancelTimeout()
+        }
+    }
+
+    try {
+        await Promise.race([decryptPromise(), timeoutPromise])
+    } catch (error) {
+        console.error('sw:push: error decrypting event', error)
+    }
+
+    console.log('sw:push: tryDecryptEvent result', plaintext)
+    return plaintext
 }

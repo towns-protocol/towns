@@ -24,12 +24,12 @@ export function getServiceWorkerJsDev(env: Env) {
             const data = event.data.json();
             const notification = data.content
             console.log('notification', notification);
-            title = notification.topic;
-            options.body = JSON.stringify(notification.options.body);
+            title = notification.channelId;
+            options.body = JSON.stringify(notification);
           } catch (e) {
             console.error('handlePushNotification', e);
             title = 'Error';
-            options.body = e.message;
+            body = e.message;
           }
           self.registration.showNotification(
             title,
@@ -164,25 +164,25 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     const output = document.getElementById('output');
     const titleText = document.getElementById('notificationTitle');
     const bodyText = document.getElementById('notificationBody');
+    const forceNotify = document.getElementById('forceNotify');
     const payload = {
-      notificationType: 'new_message',
       content: {
-        topic: titleText.value,
-        options: {
-          body: bodyText.value,
-        }
+        kind: 'mention',
+        spaceId: '${SPACE_ID}',
+        channelId: '${CHANNEL_ID}',
+        senderId: '${ALICE_ID}',
+        event: {},
       },
     };
     const notifyParams = {
       sender: '${ALICE_ID}',
-      //users: ['${ALICE_ID}', ${BOB_ID}], // send to self
-      users: ['${BOB_ID}'], // send to self
+      //users: ['${ALICE_ID}', ${BOB_ID}],
+      users: ['${ALICE_ID}'], // send to self
       payload,
-      spaceId: '${SPACE_ID}',
-      channelId: '${CHANNEL_ID}',
+      forceNotify: forceNotify.checked,
     };
     try {
-      console.log('Sending notification to server...');
+      console.log('Sending notification to server... forceNotify:' + forceNotify.checked);
       await sendToServer('/api/notify-users', 'POST', notifyParams);
       console.log('Sent notification to server.');
       output.textContent += '\\n' + 'Notification sent:' + '\\n' + payload;
@@ -368,6 +368,8 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       <label for="title">Title:</label>
       <input type="text" id="notificationTitle" size="40" value="Hello Notifications!">
       <button id="notify" type="button" onclick="notify()">Trigger Push Notification</button>
+      <label for="forceNotify">Force notify:</label>
+      <input type="checkbox" id="forceNotify" name="forceNotify" checked>
       <br><label for="notificationBody">Body:</label>
       <br><textarea id="notificationBody">{ spaceId: '${SPACE_ID}', channelId: '${CHANNEL_ID}' }' }</textarea>
     <h3>Settings test area</h3>

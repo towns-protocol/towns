@@ -14908,6 +14908,7 @@ __metadata:
     clsx: ^1.2.1
     date-fns: ^2.29.3
     debug: ^4.3.4
+    dexie: ^3.2.4
     emoji-mart: ^5.5.2
     eslint: ^8.53.0
     eslint-config-react-app: ^7.0.1

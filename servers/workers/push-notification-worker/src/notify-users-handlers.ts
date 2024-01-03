@@ -232,6 +232,12 @@ async function getUsersToNotify(
     return []
   }
 
+  // for testing & debugging, if 'forceNotify' is true, notify all users
+  if (params.forceNotify) {
+    console.log('forceNotify', params.users)
+    return params.users
+  }
+
   // Notify users according to the following rules:
   // 1. If the user is mentioned, notify if the user's DND mention is false
   // 2. If the user is participating in a reply-to thread, notify if the user's DND replyTo is false

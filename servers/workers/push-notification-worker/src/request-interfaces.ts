@@ -50,6 +50,7 @@ export interface NotifyRequestParams {
   payload: NotificationPayload
   /* push options */
   urgency?: Urgency
+  forceNotify?: boolean
 }
 
 export function isNotifyRequestParams(

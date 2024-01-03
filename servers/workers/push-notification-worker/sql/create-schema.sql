@@ -1,5 +1,5 @@
 -- create local table for development and testing
-DROP TABLE IF EXISTS PushSubscription;
+--DROP TABLE IF EXISTS PushSubscription;
 CREATE TABLE IF NOT EXISTS PushSubscription (
   PushType VARCHAR(64) NOT NULL DEFAULT 'web-push', -- push type [ 'web-push' | 'ios' | 'android' ]. Currently only 'web-push' is supported
   UserId VARCHAR(255) NOT NULL, -- wallet account
@@ -12,7 +12,7 @@ ON PushSubscription (UserId);
 
 -- Tags for push notifications so that the Worker has
 -- additional context to format the notification message
-DROP TABLE IF EXISTS NotificationTag;
+--DROP TABLE IF EXISTS NotificationTag;
 CREATE TABLE IF NOT EXISTS NotificationTag (
   SpaceId VARCHAR(255) NOT NULL,
   ChannelId VARCHAR(255) NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS NotificationTag (
   CONSTRAINT NotificationTag_PK PRIMARY KEY (ChannelId, UserId)
 );
 
-DROP TABLE IF EXISTS UserSettings;
+--DROP TABLE IF EXISTS UserSettings;
 CREATE TABLE IF NOT EXISTS UserSettings (
   UserId VARCHAR(255) NOT NULL PRIMARY KEY,
   ReplyTo INTEGER NOT NULL DEFAULT 1,
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS UserSettings (
   DirectMessage INTEGER NOT NULL DEFAULT 1
 );
 
-DROP TABLE IF EXISTS UserSettingsSpace;
+--DROP TABLE IF EXISTS UserSettingsSpace;
 CREATE TABLE IF NOT EXISTS UserSettingsSpace (
   SpaceId VARCHAR(255) NOT NULL,
   UserId VARCHAR(255) NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS UserSettingsSpace (
     ON DELETE CASCADE
 );
 
-drop table UserSettingsChannel;
+--drop table UserSettingsChannel;
 CREATE TABLE IF NOT EXISTS UserSettingsChannel (
   SpaceId VARCHAR(255) NOT NULL,
   ChannelId VARCHAR(255) NOT NULL,

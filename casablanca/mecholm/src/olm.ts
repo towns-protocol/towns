@@ -6,6 +6,7 @@
 // But, if another app were to import this that didn't bundle via Vite, or if Vite changes something, this may break.
 import olmWasm from '@matrix-org/olm/olm.wasm?url'
 import Olm from '@matrix-org/olm'
+import { isJest } from './dlog'
 
 type OlmLib = typeof Olm
 
@@ -26,8 +27,8 @@ export class OlmMegolmDelegate {
         if (this.initialized) {
             return
         }
-        // see note above re. wasm - including it needed for app, but it breaks Jest tests
-        if (process.env.JEST_WORKER_ID) {
+
+        if (isJest()) {
             await this.delegate.init()
         } else {
             await this.delegate.init({ locateFile: () => olmWasm as unknown })

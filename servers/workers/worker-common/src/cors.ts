@@ -15,7 +15,7 @@ function getAllowedOrigins(env: Environment): string[] {
                 'http://localhost:3000',
                 'http://localhost:3002', // local app prod builds
                 'https://localhost:3000',
-                'http://127.0.0.1:8787',
+                'http://localhost:8787',
                 'https://push-notification-worker-test.johnhntlabs.workers.dev',
                 'https://push-notification-worker-test-beta.towns.com',
                 'https://river1-test-beta.towns.com',
