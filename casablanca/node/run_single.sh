@@ -10,6 +10,7 @@ LOG_LEVEL=info
 USE_BLOCKCHAIN_STREAM_REGISTRY=true
 
 CONFIG_ONLY=false
+SKIP_CONFIG=false
 
 # Parse command-line options
 args=() # Collect arguments to pass to the last command
@@ -17,6 +18,10 @@ while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -c|--config-only)
             CONFIG_ONLY=true
+            shift
+            ;;
+        -sc|--skip-config)
+            SKIP_CONFIG=true
             shift
             ;;
         --disable_entitlements|--de)
@@ -35,17 +40,20 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-./config_instance.sh $INSTANCE \
-    RPC_PORT ${RPC_PORT} \
-    DB_PORT 5433 \
-    USE_CONTRACT $USE_CONTRACT \
-    METRICS_ENABLED $METRICS_ENABLED \
-    METRICS_PORT 8081 \
-    NODE_REGISTRY "''" \
-    LOG_NOCOLOR ${LOG_NOCOLOR} \
-    LOG_LEVEL ${LOG_LEVEL} \
-    REPL_FACTOR 1 \
-    USE_BLOCKCHAIN_STREAM_REGISTRY $USE_BLOCKCHAIN_STREAM_REGISTRY
+if [ "$SKIP_CONFIG" = false ]; then
+  # Generate the config file
+  ./config_instance.sh $INSTANCE \
+      RPC_PORT ${RPC_PORT} \
+      DB_PORT 5433 \
+      USE_CONTRACT $USE_CONTRACT \
+      METRICS_ENABLED $METRICS_ENABLED \
+      METRICS_PORT 8081 \
+      NODE_REGISTRY "''" \
+      LOG_NOCOLOR ${LOG_NOCOLOR} \
+      LOG_LEVEL ${LOG_LEVEL} \
+      REPL_FACTOR 1 \
+      USE_BLOCKCHAIN_STREAM_REGISTRY $USE_BLOCKCHAIN_STREAM_REGISTRY
+fi
 
 # Skip running the server if -c flag is provided
 if [ "$CONFIG_ONLY" = false ]; then

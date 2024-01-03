@@ -1,6 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
+SESSION_NAME="River"
+YAML_FILE="./casablanca/node/run_files/single/config/config.yaml"
+PNW_URL="http://localhost:8787"
+PNW_AUTH_TOKEN="Zm9v"
+
 # Check if Homebrew is installed
 if ! command -v brew &> /dev/null; then
     echo "Homebrew is not installed. Installing Homebrew first..."
@@ -41,8 +46,6 @@ if ! command -v yq &> /dev/null; then
     fi
     echo "yq installed successfully."
 fi
-
-SESSION_NAME="River"
 
 # Create a new tmux session
 tmux new-session -d -s $SESSION_NAME
@@ -113,10 +116,6 @@ fi
 # Now generate the casablanca server config
 ./casablanca/node/run_single.sh -c
 # and set the PNW settings in it's config
-YAML_FILE="./casablanca/node/run_files/single/config/config.yaml"
-PNW_URL="http://localhost:8787"
-PNW_AUTH_TOKEN="Zm9v"
-
 yq eval ".pushNotification.url = \"$PNW_URL\"" -i $YAML_FILE
 yq eval ".pushNotification.authToken = \"$PNW_AUTH_TOKEN\"" -i $YAML_FILE
 
@@ -143,7 +142,7 @@ commands=(
     "worker_token:cd servers/workers/token-worker && yarn dev:local"
     "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
     "worker_push:cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh"
-    "casablanca:./casablanca/node/run_single.sh"
+    "casablanca:./casablanca/node/run_single.sh --skip-config"
     "casablanca-no-entitlements:./casablanca/node/run_single.sh --disable_entitlements"
     "xchain:./servers/xchain/launch_multi.sh"
 )
