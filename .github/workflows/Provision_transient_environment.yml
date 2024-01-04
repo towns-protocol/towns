@@ -31,12 +31,12 @@ jobs:
                       const single_node_transient_environment = labels.data.some(label => label.name.includes('single-node'));
                       const multi_node_transient_environment = labels.data.some(label => label.name.includes('multi-node'));
                       const is_db_cloned = labels.data.some(label => label.name.includes('clone'));
-                      const transientEnvironmentType = 
+                      const transientEnvironmentType =
                         multi_node_transient_environment  ? 'multi-node' :
                         single_node_transient_environment ? 'single-node' :
                                                             'lite';
 
-                      const numNodes = 
+                      const numNodes =
                         transientEnvironmentType === 'multi-node'  ? 10 :
                         transientEnvironmentType === 'single-node' ? 1 : 0;
 
@@ -67,6 +67,19 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v3
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                aws-region: us-east-1
+
+            - name: Login to Amazon ECR
+              id: login-aws-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+              with:
+                registry-type: 'public'
 
             - name: Terraform init
               working-directory: ./infra
