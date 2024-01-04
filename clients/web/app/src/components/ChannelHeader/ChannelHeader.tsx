@@ -135,7 +135,10 @@ const GDMTitleContent = (props: { roomIdentifier: string }) => {
     const { data } = useDMData(props.roomIdentifier)
     const userIds = useMemo(() => data?.userIds ?? [], [data?.userIds])
     const userListTitle = useUserList({ userIds, excludeSelf: true, maxNames: 3 }).join('')
-    const title = data?.properties?.name ?? userListTitle
+    const title =
+        data?.properties?.name && data.properties.name.length > 0
+            ? data?.properties?.name
+            : userListTitle
     return (
         <>
             <AvatarGroup userIds={userIds} width="x3" />

@@ -87,7 +87,9 @@ export const DMChannelInfoPanel = () => {
         return members.filter((member) => member.userId !== myUserId).map((m) => m.userId)
     }, [members, myUserId])
 
-    const membersText = useUserList({ userIds: memberNamesExludingSelf }).join('')
+    const membersText = useUserList({ userIds: memberNamesExludingSelf, excludeSelf: true }).join(
+        '',
+    )
     const memberCount = members.length ?? 0
 
     const usernameProperties = useMemo(() => {
