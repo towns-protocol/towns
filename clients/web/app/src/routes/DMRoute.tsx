@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { Outlet, useNavigate, useOutlet, useParams } from 'react-router'
 import { useZionContext } from 'use-zion-client'
 import { GlobalContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
+import { useSearchParams } from 'react-router-dom'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
@@ -15,36 +16,44 @@ export const DirectMessages = () => {
 
     const { spaceSlug } = useParams()
     useTouchRedirect({ isTouch })
+    const [search] = useSearchParams()
 
     if (isTouch && !spaceSlug) {
         return <WelcomeLayout debugText="TOUCH MESSAGE REDIRECT" />
     }
 
-    return isTouch ? (
-        <GlobalContextUserLookupProvider>
-            <Box absoluteFill background="level1">
-                <DirectMessagesPanel />
-                <ZLayerBox>
-                    <Outlet />
-                </ZLayerBox>
-            </Box>
-        </GlobalContextUserLookupProvider>
-    ) : (
-        outlet ?? (
-            <Stack centerContent grow scroll absoluteFill>
-                <Stack centerContent gap="lg" width="250" minHeight="100svh">
-                    <Box padding="md" color="gray2" background="level2" rounded="sm">
-                        <Icon type="message" size="square_sm" />
-                    </Box>
-                    <Heading level={3}>Welcome to your DMs</Heading>
-                    <Paragraph textAlign="center" color="gray2">
-                        Direct messages are end to end encrypted conversations between you and other
-                        users
-                    </Paragraph>
-                </Stack>
-            </Stack>
+    if (isTouch) {
+        if (search.get('ref') === 'home') {
+            return <Outlet />
+        }
+        return (
+            <GlobalContextUserLookupProvider>
+                <Box absoluteFill background="level1">
+                    <DirectMessagesPanel />
+                    <ZLayerBox>
+                        <Outlet />
+                    </ZLayerBox>
+                </Box>
+            </GlobalContextUserLookupProvider>
         )
-    )
+    } else {
+        return (
+            outlet ?? (
+                <Stack centerContent grow scroll absoluteFill>
+                    <Stack centerContent gap="lg" width="250" minHeight="100svh">
+                        <Box padding="md" color="gray2" background="level2" rounded="sm">
+                            <Icon type="message" size="square_sm" />
+                        </Box>
+                        <Heading level={3}>Welcome to your DMs</Heading>
+                        <Paragraph textAlign="center" color="gray2">
+                            Direct messages are end to end encrypted conversations between you and
+                            other users
+                        </Paragraph>
+                    </Stack>
+                </Stack>
+            )
+        )
+    }
 }
 
 /**

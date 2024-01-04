@@ -394,7 +394,7 @@ const ChannelList = (props: {
                 c.isJoined ? (
                     <TouchChannelResultRow
                         key={c.id}
-                        channelNetworkId={c.id}
+                        itemLink={{ channelId: c.id }}
                         name={c.label}
                         unread={c.unread}
                         mentionCount={c.mentionCount}
@@ -425,11 +425,7 @@ const DirectMessageChannelList = () => {
             <SectionHeader title="Direct Messages" />
             <Stack>
                 {spaceDms.map((c) => (
-                    <DirectMessageItem
-                        key={c.id}
-                        channel={c}
-                        unread={dmUnreadChannelIds.has(c.id)}
-                    />
+                    <DirectMessageItem key={c.id} dm={c} unread={dmUnreadChannelIds.has(c.id)} />
                 ))}
             </Stack>
         </>
@@ -438,25 +434,21 @@ const DirectMessageChannelList = () => {
     )
 }
 
-const DirectMessageItem = (props: { channel: DMChannelIdentifier; unread: boolean }) => {
-    const { channel, unread } = props
-    const { unreadCount } = useDMLatestMessage(channel.id)
+const DirectMessageItem = (props: { dm: DMChannelIdentifier; unread: boolean }) => {
+    const { dm, unread } = props
+    const { unreadCount } = useDMLatestMessage(dm.id)
     return (
-        <DMChannelContextUserLookupProvider
-            fallbackToParentContext
-            key={channel.id}
-            channelId={channel.id}
-        >
+        <DMChannelContextUserLookupProvider fallbackToParentContext key={dm.id} channelId={dm.id}>
             <TouchChannelResultRow
-                key={channel.id}
-                channelNetworkId={channel.id}
-                name={<DirectMessageName channel={channel} />}
+                key={dm.id}
+                itemLink={{ messageId: dm.id }}
+                name={<DirectMessageName channel={dm} />}
                 unread={unread}
                 mentionCount={unreadCount}
                 muted={false}
                 icontElement={
                     <Box width="x4">
-                        <DirectMessageIcon channel={channel} width="x4" />
+                        <DirectMessageIcon channel={dm} width="x4" />
                     </Box>
                 }
             />
@@ -465,21 +457,26 @@ const DirectMessageItem = (props: { channel: DMChannelIdentifier; unread: boolea
 }
 
 export const TouchChannelResultRow = (props: {
-    channelNetworkId: string
+    itemLink: { channelId: string } | { messageId: string }
     name: React.ReactNode
     unread: boolean
     mentionCount: number
     muted: boolean
     icontElement?: React.ReactNode
 }) => {
-    const { channelNetworkId, name, unread, mentionCount, muted } = props
+    const { itemLink, name, unread, mentionCount, muted } = props
     const { createLink } = useCreateLink()
-    const link = createLink({ channelId: channelNetworkId })
+    const link =
+        createLink(
+            'channelId' in itemLink
+                ? { channelId: itemLink.channelId }
+                : { messageId: itemLink.messageId },
+        ) + `?ref=home`
 
     return (
         <NavItem to={link} padding="none">
             <NavItemContent
-                key={channelNetworkId}
+                key={link}
                 fontWeight={unread ? 'strong' : 'normal'}
                 color={unread ? 'default' : 'gray1'}
             >

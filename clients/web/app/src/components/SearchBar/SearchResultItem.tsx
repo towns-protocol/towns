@@ -72,7 +72,7 @@ export const ResultItem = (
 
             return isTouch ? (
                 <TouchChannelResultRow
-                    channelNetworkId={item.source.id}
+                    itemLink={{ channelId: item.source.id }}
                     name={item.source.label}
                     unread={item.source.unread}
                     mentionCount={item.source.mentionCount}
