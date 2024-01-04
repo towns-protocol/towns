@@ -119,7 +119,7 @@ func (s *syncHandlerImpl) SyncStreams(
 
 	// generate a random syncId
 	syncId := uuid.New().String()
-	log.Info("SyncStreams:SyncHandlerV2.SyncStreams ENTER", "syncId", syncId, "syncPos", req.Msg.SyncPos)
+	log.Debug("SyncStreams:SyncHandlerV2.SyncStreams ENTER", "syncId", syncId, "syncPos", req.Msg.SyncPos)
 
 	sub, err := s.addSubscription(ctx, req, res, syncId)
 	if err != nil {
@@ -137,14 +137,14 @@ func (s *syncHandlerImpl) SyncStreams(
 		log.Info("SyncStreams:SyncHandlerV2.SyncStreams LEAVE: failed to send syncId", "res", res, "err", err, "syncId", syncId)
 		return err
 	}
-	log.Info("SyncStreams:SyncHandlerV2.SyncStreams: sent syncId", "syncId", syncId)
+	log.Debug("SyncStreams:SyncHandlerV2.SyncStreams: sent syncId", "syncId", syncId)
 
 	e = s.handleSyncRequest(req, res, sub)
 	if e != nil {
 		err := base.AsRiverError(e).Func("SyncStreams")
 		if err.Code == protocol.Err_CANCELED {
 			// Context is canceled when client disconnects, so this is normal case.
-			log.Info("SyncStreams:SyncHandlerV2.SyncStreams LEAVE: sync Dispatch() ended with expected error", "syncId", syncId)
+			log.Debug("SyncStreams:SyncHandlerV2.SyncStreams LEAVE: sync Dispatch() ended with expected error", "syncId", syncId)
 			_ = err.LogDebug(log)
 		} else {
 			log.Info("SyncStreams:SyncHandlerV2.SyncStreams LEAVE: sync Dispatch() ended with unexpected error", "syncId", syncId)
@@ -153,7 +153,7 @@ func (s *syncHandlerImpl) SyncStreams(
 		return err.AsConnectError()
 	}
 	// no errors from handling the sync request.
-	log.Info("SyncStreams:SyncHandlerV2.SyncStreams LEAVE")
+	log.Debug("SyncStreams:SyncHandlerV2.SyncStreams LEAVE")
 	return nil
 }
 
@@ -203,13 +203,13 @@ func (s *syncHandlerImpl) handleSyncRequest(
 	}
 
 	// start the sync loop
-	log.Info("SyncStreams:SyncHandlerV2.SyncStreams: sync Dispatch() started", "syncId", sub.syncId)
+	log.Debug("SyncStreams:SyncHandlerV2.SyncStreams: sync Dispatch() started", "syncId", sub.syncId)
 	sub.Dispatch(res)
-	log.Info("SyncStreams:SyncHandlerV2.SyncStreams: sync Dispatch() ended", "syncId", sub.syncId)
+	log.Debug("SyncStreams:SyncHandlerV2.SyncStreams: sync Dispatch() ended", "syncId", sub.syncId)
 
 	err := sub.getError()
 	if err != nil {
-		log.Info("SyncStreams:SyncHandlerV2.SyncStreams LEAVE: sync Dispatch() ended with expected error", "syncId", sub.syncId)
+		log.Debug("SyncStreams:SyncHandlerV2.SyncStreams LEAVE: sync Dispatch() ended with expected error", "syncId", sub.syncId)
 		return err
 	}
 
@@ -222,12 +222,12 @@ func (s *syncHandlerImpl) CancelSync(
 	req *connect_go.Request[protocol.CancelSyncRequest],
 ) (*connect_go.Response[protocol.CancelSyncResponse], error) {
 	_, log := ctxAndLogForRequest(ctx, req)
-	log.Info("SyncStreams:SyncHandlerV2.CancelSync ENTER", "syncId", req.Msg.SyncId)
+	log.Debug("SyncStreams:SyncHandlerV2.CancelSync ENTER", "syncId", req.Msg.SyncId)
 	sub := s.getSub(req.Msg.SyncId)
 	if sub != nil {
 		sub.OnClose()
 	}
-	log.Info("SyncStreams:SyncHandlerV2.CancelSync LEAVE", "syncId", req.Msg.SyncId)
+	log.Debug("SyncStreams:SyncHandlerV2.CancelSync LEAVE", "syncId", req.Msg.SyncId)
 	return connect_go.NewResponse(&protocol.CancelSyncResponse{}), nil
 }
 
@@ -258,13 +258,13 @@ func (s *syncHandlerImpl) syncLocalNode(
 	log := dlog.CtxLog(ctx)
 
 	if ctx.Err() != nil {
-		log.Debug("SyncStreams:SyncHandlerV2.SyncStreams: syncLocalNode not starting", "context_error", ctx.Err())
+		log.Error("SyncStreams:SyncHandlerV2.SyncStreams: syncLocalNode not starting", "context_error", ctx.Err())
 		return
 	}
 
 	err := s.syncLocalStreamsImpl(ctx, syncPos, sub)
 	if err != nil {
-		log.Debug("SyncStreams:SyncHandlerV2.SyncStreams: syncLocalNode failed", "err", err)
+		log.Error("SyncStreams:SyncHandlerV2.SyncStreams: syncLocalNode failed", "err", err)
 		if sub != nil {
 			sub.OnSyncError(err)
 		}
@@ -311,7 +311,7 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 	log.Debug("SyncStreams:SyncHandlerV2.addLocalStreamToSync ENTER", "syncId", subs.syncId, "syncPos", cookie)
 
 	if ctx.Err() != nil {
-		log.Debug("SyncStreams:SyncHandlerV2.addLocalStreamToSync: context error", "err", ctx.Err())
+		log.Error("SyncStreams:SyncHandlerV2.addLocalStreamToSync: context error", "err", ctx.Err())
 		return ctx.Err()
 	}
 	if subs == nil {
@@ -332,13 +332,13 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 
 	streamSub, _, err := s.cache.GetStream(ctx, cookie.StreamId)
 	if err != nil {
-		log.Debug("SyncStreams:SyncHandlerV2.addLocalStreamToSync: failed to get stream", "streamId", cookie.StreamId, "err", err)
+		log.Info("SyncStreams:SyncHandlerV2.addLocalStreamToSync: failed to get stream", "streamId", cookie.StreamId, "err", err)
 		return err
 	}
 
 	err = subs.addLocalStream(ctx, cookie, &streamSub)
 	if err != nil {
-		log.Debug("SyncStreams:SyncHandlerV2.addLocalStreamToSync: error subscribing to stream", "streamId", cookie.StreamId, "err", err)
+		log.Info("SyncStreams:SyncHandlerV2.addLocalStreamToSync: error subscribing to stream", "streamId", cookie.StreamId, "err", err)
 		return err
 	}
 

@@ -35,7 +35,7 @@ func (s *syncSubscriptionImpl) addLocalStream(
 	stream *events.SyncStream,
 ) error {
 	log := dlog.CtxLog(ctx)
-	log.Info("SyncStreams:syncSubscriptionImpl:addLocalStream: adding local stream", "syncId", s.syncId, "streamId", syncCookie.StreamId)
+	log.Debug("SyncStreams:syncSubscriptionImpl:addLocalStream: adding local stream", "syncId", s.syncId, "streamId", syncCookie.StreamId)
 
 	var exists bool
 
@@ -47,15 +47,15 @@ func (s *syncSubscriptionImpl) addLocalStream(
 	s.mu.Unlock()
 
 	if exists {
-		log.Info("SyncStreams:syncSubscriptionImpl:addLocalStream: local stream already exists", "syncId", s.syncId, "streamId", syncCookie.StreamId)
+		log.Debug("SyncStreams:syncSubscriptionImpl:addLocalStream: local stream already exists", "syncId", s.syncId, "streamId", syncCookie.StreamId)
 	} else {
 		// subscribe to the stream
 		err := (*stream).Sub(ctx, syncCookie, s)
 		if err != nil {
-			log.Info("SyncStreams:syncSubscriptionImpl:addLocalStream: error subscribing to stream", "syncId", s.syncId, "streamId", syncCookie.StreamId, "err", err)
+			log.Error("SyncStreams:syncSubscriptionImpl:addLocalStream: error subscribing to stream", "syncId", s.syncId, "streamId", syncCookie.StreamId, "err", err)
 			return err
 		}
-		log.Info("SyncStreams:syncSubscriptionImpl:addLocalStream: added local stream", "syncId", s.syncId, "streamId", syncCookie.StreamId)
+		log.Debug("SyncStreams:syncSubscriptionImpl:addLocalStream: added local stream", "syncId", s.syncId, "streamId", syncCookie.StreamId)
 	}
 
 	return nil
@@ -260,7 +260,7 @@ func (s *syncSubscriptionImpl) OnClose() {
 	}
 
 	log := dlog.CtxLog(s.ctx)
-	log.Info("SyncStreams:syncSubscriptionImpl:OnClose: closing stream", "syncId", s.syncId)
+	log.Debug("SyncStreams:syncSubscriptionImpl:OnClose: closing stream", "syncId", s.syncId)
 	c := protocol.SyncOp_SYNC_CLOSE
 	select {
 	case s.controlChannel <- &c:
@@ -308,7 +308,7 @@ func (s *syncSubscriptionImpl) Dispatch(res *connect_go.ServerStream[protocol.Sy
 					dlog.CtxLog(s.ctx).Warn("SyncStreams:syncSubscriptionImpl:closeStream: error canceling stream", "err", err)
 				}
 				s.cancel()
-				log.Info("SyncStreams:syncSubscriptionImpl:Dispatch: closed stream", "syncId", s.syncId)
+				log.Debug("SyncStreams:syncSubscriptionImpl:Dispatch: closed stream", "syncId", s.syncId)
 			} else {
 				log.Warn("SyncStreams:syncSubscriptionImpl:Dispatch unknown control message", "syncId", s.syncId, "control", control)
 			}
