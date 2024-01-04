@@ -2,6 +2,8 @@ import { ethers } from 'ethers'
 import { Presets, Client, UserOperationMiddlewareFn } from 'userop'
 import { SpaceDapp } from './SpaceDapp'
 import { ITownArchitectBase } from './ITownArchitectShim'
+import { getContractsInfo } from '../IStaticContractsInfo'
+import { MockERC721AShim } from './MockERC721AShim'
 // import { estimateGasForLocalBundler } from '../userOpUtils' // for eth-infinitism bundler, probably can remove
 
 type UserOpSpaceDappConfig = {
@@ -45,6 +47,7 @@ export class UserOpSpaceDapp extends SpaceDapp {
     rpcUrl: string
     entryPointAddress: string | undefined
     factoryAddress: string | undefined
+    mockNFT: MockERC721AShim | undefined
 
     constructor(config: UserOpSpaceDappConfig) {
         const {
@@ -62,6 +65,8 @@ export class UserOpSpaceDapp extends SpaceDapp {
         this.userOpClient = userOpClient
         this.entryPointAddress = entryPointAddress
         this.factoryAddress = factoryAddress
+        const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
+        this.mockNFT = new MockERC721AShim(mockNFTAddress, chainId, provider)
     }
 
     // Initialize a builder with middleware based on paymaster config
@@ -195,13 +200,16 @@ export class UserOpSpaceDapp extends SpaceDapp {
     }
 
     /**
-     * This method is for running a simple test sending funds, not for app use
+     * This method is for running a sanity test, not for app use
      */
     public async sendFunds(args: {
         signer: ethers.Signer
         recipient: string
         value: ethers.BigNumberish
     }) {
+        if (!this.isAnvil()) {
+            throw new Error('this method is only for local dev against anvil')
+        }
         const { signer, recipient, value } = args
         return this.sendUserOp({
             signer,
@@ -209,6 +217,27 @@ export class UserOpSpaceDapp extends SpaceDapp {
             callData: '0x',
             value,
         })
+    }
+
+    /**
+     * This method is for running a sanity test, not for app use
+     */
+    public mintMockNFT(args: { signer: ethers.Signer; recipient: string }) {
+        if (!this.isAnvil()) {
+            throw new Error('this method is only for local dev against anvil')
+        }
+        const callData = this.mockNFT?.interface.encodeFunctionData('mintTo', [args.recipient])
+
+        return this.sendUserOp({
+            signer: args.signer,
+            toAddress: this.mockNFT?.address,
+            callData: callData,
+            value: 0,
+        })
+    }
+
+    private isAnvil() {
+        return this.chainId === 31337
     }
 
     static async init(config: Omit<UserOpSpaceDappConfig, 'userOpClient'>) {

@@ -14,7 +14,7 @@
         "test": "yarn my-jest",
         "test:ci": "yarn test",
         "test:debug": "DEBUG=test yarn my-jest",
-        "test:funds": "yarn my-jest --testNamePattern=funds",
+        "test:sanity": "yarn my-jest --testNamePattern=sanity",
         "watch": "tsc --watch"
     },
     "dependencies": {
