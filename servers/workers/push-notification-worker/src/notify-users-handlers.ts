@@ -162,14 +162,23 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
         )
         // delete it from the db
         console.log(
-          'delete subscription from the db',
+          'deleting subscription from the db',
+          'userId',
           result.value.userId,
+          'pushSubscription',
           result.value.pushSubscription,
         )
         try {
           await deletePushSubscription(
             env.DB,
             result.value.userId,
+            result.value.pushSubscription,
+          )
+          console.log(
+            'deleted subscription from the db',
+            'userId',
+            result.value.userId,
+            'subscription',
             result.value.pushSubscription,
           )
         } catch (err) {

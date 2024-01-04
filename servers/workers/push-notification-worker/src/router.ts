@@ -29,6 +29,11 @@ import { notifyUsers } from './notify-users-handlers'
 const router = Router()
 
 router.post('/api/add-subscription', async (request: Request, env: Env) => {
+  console.log(
+    'add-subscription',
+    'user-agent',
+    request.headers.get('user-agent'),
+  )
   // check auth before doing work
   if (!isAuthedRequest(request, env)) {
     return create401Response('/api/add-subscription')

@@ -155,10 +155,6 @@ for cmd in "${commands[@]}"; do
     tmux send-keys -t $SESSION_NAME:"$window_name" "$command" C-m
 done
 
-# on a clean build, the run_files/single directory doesn't exist yet. It is
-# created when run_single.sh is run. Fund the wallet here so that it doesn't fail
-cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat casablanca/node/run_files/single/wallet/node_address` 1000000000000000000
-
 # Attach to the tmux session
 tmux attach -t $SESSION_NAME
 

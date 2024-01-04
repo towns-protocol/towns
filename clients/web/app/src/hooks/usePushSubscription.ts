@@ -38,7 +38,9 @@ async function registerForPushSubscription(userId: string, signal: AbortSignal) 
     }
     console.log(
         'PUSH: sending subscription to Push Notification Worker',
+        'userId',
         data.userId,
+        'endpoint',
         data.subscriptionObject.endpoint,
     )
     try {
