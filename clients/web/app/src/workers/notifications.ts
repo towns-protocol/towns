@@ -85,14 +85,13 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     if (data.space) {
                         const space = data.space
                         try {
-                            await addSpaceToIdb(space)
+                            await Promise.all([addSpaceToIdb(space), addChannelsToIdb(space)])
                         } catch (error) {
-                            console.error('sw:push: error adding space to idb', space, error)
-                        }
-                        try {
-                            await addChannelsToIdb(space)
-                        } catch (error) {
-                            console.error('sw:push: error adding channels to idb', space, error)
+                            console.error(
+                                'sw:push: error adding space and channels to idb',
+                                space,
+                                error,
+                            )
                         }
                     }
                     break
@@ -509,23 +508,39 @@ async function addChannelsToIdb(space: SpaceData) {
     }
 }
 
+function preferredName(member: RoomMember): string {
+    // in order of preference: displayName -> username -> userId
+    return stringHasValue(member.displayName)
+        ? member.displayName
+        : stringHasValue(member.username)
+        ? member.username
+        : member.userId
+}
+
 async function addUsersToIdb(membersMap: { [userId: string]: RoomMember | undefined }) {
     if (!idbUsers) {
         ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
     }
     const allIdbUsers = await idbUsers.getAll()
-
-    const missingMembers = Object.values(membersMap).filter(
-        (member): member is RoomMember =>
-            member !== undefined && !allIdbUsers.some((idbUser) => idbUser.id === member.userId),
-    )
-    if (missingMembers.length) {
+    // update name if the userId is missing; or if the name is different
+    const updateNames = Object.values(membersMap)
+        .filter(
+            (member) =>
+                member &&
+                !allIdbUsers.some(
+                    (idbUser) =>
+                        idbUser.id === member.userId && idbUser.name === preferredName(member),
+                ),
+        )
+        .filter((member) => member !== undefined) as RoomMember[]
+    if (updateNames.length) {
         const tx = await idbUsers.transaction('readwrite')
         const store = tx.store
         await Promise.all([
-            ...missingMembers.map(async (member) => {
+            ...updateNames.map(async (member) => {
+                const name = preferredName(member)
                 await store.put?.({
-                    name: member.displayName,
+                    name,
                     id: member.userId,
                 })
             }),

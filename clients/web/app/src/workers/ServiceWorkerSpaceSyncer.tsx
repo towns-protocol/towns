@@ -6,18 +6,19 @@ import {
     useUserLookupContext,
     useZionContext,
 } from 'use-zion-client'
+import { GlobalContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
 import { ServiceWorkerMessageType } from './types.d'
 
 export function ServiceWorkerSpacesSyncer() {
     const { spaceHierarchies } = useZionContext()
     return (
-        <>
+        <GlobalContextUserLookupProvider>
             {Object.values(spaceHierarchies).map(({ root }) => (
                 <SpaceContextProvider key={root.id} spaceId={root.id}>
                     <MessageSender spaceId={root.id} />
                 </SpaceContextProvider>
             ))}
-        </>
+        </GlobalContextUserLookupProvider>
     )
 }
 
