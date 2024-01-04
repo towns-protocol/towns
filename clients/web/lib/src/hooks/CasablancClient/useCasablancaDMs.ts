@@ -79,6 +79,6 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
             casablancaClient.off('streamInitialized', onStreamChange)
             casablancaClient.off('streamUpdated', onStreamChange)
         }
-    })
+    }, [casablancaClient, userId])
     return { channels }
 }
