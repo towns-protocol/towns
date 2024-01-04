@@ -4,6 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router'
 import {
     ChannelContextProvider,
+    DMChannelContextUserLookupProvider,
     Permission,
     RoomMember,
     SpaceData,
@@ -17,7 +18,6 @@ import {
     useUserLookupContext,
 } from 'use-zion-client'
 import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
-import { DMChannelContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
 import { Avatar } from '@components/Avatar/Avatar'
 import {
     DirectMessageIcon,

@@ -2,8 +2,12 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { matchRoutes, useLocation, useNavigate, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
-import { getAccountAddress, useMyProfile, useZionClient } from 'use-zion-client'
-import { useUserLookupContext } from 'use-zion-client/dist/components/UserLookupContext'
+import {
+    getAccountAddress,
+    useMyProfile,
+    useUserLookupContext,
+    useZionClient,
+} from 'use-zion-client'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'

@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
-import { useMyUserId, useZionContext } from 'use-zion-client'
-import { LookupUser } from 'use-zion-client/dist/components/UserLookupContext'
+import { LookupUser, useMyUserId, useZionContext } from 'use-zion-client'
 import { Box, Stack, Text } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { SpaceIcon } from '@components/SpaceIcon'

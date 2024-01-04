@@ -1,8 +1,13 @@
 import React, { useCallback, useMemo } from 'react'
-import { useDMData, useDMLatestMessage, useMyUserId, useUser } from 'use-zion-client'
+import {
+    DMChannelIdentifier,
+    LookupUser,
+    useDMData,
+    useDMLatestMessage,
+    useMyUserId,
+    useUser,
+} from 'use-zion-client'
 import { MostRecentMessageInfo_OneOf } from 'use-zion-client/dist/hooks/use-dm-latest-message'
-import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
-import { LookupUser } from 'use-zion-client/dist/components/UserLookupContext'
 import { Avatar } from '@components/Avatar/Avatar'
 import { TimelineEncryptedContent } from '@components/EncryptedContent/EncryptedMessageBody'
 import { UserList } from '@components/UserList/UserList'

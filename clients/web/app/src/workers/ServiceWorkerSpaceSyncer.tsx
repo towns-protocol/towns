@@ -1,13 +1,16 @@
 import React, { useEffect } from 'react'
 import {
+    GlobalContextUserLookupProvider,
     SpaceContextProvider,
     useMyProfile,
     useSpaceData,
     useUserLookupContext,
     useZionContext,
 } from 'use-zion-client'
-import { GlobalContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
 import { ServiceWorkerMessageType } from './types.d'
+
+// seems like this file doesn't want to update - remove this comment, just to
+// make sure git picks it up
 
 export function ServiceWorkerSpacesSyncer() {
     const { spaceHierarchies } = useZionContext()

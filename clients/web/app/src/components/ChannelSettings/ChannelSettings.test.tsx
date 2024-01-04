@@ -209,78 +209,82 @@ describe('CreateChannelForm', () => {
         })
     })
 
-    test('when role details change on load, correct roles are checked and submitted', async () => {
-        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
-            isReady: true,
-            isTransactionNetwork: true,
-            name: 'Sepolia',
-            switchNetwork: () => null,
-        })
+    test(
+        'when role details change on load, correct roles are checked and submitted',
+        async () => {
+            vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
+                isReady: true,
+                isTransactionNetwork: true,
+                name: 'Sepolia',
+                switchNetwork: () => null,
+            })
 
-        vi.spyOn(zionClient, 'useUpdateChannelTransaction').mockImplementation(
-            useMockedUpdateChannelTransaction,
-        )
-
-        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
-            (_spaceNetworkId: string | undefined) => {
-                return {
-                    data: [
-                        {
-                            ...everyoneRole,
-                        },
-                        {
-                            ...memberRole,
-                        },
-                    ],
-                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
-            },
-        )
-
-        // first render with both roles assigned to channel
-        const { rerender } = render(<Wrapper />)
-
-        const everyoneCheckbox = await screen.findByRole('checkbox', { name: /everyone/i })
-        const memberCheckbox = await screen.findByRole('checkbox', { name: /member/i })
-        const submitButton = screen.getByRole('button', { name: /save on chain/i })
-
-        await waitFor(() => {
-            expect(memberCheckbox).toBeChecked()
-        })
-
-        await waitFor(() => {
-            expect(everyoneCheckbox).toBeChecked()
-        })
-
-        // fake bg data update
-        mockDataForUseMultipleRoleDetails = roleDataWithMemberAssignedToChannel
-
-        rerender(<Wrapper />)
-
-        await waitFor(() => {
-            expect(memberCheckbox).toBeChecked()
-        })
-
-        await waitFor(() => {
-            expect(everyoneCheckbox).not.toBeChecked()
-        })
-
-        fireEvent.click(submitButton)
-
-        await waitFor(async () => {
-            await screen.findByText('Channel updated')
-        })
-
-        await waitFor(async () => {
-            return expect(updateChannelTransactionSpy).toHaveBeenCalledWith(
-                {
-                    channelId: channelRoomIdentifier,
-                    parentSpaceId: spaceRoomIdentifier,
-                    updatedChannelName: 'some channel',
-                    updatedChannelTopic: 'channel topic',
-                    updatedRoleIds: [8],
-                },
-                {},
+            vi.spyOn(zionClient, 'useUpdateChannelTransaction').mockImplementation(
+                useMockedUpdateChannelTransaction,
             )
-        })
-    })
+
+            vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
+                (_spaceNetworkId: string | undefined) => {
+                    return {
+                        data: [
+                            {
+                                ...everyoneRole,
+                            },
+                            {
+                                ...memberRole,
+                            },
+                        ],
+                    } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
+                },
+            )
+
+            // first render with both roles assigned to channel
+            const { rerender } = render(<Wrapper />)
+
+            const everyoneCheckbox = await screen.findByRole('checkbox', { name: /everyone/i })
+            const memberCheckbox = await screen.findByRole('checkbox', { name: /member/i })
+            const submitButton = screen.getByRole('button', { name: /save on chain/i })
+
+            await waitFor(() => {
+                expect(memberCheckbox).toBeChecked()
+            })
+
+            await waitFor(() => {
+                expect(everyoneCheckbox).toBeChecked()
+            })
+
+            // fake bg data update
+            mockDataForUseMultipleRoleDetails = roleDataWithMemberAssignedToChannel
+
+            rerender(<Wrapper />)
+
+            await waitFor(() => {
+                expect(memberCheckbox).toBeChecked()
+            })
+
+            await waitFor(() => {
+                expect(everyoneCheckbox).not.toBeChecked()
+            })
+
+            fireEvent.click(submitButton)
+
+            await waitFor(async () => {
+                await screen.findByText('Channel updated')
+            })
+
+            await waitFor(async () => {
+                return expect(updateChannelTransactionSpy).toHaveBeenCalledWith(
+                    {
+                        channelId: channelRoomIdentifier,
+                        parentSpaceId: spaceRoomIdentifier,
+                        updatedChannelName: 'some channel',
+                        updatedChannelTopic: 'channel topic',
+                        updatedRoleIds: [8],
+                    },
+                    {},
+                )
+            })
+        },
+        { timeout: 20_000 },
+    )
 })

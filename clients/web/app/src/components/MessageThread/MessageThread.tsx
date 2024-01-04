@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import {
+    LookupUser,
     SendMessageOptions,
     ZTEvent,
     useMyProfile,
@@ -8,7 +9,6 @@ import {
 } from 'use-zion-client'
 import { firstBy } from 'thenby'
 import { useLocation } from 'react-router'
-import { LookupUser } from 'use-zion-client/dist/components/UserLookupContext'
 import { isDefined } from '@river/mecholm'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'

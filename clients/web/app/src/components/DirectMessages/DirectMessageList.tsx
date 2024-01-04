@@ -8,8 +8,12 @@ import React, {
     useState,
 } from 'react'
 import { useLocation, useMatch, useNavigate } from 'react-router'
-import { DMChannelIdentifier, useTimelineStore, useZionContext } from 'use-zion-client'
-import { DMChannelContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
+import {
+    DMChannelContextUserLookupProvider,
+    DMChannelIdentifier,
+    useTimelineStore,
+    useZionContext,
+} from 'use-zion-client'
 import { ResultItem } from '@components/SearchBar/SearchResultItem'
 import { Box, Icon, IconButton, Paragraph, Stack, TextField } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'

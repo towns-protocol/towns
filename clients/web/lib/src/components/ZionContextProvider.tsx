@@ -22,7 +22,7 @@ import { useDMUnreads } from '../hooks/ZionContext/useDMUnreads'
 import { useTimelineFilter } from '../store/use-timeline-filter'
 import { ZTEvent } from '../types/timeline-types'
 import { useStreamSyncActive } from '../hooks/ZionContext/useStreamSyncActive'
-import { GlobalContextUserLookupProvider } from './UserLookupContext'
+import { GlobalContextUserLookupProvider } from './UserLookupContextProviders'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 

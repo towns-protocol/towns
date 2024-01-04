@@ -2,20 +2,7 @@ import { useMemo, useRef } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
 import { RoomMember } from 'types/zion-types'
 import isEqual from 'lodash/isEqual'
-
-export type MemberOf = {
-    [spaceId: string]: {
-        spaceId: string
-        userId: string
-        username: string
-        displayName: string
-        avatarUrl?: string
-    }
-}
-
-type KnownUser = RoomMember & {
-    memberOf: MemberOf
-}
+import { KnownUser, MemberOf } from '../types/user-lookup'
 
 /**
  * @returns an array of all known users in all spaces.

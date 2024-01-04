@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { LookupUser, useUserLookupContext } from '../components/UserLookupContext'
+import { LookupUser } from '../types/user-lookup'
+import { useUserLookupContext } from './use-user-lookup-context'
 
 export function useUser(userId?: string): LookupUser | undefined {
     const { users } = useUserLookupContext()

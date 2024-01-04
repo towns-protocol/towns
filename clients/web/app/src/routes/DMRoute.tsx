@@ -1,13 +1,12 @@
 import React, { useEffect, useRef } from 'react'
 import { Outlet, useNavigate, useOutlet, useParams } from 'react-router'
-import { useZionContext } from 'use-zion-client'
-import { GlobalContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
 import { useSearchParams } from 'react-router-dom'
+import { GlobalContextUserLookupProvider, useZionContext } from 'use-zion-client'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
+import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
-import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const DirectMessages = () => {

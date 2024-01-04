@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo } from 'react'
-import { SpaceContextUserLookupProvider } from './UserLookupContext'
+import { SpaceContextUserLookupProvider } from './UserLookupContextProviders'
 
 export interface ISpaceContext {
     spaceId?: string

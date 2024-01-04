@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react'
 import {
+    DMChannelContextUserLookupProvider,
     DMChannelIdentifier,
     useDMLatestMessage,
     useMyUserId,
     useSpaceMembers,
     useZionContext,
 } from 'use-zion-client'
-import { DMChannelContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
 import {
     DirectMessageIcon,
     DirectMessageName,

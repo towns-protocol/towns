@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import {
+    DMChannelContextUserLookupProvider,
     DMChannelIdentifier,
     useChannelData,
     useDMData,
@@ -9,7 +10,6 @@ import {
     useUserLookupContext,
     useZionClient,
 } from 'use-zion-client'
-import { DMChannelContextUserLookupProvider } from 'use-zion-client/dist/components/UserLookupContext'
 import { Box, Icon, Stack, Text, TextButton, TextField } from '@ui'
 import { Panel, PanelButton } from '@components/Panel/Panel'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'

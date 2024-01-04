@@ -23,7 +23,7 @@ import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { TSigner } from '../../src/types/web3-types'
-import { useUserLookupContext } from '../../src/components/UserLookupContext'
+import { useUserLookupContext } from '../../src/hooks/use-user-lookup-context'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -138,7 +138,7 @@ describe('userProfileHooks', () => {
             expect(
                 alice
                     .getRoomData(alicesChannelId)
-                    ?.members.some((x: RoomMember) => x.name === "Bob's your uncle"),
+                    ?.members.some((x: RoomMember) => x.displayName === "Bob's your uncle"),
             ).toBe(true),
         )
         // have alice send a message
