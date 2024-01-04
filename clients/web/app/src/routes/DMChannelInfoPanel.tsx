@@ -75,13 +75,13 @@ export const DMChannelInfoPanel = () => {
         }
     }, [navigate, isTouch])
 
-    const onPermissionsClick = useCallback(() => {
-        if (isTouch) {
-            setActiveModal('permissions')
-        } else {
-            navigate(`../${CHANNEL_INFO_PARAMS.INFO}?${CHANNEL_INFO_PARAMS.PERMISSIONS}`)
-        }
-    }, [navigate, isTouch])
+    // const onPermissionsClick = useCallback(() => {
+    //     if (isTouch) {
+    //         setActiveModal('permissions')
+    //     } else {
+    //         navigate(`../${CHANNEL_INFO_PARAMS.INFO}?${CHANNEL_INFO_PARAMS.PERMISSIONS}`)
+    //     }
+    // }, [navigate, isTouch])
 
     const memberNamesExludingSelf = useMemo(() => {
         return members.filter((member) => member.userId !== myUserId).map((m) => m.userId)
@@ -135,14 +135,14 @@ export const DMChannelInfoPanel = () => {
                             {memberCount} {memberCount === 1 ? 'member' : 'members'}{' '}
                         </Text>
                     </PanelButton>
-                    {data?.isGroup && (
+                    {/* {data?.isGroup && (
                         <PanelButton onClick={onPermissionsClick}>
                             <Icon type="people" size="square_sm" color="gray2" />
                             <Text color="default" fontWeight="medium">
                                 Manage member permissions
                             </Text>
                         </PanelButton>
-                    )}
+                    )} */}
                     <PanelButton onClick={onLeaveClick}>
                         <Icon type="logout" color="error" size="square_sm" />
                         <Text color="error" fontWeight="medium">
