@@ -1,19 +1,33 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { useCasablancaSpaces } from '../CasablancClient/useCasablancaSpaces'
 import { Client as CasablancaClient } from '@river/sdk'
 import { SpaceHierarchies } from 'types/zion-types'
 import { SpaceChild } from 'types/zion-types'
+import isEqual from 'lodash/isEqual'
 
 export function useCasablancaSpaceHierarchies(
     casablancaClient?: CasablancaClient,
 ): SpaceHierarchies {
     const spaces = useCasablancaSpaces(casablancaClient)
-    const spaceIds = useMemo(() => spaces.map((space) => space.id), [spaces])
+
+    const previousSpaceIdsRef = useRef<string[]>([])
+
+    const spaceIds = useMemo(() => {
+        const newSpaceIds = spaces.map((space) => space.id)
+        if (isEqual(previousSpaceIdsRef.current, newSpaceIds)) {
+            return previousSpaceIdsRef.current
+        } else {
+            previousSpaceIdsRef.current = newSpaceIds
+            return newSpaceIds
+        }
+    }, [spaces])
+
+    const previousSpaceHierarchiesRef = useRef<SpaceHierarchies>({})
 
     // todo austin - seems like this should be a useEffect that listens to add/remove channel events
     return useMemo(() => {
         if (!casablancaClient) {
-            return {}
+            return previousSpaceHierarchiesRef.current
         }
 
         const result: SpaceHierarchies = {}
@@ -24,7 +38,12 @@ export function useCasablancaSpaceHierarchies(
             //2.Consider refactoring code using reduce (if it will be more readable)
             result[spaceId] = toSpaceHierarchy(casablancaClient, spaceId)
         })
-        return result
+        if (isEqual(previousSpaceHierarchiesRef.current, result)) {
+            return previousSpaceHierarchiesRef.current
+        } else {
+            previousSpaceHierarchiesRef.current = result
+            return result
+        }
     }, [spaceIds, casablancaClient])
 }
 
