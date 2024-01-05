@@ -256,7 +256,11 @@ export const MessageLayout = (props: Props) => {
                     )}
 
                     {attachments && attachments.length > 0 && (
-                        <Attachments attachments={attachments} onClickMedia={onMediaClick} />
+                        <Attachments
+                            attachments={attachments}
+                            onClickMedia={onMediaClick}
+                            onClick={isTouch && isSelectable ? onClick : undefined}
+                        />
                     )}
 
                     {hasReactions || hasReplies ? (
@@ -428,9 +432,10 @@ const ActiveAvatar = (props: AvatarProps & { userId: string; link: string }) => 
 
 export const Attachments = (props: {
     attachments: Attachment[]
+    onClick?: () => void
     onClickMedia?: (streamId: string) => void
 }) => {
-    const { onClickMedia, attachments } = props
+    const { onClickMedia, attachments, onClick } = props
 
     const mediaAttachments: ChunkedMediaAttachment[] = attachments.filter(isRichMediaAttachment)
     const fileAttachments: ChunkedMediaAttachment[] = attachments.filter(isRegularFileAttachment)
@@ -438,7 +443,7 @@ export const Attachments = (props: {
     return (
         <>
             {mediaAttachments.length > 0 && (
-                <Stack horizontal gap="sm" flexWrap="wrap">
+                <Stack horizontal gap="sm" flexWrap="wrap" onClick={onClick}>
                     {mediaAttachments.map((attachment) => (
                         <ChunkedFile
                             key={attachment.streamId}

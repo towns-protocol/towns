@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useChunkedMedia } from 'use-zion-client'
 import { useDownloadFile } from 'use-zion-client/dist/hooks/use-chunked-media'
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
@@ -93,8 +93,17 @@ const ChunkedMedia = (props: Props) => {
     const { objectURL } = useChunkedMedia(props)
     const { isTouch } = useDevice()
 
-    const MAX_HEIGHT = 280
-    const calculatedWidth = MAX_HEIGHT * (width / height)
+    const multiplier = isTouch ? 0.7 : 1
+    const MAX_HEIGHT = 280 * multiplier
+
+    const calculatedHeight = useMemo(() => {
+        const imageRatio = width / height
+        if (imageRatio > 3) {
+            return MAX_HEIGHT / imageRatio
+        } else {
+            return MAX_HEIGHT
+        }
+    }, [width, height, MAX_HEIGHT])
 
     useEffect(() => {
         if (thumbnail) {
@@ -108,11 +117,26 @@ const ChunkedMedia = (props: Props) => {
         <Box
             position="relative"
             cursor="zoom-in"
-            style={{ width: calculatedWidth, height: MAX_HEIGHT }}
+            style={{
+                height: calculatedHeight,
+                maxWidth: '75%',
+                aspectRatio: `${width} / ${height}`,
+            }}
             rounded="sm"
             overflow="hidden"
         >
-            <img src={objectURL ?? thumbnailURL ?? ''} onClick={onClick} />
+            <Box
+                role="image"
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    backgroundImage: `url(${objectURL ?? thumbnailURL ?? ''}`,
+                    backgroundPosition: 'center',
+                    backgroundSize: 'cover',
+                    backgroundRepeat: 'no-repeat',
+                }}
+                onClick={isTouch ? undefined : onClick}
+            />
             {isTouch && (
                 <IconButton
                     opaque
