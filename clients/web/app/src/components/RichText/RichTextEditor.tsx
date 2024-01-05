@@ -238,7 +238,7 @@ export const RichTextEditor = (props: Props) => {
     )
 }
 
-const RichTextEditorWithoutBoundary = (props: Props) => {
+const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
     const {
         editable = true,
         userId,
@@ -429,7 +429,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
             </LexicalComposer>
         </Stack>
     )
-}
+})
 
 const RichTextEditorFallbackComponent = (props: { error: Error }) => (
     <Box
