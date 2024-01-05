@@ -23,7 +23,7 @@ import { toast } from 'react-hot-toast/headless'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
-import { useStore } from 'store/store'
+import { useInputStore } from 'store/store'
 import { Box, BoxProps, Stack } from '@ui'
 import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
@@ -258,7 +258,7 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
     const [isSendingFiles, setIsSendingFiles] = useState<boolean>(false)
     const { protocol } = useEnvironment()
 
-    const userInput = useStore((state) =>
+    const userInput = useInputStore((state) =>
         props.storageId ? state.channelMessageInputMap[props.storageId] : undefined,
     )
 

@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { useEffect } from 'react'
-import { useStore } from 'store/store'
+import { useInputStore } from 'store/store'
 
 type Props = {
     storageId?: string
@@ -8,7 +8,7 @@ type Props = {
 
 export const RememberInputPlugin = (props: Props) => {
     const { storageId } = props
-    const setInput = useStore((state) => state.setChannelmessageInput)
+    const setInput = useInputStore((state) => state.setChannelmessageInput)
 
     const [editor] = useLexicalComposerContext()
     useEffect(() => {

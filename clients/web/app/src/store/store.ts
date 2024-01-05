@@ -8,8 +8,6 @@ interface AppState {
     setPaneSize: (id: string, size: number) => void
     isWindowFocused: boolean
     setIsWindowFocused: (isWindowActive: boolean) => void
-    setChannelmessageInput: (id: string, value: string) => void
-    channelMessageInputMap: { [inputId: string]: string }
     dismissedGettingStartedMap: { [spaceId: string]: string }
     setDismissedGettingStarted: (spaceId: string) => void
     setTownRouteBookmark: (spaceId: string, route: string) => void
@@ -27,7 +25,7 @@ export const GLOBAL_STORE_NAME = 'towns/global'
 
 export const useStore = create(
     persist<AppState>(
-        (set, get) => ({
+        (set) => ({
             theme: undefined,
             setTheme: (theme) => {
                 set(() => ({ theme }))
@@ -36,10 +34,10 @@ export const useStore = create(
             spaceIdBookmark: undefined,
             townRouteBookmarks: {},
             setTownRouteBookmark: (spaceId, route) => {
-                set(() => ({
+                set((state) => ({
                     // also set the spaceIdBookmark when setting the town route
                     spaceIdBookmark: spaceId,
-                    townRouteBookmarks: { ...get().townRouteBookmarks, [spaceId]: route },
+                    townRouteBookmarks: { ...state.townRouteBookmarks, [spaceId]: route },
                 }))
             },
 
@@ -51,14 +49,12 @@ export const useStore = create(
             channelMessageInputMap: {},
             dismissedGettingStartedMap: {},
             setDismissedGettingStarted: (spacedId) => {
-                const _map = get().dismissedGettingStartedMap
-                _map[spacedId] = spacedId
-                set(() => ({ dismissedGettingStartedMap: _map }))
-            },
-            setChannelmessageInput: (id, value) => {
-                const userInput = get().channelMessageInputMap
-                userInput[id] = value
-                set(() => ({ channelMessageInputMap: userInput }))
+                set((state) => ({
+                    dismissedGettingStartedMap: {
+                        ...state.dismissedGettingStartedMap,
+                        [spacedId]: spacedId,
+                    },
+                }))
             },
 
             paneSizes: {},
@@ -93,6 +89,30 @@ export const useStore = create(
                 const { isWindowFocused, searchTerms, ...rest } = state
                 return rest as AppState
             },
+        },
+    ),
+)
+
+interface InputStoreState {
+    setChannelmessageInput: (id: string, value: string) => void
+    channelMessageInputMap: { [inputId: string]: string }
+}
+
+export const GLOBAL_INPUT_STORE_NAME = 'towns/input'
+
+export const useInputStore = create(
+    persist<InputStoreState>(
+        (set) => ({
+            channelMessageInputMap: {},
+            setChannelmessageInput: (id, value) => {
+                set((state) => ({
+                    channelMessageInputMap: { ...state.channelMessageInputMap, [id]: value },
+                }))
+            },
+        }),
+        {
+            name: GLOBAL_INPUT_STORE_NAME,
+            version: 1,
         },
     ),
 )
