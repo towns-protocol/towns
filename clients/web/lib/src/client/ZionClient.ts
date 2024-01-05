@@ -1,5 +1,5 @@
 import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 'ethers'
-import { RoomMessageEvent } from '../types/timeline-types'
+import { RoomMessageEvent, transformAttachments } from '../types/timeline-types'
 import {
     Client as CasablancaClient,
     RiverDbManager,
@@ -1155,6 +1155,7 @@ export class ZionClient implements EntitlementsDelegate {
                         content: {
                             body: message,
                             mentions: options?.mentions ?? [],
+                            attachments: transformAttachments(options?.attachments),
                         },
                     })
                 }
@@ -1274,6 +1275,7 @@ export class ZionClient implements EntitlementsDelegate {
             content: {
                 body: message,
                 mentions: options?.mentions ?? [],
+                attachments: transformAttachments(options?.attachments),
             },
         })
     }

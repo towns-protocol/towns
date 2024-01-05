@@ -17,9 +17,8 @@ import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary'
 import { clsx } from 'clsx'
 import isEqual from 'lodash/isEqual'
 import React, { useCallback, useMemo, useState } from 'react'
-import { Channel, Mention, RoomMember, SendTextMessageOptions } from 'use-zion-client'
+import { Channel, Mention, MessageType, RoomMember, SendTextMessageOptions } from 'use-zion-client'
 import { NodeEventPlugin } from '@lexical/react/LexicalNodeEventPlugin'
-import { toast } from 'react-hot-toast/headless'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
@@ -31,6 +30,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
 import { SpaceProtocol, useEnvironment } from 'hooks/useEnvironmnet'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { MessageStatusAnnotation, useInitialConfig } from './hooks/useInitialConfig'
 import { AnnotationNode } from './nodes/AnnotationNode'
 import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
@@ -58,7 +58,6 @@ import { RichTextBottomToolbar } from './RichTextBottomToolbar'
 import { singleEmojiMessage } from './RichTextEditor.css'
 import { PasteFilePlugin } from './plugins/PasteFilePlugin'
 import { HightlightNode, createHighlightTransformer } from './nodes/HightlightNode'
-import { FileUploadFailedToast } from './FileUploadFailedToast'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -254,9 +253,9 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
     const { transformers } = useTransformers({ members, channels })
     const { isTouch } = useDevice()
     const [isEditorEmpty, setIsEditorEmpty] = useState(true)
-    const [fileCount, setFileCount] = useState(0)
-    const [isSendingFiles, setIsSendingFiles] = useState<boolean>(false)
     const { protocol } = useEnvironment()
+    const { uploadFiles, files } = useMediaDropContext()
+    const fileCount = files.length
 
     const userInput = useInputStore((state) =>
         props.storageId ? state.channelMessageInputMap[props.storageId] : undefined,
@@ -283,39 +282,23 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
     const [isAttemptingSend, setIsAttemptingSend] = useState(false)
 
     const onSendCb = useCallback(
-        (message: string, mentions: Mention[]) => {
-            const options = mentions.length > 0 ? { mentions } : undefined
+        async (message: string, mentions: Mention[]) => {
+            const attachments = files.length > 0 ? (await uploadFiles?.()) ?? [] : []
+
+            const options: SendTextMessageOptions = { messageType: MessageType.Text }
+            if (mentions.length > 0) {
+                options.mentions = mentions
+            }
+            if (attachments.length > 0) {
+                options.attachments = attachments
+            }
             onSend?.(message, options)
         },
-        [onSend],
+        [onSend, files, uploadFiles],
     )
     const onSendAttemptWhileDisabled = useCallback(() => {
         setIsAttemptingSend(true)
     }, [])
-
-    const sendFile = useCallback(() => {
-        if (fileCount === 0) {
-            return
-        }
-        setIsSendingFiles(true)
-    }, [fileCount, setIsSendingFiles])
-
-    const showErrorMessage = useCallback((message: string) => {
-        setIsSendingFiles(false)
-        toast.custom((t) => {
-            return <FileUploadFailedToast toast={t} message={message} />
-        })
-    }, [])
-
-    const imageCountUpdated = useCallback(
-        (count: number) => {
-            setFileCount(count)
-            if (fileCount === 0) {
-                setIsSendingFiles(false)
-            }
-        },
-        [setFileCount, fileCount, setIsSendingFiles],
-    )
 
     if (!editable) {
         return (
@@ -378,7 +361,6 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
                             setIsEditorEmpty={setIsEditorEmpty}
                             hasImage={fileCount > 0}
                             key="markdownplugin"
-                            onSendImage={sendFile}
                             onSend={onSendCb}
                             onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
                             onCancel={props.onCancel}
@@ -387,15 +369,7 @@ const RichTextEditorWithoutBoundary = React.memo((props: Props) => {
                 </Stack>
 
                 <Stack gap shrink paddingX paddingBottom="sm">
-                    {protocol === SpaceProtocol.Casablanca && (
-                        <PasteFilePlugin
-                            isSendingFiles={isSendingFiles}
-                            setIsSendingFiles={setIsSendingFiles}
-                            setFileCount={imageCountUpdated}
-                            threadId={props.threadId}
-                            showErrorMessage={showErrorMessage}
-                        />
-                    )}
+                    {protocol === SpaceProtocol.Casablanca && <PasteFilePlugin />}
                     <RichTextBottomToolbar
                         editing={isEditing}
                         focused={focused}

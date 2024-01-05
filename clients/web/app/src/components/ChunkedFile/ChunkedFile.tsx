@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useChunkedMedia } from 'use-zion-client'
 import { useDownloadFile } from 'use-zion-client/dist/hooks/use-chunked-media'
-import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
-import { Box, Button, Icon, Stack, Text } from '@ui'
+import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
+import { useDevice } from 'hooks/useDevice'
 
 type Props = {
     streamId: string
@@ -80,10 +80,7 @@ const ChunkedFileDownload = (props: Props) => {
                     )}
                 </Stack>
                 <Button tone="level2" color="gray2" border="level3" size="button_sm" rounded="sm">
-                    <Stack horizontal>
-                        <Icon type="download" color="gray2" size="square_sm" />
-                    </Stack>
-                    <Text fontWeight="medium">Download</Text>
+                    <Icon type="download" color="gray2" size="square_sm" />
                 </Button>
             </Stack>
         </Stack>
@@ -94,6 +91,10 @@ const ChunkedMedia = (props: Props) => {
     const { width, height, thumbnail, onClick } = props
     const [thumbnailURL, setThumbnailURL] = useState<string | undefined>(undefined)
     const { objectURL } = useChunkedMedia(props)
+    const { isTouch } = useDevice()
+
+    const MAX_HEIGHT = 280
+    const calculatedWidth = MAX_HEIGHT * (width / height)
 
     useEffect(() => {
         if (thumbnail) {
@@ -104,13 +105,24 @@ const ChunkedMedia = (props: Props) => {
     }, [thumbnail])
 
     return (
-        <Box cursor="zoom-in">
-            <RatioedBackgroundImage
-                url={objectURL ?? thumbnailURL ?? ''}
-                width={width}
-                height={height}
-                onClick={onClick}
-            />
+        <Box
+            position="relative"
+            cursor="zoom-in"
+            style={{ width: calculatedWidth, height: MAX_HEIGHT }}
+            rounded="sm"
+            overflow="hidden"
+        >
+            <img src={objectURL ?? thumbnailURL ?? ''} onClick={onClick} />
+            {isTouch && (
+                <IconButton
+                    opaque
+                    icon="maximize"
+                    position="absolute"
+                    bottom="sm"
+                    right="sm"
+                    onClick={onClick}
+                />
+            )}
         </Box>
     )
 }

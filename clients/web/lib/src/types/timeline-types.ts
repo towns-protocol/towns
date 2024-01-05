@@ -1,5 +1,9 @@
 import { HistoryVisibility, IContent, JoinRule, RestrictedAllowType } from 'matrix-js-sdk'
 import {
+    ChannelMessage_Post_Attachment,
+    ChannelMessage_Post_Content_ChunkedMedia_AESGCM,
+    ChannelMessage_Post_Content_Image_Info,
+    ChannelMessage_Post_Content_MediaInfo,
     ChannelOp,
     ChannelProperties,
     FullyReadMarker,
@@ -10,6 +14,7 @@ import { Channel, Membership, Mention, PowerLevels } from './zion-types'
 import { BlockchainTransaction } from './web3-types'
 import { staticAssertNever } from '../utils/zion-utils'
 import { DecryptedContentError } from '@river/sdk'
+import { isDefined } from '@river/mecholm'
 
 /**************************************************************************
  * We're using a union type to represent the different types of events that
@@ -206,6 +211,7 @@ export interface RoomMessageEvent {
     editsEventId?: string
     content: IContent // room messages have lots of representations
     wireContent: IContent
+    attachments?: Attachment[]
 }
 
 export interface RoomNameEvent {
@@ -323,6 +329,36 @@ export interface IgnoredNoticeEvent {
 
 export type NoticeEvent = BlockchainTransactionEvent | IgnoredNoticeEvent
 
+export type Encryption = Pick<ChannelMessage_Post_Content_ChunkedMedia_AESGCM, 'iv' | 'secretKey'>
+export type MediaInfo = Pick<
+    ChannelMessage_Post_Content_MediaInfo,
+    'filename' | 'mimetype' | 'sizeBytes' | 'widthPixels' | 'heightPixels'
+>
+export type ImageInfo = Pick<ChannelMessage_Post_Content_Image_Info, 'url' | 'width' | 'height'>
+
+export type ImageAttachment = {
+    type: 'image'
+    info: ImageInfo
+    id: string
+}
+
+export type ChunkedMediaAttachment = {
+    type: 'chunked_media'
+    streamId: string
+    encryption: Encryption
+    info: MediaInfo
+    id: string
+}
+
+export type EmbeddedMediaAttachment = {
+    type: 'embedded_media'
+    info: MediaInfo
+    content: Uint8Array
+    id: string
+}
+
+export type Attachment = ImageAttachment | ChunkedMediaAttachment | EmbeddedMediaAttachment
+
 export function getFallbackContent(
     senderDisplayName: string,
     content?: TimelineEvent_OneOf,
@@ -406,4 +442,56 @@ export function getFallbackContent(
         default:
             staticAssertNever(content)
     }
+}
+
+export function transformAttachments(attachments?: Attachment[]): ChannelMessage_Post_Attachment[] {
+    if (!attachments) {
+        return []
+    }
+
+    return attachments
+        .map((attachment) => {
+            switch (attachment.type) {
+                case 'chunked_media':
+                    return new ChannelMessage_Post_Attachment({
+                        content: {
+                            case: 'chunkedMedia',
+                            value: {
+                                info: attachment.info,
+                                streamId: attachment.streamId,
+                                encryption: {
+                                    case: 'aesgcm',
+                                    value: {
+                                        iv: attachment.encryption.iv,
+                                        secretKey: attachment.encryption.secretKey,
+                                    },
+                                },
+                            },
+                        },
+                    })
+
+                case 'embedded_media':
+                    return new ChannelMessage_Post_Attachment({
+                        content: {
+                            case: 'embeddedMedia',
+                            value: {
+                                info: attachment.info,
+                                content: attachment.content,
+                            },
+                        },
+                    })
+                case 'image':
+                    return new ChannelMessage_Post_Attachment({
+                        content: {
+                            case: 'image',
+                            value: {
+                                info: attachment.info,
+                            },
+                        },
+                    })
+                default:
+                    return undefined
+            }
+        })
+        .filter(isDefined)
 }

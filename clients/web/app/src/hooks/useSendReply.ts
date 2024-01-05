@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { SendMessageOptions, useChannelData, useZionClient } from 'use-zion-client'
+import { MessageType, SendMessageOptions, useChannelData, useZionClient } from 'use-zion-client'
 
 export const useSendReply = (threadId?: string, threadPreview?: string) => {
     const { sendMessage } = useZionClient()
@@ -12,7 +12,11 @@ export const useSendReply = (threadId?: string, threadPreview?: string) => {
             options: SendMessageOptions | undefined,
             threadParticipants?: Set<string>,
         ) => {
-            if (value && spaceId) {
+            const valid =
+                value.length > 0 ||
+                (options?.messageType === MessageType.Text && options.attachments?.length)
+
+            if (valid && spaceId) {
                 sendMessage(channelId, value, {
                     ...options,
                     parentSpaceId: spaceId,
@@ -20,7 +24,7 @@ export const useSendReply = (threadId?: string, threadPreview?: string) => {
                     threadPreview,
                     threadParticipants,
                 })
-            } else if (value) {
+            } else if (valid) {
                 sendMessage(channelId, value, { ...options, threadId, threadPreview })
             }
             return sendReply

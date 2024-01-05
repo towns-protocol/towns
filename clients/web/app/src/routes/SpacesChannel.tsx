@@ -5,6 +5,7 @@ import { Outlet, useLocation, useParams } from 'react-router'
 import {
     ChannelContextProvider,
     Membership,
+    MessageType,
     SendMessageOptions,
     useChannelData,
     useChannelTimeline,
@@ -80,9 +81,13 @@ const SpacesChannelComponent = (props: Props) => {
 
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {
-            if (value && channelId && spaceId) {
+            const valid =
+                value.length > 0 ||
+                (options?.messageType === MessageType.Text && options.attachments?.length)
+
+            if (valid && channelId && spaceId) {
                 sendMessage(channelId, value, { parentSpaceId: spaceId, ...options })
-            } else if (value && channelId) {
+            } else if (valid && channelId) {
                 sendMessage(channelId, value, options)
             }
         },
@@ -190,7 +195,7 @@ const SpacesChannelComponent = (props: Props) => {
                 <MediaDropContextProvider
                     key={channelId}
                     title={imageUploadTitle}
-                    id="channel"
+                    channelId={channelId}
                     disableDrop={!isChannelWritable}
                 >
                     <MessageTimelineWrapper

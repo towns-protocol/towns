@@ -121,6 +121,7 @@ export const MessageItem = (props: Props) => {
                             eventId={event.eventId}
                             eventContent={event.content}
                             channelId={channelId}
+                            attachments={event.content.attachments}
                         />
 
                         {/* Always show message on touch devices, even while editing also disables onMentionClick. */}
@@ -201,7 +202,7 @@ type MessageWrapperProps = {
 const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     const { event, displayContext, selectable, replies } = props
     const { sender } = event
-
+    const navigate = useNavigate()
     const timelineContext = useTimelineContext()
     const { isTouch } = useDevice()
 
@@ -238,6 +239,22 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         [event.isEncrypting, event.isLocalPending, event.localEventId],
     )
 
+    const attachments =
+        event.content?.kind === ZTEvent.RoomMessage ? event.content.attachments : undefined
+
+    const onMediaClick = useCallback(
+        (attachmentId: string) => {
+            if (!event.threadParentId || event.threadParentId.length === 0) {
+                navigate(`./?${QUERY_PARAMS.GALLERY_ID}=${attachmentId}`)
+                return
+            }
+            return navigate(
+                `./?${QUERY_PARAMS.GALLERY_ID}=${attachmentId}&${QUERY_PARAMS.GALLERY_THREAD_ID}=${event.threadParentId}`,
+            )
+        },
+        [navigate, event.threadParentId],
+    )
+
     return !event ? null : (
         <MessageLayout
             avatarSize={isTouch ? 'avatar_x4' : 'avatar_md'}
@@ -263,9 +280,11 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             relativeDate={isRelativeDate}
             replies={replies}
             messageBody={body}
+            attachments={attachments}
             sendStatus={sendStatus}
             sessionId={event.sessionId}
             onReaction={handleReaction}
+            onMediaClick={onMediaClick}
         >
             {props.children}
         </MessageLayout>

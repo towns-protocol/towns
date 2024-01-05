@@ -1,7 +1,8 @@
 import React, { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { MessageType, TimelineEvent, ZTEvent } from 'use-zion-client'
+import { Attachment, TimelineEvent, ZTEvent } from 'use-zion-client'
 import { Lightbox, ViewCallbackProps } from 'yet-another-react-lightbox'
+import { isDefined } from '@river/mecholm'
 import { QUERY_PARAMS } from 'routes'
 import { atoms } from 'ui/styles/atoms.css'
 import { Icon } from '@ui'
@@ -17,22 +18,28 @@ type Props = {
 export const FullScreenMedia = (props: Props) => {
     const [searchParams, setSearchParams] = useSearchParams()
     const galleryId = searchParams.get(QUERY_PARAMS.GALLERY_ID)
-
     const { events, threadId } = props
 
     const elements = useMemo(() => {
-        const imageEvents = events.filter((e) => {
-            return (
-                e.content?.kind === ZTEvent.RoomMessage &&
-                (e.content.msgType === MessageType.ChunkedMedia ||
-                    e.content.msgType == MessageType.EmbeddedMedia ||
-                    e.content.msgType == MessageType.Image)
-            )
-        })
-        if (!threadId) {
-            return imageEvents.filter((e) => e.threadParentId === undefined)
-        }
-        return imageEvents.filter((e) => e.threadParentId === threadId || e.eventId === threadId)
+        const filteredEvents = threadId
+            ? events.filter((e) => e.eventId === threadId || e.threadParentId === threadId)
+            : events
+        return filteredEvents
+            .map((e) => {
+                if (
+                    e.content?.kind === ZTEvent.RoomMessage &&
+                    e.content.attachments &&
+                    e.content.attachments.length > 0
+                ) {
+                    return e.content.attachments.map((a) => ({
+                        attachment: a,
+                        createdAtEpocMs: e.createdAtEpocMs,
+                        userId: e.sender.id,
+                    }))
+                }
+            })
+            .filter(isDefined)
+            .flatMap((e) => e)
     }, [events, threadId])
 
     const closeButtonPressed = useCallback(() => {
@@ -50,7 +57,7 @@ export const FullScreenMedia = (props: Props) => {
             }
             const event = elements[info.index]
             setSearchParams((prev) => {
-                prev.set(QUERY_PARAMS.GALLERY_ID, event.eventId)
+                prev.set(QUERY_PARAMS.GALLERY_ID, event.attachment.id)
                 if (threadId) {
                     prev.set(QUERY_PARAMS.GALLERY_THREAD_ID, threadId)
                 }
@@ -61,11 +68,17 @@ export const FullScreenMedia = (props: Props) => {
     )
     const slides = useMemo(() => {
         return elements.map((e) => {
-            return { type: 'image' as const, event: e, src: '' }
+            return {
+                type: 'image' as const,
+                attachment: e.attachment,
+                userId: e.userId,
+                createdAtEpocMs: e.createdAtEpocMs,
+                src: '',
+            }
         })
     }, [elements])
 
-    const index = elements.findIndex((e) => e.eventId === galleryId)
+    const index = elements.findIndex((e) => e.attachment.id === galleryId)
     if (index < 0) {
         return null
     }
@@ -86,10 +99,17 @@ export const FullScreenMedia = (props: Props) => {
                 iconClose: () => <Icon type="close" />,
                 slide: (info) => {
                     // Offset = distance from current center slide
-                    if (Math.abs(info.offset) > 1 || !hasTimelineEvent(info.slide)) {
+                    if (Math.abs(info.offset) > 1 || !hasAttachment(info.slide)) {
                         return undefined
                     }
-                    return <FullScreenMediaItem event={info.slide.event} />
+
+                    return (
+                        <FullScreenMediaItem
+                            attachment={info.slide.attachment}
+                            userId={info.slide.userId}
+                            timestamp={info.slide.createdAtEpocMs}
+                        />
+                    )
                 },
             }}
             animation={{
@@ -101,11 +121,17 @@ export const FullScreenMedia = (props: Props) => {
     )
 }
 
-function hasTimelineEvent(obj: unknown): obj is { event: TimelineEvent } {
+function hasAttachment(
+    obj: unknown,
+): obj is { attachment: Attachment; userId: string; createdAtEpocMs: number } {
     return (
         obj !== null &&
         typeof obj === 'object' &&
-        'event' in obj &&
-        typeof obj.event !== 'undefined'
+        'attachment' in obj &&
+        typeof obj.attachment !== 'undefined' &&
+        'userId' in obj &&
+        typeof obj.userId !== 'undefined' &&
+        'createdAtEpocMs' in obj &&
+        typeof obj.createdAtEpocMs !== 'undefined'
     )
 }

@@ -1,5 +1,6 @@
 import { firstBy } from 'thenby'
 import {
+    Attachment,
     Membership,
     RedactedEvent,
     RoomCreateEvent,
@@ -64,6 +65,7 @@ export interface MessageRenderEvent extends BaseEvent {
     event: ZRoomMessageEvent
     displayContext: 'single' | 'head' | 'body' | 'tail'
     isHighlight?: boolean
+    attachments?: Attachment[]
 }
 
 export interface EncryptedMessageRenderEvent extends BaseEvent {

@@ -2,6 +2,7 @@ import { PlainMessage } from '@bufbuild/protobuf'
 import { HistoryVisibility, IContent, MatrixEvent } from 'matrix-js-sdk'
 import { StreamSettings } from '@river/proto'
 import { Stream } from '@river/sdk'
+import { Attachment } from './timeline-types'
 
 export enum Membership {
     Join = 'join',
@@ -148,6 +149,7 @@ export interface ThreadIdOptions {
 export type SendTextMessageOptions = ThreadIdOptions & {
     messageType?: MessageType.Text
     mentions?: Mention[]
+    attachments?: Attachment[]
 }
 
 export interface Mention {

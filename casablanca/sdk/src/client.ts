@@ -20,6 +20,7 @@ import {
     Envelope,
     Err,
     SessionKeys,
+    ChannelMessage_Post_Attachment,
 } from '@river/proto'
 import {
     bin_fromHexString,
@@ -905,11 +906,13 @@ export class Client
         streamId: string,
         body: string,
         mentions?: ChannelMessage_Post_Mention[],
+        attachments: ChannelMessage_Post_Attachment[] = [],
     ): Promise<void> {
         return this.sendChannelMessage_Text(streamId, {
             content: {
                 body,
                 mentions: mentions ?? [],
+                attachments: attachments,
             },
         })
     }

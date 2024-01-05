@@ -24,11 +24,20 @@ message ChannelMessage {
             string user_id = 1;
             string display_name = 2;
         }
+
+        message Attachment {
+            oneof content {
+                Content.Image image = 101;
+                Content.EmbeddedMedia embeddedMedia = 102;
+                Content.ChunkedMedia chunkedMedia = 103;
+            }
+        }
         
         message Content {
             message Text {
                 string body = 1;
                 repeated Mention mentions = 2;
+                repeated Attachment attachments = 3;
             }
 
             message Image {

@@ -24,7 +24,6 @@ export const SendMarkdownPlugin = (props: {
     isEditing: boolean
     hasImage: boolean
     onSend?: (value: string, mentions: Mention[]) => void
-    onSendImage: () => void
     onSendAttemptWhileDisabled?: () => void
     onCancel?: () => void
     isEditorEmpty: boolean
@@ -37,7 +36,6 @@ export const SendMarkdownPlugin = (props: {
         isEditorEmpty,
         setIsEditorEmpty,
         hasImage,
-        onSendImage,
     } = props
     const [editor] = useLexicalComposerContext()
 
@@ -94,9 +92,6 @@ export const SendMarkdownPlugin = (props: {
                         if (!disabled) {
                             parseMarkdown()
                             editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined)
-                            if (onSendImage) {
-                                onSendImage()
-                            }
                         } else if (onSendAttemptWhileDisabled) {
                             onSendAttemptWhileDisabled()
                         }
@@ -113,23 +108,12 @@ export const SendMarkdownPlugin = (props: {
                 COMMAND_PRIORITY_LOW,
             ),
         )
-    }, [
-        editor,
-        parseMarkdown,
-        disabled,
-        registerCommandCount,
-        onSendAttemptWhileDisabled,
-        isTouch,
-        onSendImage,
-    ])
+    }, [editor, parseMarkdown, disabled, registerCommandCount, onSendAttemptWhileDisabled, isTouch])
 
     const sendMessage = useCallback(() => {
-        if (hasImage) {
-            onSendImage()
-        }
         parseMarkdown()
         editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined)
-    }, [editor, parseMarkdown, hasImage, onSendImage])
+    }, [editor, parseMarkdown])
 
     const shouldDisplayButtons =
         props.displayButtons === 'always' ||

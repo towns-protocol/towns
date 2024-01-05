@@ -278,6 +278,7 @@ export const MessageTimeline = (props: Props) => {
                                     key: stableKey,
                                     event,
                                     displayContext: getMessageDisplayContext(index, events.length),
+                                    attachments: event.content.attachments,
                                 }
                             } else if (isRedactedRoomMessage(event)) {
                                 if (repliesMap?.[event.eventId]) {

@@ -26,6 +26,7 @@ import {
     ChannelMessage,
     CommonPayload,
     ChannelProperties,
+    ChannelMessage_Post_Attachment,
 } from '@river/proto'
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
@@ -53,9 +54,13 @@ import {
     ZTEvent,
     KeySolicitationEvent,
     RoomPropertiesEvent,
+    Attachment,
+    ChunkedMediaAttachment,
+    EmbeddedMediaAttachment,
+    ImageAttachment,
 } from '../../types/timeline-types'
 import { EventStatus } from 'matrix-js-sdk'
-import { logNever } from '@river/mecholm'
+import { isDefined, logNever } from '@river/mecholm'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -233,6 +238,7 @@ function toTownsContent(timelineEvent: StreamTimelineEvent): TownsContentResult 
         return toTownsContent_FromChannelMessage(
             timelineEvent.localEvent.channelMessage,
             'local event',
+            timelineEvent.hashStr,
         )
     } else if (isDecryptedEvent(timelineEvent)) {
         return toTownsContent_fromDecryptedEvent(timelineEvent.hashStr, timelineEvent)
@@ -274,7 +280,11 @@ function toTownsContent_fromDecryptedEvent(
         case 'text':
             return { error: `payload contains only text: ${message.decryptedContent.content}` }
         case 'channelMessage':
-            return toTownsContent_FromChannelMessage(message.decryptedContent.content, description)
+            return toTownsContent_FromChannelMessage(
+                message.decryptedContent.content,
+                description,
+                eventId,
+            )
         case 'channelProperties':
             return toTownsContent_FromChannelProperties(message.decryptedContent.content)
         default:
@@ -522,12 +532,14 @@ function toTownsContent_ChannelPayload(
 function toTownsContent_FromChannelMessage(
     channelMessage: ChannelMessage,
     description: string,
+    eventId: string,
 ): TownsContentResult {
     switch (channelMessage.payload?.case) {
         case 'post':
             return (
                 toTownsContent_ChannelPayload_Message_Post(
                     channelMessage.payload.value,
+                    eventId,
                     undefined,
                     description,
                 ) ?? {
@@ -556,6 +568,7 @@ function toTownsContent_FromChannelMessage(
             }
             const newContent = toTownsContent_ChannelPayload_Message_Post(
                 newPost,
+                eventId,
                 channelMessage.payload.value.refEventId,
                 description,
             )
@@ -612,6 +625,7 @@ function toTownsContent_ChannelPayload_ChannelProperties(
 
 function toTownsContent_ChannelPayload_Message_Post(
     value: ChannelMessage_Post | PlainMessage<ChannelMessage_Post>,
+    eventId: string,
     editsEventId: string | undefined,
     description: string,
 ): TownsContentResult {
@@ -628,6 +642,7 @@ function toTownsContent_ChannelPayload_Message_Post(
                     editsEventId: editsEventId,
                     content: {},
                     wireContent: {},
+                    attachments: toAttachments(value.content.value.attachments, eventId),
                 } satisfies RoomMessageEvent,
             }
         case 'image':
@@ -822,4 +837,58 @@ function hasTimelineContent(kind: SnapshotCaseType): boolean {
         kind === 'dmChannelContent' ||
         kind === 'gdmChannelContent'
     )
+}
+
+function toAttachments(
+    attachments: PlainMessage<ChannelMessage_Post_Attachment>[],
+    parentEventId: string,
+): Attachment[] {
+    return attachments
+        .map((attachment, index) => toAttachment(attachment, parentEventId, index))
+        .filter(isDefined)
+}
+
+function toAttachment(
+    attachment: PlainMessage<ChannelMessage_Post_Attachment>,
+    parentEventId: string,
+    index: number,
+): Attachment | undefined {
+    const id = `${parentEventId}-${index}`
+    switch (attachment.content.case) {
+        case 'chunkedMedia': {
+            const info = attachment.content.value.info
+            const encryption = attachment.content.value.encryption.value
+            if (!info || !encryption) {
+                return undefined
+            }
+            return {
+                type: 'chunked_media',
+                info,
+                streamId: attachment.content.value.streamId,
+                encryption: encryption,
+                id,
+            } satisfies ChunkedMediaAttachment
+        }
+        case 'embeddedMedia': {
+            const info = attachment.content.value.info
+            if (!info) {
+                return undefined
+            }
+            return {
+                type: 'embedded_media',
+                info,
+                content: attachment.content.value.content,
+                id,
+            } satisfies EmbeddedMediaAttachment
+        }
+        case 'image': {
+            const info = attachment.content.value.info
+            if (!info) {
+                return undefined
+            }
+            return { type: 'image', info, id } satisfies ImageAttachment
+        }
+        default:
+            return undefined
+    }
 }

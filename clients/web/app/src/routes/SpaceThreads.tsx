@@ -92,7 +92,7 @@ export const SpaceThreads = () => {
                                     <MediaDropContextProvider
                                         disableDrop
                                         title=""
-                                        id={thread.parentId}
+                                        channelId={channel.id}
                                     >
                                         <>
                                             <MessageThread

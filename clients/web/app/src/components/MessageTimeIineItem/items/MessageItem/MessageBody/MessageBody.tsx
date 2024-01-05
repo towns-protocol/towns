@@ -80,7 +80,6 @@ export const MessageBody = ({
                 onMentionClick={onMentionClick}
                 onMentionHover={isTouch ? undefined : onMentionHover}
             />
-
             {invalidContent
                 ? null
                 : unfurledContent.map((unfurlData: UnfurlData) => (

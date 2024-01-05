@@ -1,5 +1,6 @@
 import React, { useCallback, useContext } from 'react'
 import {
+    Attachment,
     RoomMessageEvent,
     SendTextMessageOptions,
     useMyProfile,
@@ -12,26 +13,31 @@ import { useEditMessage } from 'hooks/useEditMessage'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useDevice } from 'hooks/useDevice'
+import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 
 type Props = {
     eventId: string
     eventContent: RoomMessageEvent
     channelId: string
     initialValue: string
+    attachments?: Attachment[]
 }
 
 export const TimelineMessageEditor = (props: Props) => {
     const { isTouch } = useDevice()
-    const { initialValue, channelId, eventId, eventContent } = props
+    const { attachments, initialValue, channelId, eventId, eventContent } = props
     const { timelineActions } = useContext(MessageTimelineContext) ?? {}
     const editChannelEvent = useEditMessage(channelId)
 
     const onSend = useCallback(
         (value: string, options: SendTextMessageOptions | undefined) => {
+            if (options) {
+                options.attachments = [...(attachments ?? []), ...(options.attachments ?? [])]
+            }
             editChannelEvent({ eventId, value }, eventContent, options)
             timelineActions?.onCancelEditingMessage?.()
         },
-        [editChannelEvent, eventContent, eventId, timelineActions],
+        [editChannelEvent, eventContent, eventId, timelineActions, attachments],
     )
 
     const onCancel = useCallback(() => {
@@ -45,32 +51,36 @@ export const TimelineMessageEditor = (props: Props) => {
     return isTouch ? (
         <TouchEditMessageWrapper onCancel={onCancel}>
             <Box grow />
-            <RichTextEditor
-                autoFocus
-                editable
-                editing
-                displayButtons="always"
-                initialValue={initialValue}
-                channels={channels}
-                users={members}
-                userId={userId}
-                onSend={onSend}
-                onCancel={onCancel}
-            />
+            <MediaDropContextProvider channelId={channelId} title="" eventId={eventId}>
+                <RichTextEditor
+                    autoFocus
+                    editable
+                    editing
+                    displayButtons="always"
+                    initialValue={initialValue}
+                    channels={channels}
+                    users={members}
+                    userId={userId}
+                    onSend={onSend}
+                    onCancel={onCancel}
+                />
+            </MediaDropContextProvider>
         </TouchEditMessageWrapper>
     ) : (
         <Stack gap>
-            <RichTextEditor
-                editable
-                editing
-                displayButtons="always"
-                initialValue={initialValue}
-                channels={channels}
-                users={members}
-                userId={userId}
-                onSend={onSend}
-                onCancel={onCancel}
-            />
+            <MediaDropContextProvider channelId={channelId} title="" eventId={eventId}>
+                <RichTextEditor
+                    editable
+                    editing
+                    displayButtons="always"
+                    initialValue={initialValue}
+                    channels={channels}
+                    users={members}
+                    userId={userId}
+                    onSend={onSend}
+                    onCancel={onCancel}
+                />
+            </MediaDropContextProvider>
         </Stack>
     )
 }

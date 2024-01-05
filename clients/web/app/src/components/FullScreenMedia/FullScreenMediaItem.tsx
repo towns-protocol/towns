@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { MessageType, TimelineEvent, ZTEvent, useChunkedMedia, useUser } from 'use-zion-client'
+import React, { useEffect, useState } from 'react'
+import { Attachment, useChunkedMedia, useUser } from 'use-zion-client'
 import { formatDistance } from 'date-fns'
 import { Box, Stack, Text } from '@ui'
 import { darkTheme } from 'ui/styles/vars.css'
@@ -7,7 +7,9 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
 
 type Props = {
-    event: TimelineEvent
+    attachment: Attachment
+    userId: string
+    timestamp: number
 }
 
 type MediaSenderInfoProps = {
@@ -16,40 +18,16 @@ type MediaSenderInfoProps = {
 }
 
 export const FullScreenMediaItem = (props: Props) => {
-    const { event } = props
-    if (event.content?.kind !== ZTEvent.RoomMessage) {
-        return null
-    }
+    const { attachment, userId, timestamp } = props
 
-    if (event.content.msgType === MessageType.ChunkedMedia) {
+    if (attachment.type === 'chunked_media') {
         return (
             <ChunkedMediaFullScreen
-                streamId={event.content.content.streamId}
-                iv={event.content.content.iv}
-                secretKey={event.content.content.secretKey}
-                thumbnail={event.content.content.thumbnail}
-                userId={event.sender.id}
-                timestamp={event.createdAtEpocMs}
-            />
-        )
-    }
-
-    if (event.content.msgType === MessageType.EmbeddedMedia) {
-        return (
-            <EmbeddedMediaFullScreen
-                content={event.content.content.content}
-                userId={event.sender.id}
-                timestamp={event.createdAtEpocMs}
-            />
-        )
-    }
-
-    if (event.content.msgType === MessageType.Image) {
-        return (
-            <MediaItemWithBackground
-                url={event.content.content.info.url}
-                userId={event.sender.id}
-                timestamp={event.createdAtEpocMs}
+                streamId={attachment.streamId}
+                iv={attachment.encryption.iv}
+                secretKey={attachment.encryption.secretKey}
+                userId={userId}
+                timestamp={timestamp}
             />
         )
     }
@@ -62,7 +40,7 @@ const ChunkedMediaFullScreen = (
         streamId: string
         iv: Uint8Array
         secretKey: Uint8Array
-        thumbnail: Uint8Array
+        thumbnail?: Uint8Array
     } & MediaSenderInfoProps,
 ) => {
     const { thumbnail, ...mediaProps } = props
@@ -80,21 +58,6 @@ const ChunkedMediaFullScreen = (
     return (
         <MediaItemWithBackground
             url={objectURL ?? thumbnailURL ?? ''}
-            userId={props.userId}
-            timestamp={props.timestamp}
-        />
-    )
-}
-
-const EmbeddedMediaFullScreen = (props: { content: Uint8Array } & MediaSenderInfoProps) => {
-    const { content } = props
-    const objectURL = useMemo(() => {
-        const url = URL.createObjectURL(new Blob([content]))
-        return url
-    }, [content])
-    return (
-        <MediaItemWithBackground
-            url={objectURL}
             userId={props.userId}
             timestamp={props.timestamp}
         />
