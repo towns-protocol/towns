@@ -95,27 +95,8 @@ export const DMChannelContextUserLookupProvider = (props: {
         // opportunistically fill in displayName from parent context if
         // allowed. This is designed for the DM channels within spaces
         if (props.fallbackToParentContext) {
-            allUsers.forEach((user) => {
-                if ((!user.username || !user.displayName) && user.memberOf) {
-                    // find the first (not necesarilly the best, since that
-                    // would be subjective) alternative that has a displayName
-                    const matches = Object.values(user.memberOf)
-                        .filter((u) => u.displayName.length > 0 || u.username.length > 0)
-                        .sort((a, b) =>
-                            !spaceId
-                                ? 0
-                                : Math.sign(
-                                      spaceCompare(a.spaceId, spaceId) -
-                                          spaceCompare(b.spaceId, spaceId),
-                                  ),
-                        )
-
-                    if (matches.length > 0) {
-                        user.username = matches[0].username
-                        user.displayName = matches[0].displayName
-                    }
-                }
-            })
+            allUsers.forEach((u) => mergeNames(u, spaceId))
+            users.forEach((u) => mergeNames(u, spaceId))
         }
         const usersMap = allUsers.reduce((acc, user) => {
             acc[user.userId] = user
@@ -129,6 +110,27 @@ export const DMChannelContextUserLookupProvider = (props: {
     }, [room, props.fallbackToParentContext, channelId, parentContext?.usersMap, spaceId])
 
     return <UserLookupContext.Provider value={value}>{props.children}</UserLookupContext.Provider>
+}
+
+const mergeNames = (user: LookupUser, spaceId?: string) => {
+    if ((!user.username || !user.displayName) && user.memberOf) {
+        // find the first (not necesarilly the best, since that
+        // would be subjective) alternative that has a displayName
+        const matches = Object.values(user.memberOf)
+            .filter((u) => u.displayName.length > 0 || u.username.length > 0)
+            .sort((a, b) =>
+                !spaceId
+                    ? 0
+                    : Math.sign(
+                          spaceCompare(a.spaceId, spaceId) - spaceCompare(b.spaceId, spaceId),
+                      ),
+            )
+
+        if (matches.length > 0) {
+            user.username = matches[0].username
+            user.displayName = matches[0].displayName
+        }
+    }
 }
 
 const spaceCompare = (memberStreamId: string, currentStreamId: string) =>
