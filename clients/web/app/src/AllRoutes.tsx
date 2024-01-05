@@ -18,11 +18,11 @@ const VersionsPage = React.lazy(() => import('routes/VersionsPage'))
 const PlaygroundRoutes = React.lazy(() => import('@components/Playground/PlaygroundRoutes'))
 
 export const AllRoutes = () => {
-    const { isAuthenticatedAndConnected } = useAuth()
+    const { isAuthenticated } = useAuth()
 
     return (
         <>
-            {!isAuthenticatedAndConnected && (
+            {!isAuthenticated && (
                 <Box position="fixed" left="lg" bottom="lg">
                     <ErrorReportModal />
                 </Box>
@@ -33,7 +33,7 @@ export const AllRoutes = () => {
                     <Route element={<Outlet />}>
                         <>
                             <Route path={PATHS.VERSIONS} element={<VersionsPage />} />
-                            {!isAuthenticatedAndConnected ? (
+                            {!isAuthenticated ? (
                                 <>
                                     <Route path={PATHS.REGISTER} element={<WelcomeRoute />} />
                                     <Route path={PATHS.LOGIN} element={<WelcomeRoute />} />

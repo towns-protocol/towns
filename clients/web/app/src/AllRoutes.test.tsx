@@ -50,8 +50,7 @@ vi.mock('hooks/useAuth', async () => {
         useAuth: () => ({
             register: () => Promise.resolve(),
             loggedInWalletAddress: '0x1234',
-            isConnected: true,
-            isAuthenticatedAndConnected: true,
+            isAuthenticated: true,
         }),
     }
 })
