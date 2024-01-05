@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
     Channel,
     ChannelGroup,
@@ -21,6 +21,7 @@ import { SpaceInfo } from '@river/web3'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useQuery } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
+import { isDefined } from '../utils/isDefined'
 
 /// returns default space if no space slug is provided
 export function useSpaceData(inSpaceId?: string): SpaceData | undefined {
@@ -191,31 +192,49 @@ export function useSpaceNames(client?: CasablancaClient) {
 
     const isEnabled = spaceDapp && client && client.streams.size() > 0
 
-    const streamSize = client?.streams.size()
+    const previousSpaceIdsRef = useRef<string[]>([])
     const spaceIds = useMemo(() => {
-        if (!isEnabled || !client || streamSize == 0) {
-            return []
+        if (!isEnabled || !client?.streams || client?.streams.size() == 0) {
+            return previousSpaceIdsRef.current
         }
-        return client.streams.getStreamIds().filter((id) => isSpaceStreamId(id))
-    }, [isEnabled, client, streamSize])
+        const newSpaceIds = client.streams.getStreamIds().filter((id) => isSpaceStreamId(id))
+        if (isEqual(previousSpaceIdsRef.current, newSpaceIds)) {
+            // If all elements are the same, return the previous array
+            console.log(
+                `useSpaceNames: spaceIds unchanged, returning previous array`,
+                previousSpaceIdsRef.current,
+                newSpaceIds,
+            )
+            return previousSpaceIdsRef.current
+        }
+
+        // Update the ref with the new array
+        previousSpaceIdsRef.current = newSpaceIds
+        console.log(
+            `useSpaceNames: spaceIds changed, returning new array`,
+            previousSpaceIdsRef.current,
+            newSpaceIds,
+        )
+        return newSpaceIds
+    }, [isEnabled, client?.streams])
 
     const getSpaceNames = useCallback(
         async function (): Promise<SpaceInfo[]> {
-            if (!spaceDapp || !isEnabled) {
+            if (!spaceDapp || !isEnabled || !spaceIds) {
                 return []
             }
-            const getSpaceInfoPromises: Promise<SpaceInfo | undefined>[] = []
-            for (const streamId of spaceIds) {
-                getSpaceInfoPromises.push(spaceDapp.getSpaceInfo(streamId))
-            }
+            const getSpaceInfoPromises = spaceIds.map((streamId) =>
+                spaceDapp.getSpaceInfo(streamId),
+            )
             const spaceInfos = await Promise.all(getSpaceInfoPromises)
-            return spaceInfos.filter((spaceInfo) => spaceInfo !== undefined) as SpaceInfo[]
+            console.log(`useSpaceNames: spaceInfos executed with `, spaceIds, spaceInfos)
+            return spaceInfos.filter(isDefined)
         },
         [spaceDapp, isEnabled, spaceIds],
     )
 
-    const queryData = useQuery<SpaceInfo[]>(
-        blockchainKeys.spaceNames(spaceIds),
+    const queryData = useQuery(
+        spaceIds,
         getSpaceNames,
         // options for the query.
         {
@@ -223,6 +242,10 @@ export function useSpaceNames(client?: CasablancaClient) {
             refetchOnMount: true,
         },
     )
+
+    useEffect(() => {
+        console.log(`queryData changed`, queryData.data, queryData.isLoading)
+    }, [queryData.data, queryData.isLoading])
 
     return {
         data: queryData.data,
