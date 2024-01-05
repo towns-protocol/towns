@@ -1279,6 +1279,21 @@ export class Client
         }
     }
 
+    async removeUser(streamId: string, userId: string): Promise<void> {
+        this.logCall('removeUser', streamId, userId)
+        if (isGDMChannelStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_GDMChannelPayload_Membership({
+                    op: MembershipOp.SO_LEAVE,
+                    userId,
+                }),
+            )
+        } else {
+            throw new Error('invalid streamId')
+        }
+    }
+
     async scrollback(
         streamId: string,
     ): Promise<{ terminus: boolean; firstEvent?: StreamTimelineEvent }> {

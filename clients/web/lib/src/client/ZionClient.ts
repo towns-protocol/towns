@@ -1035,6 +1035,13 @@ export class ZionClient implements EntitlementsDelegate {
         return toZionRoomFromStream(stream, this.casablancaClient.userId)
     }
 
+    public async removeUser(streamId: string, userId: string): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
+        }
+        await this.casablancaClient.removeUser(streamId, userId)
+    }
+
     /************************************************
      * joinTown
      * - mints membership if needed

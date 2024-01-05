@@ -312,7 +312,7 @@ export const getEventsByDate = (
                         e.membershipType === event.content.membership &&
                         // separate groups by who invited/added the user to
                         // channel for GDMs (e.g. x added y, y added x and z)
-                        (channelType !== 'gdm' || e.events[0].sender.id === event.sender.id),
+                        (channelType !== 'gdm' || e.events[0]?.sender.id === event.sender.id),
                 ) as AccumulatedRoomMemberRenderEvent | undefined
 
                 if (!accumulatedEvents) {

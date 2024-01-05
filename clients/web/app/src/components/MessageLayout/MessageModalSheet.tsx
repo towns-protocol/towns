@@ -2,10 +2,11 @@ import React, { useCallback, useContext, useEffect, useState } from 'react'
 import Sheet from 'react-modal-sheet'
 import { useZionClient } from 'use-zion-client'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
-import { Button, Divider, Icon, IconName, Stack, Text, useZLayerContext } from '@ui'
+import { Button, Divider, Icon, Stack, useZLayerContext } from '@ui'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { EmojiPickerContainerMobile } from '@components/EmojiPickerButton/EmojiPickerContainerMobile'
+import { TableCell } from '@components/TableCell/TableCell'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -215,38 +216,6 @@ export const MessageModalSheet = (props: Props) => {
                 />
             )}
         </>
-    )
-}
-
-type TableCellProps = {
-    iconType: IconName
-    text: string
-    isError?: boolean
-    onClick: () => void
-}
-
-const TableCell = (props: TableCellProps) => {
-    const { iconType, text, isError, onClick } = props
-
-    return (
-        <Stack
-            horizontal
-            rounded="xs"
-            background={{ hover: 'level2' }}
-            gap="sm"
-            alignItems="center"
-            padding="sm"
-            onClick={onClick}
-        >
-            <Icon
-                type={iconType}
-                size="square_lg"
-                background="level2"
-                color={isError ? 'error' : 'gray2'}
-                padding="xs"
-            />
-            <Text color={isError ? 'error' : 'default'}>{text}</Text>
-        </Stack>
     )
 }
 

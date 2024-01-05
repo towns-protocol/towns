@@ -680,9 +680,6 @@ func (s *Service) addGDMMembershipEvent(ctx context.Context, stream AddableStrea
 		if !member {
 			return RiverError(Err_PERMISSION_DENIED, "user is not a member of gdm channel", "user", creatorUserId)
 		}
-		if membership.Op == MembershipOp_SO_LEAVE && creatorUserId != membership.UserId {
-			return RiverError(Err_PERMISSION_DENIED, "user must leave themselves", "user", membership.UserId)
-		}
 
 	case MembershipOp_SO_JOIN:
 		member, err := s.checkMembership(ctx, view, membership.UserId)

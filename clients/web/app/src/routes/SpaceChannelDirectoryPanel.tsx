@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
@@ -6,11 +6,14 @@ import {
     getAccountAddress,
     useChannelData,
     useChannelMembers,
+    useMyUserId,
     useUserLookupContext,
+    useZionClient,
 } from 'use-zion-client'
 import { isGDMChannelStreamId } from '@river/sdk'
+import Sheet from 'react-modal-sheet'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { Box, Icon, Paragraph, Stack } from '@ui'
+import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
 import { useCreateLink } from 'hooks/useCreateLink'
@@ -21,16 +24,45 @@ import { Avatar } from '@components/Avatar/Avatar'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { useDevice } from 'hooks/useDevice'
+import { modalSheetClass } from 'ui/styles/globals/sheet.css'
+import { TableCell } from '@components/TableCell/TableCell'
 import { ChannelInviteModal } from './ChannelInvitePanel'
 
 export const ChannelDirectoryPanel = () => {
     const { channel } = useChannelData()
     const navigate = useNavigate()
+    const { client } = useZionClient()
 
+    const [pendingRemovalUserId, setPendingRemovalUserId] = React.useState<string | undefined>(
+        undefined,
+    )
     const canAddMembers = channel?.id ? isGDMChannelStreamId(channel.id) : false
     const onClose = useEvent(() => {
         navigate('..')
     })
+
+    const canRemoveMembers = channel?.id ? isGDMChannelStreamId(channel.id) : false
+    const onRemoveMember = useCallback(
+        (userId: string) => {
+            setPendingRemovalUserId(userId)
+        },
+        [setPendingRemovalUserId],
+    )
+
+    const onConfirmRemoveMember = useCallback(async () => {
+        if (!pendingRemovalUserId) {
+            return
+        }
+        if (!channel?.id) {
+            return
+        }
+        await client?.removeUser(channel?.id, pendingRemovalUserId)
+        setPendingRemovalUserId(undefined)
+    }, [setPendingRemovalUserId, pendingRemovalUserId, channel?.id, client])
+
+    const onCancelRemoveMember = useCallback(() => {
+        setPendingRemovalUserId(undefined)
+    }, [setPendingRemovalUserId])
 
     const addMembersClick = useCallback(() => {
         navigate(`../${CHANNEL_INFO_PARAMS.INFO}?${CHANNEL_INFO_PARAMS.INVITE}`)
@@ -48,21 +80,39 @@ export const ChannelDirectoryPanel = () => {
             }
             onClose={onClose}
         >
-            <ChannelMembers onAddMembersClick={canAddMembers ? addMembersClick : undefined} />
+            <ChannelMembers
+                onAddMembersClick={canAddMembers ? addMembersClick : undefined}
+                onRemoveMember={canRemoveMembers ? onRemoveMember : undefined}
+            />
+            {pendingRemovalUserId && (
+                <ConfirmRemoveMemberModal
+                    userId={pendingRemovalUserId}
+                    onConfirm={onConfirmRemoveMember}
+                    onCancel={onCancelRemoveMember}
+                />
+            )}
         </Panel>
     )
 }
 
-const ChannelMembers = (props: { onAddMembersClick?: () => void }) => {
-    const { onAddMembersClick } = props
+const ChannelMembers = (props: {
+    onAddMembersClick?: () => void
+    onRemoveMember?: (userId: string) => void
+}) => {
+    const { onAddMembersClick, onRemoveMember } = props
     const { memberIds } = useChannelMembers()
     const { usersMap } = useUserLookupContext()
+    const myUserId = useMyUserId()
 
     return (
         <Stack paddingY="md" minHeight="forceScroll">
             {onAddMembersClick && <AddMemberRow onClick={onAddMembersClick} />}
             {memberIds.map((userId) => (
-                <ChannelMemberRow key={userId} user={usersMap[userId]} />
+                <ChannelMemberRow
+                    key={userId}
+                    user={usersMap[userId]}
+                    onRemoveMember={userId === myUserId ? undefined : onRemoveMember}
+                />
             ))}
         </Stack>
     )
@@ -70,17 +120,82 @@ const ChannelMembers = (props: { onAddMembersClick?: () => void }) => {
 
 export const ChannelMembersModal = (props: { onHide: () => void }) => {
     const { channel } = useChannelData()
+    const { client } = useZionClient()
+
     const canAddMembers = channel?.id ? isGDMChannelStreamId(channel.id) : false
-    const [inviteModalOpen, setInviteModalOpen] = React.useState(false)
+    const canRemoveMembers = channel?.id ? isGDMChannelStreamId(channel.id) : false
+
+    const [selectedUserId, setSelectedUserId] = useState<string | undefined>(undefined)
+    const [pendingRemovalUserId, setPendingRemovalUserId] = React.useState<string | undefined>(
+        undefined,
+    )
+    const [inviteModalOpen, setInviteModalOpen] = useState(false)
     const onAddMembersClick = useCallback(() => {
         setInviteModalOpen(true)
     }, [setInviteModalOpen])
 
+    const onMemberClick = useCallback((userId: string) => {
+        setSelectedUserId(userId)
+    }, [])
+
+    const onCloseMemberModal = useCallback(() => {
+        setSelectedUserId(undefined)
+    }, [])
+
+    const onRemoveMemberClicked = useCallback(() => {
+        if (selectedUserId) {
+            setPendingRemovalUserId(selectedUserId)
+        }
+        setSelectedUserId(undefined)
+    }, [setPendingRemovalUserId, selectedUserId, setSelectedUserId])
+
+    const onConfirmRemoveMember = useCallback(async () => {
+        if (!pendingRemovalUserId) {
+            return
+        }
+        if (!channel?.id) {
+            return
+        }
+        await client?.removeUser(channel?.id, pendingRemovalUserId)
+        setPendingRemovalUserId(undefined)
+    }, [setPendingRemovalUserId, pendingRemovalUserId, channel?.id, client])
+
     return (
-        <ModalContainer touchTitle="Members" onHide={props.onHide}>
-            <ChannelMembers onAddMembersClick={canAddMembers ? onAddMembersClick : undefined} />
-            {inviteModalOpen && <ChannelInviteModal onHide={() => setInviteModalOpen(false)} />}
-        </ModalContainer>
+        <>
+            <ModalContainer touchTitle="Members" onHide={props.onHide}>
+                <ChannelMembers
+                    onAddMembersClick={canAddMembers ? onAddMembersClick : undefined}
+                    onRemoveMember={canRemoveMembers ? onMemberClick : undefined}
+                />
+                {inviteModalOpen && <ChannelInviteModal onHide={() => setInviteModalOpen(false)} />}
+                {selectedUserId && (
+                    <UserModal
+                        onClose={onCloseMemberModal}
+                        onRemoveMemberClicked={onRemoveMemberClicked}
+                    />
+                )}
+
+                {pendingRemovalUserId && (
+                    <Box absoluteFill centerContent background="backdropBlur">
+                        {/* This is a bit of a hack — the react-modal-sheet won't let us present a modal multiple sheets on top of each other. */}
+                        <Box
+                            padding
+                            position="relative"
+                            background="level1"
+                            color="default"
+                            rounded="sm"
+                            border="level3"
+                        >
+                            <ConfirmRemoveMemberModalContent
+                                userId={pendingRemovalUserId}
+                                onConfirm={onConfirmRemoveMember}
+                                onCancel={() => setPendingRemovalUserId(undefined)}
+                            />
+                        </Box>
+                    </Box>
+                )}
+            </ModalContainer>
+        </>
     )
 }
 
@@ -107,7 +222,14 @@ const AddMemberRow = (props: { onClick: () => void }) => {
     )
 }
 
-const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
+type ChannelMemberRowProps = {
+    user: RoomMember
+    onRemoveMember?: (userId: string) => void
+}
+
+const ChannelMemberRow = (props: ChannelMemberRowProps) => {
+    const { user, onRemoveMember } = props
+    const [isHeaderHovering, setIsHeaderHovering] = useState(false)
     const isValid = !!user?.userId
     const link = useCreateLink().createLink({ profileId: user.userId })
     const { isTouch } = useDevice()
@@ -117,14 +239,36 @@ const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
     }
 
     const navigate = useNavigate()
-    const onNavigateClick = useCallback(() => {
-        if (link) {
-            navigate(link)
+    const onClick = useCallback(() => {
+        if (isTouch) {
+            onRemoveMember?.(user.userId)
+        } else {
+            if (link) {
+                navigate(link)
+            }
         }
-    }, [link, navigate])
+    }, [link, navigate, user.userId, onRemoveMember, isTouch])
 
     const { usersMap } = useUserLookupContext()
     const globalUser = usersMap[user.userId] ?? user
+
+    const onPointerEnter = useCallback(() => {
+        setIsHeaderHovering(true)
+    }, [])
+    const onPointerLeave = useCallback(() => {
+        setIsHeaderHovering(false)
+    }, [])
+
+    const onRemoveMemberClicked = useCallback(
+        (event: React.MouseEvent) => {
+            event.preventDefault()
+            event.stopPropagation()
+            if (onRemoveMember) {
+                onRemoveMember(user.userId)
+            }
+        },
+        [onRemoveMember, user.userId],
+    )
 
     if (!userAddress) {
         return null
@@ -137,7 +281,10 @@ const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
             paddingY="sm"
             background={{ hover: 'level3', default: undefined }}
             cursor="pointer"
-            onClick={onNavigateClick}
+            alignItems="center"
+            onClick={onClick}
+            onPointerEnter={isTouch ? undefined : onPointerEnter}
+            onPointerLeave={isTouch ? undefined : onPointerLeave}
         >
             <Stack horizontal height="height_lg" gap="md" width="100%">
                 <Box
@@ -158,6 +305,95 @@ const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
                     )}
                 </Stack>
             </Stack>
+            {onRemoveMember && isHeaderHovering && (
+                <Box tooltip="Remove from group">
+                    <Button tone="none" color="gray2" size="inline" onClick={onRemoveMemberClicked}>
+                        <Icon type="minus" />
+                    </Button>
+                </Box>
+            )}
         </Stack>
+    )
+}
+
+type ConfirmRemoveMemberModalProps = {
+    onConfirm: () => void
+    onCancel: () => void
+    userId: string
+}
+
+const ConfirmRemoveMemberModal = (props: ConfirmRemoveMemberModalProps) => {
+    const { onCancel } = props
+    return (
+        <ModalContainer minWidth="auto" onHide={onCancel}>
+            <ConfirmRemoveMemberModalContent {...props} />
+        </ModalContainer>
+    )
+}
+
+const ConfirmRemoveMemberModalContent = (props: ConfirmRemoveMemberModalProps) => {
+    const { onConfirm, onCancel } = props
+    const { userId } = props
+    const { usersMap } = useUserLookupContext()
+    const user = usersMap[userId]
+
+    if (!user) {
+        return null
+    }
+    const name = getPrettyDisplayName(user)
+    return (
+        <Stack padding="sm" gap="lg" width="300">
+            <Text fontWeight="strong">Remove {name} from this group</Text>
+            <Text>Are you sure you sure you want to remove {name} from this group?</Text>
+            <Stack horizontal gap width="100%">
+                <Box grow />
+
+                <Button tone="level2" onClick={onCancel}>
+                    Cancel
+                </Button>
+                <Button tone="negative" color="default" onClick={onConfirm}>
+                    Remove
+                </Button>
+            </Stack>
+        </Stack>
+    )
+}
+
+const UserModal = (props: { onClose: () => void; onRemoveMemberClicked: () => void }) => {
+    const [isOpen, setIsOpen] = useState(false)
+    const { onClose, onRemoveMemberClicked } = props
+    useEffect(() => {
+        setIsOpen(true)
+    }, [])
+
+    const closeSheet = useCallback(() => {
+        setIsOpen(false)
+        setTimeout(() => {
+            onClose()
+        }, 300)
+    }, [setIsOpen, onClose])
+
+    return (
+        <Sheet
+            isOpen={isOpen}
+            className={modalSheetClass}
+            detent="content-height"
+            onClose={closeSheet}
+        >
+            <Sheet.Container>
+                <Sheet.Header />
+                <Sheet.Content>
+                    <Stack paddingX="sm" paddingBottom="lg" alignContent="start" gap="sm">
+                        <TableCell
+                            isError
+                            iconType="minus"
+                            text="Remove from Group"
+                            onClick={onRemoveMemberClicked}
+                        />
+                    </Stack>
+                </Sheet.Content>
+            </Sheet.Container>
+            <Sheet.Backdrop onTap={closeSheet} />
+        </Sheet>
     )
 }

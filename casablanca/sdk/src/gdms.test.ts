@@ -226,4 +226,29 @@ describe('gdmsTests', () => {
         log('waiting for members to receive new channel props')
         await Promise.all(promises)
     })
+
+    test('membersCanRemoveMembers', async () => {
+        const userIds = [alicesClient.userId, charliesClient.userId]
+        const { streamId } = await bobsClient.createGDMChannel(userIds)
+        await expect(bobsClient.waitForStream(streamId)).toResolve()
+        await expect(alicesClient.waitForStream(streamId)).toResolve()
+        await expect(charliesClient.waitForStream(streamId)).toResolve()
+        await expect(alicesClient.removeUser(streamId, charliesClient.userId)).toResolve()
+        const stream = await alicesClient.waitForStream(streamId)
+        stream.waitForMembership(MembershipOp.SO_LEAVE, charliesClient.userId)
+    })
+
+    test('nonMembersCannotRemoveMembers', async () => {
+        const userIds = [alicesClient.userId, charliesClient.userId]
+        const { streamId } = await bobsClient.createGDMChannel(userIds)
+        await expect(bobsClient.waitForStream(streamId)).toResolve()
+        await expect(alicesClient.waitForStream(streamId)).toResolve()
+        await expect(charliesClient.waitForStream(streamId)).toResolve()
+
+        // @ts-ignore
+        await expect(chucksClient.initStream(streamId)).toResolve()
+        await expect(chucksClient.removeUser(streamId, charliesClient.userId)).rejects.toThrow(
+            'user is not a member of gdm channel',
+        )
+    })
 })

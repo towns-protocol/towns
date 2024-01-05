@@ -778,6 +778,16 @@ const MetamaskIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+export const MinusIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M3 12C3 11.4477 3.50368 11 4.125 11H19.875C20.4963 11 21 11.4477 21 12C21 12.5523 20.4963 13 19.875 13H4.125C3.50368 13 3 12.5523 3 12Z"
+            fill="currentColor"
+        />
+    </svg>
+))
 export const MoreIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -1526,6 +1536,7 @@ const iconMap = {
     message: MessageIcon,
     messageVariant: MessageVariantIcon,
     metamask: MetamaskIcon,
+    minus: MinusIcon,
     more: MoreIcon,
     newmessage: NewMessageIcon,
     maximize: MaximizeIcon,

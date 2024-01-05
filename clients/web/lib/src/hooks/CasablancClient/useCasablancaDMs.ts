@@ -45,7 +45,7 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                             joined: stream.view.getMemberships().isMemberJoined(),
                             left: stream.view.getMemberships().isMember(MembershipOp.SO_LEAVE),
                             userIds: Array.from(
-                                stream.view.gdmChannelContent.participants(),
+                                stream.view.gdmChannelContent.memberships.joinedUsers,
                             ).filter((memberUserId) => memberUserId !== userId),
                             properties: stream.view.getChannelMetadata()?.channelProperties,
                             lastEventCreatedAtEpocMs:

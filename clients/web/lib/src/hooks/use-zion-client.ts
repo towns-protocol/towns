@@ -141,6 +141,7 @@ interface ZionClientImpl {
     joinTown: (spaceId: string, signer: TSigner) => Promise<Room | undefined>
     redactEvent: (roomId: string, eventId: string, reason?: string) => Promise<void>
     registerWalletWithCasablanca: (statement: string, signer: TSigner) => Promise<void>
+    removeUser: (streamId: string, userId: string) => Promise<void>
     resetFullyReadMarkers: () => void
     scrollback: (
         roomId: string,
@@ -233,6 +234,7 @@ export function useZionClient(): ZionClientImpl {
         joinTown: useWithCatch(client?.joinTown),
         redactEvent: useWithCatch(client?.redactEvent),
         registerWalletWithCasablanca,
+        removeUser: useWithCatch(client?.removeUser),
         resetFullyReadMarkers,
         scrollback: useWithCatch(client?.scrollback),
         sendMessage: useWithCatch(client?.sendMessage),
