@@ -106,5 +106,5 @@ destroy: env check wait_for_lock_release
 	@$(CMD) make _destroy GIT_PR_NUMBER=$(GIT_PR_NUMBER) CI_AUTOAPPROVE=$(CI_AUTOAPPROVE)
 
 _destroy:
-	terraform -chdir=${terraform_folder} workspace select $(terraform_workspace_name) || terraform -chdir=${terraform_folder} workspace new $(terraform_workspace_name)
+	terraform -chdir=${terraform_folder} workspace select $(terraform_workspace_name)
 	terraform -chdir=${terraform_folder} destroy $(CI_AUTOAPPROVE)
