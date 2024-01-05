@@ -26,7 +26,9 @@ export const CreateDirectMessage = (props: Props) => {
         (userIds: Set<string>) =>
             dmChannels.find(
                 (dm) =>
-                    dm.userIds.length === userIds.size && dm.userIds.every((id) => userIds.has(id)),
+                    !dm.isGroup &&
+                    dm.userIds.length === userIds.size &&
+                    dm.userIds.every((id) => userIds.has(id)),
             ),
         [dmChannels],
     )
