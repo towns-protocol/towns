@@ -33,20 +33,12 @@ const AddressText = (props: {
     )
 
     const [hex, setHex] = useState(
-        `${Array(40)
-            .fill(0)
-            .map(() => Math.floor(Math.random() * 16).toString(16))
-            .join('')}`,
+        () =>
+            `${Array(40)
+                .fill(0)
+                .map(() => Math.floor(Math.random() * 16).toString(16))
+                .join('')}`,
     )
-
-    const [tick, setTick] = useState(0)
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setTick((t) => t + 1)
-        }, 100)
-        return () => clearInterval(interval)
-    }, [])
 
     const [animateMintIndex, setAnimateIndex] = useState(0)
 
@@ -87,12 +79,16 @@ const AddressText = (props: {
         }
     }, [animateMintIndex, address])
 
-    const result = !address
-        ? `0x${hex}`
-        : (`0x` + hex)
-              .split('')
-              .map((h, i) => (i > 1 && animateMintIndex > i - 1 ? address[i - 2] : h))
-              .join('')
+    const result = useMemo(
+        () =>
+            !address
+                ? `0x${hex}`
+                : (`0x` + hex)
+                      .split('')
+                      .map((h, i) => (i > 1 && animateMintIndex > i - 1 ? address[i - 2] : h))
+                      .join(''),
+        [address, animateMintIndex, hex],
+    )
 
     return (
         <>
@@ -102,7 +98,8 @@ const AddressText = (props: {
                 const key = `${isMinted ? `m-` : ``}${i}`
 
                 // 0 - 1 offset on the square, where each quarter is a side
-                const p = (i / arr.length + tick * 0.0005) % 1
+                // this code used to update tick every 100ms, wasting CPU cycles
+                const p = (i / arr.length + 0 /* tick */ * 0.0005) % 1
 
                 // size of a side of the square
                 const size = props.size
