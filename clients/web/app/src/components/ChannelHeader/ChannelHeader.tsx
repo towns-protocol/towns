@@ -180,7 +180,7 @@ const TouchChannelHeader = (props: Props) => {
                 contentRight={
                     <IconButton
                         icon="info"
-                        size="square_sm"
+                        size="square_md"
                         color="default"
                         onClick={infoButtonPressed}
                     />
