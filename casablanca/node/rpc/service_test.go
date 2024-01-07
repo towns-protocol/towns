@@ -34,7 +34,6 @@ var testDatabaseUrl string
 var testSchemaName string
 
 func TestMain(m *testing.M) {
-
 	db, schemaName, closer, err := dbtestutils.StartDB(context.Background())
 	if err != nil {
 		panic(err)

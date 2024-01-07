@@ -34,6 +34,7 @@ type StreamView interface {
 	LastBlock() *miniblockInfo
 	ValidateNextEvent(parsedEvent *ParsedEvent, config *config.RecencyConstraintsConfig) error
 	GetStats() StreamViewStats
+	ProposeNextMiniblock(ctx context.Context) (*MiniblockProposal, error)
 }
 
 func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
@@ -170,13 +171,38 @@ func (r *streamViewImpl) LastBlock() *miniblockInfo {
 	return r.blocks[len(r.blocks)-1]
 }
 
-func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHeader, []*ParsedEvent) {
+// Returns nil if there are no events to propose.
+func (r *streamViewImpl) ProposeNextMiniblock(ctx context.Context) (*MiniblockProposal, error) {
+	if r.minipool.events.Len() == 0 {
+		return nil, nil
+	}
+	hashes := make([][]byte, 0, r.minipool.events.Len())
+	for _, e := range r.minipool.events.Values {
+		hashes = append(hashes, e.Hash)
+	}
+	return &MiniblockProposal{
+		Hashes:            hashes,
+		NewMiniblockNum:   r.minipool.generation,
+		PrevMiniblockHash: r.LastBlock().headerEvent.Hash,
+	}, nil
+}
+
+func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context, proposal *MiniblockProposal) (*MiniblockHeader, []*ParsedEvent, error) {
+	if r.minipool.generation != proposal.NewMiniblockNum || !bytes.Equal(proposal.PrevMiniblockHash, r.LastBlock().headerEvent.Hash) {
+		return nil, nil, RiverError(Err_STREAM_LAST_BLOCK_MISMATCH, "proposal generation or hash mismatch", "expected", r.minipool.generation, "actual", proposal.NewMiniblockNum)
+	}
+
 	log := dlog.CtxLog(ctx)
-	hashes := make([][]byte, r.minipool.events.Len())
-	events := make([]*ParsedEvent, r.minipool.events.Len())
-	for i, e := range r.minipool.events.Values {
-		hashes[i] = e.Hash
-		events[i] = e
+	hashes := make([][]byte, 0, r.minipool.events.Len())
+	events := make([]*ParsedEvent, 0, r.minipool.events.Len())
+
+	for _, h := range proposal.Hashes {
+		e, ok := r.minipool.events.Get(string(h))
+		if !ok {
+			return nil, nil, RiverError(Err_MINIPOOL_MISSING_EVENTS, "proposal event not found in minipool", "hash", FormatHashFromBytes(h))
+		}
+		hashes = append(hashes, e.Hash)
+		events = append(events, e)
 	}
 
 	var snapshot *Snapshot
@@ -229,7 +255,7 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHea
 		Content: &MiniblockHeader_None{
 			None: &emptypb.Empty{},
 		},
-	}, events
+	}, events, nil
 }
 
 func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo, config *config.StreamConfig) (*streamViewImpl, error) {

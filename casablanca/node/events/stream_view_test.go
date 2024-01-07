@@ -20,9 +20,7 @@ var recencyConstraintsConfig_t = config.RecencyConstraintsConfig{
 
 func parsedEvent(t *testing.T, envelope *protocol.Envelope) *ParsedEvent {
 	parsed, err := ParseEvent(envelope)
-	if err != nil {
-		assert.NoError(t, err)
-	}
+	assert.NoError(t, err)
 	return parsed
 }
 
@@ -123,7 +121,8 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, false, view.shouldSnapshot())
 
 	// and miniblocks should have nil snapshots
-	miniblockHeader, _ = view.makeMiniblockHeader(context.Background())
+	proposal, _ := view.ProposeNextMiniblock(context.Background())
+	miniblockHeader, _, _ = view.makeMiniblockHeader(context.Background(), proposal)
 	assert.Nil(t, miniblockHeader.Snapshot)
 
 	// add another join event
@@ -144,7 +143,8 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, 1, len(view.blocks))
 	assert.Equal(t, 2, len(view.blocks[0].events))
 	// and miniblocks should have non - nil snapshots
-	miniblockHeader, envelopes := view.makeMiniblockHeader(context.Background())
+	proposal, _ = view.ProposeNextMiniblock(context.Background())
+	miniblockHeader, envelopes, _ := view.makeMiniblockHeader(context.Background(), proposal)
 	assert.NotNil(t, miniblockHeader.Snapshot)
 
 	// check count

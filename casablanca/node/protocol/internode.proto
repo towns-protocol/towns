@@ -4,6 +4,12 @@ option go_package = "casablanca/node/protocol";
 
 import "protocol.proto";
 
+message MiniblockProposal {
+    repeated bytes hashes = 1;
+    int64 new_miniblock_num = 2;
+    bytes prev_miniblock_hash = 3;
+}
+
 message AllocateStreamRequest {
     Miniblock miniblock = 1;
     string stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
