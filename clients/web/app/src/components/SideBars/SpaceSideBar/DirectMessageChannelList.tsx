@@ -51,6 +51,8 @@ export const DirectMessageChannelList = (props: { onDisplayCreate: () => void })
 const CondensedChannelNavItem = (props: { channel: DMChannelIdentifier; unread: boolean }) => {
     const { channel, unread } = props
     const { createLink } = useCreateLink()
+    const link = useMemo(() => createLink({ messageId: channel.id }), [createLink, channel.id])
+
     const { unreadCount } = useDMLatestMessage(channel.id)
     const myUserId = useMyUserId()
     return (
@@ -70,7 +72,7 @@ const CondensedChannelNavItem = (props: { channel: DMChannelIdentifier; unread: 
                 id={channel.id}
                 label={<DirectMessageName channel={channel} />}
                 highlight={unread}
-                link={createLink({ messageId: channel.id })}
+                link={link}
                 minHeight="x5"
             />
         </DMChannelContextUserLookupProvider>
