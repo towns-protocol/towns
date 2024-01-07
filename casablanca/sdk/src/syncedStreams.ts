@@ -415,7 +415,8 @@ export class SyncedStreams {
                 }
             })
         } else {
-            throw new Error('attemptRetry from invalid state')
+            this.log('attemptRetry: invalid state transition', this.syncState)
+            // throw new Error('attemptRetry from invalid state')
         }
     }
 
