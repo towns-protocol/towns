@@ -209,6 +209,7 @@ export class SyncedStreams {
             stream.removeAllListeners()
             this.streams.delete(streamId)
             this.log('removed stream from sync', streamId)
+            this.clientEmitter.emit('streamRemovedFromSync', streamId)
         } else {
             this.log(
                 'removeStreamFromSync: not in "syncing" state; let main sync loop handle this with its streams map',

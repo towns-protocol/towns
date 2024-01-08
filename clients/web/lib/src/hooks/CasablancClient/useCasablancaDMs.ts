@@ -71,13 +71,19 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
             }
         }
 
+        const onLeftStream = (_: string) => {
+            updateChannels()
+        }
+
         updateChannels()
 
         casablancaClient.on('streamInitialized', onStreamChange)
         casablancaClient.on('streamUpdated', onStreamChange)
+        casablancaClient.on('streamRemovedFromSync', onLeftStream)
         return () => {
             casablancaClient.off('streamInitialized', onStreamChange)
             casablancaClient.off('streamUpdated', onStreamChange)
+            casablancaClient.off('streamRemovedFromSync', onLeftStream)
         }
     }, [casablancaClient, userId])
     return { channels }
