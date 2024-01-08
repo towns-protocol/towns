@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Channel } from '../types/zion-types'
 import { useZionContext } from './ZionContextProvider'
 import { useSpaceData } from '../hooks/use-space-data'
 import { useAsyncTaskQueue } from '../utils/useAsyncTaskQueue'
@@ -13,60 +12,50 @@ export const AutojoinChannels = () => {
     const { joinRoom } = useZionClient()
     const { enqueueTask } = useAsyncTaskQueue()
     const checkedChannels = useRef<Record<string, boolean>>({})
-    const userId = casablancaClient?.userId
-    const [channelsToJoin, setChannelsToJoin] = useState<Channel[]>([])
+    const [streamIdsToJoin, setStreamIdsToJoin] = useState<string[]>([])
 
-    const _joinRoom = useCallback(
-        (channel: Channel) => {
+    const _joinStream = useCallback(
+        (streamId: string) => {
             return async () => {
                 try {
-                    await joinRoom(channel.id, space?.id)
+                    await joinRoom(streamId, undefined)
                 } catch (error) {
-                    console.error('[AutoJoinChannels] joining channel failed', channel.id, error)
+                    console.error('[AutoJoinChannels] joining channel failed', streamId, error)
                 }
             }
         },
-        [joinRoom, space?.id],
+        [joinRoom],
     )
 
+    // we still need to handle the case where a user leaves a space, and automatically leaves
+    // all the channels. HNT-4431
     useEffect(() => {
-        async function update() {
-            if (!userId) {
-                return
-            }
-            // channels that are not joined and have no history of leaving
-            const _channelsToJoin = await asyncFilter(channels, async (c) => {
-                try {
-                    const streamStateView = await casablancaClient.getStream(c.id)
-                    return streamStateView
-                        ? !streamStateView.getMemberships().leftUsers.has(userId)
-                        : false
-                } catch (error) {
-                    console.error('[AutoJoinChannels] fetching stream failed', c.id, error)
-                }
-                return false
-            })
-            setChannelsToJoin(_channelsToJoin)
+        if (!casablancaClient || !casablancaClient.userStreamId) {
+            return
+        }
+        const userStream = casablancaClient.streams.get(casablancaClient.userStreamId)
+        if (!userStream) {
+            return
         }
 
-        void update()
-    }, [casablancaClient, channels, userId])
+        const streamsToJoin = channels
+            .map((c) => c.id)
+            .filter((streamId) => !userStream.view.userContent.userJoinedStreams.has(streamId))
+            .filter((streamId) => !userStream.view.userContent.userLeftStreams.has(streamId))
+
+        setStreamIdsToJoin(streamsToJoin)
+    }, [casablancaClient, channels, casablancaClient?.userStreamId])
 
     // watch eligible channels to join
     useEffect(() => {
-        channelsToJoin.forEach((channel) => {
+        streamIdsToJoin.forEach((streamId) => {
             // add to queue a single time. let them run in background, even if user navigates away
-            if (!checkedChannels.current[channel.id]) {
-                checkedChannels.current[channel.id] = true
-                enqueueTask(_joinRoom(channel))
+            if (!checkedChannels.current[streamId]) {
+                checkedChannels.current[streamId] = true
+                enqueueTask(_joinStream(streamId))
             }
         })
-    }, [_joinRoom, enqueueTask, channelsToJoin])
+    }, [_joinStream, enqueueTask, streamIdsToJoin])
 
     return null
-}
-
-async function asyncFilter<T>(arr: T[], predicate: (item: T) => Promise<boolean>): Promise<T[]> {
-    const results = await Promise.all(arr.map(predicate))
-    return arr.filter((_v, index) => results[index])
 }

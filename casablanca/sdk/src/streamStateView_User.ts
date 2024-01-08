@@ -19,6 +19,7 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly memberships: StreamStateView_UserStreamMembership
     readonly userInvitedStreams = new Set<string>()
     readonly userJoinedStreams = new Set<string>()
+    readonly userLeftStreams = new Set<string>()
     readonly toDeviceMessages: ParsedEvent[] = []
 
     constructor(inception: UserPayload_Inception) {
@@ -96,6 +97,7 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                 {
                     const wasInvited = this.userInvitedStreams.delete(streamId)
                     const wasJoined = this.userJoinedStreams.delete(streamId)
+                    this.userLeftStreams.add(streamId)
                     if (wasInvited || wasJoined) {
                         emitter?.emit('userLeftStream', streamId)
                     }

@@ -8,13 +8,6 @@ import React from 'react'
 import { mockSpaceDataWith2Channels } from '../mocks/spaceData'
 
 const joinRoomMock = jest.fn()
-const getStreamMock = jest.fn<
-    (streamId: string) => {
-        getMemberships: () => {
-            leftUsers: Set<string>
-        }
-    }
->()
 
 /**
  * mock modules that are imported in AutojoinChannels.tsx
@@ -29,13 +22,29 @@ jest.unstable_mockModule('../../src/hooks/use-zion-client', () => ({
     }),
 }))
 
-jest.unstable_mockModule('../../src/components/ZionContextProvider', () => ({
-    useZionContext: () => ({
-        casablancaClient: {
-            userId: '0x123',
-            getStream: getStreamMock,
+let userJoinedSet = new Set()
+let userLeftSet = new Set()
+
+const useZionContextResponse = {
+    casablancaClient: {
+        userStreamId: 'USER_STREAM_ID',
+        streams: {
+            get: () => {
+                return {
+                    view: {
+                        userContent: {
+                            userJoinedStreams: userJoinedSet,
+                            userLeftStreams: userLeftSet,
+                        },
+                    },
+                }
+            },
         },
-    }),
+    },
+}
+
+jest.unstable_mockModule('../../src/components/ZionContextProvider', () => ({
+    useZionContext: () => useZionContextResponse,
 }))
 
 /**
@@ -52,34 +61,29 @@ const channels = mockSpaceDataWith2Channels.channelGroups.flatMap((cg) => cg.cha
 
 describe('<AutojoinChannels />', () => {
     test('It joins all eligible channels when loading a space', async () => {
-        const mockStreamData = {
-            [channels[0].id]: streamMock(),
-            [channels[1].id]: streamMock(),
-        }
-        getStreamMock.mockImplementation((streamId: string) => mockStreamData[streamId])
+        userJoinedSet = new Set()
+        userLeftSet = new Set()
         render(<AutojoinChannels />)
         await waitFor(() => {
             expect(joinRoomMock).toBeCalledTimes(2)
         })
     })
 
-    test('It does not try to join a channel that has any record of room account membership data', () => {
+    test('It does not try to join a channel if the user has has already joined', () => {
         jest.useFakeTimers()
-        const mockStreamData = {
-            [channels[0].id]: streamMock('0x123'),
-            [channels[1].id]: streamMock('0x123'),
-        }
-        getStreamMock.mockImplementation((streamId: string) => mockStreamData[streamId])
+        userJoinedSet = new Set([channels[0].id, channels[1].id])
+        userLeftSet = new Set()
+        render(<AutojoinChannels />)
+        jest.runAllTimers() // run all the timers so we're not getting a false positive b/c joinRoom was queued but not called yet
+        expect(joinRoomMock).not.toBeCalled()
+    })
+
+    test('It does not try to join a channel if the user has has already left', () => {
+        jest.useFakeTimers()
+        userJoinedSet = new Set()
+        userLeftSet = new Set([channels[0].id, channels[1].id])
         render(<AutojoinChannels />)
         jest.runAllTimers() // run all the timers so we're not getting a false positive b/c joinRoom was queued but not called yet
         expect(joinRoomMock).not.toBeCalled()
     })
 })
-
-function streamMock(userId?: string) {
-    return {
-        getMemberships: () => ({
-            leftUsers: new Set(userId),
-        }),
-    }
-}
