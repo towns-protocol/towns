@@ -7,6 +7,7 @@ import {
     createPromiseClient,
     UnaryRequest,
     StreamRequest,
+    Code,
 } from '@connectrpc/connect'
 import { AnyMessage } from '@bufbuild/protobuf'
 import { createConnectTransport } from '@connectrpc/connect-web'
@@ -136,7 +137,7 @@ const interceptor: (transportId: number) => Interceptor = (transportId: number) 
                     !(
                         req.method.name === 'GetStream' &&
                         isIConnectError(e) &&
-                        e.code === Number(Err.NOT_FOUND)
+                        e.code === (Code.NotFound as number)
                     )
                 ) {
                     logError(req.method.name, 'ERROR', id, e)

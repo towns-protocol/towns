@@ -325,7 +325,7 @@ export class Client
             const response = await this.rpcClient.getStreamUnpacked({ streamId })
             return response
         } catch (e) {
-            if (isIConnectError(e) && e.code === Number(Err.NOT_FOUND)) {
+            if (isIConnectError(e) && e.code === (Code.NotFound as number)) {
                 return undefined
             } else {
                 throw e
