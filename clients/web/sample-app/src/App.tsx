@@ -53,9 +53,6 @@ const AppContent = () => {
                     enableSpaceRootUnreads
                     casablancaServerUrl={casablancaUrl}
                     chainId={chainId}
-                    logNamespaceFilter="csb:*"
-                    onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
-                    initialSyncLimit={100}
                 >
                     <EmbeddedSignerContextProvider chainId={chainId}>
                         <Routes>
