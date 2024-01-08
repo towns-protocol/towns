@@ -16,9 +16,13 @@ const commitHash = execSync('git rev-parse --short HEAD').toString().trim()
 
 const isProduction = process.env.NODE_ENV === 'production'
 
-const profiling = isProduction && {
-    'react-dom/client': 'react-dom/profiling',
-}
+// Turning off in production because of HNT-4418
+const profiling =
+    isProduction && false
+        ? {
+              'react-dom/client': 'react-dom/profiling',
+          }
+        : ({} as Record<string, string>)
 
 function differMatrixSourcemapsPlugins(): PluginOption {
     const matrixPackages = ['node_modules/matrix', 'node_modules/@matrix-org']
