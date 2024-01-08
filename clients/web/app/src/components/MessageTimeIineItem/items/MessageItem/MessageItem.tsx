@@ -217,6 +217,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         type,
         messageReactionsMap,
         isChannelWritable,
+        threadParentId,
     } = timelineContext
 
     const user = membersMap[sender.id]
@@ -244,15 +245,15 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
 
     const onMediaClick = useCallback(
         (attachmentId: string) => {
-            if (!event.threadParentId || event.threadParentId.length === 0) {
+            if (!threadParentId || threadParentId.length === 0) {
                 navigate(`./?${QUERY_PARAMS.GALLERY_ID}=${attachmentId}`)
                 return
             }
             return navigate(
-                `./?${QUERY_PARAMS.GALLERY_ID}=${attachmentId}&${QUERY_PARAMS.GALLERY_THREAD_ID}=${event.threadParentId}`,
+                `./?${QUERY_PARAMS.GALLERY_ID}=${attachmentId}&${QUERY_PARAMS.GALLERY_THREAD_ID}=${threadParentId}`,
             )
         },
-        [navigate, event.threadParentId],
+        [navigate, threadParentId],
     )
 
     return !event ? null : (
