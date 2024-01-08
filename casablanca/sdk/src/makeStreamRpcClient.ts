@@ -12,7 +12,7 @@ import {
 import { AnyMessage } from '@bufbuild/protobuf'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { Err, StreamService } from '@river/proto'
-import { dlog, dlogError } from '@river/mecholm'
+import { check, dlog, dlogError } from '@river/mecholm'
 import { genShortId } from './id'
 import { isIConnectError } from './utils'
 
@@ -25,7 +25,13 @@ const logError = dlogError('csb:rpc:error')
 let nextRpcClientNum = 0
 const histogramIntervalMs = 5000
 
-export const sortObjectKey = (obj: Record<string, any>) => {
+export type RetryParams = {
+    maxAttempts: number
+    initialRetryDelay: number
+    maxRetryDelay: number
+}
+
+const sortObjectKey = (obj: Record<string, any>) => {
     const sorted: Record<string, any> = {}
     Object.keys(obj)
         .sort()
@@ -35,7 +41,37 @@ export const sortObjectKey = (obj: Record<string, any>) => {
     return sorted
 }
 
-const interceptor: (transportId: number) => Interceptor = (transportId: number) => {
+const retryInterceptor: (retryParams: RetryParams) => Interceptor = (retryParams: RetryParams) => {
+    return (next) =>
+        async (
+            req: UnaryRequest<AnyMessage, AnyMessage> | StreamRequest<AnyMessage, AnyMessage>,
+        ) => {
+            let attempt = 0
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                attempt++
+                try {
+                    return await next(req)
+                } catch (e) {
+                    const retryDelay = getRetryDelay(e, attempt, retryParams)
+                    if (retryDelay <= 0) {
+                        throw e
+                    }
+                    logError(
+                        req.method.name,
+                        'ERROR RETRYING',
+                        attempt,
+                        'of',
+                        retryParams.maxAttempts,
+                        e,
+                    )
+                    await new Promise((resolve) => setTimeout(resolve, retryDelay))
+                }
+            }
+        }
+}
+
+const loggingInterceptor: (transportId: number) => Interceptor = (transportId: number) => {
     // Histogram data structure
     const callHistogram: Record<string, { interval: number; total: number; error?: number }> = {}
 
@@ -254,9 +290,46 @@ const randomUrlSelector = (urls: string) => {
     }
 }
 
+function getRetryDelay(error: unknown, attempts: number, retryParams: RetryParams): number {
+    check(attempts >= 1, 'attempts must be >= 1')
+    // aellis wondering if we should retry forever if there's no internet connection
+    if (attempts > retryParams.maxAttempts) {
+        return -1 // no more attempts
+    }
+    const retryDelay = Math.min(
+        retryParams.maxRetryDelay,
+        retryParams.initialRetryDelay * Math.pow(2, attempts),
+    )
+    // we don't get a lot of info off of these errors... retry the ones that we know we need to
+    if (error !== null && typeof error === 'object') {
+        if ('message' in error) {
+            // this happens in the tests when the server is totally down
+            if (error.message === 'fetch failed') {
+                return retryDelay
+            }
+            // this happens in the browser when the server is totally down
+            if (error.message === 'failed to fetch') {
+                return retryDelay
+            }
+        }
+
+        // we can't use the code for anything above 16 cause the connect lib squashes it and returns 2
+        // see protocol.proto for description of error codes
+        if (errorContains(error, Err.RESOURCE_EXHAUSTED)) {
+            return retryDelay
+        } else if (errorContains(error, Err.DEBUG_ERROR)) {
+            return retryDelay
+        }
+    }
+    return -1
+}
+
 export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
 
-export function makeStreamRpcClient(dest: Transport | string): StreamRpcClient {
+export function makeStreamRpcClient(
+    dest: Transport | string,
+    retryParams: RetryParams = { maxAttempts: 3, initialRetryDelay: 2000, maxRetryDelay: 6000 },
+): StreamRpcClient {
     const transportId = nextRpcClientNum++
     logCallsHistogram('makeStreamRpcClient, transportId =', transportId)
     let transport: Transport
@@ -267,7 +340,7 @@ export function makeStreamRpcClient(dest: Transport | string): StreamRpcClient {
         transport = createConnectTransport({
             baseUrl: url,
             useBinaryFormat: true,
-            interceptors: [interceptor(transportId)],
+            interceptors: [retryInterceptor(retryParams), loggingInterceptor(transportId)],
         })
     } else {
         logInfo('makeStreamRpcClient: Connecting to provided transport')
