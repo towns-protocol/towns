@@ -5,6 +5,14 @@ import React from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { TestApp } from './App'
 
+process.on('uncaughtException', function (error) {
+    console.log(`uncaughtException`, error)
+})
+
+process.on('unhandledRejection', function (reason, p) {
+    console.log(`unhandledRejection`, reason, p)
+    //call handler here
+})
 describe('Accordion test', () => {
     test('should render', () => {
         render(

@@ -10,7 +10,7 @@ import { ENVIRONMENTS } from 'utils/environment'
 
 const PROVIDER_HTTP_URL = import.meta.env.VITE_PROVIDER_HTTP_URL ?? ''
 const PROVIDER_WS_URL = import.meta.env.VITE_PROVIDER_WS_URL ?? ''
-const PRIVY_ID = import.meta.env.VITE_PRIVY_ID ?? ''
+const PRIVY_ID = import.meta.env.VITE_PRIVY_ID ?? 'imustbe25charslong_______'
 
 const SUPPORTED_CHAINS = [foundry, baseSepolia, localhost]
 

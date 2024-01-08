@@ -4,14 +4,16 @@ import { Container } from '@mui/material'
 import { ZionContextProvider } from 'use-zion-client'
 import { ThemeProvider } from '@mui/material/styles'
 import { EmbeddedSignerContextProvider } from '@towns/privy'
-import { PrivyWagmiConnector } from '@privy-io/wagmi-connector'
+import { WagmiConfig, createConfig } from 'wagmi'
+import { createPublicClient, http } from 'viem'
+import { foundry } from 'wagmi/chains'
 import { Thread } from 'routes/Thread'
 import { Threads } from 'routes/Threads'
 import { Mentions } from 'routes/Mentions'
 import { Login } from '@components/Login'
 import { VersionsPage } from 'routes/VersionsPage'
 import { useEnvironment } from 'hooks/use-environment'
-import { PrivyProvider, wagmiChainsConfig } from 'context/PrivyProvider'
+import { PrivyProvider } from 'context/PrivyProvider'
 import { WalletLinkingPage } from 'routes/WalletLinkingPage'
 import { Home } from './routes/Home'
 import { MainLayout } from './components/MainLayout'
@@ -30,9 +32,18 @@ import { AuthenticatedContent } from './routes/AuthenticatedContent'
 
 export const TestApp = () => {
     return (
-        <PrivyWagmiConnector wagmiChainsConfig={wagmiChainsConfig}>
+        // Using WagmiConfig instead of Privy/PrivyWagmi b/c needs a lot of mocking and we don't actually need a wallet for any of our unit tests
+        <WagmiConfig
+            config={createConfig({
+                autoConnect: true,
+                publicClient: createPublicClient({
+                    chain: foundry,
+                    transport: http(),
+                }),
+            })}
+        >
             <AppContent />
-        </PrivyWagmiConnector>
+        </WagmiConfig>
     )
 }
 

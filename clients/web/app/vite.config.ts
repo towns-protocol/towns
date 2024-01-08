@@ -10,8 +10,15 @@ import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 import { vitePWAOptions } from './vite-pwa-options.config'
 import { execSync } from 'child_process'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 
 const commitHash = execSync('git rev-parse --short HEAD').toString().trim()
+
+const isProduction = process.env.NODE_ENV === 'production'
+
+const profiling = isProduction && {
+    'react-dom/client': 'react-dom/profiling',
+}
 
 function differMatrixSourcemapsPlugins(): PluginOption {
     const matrixPackages = ['node_modules/matrix', 'node_modules/@matrix-org']
@@ -35,6 +42,7 @@ export default ({ mode }: { mode: string }) => {
     const env = loadEnv(mode, process.cwd(), '')
 
     const devPlugins: PluginOption[] = [
+        ...[env.VITE_USE_LOCAL_NETWORK_HTTPS ? basicSsl() : []],
         checker({
             typescript: true,
             eslint: {
@@ -71,13 +79,9 @@ export default ({ mode }: { mode: string }) => {
                             return 'matrix-js-sdk'
                         }
                     },
-                    sourcemapIgnoreList: (relativeSourcePath) => {
-                        // avoid spending memory and cpu cycles on source-mapping node_modules
-                        const normalizedPath = path.normalize(relativeSourcePath)
-                        return normalizedPath.includes('node_modules')
-                    },
                 },
             },
+            minify: false, // Ensure esbuild is used for minification
         },
         define: {
             APP_VERSION: JSON.stringify(process.env.npm_package_version),
@@ -120,13 +124,11 @@ export default ({ mode }: { mode: string }) => {
                   }
                 : undefined,
         },
-    }
-
-    if (env.VITE_USE_LOCAL_NETWORK_HTTPS === 'true') {
-        console.log('Using local network HTTPS')
-        config.server!.host = '0.0.0.0'
-        config.server!.https = true
-        config.plugins!.push(mkcert({ hosts: [env.VITE_LOCAL_HOSTNAME] }))
+        resolve: {
+            alias: {
+                ...profiling,
+            },
+        },
     }
 
     return defineConfig(config)

@@ -1,6 +1,5 @@
-import React, { createContext, useContext } from 'react'
+import React, { createContext, useContext, useEffect, useRef } from 'react'
 import { ZionClient } from '../client/ZionClient'
-import { ZionOpts } from '../client/ZionClientTypes'
 import { useContentAwareTimelineDiffCasablanca } from '../hooks/ZionContext/useContentAwareTimelineDiff'
 import { IOnboardingState } from '../hooks/ZionContext/onboarding/IOnboardingState'
 import { useOnboardingState_Casablanca } from '../hooks/ZionContext/useOnboardingState'
@@ -59,7 +58,9 @@ export function useZionContext(): IZionContext {
     return context
 }
 
-interface Props extends ZionOpts {
+interface ZionContextProviderProps {
+    chainId: number
+    casablancaServerUrl?: string | undefined
     enableSpaceRootUnreads?: boolean
     timelineFilter?: Set<ZTEvent>
     children: JSX.Element
@@ -70,22 +71,49 @@ interface Props extends ZionOpts {
 export function ZionContextProvider({
     QueryClientProvider = QueryProvider,
     ...props
-}: Props): JSX.Element {
-    const { ...contextProps } = props
+}: ZionContextProviderProps): JSX.Element {
     return (
         <QueryClientProvider>
-            <Web3ContextProvider chainId={contextProps.chainId}>
-                <ContextImpl {...contextProps}></ContextImpl>
+            <Web3ContextProvider chainId={props.chainId}>
+                <ZionContextImplMemo {...props}></ZionContextImplMemo>
             </Web3ContextProvider>
         </QueryClientProvider>
     )
 }
 
-/// the zion client needs to be nested inside a Web3 provider, hence the need for this component
-const ContextImpl = (props: Props): JSX.Element => {
+const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
+    let hookCounter = 0
+
+    function useHookLogger() {
+        useEffect(() => {
+            console.log(`Hook number ${++hookCounter}`)
+            return () => {
+                hookCounter--
+            }
+        }, [])
+    }
+
     const { casablancaServerUrl, enableSpaceRootUnreads, timelineFilter } = props
 
-    const { client, clientSingleton, casablancaClient } = useZionClientListener(props)
+    const previousProps = useRef<ZionContextProviderProps>()
+
+    useEffect(() => {
+        if (previousProps.current) {
+            Object.keys(previousProps.current).forEach((key, i) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                if ((previousProps.current as any)[key] !== (props as any)[key]) {
+                    console.log('ZionContextImpl: props changed', i, key)
+                }
+            })
+        }
+    })
+
+    previousProps.current = props
+
+    const { client, clientSingleton, casablancaClient } = useZionClientListener({
+        chainId: props.chainId,
+        casablancaServerUrl: props.casablancaServerUrl,
+    })
     const { invitedToIds } = useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const { streamSyncActive } = useStreamSyncActive(casablancaClient)
@@ -99,11 +127,13 @@ const ContextImpl = (props: Props): JSX.Element => {
     )
 
     const { dmUnreadChannelIds } = useDMUnreads(casablancaClient, dmChannels)
+    useHookLogger()
 
     const rooms = useCasablancaRooms(casablancaClient)
     const dynamicTimelineFilter = useTimelineFilter((state) => state.eventFilter)
     useCasablancaTimelines(casablancaClient, dynamicTimelineFilter ?? timelineFilter)
     const casablancaOnboardingState = useOnboardingState_Casablanca(client, casablancaClient)
+    useHookLogger()
 
     return (
         <ZionContext.Provider
@@ -130,3 +160,23 @@ const ContextImpl = (props: Props): JSX.Element => {
         </ZionContext.Provider>
     )
 }
+
+/// the zion client needs to be nested inside a Web3 provider, hence the need for this component
+const ZionContextImplMemo = React.memo(
+    ZionContextImpl,
+
+    (
+        prevProps: Readonly<ZionContextProviderProps>,
+        nextProps: Readonly<ZionContextProviderProps>,
+    ) => {
+        let result = true
+        Object.keys(prevProps).forEach((key, i) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+            if ((prevProps as any)[key] !== (nextProps as any)[key]) {
+                console.log('ZionContextProvider: props changed', i, key)
+                result = false
+            }
+        })
+        return result
+    },
+)

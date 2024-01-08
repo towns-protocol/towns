@@ -8,7 +8,7 @@ import { DMChannelIdentifier } from '../../types/dm-channel-identifier'
 export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
     channels: DMChannelIdentifier[]
 } {
-    const [channels, setChannels] = useState<DMChannelIdentifier[]>([])
+    const [channels, setChannels] = useState<DMChannelIdentifier[]>(() => [])
     const userId = casablancaClient?.userId
 
     useEffect(() => {
@@ -17,7 +17,7 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
         }
 
         const updateChannels = () => {
-            const dmChannels = casablancaClient.streams
+            const dmChannels: DMChannelIdentifier[] = casablancaClient.streams
                 .getStreams()
                 .filter((stream: Stream) => stream.view.contentKind === 'dmChannelContent')
                 .map(
@@ -26,16 +26,16 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                             id: stream.view.streamId,
                             joined: stream.view.getMemberships().isMemberJoined(),
                             left: stream.view.getMemberships().isMember(MembershipOp.SO_LEAVE),
-                            userIds: Array.from(stream.view.dmChannelContent.participants()).filter(
-                                (memberUserId) => memberUserId !== userId,
-                            ),
+                            userIds: Array.from(stream.view.dmChannelContent.participants())
+                                .filter((memberUserId) => memberUserId !== userId)
+                                .sort((a, b) => a.localeCompare(b)),
                             lastEventCreatedAtEpocMs:
                                 stream.view.dmChannelContent.lastEventCreatedAtEpocMs,
                             isGroup: false,
                         } satisfies DMChannelIdentifier),
                 )
 
-            const gdmChannels = casablancaClient.streams
+            const gdmChannels: DMChannelIdentifier[] = casablancaClient.streams
                 .getStreams()
                 .filter((stream: Stream) => stream.view.contentKind === 'gdmChannelContent')
                 .map(
@@ -44,9 +44,9 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                             id: stream.view.streamId,
                             joined: stream.view.getMemberships().isMemberJoined(),
                             left: stream.view.getMemberships().isMember(MembershipOp.SO_LEAVE),
-                            userIds: Array.from(
-                                stream.view.gdmChannelContent.memberships.joinedUsers,
-                            ).filter((memberUserId) => memberUserId !== userId),
+                            userIds: Array.from(stream.view.gdmChannelContent.participants())
+                                .filter((memberUserId) => memberUserId !== userId)
+                                .sort((a, b) => a.localeCompare(b)),
                             properties: stream.view.getChannelMetadata()?.channelProperties,
                             lastEventCreatedAtEpocMs:
                                 stream.view.gdmChannelContent.lastEventCreatedAtEpocMs,
@@ -54,14 +54,46 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                         } satisfies DMChannelIdentifier),
                 )
             const channels = [...dmChannels, ...gdmChannels].sort((a, b) => {
+                if (a.lastEventCreatedAtEpocMs === b.lastEventCreatedAtEpocMs) {
+                    // If lastEventCreatedAtEpocMs is equal, sort by id
+                    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+                }
+                // Otherwise, sort by lastEventCreatedAtEpocMs
                 return a.lastEventCreatedAtEpocMs > b.lastEventCreatedAtEpocMs ? -1 : 1
+            })
+
+            function isSorted(array: string[]) {
+                for (let i = 0; i < array.length - 1; i++) {
+                    if (array[i] > array[i + 1]) {
+                        return false
+                    }
+                }
+                return true
+            }
+
+            channels.forEach((channel) => {
+                if (!isSorted(channel.userIds)) {
+                    console.error('useCasablancaDMs: channel.userIds are not sorted', {
+                        channel,
+                    })
+                }
             })
 
             setChannels((prev) => {
                 if (isEqual(prev, channels)) {
+                    console.log('useCasablancaDMs: channels are equal, not updating')
+                    prev.forEach((channel) => {
+                        if (!isSorted(channel.userIds)) {
+                            console.error('useCasablancaDMs: prev.userIds are not sorted', {
+                                channel,
+                            })
+                        }
+                    })
+
                     return prev
+                } else {
+                    return channels
                 }
-                return channels
             })
         }
 

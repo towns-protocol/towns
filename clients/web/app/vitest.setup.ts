@@ -62,8 +62,8 @@ vi.mock('@privy-io/react-auth', async () => {
     }
 })
 
-vi.mock('@towns/privy', async () => {
-    const actual = await vi.importActual<typeof import('@towns/privy')>('@towns/privy')
+vi.mock('@towns/privy', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@towns/privy')>()
     return {
         ...actual,
         useGetEmbeddedSigner: () => () => {

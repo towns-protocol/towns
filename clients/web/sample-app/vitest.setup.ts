@@ -1,7 +1,12 @@
 import React from 'react'
 import 'vitest-canvas-mock'
 import { vi } from 'vitest'
+import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
 import { ConnectedWallet } from '@privy-io/react-auth'
+
+beforeAll(() => {
+    globalThis.ResizeObserver = ResizeObserver
+})
 
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
@@ -57,9 +62,13 @@ vi.mock('@privy-io/react-auth', async () => {
     }
 })
 
-vi.mock('@towns/privy', async () => {
+vi.mock('@towns/privy', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@towns/privy')>()
     return {
-        EmbeddedSignerContextProvider: ({ children }: { children: React.ReactNode }) => children,
+        ...actual,
+        EmbeddedSignerContextProvider: ({ children }: { children: React.ReactNode }) => {
+            return children
+        },
         useGetEmbeddedSigner: () => () => {
             //empty object for fake signer
             return {}

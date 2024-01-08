@@ -33,20 +33,9 @@ const mockConfig = createConfig({
 })
 
 export const ZionTestApp = (props: Props) => {
-    const {
-        provider,
-        onboardingOpts: inOnboardingOpts,
-        initialSyncLimit,
-        pollTimeoutMs,
-        children,
-    } = props
+    const { provider, children } = props
     // pull environment variables from the process
     const casablancaServerUrl = process.env.CASABLANCA_SERVER_URL!
-    const onboardingOpts: ZionOnboardingOpts = inOnboardingOpts
-        ? inOnboardingOpts
-        : {
-              showWelcomeSpash: true,
-          }
     Object.defineProperty(window, 'ethereum', {
         value: provider,
         writable: true,
@@ -56,13 +45,8 @@ export const ZionTestApp = (props: Props) => {
         <WagmiConfig config={mockConfig}>
             <ZionContextProvider
                 casablancaServerUrl={casablancaServerUrl}
-                onboardingOpts={onboardingOpts}
-                initialSyncLimit={initialSyncLimit}
-                pollTimeoutMs={pollTimeoutMs}
                 chainId={foundry.id}
                 QueryClientProvider={TestQueryClientProvider}
-                logNamespaceFilter="" // "csb:*" A bit too much for tests, better way to set?
-                verbose={true}
             >
                 <>
                     <ZionWalletAutoConnect />

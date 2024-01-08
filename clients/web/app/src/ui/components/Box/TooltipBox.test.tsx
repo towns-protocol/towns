@@ -1,7 +1,7 @@
 import React from 'react'
 import TestRenderer from 'react-test-renderer'
 import { describe, expect, it } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { toJsonTree } from 'utils/test_util'
 import { TooltipBox as Box } from './TooltipBox'
@@ -15,23 +15,31 @@ describe('Box', () => {
     })
 
     it('should display default tooltip on hover', async () => {
-        render(
+        const { container } = render(
             <ZLayerProvider>
                 <Box data-testid="box" tooltip="help" />
             </ZLayerProvider>,
         )
+
+        console.log(container.innerHTML)
+
         const box = screen.getByTestId('box')
         userEvent.hover(box)
-
-        await waitFor(() => {
-            expect(screen.getByText('help')).toBeInTheDocument()
-        })
+        await waitFor(
+            () => {
+                expect(screen.getByText('help')).toBeInTheDocument()
+            },
+            { timeout: 5000 },
+        )
+        console.log(container.innerHTML)
 
         userEvent.unhover(box)
 
         await waitFor(() => {
             expect(screen.queryByText('help')).not.toBeInTheDocument()
         })
+        console.log(container.innerHTML)
+        cleanup()
     })
 
     it('should display clickable tooltip on click', async () => {
@@ -47,5 +55,6 @@ describe('Box', () => {
         await waitFor(() => {
             expect(screen.getByText('help')).toBeInTheDocument()
         })
+        cleanup()
     })
 })

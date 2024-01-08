@@ -5,14 +5,14 @@ import * as Lib from 'use-zion-client'
 import { afterEach, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { BrowserRouter } from 'react-router-dom'
+import { createPublicClient, http } from 'viem'
 import { ethers } from 'ethers'
-import { configureChains } from 'wagmi'
-import { foundry } from 'wagmi/chains'
-import { publicProvider } from 'wagmi/providers/public'
-import { PrivyWagmiConnector } from '@privy-io/wagmi-connector'
+import { WagmiConfig, createConfig } from 'wagmi'
 import { ZLayerProvider } from '@ui'
 import { AuthContextProvider } from 'hooks/useAuth'
 import { env } from 'utils'
+import '@testing-library/jest-dom'
+import { foundryClone } from 'foundryChain'
 
 type TestAppProps = {
     children: JSX.Element
@@ -23,7 +23,13 @@ type TestAppProps = {
 
 export const getWalletAddress = () => ethers.Wallet.createRandom().address
 
-const chainsConfig = configureChains([foundry], [publicProvider()])
+const wagmiConfig = createConfig({
+    autoConnect: true,
+    publicClient: createPublicClient({
+        chain: foundryClone,
+        transport: http(),
+    }),
+})
 
 export const TestApp = (props: TestAppProps) => {
     // new query client for each test for isolation
@@ -43,8 +49,8 @@ export const TestApp = (props: TestAppProps) => {
     })
 
     return (
-        // Using PrivyWagmiConnector instead of PrivyProvider b/c PrivyProvider needs a lot of mocking and we don't actually need a wallet for any of our unit tests
-        <PrivyWagmiConnector wagmiChainsConfig={chainsConfig}>
+        // Using WagmiConfig instead of Privy/PrivyWagmi b/c needs a lot of mocking and we don't actually need a wallet for any of our unit tests
+        <WagmiConfig config={wagmiConfig}>
             <ZLayerProvider>
                 <Lib.ZionContextProvider
                     casablancaServerUrl={env.VITE_CASABLANCA_HOMESERVER_URL}
@@ -58,7 +64,7 @@ export const TestApp = (props: TestAppProps) => {
                     </AuthContextProvider>
                 </Lib.ZionContextProvider>
             </ZLayerProvider>
-        </PrivyWagmiConnector>
+        </WagmiConfig>
     )
 }
 
