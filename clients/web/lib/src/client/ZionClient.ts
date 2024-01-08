@@ -1141,11 +1141,14 @@ export class ZionClient implements EntitlementsDelegate {
      * sendMessage
      *************************************************/
     public async sendMessage(roomId: string, message: string, options?: SendMessageOptions) {
+        const sendInParallel: Promise<unknown>[] = []
         if (this.pushNotificationClient && options?.parentSpaceId) {
-            await this.pushNotificationClient.sendNotificationTagIfAny(
-                options.parentSpaceId,
-                roomId,
-                options,
+            sendInParallel.push(
+                this.pushNotificationClient.sendNotificationTagIfAny(
+                    options.parentSpaceId,
+                    roomId,
+                    options,
+                ),
             )
         }
 
@@ -1156,89 +1159,108 @@ export class ZionClient implements EntitlementsDelegate {
             case undefined:
             case MessageType.Text:
                 {
-                    await this.casablancaClient.sendChannelMessage_Text(roomId, {
-                        threadId: options?.threadId,
-                        threadPreview: options?.threadPreview,
-                        content: {
-                            body: message,
-                            mentions: options?.mentions ?? [],
-                            attachments: transformAttachments(options?.attachments),
-                        },
-                    })
+                    sendInParallel.push(
+                        this.casablancaClient.sendChannelMessage_Text(roomId, {
+                            threadId: options?.threadId,
+                            threadPreview: options?.threadPreview,
+                            content: {
+                                body: message,
+                                mentions: options?.mentions ?? [],
+                                attachments: transformAttachments(options?.attachments),
+                            },
+                        }),
+                    )
                 }
                 break
             case MessageType.Image:
-                await this.casablancaClient.sendChannelMessage_Image(roomId, {
-                    threadId: options?.threadId,
-                    threadPreview: options?.threadPreview,
-                    content: {
-                        title: message,
-                        info: options?.info,
-                        thumbnail: options?.thumbnail,
-                    },
-                })
+                sendInParallel.push(
+                    this.casablancaClient.sendChannelMessage_Image(roomId, {
+                        threadId: options?.threadId,
+                        threadPreview: options?.threadPreview,
+                        content: {
+                            title: message,
+                            info: options?.info,
+                            thumbnail: options?.thumbnail,
+                        },
+                    }),
+                )
                 break
             case MessageType.GM:
-                await this.casablancaClient.sendChannelMessage_GM(roomId, {
-                    threadId: options?.threadId,
-                    threadPreview: options?.threadPreview,
-                    content: {
-                        typeUrl: message,
-                    },
-                })
+                sendInParallel.push(
+                    this.casablancaClient.sendChannelMessage_GM(roomId, {
+                        threadId: options?.threadId,
+                        threadPreview: options?.threadPreview,
+                        content: {
+                            typeUrl: message,
+                        },
+                    }),
+                )
                 break
             case MessageType.EmbeddedMedia:
-                await this.casablancaClient.sendChannelMessage_EmbeddedMedia(roomId, {
-                    threadId: options.threadId,
-                    threadPreview: options.threadPreview,
-                    content: {
-                        content: options.content,
-                        info: {
-                            sizeBytes: options.info.sizeBytes,
-                            mimetype: options.info.mimetype,
-                            widthPixels: options.info.widthPixels,
-                            heightPixels: options.info.heightPixels,
-                            filename: '',
-                        },
-                    },
-                })
-                break
-            case MessageType.ChunkedMedia:
-                await this.casablancaClient.sendChannelMessage_Media(roomId, {
-                    threadId: options?.threadId,
-                    threadPreview: options?.threadPreview,
-                    content: {
-                        streamId: options.streamId,
-                        info: {
-                            sizeBytes: options.info.sizeBytes,
-                            mimetype: options.info.mimetype,
-                            widthPixels: options.info.widthPixels,
-                            heightPixels: options.info.heightPixels,
-                            filename: options.info.filename,
-                        },
-                        encryption: {
-                            case: 'aesgcm',
-                            value: {
-                                iv: options.iv,
-                                secretKey: options.secretKey,
-                            },
-                        },
-                        thumbnail: {
+                sendInParallel.push(
+                    this.casablancaClient.sendChannelMessage_EmbeddedMedia(roomId, {
+                        threadId: options.threadId,
+                        threadPreview: options.threadPreview,
+                        content: {
+                            content: options.content,
                             info: {
-                                sizeBytes: options.thumbnail.info.sizeBytes,
-                                mimetype: options.thumbnail.info.mimetype,
-                                widthPixels: options.thumbnail.info.widthPixels,
-                                heightPixels: options.thumbnail.info.heightPixels,
+                                sizeBytes: options.info.sizeBytes,
+                                mimetype: options.info.mimetype,
+                                widthPixels: options.info.widthPixels,
+                                heightPixels: options.info.heightPixels,
                                 filename: '',
                             },
-                            content: options.thumbnail.content,
                         },
-                    },
-                })
+                    }),
+                )
+                break
+            case MessageType.ChunkedMedia:
+                sendInParallel.push(
+                    this.casablancaClient.sendChannelMessage_Media(roomId, {
+                        threadId: options?.threadId,
+                        threadPreview: options?.threadPreview,
+                        content: {
+                            streamId: options.streamId,
+                            info: {
+                                sizeBytes: options.info.sizeBytes,
+                                mimetype: options.info.mimetype,
+                                widthPixels: options.info.widthPixels,
+                                heightPixels: options.info.heightPixels,
+                                filename: options.info.filename,
+                            },
+                            encryption: {
+                                case: 'aesgcm',
+                                value: {
+                                    iv: options.iv,
+                                    secretKey: options.secretKey,
+                                },
+                            },
+                            thumbnail: {
+                                info: {
+                                    sizeBytes: options.thumbnail.info.sizeBytes,
+                                    mimetype: options.thumbnail.info.mimetype,
+                                    widthPixels: options.thumbnail.info.widthPixels,
+                                    heightPixels: options.thumbnail.info.heightPixels,
+                                    filename: '',
+                                },
+                                content: options.thumbnail.content,
+                            },
+                        },
+                    }),
+                )
                 break
             default:
                 staticAssertNever(options)
         }
+
+        const results = await Promise.allSettled(sendInParallel)
+        for (const result of results) {
+            if (result.status === 'rejected') {
+                console.error('[sendMessage] failed', result.reason)
+                throw result.reason
+            }
+        }
+
         this._eventHandlers?.onSendMessage?.(roomId, message, options)
     }
 
