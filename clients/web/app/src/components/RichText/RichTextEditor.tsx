@@ -110,19 +110,20 @@ const filteredDefaultTransforms = TRANSFORMERS.filter((t) => !isEqual(t, HEADING
     .map((t) => (isEqual(t, LINK) ? BLANK_LINK : t))
 
 const useTransformers = ({ members, channels, highlightTerms }: IUseTransformers) => {
+    const filteredChannels = channels.filter((c) => notUndefined(c) && c.label.length > 1)
     const transformers = useMemo(() => {
         const names = members
             .filter((m) => notUndefined(m.displayName))
             .map((m) => ({ displayName: getPrettyDisplayName(m), userId: m.userId }))
-        const channelHashtags = channels.filter(notUndefined)
+
         return [
             createMentionTransformer(names),
-            createChannelLinkTransformer(channelHashtags),
+            filteredChannels.length ? createChannelLinkTransformer(filteredChannels) : undefined,
             CHECK_LIST,
             ...filteredDefaultTransforms,
             ...(highlightTerms?.length ? [createHighlightTransformer(highlightTerms)] : []),
-        ]
-    }, [members, channels, highlightTerms])
+        ].filter(notUndefined)
+    }, [filteredChannels, highlightTerms, members])
     return { transformers }
 }
 
