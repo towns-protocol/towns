@@ -81,7 +81,6 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
 
             setChannels((prev) => {
                 if (isEqual(prev, channels)) {
-                    console.log('useCasablancaDMs: channels are equal, not updating')
                     prev.forEach((channel) => {
                         if (!isSorted(channel.userIds)) {
                             console.error('useCasablancaDMs: prev.userIds are not sorted', {
@@ -89,7 +88,6 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                             })
                         }
                     })
-
                     return prev
                 } else {
                     return channels
