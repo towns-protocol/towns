@@ -11,7 +11,12 @@ import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { staticAssertNever } from '../utils/zion-utils'
 
-export const useZionClientListener = (opts: { chainId: number; casablancaServerUrl?: string }) => {
+export const useZionClientListener = (opts: {
+    chainId: number
+    casablancaServerUrl?: string
+    pushNotificationWorkerUrl?: string
+    pushNotificationAuthToken?: string
+}) => {
     const { provider } = useWeb3Context()
     const { setLoginStatus: setCasablancaLoginStatus, setLoginError: setCasablancaLoginError } =
         useCasablancaStore()

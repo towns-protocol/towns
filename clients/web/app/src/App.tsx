@@ -58,6 +58,8 @@ export const App = () => {
             chainId={environment.chainId}
             initalSyncSortPredicate={initalSyncSortPredicate}
             timelineFilter={new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicitation])}
+            pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
+            pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
         >
             <EmbeddedSignerContextProvider chainId={environment.chainId}>
                 <BetaDebugger />

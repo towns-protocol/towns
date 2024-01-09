@@ -66,6 +66,8 @@ interface ZionContextProviderProps {
     children: JSX.Element
     initalSyncSortPredicate?: InitialSyncSortPredicate
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
+    pushNotificationAuthToken?: string
+    pushNotificationWorkerUrl?: string
 }
 
 export function ZionContextProvider({
@@ -113,6 +115,8 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
     const { client, clientSingleton, casablancaClient } = useZionClientListener({
         chainId: props.chainId,
         casablancaServerUrl: props.casablancaServerUrl,
+        pushNotificationAuthToken: props.pushNotificationAuthToken,
+        pushNotificationWorkerUrl: props.pushNotificationWorkerUrl,
     })
     const { invitedToIds } = useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
