@@ -10,7 +10,6 @@ import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 import { vitePWAOptions } from './vite-pwa-options.config'
 import { execSync } from 'child_process'
-import basicSsl from '@vitejs/plugin-basic-ssl'
 
 const commitHash = execSync('git rev-parse --short HEAD').toString().trim()
 
@@ -46,7 +45,6 @@ export default ({ mode }: { mode: string }) => {
     const env = loadEnv(mode, process.cwd(), '')
 
     const devPlugins: PluginOption[] = [
-        ...[env.VITE_USE_LOCAL_NETWORK_HTTPS ? basicSsl() : []],
         checker({
             typescript: true,
             eslint: {
@@ -133,6 +131,13 @@ export default ({ mode }: { mode: string }) => {
                 ...profiling,
             },
         },
+    }
+
+    if (env.VITE_USE_LOCAL_NETWORK_HTTPS === 'true') {
+        console.log('Using local network HTTPS')
+        config.server!.host = '0.0.0.0'
+        config.server!.https = {}
+        config.plugins!.push(mkcert({ hosts: [env.VITE_LOCAL_HOSTNAME] }))
     }
 
     return defineConfig(config)
