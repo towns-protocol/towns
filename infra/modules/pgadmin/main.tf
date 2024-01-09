@@ -61,6 +61,28 @@ resource "aws_iam_role" "pgadmin_task_execution_role" {
   tags = local.pgadmin_tags
 }
 
+resource "aws_iam_role_policy" "pgadmin_google_oauth2_config_secret" {
+  name = "${local.name}-pgadmin-google-oauth2"
+  role = aws_iam_role.pgadmin_task_execution_role.id
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${local.global_remote_state.pgadmin_google_oauth2_config_secret.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
 resource "aws_ecs_task_definition" "pgadmin-fargate" {
   family = "${local.name}-fargate"
 
