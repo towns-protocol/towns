@@ -50,6 +50,9 @@ export async function createSpaceDappForNetwork(
 ): Promise<ISpaceDapp<Versions> | undefined> {
     const provider = createStaticProvider(env.ENVIRONMENT, env)
     const network = await provider.getNetwork()
-    const spaceDapp = createSpaceDapp(network.chainId, provider, 'v3')
+    const spaceDapp = createSpaceDapp({
+        chainId: network.chainId,
+        provider,
+    })
     return spaceDapp
 }
