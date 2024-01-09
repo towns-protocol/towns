@@ -20,7 +20,9 @@ on:
         - cron: '*/1 * * * *' # Every 1 minute
 jobs:
     run_synthetic_tests:
-        runs-on: synthetic-test-runner
+        runs-on:
+          group: synthetic-test-runners
+        
         timeout-minutes: 240
         services:
             redis:
