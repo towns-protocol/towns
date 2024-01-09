@@ -110,6 +110,16 @@ resource "aws_secretsmanager_secret_version" "pgadmin_google_oauth2_config" {
   secret_string = "DUMMY"
 }
 
+resource "aws_secretsmanager_secret" "base_chain_network_url_secret" {
+  name        = "base-chain-network-url"
+  description = "Base chain network url"
+}
+
+resource "aws_secretsmanager_secret_version" "base_chain_network_url_secret" {
+  secret_id     = aws_secretsmanager_secret.base_chain_network_url_secret.id
+  secret_string = "DUMMY"
+}
+
 module "river_node_credentials" {
   source = "../../../modules/river-node-credentials"
 

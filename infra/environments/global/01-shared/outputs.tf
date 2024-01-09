@@ -50,3 +50,7 @@ output "readonlyuser_db_password_secret" {
 output "pgadmin_google_oauth2_config_secret" {
   value = aws_secretsmanager_secret.pgadmin_google_oauth2_config
 }
+
+output "base_chain_network_url_secret" {
+  value = aws_secretsmanager_secret.base_chain_network_url_secret
+}

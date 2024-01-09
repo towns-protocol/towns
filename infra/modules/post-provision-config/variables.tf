@@ -50,15 +50,6 @@ variable "river_node_wallet_credentials_arn" {
   }
 }
 
-variable "homechain_network_url_secret_arn" {
-  description = "The arn of the homechain network url secret"
-  type        = string
-  validation {
-    condition     = var.homechain_network_url_secret_arn != ""
-    error_message = "The homechain network url secret arn cannot be empty."
-  }
-}
-
 variable "rds_cluster_resource_id" {
   description = "The d of the rds db"
   type        = string

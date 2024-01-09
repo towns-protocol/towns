@@ -65,30 +65,6 @@ async function findOrCreateWalletPrivateKey() {
   return privateKey;
 }
 
-async function setHomechainNetworkUrlSecret() {
-  console.log('setting homechain network url secret - start')
-  const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
-  console.log('getting global proxy key secret')
-  const getGlobalProxyKeyCommand = new GetSecretValueCommand({
-    SecretId: process.env.RPC_PROXY_GLOBAL_ACCESS_KEY_ARN
-  })
-  const globalProxyKeySecret = (await secretsClient.send(getGlobalProxyKeyCommand)).SecretString;
-
-  const { HOME_CHAIN_ID } = process.env;
-  if (!HOME_CHAIN_ID || HOME_CHAIN_ID.length === 0) {
-    throw new Error('HOME_CHAIN_ID not set')
-  }
-  const BASE_URL = `https://nexus-rpc-worker-test-beta.towns.com/${HOME_CHAIN_ID}`
-  const setHomechainNetworkUrlSecretCommand = new PutSecretValueCommand({
-    SecretId: process.env.HOME_CHAIN_NETWORK_URL_SECRET_ARN,
-    SecretString: `${BASE_URL}?key=${globalProxyKeySecret}`,
-  })
-
-  console.log('actually setting homechain network url secret')
-  await secretsClient.send(setHomechainNetworkUrlSecretCommand);
-  console.log('done setting homechain network url secret')
-}
-
 const getMasterUserCredentials = async () => {
   console.log('getting master user credentials')
   const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
@@ -398,9 +374,6 @@ async function findOrCreateRiverReadOnlyUserDBConfig() {
 
 exports.handler = async (event, context, callback) => {
   try {
-    // read the proxy shared key, and use it to write the homechain network url secret
-    await setHomechainNetworkUrlSecret();
-
     // find or create the wallet private key, and use it to configure the db schema
     const privateKey = await findOrCreateWalletPrivateKey()
     const wallet = generateFromPrivateKey(privateKey);

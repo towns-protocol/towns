@@ -165,7 +165,6 @@ module "post_provision_config" {
   river_node_name                         = local.node_name
   subnet_ids                              = var.node_subnets
   river_node_wallet_credentials_arn       = local.shared_credentials.wallet_private_key.arn
-  homechain_network_url_secret_arn        = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
   river_db_cluster_master_user_secret_arn = var.river_node_db.root_user_secret_arn
   river_user_db_config                    = local.river_user_db_config
   rds_cluster_resource_id                 = var.river_node_db.rds_aurora_postgresql.cluster_resource_id
@@ -215,16 +214,6 @@ resource "aws_cloudwatch_log_subscription_filter" "dd_agent_log_group_filter" {
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
-resource "aws_secretsmanager_secret" "river_node_home_chain_network_url" {
-  name = "${local.node_name}-homechain-network-url-secret"
-  tags = local.river_node_tags
-}
-
-resource "aws_secretsmanager_secret_version" "river_node_home_chain_network_url" {
-  secret_id     = aws_secretsmanager_secret.river_node_home_chain_network_url.id
-  secret_string = "DUMMY"
-}
-
 resource "aws_iam_role_policy" "river_node_credentials" {
   name = "${local.node_name}-node-credentials"
   role = aws_iam_role.ecs_task_execution_role.id
@@ -242,7 +231,7 @@ resource "aws_iam_role_policy" "river_node_credentials" {
           "${local.shared_credentials.db_password.arn}",
           "${local.shared_credentials.wallet_private_key.arn}",
           "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
-          "${aws_secretsmanager_secret.river_node_home_chain_network_url.arn}",
+          "${local.global_remote_state.base_chain_network_url_secret.arn}",
           "${local.global_remote_state.river_global_push_notification_auth_token.arn}"
         ]
       }
@@ -396,7 +385,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name      = "BASECHAIN__NETWORKURL"
-        valueFrom = aws_secretsmanager_secret.river_node_home_chain_network_url.arn
+        valueFrom = local.global_remote_state.base_chain_network_url_secret.arn
       },
       {
         name      = "PUSHNOTIFICATION__AUTHTOKEN",
