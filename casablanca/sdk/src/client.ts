@@ -1,4 +1,5 @@
 import { Message, PlainMessage } from '@bufbuild/protobuf'
+import { datadogRum } from '@datadog/browser-rum'
 import {
     MembershipOp,
     ChannelOp,
@@ -288,6 +289,7 @@ export class Client
     }
 
     async initializeUser(): Promise<void> {
+        const initializeUserStartTime = performance.now()
         this.logCall('initializeUser', this.userId)
         assert(this.userStreamId === undefined, 'already initialized')
         await this.initCrypto()
@@ -317,6 +319,9 @@ export class Client
         await this.uploadDeviceKeys()
         await this.initUserJoinedStreams()
         this.decryptionExtensions.start()
+        const initializeUserEndTime = performance.now()
+        const executionTime = initializeUserEndTime - initializeUserStartTime
+        datadogRum.addTiming('inititalizeUser', executionTime)
     }
 
     // special wrapper around rpcClient.getStream which catches NOT_FOUND errors but re-throws everything else
