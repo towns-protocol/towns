@@ -53,6 +53,7 @@ TOKEN_WORKER_PATH="servers/workers/token-worker"
 UNFURL_WORKER_PATH="servers/workers/unfurl-worker"
 JWT_WORKER_PATH="servers/workers/jwt-worker"
 RPC_PROXY_WORKER_PATH="servers/workers/nexus-rpc-worker"
+STACKUP_WORKER_PATH="servers/workers/stackup-worker"
 
 declare -a WORKER_PATHS=(
     $JWT_WORKER_PATH
@@ -62,6 +63,7 @@ declare -a WORKER_PATHS=(
     $UNFURL_WORKER_PATH
     $GATEWAY_WORKER_PATH
     $RPC_PROXY_WORKER_PATH
+    $STACKUP_WORKER_PATH
 )
 
 for WORKER_PATH in "${WORKER_PATHS[@]}"; do

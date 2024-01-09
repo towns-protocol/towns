@@ -11,3 +11,12 @@ export function getOptionsResponse(request: Request, env: Environment): Response
         headers: withCorsHeaders(request, env),
     })
 }
+
+export function isErrorType(obj: unknown): obj is { message: string } {
+    return (
+        obj !== null &&
+        typeof obj === 'object' &&
+        'message' in obj &&
+        typeof obj.message === 'string'
+    )
+}

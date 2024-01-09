@@ -1,0 +1,10 @@
+# add your secret variables here for local development
+# for public variables, add them in wrangler.toml
+PAYMASTER_ADDRESS=
+STACKUP_API_TOKEN=
+SKIP_TOWNID_VERIFICATION=
+PRIVY_APP_KEY=
+PRIVY_APP_ID=
+ALCHEMY_API_KEY=
+AUTH_SECRET=
+ADMIN_AUTH_SECRET=

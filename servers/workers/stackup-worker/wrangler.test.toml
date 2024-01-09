@@ -1,0 +1,19 @@
+# this is for tests, so it gets used even though wrangler CLI says otherwise
+[miniflare]
+cache_persist = false
+
+[vars]
+AUTH_SECRET="foo"
+ENVIRONMENT="development"
+SKIP_TOWNID_VERIFICATION="true"
+PAYMASTER_ADDRESS=""
+STACKUP_API_TOKEN=""
+PRIVY_APP_KEY=""
+PRIVY_APP_ID=""
+
+kv_namespaces = [
+  { binding = "OVERRIDES", id = "<ignored>", preview_id = "<ignored>" },
+  { binding = "CREATE_TOWN", id = "<ignored>", preview_id = "<ignored>" },
+  { binding = "EMAIL_WHITELIST", id = "<ignored>", preview_id = "<ignored>" },
+  { binding = "TOWN_WHITELIST", id = "<ignored>", preview_id = "<ignored>" },
+]

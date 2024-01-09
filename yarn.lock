@@ -22014,6 +22014,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"stackup-worker@workspace:servers/workers/stackup-worker":
+  version: 0.0.0-use.local
+  resolution: "stackup-worker@workspace:servers/workers/stackup-worker"
+  dependencies:
+    "@cloudflare/workers-types": ^4.20230710.1
+    "@towns/generated": "workspace:^"
+    "@types/jest": ^29.5.3
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^6.10.0
+    eslint: ^8.53.0
+    itty-router: ^2.6.6
+    jest: ^29.6.2
+    jest-environment-miniflare: ^2.14.0
+    miniflare: ^3.20230710.0
+    prettier: ^2.8.8
+    ts-jest: ^29.1.1
+    typescript: ^5.1.6
+    userop.js: ^0.3.7
+    worker-common: "workspace:^"
+    wrangler: ^3.2.0
+  languageName: unknown
+  linkType: soft
+
 "standard-as-callback@npm:^2.1.0":
   version: 2.1.0
   resolution: "standard-as-callback@npm:2.1.0"
@@ -23948,6 +23971,17 @@ __metadata:
     zustand: ^4.3.3
   languageName: unknown
   linkType: soft
+
+"userop.js@npm:^0.3.7":
+  version: 0.3.7
+  resolution: "userop.js@npm:0.3.7"
+  dependencies:
+    elliptic: ^6.5.4
+    ethers: ^5.7.2
+    js-base64: ^3.7.5
+  checksum: b7da3e9f0cb5b8c4e47101b0abd2ce9185e1b52aa18484a4856e1800dc997c8a14bf2ab720d0eda509e469157b0a7a1feca9d5e6e6506cd28913ec135182a54b
+  languageName: node
+  linkType: hard
 
 "userop@npm:^0.3.7":
   version: 0.3.7
