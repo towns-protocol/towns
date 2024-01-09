@@ -90,6 +90,26 @@ resource "aws_secretsmanager_secret_version" "river_global_dd_agent_api_key" {
   secret_string = "DUMMY"
 }
 
+resource "aws_secretsmanager_secret" "river_global_read_db_password" {
+  name        = "river-global-readonly-db-password"
+  description = "Shared read only db credentials for river node"
+}
+
+resource "aws_secretsmanager_secret_version" "river_global_read_db_password" {
+  secret_id     = aws_secretsmanager_secret.river_global_read_db_password.id
+  secret_string = "DUMMY"
+}
+
+resource "aws_secretsmanager_secret" "pgadmin_google_oauth2_config" {
+  name        = "pgadmin-google-oauth2-config"
+  description = "Google Auth Client ID"
+}
+
+resource "aws_secretsmanager_secret_version" "pgadmin_google_oauth2_config" {
+  secret_id     = aws_secretsmanager_secret.pgadmin_google_oauth2_config.id
+  secret_string = "DUMMY"
+}
+
 module "river_node_credentials" {
   source = "../../../modules/river-node-credentials"
 

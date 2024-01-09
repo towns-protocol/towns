@@ -10,7 +10,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.13.1"
+      version = ">= 5.13.1"
     }
     datadog = {
       source  = "DataDog/datadog"
@@ -80,7 +80,10 @@ module "river_db_cluster" {
   # if it's single-node, then it's a cow clone.
   is_cloned = var.is_db_cloned
 
-  count = local.create_db_cluster ? 1 : 0
+  count                     = local.create_db_cluster ? 1 : 0
+  pgadmin_security_group_id = module.global_constants.transient_global_remote_state.outputs.pgadmin_security_group_id
+
+
 }
 
 module "river_node" {

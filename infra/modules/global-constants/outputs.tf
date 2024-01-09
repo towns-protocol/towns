@@ -84,3 +84,10 @@ data "terraform_remote_state" "transient_global_remote_state" {
 output "transient_global_remote_state" {
   value = data.terraform_remote_state.transient_global_remote_state
 }
+
+
+# We reserve the first N listener rules for arbitary services such as pgadmin.
+# River nodes are allowed to use the rest of the rules.
+output "alb_reserved_num_rules" {
+  value = 50
+}

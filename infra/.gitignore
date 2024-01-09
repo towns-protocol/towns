@@ -31,3 +31,9 @@ terraform.rc
 auth.*
 keys.*
 *.pem
+
+# Zip artifacts
+*.zip
+
+#Testing Environment only
+mahattam-test

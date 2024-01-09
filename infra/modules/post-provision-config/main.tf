@@ -13,6 +13,7 @@ locals {
       Node_Name   = var.river_node_name
     }
   )
+  global_remote_state = module.global_constants.global_remote_state.outputs
 }
 
 
@@ -52,6 +53,13 @@ module "post_provision_config_lambda_function" {
       USER         = var.river_user_db_config.user
       PASSWORD_ARN = var.river_user_db_config.password_arn
     })
+    RIVER_READ_ONLY_USER_DB_CONFIG = jsonencode({
+      HOST         = var.river_user_db_config.host
+      PORT         = var.river_user_db_config.port
+      DATABASE     = var.river_user_db_config.database
+      USER         = "river-readonly"
+      PASSWORD_ARN = local.global_remote_state.readonlyuser_db_password_secret.arn
+    })
     HOME_CHAIN_ID                           = var.home_chain_id
     RIVER_NODE_WALLET_CREDENTIALS_ARN       = var.river_node_wallet_credentials_arn
     RIVER_DB_CLUSTER_MASTER_USER_SECRET_ARN = var.river_db_cluster_master_user_secret_arn
@@ -69,46 +77,21 @@ module "post_provision_config_lambda_function" {
           ],
           "Effect": "Allow",
           "Resource": [
-            "${var.river_db_cluster_master_user_secret_arn}"
-          ]
-        },
-        {
-          "Action": [
-            "secretsmanager:GetSecretValue",
-            "secretsmanager:PutSecretValue"
-          ],
-          "Effect": "Allow",
-          "Resource": [
-            "${var.river_user_db_config.password_arn}"
-          ]
-        },
-        {
-          "Action": [
-            "secretsmanager:GetSecretValue",
-            "secretsmanager:PutSecretValue"
-          ],
-          "Effect": "Allow",
-          "Resource": [
-            "${var.homechain_network_url_secret_arn}"
-          ]
-        },
-        {
-          "Action": [
-            "secretsmanager:GetSecretValue",
-            "secretsmanager:PutSecretValue"
-          ],
-          "Effect": "Allow",
-          "Resource": [
-            "${var.river_node_wallet_credentials_arn}"
-          ]
-        },
-        {
-          "Action": [
-            "secretsmanager:GetSecretValue"
-          ],
-          "Effect": "Allow",
-          "Resource": [
+            "${var.river_db_cluster_master_user_secret_arn}",
             "${local.rpc_proxy_global_access_key_arn}"
+          ]
+        },
+        {
+          "Action": [
+            "secretsmanager:GetSecretValue",
+            "secretsmanager:PutSecretValue"
+          ],
+          "Effect": "Allow",
+          "Resource": [
+            "${var.river_user_db_config.password_arn}",
+            "${local.global_remote_state.readonlyuser_db_password_secret.arn}",
+            "${var.homechain_network_url_secret_arn}",
+            "${var.river_node_wallet_credentials_arn}"
           ]
         }
       ]

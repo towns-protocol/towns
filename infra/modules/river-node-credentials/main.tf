@@ -39,4 +39,3 @@ resource "aws_secretsmanager_secret_version" "river_node_wallet_private_key" {
   secret_id     = aws_secretsmanager_secret.river_node_wallet_private_key.id
   secret_string = "DUMMY"
 }
-

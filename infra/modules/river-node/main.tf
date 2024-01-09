@@ -51,7 +51,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.13.1"
+      version = ">= 5.13.1"
     }
     datadog = {
       source  = "DataDog/datadog"
@@ -239,42 +239,10 @@ resource "aws_iam_role_policy" "river_node_credentials" {
         ],
         "Effect": "Allow",
         "Resource": [
-          "${local.shared_credentials.db_password.arn}"
-        ]
-      },
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${local.shared_credentials.wallet_private_key.arn}"
-        ]
-      },
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${local.global_remote_state.river_global_dd_agent_api_key.arn}"
-        ]
-      },
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
-          "${aws_secretsmanager_secret.river_node_home_chain_network_url.arn}"
-        ]
-      },
-      {
-        "Action": [
-          "secretsmanager:GetSecretValue"
-        ],
-        "Effect": "Allow",
-        "Resource": [
+          "${local.shared_credentials.db_password.arn}",
+          "${local.shared_credentials.wallet_private_key.arn}",
+          "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
+          "${aws_secretsmanager_secret.river_node_home_chain_network_url.arn}",
           "${local.global_remote_state.river_global_push_notification_auth_token.arn}"
         ]
       }
@@ -321,11 +289,26 @@ resource "aws_lb_target_group" "green" {
 }
 
 locals {
-  # we modulo by 50000 to avoid going over the max.
+  # first, we compute max_non_reserved_priority, to find the max
+  # priority a river node can have.
+  # we modulo by max_non_reserved_priority to avoid going over the max.
   # we multiply by 10 to give room for at most 10 nodes.
   # we add the node number to give each node a unique priority.
-  transient_lb_listener_priority = ((var.is_transient ? var.git_pr_number : 0) * 10 + var.node_number) % 50000
-  lb_listener_priority           = var.is_transient ? local.transient_lb_listener_priority : 1
+  # we add the reserved priority to make room for other, arbitrary services such as pgadmin.
+
+  max_lb_listener_priority  = 50000
+  max_non_reserved_priority = local.max_lb_listener_priority - module.global_constants.alb_reserved_num_rules
+
+  transient_lb_listener_priority = (
+    (
+      10 * (var.is_transient ? var.git_pr_number : 0) +
+      var.node_number
+    ) % local.max_non_reserved_priority
+  ) + module.global_constants.alb_reserved_num_rules
+
+  lb_listener_priority = var.is_transient ? local.transient_lb_listener_priority : (
+    1 + module.global_constants.alb_reserved_num_rules
+  )
 }
 
 resource "aws_lb_listener_rule" "host_rule" {

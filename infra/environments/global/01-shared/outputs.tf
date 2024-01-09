@@ -42,3 +42,11 @@ output "public_ecr" {
   description = "Public ECR repository"
   value       = module.public_ecr
 }
+
+output "readonlyuser_db_password_secret" {
+  value = aws_secretsmanager_secret.river_global_read_db_password
+}
+
+output "pgadmin_google_oauth2_config_secret" {
+  value = aws_secretsmanager_secret.pgadmin_google_oauth2_config
+}

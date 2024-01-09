@@ -97,3 +97,17 @@ resource "aws_security_group_rule" "allow_public_access_for_transient_dbs" {
 
   cidr_blocks = ["0.0.0.0/0"]
 }
+
+resource "aws_security_group_rule" "allow_pgadmin_inbound_to_db" {
+  # var.pgadmin_security_group_id is of type any. so the count should be determined by
+  # whether it exists.
+
+  count     = can(var.pgadmin_security_group_id) ? 1 : 0
+  type      = "ingress"
+  from_port = 5432
+  to_port   = 5432
+  protocol  = "tcp"
+
+  security_group_id        = module.rds_aurora_postgresql.security_group_id
+  source_security_group_id = var.pgadmin_security_group_id
+}

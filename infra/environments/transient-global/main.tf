@@ -7,25 +7,25 @@ provider "aws" {
 #   app_key = var.datadog_app_key
 # }
 
-# provider "cloudflare" {
-#   api_token = var.cloudflare_terraform_api_token
-# }
+provider "cloudflare" {
+  api_token = var.cloudflare_terraform_api_token
+}
 
 
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.13.1"
+      version = ">= 5.13.1"
     }
     # datadog = {
     #   source = "DataDog/datadog"
     #   version = "3.32.0"
     # }
-    # cloudflare = {
-    #   source  = "cloudflare/cloudflare"
-    #   version = "~> 4.0"
-    # }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
   }
 
   backend "s3" {}
@@ -79,4 +79,20 @@ resource "aws_secretsmanager_secret" "rpc_proxy_global_access_key" {
 resource "aws_secretsmanager_secret_version" "rpc_proxy_global_access_key" {
   secret_id     = aws_secretsmanager_secret.rpc_proxy_global_access_key.id
   secret_string = "DUMMY"
+}
+
+module "pgadmin" {
+  source          = "../../modules/pgadmin"
+  vpc_id          = module.vpc.vpc_id
+  public_subnets  = module.vpc.public_subnets
+  private_subnets = module.vpc.private_subnets
+
+  ecs_cluster = {
+    id   = aws_ecs_cluster.river_ecs_cluster.id
+    name = aws_ecs_cluster.river_ecs_cluster.name
+  }
+
+  alb_security_group_id  = module.river_alb.security_group_id
+  alb_dns_name           = module.river_alb.lb_dns_name
+  alb_https_listener_arn = module.river_alb.lb_https_listener_arn
 }

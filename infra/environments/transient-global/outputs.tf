@@ -16,3 +16,7 @@ output "river_ecs_cluster" {
 output "rpc_proxy_global_access_key" {
   value = aws_secretsmanager_secret.rpc_proxy_global_access_key
 }
+
+output "pgadmin_security_group_id" {
+  value = module.pgadmin.security_group_id
+}

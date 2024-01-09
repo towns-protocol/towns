@@ -15,10 +15,10 @@ function generatePostgresPassword() {
   const PG_PASSWORD_LENGTH = 32;
   let password = generatePassword(PG_PASSWORD_LENGTH);
   while (
-    password.includes("'") || 
-    password.includes('"') || 
-    password.includes('\\') || 
-    password.includes('/') || 
+    password.includes("'") ||
+    password.includes('"') ||
+    password.includes('\\') ||
+    password.includes('/') ||
     password.includes(';')
   ) {
     console.log('regenerating password')
@@ -123,21 +123,25 @@ const createRiverNodeSchema = async ({
     }
   })
 
-  const createSchemaQuery = `
-    DO
-    $do$
-    BEGIN
-      IF NOT EXISTS (
-        SELECT FROM pg_catalog.pg_namespace WHERE nspname = '${schemaName}'
-      ) THEN
-        CREATE SCHEMA ${schemaName};
-      END IF;
-    END
-    $do$
-  `;
-
   try {
+    console.log('connecting')
+    await pgClient.connect();
+    console.log('connected')
+
+    const createSchemaQuery = `
+      DO
+      $do$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT FROM pg_catalog.pg_namespace WHERE nspname = '${schemaName}'
+        ) THEN
+          CREATE SCHEMA ${schemaName};
+        END IF;
+      END
+      $do$
+    `;
     await pgClient.query(createSchemaQuery);
+    console.log('done creating schema')
   } catch (e) {
     console.error('error creating schema: ', e)
     error = e;
@@ -149,13 +153,13 @@ const createRiverNodeSchema = async ({
     throw error;
   }
 }
-  
+
 const createRiverNodeDbUser = async ({
   riverUserDBConfig,
   masterUserCredentials,
 }) => {
   console.log('creating river node db user')
-  
+
   const pgClient = new Client({
     host: riverUserDBConfig.HOST,
     database: 'postgres',
@@ -248,10 +252,98 @@ const createRiverNodeDbUser = async ({
   }
 }
 
+const createReadOnlyDbUser = async ({
+  riverReadOnlyUserDBConfig,
+  masterUserCredentials,
+  schemaName,
+}) => {
+  console.log('creating river node Read only db user')
+
+  const pgClient = new Client({
+    host: riverReadOnlyUserDBConfig.HOST,
+    database: riverReadOnlyUserDBConfig.DATABASE,
+    password: masterUserCredentials.password,
+    user: masterUserCredentials.username,
+    port: riverReadOnlyUserDBConfig.PORT,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  })
+
+  let error;
+
+  try {
+    console.log('connecting')
+    await pgClient.connect();
+    console.log('connected')
+
+    // create user if not exists
+    console.log('creating readonly user')
+
+    const createUserQuery = `
+      DO
+      $do$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT FROM pg_catalog.pg_user WHERE usename = '${riverReadOnlyUserDBConfig.USER}'
+        ) THEN
+          CREATE USER "${riverReadOnlyUserDBConfig.USER}" WITH PASSWORD '${riverReadOnlyUserDBConfig.PASSWORD}';
+        END IF;
+      END
+      $do$
+    `;
+    await pgClient.query(createUserQuery);
+    console.log('created read only user')
+
+    await pgClient.query('SELECT pg_advisory_lock(1);'); // 1 is an arbitrary lock ID
+    const grantReadPermissionQuery = `
+      GRANT CONNECT ON DATABASE ${riverReadOnlyUserDBConfig.DATABASE} TO "${riverReadOnlyUserDBConfig.USER}";
+      GRANT USAGE ON SCHEMA public TO "${riverReadOnlyUserDBConfig.USER}";
+      GRANT SELECT ON ALL TABLES IN SCHEMA public TO "${riverReadOnlyUserDBConfig.USER}";
+      GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO "${riverReadOnlyUserDBConfig.USER}";
+      GRANT USAGE ON SCHEMA ${schemaName} TO "${riverReadOnlyUserDBConfig.USER}";
+      GRANT SELECT ON ALL TABLES IN SCHEMA ${schemaName} TO "${riverReadOnlyUserDBConfig.USER}";
+      GRANT SELECT ON ALL SEQUENCES IN SCHEMA ${schemaName} TO "${riverReadOnlyUserDBConfig.USER}";
+    `;
+
+    // run the query above with 5 retry attempts:
+    const executeCreateQuery = async () => {
+      let attempt = 0;
+      let error;
+      while (attempt < 5) {
+        try {
+          await pgClient.query(grantReadPermissionQuery);
+          break;
+        } catch (e) {
+          console.warn(`error executing create query attempt: ${attempt}`, e)
+          error = e;
+          attempt++;
+        }
+      }
+      if (error) {
+        throw error;
+      }
+    }
+
+    await executeCreateQuery()
+
+    console.log('done creating readonly user')
+
+  } catch (e) {
+    error = e;
+  } finally {
+    await pgClient.query('SELECT pg_advisory_unlock(1);');
+    await pgClient.end()
+  }
+
+  if (error) {
+    throw error;
+  }
+}
 async function findOrCreateRiverUserDBConfig() {
   console.log('finding or creating river user password')
   const RIVER_USER_DB_CONFIG = JSON.parse(process.env.RIVER_USER_DB_CONFIG)
-  
+
   const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
   const command = new GetSecretValueCommand({
     SecretId: RIVER_USER_DB_CONFIG.PASSWORD_ARN
@@ -276,6 +368,34 @@ async function findOrCreateRiverUserDBConfig() {
   }
 }
 
+async function findOrCreateRiverReadOnlyUserDBConfig() {
+  console.log('finding or creating river read only user password')
+  const RIVER_READ_ONLY_USER_DB_CONFIG = JSON.parse(process.env.RIVER_READ_ONLY_USER_DB_CONFIG)
+
+  const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
+  const command = new GetSecretValueCommand({
+    SecretId: RIVER_READ_ONLY_USER_DB_CONFIG.PASSWORD_ARN
+  })
+  const secretValue = await secretsClient.send(command);
+  let password = secretValue.SecretString;
+  if (password === 'DUMMY') {
+    console.log('saving new river read only db password')
+    password = generatePostgresPassword();
+    const putSecretCommand = new PutSecretValueCommand({
+      SecretId: RIVER_READ_ONLY_USER_DB_CONFIG.PASSWORD_ARN,
+      SecretString: password,
+    })
+    await secretsClient.send(putSecretCommand);
+  } else {
+    console.log('river read only db password already set')
+  }
+
+  return {
+    ...RIVER_READ_ONLY_USER_DB_CONFIG,
+    PASSWORD: password,
+  }
+}
+
 exports.handler = async (event, context, callback) => {
   try {
     // read the proxy shared key, and use it to write the homechain network url secret
@@ -286,9 +406,9 @@ exports.handler = async (event, context, callback) => {
     const wallet = generateFromPrivateKey(privateKey);
     const address = wallet.getAddressString();
 
-    // find or create the river user password, and use it to configure the river db
     const riverUserDBConfig = await findOrCreateRiverUserDBConfig();
     const masterUserCredentials = await getMasterUserCredentials();
+    const riverReadOnlyUserDBConfig = await findOrCreateRiverReadOnlyUserDBConfig();
 
     console.log('node wallet address: ', address)
 
@@ -298,11 +418,19 @@ exports.handler = async (event, context, callback) => {
       masterUserCredentials,
     });
 
-    // const schemaName = `s${address.toLowerCase()}`
-    // await createRiverNodeSchema({
-    //   schemaName,
-    //   riverUserDBConfig,
-    // });
+    const schemaName = `s${address.toLowerCase()}`
+    // need to create the schema before creating the read only user,
+    // because the read only user needs to maintain read access to the schema
+    await createRiverNodeSchema({
+      schemaName,
+      riverUserDBConfig,
+    });
+
+    await createReadOnlyDbUser({
+      schemaName,
+      riverReadOnlyUserDBConfig,
+      masterUserCredentials,
+    });
 
     callback(null, 'done')
   } catch (e) {

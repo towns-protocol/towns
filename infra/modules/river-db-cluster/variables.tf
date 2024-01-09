@@ -23,3 +23,8 @@ variable "is_cloned" {
   type        = bool
   default     = false
 }
+
+variable "pgadmin_security_group_id" {
+  description = "(optional) The security group id of the pgadmin service"
+  type        = any
+}
