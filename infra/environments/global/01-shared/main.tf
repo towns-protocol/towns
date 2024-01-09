@@ -203,6 +203,7 @@ module "public_ecr" {
 
   image_names = [
     "river-node",
+    "forked-chain-service",
     "hnt-infra",
   ]
   repository_type = "public"
