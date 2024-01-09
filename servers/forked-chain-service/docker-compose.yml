@@ -9,5 +9,5 @@ services:
     environment:
       # - FORK_URL=fill your own
       - CHAIN_ID=85432
-      - FORK_BLOCK_NUMBER=1234
+      - FORK_BLOCK_NUMBER=latest
       - BLOCK_TIME=2

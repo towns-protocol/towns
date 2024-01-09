@@ -4,6 +4,23 @@ set -e
 
 # TODO: add logic to get the latest block number and pass it to anvil
 
+function check_dependencies() {
+    if ! [ -x "$(command -v anvil)" ]; then
+        echo "anvil is not installed"
+        exit 1
+    fi
+
+    if ! [ -x "$(command -v curl)" ]; then
+        echo "curl is not installed"
+        exit 1
+    fi
+
+    if ! [ -x "$(command -v jq)" ]; then
+        echo "jq is not installed"
+        exit 1
+    fi
+}
+
 function check_env() {
     if [ -z "$FORK_URL" ]; then
         echo "FORK_URL is not set"
@@ -59,5 +76,6 @@ function start_anvil() {
         --port 8545
 }
 
+check_dependencies
 check_env
 start_anvil
