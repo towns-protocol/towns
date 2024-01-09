@@ -29,7 +29,7 @@ import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
-import { ITownArchitectBase, ISpaceDapp, TokenEntitlementDataTypes, Permission } from '@river/web3'
+import { ITownArchitectBase, TokenEntitlementDataTypes, Permission } from '@river/web3'
 import { isTestEnv } from '@river/sdk'
 import { TSigner } from 'types/web3-types'
 
@@ -53,7 +53,7 @@ interface ZionClientImpl {
     chainId: number | undefined
     client: ZionClient | undefined
     clientRunning: boolean
-    spaceDapp: ISpaceDapp | undefined
+    spaceDapp: ZionClient['spaceDapp'] | undefined
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
         membership: ITownArchitectBase.MembershipStruct,

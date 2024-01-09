@@ -26,7 +26,7 @@ describe('withEntitlements', () => {
         await bobProvider.fundWallet()
         const mintReceipt = await bobProvider.mintMockNFT()
         log('mintReceipt', mintReceipt)
-        const spaceDapp = createSpaceDapp(chainId, bobProvider)
+        const spaceDapp = createSpaceDapp({ chainId, provider: bobProvider })
 
         // create a user stream
         const bob = await makeTestClient({ context: bobsContext })
@@ -120,7 +120,7 @@ describe('withEntitlements', () => {
         log('Alice created user, about to join space', { alicesUserId: alice.userId })
 
         // first join the space on chain
-        const aliceSpaceDapp = createSpaceDapp(chainId, aliceProvider)
+        const aliceSpaceDapp = createSpaceDapp({ chainId, provider: aliceProvider })
         const transaction2 = await aliceSpaceDapp.joinTown(
             spaceId,
             alicesWallet.address,

@@ -73,7 +73,7 @@ type UseMockTransactionReturn = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any | undefined
     error: Error | undefined
-    transactionHash: string | undefined
+    transactionHash: `0x${string}` | undefined
     transactionStatus: zionClient.TransactionStatus
 }
 
@@ -127,10 +127,11 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
         >(undefined)
 
         const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
+            const hash = zionClient.getTransactionHashOrUserOpHash(transactionContext?.transaction)
             return {
                 data: transactionContext?.data,
                 isLoading: transactionContext?.status === zionClient.TransactionStatus.Pending,
-                transactionHash: transactionContext?.transaction?.hash,
+                transactionHash: hash,
                 transactionStatus: transactionContext?.status ?? zionClient.TransactionStatus.None,
                 error: transactionContext?.error,
             }

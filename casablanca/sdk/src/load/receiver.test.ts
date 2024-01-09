@@ -83,7 +83,7 @@ describe('loadTestsScenario2', () => {
             const network = await provider.getNetwork()
 
             // alice joins the space
-            const alicesSpaceDapp = createSpaceDapp(network.chainId, provider)
+            const alicesSpaceDapp = createSpaceDapp({ chainId: network.chainId, provider })
             const alicesRiverSDK = new RiverSDK(alicesSpaceDapp, alice, walletWithProvider)
             await alicesRiverSDK.joinTown(chainSpaceChannelData.spaceId)
 

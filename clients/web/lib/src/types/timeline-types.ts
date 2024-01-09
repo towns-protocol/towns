@@ -11,7 +11,6 @@ import {
     PayloadCaseType,
 } from '@river/proto'
 import { Channel, Membership, Mention, PowerLevels } from './zion-types'
-import { BlockchainTransaction } from './web3-types'
 import { staticAssertNever } from '../utils/zion-utils'
 import { DecryptedContentError } from '@river/sdk'
 import { isDefined } from '@river/mecholm'
@@ -314,20 +313,13 @@ export type MentionResult = {
     thread?: TimelineEvent
 }
 
-export interface BlockchainTransactionEvent {
-    kind: ZTEvent.BlockchainTransaction
-    inReplyTo?: string
-    threadPreview?: string
-    content: BlockchainTransaction
-}
-
 export interface IgnoredNoticeEvent {
     kind: ZTEvent.Notice
     message: string
     contentKind?: string
 }
 
-export type NoticeEvent = BlockchainTransactionEvent | IgnoredNoticeEvent
+export type NoticeEvent = IgnoredNoticeEvent
 
 export type Encryption = Pick<ChannelMessage_Post_Content_ChunkedMedia_AESGCM, 'iv' | 'secretKey'>
 export type MediaInfo = Pick<
@@ -424,8 +416,6 @@ export function getFallbackContent(
             return `childId: ${content.childId}`
         case ZTEvent.SpaceParent:
             return `parentId: ${content.parentId}`
-        case ZTEvent.BlockchainTransaction:
-            return `blockchainTransaction: ${content.content.hash}`
         case ZTEvent.Notice:
             return `Notice: msgType: ${content.contentKind ?? 'unknown'}, message: ${
                 content.message

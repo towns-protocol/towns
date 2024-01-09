@@ -13,6 +13,7 @@ import {
     Permission,
     createExternalTokenStruct,
     getContractAddress,
+    getTransactionHashFromTransactionOrUserOp,
     isHexString,
     publicMint,
 } from '@river/web3'
@@ -148,10 +149,11 @@ test.skip('join_space_gated_2_NFT_2_wallet', async () => {
     console.log('create space gated by tokenA and tokenB tokens', externalTokens)
 
     const tx_link = await bob1.linkWallet(bob1.provider.wallet, bob2.provider.wallet)
+    const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
 
-    assert(tx_link.transaction?.hash !== undefined, 'linkWallet failed')
-    if (tx_link.transaction?.hash) {
-        const receipt = await bob1.opts.web3Provider?.waitForTransaction(tx_link.transaction.hash)
+    assert(txHash !== undefined, 'linkWallet failed')
+    if (txHash) {
+        const receipt = await bob1.opts.web3Provider?.waitForTransaction(txHash)
         expect(receipt?.status).toEqual(1)
     }
     expect(tx_link.error).toBeUndefined()

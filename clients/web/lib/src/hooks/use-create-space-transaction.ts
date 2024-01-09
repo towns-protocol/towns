@@ -9,7 +9,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { TSigner } from '../types/web3-types'
 import { CreateSpaceInfo } from '../types/zion-types'
 import { useZionClient } from './use-zion-client'
-import { ITownArchitectBase } from '@river/web3'
+import { ITownArchitectBase, getTransactionHashOrUserOpHash } from '@river/web3'
 /**
  * Combine Matrix space creation and smart contract space
  * creation into one hook.
@@ -25,7 +25,7 @@ export function useCreateSpaceTransaction() {
         return {
             data: transactionContext?.data,
             isLoading: transactionContext?.status === TransactionStatus.Pending,
-            transactionHash: transactionContext?.transaction?.hash,
+            transactionHash: getTransactionHashOrUserOpHash(transactionContext?.transaction),
             transactionStatus: transactionContext?.status ?? TransactionStatus.None,
             error: transactionContext?.error,
         }

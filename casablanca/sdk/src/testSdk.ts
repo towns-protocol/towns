@@ -1,5 +1,5 @@
 import { Client } from './client'
-import { ISpaceDapp, MembershipStruct, Permission } from '@river/web3'
+import { IUseropSpaceDapp, MembershipStruct, Permission } from '@river/web3'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 import { getFilteredRolesFromSpace } from '@river/web3/dist/ContractHelpers'
 import { BigNumber, ethers } from 'ethers'
@@ -9,10 +9,10 @@ const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
 const log = dlog('csb:test:synthetic')
 export class RiverSDK {
-    private readonly spaceDapp: ISpaceDapp
+    private readonly spaceDapp: IUseropSpaceDapp
     private client: Client
     private walletWithProvider: ethers.Wallet
-    constructor(spaceDapp: ISpaceDapp, client: Client, walletWithProvider: ethers.Wallet) {
+    constructor(spaceDapp: IUseropSpaceDapp, client: Client, walletWithProvider: ethers.Wallet) {
         this.spaceDapp = spaceDapp
         this.client = client
         this.walletWithProvider = walletWithProvider

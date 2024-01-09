@@ -10,6 +10,7 @@ import { SignerUndefinedError, toError } from '../types/error-types'
 import { queryClient, useQuery } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { useConnectivity } from './use-connectivity'
+import { getTransactionHashOrUserOpHash } from '@river/web3'
 
 export function useLinkWalletTransaction() {
     const { traceTransaction, ...rest } = useLinkTransactionBuilder()
@@ -77,7 +78,7 @@ function useLinkTransactionBuilder() {
         return {
             data: transactionContext?.data,
             isLoading: transactionContext?.status === TransactionStatus.Pending,
-            transactionHash: transactionContext?.transaction?.hash,
+            transactionHash: getTransactionHashOrUserOpHash(transactionContext?.transaction),
             transactionStatus: transactionContext?.status ?? TransactionStatus.None,
             error: transactionContext?.error,
         }

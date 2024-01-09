@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 
 import { IWeb3Context } from '../components/Web3ContextProvider'
-import { ISpaceDapp, createSpaceDapp } from '@river/web3'
+import { IUseropSpaceDapp, createSpaceDapp } from '@river/web3'
 
 // a hook to create a SpaceDapp instance outside of matrix client context
 export const useSpaceDapp = ({
@@ -10,8 +10,8 @@ export const useSpaceDapp = ({
 }: Pick<IWeb3Context, 'provider'> & {
     chainId: number | undefined
 }) => {
-    const spaceDapp = useMemo<ISpaceDapp | undefined>(
-        () => (chainId && provider && createSpaceDapp(chainId, provider)) || undefined,
+    const spaceDapp = useMemo<IUseropSpaceDapp | undefined>(
+        () => (chainId && provider && createSpaceDapp({ chainId, provider })) || undefined,
         [chainId, provider],
     )
     return spaceDapp

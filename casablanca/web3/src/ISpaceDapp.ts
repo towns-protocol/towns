@@ -17,7 +17,10 @@ import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
 import { WalletLink as WalletLinkV4 } from './v4/WalletLink'
 import { WalletClient, Address, PublicClient } from 'viem'
 import { ContractTransaction, ethers } from 'ethers'
-import { SpaceDappTransaction } from './v4'
+import { SpaceDappTransaction as SpaceDappV4Transaction } from './v4'
+import { PaymasterConfig, UserOpParams } from './UserOpTypes'
+import { Town } from './v3'
+import { ISendUserOperationResponse, Client as UseropClient } from 'userop'
 
 export type SignerType<V extends Versions = TDefaultVersion> = V extends 'v3'
     ? ethers.Signer
@@ -55,7 +58,9 @@ export interface UpdateRoleParams<V extends Versions = TDefaultVersion> {
 
 type TransactionType<V extends Versions> = V extends 'v3'
     ? ContractTransaction
-    : SpaceDappTransaction
+    : SpaceDappV4Transaction
+
+export type UserOperationResponse = ISendUserOperationResponse
 
 type StringOrAddress<V extends Versions> = V extends 'v3' ? string : Address
 
@@ -137,4 +142,28 @@ export interface ISpaceDapp<V extends Versions = TDefaultVersion> {
     getMembershipSupply: (spaceId: string) => Promise<TotalSupplyInfo<V>>
     getMembershipInfo: (spaceId: string) => Promise<MembershipInfo<V>>
     getWalletLink: () => V extends 'v3' ? WalletLinkV3 : WalletLinkV4
+}
+
+export interface IUseropSpaceDapp<V extends Versions = TDefaultVersion> extends ISpaceDapp<V> {
+    getAbstractAccountAddress: (args: UserOpParams) => Promise<string>
+    getTown: (spaceId: string) => Promise<Town>
+    sendUserOp: (args: UserOpParams) => Promise<ISendUserOperationResponse>
+    getUserOpClient: () => Promise<UseropClient>
+    sendCreateSpaceOp: (
+        args: Parameters<ISpaceDapp['createSpace']>,
+        paymasterConfig?: PaymasterConfig,
+    ) => Promise<ISendUserOperationResponse>
+    sendJoinTownOp: (
+        args: Parameters<ISpaceDapp['joinTown']>,
+        paymasterConfig?: PaymasterConfig,
+    ) => Promise<ISendUserOperationResponse>
+    sendFunds: (args: {
+        signer: SignerType<V>
+        recipient: string
+        value: ethers.BigNumberish
+    }) => Promise<ISendUserOperationResponse>
+    mintMockNFT: (args: {
+        signer: SignerType<V>
+        recipient: string
+    }) => Promise<ISendUserOperationResponse>
 }

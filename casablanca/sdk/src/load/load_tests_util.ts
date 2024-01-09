@@ -6,7 +6,7 @@ import { Client } from '../client'
 import { RiverSDK } from '../testSdk'
 import { RiverDbManager } from '../riverDbManager'
 import { MockEntitlementsDelegate } from '../utils'
-import { ISpaceDapp, createSpaceDapp } from '@river/web3'
+import { IUseropSpaceDapp, createSpaceDapp } from '@river/web3'
 import { dlog } from '@river/mecholm'
 import { minimalBalance } from './loadconfig'
 
@@ -91,7 +91,7 @@ export async function multipleClientsJoinSpaceAndChannel(
         const client = clientWalletInfo.client
         const network = await provider.getNetwork()
         const chainId = network.chainId
-        const spaceDapp = createSpaceDapp(chainId, provider)
+        const spaceDapp = createSpaceDapp({ chainId, provider })
         const riverSDK = new RiverSDK(spaceDapp, client, walletWithProvider)
         await riverSDK.joinTown(spaceId)
         if (channelId) {
@@ -104,7 +104,7 @@ export async function multipleClientsJoinSpaceAndChannel(
 
 export type ClientSpaceChannelInfo = {
     client: Client
-    spaceDapp: ISpaceDapp
+    spaceDapp: IUseropSpaceDapp
     spaceId: string
     channelId: string
 }
@@ -124,7 +124,7 @@ export async function createClientSpaceAndChannel(
     const walletWithProvider = clientWalletInfo.walletWithProvider
     const network = await provider.getNetwork()
     const chainId = network.chainId
-    const spaceDapp = createSpaceDapp(chainId, provider)
+    const spaceDapp = createSpaceDapp({ chainId, provider })
 
     const balance = await walletWithProvider.getBalance()
     const minimalWeiValue = BigNumber.from(BigInt(Math.floor(minimalBalance * 1e18)))

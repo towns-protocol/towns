@@ -14,7 +14,7 @@ describe.skip('sanity: user operations', () => {
 
         await bob.fundWallet()
 
-        const spaceDapp = await UserOpSpaceDapp.init({
+        const spaceDapp = new UserOpSpaceDapp({
             chainId: bob.network.chainId,
             provider: bob,
             bundlerUrl: process.env.BUNDLER_URL,
@@ -39,7 +39,7 @@ describe.skip('sanity: user operations', () => {
         const receipt = await op.wait()
         expect(receipt?.transactionHash).toBeDefined()
         expect(receipt?.args.success).toBe(true)
-        await bob.waitForTransaction(receipt!.transactionHash)
+        await bob.waitForTransaction(receipt?.transactionHash ?? '')
         expect(
             (await spaceDapp.mockNFT?.read.balanceOf(newWallet.address))?.toBigInt(),
         ).toBeGreaterThan(0)
@@ -53,7 +53,7 @@ describe.skip('sanity: user operations', () => {
 
         await bob.fundWallet()
 
-        const spaceDapp = await UserOpSpaceDapp.init({
+        const spaceDapp = new UserOpSpaceDapp({
             chainId: bob.network.chainId,
             provider: bob,
             bundlerUrl: process.env.BUNDLER_URL,
@@ -79,7 +79,7 @@ describe.skip('sanity: user operations', () => {
         const receipt = await op.wait()
         expect(receipt?.transactionHash).toBeDefined()
         expect(receipt?.args.success).toBe(true)
-        await bob.waitForTransaction(receipt!.transactionHash)
+        await bob.waitForTransaction(receipt?.transactionHash ?? '')
         expect((await bob.getBalance(newWallet.address)).toBigInt()).toBeGreaterThan(0)
     })
 })

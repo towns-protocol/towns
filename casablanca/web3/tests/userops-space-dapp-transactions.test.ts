@@ -16,7 +16,7 @@ describe.skip('UserOpSpaceDapp tests', () => {
             await bob.mintMockNFT()
         }
 
-        const spaceDapp = await UserOpSpaceDapp.init({
+        const spaceDapp = new UserOpSpaceDapp({
             chainId: bob.network.chainId,
             provider: bob,
             bundlerUrl: process.env.BUNDLER_URL,
@@ -41,6 +41,7 @@ describe.skip('UserOpSpaceDapp tests', () => {
         const op = await spaceDapp.sendCreateSpaceOp([townInfo, bob.wallet], {
             url: process.env.PAYMASTER_URL!,
         })
+        op.userOpHash
         const opReceipt = await op.wait()
         expect(opReceipt?.transactionHash).toBeDefined()
         const txReceipt = await bob.waitForTransaction(opReceipt!.transactionHash)
@@ -58,11 +59,11 @@ describe.skip('UserOpSpaceDapp tests', () => {
         expect(town?.networkId).toBe(townInfo.spaceId)
     })
 
-    test.skip('can send joinTown user op', async () => {
+    test('can send joinTown user op', async () => {
         const bob = await TestWeb3Provider.init()
         const alice = await TestWeb3Provider.init()
 
-        const bobSpaceDapp = await UserOpSpaceDapp.init({
+        const bobSpaceDapp = new UserOpSpaceDapp({
             chainId: bob.network.chainId,
             provider: bob,
             bundlerUrl: process.env.BUNDLER_URL,
@@ -70,7 +71,7 @@ describe.skip('UserOpSpaceDapp tests', () => {
             entryPointAddress: process.env.ENTRY_POINT_ADDRESS,
             factoryAddress: process.env.FACTORY_ADDRESS,
         })
-        const alicSpaceDapp = await UserOpSpaceDapp.init({
+        const alicSpaceDapp = new UserOpSpaceDapp({
             chainId: alice.network.chainId,
             provider: alice,
             bundlerUrl: process.env.BUNDLER_URL,

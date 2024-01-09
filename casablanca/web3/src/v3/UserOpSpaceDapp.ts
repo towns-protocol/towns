@@ -1,60 +1,28 @@
 import { ethers } from 'ethers'
-import { Presets, Client, UserOperationMiddlewareFn } from 'userop'
+import { Presets, Client, UserOperationMiddlewareFn, ISendUserOperationResponse } from 'userop'
 import { SpaceDapp } from './SpaceDapp'
 import { ITownArchitectBase } from './ITownArchitectShim'
 import { getContractsInfo } from '../IStaticContractsInfo'
 import { MockERC721AShim } from './MockERC721AShim'
+import { PaymasterConfig, UserOpParams, UserOpSpaceDappConfig } from '../UserOpTypes'
+import { IUseropSpaceDapp } from '../ISpaceDapp'
+import { LOCALHOST_CHAIN_ID } from '../Web3Constants'
 // import { estimateGasForLocalBundler } from '../userOpUtils' // for eth-infinitism bundler, probably can remove
 
-type UserOpSpaceDappConfig = {
-    chainId: number
-    provider: ethers.providers.Provider | undefined
-    /**
-     * Node RPC url
-     */
-    rpcUrl: string
-    /**
-     * Optionally route bundler RPC methods to this endpoint. If the bundler and node RPC methods do not share the same rpcUrl, you must provide this. (i.e. local dev, or different node provider than bundler provider)
-     * https://docs.stackup.sh/docs/useropjs-provider#bundlerjsonrpcprovider
-     */
-    bundlerUrl?: string
-    /**
-     * UserOp client
-     */
-    userOpClient: Client
-    entryPointAddress?: string
-    factoryAddress?: string
-}
-
-type PaymasterConfig = {
-    /**
-     * Paymaster URL
-     */
-    url: string
-}
-
-type UserOpParams = {
-    toAddress?: string
-    callData?: string
-    value?: ethers.BigNumberish
-    signer: ethers.Signer
-    paymasterConfig?: PaymasterConfig
-}
-
-export class UserOpSpaceDapp extends SpaceDapp {
-    userOpClient: Client
+export class UserOpSpaceDapp extends SpaceDapp implements IUseropSpaceDapp<'v3'> {
     bundlerUrl: string
     rpcUrl: string
     entryPointAddress: string | undefined
     factoryAddress: string | undefined
     mockNFT: MockERC721AShim | undefined
+    userOpClient: Client | undefined
 
-    constructor(config: UserOpSpaceDappConfig) {
+    constructor(config: UserOpSpaceDappConfig<'v3'>) {
         const {
             chainId,
             provider,
             bundlerUrl,
-            userOpClient,
+            // userOpClient,
             rpcUrl,
             entryPointAddress,
             factoryAddress,
@@ -62,7 +30,6 @@ export class UserOpSpaceDapp extends SpaceDapp {
         super(chainId, provider)
         this.rpcUrl = rpcUrl
         this.bundlerUrl = bundlerUrl ?? rpcUrl
-        this.userOpClient = userOpClient
         this.entryPointAddress = entryPointAddress
         this.factoryAddress = factoryAddress
         const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
@@ -107,7 +74,7 @@ export class UserOpSpaceDapp extends SpaceDapp {
         return town
     }
 
-    public async sendUserOp(args: UserOpParams) {
+    public async sendUserOp(args: UserOpParams): Promise<ISendUserOperationResponse> {
         const { toAddress, callData, value } = args
 
         const builder = await this.initBuilder(args)
@@ -138,16 +105,26 @@ export class UserOpSpaceDapp extends SpaceDapp {
         // }
 
         const userOp = builder.execute(toAddress, value ?? 0, callData)
-
-        return this.userOpClient.sendUserOperation(userOp, {
+        const userOpClient = await this.getUserOpClient()
+        return userOpClient.sendUserOperation(userOp, {
             onBuild: (op) => console.log('Signed UserOperation:', op),
         })
+    }
+
+    public async getUserOpClient() {
+        if (!this.userOpClient) {
+            this.userOpClient = await Client.init(this.rpcUrl, {
+                entryPoint: this.entryPointAddress,
+                overrideBundlerRpc: this.bundlerUrl,
+            })
+        }
+        return this.userOpClient
     }
 
     public async sendCreateSpaceOp(
         args: Parameters<SpaceDapp['createSpace']>,
         paymasterConfig?: PaymasterConfig,
-    ) {
+    ): Promise<ISendUserOperationResponse> {
         const [createSpaceParams, signer] = args
         const townInfo: ITownArchitectBase.TownInfoStruct = {
             id: createSpaceParams.spaceId,
@@ -180,7 +157,7 @@ export class UserOpSpaceDapp extends SpaceDapp {
     public async sendJoinTownOp(
         args: Parameters<SpaceDapp['joinTown']>,
         paymasterConfig?: PaymasterConfig,
-    ) {
+    ): Promise<ISendUserOperationResponse> {
         const [spaceId, recipient, signer] = args
         const town = await this.getTown(spaceId)
         const callData = town.Membership.interface.encodeFunctionData('joinTown', [recipient])
@@ -206,7 +183,7 @@ export class UserOpSpaceDapp extends SpaceDapp {
         signer: ethers.Signer
         recipient: string
         value: ethers.BigNumberish
-    }) {
+    }): Promise<ISendUserOperationResponse> {
         if (!this.isAnvil()) {
             throw new Error('this method is only for local dev against anvil')
         }
@@ -237,18 +214,6 @@ export class UserOpSpaceDapp extends SpaceDapp {
     }
 
     private isAnvil() {
-        return this.chainId === 31337
-    }
-
-    static async init(config: Omit<UserOpSpaceDappConfig, 'userOpClient'>) {
-        const userOpClient = await Client.init(config.rpcUrl, {
-            entryPoint: config.entryPointAddress,
-            overrideBundlerRpc: config.bundlerUrl,
-        })
-
-        return new UserOpSpaceDapp({
-            ...config,
-            userOpClient,
-        })
+        return this.chainId === LOCALHOST_CHAIN_ID
     }
 }

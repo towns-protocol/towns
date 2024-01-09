@@ -107,10 +107,10 @@ describe('mirrorMessages', () => {
                         }
                     }
                     if (commandData.commandType === 'joinTown') {
-                        const spaceDapp = createSpaceDapp(
-                            (await walletWithProvider.provider.getNetwork()).chainId,
-                            walletWithProvider.provider,
-                        )
+                        const spaceDapp = createSpaceDapp({
+                            chainId: (await walletWithProvider.provider.getNetwork()).chainId,
+                            provider: walletWithProvider.provider,
+                        })
                         const spaceAndChannelIds = commandData.command as {
                             townId: string
                             channelId: string

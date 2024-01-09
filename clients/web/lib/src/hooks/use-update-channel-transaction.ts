@@ -12,6 +12,7 @@ import { UpdateChannelInfo } from 'types/zion-types'
 import { removeSyncedEntitledChannelsQueriesForSpace } from '../query/removeSyncedEntitledChannelQueries'
 import { useQueryClient } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
+import { getTransactionHashOrUserOpHash } from '@river/web3'
 
 /**
  * Hook to create a role with a transaction.
@@ -28,7 +29,7 @@ export function useUpdateChannelTransaction() {
         return {
             data: transactionContext?.data,
             isLoading: transactionContext?.status === TransactionStatus.Pending,
-            transactionHash: transactionContext?.transaction?.hash,
+            transactionHash: getTransactionHashOrUserOpHash(transactionContext?.transaction),
             transactionStatus: transactionContext?.status ?? TransactionStatus.None,
             error: transactionContext?.error,
         }

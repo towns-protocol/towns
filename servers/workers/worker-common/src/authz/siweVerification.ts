@@ -89,7 +89,7 @@ export async function verifySpaceOwner(
         spaceId: decodeURIComponent(spaceId),
         address,
     })
-    const spaceDapp = createSpaceDapp(chainId, provider)
+    const spaceDapp = createSpaceDapp({ chainId, provider })
     try {
         const hasPermission: boolean = await spaceDapp.isEntitledToSpace(
             decodeURIComponent(spaceId),

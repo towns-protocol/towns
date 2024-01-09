@@ -22,12 +22,12 @@ import { useTimelineFilter } from '../store/use-timeline-filter'
 import { ZTEvent } from '../types/timeline-types'
 import { useStreamSyncActive } from '../hooks/ZionContext/useStreamSyncActive'
 import { GlobalContextUserLookupProvider } from './UserLookupContextProviders'
+import { ZionOpts } from '../client/ZionClientTypes'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
 export interface IZionContext {
-    casablancaServerUrl?: string
-    appChainId: number /// our app is locked to a single chain that matches the server deployment
+    casablancaServerUrl?: ZionOpts['casablancaServerUrl']
     client?: ZionClient /// only set when user is authenticated with matrix or casablanca
     clientSingleton?: ZionClient /// always set, can be use for matrix, this duplication can be removed once we transition to casablanca
     matrixClient?: MatrixClient /// set if we're logged in and matrix client is started
@@ -140,7 +140,6 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
             value={{
                 client,
                 clientSingleton,
-                appChainId: props.chainId,
                 casablancaClient,
                 rooms,
                 invitedToIds,

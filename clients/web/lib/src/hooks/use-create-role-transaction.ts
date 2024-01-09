@@ -10,7 +10,7 @@ import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
-import { TokenEntitlementDataTypes, Permission } from '@river/web3'
+import { TokenEntitlementDataTypes, Permission, getTransactionHashOrUserOpHash } from '@river/web3'
 
 /**
  * Hook to create a role with a transaction.
@@ -27,7 +27,7 @@ export function useCreateRoleTransaction() {
         return {
             data: transactionContext?.data,
             isLoading: transactionContext?.status === TransactionStatus.Pending,
-            transactionHash: transactionContext?.transaction?.hash,
+            transactionHash: getTransactionHashOrUserOpHash(transactionContext?.transaction),
             transactionStatus: transactionContext?.status ?? TransactionStatus.None,
             error: transactionContext?.error,
         }

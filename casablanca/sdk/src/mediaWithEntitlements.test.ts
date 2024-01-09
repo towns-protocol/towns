@@ -65,7 +65,7 @@ describe('mediaWithEntitlementsTests', () => {
         const chainId = (await provider.getNetwork()).chainId
         await provider.fundWallet()
         await provider.mintMockNFT()
-        const spaceDapp = createSpaceDapp(chainId, provider)
+        const spaceDapp = createSpaceDapp({ chainId, provider })
 
         // create a space stream,
         const membershipInfo: MembershipStruct = {

@@ -1,6 +1,7 @@
-import { BigNumberish, ContractReceipt, ContractTransaction } from 'ethers'
+import { BigNumberish, ContractReceipt } from 'ethers'
 import { SendMessageOptions, UpdateChannelInfo } from '../types/zion-types'
-import { RoleIdentifier, TProvider } from '../types/web3-types'
+import { RoleIdentifier, TProvider, TransactionOrUserOperation } from '../types/web3-types'
+import { UserOpSpaceDappConfig } from '@river/web3'
 
 export interface ZionOpts {
     casablancaServerUrl?: string
@@ -14,6 +15,7 @@ export interface ZionOpts {
     pushNotificationWorkerUrl?: string
     pushNotificationAuthToken?: string
     verbose?: boolean
+    accountAbstractionConfig?: Omit<UserOpSpaceDappConfig<'v3'>, 'chainId' | 'provider'>
 }
 
 export interface ZionOnboardingOpts {
@@ -61,14 +63,14 @@ export type TransactionContext<T> =
           data: T | undefined
           status: TransactionStatus.None | TransactionStatus.Pending | TransactionStatus.Failed
           receipt: undefined
-          transaction: ContractTransaction | undefined
+          transaction: TransactionOrUserOperation | undefined
           error?: Error
       }
     | {
           data: T | undefined
           status: TransactionStatus.Success
           receipt: ContractReceipt
-          transaction: ContractTransaction
+          transaction: TransactionOrUserOperation
           error?: undefined
       }
 
@@ -104,7 +106,7 @@ export type ZionClientEventHandlers = {
 export function createTransactionContext<T>(props: {
     status: TransactionStatus
     data?: T
-    transaction?: ContractTransaction
+    transaction?: TransactionOrUserOperation
     receipt?: ContractReceipt
     error?: Error
 }): TransactionContext<T> {

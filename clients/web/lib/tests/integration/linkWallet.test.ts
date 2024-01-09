@@ -4,7 +4,7 @@
 import { Wallet } from 'ethers'
 import { createTestSpaceGatedByTownAndZionNfts, registerAndStartClients } from './helpers/TestUtils'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { Permission } from '@river/web3'
+import { Permission, getTransactionHashFromTransactionOrUserOp } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 describe('Link Wallet', () => {
     test('link wallet', async () => {
@@ -12,11 +12,13 @@ describe('Link Wallet', () => {
         const metamaskWallet = await generateNewWallet()
 
         const tx_link = await alice.linkWallet(alice.provider.wallet, metamaskWallet)
-        if (tx_link.transaction?.hash) {
-            await alice.opts.web3Provider?.waitForTransaction(tx_link.transaction?.hash)
+        const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
+
+        if (txHash) {
+            await alice.opts.web3Provider?.waitForTransaction(txHash)
         }
         expect(tx_link.error).toBeUndefined()
-        expect(tx_link.transaction?.hash).toBeDefined()
+        expect(txHash).toBeDefined()
 
         const aliceAddress = alice.getUserId()
         if (!aliceAddress) {
@@ -34,29 +36,37 @@ describe('Link Wallet', () => {
 
         // check that we cannot link the same wallet twice
         const tx_link_again = await bob.linkWallet(bob.provider.wallet, metamaskWallet)
-        if (tx_link_again.transaction?.hash) {
-            await alice.opts.web3Provider?.waitForTransaction(tx_link_again.transaction?.hash)
+        const txHashAgain = await getTransactionHashFromTransactionOrUserOp(
+            tx_link_again.transaction,
+        )
+
+        if (txHashAgain) {
+            await alice.opts.web3Provider?.waitForTransaction(txHashAgain)
         }
 
         expect(tx_link_again.error).toBeDefined()
         expect(tx_link_again.error?.name).toBe('WalletLink__LinkAlreadyExists')
-        expect(tx_link_again.transaction?.hash).toBeUndefined()
+        expect(txHashAgain).toBeUndefined()
 
         // remove link
         const tx_remove = await alice.removeLink(
             alice.provider.wallet,
             await metamaskWallet.getAddress(),
         )
-        if (tx_remove.transaction?.hash) {
-            await alice.opts.web3Provider?.waitForTransaction(tx_remove.transaction?.hash)
+        const txHashRemove = await getTransactionHashFromTransactionOrUserOp(tx_remove.transaction)
+        if (txHashRemove) {
+            await alice.opts.web3Provider?.waitForTransaction(txHashRemove)
         }
 
         expect(tx_remove.error).toBeUndefined()
 
         // link with bob now
         const tx_link_again_bob = await bob.linkWallet(bob.provider.wallet, metamaskWallet)
-        if (tx_link_again_bob.transaction?.hash) {
-            await alice.opts.web3Provider?.waitForTransaction(tx_link_again_bob.transaction?.hash)
+        const txHashAgainBob = await getTransactionHashFromTransactionOrUserOp(
+            tx_link_again_bob.transaction,
+        )
+        if (txHashAgainBob) {
+            await alice.opts.web3Provider?.waitForTransaction(txHashAgainBob)
         }
         expect(tx_link_again_bob.error).toBeUndefined()
 
@@ -71,11 +81,12 @@ describe('Link Wallet', () => {
         const metamaskWallet = await TestConstants.getWalletWithTestGatingNft()
 
         const tx_link = await bob.linkWallet(bob.provider.wallet, metamaskWallet)
-        if (tx_link.transaction?.hash) {
-            await alice.opts.web3Provider?.waitForTransaction(tx_link.transaction?.hash)
+        const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
+        if (txHash) {
+            await alice.opts.web3Provider?.waitForTransaction(txHash)
         }
         expect(tx_link.error).toBeUndefined()
-        expect(tx_link.transaction?.hash).toBeDefined()
+        expect(txHash).toBeDefined()
 
         const bobAddress = bob.getUserId()
         await alice.fundWallet()

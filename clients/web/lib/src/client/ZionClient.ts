@@ -47,13 +47,21 @@ import { makeUniqueSpaceStreamId } from '@river/sdk'
 import { staticAssertNever } from '../utils/zion-utils'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
-import { RoleIdentifier, ISpaceDapp, BlockchainTransactionType, Address } from '../types/web3-types'
+import {
+    RoleIdentifier,
+    BlockchainTransactionType,
+    ReceiptType,
+    TransactionOrUserOperation,
+} from '../types/web3-types'
 import {
     createSpaceDapp,
     ITownArchitectBase,
     Permission,
     TokenEntitlementDataTypes,
     SpaceInfo,
+    isUserOpResponse,
+    getTransactionHashOrUserOpHash,
+    IUseropSpaceDapp,
 } from '@river/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 
@@ -75,7 +83,7 @@ import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 export class ZionClient implements EntitlementsDelegate {
     public readonly opts: ZionOpts
     public readonly name: string
-    public spaceDapp: ISpaceDapp
+    public spaceDapp: IUseropSpaceDapp<'v3'>
     public blockchainTransactionStore: BlockchainTransactionStore
     protected casablancaClient?: CasablancaClient
     private _signerContext?: SignerContext
@@ -86,7 +94,14 @@ export class ZionClient implements EntitlementsDelegate {
         this.opts = opts
         this.name = name || Math.random().toString(36).substring(7)
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
-        this.spaceDapp = createSpaceDapp(opts.chainId, opts.web3Provider)
+        this.spaceDapp = createSpaceDapp({
+            chainId: opts.chainId,
+            provider: opts.web3Provider,
+            bundlerUrl: opts.accountAbstractionConfig?.bundlerUrl,
+            rpcUrl: opts.accountAbstractionConfig?.rpcUrl,
+            entryPointAddress: opts.accountAbstractionConfig?.entryPointAddress,
+            factoryAddress: opts.accountAbstractionConfig?.factoryAddress,
+        })
         this.blockchainTransactionStore = new BlockchainTransactionStore(this.spaceDapp)
         this._eventHandlers = opts.eventHandlers
         if (opts.pushNotificationWorkerUrl && opts.pushNotificationAuthToken) {
@@ -103,6 +118,10 @@ export class ZionClient implements EntitlementsDelegate {
 
     public get chainId(): number {
         return this.opts.chainId
+    }
+
+    public isAccountAbstractionEnabled() {
+        return !!this.opts.accountAbstractionConfig?.rpcUrl
     }
 
     /************************************************
@@ -292,7 +311,7 @@ export class ZionClient implements EntitlementsDelegate {
         const spaceId: string = makeUniqueSpaceStreamId()
         const channelId: string = makeUniqueChannelStreamId()
 
-        let transaction: ContractTransaction | undefined = undefined
+        let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.CreateSpace,
@@ -301,18 +320,21 @@ export class ZionClient implements EntitlementsDelegate {
             },
         })
 
+        const args = {
+            spaceId,
+            spaceName: createSpaceInfo.name,
+            spaceMetadata: createSpaceInfo.name,
+            channelId,
+            channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
+            membership,
+        }
+
         try {
-            transaction = await this.spaceDapp.createSpace(
-                {
-                    spaceId: spaceId,
-                    spaceName: createSpaceInfo.name,
-                    spaceMetadata: createSpaceInfo.name,
-                    channelId: channelId,
-                    channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
-                    membership,
-                },
-                signer,
-            )
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.spaceDapp.sendCreateSpaceOp([args, signer])
+            } else {
+                transaction = await this.spaceDapp.createSpace(args, signer)
+            }
 
             console.log(`[createCasablancaSpaceTransaction] transaction created` /*, transaction*/)
         } catch (err) {
@@ -321,7 +343,8 @@ export class ZionClient implements EntitlementsDelegate {
         }
 
         continueStoreTx({
-            hash: transaction?.hash as Address,
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
             error,
         })
 
@@ -436,7 +459,8 @@ export class ZionClient implements EntitlementsDelegate {
         }
 
         continueStoreTx({
-            hash: transaction?.hash as Address,
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
             error,
         })
 
@@ -519,7 +543,8 @@ export class ZionClient implements EntitlementsDelegate {
         }
 
         continueStoreTx({
-            hash: transaction?.hash as Address,
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
             error,
         })
 
@@ -729,7 +754,8 @@ export class ZionClient implements EntitlementsDelegate {
         }
 
         continueStoreTx({
-            hash: transaction?.hash as Address,
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
             error,
         })
 
@@ -832,7 +858,8 @@ export class ZionClient implements EntitlementsDelegate {
         }
 
         continueStoreTx({
-            hash: transaction?.hash as Address,
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
             error,
         })
 
@@ -881,7 +908,8 @@ export class ZionClient implements EntitlementsDelegate {
         }
         // todo: add necessary contextual data
         continueStoreTx({
-            hash: transaction?.hash as Address,
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
             error,
         })
 
@@ -940,7 +968,8 @@ export class ZionClient implements EntitlementsDelegate {
         }
 
         continueStoreTx({
-            hash: transaction?.hash as Address,
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
             error,
         })
 
@@ -1437,7 +1466,8 @@ export class ZionClient implements EntitlementsDelegate {
             error = parsedError
         }
         continueStoreTx({
-            hash: transaction?.hash as Address,
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
             error,
         })
 
@@ -1475,7 +1505,8 @@ export class ZionClient implements EntitlementsDelegate {
         }
 
         continueStoreTx({
-            hash: transaction?.hash as Address,
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
             error,
         })
 
@@ -1609,13 +1640,35 @@ export class ZionClient implements EntitlementsDelegate {
             })
         }
 
-        let transaction: ContractTransaction | undefined = undefined
-        let receipt: ContractReceipt | undefined = undefined
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let receipt: ReceiptType | undefined = undefined
         let error: Error | undefined = undefined
 
+        transaction = context.transaction
+
         try {
-            transaction = context.transaction
-            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
+            if (isUserOpResponse(transaction)) {
+                // wait for the userop event - this .wait is not the same as ethers.ContractTransaction.wait - see userop.js sendUserOperation
+                const userOpEvent = await transaction.wait()
+
+                if (userOpEvent) {
+                    if (userOpEvent.args.success === false) {
+                        // TODO: parse the user operation error
+                        throw new Error(
+                            `[_waitForBlockchainTransaction] user operation was not successful`,
+                        )
+                    }
+
+                    // we probably don't need to wait for this transaction, but for now we can convert it to a receipt for less refactoring
+                    receipt = await this.opts.web3Provider?.waitForTransaction(
+                        userOpEvent.transactionHash,
+                    )
+                } else {
+                    throw new Error(`[_waitForBlockchainTransaction] userOpEvent is undefined`)
+                }
+            } else {
+                receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
+            }
 
             if (receipt?.status === 1) {
                 return createTransactionContext({

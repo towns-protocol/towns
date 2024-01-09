@@ -5,8 +5,9 @@ import {
     RoleEntitlements as R_RoleEntitlements,
     RoleDetails as R_RoleDetails,
     ISpaceDapp as R_ISpaceDapp,
+    UserOperationResponse,
 } from '@river/web3'
-import { Signer } from 'ethers'
+import { ContractReceipt, ContractTransaction, Signer } from 'ethers'
 
 // TODO: replace instances of wagmi/viem Address with this type
 export type Address = `0x${string}`
@@ -45,7 +46,8 @@ export enum BlockchainTransactionType {
 }
 
 export type BlockchainTransaction = {
-    hash: Address
+    hashOrUserOpHash: Address
+    transaction: TransactionOrUserOperation
     data?: {
         spaceStreamId?: string
         channeStreamId?: string
@@ -62,3 +64,6 @@ export type TokenEntitlementStruct = TokenEntitlementDataTypes.ExternalTokenStru
 export type RoleEntitlements = R_RoleEntitlements<'v3'>
 export type RoleDetails = R_RoleDetails<'v3'>
 export type ISpaceDapp = R_ISpaceDapp<'v3'>
+export type ReceiptType = ContractReceipt
+
+export type TransactionOrUserOperation = ContractTransaction | UserOperationResponse

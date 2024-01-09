@@ -128,10 +128,10 @@ describe('mirrorMessages', () => {
 
             //Step 3.5 - if we run on transient environment, we need to create a town and join it
             //TODO: spaceDatpp creation should be moved to the test SDK
-            const spaceDapp = createSpaceDapp(
-                (await walletWithProvider.provider.getNetwork()).chainId,
-                walletWithProvider.provider,
-            )
+            const spaceDapp = createSpaceDapp({
+                chainId: (await walletWithProvider.provider.getNetwork()).chainId,
+                provider: walletWithProvider.provider,
+            })
 
             const riverSDK = new RiverSDK(spaceDapp, client, walletWithProvider)
 

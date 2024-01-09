@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TSigner } from '../types/web3-types'
 import { CreateChannelInfo } from '../types/zion-types'
 import { useZionClient } from './use-zion-client'
+import { getTransactionHashOrUserOpHash } from '@river/web3'
 
 /**
  * Combine Matrix channel creation and Smart Contract channel
@@ -26,7 +27,7 @@ export function useCreateChannelTransaction() {
         return {
             data: transactionContext?.data,
             isLoading: transactionContext?.status === TransactionStatus.Pending,
-            transactionHash: transactionContext?.transaction?.hash,
+            transactionHash: getTransactionHashOrUserOpHash(transactionContext?.transaction),
             transactionStatus: transactionContext?.status ?? TransactionStatus.None,
             error: transactionContext?.error,
         }

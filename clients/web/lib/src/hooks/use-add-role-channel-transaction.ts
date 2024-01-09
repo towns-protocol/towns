@@ -10,6 +10,7 @@ import { toError } from '../types/error-types'
 import { useQueryClient } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
 import { TSigner } from '../types/web3-types'
+import { getTransactionHashOrUserOpHash } from '@river/web3'
 
 /**
  * Hook to add a role to a channel with a transaction.
@@ -26,7 +27,7 @@ export function useAddRoleToChannelTransaction() {
         return {
             data: transactionContext?.data,
             isLoading: transactionContext?.status === TransactionStatus.Pending,
-            transactionHash: transactionContext?.transaction?.hash,
+            transactionHash: getTransactionHashOrUserOpHash(transactionContext?.transaction),
             transactionStatus: transactionContext?.status ?? TransactionStatus.None,
             error: transactionContext?.error,
         }

@@ -1,7 +1,9 @@
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { BlockchainTransaction, BlockchainTransactionType, ISpaceDapp } from '../types/web3-types'
+import { BlockchainTransaction, BlockchainTransactionType } from '../types/web3-types'
 import { ethers } from 'ethers'
+import { ZionClient } from './ZionClient'
+import { isUserOpResponse } from '@river/web3'
 
 type Events = {
     updatedTransaction: (tx: BlockchainStoreTx) => void
@@ -18,11 +20,11 @@ export type BlockchainStoreTransactions = Record<string, BlockchainStoreTx>
 
 export class BlockchainTransactionStore extends (EventEmitter as new () => TypedEmitter<Events>) {
     transactions: BlockchainStoreTransactions = {}
-    spaceDapp: ISpaceDapp
+    spaceDapp: ZionClient['spaceDapp']
     promiseQueue: Promise<void>[] = []
     abortController = new AbortController()
 
-    constructor(spaceDapp: ISpaceDapp) {
+    constructor(spaceDapp: ZionClient['spaceDapp']) {
         super()
         this.spaceDapp = spaceDapp
     }
@@ -40,15 +42,18 @@ export class BlockchainTransactionStore extends (EventEmitter as new () => Typed
         this.updateTransaction(tx)
 
         return ({
-            hash,
+            hashOrUserOpHash,
             error,
+            transaction,
         }: {
-            hash: BlockchainTransaction['hash'] | undefined
+            hashOrUserOpHash: BlockchainTransaction['hashOrUserOpHash'] | undefined
+            transaction: BlockchainTransaction['transaction'] | undefined
             error: Error | undefined
         }) => {
-            if (hash) {
+            if (hashOrUserOpHash && transaction) {
                 this.moveToPending(id, {
-                    hash,
+                    hashOrUserOpHash,
+                    transaction,
                     type,
                     data,
                 })
@@ -91,7 +96,31 @@ export class BlockchainTransactionStore extends (EventEmitter as new () => Typed
                 const type = tx.type
 
                 try {
-                    await this.spaceDapp.provider?.waitForTransaction(tx.hash)
+                    const transactionOrUserOp = tx.transaction
+                    let hashToWaitFor = tx.hashOrUserOpHash
+                    if (isUserOpResponse(transactionOrUserOp)) {
+                        const userOpEvent = await transactionOrUserOp.wait()
+
+                        if (this.abortController.signal.aborted) {
+                            return
+                        }
+
+                        // TODO: parse user operation error
+                        if (!userOpEvent || userOpEvent.args.success === false) {
+                            this.updateTransaction({
+                                ...tx,
+                                id,
+                                status: 'failure',
+                            })
+                            return
+                        }
+
+                        hashToWaitFor = userOpEvent.transactionHash as `0x${string}`
+                    }
+
+                    // this should be the same wait time as zionClient.waitForTransaction
+                    // only waiting for tx.wait() can resolve quicker than provider.waitForTransaction
+                    await this.spaceDapp.provider?.waitForTransaction(hashToWaitFor)
 
                     if (this.abortController.signal.aborted) {
                         return

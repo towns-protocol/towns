@@ -14,6 +14,7 @@ import { getAccountAddress } from '../../src/types/user-identifier'
 import {
     createExternalTokenStruct,
     getTestGatingNftAddress,
+    getTransactionHashFromTransactionOrUserOp,
     Permission,
     TokenEntitlementDataTypes,
 } from '@river/web3'
@@ -221,11 +222,14 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const metamaskWalletWithGatingNFT = await TestConstants.getWalletWithTestGatingNft()
 
         const tx_link = await bob.linkWallet(bob.provider.wallet, metamaskWalletWithGatingNFT)
-        if (tx_link.transaction?.hash) {
-            await bob.opts.web3Provider?.waitForTransaction(tx_link.transaction?.hash)
+
+        const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
+
+        if (txHash) {
+            await bob.opts.web3Provider?.waitForTransaction(txHash)
         }
         expect(tx_link.error).toBeUndefined()
-        expect(tx_link.transaction?.hash).toBeDefined()
+        expect(txHash).toBeDefined()
 
         // create a space with token entitlement to read & write
         await alice.fundWallet()
@@ -265,11 +269,13 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         const metamaskWalletWithoutGatingNft = await new ZionTestWeb3Provider().fundWallet()
 
         const tx_link = await bob.linkWallet(bob.provider.wallet, metamaskWalletWithoutGatingNft)
-        if (tx_link.transaction?.hash) {
-            await bob.opts.web3Provider?.waitForTransaction(tx_link.transaction?.hash)
+        const txHash = await getTransactionHashFromTransactionOrUserOp(tx_link.transaction)
+
+        if (txHash) {
+            await bob.opts.web3Provider?.waitForTransaction(txHash)
         }
         expect(tx_link.error).toBeUndefined()
-        expect(tx_link.transaction?.hash).toBeDefined()
+        expect(txHash).toBeDefined()
 
         // create a space with token entitlement to read & write
         await alice.fundWallet()

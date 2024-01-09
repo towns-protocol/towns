@@ -37,7 +37,7 @@ export function useTransactionEffects({
     useOnTransactionUpdated(async (arg) => {
         const [id] =
             Object.entries(inProgressTransactions).find(([, data]) => {
-                return data.hash === arg.hash
+                return data.hash === arg.hashOrUserOpHash
             }) ?? []
         if (id) {
             setTransactionSuccess(id)

@@ -64,7 +64,7 @@ describe('loadTestsScenario2', () => {
         log('Wallet address:', walletWithProvider.address)
         expect(balance.gte(minBalanceRequired)).toBe(true)
 
-        const bobsSpaceDapp = createSpaceDapp(bobChainId, bobProvider)
+        const bobsSpaceDapp = createSpaceDapp({ chainId: bobChainId, provider: bobProvider })
         const bobsRiverSDK = new RiverSDK(bobsSpaceDapp, bob, walletWithProvider)
 
         // create space
