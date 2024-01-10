@@ -160,7 +160,9 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     data: JSON.stringify(content),
                     tag: notification.content.channelId,
                     silent: false,
-                    icon: '/pwa/maskable_icon_x192.png',
+                    icon: `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${notification.content.senderId}/thumbnail100`,
+                    badge: '/pwa/maskable_icon_x192.png',
+                    renotify: true,
                 }
                 await worker.registration.showNotification(content.title, options)
                 console.log('sw:push: Notification shown')
