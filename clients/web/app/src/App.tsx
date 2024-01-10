@@ -3,7 +3,6 @@ import React, { useCallback, useRef } from 'react'
 import { useLocation } from 'react-router'
 import { InitialSyncSortPredicate, ZTEvent, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
-
 import { EmbeddedSignerContextProvider } from '@towns/privy'
 import { Notifications } from '@components/Notifications/Notifications'
 import { useDevice } from 'hooks/useDevice'
@@ -21,7 +20,6 @@ import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
 import { AuthContextProvider } from 'hooks/useAuth'
 import { useWatchForPrivyRequestErrors } from 'hooks/useWatchForPrivyRequestErrors'
 import DebugBar from '@components/DebugBar/DebugBar'
-import { BetaDebugger } from './BetaDebugger'
 
 FontLoader.init()
 
@@ -62,7 +60,6 @@ export const App = () => {
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
         >
             <EmbeddedSignerContextProvider chainId={environment.chainId}>
-                <BetaDebugger />
                 <AuthContextProvider>
                     <FaviconBadge />
                     <AppBadge />
