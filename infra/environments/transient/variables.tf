@@ -30,8 +30,8 @@ variable "num_nodes" {
   default     = 1
 }
 
-variable "is_db_cloned" {
-  description = "Whether to clone the reference db or start with a fresh one"
+variable "is_clean_environment" {
+  description = "Flag used to determine whether clone db, fork chain block number etc"
   type        = bool
   default     = false
 }

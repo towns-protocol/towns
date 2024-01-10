@@ -18,8 +18,10 @@ export const replySentTime = 90000
 export const testBetaName = 'test-beta'
 export const testSpamChannelName = 'test spam'
 
-export const jsonRpcProviderUrl = 'https://sepolia.base.org'
 export const envName = process.env.ENVIRONMENT_NAME || testBetaName
+export const riverNodeRpcUrl = 'https://river1-' + envName + '.towns.com'
+export const jsonRpcProviderUrl =
+    envName == testBetaName ? 'https://sepolia.base.org' : `https://base-fork-${envName}.towns.com`
 
 export const fromFollowerQueueName = 'healthcheckqueuefollower'
 export const fromLeaderQueueName = 'healthcheckqueueleader'

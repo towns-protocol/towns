@@ -60,7 +60,7 @@ module "post_provision_config_lambda_function" {
       USER         = "river-readonly"
       PASSWORD_ARN = local.global_remote_state.readonlyuser_db_password_secret.arn
     })
-    HOME_CHAIN_ID                           = var.home_chain_id
+    HOME_CHAIN_ID                           = var.base_chain_id
     RIVER_NODE_WALLET_CREDENTIALS_ARN       = var.river_node_wallet_credentials_arn
     RIVER_DB_CLUSTER_MASTER_USER_SECRET_ARN = var.river_db_cluster_master_user_secret_arn
   }

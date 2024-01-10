@@ -120,6 +120,16 @@ resource "aws_secretsmanager_secret_version" "base_chain_network_url_secret" {
   secret_string = "DUMMY"
 }
 
+resource "aws_secretsmanager_secret" "river_chain_network_url_secret" {
+  name        = "river-chain-network-url"
+  description = "River chain network url"
+}
+
+resource "aws_secretsmanager_secret_version" "river_chain_network_url_secret" {
+  secret_id     = aws_secretsmanager_secret.river_chain_network_url_secret.id
+  secret_string = "DUMMY"
+}
+
 module "river_node_credentials" {
   source = "../../../modules/river-node-credentials"
 

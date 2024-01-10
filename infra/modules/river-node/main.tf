@@ -43,8 +43,6 @@ locals {
   river_node_memory = local.total_memory - local.dd_agent_memory
 
   ephemeral_storage_size_in_gib = var.is_transient ? 21 : 100
-
-  home_chain_id = "84532"
 }
 
 terraform {
@@ -170,7 +168,7 @@ module "post_provision_config" {
   rds_cluster_resource_id                 = var.river_node_db.rds_aurora_postgresql.cluster_resource_id
   vpc_id                                  = var.vpc_id
   security_group_id                       = aws_security_group.post_provision_config_lambda_function_sg.id
-  home_chain_id                           = local.home_chain_id
+  base_chain_id                           = var.base_chain_id
 }
 
 locals {
@@ -330,6 +328,29 @@ locals {
     user         = "river${var.node_number}"
     password_arn = local.shared_credentials.db_password.arn
   }
+
+  // we conditionally create these arrays. an empty array, when concatted, does nothing.
+  // this is how we conditionally add secrets and env vars to the task definition.
+
+  base_chain_default_td_secret_config = var.base_chain_network_url_override == null ? [{
+    name      = "BASECHAIN__NETWORKURL"
+    valueFrom = local.global_remote_state.base_chain_network_url_secret.arn
+  }] : []
+
+  base_chain_override_td_env_config = var.base_chain_network_url_override == null ? [] : [{
+    name  = "BASECHAIN__NETWORKURL"
+    value = var.base_chain_network_url_override
+  }]
+
+  river_chain_default_td_secret_config = var.river_chain_network_url_override == null ? [{
+    name      = "RIVERCHAIN__NETWORKURL"
+    valueFrom = local.global_remote_state.river_chain_network_url_secret.arn
+  }] : []
+
+  river_chain_override_td_env_config = var.river_chain_network_url_override == null ? [] : [{
+    name  = "RIVERCHAIN__NETWORKURL"
+    value = var.river_chain_network_url_override
+  }]
 }
 
 resource "aws_ecs_task_definition" "river-fargate" {
@@ -374,7 +395,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
     cpu    = local.river_node_cpu
     memory = local.river_node_memory
 
-    secrets = [
+    secrets = concat([
       {
         name      = "DATABASE__PASSWORD",
         valueFrom = local.shared_credentials.db_password.arn
@@ -384,14 +405,13 @@ resource "aws_ecs_task_definition" "river-fargate" {
         valueFrom = local.shared_credentials.wallet_private_key.arn
       },
       {
-        name      = "BASECHAIN__NETWORKURL"
-        valueFrom = local.global_remote_state.base_chain_network_url_secret.arn
-      },
-      {
         name      = "PUSHNOTIFICATION__AUTHTOKEN",
         valueFrom = local.global_remote_state.river_global_push_notification_auth_token.arn
-      },
-    ]
+      }
+      ],
+      local.base_chain_default_td_secret_config,
+      local.river_chain_default_td_secret_config
+    )
 
     dockerLabels = {
       "com.datadoghq.ad.check_names"  = "[\"openmetrics\"]",
@@ -399,10 +419,14 @@ resource "aws_ecs_task_definition" "river-fargate" {
       "com.datadoghq.ad.instances"    = "[{\"openmetrics_endpoint\": \"http://localhost:8081/metrics\", \"namespace\": \"river_node\", \"metrics\": [\".*\"], \"collect_counters_with_distributions\": true}]"
     }
 
-    environment = [
+    environment = concat([
       {
         name  = "BASECHAIN__CHAINID",
-        value = local.home_chain_id
+        value = var.base_chain_id
+      },
+      {
+        name  = "RIVERCHAIN_CHAINID",
+        value = var.river_chain_id
       },
       {
         name  = "METRICS__ENABLED",
@@ -513,7 +537,11 @@ resource "aws_ecs_task_definition" "river-fargate" {
         0xa278267f396a317c5bb583f47f7f2792bc00d3b3,https://river10-${terraform.workspace}.towns.com
         EOF
       }
-    ]
+      ],
+      local.base_chain_override_td_env_config,
+      local.river_chain_override_td_env_config
+    )
+
     logConfiguration = {
       logDriver = "awslogs"
       options = {

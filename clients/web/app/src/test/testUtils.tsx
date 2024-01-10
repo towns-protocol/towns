@@ -12,7 +12,7 @@ import { ZLayerProvider } from '@ui'
 import { AuthContextProvider } from 'hooks/useAuth'
 import { env } from 'utils'
 import '@testing-library/jest-dom'
-import { foundryClone } from 'foundryChain'
+import { foundryClone } from 'customChains'
 
 type TestAppProps = {
     children: JSX.Element

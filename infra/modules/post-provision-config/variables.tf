@@ -79,7 +79,7 @@ variable "river_db_cluster_master_user_secret_arn" {
   }
 }
 
-variable "home_chain_id" {
-  description = "The chain id of the home chain"
+variable "base_chain_id" {
+  description = "The base chain id"
   type        = string
 }

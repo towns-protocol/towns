@@ -63,3 +63,25 @@ variable "river_node_db" {
   description = "The river node db module"
   type        = any
 }
+
+variable "base_chain_id" {
+  description = "The base chain id"
+  type        = string
+}
+
+variable "river_chain_id" {
+  description = "The river chain id"
+  type        = string
+}
+
+variable "base_chain_network_url_override" {
+  description = "(optional) The base chain network url override"
+  type        = any
+  default     = null
+}
+
+variable "river_chain_network_url_override" {
+  description = "(optional) The river chain network url override"
+  type        = any
+  default     = null
+}

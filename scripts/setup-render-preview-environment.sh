@@ -75,9 +75,10 @@ if [ "$IS_PULL_REQUEST" = true ]; then
     pr_number=$(get_pr_number_of_preview)
     is_fully_provisioned=$(check_pr_label $pr_number)
     domain="$pr_number.$PREVIEW_DOMAIN_SUFFIX"
+    transient_provider_http_url="https://base-fork-transient-${pr_number}.towns.com"
+    transient_provider_ws_url="wss://base-fork-transient-${pr_number}.towns.com"
 
     echo "Setting service $RENDER_SERVICE_ID domain to $domain"
-
     curl  \
         --url https://api.render.com/v1/services/$RENDER_SERVICE_ID/custom-domains \
         --header "Accept: application/json" \
@@ -88,28 +89,22 @@ if [ "$IS_PULL_REQUEST" = true ]; then
     transient_river_node_url="https://river1-transient-${pr_number}.towns.com"
     test_beta_river_node_url="https://river1-test-beta.towns.com"
 
-
     if [ "$is_fully_provisioned" = true ]; then
         echo "Setting VITE_CASABLANCA_HOMESERVER_URL to $transient_river_node_url"
         export VITE_CASABLANCA_HOMESERVER_URL="$transient_river_node_url"
-    else
-        echo "Setting VITE_CASABLANCA_HOMESERVER_URL to $test_beta_river_node_url"
-        export VITE_CASABLANCA_HOMESERVER_URL="$test_beta_river_node_url"
+
+        echo "Setting VITE_PROVIDER_HTTP_URL to $transient_provider_http_url"
+        export VITE_PROVIDER_HTTP_URL="$transient_provider_http_url"
+
+        echo "Setting VITE_PROVIDER_WS_URL to $transient_provider_ws_url"
+        export VITE_PROVIDER_WS_URL="$transient_provider_ws_url"
     fi
 
     # TODO: remove the VITE_CHAIN_ID env var from here post-migration.
 
-    export VITE_CHAIN_ID="84532"
-    
-    curl  \
-        --request PUT \
-        --url https://api.render.com/v1/services/$RENDER_SERVICE_ID/env-vars \
-        --header "accept: application/json" \
-        --header "authorization: Bearer $RENDER_API_KEY" \
-        --header "content-type: application/json" \
-        --data '[{"key":"VITE_CASABLANCA_HOMESERVER_URL","value":"'"$VITE_CASABLANCA_HOMESERVER_URL"'"},{"key":"VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER","value":"'"$pr_number"'"}, {"key":"VITE_CHAIN_ID","value":"'"$VITE_CHAIN_ID"'"}]'
+    echo "Setting VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER to $pr_number"
+    export VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER="$pr_number"
 
-        
 else
     echo "Not a pull request. No custom domain needed."
 fi

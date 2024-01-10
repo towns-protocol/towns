@@ -46,6 +46,13 @@ locals {
   preview_sample_app_cname_record_value = "${local.reference_sample_app_name}-pr-${var.git_pr_number}.onrender.com"
 
   transient_global_remote_state = module.global_constants.transient_global_remote_state.outputs
+
+  global_remote_state = module.global_constants.global_remote_state.outputs
+
+  create_db_cluster           = var.num_nodes > 0
+  create_forked_chain_service = var.num_nodes > 0
+  base_chain_id               = 84532
+  river_chain_id              = 6524490
 }
 
 resource "cloudflare_record" "app_dns" {
@@ -64,10 +71,6 @@ resource "cloudflare_record" "sample_app_dns" {
   ttl     = 60
 }
 
-locals {
-  create_db_cluster = var.num_nodes > 0
-}
-
 module "river_db_cluster" {
   source           = "../../modules/river-db-cluster"
   database_subnets = local.transient_global_remote_state.vpc.database_subnets
@@ -78,12 +81,65 @@ module "river_db_cluster" {
   # for now, we're just hardcoding this logic here.
   # if a transient environment is multi-node, then it's a fresh & clean db.
   # if it's single-node, then it's a cow clone.
-  is_cloned = var.is_db_cloned
+  is_cloned = !var.is_clean_environment
 
   count                     = local.create_db_cluster ? 1 : 0
   pgadmin_security_group_id = module.global_constants.transient_global_remote_state.outputs.pgadmin_security_group_id
+}
 
+locals {
+  # These block numbers determien the earliest fork we can make. They will
+  # outline critical events, such as contract deployments or upgrades.
 
+  # TODO: Find the earliest fork block number for the base chain
+  base_earliest_fork_block_number = "latest"
+
+  # This is when the Stream Registry was first deployed
+  river_earliest_fork_block_number = "44649"
+}
+
+module "base_forked_chain_service" {
+  source                 = "../../modules/forked-chain-service"
+  count                  = local.create_forked_chain_service ? 1 : 0
+  alb_security_group_id  = local.transient_global_remote_state.river_alb.security_group_id
+  alb_dns_name           = local.transient_global_remote_state.river_alb.lb_dns_name
+  alb_https_listener_arn = local.transient_global_remote_state.river_alb.lb_https_listener_arn
+
+  block_time = 2
+  chain_id   = local.base_chain_id
+  chain_name = "base"
+  ecs_cluster = {
+    id   = local.transient_global_remote_state.river_ecs_cluster.id
+    name = local.transient_global_remote_state.river_ecs_cluster.name
+  }
+
+  fork_block_number = var.is_clean_environment ? local.base_earliest_fork_block_number : "latest"
+
+  service_subnets     = local.transient_global_remote_state.vpc.private_subnets
+  fork_url_secret_arn = local.global_remote_state.base_chain_network_url_secret.arn
+  vpc_id              = local.transient_global_remote_state.vpc.vpc_id
+}
+
+module "river_forked_chain_service" {
+  source                 = "../../modules/forked-chain-service"
+  count                  = local.create_forked_chain_service ? 1 : 0
+  alb_security_group_id  = local.transient_global_remote_state.river_alb.security_group_id
+  alb_dns_name           = local.transient_global_remote_state.river_alb.lb_dns_name
+  alb_https_listener_arn = local.transient_global_remote_state.river_alb.lb_https_listener_arn
+
+  block_time = 2
+  chain_id   = local.base_chain_id
+  chain_name = "river"
+  ecs_cluster = {
+    id   = local.transient_global_remote_state.river_ecs_cluster.id
+    name = local.transient_global_remote_state.river_ecs_cluster.name
+  }
+
+  fork_block_number = var.is_clean_environment ? local.river_earliest_fork_block_number : "latest"
+
+  service_subnets     = local.transient_global_remote_state.vpc.private_subnets
+  fork_url_secret_arn = local.global_remote_state.river_chain_network_url_secret.arn
+  vpc_id              = local.transient_global_remote_state.vpc.vpc_id
 }
 
 module "river_node" {
@@ -100,6 +156,12 @@ module "river_node" {
   vpc_id       = local.transient_global_remote_state.vpc.vpc_id
 
   is_multi_node = var.num_nodes > 1
+
+  base_chain_id                   = local.base_chain_id
+  base_chain_network_url_override = module.base_forked_chain_service[0].network_url
+
+  river_chain_id                   = local.river_chain_id
+  river_chain_network_url_override = module.river_forked_chain_service[0].network_url
 
   ecs_cluster = {
     id   = local.transient_global_remote_state.river_ecs_cluster.id

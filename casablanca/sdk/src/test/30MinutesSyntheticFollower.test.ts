@@ -21,7 +21,7 @@ import {
     jsonRpcProviderUrl,
     fromFollowerQueueName,
     fromLeaderQueueName,
-    envName,
+    riverNodeRpcUrl,
 } from './30MinutesSyntheticConfig'
 import { DecryptedContent } from '../encryptedContentTypes'
 import { SnapshotCaseType } from '@river/proto'
@@ -148,9 +148,7 @@ describe('mirrorMessages', () => {
             const walletWithProvider = followerWallet.connect(provider)
             const context = await makeUserContextFromWallet(walletWithProvider)
 
-            const nodeRpcURL = 'https://river1-' + envName + '.towns.com'
-
-            const rpcClient = makeStreamRpcClient(nodeRpcURL)
+            const rpcClient = makeStreamRpcClient(riverNodeRpcUrl)
 
             const userId = userIdFromAddress(context.creatorAddress)
 

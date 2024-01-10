@@ -26,7 +26,7 @@ endif
 ifeq ($(ENV), transient)
 	@echo TF_VAR_git_pr_number=$(GIT_PR_NUMBER) >> .env
 	@echo TF_VAR_num_nodes=$(TF_VAR_num_nodes) >> .env
-	@echo TF_VAR_is_db_cloned=$(TF_VAR_is_db_cloned) >> .env
+	@echo TF_VAR_is_clean_environment=$(TF_VAR_is_clean_environment) >> .env
 endif
 
 

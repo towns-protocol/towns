@@ -49,3 +49,7 @@ output "pgadmin_google_oauth2_config_secret" {
 output "base_chain_network_url_secret" {
   value = aws_secretsmanager_secret.base_chain_network_url_secret
 }
+
+output "river_chain_network_url_secret" {
+  value = aws_secretsmanager_secret.river_chain_network_url_secret
+}
