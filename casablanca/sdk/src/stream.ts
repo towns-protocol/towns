@@ -15,15 +15,13 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     constructor(
         userId: string,
         streamId: string,
-        snapshot: Snapshot,
-        prevSnapshotMiniblockNum: bigint,
         clientEmitter: TypedEmitter<EmittedEvents>,
         logEmitFromStream: DLogger,
     ) {
         super()
         this.clientEmitter = clientEmitter
         this.logEmitFromStream = logEmitFromStream
-        this.view = new StreamStateView(userId, streamId, snapshot, prevSnapshotMiniblockNum)
+        this.view = new StreamStateView(userId, streamId)
     }
 
     get streamId(): string {
@@ -38,9 +36,17 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         streamAndCookie: ParsedStreamAndCookie,
         snapshot: Snapshot,
         miniblocks: ParsedMiniblock[],
+        prevSnapshotMiniblockNum: bigint,
         cleartexts: Record<string, string> | undefined,
     ): void {
-        this.view.initialize(streamAndCookie, snapshot, miniblocks, cleartexts, this)
+        this.view.initialize(
+            streamAndCookie,
+            snapshot,
+            miniblocks,
+            prevSnapshotMiniblockNum,
+            cleartexts,
+            this,
+        )
     }
 
     appendEvents(

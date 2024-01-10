@@ -1,10 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import {
-    DmChannelPayload_Inception,
-    DmChannelPayload_Snapshot,
-    Snapshot,
-    DmChannelPayload,
-} from '@river/proto'
+import { DmChannelPayload_Snapshot, Snapshot, DmChannelPayload } from '@river/proto'
 import { EmittedEvents } from './client'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
@@ -18,26 +13,26 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly memberships: StreamStateView_Membership
     readonly userMetadata: StreamStateView_UserMetadata
-    readonly firstPartyId: string
-    readonly secondPartyId: string
+    firstPartyId?: string
+    secondPartyId?: string
     lastEventCreatedAtEpocMs = 0n
 
-    constructor(userId: string, inception: DmChannelPayload_Inception) {
+    constructor(userId: string, streamId: string) {
         super()
-        this.memberships = new StreamStateView_Membership(userId, inception.streamId)
-        this.userMetadata = new StreamStateView_UserMetadata(userId, inception.streamId)
-        this.streamId = inception.streamId
-        this.firstPartyId = inception.firstPartyId
-        this.secondPartyId = inception.secondPartyId
+        this.memberships = new StreamStateView_Membership(userId, streamId)
+        this.userMetadata = new StreamStateView_UserMetadata(userId, streamId)
+        this.streamId = streamId
     }
 
-    initialize(
+    applySnapshot(
         snapshot: Snapshot,
         content: DmChannelPayload_Snapshot,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
-        this.memberships.initialize(content.memberships, emitter)
-        this.userMetadata.initialize(content.usernames, content.displayNames, emitter)
+        this.memberships.applySnapshot(content.memberships, emitter)
+        this.userMetadata.applySnapshot(content.usernames, content.displayNames, emitter)
+        this.firstPartyId = content.inception?.firstPartyId
+        this.secondPartyId = content.inception?.secondPartyId
     }
 
     appendEvent(
@@ -151,6 +146,9 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     }
 
     participants(): Set<string> {
+        if (!this.firstPartyId || !this.secondPartyId) {
+            return new Set()
+        }
         return new Set([this.firstPartyId, this.secondPartyId])
     }
 }

@@ -20,7 +20,7 @@ export class StreamStateView_UserMetadata {
         this.displayNames = new UserMetadata_DisplayNames(streamId)
     }
 
-    initialize(
+    applySnapshot(
         usernames: { [userId: string]: WrappedEncryptedData },
         displayNames: { [userId: string]: WrappedEncryptedData },
         emitter: TypedEmitter<EmittedEvents> | undefined,

@@ -4,7 +4,6 @@ import { EmittedEvents } from './client'
 import {
     Snapshot,
     UserDeviceKeyPayload,
-    UserDeviceKeyPayload_Inception,
     UserDeviceKeyPayload_MegolmDevice,
     UserDeviceKeyPayload_Snapshot,
 } from '@river/proto'
@@ -20,14 +19,14 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
     // user_id -> device_keys, fallback_keys
     readonly megolmKeys: UserDevice[] = []
 
-    constructor(inception: UserDeviceKeyPayload_Inception) {
+    constructor(userId: string, streamId: string) {
         super()
-        this.streamId = inception.streamId
-        this.memberships = new StreamStateView_UserStreamMembership(inception.streamId)
-        this.streamCreatorId = inception.userId
+        this.streamId = streamId
+        this.memberships = new StreamStateView_UserStreamMembership(streamId)
+        this.streamCreatorId = userId
     }
 
-    initialize(
+    applySnapshot(
         snapshot: Snapshot,
         content: UserDeviceKeyPayload_Snapshot,
         emitter: TypedEmitter<EmittedEvents> | undefined,

@@ -102,6 +102,9 @@ export const isMediaStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.Media)
 export const isGDMChannelStreamId = (streamId: string): boolean =>
     streamId.startsWith(StreamPrefix.GDM)
+export const isUserToDeviceStreamId = (streamId: string): boolean =>
+    streamId.startsWith(StreamPrefix.UserToDevice)
+
 export const isValidStreamId = (streamId: string): boolean =>
     allowedStreamPrefixes().some((prefix) => streamId.startsWith(prefix))
 

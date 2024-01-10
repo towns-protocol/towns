@@ -35,14 +35,16 @@ export class UnauthenticatedClient {
             check(isDefined(response.stream) && hasElements(response.miniblocks), 'got bad stream')
             const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
                 unpackStreamResponse(response)
-            const streamView = new StreamStateView(
-                this.userId,
-                streamId,
-                snapshot,
-                prevSnapshotMiniblockNum,
-            )
+            const streamView = new StreamStateView(this.userId, streamId)
 
-            streamView.initialize(streamAndCookie, snapshot, miniblocks, undefined, undefined)
+            streamView.initialize(
+                streamAndCookie,
+                snapshot,
+                miniblocks,
+                prevSnapshotMiniblockNum,
+                undefined,
+                undefined,
+            )
             return streamView
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)

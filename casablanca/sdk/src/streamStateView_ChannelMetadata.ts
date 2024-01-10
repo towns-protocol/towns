@@ -15,7 +15,7 @@ export class StreamStateView_ChannelMetadata {
         this.streamId = streamId
     }
 
-    initialize(
+    applySnapshot(
         encryptedChannelProperties: WrappedEncryptedData,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {

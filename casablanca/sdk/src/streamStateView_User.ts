@@ -5,7 +5,6 @@ import {
     MembershipOp,
     Snapshot,
     UserPayload,
-    UserPayload_Inception,
     UserPayload_Snapshot,
     UserPayload_UserMembership,
 } from '@river/proto'
@@ -22,13 +21,13 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly userLeftStreams = new Set<string>()
     readonly toDeviceMessages: ParsedEvent[] = []
 
-    constructor(inception: UserPayload_Inception) {
+    constructor(streamId: string) {
         super()
-        this.streamId = inception.streamId
-        this.memberships = new StreamStateView_UserStreamMembership(inception.streamId)
+        this.streamId = streamId
+        this.memberships = new StreamStateView_UserStreamMembership(streamId)
     }
 
-    initialize(
+    applySnapshot(
         snapshot: Snapshot,
         content: UserPayload_Snapshot,
         emitter: TypedEmitter<EmittedEvents> | undefined,

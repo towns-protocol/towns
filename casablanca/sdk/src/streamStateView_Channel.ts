@@ -2,33 +2,28 @@ import TypedEmitter from 'typed-emitter'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
-import {
-    ChannelPayload,
-    ChannelPayload_Inception,
-    ChannelPayload_Snapshot,
-    Snapshot,
-} from '@river/proto'
+import { ChannelPayload, ChannelPayload_Snapshot, Snapshot } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check, logNever } from '@river/mecholm'
 
 export class StreamStateView_Channel extends StreamStateView_AbstractContent {
     readonly streamId: string
-    readonly spaceId?: string
     readonly memberships: StreamStateView_Membership
+    spaceId: string = ''
 
-    constructor(userId: string, inception: ChannelPayload_Inception) {
+    constructor(userId: string, streamId: string) {
         super()
-        this.memberships = new StreamStateView_Membership(userId, inception.streamId)
-        this.streamId = inception.streamId
-        this.spaceId = inception.spaceId
+        this.memberships = new StreamStateView_Membership(userId, streamId)
+        this.streamId = streamId
     }
 
-    initialize(
+    applySnapshot(
         snapshot: Snapshot,
         content: ChannelPayload_Snapshot,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
-        this.memberships.initialize(content.memberships, emitter)
+        this.memberships.applySnapshot(content.memberships, emitter)
+        this.spaceId = content.inception?.spaceId ?? ''
     }
 
     prependEvent(

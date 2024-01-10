@@ -11,7 +11,6 @@ import {
     Snapshot,
     SpacePayload,
     SpacePayload_Channel,
-    SpacePayload_Inception,
     SpacePayload_Snapshot,
 } from '@river/proto'
 import { StreamEvents } from './streamEvents'
@@ -25,22 +24,22 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     readonly userMetadata: StreamStateView_UserMetadata
     readonly spaceChannelsMetadata = new Map<string, ChannelProperties>()
 
-    constructor(userId: string, inception: SpacePayload_Inception) {
+    constructor(userId: string, streamId: string) {
         super()
-        this.memberships = new StreamStateView_Membership(userId, inception.streamId)
-        this.userMetadata = new StreamStateView_UserMetadata(userId, inception.streamId)
-        this.streamId = inception.streamId
+        this.memberships = new StreamStateView_Membership(userId, streamId)
+        this.userMetadata = new StreamStateView_UserMetadata(userId, streamId)
+        this.streamId = streamId
     }
 
-    initialize(
+    applySnapshot(
         snapshot: Snapshot,
         content: SpacePayload_Snapshot,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         // update memberships
-        this.memberships.initialize(content.memberships, emitter)
+        this.memberships.applySnapshot(content.memberships, emitter)
 
-        this.userMetadata.initialize(content.usernames, content.displayNames, emitter)
+        this.userMetadata.applySnapshot(content.usernames, content.displayNames, emitter)
         // loop over content.channels, update space channels metadata
         for (const [_, payload] of Object.entries(content.channels)) {
             this.addSpacePayload_Channel(payload, emitter)

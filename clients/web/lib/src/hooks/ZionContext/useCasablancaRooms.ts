@@ -61,12 +61,20 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
 
         // subscribe to changes
         const onStreamUpdated = (streamId: string) => {
-            updateState(streamId)
+            if (
+                isSpaceStreamId(streamId) ||
+                isChannelStreamId(streamId) ||
+                isDMChannelStreamId(streamId) ||
+                isGDMChannelStreamId(streamId)
+            ) {
+                updateState(streamId)
+            }
         }
 
         client.on('streamNewUserJoined', onStreamUpdated)
         client.on('streamUserLeft', onStreamUpdated)
         client.on('userLeftStream', onStreamUpdated)
+        client.on('streamInitialized', onStreamUpdated)
         client.on('streamDisplayNameUpdated', onStreamUpdated)
         client.on('streamPendingDisplayNameUpdated', onStreamUpdated)
         client.on('streamUsernameUpdated', onStreamUpdated)
@@ -75,6 +83,7 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
             client.off('streamNewUserJoined', onStreamUpdated)
             client.off('streamUserLeft', onStreamUpdated)
             client.off('userLeftStream', onStreamUpdated)
+            client.off('streamInitialized', onStreamUpdated)
             client.off('streamDisplayNameUpdated', onStreamUpdated)
             client.off('streamPendingDisplayNameUpdated', onStreamUpdated)
             client.off('streamUsernameUpdated', onStreamUpdated)

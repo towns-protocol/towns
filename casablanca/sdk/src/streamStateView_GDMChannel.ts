@@ -1,10 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import {
-    GdmChannelPayload,
-    GdmChannelPayload_Inception,
-    GdmChannelPayload_Snapshot,
-    Snapshot,
-} from '@river/proto'
+import { GdmChannelPayload, GdmChannelPayload_Snapshot, Snapshot } from '@river/proto'
 import { EmittedEvents } from './client'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
@@ -23,23 +18,23 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
 
     lastEventCreatedAtEpocMs = 0n
 
-    constructor(userId: string, inception: GdmChannelPayload_Inception) {
+    constructor(userId: string, streamId: string) {
         super()
-        this.memberships = new StreamStateView_Membership(userId, inception.streamId)
-        this.userMetadata = new StreamStateView_UserMetadata(userId, inception.streamId)
-        this.channelMetadata = new StreamStateView_ChannelMetadata(userId, inception.streamId)
-        this.streamId = inception.streamId
+        this.memberships = new StreamStateView_Membership(userId, streamId)
+        this.userMetadata = new StreamStateView_UserMetadata(userId, streamId)
+        this.channelMetadata = new StreamStateView_ChannelMetadata(userId, streamId)
+        this.streamId = streamId
     }
 
-    initialize(
+    applySnapshot(
         snapshot: Snapshot,
         content: GdmChannelPayload_Snapshot,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
-        this.memberships.initialize(content.memberships, emitter)
-        this.userMetadata.initialize(content.usernames, content.displayNames, emitter)
+        this.memberships.applySnapshot(content.memberships, emitter)
+        this.userMetadata.applySnapshot(content.usernames, content.displayNames, emitter)
         if (content.channelProperties) {
-            this.channelMetadata.initialize(content.channelProperties, emitter)
+            this.channelMetadata.applySnapshot(content.channelProperties, emitter)
         }
     }
 

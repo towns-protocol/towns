@@ -276,16 +276,15 @@ export class Client
             response
 
         const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
-        const stream = new Stream(
-            this.userId,
-            streamId,
-            snapshot,
-            prevSnapshotMiniblockNum,
-            this,
-            this.logEmitFromStream,
-        )
+        const stream = new Stream(this.userId, streamId, this, this.logEmitFromStream)
         this.streams.set(streamId, stream)
-        stream.initialize(streamAndCookie, snapshot, miniblocks, cleartexts)
+        stream.initialize(
+            streamAndCookie,
+            snapshot,
+            miniblocks,
+            prevSnapshotMiniblockNum,
+            cleartexts,
+        )
     }
 
     async initializeUser(): Promise<void> {
@@ -621,18 +620,17 @@ export class Client
         const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum, eventIds } =
             unpackStreamResponse(response)
         const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
-        const stream = new Stream(
-            this.userId,
-            streamId,
-            snapshot,
-            prevSnapshotMiniblockNum,
-            this,
-            this.logEmitFromStream,
-        )
+        const stream = new Stream(this.userId, streamId, this, this.logEmitFromStream)
 
         // TODO: add support for creating/getting a stream without syncing (HNT-2686)
         this.streams.set(streamId, stream)
-        stream.initialize(streamAndCookie, snapshot, miniblocks, cleartexts)
+        stream.initialize(
+            streamAndCookie,
+            snapshot,
+            miniblocks,
+            prevSnapshotMiniblockNum,
+            cleartexts,
+        )
         return { streamId: streamId }
     }
 
@@ -792,16 +790,12 @@ export class Client
             this.logCall('getStream', streamId)
             const response = await this.rpcClient.getStreamUnpacked({ streamId })
 
-            const streamView = new StreamStateView(
-                this.userId,
-                streamId,
-                response.snapshot,
-                response.prevSnapshotMiniblockNum,
-            )
+            const streamView = new StreamStateView(this.userId, streamId)
             streamView.initialize(
                 response.streamAndCookie,
                 response.snapshot,
                 response.miniblocks,
+                response.prevSnapshotMiniblockNum,
                 undefined,
                 undefined,
             )
@@ -831,14 +825,7 @@ export class Client
                     return previousStream
                 } else {
                     this.logCall('initStream', response.streamAndCookie)
-                    const stream = new Stream(
-                        this.userId,
-                        streamId,
-                        response.snapshot,
-                        response.prevSnapshotMiniblockNum,
-                        this,
-                        this.logEmitFromStream,
-                    )
+                    const stream = new Stream(this.userId, streamId, this, this.logEmitFromStream)
                     this.streams.set(streamId, stream)
                     stream.on('streamInitialized', () => {
                         const addToSync = async () => {
@@ -856,6 +843,7 @@ export class Client
                         response.streamAndCookie,
                         response.snapshot,
                         response.miniblocks,
+                        response.prevSnapshotMiniblockNum,
                         cleartexts,
                     )
                     return stream

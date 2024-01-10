@@ -5,7 +5,6 @@ import {
     Snapshot,
     UserSettingsPayload,
     UserSettingsPayload_FullyReadMarkers,
-    UserSettingsPayload_Inception,
     UserSettingsPayload_Snapshot,
 } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
@@ -26,13 +25,13 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
     readonly fullyReadMarkersSrc = new Map<string, EncryptedData>()
     readonly fullyReadMarkers = new Map<string, Record<string, FullyReadMarker>>()
 
-    constructor(inception: UserSettingsPayload_Inception) {
+    constructor(streamId: string) {
         super()
-        this.streamId = inception.streamId
-        this.memberships = new StreamStateView_UserStreamMembership(inception.streamId)
+        this.streamId = streamId
+        this.memberships = new StreamStateView_UserStreamMembership(streamId)
     }
 
-    initialize(snapshot: Snapshot, content: UserSettingsPayload_Snapshot): void {
+    applySnapshot(snapshot: Snapshot, content: UserSettingsPayload_Snapshot): void {
         // iterate over content.fullyReadMarkers
         for (const [_, payload] of Object.entries(content.fullyReadMarkers)) {
             this.fullyReadMarkerUpdate(payload)

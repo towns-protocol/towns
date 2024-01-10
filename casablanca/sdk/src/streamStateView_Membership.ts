@@ -21,7 +21,7 @@ export class StreamStateView_Membership {
         this.streamId = streamId
     }
 
-    initialize(
+    applySnapshot(
         memberships: { [key: string]: Membership },
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {

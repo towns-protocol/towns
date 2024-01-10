@@ -19,7 +19,7 @@ export class StreamStateView_CommonContent {
         this.streamId = streamId
     }
 
-    initialize(snapshot: Snapshot, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+    applySnapshot(snapshot: Snapshot, emitter: TypedEmitter<EmittedEvents> | undefined): void {
         if (!snapshot.common) {
             return
         }

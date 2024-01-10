@@ -5,7 +5,6 @@ import {
     Snapshot,
     UserToDevicePayload,
     UserToDevicePayload_Snapshot,
-    UserToDevicePayload_Inception,
     UserToDevicePayload_Snapshot_DeviceSummary,
     UserToDevicePayload_MegolmSessions,
     UserToDevicePayload_Ack,
@@ -23,13 +22,13 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
         { creatorUserId: string; value: UserToDevicePayload_MegolmSessions }
     > = {}
 
-    constructor(inception: UserToDevicePayload_Inception) {
+    constructor(streamId: string) {
         super()
-        this.streamId = inception.streamId
-        this.memberships = new StreamStateView_UserStreamMembership(inception.streamId)
+        this.streamId = streamId
+        this.memberships = new StreamStateView_UserStreamMembership(streamId)
     }
 
-    initialize(
+    applySnapshot(
         snapshot: Snapshot,
         content: UserToDevicePayload_Snapshot,
         _emitter: TypedEmitter<EmittedEvents> | undefined,

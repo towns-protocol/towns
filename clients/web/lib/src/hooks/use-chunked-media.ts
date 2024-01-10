@@ -27,7 +27,11 @@ async function getObjectURL(
     }
 
     const stream = await casablancaClient.getStream(streamId)
-    const data = stream.mediaContent.chunks.reduce((acc, chunk) => {
+    const mediaInfo = stream.mediaContent.info
+    if (!mediaInfo) {
+        return undefined
+    }
+    const data = mediaInfo.chunks.reduce((acc, chunk) => {
         return new Uint8Array([...acc, ...chunk])
     }, new Uint8Array())
 

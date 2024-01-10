@@ -31,7 +31,18 @@ import { StreamStateView_Media } from './streamStateView_Media'
 import { StreamStateView_GDMChannel } from './streamStateView_GDMChannel'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_DMChannel } from './streamStateView_DMChannel'
-import { genLocalId } from './id'
+import {
+    genLocalId,
+    isChannelStreamId,
+    isDMChannelStreamId,
+    isGDMChannelStreamId,
+    isMediaStreamId,
+    isSpaceStreamId,
+    isUserDeviceStreamId,
+    isUserSettingsStreamId,
+    isUserStreamId,
+    isUserToDeviceStreamId,
+} from './id'
 import { StreamStateView_UserToDevice } from './streamStateView_UserToDevice'
 import { StreamStateView_CommonContent } from './streamStateView_CommonContent'
 import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
@@ -134,119 +145,74 @@ export class StreamStateView {
         return this._mediaContent
     }
 
-    constructor(
-        userId: string,
-        streamId: string,
-        snapshot: Snapshot,
-        prevSnapshotMiniblockNum: bigint,
-    ) {
+    constructor(userId: string, streamId: string) {
         log('streamStateView', streamId)
-        check(isDefined(snapshot), `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
-
-        check(
-            isDefined(snapshot.content.value?.inception),
-            `Snapshot does not contain inception ${streamId}`,
-            Err.STREAM_BAD_EVENT,
-        )
-        const inceptionPayload = snapshot.content.value?.inception
-        check(
-            inceptionPayload?.streamId === streamId,
-            `Non-matching stream id in inception ${streamId} != ${inceptionPayload?.streamId}`,
-            Err.STREAM_BAD_EVENT,
-        )
-
         this.userId = userId
         this.streamId = streamId
-        this.contentKind = snapshot.content.case
-        this.prevSnapshotMiniblockNum = prevSnapshotMiniblockNum
-        this.commonContent = new StreamStateView_CommonContent(streamId)
 
-        switch (snapshot.content.case) {
-            case 'channelContent':
-                this._channelContent = new StreamStateView_Channel(
-                    userId,
-                    snapshot.content.value.inception,
-                )
-                break
-            case 'dmChannelContent':
-                this._dmChannelContent = new StreamStateView_DMChannel(
-                    userId,
-                    snapshot.content.value.inception,
-                )
-                break
-            case 'gdmChannelContent':
-                this._gdmChannelContent = new StreamStateView_GDMChannel(
-                    userId,
-                    snapshot.content.value.inception,
-                )
-                break
-            case 'spaceContent':
-                this._spaceContent = new StreamStateView_Space(
-                    userId,
-                    snapshot.content.value.inception,
-                )
-                break
-            case 'userContent':
-                this._userContent = new StreamStateView_User(snapshot.content.value.inception)
-                break
-            case 'userSettingsContent':
-                this._userSettingsContent = new StreamStateView_UserSettings(
-                    snapshot.content.value.inception,
-                )
-                break
-            case 'userDeviceKeyContent':
-                this._userDeviceKeyContent = new StreamStateView_UserDeviceKeys(
-                    snapshot.content.value.inception,
-                )
-                break
-            case `userToDeviceContent`:
-                this._userToDeviceContent = new StreamStateView_UserToDevice(
-                    snapshot.content.value.inception,
-                )
-                break
-            case 'mediaContent':
-                this._mediaContent = new StreamStateView_Media(snapshot.content.value.inception)
-                break
-            case undefined:
-                check(false, `Snapshot has no content ${streamId}`, Err.STREAM_BAD_EVENT)
-                break
-            default:
-                logNever(snapshot.content)
+        if (isSpaceStreamId(streamId)) {
+            this.contentKind = 'spaceContent'
+            this._spaceContent = new StreamStateView_Space(userId, streamId)
+        } else if (isChannelStreamId(streamId)) {
+            this.contentKind = 'channelContent'
+            this._channelContent = new StreamStateView_Channel(userId, streamId)
+        } else if (isDMChannelStreamId(streamId)) {
+            this.contentKind = 'dmChannelContent'
+            this._dmChannelContent = new StreamStateView_DMChannel(userId, streamId)
+        } else if (isGDMChannelStreamId(streamId)) {
+            this.contentKind = 'gdmChannelContent'
+            this._gdmChannelContent = new StreamStateView_GDMChannel(userId, streamId)
+        } else if (isMediaStreamId(streamId)) {
+            this.contentKind = 'mediaContent'
+            this._mediaContent = new StreamStateView_Media(streamId)
+        } else if (isUserStreamId(streamId)) {
+            this.contentKind = 'userContent'
+            this._userContent = new StreamStateView_User(streamId)
+        } else if (isUserSettingsStreamId(streamId)) {
+            this.contentKind = 'userSettingsContent'
+            this._userSettingsContent = new StreamStateView_UserSettings(streamId)
+        } else if (isUserDeviceStreamId(streamId)) {
+            this.contentKind = 'userDeviceKeyContent'
+            this._userDeviceKeyContent = new StreamStateView_UserDeviceKeys(userId, streamId)
+        } else if (isUserToDeviceStreamId(streamId)) {
+            this.contentKind = 'userToDeviceContent'
+            this._userToDeviceContent = new StreamStateView_UserToDevice(streamId)
+        } else {
+            throw new Error(`Stream doesn't have a content kind ${streamId}`)
         }
+
+        this.prevSnapshotMiniblockNum = 0n
+        this.commonContent = new StreamStateView_CommonContent(streamId)
     }
 
-    private initializeFromSnapshot(
-        snapshot: Snapshot,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
-        // first initialize content specific data
+    private applySnapshot(snapshot: Snapshot, emitter: TypedEmitter<EmittedEvents> | undefined) {
         switch (snapshot.content.case) {
+            case 'spaceContent':
+                this.spaceContent.applySnapshot(snapshot, snapshot.content.value, emitter)
+                break
             case 'channelContent':
-                this.channelContent.initialize(snapshot, snapshot.content.value, emitter)
+                this.channelContent.applySnapshot(snapshot, snapshot.content.value, emitter)
                 break
             case 'dmChannelContent':
-                this.dmChannelContent.initialize(snapshot, snapshot.content.value, emitter)
+                this.dmChannelContent.applySnapshot(snapshot, snapshot.content.value, emitter)
                 break
             case 'gdmChannelContent':
-                this.gdmChannelContent.initialize(snapshot, snapshot.content.value, emitter)
-                break
-            case 'spaceContent':
-                this.spaceContent.initialize(snapshot, snapshot.content.value, emitter)
-                break
-            case 'userContent':
-                this.userContent.initialize(snapshot, snapshot.content.value, emitter)
-                break
-            case 'userSettingsContent':
-                this.userSettingsContent.initialize(snapshot, snapshot.content.value)
-                break
-            case 'userDeviceKeyContent':
-                this.userDeviceKeyContent.initialize(snapshot, snapshot.content.value, emitter)
-                break
-            case 'userToDeviceContent':
-                this.userToDeviceContent.initialize(snapshot, snapshot.content.value, emitter)
+                this.gdmChannelContent.applySnapshot(snapshot, snapshot.content.value, emitter)
                 break
             case 'mediaContent':
-                this.mediaContent.initialize(snapshot, snapshot.content.value, emitter)
+                this.mediaContent.applySnapshot(snapshot, snapshot.content.value, emitter)
+                break
+            case 'userContent':
+                this.userContent.applySnapshot(snapshot, snapshot.content.value, emitter)
+                break
+            case 'userDeviceKeyContent':
+                this.userDeviceKeyContent.applySnapshot(snapshot, snapshot.content.value, emitter)
+                break
+            case 'userSettingsContent':
+                this.userSettingsContent.applySnapshot(snapshot, snapshot.content.value)
+                break
+            case 'userToDeviceContent':
+                this.userToDeviceContent.applySnapshot(snapshot, snapshot.content.value, emitter)
                 break
             case undefined:
                 check(false, `Snapshot has no content ${this.streamId}`, Err.STREAM_BAD_EVENT)
@@ -254,9 +220,7 @@ export class StreamStateView {
             default:
                 logNever(snapshot.content)
         }
-
-        // then initialize common content
-        this.commonContent.initialize(snapshot, emitter)
+        this.commonContent.applySnapshot(snapshot, emitter)
     }
 
     private appendStreamAndCookie(
@@ -457,13 +421,14 @@ export class StreamStateView {
         streamAndCookie: ParsedStreamAndCookie,
         snapshot: Snapshot,
         miniblocks: ParsedMiniblock[],
+        prevSnapshotMiniblockNum: bigint,
         cleartexts: Record<string, string> | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         check(miniblocks.length > 0, `Stream has no miniblocks ${this.streamId}`, Err.STREAM_EMPTY)
         // parse the blocks
         // initialize from snapshot data, this gets all memberships and channel data, etc
-        this.initializeFromSnapshot(snapshot, emitter)
+        this.applySnapshot(snapshot, emitter)
         // initialize from miniblocks, the first minblock is the snapshot block, it's events are accounted for
         const block0Events = miniblocks[0].events.map((parsedEvent, i) => {
             const eventNum = miniblocks[0].header.eventNumOffset + BigInt(i)
@@ -506,6 +471,7 @@ export class StreamStateView {
         this.prevMiniblockHash = lastBlock.hash
         // append the minipool events
         this.appendStreamAndCookie(streamAndCookie, cleartexts, emitter)
+        this.prevSnapshotMiniblockNum = prevSnapshotMiniblockNum
         // let everyone know
         emitter?.emit('streamInitialized', this.streamId, this.contentKind)
     }
