@@ -16,7 +16,7 @@ import { Box, BoxProps, ButtonText, Icon, Paragraph, Stack, Text } from '@ui'
 import { useHover } from 'hooks/useHover'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useHandleReaction } from 'hooks/useReactions'
-import { Avatar, AvatarProps } from '@components/Avatar/Avatar'
+import { AvatarProps, AvatarWithoutDot } from '@components/Avatar/Avatar'
 import { AvatarAtoms } from 'components/Avatar/Avatar.css'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
@@ -418,14 +418,14 @@ const AvatarComponent = (props: AvatarProps & { userId?: string; link?: string }
     if (userId && link) {
         return <ActiveAvatar {...avatarProps} userId={userId} link={link} />
     }
-    return <Avatar {...avatarProps} userId={userId} />
+    return <AvatarWithoutDot {...avatarProps} userId={userId} />
 }
 
 const ActiveAvatar = (props: AvatarProps & { userId: string; link: string }) => {
     const { userId, ...avatarProps } = props
     return (
         <Link to={props.link} tabIndex={-1}>
-            <Avatar userId={userId} {...avatarProps} />
+            <AvatarWithoutDot userId={userId} {...avatarProps} />
         </Link>
     )
 }

@@ -28,6 +28,7 @@ export type TimelineStoreStates = {
     threadsStats: ThreadStatsMap
     threads: ThreadsMap
     reactions: ReactionsMap
+    lastestEventByUser: { [userId: string]: TimelineEvent }
 }
 
 export interface TimelineStoreInterface {
@@ -56,6 +57,7 @@ export const useTimelineStore = create<TimelineStore>((set) => ({
     threadsStats: {},
     threads: {},
     reactions: {},
+    lastestEventByUser: {},
     setState: makeTimelineStoreInterface(
         (fn: (prevState: TimelineStoreStates) => TimelineStoreStates) => {
             set((state) => fn(state))
@@ -68,6 +70,7 @@ function makeTimelineStoreInterface(
 ): TimelineStoreInterface {
     const initializeStream = (userId: string, roomId: string) => {
         const aggregated = toStatsAndReactions([], userId)
+
         setState((state) => ({
             timelines: { ...state.timelines, [roomId]: [] },
             replacedEvents: state.replacedEvents,
@@ -84,6 +87,7 @@ function makeTimelineStoreInterface(
                 ...state.reactions,
                 [roomId]: aggregated.reactions,
             },
+            lastestEventByUser: state.lastestEventByUser,
         }))
     }
 
@@ -113,6 +117,7 @@ function makeTimelineStoreInterface(
             threadsStats: removeThreadStat(roomId, event, state.threadsStats),
             threads: removeThreadEvent(roomId, event, state.threads),
             reactions: removeReaction(roomId, event, state.reactions),
+            lastestEventByUser: state.lastestEventByUser,
         }
     }
     const appendEvent = (
@@ -134,6 +139,7 @@ function makeTimelineStoreInterface(
             ),
             threads: insertThreadEvent(roomId, timelineEvent, state.threads),
             reactions: addReactions(roomId, timelineEvent, state.reactions),
+            lastestEventByUser: state.lastestEventByUser,
         }
     }
     const prependEvent = (
@@ -161,6 +167,7 @@ function makeTimelineStoreInterface(
             ),
             threads: insertThreadEvent(roomId, timelineEvent, state.threads),
             reactions: addReactions(roomId, timelineEvent, state.reactions),
+            lastestEventByUser: state.lastestEventByUser,
         }
     }
 
@@ -239,6 +246,7 @@ function makeTimelineStoreInterface(
                 newEvent,
                 removeReaction(roomId, oldEvent, state.reactions),
             ),
+            lastestEventByUser: state.lastestEventByUser,
         }
     }
 
@@ -297,6 +305,7 @@ function makeTimelineStoreInterface(
                       }
                     : state.threads,
             reactions: state.reactions,
+            lastestEventByUser: state.lastestEventByUser,
         }
     }
 
@@ -309,6 +318,7 @@ function makeTimelineStoreInterface(
     ) {
         const editsEventId = getEditsId(event.content)
         const redactsEventId = getRedactsId(event.content)
+
         if (redactsEventId) {
             if (updatingEventId) {
                 // remove the formerly encrypted event
@@ -330,6 +340,18 @@ function makeTimelineStoreInterface(
                 state = appendEvent(state, userId, streamId, event)
             }
         }
+
+        const prevLatestEvent = state.lastestEventByUser[event.sender.id]
+        if ((prevLatestEvent?.createdAtEpocMs ?? 0) < event.createdAtEpocMs) {
+            state = {
+                ...state,
+                lastestEventByUser: {
+                    ...state.lastestEventByUser,
+                    [event.sender.id]: event,
+                },
+            }
+        }
+
         return state
     }
 

@@ -88,10 +88,10 @@ export const UserProfile = (props: Props) => {
                                 },
                             }}
                         >
-                            <Stack aspectRatio="1/1">
+                            <Stack centerContent aspectRatio="1/1">
                                 <Avatar
                                     userId={userId}
-                                    size="avatar_100"
+                                    size="avatar_x20"
                                     imageVariant="thumbnail300"
                                 />
                             </Stack>

@@ -78,10 +78,11 @@ const GridProfile = ({ member }: { member: RoomMember }) => {
                 centerContent
                 gap
                 padding
+                background="level1"
                 tooltip={!isTouch ? <ProfileHoverCard userId={member.userId} /> : undefined}
             >
                 <Stack gap grow maxWidth="100%">
-                    <Box centerContent>
+                    <Box position="relative">
                         <Avatar
                             size="avatar_x15"
                             userId={member.userId ?? ''}

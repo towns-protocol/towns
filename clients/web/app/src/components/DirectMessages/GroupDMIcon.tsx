@@ -44,7 +44,7 @@ export const AvatarGroup = (props: AvatarGroupProps) => {
     if (userIds.length > 2) {
         // inserts placeholder for +X copy after first entry
         // participants are kept in order
-        slots.splice(1, 0, REMAINING_PLACEHOLDER)
+        slots.splice(0, 0, REMAINING_PLACEHOLDER)
     }
 
     const startAngle = Math.PI * 1.25
@@ -52,7 +52,7 @@ export const AvatarGroup = (props: AvatarGroupProps) => {
 
     const { size, borderWidth, fontScale } = {
         x3: { size: '75%', fontScale: 0.5, borderWidth: 2 },
-        x4: { size: '70%', fontScale: 0.6, borderWidth: 2 },
+        x4: { size: '66%', fontScale: 0.6, borderWidth: 2 },
         x6: { size: '66%', fontScale: 0.8, borderWidth: 2 },
         x12: { size: '60%', fontScale: 1.5, borderWidth: 4 },
     }[width]

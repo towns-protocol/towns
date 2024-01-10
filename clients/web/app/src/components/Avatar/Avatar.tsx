@@ -1,8 +1,11 @@
 import { clsx } from 'clsx'
 import React, { forwardRef, useCallback, useEffect, useMemo } from 'react'
 import { getAccountAddress } from 'use-zion-client'
+import { AnimatePresence } from 'framer-motion'
 import { ImageVariant, useImageSource } from '@components/UploadImage/useImageSource'
 import { useImageStore } from '@components/UploadImage/useImageStore'
+import { FadeInBox } from '@components/Transitions'
+import { useGreenDot } from 'hooks/useGreenDot'
 import { TooltipBox as Box, TooltipBoxProps as BoxProps } from '../../ui/components/Box/TooltipBox'
 import {
     AvatarAtoms,
@@ -50,8 +53,13 @@ function useAvatarImageSrc(props: { imageVariant?: ImageVariant; userId?: string
     return { imageSrc, resourceId }
 }
 
-// pass a src prop to force using that image, otherwise pass userId
 export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
+    const isGreen = useGreenDot(props.userId)
+    return <AvatarWithoutDot {...props} dot={isGreen} ref={ref} />
+})
+
+// pass a src prop to force using that image, otherwise pass userId
+export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean }>((props, ref) => {
     const { src, userId, imageVariant, ...rest } = props
     const _imageVariant = imageVariant ?? 'thumbnail100'
     const { imageSrc, resourceId } = useAvatarImageSrc({
@@ -78,76 +86,107 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
     )
 })
 
-const _Avatar = forwardRef<HTMLElement, Omit<Props, 'userId'> & { resourceId: string }>(
-    (props, ref) => {
-        const {
-            animate = false,
-            size = 'avatar_md',
-            height = 'avatar_md',
-            type = 'user',
-            stacked = false,
-            border,
-            src,
-            resourceId,
-            icon,
-            ...boxProps
-        } = props
+const _Avatar = forwardRef<
+    HTMLElement,
+    Omit<Props & { dot?: boolean }, 'userId'> & { resourceId: string }
+>((props, ref) => {
+    const {
+        animate = false,
+        size = 'avatar_md',
+        height = 'avatar_md',
+        type = 'user',
+        stacked = false,
+        border,
+        src,
+        resourceId,
+        icon,
+        ...boxProps
+    } = props
 
-        const Container = animate ? MotionBox : Box
+    const Container = animate ? MotionBox : Box
 
-        const onError = useCallback(() => {
-            if (resourceId) {
-                useImageStore.getState().addErroredResource(resourceId)
-            }
-        }, [resourceId])
+    const onError = useCallback(() => {
+        if (resourceId) {
+            useImageStore.getState().addErroredResource(resourceId)
+        }
+    }, [resourceId])
 
-        const onLoad = useCallback(() => {
-            if (src) {
-                useImageStore.getState().setLoadedResource(resourceId, {
-                    imageUrl: src,
-                })
-            }
-        }, [resourceId, src])
+    const onLoad = useCallback(() => {
+        if (src) {
+            useImageStore.getState().setLoadedResource(resourceId, {
+                imageUrl: src,
+            })
+        }
+    }, [resourceId, src])
 
-        const failedResource = useImageStore((state) => state.erroredResources[resourceId])
-        const loadedResource = useImageStore((state) => state.loadedResource[resourceId])
+    const failedResource = useImageStore((state) => state.erroredResources[resourceId])
+    const loadedResource = useImageStore((state) => state.loadedResource[resourceId])
 
-        const content = () => {
-            if (icon) {
-                return (
-                    <Box centerContent horizontal height="100%" background="level4">
-                        <Icon type={icon} color="gray2" />
-                    </Box>
-                )
-            }
-
-            //initial image load - this should render for each resourceId once to save the failed/loaded state so subsequent instances don't need to check
-            if (src && !failedResource && !loadedResource) {
-                return (
-                    <img
-                        src={src}
-                        className={avatarImageStyle}
-                        style={{
-                            opacity: 0,
-                        }}
-                        onLoad={onLoad}
-                        onError={onError}
-                    />
-                )
-            }
-
-            if (loadedResource) {
-                return <img src={src} className={avatarImageStyle} />
-            }
+    const content = () => {
+        if (icon) {
+            return (
+                <Box centerContent horizontal height="100%" background="level4">
+                    <Icon type={icon} color="gray2" />
+                </Box>
+            )
         }
 
-        return (
-            <Container
-                display="block"
-                variants={{ initial: { scale: 1 }, hover: { scale: 1.1 } }}
-                ref={ref}
-                shrink={false}
-                position="relative"
+        //initial image load - this should render for each resourceId once to save the failed/loaded state so subsequent instances don't need to check
+        if (src && !failedResource && !loadedResource) {
+            return (
+                <img
+                    src={src}
+                    className={avatarImageStyle}
+                    style={{
+                        opacity: 0,
+                    }}
+                    onLoad={onLoad}
+                    onError={onError}
+                />
+            )
+        }
+
+        if (loadedResource) {
+            return <img src={src} className={avatarImageStyle} />
+        }
+    }
+
+    const dot = props.dot && (
+        <FadeInBox
+            background="positive"
+            borderRadius="full"
+            style={{
+                position: `absolute`,
+                right: `0%`,
+                bottom: `0%`,
+                width: `100%`,
+                height: `100%`,
+                maxWidth: `var(--dot-width, 50px)`,
+                maxHeight: `var(--dot-width, 50px)`,
+                borderColor: `var(--background)`,
+                border: `var(--dot-border-width) solid`,
+                transformOrigin: `center center`,
+                transform: ` rotate(45deg) translateX(var(--dot-offset, 50%)) scale(0.37)`,
+            }}
+        />
+    )
+
+    return (
+        <Container
+            display="block"
+            variants={{ initial: { scale: 1 }, hover: { scale: 1.1 } }}
+            ref={ref}
+            shrink={false}
+            position="relative"
+            className={avatarAtoms({
+                size: size ?? height,
+            })}
+            {...boxProps}
+        >
+            <Box
+                absoluteFill
+                overflow="hidden"
+                {...boxProps}
                 className={clsx(
                     avatarToggleClasses({ stacked, border, circle: type === 'user' }),
                     undefined,
@@ -159,12 +198,11 @@ const _Avatar = forwardRef<HTMLElement, Omit<Props, 'userId'> & { resourceId: st
                 style={{
                     // all users should have a image uploaded but in the case they somehow don't, or fails to load, we use a placeholder image
                     backgroundImage: failedResource ? `url(/placeholders/pp1.png)` : 'none',
-                    overflow: 'hidden',
                 }}
-                {...boxProps}
             >
                 {content()}
-            </Container>
-        )
-    },
-)
+            </Box>
+            <AnimatePresence>{dot}</AnimatePresence>
+        </Container>
+    )
+})
