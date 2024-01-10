@@ -3,7 +3,7 @@ set -euo pipefail
 
 PORT=$1
 NAME=$2
-ITERATIONS=${3:-200} # Set ITERATIONS to the 3rd argument, or default to 200 to wait for 20 seconds
+ITERATIONS=${3:-300} # Set ITERATIONS to the 3rd argument, or default to 300 to wait for 30 seconds
 
 echo "Waiting for ${NAME} to launch on ${PORT} port..."
 
