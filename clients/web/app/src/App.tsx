@@ -20,6 +20,7 @@ import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
 import { AuthContextProvider } from 'hooks/useAuth'
 import { useWatchForPrivyRequestErrors } from 'hooks/useWatchForPrivyRequestErrors'
 import DebugBar from '@components/DebugBar/DebugBar'
+import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 
 FontLoader.init()
 
@@ -87,6 +88,7 @@ export const App = () => {
                         <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
                     )}
                     <Notifications />
+                    <BlockchainTxNotifier />
                     <ServiceWorkerSpacesSyncer />
                 </AuthContextProvider>
             </EmbeddedSignerContextProvider>

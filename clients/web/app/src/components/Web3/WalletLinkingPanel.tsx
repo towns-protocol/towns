@@ -3,6 +3,8 @@ import { Address, useBalance } from 'wagmi'
 import { useConnectWallet, usePrivy, useWallets } from '@privy-io/react-auth'
 import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
 import {
+    BlockchainTransactionType,
+    useIsTransactionPending,
     useLinkWalletTransaction,
     useLinkedWallets,
     useUnlinkWalletTransaction,
@@ -14,9 +16,8 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useAuth } from 'hooks/useAuth'
 import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { useErrorToast } from 'hooks/useErrorToast'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { formatEthDisplay, mapToErrorMessage } from './utils'
+import { formatEthDisplay } from './utils'
 
 export function WalletLinkingPanel() {
     const [unlinkModal, setUnlinkModal] = useState<{
@@ -38,16 +39,8 @@ export function WalletLinkingPanel() {
         })
     const { loggedInWalletAddress } = useAuth()
     const { wallets: connectedWallets } = useWallets()
-    const {
-        isLoading: isLoadingLinkingWallet,
-        linkWalletTransaction,
-        error: errorLinkWallet,
-    } = useLinkWalletTransaction()
-    const {
-        isLoading: isLoadingUnlinkingWallet,
-        unlinkWalletTransaction,
-        error: errorUnlinkWallet,
-    } = useUnlinkWalletTransaction()
+    const { linkWalletTransaction } = useLinkWalletTransaction()
+    const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
     const getSigner = useGetEmbeddedSigner()
 
     const onLinkClick = useConnectThenLink({
@@ -56,14 +49,6 @@ export function WalletLinkingPanel() {
 
     const { data: linkedWallets } = useLinkedWallets()
 
-    useErrorToast({
-        errorMessage: errorLinkWallet ? mapToErrorMessage(errorLinkWallet) : undefined,
-    })
-
-    useErrorToast({
-        errorMessage: errorUnlinkWallet ? mapToErrorMessage(errorUnlinkWallet) : undefined,
-    })
-
     async function onUnlinkClick(addressToUnlink: Address) {
         const signer = await getSigner()
         if (!signer || !connectedWallets) {
@@ -71,6 +56,8 @@ export function WalletLinkingPanel() {
         }
         unlinkWalletTransaction(signer, addressToUnlink)
     }
+    const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
+    const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
 
     if (!loggedInWalletAddress) {
         return null
@@ -92,14 +79,21 @@ export function WalletLinkingPanel() {
                     />
                 )
             })}
-            <PanelButton onClick={onLinkClick}>
+            <PanelButton
+                cursor={
+                    isWalletLinkingPending || isWalletUnLinkingPending ? 'not-allowed' : 'pointer'
+                }
+                opacity={isWalletLinkingPending || isWalletUnLinkingPending ? '0.5' : 'opaque'}
+                disabled={isWalletLinkingPending || isWalletUnLinkingPending}
+                onClick={onLinkClick}
+            >
                 <Box width="height_md" alignItems="center">
                     <Icon type="link" size="square_sm" />
                 </Box>
                 <Paragraph color="default">Link new wallet</Paragraph>
             </PanelButton>
-            {isLoadingLinkingWallet && <FullPanelOverlay text="Linking Wallet" />}
-            {isLoadingUnlinkingWallet && <FullPanelOverlay text="Unlinking Wallet" />}
+            {/* {isLoadingLinkingWallet && <FullPanelOverlay text="Linking Wallet" />} */}
+            {/* {isLoadingUnlinkingWallet && <FullPanelOverlay text="Unlinking Wallet" />} */}
 
             {unlinkModal.visible && (
                 <ModalContainer minWidth="auto" onHide={hideUnlinkModal}>
@@ -178,6 +172,9 @@ export function LinkedWallet({
         enabled: isTownsWallet,
         watch: true,
     })
+    const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
+    const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
+
     return (
         <PanelButton
             cursor="auto"
@@ -208,6 +205,13 @@ export function LinkedWallet({
                 <ExportWallet />
             ) : (
                 <IconButton
+                    cursor={
+                        isWalletLinkingPending || isWalletUnLinkingPending
+                            ? 'not-allowed'
+                            : 'pointer'
+                    }
+                    disabled={isWalletLinkingPending || isWalletUnLinkingPending}
+                    opacity={isWalletLinkingPending || isWalletUnLinkingPending ? '0.5' : 'opaque'}
                     icon="unlink"
                     color="default"
                     onClick={() => onUnlinkClick?.(address)}

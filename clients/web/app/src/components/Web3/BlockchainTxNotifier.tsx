@@ -1,0 +1,153 @@
+import React, { useMemo, useState } from 'react'
+import {
+    BlockchainStoreTx,
+    BlockchainTransactionType,
+    Membership,
+    useMyMembership,
+    useOnTransactionUpdated,
+} from 'use-zion-client'
+
+import headlessToast, { Toast, toast } from 'react-hot-toast/headless'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { Box, Icon, IconButton, Text } from '@ui'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { mapToErrorMessage } from './utils'
+
+type ToastProps = {
+    tx: BlockchainStoreTx
+    successMessage: string
+    pendingMessage?: string
+    pendingContextMessage?: string
+    successContextMessage?: string
+    errorMessage?: string
+    errorContextMessage?: string
+}
+
+export function BlockchainTxNotifier() {
+    const spaceId = useSpaceIdFromPathname()
+    const myMembership = useMyMembership(spaceId ?? '')
+    const isMember = myMembership === Membership.Join
+
+    useOnTransactionUpdated((tx) => {
+        if (tx.status === 'potential') {
+            switch (tx.type) {
+                case BlockchainTransactionType.LinkWallet:
+                    if (!isMember) {
+                        // skip b/c we can wallet link when on a public town page, and we handle there
+                        return
+                    }
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Linking wallet...',
+                        successMessage: 'Wallet linked!',
+                    })
+                    break
+                case BlockchainTransactionType.UnlinkWallet:
+                    if (!isMember) {
+                        // skip b/c we can wallet link when on a public town page, and we handle there
+                        return
+                    }
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Unlinking wallet...',
+                        successMessage: 'Unlinked your wallet!',
+                    })
+                    break
+                default:
+                    break
+            }
+        }
+    })
+
+    return null
+}
+
+function generateToast(props: ToastProps) {
+    return toast.custom((t) => <MonitoringNotification {...props} toast={t} />, {
+        duration: Infinity,
+    })
+}
+
+function MonitoringNotification(props: ToastProps & { toast: Toast }) {
+    const {
+        tx,
+        successMessage,
+        pendingMessage = 'Transaction pending...',
+        pendingContextMessage,
+        successContextMessage,
+        errorMessage = mapToErrorMessage(tx.error),
+        errorContextMessage,
+        toast,
+    } = props
+
+    const [status, setStatus] = useState(tx.status)
+
+    const isSuccess = status === 'success'
+    const isPending = status === 'pending'
+    const isPotential = status === 'potential'
+
+    const { message, contextMessage } = useMemo(() => {
+        return status === 'pending' || status === 'potential'
+            ? {
+                  message: pendingMessage,
+                  contextMessage: pendingContextMessage,
+              }
+            : status === 'success'
+            ? {
+                  message: successMessage,
+                  contextMessage: successContextMessage,
+              }
+            : {
+                  message: errorMessage,
+                  contextMessage: errorContextMessage,
+              }
+    }, [
+        status,
+        pendingMessage,
+        pendingContextMessage,
+        successMessage,
+        successContextMessage,
+        errorMessage,
+        errorContextMessage,
+    ])
+
+    useOnTransactionUpdated((tx) => {
+        setStatus(tx.status)
+    })
+
+    return (
+        <Box gap width="300" justifyContent="spaceBetween">
+            <Box horizontal gap justifyContent="spaceBetween">
+                <Box horizontal gap alignItems="center">
+                    {isPending || isPotential ? (
+                        <ButtonSpinner />
+                    ) : (
+                        <Icon
+                            color={isSuccess ? 'positive' : 'negative'}
+                            type={isSuccess ? 'check' : 'alert'}
+                        />
+                    )}
+                    <Text as="span" display="inline">
+                        {message}
+                    </Text>
+                </Box>
+
+                <IconButton
+                    alignSelf="center"
+                    size="square_xs"
+                    icon="close"
+                    border="level4"
+                    rounded="full"
+                    disabled={isPending || isPotential}
+                    visibility={isPending || isPotential ? 'hidden' : 'visible'}
+                    onClick={() => headlessToast.dismiss(toast.id)}
+                />
+            </Box>
+            {contextMessage && (
+                <Box gap>
+                    <Text size="sm">{contextMessage}</Text>
+                </Box>
+            )}
+        </Box>
+    )
+}
