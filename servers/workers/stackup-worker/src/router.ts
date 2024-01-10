@@ -192,28 +192,26 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
     if (responseFetched.status !== 200) {
         return new Response('Invalid Paymaster Response', { status: responseFetched.status })
     }
-    const response = await responseFetched.json()
-    if (!isPmSponsorUserOperationResponse(response)) {
+    const json = await responseFetched.json()
+    if (!isPmSponsorUserOperationResponse(json)) {
         return new Response('Invalid Paymaster Response', { status: 400 })
     }
     const statusCode = responseFetched.status
     if (statusCode !== 200) {
         return new Response('Paymaster Error', {
             status: statusCode,
-            statusText: `Error code ${response?.error?.code}, message ${response?.error?.message}`,
+            statusText: `Error code ${json?.error?.code}, message ${json?.error?.message}`,
         })
     } else {
-        if (response.error) {
-            console.error(
-                `stackup API returned error: ${response.error.code}, ${response.error.message}`,
-            )
+        if (json.error) {
+            console.error(`stackup API returned error: ${json.error.code}, ${json.error.message}`)
             return new Response('Internal Service Error', {
                 status: 500,
-                statusText: `Error code ${response.error.code}, message ${response.error.message}`,
+                statusText: `Error code ${json.error.code}, message ${json.error.message}`,
             })
         }
-        console.log('stackup API response:', response.result)
-        return response
+        console.log('stackup API response:', json.result)
+        return new Response(JSON.stringify(json.result), { status: 200 })
     }
     // proxy successful VerifyingPaymasterResult response to caller
 })

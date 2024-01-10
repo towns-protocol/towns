@@ -25,7 +25,8 @@
         "ethers": "^5.7.2",
         "nanoid": "^4.0.0",
         "userop": "^0.3.7",
-        "viem": "^1.18.2"
+        "viem": "^1.18.2",
+        "zod": "^3.21.4"
     },
     "devDependencies": {
         "@types/jest": "^29.5.3",

@@ -147,7 +147,12 @@ export interface ISpaceDapp<V extends Versions = TDefaultVersion> {
 export interface IUseropSpaceDapp<V extends Versions = TDefaultVersion> extends ISpaceDapp<V> {
     getAbstractAccountAddress: (args: UserOpParams) => Promise<string>
     getTown: (spaceId: string) => Promise<Town>
-    sendUserOp: (args: UserOpParams) => Promise<ISendUserOperationResponse>
+    sendUserOp: (
+        args: UserOpParams & {
+            functionHashForPaymasterProxy: string
+            townId: string
+        },
+    ) => Promise<ISendUserOperationResponse>
     getUserOpClient: () => Promise<UseropClient>
     sendCreateSpaceOp: (
         args: Parameters<ISpaceDapp['createSpace']>,

@@ -12,7 +12,7 @@ describe.skip('UserOpSpaceDapp tests', () => {
 
         // ANVIL
         // also mint the mock nft in case there's gating on creating a space
-        if (!process.env.PAYMASTER_URL) {
+        if (!process.env.PAYMASTER_PROXY_URL) {
             await bob.mintMockNFT()
         }
 
@@ -20,6 +20,8 @@ describe.skip('UserOpSpaceDapp tests', () => {
             chainId: bob.network.chainId,
             provider: bob,
             bundlerUrl: process.env.BUNDLER_URL,
+            paymasterProxyUrl: process.env.PAYMASTER_PROXY_URL,
+            paymasterProxyAuthSecret: process.env.PAYMASTER_PROXY_AUTH_SECRET,
             rpcUrl: process.env.RPC_URL!,
             entryPointAddress: process.env.ENTRY_POINT_ADDRESS,
             factoryAddress: process.env.FACTORY_ADDRESS,
@@ -32,14 +34,14 @@ describe.skip('UserOpSpaceDapp tests', () => {
         // ANVIL
         // must fund the AA wallet to pass gas verification checks b/c no paymaster
         // also mint the mock nft in case there's gating on creating a space
-        if (!process.env.PAYMASTER_URL) {
+        if (!process.env.PAYMASTER_PROXY_URL) {
             await bob.mintMockNFT(abstractAccount)
         }
 
         const townInfo = createSpaceParams({ feeRecipient: bob.wallet.address })
 
         const op = await spaceDapp.sendCreateSpaceOp([townInfo, bob.wallet], {
-            url: process.env.PAYMASTER_URL!,
+            url: process.env.PAYMASTER_PROXY_URL!,
         })
         op.userOpHash
         const opReceipt = await op.wait()
@@ -82,13 +84,13 @@ describe.skip('UserOpSpaceDapp tests', () => {
         try {
             const spaceParams = createSpaceParams({ feeRecipient: bob.wallet.address })
             const spaceOp = await bobSpaceDapp.sendCreateSpaceOp([spaceParams, bob.wallet], {
-                url: process.env.PAYMASTER_URL!,
+                url: process.env.PAYMASTER_PROXY_URL!,
             })
             await spaceOp.wait()
             const op = await alicSpaceDapp.sendJoinTownOp(
                 [spaceParams.spaceId, alice.wallet.address, alice.wallet],
                 {
-                    url: process.env.PAYMASTER_URL!,
+                    url: process.env.PAYMASTER_PROXY_URL!,
                 },
             )
             const receipt = await op.wait()

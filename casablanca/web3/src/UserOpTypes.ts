@@ -19,9 +19,13 @@ export type UserOpSpaceDappConfig<V extends Versions = TDefaultVersion> = {
      */
     bundlerUrl?: string
     /**
-     * UserOp client
+     * Send userops to paymaster proxy for verification. Omitting this requires users to fund their AA wallet with gas.
      */
-    // userOpClient: Client
+    paymasterProxyUrl?: string
+    /**
+     * Bearer token for paymaster proxy
+     */
+    paymasterProxyAuthSecret?: string
     entryPointAddress?: string
     factoryAddress?: string
 }
@@ -30,7 +34,8 @@ export type PaymasterConfig = {
     /**
      * Paymaster URL
      */
-    url: string
+    url?: string
+    usePaymasterProxy?: boolean
 }
 
 export type UserOpParams = {

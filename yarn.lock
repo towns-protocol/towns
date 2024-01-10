@@ -6584,6 +6584,7 @@ __metadata:
     typescript: ^5.1.6
     userop: ^0.3.7
     viem: ^1.18.2
+    zod: ^3.21.4
   languageName: unknown
   linkType: soft
 
