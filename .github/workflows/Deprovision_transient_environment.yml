@@ -29,7 +29,7 @@ jobs:
             GIT_PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
             # We need to set these 2 while destroying. otherwise lite environments get confused during the deprovision step as terraform tries to delete components that don't exist. But when we set these, lite or not, all components are deleted.
             TF_VAR_num_nodes: 0
-            TF_VAR_is_db_cloned: false
+            TF_VAR_is_clean_environment: true
 
         steps:
             - name: Configure AWS credentials
