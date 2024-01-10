@@ -8,17 +8,23 @@ globalThis.OLM_OPTIONS = {}
 const cryptoStoreCache = new Map<string, CryptoStore>()
 const decryptorCache = new Map<string, MegolmDecryption>()
 
+export interface PlaintextDetails {
+    body: string | undefined
+    mentions: string | undefined
+    threadId: string | undefined
+}
+
 export async function decryptWithMegolm(
     userId: string,
     channelId: string,
     encryptedData: EncryptedData,
-) {
+): Promise<PlaintextDetails | undefined> {
     const decryptor = await getDecryptor(userId)
     const plaintext = await decryptor.decrypt(channelId, encryptedData)
     console.log('sw:push: decrypted plaintext', plaintext)
-    // if the decryption is successful, plaintext has the string, else it's undefined
-    const plaintextBody = plaintext ? getPlaintextBody(plaintext) : undefined
-    console.log('sw:push: decrypted plaintextBody', plaintextBody ?? 'undefined')
+    // if the decryption is successful, plaintext has the string, else it's null
+    const plaintextBody = plaintext ? extractDetails(plaintext) : undefined
+    console.log('sw:push: regex plaintext body', plaintextBody ?? 'null')
     return plaintextBody
 }
 
@@ -56,14 +62,18 @@ async function newMegolmDecryption(
     return new MegolmDecryption({ olmDevice })
 }
 
-function getPlaintextBody(input: string): string | undefined {
-    const regex = /"body"\s*:\s*"((?:\\"|[^"])*)"/
-    const match = input.match(regex)
+const bodyRegex = /"body":"(.*?)"(?=,|})/
+const mentionsRegex = /"mentions":(\[\{.*?\}\])(?=,|})/
+const threadIdRegex = /"threadId":"(.*?)"(?=,|})/
 
-    if (match) {
-        const extractedBody = match[1].replace(/\\"/g, '"')
-        return extractedBody
-    } else {
-        return undefined
+function extractDetails(jsonString: string): PlaintextDetails {
+    const bodyMatch = jsonString.match(bodyRegex)
+    const mentionsMatch = jsonString.match(mentionsRegex)
+    const threadIdMatch = jsonString.match(threadIdRegex)
+
+    return {
+        body: bodyMatch ? bodyMatch[1] : undefined,
+        mentions: mentionsMatch ? mentionsMatch[1] : undefined,
+        threadId: threadIdMatch ? threadIdMatch[1] : undefined,
     }
 }

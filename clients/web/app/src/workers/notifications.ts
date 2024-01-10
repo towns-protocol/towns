@@ -2,14 +2,23 @@ import { RoomMember, SpaceData, UserIdToMember } from 'use-zion-client'
 import {
     AppNotification,
     AppNotificationType,
+    NotificationContent,
+    NotificationDM,
+    NotificationMention,
+    NotificationNewMessage,
+    NotificationReplyTo,
     ServiceWorkerMessageType,
     WEB_PUSH_NAVIGATION_CHANNEL,
 } from './types.d'
 import { User, startDB } from '../idb/notificationsMeta'
-import { appNotificationFromPushEvent, pathFromAppNotification } from './notificationParsers'
+import {
+    appNotificationFromPushEvent,
+    notificationContentFromEvent,
+    pathFromAppNotification,
+} from './notificationParsers'
 import { checkClientIsVisible, getShortenedName } from './utils'
 
-import { decryptWithMegolm } from './mecholmDecryption'
+import { PlaintextDetails, decryptWithMegolm } from './mecholmDecryption'
 import { env } from '../utils/environment'
 import { getEncryptedData } from './data_transforms'
 
@@ -141,19 +150,19 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                 return
             }
 
-            const { title, body } = await getNotificationContent(notification)
-            console.log(`sw:push: notification content { title: ${title}, body: ${body} }`)
+            const content = await getNotificationContent(notification)
+            console.log('sw:push:getNotificationContent', content)
 
             // options: https://developer.mozilla.org/en-US/docs/Web/API/Notification
-            if (title && body) {
+            if (content?.title && content?.body) {
                 const options: NotificationOptions = {
-                    body,
+                    body: content.body,
+                    data: JSON.stringify(content),
+                    tag: notification.content.channelId,
                     silent: false,
                     icon: '/pwa/maskable_icon_x192.png',
-                    data,
-                    tag: notification.content.channelId,
                 }
-                await worker.registration.showNotification(title, options)
+                await worker.registration.showNotification(content.title, options)
                 console.log('sw:push: Notification shown')
             } else {
                 console.log(
@@ -169,12 +178,13 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
         event.notification.close()
         event.waitUntil(
             worker.clients.matchAll({ type: 'window' }).then(async (clientsArr) => {
-                const data = appNotificationFromPushEvent(event.notification.data)
+                const data = notificationContentFromEvent(event.notification.data)
                 if (!data) {
                     console.log('sw:push: worker could not parse notification data')
                     return
                 }
                 const pathToNavigateTo = pathFromAppNotification(data)
+                console.log('sw:push: pathToNavigateTo', pathToNavigateTo)
 
                 const hadWindowToFocus = clientsArr.find((windowClient) =>
                     windowClient.url.includes(worker.location.origin),
@@ -197,12 +207,14 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
 }
 
 function generateNewNotificationMessage(
-    townName: string,
+    spaceId: string,
+    townName: string | undefined,
+    channelId: string,
     channelName: string | undefined,
     sender: string | undefined,
-    plaintext: string | undefined,
-) {
-    let body = plaintext
+    plaintext: PlaintextDetails | undefined,
+): NotificationNewMessage {
+    let body = plaintext?.body
     if (!body) {
         switch (true) {
             case stringHasValue(channelName) && stringHasValue(sender):
@@ -219,9 +231,21 @@ function generateNewNotificationMessage(
                 break
         }
     }
+    if (townName) {
+        return {
+            kind: AppNotificationType.NewMessage,
+            spaceId,
+            channelId,
+            title: townName,
+            body,
+        }
+    }
     return {
-        title: townName,
-        body,
+        kind: AppNotificationType.NewMessage,
+        spaceId,
+        channelId,
+        title: '',
+        body: '',
     }
 }
 
@@ -253,26 +277,17 @@ function generateDmTitle(sender: string | undefined, recipients: User[]): string
 }
 
 function generateDM(
+    channelId: string,
     myUserId: string | undefined,
     sender: string | undefined,
     recipients: User[] | undefined,
-    plaintext: string | undefined,
-) {
+    plaintext: PlaintextDetails | undefined,
+): NotificationDM {
     // if myUserId is available, remove it from the recipients list
     const recipientsExcludeMe =
         recipients?.filter((recipient) => (myUserId ? recipient.id !== myUserId : false)) ?? []
-    console.log(
-        'sw:push: recipientsExcludeMe',
-        recipientsExcludeMe,
-        'recipients',
-        recipients,
-        'myUserId',
-        myUserId,
-        'senderName',
-        sender,
-    )
     const title = generateDmTitle(sender, recipientsExcludeMe)
-    let body = plaintext
+    let body = plaintext?.body
     if (!body) {
         switch (true) {
             case stringHasValue(sender) && recipientsExcludeMe?.length === 0:
@@ -294,18 +309,22 @@ function generateDM(
     }
     console.log('sw:push: generateDM OUTPUT', { title, body })
     return {
+        kind: AppNotificationType.DirectMessage,
+        channelId,
         title,
         body,
     }
 }
 
 function generateMentionedMessage(
-    townName: string,
+    spaceId: string,
+    townName: string | undefined,
+    channelId: string,
     channelName: string | undefined,
     sender: string | undefined,
-    plaintext: string | undefined,
-) {
-    let body = plaintext
+    plaintext: PlaintextDetails | undefined,
+): NotificationMention {
+    let body = plaintext?.body
     if (!body) {
         switch (true) {
             case stringHasValue(channelName) && stringHasValue(sender):
@@ -323,18 +342,24 @@ function generateMentionedMessage(
         }
     }
     return {
-        title: townName,
+        kind: AppNotificationType.Mention,
+        spaceId,
+        channelId,
+        threadId: plaintext?.threadId,
+        title: townName ?? '',
         body,
     }
 }
 
 function generateReplyToMessage(
-    townName: string,
+    spaceId: string,
+    townName: string | undefined,
+    channelId: string,
     channelName: string | undefined,
     sender: string | undefined,
-    plaintext: string | undefined,
-) {
-    let body = plaintext
+    plaintext: PlaintextDetails | undefined,
+): NotificationReplyTo {
+    let body = plaintext?.body
     if (!body) {
         switch (true) {
             case stringHasValue(channelName) && stringHasValue(sender):
@@ -352,15 +377,18 @@ function generateReplyToMessage(
         }
     }
     return {
-        title: townName,
+        kind: AppNotificationType.ReplyTo,
+        spaceId,
+        channelId,
+        threadId: plaintext?.threadId ?? '',
+        title: townName ?? '',
         body,
     }
 }
 
-async function getNotificationContent(notification: AppNotification): Promise<{
-    title: string | undefined
-    body: string | undefined
-}> {
+async function getNotificationContent(
+    notification: AppNotification,
+): Promise<NotificationContent | undefined> {
     let townName: string | undefined = undefined
     let channelName: string | undefined = undefined
     let senderName: string | undefined = undefined
@@ -415,36 +443,43 @@ async function getNotificationContent(notification: AppNotification): Promise<{
 
     switch (notification.content.kind) {
         case AppNotificationType.DirectMessage:
-            return generateDM(myUserId, senderName, recipients, plaintext)
+            return generateDM(
+                notification.content.channelId,
+                myUserId,
+                senderName,
+                recipients,
+                plaintext,
+            )
         case AppNotificationType.NewMessage:
-            if (townName) {
-                return generateNewNotificationMessage(townName, channelName, senderName, plaintext)
-            }
-            return {
-                title: undefined,
-                body: undefined,
-            }
+            return generateNewNotificationMessage(
+                notification.content.spaceId,
+                townName,
+                notification.content.channelId,
+                channelName,
+                senderName,
+                plaintext,
+            )
         case AppNotificationType.Mention:
-            if (townName) {
-                return generateMentionedMessage(townName, channelName, senderName, plaintext)
-            }
-            return {
-                title: undefined,
-                body: undefined,
-            }
+            return generateMentionedMessage(
+                notification.content.spaceId,
+                townName,
+                notification.content.channelId,
+                channelName,
+                senderName,
+                plaintext,
+            )
         case AppNotificationType.ReplyTo:
-            if (townName) {
-                return generateReplyToMessage(townName, channelName, senderName, plaintext)
-            }
-            return {
-                title: undefined,
-                body: undefined,
-            }
+            return generateReplyToMessage(
+                notification.content.spaceId,
+                townName,
+                notification.content.channelId,
+                channelName,
+                senderName,
+                plaintext,
+            )
+
         default:
-            return {
-                title: undefined,
-                body: undefined,
-            }
+            return undefined
     }
 }
 
@@ -556,14 +591,14 @@ function stringHasValue(s: string | undefined): boolean {
 async function tryDecryptEvent(
     userId: string,
     notification: AppNotification,
-): Promise<string | undefined> {
+): Promise<PlaintextDetails | undefined> {
     console.log('sw:push: tryDecryptEvent', userId, notification)
     if (!userId) {
         return undefined
     }
 
     const { event, channelId } = notification.content
-    let plaintext: string | undefined
+    let plaintext: PlaintextDetails | undefined
     let cancelTimeout: () => void
 
     const timeoutPromise = new Promise<void>((resolve, reject) => {
@@ -585,7 +620,7 @@ async function tryDecryptEvent(
             console.log('sw:push: tryDecryptEvent', event)
             const encryptedData = getEncryptedData(event)
             plaintext = await decryptWithMegolm(userId, channelId, encryptedData)
-            console.log('sw:push: decrypted plaintext', plaintext)
+            console.log(`sw:push: decryptWithMegolm returns "${plaintext}"`)
             return plaintext
         } catch (error) {
             console.error('sw:push: error decrypting', error)
@@ -601,6 +636,6 @@ async function tryDecryptEvent(
         console.error('sw:push: error decrypting event', error)
     }
 
-    console.log('sw:push: tryDecryptEvent result', plaintext)
+    console.log(`sw:push: tryDecryptEvent result: "${plaintext}"`)
     return plaintext
 }
