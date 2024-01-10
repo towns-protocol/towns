@@ -33,6 +33,7 @@
 [rpc_endpoints]
   base_anvil = "http://127.0.0.1:8545"
   river_anvil = "http://127.0.0.1:8546"
+  river = "${RIVER_RPC_URL}"
   goerli = "${GOERLI_RPC_URL}"
   sepolia = "${SEPOLIA_RPC_URL}"
   base_goerli = "${BASE_GOERLI_RPC_URL}"
