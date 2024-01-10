@@ -178,25 +178,6 @@ resource "aws_s3_bucket_versioning" "post_provision_config_lambda_code_versionin
   }
 }
 
-
-module "ecr" {
-  source  = "mattyait/ecr/aws"
-  version = "1.1.0"
-
-  image_names = [
-    "river-node",
-    "hnt-infra",
-  ]
-  scan_on_push         = true
-  image_tag_mutability = "MUTABLE"
-
-  max_untagged_image_count = 5
-  max_tagged_image_count   = 50
-  protected_tags           = ["latest"]
-
-  tags = module.global_constants.tags
-}
-
 module "public_ecr" {
   source  = "mattyait/ecr/aws"
   version = "1.1.0"

@@ -33,11 +33,6 @@ output "river_node_credentials_secret" {
   value       = module.river_node_credentials
 }
 
-output "ecr" {
-  description = "ECR repository"
-  value       = module.ecr
-}
-
 output "public_ecr" {
   description = "Public ECR repository"
   value       = module.public_ecr
