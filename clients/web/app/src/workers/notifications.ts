@@ -161,7 +161,6 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     tag: notification.content.channelId,
                     silent: false,
                     icon: `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${notification.content.senderId}/thumbnail100`,
-                    badge: '/pwa/maskable_icon_x192.png',
                     renotify: true,
                 }
                 await worker.registration.showNotification(content.title, options)
