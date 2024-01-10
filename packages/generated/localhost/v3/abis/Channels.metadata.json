@@ -95,6 +95,113 @@
         "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          }
+        ],
+        "name": "ChannelCreated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          }
+        ],
+        "name": "ChannelRemoved",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "ChannelRoleAdded",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "ChannelRoleRemoved",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          }
+        ],
+        "name": "ChannelUpdated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
             "indexed": false,
             "internalType": "uint32",
             "name": "version",
@@ -589,11 +696,11 @@
       ]
     },
     "contracts/src/towns/facets/channels/ChannelBase.sol": {
-      "keccak256": "0x323c0f56ddcca8d0e96dd3a75e034266d1fd70facd8fe6bc7a3ee1fff549b816",
+      "keccak256": "0xedfc5cecbe778e583b276cac3209abc021b22721fde34d3889b344059f5ae558",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://93d9fd906fd04eed7d36ec91271715f6cbb54512e2ecacd9ca70df58303ba036",
-        "dweb:/ipfs/QmWs8PNKGHi3ux6xLaoa1V4Fq484nwNqrMXUKFZQvD77sy"
+        "bzz-raw://45695e5398de3f93427e9f17d792409dbfd2536ba045969f5f5c99f4dc4fbe9f",
+        "dweb:/ipfs/QmUbY57ZCmAst3atkqbVdizkGYXR9v4zrz4PP5qj7T1fgp"
       ]
     },
     "contracts/src/towns/facets/channels/ChannelService.sol": {
@@ -621,11 +728,11 @@
       ]
     },
     "contracts/src/towns/facets/channels/IChannel.sol": {
-      "keccak256": "0x9b484cab68a866f3e10d770f565825df92d00e526ab5aa6f3fc2fe707e4037f0",
+      "keccak256": "0xb2ef89f8b52034c0e3ce805defa3f1b29ac8255b6f8fc4374eef5459023b6bc6",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9fabc7a3f384521ce3b1b4e06aebd877f57be6f0e4389c21883a546b1b544cbc",
-        "dweb:/ipfs/QmfNzmykukAEgVGFrrwbB11ynDkBZbCmKaxMaQFRMa8Cvt"
+        "bzz-raw://fb66c5ce9b9b8ac447db0bf40bd7121fa2f7730cbb9e40bed3566dce0cdf0d40",
+        "dweb:/ipfs/QmeFNZmuYXdRfJPMqitpbjvKGqKvxj1DTDbZ7uzY5RsXkf"
       ]
     },
     "contracts/src/towns/facets/entitlements/EntitlementsManagerStorage.sol": {

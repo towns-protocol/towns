@@ -463,11 +463,11 @@
       ]
     },
     "contracts/src/towns/facets/channels/IChannel.sol": {
-      "keccak256": "0x9b484cab68a866f3e10d770f565825df92d00e526ab5aa6f3fc2fe707e4037f0",
+      "keccak256": "0xb2ef89f8b52034c0e3ce805defa3f1b29ac8255b6f8fc4374eef5459023b6bc6",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9fabc7a3f384521ce3b1b4e06aebd877f57be6f0e4389c21883a546b1b544cbc",
-        "dweb:/ipfs/QmfNzmykukAEgVGFrrwbB11ynDkBZbCmKaxMaQFRMa8Cvt"
+        "bzz-raw://fb66c5ce9b9b8ac447db0bf40bd7121fa2f7730cbb9e40bed3566dce0cdf0d40",
+        "dweb:/ipfs/QmeFNZmuYXdRfJPMqitpbjvKGqKvxj1DTDbZ7uzY5RsXkf"
       ]
     },
     "contracts/src/towns/facets/roles/IRoles.sol": {

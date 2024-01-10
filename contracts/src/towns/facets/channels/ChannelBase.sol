@@ -8,7 +8,6 @@ import {IChannelBase} from "./IChannel.sol";
 
 // services
 import {ChannelService} from "./ChannelService.sol";
-
 import {Validator} from "contracts/src/utils/Validator.sol";
 
 abstract contract ChannelBase is IChannelBase {
@@ -20,6 +19,7 @@ abstract contract ChannelBase is IChannelBase {
     Validator.checkLength(metadata, 0);
     Validator.checkLength(channelId, 2);
     ChannelService.createChannel(channelId, metadata, roleIds);
+    emit ChannelCreated(msg.sender, channelId);
   }
 
   function _getChannel(
@@ -71,10 +71,12 @@ abstract contract ChannelBase is IChannelBase {
   ) internal {
     Validator.checkLength(channelId, 2);
     ChannelService.updateChannel(channelId, metadata, disabled);
+    emit ChannelUpdated(msg.sender, channelId);
   }
 
-  function _removeChannel(string memory id) internal {
-    ChannelService.removeChannel(id);
+  function _removeChannel(string memory channelId) internal {
+    ChannelService.removeChannel(channelId);
+    emit ChannelRemoved(msg.sender, channelId);
   }
 
   function _addRoleToChannel(
@@ -82,6 +84,7 @@ abstract contract ChannelBase is IChannelBase {
     uint256 roleId
   ) internal {
     ChannelService.addRoleToChannel(channelId, roleId);
+    emit ChannelRoleAdded(msg.sender, channelId, roleId);
   }
 
   function _removeRoleFromChannel(
@@ -89,5 +92,6 @@ abstract contract ChannelBase is IChannelBase {
     uint256 roleId
   ) internal {
     ChannelService.removeRoleFromChannel(channelId, roleId);
+    emit ChannelRoleRemoved(msg.sender, channelId, roleId);
   }
 }

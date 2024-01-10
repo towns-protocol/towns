@@ -25,6 +25,9 @@ contract EntitlementsManagerBase is IEntitlementsManagerBase {
 
     // set entitlement
     EntitlementsManagerService.addEntitlement(entitlement, false);
+
+    // emit event
+    emit EntitlementModuleAdded(msg.sender, entitlement);
   }
 
   function _removeEntitlementModule(address entitlement) internal {
@@ -35,6 +38,9 @@ contract EntitlementsManagerBase is IEntitlementsManagerBase {
 
     // set entitlement
     EntitlementsManagerService.removeEntitlement(entitlement);
+
+    // emit event
+    emit EntitlementModuleRemoved(msg.sender, entitlement);
   }
 
   function _getEntitlement(

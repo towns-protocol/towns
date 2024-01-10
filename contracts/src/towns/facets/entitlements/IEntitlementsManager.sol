@@ -13,6 +13,12 @@ interface IEntitlementsManagerBase {
     string moduleType;
     bool isImmutable;
   }
+
+  // =============================================================
+  //                           Events
+  // =============================================================
+  event EntitlementModuleAdded(address indexed caller, address entitlement);
+  event EntitlementModuleRemoved(address indexed caller, address entitlement);
 }
 
 interface IEntitlementsManager is IEntitlementsManagerBase {

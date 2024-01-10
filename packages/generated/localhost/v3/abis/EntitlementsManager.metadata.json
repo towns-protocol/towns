@@ -77,6 +77,44 @@
           {
             "indexed": true,
             "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "entitlement",
+            "type": "address"
+          }
+        ],
+        "name": "EntitlementModuleAdded",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "entitlement",
+            "type": "address"
+          }
+        ],
+        "name": "EntitlementModuleRemoved",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
             "name": "previousOwner",
             "type": "address"
           },
@@ -486,11 +524,11 @@
       ]
     },
     "contracts/src/towns/facets/entitlements/EntitlementsManagerBase.sol": {
-      "keccak256": "0xe43a57bc1c5a2f30b62fa7033b4131b5e1aa2ee7803a1daa186437b840c54f85",
+      "keccak256": "0x5668f472af159cf0a61e3e3267e4cf697d7f96bfa87f868c3b47b1923bde3404",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://d4f0deb8c187f8561e5b5686cb9de2c693bbee39a6c6589d6ffd9580de56e3e3",
-        "dweb:/ipfs/QmYgUJBMn7x5BVfMShn1S3JrVcrA59zhgbYZKi56zHBUhX"
+        "bzz-raw://54d4f2eae101539fddc1f9db2fd2a9918fe67c576d49f7545cf7c9412ac7f3c7",
+        "dweb:/ipfs/Qmf7Ho2sPwFWYMhiYB4KzRczPYwskXiPJ1tFo1pEjt15WB"
       ]
     },
     "contracts/src/towns/facets/entitlements/EntitlementsManagerService.sol": {
@@ -510,11 +548,11 @@
       ]
     },
     "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol": {
-      "keccak256": "0x4731be9df77a3290fd90e464d9f8d803ce66289fede460d86abab5d6e6f07db8",
+      "keccak256": "0x21ee27ddcfc765b3d65936966a5ac79884c94badba64e741a2dd32c405f2e0c7",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://7f15dbbbc181369bf8b98feb5557a98def9109b042c865cfad7136a670c8cc50",
-        "dweb:/ipfs/QmP47HACM3kVK5QXkjEmdr15q5zAVSa2Kr48UC5PddpJmu"
+        "bzz-raw://4165837305a2e3948e76d381d4725ec5fc655487b6e1d0a80a99fd12bdd6e1bb",
+        "dweb:/ipfs/QmXxsN1Z323t9WHZej1Knu3eWK7eG1UvPVEwiXQksGzvz9"
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {

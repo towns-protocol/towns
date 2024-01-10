@@ -7,12 +7,32 @@ pragma solidity ^0.8.23;
 
 // contracts
 interface IChannelBase {
+  // =============================================================
+  //                           Structs
+  // =============================================================
   struct Channel {
     string id;
     bool disabled;
     string metadata;
     uint256[] roleIds;
   }
+
+  // =============================================================
+  //                           Events
+  // =============================================================
+  event ChannelCreated(address indexed caller, string channelId);
+  event ChannelUpdated(address indexed caller, string channelId);
+  event ChannelRemoved(address indexed caller, string channelId);
+  event ChannelRoleAdded(
+    address indexed caller,
+    string channelId,
+    uint256 roleId
+  );
+  event ChannelRoleRemoved(
+    address indexed caller,
+    string channelId,
+    uint256 roleId
+  );
 }
 
 interface IChannel is IChannelBase {

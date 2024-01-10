@@ -13,7 +13,11 @@ import type {
   Signer,
   utils,
 } from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type {
+  FunctionFragment,
+  Result,
+  EventFragment,
+} from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
@@ -124,8 +128,79 @@ export interface IChannelInterface extends utils.Interface {
     data: BytesLike
   ): Result;
 
-  events: {};
+  events: {
+    "ChannelCreated(address,string)": EventFragment;
+    "ChannelRemoved(address,string)": EventFragment;
+    "ChannelRoleAdded(address,string,uint256)": EventFragment;
+    "ChannelRoleRemoved(address,string,uint256)": EventFragment;
+    "ChannelUpdated(address,string)": EventFragment;
+  };
+
+  getEvent(nameOrSignatureOrTopic: "ChannelCreated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ChannelRemoved"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ChannelRoleAdded"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ChannelRoleRemoved"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ChannelUpdated"): EventFragment;
 }
+
+export interface ChannelCreatedEventObject {
+  caller: string;
+  channelId: string;
+}
+export type ChannelCreatedEvent = TypedEvent<
+  [string, string],
+  ChannelCreatedEventObject
+>;
+
+export type ChannelCreatedEventFilter = TypedEventFilter<ChannelCreatedEvent>;
+
+export interface ChannelRemovedEventObject {
+  caller: string;
+  channelId: string;
+}
+export type ChannelRemovedEvent = TypedEvent<
+  [string, string],
+  ChannelRemovedEventObject
+>;
+
+export type ChannelRemovedEventFilter = TypedEventFilter<ChannelRemovedEvent>;
+
+export interface ChannelRoleAddedEventObject {
+  caller: string;
+  channelId: string;
+  roleId: BigNumber;
+}
+export type ChannelRoleAddedEvent = TypedEvent<
+  [string, string, BigNumber],
+  ChannelRoleAddedEventObject
+>;
+
+export type ChannelRoleAddedEventFilter =
+  TypedEventFilter<ChannelRoleAddedEvent>;
+
+export interface ChannelRoleRemovedEventObject {
+  caller: string;
+  channelId: string;
+  roleId: BigNumber;
+}
+export type ChannelRoleRemovedEvent = TypedEvent<
+  [string, string, BigNumber],
+  ChannelRoleRemovedEventObject
+>;
+
+export type ChannelRoleRemovedEventFilter =
+  TypedEventFilter<ChannelRoleRemovedEvent>;
+
+export interface ChannelUpdatedEventObject {
+  caller: string;
+  channelId: string;
+}
+export type ChannelUpdatedEvent = TypedEvent<
+  [string, string],
+  ChannelUpdatedEventObject
+>;
+
+export type ChannelUpdatedEventFilter = TypedEventFilter<ChannelUpdatedEvent>;
 
 export interface IChannel extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -285,7 +360,56 @@ export interface IChannel extends BaseContract {
     ): Promise<void>;
   };
 
-  filters: {};
+  filters: {
+    "ChannelCreated(address,string)"(
+      caller?: PromiseOrValue<string> | null,
+      channelId?: null
+    ): ChannelCreatedEventFilter;
+    ChannelCreated(
+      caller?: PromiseOrValue<string> | null,
+      channelId?: null
+    ): ChannelCreatedEventFilter;
+
+    "ChannelRemoved(address,string)"(
+      caller?: PromiseOrValue<string> | null,
+      channelId?: null
+    ): ChannelRemovedEventFilter;
+    ChannelRemoved(
+      caller?: PromiseOrValue<string> | null,
+      channelId?: null
+    ): ChannelRemovedEventFilter;
+
+    "ChannelRoleAdded(address,string,uint256)"(
+      caller?: PromiseOrValue<string> | null,
+      channelId?: null,
+      roleId?: null
+    ): ChannelRoleAddedEventFilter;
+    ChannelRoleAdded(
+      caller?: PromiseOrValue<string> | null,
+      channelId?: null,
+      roleId?: null
+    ): ChannelRoleAddedEventFilter;
+
+    "ChannelRoleRemoved(address,string,uint256)"(
+      caller?: PromiseOrValue<string> | null,
+      channelId?: null,
+      roleId?: null
+    ): ChannelRoleRemovedEventFilter;
+    ChannelRoleRemoved(
+      caller?: PromiseOrValue<string> | null,
+      channelId?: null,
+      roleId?: null
+    ): ChannelRoleRemovedEventFilter;
+
+    "ChannelUpdated(address,string)"(
+      caller?: PromiseOrValue<string> | null,
+      channelId?: null
+    ): ChannelUpdatedEventFilter;
+    ChannelUpdated(
+      caller?: PromiseOrValue<string> | null,
+      channelId?: null
+    ): ChannelUpdatedEventFilter;
+  };
 
   estimateGas: {
     addRoleToChannel(

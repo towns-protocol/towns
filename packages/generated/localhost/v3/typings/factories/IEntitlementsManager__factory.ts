@@ -178,6 +178,44 @@ const _abi = [
     outputs: [],
     stateMutability: "nonpayable",
   },
+  {
+    type: "event",
+    name: "EntitlementModuleAdded",
+    inputs: [
+      {
+        name: "caller",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "entitlement",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "EntitlementModuleRemoved",
+    inputs: [
+      {
+        name: "caller",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "entitlement",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
 ] as const;
 
 export class IEntitlementsManager__factory {

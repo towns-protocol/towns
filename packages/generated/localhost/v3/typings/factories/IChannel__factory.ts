@@ -178,6 +178,113 @@ const _abi = [
     outputs: [],
     stateMutability: "nonpayable",
   },
+  {
+    type: "event",
+    name: "ChannelCreated",
+    inputs: [
+      {
+        name: "caller",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "channelId",
+        type: "string",
+        indexed: false,
+        internalType: "string",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "ChannelRemoved",
+    inputs: [
+      {
+        name: "caller",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "channelId",
+        type: "string",
+        indexed: false,
+        internalType: "string",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "ChannelRoleAdded",
+    inputs: [
+      {
+        name: "caller",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "channelId",
+        type: "string",
+        indexed: false,
+        internalType: "string",
+      },
+      {
+        name: "roleId",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "ChannelRoleRemoved",
+    inputs: [
+      {
+        name: "caller",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "channelId",
+        type: "string",
+        indexed: false,
+        internalType: "string",
+      },
+      {
+        name: "roleId",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "ChannelUpdated",
+    inputs: [
+      {
+        name: "caller",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "channelId",
+        type: "string",
+        indexed: false,
+        internalType: "string",
+      },
+    ],
+    anonymous: false,
+  },
 ] as const;
 
 export class IChannel__factory {
