@@ -216,6 +216,10 @@ resource "aws_ecs_task_definition" "task_definition" {
       {
         name  = "BLOCK_TIME",
         value = tostring(var.block_time)
+      },
+      {
+        name  = "PORT",
+        value = "8545"
       }
     ]
 

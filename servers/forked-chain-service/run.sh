@@ -1,12 +1,17 @@
 #!/bin/bash
 
-set -e
+set -eo pipefail
 
 # TODO: add logic to get the latest block number and pass it to anvil
 
 function check_dependencies() {
     if ! [ -x "$(command -v anvil)" ]; then
         echo "anvil is not installed"
+        exit 1
+    fi
+
+    if ! [ -x "$(command -v cast)" ]; then
+        echo "cast is not installed"
         exit 1
     fi
 
@@ -17,6 +22,16 @@ function check_dependencies() {
 
     if ! [ -x "$(command -v jq)" ]; then
         echo "jq is not installed"
+        exit 1
+    fi
+
+    # if ! [ -x "$(command -v read)" ]; then
+    #     echo "read is not installed"
+    #     exit 1
+    # fi
+
+    if ! [ -x "$(command -v screen)" ]; then
+        echo "screen is not installed"
         exit 1
     fi
 }
@@ -41,6 +56,18 @@ function check_env() {
         echo "BLOCK_TIME is not set"
         exit 1
     fi
+
+    if [ -z "$PORT" ]; then
+        echo "PORT is not set"
+        exit 1
+    fi
+
+    if [ -z "$FUNDING_WALLETS_CSV" ]; then
+        echo "FUNDING_WALLETS_CSV is not set. Defaulting to empty string."
+        FUNDING_WALLETS_CSV=""
+    fi
+
+    LOCAL_ANVIL_RPC_URL="http://localhost:${PORT}"
 }
 
 function get_latest_block_number() {
@@ -61,6 +88,82 @@ function get_fork_block_number() {
     fi
 }
 
+function fund_wallet() {
+    local wallet=$1
+    local amount="0x021e19e0c9bab2400000" # 1000 ETH
+
+    
+    local curl_data_payload='{
+        "method": "anvil_setBalance",
+        "id": 1,
+        "jsonrpc": "2.0",
+        "params": [
+            "'${wallet}'", 
+            "'${amount}'"
+        ]
+    }'
+
+    echo "Funding wallet: $wallet"
+
+    curl "$LOCAL_ANVIL_RPC_URL" \
+        -X POST \
+        -H "Content-Type: application/json" \
+        --data "$curl_data_payload"
+}
+
+function fund_wallets() {
+    echo "Funding wallets"
+
+    IFS=',' read -ra wallets <<< "$FUNDING_WALLETS_CSV"
+
+    for wallet in "${wallets[@]}"; do
+        fund_wallet $wallet
+    done
+}
+
+function wait_for_anvil() {
+    echo "Waiting for anvil to start"
+
+    local max_attempts=30
+    local attempt=1
+    local delay=2  # seconds
+
+    while [ $attempt -le $max_attempts ]; do
+        echo "Attempt $attempt of $max_attempts..."
+
+        # Temporarily disable exit on error
+        set +e
+        response=$(curl -s -S $LOCAL_ANVIL_RPC_URL -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": 5}')
+        local status=$?
+        # Re-enable exit on error
+        set -e
+
+        if [ $status -eq 0 ]; then
+            if [[ $response == *"result"* ]]; then
+                echo "Anvil is ready"
+                return 0
+            fi
+        else
+            echo "Curl failed with status $status"
+        fi
+
+        echo "Anvil not ready yet. Waiting for $delay seconds..."
+        attempt=$((attempt+1))
+        sleep $delay
+    done
+
+    echo "Anvil did not start within the expected time."
+    return 1
+}
+
+function handle_sigint() {
+    echo "SIGINT received, stopping anvil process with PID: $ANVIL_PID"
+    if [ ! -z "$ANVIL_PID" ]; then
+        kill -SIGINT $ANVIL_PID
+    fi
+    exit 0
+}
+
 function start_anvil() {
     fork_block_number=$(get_fork_block_number)
 
@@ -73,9 +176,28 @@ function start_anvil() {
         --fork-chain-id $CHAIN_ID \
         --block-time $BLOCK_TIME \
         --host "0.0.0.0" \
-        --port 8545
+        --port $PORT &
+
+    # Capture the PID of the background process
+    local anvil_pid=$!
+    echo "Anvil started in background with PID: $anvil_pid"
+
+    # Export PID to make it available in subsequent functions
+    export ANVIL_PID=$anvil_pid
 }
 
+function anvil_foreground() {
+    # Wait for the anvil process to complete, if needed
+    if [ ! -z "$ANVIL_PID" ]; then
+        echo "Waiting for anvil process to complete"
+        wait $ANVIL_PID
+    fi
+}
+
+trap handle_sigint SIGINT
 check_dependencies
 check_env
 start_anvil
+wait_for_anvil
+fund_wallets
+anvil_foreground
