@@ -36,7 +36,7 @@ type PaymasterProxyPostData = IUserOperation & {
     townId: string
 }
 
-export class UserOpSpaceDapp extends SpaceDapp implements IUseropSpaceDapp<'v3'> {
+export class UserOpSpaceDapp extends SpaceDapp implements IUseropSpaceDapp {
     bundlerUrl: string
     rpcUrl: string
     paymasterProxyUrl: string | undefined
@@ -46,7 +46,7 @@ export class UserOpSpaceDapp extends SpaceDapp implements IUseropSpaceDapp<'v3'>
     mockNFT: MockERC721AShim | undefined
     userOpClient: Client | undefined
 
-    constructor(config: UserOpSpaceDappConfig<'v3'>) {
+    constructor(config: UserOpSpaceDappConfig) {
         const {
             chainId,
             provider,

@@ -1,70 +1,40 @@
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 
-import {
-    Versions,
-    BasicRoleInfo,
-    Permission,
-    TDefaultVersion,
-    defaultVersion,
-} from './ContractTypes'
+import { Versions, BasicRoleInfo, Permission, defaultVersion, Address } from './ContractTypes'
 import { getContractsInfo } from './IStaticContractsInfo'
 import { ISpaceDapp } from './ISpaceDapp'
-import { Address, PublicClient, WalletClient, zeroAddress } from 'viem'
 import {
     ITownArchitectBase as ITownArchitectBaseV3,
     MockERC721AShim as MockERC721AShimV3,
     TokenEntitlementDataTypes,
     IMembershipBase as IMembershipBaseV3,
 } from './v3'
-import {
-    SpaceDappTransaction,
-    MockERC721AShim as MockERC721AShimV4,
-    ITownArchitectBase as ITownArchitectBaseV4,
-} from './v4'
-import { isEthersProvider } from './Utils'
 
 import { getTestGatingNFTContractAddress } from './TestGatingNFT'
 
 export function mintMockNFT(
     chainId: number,
-    provider: ethers.providers.Provider | PublicClient,
-    fromWallet: ethers.Wallet | WalletClient,
+    provider: ethers.providers.Provider,
+    fromWallet: ethers.Wallet,
     toAddress: string,
-): Promise<ethers.ContractTransaction | SpaceDappTransaction> {
+): Promise<ethers.ContractTransaction> {
     if (chainId === 31337) {
         const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
-        if (isEthersProvider(provider)) {
-            const mockNFT = new MockERC721AShimV3(mockNFTAddress, chainId, provider)
-            return mockNFT.write(fromWallet as ethers.Wallet).mintTo(toAddress)
-        } else {
-            const mockNFT = new MockERC721AShimV4(mockNFTAddress, chainId, provider)
-            return mockNFT.write({
-                functionName: 'mintTo',
-                args: [toAddress as Address],
-                wallet: fromWallet as WalletClient,
-            })
-        }
+        const mockNFT = new MockERC721AShimV3(mockNFTAddress, chainId, provider)
+        return mockNFT.write(fromWallet).mintTo(toAddress)
     }
     throw new Error(`Unsupported chainId ${chainId}, only 31337 is supported.`)
 }
 
 export function balanceOfMockNFT(
     chainId: number,
-    provider: ethers.providers.Provider | PublicClient,
+    provider: ethers.providers.Provider,
     address: Address,
 ) {
     if (chainId === 31337) {
         const mockNFTAddress = getContractsInfo(chainId).mockErc721aAddress
-        if (isEthersProvider(provider)) {
-            const mockNFT = new MockERC721AShimV3(mockNFTAddress, chainId, provider)
-            return mockNFT.read.balanceOf(address)
-        } else {
-            const mockNFT = new MockERC721AShimV4(mockNFTAddress, chainId, provider)
-            return mockNFT.read({
-                functionName: 'balanceOf',
-                args: [address],
-            })
-        }
+        const mockNFT = new MockERC721AShimV3(mockNFTAddress, chainId, provider)
+        return mockNFT.read.balanceOf(address)
     }
     throw new Error(`Unsupported chainId ${chainId}, only 31337 is supported.`)
 }
@@ -75,8 +45,8 @@ export async function getTestGatingNftAddress(_chainId: number): Promise<string>
     return await getTestGatingNFTContractAddress()
 }
 
-export async function getFilteredRolesFromSpace<V extends Versions = TDefaultVersion>(
-    spaceDapp: ISpaceDapp<V>,
+export async function getFilteredRolesFromSpace(
+    spaceDapp: ISpaceDapp,
     spaceNetworkId: string,
 ): Promise<BasicRoleInfo[]> {
     const spaceRoles = await spaceDapp.getRoles(spaceNetworkId)
@@ -118,7 +88,7 @@ export function isRoleIdInArray(
  */
 
 function isMembershipStructV3(
-    returnValue: ITownArchitectBaseV3.MembershipStruct | ITownArchitectBaseV4['MembershipStruct'],
+    returnValue: ITownArchitectBaseV3.MembershipStruct,
 ): returnValue is ITownArchitectBaseV3.MembershipStruct {
     return typeof returnValue.settings.price === 'number'
 }
@@ -128,38 +98,23 @@ type CreateMembershipStructArgs = {
     permissions: Permission[]
     tokenAddresses: string[]
     version?: Versions
-} & (
-    | Omit<
-          IMembershipBaseV3.MembershipInfoStruct,
-          | 'symbol'
-          | 'price'
-          | 'maxSupply'
-          | 'duration'
-          | 'currency'
-          | 'feeRecipient'
-          | 'freeAllocation'
-          | 'pricingModule'
-      >
-    | Omit<
-          ITownArchitectBaseV4['MembershipInfoStruct'],
-          | 'symbol'
-          | 'price'
-          | 'maxSupply'
-          | 'duration'
-          | 'currency'
-          | 'feeRecipient'
-          | 'freeAllocation'
-          | 'pricingModule'
-      >
-)
+} & Omit<
+    IMembershipBaseV3.MembershipInfoStruct,
+    | 'symbol'
+    | 'price'
+    | 'maxSupply'
+    | 'duration'
+    | 'currency'
+    | 'feeRecipient'
+    | 'freeAllocation'
+    | 'pricingModule'
+>
 function _createMembershipStruct({
     name,
     permissions,
     tokenAddresses,
     version = defaultVersion,
-}: CreateMembershipStructArgs):
-    | ITownArchitectBaseV3.MembershipStruct
-    | ITownArchitectBaseV4['MembershipStruct'] {
+}: CreateMembershipStructArgs): ITownArchitectBaseV3.MembershipStruct {
     if (version === 'v3') {
         return {
             settings: {
@@ -189,8 +144,8 @@ function _createMembershipStruct({
                 price: BigInt(0),
                 maxSupply: BigInt(1000),
                 duration: BigInt(0),
-                currency: zeroAddress,
-                feeRecipient: zeroAddress,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: ethers.constants.AddressZero,
                 freeAllocation: 0,
                 pricingModule: ethers.constants.AddressZero,
             },

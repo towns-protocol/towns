@@ -1,7 +1,12 @@
 import { ethers } from 'ethers'
 
-import { Address, Hex, decodeAbiParameters, encodeAbiParameters, parseAbiParameters } from 'viem'
-import { EntitlementStruct, ExternalTokenStruct, Versions, defaultVersion } from './ContractTypes'
+import {
+    Address,
+    EntitlementStruct,
+    ExternalTokenStruct,
+    Versions,
+    defaultVersion,
+} from './ContractTypes'
 
 const UserAddressesEncoding = 'address[]'
 
@@ -20,11 +25,7 @@ export function encodeUsers(users: string[] | Address[], version: Versions = def
             const encodedData = abiCoder.encode([UserAddressesEncoding], [users])
             return encodedData
         }
-        case 'v4': {
-            return encodeAbiParameters(parseAbiParameters([UserAddressesEncoding]), [
-                users as Address[],
-            ])
-        }
+
         default: {
             throw new Error(`encodeUsers(): not a valid version`)
         }
@@ -43,18 +44,7 @@ export function decodeUsers(encodedData: string, version = defaultVersion): stri
             }
             return u
         }
-        case 'v4': {
-            const decodedData = decodeAbiParameters(
-                parseAbiParameters([UserAddressesEncoding]),
-                encodedData as Hex,
-            )
-            let u: Hex[] = []
-            if (decodedData.length) {
-                // decoded value is in element 0 of the array
-                u = decodedData[0].slice()
-            }
-            return u
-        }
+
         default: {
             throw new Error(`decodeUsers(): not a valid version`)
         }
@@ -63,19 +53,12 @@ export function decodeUsers(encodedData: string, version = defaultVersion): stri
 
 export function createTokenEntitlementStruct(
     moduleAddress: string,
-    tokens: ExternalTokenStruct<typeof version>[],
+    tokens: ExternalTokenStruct[],
     version: Versions = defaultVersion,
-): EntitlementStruct<typeof version> {
+): EntitlementStruct {
     switch (version) {
         case 'v3': {
-            const data = encodeExternalTokens(tokens as ExternalTokenStruct<'v3'>[], 'v3')
-            return {
-                module: moduleAddress,
-                data,
-            }
-        }
-        case 'v4': {
-            const data = encodeExternalTokens(tokens as ExternalTokenStruct<'v4'>[], 'v4')
+            const data = encodeExternalTokens(tokens, 'v3')
             return {
                 module: moduleAddress,
                 data,
@@ -91,15 +74,14 @@ export function createUserEntitlementStruct(
     moduleAddress: string,
     users: string[],
     version: Versions = defaultVersion,
-): EntitlementStruct<typeof version> {
+): EntitlementStruct {
     switch (version) {
-        case 'v3':
-        case 'v4': {
+        case 'v3': {
             const data = encodeUsers(users, version)
             return {
                 module: moduleAddress,
                 data,
-            } as EntitlementStruct<typeof version>
+            } as EntitlementStruct
         }
 
         default: {
@@ -109,24 +91,20 @@ export function createUserEntitlementStruct(
 }
 
 export function encodeExternalTokens(
-    tokens: ExternalTokenStruct<typeof version>[],
+    tokens: ExternalTokenStruct[],
     version: Versions = defaultVersion,
 ): string {
     const externalTokenConfig = getExternalTokenEncoding(version)
     switch (version) {
-        case 'v3': {
-            const abiCoder = ethers.utils.defaultAbiCoder
-            const encodedData = abiCoder.encode([externalTokenConfig], [tokens])
-            return encodedData
-        }
-        case 'v4': {
-            return encodeAbiParameters(parseAbiParameters([externalTokenConfig]), [
-                tokens as ExternalTokenStruct<'v4'>[],
-            ])
-        }
-        default: {
-            throw new Error(`encodeExternalTokens(): not a valid version`)
-        }
+        case 'v3':
+            {
+                const abiCoder = ethers.utils.defaultAbiCoder
+                const encodedData = abiCoder.encode([externalTokenConfig], [tokens])
+                return encodedData
+            }
+            {
+                throw new Error(`encodeExternalTokens(): not a valid version`)
+            }
     }
 }
 
@@ -139,25 +117,12 @@ export function decodeExternalTokens(encodedData: string, version: Versions = de
             const decodedData = abiCoder.decode(
                 [externalTokenConfig],
                 encodedData,
-            ) as ExternalTokenStruct<'v3'>[][]
-            let t: ExternalTokenStruct<'v3'>[] = []
+            ) as ExternalTokenStruct[][]
+            let t: ExternalTokenStruct[] = []
             if (decodedData.length) {
                 // decoded value is in element 0 of the array
                 t = decodedData[0]
             }
-            return t
-        }
-        case 'v4': {
-            const decodedData = decodeAbiParameters(
-                parseAbiParameters([externalTokenConfig]),
-                encodedData as Hex,
-            )
-            let t: ExternalTokenStruct<'v4'>[] = []
-            if (decodedData.length) {
-                // decoded value is in element 0 of the array
-                t = (decodedData as unknown as ExternalTokenStruct<'v4'>[][])[0]
-            }
-
             return t
         }
 

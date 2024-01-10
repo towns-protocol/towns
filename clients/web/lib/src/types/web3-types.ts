@@ -61,9 +61,9 @@ export type Connectors = (args: { chains: Chain[] }) => Connector[]
 export type TokenEntitlementStruct = TokenEntitlementDataTypes.ExternalTokenStruct
 
 // versioned types for easier reference/upgrade
-export type RoleEntitlements = R_RoleEntitlements<'v3'>
-export type RoleDetails = R_RoleDetails<'v3'>
-export type ISpaceDapp = R_ISpaceDapp<'v3'>
+export type RoleEntitlements = R_RoleEntitlements
+export type RoleDetails = R_RoleDetails
+export type ISpaceDapp = R_ISpaceDapp
 export type ReceiptType = ContractReceipt
 
 export type TransactionOrUserOperation = ContractTransaction | UserOperationResponse

@@ -15,7 +15,7 @@ export interface ZionOpts {
     pushNotificationWorkerUrl?: string
     pushNotificationAuthToken?: string
     verbose?: boolean
-    accountAbstractionConfig?: Omit<UserOpSpaceDappConfig<'v3'>, 'chainId' | 'provider'>
+    accountAbstractionConfig?: Omit<UserOpSpaceDappConfig, 'chainId' | 'provider'>
 }
 
 export interface ZionOnboardingOpts {

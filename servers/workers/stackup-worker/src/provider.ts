@@ -45,9 +45,7 @@ export function createJsonProvider(
     })
 }
 
-export async function createSpaceDappForNetwork(
-    env: Env,
-): Promise<ISpaceDapp<Versions> | undefined> {
+export async function createSpaceDappForNetwork(env: Env): Promise<ISpaceDapp | undefined> {
     const provider = createStaticProvider(env.ENVIRONMENT, env)
     const network = await provider.getNetwork()
     const spaceDapp = createSpaceDapp({

@@ -1,14 +1,10 @@
 import { ethers } from 'ethers'
-import { TDefaultVersion, Versions } from './ContractTypes'
-import { PublicClient } from 'viem'
 
-type ProviderType<V extends Versions = TDefaultVersion> = V extends 'v3'
-    ? ethers.providers.Provider
-    : PublicClient
+type ProviderType = ethers.providers.Provider
 
-export type UserOpSpaceDappConfig<V extends Versions = TDefaultVersion> = {
+export type UserOpSpaceDappConfig = {
     chainId: number
-    provider: ProviderType<V> | undefined
+    provider: ProviderType | undefined
     /**
      * Node RPC url
      */

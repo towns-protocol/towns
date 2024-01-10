@@ -8,14 +8,6 @@ import {
     ITownArchitectBase as ITownArchitectBaseV3,
 } from './v3/ITownArchitectShim'
 import { IRolesBase as IRolesBaseV3 } from './v3/IRolesShim'
-import { TokenEntitlementShim as TokenEntitlementShimV4 } from './v4/TokenEntitlementShim'
-import { UserEntitlementShim as UserEntitlementShimV4 } from './v4/UserEntitlementShim'
-import {
-    TokenEntitlementDataTypes as TokenEntitlementDataTypesV4,
-    ITownArchitectBase as ITownArchitectBaseV4,
-    IRolesBase as IRolesBaseV4,
-    IMembershipBase as IMembershipBaseV4,
-} from './v4/types'
 
 export enum Permission {
     Read = 'Read',
@@ -32,45 +24,28 @@ export enum Permission {
     JoinTown = 'JoinTown',
 }
 
-export type Versions = 'v3' | 'v4'
+export type Versions = 'v3'
 export const defaultVersion: Versions = 'v3'
 export type TDefaultVersion = typeof defaultVersion
 
-export type EntitlementShim<Version = TDefaultVersion> = Version extends 'v3'
-    ? TokenEntitlementShimV3 | UserEntitlementShimV3
-    : TokenEntitlementShimV4 | UserEntitlementShimV4
+export type EntitlementShim = TokenEntitlementShimV3 | UserEntitlementShimV3
 
-export type ExternalTokenStruct<Version = TDefaultVersion> = Version extends 'v3'
-    ? TokenEntitlementDataTypesV3.ExternalTokenStruct
-    : TokenEntitlementDataTypesV4['ExternalTokenStruct']
+export type ExternalTokenStruct = TokenEntitlementDataTypesV3.ExternalTokenStruct
 
-export type EntitlementStruct<Version = TDefaultVersion> = Version extends 'v3'
-    ? IRolesBaseV3.CreateEntitlementStruct
-    : IRolesBaseV4['CreateEntitlementStruct']
+export type EntitlementStruct = IRolesBaseV3.CreateEntitlementStruct
 
-type TokenEntitlementShim<Version = TDefaultVersion> = Version extends 'v3'
-    ? TokenEntitlementShimV3
-    : TokenEntitlementShimV4
+type TokenEntitlementShim = TokenEntitlementShimV3
 
-type UserEntitlementShim<Version = TDefaultVersion> = Version extends 'v3'
-    ? UserEntitlementShimV3
-    : UserEntitlementShimV4
+type UserEntitlementShim = UserEntitlementShimV3
 
-type MembershipInfoStruct<Version = TDefaultVersion> = Version extends 'v3'
-    ? IMembershipBaseV3.MembershipInfoStruct
-    : ITownArchitectBaseV4['MembershipInfoStruct']
+type MembershipInfoStruct = IMembershipBaseV3.MembershipInfoStruct
 
-type TotalSupplyOutputStruct<Version = TDefaultVersion> = Version extends 'v3'
-    ? { totalSupply: number }
-    : { totalSupply: IMembershipBaseV4['TotalSupplyOutput'] }
+type TotalSupplyOutputStruct = { totalSupply: number }
 
-export type MembershipStruct<Version = TDefaultVersion> = Version extends 'v3'
-    ? ITownArchitectBaseV3.MembershipStruct
-    : ITownArchitectBaseV4['MembershipStruct']
+export type MembershipStruct = ITownArchitectBaseV3.MembershipStruct
 
-export type TownInfoStruct<Version = TDefaultVersion> = Version extends 'v3'
-    ? ITownArchitectBaseV3.TownInfoStruct
-    : ITownArchitectBaseV4['TownStruct']
+export type TownInfoStruct = ITownArchitectBaseV3.TownInfoStruct
+
 /**
  * Supported entitlement modules
  */
@@ -82,11 +57,11 @@ export enum EntitlementModuleType {
 /**
  * Role details from multiple contract sources
  */
-export interface RoleDetails<Version = TDefaultVersion> {
+export interface RoleDetails {
     id: number
     name: string
     permissions: Permission[]
-    tokens: ExternalTokenStruct<Version>[]
+    tokens: ExternalTokenStruct[]
     users: string[]
     channels: ChannelMetadata[]
 }
@@ -103,31 +78,31 @@ export interface ChannelMetadata {
 /**
  * Channel details from multiple contract sources
  */
-export interface ChannelDetails<Version = TDefaultVersion> {
+export interface ChannelDetails {
     spaceNetworkId: string
     channelNetworkId: string
     name: string
     disabled: boolean
-    roles: RoleEntitlements<Version>[]
+    roles: RoleEntitlements[]
     description?: string
 }
 
 /**
  * Role details for a channel from multiple contract sources
  */
-export interface RoleEntitlements<Version = TDefaultVersion> {
+export interface RoleEntitlements {
     roleId: number
     name: string
     permissions: Permission[]
-    tokens: ExternalTokenStruct<Version>[]
+    tokens: ExternalTokenStruct[]
     users: string[]
 }
 
 /*
     Decoded Token and User entitlenment details
 */
-export interface EntitlementDetails<Version = TDefaultVersion> {
-    tokens: ExternalTokenStruct<Version>[]
+export interface EntitlementDetails {
+    tokens: ExternalTokenStruct[]
     users: string[]
 }
 
@@ -140,15 +115,15 @@ export interface EntitlementModule {
     moduleType: EntitlementModuleType
 }
 
-export function isTokenEntitlement<Version = TDefaultVersion>(
+export function isTokenEntitlement(
     entitlement: EntitlementModule,
-): entitlement is TokenEntitlementShim<Version> {
+): entitlement is TokenEntitlementShim {
     return entitlement.moduleType === EntitlementModuleType.TokenEntitlement
 }
 
-export function isUserEntitlement<Version = TDefaultVersion>(
+export function isUserEntitlement(
     entitlement: EntitlementModule,
-): entitlement is UserEntitlementShim<Version> {
+): entitlement is UserEntitlementShim {
     return entitlement.moduleType === EntitlementModuleType.UserEntitlement
 }
 
@@ -168,10 +143,10 @@ export function isExternalTokenStruct(
     )
 }
 
-export function isExternalTokenStructArray<Version = TDefaultVersion>(
+export function isExternalTokenStructArray(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     args: any,
-): args is ExternalTokenStruct<Version>[] {
+): args is ExternalTokenStruct[] {
     return Array.isArray(args) && args.length > 0 && args.every(isExternalTokenStruct)
 }
 
@@ -182,12 +157,11 @@ export function isStringArray(
     return Array.isArray(args) && args.length > 0 && args.every((arg) => typeof arg === 'string')
 }
 
-export type MembershipInfo<V extends Versions = TDefaultVersion> = Pick<
-    MembershipInfoStruct<V>,
+export type MembershipInfo = Pick<
+    MembershipInfoStruct,
     'maxSupply' | 'currency' | 'feeRecipient' | 'price'
 >
 
-export type TotalSupplyInfo<V extends Versions = TDefaultVersion> = Pick<
-    TotalSupplyOutputStruct<V>,
-    'totalSupply'
->
+export type TotalSupplyInfo = Pick<TotalSupplyOutputStruct, 'totalSupply'>
+
+export type Address = `0x${string}`

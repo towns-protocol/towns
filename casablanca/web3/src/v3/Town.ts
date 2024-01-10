@@ -29,7 +29,7 @@ import { toPermissions } from '../ConvertersRoles'
 import { IMembershipShim } from './IMembershipShim'
 
 interface AddressToEntitlement {
-    [address: string]: EntitlementShim<'v3'>
+    [address: string]: EntitlementShim
 }
 
 interface TownConstructorArgs {
@@ -114,7 +114,7 @@ export class Town {
         return this.townOwner.read.getTownInfo(this.address)
     }
 
-    public async getRole(roleId: BigNumberish): Promise<RoleDetails<'v3'> | null> {
+    public async getRole(roleId: BigNumberish): Promise<RoleDetails | null> {
         // get all the entitlements for the town
         const entitlementShims = await this.getEntitlementShims()
         // get the various pieces of details
@@ -136,7 +136,7 @@ export class Town {
         }
     }
 
-    public async getChannel(channelId: string): Promise<ChannelDetails<'v3'> | null> {
+    public async getChannel(channelId: string): Promise<ChannelDetails | null> {
         // get most of the channel details except the roles which
         // require a separate call to get each role's details
         const channelInfo = await this.Channels.read.getChannel(channelId)
@@ -177,21 +177,21 @@ export class Town {
 
     private async getChannelRoleEntitlements(
         channelInfo: IChannelBase.ChannelStructOutput,
-    ): Promise<RoleEntitlements<'v3'>[]> {
+    ): Promise<RoleEntitlements[]> {
         // get all the entitlements for the town
         const entitlementShims = await this.getEntitlementShims()
-        const getRoleEntitlementsAsync: Promise<RoleEntitlements<'v3'> | null>[] = []
+        const getRoleEntitlementsAsync: Promise<RoleEntitlements | null>[] = []
         for (const roleId of channelInfo.roleIds) {
             getRoleEntitlementsAsync.push(this.getRoleEntitlements(entitlementShims, roleId))
         }
         // get all the role info
         const allRoleEntitlements = await Promise.all(getRoleEntitlementsAsync)
-        return allRoleEntitlements.filter((r) => r !== null) as RoleEntitlements<'v3'>[]
+        return allRoleEntitlements.filter((r) => r !== null) as RoleEntitlements[]
     }
 
     public async findEntitlementByType(
         entitlementType: EntitlementModuleType,
-    ): Promise<EntitlementShim<'v3'> | null> {
+    ): Promise<EntitlementShim | null> {
         const entitlements = await this.getEntitlementShims()
         for (const entitlement of entitlements) {
             if (entitlement.moduleType === entitlementType) {
@@ -226,7 +226,7 @@ export class Town {
         return err
     }
 
-    private async getEntitlementByAddress(address: string): Promise<EntitlementShim<'v3'>> {
+    private async getEntitlementByAddress(address: string): Promise<EntitlementShim> {
         if (!this.addressToEntitlement[address]) {
             const entitlement = await this.entitlements.read.getEntitlement(address)
             switch (entitlement.moduleType) {
@@ -263,10 +263,10 @@ export class Town {
         }
     }
 
-    public async getEntitlementShims(): Promise<EntitlementShim<'v3'>[]> {
+    public async getEntitlementShims(): Promise<EntitlementShim[]> {
         // get all the entitlement addresses supported in the town
         const entitlementInfo = await this.entitlements.read.getEntitlements()
-        const getEntitlementShims: Promise<EntitlementShim<'v3'>>[] = []
+        const getEntitlementShims: Promise<EntitlementShim>[] = []
         // with the addresses, get the entitlement shims
         for (const info of entitlementInfo) {
             getEntitlementShims.push(this.getEntitlementByAddress(info.moduleAddress))
@@ -275,9 +275,9 @@ export class Town {
     }
 
     private async getEntitlementDetails(
-        entitlementShims: EntitlementShim<'v3'>[],
+        entitlementShims: EntitlementShim[],
         roleId: BigNumberish,
-    ): Promise<EntitlementDetails<'v3'>> {
+    ): Promise<EntitlementDetails> {
         let tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         let users: string[] = []
         // with the shims, get the role details for each entitlement
@@ -285,15 +285,15 @@ export class Town {
             TokenEntitlementDataTypes.ExternalTokenStruct[] | string[]
         >[] = []
         for (const entitlement of entitlementShims) {
-            if (isTokenEntitlement<'v3'>(entitlement)) {
+            if (isTokenEntitlement(entitlement)) {
                 getEntitlements.push(entitlement.getRoleEntitlement(roleId))
-            } else if (isUserEntitlement<'v3'>(entitlement)) {
+            } else if (isUserEntitlement(entitlement)) {
                 getEntitlements.push(entitlement.getRoleEntitlement(roleId))
             }
         }
         const entitlements = await Promise.all(getEntitlements)
         for (const entitlment of entitlements) {
-            if (isExternalTokenStructArray<'v3'>(entitlment)) {
+            if (isExternalTokenStructArray(entitlment)) {
                 tokens = tokens.concat(entitlment)
             } else if (isStringArray(entitlment)) {
                 users = users.concat(entitlment)
@@ -336,9 +336,9 @@ export class Town {
     }
 
     private async getRoleEntitlements(
-        entitlementShims: EntitlementShim<'v3'>[],
+        entitlementShims: EntitlementShim[],
         roleId: BigNumberish,
-    ): Promise<RoleEntitlements<'v3'> | null> {
+    ): Promise<RoleEntitlements | null> {
         const [roleInfo, entitlementDetails] = await Promise.all([
             this.getRoleInfo(roleId),
             this.getEntitlementDetails(entitlementShims, roleId),

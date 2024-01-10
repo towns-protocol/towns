@@ -102,7 +102,7 @@ describe.skip('UserOpSpaceDapp tests', () => {
     })
 })
 
-function createSpaceParams({ feeRecipient }: { feeRecipient: string }): CreateSpaceParams<'v3'> {
+function createSpaceParams({ feeRecipient }: { feeRecipient: string }): CreateSpaceParams {
     const spaceId: string = `SPCE-${nanoid()}`
     const channelId: string = `CHAN-${nanoid()}`
     const name = `${spaceId}__${new Date().getTime()}`

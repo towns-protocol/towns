@@ -1,8 +1,9 @@
 import { ContractTransaction, ethers } from 'ethers'
 import { getContractsInfo } from './IStaticContractsInfo'
 import { MockERC721AShim } from './v3/MockERC721AShim'
-import { Address, PublicClient } from 'viem'
+import { PublicClient } from 'viem'
 import { ISendUserOperationResponse } from 'userop'
+import { Address } from './ContractTypes'
 
 export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class

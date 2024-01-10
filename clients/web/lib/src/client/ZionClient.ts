@@ -83,7 +83,7 @@ import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 export class ZionClient implements EntitlementsDelegate {
     public readonly opts: ZionOpts
     public readonly name: string
-    public spaceDapp: IUseropSpaceDapp<'v3'>
+    public spaceDapp: IUseropSpaceDapp
     public blockchainTransactionStore: BlockchainTransactionStore
     protected casablancaClient?: CasablancaClient
     private _signerContext?: SignerContext

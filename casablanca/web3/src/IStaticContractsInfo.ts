@@ -8,8 +8,7 @@ import BaseSepoliaTownFactoryAddress from '@towns/generated/base_sepolia/address
 import BaseSepoliaTownOwnerAddress from '@towns/generated/base_sepolia/addresses/townOwner.json' assert { type: 'json' }
 import BaseSepoliaWalletLinkAddress from '@towns/generated/base_sepolia/addresses/walletLink.json' assert { type: 'json' }
 
-import { Address } from 'viem'
-
+import { Address } from './ContractTypes'
 export interface IStaticContractsInfo {
     townFactoryAddress: Address
     townOwnerAddress: Address
