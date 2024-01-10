@@ -32,8 +32,6 @@ on:
             AWS_SECRET_ACCESS_KEY:
                 description: 'AWS secret access key'
                 required: true
-            DOCKER_HUB_USERNAME: { required: true }
-            DOCKER_HUB_TOKEN: { required: true }
             SLACK_WEBHOOK_URL: { required: true }
         inputs:
             environment_name:
