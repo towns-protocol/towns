@@ -156,13 +156,11 @@ export function CreateTownSubmit({
                     requirements,
                     signer,
                 )
-                if (result?.error) {
+                const errorMessage = result?.error && mapToErrorMessage(result.error)
+                if (errorMessage) {
                     toast.custom(
                         (t) => (
-                            <TransactionErrorNotification
-                                toast={t}
-                                errorMessage={mapToErrorMessage(result.error)}
-                            />
+                            <TransactionErrorNotification toast={t} errorMessage={errorMessage} />
                         ),
                         {
                             duration: Infinity,

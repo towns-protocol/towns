@@ -153,7 +153,11 @@ function usePrivyLoginWithErrorHandler({
     loggedInWalletAddress: AuthContext['loggedInWalletAddress']
 }) {
     const { login: privyLogin } = useLogin({
+        onComplete(user, isNewUser, wasAlreadyAuthenticated, loginMethod) {},
         onError: (error) => {
+            if (error === 'exited_auth_flow') {
+                return
+            }
             toast.custom(
                 (t) => {
                     return (

@@ -3,6 +3,7 @@ import { LoginStatus } from 'use-zion-client'
 import { useAuth } from 'hooks/useAuth'
 import { Box, FancyButton } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
+import { mapToErrorMessage } from '@components/Web3/utils'
 
 export function LoginComponent() {
     const {
@@ -12,7 +13,7 @@ export function LoginComponent() {
         isAutoLoggingInToRiver,
     } = useAuth()
 
-    const errorMessage = loginError ? loginError.message : undefined
+    const errorMessage = loginError ? mapToErrorMessage(loginError) : undefined
 
     const isBusy =
         libLoginStatus === LoginStatus.LoggingIn ||

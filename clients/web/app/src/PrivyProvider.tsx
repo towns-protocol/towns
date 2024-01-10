@@ -74,7 +74,7 @@ export function PrivyProvider({ children }: { children: JSX.Element }) {
                 },
                 embeddedWallets: {
                     createOnLogin: 'all-users',
-                    noPromptOnSignature: true,
+                    noPromptOnSignature: false,
                 },
                 loginMethods: ['sms', 'google', 'twitter', 'apple'],
             }}

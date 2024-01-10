@@ -2,6 +2,7 @@ import {
     SignerUndefinedError,
     TokenEntitlementStruct,
     WalletDoesNotMatchSignedInAccountError,
+    useCasablancaStore,
 } from 'use-zion-client'
 
 import { WalletAlreadyLinkedError, WalletNotLinkedError } from '@river/web3'
@@ -53,21 +54,29 @@ export function formatEthDisplay(num: number) {
 const walletLinkError = new WalletAlreadyLinkedError()
 const walletNotLinkedError = new WalletNotLinkedError()
 
-export function mapToErrorMessage(error: Error | undefined) {
+type AuthError = ReturnType<(typeof useCasablancaStore)['getState']>['loginError']
+type ErrorTypes = Error | AuthError
+
+function isAuthError(error: ErrorTypes | undefined): error is AuthError {
+    return typeof error === 'object' && error !== null && 'code' in error
+}
+
+export function mapToErrorMessage(error: ErrorTypes | undefined) {
     if (!error) {
         return 'An unknown error occurred. Cannot save transaction.'
     }
     let errorText = ''
-    const errorName = error?.name ?? ''
+    const errorName = (isAuthError(error) ? error.error?.name : error?.name) ?? ''
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const errorCode = (error?.message as any)?.code ?? ''
+    const errorCode = (isAuthError(error) ? error.code : (error?.message as any)?.code) ?? ''
+
+    if (errorCode === 'ACTION_REJECTED' || errorCode === 4001 || isRejectedErrorMessage(error)) {
+        return
+    }
 
     switch (true) {
         case isNotFoundRiverError(error):
             errorText = 'River stream not found.'
-            break
-        case errorCode === 'ACTION_REJECTED' || isRejectedErrorMessage(error):
-            errorText = 'Transaction rejected.'
             break
         case isLimitReachedError(error):
             errorText = 'This town has reached its member limit.'
@@ -127,20 +136,20 @@ export function mapToErrorMessage(error: Error | undefined) {
     return fullErrorText
 }
 
-export function isNotFoundRiverError(error: Error | undefined) {
+export function isNotFoundRiverError(error: ErrorTypes | undefined) {
     const _error = error as unknown as { code: number; message: string }
     return _error?.code === 5 && _error.message.includes('5:NOT_FOUND')
 }
 
-export function isLimitReachedError(error: Error | undefined) {
+export function isLimitReachedError(error: ErrorTypes | undefined) {
     return error?.message?.includes?.('has exceeded the member cap')
 }
 
-export function isMaybeFundsError(error: Error | undefined) {
+export function isMaybeFundsError(error: ErrorTypes | undefined) {
     return error?.message?.toString()?.includes('gas required exceeds allowance (0)')
 }
 
-export function isRejectedErrorMessage(error: Error | undefined) {
+export function isRejectedErrorMessage(error: ErrorTypes | undefined) {
     return error?.message?.toString()?.includes('user rejected transaction')
 }
 
