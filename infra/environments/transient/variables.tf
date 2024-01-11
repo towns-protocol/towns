@@ -35,3 +35,9 @@ variable "is_clean_environment" {
   type        = bool
   default     = false
 }
+
+variable "river_node_log_level" {
+  description = "The log level for the river node (e.g debug, info, warn, error)"
+  type        = string
+  default     = "info"
+}

@@ -157,6 +157,7 @@ module "river_node" {
 
   is_multi_node = var.num_nodes > 1
 
+  log_level                       = var.river_node_log_level
   base_chain_id                   = local.base_chain_id
   base_chain_network_url_override = module.base_forked_chain_service[0].network_url
 

@@ -431,7 +431,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name  = "LOG__LEVEL",
-        value = "info"
+        value = var.log_level
       },
       {
         name  = "LOG__NOCOLOR",

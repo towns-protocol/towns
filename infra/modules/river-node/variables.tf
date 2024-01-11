@@ -64,6 +64,12 @@ variable "river_node_db" {
   type        = any
 }
 
+variable "log_level" {
+  description = "The log level for the river node (e.g debug, info, warn, error)"
+  type        = string
+  default     = "info"
+}
+
 variable "base_chain_id" {
   description = "The base chain id"
   type        = string
