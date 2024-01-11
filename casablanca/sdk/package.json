@@ -39,6 +39,7 @@
         "@river/mecholm": "workspace:^",
         "@river/proto": "workspace:^",
         "@river/web3": "workspace:^",
+        "axios": "^1.2.6",
         "browser-or-node": "^2.1.1",
         "debug": "^4.3.4",
         "dexie": "^3.2.4",
