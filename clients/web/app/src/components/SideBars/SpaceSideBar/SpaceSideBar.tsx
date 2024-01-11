@@ -1,4 +1,5 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
     Membership,
@@ -6,31 +7,35 @@ import {
     SpaceData,
     useHasPermission,
     useMyMembership,
+    useSpaceMembers,
     useSpaceMentions,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
+    useZionContext,
 } from 'use-zion-client'
-import { useNavigate } from 'react-router'
+import { CreateDirectMessage } from '@components/DirectMessages/CreateDirectMessage'
+import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
-import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
+import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
+import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
+import { FadeIn, FadeInBox } from '@components/Transitions'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { Badge, Box, Button, Icon, IconButton, Stack, Text } from '@ui'
-import { PATHS } from 'routes'
-import { useStore } from 'store/store'
-import { FadeIn, FadeInBox } from '@components/Transitions'
 import { useAuth } from 'hooks/useAuth'
-import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
-import { CreateDirectMessage } from '@components/DirectMessages/CreateDirectMessage'
-import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
-import { useShortcut } from 'hooks/useShortcut'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { useShortcut } from 'hooks/useShortcut'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { PATHS } from 'routes'
+import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
+import { useStore } from 'store/store'
+import { notUndefined } from 'ui/utils/utils'
 import { SideBar } from '../_SideBar'
+import { CondensedChannelNavItem } from './DirectMessageChannelList'
+import { SidebarListLayout } from './SidebarListLayout'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
-import { ChannelList } from './ChannelList'
-import { DirectMessageChannelList } from './DirectMessageChannelList'
 
 type Props = {
     space: SpaceData
@@ -64,7 +69,6 @@ export const SpaceSideBar = (props: Props) => {
     const onHideBrowseChannels = useEvent(() => setBrowseChannelsModalVisible(false))
     const onShowBrowseChannels = useEvent(() => setBrowseChannelsModalVisible(true))
 
-    const mentions = useSpaceMentions()
     const unreadThreadMentions = useSpaceUnreadThreadMentions()
 
     const { hasPermission: canCreateChannel } = useHasPermission({
@@ -103,11 +107,33 @@ export const SpaceSideBar = (props: Props) => {
             navigate(link)
         }
     }, [createLink, navigate])
+
     const onDisplayDefault = useCallback(() => {
         setLayoutMode(LayoutMode.Default)
     }, [])
 
     useShortcut('CreateMessage', onDisplayCreate)
+
+    const { unreads, readChannels, readDms } = useSortedChannels(space.id)
+
+    const itemRenderer = useCallback(
+        (u: (typeof unreads)[0]) => {
+            if (u.type === 'dm') {
+                return <CondensedChannelNavItem unread={u.unread} key={u.id} channel={u.channel} />
+            } else {
+                return (
+                    <ChannelNavItem
+                        key={u.id}
+                        id={u.id}
+                        space={space}
+                        channel={u.channel}
+                        mentionCount={u.mentionCount}
+                    />
+                )
+            }
+        },
+        [space],
+    )
 
     return (
         <SideBar data-testid="space-sidebar" height="100%" onScroll={onScroll}>
@@ -165,6 +191,7 @@ export const SpaceSideBar = (props: Props) => {
                         </Box>
                     ) : (
                         <FadeIn>
+                            {/* threads */}
                             <ActionNavItem
                                 highlight={unreadThreadsCount > 0}
                                 icon="threads"
@@ -178,6 +205,7 @@ export const SpaceSideBar = (props: Props) => {
                                 }
                                 minHeight="x5"
                             />
+                            {/* mentions */}
                             <ActionNavItem
                                 icon="at"
                                 id="mentions"
@@ -185,12 +213,26 @@ export const SpaceSideBar = (props: Props) => {
                                 link={`/${PATHS.SPACES}/${space.id}/mentions`}
                                 minHeight="x5"
                             />
-                            <ChannelList
-                                key={space.id}
-                                space={space}
-                                mentions={mentions}
-                                canCreateChannel={canCreateChannel}
-                                onShowCreateChannel={onShowCreateChannel}
+                            <SidebarListLayout
+                                label="Unreads"
+                                channels={unreads}
+                                itemRenderer={itemRenderer}
+                            />
+
+                            <SidebarListLayout
+                                label="Channels"
+                                channels={readChannels}
+                                headerContent={
+                                    canCreateChannel && (
+                                        <IconButton
+                                            icon="plus"
+                                            tooltip="New channel"
+                                            tooltipOptions={{ immediate: true }}
+                                            onClick={onShowCreateChannel}
+                                        />
+                                    )
+                                }
+                                itemRenderer={itemRenderer}
                             />
 
                             <ActionNavItem
@@ -209,7 +251,20 @@ export const SpaceSideBar = (props: Props) => {
                                     onClick={onShowCreateChannel}
                                 />
                             )}
-                            <DirectMessageChannelList onDisplayCreate={onDisplayCreate} />
+                            <SidebarListLayout
+                                label="Direct Messages"
+                                channels={readDms}
+                                headerContent={
+                                    <IconButton
+                                        size="square_sm"
+                                        icon="compose"
+                                        color="gray2"
+                                        cursor="pointer"
+                                        onClick={onDisplayCreate}
+                                    />
+                                }
+                                itemRenderer={itemRenderer}
+                            />
                         </FadeIn>
                     )}
                 </Stack>
@@ -234,4 +289,96 @@ export const SpaceSideBar = (props: Props) => {
             )}
         </SideBar>
     )
+}
+
+const useSortedChannels = (spaceId: string) => {
+    const mentions = useSpaceMentions()
+    const channels = useSpaceChannels()
+    const { spaceUnreadChannelIds, dmUnreadChannelIds, dmChannels } = useZionContext()
+    const { memberIds } = useSpaceMembers()
+
+    const unreadChannelIds = useMemo(
+        () =>
+            new Set(
+                spaceUnreadChannelIds[spaceId]
+                    ? Object.entries(spaceUnreadChannelIds[spaceId]).map((c) => c[1])
+                    : [],
+            ),
+        [spaceId, spaceUnreadChannelIds],
+    )
+
+    const channelItems = useMemo(() => {
+        return channels
+            .map((channel) => {
+                const mentionCount = mentions.reduce(
+                    (count, m) =>
+                        m.unread && !m.thread && m.channel.id === channel.id ? count + 1 : count,
+                    0,
+                )
+                return channel
+                    ? ({
+                          type: 'channel',
+                          id: channel.id,
+                          channel,
+                          mentionCount,
+                          unread: unreadChannelIds.has(channel.id),
+                          latestMs: Number(0),
+                      } as const)
+                    : undefined
+            })
+            .filter(notUndefined)
+    }, [channels, mentions, unreadChannelIds])
+
+    const dmItems = useMemo(() => {
+        return Array.from(dmChannels)
+            .filter((c) => !c.left && c.userIds.every((m) => memberIds.includes(m)))
+            .map((channel) => {
+                return channel
+                    ? ({
+                          type: 'dm',
+                          id: channel.id,
+                          channel,
+                          unread: dmUnreadChannelIds.has(channel.id),
+                          latestMs: Number(channel?.lastEventCreatedAtEpocMs ?? 0),
+                      } as const)
+                    : undefined
+            })
+            .filter(notUndefined)
+    }, [dmChannels, dmUnreadChannelIds, memberIds])
+
+    const params = useParams()
+    const currentRouteId = params.channelSlug
+    const prevUnreads = useRef<string[]>([])
+
+    const persistUnreadId =
+        currentRouteId && prevUnreads.current.includes(currentRouteId) ? currentRouteId : undefined
+
+    const unreads = useMemo(() => {
+        return [
+            ...channelItems.filter((c) => c.unread || c.channel.id === persistUnreadId),
+            ...dmItems.filter((c) => c.unread || c.channel.id === persistUnreadId),
+        ].sort((a, b) => Math.sign(b.latestMs - a.latestMs))
+    }, [channelItems, dmItems, persistUnreadId])
+
+    useEffect(() => {
+        prevUnreads.current = unreads.map((u) => u.id)
+    }, [unreads])
+
+    const readChannels = useMemo(() => {
+        return [...channelItems.filter((c) => !c.unread && persistUnreadId !== c.id)].sort((a, b) =>
+            a.channel.label.localeCompare(b.channel.label),
+        )
+    }, [channelItems, persistUnreadId])
+
+    const readDms = useMemo(() => {
+        return [...dmItems.filter((c) => !c.unread && persistUnreadId !== c.id)].sort((a, b) =>
+            Math.sign(b.latestMs - a.latestMs),
+        )
+    }, [dmItems, persistUnreadId])
+
+    return {
+        readChannels,
+        readDms,
+        unreads,
+    }
 }
