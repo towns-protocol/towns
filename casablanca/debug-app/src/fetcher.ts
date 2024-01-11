@@ -22,7 +22,7 @@ export const fetchData = async (url: string): Promise<string> => {
 
 export const fetchRpcInfo = async (url: string): Promise<string> => {
     const client = makeStreamRpcClient(url)
-    const result = await client.info({ debug: 'ping!' })
+    const result = await client.info({ debug: ['ping!'] })
     console.log('Result:', result)
     return result.toJsonString()
 }

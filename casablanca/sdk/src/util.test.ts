@@ -239,7 +239,7 @@ export const makeDonePromise = (): DonePromise => {
 }
 
 export const sendFlush = async (client: StreamRpcClientType): Promise<void> => {
-    const r = await client.info({ debug: 'flush_cache' })
+    const r = await client.info({ debug: ['flush_cache'] })
     assert(r.graffiti === 'cache flushed')
 }
 

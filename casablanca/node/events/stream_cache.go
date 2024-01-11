@@ -21,6 +21,7 @@ type StreamCache interface {
 	CreateStream(ctx context.Context, streamId string, genesisMiniblock *Miniblock) (SyncStream, StreamView, error)
 	ForceFlushAll(ctx context.Context)
 	ListStreams(ctx context.Context) []string
+	MakeMiniblock(ctx context.Context, streamId string) error
 }
 
 type streamCacheImpl struct {
@@ -97,4 +98,13 @@ func (s *streamCacheImpl) ListStreams(ctx context.Context) []string {
 		return true
 	})
 	return result
+}
+
+func (s *streamCacheImpl) MakeMiniblock(ctx context.Context, streamId string) error {
+	entry, _ := s.cache.Load(streamId)
+	if entry == nil {
+		return RiverError(Err_NOT_FOUND, "stream not in cache", "streamId", streamId)
+	}
+	stream := entry.(*streamImpl)
+	return stream.MakeMiniblock(ctx)
 }

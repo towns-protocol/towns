@@ -631,7 +631,7 @@ message CancelSyncRequest {
 message CancelSyncResponse {}
 
 message InfoRequest {
-    string debug = 1;
+    repeated string debug = 1;
 }
 
 message InfoResponse {

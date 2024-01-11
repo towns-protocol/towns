@@ -94,7 +94,7 @@ describe('nodeRestart', () => {
         )
 
         log('Restarting node')
-        await expect(bob.info({ debug: 'exit' })).toResolve()
+        await expect(bob.info({ debug: ['exit'] })).toResolve()
 
         log('Waiting a bit')
         await setTimeout(1000)

@@ -289,7 +289,7 @@ describe('streamRpcClient', () => {
         const client = makeTestRpcClient()
         log('makeStreamRpcClient', 'url', client.url)
         expect(client).toBeDefined()
-        const result = await client.info({ debug: 'graffiti' })
+        const result = await client.info({ debug: ['graffiti'] })
         expect(result).toBeDefined()
         expect(result.graffiti).toEqual('Towns.com node welcomes you!')
     })
@@ -300,7 +300,7 @@ describe('streamRpcClient', () => {
 
         let err: Error | undefined = undefined
         try {
-            await client.info({ debug: 'error' })
+            await client.info({ debug: ['error'] })
         } catch (e) {
             expect(e).toBeInstanceOf(Error)
             err = e as Error
@@ -317,7 +317,7 @@ describe('streamRpcClient', () => {
 
         let err: Error | undefined = undefined
         try {
-            await client.info({ debug: 'error_untyped' })
+            await client.info({ debug: ['error_untyped'] })
         } catch (e) {
             expect(e).toBeInstanceOf(Error)
             err = e as Error
@@ -331,7 +331,7 @@ describe('streamRpcClient', () => {
     test('panic', async () => {
         const client = makeTestRpcClient()
         expect(client).toBeDefined()
-        await expect(client.info({ debug: 'panic' })).rejects.toThrow(
+        await expect(client.info({ debug: ['panic'] })).rejects.toThrow(
             '[unknown] TypeError: fetch failed',
         )
     })

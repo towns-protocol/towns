@@ -23,7 +23,7 @@ describe('protocol', () => {
         expect(client).toBeDefined()
 
         try {
-            await client.info(new InfoRequest({ debug: 'error' }))
+            await client.info(new InfoRequest({ debug: ['error'] }))
             expect(true).toBe(false)
         } catch (err) {
             expect(errorContains(err, Err.DEBUG_ERROR)).toBe(true)
