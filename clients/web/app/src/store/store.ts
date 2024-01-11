@@ -19,6 +19,8 @@ interface AppState {
     setPushNotificationsPromptClosed: { (denied: boolean): void }
     setSearchTerms: (searchTerms: string) => void
     searchTerms: string
+    mutedChannelIds: string[]
+    setMutedChannelIds: (mutedChannelIds: string[]) => void
 }
 
 export const GLOBAL_STORE_NAME = 'towns/global'
@@ -30,7 +32,10 @@ export const useStore = create(
             setTheme: (theme) => {
                 set(() => ({ theme }))
             },
-
+            setMutedChannelIds: (mutedChannelIds: string[]) => {
+                set(() => ({ mutedChannelIds }))
+            },
+            mutedChannelIds: [],
             spaceIdBookmark: undefined,
             townRouteBookmarks: {},
             setTownRouteBookmark: (spaceId, route) => {

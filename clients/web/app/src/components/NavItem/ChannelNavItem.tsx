@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { useParams } from 'react-router'
-import { Channel, SpaceData, useChannelNotificationCounts } from 'use-zion-client'
+import { Channel, SpaceData, useZionContext } from 'use-zion-client'
 import { useEvent } from 'react-use-event-hook'
 import { PATHS } from 'routes'
 import { Badge, ButtonText, Icon, Stack } from '@ui'
@@ -20,7 +20,6 @@ export const ChannelNavItem = (props: Props) => {
     const [showChannelSettings, setShowChannelSettings] = useState<boolean>(false)
 
     const { id, space, channel, mentionCount = 0 } = props
-    const notis = useChannelNotificationCounts(channel.id)
 
     const link = `/${PATHS.SPACES}/${space.id}/channels/${channel.id}/`
     const isHighlight = channel.id === channelSlug
@@ -39,8 +38,11 @@ export const ChannelNavItem = (props: Props) => {
         spaceId: space.id,
         channelId: channel.id,
     })
+
     const isMuted = channelIsMuted || spaceIsMuted
-    const showUnread = notis.isUnread && !isMuted
+
+    const { spaceUnreadChannelIds } = useZionContext()
+    const showUnread = spaceUnreadChannelIds[space.id]?.includes(channel.id)
 
     return (
         <>

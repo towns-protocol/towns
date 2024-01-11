@@ -21,12 +21,14 @@ import { AuthContextProvider } from 'hooks/useAuth'
 import { useWatchForPrivyRequestErrors } from 'hooks/useWatchForPrivyRequestErrors'
 import DebugBar from '@components/DebugBar/DebugBar'
 import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
+import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
 
 FontLoader.init()
 
 export const App = () => {
-    const { theme } = useStore((state) => ({
+    const { theme, mutedChannelIds } = useStore((state) => ({
         theme: state.theme,
+        mutedChannelIds: state.mutedChannelIds,
     }))
 
     useWindowListener()
@@ -53,6 +55,7 @@ export const App = () => {
 
     return (
         <ZionContextProvider
+            mutedChannelIds={mutedChannelIds}
             casablancaServerUrl={environment.casablancaUrl}
             chainId={environment.chainId}
             initalSyncSortPredicate={initalSyncSortPredicate}
@@ -87,6 +90,7 @@ export const App = () => {
                     {!env.VITE_DISABLE_DEBUG_BARS && (
                         <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
                     )}
+                    <SyncNotificationSettings />
                     <Notifications />
                     <BlockchainTxNotifier />
                     <ServiceWorkerSpacesSyncer />

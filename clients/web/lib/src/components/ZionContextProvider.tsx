@@ -64,6 +64,7 @@ interface ZionContextProviderProps {
     enableSpaceRootUnreads?: boolean
     timelineFilter?: Set<ZTEvent>
     children: JSX.Element
+    mutedChannelIds?: string[]
     initalSyncSortPredicate?: InitialSyncSortPredicate
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
     pushNotificationAuthToken?: string
@@ -84,6 +85,8 @@ export function ZionContextProvider({
 }
 
 const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
+    const { mutedChannelIds } = props
+
     let hookCounter = 0
 
     function useHookLogger() {
@@ -95,7 +98,7 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
         }, [])
     }
 
-    const { casablancaServerUrl, enableSpaceRootUnreads, timelineFilter } = props
+    const { casablancaServerUrl, enableSpaceRootUnreads = false, timelineFilter } = props
 
     const previousProps = useRef<ZionContextProviderProps>()
 
@@ -124,11 +127,13 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
     const { spaces } = useSpaces(undefined, casablancaClient)
     const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
-    const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads(
+
+    const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads({
         client,
         spaceHierarchies,
-        enableSpaceRootUnreads === true,
-    )
+        enableSpaceRootUnreads,
+        mutedChannelIds,
+    })
 
     const { dmUnreadChannelIds } = useDMUnreads(casablancaClient, dmChannels)
     useHookLogger()

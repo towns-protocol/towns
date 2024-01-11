@@ -7,11 +7,17 @@ import { ThreadStatsMap, useTimelineStore } from '../../store/use-timeline-store
 import { useSpaceIdStore } from './useSpaceIds'
 import isEqual from 'lodash/isEqual'
 
-export function useSpaceUnreads(
-    client: ZionClient | undefined,
-    spaceHierarchies: SpaceHierarchies,
-    bShowSpaceRootUnreads: boolean,
-) {
+export function useSpaceUnreads({
+    client,
+    spaceHierarchies,
+    enableSpaceRootUnreads: bShowSpaceRootUnreads,
+    mutedChannelIds,
+}: {
+    client: ZionClient | undefined
+    spaceHierarchies: SpaceHierarchies
+    enableSpaceRootUnreads: boolean
+    mutedChannelIds?: string[]
+}) {
     const { spaceIds } = useSpaceIdStore()
 
     const [state, setState] = useState<{
@@ -37,6 +43,7 @@ export function useSpaceUnreads(
         ) => {
             setState((prev) => {
                 const unreadChannelIdsArray = [...unreadChannelIds]
+
                 const channelIdsAreEqual = isEqual(
                     prev.spaceUnreadChannelIds[spaceId],
                     unreadChannelIdsArray,
@@ -91,9 +98,12 @@ export function useSpaceUnreads(
                         isParticipatingThread(marker, threadsStats) &&
                         childIds.has(marker.channelId)
                     ) {
-                        hasUnread = true
-                        mentionCount += marker.mentions
-                        unreadChannelIds.add(marker.channelId)
+                        const isMuted = mutedChannelIds?.includes(marker.channelId)
+                        if (!isMuted) {
+                            mentionCount += marker.mentions
+                            hasUnread = true
+                            unreadChannelIds.add(marker.channelId)
+                        }
                     }
                 })
 
@@ -107,7 +117,7 @@ export function useSpaceUnreads(
         return () => {
             fullyReadUnsub()
         }
-    }, [client, spaceIds, spaceHierarchies, bShowSpaceRootUnreads, threadsStats])
+    }, [client, spaceIds, spaceHierarchies, bShowSpaceRootUnreads, threadsStats, mutedChannelIds])
 
     return state
 }
