@@ -275,34 +275,8 @@ resource "aws_lb_target_group" "green" {
   tags = local.river_node_tags
 }
 
-locals {
-  # first, we compute max_non_reserved_priority, to find the max
-  # priority a river node can have.
-  # we modulo by max_non_reserved_priority to avoid going over the max.
-  # we multiply by 10 to give room for at most 10 nodes.
-  # we add the node number to give each node a unique priority.
-  # we add the reserved priority to make room for other, arbitrary services such as pgadmin.
-
-  max_lb_listener_priority  = 50000
-  max_non_reserved_priority = local.max_lb_listener_priority - module.global_constants.alb_reserved_num_rules
-
-  transient_lb_listener_priority = (
-    (
-      10 * (var.is_transient ? var.git_pr_number : 0) +
-      var.node_number
-    ) % local.max_non_reserved_priority
-  ) + module.global_constants.alb_reserved_num_rules
-
-  lb_listener_priority = var.is_transient ? local.transient_lb_listener_priority : (
-    1 + module.global_constants.alb_reserved_num_rules
-  )
-}
-
 resource "aws_lb_listener_rule" "host_rule" {
   listener_arn = var.alb_https_listener_arn
-
-  # set the priority dynamically to avoid conflicts with
-  priority = local.lb_listener_priority
 
   lifecycle {
     ignore_changes = [action]
@@ -329,6 +303,8 @@ locals {
     password_arn = local.shared_credentials.db_password.arn
   }
 
+  nodes = module.global_constants.nodes_metadata
+
   // we conditionally create these arrays. an empty array, when concatted, does nothing.
   // this is how we conditionally add secrets and env vars to the task definition.
 
@@ -351,6 +327,11 @@ locals {
     name  = "RIVERCHAIN__NETWORKURL"
     value = var.river_chain_network_url_override
   }]
+
+  river_registry_contract_td_env_config = var.is_transient ? [{
+    name  = "REGISTRYCONTRACT__ADDRESS",
+    value = "0xEd142Ee3F6B445B70f063A30A3F61e5d7855F6Fd"
+  }] : []
 }
 
 resource "aws_ecs_task_definition" "river-fargate" {
@@ -425,7 +406,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = var.base_chain_id
       },
       {
-        name  = "RIVERCHAIN_CHAINID",
+        name  = "RIVERCHAIN__CHAINID",
         value = var.river_chain_id
       },
       {
@@ -525,21 +506,26 @@ resource "aws_ecs_task_definition" "river-fargate" {
         name  = "NODEREGISTRYCSV"
         value = <<-EOF
         #address,url
-        0xbf2fe1d28887a0000a1541291c895a26bd7b1ddd,https://river1-${terraform.workspace}.towns.com,
-        0x43eace8e799497f8206e579f7ccd1ec41770d099,https://river2-${terraform.workspace}.towns.com,
-        0x4e9baef70f7505fda609967870b8b489af294796,https://river3-${terraform.workspace}.towns.com,
-        0xae2ef76c62c199bc49bb38db99b29726bd8a8e53,https://river4-${terraform.workspace}.towns.com,
-        0xc4f042cd5aef82db8c089ad0cc4dd7d26b2684cb,https://river5-${terraform.workspace}.towns.com,
-        0x9bb3b35bbf3fa8030ccdb31030cf78039a0d0d9b,https://river6-${terraform.workspace}.towns.com,
-        0x582c64ba11bf70e0bac39988cd3bf0b8f40bdec4,https://river7-${terraform.workspace}.towns.com,
-        0x9df6e5f15ec682ca58df6d2a831436973f98fe60,https://river8-${terraform.workspace}.towns.com,
-        0xb79facbfc07bff49cd2e2971305da0df7aca9bf8,https://river9-${terraform.workspace}.towns.com,
-        0xa278267f396a317c5bb583f47f7f2792bc00d3b3,https://river10-${terraform.workspace}.towns.com
+        ${local.nodes[0].address},${local.nodes[0].url},
+        ${local.nodes[1].address},${local.nodes[1].url},
+        ${local.nodes[2].address},${local.nodes[2].url},
+        ${local.nodes[3].address},${local.nodes[3].url},
+        ${local.nodes[4].address},${local.nodes[4].url},
+        ${local.nodes[5].address},${local.nodes[5].url},
+        ${local.nodes[6].address},${local.nodes[6].url},
+        ${local.nodes[7].address},${local.nodes[7].url},
+        ${local.nodes[8].address},${local.nodes[8].url},
+        ${local.nodes[9].address},${local.nodes[9].url}
         EOF
-      }
+      },
+      {
+        name  = "USEBLOCKCHAINSTREAMREGISTRY",
+        value = var.is_transient ? "true" : "false"
+      },
       ],
       local.base_chain_override_td_env_config,
-      local.river_chain_override_td_env_config
+      local.river_chain_override_td_env_config,
+      local.river_registry_contract_td_env_config
     )
 
     logConfiguration = {
@@ -601,11 +587,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
   tags = module.global_constants.tags
 }
 
-resource "aws_codedeploy_app" "river-node-code-deploy-app" {
-  compute_platform = "ECS"
-  name             = local.node_name
-  tags             = local.river_node_tags
-}
 
 resource "aws_iam_role" "ecs_code_deploy_role" {
   name                = "${local.node_name}-ecs-code-deploy-role"
@@ -627,6 +608,12 @@ resource "aws_iam_role" "ecs_code_deploy_role" {
   })
 
   tags = module.global_constants.tags
+}
+
+resource "aws_codedeploy_app" "river-node-code-deploy-app" {
+  compute_platform = "ECS"
+  name             = local.node_name
+  tags             = local.river_node_tags
 }
 
 resource "aws_ecs_service" "river-ecs-service" {
@@ -676,11 +663,15 @@ resource "aws_ecs_service" "river-ecs-service" {
 
 resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   app_name               = aws_codedeploy_app.river-node-code-deploy-app.name
-  deployment_group_name  = local.node_name
+  deployment_group_name  = "river-blue-green"
   service_role_arn       = aws_iam_role.ecs_code_deploy_role.arn
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
 
   tags = local.river_node_tags
+
+  depends_on = [
+    aws_ecs_service.river-ecs-service
+  ]
 
   ecs_service {
     cluster_name = var.ecs_cluster.name

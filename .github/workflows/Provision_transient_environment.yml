@@ -137,6 +137,7 @@ jobs:
         strategy:
             matrix:
                 iteration: ${{ fromJson(needs.check_labels.outputs.continuous_deploy_iterations) }}
+            fail-fast: false
         with:
             environment_name: ${{ format('transient-{0}', github.event.pull_request.number )}}
             docker_image_tag: ${{ format('transient-{0}-latest', github.event.pull_request.number )}}

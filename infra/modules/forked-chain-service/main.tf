@@ -12,6 +12,7 @@ locals {
   service_name        = "${var.chain_name}-fork"
   name                = "${local.service_name}-${terraform.workspace}"
   global_remote_state = module.global_constants.global_remote_state.outputs
+  nodes               = module.global_constants.nodes_metadata
 }
 
 terraform {
@@ -220,6 +221,21 @@ resource "aws_ecs_task_definition" "task_definition" {
       {
         name  = "PORT",
         value = "8545"
+      },
+      {
+        name  = "FUNDING_WALLETS_CSV",
+        value = <<-EOF
+        ${local.nodes[0].address},
+        ${local.nodes[1].address},
+        ${local.nodes[2].address},
+        ${local.nodes[3].address},
+        ${local.nodes[4].address},
+        ${local.nodes[5].address},
+        ${local.nodes[6].address},
+        ${local.nodes[7].address},
+        ${local.nodes[8].address},
+        ${local.nodes[9].address}
+        EOF
       }
     ]
 

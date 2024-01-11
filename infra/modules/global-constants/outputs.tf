@@ -91,3 +91,49 @@ output "transient_global_remote_state" {
 output "alb_reserved_num_rules" {
   value = 50
 }
+
+output "nodes_metadata" {
+  value = [
+    {
+      address = "0xbf2fe1d28887a0000a1541291c895a26bd7b1ddd"
+      url     = "https://river1-${terraform.workspace}.towns.com"
+    }
+    , {
+      address = "0x43eace8e799497f8206e579f7ccd1ec41770d099"
+      url     = "https://river2-${terraform.workspace}.towns.com"
+    }
+    , {
+      address = "0x4e9baef70f7505fda609967870b8b489af294796"
+      url     = "https://river3-${terraform.workspace}.towns.com"
+    }
+    , {
+      address = "0xae2ef76c62c199bc49bb38db99b29726bd8a8e53"
+      url     = "https://river4-${terraform.workspace}.towns.com"
+    }
+    , {
+      address = "0xc4f042cd5aef82db8c089ad0cc4dd7d26b2684cb"
+      url     = "https://river5-${terraform.workspace}.towns.com"
+    }
+    , {
+      address = "0x9bb3b35bbf3fa8030ccdb31030cf78039a0d0d9b"
+      url     = "https://river6-${terraform.workspace}.towns.com"
+    },
+    {
+      address = "0x582c64ba11bf70e0bac39988cd3bf0b8f40bdec4"
+      url     = "https://river7-${terraform.workspace}.towns.com"
+    },
+    {
+      address = "0x9df6e5f15ec682ca58df6d2a831436973f98fe60"
+      url     = "https://river8-${terraform.workspace}.towns.com"
+    }
+    , {
+      address = "0xb79facbfc07bff49cd2e2971305da0df7aca9bf8"
+      url     = "https://river9-${terraform.workspace}.towns.com"
+    }
+    , {
+      address = "0xa278267f396a317c5bb583f47f7f2792bc00d3b3"
+      url     = "https://river10-${terraform.workspace}.towns.com"
+    }
+
+  ]
+}

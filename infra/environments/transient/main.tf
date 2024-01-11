@@ -95,7 +95,7 @@ locals {
   base_earliest_fork_block_number = "latest"
 
   # This is when the Stream Registry was first deployed
-  river_earliest_fork_block_number = "44649"
+  river_earliest_fork_block_number = "1777392"
 }
 
 module "base_forked_chain_service" {
@@ -128,7 +128,7 @@ module "river_forked_chain_service" {
   alb_https_listener_arn = local.transient_global_remote_state.river_alb.lb_https_listener_arn
 
   block_time = 2
-  chain_id   = local.base_chain_id
+  chain_id   = local.river_chain_id
   chain_name = "river"
   ecs_cluster = {
     id   = local.transient_global_remote_state.river_ecs_cluster.id
