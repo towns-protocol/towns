@@ -319,8 +319,13 @@ export class Client
         this.decryptionExtensions.start()
         const initializeUserEndTime = performance.now()
         const executionTime = initializeUserEndTime - initializeUserStartTime
+        //TODO: remove ASAP - for testing only
+        //eslint-disable-next-line no-console
+        console.log('process.env.DD_TOWNS_LOAD_TESTING_KEY', process.env.DD_TOWNS_LOAD_TESTING_KEY)
         if (process.env.DD_TOWNS_LOAD_TESTING_KEY) {
-            this.logCall('initializeUser', 'sending metric to DataDog')
+            //TODO: remove ASAP - for testing only
+            //eslint-disable-next-line no-console
+            console.log('initializeUser', 'sending metric to DataDog')
             const apiKey = process.env.DD_TOWNS_LOAD_TESTING_KEY
             const apiUrl = 'https://api.datadoghq.com/api/v1/series'
 
@@ -345,10 +350,14 @@ export class Client
             })
                 .then((response) => response.json())
                 .then((data) => {
-                    this.logCall('Metric sent successfully:', data)
+                    //TODO: remove ASAP - for testing only
+                    //eslint-disable-next-line no-console
+                    console.log('Metric sent successfully:', data)
                 })
                 .catch((error) => {
-                    this.logCall('Error sending metric:', error)
+                    //TODO: remove ASAP - for testing only
+                    //eslint-disable-next-line no-console
+                    console.log('Error sending metric:', error)
                 })
         }
         //datadogRum.addTiming('inititalizeUser', executionTime)
