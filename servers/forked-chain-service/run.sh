@@ -2,8 +2,6 @@
 
 set -eo pipefail
 
-# TODO: add logic to get the latest block number and pass it to anvil
-
 function check_dependencies() {
     if ! [ -x "$(command -v anvil)" ]; then
         echo "anvil is not installed"
@@ -25,13 +23,13 @@ function check_dependencies() {
         exit 1
     fi
 
-    # if ! [ -x "$(command -v read)" ]; then
-    #     echo "read is not installed"
-    #     exit 1
-    # fi
+    if ! [ -x "$(command -v awk)" ]; then
+        echo "awk is not installed"
+        exit 1
+    fi
 
-    if ! [ -x "$(command -v screen)" ]; then
-        echo "screen is not installed"
+    if ! [ -x "$(command -v cut)" ]; then
+        echo "cut is not installed"
         exit 1
     fi
 }
@@ -112,11 +110,14 @@ function fund_wallet() {
 }
 
 function fund_wallets() {
-    echo "Funding wallets"
+    # Count the number of fields in the CSV
+    num_fields=$(echo "$FUNDING_WALLETS_CSV" | awk -F, '{print NF}')
 
-    IFS=',' read -ra wallets <<< "$FUNDING_WALLETS_CSV"
-
-    for wallet in "${wallets[@]}"; do
+    # Loop over each field, and fund the wallet
+    for i in $(seq 1 $num_fields)
+    do
+        wallet=$(echo "$FUNDING_WALLETS_CSV" | cut -d',' -f$i)
+        echo "funding wallet: $wallet"
         fund_wallet $wallet
     done
 }
