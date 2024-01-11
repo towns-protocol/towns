@@ -1,3 +1,5 @@
+import { User } from './types'
+
 // TODO: should we use this to only show notifications when the tab is not visible?
 export async function checkClientIsVisible(worker: ServiceWorkerGlobalScope): Promise<boolean> {
     // https://github.com/microsoft/TypeScript/issues/14877
@@ -42,4 +44,17 @@ export const shortAddress = (address: string) => {
     const start = address.slice(0, 5)
     const end = address.slice(-3)
     return `${start}...${end}`
+}
+
+export function stringHasValue(s: string | undefined): boolean {
+    return s !== undefined && s.length > 0
+}
+
+export function preferredUsername(user: User): string {
+    // in order of preference: displayName -> username -> userId
+    return stringHasValue(user.displayName)
+        ? user.displayName
+        : stringHasValue(user.username)
+        ? user.username
+        : user.userId
 }

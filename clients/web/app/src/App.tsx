@@ -16,7 +16,7 @@ import { AppNotifications } from '@components/AppNotifications/AppNotifications'
 import { useStore } from 'store/store'
 import { RegisterPushSubscription } from '@components/RegisterPushSubscription/RegisterPushSubscription'
 import { AllRoutes } from 'AllRoutes'
-import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
+import { ServiceWorkerMetadataSyncer } from 'workers/ServiceWorkerMetadataSyncer'
 import { AuthContextProvider } from 'hooks/useAuth'
 import { useWatchForPrivyRequestErrors } from 'hooks/useWatchForPrivyRequestErrors'
 import DebugBar from '@components/DebugBar/DebugBar'
@@ -93,7 +93,7 @@ export const App = () => {
                     <SyncNotificationSettings />
                     <Notifications />
                     <BlockchainTxNotifier />
-                    <ServiceWorkerSpacesSyncer />
+                    <ServiceWorkerMetadataSyncer />
                 </AuthContextProvider>
             </EmbeddedSignerContextProvider>
         </ZionContextProvider>

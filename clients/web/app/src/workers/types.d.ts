@@ -103,3 +103,9 @@ export enum ServiceWorkerMessageType {
     SpaceMembers = 'space_members',
     MyUserId = 'my_user_id',
 }
+
+export interface User {
+    userId: string
+    username: string
+    displayName: string
+}

@@ -1,4 +1,3 @@
-import { RoomMember, SpaceData, UserIdToMember } from 'use-zion-client'
 import {
     AppNotification,
     AppNotificationType,
@@ -10,31 +9,26 @@ import {
     ServiceWorkerMessageType,
     WEB_PUSH_NAVIGATION_CHANNEL,
 } from './types.d'
-import { User, startDB } from '../idb/notificationsMeta'
+import { User } from '../idb/notificationsMeta'
 import {
     appNotificationFromPushEvent,
     notificationContentFromEvent,
     pathFromAppNotification,
 } from './notificationParsers'
-import { checkClientIsVisible, getShortenedName } from './utils'
+import { checkClientIsVisible, getShortenedName, stringHasValue } from './utils'
 
 import { PlaintextDetails, decryptWithMegolm } from './mecholmDecryption'
 import { env } from '../utils/environment'
 import { getEncryptedData } from './data_transforms'
+import { NotificationStore } from '../store/notificationStore'
 
-let idbChannels: ReturnType<typeof startDB>['idbChannels'] | undefined = undefined
-let idbSpaces: ReturnType<typeof startDB>['idbSpaces'] | undefined = undefined
-let idbUsers: ReturnType<typeof startDB>['idbUsers'] | undefined = undefined
+let notificationStore: NotificationStore | undefined = undefined
 
-function startDBWithTerminationListener() {
-    return startDB({
-        onTerminated: () => {
-            // if terminated, we need to reset the idb stores so that the next action that involves one will re-establish a connection
-            idbChannels = undefined
-            idbUsers = undefined
-            idbSpaces = undefined
-        },
-    })
+function getNotificationStore(): NotificationStore {
+    if (!notificationStore) {
+        notificationStore = new NotificationStore()
+    }
+    return notificationStore
 }
 
 export function handleNotifications(worker: ServiceWorkerGlobalScope) {
@@ -64,67 +58,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     // `activate` fires once old service worker is gone and new one has taken control
     worker.addEventListener('activate', () => {
         console.log('sw:push: "activate" event')
-        startDBWithTerminationListener()
-    })
-
-    worker.addEventListener('message', async (event) => {
-        console.log('sw:push: "message" event', event)
-        const data: {
-            type?: ServiceWorkerMessageType
-            space?: SpaceData
-            membersMap?: UserIdToMember
-            myProfile?: RoomMember
-        } = event.data
-
-        event.waitUntil(addData())
-
-        async function addData() {
-            switch (data.type) {
-                case ServiceWorkerMessageType.MyUserId:
-                    if (data.myProfile?.userId) {
-                        const userId = data.myProfile.userId
-                        try {
-                            await addMyUserIdToIdb(userId)
-                        } catch (error) {
-                            console.error('sw:push: error adding my userId to idb', userId, error)
-                        }
-                    }
-                    break
-                case ServiceWorkerMessageType.SpaceMetadata:
-                    if (data.space) {
-                        const space = data.space
-                        try {
-                            await Promise.all([addSpaceToIdb(space), addChannelsToIdb(space)])
-                        } catch (error) {
-                            console.error(
-                                'sw:push: error adding space and channels to idb',
-                                space,
-                                error,
-                            )
-                        }
-                    }
-                    break
-                case ServiceWorkerMessageType.SpaceMembers:
-                    if (data.membersMap) {
-                        try {
-                            await addUsersToIdb(data.membersMap)
-                        } catch (error) {
-                            console.error(
-                                'sw:push: error adding users to idb',
-                                {
-                                    space: data.space,
-                                    membersMap: data.membersMap,
-                                },
-                                error,
-                            )
-                        }
-                    }
-                    break
-                default:
-                    console.log('sw:push: received unknown message type', data.type)
-                    break
-            }
-        }
+        getNotificationStore()
     })
 
     worker.addEventListener('push', (event) => {
@@ -396,18 +330,14 @@ async function getNotificationContent(
     let recipients: User[] = []
     let myUserId: string | undefined = undefined
 
-    if (!idbSpaces || !idbChannels || !idbUsers) {
-        ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
-    }
-
     try {
         const space =
             notification.content.kind !== AppNotificationType.DirectMessage
-                ? await idbSpaces.get(notification.content.spaceId)
+                ? await notificationStore?.getSpace(notification.content.spaceId)
                 : undefined
-        const channel = await idbChannels.get(notification.content.channelId)
-        const sender = await idbUsers.get(notification.content.senderId)
-        const myUser = await idbUsers.get(ServiceWorkerMessageType.MyUserId)
+        const channel = await notificationStore?.getChannel(notification.content.channelId)
+        const sender = await notificationStore?.getUser(notification.content.senderId)
+        const myUser = await notificationStore?.getUser(ServiceWorkerMessageType.MyUserId)
         myUserId = myUser?.name // this is the userId, not the displayName
         townName = space?.name
         channelName = channel?.name
@@ -422,8 +352,8 @@ async function getNotificationContent(
             console.log('sw:push: recipients', notification.content.recipients)
             const dbUsersPromises: Promise<User | undefined>[] = []
             notification.content.recipients.forEach((recipientId) => {
-                if (idbUsers) {
-                    dbUsersPromises.push(idbUsers.get(recipientId))
+                if (notificationStore) {
+                    dbUsersPromises.push(notificationStore.getUser(recipientId))
                 }
             })
             const dbUsers = await Promise.all(dbUsersPromises)
@@ -440,6 +370,7 @@ async function getNotificationContent(
     }
 
     // try to decrypt, if we can't, return undefined, and the notification will be a generic message
+    console.log('tak:sw:push: myUserId before calling tryDecryptEvent', myUserId)
     const plaintext = myUserId ? await tryDecryptEvent(myUserId, notification) : undefined
 
     switch (notification.content.kind) {
@@ -482,111 +413,6 @@ async function getNotificationContent(
         default:
             return undefined
     }
-}
-
-async function addMyUserIdToIdb(userId: string) {
-    if (!idbUsers) {
-        ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
-    }
-    await idbUsers.set({
-        id: ServiceWorkerMessageType.MyUserId,
-        name: userId,
-    })
-    console.log('sw:push: added my userId to idb', userId)
-}
-
-async function addSpaceToIdb(space: SpaceData) {
-    if (!idbSpaces) {
-        ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
-    }
-    const spaceId = space.id
-    const cacheSpace = await idbSpaces.get(spaceId)
-
-    if (!cacheSpace || cacheSpace.name !== space.name) {
-        console.log('sw:push: adding space to idb', spaceId)
-        await idbSpaces.set({
-            id: spaceId,
-            name: space.name,
-        })
-    }
-}
-
-async function addChannelsToIdb(space: SpaceData) {
-    if (!idbChannels) {
-        ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
-    }
-    const channels = space.channelGroups.flatMap((cg) => cg.channels)
-    const allIdbChannelsForSpace = await idbChannels.getAllFromIndex('bySpace', space.id)
-
-    const missingItems = channels.filter(
-        (channel) => !allIdbChannelsForSpace.some((idbChannel) => idbChannel.id === channel.id),
-    )
-    const nameChangedItems = channels.filter((channel) =>
-        allIdbChannelsForSpace.some(
-            (idbChannel) => idbChannel.id === channel.id && idbChannel.name !== channel.label,
-        ),
-    )
-    const itemsToUpdate = missingItems.concat(nameChangedItems)
-
-    if (itemsToUpdate.length) {
-        const tx = await idbChannels.transaction('readwrite')
-        const store = tx.store
-        await Promise.all([
-            ...itemsToUpdate.map((item) =>
-                store.put?.({
-                    id: item.id,
-                    name: item.label,
-                    parentSpaceId: space.id,
-                }),
-            ),
-            tx.done,
-        ])
-    }
-}
-
-function preferredName(member: RoomMember): string {
-    // in order of preference: displayName -> username -> userId
-    return stringHasValue(member.displayName)
-        ? member.displayName
-        : stringHasValue(member.username)
-        ? member.username
-        : member.userId
-}
-
-async function addUsersToIdb(membersMap: { [userId: string]: RoomMember | undefined }) {
-    if (!idbUsers) {
-        ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
-    }
-    const allIdbUsers = await idbUsers.getAll()
-    // update name if the userId is missing; or if the name is different
-    const updateNames = Object.values(membersMap)
-        .filter(
-            (member) =>
-                member &&
-                !allIdbUsers.some(
-                    (idbUser) =>
-                        idbUser.id === member.userId && idbUser.name === preferredName(member),
-                ),
-        )
-        .filter((member) => member !== undefined) as RoomMember[]
-    if (updateNames.length) {
-        const tx = await idbUsers.transaction('readwrite')
-        const store = tx.store
-        await Promise.all([
-            ...updateNames.map(async (member) => {
-                const name = preferredName(member)
-                await store.put?.({
-                    name,
-                    id: member.userId,
-                })
-            }),
-            tx.done,
-        ])
-    }
-}
-
-function stringHasValue(s: string | undefined): boolean {
-    return s !== undefined && s.length > 0
 }
 
 async function tryDecryptEvent(
