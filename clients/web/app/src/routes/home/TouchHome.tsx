@@ -419,10 +419,26 @@ const ChannelList = (props: {
 
 const DirectMessageChannelList = () => {
     const { spaceDms, dmUnreadChannelIds } = useSpaceDms()
+    const navigate = useNavigate()
+    const { createLink } = useCreateLink()
+    const onCreateNewMessage = useCallback(() => {
+        const link = createLink({ messageId: 'new' })
+        if (link) {
+            navigate(`${link}?ref=home`)
+        }
+    }, [createLink, navigate])
 
     return spaceDms.length ? (
         <>
-            <SectionHeader title="Direct Messages" />
+            <SectionHeader title="Direct Messages">
+                <IconButton
+                    size="square_sm"
+                    icon="compose"
+                    color="gray2"
+                    cursor="pointer"
+                    onClick={onCreateNewMessage}
+                />
+            </SectionHeader>
             <Stack>
                 {spaceDms.map((c) => (
                     <DirectMessageItem key={c.id} dm={c} unread={dmUnreadChannelIds.has(c.id)} />
@@ -534,11 +550,19 @@ export const TouchUserResultRow = (props: { member: RoomMember }) => {
     )
 }
 
-const SectionHeader = (props: { title: string }) => {
+const SectionHeader = (props: { title: string; children?: React.ReactNode }) => {
     const { title } = props
     return (
-        <Box paddingX paddingTop="md" paddingBottom="sm">
+        <Box paddingX horizontal paddingTop="md" paddingBottom="sm" alignItems="center">
             <Text color="gray2">{title}</Text>
+
+            {props.children ? (
+                <Box grow horizontal justifyContent="end">
+                    {props.children}
+                </Box>
+            ) : (
+                <></>
+            )}
         </Box>
     )
 }

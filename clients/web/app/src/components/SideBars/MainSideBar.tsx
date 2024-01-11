@@ -32,7 +32,13 @@ export const MainSideBar = () => {
                 }}
             >
                 <Box position="relative">
-                    <Icon width="x4" aspectRatio="1/1" size="square_lg" type="dm" />
+                    <Icon
+                        width="x4"
+                        aspectRatio="1/1"
+                        size="square_lg"
+                        type="dm"
+                        background="level2"
+                    />
                     {dmUnreadChannelIds.size > 0 && <Dot position="bottomRight" />}
                 </Box>
             </NavItem>

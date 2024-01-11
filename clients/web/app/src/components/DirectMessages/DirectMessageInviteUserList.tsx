@@ -3,6 +3,8 @@ import fuzzysort from 'fuzzysort'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { firstBy } from 'thenby'
 import { useMyUserId, useUser, useUserLookupContext, useZionContext } from 'use-zion-client'
+import { Avatar } from '@components/Avatar/Avatar'
+import { FadeInBox } from '@components/Transitions'
 import {
     Box,
     Checkbox,
@@ -15,22 +17,24 @@ import {
     Text,
     TextField,
 } from '@ui'
-import { Avatar } from '@components/Avatar/Avatar'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useDevice } from 'hooks/useDevice'
 import { usePersistOrder } from 'hooks/usePersistOrder'
 import { useGetUserBio } from 'hooks/useUserBio'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 export const DirectMessageInviteUserList = (props: {
     onSelectionChange?: (userIds: Set<string>) => void
     hiddenUserIds?: Set<string>
     isMultiSelect?: boolean
     onToggleMultiSelect?: () => void
+    children?: React.ReactNode
 }) => {
     const { onSelectionChange, hiddenUserIds = new Set(), isMultiSelect = false } = props
     const [searchTerm, setSearchTerm] = useState('')
     const { users, usersMap } = useUserLookupContext()
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
     const userId = useMyUserId()
+    const { isTouch } = useDevice()
 
     const toggleMember = useCallback(
         (id: string) => {
@@ -68,8 +72,15 @@ export const DirectMessageInviteUserList = (props: {
         useRecentUsers(userId).filter((id) => !hiddenUserIds.has(id)),
     )
 
+    const allUsers = usePersistOrder(
+        users
+            .map((u) => u.userId)
+            .filter((id) => !hiddenUserIds.has(id) && !recentUsers.includes(id)),
+    )
+
     useEffect(() => {
         onSelectionChange?.(selectedUserIds)
+        setSearchTerm('')
     }, [onSelectionChange, selectedUserIds])
 
     const onToggleGroupDM = useCallback(() => {
@@ -82,15 +93,31 @@ export const DirectMessageInviteUserList = (props: {
         }
     }, [filteredUserIds.length, props])
 
+    const [isSettled, setIsSettled] = useState(!isTouch)
+
+    useEffect(() => {
+        if (isTouch) {
+            const timeout = setTimeout(() => {
+                setIsSettled(true)
+            }, 1000)
+            return () => {
+                clearTimeout(timeout)
+            }
+        }
+    }, [isTouch])
+
+    const layout = isSettled ? 'position' : undefined
+
     return (
-        <Stack gap grow>
+        <MotionStack grow>
             <AnimatePresence mode="popLayout">
                 {isMultiSelect && selectedUserIds.size > 0 && (
-                    <Stack
+                    <FadeInBox
                         horizontal
                         scroll
                         paddingX
                         gap
+                        paddingTop="md"
                         overflowX="scroll"
                         alignItems="center"
                         key="selected-users"
@@ -98,73 +125,98 @@ export const DirectMessageInviteUserList = (props: {
                         {Array.from(selectedUserIds).map((id) => (
                             <SelectedParticipant key={id} userId={id} onToggle={toggleMember} />
                         ))}
-                    </Stack>
+                    </FadeInBox>
                 )}
-                <MotionStack gap key="searchterm" layout="position">
-                    {isMultiSelect && selectedUserIds.size > 0 && <Divider />}
-                    <Box paddingX>
-                        <TextField
-                            autoFocus
-                            background="level2"
-                            value={searchTerm}
-                            placeholder="Search people"
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </Box>
-                </MotionStack>
-
-                <MotionStack
-                    gap
-                    grow
-                    scroll
-                    scrollbars
-                    layout="position"
-                    flexBasis="300"
-                    paddingBottom="md"
-                >
-                    {!isMultiSelect && (
-                        <Box
-                            paddingX
-                            horizontal
-                            gap
-                            alignItems="center"
-                            cursor="pointer"
-                            onClick={onToggleGroupDM}
-                        >
-                            <Box
-                                centerContent
-                                horizontal
+                <MotionStack grow layout={layout}>
+                    <Stack gap paddingY key="search">
+                        {isMultiSelect && selectedUserIds.size > 0 && <Divider />}
+                        <Box paddingX horizontal>
+                            <TextField
+                                autoFocus={isSettled}
                                 background="level2"
-                                rounded="full"
-                                width="x4"
-                                height="x4"
-                                color="gray2"
-                            >
-                                <Icon type="people" />
-                            </Box>
-                            <Paragraph whiteSpace="nowrap">Create new group</Paragraph>
+                                value={searchTerm}
+                                placeholder="Search people"
+                                after={
+                                    searchTerm && (
+                                        <Icon type="close" onClick={() => setSearchTerm('')} />
+                                    )
+                                }
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </Box>
-                    )}
-                    {!searchTerm && recentUsers?.length > 0 && (
-                        <Box paddingX>
-                            <Paragraph size="sm" color="gray2" fontWeight="medium">
-                                Recent
-                            </Paragraph>
-                        </Box>
-                    )}
+                    </Stack>
+                    <Stack
+                        grow
+                        scroll
+                        scrollbars
+                        paddingBottom="md"
+                        key="selector"
+                        flexBasis="300"
+                        gap="xxs"
+                    >
+                        {!isMultiSelect && (
+                            <>
+                                <ListItem selected={false} onClick={onToggleGroupDM}>
+                                    <IconButton
+                                        background="level2"
+                                        size="square_md"
+                                        icon="people"
+                                        color="default"
+                                        rounded="full"
+                                        padding="sm"
+                                    />
 
-                    {(searchTerm ? filteredUserIds : recentUsers).map((id) => (
-                        <Participant
-                            key={id}
-                            userId={id}
-                            selected={selectedUserIds.has(id)}
-                            isCheckbox={isMultiSelect}
-                            onToggle={toggleMember}
-                        />
-                    ))}
+                                    <Paragraph whiteSpace="nowrap">Create new group</Paragraph>
+                                </ListItem>
+
+                                {!searchTerm && (
+                                    <>
+                                        <Divider />
+                                        <Box padding color="gray2">
+                                            <Paragraph>Suggested</Paragraph>
+                                        </Box>
+                                    </>
+                                )}
+                            </>
+                        )}
+
+                        {(searchTerm
+                            ? recentUsers.filter((u) => filteredUserIds.includes(u))
+                            : recentUsers
+                        ).map((id) => (
+                            <Participant
+                                key={id}
+                                userId={id}
+                                selected={selectedUserIds.has(id)}
+                                isCheckbox={isMultiSelect}
+                                layout={layout}
+                                onToggle={toggleMember}
+                            />
+                        ))}
+                        {/* {!searchTerm && <Divider space="md" label="Everyone" />} */}
+                        {!searchTerm && (
+                            <Box padding color="gray2">
+                                <Paragraph>Everyone</Paragraph>
+                            </Box>
+                        )}
+                        {(searchTerm
+                            ? allUsers.filter((u) => filteredUserIds.includes(u))
+                            : allUsers
+                        ).map((id) => (
+                            <Participant
+                                key={id}
+                                userId={id}
+                                selected={selectedUserIds.has(id)}
+                                isCheckbox={isMultiSelect}
+                                layout={layout}
+                                onToggle={toggleMember}
+                            />
+                        ))}
+                    </Stack>
+                    {props.children}
                 </MotionStack>
             </AnimatePresence>
-        </Stack>
+        </MotionStack>
     )
 }
 
@@ -173,7 +225,13 @@ type ParticipantProps = {
     onToggle: (id: string) => void
 }
 
-const Participant = (props: ParticipantProps & { selected: boolean; isCheckbox: boolean }) => {
+const Participant = (
+    props: ParticipantProps & {
+        selected: boolean
+        isCheckbox: boolean
+        layout: 'position' | undefined
+    },
+) => {
     const { userId, onToggle, selected, isCheckbox } = props
     const profile = useUser(userId)
 
@@ -184,18 +242,7 @@ const Participant = (props: ParticipantProps & { selected: boolean; isCheckbox: 
     }, [onToggle, userId])
 
     return (
-        <MotionStack
-            hoverable
-            horizontal
-            gap
-            paddingX
-            transition={{ type: 'spring', damping: 25, stiffness: 120 }}
-            width="100%"
-            alignItems="center"
-            layout="position"
-            cursor="pointer"
-            onClick={onClick}
-        >
+        <ListItem selected={selected} onClick={onClick}>
             <Avatar userId={userId} size="avatar_x4" />
             <Box gap="sm" overflow="hidden" paddingY="xs">
                 <Paragraph truncate color="default">
@@ -210,7 +257,7 @@ const Participant = (props: ParticipantProps & { selected: boolean; isCheckbox: 
             <Box grow shrink={false} alignItems="end">
                 {isCheckbox && <Checkbox name="" checked={selected} onChange={onClick} />}
             </Box>
-        </MotionStack>
+        </ListItem>
     )
 }
 
@@ -247,7 +294,6 @@ const SelectedParticipant = (props: ParticipantProps) => {
             <Box maxWidth="x8" height="x2" overflow="hidden" justifyContent="center">
                 <Text truncate fontWeight="medium" fontSize="xs">
                     {getPrettyDisplayName(profile)}
-                    {getPrettyDisplayName(profile)}
                 </Text>
             </Box>
         </MotionStack>
@@ -270,3 +316,21 @@ const useRecentUsers = (userId?: string) => {
         }, [] as string[])
     }, [dmChannels, userId])
 }
+
+const ListItem = (props: { onClick: () => void; selected: boolean; children: React.ReactNode }) => (
+    <Box horizontal width="100%" paddingX="sm" onClick={props.onClick}>
+        <Box
+            hoverable
+            horizontal
+            gap
+            width="100%"
+            cursor="pointer"
+            background={props.selected ? 'level2' : 'level1'}
+            alignItems="center"
+            padding="sm"
+            borderRadius="sm"
+        >
+            {props.children}
+        </Box>
+    </Box>
+)

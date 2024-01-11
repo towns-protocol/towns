@@ -20,6 +20,7 @@ type Props = {
     leftBarButton?: React.ReactNode
     rightBarButton?: React.ReactNode
     onClose?: () => void
+    background?: BoxProps['background']
 }
 
 export const Panel = (props: Props) => {
@@ -28,7 +29,7 @@ export const Panel = (props: Props) => {
 }
 
 const DesktopPanel = (props: Props) => {
-    const { paddingX = 'md', onClose, rightBarButton, leftBarButton } = props
+    const { paddingX = 'md', background = 'level2', onClose, rightBarButton, leftBarButton } = props
     useSafeEscapeKeyCancellation({ onEscape: onClose, capture: false })
 
     return (
@@ -39,14 +40,14 @@ const DesktopPanel = (props: Props) => {
                 borderBottom
                 shrink={false}
                 paddingX={paddingX}
-                background="level2"
+                background={background}
                 height="x8"
                 alignItems="center"
                 color="gray1"
                 justifySelf="start"
             >
                 {leftBarButton && <Stack paddingRight="sm">{leftBarButton}</Stack>}
-                <Stack grow color="gray2" overflow="hidden">
+                <Stack grow color="gray2" overflow="hidden" paddingY="sm">
                     {props.label}
                 </Stack>
                 <Stack>
@@ -114,6 +115,7 @@ const TouchPanel = (props: Props) => {
         <AnimatePresence>
             {modalPresented && (
                 <ZLayerBox
+                    layoutScroll
                     absoluteFill
                     initial={{ x: '100%' }}
                     animate={{ x: '0%' }}
@@ -135,7 +137,7 @@ const TouchPanel = (props: Props) => {
                         onBack={closePanel}
                     />
                     {/* note: for vlist this following config would be ideal:  <Box grow overflow="hidden" position="relative"> */}
-                    <Box scroll scrollbars grow>
+                    <Box scroll scrollbars height="100%">
                         {props.children}
                     </Box>
                 </ZLayerBox>

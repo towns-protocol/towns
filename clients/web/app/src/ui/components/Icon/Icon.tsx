@@ -344,7 +344,6 @@ export const DownloadIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref)
 
 export const DMIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" {...props} ref={ref}>
-        <rect width="32" height="32" rx="8" fill="#F8F7FB" />
         <path
             fillRule="evenodd"
             clipRule="evenodd"

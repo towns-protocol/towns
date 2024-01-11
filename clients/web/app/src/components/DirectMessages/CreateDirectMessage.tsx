@@ -1,13 +1,60 @@
-import React, { useCallback, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { AnimatePresence } from 'framer-motion'
+import React, { useCallback, useMemo, useState } from 'react'
+import { Outlet, useNavigate } from 'react-router'
+import { useSearchParams } from 'react-router-dom'
 import { DMChannelIdentifier, useZionClient, useZionContext } from 'use-zion-client'
+import { Panel } from '@components/Panel/Panel'
+import { FadeInBox } from '@components/Transitions'
+import { Box, FancyButton, Stack, Text } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { Box, Button } from '@ui'
+import { useDevice } from 'hooks/useDevice'
 import { useErrorToast } from 'hooks/useErrorToast'
+import { CentralPanelLayout } from 'routes/layouts/CentralPanelLayout'
 import { DirectMessageInviteUserList } from './DirectMessageInviteUserList'
 
 type Props = {
-    onDirectMessageCreated: () => void
+    onDirectMessageCreated?: () => void
+}
+
+export const CreateMessagePanel = () => {
+    const { isTouch } = useDevice()
+    const { createLink } = useCreateLink()
+    const navigate = useNavigate()
+    const [search] = useSearchParams()
+
+    const onClose = useCallback(() => {
+        if (search.get('ref')) {
+            navigate(-1)
+        } else {
+            const link = createLink({ route: 'townHome' })
+            if (link) {
+                navigate(link)
+            }
+        }
+    }, [createLink, navigate, search])
+
+    const panel = (
+        <>
+            <Panel
+                paddingX={isTouch ? undefined : 'lg'}
+                label={
+                    <Text strong color="default" size="lg">
+                        New Message
+                    </Text>
+                }
+                background="level1"
+                onClose={onClose}
+            >
+                <Box grow paddingX={{ touch: 'none', default: 'sm' }}>
+                    <CreateDirectMessage />
+                </Box>
+            </Panel>
+            <Outlet />
+        </>
+    )
+
+    // TODO: central panel layout includes animation on touch
+    return isTouch ? panel : <CentralPanelLayout>{panel}</CentralPanelLayout>
 }
 
 export const CreateDirectMessage = (props: Props) => {
@@ -35,22 +82,34 @@ export const CreateDirectMessage = (props: Props) => {
 
     const [resetListKey, setResetListKey] = useState(0)
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
+
     useErrorToast({
         errorMessage,
         contextMessage: 'There was an error creating the message',
     })
 
+    const [search] = useSearchParams()
+    const linkRef = useMemo(() => {
+        const ref = search.get('ref')
+        return ref ? `?ref=${ref}` : ''
+    }, [search])
+
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
     const onSubmit = useCallback(
         async (selectedUserIds: Set<string>) => {
             console.log('create dm/gm: submit', Array.from(selectedUserIds).join())
             const existingChannel = checkIfChannelExists(selectedUserIds)
+            setIsSubmitting(true)
             if (existingChannel) {
                 console.log('create dm/gm: existingChannel', existingChannel)
+
                 const link = createLink({ messageId: existingChannel.id })
                 if (link) {
-                    onDirectMessageCreated()
-                    navigate(link)
+                    onDirectMessageCreated?.()
+                    navigate(link + linkRef)
                 }
+                setIsSubmitting(false)
                 return
             }
             if (selectedUserIds.size === 0) {
@@ -64,14 +123,14 @@ export const CreateDirectMessage = (props: Props) => {
                     const link = createLink({ messageId: streamId })
                     if (link) {
                         console.log('create dm: navigating', link)
-                        onDirectMessageCreated()
-                        navigate(link)
+                        onDirectMessageCreated?.()
+                        navigate(link + linkRef)
                     }
                 } else {
                     console.error('create dm: failed creating stream')
                     setErrorMessage('failed to create dm stream')
                 }
-
+                setIsSubmitting(false)
                 setSelectedUserIds(new Set())
                 setResetListKey((k) => k + 1)
             } else {
@@ -83,7 +142,7 @@ export const CreateDirectMessage = (props: Props) => {
                     const link = createLink({ messageId: streamId })
                     if (link) {
                         console.log('create gm: navigating', link)
-                        onDirectMessageCreated()
+                        onDirectMessageCreated?.()
                         navigate(link)
                     }
                 } else {
@@ -96,6 +155,7 @@ export const CreateDirectMessage = (props: Props) => {
             createDMChannel,
             createGDMChannel,
             createLink,
+            linkRef,
             navigate,
             onDirectMessageCreated,
         ],
@@ -104,26 +164,11 @@ export const CreateDirectMessage = (props: Props) => {
     const onSelectionChange = useCallback(
         (selectedUserIds: Set<string>) => {
             const existingChannel = checkIfChannelExists(selectedUserIds)
-            setExistingChannels(existingChannel)
+
             if (isGroupDM) {
                 setSelectedUserIds(selectedUserIds)
-                /*
-                
-                // TODO: This opens the existing GM interactively but we
-                // currently don't have a nice way to show "new" messages
-
-                if (existingChannel) {
-                    const link = createLink({ messageId: existingChannel.id })
-                    if (link) {
-                        navigate(link)
-                    }
-                } else {
-                    const link = createLink({ messageId: 'new' })
-                    if (link) {
-                        navigate(link)
-                    }
-                }*/
             } else if (selectedUserIds.size === 1) {
+                setExistingChannels(existingChannel)
                 onSubmit(selectedUserIds)
             }
         },
@@ -141,25 +186,41 @@ export const CreateDirectMessage = (props: Props) => {
     }, [])
 
     return (
-        <>
+        <Stack gap grow>
             <DirectMessageInviteUserList
                 key={`list-${resetListKey}`}
                 isMultiSelect={isGroupDM}
                 onToggleMultiSelect={onToggleGroupDM}
                 onSelectionChange={onSelectionChange}
-            />
-
-            {isGroupDM && (
-                <Box paddingX paddingBottom="md" bottom="none" left="none" right="none">
-                    <Button
-                        disabled={selectedUserIds.size === 0}
-                        tone="cta1"
-                        onClick={onCreateButtonClicked}
+            >
+                {isGroupDM && (
+                    <Box
+                        paddingX
+                        key="create-gm"
+                        paddingBottom="md"
+                        bottom="none"
+                        left="none"
+                        right="none"
+                        maxWidth="400"
                     >
-                        {cta}
-                    </Button>
-                </Box>
-            )}
-        </>
+                        <FancyButton
+                            cta
+                            spinner={isSubmitting}
+                            disabled={selectedUserIds.size === 0}
+                            onClick={onCreateButtonClicked}
+                        >
+                            {cta}
+                        </FancyButton>
+                    </Box>
+                )}
+            </DirectMessageInviteUserList>
+            <AnimatePresence>
+                {isSubmitting && (
+                    <FadeInBox absoluteFill centerContent pointerEvents="none">
+                        <Box horizontal gap position="absolute" alignItems="center" />
+                    </FadeInBox>
+                )}
+            </AnimatePresence>
+        </Stack>
     )
 }

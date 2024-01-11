@@ -11,6 +11,7 @@ import { useDevice } from 'hooks/useDevice'
 import { DirectMessageThread } from '@components/DirectMessages/DirectMessageThread'
 import { CreateSpaceFormV2 } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2'
 import { NestedPanel } from '@components/Panel/NestedPanel'
+import { CreateMessagePanel } from '@components/DirectMessages/CreateDirectMessage'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
@@ -127,6 +128,10 @@ export const AuthenticatedRoutes = () => {
 }
 const messageRoutes = (
     <Route path="messages" element={<DirectMessages />}>
+        <Route path="new" element={<CreateMessagePanel />}>
+            <Route path=":channelSlug" element={<DirectMessageThread />} />
+            {...desktopSpaceProfilePanelRoutes()}
+        </Route>
         <Route path=":channelSlug" element={<DirectMessageThread />}>
             <Route path="replies/:messageId" element={<SpacesChannelReplies parentRoute="../" />} />
             {...desktopSpaceProfilePanelRoutes()}

@@ -1,11 +1,12 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback } from 'react'
+import { useNavigate } from 'react-router'
 import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
 import { Box, BoxProps, Icon, IconButton, IconName, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { useShortcut } from 'hooks/useShortcut'
-import { CreateDirectMessage } from './CreateDirectMessage'
+import { useCreateLink } from 'hooks/useCreateLink'
 import { DirectMessageList } from './DirectMessageList'
 
 type DirectMessagesPanelProps = {
@@ -26,23 +27,21 @@ export const DirectMessagesModal = (props: { onHide: () => void }) => {
 
 export const DirectMessagesPanel = (props: DirectMessagesPanelProps) => {
     const { hideNavigation = false } = props
-    const [panelMode, setPanelMode] = useState<'list' | 'create'>('list')
 
-    const onDisplayList = useCallback(() => {
-        setPanelMode('list')
-    }, [])
+    const navigate = useNavigate()
+
+    const { createLink } = useCreateLink()
 
     const onDisplayCreate = useCallback(() => {
-        setPanelMode('create')
-    }, [])
+        const link = createLink({ messageId: 'new' })
+        if (link) {
+            navigate(link)
+        }
+    }, [createLink, navigate])
 
     useShortcut('CreateMessage', onDisplayCreate)
 
-    return panelMode === 'list' ? (
-        <MessageListPanel hideNavigation={hideNavigation} onNavAction={onDisplayCreate} />
-    ) : (
-        <CreateDirectMessagePanel hideNavigation={hideNavigation} onNavAction={onDisplayList} />
-    )
+    return <MessageListPanel hideNavigation={hideNavigation} onNavAction={onDisplayCreate} />
 }
 
 const MessageListPanel = ({
@@ -59,21 +58,6 @@ const MessageListPanel = ({
             )}
             <DirectMessageList />
         </ZLayerBox>
-    )
-}
-
-const CreateDirectMessagePanel = ({
-    onNavAction,
-    hideNavigation,
-}: {
-    onNavAction: () => void
-    hideNavigation: boolean
-}) => {
-    return (
-        <Stack gap height="100%">
-            {!hideNavigation && <PanelHeader label="New Message" onClose={onNavAction} />}
-            <CreateDirectMessage onDirectMessageCreated={onNavAction} />
-        </Stack>
     )
 }
 
@@ -96,7 +80,7 @@ const PanelHeader = (props: {
             onBack={onClose}
         />
     ) : (
-        <Box borderBottom>
+        <Box borderBottom height="x8">
             <Stack horizontal padding gap="lg" alignItems="center">
                 <Text color="default" fontWeight="strong">
                     {label}

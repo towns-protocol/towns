@@ -10,6 +10,7 @@ import {
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
 } from 'use-zion-client'
+import { useNavigate } from 'react-router'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
@@ -23,6 +24,7 @@ import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { CreateDirectMessage } from '@components/DirectMessages/CreateDirectMessage'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { useShortcut } from 'hooks/useShortcut'
+import { useCreateLink } from 'hooks/useCreateLink'
 import { SideBar } from '../_SideBar'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
@@ -92,9 +94,15 @@ export const SpaceSideBar = (props: Props) => {
 
     const [layoutMode, setLayoutMode] = useState<LayoutMode>(LayoutMode.Default)
 
+    const navigate = useNavigate()
+    const { createLink } = useCreateLink()
+
     const onDisplayCreate = useCallback(() => {
-        setLayoutMode(LayoutMode.CreateMessage)
-    }, [])
+        const link = createLink({ messageId: 'new' })
+        if (link) {
+            navigate(link)
+        }
+    }, [createLink, navigate])
     const onDisplayDefault = useCallback(() => {
         setLayoutMode(LayoutMode.Default)
     }, [])
