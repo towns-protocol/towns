@@ -71,14 +71,16 @@ function useAuthContext(): AuthContext {
         getIsWalletRegistered,
     } = useConnectivity()
     const { logout: privyLogout } = usePrivy()
+
+    const { isAutoLoggingInToRiver, loginToRiverAfterPrivy, resetAutoLoginState } =
+        useAutoLoginToRiverIfEmbeddedWallet({
+            riverLogin,
+            riverLoginError: loginError,
+        })
+
     const { privyLogin } = usePrivyLoginWithErrorHandler({
         loggedInWalletAddress,
-    })
-
-    const { isAutoLoggingInToRiver } = useAutoLoginToRiverIfEmbeddedWallet({
-        riverIsAuthenticated,
-        riverLogin,
-        riverLoginError: loginError,
+        loginToRiverAfterPrivy,
     })
 
     const getSigner = useGetEmbeddedSigner()
@@ -103,7 +105,8 @@ function useAuthContext(): AuthContext {
             return
         }
         await privyLogout()
-    }, [riverLogout, privyLogout])
+        resetAutoLoginState()
+    }, [riverLogout, privyLogout, resetAutoLoginState])
 
     return useMemo(
         () => ({
@@ -149,11 +152,18 @@ export function useIsConnected(): AuthContext['isConnected'] {
 
 function usePrivyLoginWithErrorHandler({
     loggedInWalletAddress,
+    loginToRiverAfterPrivy,
 }: {
     loggedInWalletAddress: AuthContext['loggedInWalletAddress']
+    loginToRiverAfterPrivy?: () => void
 }) {
     const { login: privyLogin } = useLogin({
-        onComplete(user, isNewUser, wasAlreadyAuthenticated, loginMethod) {},
+        onComplete(user, isNewUser, wasAlreadyAuthenticated, loginMethod) {
+            // don't call on page load when user already authenticated
+            if (!wasAlreadyAuthenticated) {
+                loginToRiverAfterPrivy?.()
+            }
+        },
         onError: (error) => {
             if (error === 'exited_auth_flow') {
                 return

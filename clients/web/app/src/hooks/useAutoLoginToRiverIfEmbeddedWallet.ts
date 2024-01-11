@@ -1,22 +1,17 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useConnectivity } from 'use-zion-client'
-import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import useStateMachine, { t } from '@cassiozen/usestatemachine'
-import { usePrivy } from '@privy-io/react-auth'
 type UseConnectivtyReturnValue = ReturnType<typeof useConnectivity>
 
 export function useAutoLoginToRiverIfEmbeddedWallet({
-    riverIsAuthenticated,
     riverLogin,
     riverLoginError,
 }: {
-    riverIsAuthenticated: UseConnectivtyReturnValue['isAuthenticated']
     riverLogin: UseConnectivtyReturnValue['login']
     riverLoginError: UseConnectivtyReturnValue['loginError']
 }) {
-    const embeddedWallet = useEmbeddedWallet()
     const getSigner = useGetEmbeddedSigner()
-    const { ready: privyReady } = usePrivy()
 
     const [state, send] = useStateMachine({
         schema: {
@@ -29,17 +24,6 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
         states: {
             loggedOutBoth: {
                 on: {
-                    CYCLE: 'privyLoggedInButRiverUnknown',
-                },
-                effect({ setContext }) {
-                    setContext((c) => ({
-                        isAutoLoggingInToRiver: false,
-                        hasSuccessfulLogin: false,
-                    }))
-                },
-            },
-            privyLoggedInButRiverUnknown: {
-                on: {
                     LOG_IN_TO_RIVER: {
                         target: 'loggingInToRiver',
                         guard({ context }) {
@@ -49,24 +33,16 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                             return true
                         },
                     },
-                    RESET: 'loggedOutBoth',
-                    LOGGED_IN_BOTH: 'loggedInBoth',
                 },
-                effect({ event }) {
-                    if (event.type === 'CYCLE') {
-                        if (event.riverIsAuthenticated) {
-                            // this is a page load, user is already logged in to river
-                            send('LOGGED_IN_BOTH')
-                            return
-                        } else {
-                            send('LOG_IN_TO_RIVER')
-                        }
-                    }
+                effect({ setContext }) {
+                    setContext((c) => ({
+                        isAutoLoggingInToRiver: false,
+                        hasSuccessfulLogin: false,
+                    }))
                 },
             },
             loggingInToRiver: {
                 on: {
-                    CYCLE: 'loggedInBoth',
                     RESET: 'loggedOutBoth',
                 },
                 effect({ setContext }) {
@@ -92,7 +68,6 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
             },
             loggedInBoth: {
                 on: {
-                    CYCLE: 'privyLoggedInButRiverUnknown',
                     RESET: 'loggedOutBoth',
                 },
                 effect({ setContext }) {
@@ -103,15 +78,22 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
     })
 
     useEffect(() => {
-        if (!privyReady) {
-            return
-        }
-        if (!embeddedWallet || riverLoginError) {
+        if (riverLoginError) {
             send('RESET')
-            return
         }
-        send({ type: 'CYCLE', riverIsAuthenticated })
-    }, [send, riverIsAuthenticated, embeddedWallet, riverLoginError, privyReady])
+    }, [riverLoginError, send])
 
-    return { isAutoLoggingInToRiver: state.context.isAutoLoggingInToRiver }
+    const resetAutoLoginState = useCallback(() => {
+        send('RESET')
+    }, [send])
+
+    const loginToRiverAfterPrivy = useCallback(() => {
+        send('LOG_IN_TO_RIVER')
+    }, [send])
+
+    return {
+        isAutoLoggingInToRiver: state.context.isAutoLoggingInToRiver,
+        resetAutoLoginState,
+        loginToRiverAfterPrivy,
+    }
 }
