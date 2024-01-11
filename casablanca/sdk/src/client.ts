@@ -915,6 +915,7 @@ export class Client
         const stream = this.stream(streamId)
         check(stream !== undefined, 'stream not found')
         const localId = stream.view.appendLocalEvent(payload, this)
+        const cleartext = payload.toJsonString()
         const message = await this.encryptMegolmEvent(payload, streamId)
         if (!message) {
             throw new Error('failed to encrypt message')
@@ -923,16 +924,19 @@ export class Client
             return this.makeEventAndAddToStream(streamId, make_ChannelPayload_Message(message), {
                 method: 'sendMessage',
                 localId,
+                cleartext: cleartext,
             })
         } else if (isDMChannelStreamId(streamId)) {
             return this.makeEventAndAddToStream(streamId, make_DMChannelPayload_Message(message), {
                 method: 'sendMessageDM',
                 localId,
+                cleartext: cleartext,
             })
         } else if (isGDMChannelStreamId(streamId)) {
             return this.makeEventAndAddToStream(streamId, make_GDMChannelPayload_Message(message), {
                 method: 'sendMessageGDM',
                 localId,
+                cleartext: cleartext,
             })
         }
     }
@@ -1438,7 +1442,7 @@ export class Client
     async makeEventAndAddToStream(
         streamId: string,
         payload: PlainMessage<StreamEvent>['payload'],
-        options: { method?: string; localId?: string } = {},
+        options: { method?: string; localId?: string; cleartext?: string } = {},
     ): Promise<void> {
         // TODO: filter this.logged payload for PII reasons
         this.logCall(
@@ -1455,7 +1459,13 @@ export class Client
 
         const prevHash = stream.view.prevMiniblockHash
         assert(isDefined(prevHash), 'no prev miniblock hash for stream ' + streamId)
-        await this.makeEventWithHashAndAddToStream(streamId, payload, prevHash, options.localId)
+        await this.makeEventWithHashAndAddToStream(
+            streamId,
+            payload,
+            prevHash,
+            options.localId,
+            options.cleartext,
+        )
     }
 
     async makeEventWithHashAndAddToStream(
@@ -1463,14 +1473,21 @@ export class Client
         payload: PlainMessage<StreamEvent>['payload'],
         prevMiniblockHash: Uint8Array,
         localId?: string,
+        cleartext?: string,
         retryCount?: number,
     ): Promise<void> {
         const event = await makeEvent(this.signerContext, payload, prevMiniblockHash)
         const eventId = bin_toHexString(event.hash)
         if (localId) {
+            // when we have a localId, we need to update the local event with the eventId
             const stream = this.streams.get(streamId)
             assert(stream !== undefined, 'unknown stream ' + streamId)
             stream.view.updateLocalEvent(localId, eventId, this)
+        }
+
+        if (cleartext) {
+            // if we have cleartext, save it so we don't have to re-decrypt it later
+            await this.persistenceStore.saveCleartext(eventId, cleartext)
         }
 
         try {
@@ -1497,6 +1514,7 @@ export class Client
                     payload,
                     bin_fromHexString(expectedHash),
                     isDefined(localId) ? eventId : undefined,
+                    cleartext,
                     retryCount + 1,
                 )
             } else {
