@@ -1,5 +1,4 @@
 import { Message, PlainMessage } from '@bufbuild/protobuf'
-import { datadogRum } from '@datadog/browser-rum'
 import {
     MembershipOp,
     ChannelOp,
@@ -320,7 +319,39 @@ export class Client
         this.decryptionExtensions.start()
         const initializeUserEndTime = performance.now()
         const executionTime = initializeUserEndTime - initializeUserStartTime
-        datadogRum.addTiming('inititalizeUser', executionTime)
+        if (process.env.DD_TOWNS_LOAD_TESTING_KEY) {
+            this.logCall('initializeUser', 'sending metric to DataDog')
+            const apiKey = process.env.DD_TOWNS_LOAD_TESTING_KEY
+            const apiUrl = 'https://api.datadoghq.com/api/v1/series'
+
+            const metricData = {
+                series: [
+                    {
+                        metric: 'initializeUser.executionTime',
+                        points: [[Math.floor(Date.now() / 1000), executionTime]],
+                        type: 'gauge',
+                        host: 'test-beta',
+                    },
+                ],
+            }
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'DD-API-KEY': apiKey,
+                },
+                body: JSON.stringify(metricData),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    this.logCall('Metric sent successfully:', data)
+                })
+                .catch((error) => {
+                    this.logCall('Error sending metric:', error)
+                })
+        }
+        //datadogRum.addTiming('inititalizeUser', executionTime)
     }
 
     // special wrapper around rpcClient.getStream which catches NOT_FOUND errors but re-throws everything else
