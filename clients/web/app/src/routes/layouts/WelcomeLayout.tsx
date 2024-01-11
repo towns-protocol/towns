@@ -28,10 +28,16 @@ export const WelcomeLayout = (props: { children?: React.ReactNode; debugText?: s
 export const PersistAndFadeWelcomeLogo = () => {
     const [isInit, setIsInit] = React.useState(false)
     useEffect(() => {
+        let timeoutId: NodeJS.Timeout | undefined
         if (!isInit) {
-            setTimeout(() => {
+            timeoutId = setTimeout(() => {
                 setIsInit(true)
             }, 250)
+        }
+        return () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId)
+            }
         }
     }, [isInit])
     return (
