@@ -110,6 +110,21 @@ function fund_wallet() {
 }
 
 function fund_wallets() {
+    # If the FUNDING_WALLETS_CSV is empty, then exit early
+    if [ -z "$FUNDING_WALLETS_CSV" ]; then
+        echo "FUNDING_WALLETS_CSV is empty. Skipping funding wallets."
+        return 0
+    fi
+
+    # Remove leading and trailing whitespace
+    FUNDING_WALLETS_CSV=$(echo "$FUNDING_WALLETS_CSV" | xargs)
+
+    # Remove linebreak characters
+    FUNDING_WALLETS_CSV=$(echo "$FUNDING_WALLETS_CSV" | tr -d '\\n')
+
+    # Remove leading and trailing whitespace
+    FUNDING_WALLETS_CSV=$(echo "$FUNDING_WALLETS_CSV" | xargs)
+
     # Count the number of fields in the CSV
     num_fields=$(echo "$FUNDING_WALLETS_CSV" | awk -F, '{print NF}')
 
@@ -117,6 +132,14 @@ function fund_wallets() {
     for i in $(seq 1 $num_fields)
     do
         wallet=$(echo "$FUNDING_WALLETS_CSV" | cut -d',' -f$i)
+        # Remove leading and trailing whitespace
+        wallet=$(echo "$wallet" | xargs)
+
+        # skip empty fields
+        if [ -z "$wallet" ]; then
+            continue
+        fi
+        
         echo "funding wallet: $wallet"
         fund_wallet $wallet
     done
