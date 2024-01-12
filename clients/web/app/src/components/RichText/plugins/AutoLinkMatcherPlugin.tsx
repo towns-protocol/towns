@@ -10,7 +10,7 @@ import { AutoLinkPlugin } from '@lexical/react/LexicalAutoLinkPlugin'
 import * as React from 'react'
 
 const URL_MATCHER =
-    /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%!_+.~#?&//=]*)/
+    /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()[\],@:%!_+.~#?&//=]*)/
 
 // matches without https?:// prefix (e.g. `app.towns.com/?invite`). needs to be more strict than the above
 // since it could easily mess up a normal sentence.
@@ -18,7 +18,7 @@ const URL_MATCHER =
 // 2/ tld - any 2 char is ok, otherwise pick from a list of known tlds
 // 3/ path - optional
 const NON_PREFIXED_MATCHER =
-    /^([-a-z0-9@:%._+~#=]{1,256}\.){1,2}(?:com|net|org|co|dev|app|inc|online|info|live|us|tech|pro|world|space|life|shop|art|[a-z]{2})\b(?:[-a-zA-Z0-9()@:%!_+.~#?&//=]*)$/
+    /^([-a-z0-9@:%._+~#=]{1,256}\.){1,2}(?:com|net|org|co|dev|app|inc|online|info|live|us|tech|pro|world|space|life|shop|art|[a-z]{2})\b(?:[-a-zA-Z0-9()[\],@:%!_+.~#?&//=]*)$/
 
 const EMAIL_MATCHER =
     /(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))/
