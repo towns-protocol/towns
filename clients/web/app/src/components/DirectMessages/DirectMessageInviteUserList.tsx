@@ -61,7 +61,7 @@ export const DirectMessageInviteUserList = (props: {
         })
         .map((r) => r.obj.userId)
         .sort(
-            firstBy<string>((id) => (usersMap[id]?.displayName.startsWith(`0x`) ? 1 : -1)).thenBy(
+            firstBy<string>((id) => (usersMap[id]?.displayName?.startsWith(`0x`) ? 1 : -1)).thenBy(
                 (id) => usersMap[id]?.displayName,
             ),
         )
@@ -105,6 +105,49 @@ export const DirectMessageInviteUserList = (props: {
             }
         }
     }, [isTouch])
+
+    const [activeIndex, setActiveIndex] = useState(1)
+
+    useEffect(() => {
+        if (isMultiSelect) {
+            setActiveIndex(0)
+        }
+    }, [isMultiSelect])
+
+    const listRef = React.useRef<HTMLDivElement>(null)
+
+    const priorityList = searchTerm
+        ? recentUsers.filter((u) => filteredUserIds.includes(u))
+        : recentUsers
+
+    const buttonListLength = isMultiSelect ? 0 : 1
+    const priorityListLength = priorityList.length + buttonListLength
+    const totalListLength = priorityList.length + allUsers.length + buttonListLength
+
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault()
+                setActiveIndex((a) => Math.min(totalListLength - 1, a + 1))
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault()
+                setActiveIndex((a) => Math.max(0, a - 1))
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault()
+                const el = listRef.current?.querySelector(`#search-item-${activeIndex}`)
+                const link = (el?.querySelector('a') ?? el) as HTMLElement
+                if ('click' in link) {
+                    link.click()
+                }
+            }
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => {
+            window.removeEventListener('keydown', onKeyDown)
+        }
+    }, [activeIndex, allUsers.length, props, priorityList.length, totalListLength])
 
     const layout = isSettled ? 'position' : undefined
 
@@ -153,47 +196,49 @@ export const DirectMessageInviteUserList = (props: {
                         key="selector"
                         flexBasis="300"
                         gap="xxs"
+                        ref={listRef}
                     >
                         {!isMultiSelect && (
+                            <ListItem
+                                selected={false}
+                                id={`search-item-${0}`}
+                                isHighlighted={activeIndex === 0}
+                                onClick={onToggleGroupDM}
+                            >
+                                <IconButton
+                                    background="level2"
+                                    size="square_md"
+                                    icon="people"
+                                    color="default"
+                                    rounded="full"
+                                    padding="sm"
+                                />
+
+                                <Paragraph whiteSpace="nowrap">Create new group</Paragraph>
+                            </ListItem>
+                        )}
+
+                        {!searchTerm && (
                             <>
-                                <ListItem selected={false} onClick={onToggleGroupDM}>
-                                    <IconButton
-                                        background="level2"
-                                        size="square_md"
-                                        icon="people"
-                                        color="default"
-                                        rounded="full"
-                                        padding="sm"
-                                    />
-
-                                    <Paragraph whiteSpace="nowrap">Create new group</Paragraph>
-                                </ListItem>
-
-                                {!searchTerm && (
-                                    <>
-                                        <Divider />
-                                        <Box padding color="gray2">
-                                            <Paragraph>Suggested</Paragraph>
-                                        </Box>
-                                    </>
-                                )}
+                                <Divider space="md" />
+                                <Box padding color="gray2">
+                                    <Paragraph>Suggested</Paragraph>
+                                </Box>
                             </>
                         )}
 
-                        {(searchTerm
-                            ? recentUsers.filter((u) => filteredUserIds.includes(u))
-                            : recentUsers
-                        ).map((id) => (
+                        {priorityList.map((id, index) => (
                             <Participant
+                                id={`search-item-${index + buttonListLength}`}
                                 key={id}
                                 userId={id}
                                 selected={selectedUserIds.has(id)}
+                                isHighlighted={index + buttonListLength === activeIndex}
                                 isCheckbox={isMultiSelect}
                                 layout={layout}
                                 onToggle={toggleMember}
                             />
                         ))}
-                        {/* {!searchTerm && <Divider space="md" label="Everyone" />} */}
                         {!searchTerm && (
                             <Box padding color="gray2">
                                 <Paragraph>Everyone</Paragraph>
@@ -202,9 +247,11 @@ export const DirectMessageInviteUserList = (props: {
                         {(searchTerm
                             ? allUsers.filter((u) => filteredUserIds.includes(u))
                             : allUsers
-                        ).map((id) => (
+                        ).map((id, index) => (
                             <Participant
                                 key={id}
+                                id={`search-item-${priorityListLength + index}`}
+                                isHighlighted={priorityListLength + index === activeIndex}
                                 userId={id}
                                 selected={selectedUserIds.has(id)}
                                 isCheckbox={isMultiSelect}
@@ -227,12 +274,14 @@ type ParticipantProps = {
 
 const Participant = (
     props: ParticipantProps & {
+        id?: string
         selected: boolean
         isCheckbox: boolean
         layout: 'position' | undefined
+        isHighlighted?: boolean
     },
 ) => {
-    const { userId, onToggle, selected, isCheckbox } = props
+    const { userId, onToggle, selected, isCheckbox, isHighlighted } = props
     const profile = useUser(userId)
 
     const { data: userBio } = useGetUserBio(userId)
@@ -242,7 +291,7 @@ const Participant = (
     }, [onToggle, userId])
 
     return (
-        <ListItem selected={selected} onClick={onClick}>
+        <ListItem selected={selected} id={props.id} isHighlighted={isHighlighted} onClick={onClick}>
             <Avatar userId={userId} size="avatar_x4" />
             <Box gap="sm" overflow="hidden" paddingY="xs">
                 <Paragraph truncate color="default">
@@ -317,12 +366,19 @@ const useRecentUsers = (userId?: string) => {
     }, [dmChannels, userId])
 }
 
-const ListItem = (props: { onClick: () => void; selected: boolean; children: React.ReactNode }) => (
-    <Box horizontal width="100%" paddingX="sm" onClick={props.onClick}>
+const ListItem = (props: {
+    onClick: () => void
+    selected: boolean
+    children: React.ReactNode
+    isHighlighted?: boolean
+    id?: string
+}) => (
+    <Box horizontal width="100%" paddingX="sm" id={props.id} onClick={props.onClick}>
         <Box
             hoverable
             horizontal
             gap
+            elevate={props.isHighlighted}
             width="100%"
             cursor="pointer"
             background={props.selected ? 'level2' : 'level1'}
