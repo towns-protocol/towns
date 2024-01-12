@@ -102,7 +102,10 @@ export function useSpaceUnreads({
                         if (!isMuted) {
                             mentionCount += marker.mentions
                             hasUnread = true
-                            unreadChannelIds.add(marker.channelId)
+                            // dismiss threads when marking channels as unread
+                            if (!marker.threadParentId) {
+                                unreadChannelIds.add(marker.channelId)
+                            }
                         }
                     }
                 })
