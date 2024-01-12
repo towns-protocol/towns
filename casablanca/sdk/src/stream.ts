@@ -1,11 +1,11 @@
-import { MembershipOp, Snapshot } from '@river/proto'
+import { MembershipOp, Snapshot, SyncCookie } from '@river/proto'
 
 import { DLogger } from '@river/mecholm'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView } from './streamStateView'
 import { EmittedEvents } from './client'
-import { ParsedMiniblock, ParsedStreamAndCookie } from './types'
+import { ParsedEvent, ParsedMiniblock } from './types'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
     readonly clientEmitter: TypedEmitter<EmittedEvents>
@@ -33,14 +33,16 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
      * on the new stream event and still access this object through Client.streams.
      */
     initialize(
-        streamAndCookie: ParsedStreamAndCookie,
+        nextSyncCookie: SyncCookie,
+        minipoolEvents: ParsedEvent[],
         snapshot: Snapshot,
         miniblocks: ParsedMiniblock[],
         prevSnapshotMiniblockNum: bigint,
         cleartexts: Record<string, string> | undefined,
     ): void {
         this.view.initialize(
-            streamAndCookie,
+            nextSyncCookie,
+            minipoolEvents,
             snapshot,
             miniblocks,
             prevSnapshotMiniblockNum,
@@ -49,11 +51,12 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         )
     }
 
-    appendEvents(
-        streamAndCookie: ParsedStreamAndCookie,
+    async appendEvents(
+        events: ParsedEvent[],
+        nextSyncCookie: SyncCookie,
         cleartexts: Record<string, string> | undefined,
-    ): void {
-        this.view.appendEvents(streamAndCookie, cleartexts, this)
+    ): Promise<void> {
+        this.view.appendEvents(events, nextSyncCookie, cleartexts, this)
     }
 
     prependEvents(

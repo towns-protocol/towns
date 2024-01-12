@@ -38,7 +38,8 @@ export class UnauthenticatedClient {
             const streamView = new StreamStateView(this.userId, streamId)
 
             streamView.initialize(
-                streamAndCookie,
+                streamAndCookie.nextSyncCookie,
+                streamAndCookie.events,
                 snapshot,
                 miniblocks,
                 prevSnapshotMiniblockNum,

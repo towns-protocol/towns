@@ -1,12 +1,27 @@
+import { PersistedMiniblock, PersistedSyncedStream } from '@river/proto'
 import Dexie, { Table } from 'dexie'
+import { ParsedMiniblock } from './types'
+import {
+    persistedSyncedStreamToParsedSyncedStream,
+    persistedMiniblockToParsedMiniblock,
+    parsedMiniblockToPersistedMiniblock,
+} from './streamUtils'
+
+import { dlog, isDefined } from '@river/mecholm'
 
 export class PersistenceStore extends Dexie {
+    log = dlog('csb:persistence')
+
     cleartexts!: Table<{ cleartext: string; eventId: string }>
+    syncedStreams!: Table<{ streamId: string; data: Uint8Array }>
+    miniblocks!: Table<{ streamId: string; miniblockNum: string; data: Uint8Array }>
 
     constructor(databaseName: string) {
         super(databaseName)
-        this.version(1).stores({
+        this.version(2).stores({
             cleartexts: 'eventId',
+            syncedStreams: 'streamId',
+            miniblocks: '[streamId+miniblockNum]',
         })
     }
 
@@ -29,5 +44,68 @@ export class PersistenceStore extends Dexie {
                   }
                   return acc
               }, {} as Record<string, string>)
+    }
+
+    async getSyncedStream(streamId: string) {
+        const record = await this.syncedStreams.get(streamId)
+        if (!record) {
+            return undefined
+        }
+        const cachedSyncedStream = PersistedSyncedStream.fromBinary(record.data)
+        return persistedSyncedStreamToParsedSyncedStream(cachedSyncedStream)
+    }
+
+    async saveSyncedStream(streamId: string, syncedStream: PersistedSyncedStream) {
+        this.log('saving synced stream', streamId)
+        await this.syncedStreams.put({
+            streamId,
+            data: syncedStream.toBinary(),
+        })
+    }
+
+    async saveMiniblock(streamId: string, miniblock: ParsedMiniblock) {
+        this.log('saving miniblock', streamId)
+        const cachedMiniblock = parsedMiniblockToPersistedMiniblock(miniblock)
+        await this.miniblocks.put({
+            streamId: streamId,
+            miniblockNum: miniblock.header.miniblockNum.toString(),
+            data: cachedMiniblock.toBinary(),
+        })
+    }
+
+    async getMiniblock(
+        streamId: string,
+        miniblockNum: bigint,
+    ): Promise<ParsedMiniblock | undefined> {
+        const record = await this.miniblocks.get([streamId, miniblockNum.toString()])
+        if (!record) {
+            return undefined
+        }
+        const cachedMiniblock = PersistedMiniblock.fromBinary(record.data)
+        return persistedMiniblockToParsedMiniblock(cachedMiniblock)
+    }
+
+    async getMiniblocks(
+        streamId: string,
+        rangeStart: bigint,
+        rangeEnd: bigint,
+    ): Promise<ParsedMiniblock[]> {
+        const ids: [string, string][] = []
+        for (let i = rangeStart; i <= rangeEnd; i++) {
+            ids.push([streamId, i.toString()])
+        }
+        const records = await this.miniblocks.bulkGet(ids)
+        // All or nothing
+        return records.length !== ids.length
+            ? []
+            : records
+                  .map((record) => {
+                      if (!record) {
+                          return undefined
+                      }
+                      const cachedMiniblock = PersistedMiniblock.fromBinary(record.data)
+                      return persistedMiniblockToParsedMiniblock(cachedMiniblock)
+                  })
+                  .filter(isDefined)
     }
 }

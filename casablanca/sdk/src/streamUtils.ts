@@ -1,0 +1,67 @@
+import { PersistedEvent, PersistedMiniblock, PersistedSyncedStream, SyncCookie } from '@river/proto'
+import { ParsedEvent, ParsedMiniblock } from './types'
+import { isDefined } from '@river/mecholm'
+
+export function persistedEventToParsedEvent(event: PersistedEvent): ParsedEvent | undefined {
+    if (!event.event || !event.envelope) {
+        return undefined
+    }
+    return {
+        event: event.event,
+        envelope: event.envelope,
+        hashStr: event.hashStr,
+        prevMiniblockHashStr:
+            event.prevMiniblockHashStr.length > 0 ? event.prevMiniblockHashStr : undefined,
+        creatorUserId: event.creatorUserId,
+    }
+}
+
+export function persistedMiniblockToParsedMiniblock(
+    miniblock: PersistedMiniblock,
+): ParsedMiniblock | undefined {
+    if (!miniblock.header) {
+        return undefined
+    }
+    return {
+        hash: miniblock.hash,
+        header: miniblock.header,
+        events: miniblock.events.map(persistedEventToParsedEvent).filter(isDefined),
+    }
+}
+
+export function parsedMiniblockToPersistedMiniblock(miniblock: ParsedMiniblock) {
+    return new PersistedMiniblock({
+        hash: miniblock.hash,
+        header: miniblock.header,
+        events: miniblock.events.map(parsedEventToPersistedEvent),
+    })
+}
+
+function parsedEventToPersistedEvent(event: ParsedEvent) {
+    return new PersistedEvent({
+        event: event.event,
+        envelope: event.envelope,
+        hashStr: event.hashStr,
+        prevMiniblockHashStr: event.prevMiniblockHashStr,
+        creatorUserId: event.creatorUserId,
+    })
+}
+
+export function persistedSyncedStreamToParsedSyncedStream(stream: PersistedSyncedStream):
+    | {
+          syncCookie: SyncCookie
+          lastSnapshotMiniblockNum: bigint
+          minipoolEvents: ParsedEvent[]
+          lastMiniblockNum: bigint
+      }
+    | undefined {
+    if (!stream.syncCookie) {
+        return undefined
+    }
+    return {
+        syncCookie: stream.syncCookie,
+        lastSnapshotMiniblockNum: stream.lastSnapshotMiniblockNum,
+        minipoolEvents: stream.minipoolEvents.map(persistedEventToParsedEvent).filter(isDefined),
+        lastMiniblockNum: stream.lastMiniblockNum,
+    }
+}

@@ -11,8 +11,8 @@ import {
 import TypedEmitter from 'typed-emitter'
 import {
     ConfirmedTimelineEvent,
+    ParsedEvent,
     ParsedMiniblock,
-    ParsedStreamAndCookie,
     RemoteTimelineEvent,
     StreamTimelineEvent,
     isConfirmedEvent,
@@ -60,7 +60,7 @@ export class StreamStateView {
     readonly contentKind: SnapshotCaseType
     readonly timeline: StreamTimelineEvent[] = []
     readonly events = new Map<string, StreamTimelineEvent>()
-
+    isInitialized = false
     prevMiniblockHash?: Uint8Array
     lastEventNum = 0n
     prevSnapshotMiniblockNum: bigint
@@ -185,7 +185,7 @@ export class StreamStateView {
         this.commonContent = new StreamStateView_CommonContent(streamId)
     }
 
-    private applySnapshot(snapshot: Snapshot, emitter: TypedEmitter<EmittedEvents> | undefined) {
+    applySnapshot(snapshot: Snapshot, emitter: TypedEmitter<EmittedEvents> | undefined) {
         switch (snapshot.content.case) {
             case 'spaceContent':
                 this.spaceContent.applySnapshot(snapshot, snapshot.content.value, emitter)
@@ -224,7 +224,8 @@ export class StreamStateView {
     }
 
     private appendStreamAndCookie(
-        streamAndCookie: ParsedStreamAndCookie,
+        nextSyncCookie: SyncCookie,
+        minipoolEvents: ParsedEvent[],
         cleartexts: Record<string, string> | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): {
@@ -235,7 +236,7 @@ export class StreamStateView {
         const appended: StreamTimelineEvent[] = []
         const updated: StreamTimelineEvent[] = []
         const confirmed: ConfirmedTimelineEvent[] = []
-        for (const parsedEvent of streamAndCookie.events) {
+        for (const parsedEvent of minipoolEvents) {
             const existingEvent = this.events.get(parsedEvent.hashStr)
             if (existingEvent) {
                 existingEvent.remoteEvent = parsedEvent
@@ -259,7 +260,7 @@ export class StreamStateView {
                 }
             }
         }
-        this.syncCookie = streamAndCookie.nextSyncCookie
+        this.syncCookie = nextSyncCookie
         return { appended, updated, confirmed }
     }
 
@@ -418,7 +419,8 @@ export class StreamStateView {
     }
 
     initialize(
-        streamAndCookie: ParsedStreamAndCookie,
+        nextSyncCookie: SyncCookie,
+        minipoolEvents: ParsedEvent[],
         snapshot: Snapshot,
         miniblocks: ParsedMiniblock[],
         prevSnapshotMiniblockNum: bigint,
@@ -470,19 +472,22 @@ export class StreamStateView {
         // and the prev miniblock has (if there were more than 1 miniblocks, this should already be set)
         this.prevMiniblockHash = lastBlock.hash
         // append the minipool events
-        this.appendStreamAndCookie(streamAndCookie, cleartexts, emitter)
+        this.appendStreamAndCookie(nextSyncCookie, minipoolEvents, cleartexts, emitter)
         this.prevSnapshotMiniblockNum = prevSnapshotMiniblockNum
         // let everyone know
+        this.isInitialized = true
         emitter?.emit('streamInitialized', this.streamId, this.contentKind)
     }
 
     appendEvents(
-        streamAndCookie: ParsedStreamAndCookie,
+        events: ParsedEvent[],
+        nextSyncCookie: SyncCookie,
         cleartexts: Record<string, string> | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
         const { appended, updated, confirmed } = this.appendStreamAndCookie(
-            streamAndCookie,
+            nextSyncCookie,
+            events,
             cleartexts,
             emitter,
         )

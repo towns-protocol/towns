@@ -411,7 +411,7 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 		miniblockIndex, err := s.view.indexOfMiniblockWithNum(cookie.MinipoolGen)
 		if err != nil {
 			log.Warn("Stream.Sub: out of date cookie.MiniblockNum sending all known blocks.", "error", err.Error())
-			miniblockIndex = 0
+			return RiverError(Err_BAD_SYNC_COOKIE, "Stream.Sub: out of date cookie.MiniblockNum sending all known blocks.")
 		}
 
 		// append events from blocks

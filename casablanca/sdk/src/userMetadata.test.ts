@@ -29,6 +29,7 @@ describe('userMetadataTests', () => {
         await alicesClient.startSync()
 
         const { streamId } = await bobsClient.createSpace(undefined)
+        await bobsClient.waitForStream(streamId)
         await bobsClient.inviteUser(streamId, alicesClient.userId)
         await expect(alicesClient.joinStream(streamId)).toResolve()
 
@@ -69,8 +70,9 @@ describe('userMetadataTests', () => {
         await alicesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
         const stream = await bobsClient.waitForStream(streamId)
+        await alicesClient.waitForStream(streamId)
+        await expect(alicesClient.joinStream(streamId)).toResolve()
         await waitFor(() => {
             expect(stream.view.getMemberships().joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId]),
@@ -120,9 +122,9 @@ describe('userMetadataTests', () => {
             alicesClient.userId,
             evesClient.userId,
         ])
+        const stream = await bobsClient.waitForStream(streamId)
         await expect(alicesClient.joinStream(streamId)).toResolve()
         await expect(evesClient.joinStream(streamId)).toResolve()
-        const stream = await bobsClient.waitForStream(streamId)
         await waitFor(() => {
             expect(stream.view.getMemberships().joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId, evesClient.userId]),
@@ -202,6 +204,7 @@ describe('userMetadataTests', () => {
         await alicesClient.startSync()
 
         const { streamId } = await bobsClient.createSpace(undefined)
+        await bobsClient.waitForStream(streamId)
         await bobsClient.inviteUser(streamId, alicesClient.userId)
         await expect(alicesClient.joinStream(streamId)).toResolve()
 
@@ -219,15 +222,12 @@ describe('userMetadataTests', () => {
             alicePromise.done()
         })
 
-        await bobsClient.waitForStream(streamId)
-        await alicesClient.waitForStream(streamId)
         await bobsClient.setUsername(streamId, 'bob-username')
 
         await bobPromise.expectToSucceed()
         await alicePromise.expectToSucceed()
 
         const expected = new Map<string, string>([[bobsClient.userId, 'bob-username']])
-
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
             expect(streamView.getUserMetadata()!.usernames.plaintextUsernames).toEqual(expected)
@@ -241,8 +241,10 @@ describe('userMetadataTests', () => {
         await alicesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
-        await expect(alicesClient.joinStream(streamId)).toResolve()
         const stream = await bobsClient.waitForStream(streamId)
+        await alicesClient.waitForStream(streamId)
+        await expect(alicesClient.joinStream(streamId)).toResolve()
+
         await waitFor(() => {
             expect(stream.view.getMemberships().joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId]),
@@ -263,8 +265,6 @@ describe('userMetadataTests', () => {
             alicePromise.done()
         })
 
-        await bobsClient.waitForStream(streamId)
-        await alicesClient.waitForStream(streamId)
         await bobsClient.setUsername(streamId, 'bob-username')
 
         await bobPromise.expectToSucceed()
@@ -290,9 +290,14 @@ describe('userMetadataTests', () => {
             alicesClient.userId,
             evesClient.userId,
         ])
+
+        const stream = await bobsClient.waitForStream(streamId)
+        await alicesClient.waitForStream(streamId)
+        await evesClient.waitForStream(streamId)
+
         await expect(alicesClient.joinStream(streamId)).toResolve()
         await expect(evesClient.joinStream(streamId)).toResolve()
-        const stream = await bobsClient.waitForStream(streamId)
+
         await waitFor(() => {
             expect(stream.view.getMemberships().joinedUsers).toEqual(
                 new Set([bobsClient.userId, alicesClient.userId, evesClient.userId]),
@@ -320,8 +325,6 @@ describe('userMetadataTests', () => {
             evePromise.done()
         })
 
-        await bobsClient.waitForStream(streamId)
-        await alicesClient.waitForStream(streamId)
         await bobsClient.setUsername(streamId, 'bob-username')
 
         await bobPromise.expectToSucceed()

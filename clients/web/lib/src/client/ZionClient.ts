@@ -219,7 +219,6 @@ export class ZionClient implements EntitlementsDelegate {
         })
 
         await this.casablancaClient.startSync()
-
         return this.casablancaClient
     }
 
@@ -1337,6 +1336,14 @@ export class ZionClient implements EntitlementsDelegate {
             throw new Error('Casablanca client is undefined')
         }
         await this.casablancaClient.sendFullyReadMarkers(channelId, content)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async setPriorityStreamIds(streamIds: string[]) {
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client is undefined')
+        }
+        this.casablancaClient.setPriorityStreamIds(streamIds)
     }
 
     /************************************************

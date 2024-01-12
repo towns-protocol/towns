@@ -1,12 +1,13 @@
-import { DLogger, dlog, shortenHexString } from '@river/mecholm'
-import { SyncCookie, SyncOp, SyncStreamsResponse } from '@river/proto'
+import { DLogger, dlog, dlogError, shortenHexString } from '@river/mecholm'
+import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river/proto'
 
 import { EmittedEvents } from './client'
 import { PersistenceStore } from './persistenceStore'
 import { Stream } from './stream'
-import { StreamRpcClientType } from './makeStreamRpcClient'
+import { StreamRpcClientType, errorContains } from './makeStreamRpcClient'
 import TypedEmitter from 'typed-emitter'
 import { unpackStreamAndCookie } from './sign'
+import { SyncedStream } from './syncedStream'
 
 export enum SyncState {
     Canceling = 'Canceling', // syncLoop, maybe syncId if was syncing, not is was starting or retrying
@@ -49,10 +50,11 @@ export class SyncedStreams {
     // userId is the current user id
     private readonly userId: string
     // mapping of stream id to stream
-    private readonly streams: Map<string, Stream> = new Map()
+    private readonly streams: Map<string, SyncedStream> = new Map()
     // loggers
     private readonly logSync: DLogger
     private readonly logStream: DLogger
+    private readonly logError: DLogger
     // clientEmitter is used to proxy the events from the streams to the client
     private readonly clientEmitter: TypedEmitter<EmittedEvents>
     private readonly persistenceStore: PersistenceStore
@@ -93,17 +95,18 @@ export class SyncedStreams {
         )
         this.logSync = dlog('csb:cl:sync').extend(shortId)
         this.logStream = dlog('csb:cl:sync:stream').extend(shortId)
+        this.logError = dlogError('csb:cl:sync:stream').extend(shortId)
     }
 
     public has(streamId: string): boolean {
         return this.streams.get(streamId) !== undefined
     }
 
-    public get(streamId: string): Stream | undefined {
+    public get(streamId: string): SyncedStream | undefined {
         return this.streams.get(streamId)
     }
 
-    public set(streamId: string, stream: Stream): void {
+    public set(streamId: string, stream: SyncedStream): void {
         this.log('stream set', streamId)
         this.streams.set(streamId, stream)
     }
@@ -178,7 +181,11 @@ export class SyncedStreams {
                 this.log('addedStreamToSync', syncCookie)
             } catch (err) {
                 // Trigger restart of sync loop
-                this.log(`addStreamToSync error`, err)
+                this.log(`addedStreamToSync error`, err)
+                if (errorContains(err, Err.BAD_SYNC_COOKIE)) {
+                    this.log('addStreamToSync BAD_SYNC_COOKIE', syncCookie)
+                    throw err
+                }
             }
         } else {
             this.log(
@@ -482,10 +489,14 @@ export class SyncedStreams {
                         const cleartexts = await this.persistenceStore.getCleartexts(
                             streamAndCookie.events.map((e) => e.hashStr),
                         )
-                        stream.appendEvents(streamAndCookie, cleartexts)
+                        await stream.appendEvents(
+                            streamAndCookie.events,
+                            streamAndCookie.nextSyncCookie,
+                            cleartexts,
+                        )
                     }
                 } catch (err) {
-                    this.log('onUpdate error', err)
+                    this.logError('onUpdate error', err)
                 }
             } else {
                 this.log('sync RESULTS no stream', syncStream)

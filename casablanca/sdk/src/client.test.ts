@@ -423,10 +423,10 @@ describe('clientTest', () => {
         await expect(
             bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
         ).toResolve()
-        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
 
         // Bob can send a message.
         const stream = await bobsClient.waitForStream(bobsChannelId)
+
         await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!')).toResolve()
         await waitFor(() => {
             const event = stream.view.timeline.find(

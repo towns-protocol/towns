@@ -14,7 +14,6 @@ import { PATHS } from 'routes'
 import { TopBar } from '@components/TopBar/TopBar'
 import { atoms } from 'ui/styles/atoms.css'
 import * as styles from './AppPanelLayout.css'
-import { PersistAndFadeWelcomeLogo } from './WelcomeLayout'
 
 export const AppPanelLayout = () => {
     const allotemntRef = useRef<AllotmentHandle>(null)
@@ -80,7 +79,6 @@ export const AppPanelLayout = () => {
                     </Allotment.Pane>
                 </Allotment>
             </Box>
-            <PersistAndFadeWelcomeLogo />
             <ShortcutModal />
         </Stack>
     )

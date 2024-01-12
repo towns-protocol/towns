@@ -4,7 +4,7 @@ option go_package = "casablanca/internal";
 
 import "protocol.proto";
 
-message CachedEvent {
+message PersistedEvent {
     StreamEvent event = 1;
     Envelope envelope = 2;
     string hash_str = 3;
@@ -12,23 +12,15 @@ message CachedEvent {
     string creator_user_id = 5;
 }
 
-message CachedStreamAndCookie {
-    SyncCookie next_sync_cookie = 1;
-    SyncCookie start_sync_cookie = 2;
-    repeated CachedEvent events = 3;
-}
-
-message CachedMiniblock {
+message PersistedMiniblock {
     bytes hash = 1;
     MiniblockHeader header = 2;
-    repeated CachedEvent events = 3;
+    repeated PersistedEvent events = 3;
 }
 
-message CachedStreamResponse {
-    Snapshot snapshot = 1;
-    CachedStreamAndCookie stream_and_cookie = 2;
-    repeated CachedMiniblock miniblocks = 3;
-    uint64 prev_snapshot_miniblock_num = 4;
-    repeated string event_ids = 5;
+message PersistedSyncedStream {
+    SyncCookie sync_cookie = 1;
+    uint64 last_snapshot_miniblock_num = 2;
+    uint64 last_miniblock_num = 3;
+    repeated PersistedEvent minipoolEvents = 4;
 }
-
