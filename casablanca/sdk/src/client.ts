@@ -788,11 +788,11 @@ export class Client
         }
     }
 
-    async initStream(streamId: string, forceDownload?: boolean): Promise<Stream> {
+    async initStream(streamId: string, forceDownload: boolean = true): Promise<Stream> {
         try {
             this.logCall('initStream', streamId)
             const stream = this.stream(streamId)
-            if (!forceDownload && stream) {
+            if (stream) {
                 if (stream.view.isInitialized) {
                     this.logCall('initStream', streamId, 'already initialized')
                     return stream
