@@ -394,24 +394,18 @@ func (r *streamViewImpl) SyncCookie(localNodeAddress string) *SyncCookie {
 	}
 }
 
-func (r *streamViewImpl) getMinEventsPerSnapshot() (int, bool) {
+func (r *streamViewImpl) getMinEventsPerSnapshot() int {
 	// TODO this should be a system level config https://linear.app/hnt-labs/issue/HNT-2011
 	defaultMinEventsPerSnapshot := 100
 	settings := r.InceptionPayload().GetSettings()
 	if settings == nil || settings.GetMinEventsPerSnapshot() == 0 {
-		return defaultMinEventsPerSnapshot, true
+		return defaultMinEventsPerSnapshot
 	}
-	return int(settings.GetMinEventsPerSnapshot()), false
+	return int(settings.GetMinEventsPerSnapshot())
 }
 
 func (r *streamViewImpl) shouldSnapshot() bool {
-	var minEventsPerSnapshot, usingDefault = r.getMinEventsPerSnapshot()
-	// Do not snapshot user key streams
-	// See https://linear.app/hnt-labs/issue/HNT-3531/implement-snapshotting-for-key-stream
-	_, isUserDeviceKeyPayload := r.InceptionPayload().(*UserDeviceKeyPayload_Inception)
-	if usingDefault && (isUserDeviceKeyPayload) {
-		return false
-	}
+	var minEventsPerSnapshot = r.getMinEventsPerSnapshot()
 
 	var count = 0
 	// count the events in the minipool
