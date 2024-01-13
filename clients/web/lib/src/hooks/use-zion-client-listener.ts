@@ -16,6 +16,7 @@ export const useZionClientListener = (opts: {
     casablancaServerUrl?: string
     pushNotificationWorkerUrl?: string
     pushNotificationAuthToken?: string
+    accountAbstractionConfig: ZionOpts['accountAbstractionConfig']
 }) => {
     const { provider } = useWeb3Context()
     const { setLoginStatus: setCasablancaLoginStatus, setLoginError: setCasablancaLoginError } =

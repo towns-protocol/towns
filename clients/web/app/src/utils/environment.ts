@@ -87,6 +87,12 @@ const envSchema = z.object({
             ),
         ])
         .optional(),
+
+    VITE_AA_RPC_URL: z.string().url().optional(),
+    VITE_AA_BUNDLER_URL: z.string().url().optional(),
+    VITE_AA_ENTRY_POINT_ADDRESS: z.string().optional(),
+    VITE_AA_FACTORY_ADDRESS: z.string().optional(),
+    VITE_AA_PAYMASTER_PROXY_URL: z.string().url().optional(),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)

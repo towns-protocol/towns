@@ -1,32 +1,29 @@
 import { isEthersProvider } from './Utils'
 import { Versions, defaultVersion } from './ContractTypes'
-import { UserOpSpaceDapp } from './v3/UserOpSpaceDapp'
-import { UserOpSpaceDappConfig } from './UserOpTypes'
-import { IUseropSpaceDapp } from './ISpaceDapp'
+import { SpaceDappConfig } from './SpaceDappTypes'
+import { SpaceDapp } from './v3'
+import { ISpaceDapp } from './ISpaceDapp'
 
 export function createSpaceDapp(
-    args: Omit<UserOpSpaceDappConfig, 'rpcUrl'> & { rpcUrl?: string },
+    args: Omit<SpaceDappConfig, 'aaRpcUrl'> & { aaRpcUrl?: string },
     version?: 'v3',
-): IUseropSpaceDapp
+): ISpaceDapp
 
 export function createSpaceDapp(
-    args: Omit<UserOpSpaceDappConfig, 'rpcUrl'> & { rpcUrl?: string },
+    args: Omit<SpaceDappConfig, 'aaRpcUrl'> & { aaRpcUrl?: string },
     version: Versions = defaultVersion,
 ) {
-    const { chainId, provider, rpcUrl, entryPointAddress, factoryAddress } = args
-    if (provider === undefined) {
+    if (args.provider === undefined) {
         throw new Error('createSpaceDapp() Provider is undefined')
     }
+
     switch (version) {
         case 'v3': {
-            if (isEthersProvider(provider)) {
-                return new UserOpSpaceDapp({
-                    chainId,
-                    provider,
-                    rpcUrl: rpcUrl ?? '',
-                    entryPointAddress,
-                    factoryAddress,
-                }) as IUseropSpaceDapp
+            if (isEthersProvider(args.provider)) {
+                return new SpaceDapp({
+                    ...args,
+                    aaRpcUrl: args.aaRpcUrl ?? '',
+                }) as ISpaceDapp
             }
             throw new Error("createSpaceDapp() 'v3' Provider is not an ethers provider")
         }

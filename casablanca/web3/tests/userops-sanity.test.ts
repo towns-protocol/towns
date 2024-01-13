@@ -1,4 +1,4 @@
-import { UserOpSpaceDapp } from '../src/v3/UserOpSpaceDapp'
+import { TestSpaceDapp } from './TestSpaceDapp'
 import { TestWeb3Provider } from './TestWeb3Provider'
 import { ethers } from 'ethers'
 
@@ -14,11 +14,11 @@ describe.skip('sanity: user operations', () => {
 
         await bob.fundWallet()
 
-        const spaceDapp = new UserOpSpaceDapp({
+        const spaceDapp = new TestSpaceDapp({
             chainId: bob.network.chainId,
             provider: bob,
             bundlerUrl: process.env.BUNDLER_URL,
-            rpcUrl: process.env.RPC_URL!,
+            aaRpcUrl: process.env.RPC_URL!,
             entryPointAddress: process.env.ENTRY_POINT_ADDRESS,
             factoryAddress: process.env.FACTORY_ADDRESS,
         })
@@ -53,11 +53,11 @@ describe.skip('sanity: user operations', () => {
 
         await bob.fundWallet()
 
-        const spaceDapp = new UserOpSpaceDapp({
+        const spaceDapp = new TestSpaceDapp({
             chainId: bob.network.chainId,
             provider: bob,
             bundlerUrl: process.env.BUNDLER_URL,
-            rpcUrl: process.env.RPC_URL!,
+            aaRpcUrl: process.env.RPC_URL!,
             entryPointAddress: process.env.ENTRY_POINT_ADDRESS,
             factoryAddress: process.env.FACTORY_ADDRESS,
         })

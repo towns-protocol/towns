@@ -1,3 +1,9 @@
+//
+//
+// Keeping this as a reference in case we need to calculate gas ourselves in the future for local development
+//
+//
+
 // import { NotPromise, packUserOp } from '@account-abstraction/utils'
 // import { DefaultGasOverheads, GasOverheads, SimpleAccountAPI } from '@account-abstraction/sdk'
 // import { Deferrable, arrayify, hexlify } from 'ethers/lib/utils'

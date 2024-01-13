@@ -69,6 +69,7 @@ interface ZionContextProviderProps {
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
     pushNotificationAuthToken?: string
     pushNotificationWorkerUrl?: string
+    accountAbstractionConfig?: ZionOpts['accountAbstractionConfig']
 }
 
 export function ZionContextProvider({
@@ -120,6 +121,7 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
         casablancaServerUrl: props.casablancaServerUrl,
         pushNotificationAuthToken: props.pushNotificationAuthToken,
         pushNotificationWorkerUrl: props.pushNotificationWorkerUrl,
+        accountAbstractionConfig: props.accountAbstractionConfig,
     })
     const { invitedToIds } = useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)

@@ -1,9 +1,10 @@
-import { UserOpSpaceDapp } from '../src/v3/UserOpSpaceDapp'
 import { TestWeb3Provider } from './TestWeb3Provider'
 import { Permission } from '../src/ContractTypes'
 import { CreateSpaceParams } from '../src/ISpaceDapp'
+import { paymasterProxyMiddleware } from '../src/userop-utils/paymasterProxyMiddleware'
 import { ethers } from 'ethers'
 import { nanoid } from 'nanoid'
+import { TestSpaceDapp } from './TestSpaceDapp'
 
 // FOR NOW these tests only work against stackup bundler/paymaster
 describe.skip('UserOpSpaceDapp tests', () => {
@@ -16,15 +17,17 @@ describe.skip('UserOpSpaceDapp tests', () => {
             await bob.mintMockNFT()
         }
 
-        const spaceDapp = new UserOpSpaceDapp({
+        const spaceDapp = new TestSpaceDapp({
             chainId: bob.network.chainId,
             provider: bob,
             bundlerUrl: process.env.BUNDLER_URL,
             paymasterProxyUrl: process.env.PAYMASTER_PROXY_URL,
-            paymasterProxyAuthSecret: process.env.PAYMASTER_PROXY_AUTH_SECRET,
-            rpcUrl: process.env.RPC_URL!,
+            aaRpcUrl: process.env.RPC_URL!,
             entryPointAddress: process.env.ENTRY_POINT_ADDRESS,
             factoryAddress: process.env.FACTORY_ADDRESS,
+            paymasterMiddleware: paymasterProxyMiddleware({
+                paymasterProxyAuthSecret: process.env.PAYMASTER_PROXY_AUTH_SECRET!,
+            }),
         })
 
         const abstractAccount = await spaceDapp.getAbstractAccountAddress({
@@ -53,7 +56,7 @@ describe.skip('UserOpSpaceDapp tests', () => {
         expect(opReceipt?.args.success).toBe(true)
         let town
         try {
-            town = await (await spaceDapp.getTown(townInfo.spaceId)).getTownInfo()
+            town = await (await spaceDapp.getTown(townInfo.spaceId))?.getTownInfo()
         } catch (error) {
             throw new Error("can't fetch town data: " + JSON.stringify(error))
         }
@@ -65,19 +68,19 @@ describe.skip('UserOpSpaceDapp tests', () => {
         const bob = await TestWeb3Provider.init()
         const alice = await TestWeb3Provider.init()
 
-        const bobSpaceDapp = new UserOpSpaceDapp({
+        const bobSpaceDapp = new TestSpaceDapp({
             chainId: bob.network.chainId,
             provider: bob,
             bundlerUrl: process.env.BUNDLER_URL,
-            rpcUrl: process.env.RPC_URL!,
+            aaRpcUrl: process.env.RPC_URL!,
             entryPointAddress: process.env.ENTRY_POINT_ADDRESS,
             factoryAddress: process.env.FACTORY_ADDRESS,
         })
-        const alicSpaceDapp = new UserOpSpaceDapp({
+        const alicSpaceDapp = new TestSpaceDapp({
             chainId: alice.network.chainId,
             provider: alice,
             bundlerUrl: process.env.BUNDLER_URL,
-            rpcUrl: process.env.RPC_URL!,
+            aaRpcUrl: process.env.RPC_URL!,
             entryPointAddress: process.env.ENTRY_POINT_ADDRESS,
             factoryAddress: process.env.FACTORY_ADDRESS,
         })

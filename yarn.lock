@@ -14894,6 +14894,7 @@ __metadata:
     ua-parser-js: ^1.0.33
     unfurl-worker: "workspace:^"
     use-zion-client: "workspace:^"
+    userop.js: ^0.3.7
     vanilla-classnames: ^0.1.0
     vite: ^5.0.10
     vite-plugin-checker: ^0.6.2

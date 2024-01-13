@@ -6,7 +6,7 @@ import { Client } from '../client'
 import { RiverSDK } from '../testSdk'
 import { RiverDbManager } from '../riverDbManager'
 import { MockEntitlementsDelegate } from '../utils'
-import { IUseropSpaceDapp, createSpaceDapp } from '@river/web3'
+import { ISpaceDapp, createSpaceDapp } from '@river/web3'
 import { dlog } from '@river/mecholm'
 import { minimalBalance } from './loadconfig'
 
@@ -104,7 +104,7 @@ export async function multipleClientsJoinSpaceAndChannel(
 
 export type ClientSpaceChannelInfo = {
     client: Client
-    spaceDapp: IUseropSpaceDapp
+    spaceDapp: ISpaceDapp
     spaceId: string
     channelId: string
 }

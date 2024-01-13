@@ -1,7 +1,7 @@
 import { BigNumberish, ContractReceipt } from 'ethers'
 import { SendMessageOptions, UpdateChannelInfo } from '../types/zion-types'
 import { RoleIdentifier, TProvider, TransactionOrUserOperation } from '../types/web3-types'
-import { UserOpSpaceDappConfig } from '@river/web3'
+import { SpaceDappConfig } from '@river/web3'
 
 export interface ZionOpts {
     casablancaServerUrl?: string
@@ -15,7 +15,7 @@ export interface ZionOpts {
     pushNotificationWorkerUrl?: string
     pushNotificationAuthToken?: string
     verbose?: boolean
-    accountAbstractionConfig?: Omit<UserOpSpaceDappConfig, 'chainId' | 'provider'>
+    accountAbstractionConfig?: Omit<SpaceDappConfig, 'chainId' | 'provider'>
 }
 
 export interface ZionOnboardingOpts {

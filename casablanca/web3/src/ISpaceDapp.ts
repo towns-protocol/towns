@@ -10,11 +10,9 @@ import {
     TotalSupplyInfo,
 } from './ContractTypes'
 
-import { SpaceInfo } from './SpaceInfo'
 import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
 import { ContractTransaction, ethers } from 'ethers'
-import { PaymasterConfig, UserOpParams } from './UserOpTypes'
-import { Town } from './v3'
+import { PaymasterConfig, UserOpParams, SpaceInfo } from './SpaceDappTypes'
 import { ISendUserOperationResponse, Client as UseropClient } from 'userop'
 
 export type SignerType = ethers.Signer
@@ -113,18 +111,16 @@ export interface ISpaceDapp {
     getMembershipSupply: (spaceId: string) => Promise<TotalSupplyInfo>
     getMembershipInfo: (spaceId: string) => Promise<MembershipInfo>
     getWalletLink: () => WalletLinkV3
-}
 
-export interface IUseropSpaceDapp extends ISpaceDapp {
+    // userop related
     getAbstractAccountAddress: (args: UserOpParams) => Promise<string>
-    getTown: (spaceId: string) => Promise<Town>
+    getUserOpClient: () => Promise<UseropClient>
     sendUserOp: (
         args: UserOpParams & {
             functionHashForPaymasterProxy: string
             townId: string
         },
     ) => Promise<ISendUserOperationResponse>
-    getUserOpClient: () => Promise<UseropClient>
     sendCreateSpaceOp: (
         args: Parameters<ISpaceDapp['createSpace']>,
         paymasterConfig?: PaymasterConfig,
@@ -133,13 +129,4 @@ export interface IUseropSpaceDapp extends ISpaceDapp {
         args: Parameters<ISpaceDapp['joinTown']>,
         paymasterConfig?: PaymasterConfig,
     ) => Promise<ISendUserOperationResponse>
-    sendFunds: (args: {
-        signer: SignerType
-        recipient: string
-        value: ethers.BigNumberish
-    }) => Promise<ISendUserOperationResponse>
-    mintMockNFT: (args: {
-        signer: SignerType
-        recipient: string
-    }) => Promise<ISendUserOperationResponse>
 }

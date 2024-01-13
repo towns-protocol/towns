@@ -61,7 +61,7 @@ import {
     SpaceInfo,
     isUserOpResponse,
     getTransactionHashOrUserOpHash,
-    IUseropSpaceDapp,
+    ISpaceDapp,
 } from '@river/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 
@@ -83,7 +83,7 @@ import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 export class ZionClient implements EntitlementsDelegate {
     public readonly opts: ZionOpts
     public readonly name: string
-    public spaceDapp: IUseropSpaceDapp
+    public spaceDapp: ISpaceDapp
     public blockchainTransactionStore: BlockchainTransactionStore
     protected casablancaClient?: CasablancaClient
     private _signerContext?: SignerContext
@@ -95,12 +95,9 @@ export class ZionClient implements EntitlementsDelegate {
         this.name = name || Math.random().toString(36).substring(7)
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.spaceDapp = createSpaceDapp({
+            ...opts.accountAbstractionConfig,
             chainId: opts.chainId,
             provider: opts.web3Provider,
-            bundlerUrl: opts.accountAbstractionConfig?.bundlerUrl,
-            rpcUrl: opts.accountAbstractionConfig?.rpcUrl,
-            entryPointAddress: opts.accountAbstractionConfig?.entryPointAddress,
-            factoryAddress: opts.accountAbstractionConfig?.factoryAddress,
         })
         this.blockchainTransactionStore = new BlockchainTransactionStore(this.spaceDapp)
         this._eventHandlers = opts.eventHandlers
@@ -121,7 +118,7 @@ export class ZionClient implements EntitlementsDelegate {
     }
 
     public isAccountAbstractionEnabled() {
-        return !!this.opts.accountAbstractionConfig?.rpcUrl
+        return !!this.opts.accountAbstractionConfig?.aaRpcUrl
     }
 
     /************************************************

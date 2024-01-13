@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { IUseropSpaceDapp, useSpaceDapp, useWeb3Context } from 'use-zion-client'
+import { ISpaceDapp, useSpaceDapp, useWeb3Context } from 'use-zion-client'
 import { useEnvironment } from './useEnvironmnet'
 
-async function getChannels(spaceId: string | undefined, spaceDapp: IUseropSpaceDapp | undefined) {
+async function getChannels(spaceId: string | undefined, spaceDapp: ISpaceDapp | undefined) {
     if (spaceId && spaceDapp) {
         const channels = await spaceDapp.getChannels(spaceId)
         if (channels) {

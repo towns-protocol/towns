@@ -15,13 +15,14 @@ import {
 
 import { IRolesBase } from './IRolesShim'
 import { ITownArchitectBase } from './ITownArchitectShim'
-import { SpaceInfo } from '../SpaceInfo'
 import { Town } from './Town'
 import { TownRegistrar } from './TownRegistrar'
 import { createEntitlementStruct } from '../ConvertersRoles'
 import { getContractsInfo } from '../IStaticContractsInfo'
 import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
 import { WalletLink } from './WalletLink'
+import { PaymasterConfig, UserOpParams, SpaceDappConfig, SpaceInfo } from '../SpaceDappTypes'
+import { Client, ISendUserOperationResponse, Presets } from 'userop'
 
 export class SpaceDapp implements ISpaceDapp {
     public readonly chainId: number
@@ -29,12 +30,38 @@ export class SpaceDapp implements ISpaceDapp {
     protected readonly townRegistrar: TownRegistrar
     public readonly walletLink: WalletLink
 
-    constructor(chainId: number, provider: ethers.providers.Provider | undefined) {
+    // userop related
+    public readonly bundlerUrl: string
+    public readonly aaRpcUrl: string
+    public readonly paymasterProxyUrl: string | undefined
+    public readonly entryPointAddress: string | undefined
+    public readonly factoryAddress: string | undefined
+    public paymasterMiddleware: SpaceDappConfig['paymasterMiddleware']
+    public userOpClient: Client | undefined
+
+    constructor(config: SpaceDappConfig) {
+        const {
+            chainId,
+            provider,
+            aaRpcUrl,
+            bundlerUrl,
+            paymasterProxyUrl,
+            entryPointAddress,
+            factoryAddress,
+            paymasterMiddleware,
+        } = config
         this.chainId = chainId
         this.provider = provider
         const contractsInfo = getContractsInfo(chainId)
         this.townRegistrar = new TownRegistrar(contractsInfo, chainId, provider)
         this.walletLink = new WalletLink(contractsInfo, chainId, provider)
+
+        this.aaRpcUrl = aaRpcUrl
+        this.bundlerUrl = bundlerUrl ?? aaRpcUrl
+        this.paymasterProxyUrl = paymasterProxyUrl
+        this.entryPointAddress = entryPointAddress
+        this.factoryAddress = factoryAddress
+        this.paymasterMiddleware = paymasterMiddleware
     }
 
     public async addRoleToChannel(
@@ -371,8 +398,191 @@ export class SpaceDapp implements ISpaceDapp {
         return this.walletLink
     }
 
-    protected getTown(townId: string): Promise<Town | undefined> {
+    public async getAbstractAccountAddress(args: UserOpParams) {
+        return (await this.initBuilder(args)).getSender()
+    }
+
+    public getTown(townId: string): Promise<Town | undefined> {
         return this.townRegistrar.getTown(townId)
+    }
+
+    public async sendUserOp(
+        args: UserOpParams & {
+            // a function signature hash to pass to paymaster proxy - this is just the function name for now
+            functionHashForPaymasterProxy: string
+            townId: string
+        },
+    ): Promise<ISendUserOperationResponse> {
+        const { toAddress, callData, value } = args
+
+        const builder = await this.initBuilder(args)
+
+        if (!toAddress) {
+            throw new Error('toAddress is required')
+        }
+        if (!callData) {
+            throw new Error('callData is required')
+        }
+        // local bundler and no paymaster needs to estimate gas
+        // MAYBE WE DON'T NEED THIS WITH SKANDHA BUNDLER
+        // if (this.chainId === 31337) {
+        //     const { preVerificationGas, callGasLimit, verificationGasLimit } =
+        //         await estimateGasForLocalBundler({
+        //             target: toAddress,
+        //             provider: new ethers.providers.JsonRpcProvider(this.rpcUrl),
+        //             entryPointAddress: this.entryPointAddress ?? '',
+        //             sender: builder.getSender(),
+        //             callData,
+        //             factoryAddress: this.factoryAddress ?? '',
+        //             signer,
+        //         })
+
+        //     builder.setPreVerificationGas(preVerificationGas)
+        //     builder.setCallGasLimit(callGasLimit)
+        //     builder.setVerificationGasLimit(verificationGasLimit)
+        // }
+
+        const userOp = builder.execute(toAddress, value ?? 0, callData)
+        const userOpClient = await this.getUserOpClient()
+        return userOpClient.sendUserOperation(userOp, {
+            onBuild: (op) => console.log('Signed UserOperation:', op),
+        })
+    }
+
+    public async getUserOpClient() {
+        if (!this.userOpClient) {
+            this.userOpClient = await Client.init(this.aaRpcUrl, {
+                entryPoint: this.entryPointAddress,
+                overrideBundlerRpc: this.bundlerUrl,
+            })
+        }
+        return this.userOpClient
+    }
+
+    public async sendCreateSpaceOp(
+        args: Parameters<SpaceDapp['createSpace']>,
+        paymasterConfig?: PaymasterConfig,
+    ): Promise<ISendUserOperationResponse> {
+        const [createSpaceParams, signer] = args
+        const townInfo: ITownArchitectBase.TownInfoStruct = {
+            id: createSpaceParams.spaceId,
+            name: createSpaceParams.spaceName,
+            uri: createSpaceParams.spaceMetadata,
+            membership: createSpaceParams.membership,
+            channel: {
+                id: createSpaceParams.channelId,
+                metadata: createSpaceParams.channelName || '',
+            },
+        }
+
+        const functionName = 'createTown'
+
+        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+            this.townRegistrar.TownArchitect.interface,
+            functionName,
+        )
+
+        const callData = this.townRegistrar.TownArchitect.interface.encodeFunctionData(
+            functionName,
+            [townInfo],
+        )
+
+        // TODO: determine if this simulation causes an additional signature in UX
+        // try {
+        //     await this.townRegistrar.TownArchitect.write(signer).callStatic.createTown(townInfo)
+        // } catch (error) {
+        //     throw this.parseSpaceError(createSpaceParams.spaceId, error)
+        // }
+        return this.sendUserOp({
+            toAddress: this.townRegistrar.TownArchitect.address,
+            callData,
+            signer,
+            paymasterConfig,
+            townId: townInfo.id as string,
+            functionHashForPaymasterProxy,
+        })
+    }
+
+    public async sendJoinTownOp(
+        args: Parameters<SpaceDapp['joinTown']>,
+        paymasterConfig?: PaymasterConfig,
+    ): Promise<ISendUserOperationResponse> {
+        const [spaceId, recipient, signer] = args
+        const town = await this.getTown(spaceId)
+        const functionName = 'joinTown'
+
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+
+        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+            town.Membership.interface,
+            functionName,
+        )
+
+        const callData = town.Membership.interface.encodeFunctionData(functionName, [recipient])
+
+        // try {
+        //     // simulate the tx - throws an error second time you run it!
+        //     await town.Membership.write(signer).callStatic.joinTown(recipient)
+        // } catch (error) {
+        //     throw this.parseSpaceError(spaceId, error)
+        // }
+        return this.sendUserOp({
+            toAddress: town.Address,
+            callData,
+            signer,
+            paymasterConfig,
+            townId: (await town.getTownInfo()).networkId as string,
+            functionHashForPaymasterProxy,
+        })
+    }
+
+    /**
+     * should return a matching functionHash as the paymaster proxy validation
+     * TODO: convert to same hash as paymaster proxy validation, for now it's just function name
+     */
+    private getFunctionSigHash<ContractInterface extends ethers.utils.Interface>(
+        _contractInterface: ContractInterface,
+        functionName: string,
+    ) {
+        return functionName
+        // TODO: swap to this
+        // const frag = contractInterface.getFunction(functionName)
+        // return frag.format() // format sigHash
+    }
+
+    // Initialize a builder with middleware based on paymaster config
+    //
+    // Because we are still determining exactly how we are using paymaster,
+    // and userop.js doesn't allow for add/remove a specific middleware from the middleware stack,
+    // each user operation can just initiliaze a new builder to make things simpler
+    private async initBuilder(
+        args: UserOpParams & {
+            // a function signature hash to pass to paymaster proxy - this is just the function name for now
+            functionHashForPaymasterProxy?: string
+            townId?: string
+        },
+    ) {
+        const { signer } = args
+
+        return Presets.Builder.SimpleAccount.init(signer, this.aaRpcUrl, {
+            entryPoint: this.entryPointAddress,
+            factory: this.factoryAddress,
+            overrideBundlerRpc: this.bundlerUrl,
+            // salt?: BigNumberish;
+            // nonceKey?: number;
+            paymasterMiddleware: async (ctx) =>
+                this.paymasterMiddleware?.({
+                    userOpContext: ctx,
+                    bundlerUrl: this.bundlerUrl,
+                    provider: this.provider,
+                    aaRpcUrl: this.aaRpcUrl,
+                    paymasterProxyUrl: this.paymasterProxyUrl,
+                    functionHashForPaymasterProxy: args.functionHashForPaymasterProxy,
+                    townId: args.townId,
+                }),
+        })
     }
 
     private async encodeUpdateChannelRoles(

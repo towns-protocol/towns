@@ -22,6 +22,7 @@ import { useWatchForPrivyRequestErrors } from 'hooks/useWatchForPrivyRequestErro
 import DebugBar from '@components/DebugBar/DebugBar'
 import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
+import { useAccountAbstractionConfig } from 'userOpConfig'
 
 FontLoader.init()
 
@@ -53,6 +54,8 @@ export const App = () => {
         return 1
     }, [])
 
+    const accountAbstractionConfig = useAccountAbstractionConfig(environment.chainId)
+
     return (
         <ZionContextProvider
             mutedChannelIds={mutedChannelIds}
@@ -62,6 +65,7 @@ export const App = () => {
             timelineFilter={new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicitation])}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
+            accountAbstractionConfig={accountAbstractionConfig}
         >
             <EmbeddedSignerContextProvider chainId={environment.chainId}>
                 <AuthContextProvider>
