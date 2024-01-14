@@ -268,7 +268,7 @@ export class Client
 
         this.userStreamId = makeUserStreamId(this.userId)
         const userStream = this.createSyncedStream(this.userStreamId)
-        if (!(await userStream.initializeFromPersistence())) {
+        {
             const response =
                 (await this.getUserStream(this.userStreamId)) ??
                 (await this.createUserStream(this.userStreamId))
@@ -277,7 +277,7 @@ export class Client
 
         this.userToDeviceStreamId = makeUserToDeviceStreamId(this.userId)
         const userToDeviceStream = this.createSyncedStream(this.userToDeviceStreamId)
-        if (!(await userToDeviceStream.initializeFromPersistence())) {
+        {
             const response =
                 (await this.getUserStream(this.userToDeviceStreamId)) ??
                 (await this.createUserToDeviceStream(this.userToDeviceStreamId))
@@ -286,7 +286,7 @@ export class Client
 
         this.userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
         const userDeviceKeyStream = this.createSyncedStream(this.userDeviceKeyStreamId)
-        if (!(await userDeviceKeyStream.initializeFromPersistence())) {
+        {
             const response =
                 (await this.getUserStream(this.userDeviceKeyStreamId)) ??
                 (await this.createUserDeviceKeyStream(this.userDeviceKeyStreamId))
@@ -295,7 +295,7 @@ export class Client
 
         this.userSettingsStreamId = makeUserSettingsStreamId(this.userId)
         const userSettingsStream = this.createSyncedStream(this.userSettingsStreamId)
-        if (!(await userSettingsStream.initializeFromPersistence())) {
+        {
             const response =
                 (await this.getUserStream(this.userSettingsStreamId)) ??
                 (await this.createUserSettingsStream(this.userSettingsStreamId))
