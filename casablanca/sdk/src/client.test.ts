@@ -34,6 +34,7 @@ import {
     make_ChannelPayload_Message,
     make_CommonPayload_KeyFulfillment,
 } from './types'
+import { DecryptionStatus } from './decryptionExtensions'
 
 const log = dlog('csb:test')
 
@@ -724,6 +725,10 @@ describe('clientTest', () => {
         await expect(alicesClient.initializeUser()).toResolve()
         await bobsClient.startSync()
         await alicesClient.startSync()
+        await waitFor(() => {
+            // @ts-ignore
+            alicesClient.decryptionExtensions?.status === DecryptionStatus.idle
+        })
         const alicesUserId = alicesClient.userId
 
         const fallbackKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId], true)
@@ -782,6 +787,10 @@ describe('clientTest', () => {
 
         await expect(alicesClient.initializeUser()).toResolve()
         await alicesClient.startSync()
+        await waitFor(() => {
+            // @ts-ignore
+            alicesClient.decryptionExtensions?.status === DecryptionStatus.idle
+        })
 
         await expect(bobsClient.downloadUserDeviceInfo([alicesClient.userId])).toResolve()
         const knownDevices = await bobsClient.knownDevicesForUserId(alicesClient.userId)

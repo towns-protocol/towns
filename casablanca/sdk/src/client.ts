@@ -302,7 +302,6 @@ export class Client
             await userSettingsStream.initializeFromResponse(response)
         }
 
-        await this.uploadDeviceKeys()
         await this.initUserJoinedStreams()
 
         this.decryptionExtensions.start()

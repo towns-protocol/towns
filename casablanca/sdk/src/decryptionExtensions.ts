@@ -200,6 +200,8 @@ export class DecryptionExtensions extends (EventEmitter as new () => TypedEmitte
         check(!this.started, 'start() called twice, please re-instantiate instead')
         this.log.debug('starting')
         this.started = true
+        // enqueue a task to upload device keys
+        this.queues.priorityTasks.push(() => this.client.uploadDeviceKeys())
         // enqueue a task to download new to-device messages
         this.queues.priorityTasks.push(() => this.client.downloadNewToDeviceMessages())
         // start the tick loop
