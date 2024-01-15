@@ -8,7 +8,7 @@ import {
     useZionContext,
 } from 'use-zion-client'
 import React, { useEffect } from 'react'
-
+import debug from 'debug'
 import { NotificationStore } from '../store/notificationStore'
 import { ServiceWorkerMessageType, User } from './types.d'
 import { UserRecord } from '../store/notificationSchema'
@@ -16,6 +16,8 @@ import { preferredUsername } from './utils'
 
 // cache the crypto store and decryptor for each user
 const store = new NotificationStore()
+
+const log = debug('sw:push')
 
 export function ServiceWorkerMetadataSyncer() {
     const { spaceHierarchies } = useZionContext()
@@ -51,7 +53,7 @@ function NotificationMetadata({ spaceId }: { spaceId: string }) {
             )
             .filter((member) => member !== undefined) as User[]
         if (changedNames.length) {
-            console.log('sw:push: adding users to notification cache', membersMap)
+            log('adding users to notification cache', membersMap)
             const usersToUpdate = changedNames.map((u) => ({
                 id: u.userId,
                 name: preferredUsername(u),
@@ -63,7 +65,7 @@ function NotificationMetadata({ spaceId }: { spaceId: string }) {
     const setSpace = async (space: SpaceData) => {
         const cacheSpace = await store.getSpace(space.id)
         if (!cacheSpace || cacheSpace.name !== space.name) {
-            console.log('sw:push: adding space to notification cache', space.id, space.name)
+            log('adding space to notification cache', space.id, space.name)
             await store.setSpace({
                 id: space.id,
                 name: space.name,
@@ -80,7 +82,7 @@ function NotificationMetadata({ spaceId }: { spaceId: string }) {
         )
 
         if (changedChannels.length) {
-            console.log('sw:push: adding channels to notification cache', space.id, channels)
+            log('adding channels to notification cache', space.id, channels)
             const channelsToUpdate = changedChannels.map((c) => ({
                 id: c.id,
                 name: c.label,
@@ -94,7 +96,7 @@ function NotificationMetadata({ spaceId }: { spaceId: string }) {
         if (myProfile) {
             const id = ServiceWorkerMessageType.MyUserId
             const myUserId = myProfile.userId
-            console.log('sw:push: adding my name to notification cache', id, myUserId)
+            log('adding my name to notification cache', id, myUserId)
             setUser({
                 id,
                 name: myUserId,
