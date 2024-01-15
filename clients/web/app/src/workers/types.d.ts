@@ -98,12 +98,6 @@ export type NotificationContent =
 
 export const WEB_PUSH_NAVIGATION_CHANNEL = 'web-push-navigation-channel'
 
-export enum ServiceWorkerMessageType {
-    SpaceMetadata = 'space_metadata',
-    SpaceMembers = 'space_members',
-    MyUserId = 'my_user_id',
-}
-
 export interface User {
     userId: string
     username: string

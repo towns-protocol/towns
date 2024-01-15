@@ -2,24 +2,22 @@ import Dexie, { Table } from 'dexie'
 import { ChannelRecord, SpaceRecord, UserRecord } from './notificationSchema'
 
 export class NotificationStore extends Dexie {
-    private readonly dbName: string
+    public readonly storeName: string
+    public readonly userId: string
     public spaces!: Table<SpaceRecord, string>
     public channels!: Table<ChannelRecord, string>
     public users!: Table<UserRecord, string>
 
-    constructor(dbName?: string) {
-        const _dbName = dbName ?? 'db_notification'
-        super(_dbName)
-        this.dbName = _dbName
+    constructor(userId: string, storeName?: string) {
+        storeName = storeName ?? `notification-${userId}`
+        super(storeName)
+        this.storeName = storeName
+        this.userId = userId
         this.version(1).stores({
             spaces: 'id',
             channels: 'id, parentSpaceId',
             users: 'id',
         })
-    }
-
-    public get databaseName(): string {
-        return this.dbName
     }
 
     public async getUser(userId: string): Promise<UserRecord | undefined> {

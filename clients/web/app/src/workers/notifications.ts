@@ -1,3 +1,4 @@
+import { UserRecord } from 'store/notificationSchema'
 import {
     AppNotification,
     AppNotificationType,
@@ -6,10 +7,9 @@ import {
     NotificationMention,
     NotificationNewMessage,
     NotificationReplyTo,
-    ServiceWorkerMessageType,
     WEB_PUSH_NAVIGATION_CHANNEL,
 } from './types.d'
-import { User } from '../idb/notificationsMeta'
+import { PlaintextDetails, decryptWithMegolm } from './mecholmDecryption'
 import {
     appNotificationFromPushEvent,
     notificationContentFromEvent,
@@ -17,18 +17,28 @@ import {
 } from './notificationParsers'
 import { checkClientIsVisible, getShortenedName, stringHasValue } from './utils'
 
-import { PlaintextDetails, decryptWithMegolm } from './mecholmDecryption'
+import { NotificationCurrentUser } from '../store/notificationCurrentUser'
+import { NotificationStore } from '../store/notificationStore'
 import { env } from '../utils/environment'
 import { getEncryptedData } from './data_transforms'
-import { NotificationStore } from '../store/notificationStore'
 
-let notificationStore: NotificationStore | undefined = undefined
+const notificationStores: Record<string, NotificationStore> = {}
+let currentUserStore: NotificationCurrentUser | undefined = undefined
 
-function getNotificationStore(): NotificationStore {
-    if (!notificationStore) {
-        notificationStore = new NotificationStore()
+// initializse the current user's notification store
+// which allows us to map the ids in the notification to the names
+async function initCurrentUserNotificationStore(): Promise<string | undefined> {
+    if (!currentUserStore) {
+        currentUserStore = new NotificationCurrentUser()
     }
-    return notificationStore
+    // if the notificationStore is not initialized, initialize it
+    const currentUserId = await currentUserStore.getCurrentUserId()
+    if (currentUserId && notificationStores[currentUserId] === undefined) {
+        notificationStores[currentUserId] = new NotificationStore(currentUserId)
+    } else {
+        console.log('sw:push: no currentUserId in NotificationCurrentUser')
+    }
+    return currentUserId
 }
 
 export function handleNotifications(worker: ServiceWorkerGlobalScope) {
@@ -58,7 +68,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     // `activate` fires once old service worker is gone and new one has taken control
     worker.addEventListener('activate', () => {
         console.log('sw:push: "activate" event')
-        getNotificationStore()
+        initCurrentUserNotificationStore()
     })
 
     worker.addEventListener('push', (event) => {
@@ -84,7 +94,8 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                 return
             }
 
-            const content = await getNotificationContent(notification)
+            const currentUserId = await initCurrentUserNotificationStore()
+            const content = await getNotificationContent(notification, currentUserId)
             console.log('sw:push:getNotificationContent', content)
 
             // options: https://developer.mozilla.org/en-US/docs/Web/API/Notification
@@ -184,7 +195,7 @@ function generateNewNotificationMessage(
     }
 }
 
-function generateDmTitle(sender: string | undefined, recipients: User[]): string {
+function generateDmTitle(sender: string | undefined, recipients: UserRecord[]): string {
     console.log('sw:push: generateDmTitle INPUT', 'senderName', sender, 'recipients', recipients)
     const recipientNames = recipients
         .map((recipient) => getShortenedName(recipient.name))
@@ -215,7 +226,7 @@ function generateDM(
     channelId: string,
     myUserId: string | undefined,
     sender: string | undefined,
-    recipients: User[] | undefined,
+    recipients: UserRecord[] | undefined,
     plaintext: PlaintextDetails | undefined,
 ): NotificationDM {
     // if myUserId is available, remove it from the recipients list
@@ -323,22 +334,22 @@ function generateReplyToMessage(
 
 async function getNotificationContent(
     notification: AppNotification,
+    currentUserId: string | undefined,
 ): Promise<NotificationContent | undefined> {
     let townName: string | undefined = undefined
     let channelName: string | undefined = undefined
     let senderName: string | undefined = undefined
-    let recipients: User[] = []
-    let myUserId: string | undefined = undefined
+    let recipients: UserRecord[] = []
+    const notificationStore = currentUserId ? notificationStores[currentUserId] : undefined
 
     try {
-        const space =
+        const [space, channel, sender] = await Promise.all([
             notification.content.kind !== AppNotificationType.DirectMessage
-                ? await notificationStore?.getSpace(notification.content.spaceId)
-                : undefined
-        const channel = await notificationStore?.getChannel(notification.content.channelId)
-        const sender = await notificationStore?.getUser(notification.content.senderId)
-        const myUser = await notificationStore?.getUser(ServiceWorkerMessageType.MyUserId)
-        myUserId = myUser?.name // this is the userId, not the displayName
+                ? notificationStore?.getSpace(notification.content.spaceId)
+                : undefined,
+            notificationStore?.getChannel(notification.content.channelId),
+            notificationStore?.getUser(notification.content.senderId),
+        ])
         townName = space?.name
         channelName = channel?.name
         // transform the sender name to the shortened version
@@ -350,7 +361,7 @@ async function getNotificationContent(
             notification.content.recipients.length > 0
         ) {
             console.log('sw:push: recipients', notification.content.recipients)
-            const dbUsersPromises: Promise<User | undefined>[] = []
+            const dbUsersPromises: Promise<UserRecord | undefined>[] = []
             notification.content.recipients.forEach((recipientId) => {
                 if (notificationStore) {
                     dbUsersPromises.push(notificationStore.getUser(recipientId))
@@ -363,21 +374,24 @@ async function getNotificationContent(
                         return user
                     }
                 })
-                .filter((user) => user !== undefined) as User[]
+                .filter((user) => user !== undefined) as UserRecord[]
         }
     } catch (error) {
-        console.error('sw:push: error fetching space/channel/user names from idb', error)
+        console.error(
+            'sw:push: error fetching space/channel/user names from notification store',
+            error,
+        )
     }
 
     // try to decrypt, if we can't, return undefined, and the notification will be a generic message
-    console.log('tak:sw:push: myUserId before calling tryDecryptEvent', myUserId)
-    const plaintext = myUserId ? await tryDecryptEvent(myUserId, notification) : undefined
+    console.log('sw:push: myUserId before calling tryDecryptEvent', currentUserId)
+    const plaintext = currentUserId ? await tryDecryptEvent(currentUserId, notification) : undefined
 
     switch (notification.content.kind) {
         case AppNotificationType.DirectMessage:
             return generateDM(
                 notification.content.channelId,
-                myUserId,
+                currentUserId,
                 senderName,
                 recipients,
                 plaintext,
