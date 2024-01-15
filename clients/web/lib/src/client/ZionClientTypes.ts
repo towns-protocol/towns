@@ -16,6 +16,7 @@ export interface ZionOpts {
     pushNotificationAuthToken?: string
     verbose?: boolean
     accountAbstractionConfig?: Omit<SpaceDappConfig, 'chainId' | 'provider'>
+    highPriorityStreamIds?: string[]
 }
 
 export interface ZionOnboardingOpts {

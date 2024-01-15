@@ -70,6 +70,7 @@ interface ZionContextProviderProps {
     pushNotificationAuthToken?: string
     pushNotificationWorkerUrl?: string
     accountAbstractionConfig?: ZionOpts['accountAbstractionConfig']
+    highPriorityStreamIds?: string[]
 }
 
 export function ZionContextProvider({
@@ -122,6 +123,7 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
         pushNotificationAuthToken: props.pushNotificationAuthToken,
         pushNotificationWorkerUrl: props.pushNotificationWorkerUrl,
         accountAbstractionConfig: props.accountAbstractionConfig,
+        highPriorityStreamIds: props.highPriorityStreamIds,
     })
     const { invitedToIds } = useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)

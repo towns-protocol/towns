@@ -1,9 +1,10 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import React, { useCallback, useRef } from 'react'
-import { useLocation } from 'react-router'
+import { matchPath, useLocation } from 'react-router'
 import { InitialSyncSortPredicate, ZTEvent, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
 import { EmbeddedSignerContextProvider } from '@towns/privy'
+import { isDefined } from '@river/mecholm'
 import { Notifications } from '@components/Notifications/Notifications'
 import { useDevice } from 'hooks/useDevice'
 import { useEnvironment } from 'hooks/useEnvironmnet'
@@ -23,6 +24,7 @@ import DebugBar from '@components/DebugBar/DebugBar'
 import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
 import { useAccountAbstractionConfig } from 'userOpConfig'
+import { PATHS } from 'routes'
 
 FontLoader.init()
 
@@ -31,6 +33,25 @@ export const App = () => {
         theme: state.theme,
         mutedChannelIds: state.mutedChannelIds,
     }))
+
+    const highPriorityStreamIds = useRef<string[]>([])
+    const didSetHighpriorityStreamIds = useRef<boolean>(false)
+    if (!didSetHighpriorityStreamIds.current) {
+        didSetHighpriorityStreamIds.current = true
+        const state = useStore.getState()
+        const spaceId = state.spaceIdBookmark
+        const channelBookmark = spaceId ? state.townRouteBookmarks[spaceId] : undefined
+        const match = matchPath(
+            {
+                path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/`,
+            },
+            channelBookmark ?? '',
+        )
+
+        highPriorityStreamIds.current = [match?.params.spaceId, match?.params.channelId].filter(
+            isDefined,
+        )
+    }
 
     useWindowListener()
     useWatchForPrivyRequestErrors()
@@ -66,6 +87,7 @@ export const App = () => {
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
             accountAbstractionConfig={accountAbstractionConfig}
+            highPriorityStreamIds={highPriorityStreamIds.current}
         >
             <EmbeddedSignerContextProvider chainId={environment.chainId}>
                 <AuthContextProvider>

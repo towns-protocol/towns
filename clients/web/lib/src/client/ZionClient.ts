@@ -206,6 +206,7 @@ export class ZionClient implements EntitlementsDelegate {
             cryptoStore,
             this,
             this.opts.logNamespaceFilter,
+            this.opts.highPriorityStreamIds,
         )
         this.casablancaClient.setMaxListeners(100)
 
@@ -1333,14 +1334,6 @@ export class ZionClient implements EntitlementsDelegate {
             throw new Error('Casablanca client is undefined')
         }
         await this.casablancaClient.sendFullyReadMarkers(channelId, content)
-    }
-
-    // eslint-disable-next-line @typescript-eslint/require-await
-    public async setPriorityStreamIds(streamIds: string[]) {
-        if (!this.casablancaClient) {
-            throw new Error('Casablanca client is undefined')
-        }
-        this.casablancaClient.setPriorityStreamIds(streamIds)
     }
 
     /************************************************

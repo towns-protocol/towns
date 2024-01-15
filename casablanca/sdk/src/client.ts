@@ -152,6 +152,7 @@ export class Client
         cryptoStore: CryptoStore,
         entitlementsDelegate: EntitlementsDelegate,
         logNamespaceFilter?: string,
+        highPriorityStreamIds?: string[],
     ) {
         super()
         if (logNamespaceFilter) {
@@ -190,6 +191,7 @@ export class Client
         )
         this.streams = new SyncedStreams(this.userId, this.rpcClient, this.persistenceStore, this)
         this.syncedStreamsExtensions = new SyncedStreamsExtension(this)
+        this.syncedStreamsExtensions.setHighPriority(highPriorityStreamIds ?? [])
         this.logCall('new Client')
     }
 
@@ -217,11 +219,6 @@ export class Client
 
     stream(streamId: string): SyncedStream | undefined {
         return this.streams.get(streamId)
-    }
-
-    setPriorityStreamIds(streamIds: string[]) {
-        check(isDefined(this.syncedStreamsExtensions), 'syncedStreamsExtensions must be defined')
-        this.syncedStreamsExtensions.setHighPriority(streamIds)
     }
 
     createSyncedStream(streamId: string): SyncedStream {

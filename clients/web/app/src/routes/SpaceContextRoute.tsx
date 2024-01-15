@@ -1,9 +1,8 @@
 import capitalize from 'lodash/capitalize'
-import React, { useEffect, useMemo, useRef } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { matchPath, useLocation } from 'react-router-dom'
-import { AutojoinChannels, SpaceContextProvider, SpaceData, useZionClient } from 'use-zion-client'
-import { isDefined } from '@river/mecholm'
+import { AutojoinChannels, SpaceContextProvider, SpaceData } from 'use-zion-client'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useSetDocTitle } from 'hooks/useDocTitle'
@@ -15,30 +14,8 @@ const createSpaceTitle = (spaceName?: string, childLabel?: string) => {
 }
 
 export const SpaceContextRoute = () => {
-    const client = useZionClient()
     const spaceRoute = useMatch({ path: `/${PATHS.SPACES}/:spaceSlug`, end: false })
-    const spaceChannelRoute = useMatch({
-        path: `/${PATHS.SPACES}/:spaceSlug/channels/:channelSlug`,
-        end: false,
-    })
     const spaceId = spaceRoute?.params.spaceSlug ?? ''
-    const didSetHighpriorityStreams = useRef<boolean>(false)
-
-    useEffect(() => {
-        if (didSetHighpriorityStreams.current) {
-            return
-        }
-        const ids = [
-            spaceChannelRoute?.params.spaceSlug,
-            spaceChannelRoute?.params.channelSlug,
-        ].filter(isDefined)
-
-        if (ids.length === 0) {
-            return
-        }
-        didSetHighpriorityStreams.current = true
-        client.setPriorityStreamIds(ids)
-    }, [spaceChannelRoute, client])
 
     return (
         <SpaceContextProvider spaceId={spaceId}>
