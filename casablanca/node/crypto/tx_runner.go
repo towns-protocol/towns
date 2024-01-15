@@ -12,8 +12,8 @@ import (
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	. "casablanca/node/base"
-	. "casablanca/node/protocol"
+	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/protocol"
 )
 
 type Transactor interface {

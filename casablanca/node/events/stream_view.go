@@ -2,14 +2,15 @@ package events
 
 import (
 	"bytes"
-	. "casablanca/node/base"
-	"casablanca/node/config"
-	"casablanca/node/dlog"
-	. "casablanca/node/protocol"
-	"casablanca/node/storage"
-	. "casablanca/node/utils"
 	"context"
 	"time"
+
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/dlog"
+	. "github.com/river-build/river/protocol"
+	"github.com/river-build/river/storage"
+	. "github.com/river-build/river/utils"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"

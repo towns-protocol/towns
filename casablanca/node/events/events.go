@@ -6,9 +6,9 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"casablanca/node/crypto"
-	"casablanca/node/protocol"
-	. "casablanca/node/protocol"
+	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/protocol"
+	. "github.com/river-build/river/protocol"
 )
 
 func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte) (*StreamEvent, error) {

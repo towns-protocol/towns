@@ -1,13 +1,14 @@
 package events
 
 import (
-	. "casablanca/node/base"
-	"casablanca/node/config"
-	"casablanca/node/crypto"
-	. "casablanca/node/protocol"
-	"casablanca/node/storage"
 	"context"
 	"sync"
+
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/crypto"
+	. "github.com/river-build/river/protocol"
+	"github.com/river-build/river/storage"
 )
 
 type StreamCacheParams struct {

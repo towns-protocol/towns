@@ -1,4 +1,4 @@
-module casablanca/node
+module github.com/river-build/river
 
 go 1.21
 

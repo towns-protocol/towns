@@ -1,11 +1,12 @@
 package events
 
 import (
-	. "casablanca/node/protocol"
-	"casablanca/node/shared"
 	"errors"
 	"fmt"
 	"sort"
+
+	. "github.com/river-build/river/protocol"
+	"github.com/river-build/river/shared"
 )
 
 func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {

@@ -7,9 +7,9 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-	. "casablanca/node/base"
-	. "casablanca/node/crypto"
-	. "casablanca/node/protocol"
+	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/crypto"
+	. "github.com/river-build/river/protocol"
 )
 
 type ParsedEvent struct {

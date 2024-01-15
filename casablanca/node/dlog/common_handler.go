@@ -15,7 +15,7 @@ import (
 
 	"golang.org/x/exp/slog"
 
-	buffer "casablanca/node/dlog/buffer"
+	buffer "github.com/river-build/river/dlog/buffer"
 )
 
 type PrettyHandlerOptions struct {

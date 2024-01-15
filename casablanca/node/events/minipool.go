@@ -1,7 +1,7 @@
 package events
 
 import (
-	. "casablanca/node/utils"
+	. "github.com/river-build/river/utils"
 )
 
 type eventMap = *OrderedMap[string, *ParsedEvent]

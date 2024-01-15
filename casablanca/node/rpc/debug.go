@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	. "casablanca/node/events"
 	"fmt"
 	"html"
 	"net/http"
@@ -9,6 +8,8 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+
+	. "github.com/river-build/river/events"
 )
 
 // GenerateStackHTML generates an HTML table from runtime.Stack

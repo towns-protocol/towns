@@ -1,9 +1,10 @@
 package registries
 
 import (
-	"casablanca/node/config"
-	"casablanca/node/crypto"
 	"context"
+
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/crypto"
 )
 
 func NewStreamRegistryContract(

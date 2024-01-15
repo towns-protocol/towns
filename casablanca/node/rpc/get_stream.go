@@ -5,8 +5,8 @@ import (
 
 	connect_go "github.com/bufbuild/connect-go"
 
-	"casablanca/node/infra"
-	. "casablanca/node/protocol"
+	"github.com/river-build/river/infra"
+	. "github.com/river-build/river/protocol"
 )
 
 var (

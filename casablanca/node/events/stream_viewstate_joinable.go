@@ -1,7 +1,7 @@
 package events
 
 import (
-	"casablanca/node/protocol"
+	"github.com/river-build/river/protocol"
 
 	mapset "github.com/deckarep/golang-set/v2"
 )

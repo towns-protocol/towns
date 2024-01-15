@@ -1,14 +1,15 @@
 package testutils
 
 import (
-	"casablanca/node/config"
-	"casablanca/node/crypto"
-	"casablanca/node/infra"
-	"casablanca/node/protocol/protocolconnect"
-	"casablanca/node/rpc"
 	"context"
 	"fmt"
 	"net/http"
+
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/infra"
+	"github.com/river-build/river/protocol/protocolconnect"
+	"github.com/river-build/river/rpc"
 
 	"github.com/ethereum/go-ethereum/common"
 	eth_rpc "github.com/ethereum/go-ethereum/rpc"

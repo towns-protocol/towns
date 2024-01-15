@@ -1,7 +1,7 @@
 package config
 
 import (
-	infra "casablanca/node/infra/config"
+	infra "github.com/river-build/river/infra/config"
 )
 
 // Viper uses mapstructure module to marshal settings into config struct.

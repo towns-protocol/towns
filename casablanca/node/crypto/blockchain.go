@@ -4,9 +4,9 @@ import (
 	"context"
 	"math/big"
 
-	. "casablanca/node/base"
-	"casablanca/node/config"
-	. "casablanca/node/protocol"
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/config"
+	. "github.com/river-build/river/protocol"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 )

@@ -1,8 +1,9 @@
 package events
 
 import (
-	. "casablanca/node/protocol"
 	"testing"
+
+	. "github.com/river-build/river/protocol"
 
 	"github.com/stretchr/testify/require"
 )

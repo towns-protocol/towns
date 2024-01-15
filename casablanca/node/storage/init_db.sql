@@ -1,5 +1,5 @@
--- CREATE DATABASE casablanca;
--- \c casablanca;
+-- CREATE DATABASE river;
+-- \c river;
 
 CREATE TABLE IF NOT EXISTS es (
   stream_id VARCHAR PRIMARY KEY,

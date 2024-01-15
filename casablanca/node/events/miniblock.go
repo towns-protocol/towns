@@ -1,9 +1,9 @@
 package events
 
 import (
-	. "casablanca/node/base"
-	"casablanca/node/crypto"
-	. "casablanca/node/protocol"
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/crypto"
+	. "github.com/river-build/river/protocol"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"

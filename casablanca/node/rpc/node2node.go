@@ -5,9 +5,9 @@ import (
 
 	"github.com/bufbuild/connect-go"
 
-	. "casablanca/node/base"
-	. "casablanca/node/events"
-	. "casablanca/node/protocol"
+	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/events"
+	. "github.com/river-build/river/protocol"
 )
 
 func (s *Service) AllocateStream(ctx context.Context, req *connect.Request[AllocateStreamRequest]) (*connect.Response[AllocateStreamResponse], error) {

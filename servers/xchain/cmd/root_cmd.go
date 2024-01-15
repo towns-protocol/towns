@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	"casablanca/node/infra"
 	"servers/xchain/config"
 	"strings"
+
+	"github.com/river-build/river/infra"
 
 	"fmt"
 	"os"

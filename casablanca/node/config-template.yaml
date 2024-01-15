@@ -1,7 +1,7 @@
 # Network configuration
 port: <RPC_PORT>
 database:
-    url: postgres://postgres:postgres@localhost:<DB_PORT>/casablanca?sslmode=disable&pool_max_conns=1000
+    url: postgres://postgres:postgres@localhost:<DB_PORT>/river?sslmode=disable&pool_max_conns=1000
     database: ''
     user: ''
     password: ''

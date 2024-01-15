@@ -1,18 +1,19 @@
 package auth
 
 import (
-	. "casablanca/node/base"
-	"casablanca/node/config"
-	"casablanca/node/contracts"
-	"casablanca/node/contracts/dev"
-	v3 "casablanca/node/contracts/v3"
-	"casablanca/node/crypto"
-	"casablanca/node/dlog"
-	"casablanca/node/infra"
-	. "casablanca/node/protocol"
 	"context"
 	"math/big"
 	"time"
+
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/contracts"
+	"github.com/river-build/river/contracts/dev"
+	v3 "github.com/river-build/river/contracts/v3"
+	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/infra"
+	. "github.com/river-build/river/protocol"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"

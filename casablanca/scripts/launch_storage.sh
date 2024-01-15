@@ -5,4 +5,4 @@ echo
 echo "Launching Postgres..."
 echo 
 
-docker compose --project-name casablanca up --detach --wait
+docker compose --project-name river up --detach --wait

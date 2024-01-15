@@ -1,12 +1,13 @@
 package auth
 
 import (
-	. "casablanca/node/base"
-	"casablanca/node/config"
-	"casablanca/node/dlog"
-	"casablanca/node/protocol"
 	"context"
 	"time"
+
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/protocol"
 
 	lru "github.com/hashicorp/golang-lru/arc/v2"
 )

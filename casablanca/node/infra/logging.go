@@ -1,10 +1,11 @@
 package infra
 
 import (
-	"casablanca/node/dlog"
-	config "casablanca/node/infra/config"
 	"fmt"
 	"os"
+
+	"github.com/river-build/river/dlog"
+	config "github.com/river-build/river/infra/config"
 
 	"golang.org/x/exp/slog"
 )

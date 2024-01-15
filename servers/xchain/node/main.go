@@ -1,9 +1,10 @@
 package main
 
 import (
-	"casablanca/node/dlog"
 	"context"
 	"servers/xchain/cmd"
+
+	"github.com/river-build/river/dlog"
 )
 
 func main() {

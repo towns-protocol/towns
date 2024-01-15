@@ -1,7 +1,7 @@
 package base
 
 import (
-	. "casablanca/node/protocol"
+	. "github.com/river-build/river/protocol"
 
 	"github.com/ethereum/go-ethereum/common"
 )

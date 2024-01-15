@@ -1,7 +1,5 @@
 syntax = "proto3";
-package casablancapayloads;
-option go_package = "casablanca/payloads";
-
+package river;
 
 message ChannelMessage {
     message Reaction {

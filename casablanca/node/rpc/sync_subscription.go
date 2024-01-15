@@ -1,12 +1,13 @@
 package rpc
 
 import (
-	"casablanca/node/base"
-	"casablanca/node/dlog"
-	"casablanca/node/events"
-	"casablanca/node/protocol"
 	"context"
 	"sync"
+
+	"github.com/river-build/river/base"
+	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/events"
+	"github.com/river-build/river/protocol"
 
 	connect_go "github.com/bufbuild/connect-go"
 	"golang.org/x/exp/slog"

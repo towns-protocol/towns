@@ -1,10 +1,6 @@
 package nodes
 
 import (
-	. "casablanca/node/base"
-	"casablanca/node/dlog"
-	. "casablanca/node/protocol"
-	. "casablanca/node/protocol/protocolconnect"
 	"context"
 	"encoding/csv"
 	"encoding/json"
@@ -12,6 +8,11 @@ import (
 	"os"
 	"strings"
 	"sync"
+
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/dlog"
+	. "github.com/river-build/river/protocol"
+	. "github.com/river-build/river/protocol/protocolconnect"
 
 	"github.com/bufbuild/connect-go"
 )

@@ -3,8 +3,8 @@ package rpc
 import (
 	"context"
 
-	. "casablanca/node/events"
-	. "casablanca/node/protocol"
+	. "github.com/river-build/river/events"
+	. "github.com/river-build/river/protocol"
 
 	"github.com/bufbuild/connect-go"
 )

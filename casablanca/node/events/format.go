@@ -3,7 +3,7 @@ package events
 import (
 	"strings"
 
-	. "casablanca/node/base"
+	. "github.com/river-build/river/base"
 )
 
 func FormatEventShort(e *ParsedEvent) string {

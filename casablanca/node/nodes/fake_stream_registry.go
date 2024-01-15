@@ -3,7 +3,7 @@ package nodes
 import (
 	"context"
 
-	. "casablanca/node/base"
+	. "github.com/river-build/river/base"
 )
 
 // Temp implementation that hashed the streamId and returns the node that is responsible for it.

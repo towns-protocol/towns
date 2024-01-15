@@ -1,13 +1,13 @@
 package rpc
 
 import (
-	"casablanca/node/auth"
-	"casablanca/node/config"
-	"casablanca/node/crypto"
-	"casablanca/node/events"
-	"casablanca/node/infra"
-	"casablanca/node/nodes"
-	. "casablanca/node/protocol/protocolconnect"
+	"github.com/river-build/river/auth"
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/events"
+	"github.com/river-build/river/infra"
+	"github.com/river-build/river/nodes"
+	. "github.com/river-build/river/protocol/protocolconnect"
 )
 
 var (

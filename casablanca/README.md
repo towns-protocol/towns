@@ -16,13 +16,13 @@ Protobufs are generated for go and typescript
     cd node
     go generate -v -x protocol/gen.go
 
-# Running Casablanca node
+# Running River node
 
 Start storage backend, build node and start:
 
     scripts/launch.sh
 
-# Running Casablanca Tests
+# Running River Tests
 
 Run client tests:
 

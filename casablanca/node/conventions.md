@@ -124,13 +124,13 @@ import (
 
 	"github.com/bufbuild/connect-go"
 
-	"casablanca/node/auth"
-	. "casablanca/node/base"
-	"casablanca/node/common"
-	"casablanca/node/crypto"
-	. "casablanca/node/events"
-	"casablanca/node/infra"
-	. "casablanca/node/protocol"
-	"casablanca/node/storage"
+	"github.com/river-build/river/auth"
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/common"
+	"github.com/river-build/river/crypto"
+	. "github.com/river-build/river/events"
+	"github.com/river-build/river/infra"
+	. "github.com/river-build/river/protocol"
+	"github.com/river-build/river/storage"
 )
 ```

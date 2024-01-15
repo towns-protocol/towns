@@ -17,7 +17,7 @@ import (
 
 	"golang.org/x/exp/slog"
 
-	buffer "casablanca/node/dlog/buffer"
+	buffer "github.com/river-build/river/dlog/buffer"
 )
 
 // PrettyJSONHandler is a Handler that writes Records to an io.Writer as

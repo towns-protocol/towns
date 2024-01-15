@@ -1,12 +1,13 @@
 package cmd
 
 import (
-	"casablanca/node/config"
-	"casablanca/node/crypto"
-	"casablanca/node/registries"
 	"context"
 	"encoding/hex"
 	"fmt"
+
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/registries"
 
 	"github.com/spf13/cobra"
 )

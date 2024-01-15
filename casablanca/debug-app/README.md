@@ -1,1 +1,1 @@
-debug-app calls casablanca/sdk directly to allow debugging of transport issues.
+debug-app calls river/sdk directly to allow debugging of transport issues.

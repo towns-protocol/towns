@@ -72,22 +72,22 @@ type TownsEntitlementsFilterer struct {
 // with pre-set call and transact options.
 type TownsEntitlementsSession struct {
 	Contract     *TownsEntitlements // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts                // Call options to use throughout this session
-	TransactOpts bind.TransactOpts            // Transaction auth options to use throughout this session
+	CallOpts     bind.CallOpts      // Call options to use throughout this session
+	TransactOpts bind.TransactOpts  // Transaction auth options to use throughout this session
 }
 
 // TownsEntitlementsCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type TownsEntitlementsCallerSession struct {
 	Contract *TownsEntitlementsCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts                      // Call options to use throughout this session
+	CallOpts bind.CallOpts            // Call options to use throughout this session
 }
 
 // TownsEntitlementsTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type TownsEntitlementsTransactorSession struct {
 	Contract     *TownsEntitlementsTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts                      // Transaction auth options to use throughout this session
+	TransactOpts bind.TransactOpts            // Transaction auth options to use throughout this session
 }
 
 // TownsEntitlementsRaw is an auto generated low-level Go binding around an Ethereum contract.

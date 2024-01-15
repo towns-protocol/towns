@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"casablanca/node/config"
-	"casablanca/node/crypto"
-	"casablanca/node/dlog"
-	"casablanca/node/testutils"
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/testutils"
 
 	"context"
 

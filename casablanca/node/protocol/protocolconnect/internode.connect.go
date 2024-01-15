@@ -5,10 +5,10 @@
 package protocolconnect
 
 import (
-	protocol "casablanca/node/protocol"
 	context "context"
 	errors "errors"
 	connect_go "github.com/bufbuild/connect-go"
+	protocol "github.com/river-build/river/protocol"
 	http "net/http"
 	strings "strings"
 )

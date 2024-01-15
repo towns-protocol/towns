@@ -1,15 +1,16 @@
 package registries
 
 import (
-	. "casablanca/node/base"
-	"casablanca/node/config"
-	"casablanca/node/contracts/dev"
-	"casablanca/node/dlog"
-	. "casablanca/node/protocol"
 	"context"
 	"math/big"
 
-	"casablanca/node/crypto"
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/contracts/dev"
+	"github.com/river-build/river/dlog"
+	. "github.com/river-build/river/protocol"
+
+	"github.com/river-build/river/crypto"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )

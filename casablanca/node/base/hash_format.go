@@ -1,8 +1,9 @@
 package base
 
 import (
-	"casablanca/node/protocol"
 	"strings"
+
+	"github.com/river-build/river/protocol"
 )
 
 const (

@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"casablanca/node/dlog"
+	"github.com/river-build/river/dlog"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"

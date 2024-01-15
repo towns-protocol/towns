@@ -1,16 +1,16 @@
 package rpc
 
 import (
-	"casablanca/node/auth"
-	. "casablanca/node/base"
-	"casablanca/node/config"
-	"casablanca/node/crypto"
-	"casablanca/node/dlog"
-	"casablanca/node/events"
-	"casablanca/node/nodes"
-	"casablanca/node/protocol/protocolconnect"
-	"casablanca/node/registries"
-	"casablanca/node/storage"
+	"github.com/river-build/river/auth"
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/events"
+	"github.com/river-build/river/nodes"
+	"github.com/river-build/river/protocol/protocolconnect"
+	"github.com/river-build/river/registries"
+	"github.com/river-build/river/storage"
 
 	"context"
 	"fmt"

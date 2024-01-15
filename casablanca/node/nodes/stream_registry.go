@@ -1,11 +1,12 @@
 package nodes
 
 import (
-	. "casablanca/node/base"
-	. "casablanca/node/protocol"
-	"casablanca/node/registries"
 	"context"
 	"hash/fnv"
+
+	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/protocol"
+	"github.com/river-build/river/registries"
 )
 
 type StreamRegistry interface {

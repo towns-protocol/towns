@@ -2,8 +2,9 @@ package events
 
 import (
 	"bytes"
-	. "casablanca/node/base"
-	. "casablanca/node/protocol"
+
+	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/protocol"
 )
 
 func SyncCookieEqual(a, b *SyncCookie) bool {

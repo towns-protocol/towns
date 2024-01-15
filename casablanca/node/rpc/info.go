@@ -7,9 +7,9 @@ import (
 	connect_go "github.com/bufbuild/connect-go"
 	"golang.org/x/exp/slog"
 
-	. "casablanca/node/base"
-	"casablanca/node/infra"
-	"casablanca/node/protocol"
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/infra"
+	"github.com/river-build/river/protocol"
 )
 
 var (

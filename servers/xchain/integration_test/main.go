@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"casablanca/node/dlog"
 	"context"
 	"log"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"servers/xchain/server"
 	"sync"
 	"syscall"
+
+	"github.com/river-build/river/dlog"
 )
 
 func keyboardInput(input chan rune) {

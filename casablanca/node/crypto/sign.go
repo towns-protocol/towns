@@ -1,7 +1,6 @@
 package crypto
 
 import (
-	"casablanca/node/dlog"
 	"context"
 	"crypto/ecdsa"
 	"encoding/binary"
@@ -9,6 +8,8 @@ import (
 	"io"
 	"math/big"
 	"os"
+
+	"github.com/river-build/river/dlog"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"

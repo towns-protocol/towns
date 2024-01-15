@@ -2,15 +2,16 @@ package nodes
 
 import (
 	"bytes"
-	"casablanca/node/config"
-	"casablanca/node/dlog"
-	"casablanca/node/events"
-	"casablanca/node/protocol"
-	"casablanca/node/shared"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/events"
+	"github.com/river-build/river/protocol"
+	"github.com/river-build/river/shared"
 )
 
 // PushNotification is used to trigger push notifications to the client.

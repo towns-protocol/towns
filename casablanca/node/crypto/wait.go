@@ -10,8 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	. "casablanca/node/base"
-	. "casablanca/node/protocol"
+	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/protocol"
 )
 
 func WaitMined(

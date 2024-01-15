@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
       {
-        "name": "Launch Casablanca",
+        "name": "Launch River",
         "type": "go",
         "request": "launch",
         "mode": "auto",

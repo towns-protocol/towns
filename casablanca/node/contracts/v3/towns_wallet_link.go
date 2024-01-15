@@ -63,23 +63,23 @@ type TownsWalletLinkFilterer struct {
 // TownsWalletLinkSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type TownsWalletLinkSession struct {
-	Contract     *TownsWalletLink // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts              // Call options to use throughout this session
-	TransactOpts bind.TransactOpts          // Transaction auth options to use throughout this session
+	Contract     *TownsWalletLink  // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
 // TownsWalletLinkCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type TownsWalletLinkCallerSession struct {
 	Contract *TownsWalletLinkCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts                    // Call options to use throughout this session
+	CallOpts bind.CallOpts          // Call options to use throughout this session
 }
 
 // TownsWalletLinkTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type TownsWalletLinkTransactorSession struct {
 	Contract     *TownsWalletLinkTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts                    // Transaction auth options to use throughout this session
+	TransactOpts bind.TransactOpts          // Transaction auth options to use throughout this session
 }
 
 // TownsWalletLinkRaw is an auto generated low-level Go binding around an Ethereum contract.

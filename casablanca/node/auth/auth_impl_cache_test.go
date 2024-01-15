@@ -1,9 +1,10 @@
 package auth
 
 import (
-	"casablanca/node/config"
 	"context"
 	"testing"
+
+	"github.com/river-build/river/config"
 
 	"github.com/stretchr/testify/assert"
 )

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"casablanca/node/dlog"
+	"github.com/river-build/river/dlog"
 
 	"golang.org/x/exp/slog"
 )

@@ -1,16 +1,17 @@
 package events
 
 import (
-	. "casablanca/node/base"
-	"casablanca/node/config"
-	"casablanca/node/crypto"
-	. "casablanca/node/protocol"
-	"casablanca/node/storage"
-	"casablanca/node/testutils/dbtestutils"
 	"context"
 	"fmt"
 	"os"
 	"testing"
+
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/crypto"
+	. "github.com/river-build/river/protocol"
+	"github.com/river-build/river/storage"
+	"github.com/river-build/river/testutils/dbtestutils"
 
 	"github.com/stretchr/testify/assert"
 )

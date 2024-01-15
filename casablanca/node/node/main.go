@@ -1,8 +1,9 @@
 package main
+
 // Execute cobra root command from cmd
 
 import (
-	"casablanca/node/cmd"
+	"github.com/river-build/river/cmd"
 )
 
 func main() {

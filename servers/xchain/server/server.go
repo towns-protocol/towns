@@ -7,7 +7,7 @@ import (
 	"errors"
 	"math/big"
 
-	"casablanca/node/dlog"
+	"github.com/river-build/river/dlog"
 
 	xc "servers/xchain/common"
 	"servers/xchain/config"

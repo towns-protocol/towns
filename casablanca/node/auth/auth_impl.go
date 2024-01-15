@@ -1,16 +1,17 @@
 package auth
 
 import (
-	. "casablanca/node/base"
-	"casablanca/node/config"
-	"casablanca/node/crypto"
-	"casablanca/node/dlog"
-	"casablanca/node/infra"
-	. "casablanca/node/protocol"
 	"context"
 	"fmt"
 	"sync"
 	"time"
+
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/infra"
+	. "github.com/river-build/river/protocol"
 
 	"github.com/ethereum/go-ethereum/common"
 )

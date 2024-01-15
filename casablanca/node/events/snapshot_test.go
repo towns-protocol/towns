@@ -1,13 +1,14 @@
 package events
 
 import (
-	"casablanca/node/crypto"
-	"casablanca/node/protocol"
-	"casablanca/node/shared"
 	"context"
 	"testing"
 
-	. "casablanca/node/protocol"
+	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/protocol"
+	"github.com/river-build/river/shared"
+
+	. "github.com/river-build/river/protocol"
 
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"

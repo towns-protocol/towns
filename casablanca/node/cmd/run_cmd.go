@@ -1,14 +1,15 @@
 package cmd
 
 import (
-	"casablanca/node/config"
-	"casablanca/node/infra"
-	"casablanca/node/rpc"
 	"context"
 	"fmt"
 	"os"
 	"runtime/pprof"
 	"time"
+
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/infra"
+	"github.com/river-build/river/rpc"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"

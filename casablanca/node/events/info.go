@@ -1,9 +1,9 @@
 package events
 
 import (
-	. "casablanca/node/base"
-	. "casablanca/node/protocol"
-	"casablanca/node/shared"
+	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/protocol"
+	"github.com/river-build/river/shared"
 )
 
 func ChannelFromInception(i IsInceptionPayload) (*ChannelPayload_Inception, error) {

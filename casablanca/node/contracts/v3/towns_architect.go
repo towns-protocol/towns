@@ -111,23 +111,23 @@ type TownsArchitectFilterer struct {
 // TownsArchitectSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type TownsArchitectSession struct {
-	Contract     *TownsArchitect // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts             // Call options to use throughout this session
-	TransactOpts bind.TransactOpts         // Transaction auth options to use throughout this session
+	Contract     *TownsArchitect   // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
 // TownsArchitectCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type TownsArchitectCallerSession struct {
 	Contract *TownsArchitectCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts                   // Call options to use throughout this session
+	CallOpts bind.CallOpts         // Call options to use throughout this session
 }
 
 // TownsArchitectTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type TownsArchitectTransactorSession struct {
 	Contract     *TownsArchitectTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts                   // Transaction auth options to use throughout this session
+	TransactOpts bind.TransactOpts         // Transaction auth options to use throughout this session
 }
 
 // TownsArchitectRaw is an auto generated low-level Go binding around an Ethereum contract.

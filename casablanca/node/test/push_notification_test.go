@@ -1,11 +1,6 @@
 package test
 
 import (
-	"casablanca/node/config"
-	"casablanca/node/crypto"
-	"casablanca/node/nodes"
-	"casablanca/node/shared"
-	"casablanca/node/testutils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -13,6 +8,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/crypto"
+	"github.com/river-build/river/nodes"
+	"github.com/river-build/river/shared"
+	"github.com/river-build/river/testutils"
 
 	"github.com/stretchr/testify/assert"
 )

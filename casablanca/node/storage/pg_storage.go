@@ -1,12 +1,11 @@
 package storage
 
 import (
-	. "casablanca/node/base"
-	. "casablanca/node/protocol"
 	"os"
 
-	"casablanca/node/dlog"
-	"casablanca/node/infra"
+	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/protocol"
+
 	"context"
 	_ "embed"
 	"encoding/hex"
@@ -14,6 +13,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/infra"
 
 	"github.com/gologme/log"
 	"github.com/jackc/pgx/v5"

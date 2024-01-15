@@ -1,9 +1,9 @@
 package rpc
 
 import (
-	. "casablanca/node/base"
-	"casablanca/node/dlog"
-	. "casablanca/node/protocol"
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/dlog"
+	. "github.com/river-build/river/protocol"
 
 	"context"
 

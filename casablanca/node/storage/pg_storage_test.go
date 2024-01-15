@@ -1,13 +1,14 @@
 package storage
 
 import (
-	. "casablanca/node/base"
-	. "casablanca/node/shared"
-	"casablanca/node/testutils/dbtestutils"
 	"context"
 	"os"
 	"reflect"
 	"testing"
+
+	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/shared"
+	"github.com/river-build/river/testutils/dbtestutils"
 
 	"github.com/stretchr/testify/assert"
 )

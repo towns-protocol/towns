@@ -71,23 +71,23 @@ type TownsChannelsFilterer struct {
 // TownsChannelsSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type TownsChannelsSession struct {
-	Contract     *TownsChannels // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts            // Call options to use throughout this session
-	TransactOpts bind.TransactOpts        // Transaction auth options to use throughout this session
+	Contract     *TownsChannels    // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
 // TownsChannelsCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type TownsChannelsCallerSession struct {
 	Contract *TownsChannelsCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts                  // Call options to use throughout this session
+	CallOpts bind.CallOpts        // Call options to use throughout this session
 }
 
 // TownsChannelsTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type TownsChannelsTransactorSession struct {
 	Contract     *TownsChannelsTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts                  // Transaction auth options to use throughout this session
+	TransactOpts bind.TransactOpts        // Transaction auth options to use throughout this session
 }
 
 // TownsChannelsRaw is an auto generated low-level Go binding around an Ethereum contract.

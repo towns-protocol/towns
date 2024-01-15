@@ -1,10 +1,11 @@
 package storage
 
 import (
-	. "casablanca/node/base"
-	. "casablanca/node/protocol"
 	"context"
 	"sync"
+
+	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/protocol"
 )
 
 type memStream struct {

@@ -10,8 +10,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"casablanca/node/dlog"
-	config "casablanca/node/infra/config"
+	"github.com/river-build/river/dlog"
+	config "github.com/river-build/river/infra/config"
 )
 
 /* SuccessMetrics is a struct for tracking success/failure of various operations.

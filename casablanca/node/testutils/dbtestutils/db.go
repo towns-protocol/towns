@@ -41,7 +41,7 @@ func StartDB(ctx context.Context) (string, string, func(), error) {
 		Env: []string{
 			"POSTGRES_PASSWORD=secret",
 			"POSTGRES_USER=user_name",
-			"POSTGRES_DB=casablanca",
+			"POSTGRES_DB=river",
 			"listen_addresses = '*'",
 		},
 		Cmd: []string{"postgres", "-c", "max_connections=1000"},
@@ -56,7 +56,7 @@ func StartDB(ctx context.Context) (string, string, func(), error) {
 	}
 
 	hostAndPort := resource.GetHostPort("5432/tcp")
-	testDatabaseUrl := fmt.Sprintf("postgres://user_name:secret@%s/casablanca?sslmode=disable", hostAndPort)
+	testDatabaseUrl := fmt.Sprintf("postgres://user_name:secret@%s/river?sslmode=disable", hostAndPort)
 
 	err = resource.Expire(600) // Tell docker to hard kill the container in 120 seconds
 	if err != nil {

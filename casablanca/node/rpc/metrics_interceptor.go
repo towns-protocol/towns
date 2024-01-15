@@ -1,9 +1,10 @@
 package rpc
 
 import (
-	"casablanca/node/infra"
 	"context"
 	"time"
+
+	"github.com/river-build/river/infra"
 
 	"github.com/bufbuild/connect-go"
 )

@@ -1,15 +1,16 @@
 package events
 
 import (
-	"casablanca/node/config"
-	"casablanca/node/dlog"
-	"casablanca/node/storage"
 	"context"
 	"sync"
 	"time"
 
-	. "casablanca/node/base"
-	. "casablanca/node/protocol"
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/storage"
+
+	. "github.com/river-build/river/base"
+	. "github.com/river-build/river/protocol"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"google.golang.org/protobuf/proto"

@@ -4,7 +4,6 @@
 package base
 
 import (
-	"casablanca/node/protocol"
 	"context"
 	"encoding/hex"
 	"errors"
@@ -13,6 +12,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/river-build/river/protocol"
 
 	connect_go "github.com/bufbuild/connect-go"
 	"github.com/ethereum/go-ethereum/accounts/abi"

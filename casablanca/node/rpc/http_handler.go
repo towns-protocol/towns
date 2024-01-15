@@ -3,9 +3,9 @@ package rpc
 import (
 	"net/http"
 
-	. "casablanca/node/base"
-	"casablanca/node/dlog"
-	"casablanca/node/infra"
+	. "github.com/river-build/river/base"
+	"github.com/river-build/river/dlog"
+	"github.com/river-build/river/infra"
 
 	"golang.org/x/exp/slog"
 )

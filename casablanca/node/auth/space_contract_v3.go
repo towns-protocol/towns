@@ -1,10 +1,11 @@
 package auth
 
 import (
-	"casablanca/node/config"
-	"casablanca/node/infra"
 	"context"
 	"sync"
+
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/infra"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"

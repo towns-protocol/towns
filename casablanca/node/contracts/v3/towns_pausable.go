@@ -63,23 +63,23 @@ type TownsPausableFilterer struct {
 // TownsPausableSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type TownsPausableSession struct {
-	Contract     *TownsPausable // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts            // Call options to use throughout this session
-	TransactOpts bind.TransactOpts        // Transaction auth options to use throughout this session
+	Contract     *TownsPausable    // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
 // TownsPausableCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type TownsPausableCallerSession struct {
 	Contract *TownsPausableCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts                  // Call options to use throughout this session
+	CallOpts bind.CallOpts        // Call options to use throughout this session
 }
 
 // TownsPausableTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type TownsPausableTransactorSession struct {
 	Contract     *TownsPausableTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts                  // Transaction auth options to use throughout this session
+	TransactOpts bind.TransactOpts        // Transaction auth options to use throughout this session
 }
 
 // TownsPausableRaw is an auto generated low-level Go binding around an Ethereum contract.

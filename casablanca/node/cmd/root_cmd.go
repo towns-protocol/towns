@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	"casablanca/node/config"
-	"casablanca/node/infra"
 	"strings"
+
+	"github.com/river-build/river/config"
+	"github.com/river-build/river/infra"
 
 	"fmt"
 	"os"

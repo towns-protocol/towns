@@ -1,9 +1,10 @@
 package crypto
 
 import (
-	. "casablanca/node/base"
 	"encoding/json"
 	"os"
+
+	. "github.com/river-build/river/base"
 
 	"github.com/ethereum/go-ethereum/common"
 )
