@@ -127,7 +127,7 @@ describe('streamRpcClient using v2 sync', () => {
             syncPos: [syncCookie],
         })
         await expect(
-            waitForSyncStreams(aliceStreamIterable, (res) => {
+            waitForSyncStreams(aliceStreamIterable, async (res) => {
                 syncId = res.syncId
                 return res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined
             }),
@@ -529,7 +529,7 @@ describe('streamRpcClient', () => {
         let syncId
 
         await expect(
-            waitForSyncStreams(aliceSyncStreams, (res) => {
+            waitForSyncStreams(aliceSyncStreams, async (res) => {
                 syncId = res.syncId
                 return res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined
             }),
@@ -589,7 +589,8 @@ describe('streamRpcClient', () => {
         const channel = await alice.getStream({ streamId: channelId })
         let messageCount = 0
         if (!channel.stream) throw new Error('channel stream not found')
-        unpackEnvelopes(channel.stream.events).forEach((e) => {
+        const envelopes = await unpackEnvelopes(channel.stream.events)
+        envelopes.forEach((e) => {
             const p = e.event.payload
             if (p?.case === 'channelPayload' && p.value.content.case === 'message') {
                 messageCount++
@@ -886,7 +887,7 @@ const waitForEvent = async (
     for await (const res of iterableWrapper(syncStream)) {
         const stream = res.stream
         if (stream?.nextSyncCookie?.streamId === streamId) {
-            const events = unpackEnvelopes(stream.events)
+            const events = await unpackEnvelopes(stream.events)
             for (const e of events) {
                 if (matcher(e)) {
                     return stream.nextSyncCookie

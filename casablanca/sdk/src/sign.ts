@@ -153,16 +153,18 @@ export const checkDelegateSig = (
     )
 }
 
-export const unpackStreamResponse = (
+export const unpackStreamResponse = async (
     response: CreateStreamResponse | GetStreamResponse,
-): ParsedStreamResponse => {
+): Promise<ParsedStreamResponse> => {
     assert(response.stream !== undefined, 'bad stream')
-    const streamAndCookie = unpackStreamAndCookie(response.stream)
+    const streamAndCookie = await unpackStreamAndCookie(response.stream)
     assert(
         response.stream.miniblocks.length > 0,
         `bad stream: no blocks ${streamAndCookie.nextSyncCookie.streamId}`,
     )
-    const miniblocks = response.stream.miniblocks.map((mb) => unpackMiniblock(mb))
+    const miniblocks = await Promise.all(
+        response.stream.miniblocks.map(async (mb) => await unpackMiniblock(mb)),
+    )
     const snapshot = miniblocks[0].header.snapshot
     const prevSnapshotMiniblockNum = miniblocks[0].header.prevSnapshotMiniblockNum
     assert(
@@ -185,23 +187,25 @@ export const unpackStreamResponse = (
     }
 }
 
-export const unpackStreamAndCookie = (streamAndCookie: StreamAndCookie): ParsedStreamAndCookie => {
+export const unpackStreamAndCookie = async (
+    streamAndCookie: StreamAndCookie,
+): Promise<ParsedStreamAndCookie> => {
     assert(streamAndCookie.nextSyncCookie !== undefined, 'bad stream: no cookie')
     return {
-        events: unpackEnvelopes(streamAndCookie.events),
+        events: await unpackEnvelopes(streamAndCookie.events),
         nextSyncCookie: streamAndCookie.nextSyncCookie,
     }
 }
 
 // returns all events + the header event and pointer to header content
-export const unpackMiniblock = (miniblock: Miniblock): ParsedMiniblock => {
+export const unpackMiniblock = async (miniblock: Miniblock): Promise<ParsedMiniblock> => {
     check(isDefined(miniblock.header), 'Miniblock header is not set')
-    const header = unpackEnvelope(miniblock.header)
+    const header = await unpackEnvelope(miniblock.header)
     check(
         header.event.payload.case === 'miniblockHeader',
         `bad miniblock header: wrong case received: ${header.event.payload.case}`,
     )
-    const events = unpackEnvelopes(miniblock.events)
+    const events = await unpackEnvelopes(miniblock.events)
     return {
         hash: miniblock.header.hash,
         header: header.event.payload.value,
@@ -209,7 +213,7 @@ export const unpackMiniblock = (miniblock: Miniblock): ParsedMiniblock => {
     }
 }
 
-export const unpackEnvelope = (envelope: Envelope): ParsedEvent => {
+export const unpackEnvelope = async (envelope: Envelope): Promise<ParsedEvent> => {
     check(hasElements(envelope.event), 'Event base is not set', Err.BAD_EVENT)
     check(hasElements(envelope.hash), 'Event hash is not set', Err.BAD_EVENT)
     check(hasElements(envelope.signature), 'Event signature is not set', Err.BAD_EVENT)
@@ -251,13 +255,13 @@ export const unpackEnvelope = (envelope: Envelope): ParsedEvent => {
     }
 }
 
-export const unpackEnvelopes = (event: Envelope[]): ParsedEvent[] => {
+export const unpackEnvelopes = async (event: Envelope[]): Promise<ParsedEvent[]> => {
     const ret: ParsedEvent[] = []
     //let prevEventHash: Uint8Array | undefined = undefined
     for (const e of event) {
         // TODO: this handling of prevEventHash is not correct,
         // hashes should be checked against all preceding events in the stream.
-        ret.push(unpackEnvelope(e))
+        ret.push(await unpackEnvelope(e))
         //prevEventHash = e.hash!
     }
     return ret

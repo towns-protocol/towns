@@ -48,7 +48,7 @@ describe('syncStreams', () => {
             ],
             streamId: alicesUserStreamId,
         })
-        const { streamAndCookie } = unpackStreamResponse(aliceUserStream)
+        const { streamAndCookie } = await unpackStreamResponse(aliceUserStream)
 
         const mockClientEmitter = {} as TypedEmitter<EmittedEvents>
 

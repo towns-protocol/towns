@@ -135,34 +135,34 @@ describe('sign', () => {
                 },
             }
             const event = await makeEvent(context, payload, hash)
-            expect(unpackEnvelope(event)).toBeDefined()
+            expect(await unpackEnvelope(event)).toBeDefined()
 
             // Event with same payload from different wallet doesn't match
             const event2 = await makeEvent(context2, payload, hash)
-            expect(unpackEnvelope(event2)).toBeDefined()
+            expect(await unpackEnvelope(event2)).toBeDefined()
             expect(event2).not.toEqual(event)
 
-            expect(() => {
+            await expect(async () => {
                 const e = _.cloneDeep(event)
                 e.hash = event2.hash
-                unpackEnvelope(e)
-            }).toThrow()
+                await unpackEnvelope(e)
+            }).rejects.toThrow()
 
-            expect(() => {
+            await expect(async () => {
                 const e = _.cloneDeep(event)
                 e.signature = event2.signature
-                unpackEnvelope(e)
-            }).toThrow()
+                await unpackEnvelope(e)
+            }).rejects.toThrow()
 
-            expect(() => {
+            await expect(async () => {
                 const e = _.cloneDeep(event)
                 e.event = event2.event
-                unpackEnvelope(e)
-            }).toThrow()
+                await unpackEnvelope(e)
+            }).rejects.toThrow()
 
             // Event with same payload from the same wallet doesn't match
             const event3 = await makeEvent(context, payload, hash)
-            expect(unpackEnvelope(event3)).toBeDefined()
+            expect(await unpackEnvelope(event3)).toBeDefined()
             expect(event3.hash).not.toEqual(event.hash)
             expect(event3).not.toEqual(event)
         },

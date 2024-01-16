@@ -117,8 +117,8 @@ export const bobTalksToHimself = async (
     // Now there must be "channel created" event in the space stream.
     const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
     const envelopes = [
-        ...unpackStreamResponse(spaceResponse).miniblocks.flatMap((x) => x.events),
-        ...unpackEnvelopes(spaceResponse.stream!.events),
+        ...(await unpackStreamResponse(spaceResponse)).miniblocks.flatMap((x) => x.events),
+        ...(await unpackEnvelopes(spaceResponse.stream!.events)),
     ]
     const channelCreatePayload = lastEventFiltered(envelopes, getChannelPayload)
     expect(channelCreatePayload).toBeDefined()
@@ -154,7 +154,7 @@ export const bobTalksToHimself = async (
     await expect(
         waitForSyncStreams(
             bobSyncStreamIterable,
-            (res) => res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined,
+            async (res) => res.syncOp === SyncOp.SYNC_NEW && res.syncId !== undefined,
         ),
     ).toResolve()
 

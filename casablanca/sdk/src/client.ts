@@ -604,7 +604,7 @@ export class Client
             streamId: streamId,
         })
 
-        const unpackedResponse = unpackStreamResponse(response)
+        const unpackedResponse = await unpackStreamResponse(response)
         const stream = this.createSyncedStream(streamId)
         await stream.initializeFromResponse(unpackedResponse)
         return { streamId: streamId }
@@ -766,7 +766,7 @@ export class Client
         try {
             this.logCall('getStream', streamId)
             const response = await this.rpcClient.getStream({ streamId })
-            const unpackedResponse = unpackStreamResponse(response)
+            const unpackedResponse = await unpackStreamResponse(response)
             const streamView = new StreamStateView(this.userId, streamId)
             streamView.initialize(
                 unpackedResponse.streamAndCookie.nextSyncCookie,
@@ -800,7 +800,7 @@ export class Client
                 if (forceDownload || !(await stream.initializeFromPersistence())) {
                     this.logCall('initStream', streamId)
                     const response = await this.rpcClient.getStream({ streamId })
-                    const unpacked = unpackStreamResponse(response)
+                    const unpacked = await unpackStreamResponse(response)
                     await stream.initializeFromResponse(unpacked)
                 }
                 if (!stream.view.syncCookie) {
@@ -1297,7 +1297,7 @@ export class Client
 
         const unpackedMiniblocks: ParsedMiniblock[] = []
         for (const miniblock of response.miniblocks) {
-            const unpackedMiniblock = unpackMiniblock(miniblock)
+            const unpackedMiniblock = await unpackMiniblock(miniblock)
             unpackedMiniblocks.push(unpackedMiniblock)
             await this.persistenceStore.saveMiniblock(streamId, unpackedMiniblock)
         }

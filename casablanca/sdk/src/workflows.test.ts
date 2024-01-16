@@ -78,7 +78,7 @@ describe('workflows', () => {
         let userResponse = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userResponse.stream).toBeDefined()
         let joinPayload = lastEventFiltered(
-            unpackEnvelopes(userResponse.stream!.events),
+            await unpackEnvelopes(userResponse.stream!.events),
             getUserPayload_Membership,
         )
         expect(joinPayload).toBeDefined()
@@ -114,8 +114,8 @@ describe('workflows', () => {
         expect(userResponse.stream).toBeDefined()
         joinPayload = lastEventFiltered(
             [
-                ...unpackStreamResponse(userResponse).miniblocks.flatMap((x) => x.events),
-                ...unpackEnvelopes(userResponse.stream!.events),
+                ...(await unpackStreamResponse(userResponse)).miniblocks.flatMap((x) => x.events),
+                ...(await unpackEnvelopes(userResponse.stream!.events)),
             ],
             getUserPayload_Membership,
         )
@@ -128,8 +128,8 @@ describe('workflows', () => {
         const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
         expect(spaceResponse.stream).toBeDefined()
         const envelopes = [
-            ...unpackStreamResponse(spaceResponse).miniblocks.flatMap((x) => x.events),
-            ...unpackEnvelopes(spaceResponse.stream!.events),
+            ...(await unpackStreamResponse(spaceResponse)).miniblocks.flatMap((x) => x.events),
+            ...(await unpackEnvelopes(spaceResponse.stream!.events)),
         ]
         const channelCreatePayload = lastEventFiltered(envelopes, getChannelPayload)
         expect(channelCreatePayload).toBeDefined()

@@ -177,7 +177,7 @@ const createNewChannelAndPostHello = async (
     // Now there must be "channel created" event in the space stream.
     const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
     const channelCreatePayload = lastEventFiltered(
-        unpackEnvelopes(spaceResponse.stream!.events),
+        await unpackEnvelopes(spaceResponse.stream!.events),
         getChannelPayload,
     )
     expect(channelCreatePayload).toBeDefined()
@@ -231,13 +231,13 @@ const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: stri
 
     const all_events: ParsedEvent[] = []
     for (const mb of channel2.stream!.miniblocks) {
-        const mb_events = unpackEnvelopes(mb.events)
+        const mb_events = await unpackEnvelopes(mb.events)
         data_log('Got miniblock data', 'events=', mb_events)
         log('Miniblock event_num=', mb.events.length)
         all_events.push(...mb_events)
     }
 
-    const events = unpackEnvelopes(channel2.stream!.events)
+    const events = await unpackEnvelopes(channel2.stream!.events)
     data_log('Got channel data, looking for hello', 'events=', events)
     log(
         'Got channel data, looking for hello',
@@ -257,7 +257,7 @@ const countStreamBlocksAndSnapshots = async (bob: StreamRpcClientType, streamId:
     expect(response).toBeDefined()
     expect(response.stream).toBeDefined()
     expect(response.stream?.nextSyncCookie?.streamId).toEqual(streamId)
-    const stream = unpackStreamResponse(response)
+    const stream = await unpackStreamResponse(response)
     const minipoolEventNum = stream.streamAndCookie.events.length
     let totalEvents = minipoolEventNum
     const miniblocks = stream.miniblocks.length

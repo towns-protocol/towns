@@ -342,10 +342,10 @@ export function waitFor<T>(
 
 export async function waitForSyncStreams(
     syncStreams: AsyncIterable<SyncStreamsResponse>,
-    matcher: (res: SyncStreamsResponse) => boolean,
+    matcher: (res: SyncStreamsResponse) => Promise<boolean>,
 ): Promise<SyncStreamsResponse> {
     for await (const res of iterableWrapper(syncStreams)) {
-        if (matcher(res)) {
+        if (await matcher(res)) {
             return res
         }
     }
@@ -356,11 +356,11 @@ export async function waitForSyncStreamsMessage(
     syncStreams: AsyncIterable<SyncStreamsResponse>,
     message: string,
 ): Promise<SyncStreamsResponse> {
-    return waitForSyncStreams(syncStreams, (res) => {
+    return waitForSyncStreams(syncStreams, async (res) => {
         if (res.syncOp === SyncOp.SYNC_UPDATE) {
             const stream = res.stream
             if (stream) {
-                const env = unpackEnvelopes(stream.events)
+                const env = await unpackEnvelopes(stream.events)
                 for (const e of env) {
                     if (e.event.payload.case === 'channelPayload') {
                         const p = e.event.payload.value.content

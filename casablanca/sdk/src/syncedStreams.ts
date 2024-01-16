@@ -468,7 +468,7 @@ export class SyncedStreams {
             const syncStream = res.stream
             if (syncStream !== undefined) {
                 try {
-                    const streamAndCookie = unpackStreamAndCookie(syncStream)
+                    const streamAndCookie = await unpackStreamAndCookie(syncStream)
                     const streamId = streamAndCookie.nextSyncCookie?.streamId || ''
                     /*
                     this.log(

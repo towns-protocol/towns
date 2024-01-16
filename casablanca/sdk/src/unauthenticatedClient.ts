@@ -37,7 +37,7 @@ export class UnauthenticatedClient {
                 'got bad stream',
             )
             const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
-                unpackStreamResponse(response)
+                await unpackStreamResponse(response)
             const streamView = new StreamStateView(this.userId, streamId)
 
             streamView.initialize(
