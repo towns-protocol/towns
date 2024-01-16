@@ -6,7 +6,7 @@ import * as Lib from 'use-zion-client'
 import * as Router from 'react-router'
 import { TestApp } from 'test/testUtils'
 import * as useContractAndServerSpaceDataHook from 'hooks/useContractAndServerSpaceData'
-import * as useChannelsWithMentionCountsAndUnread from 'hooks/useChannelsWithMentionCountsAndUnread'
+import * as useSortedChannels from 'hooks/useSortedChannels'
 import { TouchHome } from './TouchHome'
 
 vi.mock('react-router', async () => {
@@ -100,22 +100,27 @@ describe('<TouchHome />', () => {
             }
         })
 
-        vi.spyOn(
-            useChannelsWithMentionCountsAndUnread,
-            'useChannelsWithMentionCountsAndUnread',
-        ).mockImplementation(() => {
+        vi.spyOn(useSortedChannels, 'useSortedChannels').mockImplementation(() => {
             return {
-                channelsWithMentionCountsAndUnread: [
+                readChannels: [
                     {
-                        isJoined: true,
-                        label: 'general',
+                        type: 'channel' as const,
                         id: 'some-stream-id',
-                        disabled: false,
+                        label: 'general',
+                        search: '',
+                        channel: {
+                            id: 'some-stream-id',
+                            label: 'general',
+                        },
                         mentionCount: 0,
                         unread: false,
-                        muted: false,
+                        joined: true,
+                        latestMs: 0,
                     },
                 ],
+                readDms: [],
+                unreadChannels: [],
+                unjoinedChannels: [],
             }
         })
 

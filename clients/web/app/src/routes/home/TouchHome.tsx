@@ -17,7 +17,6 @@ import {
     useSpaceUnreadThreadMentions,
     useUserLookupContext,
 } from 'use-zion-client'
-import { DMChannelIdentifier } from 'use-zion-client/dist/types/dm-channel-identifier'
 import { Avatar } from '@components/Avatar/Avatar'
 import {
     DirectMessageIcon,
@@ -27,7 +26,6 @@ import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { NavItem } from '@components/NavItem/_NavItem'
-import { useSpaceDms } from '@components/SideBars/SpaceSideBar/DirectMessageChannelList'
 import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { TouchLayoutHeader } from '@components/TouchLayoutHeader/TouchLayoutHeader'
@@ -52,7 +50,6 @@ import {
     TextField,
 } from '@ui'
 import { useAuth } from 'hooks/useAuth'
-import { useChannelsWithMentionCountsAndUnread } from 'hooks/useChannelsWithMentionCountsAndUnread'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { PersistAndFadeWelcomeLogo } from 'routes/layouts/WelcomeLayout'
 import { useStore } from 'store/store'
@@ -60,6 +57,8 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { atoms } from 'ui/styles/atoms.css'
 import { vars } from 'ui/styles/vars.css'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { DMChannelMenuItem, MixedChannelMenuItem, useSortedChannels } from 'hooks/useSortedChannels'
+import { notUndefined } from 'ui/utils/utils'
 import { AllChannelsList, ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
@@ -124,21 +123,32 @@ export const TouchHome = () => {
         }
     }
 
-    const { channelsWithMentionCountsAndUnread } = useChannelsWithMentionCountsAndUnread()
+    const { unreadChannels, readChannels, readDms, unjoinedChannels } = useSortedChannels({
+        spaceId: space?.id ?? '',
+    })
 
-    const filteredChannels = useMemo(() => {
-        return fuzzysort
-            .go(searchString, channelsWithMentionCountsAndUnread, { key: 'label', all: true })
-            .map((m) => m.obj)
-    }, [channelsWithMentionCountsAndUnread, searchString])
-
-    const [unreadChannels, readChannels, unjoinedChannels] = useMemo(() => {
-        return [
-            filteredChannels.filter((c) => c.unread && c.isJoined),
-            filteredChannels.filter((c) => !c.unread && c.isJoined),
-            filteredChannels.filter((c) => !c.isJoined),
-        ]
-    }, [filteredChannels])
+    const { filteredUnreadChannels, filteredReadChannels, filteredDms } = useMemo(() => {
+        return {
+            filteredUnreadChannels: fuzzysort
+                .go(searchString, unreadChannels, { keys: ['label', 'search'], all: true })
+                .map((m) => m.obj),
+            filteredReadChannels: fuzzysort
+                .go(
+                    searchString,
+                    [...readChannels, ...(searchString ? unjoinedChannels : [])].filter(
+                        notUndefined,
+                    ),
+                    {
+                        keys: ['label', 'search'],
+                        all: true,
+                    },
+                )
+                .map((m) => m.obj),
+            filteredDms: fuzzysort
+                .go(searchString, readDms, { keys: ['label', 'search'], all: true })
+                .map((m) => m.obj),
+        }
+    }, [readChannels, readDms, searchString, unjoinedChannels, unreadChannels])
 
     const filteredMembers = useMemo(() => {
         return fuzzysort.go(searchString, members, { key: 'name', all: true }).map((m) => m.obj)
@@ -156,7 +166,10 @@ export const TouchHome = () => {
 
     const { imageSrc } = useImageSource(space?.id ?? '', ImageVariants.thumbnail300)
 
-    const hasResult = filteredChannels.length > 0 || filteredMembers.length > 0
+    const hasResult =
+        filteredUnreadChannels.length > 0 ||
+        filteredReadChannels.length > 0 ||
+        filteredMembers.length > 0
 
     const { createLink } = useCreateLink()
     const threadsLink = createLink({ route: 'threads' })
@@ -247,7 +260,11 @@ export const TouchHome = () => {
                                     id={TouchScrollToTopScrollId.HomeTabScrollId}
                                     onScroll={onScroll}
                                 >
-                                    {!isLoadingChannels ? (
+                                    {isLoadingChannels ? (
+                                        <Box absoluteFill centerContent>
+                                            <ButtonSpinner />
+                                        </Box>
+                                    ) : (
                                         <Box minHeight="forceScroll">
                                             <>
                                                 {displayThreadsItem || displayMentionsItem ? (
@@ -256,79 +273,63 @@ export const TouchHome = () => {
                                                     <></>
                                                 )}
                                                 {displayThreadsItem && (
-                                                    <>
-                                                        <TouchGenericResultRow
-                                                            to={threadsLink}
-                                                            title="Threads"
-                                                            icon="message"
-                                                            highlight={unreadThreadsCount > 0}
-                                                            badgeCount={unreadThreadMentions}
-                                                        />
-                                                    </>
+                                                    <TouchGenericResultRow
+                                                        to={threadsLink}
+                                                        title="Threads"
+                                                        icon="message"
+                                                        highlight={unreadThreadsCount > 0}
+                                                        badgeCount={unreadThreadMentions}
+                                                    />
                                                 )}
                                                 {displayMentionsItem && (
-                                                    <>
-                                                        <TouchGenericResultRow
-                                                            to={mentionsLink}
-                                                            title="Mentions"
-                                                            icon="at"
-                                                        />
-                                                    </>
+                                                    <TouchGenericResultRow
+                                                        to={mentionsLink}
+                                                        title="Mentions"
+                                                        icon="at"
+                                                    />
                                                 )}
                                             </>
 
                                             <Spacer />
 
-                                            {space && unreadChannels.length > 0 && (
-                                                <>
-                                                    <SectionHeader title="Unread" />
-                                                    <ChannelList
-                                                        space={space}
-                                                        channels={unreadChannels}
-                                                    />
-                                                </>
-                                            )}
-                                            {space && readChannels.length > 0 && (
-                                                <>
-                                                    <SectionHeader title="Channels" />
-                                                    <ChannelList
-                                                        key="a"
-                                                        space={space}
-                                                        channels={readChannels}
-                                                    />
-                                                    {isSearching && unjoinedChannels.length > 0 && (
-                                                        <ChannelList
-                                                            key="b"
-                                                            space={space}
-                                                            channels={unjoinedChannels}
-                                                        />
-                                                    )}
-                                                </>
-                                            )}
-
-                                            <BrowseChannelRow
-                                                onClick={() => setActiveOverlay('browse-channels')}
-                                            />
-
-                                            {canCreateChannel && (
-                                                <CreateChannelRow
-                                                    onClick={() =>
-                                                        setActiveOverlay('create-channel')
-                                                    }
-                                                />
-                                            )}
-
                                             {space && (
                                                 <>
-                                                    <DirectMessageChannelList />
-                                                </>
-                                            )}
-
-                                            {filteredMembers.length > 0 && (
-                                                <>
-                                                    <Spacer />
-                                                    <SectionHeader title="Members" />
-                                                    <UserList members={filteredMembers} />
+                                                    <ChannelList
+                                                        label="Unread"
+                                                        channelItems={filteredUnreadChannels}
+                                                        space={space}
+                                                    />
+                                                    <ChannelList
+                                                        label="Channels"
+                                                        channelItems={filteredReadChannels}
+                                                        space={space}
+                                                    />
+                                                    <BrowseChannelRow
+                                                        onClick={() =>
+                                                            setActiveOverlay('browse-channels')
+                                                        }
+                                                    />
+                                                    {canCreateChannel && (
+                                                        <CreateChannelRow
+                                                            onClick={() =>
+                                                                setActiveOverlay('create-channel')
+                                                            }
+                                                        />
+                                                    )}
+                                                    {filteredDms.length > 0 && (
+                                                        <ChannelList
+                                                            label="Direct Messages"
+                                                            channelItems={filteredDms}
+                                                            space={space}
+                                                        />
+                                                    )}
+                                                    {filteredMembers.length > 0 && (
+                                                        <>
+                                                            <Spacer />
+                                                            <SectionHeader title="Members" />
+                                                            <UserList members={filteredMembers} />
+                                                        </>
+                                                    )}
                                                 </>
                                             )}
 
@@ -338,10 +339,6 @@ export const TouchHome = () => {
                                                     <SearchForTermRow searchString={searchString} />
                                                 </>
                                             )}
-                                        </Box>
-                                    ) : (
-                                        <Box absoluteFill centerContent>
-                                            <ButtonSpinner />
                                         </Box>
                                     )}
                                 </MotionBox>
@@ -376,81 +373,50 @@ const ErrorFallbackComponent = (props: { error: Error }) => {
     )
 }
 
-const ChannelList = (props: {
-    space: SpaceData
-    channels: {
-        id: string
-        isJoined: boolean
-        label: string
-        mentionCount: number
-        unread: boolean
-        muted: boolean
-    }[]
-}) => {
-    const { channels, space } = props
-    return (
-        <Stack>
-            {channels.map((c) =>
-                c.isJoined ? (
-                    <TouchChannelResultRow
-                        key={c.id}
-                        itemLink={{ channelId: c.id }}
-                        name={c.label}
-                        unread={c.unread}
-                        mentionCount={c.mentionCount}
-                        muted={c.muted}
-                    />
-                ) : (
-                    <Box paddingY="sm" paddingX="md" key={c.id}>
-                        <ChannelContextProvider channelId={c.id}>
-                            <ChannelItem
-                                key={c.id}
-                                space={space}
-                                channelNetworkId={c.id}
-                                name={c.label}
-                            />
-                        </ChannelContextProvider>
-                    </Box>
-                ),
-            )}
-        </Stack>
-    )
-}
+const ChannelList = React.memo(
+    (props: { label?: string; channelItems: MixedChannelMenuItem[]; space: SpaceData }) => {
+        const { channelItems, label, space } = props
 
-const DirectMessageChannelList = () => {
-    const { spaceDms, dmUnreadChannelIds } = useSpaceDms()
-    const navigate = useNavigate()
-    const { createLink } = useCreateLink()
-    const onCreateNewMessage = useCallback(() => {
-        const link = createLink({ messageId: 'new' })
-        if (link) {
-            navigate(`${link}?ref=home`)
+        if (channelItems.length === 0) {
+            return <></>
         }
-    }, [createLink, navigate])
 
-    return spaceDms.length ? (
-        <>
-            <SectionHeader title="Direct Messages">
-                <IconButton
-                    size="square_sm"
-                    icon="compose"
-                    color="gray2"
-                    cursor="pointer"
-                    onClick={onCreateNewMessage}
+        const items = channelItems.map((c) =>
+            c.type === 'dm' ? (
+                <DirectMessageItem key={c.id} dm={c} unread={c.unread} />
+            ) : c.joined ? (
+                <TouchChannelResultRow
+                    key={c.id}
+                    itemLink={{ channelId: c.id }}
+                    name={c.channel.label}
+                    unread={c.unread}
+                    mentionCount={c.mentionCount}
+                    muted={false}
                 />
-            </SectionHeader>
-            <Stack>
-                {spaceDms.map((c) => (
-                    <DirectMessageItem key={c.id} dm={c} unread={dmUnreadChannelIds.has(c.id)} />
-                ))}
-            </Stack>
-        </>
-    ) : (
-        <></>
-    )
-}
+            ) : (
+                <Box paddingY="sm" paddingX="md" key={c.id}>
+                    <ChannelContextProvider channelId={c.id}>
+                        <ChannelItem
+                            key={c.id}
+                            space={space}
+                            channelNetworkId={c.id}
+                            name={c.channel.label}
+                        />
+                    </ChannelContextProvider>
+                </Box>
+            ),
+        )
 
-const DirectMessageItem = (props: { dm: DMChannelIdentifier; unread: boolean }) => {
+        return (
+            <>
+                {label && <SectionHeader title={label} />}
+                {items}
+            </>
+        )
+    },
+)
+
+const DirectMessageItem = (props: { dm: DMChannelMenuItem; unread: boolean }) => {
     const { dm, unread } = props
     const { unreadCount } = useDMLatestMessage(dm.id)
     return (
@@ -458,13 +424,13 @@ const DirectMessageItem = (props: { dm: DMChannelIdentifier; unread: boolean }) 
             <TouchChannelResultRow
                 key={dm.id}
                 itemLink={{ messageId: dm.id }}
-                name={<DirectMessageName channel={dm} />}
+                name={<DirectMessageName channel={dm.channel} />}
                 unread={unread}
                 mentionCount={unreadCount}
                 muted={false}
                 icontElement={
                     <Box width="x4">
-                        <DirectMessageIcon channel={dm} width="x4" />
+                        <DirectMessageIcon channel={dm.channel} width="x4" />
                     </Box>
                 }
             />
@@ -676,4 +642,4 @@ const NavItemContent = (props: BoxProps) => (
     />
 )
 
-const Spacer = () => <Box height="x2" />
+const Spacer = () => <Box minHeight="x2" width="x2" />

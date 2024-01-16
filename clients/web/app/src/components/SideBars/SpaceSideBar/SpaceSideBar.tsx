@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
@@ -7,11 +7,8 @@ import {
     SpaceData,
     useHasPermission,
     useMyMembership,
-    useSpaceMembers,
-    useSpaceMentions,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
-    useZionContext,
 } from 'use-zion-client'
 import { CreateDirectMessage } from '@components/DirectMessages/CreateDirectMessage'
 import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
@@ -25,11 +22,10 @@ import { Badge, Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useShortcut } from 'hooks/useShortcut'
-import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { useSortedChannels } from 'hooks/useSortedChannels'
 import { PATHS } from 'routes'
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { useStore } from 'store/store'
-import { notUndefined } from 'ui/utils/utils'
 import { SideBar } from '../_SideBar'
 import { CondensedChannelNavItem } from './DirectMessageChannelList'
 import { SidebarListLayout } from './SidebarListLayout'
@@ -114,10 +110,16 @@ export const SpaceSideBar = (props: Props) => {
 
     useShortcut('CreateMessage', onDisplayCreate)
 
-    const { unreads, readChannels, readDms } = useSortedChannels(space.id)
+    const params = useParams()
+    const currentRouteId = params.channelSlug
+
+    const { unreadChannels, readChannels, readDms } = useSortedChannels({
+        spaceId: space.id,
+        currentRouteId,
+    })
 
     const itemRenderer = useCallback(
-        (u: (typeof unreads)[0]) => {
+        (u: (typeof unreadChannels)[0]) => {
             if (u.type === 'dm') {
                 return <CondensedChannelNavItem unread={u.unread} key={u.id} channel={u.channel} />
             } else {
@@ -215,7 +217,7 @@ export const SpaceSideBar = (props: Props) => {
                             />
                             <SidebarListLayout
                                 label="Unreads"
-                                channels={unreads}
+                                channels={unreadChannels}
                                 itemRenderer={itemRenderer}
                             />
 
@@ -289,88 +291,4 @@ export const SpaceSideBar = (props: Props) => {
             )}
         </SideBar>
     )
-}
-
-const useSortedChannels = (spaceId: string) => {
-    const mentions = useSpaceMentions()
-    const channels = useSpaceChannels()
-    const { spaceUnreadChannelIds, dmUnreadChannelIds, dmChannels } = useZionContext()
-    const { memberIds } = useSpaceMembers()
-
-    const unreadChannelIds = spaceUnreadChannelIds[spaceId]
-
-    const channelItems = useMemo(() => {
-        return channels
-            .map((channel) => {
-                const mentionCount = mentions.reduce(
-                    (count, m) =>
-                        m.unread && !m.thread && m.channel.id === channel.id ? count + 1 : count,
-                    0,
-                )
-                return channel
-                    ? ({
-                          type: 'channel',
-                          id: channel.id,
-                          channel,
-                          mentionCount,
-                          unread: !!unreadChannelIds?.has(channel.id),
-                          latestMs: Number(0),
-                      } as const)
-                    : undefined
-            })
-            .filter(notUndefined)
-    }, [channels, mentions, unreadChannelIds])
-
-    const dmItems = useMemo(() => {
-        return Array.from(dmChannels)
-            .filter((c) => !c.left && c.userIds.every((m) => memberIds.includes(m)))
-            .map((channel) => {
-                return channel
-                    ? ({
-                          type: 'dm',
-                          id: channel.id,
-                          channel,
-                          unread: dmUnreadChannelIds.has(channel.id),
-                          latestMs: Number(channel?.lastEventCreatedAtEpocMs ?? 0),
-                      } as const)
-                    : undefined
-            })
-            .filter(notUndefined)
-    }, [dmChannels, dmUnreadChannelIds, memberIds])
-
-    const params = useParams()
-    const currentRouteId = params.channelSlug
-    const prevUnreads = useRef<string[]>([])
-
-    const persistUnreadId =
-        currentRouteId && prevUnreads.current.includes(currentRouteId) ? currentRouteId : undefined
-
-    const unreads = useMemo(() => {
-        return [
-            ...channelItems.filter((c) => c.unread || c.channel.id === persistUnreadId),
-            ...dmItems.filter((c) => c.unread || c.channel.id === persistUnreadId),
-        ].sort((a, b) => Math.sign(b.latestMs - a.latestMs))
-    }, [channelItems, dmItems, persistUnreadId])
-
-    useEffect(() => {
-        prevUnreads.current = unreads.map((u) => u.id)
-    }, [unreads])
-
-    const readChannels = useMemo(() => {
-        return [...channelItems.filter((c) => !c.unread && persistUnreadId !== c.id)].sort((a, b) =>
-            a.channel.label.localeCompare(b.channel.label),
-        )
-    }, [channelItems, persistUnreadId])
-
-    const readDms = useMemo(() => {
-        return [...dmItems.filter((c) => !c.unread && persistUnreadId !== c.id)].sort((a, b) =>
-            Math.sign(b.latestMs - a.latestMs),
-        )
-    }, [dmItems, persistUnreadId])
-
-    return {
-        readChannels,
-        readDms,
-        unreads,
-    }
 }
