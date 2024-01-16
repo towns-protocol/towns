@@ -133,7 +133,7 @@ describe('syncWithBlocks', () => {
                 ...TEST_ENCRYPTED_MESSAGE_PROPS,
                 ciphertext: text,
             }),
-            channel.miniblocks.at(-1)?.header?.hash,
+            channel.stream?.miniblocks.at(-1)?.header?.hash,
         )
         nextHash = messageEvent.hash
         const resp = await bob.addEvent({

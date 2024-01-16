@@ -159,10 +159,10 @@ export const unpackStreamResponse = (
     assert(response.stream !== undefined, 'bad stream')
     const streamAndCookie = unpackStreamAndCookie(response.stream)
     assert(
-        response.miniblocks.length > 0,
+        response.stream.miniblocks.length > 0,
         `bad stream: no blocks ${streamAndCookie.nextSyncCookie.streamId}`,
     )
-    const miniblocks = response.miniblocks.map((mb) => unpackMiniblock(mb))
+    const miniblocks = response.stream.miniblocks.map((mb) => unpackMiniblock(mb))
     const snapshot = miniblocks[0].header.snapshot
     const prevSnapshotMiniblockNum = miniblocks[0].header.prevSnapshotMiniblockNum
     assert(
@@ -190,7 +190,6 @@ export const unpackStreamAndCookie = (streamAndCookie: StreamAndCookie): ParsedS
     return {
         events: unpackEnvelopes(streamAndCookie.events),
         nextSyncCookie: streamAndCookie.nextSyncCookie,
-        startSyncCookie: streamAndCookie.startSyncCookie,
     }
 }
 

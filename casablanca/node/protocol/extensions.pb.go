@@ -21,16 +21,15 @@ type IsInceptionPayload interface {
 	GetStreamId() string
 	GetSettings() *StreamSettings
 }
-
-func (*SpacePayload_Inception) isInceptionPayload()         {}
-func (*ChannelPayload_Inception) isInceptionPayload()       {}
-func (*DmChannelPayload_Inception) isInceptionPayload()     {}
-func (*GdmChannelPayload_Inception) isInceptionPayload()    {}
-func (*UserPayload_Inception) isInceptionPayload()          {}
-func (*UserToDevicePayload_Inception) isInceptionPayload()  {}
-func (*UserSettingsPayload_Inception) isInceptionPayload()  {}
+func (*SpacePayload_Inception) isInceptionPayload() {}
+func (*ChannelPayload_Inception) isInceptionPayload() {}
+func (*DmChannelPayload_Inception) isInceptionPayload() {}
+func (*GdmChannelPayload_Inception) isInceptionPayload() {}
+func (*UserPayload_Inception) isInceptionPayload() {}
+func (*UserToDevicePayload_Inception) isInceptionPayload() {}
+func (*UserSettingsPayload_Inception) isInceptionPayload() {}
 func (*UserDeviceKeyPayload_Inception) isInceptionPayload() {}
-func (*MediaPayload_Inception) isInceptionPayload()         {}
+func (*MediaPayload_Inception) isInceptionPayload() {}
 
 func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
 	switch e.Content.(type) {

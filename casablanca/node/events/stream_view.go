@@ -95,15 +95,15 @@ func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*strea
 }
 
 func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
-	if len(resp.Miniblocks) <= 0 {
+	if len(resp.Stream.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamViewFromRemote")
 	}
 
-	miniblocks := make([]*miniblockInfo, len(resp.Miniblocks))
+	miniblocks := make([]*miniblockInfo, len(resp.Stream.Miniblocks))
 	// +1 below will make it -1 for the first iteration so block number is not enforced.
 	lastMiniblockNumber := int64(-2)
 	snapshotIndex := 0
-	for i, binMiniblock := range resp.Miniblocks {
+	for i, binMiniblock := range resp.Stream.Miniblocks {
 		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, lastMiniblockNumber+1)
 		if err != nil {
 			return nil, err

@@ -74,7 +74,7 @@ const createMockSyncGenerator = (shouldFail: () => boolean, updateEmitted?: () =
                 new SyncStreamsResponse({
                     syncId: 'mockSyncId',
                     syncOp: SyncOp.SYNC_UPDATE,
-                    stream: { events: [], nextSyncCookie: {}, startSyncCookie: {} },
+                    stream: { events: [], nextSyncCookie: {} },
                 }),
             )
         }

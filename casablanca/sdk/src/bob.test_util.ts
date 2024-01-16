@@ -136,7 +136,7 @@ export const bobTalksToHimself = async (
                 ...TEST_ENCRYPTED_MESSAGE_PROPS,
                 ciphertext: 'presync',
             }),
-            channel.miniblocks.at(-1)?.header?.hash,
+            channel.stream?.miniblocks.at(-1)?.header?.hash,
         )
         await bob.addEvent({
             streamId: channelId,
@@ -173,13 +173,10 @@ export const bobTalksToHimself = async (
         // and first two events in the channel are returned immediately.
         // If presync event is posted as well, it is returned as well.
         if (flush) {
-            expect(stream.startSyncCookie?.minipoolGen).not.toEqual(syncCookie.minipoolGen)
-
             expect(stream.events).toEqual(
                 presync ? [...channelEvents, presyncEvent] : channelEvents,
             )
         } else {
-            expect(stream.startSyncCookie).toEqual(syncCookie)
             expect(stream?.events).toEqual([presyncEvent])
         }
 
@@ -210,7 +207,6 @@ export const bobTalksToHimself = async (
     const stream = syncResult?.stream
     expect(stream).toBeDefined()
     expect(stream?.nextSyncCookie?.streamId).toEqual(channelId)
-    expect(stream?.startSyncCookie).toEqual(syncCookie)
     expect(stream?.events).toEqual([helloEvent])
 
     log('stopping sync')

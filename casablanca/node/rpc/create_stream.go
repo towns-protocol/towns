@@ -184,8 +184,8 @@ func (s *Service) createReplicatedStream(
 	return &CreateStreamResponse{
 		Stream: &StreamAndCookie{
 			NextSyncCookie: cookie,
+			Miniblocks:     []*Miniblock{mb},
 		},
-		Miniblocks: []*Miniblock{mb},
 	}, nil
 }
 

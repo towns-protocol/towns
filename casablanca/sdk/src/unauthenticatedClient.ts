@@ -32,7 +32,10 @@ export class UnauthenticatedClient {
             this.logCall('getStream', streamId)
             const response = await this.rpcClient.getStream({ streamId })
             this.logCall('getStream', response.stream)
-            check(isDefined(response.stream) && hasElements(response.miniblocks), 'got bad stream')
+            check(
+                isDefined(response.stream) && hasElements(response.stream.miniblocks),
+                'got bad stream',
+            )
             const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
                 unpackStreamResponse(response)
             const streamView = new StreamStateView(this.userId, streamId)

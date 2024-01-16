@@ -133,7 +133,6 @@ export interface ParsedMiniblock {
 
 export interface ParsedStreamAndCookie {
     nextSyncCookie: SyncCookie
-    startSyncCookie?: SyncCookie
     events: ParsedEvent[]
 }
 

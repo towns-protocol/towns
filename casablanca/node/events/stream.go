@@ -319,9 +319,8 @@ func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) error {
 func (s *streamImpl) notifySubscribers(envelopes []*Envelope, newSyncCookie *SyncCookie, prevSyncCookie *SyncCookie) {
 	if s.receivers != nil && s.receivers.Cardinality() > 0 {
 		resp := &StreamAndCookie{
-			Events:          envelopes,
-			NextSyncCookie:  newSyncCookie,
-			StartSyncCookie: prevSyncCookie,
+			Events:         envelopes,
+			NextSyncCookie: newSyncCookie,
 		}
 		for receiver := range s.receivers.Iter() {
 			receiver.OnUpdate(resp)
@@ -393,9 +392,8 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 			}
 			receiver.OnUpdate(
 				&StreamAndCookie{
-					Events:          envelopes,
-					NextSyncCookie:  s.view.SyncCookie(s.params.Wallet.AddressStr),
-					StartSyncCookie: cookie,
+					Events:         envelopes,
+					NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
 				},
 			)
 		}
@@ -438,13 +436,6 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 				&StreamAndCookie{
 					Events:         envelopes,
 					NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
-					StartSyncCookie: &SyncCookie{
-						NodeAddress:       cookie.NodeAddress,
-						StreamId:          cookie.StreamId,
-						MinipoolGen:       cookie.MinipoolGen,
-						MinipoolSlot:      0,
-						PrevMiniblockHash: s.view.blocks[miniblockIndex].header().PrevMiniblockHash,
-					},
 				},
 			)
 		}

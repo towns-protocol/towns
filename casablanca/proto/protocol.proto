@@ -546,7 +546,8 @@ message SyncCookie  {
 message StreamAndCookie {
     repeated Envelope events = 1;
     SyncCookie next_sync_cookie = 2;
-    SyncCookie start_sync_cookie = 3;
+    // if non-empty, contains all blocks since the latest snapshot, miniblocks[0].header is the latest snapshot
+    repeated Miniblock miniblocks = 3;
 }
 
 message CreateStreamRequest {
@@ -557,8 +558,6 @@ message CreateStreamRequest {
 message CreateStreamResponse {
     // all events in current minipool and cookie allowing to sync from the end of the stream
     StreamAndCookie stream = 1;
-    // all blocks since the latest snapshot, miniblocks[0].header is the latest snapshot
-    repeated Miniblock miniblocks = 2;
 }
 
 message GetStreamRequest {
@@ -568,8 +567,6 @@ message GetStreamRequest {
 message GetStreamResponse {
     // all events in current minipool and cookie allowing to sync from the end of the stream
     StreamAndCookie stream = 1;
-    // all blocks since the latest snapshot, miniblocks[0].header is the latest snapshot
-    repeated Miniblock miniblocks = 2;
 }
 
 message GetMiniblocksRequest {

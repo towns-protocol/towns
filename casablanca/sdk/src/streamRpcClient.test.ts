@@ -232,7 +232,7 @@ describe('streamRpcClient using v2 sync', () => {
                 op: MembershipOp.SO_JOIN,
                 userId: bobsUserId,
             }),
-            alicesChannel.miniblocks.at(-1)?.header?.hash,
+            alicesChannel.stream?.miniblocks.at(-1)?.header?.hash,
         )
         await bob.addEvent({
             streamId: channelId,
@@ -251,7 +251,7 @@ describe('streamRpcClient using v2 sync', () => {
                 ...TEST_ENCRYPTED_MESSAGE_PROPS,
                 ciphertext: 'hello',
             }),
-            alicesChannel.miniblocks.at(-1)?.header?.hash,
+            alicesChannel.stream?.miniblocks.at(-1)?.header?.hash,
         )
         await alice.addEvent({
             streamId: channelId,
@@ -382,7 +382,7 @@ describe('streamRpcClient', () => {
                 ...TEST_ENCRYPTED_MESSAGE_PROPS,
                 ciphertext: 'hello',
             }),
-            userStream.miniblocks.at(-1)?.header?.hash,
+            userStream.stream?.miniblocks.at(-1)?.header?.hash,
         )
         const promise = bob.addEvent({
             streamId: bobsUserStreamId,
@@ -490,7 +490,7 @@ describe('streamRpcClient', () => {
                 ...TEST_ENCRYPTED_MESSAGE_PROPS,
                 ciphertext: 'hello',
             }),
-            createChannelResponse.miniblocks.at(-1)?.header?.hash,
+            createChannelResponse.stream?.miniblocks.at(-1)?.header?.hash,
         )
         await bob.addEvent({
             streamId: channelId,
@@ -507,7 +507,7 @@ describe('streamRpcClient', () => {
                         ...TEST_ENCRYPTED_MESSAGE_PROPS,
                         ciphertext: 'hello',
                     }),
-                    createChannelResponse.miniblocks.at(-1)?.header?.hash,
+                    createChannelResponse.stream?.miniblocks.at(-1)?.header?.hash,
                 ),
             }),
         ).rejects.toThrow(
@@ -542,7 +542,7 @@ describe('streamRpcClient', () => {
                 op: MembershipOp.SO_INVITE,
                 userId: alicesUserId,
             }),
-            createChannelResponse.miniblocks.at(-1)?.header?.hash,
+            createChannelResponse.stream?.miniblocks.at(-1)?.header?.hash,
         )
         await bob.addEvent({
             streamId: channelId,
@@ -567,7 +567,7 @@ describe('streamRpcClient', () => {
                 op: MembershipOp.SO_JOIN,
                 userId: alicesUserId,
             }),
-            createChannelResponse.miniblocks.at(-1)?.header?.hash,
+            createChannelResponse.stream?.miniblocks.at(-1)?.header?.hash,
         )
         await alice.addEvent({
             streamId: channelId,
@@ -610,7 +610,7 @@ describe('streamRpcClient', () => {
                 ...TEST_ENCRYPTED_MESSAGE_PROPS,
                 ciphertext: 'Hello, Alice!',
             }),
-            channel.miniblocks.at(-1)?.header?.hash,
+            channel.stream?.miniblocks.at(-1)?.header?.hash,
         )
         await bob.addEvent({
             streamId: channelId,

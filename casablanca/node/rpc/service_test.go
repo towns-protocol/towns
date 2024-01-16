@@ -221,10 +221,10 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 	if err != nil {
 		return nil, nil, err
 	}
-	if len(reschannel.Msg.Miniblocks) == 0 {
+	if len(reschannel.Msg.Stream.Miniblocks) == 0 {
 		return nil, nil, fmt.Errorf("expected at least one miniblock")
 	}
-	miniblockHash := reschannel.Msg.Miniblocks[len(reschannel.Msg.Miniblocks)-1].Header.Hash
+	miniblockHash := reschannel.Msg.Stream.Miniblocks[len(reschannel.Msg.Stream.Miniblocks)-1].Header.Hash
 	return reschannel.Msg.Stream.NextSyncCookie, miniblockHash, nil
 }
 

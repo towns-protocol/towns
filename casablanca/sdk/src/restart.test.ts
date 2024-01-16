@@ -171,7 +171,7 @@ const createNewChannelAndPostHello = async (
     expect(channel).toBeDefined()
     expect(channel.stream).toBeDefined()
     expect(channel.stream?.nextSyncCookie?.streamId).toEqual(channelId)
-    let nextHash = channel.miniblocks.at(-1)?.header?.hash
+    let nextHash = channel.stream?.miniblocks.at(-1)?.header?.hash
     expect(nextHash).toBeDefined()
 
     // Now there must be "channel created" event in the space stream.
@@ -230,7 +230,7 @@ const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: stri
     expect(channel2.stream?.nextSyncCookie?.streamId).toEqual(channelId)
 
     const all_events: ParsedEvent[] = []
-    for (const mb of channel2.miniblocks) {
+    for (const mb of channel2.stream!.miniblocks) {
         const mb_events = unpackEnvelopes(mb.events)
         data_log('Got miniblock data', 'events=', mb_events)
         log('Miniblock event_num=', mb.events.length)
@@ -242,7 +242,7 @@ const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: stri
     log(
         'Got channel data, looking for hello',
         'num_miniblocks=',
-        channel2.miniblocks.length,
+        channel2.stream!.miniblocks.length,
         'num_events=',
         channel2.stream!.events.length,
     )
