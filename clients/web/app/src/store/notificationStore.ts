@@ -1,11 +1,12 @@
 import Dexie, { Table } from 'dexie'
-import { ChannelRecord, SpaceRecord, UserRecord } from './notificationSchema'
+import { ChannelRecord, DmChannelRecord, SpaceRecord, UserRecord } from './notificationSchema'
 
 export class NotificationStore extends Dexie {
     public readonly storeName: string
     public readonly userId: string
     public spaces!: Table<SpaceRecord, string>
     public channels!: Table<ChannelRecord, string>
+    public dmChannels!: Table<DmChannelRecord, string>
     public users!: Table<UserRecord, string>
 
     constructor(userId: string, storeName?: string) {
@@ -13,9 +14,10 @@ export class NotificationStore extends Dexie {
         super(storeName)
         this.storeName = storeName
         this.userId = userId
-        this.version(1).stores({
+        this.version(2).stores({
             spaces: 'id',
             channels: 'id, parentSpaceId',
+            dmChannels: 'id, parentSpaceId',
             users: 'id',
         })
     }
@@ -26,6 +28,10 @@ export class NotificationStore extends Dexie {
 
     public async setUser(user: UserRecord): Promise<void> {
         await this.users.put(user, user.id)
+    }
+
+    public async getUsers(): Promise<UserRecord[]> {
+        return this.users.toArray()
     }
 
     public async getSpace(spaceId: string): Promise<SpaceRecord | undefined> {
@@ -44,11 +50,21 @@ export class NotificationStore extends Dexie {
         await this.channels.put(channel, channel.id)
     }
 
-    public async getChannels(spaceId: string): Promise<ChannelRecord[]> {
+    public async getChannelsBySpaceId(spaceId: string): Promise<ChannelRecord[]> {
         return this.channels.where('parentSpaceId').equalsIgnoreCase(spaceId).toArray()
     }
 
-    public async getUsers(): Promise<UserRecord[]> {
-        return this.users.toArray()
+    public async getDmChannel(channelId: string): Promise<DmChannelRecord | undefined> {
+        return await this.dmChannels.get(channelId)
+    }
+
+    public async setDmChannel(channel: DmChannelRecord): Promise<void> {
+        await this.dmChannels.put(channel, channel.id)
+    }
+
+    public async getDmChannelsByIds(
+        channelIds: string[],
+    ): Promise<(DmChannelRecord | undefined)[]> {
+        return this.dmChannels.bulkGet(channelIds)
     }
 }

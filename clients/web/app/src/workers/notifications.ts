@@ -22,6 +22,8 @@ import { NotificationStore } from '../store/notificationStore'
 import { env } from '../utils/environment'
 import { getEncryptedData } from './data_transforms'
 
+const MIDDLE_DOT = '\u00B7'
+
 const notificationStores: Record<string, NotificationStore> = {}
 let currentUserStore: NotificationCurrentUser | undefined = undefined
 
@@ -74,7 +76,6 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     worker.addEventListener('push', (event) => {
         async function handleEvent(event: PushEvent) {
             console.log('sw:push: "push" event')
-
             const clientVisible = await checkClientIsVisible(worker)
             if (clientVisible) {
                 console.log('sw:push: client is visible, not showing notification')
@@ -195,20 +196,30 @@ function generateNewNotificationMessage(
     }
 }
 
-function generateDmTitle(sender: string | undefined, recipients: UserRecord[]): string {
+function generateDmTitle(
+    sender: string | undefined,
+    recipients: UserRecord[],
+    dmChannelName: string | undefined,
+): string {
     console.log('sw:push: generateDmTitle INPUT', 'senderName', sender, 'recipients', recipients)
     const recipientNames = recipients
         .map((recipient) => getShortenedName(recipient.name))
         .filter((name) => name !== undefined) as string[]
     switch (true) {
+        case stringHasValue(sender) && stringHasValue(dmChannelName):
+            return `${sender} ${MIDDLE_DOT} ${dmChannelName}`
         case stringHasValue(sender) && recipientNames.length === 0:
             return `${sender}`
         case stringHasValue(sender) && recipientNames.length === 1:
-            return `${sender} and ${recipientNames[0]}`
+            return `${sender} ${MIDDLE_DOT} ${recipientNames[0]}`
         case stringHasValue(sender) && recipientNames.length === 2:
-            return `${sender}, ${recipientNames[0]}, and one other`
+            return `${sender} ${MIDDLE_DOT} ${recipientNames[0]}, and one other`
         case stringHasValue(sender) && recipientNames.length > 2:
-            return `${sender}, ${recipientNames[0]}, and ${recipientNames.length - 1} others`
+            return `${sender} ${MIDDLE_DOT} ${recipientNames[0]}, and ${
+                recipientNames.length - 1
+            } others`
+        case !stringHasValue(sender) && stringHasValue(dmChannelName):
+            return `${dmChannelName}`
         case !stringHasValue(sender) && recipientNames.length === 1:
             return `${recipientNames[0]} and one other`
         case !stringHasValue(sender) && recipientNames.length === 2:
@@ -224,6 +235,7 @@ function generateDmTitle(sender: string | undefined, recipients: UserRecord[]): 
 
 function generateDM(
     channelId: string,
+    dmChannelName: string | undefined,
     myUserId: string | undefined,
     sender: string | undefined,
     recipients: UserRecord[] | undefined,
@@ -232,7 +244,7 @@ function generateDM(
     // if myUserId is available, remove it from the recipients list
     const recipientsExcludeMe =
         recipients?.filter((recipient) => (myUserId ? recipient.id !== myUserId : false)) ?? []
-    const title = generateDmTitle(sender, recipientsExcludeMe)
+    const title = generateDmTitle(sender, recipientsExcludeMe, dmChannelName)
     let body = plaintext?.body
     if (!body) {
         switch (true) {
@@ -262,6 +274,28 @@ function generateDM(
     }
 }
 
+function generateMentionTitle(
+    sender: string | undefined,
+    townName: string | undefined,
+    channelName: string | undefined,
+): string {
+    if (sender && townName && channelName) {
+        return `${sender} ${MIDDLE_DOT} #${channelName} ${MIDDLE_DOT} ${townName}`
+    } else if (sender && townName && !channelName) {
+        return `${sender} ${MIDDLE_DOT} ${townName}`
+    } else if (sender && !townName && channelName) {
+        return `${sender} ${MIDDLE_DOT} #${channelName}`
+    } else if (!sender && townName && channelName) {
+        return `#${channelName} ${MIDDLE_DOT} ${townName}`
+    } else if (!sender && townName && !channelName) {
+        return `${townName}`
+    } else if (!sender && !townName && channelName) {
+        return `#${channelName}`
+    } else {
+        return 'New message'
+    }
+}
+
 function generateMentionedMessage(
     spaceId: string,
     townName: string | undefined,
@@ -270,6 +304,7 @@ function generateMentionedMessage(
     sender: string | undefined,
     plaintext: PlaintextDetails | undefined,
 ): NotificationMention {
+    const title = generateMentionTitle(sender, townName, channelName)
     let body = plaintext?.body
     if (!body) {
         switch (true) {
@@ -292,8 +327,39 @@ function generateMentionedMessage(
         spaceId,
         channelId,
         threadId: plaintext?.threadId,
-        title: townName ?? '',
+        title,
         body,
+    }
+}
+
+function generateReplyToTitle(
+    sender: string | undefined,
+    townName: string | undefined,
+    channelName: string | undefined,
+): string {
+    console.log(
+        'sw:push: generateReplyToTitle',
+        'sender',
+        sender,
+        'townName',
+        townName,
+        'channelName',
+        channelName,
+    )
+    if (sender && townName && channelName) {
+        return `${sender} replied ${MIDDLE_DOT} #${channelName} ${MIDDLE_DOT} ${townName}`
+    } else if (sender && townName && !channelName) {
+        return `${sender} replied ${MIDDLE_DOT} ${townName}`
+    } else if (sender && !townName && channelName) {
+        return `${sender} replied ${MIDDLE_DOT} #${channelName}`
+    } else if (!sender && townName && channelName) {
+        return `#${channelName} ${MIDDLE_DOT} ${townName}`
+    } else if (!sender && townName && !channelName) {
+        return `${townName}`
+    } else if (!sender && !townName && channelName) {
+        return `#${channelName}`
+    } else {
+        return 'New reply'
     }
 }
 
@@ -305,6 +371,7 @@ function generateReplyToMessage(
     sender: string | undefined,
     plaintext: PlaintextDetails | undefined,
 ): NotificationReplyTo {
+    const title = generateReplyToTitle(sender, townName, channelName)
     let body = plaintext?.body
     if (!body) {
         switch (true) {
@@ -327,7 +394,7 @@ function generateReplyToMessage(
         spaceId,
         channelId,
         threadId: plaintext?.threadId ?? '',
-        title: townName ?? '',
+        title,
         body,
     }
 }
@@ -338,22 +405,38 @@ async function getNotificationContent(
 ): Promise<NotificationContent | undefined> {
     let townName: string | undefined = undefined
     let channelName: string | undefined = undefined
+    let dmChannelName: string | undefined = undefined
     let senderName: string | undefined = undefined
     let recipients: UserRecord[] = []
     const notificationStore = currentUserId ? notificationStores[currentUserId] : undefined
 
     try {
-        const [space, channel, sender] = await Promise.all([
-            notification.content.kind !== AppNotificationType.DirectMessage
-                ? notificationStore?.getSpace(notification.content.spaceId)
+        const [space, dmChannel, channel, sender] = await Promise.all([
+            notification.content.kind !== AppNotificationType.DirectMessage // space is only needed for non-DM notifications
+                ? await notificationStore?.getSpace(notification.content.spaceId)
+                : undefined,
+            notification.content.kind === AppNotificationType.DirectMessage // dmChannel is only needed for DM notifications
+                ? await notificationStore?.getDmChannel(notification.content.channelId)
                 : undefined,
             notificationStore?.getChannel(notification.content.channelId),
             notificationStore?.getUser(notification.content.senderId),
         ])
         townName = space?.name
+        dmChannelName = dmChannel?.name
         channelName = channel?.name
         // transform the sender name to the shortened version
         senderName = getShortenedName(sender?.name)
+        console.log(
+            'sw:push:',
+            'townName:',
+            townName,
+            'channelName:',
+            channelName,
+            'dmChannelName:',
+            dmChannelName,
+            'senderName:',
+            senderName,
+        )
 
         if (
             notification.content.kind === AppNotificationType.DirectMessage &&
@@ -384,13 +467,14 @@ async function getNotificationContent(
     }
 
     // try to decrypt, if we can't, return undefined, and the notification will be a generic message
-    console.log('sw:push: myUserId before calling tryDecryptEvent', currentUserId)
+    console.log('sw:push: currentUserId before calling tryDecryptEvent', currentUserId)
     const plaintext = currentUserId ? await tryDecryptEvent(currentUserId, notification) : undefined
 
     switch (notification.content.kind) {
         case AppNotificationType.DirectMessage:
             return generateDM(
                 notification.content.channelId,
+                dmChannelName,
                 currentUserId,
                 senderName,
                 recipients,

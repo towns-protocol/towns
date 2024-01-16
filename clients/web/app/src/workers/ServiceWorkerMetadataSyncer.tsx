@@ -7,8 +7,8 @@ import {
     useUserLookupContext,
     useZionContext,
 } from 'use-zion-client'
-
 import React, { useCallback, useEffect, useState } from 'react'
+
 import debug from 'debug'
 import { NotificationCurrentUser } from 'store/notificationCurrentUser'
 import { NotificationStore } from '../store/notificationStore'
@@ -58,6 +58,7 @@ export function ServiceWorkerMetadataSyncer() {
         <GlobalContextUserLookupProvider>
             {/* wait for the notification store to be opened before processing metadata for notification */}
             {store ? <UsersMetadata store={store} /> : null}
+            {store ? <DmMetadata store={store} /> : null}
             {store
                 ? Object.values(spaceHierarchies).map(({ root }) => (
                       <SpaceContextProvider key={root.id} spaceId={root.id}>
@@ -105,6 +106,59 @@ function UsersMetadata({ store }: { store: NotificationStore }) {
     return null
 }
 
+function DmMetadata({ store }: { store: NotificationStore }) {
+    const { dmChannels } = useZionContext()
+
+    const setDmChannels = useCallback(
+        async (parentSpaceId?: string) => {
+            if (!store) {
+                return
+            }
+            const channelIds = dmChannels.map((c) => c.id)
+            const cachedDmChannels = (await store.getDmChannelsByIds(channelIds)).filter(
+                (c) => c !== undefined,
+            )
+            const changedDmChannels = dmChannels.filter((channel) =>
+                cachedDmChannels.some(
+                    (c) => c?.id === channel.id && c.name !== channel.properties?.name,
+                ),
+            )
+            log(
+                'adding DM channels to notification cache',
+                'dmChannels:',
+                dmChannels,
+                'cachedDmChannels:',
+                cachedDmChannels,
+                'changedDmChannels:',
+                changedDmChannels,
+            )
+
+            if (changedDmChannels.length) {
+                log(
+                    'adding DM channels to notification cache',
+                    'channelIds',
+                    channelIds,
+                    'cachedDmChannels',
+                    cachedDmChannels,
+                )
+                const channelsToUpdate = changedDmChannels.map((c) => ({
+                    id: c.id,
+                    name: c.properties?.name ?? '',
+                    parentSpaceId: parentSpaceId ?? '',
+                }))
+                await store.dmChannels.bulkPut(channelsToUpdate)
+            }
+        },
+        [dmChannels, store],
+    )
+
+    useEffect(() => {
+        void setDmChannels()
+    }, [setDmChannels])
+
+    return null
+}
+
 function SpacesAndChannelsMetadata({
     spaceId,
     store,
@@ -137,10 +191,9 @@ function SpacesAndChannelsMetadata({
     const setChannels = useCallback(
         async (space: SpaceData) => {
             const channels = space.channelGroups.flatMap((cg) => cg.channels)
-            const cachedChannels = await store.getChannels(space.id)
-            const changedChannels = channels.filter(
-                (channel) =>
-                    !cachedChannels.some((c) => c.id === channel.id && c.name !== channel.label),
+            const cachedChannels = await store.getChannelsBySpaceId(space.id)
+            const changedChannels = channels.filter((channel) =>
+                cachedChannels.some((c) => c.id === channel.id && c.name !== channel.label),
             )
 
             if (changedChannels.length) {
