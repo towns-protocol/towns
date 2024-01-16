@@ -32,7 +32,9 @@ export const useSearch = (searchTerms: string) => {
                 .map((userId: string) => ({
                     key: `user-${userId}`,
                     type: 'user' as const,
-                    body: usersMap[userId]?.displayName,
+                    body: `${usersMap[userId]?.displayName ?? ''} + ${
+                        usersMap[userId]?.username ?? ''
+                    }`.trim(),
                     source: usersMap[userId],
                 })),
         [memberIds, usersMap],
