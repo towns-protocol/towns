@@ -8,16 +8,19 @@ import {IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.so
 // libraries
 import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import {EntitlementsManagerStorage} from "contracts/src/towns/facets/entitlements/EntitlementsManagerStorage.sol";
+import {MembershipStorage} from "contracts/src/towns/facets/membership/MembershipStorage.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 
 // contracts
 import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
 import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
+import {BanningBase} from "contracts/src/towns/facets/banning/BanningBase.sol";
 
 abstract contract Entitled is
   IEntitlementBase,
   TokenOwnableBase,
   PausableBase,
+  BanningBase,
   ERC721ABase
 {
   using EnumerableSet for EnumerableSet.AddressSet;
@@ -34,6 +37,10 @@ abstract contract Entitled is
     bytes32 permission
   ) internal view returns (bool entitled) {
     if (user == _owner()) return true;
+
+    uint256 tokenId = MembershipStorage.layout().tokenIdByMember[user];
+    if (_isBanned(tokenId) || _isBannedByChannel(channelId, tokenId))
+      return false;
 
     EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
       .layout();

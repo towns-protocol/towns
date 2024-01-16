@@ -411,6 +411,7 @@
       ":@prb/math/=lib/prb-math/src/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
       ":base64-sol/=lib/base64/",
       ":base64/=lib/base64/",
       ":council/=lib/council/contracts/",

@@ -11,4 +11,5 @@ library Permissions {
   string public constant ModifyChannels = "AddRemoveChannels";
   string public constant ModifyRoles = "ModifySpaceSettings";
   string public constant JoinTown = "JoinTown";
+  string public constant ModifyBanning = "ModifyBanning";
 }

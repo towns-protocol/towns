@@ -12,7 +12,11 @@ import type {
   Signer,
   utils,
 } from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type {
+  FunctionFragment,
+  Result,
+  EventFragment,
+} from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
@@ -122,8 +126,38 @@ export interface IEntitlementsManagerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
 
-  events: {};
+  events: {
+    "EntitlementModuleAdded(address,address)": EventFragment;
+    "EntitlementModuleRemoved(address,address)": EventFragment;
+  };
+
+  getEvent(nameOrSignatureOrTopic: "EntitlementModuleAdded"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "EntitlementModuleRemoved"): EventFragment;
 }
+
+export interface EntitlementModuleAddedEventObject {
+  caller: string;
+  entitlement: string;
+}
+export type EntitlementModuleAddedEvent = TypedEvent<
+  [string, string],
+  EntitlementModuleAddedEventObject
+>;
+
+export type EntitlementModuleAddedEventFilter =
+  TypedEventFilter<EntitlementModuleAddedEvent>;
+
+export interface EntitlementModuleRemovedEventObject {
+  caller: string;
+  entitlement: string;
+}
+export type EntitlementModuleRemovedEvent = TypedEvent<
+  [string, string],
+  EntitlementModuleRemovedEventObject
+>;
+
+export type EntitlementModuleRemovedEventFilter =
+  TypedEventFilter<EntitlementModuleRemovedEvent>;
 
 export interface IEntitlementsManager extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -274,7 +308,25 @@ export interface IEntitlementsManager extends BaseContract {
     ): Promise<void>;
   };
 
-  filters: {};
+  filters: {
+    "EntitlementModuleAdded(address,address)"(
+      caller?: PromiseOrValue<string> | null,
+      entitlement?: null
+    ): EntitlementModuleAddedEventFilter;
+    EntitlementModuleAdded(
+      caller?: PromiseOrValue<string> | null,
+      entitlement?: null
+    ): EntitlementModuleAddedEventFilter;
+
+    "EntitlementModuleRemoved(address,address)"(
+      caller?: PromiseOrValue<string> | null,
+      entitlement?: null
+    ): EntitlementModuleRemovedEventFilter;
+    EntitlementModuleRemoved(
+      caller?: PromiseOrValue<string> | null,
+      entitlement?: null
+    ): EntitlementModuleRemovedEventFilter;
+  };
 
   estimateGas: {
     addEntitlementModule(

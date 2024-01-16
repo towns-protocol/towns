@@ -7,13 +7,14 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 // libraries
 
 // contracts
-import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
+import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
 
 // deployments
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
 import {UserEntitlement} from "contracts/src/towns/entitlements/user/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEntitlement.sol";
+import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";
 
 // helpers
 import {TownArchitectHelper} from "contracts/test/towns/architect/TownArchitectSetup.sol";
@@ -22,6 +23,7 @@ import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
 import {PlatformRequirementsHelper} from "contracts/test/towns/platform/requirements/PlatformRequirementsSetup.sol";
 import {PrepayHelper} from "contracts/test/towns/prepay/PrepaySetup.sol";
+import {TownHelper} from "contracts/test/towns/Town.t.sol";
 
 // implementations
 import {TownOwnerImplementation} from "contracts/test/towns/owner/TownOwnerSetup.sol";
@@ -31,14 +33,18 @@ import {TownImplementation} from "contracts/test/towns/Town.t.sol";
  * @notice - This is the base setup to start testing the entire suite of contracts
  * @dev - This contract is inherited by all other test contracts, it will create one diamond contract which represent the factory contract that creates all spaces
  */
-contract BaseSetup is FacetTest {
+contract BaseSetup is FacetTest, TownHelper {
   // @dev look at deploy-towns-contracts.sh for the order of deployment
   address internal multiInit;
   address internal townOwner;
   address internal userEntitlement;
   address internal tokenEntitlement;
-  address internal town;
+  address internal townDiamond;
   address public townFactory;
+
+  address internal founder;
+  address internal space;
+  address internal everyoneSpace;
 
   // @notice - This function is called before each test function
   // @dev - It will create a new diamond contract and set the townFactory variable to the address of the diamond
@@ -51,6 +57,16 @@ contract BaseSetup is FacetTest {
 
     vm.prank(deployer);
     TownOwner(townOwner).setFactory(townFactory);
+
+    // create a new space
+    founder = _randomAddress();
+
+    vm.startPrank(founder);
+    space = TownArchitect(diamond).createTown(_createTownInfo("BaseSetupTown"));
+    everyoneSpace = TownArchitect(diamond).createTown(
+      _createEveryoneTownInfo("BaseSetupEveryoneTown")
+    );
+    vm.stopPrank();
   }
 
   function diamondInitParams()
@@ -97,7 +113,7 @@ contract BaseSetup is FacetTest {
     );
 
     /// @dev Deploy town
-    town = address(
+    townDiamond = address(
       new Diamond(townImplementation.diamondInitParams({owner: deployer}))
     );
 
@@ -130,7 +146,7 @@ contract BaseSetup is FacetTest {
       userEntitlement,
       tokenEntitlement
     );
-    payloads[index++] = proxyManagerHelper.makeInitData(town);
+    payloads[index++] = proxyManagerHelper.makeInitData(townDiamond);
     payloads[index++] = ownableHelper.makeInitData(deployer);
     payloads[index++] = pausableHelper.makeInitData("");
     payloads[index++] = platformReqsHelper.makeInitData({

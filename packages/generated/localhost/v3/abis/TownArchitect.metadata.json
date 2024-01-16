@@ -1112,11 +1112,11 @@
       ]
     },
     "contracts/src/towns/facets/Permissions.sol": {
-      "keccak256": "0x71c581d53e94675ff22111bbdcb54d9238cb2476c1c87d22c1c8709643ca20c3",
+      "keccak256": "0xde1b0c5b7d1d3dd9e9bae86434d73b5abe6a26bee6df87ac5fde310abaf39a77",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://33571102d8b2339eea4e68cdb4461e6c46617fa2597bc7fc9d3bd085ed3b8939",
-        "dweb:/ipfs/QmPsppLQ4sXNwh9QC3hPw1wSdWDXKHsTbeqVPkz97F7KMd"
+        "bzz-raw://1ada318dfccd577c7e1bdcab69f1e38ed8cca186308cf8854db9fe1412ac8133",
+        "dweb:/ipfs/Qmco2jvDM998ugFRkvVb5xRdHT8DCoDcfxv9cPEqKKthR8"
       ]
     },
     "contracts/src/towns/facets/architect/ITownArchitect.sol": {

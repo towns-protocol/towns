@@ -7,6 +7,32 @@
     "abi": [
       {
         "inputs": [],
+        "name": "ApprovalCallerNotOwnerNorApproved",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ApprovalQueryForNonexistentToken",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "BalanceQueryForZeroAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "Banning__InvalidTokenId",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "ChannelService__ChannelDisabled",
         "type": "error"
       },
@@ -32,6 +58,11 @@
       },
       {
         "inputs": [],
+        "name": "Entitlement__NotMember",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "Entitlement__ValueAlreadyExists",
         "type": "error"
       },
@@ -51,6 +82,21 @@
         "type": "error"
       },
       {
+        "inputs": [],
+        "name": "MintERC2309QuantityExceedsLimit",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "MintToZeroAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "MintZeroQuantity",
+        "type": "error"
+      },
+      {
         "inputs": [
           {
             "internalType": "address",
@@ -64,6 +110,16 @@
       {
         "inputs": [],
         "name": "Ownable__ZeroAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "OwnerQueryForNonexistentToken",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "OwnershipNotInitializedForExtraData",
         "type": "error"
       },
       {
@@ -113,6 +169,31 @@
       },
       {
         "inputs": [],
+        "name": "TransferCallerNotOwnerNorApproved",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "TransferFromIncorrectOwner",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "TransferToNonERC721ReceiverImplementer",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "TransferToZeroAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "URIQueryForNonexistentToken",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "Validator__InvalidByteLength",
         "type": "error"
       },
@@ -120,6 +201,87 @@
         "inputs": [],
         "name": "Validator__InvalidStringLength",
         "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "approved",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "Approval",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "approved",
+            "type": "bool"
+          }
+        ],
+        "name": "ApprovalForAll",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "fromTokenId",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "toTokenId",
+            "type": "uint256"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "from",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          }
+        ],
+        "name": "ConsecutiveTransfer",
+        "type": "event"
       },
       {
         "anonymous": false,
@@ -208,6 +370,31 @@
           }
         ],
         "name": "RoleUpdated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "from",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "Transfer",
         "type": "event"
       },
       {
@@ -521,8 +708,20 @@
     ],
     "devdoc": {
       "events": {
+        "Approval(address,address,uint256)": {
+          "details": "Emitted when `owner` enables `approved` to manage the `tokenId` token."
+        },
+        "ApprovalForAll(address,address,bool)": {
+          "details": "Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets."
+        },
+        "ConsecutiveTransfer(uint256,uint256,address,address)": {
+          "details": "Emitted when tokens in `fromTokenId` to `toTokenId` (inclusive) is transferred from `from` to `to`, as defined in the [ERC2309](https://eips.ethereum.org/EIPS/eip-2309) standard. See {_mintERC2309} for more details."
+        },
         "OwnershipTransferred(address,address)": {
           "details": "This emits when ownership of a contract changes."
+        },
+        "Transfer(address,address,uint256)": {
+          "details": "Emitted when `tokenId` token is transferred from `from` to `to`."
         }
       },
       "kind": "dev",
@@ -530,6 +729,73 @@
       "version": 1
     },
     "userdoc": {
+      "errors": {
+        "ApprovalCallerNotOwnerNorApproved()": [
+          {
+            "notice": "The caller must own the token or be an approved operator."
+          }
+        ],
+        "ApprovalQueryForNonexistentToken()": [
+          {
+            "notice": "The token does not exist."
+          }
+        ],
+        "BalanceQueryForZeroAddress()": [
+          {
+            "notice": "Cannot query the balance for the zero address."
+          }
+        ],
+        "MintERC2309QuantityExceedsLimit()": [
+          {
+            "notice": "The `quantity` minted with ERC2309 exceeds the safety limit."
+          }
+        ],
+        "MintToZeroAddress()": [
+          {
+            "notice": "Cannot mint to the zero address."
+          }
+        ],
+        "MintZeroQuantity()": [
+          {
+            "notice": "The quantity of tokens minted must be more than zero."
+          }
+        ],
+        "OwnerQueryForNonexistentToken()": [
+          {
+            "notice": "The token does not exist."
+          }
+        ],
+        "OwnershipNotInitializedForExtraData()": [
+          {
+            "notice": "The `extraData` cannot be set on an unintialized ownership slot."
+          }
+        ],
+        "TransferCallerNotOwnerNorApproved()": [
+          {
+            "notice": "The caller must own the token or be an approved operator."
+          }
+        ],
+        "TransferFromIncorrectOwner()": [
+          {
+            "notice": "The token must be owned by `from`."
+          }
+        ],
+        "TransferToNonERC721ReceiverImplementer()": [
+          {
+            "notice": "Cannot safely transfer to a contract that does not implement the ERC721Receiver interface."
+          }
+        ],
+        "TransferToZeroAddress()": [
+          {
+            "notice": "Cannot transfer to the zero address."
+          }
+        ],
+        "URIQueryForNonexistentToken()": [
+          {
+            "notice": "The token does not exist."
+          }
+        ]
+      },
       "kind": "user",
       "methods": {},
       "version": 1
@@ -554,6 +820,7 @@
       ":@prb/math/=lib/prb-math/src/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
       ":base64-sol/=lib/base64/",
       ":base64/=lib/base64/",
       ":council/=lib/council/contracts/",
@@ -624,28 +891,76 @@
         "dweb:/ipfs/QmZumkrGnv5ty65vm7srPLGSzBTua5vJsrSuJcgajMH4JR"
       ]
     },
-    "contracts/src/towns/entitlements/IEntitlement.sol": {
-      "keccak256": "0x4c8f742aa72fca719c998b8f2b4b64426bbc4ae398c4ee7813bae46686c5308d",
+    "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol": {
+      "keccak256": "0x1e0f21db21117ca705182e671aca5f24d157ca9003268450582d3f49eb2b8ece",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://4d7bf00a043fd22d62db617c793f3a2fa92a12d8e6421e82dd10a8b5eaa0e611",
-        "dweb:/ipfs/QmapnmASApBNwJcX637MyDpVPeSvibSfZo7xHCa5ZU5esR"
+        "bzz-raw://4348c9408175707af61dd9d5d0eda909066c14eb35e1fc88604b9d58eed0d667",
+        "dweb:/ipfs/QmUk514VMTYx1skNfooNs5q53x7SoxonHuEYpsDSwvoyEG"
+      ]
+    },
+    "contracts/src/diamond/facets/token/ERC721A/ERC721AStorage.sol": {
+      "keccak256": "0x96b4e1886b3697a44deccbaf25f3d59842adc1d8ccb8cc9953a591f10c41c14a",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://59e1cc6fd674d7a1b912e28623be7ca3488dd0305e9cf9f53645387e97c3feae",
+        "dweb:/ipfs/QmUSvBk1MzHBWUPjHYWkGgBbtxZGKpnBAQTqiLNJQNqMsF"
+      ]
+    },
+    "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol": {
+      "keccak256": "0xfce3dc8955c337c405c27c7741b7beff81685ed89f2e102fbad517043e20edf9",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://6c0ef999aaa971921ba4a4d2190ce5fae92fe15a34a87aac02fd081773fdbe9e",
+        "dweb:/ipfs/QmUFD83GFhupZo2d3PafyK5fjqrzFRDnJHEsTGYhHakzUM"
+      ]
+    },
+    "contracts/src/towns/entitlements/IEntitlement.sol": {
+      "keccak256": "0x35f1b94c8192c2716c487b49c62c35821dc3b34da9d5deb50e756772407c955f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://ec3a05d15e524da284aa417da3f09b6b34f7732f6ee02d650f26f9c04eb4d336",
+        "dweb:/ipfs/Qme1bgU56x9drrefb6BUkgGQ61ipBK5zoo4ZstRmGXhzkL"
       ]
     },
     "contracts/src/towns/facets/Entitled.sol": {
-      "keccak256": "0xb7bd21a1076572bbcbac939f226834984a5a2878f58a22e5b5688d7c7ba1ebb4",
+      "keccak256": "0x2858fad43e029b6ceec943d87bec9d7977eb330472573a27f2138c2922e70351",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://d7f752b93700def6c6edec3fb02da531510a0fc1f684c91c25eae9e4d61883dc",
-        "dweb:/ipfs/QmR4FFEX2YS5NTFeEJStim9M7P4cUERfxuspv7j3DdjpQm"
+        "bzz-raw://e81d4cdf52673b70f9011b3da8e0215473c9ac6fc9fc74602aec3f3816c3eeb5",
+        "dweb:/ipfs/QmZhF6j1sYjxDzsCZZsZFGwMkeMiedim2pt3Nju3LTD4q9"
       ]
     },
     "contracts/src/towns/facets/Permissions.sol": {
-      "keccak256": "0x71c581d53e94675ff22111bbdcb54d9238cb2476c1c87d22c1c8709643ca20c3",
+      "keccak256": "0xde1b0c5b7d1d3dd9e9bae86434d73b5abe6a26bee6df87ac5fde310abaf39a77",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://33571102d8b2339eea4e68cdb4461e6c46617fa2597bc7fc9d3bd085ed3b8939",
-        "dweb:/ipfs/QmPsppLQ4sXNwh9QC3hPw1wSdWDXKHsTbeqVPkz97F7KMd"
+        "bzz-raw://1ada318dfccd577c7e1bdcab69f1e38ed8cca186308cf8854db9fe1412ac8133",
+        "dweb:/ipfs/Qmco2jvDM998ugFRkvVb5xRdHT8DCoDcfxv9cPEqKKthR8"
+      ]
+    },
+    "contracts/src/towns/facets/banning/BanningBase.sol": {
+      "keccak256": "0x0b70a264f43eea6ee33162376a7a5c9aa1c87e6aa7eb96ddffae17a32ce6eb05",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1510bc02c009d1d3fd11a22385a3f576c722d786241d12956a443b24f4bed4b4",
+        "dweb:/ipfs/QmVT291o4p175crTiW1gbbzMfMPC5w4GDK7ZYgevg5L8T5"
+      ]
+    },
+    "contracts/src/towns/facets/banning/BanningStorage.sol": {
+      "keccak256": "0x86f42359a5be03e864ad03af3bcd5986580c02baa8f4b161aeaeb5ce60d550c4",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://25bfb0f266d9e573f24d00b40db7d938d39924898c968704cccd8aa1cdf0276c",
+        "dweb:/ipfs/QmZoxQghM23Wys5EijVyAqPtPBzugxdFChdSfRHaYeQcy5"
+      ]
+    },
+    "contracts/src/towns/facets/banning/IBanning.sol": {
+      "keccak256": "0xf1d823facff2c2c6606177838e5e00c261e462c2542141eb65e51e5fb46d3560",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://f383530d390d6029c21a075a1328e2a1f627965c3c81efb8be1ee47c60a564ac",
+        "dweb:/ipfs/QmU78f5sJYKkCdkoHLvq2tT3kvS5eURcdmev2imc8siXFD"
       ]
     },
     "contracts/src/towns/facets/channels/ChannelService.sol": {
@@ -678,6 +993,14 @@
       "urls": [
         "bzz-raw://8f621544a327bd541d20e9df4d73179123a96f7f11456b50ecf2f30409073e49",
         "dweb:/ipfs/Qmf5o4Gt9w1ySMi1bHveoaQ4aTQ4MHa6SoxGWTNgWDBpGw"
+      ]
+    },
+    "contracts/src/towns/facets/membership/MembershipStorage.sol": {
+      "keccak256": "0x47260fb252ca941b6bc90f6283a4779b3b932030e30ad5f9ee5f03e3d5be2907",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://36ad6bda3e623545fe35297c4c3c12e5683c16d2c31a3edf68a0f97dd20aeb94",
+        "dweb:/ipfs/QmXi9vPcJ4mSmCKsbBCZQpUbaCdHeL8QM48xSdRXWtv3B9"
       ]
     },
     "contracts/src/towns/facets/roles/IRoles.sol": {

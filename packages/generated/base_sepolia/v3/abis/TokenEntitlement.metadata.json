@@ -22,6 +22,11 @@
       },
       {
         "inputs": [],
+        "name": "Entitlement__NotMember",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "Entitlement__ValueAlreadyExists",
         "type": "error"
       },
@@ -469,6 +474,7 @@
       ":@prb/math/=lib/prb-math/src/",
       ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
       ":base64-sol/=lib/base64/",
       ":base64/=lib/base64/",
       ":council/=lib/council/contracts/",
@@ -484,11 +490,11 @@
   },
   "sources": {
     "contracts/src/towns/entitlements/IEntitlement.sol": {
-      "keccak256": "0x4c8f742aa72fca719c998b8f2b4b64426bbc4ae398c4ee7813bae46686c5308d",
+      "keccak256": "0x35f1b94c8192c2716c487b49c62c35821dc3b34da9d5deb50e756772407c955f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://4d7bf00a043fd22d62db617c793f3a2fa92a12d8e6421e82dd10a8b5eaa0e611",
-        "dweb:/ipfs/QmapnmASApBNwJcX637MyDpVPeSvibSfZo7xHCa5ZU5esR"
+        "bzz-raw://ec3a05d15e524da284aa417da3f09b6b34f7732f6ee02d650f26f9c04eb4d336",
+        "dweb:/ipfs/Qme1bgU56x9drrefb6BUkgGQ61ipBK5zoo4ZstRmGXhzkL"
       ]
     },
     "contracts/src/towns/entitlements/token/ITokenEntitlement.sol": {
@@ -508,11 +514,11 @@
       ]
     },
     "contracts/src/towns/facets/channels/IChannel.sol": {
-      "keccak256": "0x9b484cab68a866f3e10d770f565825df92d00e526ab5aa6f3fc2fe707e4037f0",
+      "keccak256": "0xb2ef89f8b52034c0e3ce805defa3f1b29ac8255b6f8fc4374eef5459023b6bc6",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9fabc7a3f384521ce3b1b4e06aebd877f57be6f0e4389c21883a546b1b544cbc",
-        "dweb:/ipfs/QmfNzmykukAEgVGFrrwbB11ynDkBZbCmKaxMaQFRMa8Cvt"
+        "bzz-raw://fb66c5ce9b9b8ac447db0bf40bd7121fa2f7730cbb9e40bed3566dce0cdf0d40",
+        "dweb:/ipfs/QmeFNZmuYXdRfJPMqitpbjvKGqKvxj1DTDbZ7uzY5RsXkf"
       ]
     },
     "contracts/src/towns/facets/roles/IRoles.sol": {

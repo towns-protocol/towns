@@ -25,7 +25,6 @@ import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol"
 
 contract TownArchitectTest is
   BaseSetup,
-  TownHelper,
   ITownArchitectBase,
   IOwnableBase,
   IPausableBase

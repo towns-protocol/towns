@@ -23,6 +23,7 @@ import {IntrospectionHelper} from "contracts/test/diamond/introspection/Introspe
 import {MembershipHelper} from "contracts/test/towns/membership/MembershipSetup.sol";
 import {MembershipReferralHelper} from "contracts/test/towns/membership/MembershipReferralSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
+import {BanningHelper} from "contracts/test/towns/banning/BanningHelper.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -45,6 +46,7 @@ contract TownImplementation {
   MembershipHelper membershipHelper = new MembershipHelper();
   MembershipReferralHelper membershipReferralHelper =
     new MembershipReferralHelper();
+  BanningHelper banningHelper = new BanningHelper();
 
   MultiInit internal multiInit = new MultiInit();
 
@@ -59,7 +61,7 @@ contract TownImplementation {
   ) external returns (Diamond.InitParams memory) {
     membershipHelper.addSelectors(erc721aHelper.selectors());
 
-    Diamond.FacetCut[] memory cuts = new Diamond.FacetCut[](10);
+    Diamond.FacetCut[] memory cuts = new Diamond.FacetCut[](11);
 
     cuts[index++] = tokenOwnableHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[index++] = diamondCutHelper.makeCut(IDiamond.FacetCutAction.Add);
@@ -73,6 +75,7 @@ contract TownImplementation {
     cuts[index++] = membershipReferralHelper.makeCut(
       IDiamond.FacetCutAction.Add
     );
+    cuts[index++] = banningHelper.makeCut(IDiamond.FacetCutAction.Add);
 
     index = 0;
 
@@ -140,6 +143,10 @@ abstract contract TownHelper {
   function _createEveryoneTownInfo(
     string memory townId
   ) internal pure returns (ITownArchitectBase.TownInfo memory) {
+    string[] memory permissions = new string[](2);
+    permissions[0] = "Read";
+    permissions[1] = "Write";
+
     return
       ITownArchitectBase.TownInfo({
         id: townId,
@@ -163,7 +170,7 @@ abstract contract TownHelper {
             users: new address[](0),
             rule: IEntitlementRule(address(0))
           }),
-          permissions: new string[](0)
+          permissions: permissions
         }),
         channel: ITownArchitectBase.ChannelInfo({
           id: "test",

@@ -484,6 +484,17 @@ export default [
   },
   {
     "type": "error",
+    "name": "Banning__InvalidTokenId",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "ChannelService__ChannelAlreadyExists",
     "inputs": []
   },

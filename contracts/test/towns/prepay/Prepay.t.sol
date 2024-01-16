@@ -15,7 +15,7 @@ import {TownHelper} from "contracts/test/towns/Town.t.sol";
 import {PrepayFacet} from "contracts/src/towns/facets/prepay/PrepayFacet.sol";
 import {MembershipFacet} from "contracts/src/towns/facets/membership/MembershipFacet.sol";
 
-contract PrepayTest is BaseSetup, TownHelper {
+contract PrepayTest is BaseSetup {
   TownArchitect public townArchitect;
   PrepayFacet public prepay;
 
@@ -26,18 +26,11 @@ contract PrepayTest is BaseSetup, TownHelper {
   }
 
   function test_prepayMembership() external {
-    address founder = _randomAddress();
     address alice = _randomAddress();
     address bob = _randomAddress();
     address charlie = _randomAddress();
-    string memory spaceName = "Test Space";
 
-    vm.prank(founder);
-    address space = townArchitect.createTown(
-      _createEveryoneTownInfo(spaceName)
-    );
-
-    MembershipFacet membership = MembershipFacet(space);
+    MembershipFacet membership = MembershipFacet(everyoneSpace);
 
     vm.startPrank(founder);
     membership.setMembershipFreeAllocation(2);
