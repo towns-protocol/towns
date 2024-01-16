@@ -10,6 +10,9 @@ interface IEntitlementBase {
 
   // Caller has passed a value that already exists
   error Entitlement__ValueAlreadyExists();
+
+  // Caller is not a member
+  error Entitlement__NotMember();
 }
 
 interface IEntitlement is IEntitlementBase {

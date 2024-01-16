@@ -8,15 +8,25 @@ import {IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.so
 // libraries
 import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import {EntitlementsManagerStorage} from "contracts/src/towns/facets/entitlements/EntitlementsManagerStorage.sol";
+import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 
 // contracts
 import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
 import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
 
-abstract contract Entitled is IEntitlementBase, TokenOwnableBase, PausableBase {
+abstract contract Entitled is
+  IEntitlementBase,
+  TokenOwnableBase,
+  PausableBase,
+  ERC721ABase
+{
   using EnumerableSet for EnumerableSet.AddressSet;
 
   string internal constant IN_TOWN = "";
+
+  function _isMember(address user) internal view returns (bool member) {
+    member = _balanceOf(user) > 0;
+  }
 
   function _isEntitled(
     string memory channelId,
@@ -94,6 +104,12 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase, PausableBase {
   ) internal view {
     if (!_isAllowed(IN_TOWN, permission, caller)) {
       revert Entitlement__NotAllowed();
+    }
+  }
+
+  function _validateMembership(address user) internal view {
+    if (!_isMember(user) && _owner() != user) {
+      revert Entitlement__NotMember();
     }
   }
 

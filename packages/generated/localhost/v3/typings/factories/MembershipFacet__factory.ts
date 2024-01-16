@@ -1220,6 +1220,11 @@ const _abi = [
   },
   {
     type: "error",
+    name: "Entitlement__NotMember",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "Entitlement__ValueAlreadyExists",
     inputs: [],
   },

@@ -22,6 +22,11 @@
       },
       {
         "inputs": [],
+        "name": "Entitlement__NotMember",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "Entitlement__ValueAlreadyExists",
         "type": "error"
       },
@@ -485,11 +490,11 @@
   },
   "sources": {
     "contracts/src/towns/entitlements/IEntitlement.sol": {
-      "keccak256": "0x4c8f742aa72fca719c998b8f2b4b64426bbc4ae398c4ee7813bae46686c5308d",
+      "keccak256": "0x35f1b94c8192c2716c487b49c62c35821dc3b34da9d5deb50e756772407c955f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://4d7bf00a043fd22d62db617c793f3a2fa92a12d8e6421e82dd10a8b5eaa0e611",
-        "dweb:/ipfs/QmapnmASApBNwJcX637MyDpVPeSvibSfZo7xHCa5ZU5esR"
+        "bzz-raw://ec3a05d15e524da284aa417da3f09b6b34f7732f6ee02d650f26f9c04eb4d336",
+        "dweb:/ipfs/Qme1bgU56x9drrefb6BUkgGQ61ipBK5zoo4ZstRmGXhzkL"
       ]
     },
     "contracts/src/towns/entitlements/token/ITokenEntitlement.sol": {
