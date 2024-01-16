@@ -10,7 +10,7 @@ declare const navigator: Navigator & {
 const getBadgeCount = (
     invitedToIds: string[],
     spaceUnreads: Record<string, boolean>,
-    spaceMentions: Record<string, number>,
+    spaceMentions: Record<string, number | undefined>,
 ) => {
     const hasUnread =
         // all invites
@@ -19,7 +19,7 @@ const getBadgeCount = (
         Object.values(spaceUnreads).indexOf(true) >= 0
 
     // mentions
-    const mentions = Object.values(spaceMentions).reduce((a, b) => a + b, 0)
+    const mentions = Object.values(spaceMentions).reduce((a, b) => (a ?? 0) + (b ?? 0), 0)
 
     return { mentions, hasUnread } as const
 }
@@ -40,7 +40,7 @@ export function useAppBadge(): void {
                 typeof navigator?.setAppBadge === 'function' &&
                 typeof navigator?.clearAppBadge === 'function'
             ) {
-                if (mentions > 0) {
+                if (mentions ?? 0 > 0) {
                     await navigator.setAppBadge?.(mentions)
                 } else if (hasUnread) {
                     await navigator.setAppBadge?.()
@@ -56,7 +56,7 @@ export function useFavIconBadge(): void {
     const { hasUnread, mentions } = useBadgeStatus()
     useEffect(() => {
         // set the badge
-        Badger.faviconSingleton().badge(mentions, hasUnread)
+        Badger.faviconSingleton().badge(mentions ?? 0, hasUnread)
         // log
         console.log('calculated new badge value', { mentions, hasUnread })
         // end: useEffect

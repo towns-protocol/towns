@@ -42,7 +42,7 @@ export const ChannelNavItem = (props: Props) => {
     const isMuted = channelIsMuted || spaceIsMuted
 
     const { spaceUnreadChannelIds } = useZionContext()
-    const showUnread = spaceUnreadChannelIds[space.id]?.includes(channel.id)
+    const showUnread = spaceUnreadChannelIds[space.id]?.has(channel.id)
 
     return (
         <>

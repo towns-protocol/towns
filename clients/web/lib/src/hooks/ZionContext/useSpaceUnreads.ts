@@ -23,7 +23,7 @@ export function useSpaceUnreads({
     const [state, setState] = useState<{
         spaceUnreads: Record<string, boolean>
         spaceMentions: Record<string, number>
-        spaceUnreadChannelIds: Record<string, string[]>
+        spaceUnreadChannelIds: Record<string, Set<string>>
     }>({ spaceUnreads: {}, spaceMentions: {}, spaceUnreadChannelIds: {} })
 
     const threadsStats = useTimelineStore((state) => state.threadsStats)
@@ -42,7 +42,7 @@ export function useSpaceUnreads({
             unreadChannelIds: Set<string>,
         ) => {
             setState((prev) => {
-                const unreadChannelIdsArray = [...unreadChannelIds]
+                const unreadChannelIdsArray = new Set(unreadChannelIds)
 
                 const channelIdsAreEqual = isEqual(
                     prev.spaceUnreadChannelIds[spaceId],

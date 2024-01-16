@@ -35,8 +35,8 @@ export interface IZionContext {
     rooms: Record<string, Room | undefined>
     invitedToIds: string[] // ordered list of invites (spaces and channels)
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
-    spaceMentions: Record<string, number> // spaceId -> aggregated mentionCount
-    spaceUnreadChannelIds: Record<string, string[]> // spaceId -> array of channelIds with unreads
+    spaceMentions: Record<string, number | undefined> // spaceId -> aggregated mentionCount
+    spaceUnreadChannelIds: Record<string, Set<string> | undefined> // spaceId -> array of channelIds with unreads
     spaces: SpaceItem[]
     spaceHierarchies: SpaceHierarchies
     dmChannels: DMChannelIdentifier[]

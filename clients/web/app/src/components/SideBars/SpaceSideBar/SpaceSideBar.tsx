@@ -297,15 +297,7 @@ const useSortedChannels = (spaceId: string) => {
     const { spaceUnreadChannelIds, dmUnreadChannelIds, dmChannels } = useZionContext()
     const { memberIds } = useSpaceMembers()
 
-    const unreadChannelIds = useMemo(
-        () =>
-            new Set(
-                spaceUnreadChannelIds[spaceId]
-                    ? Object.entries(spaceUnreadChannelIds[spaceId]).map((c) => c[1])
-                    : [],
-            ),
-        [spaceId, spaceUnreadChannelIds],
-    )
+    const unreadChannelIds = spaceUnreadChannelIds[spaceId]
 
     const channelItems = useMemo(() => {
         return channels
@@ -321,7 +313,7 @@ const useSortedChannels = (spaceId: string) => {
                           id: channel.id,
                           channel,
                           mentionCount,
-                          unread: unreadChannelIds.has(channel.id),
+                          unread: !!unreadChannelIds?.has(channel.id),
                           latestMs: Number(0),
                       } as const)
                     : undefined
