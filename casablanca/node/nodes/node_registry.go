@@ -2,7 +2,6 @@ package nodes
 
 import (
 	"context"
-	"encoding/csv"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -101,28 +100,25 @@ func LoadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAdd
 	return n, nil
 }
 
-func NewNodeRegistryFromCsv(ctx context.Context, nodeRegistryCsv string, localNodeAddress string) (*nodeRegistryImpl, error) {
+func NewNodeRegistryFromString(ctx context.Context, nodeRegistryString string, localNodeAddress string) (*nodeRegistryImpl, error) {
 	log := dlog.CtxLog(ctx)
 
-	r := csv.NewReader(strings.NewReader(nodeRegistryCsv))
-	r.Comment = '#'
-	r.FieldsPerRecord = 2
-	r.TrimLeadingSpace = true
-	records, err := r.ReadAll()
-	if err != nil {
-		return nil, WrapRiverError(Err_BAD_CONFIG, err).Message("Failed to parse node registry CSV").Func("NewNodeRegistryFromCsv")
-	}
+	log.Info("Loading node registry from string", "nodeRegistryString", nodeRegistryString, "localAddress", localNodeAddress)
 
-	log.Info("Node Registry CSV parsed", "records", records, "localAddress", localNodeAddress)
+	vals := strings.Split(nodeRegistryString, ",")
 
 	n := &nodeRegistryImpl{
 		nodes:      make(map[string]*nodeRecord),
-		nodesFlat:  make([]*nodeRecord, 0, len(records)),
+		nodesFlat:  make([]*nodeRecord, 0, len(vals)/2),
 		httpClient: &http.Client{},
 	}
 	localFound := false
-	for _, node := range records {
-		addr, err := AddressStrToEthAddress(node[0])
+	for i := 0; i < len(vals); i += 2 {
+		if i+1 >= len(vals) {
+			return nil, RiverError(Err_BAD_CONFIG, "Invalid node registry string, odd number of values", "nodeRegistryString", nodeRegistryString)
+		}
+		url := vals[i+1]
+		addr, err := AddressStrToEthAddress(vals[i])
 		if err != nil {
 			return nil, AsRiverError(err).Func("NewNodeRegistryFromCsv")
 		}
@@ -135,7 +131,7 @@ func NewNodeRegistryFromCsv(ctx context.Context, nodeRegistryCsv string, localNo
 		}
 		nn := &nodeRecord{
 			address: addrStr,
-			url:     node[1],
+			url:     url,
 			local:   local,
 		}
 		n.nodes[addrStr] = nn

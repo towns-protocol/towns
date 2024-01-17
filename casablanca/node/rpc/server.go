@@ -35,7 +35,7 @@ func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, nodeRegistry
 
 	if nodeRegistryCsv != "" {
 		log.Info("Node registry constructed from CSV", "csb", nodeRegistryCsv)
-		return nodes.NewNodeRegistryFromCsv(ctx, nodeRegistryCsv, localNodeAddress)
+		return nodes.NewNodeRegistryFromString(ctx, nodeRegistryCsv, localNodeAddress)
 	} else if nodeRegistryPath != "" {
 		log.Info("Loading node registry", "path", nodeRegistryPath)
 		return nodes.LoadNodeRegistry(ctx, nodeRegistryPath, localNodeAddress)
