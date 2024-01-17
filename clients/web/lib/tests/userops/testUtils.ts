@@ -1,8 +1,9 @@
-import { ITownArchitectBase, Permission, paymasterProxyMiddleware } from '@river/web3'
+import { ITownArchitectBase, Permission } from '@river/web3'
 import { ZionTestClient } from '../integration/helpers/ZionTestClient'
 import { CreateSpaceInfo } from '../../src/types/zion-types'
 import { ethers } from 'ethers'
 import { ZionOpts } from '../../src/client/ZionClientTypes'
+import { paymasterProxyMiddleware } from '@towns/userops'
 
 /**
  * Create a town with an "Everyone" role that is gated only by a membership token

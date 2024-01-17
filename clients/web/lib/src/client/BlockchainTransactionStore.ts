@@ -3,7 +3,7 @@ import TypedEmitter from 'typed-emitter'
 import { BlockchainTransaction, BlockchainTransactionType } from '../types/web3-types'
 import { ethers } from 'ethers'
 import { ZionClient } from './ZionClient'
-import { isUserOpResponse } from '@river/web3'
+import { isUserOpResponse } from '@towns/userops'
 
 type Events = {
     updatedTransaction: (tx: BlockchainStoreTx) => void

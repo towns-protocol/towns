@@ -4,8 +4,9 @@
 import { Wallet } from 'ethers'
 import { createTestSpaceGatedByTownAndZionNfts, registerAndStartClients } from './helpers/TestUtils'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { Permission, getTransactionHashFromTransactionOrUserOp } from '@river/web3'
+import { Permission } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
+import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
 describe('Link Wallet', () => {
     test('link wallet', async () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])

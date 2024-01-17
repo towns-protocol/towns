@@ -8,7 +8,11 @@ export interface VerifyingPaymasterResult {
     callGasLimit: string
 }
 
-export type TownsUserOperation = IUserOperation & { townId?: string; functionHash: string }
+export type TownsUserOperation = IUserOperation & {
+    townId?: string
+    functionHash: string
+    rootKeyAddress: string
+}
 
 export type TransactionLimitRequest = {
     environment: string
@@ -36,6 +40,7 @@ export function isTransactionLimitRequest(obj: any): obj is TransactionLimitRequ
 export function isTownsUserOperation(obj: any): obj is TownsUserOperation {
     return (
         typeof obj === 'object' &&
+        typeof obj.rootKeyAddress === 'string' &&
         typeof obj.sender === 'string' &&
         typeof obj.nonce === 'string' &&
         typeof obj.initCode === 'string' &&

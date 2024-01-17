@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { LOCALHOST_CHAIN_ID } from 'use-zion-client'
-import { paymasterProxyMiddleware } from '@river/web3'
+import { paymasterProxyMiddleware } from '@towns/userops'
 import { env } from 'utils'
 
 export function useAccountAbstractionConfig(chainId: number) {

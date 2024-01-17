@@ -4,15 +4,9 @@ import { SpaceDappConfig } from './SpaceDappTypes'
 import { SpaceDapp } from './v3'
 import { ISpaceDapp } from './ISpaceDapp'
 
-export function createSpaceDapp(
-    args: Omit<SpaceDappConfig, 'aaRpcUrl'> & { aaRpcUrl?: string },
-    version?: 'v3',
-): ISpaceDapp
+export function createSpaceDapp(args: SpaceDappConfig, version?: 'v3'): ISpaceDapp
 
-export function createSpaceDapp(
-    args: Omit<SpaceDappConfig, 'aaRpcUrl'> & { aaRpcUrl?: string },
-    version: Versions = defaultVersion,
-) {
+export function createSpaceDapp(args: SpaceDappConfig, version: Versions = defaultVersion) {
     if (args.provider === undefined) {
         throw new Error('createSpaceDapp() Provider is undefined')
     }
@@ -22,7 +16,6 @@ export function createSpaceDapp(
             if (isEthersProvider(args.provider)) {
                 return new SpaceDapp({
                     ...args,
-                    aaRpcUrl: args.aaRpcUrl ?? '',
                 }) as ISpaceDapp
             }
             throw new Error("createSpaceDapp() 'v3' Provider is not an ethers provider")

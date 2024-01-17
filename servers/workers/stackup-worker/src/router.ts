@@ -94,7 +94,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
         return new Response('Bad Request', { status: 400 })
     }
     // check town is associated with paymaster
-    const { townId, functionHash, ...userOperation } = content
+    const { townId, functionHash, rootKeyAddress, ...userOperation } = content
     // depending on the function hash, validate the content
     try {
         /* createTown (TownArchitect.sol)
@@ -110,8 +110,13 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
         switch (functionHash) {
             // todo: functionHash should be a keccak hash of the function signature
             case 'createTown': {
+                if (!isHexString(rootKeyAddress)) {
+                    return new Response(`rootKeyAddress ${rootKeyAddress} not valid`, {
+                        status: 400,
+                    })
+                }
                 if (!isHexString(userOperation.sender)) {
-                    return new Response(`ender address ${userOperation.sender} not valid`, {
+                    return new Response(`userOperation.sender ${userOperation.sender} not valid`, {
                         status: 400,
                     })
                 }
@@ -122,7 +127,8 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verification = await verifyCreateTown({
-                        rootKeyAddress: userOperation.sender,
+                        rootKeyAddress: rootKeyAddress,
+                        senderAddress: userOperation.sender,
                         townId: townId,
                         env,
                     })
@@ -133,8 +139,13 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 break
             }
             case 'joinTown': {
+                if (!isHexString(rootKeyAddress)) {
+                    return new Response(`rootKeyAddress ${rootKeyAddress} not valid`, {
+                        status: 400,
+                    })
+                }
                 if (!isHexString(userOperation.sender)) {
-                    return new Response(`ender address ${userOperation.sender} not valid`, {
+                    return new Response(`userOperation.sender ${userOperation.sender} not valid`, {
                         status: 400,
                     })
                 }
@@ -145,7 +156,8 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verification = await verifyJoinTown({
-                        rootKeyAddress: userOperation.sender,
+                        rootKeyAddress: rootKeyAddress,
+                        senderAddress: userOperation.sender,
                         townId: townId,
                         env,
                     })
@@ -156,14 +168,20 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 break
             }
             case 'linkWallet': {
+                if (!isHexString(rootKeyAddress)) {
+                    return new Response(`rootKeyAddress ${rootKeyAddress} not valid`, {
+                        status: 400,
+                    })
+                }
                 if (!isHexString(userOperation.sender)) {
-                    return new Response(`ender address ${userOperation.sender} not valid`, {
+                    return new Response(`userOperation.sender ${userOperation.sender} not valid`, {
                         status: 400,
                     })
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verification = await verifyLinkWallet({
-                        rootKeyAddress: userOperation.sender,
+                        rootKeyAddress: rootKeyAddress,
+                        senderAddress: userOperation.sender,
                         env,
                     })
                     if (!verification.verified) {
@@ -173,8 +191,13 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 break
             }
             case 'createTown_linkWallet': {
+                if (!isHexString(rootKeyAddress)) {
+                    return new Response(`rootKeyAddress ${rootKeyAddress} not valid`, {
+                        status: 400,
+                    })
+                }
                 if (!isHexString(userOperation.sender)) {
-                    return new Response(`ender address ${userOperation.sender} not valid`, {
+                    return new Response(`userOperation.sender ${userOperation.sender} not valid`, {
                         status: 400,
                     })
                 }
@@ -185,14 +208,17 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verificationLink = await verifyLinkWallet({
-                        rootKeyAddress: userOperation.sender,
+                        rootKeyAddress: rootKeyAddress,
+                        senderAddress: userOperation.sender,
                         env,
                     })
                     const verificationCreate = await verifyCreateTown({
-                        rootKeyAddress: userOperation.sender,
+                        rootKeyAddress: rootKeyAddress,
                         townId: townId,
+                        senderAddress: userOperation.sender,
                         env,
                     })
+
                     if (!verificationLink.verified) {
                         return new Response(`Unauthorized: ${verificationLink.error}`, {
                             status: 401,
@@ -207,8 +233,13 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 break
             }
             case 'joinTown_linkWallet': {
+                if (!isHexString(rootKeyAddress)) {
+                    return new Response(`rootKeyAddress ${rootKeyAddress} not valid`, {
+                        status: 400,
+                    })
+                }
                 if (!isHexString(userOperation.sender)) {
-                    return new Response(`ender address ${userOperation.sender} not valid`, {
+                    return new Response(`userOperation.sender ${userOperation.sender} not valid`, {
                         status: 400,
                     })
                 }
@@ -219,11 +250,13 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
                     const verificationLink = await verifyLinkWallet({
-                        rootKeyAddress: userOperation.sender,
+                        rootKeyAddress: rootKeyAddress,
+                        senderAddress: userOperation.sender,
                         env,
                     })
                     const verificationJoin = await verifyJoinTown({
-                        rootKeyAddress: userOperation.sender,
+                        rootKeyAddress: rootKeyAddress,
+                        senderAddress: userOperation.sender,
                         townId: townId,
                         env,
                     })

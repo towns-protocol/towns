@@ -1,5 +1,4 @@
 import {
-    Address,
     BasicRoleInfo,
     ChannelDetails,
     ChannelMetadata,
@@ -13,8 +12,8 @@ import {
 
 import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
 import { ContractTransaction, ethers } from 'ethers'
-import { PaymasterConfig, UserOpParams, SpaceInfo } from './SpaceDappTypes'
-import { ISendUserOperationResponse, Client as UseropClient } from 'userop'
+import { SpaceInfo } from './SpaceDappTypes'
+import { Town, TownRegistrar } from './v3'
 
 export type SignerType = ethers.Signer
 export interface EventsContractInfo {
@@ -50,10 +49,11 @@ export interface UpdateRoleParams {
 
 type TransactionType = ContractTransaction
 
-export type UserOperationResponse = ISendUserOperationResponse
-
 export interface ISpaceDapp {
-    provider: ethers.providers.Provider | undefined
+    readonly chainId: number
+    readonly provider: ethers.providers.Provider | undefined
+    readonly townRegistrar: TownRegistrar
+    readonly walletLink: WalletLinkV3
     addRoleToChannel: (
         spaceId: string,
         channelNetworkId: string,
@@ -106,28 +106,11 @@ export interface ISpaceDapp {
         disabled: boolean,
         signer: SignerType,
     ) => Promise<TransactionType>
+    getTown(townId: string): Promise<Town | undefined>
     getTownMembershipTokenAddress: (spaceId: string) => Promise<string>
     joinTown: (spaceId: string, recipient: string, signer: SignerType) => Promise<TransactionType>
     hasTownMembership: (spaceId: string, wallet: string) => Promise<boolean>
     getMembershipSupply: (spaceId: string) => Promise<TotalSupplyInfo>
     getMembershipInfo: (spaceId: string) => Promise<MembershipInfo>
     getWalletLink: () => WalletLinkV3
-
-    // userop related
-    getAbstractAccountAddress: (args: Pick<UserOpParams, 'signer'>) => Promise<Address>
-    getUserOpClient: () => Promise<UseropClient>
-    sendUserOp: (
-        args: UserOpParams & {
-            functionHashForPaymasterProxy: string
-            townId: string
-        },
-    ) => Promise<ISendUserOperationResponse>
-    sendCreateSpaceOp: (
-        args: Parameters<ISpaceDapp['createSpace']>,
-        paymasterConfig?: PaymasterConfig,
-    ) => Promise<ISendUserOperationResponse>
-    sendJoinTownOp: (
-        args: Parameters<ISpaceDapp['joinTown']>,
-        paymasterConfig?: PaymasterConfig,
-    ) => Promise<ISendUserOperationResponse>
 }

@@ -5,9 +5,9 @@ import {
     RoleEntitlements as R_RoleEntitlements,
     RoleDetails as R_RoleDetails,
     ISpaceDapp as R_ISpaceDapp,
-    UserOperationResponse,
 } from '@river/web3'
 import { ContractReceipt, ContractTransaction, Signer } from 'ethers'
+import { ISendUserOperationResponse } from 'userop.js'
 
 // TODO: replace instances of wagmi/viem Address with this type
 export type Address = `0x${string}`
@@ -66,4 +66,4 @@ export type RoleDetails = R_RoleDetails
 export type ISpaceDapp = R_ISpaceDapp
 export type ReceiptType = ContractReceipt
 
-export type TransactionOrUserOperation = ContractTransaction | UserOperationResponse
+export type TransactionOrUserOperation = ContractTransaction | ISendUserOperationResponse

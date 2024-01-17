@@ -36,6 +36,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ampproject/remapping@npm:^2.2.1":
+  version: 2.2.1
+  resolution: "@ampproject/remapping@npm:2.2.1"
+  dependencies:
+    "@jridgewell/gen-mapping": ^0.3.0
+    "@jridgewell/trace-mapping": ^0.3.9
+  checksum: 03c04fd526acc64a1f4df22651186f3e5ef0a9d6d6530ce4482ec9841269cf7a11dbb8af79237c282d721c5312024ff17529cd72cc4768c11e999b58e2302079
+  languageName: node
+  linkType: hard
+
 "@apideck/better-ajv-errors@npm:^0.3.1":
   version: 0.3.6
   resolution: "@apideck/better-ajv-errors@npm:0.3.6"
@@ -1179,6 +1189,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/helper-string-parser@npm:^7.23.4":
+  version: 7.23.4
+  resolution: "@babel/helper-string-parser@npm:7.23.4"
+  checksum: c0641144cf1a7e7dc93f3d5f16d5327465b6cf5d036b48be61ecba41e1eece161b48f46b7f960951b67f8c3533ce506b16dece576baef4d8b3b49f8c65410f90
+  languageName: node
+  linkType: hard
+
 "@babel/helper-validator-identifier@npm:^7.19.1, @babel/helper-validator-identifier@npm:^7.22.20":
   version: 7.22.20
   resolution: "@babel/helper-validator-identifier@npm:7.22.20"
@@ -1233,6 +1250,15 @@ __metadata:
   bin:
     parser: ./bin/babel-parser.js
   checksum: 453fdf8b9e2c2b7d7b02139e0ce003d1af21947bbc03eb350fb248ee335c9b85e4ab41697ddbdd97079698de825a265e45a0846bb2ed47a2c7c1df833f42a354
+  languageName: node
+  linkType: hard
+
+"@babel/parser@npm:^7.23.6":
+  version: 7.23.6
+  resolution: "@babel/parser@npm:7.23.6"
+  bin:
+    parser: ./bin/babel-parser.js
+  checksum: 140801c43731a6c41fd193f5c02bc71fd647a0360ca616b23d2db8be4b9739b9f951a03fc7c2db4f9b9214f4b27c1074db0f18bc3fa653783082d5af7c8860d5
   languageName: node
   linkType: hard
 
@@ -2370,6 +2396,17 @@ __metadata:
     "@babel/helper-validator-identifier": ^7.22.20
     to-fast-properties: ^2.0.0
   checksum: 215fe04bd7feef79eeb4d33374b39909ce9cad1611c4135a4f7fdf41fe3280594105af6d7094354751514625ea92d0875aba355f53e86a92600f290e77b0e604
+  languageName: node
+  linkType: hard
+
+"@babel/types@npm:^7.23.6":
+  version: 7.23.6
+  resolution: "@babel/types@npm:7.23.6"
+  dependencies:
+    "@babel/helper-string-parser": ^7.23.4
+    "@babel/helper-validator-identifier": ^7.22.20
+    to-fast-properties: ^2.0.0
+  checksum: 68187dbec0d637f79bc96263ac95ec8b06d424396678e7e225492be866414ce28ebc918a75354d4c28659be6efe30020b4f0f6df81cc418a2d30645b690a8de0
   languageName: node
   linkType: hard
 
@@ -6570,7 +6607,6 @@ __metadata:
     "@typescript-eslint/parser": ^6.10.0
     abitype: ^0.9.10
     debug: ^4.3.4
-    dotenv: ^16.3.1
     eslint: ^8.53.0
     eslint-import-resolver-typescript: ^3.5.5
     eslint-plugin-import: ^2.27.5
@@ -6583,7 +6619,6 @@ __metadata:
     ts-node: ^10.9.1
     typed-emitter: ^2.1.0
     typescript: ^5.1.6
-    userop: ^0.3.7
     viem: ^1.18.2
     zod: ^3.21.4
   languageName: unknown
@@ -7321,6 +7356,25 @@ __metadata:
     react-dom: ^18.2.0
     use-zion-client: "workspace:^"
     wagmi: ^1.4.12
+  languageName: unknown
+  linkType: soft
+
+"@towns/userops@workspace:^, @towns/userops@workspace:clients/web/userops":
+  version: 0.0.0-use.local
+  resolution: "@towns/userops@workspace:clients/web/userops"
+  dependencies:
+    "@harmony/prettier-config": "workspace:^"
+    "@river/web3": "workspace:^"
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^6.10.0
+    "@vitest/coverage-v8": ^1.2.0
+    dotenv: ^16.3.1
+    eslint: ^8.53.0
+    eslint-plugin-import: ^2.27.5
+    typescript: ^5.1.6
+    userop: ^0.3.7
+    vitest: ^1.1.1
+    zod: ^3.21.4
   languageName: unknown
   linkType: soft
 
@@ -8470,6 +8524,29 @@ __metadata:
   dependencies:
     open: ^8.4.0
   checksum: 7108119c0a28ee81987e5e64a6e804ff2b360982ee40f65df4ec6ef6b5657a19f146195621b5a830e35cf018ad638f030e372e68cd90116cab2526fbef110b01
+  languageName: node
+  linkType: hard
+
+"@vitest/coverage-v8@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "@vitest/coverage-v8@npm:1.2.0"
+  dependencies:
+    "@ampproject/remapping": ^2.2.1
+    "@bcoe/v8-coverage": ^0.2.3
+    debug: ^4.3.4
+    istanbul-lib-coverage: ^3.2.2
+    istanbul-lib-report: ^3.0.1
+    istanbul-lib-source-maps: ^4.0.1
+    istanbul-reports: ^3.1.6
+    magic-string: ^0.30.5
+    magicast: ^0.3.2
+    picocolors: ^1.0.0
+    std-env: ^3.5.0
+    test-exclude: ^6.0.0
+    v8-to-istanbul: ^9.2.0
+  peerDependencies:
+    vitest: ^1.0.0
+  checksum: 55b97d17aa917e75b0088bc39fe4d1255bf03f94b19c568e47a8dca689ddd068fe62aa442da70b2355089138968e148b07c14760da1fae27c4ae796472187e0e
   languageName: node
   linkType: hard
 
@@ -14820,6 +14897,7 @@ __metadata:
     "@testing-library/user-event": ^14.4.3
     "@towns/generated": "workspace:^"
     "@towns/privy": "workspace:^"
+    "@towns/userops": "workspace:^"
     "@types/emoji-mart": ^3.0.9
     "@types/react": ^18.2.11
     "@types/react-dom": ^18.2.4
@@ -14894,7 +14972,6 @@ __metadata:
     ua-parser-js: ^1.0.33
     unfurl-worker: "workspace:^"
     use-zion-client: "workspace:^"
-    userop.js: ^0.3.7
     vanilla-classnames: ^0.1.0
     vite: ^5.0.10
     vite-plugin-checker: ^0.6.2
@@ -15977,6 +16054,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"istanbul-lib-coverage@npm:^3.2.2":
+  version: 3.2.2
+  resolution: "istanbul-lib-coverage@npm:3.2.2"
+  checksum: 2367407a8d13982d8f7a859a35e7f8dd5d8f75aae4bb5484ede3a9ea1b426dc245aff28b976a2af48ee759fdd9be374ce2bd2669b644f31e76c5f46a2e29a831
+  languageName: node
+  linkType: hard
+
 "istanbul-lib-instrument@npm:^5.0.4, istanbul-lib-instrument@npm:^5.1.0":
   version: 5.2.1
   resolution: "istanbul-lib-instrument@npm:5.2.1"
@@ -16001,7 +16085,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"istanbul-lib-source-maps@npm:^4.0.0":
+"istanbul-lib-report@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "istanbul-lib-report@npm:3.0.1"
+  dependencies:
+    istanbul-lib-coverage: ^3.0.0
+    make-dir: ^4.0.0
+    supports-color: ^7.1.0
+  checksum: fd17a1b879e7faf9bb1dc8f80b2a16e9f5b7b8498fe6ed580a618c34df0bfe53d2abd35bf8a0a00e628fb7405462576427c7df20bbe4148d19c14b431c974b21
+  languageName: node
+  linkType: hard
+
+"istanbul-lib-source-maps@npm:^4.0.0, istanbul-lib-source-maps@npm:^4.0.1":
   version: 4.0.1
   resolution: "istanbul-lib-source-maps@npm:4.0.1"
   dependencies:
@@ -16019,6 +16114,16 @@ __metadata:
     html-escaper: ^2.0.0
     istanbul-lib-report: ^3.0.0
   checksum: 7867228f83ed39477b188ea07e7ccb9b4f5320b6f73d1db93a0981b7414fa4ef72d3f80c4692c442f90fc250d9406e71d8d7ab65bb615cb334e6292b73192b89
+  languageName: node
+  linkType: hard
+
+"istanbul-reports@npm:^3.1.6":
+  version: 3.1.6
+  resolution: "istanbul-reports@npm:3.1.6"
+  dependencies:
+    html-escaper: ^2.0.0
+    istanbul-lib-report: ^3.0.0
+  checksum: 44c4c0582f287f02341e9720997f9e82c071627e1e862895745d5f52ec72c9b9f38e1d12370015d2a71dcead794f34c7732aaef3fab80a24bc617a21c3d911d6
   languageName: node
   linkType: hard
 
@@ -17625,12 +17730,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"magicast@npm:^0.3.2":
+  version: 0.3.3
+  resolution: "magicast@npm:0.3.3"
+  dependencies:
+    "@babel/parser": ^7.23.6
+    "@babel/types": ^7.23.6
+    source-map-js: ^1.0.2
+  checksum: de2bfca38cf4a20e598cf0e48598d183ebe2a846b80c5f4a71950b4e501f27492b3d21111a4da3dcff8aa85c2acdf3900126a8867a030a9f2fbb3c7a0a0c78bc
+  languageName: node
+  linkType: hard
+
 "make-dir@npm:^3.0.0":
   version: 3.1.0
   resolution: "make-dir@npm:3.1.0"
   dependencies:
     semver: ^6.0.0
   checksum: 484200020ab5a1fdf12f393fe5f385fc8e4378824c940fba1729dcd198ae4ff24867bc7a5646331e50cead8abff5d9270c456314386e629acec6dff4b8016b78
+  languageName: node
+  linkType: hard
+
+"make-dir@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "make-dir@npm:4.0.0"
+  dependencies:
+    semver: ^7.5.3
+  checksum: bf0731a2dd3aab4db6f3de1585cea0b746bb73eb5a02e3d8d72757e376e64e6ada190b1eddcde5b2f24a81b688a9897efd5018737d05e02e2a671dda9cff8a8a
   languageName: node
   linkType: hard
 
@@ -21313,6 +21438,7 @@ __metadata:
     "@rollup/plugin-inject": ^5.0.3
     "@towns/generated": "workspace:^"
     "@towns/privy": "workspace:^"
+    "@towns/userops": "workspace:^"
     "@types/node": ^20.5.0
     "@types/react": ^18.2.11
     "@types/react-dom": ^18.2.4
@@ -23940,6 +24066,7 @@ __metadata:
     "@testing-library/react": ^14.0.0
     "@testing-library/user-event": ^14.4.3
     "@towns/generated": "workspace:^"
+    "@towns/userops": "workspace:^"
     "@types/deep-diff": ^1.0.5
     "@types/jest": ^29.5.3
     "@types/json-bigint": ^1.0.4
@@ -24115,6 +24242,17 @@ __metadata:
     "@types/istanbul-lib-coverage": ^2.0.1
     convert-source-map: ^1.6.0
   checksum: 2069d59ee46cf8d83b4adfd8a5c1a90834caffa9f675e4360f1157ffc8578ef0f763c8f32d128334424159bb6b01f3876acd39cd13297b2769405a9da241f8d1
+  languageName: node
+  linkType: hard
+
+"v8-to-istanbul@npm:^9.2.0":
+  version: 9.2.0
+  resolution: "v8-to-istanbul@npm:9.2.0"
+  dependencies:
+    "@jridgewell/trace-mapping": ^0.3.12
+    "@types/istanbul-lib-coverage": ^2.0.1
+    convert-source-map: ^2.0.0
+  checksum: 31ef98c6a31b1dab6be024cf914f235408cd4c0dc56a5c744a5eea1a9e019ba279e1b6f90d695b78c3186feed391ed492380ccf095009e2eb91f3d058f0b4491
   languageName: node
   linkType: hard
 

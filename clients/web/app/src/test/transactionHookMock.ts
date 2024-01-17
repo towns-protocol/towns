@@ -1,4 +1,5 @@
 import { waitFor } from '@testing-library/react'
+import { getTransactionHashOrUserOpHash } from '@towns/userops'
 import { ContractReceipt, ContractTransaction } from 'ethers'
 import { useCallback, useMemo, useState } from 'react'
 // eslint-disable-next-line no-restricted-imports
@@ -127,7 +128,7 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
         >(undefined)
 
         const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
-            const hash = zionClient.getTransactionHashOrUserOpHash(transactionContext?.transaction)
+            const hash = getTransactionHashOrUserOpHash(transactionContext?.transaction)
             return {
                 data: transactionContext?.data,
                 isLoading: transactionContext?.status === zionClient.TransactionStatus.Pending,

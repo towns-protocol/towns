@@ -10,7 +10,7 @@ import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
-import { getTransactionHashOrUserOpHash } from '@river/web3'
+import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
 /**
  * Hook to update space name with a transaction.

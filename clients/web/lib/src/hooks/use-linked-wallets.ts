@@ -10,7 +10,7 @@ import { SignerUndefinedError, toError } from '../types/error-types'
 import { queryClient, useQuery } from '../query/queryClient'
 import { blockchainKeys } from '../query/query-keys'
 import { useConnectivity } from './use-connectivity'
-import { getTransactionHashOrUserOpHash } from '@river/web3'
+import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
 export function useLinkWalletTransaction() {
     const { traceTransaction, ...rest } = useLinkTransactionBuilder()

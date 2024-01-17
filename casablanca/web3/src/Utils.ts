@@ -1,9 +1,7 @@
-import { ContractTransaction, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { getContractsInfo } from './IStaticContractsInfo'
 import { MockERC721AShim } from './v3/MockERC721AShim'
 import { PublicClient } from 'viem'
-import { ISendUserOperationResponse } from 'userop'
-import { Address } from './ContractTypes'
 
 export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
@@ -91,35 +89,4 @@ export function isPublicClient(
         'getNetwork' in provider &&
         typeof provider.getNetwork !== 'function'
     )
-}
-
-export function isUserOpResponse(
-    tx: undefined | ContractTransaction | ISendUserOperationResponse,
-): tx is ISendUserOperationResponse {
-    return typeof tx === 'object' && tx !== null && 'userOpHash' in tx && 'wait' in tx
-}
-
-export function getTransactionHashOrUserOpHash(
-    tx: undefined | ContractTransaction | ISendUserOperationResponse,
-): Address | undefined {
-    if (!tx) {
-        return
-    }
-    if (isUserOpResponse(tx)) {
-        return tx.userOpHash as Address
-    }
-    return tx.hash as Address
-}
-
-/**
- * In the case of a user op, wait for the user op to be sent and return the correct transaction hash that a provider can wait for
- */
-export async function getTransactionHashFromTransactionOrUserOp(
-    tx: undefined | ContractTransaction | ISendUserOperationResponse,
-) {
-    if (isUserOpResponse(tx)) {
-        const response = await tx.wait()
-        return response?.transactionHash
-    }
-    return tx?.hash
 }

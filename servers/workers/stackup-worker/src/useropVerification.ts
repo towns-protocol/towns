@@ -7,6 +7,7 @@ import { IVerificationResult, checkJoinTownKVOverrides, checkMintKVOverrides } f
 
 interface ITownTransactionParams {
     rootKeyAddress: `0x${string}`
+    senderAddress: `0x${string}`
     townId: string
     env: Env
 }
@@ -52,16 +53,18 @@ export async function verifyCreateTown(
             console.error(error)
         }
         // check for whitelist overrides for user, email associated with privy account
+        // checks against Privy and so should the rootKeyAddress
         const isOverride = await checkMintKVOverrides(params.rootKeyAddress, params.env)
         if (isOverride == null) {
             return { verified: false, error: 'user not allowed to mint towns with paymaster' }
         }
         // check that quota has not been breached on-chain
+        // should use the senderAddress for this check as that is msg.sender
         const queryResult = await runLogQueryTownOwner(
             params.env.ENVIRONMENT,
             params.env,
             'Transfer',
-            params.rootKeyAddress,
+            params.senderAddress,
             NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
         )
         if (!queryResult || !queryResult.events) {

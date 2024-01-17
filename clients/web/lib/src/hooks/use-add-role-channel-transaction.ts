@@ -10,7 +10,7 @@ import { toError } from '../types/error-types'
 import { useQueryClient } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
 import { TSigner } from '../types/web3-types'
-import { getTransactionHashOrUserOpHash } from '@river/web3'
+import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
 /**
  * Hook to add a role to a channel with a transaction.

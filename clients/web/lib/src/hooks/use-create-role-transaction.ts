@@ -10,7 +10,8 @@ import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
-import { TokenEntitlementDataTypes, Permission, getTransactionHashOrUserOpHash } from '@river/web3'
+import { TokenEntitlementDataTypes, Permission } from '@river/web3'
+import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
 /**
  * Hook to create a role with a transaction.

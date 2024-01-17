@@ -1,4 +1,4 @@
-import { SpaceDappConfig } from '../SpaceDappTypes'
+import { UserOpsConfig } from './types'
 import { BigNumber } from 'ethers'
 import { BundlerJsonRpcProvider, IUserOperation, Presets } from 'userop'
 import { z } from 'zod'
@@ -18,6 +18,7 @@ const zSchema: z.ZodType<PaymasterProxyResponse> = z.object({
 })
 
 type PaymasterProxyPostData = IUserOperation & {
+    rootKeyAddress: string
     functionHash: string
     townId: string
 }
@@ -26,11 +27,12 @@ export const paymasterProxyMiddleware: ({
     paymasterProxyAuthSecret,
 }: {
     paymasterProxyAuthSecret: string
-}) => SpaceDappConfig['paymasterMiddleware'] =
+}) => UserOpsConfig['paymasterMiddleware'] =
     ({ paymasterProxyAuthSecret }) =>
     async (args) => {
         const {
             userOpContext: ctx,
+            rootKeyAddress,
             bundlerUrl,
             provider,
             aaRpcUrl: rpcUrl,
@@ -74,6 +76,7 @@ export const paymasterProxyMiddleware: ({
             const userOp: PaymasterProxyPostData = {
                 ...ctx.op,
                 functionHash: functionHashForPaymasterProxy,
+                rootKeyAddress: rootKeyAddress,
                 townId: townId,
             }
             // convert all bigNumberish types to hex strings for paymaster proxy payload
@@ -101,7 +104,7 @@ export const paymasterProxyMiddleware: ({
             ctx.op.preVerificationGas = parseResult.data.preVerificationGas
             ctx.op.verificationGasLimit = parseResult.data.verificationGasLimit
             ctx.op.callGasLimit = parseResult.data.callGasLimit
-        } catch (error: any) {
+        } catch (error) {
             // if the paymaster responds with an error
             // just estimate the gas the same way Presets.SimpleAccount does when no paymaster is passed
             // meaning a user will have to pay for gas and this can still fail if they don't have funds

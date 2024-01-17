@@ -59,11 +59,10 @@ import {
     Permission,
     TokenEntitlementDataTypes,
     SpaceInfo,
-    isUserOpResponse,
-    getTransactionHashOrUserOpHash,
     ISpaceDapp,
 } from '@river/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
+import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
 
 /***
  * Zion Client
@@ -89,16 +88,23 @@ export class ZionClient implements EntitlementsDelegate {
     private _signerContext?: SignerContext
     protected _eventHandlers?: ZionClientEventHandlers
     private pushNotificationClient?: PushNotificationClient
+    private userOps: UserOps | undefined = undefined
 
     constructor(opts: ZionOpts, name?: string) {
         this.opts = opts
         this.name = name || Math.random().toString(36).substring(7)
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.spaceDapp = createSpaceDapp({
-            ...opts.accountAbstractionConfig,
             chainId: opts.chainId,
             provider: opts.web3Provider,
         })
+        if (opts.accountAbstractionConfig?.aaRpcUrl) {
+            this.userOps = new UserOps({
+                ...opts.accountAbstractionConfig,
+                provider: opts.web3Provider,
+                spaceDapp: this.spaceDapp,
+            })
+        }
         this.blockchainTransactionStore = new BlockchainTransactionStore(this.spaceDapp)
         this._eventHandlers = opts.eventHandlers
         if (opts.pushNotificationWorkerUrl && opts.pushNotificationAuthToken) {
@@ -328,7 +334,7 @@ export class ZionClient implements EntitlementsDelegate {
 
         try {
             if (this.isAccountAbstractionEnabled()) {
-                transaction = await this.spaceDapp.sendCreateSpaceOp([args, signer])
+                transaction = await this.userOps?.sendCreateSpaceOp([args, signer])
             } else {
                 transaction = await this.spaceDapp.createSpace(args, signer)
             }
@@ -1150,7 +1156,7 @@ export class ZionClient implements EntitlementsDelegate {
             let transaction: TransactionOrUserOperation | undefined = undefined
 
             if (this.isAccountAbstractionEnabled()) {
-                transaction = await this.spaceDapp.sendJoinTownOp([spaceId, entitledWallet, signer])
+                transaction = await this.userOps?.sendJoinTownOp([spaceId, entitledWallet, signer])
             } else {
                 transaction = await this.spaceDapp.joinTown(spaceId, entitledWallet, signer)
             }

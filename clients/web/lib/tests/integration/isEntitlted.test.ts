@@ -14,11 +14,11 @@ import { getAccountAddress } from '../../src/types/user-identifier'
 import {
     createExternalTokenStruct,
     getTestGatingNftAddress,
-    getTransactionHashFromTransactionOrUserOp,
     Permission,
     TokenEntitlementDataTypes,
 } from '@river/web3'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
 
 describe('isEntitledToSpace and isEntitledToChannel tests', () => {
     test('server checks isEntitledToSpace true', async () => {
