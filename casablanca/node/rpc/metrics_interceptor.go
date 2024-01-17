@@ -5,9 +5,14 @@ import (
 	"time"
 
 	"github.com/river-build/river/infra"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	"github.com/bufbuild/connect-go"
 )
+
+type streamIdProvider interface {
+	GetStreamId() string
+}
 
 func NewMetricsInterceptor() connect.UnaryInterceptorFunc {
 	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
@@ -17,6 +22,13 @@ func NewMetricsInterceptor() connect.UnaryInterceptorFunc {
 		) (connect.AnyResponse, error) {
 			proc := req.Spec().Procedure
 			defer infra.StoreExecutionTimeMetrics(proc, "rpc", time.Now())
+
+			r, ok := req.Any().(streamIdProvider)
+			if ok {
+				// this line will enrich the tracing span with the streamId
+				span, _ := tracer.SpanFromContext(ctx)
+				span.SetTag("streamId", r.GetStreamId())
+			}
 			return next(ctx, req)
 		}
 	}
