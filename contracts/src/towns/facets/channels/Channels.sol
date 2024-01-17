@@ -54,6 +54,12 @@ contract Channels is IChannel, ChannelBase, Entitled, Facet {
     _addRoleToChannel(channelId, roleId);
   }
 
+  function getRolesByChannel(
+    string calldata channelId
+  ) external view returns (uint256[] memory roleIds) {
+    return _getRolesByChannel(channelId);
+  }
+
   function removeRoleFromChannel(
     string calldata channelId,
     uint256 roleId

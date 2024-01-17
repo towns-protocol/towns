@@ -12,15 +12,22 @@ import {IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.so
 //libraries
 
 //contracts
-import {ChannelsSetup} from "./ChannelsSetup.sol";
+import {BaseSetup} from "contracts/test/towns/BaseSetup.sol";
 
 // errors
 import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
 
 // solhint-disable-next-line max-line-length
-import {ChannelService__ChannelAlreadyExists, ChannelService__RoleAlreadyExists, ChannelService__RoleDoesNotExist} from "contracts/src/towns/facets/channels/ChannelService.sol";
+import {ChannelService__ChannelAlreadyExists, ChannelService__RoleAlreadyExists, ChannelService__RoleDoesNotExist, ChannelService__ChannelDoesNotExist} from "contracts/src/towns/facets/channels/ChannelService.sol";
 
-contract ChannelsTest is ChannelsSetup, IEntitlementBase {
+contract ChannelsTest is BaseSetup, IEntitlementBase {
+  IChannel internal channels;
+
+  function setUp() public override {
+    super.setUp();
+    channels = IChannel(everyoneSpace);
+  }
+
   function test_createChannel(
     string memory channelMetadata,
     string memory channelId
@@ -43,7 +50,7 @@ contract ChannelsTest is ChannelsSetup, IEntitlementBase {
     permissions[0] = "Write";
 
     vm.prank(founder);
-    uint256 roleId = IRoles(diamond).createRole(
+    uint256 roleId = IRoles(everyoneSpace).createRole(
       "Member",
       permissions,
       new IRoles.CreateEntitlement[](0)
@@ -69,14 +76,14 @@ contract ChannelsTest is ChannelsSetup, IEntitlementBase {
     permissions[0] = "Write";
 
     vm.prank(founder);
-    uint256 roleId = IRoles(diamond).createRole(
+    uint256 roleId = IRoles(everyoneSpace).createRole(
       "Member",
       permissions,
       new IRoles.CreateEntitlement[](0)
     );
 
     vm.prank(founder);
-    uint256 roleId2 = IRoles(diamond).createRole(
+    uint256 roleId2 = IRoles(everyoneSpace).createRole(
       "AnotherMember",
       permissions,
       new IRoles.CreateEntitlement[](0)
@@ -93,11 +100,14 @@ contract ChannelsTest is ChannelsSetup, IEntitlementBase {
     assertEq(_channel.roleIds.length, roleIds.length);
 
     assertFalse(
-      IEntitlementsManager(diamond).isEntitledToTown(_randomAddress(), "Write")
+      IEntitlementsManager(everyoneSpace).isEntitledToTown(
+        _randomAddress(),
+        "Write"
+      )
     );
 
     assertFalse(
-      IEntitlementsManager(diamond).isEntitledToChannel(
+      IEntitlementsManager(everyoneSpace).isEntitledToChannel(
         channelId,
         _randomAddress(),
         "Write"
@@ -131,7 +141,7 @@ contract ChannelsTest is ChannelsSetup, IEntitlementBase {
     vm.assume(bytes(channelId).length > 2);
 
     vm.prank(founder);
-    uint256 roleId = IRoles(diamond).createRole(
+    uint256 roleId = IRoles(everyoneSpace).createRole(
       "Member",
       new string[](0),
       new IRoles.CreateEntitlement[](0)
@@ -158,23 +168,35 @@ contract ChannelsTest is ChannelsSetup, IEntitlementBase {
     channels.createChannel(channelId, channelMetadata, new uint256[](0));
 
     IChannel.Channel[] memory _channels = channels.getChannels();
+    string[] memory channelIds = new string[](_channels.length);
 
-    assertEq(_channels.length, 1);
+    for (uint256 i = 0; i < _channels.length; i++) {
+      channelIds[i] = _channels[i].id;
+    }
+
+    assertContains(channelIds, channelId);
   }
 
   function test_getChannels_with_multiple_channels() public {
-    string memory channelName1 = "Channel1";
     string memory channelId1 = "Id1";
-    string memory channelName2 = "Channel2";
+    string memory channelName1 = "Channel1";
+
     string memory channelId2 = "Id2";
+    string memory channelName2 = "Channel2";
 
     vm.startPrank(founder);
-    channels.createChannel(channelName1, channelId1, new uint256[](0));
-    channels.createChannel(channelName2, channelId2, new uint256[](0));
+    channels.createChannel(channelId1, channelName1, new uint256[](0));
+    channels.createChannel(channelId2, channelName2, new uint256[](0));
     vm.stopPrank();
 
     IChannel.Channel[] memory _channels = channels.getChannels();
-    assertEq(_channels.length, 2);
+    string[] memory channelIds = new string[](_channels.length);
+    for (uint256 i = 0; i < _channels.length; i++) {
+      channelIds[i] = _channels[i].id;
+    }
+
+    assertContains(channelIds, channelId1);
+    assertContains(channelIds, channelId2);
   }
 
   function test_updateChannel(
@@ -226,8 +248,8 @@ contract ChannelsTest is ChannelsSetup, IEntitlementBase {
     channels.removeChannel(channelId);
     vm.stopPrank();
 
-    IChannel.Channel[] memory _channels = channels.getChannels();
-    assertEq(_channels.length, 0);
+    vm.expectRevert(ChannelService__ChannelDoesNotExist.selector);
+    channels.getChannel(channelId);
   }
 
   function test_addRoleToChannel(

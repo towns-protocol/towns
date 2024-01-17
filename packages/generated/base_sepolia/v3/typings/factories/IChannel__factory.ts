@@ -126,6 +126,25 @@ const _abi = [
   },
   {
     type: "function",
+    name: "getRolesByChannel",
+    inputs: [
+      {
+        name: "channelId",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    outputs: [
+      {
+        name: "roleIds",
+        type: "uint256[]",
+        internalType: "uint256[]",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "removeChannel",
     inputs: [
       {

@@ -13,7 +13,7 @@ import {EntitlementsManager} from "contracts/src/towns/facets/entitlements/Entit
 
 // helpers
 import {TokenOwnableHelper} from "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol";
-import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsSetup.sol";
+import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsHelper.sol";
 import {RolesHelper} from "contracts/test/towns/roles/RolesSetup.sol";
 
 // mocks

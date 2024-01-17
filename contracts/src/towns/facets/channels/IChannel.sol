@@ -71,9 +71,15 @@ interface IChannel is IChannelBase {
   /// @param channelId the channelId to remove
   function removeChannel(string memory channelId) external;
 
+  /// @notice gets all roles for a channel
+  /// @param channelId the channelId to get the roles for
+  /// @return roleIds an array of roleIds for the channel
+  function getRolesByChannel(
+    string calldata channelId
+  ) external view returns (uint256[] memory roleIds);
+
   /// @notice adds a role to a channel
   /// @param channelId the channelId to add the role to
-
   /// @param roleId the roleId to add to the channel
   function addRoleToChannel(string calldata channelId, uint256 roleId) external;
 

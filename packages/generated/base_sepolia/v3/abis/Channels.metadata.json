@@ -594,6 +594,25 @@
             "type": "string"
           }
         ],
+        "name": "getRolesByChannel",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "roleIds",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          }
+        ],
         "name": "removeChannel",
         "outputs": [],
         "stateMutability": "nonpayable",
@@ -663,6 +682,7 @@
       "methods": {
         "addRoleToChannel(string,uint256)": {
           "params": {
+            "channelId": "the channelId to add the role to",
             "roleId": "the roleId to add to the channel"
           }
         },
@@ -684,6 +704,14 @@
         "getChannels()": {
           "returns": {
             "channels": "an array of all channels"
+          }
+        },
+        "getRolesByChannel(string)": {
+          "params": {
+            "channelId": "the channelId to get the roles for"
+          },
+          "returns": {
+            "roleIds": "an array of roleIds for the channel"
           }
         },
         "removeChannel(string)": {
@@ -785,6 +813,9 @@
       },
       "kind": "user",
       "methods": {
+        "addRoleToChannel(string,uint256)": {
+          "notice": "adds a role to a channel"
+        },
         "createChannel(string,string,uint256[])": {
           "notice": "creates a channel"
         },
@@ -793,6 +824,9 @@
         },
         "getChannels()": {
           "notice": "gets all channels"
+        },
+        "getRolesByChannel(string)": {
+          "notice": "gets all roles for a channel"
         },
         "removeChannel(string)": {
           "notice": "removes a channel"
@@ -1010,11 +1044,11 @@
       ]
     },
     "contracts/src/towns/facets/channels/ChannelBase.sol": {
-      "keccak256": "0xedfc5cecbe778e583b276cac3209abc021b22721fde34d3889b344059f5ae558",
+      "keccak256": "0x2f86e18739e46c1b4b3a7341f90b4871654fab1c261aba583d1ea8d5d1177fec",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://45695e5398de3f93427e9f17d792409dbfd2536ba045969f5f5c99f4dc4fbe9f",
-        "dweb:/ipfs/QmUbY57ZCmAst3atkqbVdizkGYXR9v4zrz4PP5qj7T1fgp"
+        "bzz-raw://2f313de100ae339c66faf326f63e8396fe4d582f56f47c474632913cb12c676b",
+        "dweb:/ipfs/Qmanbd9wfLpPLcZNM2sHhXv93kTa9frQhCfjMY7ATYLHch"
       ]
     },
     "contracts/src/towns/facets/channels/ChannelService.sol": {
@@ -1034,19 +1068,19 @@
       ]
     },
     "contracts/src/towns/facets/channels/Channels.sol": {
-      "keccak256": "0xc8d76dc3af225d99014cd1cd99d1e9d0191f82cf69590fe69af15adce1aae814",
+      "keccak256": "0x6188e9a37178eb0ac5d53b10cfe8f4c89c101264db46073a65aed7ea521b090c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://958cc95ea82ba16d67e3469e40c5375b6d6071f5ae27c853cff040ccf71ffc4c",
-        "dweb:/ipfs/QmcFdzj2bSreZxKvKha66ysqVMjxKC9jg8GfxX5A39Cd1V"
+        "bzz-raw://f609164fd8fb837ace131be25f122c3549b9b7034251c44a1756b7fdd08c180e",
+        "dweb:/ipfs/QmVTYbHjfMnHURGPspypTYLa5wzNEUKJpmhB29LsvWEuea"
       ]
     },
     "contracts/src/towns/facets/channels/IChannel.sol": {
-      "keccak256": "0xb2ef89f8b52034c0e3ce805defa3f1b29ac8255b6f8fc4374eef5459023b6bc6",
+      "keccak256": "0x27e37f82ef6803c8a2bcf8adc7cbadf36bebfb5d972fea747d2d45c7159758a1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://fb66c5ce9b9b8ac447db0bf40bd7121fa2f7730cbb9e40bed3566dce0cdf0d40",
-        "dweb:/ipfs/QmeFNZmuYXdRfJPMqitpbjvKGqKvxj1DTDbZ7uzY5RsXkf"
+        "bzz-raw://4709ad95ce7c3fa490f82cd37780fa42583b50ebd1b9e0351d1638a1f8ca3e04",
+        "dweb:/ipfs/QmesoENHsrJYyfkTMpoyBJdNpGiCgsM4ajC78pNXLMTZGV"
       ]
     },
     "contracts/src/towns/facets/entitlements/EntitlementsManagerStorage.sol": {

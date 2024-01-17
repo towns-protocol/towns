@@ -49,6 +49,7 @@ export interface IChannelInterface extends utils.Interface {
     "createChannel(string,string,uint256[])": FunctionFragment;
     "getChannel(string)": FunctionFragment;
     "getChannels()": FunctionFragment;
+    "getRolesByChannel(string)": FunctionFragment;
     "removeChannel(string)": FunctionFragment;
     "removeRoleFromChannel(string,uint256)": FunctionFragment;
     "updateChannel(string,string,bool)": FunctionFragment;
@@ -60,6 +61,7 @@ export interface IChannelInterface extends utils.Interface {
       | "createChannel"
       | "getChannel"
       | "getChannels"
+      | "getRolesByChannel"
       | "removeChannel"
       | "removeRoleFromChannel"
       | "updateChannel"
@@ -84,6 +86,10 @@ export interface IChannelInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getChannels",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getRolesByChannel",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "removeChannel",
@@ -113,6 +119,10 @@ export interface IChannelInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "getChannel", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getChannels",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getRolesByChannel",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -259,6 +269,11 @@ export interface IChannel extends BaseContract {
       }
     >;
 
+    getRolesByChannel(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber[]] & { roleIds: BigNumber[] }>;
+
     removeChannel(
       channelId: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -300,6 +315,11 @@ export interface IChannel extends BaseContract {
     overrides?: CallOverrides
   ): Promise<IChannelBase.ChannelStructOutput[]>;
 
+  getRolesByChannel(
+    channelId: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber[]>;
+
   removeChannel(
     channelId: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -340,6 +360,11 @@ export interface IChannel extends BaseContract {
     getChannels(
       overrides?: CallOverrides
     ): Promise<IChannelBase.ChannelStructOutput[]>;
+
+    getRolesByChannel(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber[]>;
 
     removeChannel(
       channelId: PromiseOrValue<string>,
@@ -432,6 +457,11 @@ export interface IChannel extends BaseContract {
 
     getChannels(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getRolesByChannel(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     removeChannel(
       channelId: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -471,6 +501,11 @@ export interface IChannel extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getChannels(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getRolesByChannel(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     removeChannel(
       channelId: PromiseOrValue<string>,

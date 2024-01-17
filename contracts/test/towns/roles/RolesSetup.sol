@@ -14,7 +14,7 @@ import {Roles} from "contracts/src/towns/facets/roles/Roles.sol";
 // helpers
 import {TokenOwnableHelper} from "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol";
 import {EntitlementsHelper} from "contracts/test/towns/entitlements/EntitlementsSetup.sol";
-import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsSetup.sol";
+import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsHelper.sol";
 
 // mocks
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";

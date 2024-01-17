@@ -15,7 +15,7 @@ import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
 import {EntitlementsHelper} from "contracts/test/towns/entitlements/EntitlementsSetup.sol";
 import {RolesHelper} from "contracts/test/towns/roles/RolesSetup.sol";
-import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsSetup.sol";
+import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsHelper.sol";
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 import {MembershipHelper} from "contracts/test/towns/membership/MembershipSetup.sol";

@@ -79,6 +79,12 @@ abstract contract ChannelBase is IChannelBase {
     emit ChannelRemoved(msg.sender, channelId);
   }
 
+  function _getRolesByChannel(
+    string memory channelId
+  ) internal view returns (uint256[] memory) {
+    return ChannelService.getRolesByChannel(channelId);
+  }
+
   function _addRoleToChannel(
     string calldata channelId,
     uint256 roleId
