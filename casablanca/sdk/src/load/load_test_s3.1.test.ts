@@ -1,5 +1,5 @@
 /**
- * @group load-tests-s3.1
+ * @group load-tests-3.1
  */
 
 import { check, dlog } from '@river/mecholm'
