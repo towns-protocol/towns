@@ -1,6 +1,11 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useChannelId, useChannelMembers, useZionClient } from 'use-zion-client'
+import {
+    GlobalContextUserLookupProvider,
+    useChannelId,
+    useChannelMembers,
+    useZionClient,
+} from 'use-zion-client'
 import { Panel } from '@components/Panel/Panel'
 import { Box, Button, Stack } from '@ui'
 import { DirectMessageInviteUserList } from '@components/DirectMessages/DirectMessageInviteUserList'
@@ -66,7 +71,9 @@ export const ChannelInvitePanel = () => {
             }
             onClose={onClose}
         >
-            <ChannelInvite onClose={onClose} />
+            <GlobalContextUserLookupProvider>
+                <ChannelInvite onClose={onClose} />
+            </GlobalContextUserLookupProvider>
         </Panel>
     )
 }
