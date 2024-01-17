@@ -46,4 +46,13 @@ export class TestConstants {
 
         return wallet
     }
+
+    public static getUnfundedWallet(): Promise<ethers.Wallet> {
+        const tempWallet = ethers.Wallet.createRandom()
+
+        const provider = getJsonProvider()
+        const wallet = tempWallet.connect(provider)
+
+        return Promise.resolve(wallet)
+    }
 }

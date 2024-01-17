@@ -1,4 +1,5 @@
 import {
+    Address,
     BasicRoleInfo,
     ChannelDetails,
     ChannelMetadata,
@@ -399,7 +400,7 @@ export class SpaceDapp implements ISpaceDapp {
     }
 
     public async getAbstractAccountAddress(args: UserOpParams) {
-        return (await this.initBuilder(args)).getSender()
+        return (await this.initBuilder(args)).getSender() as Address
     }
 
     public getTown(townId: string): Promise<Town | undefined> {
@@ -442,7 +443,22 @@ export class SpaceDapp implements ISpaceDapp {
         //     builder.setVerificationGasLimit(verificationGasLimit)
         // }
 
-        const userOp = builder.execute(toAddress, value ?? 0, callData)
+        let userOp: Presets.Builder.SimpleAccount
+        if (Array.isArray(toAddress)) {
+            if (!Array.isArray(callData)) {
+                throw new Error('callData must be an array if toAddress is an array')
+            }
+            if (toAddress.length !== callData.length) {
+                throw new Error('toAddress and callData must be the same length')
+            }
+            userOp = builder.executeBatch(toAddress, callData)
+        } else {
+            if (Array.isArray(callData)) {
+                throw new Error('callData must be a string if toAddress is a string')
+            }
+            userOp = builder.execute(toAddress, value ?? 0, callData)
+        }
+
         const userOpClient = await this.getUserOpClient()
         return userOpClient.sendUserOperation(userOp, {
             onBuild: (op) => console.log('Signed UserOperation:', op),
@@ -475,27 +491,57 @@ export class SpaceDapp implements ISpaceDapp {
             },
         }
 
-        const functionName = 'createTown'
+        const abstractAccountAddress = await this.getAbstractAccountAddress({
+            signer,
+        })
 
+        const callDataCreateSpace = this.townRegistrar.TownArchitect.encodeFunctionData(
+            'createTown',
+            [townInfo],
+        )
+
+        if (await this.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
+            const functionName = 'createTown'
+
+            const functionHashForPaymasterProxy = this.getFunctionSigHash(
+                this.townRegistrar.TownArchitect.interface,
+                functionName,
+            )
+
+            // TODO: determine if this simulation causes an additional signature in UX
+            // try {
+            //     await this.townRegistrar.TownArchitect.write(signer).callStatic.createTown(townInfo)
+            // } catch (error) {
+            //     throw this.parseSpaceError(createSpaceParams.spaceId, error)
+            // }
+
+            return this.sendUserOp({
+                toAddress: this.townRegistrar.TownArchitect.address,
+                callData: callDataCreateSpace,
+                signer,
+                paymasterConfig,
+                townId: townInfo.id as string,
+                functionHashForPaymasterProxy,
+            })
+        }
+
+        // wallet isn't linked, create a user op that both links and creates the town
+        const functionName = 'createTown_linkWallet'
+
+        // TODO: this needs to accept an array of names/interfaces
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
             this.townRegistrar.TownArchitect.interface,
             functionName,
         )
 
-        const callData = this.townRegistrar.TownArchitect.interface.encodeFunctionData(
-            functionName,
-            [townInfo],
+        const callDataLinkWallet = await this.walletLink.encodeLinkWalletFunctionData(
+            signer,
+            abstractAccountAddress,
         )
 
-        // TODO: determine if this simulation causes an additional signature in UX
-        // try {
-        //     await this.townRegistrar.TownArchitect.write(signer).callStatic.createTown(townInfo)
-        // } catch (error) {
-        //     throw this.parseSpaceError(createSpaceParams.spaceId, error)
-        // }
         return this.sendUserOp({
-            toAddress: this.townRegistrar.TownArchitect.address,
-            callData,
+            toAddress: [this.walletLink.address, this.townRegistrar.TownArchitect.address],
+            callData: [callDataLinkWallet, callDataCreateSpace],
             signer,
             paymasterConfig,
             townId: townInfo.id as string,
@@ -509,28 +555,60 @@ export class SpaceDapp implements ISpaceDapp {
     ): Promise<ISendUserOperationResponse> {
         const [spaceId, recipient, signer] = args
         const town = await this.getTown(spaceId)
-        const functionName = 'joinTown'
 
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
         }
 
+        const abstractAccountAddress = await this.getAbstractAccountAddress({
+            signer,
+        })
+
+        const callDataJoinTown = town.Membership.encodeFunctionData('joinTown', [recipient])
+
+        if (await this.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
+            const functionName = 'joinTown'
+
+            const functionHashForPaymasterProxy = this.getFunctionSigHash(
+                town.Membership.interface,
+                functionName,
+            )
+
+            // TODO: determine if this simulation causes an additional signature in UX
+            // try {
+            //     // simulate the tx - throws an error second time you run it!
+            //     await town.Membership.write(signer).callStatic.joinTown(recipient)
+            // } catch (error) {
+            //     throw this.parseSpaceError(spaceId, error)
+            // }
+
+            return this.sendUserOp({
+                toAddress: town.Address,
+                callData: callDataJoinTown,
+                signer,
+                paymasterConfig,
+                townId: (await town.getTownInfo()).networkId as string,
+                functionHashForPaymasterProxy,
+            })
+        }
+
+        // wallet isn't linked, create a user op that both links and joins the town
+        const functionName = 'joinTown_linkWallet'
+
+        // TODO: this needs to accept an array of names/interfaces
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
             town.Membership.interface,
             functionName,
         )
 
-        const callData = town.Membership.interface.encodeFunctionData(functionName, [recipient])
+        const callDataLinkWallet = await this.walletLink.encodeLinkWalletFunctionData(
+            signer,
+            abstractAccountAddress,
+        )
 
-        // try {
-        //     // simulate the tx - throws an error second time you run it!
-        //     await town.Membership.write(signer).callStatic.joinTown(recipient)
-        // } catch (error) {
-        //     throw this.parseSpaceError(spaceId, error)
-        // }
         return this.sendUserOp({
-            toAddress: town.Address,
-            callData,
+            toAddress: [this.walletLink.address, town.Address],
+            callData: [callDataLinkWallet, callDataJoinTown],
             signer,
             paymasterConfig,
             townId: (await town.getTownInfo()).networkId as string,

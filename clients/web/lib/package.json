@@ -23,6 +23,7 @@
         "test:ci": "yarn csb:test-web-lib-done --silent",
         "test:ci-todo": "yarn csb:test-web-lib-todo --silent",
         "test:load:all": "yarn my-jest --group=integration/load --testTimeout=3000000",
+        "test:userops": "DOTENV_CONFIG_PATH=.env.test.userops yarn my-jest --group=integration/userops --testTimeout=3000000 --silent=false",
         "create-dev-town": "yarn my-jest ./scripts/create-dev-town.test.ts --testTimeout=3000000",
         "watch": "tsc --watch"
     },
@@ -59,6 +60,7 @@
         "@typescript-eslint/eslint-plugin": "^6.10.0",
         "@typescript-eslint/parser": "^6.10.0",
         "bullmq": "^4.10.0",
+        "dotenv": "^16.3.1",
         "eslint": "^8.53.0",
         "eslint-plugin-lodash": "^7.4.0",
         "eslint-plugin-react-hooks": "^4.6.0",

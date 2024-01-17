@@ -46,9 +46,17 @@ export type PaymasterConfig = {
 }
 
 export type UserOpParams = {
-    toAddress?: string
-    callData?: string
     value?: ethers.BigNumberish
     signer: ethers.Signer
     paymasterConfig?: PaymasterConfig
+} & (ExecuteSingleData | ExecuteBatchData)
+
+type ExecuteSingleData = {
+    toAddress?: string
+    callData?: string
+}
+
+type ExecuteBatchData = {
+    toAddress?: string[]
+    callData?: string[]
 }

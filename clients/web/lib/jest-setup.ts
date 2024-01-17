@@ -8,6 +8,11 @@ import Olm from '@matrix-org/olm'
 import { configure } from '@testing-library/dom'
 import 'jest-canvas-mock'
 import { queryClient } from './src/query/queryClient'
+import * as dotenv from 'dotenv'
+
+// load any env vars
+// set DOTENV_CONFIG_PATH in package.json script
+dotenv.config({ path: process.env.DOTENV_CONFIG_PATH })
 
 process.env.NODE_ENV = 'test'
 process.env.CASABLANCA_SERVER_URL = process.env.CASABLANCA_SERVER_URL || 'http://localhost:5157'

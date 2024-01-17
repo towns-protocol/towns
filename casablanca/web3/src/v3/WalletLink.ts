@@ -3,9 +3,11 @@ import { IWalletLinkShim } from './WalletLinkShim'
 import { IStaticContractsInfo } from '../IStaticContractsInfo'
 import { arrayify } from 'ethers/lib/utils'
 import { WalletAlreadyLinkedError, WalletNotLinkedError } from '../error-types'
+import { Address } from '../ContractTypes'
 
 export class WalletLink {
     private readonly walletLinkShim: IWalletLinkShim
+    public address: Address
 
     constructor(
         contractInfo: IStaticContractsInfo,
@@ -13,6 +15,7 @@ export class WalletLink {
         provider: ethers.providers.Provider | undefined,
     ) {
         this.walletLinkShim = new IWalletLinkShim(contractInfo.walletLinkAddress, chainId, provider)
+        this.address = contractInfo.walletLinkAddress
     }
 
     public async linkWallet(
@@ -40,12 +43,42 @@ export class WalletLink {
             .linkWalletToRootKey(rootKeyAddress, rootKeySignature, nonce)
     }
 
+    public async encodeLinkWalletFunctionData(
+        rootKey: ethers.Signer,
+        wallet: Address,
+    ): Promise<string> {
+        const rootKeyAddress = await rootKey.getAddress()
+        const walletAddress = wallet
+        const isLinkedAlready = await this.walletLinkShim.read.checkIfLinked(
+            rootKeyAddress,
+            walletAddress,
+        )
+        if (isLinkedAlready) {
+            throw new WalletAlreadyLinkedError()
+        }
+        const nonce = await this.walletLinkShim.read.getLatestNonceForRootKey(rootKeyAddress)
+        const rootKeySignature = await rootKey.signMessage(
+            packAddressWithNonce(walletAddress, nonce),
+        )
+
+        return this.walletLinkShim.interface.encodeFunctionData('linkWalletToRootKey', [
+            rootKeyAddress,
+            rootKeySignature,
+            nonce,
+        ])
+    }
+
     public parseError(error: any): Error {
         return this.walletLinkShim.parseError(error)
     }
 
     public async getLinkedWallets(rootKey: string): Promise<string[]> {
         return this.walletLinkShim.read.getWalletsByRootKey(rootKey)
+    }
+
+    public async checkIfLinked(rootKey: ethers.Signer, wallet: string): Promise<boolean> {
+        const rootKeyAddress = await rootKey.getAddress()
+        return this.walletLinkShim.read.checkIfLinked(rootKeyAddress, wallet)
     }
 
     public async removeLink(

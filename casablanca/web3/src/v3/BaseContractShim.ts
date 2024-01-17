@@ -85,6 +85,16 @@ export class BaseContractShim<
         }
     }
 
+    // TODO: better type enforcing
+    public encodeFunctionData(functionName: string, args: readonly unknown[]): string {
+        const fragment = this.interface.getFunction(functionName)
+        if (!fragment) {
+            throw new Error(`Unknown function ${functionName}`)
+        }
+
+        return this.interface.encodeFunctionData(fragment, args)
+    }
+
     public parseError(error: unknown): Error {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
         const anyError = error as any

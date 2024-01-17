@@ -172,6 +172,74 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 }
                 break
             }
+            case 'createTown_linkWallet': {
+                if (!isHexString(userOperation.sender)) {
+                    return new Response(`ender address ${userOperation.sender} not valid`, {
+                        status: 400,
+                    })
+                }
+                if (!townId) {
+                    return new Response(`Missing townId, cannot verify that town does not exist`, {
+                        status: 400,
+                    })
+                }
+                if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
+                    const verificationLink = await verifyLinkWallet({
+                        rootKeyAddress: userOperation.sender,
+                        env,
+                    })
+                    const verificationCreate = await verifyCreateTown({
+                        rootKeyAddress: userOperation.sender,
+                        townId: townId,
+                        env,
+                    })
+                    if (!verificationLink.verified) {
+                        return new Response(`Unauthorized: ${verificationLink.error}`, {
+                            status: 401,
+                        })
+                    }
+                    if (!verificationCreate.verified) {
+                        return new Response(`Unauthorized: ${verificationCreate.error}`, {
+                            status: 401,
+                        })
+                    }
+                }
+                break
+            }
+            case 'joinTown_linkWallet': {
+                if (!isHexString(userOperation.sender)) {
+                    return new Response(`ender address ${userOperation.sender} not valid`, {
+                        status: 400,
+                    })
+                }
+                if (!townId) {
+                    return new Response(`Missing townId, cannot verify that town does not exist`, {
+                        status: 400,
+                    })
+                }
+                if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
+                    const verificationLink = await verifyLinkWallet({
+                        rootKeyAddress: userOperation.sender,
+                        env,
+                    })
+                    const verificationJoin = await verifyJoinTown({
+                        rootKeyAddress: userOperation.sender,
+                        townId: townId,
+                        env,
+                    })
+                    if (!verificationLink.verified) {
+                        return new Response(`Unauthorized: ${verificationLink.error}`, {
+                            status: 401,
+                        })
+                    }
+                    if (!verificationJoin.verified) {
+                        return new Response(`Unauthorized: ${verificationJoin.error}`, {
+                            status: 401,
+                        })
+                    }
+                }
+                break
+            }
             default:
                 return new Response(`Unknown functionHash ${functionHash}`, { status: 404 })
         }

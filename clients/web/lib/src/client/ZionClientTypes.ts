@@ -135,8 +135,8 @@ export function createTransactionContext<T>(props: {
 
 export function logTxnResult(name: string, txn: TransactionContext<unknown>) {
     if (txn.status === TransactionStatus.Success) {
-        console.log(`[${name}]`, 'Success', txn.data)
+        console.log(`[${name}]`, 'Success', txn.data, txn)
     } else if (txn.status === TransactionStatus.Failed) {
-        console.error(`[${name}]`, 'Failed', txn.error)
+        console.error(`[${name}]`, 'Failed', txn.error, txn)
     }
 }

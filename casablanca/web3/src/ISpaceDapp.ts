@@ -1,4 +1,5 @@
 import {
+    Address,
     BasicRoleInfo,
     ChannelDetails,
     ChannelMetadata,
@@ -113,7 +114,7 @@ export interface ISpaceDapp {
     getWalletLink: () => WalletLinkV3
 
     // userop related
-    getAbstractAccountAddress: (args: UserOpParams) => Promise<string>
+    getAbstractAccountAddress: (args: Pick<UserOpParams, 'signer'>) => Promise<Address>
     getUserOpClient: () => Promise<UseropClient>
     sendUserOp: (
         args: UserOpParams & {

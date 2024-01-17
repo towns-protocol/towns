@@ -6,7 +6,11 @@ import {
     TimelineEvent_OneOf,
     ZTEvent,
 } from '../../../src/types/timeline-types'
-import { TransactionStatus, ZionClientEventHandlers } from '../../../src/client/ZionClientTypes'
+import {
+    TransactionStatus,
+    ZionClientEventHandlers,
+    ZionOpts,
+} from '../../../src/client/ZionClientTypes'
 import { UserIdentifier, createUserIdFromEthereumAddress } from '../../../src/types/user-identifier'
 
 import { CreateSpaceInfo } from '../../../src/types/zion-types'
@@ -22,6 +26,7 @@ import { TokenEntitlementDataTypes, Permission, ITownArchitectBase } from '@rive
 
 export interface ZionTestClientProps {
     eventHandlers?: ZionClientEventHandlers
+    accountAbstractionConfig?: ZionOpts['accountAbstractionConfig']
 }
 
 export class ZionTestClient extends ZionClient {
@@ -66,6 +71,7 @@ export class ZionTestClient extends ZionClient {
                 initialSyncLimit: 20,
                 web3Provider: provider,
                 eventHandlers: props?.eventHandlers,
+                accountAbstractionConfig: props?.accountAbstractionConfig,
                 verbose: true,
             },
             name,

@@ -1147,8 +1147,20 @@ export class ZionClient implements EntitlementsDelegate {
                 return
             }
 
-            const transaction = await this.spaceDapp.joinTown(spaceId, entitledWallet, signer)
-            await transaction.wait()
+            let transaction: TransactionOrUserOperation | undefined = undefined
+
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.spaceDapp.sendJoinTownOp([spaceId, entitledWallet, signer])
+            } else {
+                transaction = await this.spaceDapp.joinTown(spaceId, entitledWallet, signer)
+            }
+            // TODO: should this be separated into create/wait methods like other transactions?
+            await this._waitForBlockchainTransaction({
+                transaction,
+                status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+                receipt: undefined,
+                data: undefined,
+            })
         } catch (error) {
             if (error instanceof AggregateError) {
                 console.error('[mintMembershipTransaction] failed', error)

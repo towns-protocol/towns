@@ -3,7 +3,7 @@ import type { JestConfigWithTsJest } from 'ts-jest'
 const config: JestConfigWithTsJest = {
     verbose: true,
     preset: 'ts-jest/presets/default-esm',
-    setupFilesAfterEnv: ['<rootDir>/jest-setup.ts', '<rootDir>/jest.matchers.ts'],
+    setupFilesAfterEnv: ['<rootDir>/jest-setup.ts', '<rootDir>/jest.matchers.ts', 'dotenv/config'],
     testEnvironment: './jest.env.ts',
     testEnvironmentOptions: { browsers: ['chrome', 'firefox', 'safari'] },
     runner: 'groups',
