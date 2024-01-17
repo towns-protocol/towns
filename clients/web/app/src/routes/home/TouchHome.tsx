@@ -51,7 +51,6 @@ import {
 } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { PersistAndFadeWelcomeLogo } from 'routes/layouts/WelcomeLayout'
 import { useStore } from 'store/store'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { atoms } from 'ui/styles/atoms.css'
@@ -346,8 +345,6 @@ export const TouchHome = () => {
                         </AnimatePresence>
                         <Outlet />
                     </CheckValidSpaceOrInvite>
-                    {/* loading overlay, transition from home screen */}
-                    <PersistAndFadeWelcomeLogo />
                 </TouchTabBarLayout>
                 <AnimatePresence>
                     {activeOverlay === 'main-panel' && <TouchHomeOverlay onClose={onHideOverlay} />}
