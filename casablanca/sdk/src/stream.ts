@@ -10,7 +10,8 @@ import { ParsedEvent, ParsedMiniblock } from './types'
 export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
     readonly clientEmitter: TypedEmitter<EmittedEvents>
     readonly logEmitFromStream: DLogger
-    readonly view: StreamStateView
+    readonly userId: string
+    view: StreamStateView
 
     constructor(
         userId: string,
@@ -21,6 +22,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         super()
         this.clientEmitter = clientEmitter
         this.logEmitFromStream = logEmitFromStream
+        this.userId = userId
         this.view = new StreamStateView(userId, streamId)
     }
 
@@ -40,6 +42,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         prevSnapshotMiniblockNum: bigint,
         cleartexts: Record<string, string> | undefined,
     ): void {
+        this.view = new StreamStateView(this.userId, this.streamId)
         this.view.initialize(
             nextSyncCookie,
             minipoolEvents,

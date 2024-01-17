@@ -133,13 +133,13 @@ export interface ParsedMiniblock {
 
 export interface ParsedStreamAndCookie {
     nextSyncCookie: SyncCookie
+    miniblocks: ParsedMiniblock[]
     events: ParsedEvent[]
 }
 
 export interface ParsedStreamResponse {
     snapshot: Snapshot
     streamAndCookie: ParsedStreamAndCookie
-    miniblocks: ParsedMiniblock[]
     prevSnapshotMiniblockNum: bigint
     eventIds: string[]
 }

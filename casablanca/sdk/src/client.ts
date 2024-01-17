@@ -60,7 +60,7 @@ import {
     makeUserToDeviceStreamId,
     userIdFromAddress,
 } from './id'
-import { SignerContext, makeEvent, unpackMiniblock, unpackStreamResponse } from './sign'
+import { SignerContext, makeEvent, unpackMiniblock, unpackStream } from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
@@ -103,7 +103,7 @@ import {
 import debug from 'debug'
 import { Stream } from './stream'
 import { Code } from '@connectrpc/connect'
-import { usernameChecksum, isIConnectError } from './utils'
+import { usernameChecksum, isIConnectError, genPersistenceStoreName } from './utils'
 import { EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { DecryptionExtensions, EntitlementsDelegate } from './decryptionExtensions'
 import { PersistenceStore } from './persistenceStore'
@@ -186,8 +186,9 @@ export class Client
         this.logInfo = dlog('csb:cl:info', { defaultEnabled: true }).extend(shortId)
         this.logDebug = dlog('csb:cl:debug').extend(shortId)
         this.cryptoStore = cryptoStore
+
         this.persistenceStore = new PersistenceStore(
-            `persistence-${cryptoStore.name.replace('database-', '')}`,
+            genPersistenceStoreName(this.userId, this.rpcClient.url),
         )
         this.streams = new SyncedStreams(this.userId, this.rpcClient, this.persistenceStore, this)
         this.syncedStreamsExtensions = new SyncedStreamsExtension(this)
@@ -265,7 +266,7 @@ export class Client
 
         this.userStreamId = makeUserStreamId(this.userId)
         const userStream = this.createSyncedStream(this.userStreamId)
-        {
+        if (!(await userStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userStreamId)) ??
                 (await this.createUserStream(this.userStreamId))
@@ -274,7 +275,7 @@ export class Client
 
         this.userToDeviceStreamId = makeUserToDeviceStreamId(this.userId)
         const userToDeviceStream = this.createSyncedStream(this.userToDeviceStreamId)
-        {
+        if (!(await userToDeviceStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userToDeviceStreamId)) ??
                 (await this.createUserToDeviceStream(this.userToDeviceStreamId))
@@ -283,7 +284,7 @@ export class Client
 
         this.userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
         const userDeviceKeyStream = this.createSyncedStream(this.userDeviceKeyStreamId)
-        {
+        if (!(await userDeviceKeyStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userDeviceKeyStreamId)) ??
                 (await this.createUserDeviceKeyStream(this.userDeviceKeyStreamId))
@@ -292,7 +293,7 @@ export class Client
 
         this.userSettingsStreamId = makeUserSettingsStreamId(this.userId)
         const userSettingsStream = this.createSyncedStream(this.userSettingsStreamId)
-        {
+        if (!(await userSettingsStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userSettingsStreamId)) ??
                 (await this.createUserSettingsStream(this.userSettingsStreamId))
@@ -313,7 +314,7 @@ export class Client
     private async getUserStream(streamId: string): Promise<ParsedStreamResponse | undefined> {
         try {
             const response = await this.rpcClient.getStream({ streamId })
-            return unpackStreamResponse(response)
+            return unpackStream(response.stream)
         } catch (e) {
             if (isIConnectError(e) && e.code === (Code.NotFound as number)) {
                 return undefined
@@ -336,7 +337,7 @@ export class Client
             events: userEvents,
             streamId: userStreamId,
         })
-        return unpackStreamResponse(response)
+        return unpackStream(response.stream)
     }
 
     private async createUserDeviceKeyStream(
@@ -362,7 +363,7 @@ export class Client
             events: userDeviceKeyEvents,
             streamId: userDeviceKeyStreamId,
         })
-        return unpackStreamResponse(response)
+        return unpackStream(response.stream)
     }
 
     private async createUserToDeviceStream(
@@ -391,7 +392,7 @@ export class Client
             events: userToDeviceEvents,
             streamId: userToDeviceStreamId,
         })
-        return unpackStreamResponse(response)
+        return unpackStream(response.stream)
     }
 
     private async createUserSettingsStream(
@@ -410,7 +411,7 @@ export class Client
             events: userSettingsEvents,
             streamId: userSettingsStreamId,
         })
-        return unpackStreamResponse(response)
+        return unpackStream(response.stream)
     }
 
     async createSpace(spaceId: string | undefined): Promise<{ streamId: string }> {
@@ -604,7 +605,7 @@ export class Client
             streamId: streamId,
         })
 
-        const unpackedResponse = await unpackStreamResponse(response)
+        const unpackedResponse = await unpackStream(response.stream)
         const stream = this.createSyncedStream(streamId)
         await stream.initializeFromResponse(unpackedResponse)
         return { streamId: streamId }
@@ -766,13 +767,13 @@ export class Client
         try {
             this.logCall('getStream', streamId)
             const response = await this.rpcClient.getStream({ streamId })
-            const unpackedResponse = await unpackStreamResponse(response)
+            const unpackedResponse = await unpackStream(response.stream)
             const streamView = new StreamStateView(this.userId, streamId)
             streamView.initialize(
                 unpackedResponse.streamAndCookie.nextSyncCookie,
                 unpackedResponse.streamAndCookie.events,
                 unpackedResponse.snapshot,
-                unpackedResponse.miniblocks,
+                unpackedResponse.streamAndCookie.miniblocks,
                 unpackedResponse.prevSnapshotMiniblockNum,
                 undefined,
                 undefined,
@@ -784,7 +785,7 @@ export class Client
         }
     }
 
-    async initStream(streamId: string, forceDownload: boolean = true): Promise<Stream> {
+    async initStream(streamId: string, forceDownload: boolean = false): Promise<Stream> {
         try {
             this.logCall('initStream', streamId)
             const stream = this.stream(streamId)
@@ -800,7 +801,7 @@ export class Client
                 if (forceDownload || !(await stream.initializeFromPersistence())) {
                     this.logCall('initStream', streamId)
                     const response = await this.rpcClient.getStream({ streamId })
-                    const unpacked = await unpackStreamResponse(response)
+                    const unpacked = await unpackStream(response.stream)
                     await stream.initializeFromResponse(unpacked)
                 }
                 if (!stream.view.syncCookie) {

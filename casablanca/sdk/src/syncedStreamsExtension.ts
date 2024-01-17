@@ -79,9 +79,7 @@ export class SyncedStreamsExtension {
     private async tick(): Promise<void> {
         if (this.highPriorityQueue.length > 0) {
             this.log('Performance: adding high priority streams', this.highPriorityQueue)
-            await Promise.all(
-                this.highPriorityQueue.map((streamId) => this.client.initStream(streamId)),
-            )
+            await Promise.all(this.highPriorityQueue.map((streamId) => this.initStream(streamId)))
             this.highPriorityQueue = []
         }
 
@@ -90,7 +88,16 @@ export class SyncedStreamsExtension {
             'Performance: adding synced streams',
             items.map((item) => item.streamId),
         )
-        await Promise.all(items.map((item) => this.client.initStream(item.streamId)))
+        await Promise.all(items.map((item) => this.initStream(item.streamId)))
+    }
+
+    async initStream(streamId: string) {
+        // Try-catch stream init to avoid all streams being blocked by a single stream
+        try {
+            await this.client.initStream(streamId)
+        } catch (e) {
+            this.log('Error initializing stream', streamId)
+        }
     }
 
     private async stopTicking() {

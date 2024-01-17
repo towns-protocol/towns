@@ -1,14 +1,5 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import {
-    Envelope,
-    EventRef,
-    StreamEvent,
-    Err,
-    Miniblock,
-    GetStreamResponse,
-    CreateStreamResponse,
-    StreamAndCookie,
-} from '@river/proto'
+import { Envelope, EventRef, StreamEvent, Err, Miniblock, StreamAndCookie } from '@river/proto'
 import {
     bin_equal,
     bin_fromHexString,
@@ -153,26 +144,22 @@ export const checkDelegateSig = (
     )
 }
 
-export const unpackStreamResponse = async (
-    response: CreateStreamResponse | GetStreamResponse,
-): Promise<ParsedStreamResponse> => {
-    assert(response.stream !== undefined, 'bad stream')
-    const streamAndCookie = await unpackStreamAndCookie(response.stream)
+export const unpackStream = async (stream?: StreamAndCookie): Promise<ParsedStreamResponse> => {
+    assert(stream !== undefined, 'bad stream')
+    const streamAndCookie = await unpackStreamAndCookie(stream)
     assert(
-        response.stream.miniblocks.length > 0,
+        stream.miniblocks.length > 0,
         `bad stream: no blocks ${streamAndCookie.nextSyncCookie.streamId}`,
     )
-    const miniblocks = await Promise.all(
-        response.stream.miniblocks.map(async (mb) => await unpackMiniblock(mb)),
-    )
-    const snapshot = miniblocks[0].header.snapshot
-    const prevSnapshotMiniblockNum = miniblocks[0].header.prevSnapshotMiniblockNum
+
+    const snapshot = streamAndCookie.miniblocks[0].header.snapshot
+    const prevSnapshotMiniblockNum = streamAndCookie.miniblocks[0].header.prevSnapshotMiniblockNum
     assert(
         snapshot !== undefined,
         `bad block: snapshot is undefined ${streamAndCookie.nextSyncCookie.streamId}`,
     )
     const eventIds = [
-        ...miniblocks.flatMap(
+        ...streamAndCookie.miniblocks.flatMap(
             (mb) => mb.events.map((e) => e.hashStr),
             streamAndCookie.events.map((e) => e.hashStr),
         ),
@@ -181,7 +168,6 @@ export const unpackStreamResponse = async (
     return {
         streamAndCookie,
         snapshot,
-        miniblocks,
         prevSnapshotMiniblockNum,
         eventIds,
     }
@@ -191,9 +177,13 @@ export const unpackStreamAndCookie = async (
     streamAndCookie: StreamAndCookie,
 ): Promise<ParsedStreamAndCookie> => {
     assert(streamAndCookie.nextSyncCookie !== undefined, 'bad stream: no cookie')
+    const miniblocks = await Promise.all(
+        streamAndCookie.miniblocks.map(async (mb) => await unpackMiniblock(mb)),
+    )
     return {
         events: await unpackEnvelopes(streamAndCookie.events),
         nextSyncCookie: streamAndCookie.nextSyncCookie,
+        miniblocks: miniblocks,
     }
 }
 

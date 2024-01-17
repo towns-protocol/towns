@@ -3,7 +3,7 @@
  */
 
 /* eslint-disable jest/no-commented-out-tests */
-import { makeEvent, unpackStreamResponse } from './sign'
+import { makeEvent, unpackStream } from './sign'
 import { SyncedStreams } from './syncedStreams'
 import { makeDonePromise, makeRandomUserContext, makeTestRpcClient } from './util.test'
 import { makeUserStreamId, userIdFromAddress } from './id'
@@ -48,7 +48,7 @@ describe('syncStreams', () => {
             ],
             streamId: alicesUserStreamId,
         })
-        const { streamAndCookie } = await unpackStreamResponse(aliceUserStream)
+        const { streamAndCookie } = await unpackStream(aliceUserStream.stream)
 
         const mockClientEmitter = {} as TypedEmitter<EmittedEvents>
 

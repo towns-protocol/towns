@@ -1,7 +1,7 @@
 import debug from 'debug'
 import { DLogger, check, dlog, hasElements, isDefined } from '@river/mecholm'
 import { StreamRpcClientType } from './makeStreamRpcClient'
-import { unpackStreamResponse } from './sign'
+import { unpackStream } from './sign'
 import { StreamStateView } from './streamStateView'
 
 export class UnauthenticatedClient {
@@ -36,15 +36,16 @@ export class UnauthenticatedClient {
                 isDefined(response.stream) && hasElements(response.stream.miniblocks),
                 'got bad stream',
             )
-            const { streamAndCookie, snapshot, miniblocks, prevSnapshotMiniblockNum } =
-                await unpackStreamResponse(response)
+            const { streamAndCookie, snapshot, prevSnapshotMiniblockNum } = await unpackStream(
+                response.stream,
+            )
             const streamView = new StreamStateView(this.userId, streamId)
 
             streamView.initialize(
                 streamAndCookie.nextSyncCookie,
                 streamAndCookie.events,
                 snapshot,
-                miniblocks,
+                streamAndCookie.miniblocks,
                 prevSnapshotMiniblockNum,
                 undefined,
                 undefined,

@@ -83,3 +83,21 @@ export function removeCommon(x: string[], y: string[]): string[] {
 
     return result
 }
+
+export function genPersistenceStoreName(userId: string, url?: string): string {
+    if (isTestEnv()) {
+        // In multinode, we cannot use the rpc url as since the rpc url is different
+        // for each client created
+        return `persistence-${userId}`
+    }
+
+    // We need this to be unique per rpc host, otherwise we'll start mixing
+    // persisted streams with overlapping ids (user streams) from different hosts.
+    // HNT-4523 https://linear.app/hnt-labs/issue/HNT-4523/decide-what-to-name-the-persistent-db
+    const persistenceStoreSuffix = (url ?? '')
+        .replace('https:', '')
+        .replace('http:', '')
+        .replaceAll('/', '')
+
+    return `persistence-${userId}-${persistenceStoreSuffix}`
+}

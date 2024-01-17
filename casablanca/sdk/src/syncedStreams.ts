@@ -6,7 +6,7 @@ import { PersistenceStore } from './persistenceStore'
 import { Stream } from './stream'
 import { StreamRpcClientType, errorContains } from './makeStreamRpcClient'
 import TypedEmitter from 'typed-emitter'
-import { unpackStreamAndCookie } from './sign'
+import { unpackStreamAndCookie, unpackStream } from './sign'
 import { SyncedStream } from './syncedStream'
 
 export enum SyncState {
@@ -468,8 +468,6 @@ export class SyncedStreams {
             const syncStream = res.stream
             if (syncStream !== undefined) {
                 try {
-                    const streamAndCookie = await unpackStreamAndCookie(syncStream)
-                    const streamId = streamAndCookie.nextSyncCookie?.streamId || ''
                     /*
                     this.log(
                         'sync RESULTS for stream',
@@ -482,10 +480,15 @@ export class SyncedStreams {
                         streamAndCookie.startSyncCookie,
                     )
                     */
+                    const streamId = syncStream.nextSyncCookie?.streamId ?? ''
                     const stream = this.streams.get(streamId)
                     if (stream === undefined) {
                         this.log('sync got stream', streamId, 'NOT FOUND')
+                    } else if (syncStream.syncReset) {
+                        const response = await unpackStream(syncStream)
+                        await stream.initializeFromResponse(response)
                     } else {
+                        const streamAndCookie = await unpackStreamAndCookie(syncStream)
                         const cleartexts = await this.persistenceStore.getCleartexts(
                             streamAndCookie.events.map((e) => e.hashStr),
                         )

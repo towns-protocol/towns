@@ -7,7 +7,7 @@ import { DLogger, bin_toHexString, dlog, isDefined } from '@river/mecholm'
 import { PersistenceStore } from './persistenceStore'
 
 export class SyncedStream extends Stream {
-    log = dlog('csb:syncedStream')
+    log: DLogger
     readonly persistenceStore: PersistenceStore
     constructor(
         userId: string,
@@ -17,6 +17,7 @@ export class SyncedStream extends Stream {
         persistenceStore: PersistenceStore,
     ) {
         super(userId, streamId, clientEmitter, logEmitFromStream)
+        this.log = dlog('csb:syncedStream').extend(userId)
         this.persistenceStore = persistenceStore
     }
 
@@ -42,6 +43,7 @@ export class SyncedStream extends Stream {
 
         const eventIds = miniblocks.flatMap((mb) => mb.events.map((e) => e.hashStr))
         const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
+        this.log('Initializing from persistence', this.streamId)
         super.initialize(
             cachedSyncedStream.syncCookie,
             cachedSyncedStream.minipoolEvents,
@@ -83,12 +85,13 @@ export class SyncedStream extends Stream {
     }
 
     async initializeFromResponse(response: ParsedStreamResponse) {
+        this.log('initializing from response', this.streamId)
         const cleartexts = await this.persistenceStore.getCleartexts(response.eventIds)
         await this.initialize(
             response.streamAndCookie.nextSyncCookie,
             response.streamAndCookie.events,
             response.snapshot,
-            response.miniblocks,
+            response.streamAndCookie.miniblocks,
             response.prevSnapshotMiniblockNum,
             cleartexts,
         )
@@ -100,12 +103,11 @@ export class SyncedStream extends Stream {
         cleartexts: Record<string, string> | undefined,
     ): Promise<void> {
         await super.appendEvents(events, nextSyncCookie, cleartexts)
-
         for (const event of events) {
             const payload = event.event.payload
             switch (payload.case) {
                 case 'miniblockHeader': {
-                    await this.onMiniblockHeader(payload.value, event.envelope.hash)
+                    await this.onMiniblockHeader(payload.value, event, event.envelope.hash)
                     break
                 }
                 default:
@@ -120,7 +122,11 @@ export class SyncedStream extends Stream {
         }
     }
 
-    async onMiniblockHeader(miniblockHeader: MiniblockHeader, hash: Uint8Array) {
+    async onMiniblockHeader(
+        miniblockHeader: MiniblockHeader,
+        miniblockEvent: ParsedEvent,
+        hash: Uint8Array,
+    ) {
         this.log(
             'Received miniblock header',
             miniblockHeader.miniblockNum.toString(),
@@ -141,7 +147,7 @@ export class SyncedStream extends Stream {
         const miniblock: ParsedMiniblock = {
             hash: hash,
             header: miniblockHeader,
-            events: events,
+            events: [...events, miniblockEvent],
         }
         await this.persistenceStore.saveMiniblock(this.streamId, miniblock)
 

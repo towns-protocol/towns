@@ -1,4 +1,4 @@
-import { makeEvent, SignerContext, unpackEnvelopes, unpackStreamResponse } from './sign'
+import { makeEvent, SignerContext, unpackEnvelopes, unpackStream } from './sign'
 import { MembershipOp, SyncStreamsResponse, Envelope, SyncOp } from '@river/proto'
 import { DLogger } from '@river/mecholm'
 import {
@@ -117,7 +117,9 @@ export const bobTalksToHimself = async (
     // Now there must be "channel created" event in the space stream.
     const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
     const envelopes = [
-        ...(await unpackStreamResponse(spaceResponse)).miniblocks.flatMap((x) => x.events),
+        ...(await unpackStream(spaceResponse.stream)).streamAndCookie.miniblocks.flatMap(
+            (x) => x.events,
+        ),
         ...(await unpackEnvelopes(spaceResponse.stream!.events)),
     ]
     const channelCreatePayload = lastEventFiltered(envelopes, getChannelPayload)

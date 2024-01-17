@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { makeEvent, SignerContext, unpackEnvelopes, unpackStreamResponse } from './sign'
+import { makeEvent, SignerContext, unpackEnvelopes, unpackStream } from './sign'
 import { MembershipOp } from '@river/proto'
 import { dlog } from '@river/mecholm'
 import { lastEventFiltered, makeRandomUserContext, makeTestRpcClient } from './util.test'
@@ -114,7 +114,9 @@ describe('workflows', () => {
         expect(userResponse.stream).toBeDefined()
         joinPayload = lastEventFiltered(
             [
-                ...(await unpackStreamResponse(userResponse)).miniblocks.flatMap((x) => x.events),
+                ...(await unpackStream(userResponse.stream)).streamAndCookie.miniblocks.flatMap(
+                    (x) => x.events,
+                ),
                 ...(await unpackEnvelopes(userResponse.stream!.events)),
             ],
             getUserPayload_Membership,
@@ -128,7 +130,9 @@ describe('workflows', () => {
         const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
         expect(spaceResponse.stream).toBeDefined()
         const envelopes = [
-            ...(await unpackStreamResponse(spaceResponse)).miniblocks.flatMap((x) => x.events),
+            ...(await unpackStream(spaceResponse.stream)).streamAndCookie.miniblocks.flatMap(
+                (x) => x.events,
+            ),
             ...(await unpackEnvelopes(spaceResponse.stream!.events)),
         ]
         const channelCreatePayload = lastEventFiltered(envelopes, getChannelPayload)

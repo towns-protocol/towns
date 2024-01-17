@@ -405,12 +405,19 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 		s.receivers.Add(receiver)
 
 		envelopes := make([]*Envelope, 0, 16)
-		// aellis 9/2023 if the sync cookie passes a miniblockNum that's too old for the view,
-		// we just start with the first block that we have loaded
 		miniblockIndex, err := s.view.indexOfMiniblockWithNum(cookie.MinipoolGen)
 		if err != nil {
-			log.Warn("Stream.Sub: out of date cookie.MiniblockNum sending all known blocks.", "error", err.Error())
-			return RiverError(Err_BAD_SYNC_COOKIE, "Stream.Sub: out of date cookie.MiniblockNum sending all known blocks.")
+			// The user's sync cookie is out of date. Send a sync reset and return an up-to-date StreamAndCookie.
+			log.Warn("Stream.Sub: out of date cookie.MiniblockNum. Sending sync reset.", "error", err.Error())
+			receiver.OnUpdate(
+				&StreamAndCookie{
+					Events:         s.view.MinipoolEnvelopes(),
+					NextSyncCookie: s.view.SyncCookie(s.params.Wallet.AddressStr),
+					Miniblocks:     s.view.MiniblocksFromLastSnapshot(),
+					SyncReset:      true,
+				},
+			)
+			return nil
 		}
 
 		// append events from blocks
