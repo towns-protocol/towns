@@ -217,7 +217,7 @@ const SearchResults = (props: { onHide: () => void; searchResults: CombinedResul
                                     id={`search-item-${index}`}
                                 />
                             )
-                            const prevItemType = items[index - 1]?.item.type
+                            const prevItemType = items[index - 1]?.item?.type
                             if (s.item.type !== prevItemType) {
                                 return (
                                     <>

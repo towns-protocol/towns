@@ -26,7 +26,7 @@ export const DirectMessageListItem = (props: {
     const { channel, onSelect, selected, unread } = props
 
     const { latest, unreadCount } = useDMLatestMessage(channel.id)
-    const latestUser = useUser(latest?.sender.id)
+    const latestUser = useUser(latest?.sender?.id)
     const myUserId = useMyUserId()
 
     const onClick = useCallback(() => {

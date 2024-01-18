@@ -22,6 +22,7 @@ import { useDevice } from 'hooks/useDevice'
 import { useSearch } from 'hooks/useSearch'
 import { notUndefined } from 'ui/utils/utils'
 import { SearchContext } from '@components/SearchContext/SearchContext'
+import { useShortcut } from 'hooks/useShortcut'
 import { DirectMessageListItem } from './DirectMessageListItem'
 
 export const DirectMessageList = () => {
@@ -29,7 +30,7 @@ export const DirectMessageList = () => {
 
     const routeMatch = useMatch('messages/:channelId/*')
 
-    const channelId = routeMatch?.params.channelId
+    const channelId = routeMatch?.params?.channelId
     const hashId = useLocation().hash.replace('#', '')
 
     const { dmUnreadChannelIds } = useZionContext()
@@ -74,10 +75,16 @@ export const DirectMessageList = () => {
         [dmChannelIds, dmChannels, threadsStats],
     )
 
+    const searchRef = useRef<HTMLInputElement>(null)
+
+    useShortcut('DisplaySearchModal', () => {
+        searchRef.current?.focus()
+    })
+
     return (
         <Stack scroll padding="sm">
             <Stack minHeight="100svh" paddingBottom="safeAreaInsetBottom" gap="xxs">
-                {channels.length > 0 && <SearchField onSearchValue={onSearch} />}
+                {channels.length > 0 && <SearchField ref={searchRef} onSearchValue={onSearch} />}
 
                 {searchResults.length > 0 ? (
                     <SearchContext.Provider value="messages">
@@ -144,54 +151,57 @@ export const DirectMessageList = () => {
     )
 }
 
-const SearchField = (props: { onSearchValue: (value: string) => void }) => {
-    const { onSearchValue } = props
+const SearchField = React.forwardRef<HTMLInputElement, { onSearchValue: (value: string) => void }>(
+    (props, ref) => {
+        const { onSearchValue } = props
 
-    const [value, setValue] = useState('')
+        const [value, setValue] = useState('')
 
-    const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target) {
-            setValue(e.target.value)
+        const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+            if (e.target) {
+                setValue(e.target.value)
+            }
         }
-    }
 
-    const onClearSearch = useCallback(() => {
-        setValue('')
-    }, [])
+        const onClearSearch = useCallback(() => {
+            setValue('')
+        }, [])
 
-    const deferredValue = useDeferredValue(value)
+        const deferredValue = useDeferredValue(value)
 
-    useEffect(() => {
-        onSearchValue(deferredValue)
-    }, [deferredValue, onSearchValue])
+        useEffect(() => {
+            onSearchValue(deferredValue)
+        }, [deferredValue, onSearchValue])
 
-    return (
-        <Stack horizontal>
-            <Box horizontal grow padding="sm" height="x8" shrink={false}>
-                <TextField
-                    tone="none"
-                    background="level2"
-                    height="100%"
-                    placeholder="Search DMs"
-                    value={value ?? undefined}
-                    onKeyDown={(e) => e.key === 'Escape' && onClearSearch()}
-                    onChange={onChange}
-                />
-            </Box>
-            {!!value && (
-                <Box centerContent>
-                    <IconButton
-                        padding="sm"
-                        size="square_sm"
-                        color="gray2"
-                        icon="close"
-                        onClick={onClearSearch}
+        return (
+            <Stack horizontal>
+                <Box horizontal grow padding="sm" height="x8" shrink={false}>
+                    <TextField
+                        tone="none"
+                        background="level2"
+                        height="100%"
+                        placeholder="Search DMs"
+                        value={value ?? undefined}
+                        ref={ref}
+                        onKeyDown={(e) => e.key === 'Escape' && onClearSearch()}
+                        onChange={onChange}
                     />
                 </Box>
-            )}
-        </Stack>
-    )
-}
+                {!!value && (
+                    <Box centerContent>
+                        <IconButton
+                            padding="sm"
+                            size="square_sm"
+                            color="gray2"
+                            icon="close"
+                            onClick={onClearSearch}
+                        />
+                    </Box>
+                )}
+            </Stack>
+        )
+    },
+)
 
 const useFilteredDirectMessages = () => {
     const { dmChannels: _dmChannels } = useZionContext()
