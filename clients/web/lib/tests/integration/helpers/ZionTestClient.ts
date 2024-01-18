@@ -20,7 +20,6 @@ import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ethers } from 'ethers'
 import { makeUniqueName } from './TestUtils'
 import { toEvent } from '../../../src/hooks/ZionContext/useCasablancaTimelines'
-import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@river/sdk'
 import { TokenEntitlementDataTypes, Permission, ITownArchitectBase } from '@river/web3'
 
@@ -43,7 +42,6 @@ export class ZionTestClient extends ZionClient {
         console.log('========= ZionTestClient: cleanup done =========')
     }
 
-    public matrixClient?: MatrixClient = undefined // override base class to be public for tests
     public casablancaClient?: CasablancaClient = undefined // override base class to be public for tests
 
     public props?: ZionTestClientProps
@@ -79,7 +77,7 @@ export class ZionTestClient extends ZionClient {
         this.props = props
         // initialize our provider that wraps our wallet and chain communication
         this.provider = provider
-        // matrix user identifier
+        // user identifier
         this.userIdentifier = createUserIdFromEthereumAddress(
             this.provider.wallet.address,
             this.chainId,

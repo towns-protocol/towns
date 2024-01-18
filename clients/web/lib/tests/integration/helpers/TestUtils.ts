@@ -2,7 +2,6 @@ import { CreateChannelInfo, CreateSpaceInfo } from 'use-zion-client/src/types/zi
 import { BigNumber, Wallet, ethers } from 'ethers'
 import { ZionTestClient, ZionTestClientProps } from './ZionTestClient'
 
-import { EventTimeline } from 'matrix-js-sdk'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ZionClient } from '../../../src/client/ZionClient'
 import { waitFor } from '@testing-library/dom'
@@ -55,7 +54,7 @@ export async function registerAndStartClients(
 ): Promise<Record<string, ZionTestClient>> {
     // get the chain id for the test network
     const chainId = await getChainId()
-    // create new matrix test clients
+    // create new test clients
     const clients = clientNames.map((name) => new ZionTestClient(chainId, name, props))
     // start them up
     await Promise.all(clients.map((client) => client.registerWalletAndStartClient()))
@@ -98,16 +97,6 @@ export async function registerAndStartClient(
 
 export function makeUniqueName(prefix: string): string {
     return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 4095).toString(16)}`
-}
-
-export function logTimeline(timeline?: EventTimeline) {
-    if (!timeline) {
-        console.log('!!timeline is undefined')
-        return
-    }
-    timeline.getEvents().forEach((event) => {
-        console.log('!! timeline event:', event.getType(), event.getSender(), event.getContent())
-    })
 }
 
 export async function fundWallet(walletToFund: ethers.Wallet) {

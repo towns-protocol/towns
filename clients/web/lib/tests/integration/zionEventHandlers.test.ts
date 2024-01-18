@@ -217,7 +217,7 @@ describe('Zion event handlers test', () => {
         })
 
         expect(authEvents.loggedOut).toBe(false)
-        await sleep(5000) /// todo: fix matrix logout https://linear.app/hnt-labs/issue/HNT-1334/logging-out-is-problematic-in-the-tests
+        await sleep(5000)
         await alice.logout()
         await sleep(5000)
         expect(authEvents.loggedOut).toBe(true)

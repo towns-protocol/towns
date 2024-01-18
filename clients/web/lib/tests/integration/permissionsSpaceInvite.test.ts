@@ -2,7 +2,6 @@
 /**
  * @group casablanca
  */
-import { MAXTRIX_ERROR, MatrixError, NoThrownError } from './helpers/ErrorUtils'
 import {
     createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
@@ -184,15 +183,10 @@ describe('space invite', () => {
                 await alice.joinTown(spaceId, alice.wallet)
             }
         } catch (e) {
-            const error = e as MatrixError
+            const error = e as Error
             /** Assert */
             // check that the returned error wasn't that no error was thrown.
-            if (error.data) {
-                expect(error).not.toBeInstanceOf(NoThrownError)
-                // Forbidden exception because the user does not have Read permission
-                expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
-            } else {
-                // Casablanca
+            if (error) {
                 expect((e as Error).message).toMatch(new RegExp('execution reverted'))
                 expect((e as Error).name).toMatch(new RegExp('Entitlement__NotAllowed'))
             }

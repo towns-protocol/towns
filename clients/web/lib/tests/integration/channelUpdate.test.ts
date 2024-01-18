@@ -1,7 +1,7 @@
 /**
  * @group dendrite
  */
-import { MAXTRIX_ERROR, MatrixError, NoThrownError, getError } from './helpers/ErrorUtils'
+import { ErrorWithCode, NoThrownError, getError } from './helpers/ErrorUtils'
 import { Room } from '../../src/types/zion-types'
 import {
     createTestSpaceGatedByTownAndZionNfts,
@@ -13,10 +13,9 @@ import {
 import { ContractReceipt } from 'ethers'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { createExternalTokenStruct, getContractsInfo, Permission } from '@river/web3'
+import { Err } from '@river/proto'
 
-// TODO: skip for now, refactor to accommodate new contracts
-// https://linear.app/hnt-labs/issue/HNT-1641/testsintegrationchannelupdatetestts
-describe.skip('channel update', () => {
+describe('channel update', () => {
     test('Update the channel with multicall', async () => {
         /** Arrange */
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
@@ -46,10 +45,11 @@ describe.skip('channel update', () => {
         if (!channelId) {
             throw new Error('channelId is undefined')
         }
+        await alice.waitForStream(channelId)
 
         /** Act */
         // bob tries to join the space and fails because he doesn't have the token
-        const bobJoinError = await getError<MatrixError>(async function () {
+        const bobJoinError = await getError<ErrorWithCode>(async function () {
             await bob.joinRoom(channelId, spaceId)
         })
         // alice creates a new role with bob as a member
@@ -93,7 +93,7 @@ describe.skip('channel update', () => {
         expect(receipt?.status).toEqual(1)
         // bob wasn't able to join the space initially
         expect(bobJoinError).not.toBeInstanceOf(NoThrownError)
-        expect(bobJoinError.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
+        expect(bobJoinError.code).toEqual(Err.PERMISSION_DENIED)
         // bob was able to join the space after the channel was updated
         expect(bobJoinedRoom?.id).toBeTruthy()
 

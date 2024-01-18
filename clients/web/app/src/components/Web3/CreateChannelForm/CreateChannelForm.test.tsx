@@ -303,7 +303,7 @@ describe('CreateChannelForm', () => {
         await screen.findByText('There was an error with the transaction. Please try again')
     })
 
-    test('shows permission error message if there was an error with Matrix permissions', async () => {
+    test('shows permission error message if there was an error with permissions', async () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isReady: true,
             isTransactionNetwork: true,
@@ -312,7 +312,7 @@ describe('CreateChannelForm', () => {
         })
 
         vi.spyOn(zionClient, 'useCreateChannelTransaction').mockImplementation(() =>
-            useMockedCreateChannelTransaction('failedWithMatrixPermissionContext'),
+            useMockedCreateChannelTransaction('failedWithPermissionContext'),
         )
 
         vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(

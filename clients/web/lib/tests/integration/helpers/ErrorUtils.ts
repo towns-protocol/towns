@@ -1,7 +1,3 @@
-export enum MAXTRIX_ERROR {
-    M_FORBIDDEN = 'M_FORBIDDEN',
-}
-
 export enum CONTRACT_ERROR {
     AddRoleFailed = 'AddRoleFailed',
     NotAllowed = 'NotAllowed',
@@ -11,13 +7,8 @@ export enum CONTRACT_ERROR {
 
 export class NoThrownError extends Error {}
 
-export interface ErrorData {
-    errorcode: string
-    error: string
-}
-
-export interface MatrixError {
-    data: ErrorData
+export interface ErrorWithCode extends Error {
+    code: number
 }
 
 export async function getError<TError>(call: () => unknown): Promise<TError> {

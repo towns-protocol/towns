@@ -16,8 +16,7 @@ import {
 import { ZionTestClient } from './helpers/ZionTestClient'
 
 describe('historyVisibility', () => {
-    // TODO: https://linear.app/hnt-labs/issue/HNT-1584/testsintegrationhistoryvisibilitytestts
-    test.skip('create public room, send message, join second user, read message', async () => {
+    test('create public room, send message, join second user, read message', async () => {
         // create bob
         const { bob, john } = await registerAndStartClients(['bob', 'john'])
         //
@@ -81,7 +80,7 @@ describe('historyVisibility', () => {
         await alice.logout()
 
         await john.loginWalletAndStartClient()
-        await waitFor(() => expect(john.matrixClient?.getRoom(roomId)).toBeTruthy())
+        await john.waitForStream(roomId)
         //
         john.logEvents(roomId)
         // and we should see the message
@@ -104,7 +103,7 @@ describe('historyVisibility', () => {
 
         await alice2.loginWalletAndStartClient()
 
-        await waitFor(() => expect(alice2.matrixClient?.getRoom(roomId)).toBeTruthy())
+        await alice2.waitForStream(roomId)
 
         await waitFor(
             () => expect(alice2.getMessages(roomId)).toContain('Hello World!'),
@@ -124,7 +123,7 @@ describe('historyVisibility', () => {
 
         await alice3.loginWalletAndStartClient()
 
-        await waitFor(() => expect(alice3.matrixClient?.getRoom(roomId)).toBeTruthy())
+        await alice3.waitForStream(roomId)
 
         await waitFor(
             () => expect(alice3.getMessages(roomId)).toContain('Hello World!'),

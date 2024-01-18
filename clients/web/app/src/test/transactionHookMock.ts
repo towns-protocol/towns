@@ -52,7 +52,7 @@ const failedWithTransactionContext: zionClient.TransactionContext<{
     error: { name: 'whatever', message: 'some error' },
 }
 
-const failedWithMatrixPermissionContext: zionClient.TransactionContext<undefined> = {
+const failedWithPermissionContext: zionClient.TransactionContext<undefined> = {
     status: zionClient.TransactionStatus.Failed,
     transaction: undefined,
     receipt: undefined,
@@ -118,10 +118,7 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
     const createTransactionSpy = vi.fn()
 
     const useMockedCreateTransaction = (
-        outcome:
-            | 'success'
-            | 'failWithTransaction'
-            | 'failedWithMatrixPermissionContext' = 'success',
+        outcome: 'success' | 'failWithTransaction' | 'failedWithPermissionContext' = 'success',
     ): UseMockHookReturn | undefined => {
         const [transactionContext, setTransactionContext] = useState<
             zionClient.TransactionContext<unknown> | undefined
@@ -151,8 +148,8 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
                 await waitFor(() => {
                     if (outcome === 'success') {
                         setTransactionContext(successContext)
-                    } else if (outcome === 'failedWithMatrixPermissionContext') {
-                        setTransactionContext(failedWithMatrixPermissionContext)
+                    } else if (outcome === 'failedWithPermissionContext') {
+                        setTransactionContext(failedWithPermissionContext)
                     } else {
                         setTransactionContext(failedWithTransactionContext)
                     }

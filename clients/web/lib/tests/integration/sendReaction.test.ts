@@ -51,7 +51,6 @@ describe('sendReaction', () => {
 
         // wait for alice to receive the message
         await waitFor(async () => {
-            // TODO - matrixUserId should be fixed as CB users wont have it
             const event = await alice.getLatestEvent<RoomMessageEvent>(channelId)
             expect(event?.content?.body).toEqual('Hello, world from Bob!')
         })

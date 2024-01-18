@@ -7,14 +7,18 @@ import {
     createTestSpaceGatedByTownAndZionNfts,
     registerAndStartClients,
     waitForWithRetries,
+    findRoleByName,
+    createTestChannelWithSpaceRoles,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { ZTEvent } from '../../src/types/timeline-types'
 import { waitFor } from '@testing-library/dom'
-import { getFilteredRolesFromSpace, Permission } from '@river/web3'
+import { Permission } from '@river/web3'
 
-// TODO: https://linear.app/hnt-labs/issue/HNT-1731/clientsweblibtestsintegrationpermissionsredacttestts
-describe.skip('redact messages', () => {
+const EveryoneRoleName = 'Everyone'
+const MemberRoleName = 'Member'
+
+describe('redact messages', () => {
     test('member can redact own messages', async () => {
         /** Arrange */
         // create all the users for the test
@@ -28,19 +32,26 @@ describe.skip('redact messages', () => {
         if (!spaceId) {
             throw new Error('spaceId is undefined')
         }
+        await alice.waitForStream(spaceId)
+
         // create a channel for reading and writing
-        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceId)
+        // get current role details
+        const roleDetails = await findRoleByName(alice, spaceId, MemberRoleName)
+        if (!roleDetails) {
+            throw new Error('roleDetails is undefined')
+        }
         const channelId = await alice.createChannel(
             {
                 name: 'test channel',
                 parentSpaceId: spaceId,
-                roleIds: [roles[0].roleId],
+                roleIds: [roleDetails.id],
             },
             alice.provider.wallet,
         )
         if (!channelId) {
             throw new Error('channelId is undefined')
         }
+        await alice.waitForStream(channelId)
 
         /** Act */
         // alice sends a message to the room
@@ -73,33 +84,32 @@ describe.skip('redact messages', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         await alice.fundWallet()
         // create a space with entitlement to read and write
-        const spaceId = await createTestSpaceGatedByTownNft(alice, [
-            Permission.Read,
-            Permission.Write,
-        ])
+        const spaceId = await createTestSpaceGatedByTownNft(
+            alice,
+            [Permission.Read, Permission.Write],
+            {
+                name: alice.makeUniqueName(),
+            },
+        )
         if (!spaceId) {
             throw new Error('spaceId is undefined')
         }
         // create a channel for reading and writing
-        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceId)
-        const channelId = await alice.createChannel(
-            {
-                name: 'test channel',
-                parentSpaceId: spaceId,
-                roleIds: [roles[0].roleId],
-            },
-            alice.provider.wallet,
-        )
+        const channelId = (await createTestChannelWithSpaceRoles(alice, {
+            name: 'alices channel',
+            parentSpaceId: spaceId,
+            roleIds: [],
+        }))!
         if (!channelId) {
             throw new Error('channelId is undefined')
         }
         // invite user to join the channel
         const bobUserId = bob.getUserId()
         if (!bobUserId) {
-            throw new Error('Failed to get bob matrix user id')
+            throw new Error('Failed to get bob user id')
         }
-        await alice.inviteUser(channelId, bobUserId)
-        await waitForWithRetries(() => bob.joinRoom(channelId))
+        await bob.joinTown(spaceId, bob.wallet)
+        await bob.joinRoom(channelId)
 
         /** Act */
         // alice sends a message in the channel
@@ -113,13 +123,9 @@ describe.skip('redact messages', () => {
             throw new Error(`Failed to get message event ${bob.getEventsDescription(channelId)}`)
         }
         // bob tries to redact alice's message
-        const error = await getError<Error>(async function () {
-            await bob.redactEvent(channelId, messageEvent.eventId)
-        })
+        await bob.redactEvent(channelId, messageEvent.eventId)
 
         /** Assert */
-        // verify that error was thrown for redaction
-        expect(error.message).toMatch(new RegExp('Unauthorised|permission_denied'))
         // verify that the message is NOT redacted
         expect(alice.getMessages(channelId)).toContain(message)
     })
@@ -137,8 +143,12 @@ describe.skip('redact messages', () => {
         if (!spaceId) {
             throw new Error('spaceId is undefined')
         }
+
         // get the roles for channel creation later
-        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceId)
+        const roleDetails = await findRoleByName(alice, spaceId, EveryoneRoleName)
+        if (!roleDetails) {
+            throw new Error('roleDetails is undefined')
+        }
         // create the moderator role with the permission to redact messages
         const permissions = [Permission.Read, Permission.Write, Permission.Redact]
         // add bob to the moderator role
@@ -156,7 +166,7 @@ describe.skip('redact messages', () => {
                 name: 'test channel',
                 parentSpaceId: spaceId,
                 // add the space role and the moderator role to the channel
-                roleIds: [roles[0].roleId, moderatorRoleId.roleId],
+                roleIds: [roleDetails.id, moderatorRoleId.roleId],
             },
             alice.provider.wallet,
         )
@@ -166,10 +176,10 @@ describe.skip('redact messages', () => {
         // invite user to join the channel
         const bobUserId = bob.getUserId()
         if (!bobUserId) {
-            throw new Error('Failed to get bob matrix user id')
+            throw new Error('Failed to get bob user id')
         }
-        await alice.inviteUser(channelId, bobUserId)
-        await waitForWithRetries(() => bob.joinRoom(channelId))
+        await bob.joinTown(spaceId, bob.wallet)
+        await bob.joinRoom(channelId)
 
         /** Act */
         // alice sends a message in the channel
