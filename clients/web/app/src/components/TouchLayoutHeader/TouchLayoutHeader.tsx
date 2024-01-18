@@ -5,6 +5,7 @@ import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceIn
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { useShowHasUnreadBadgeForOtherSpaces } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { useMuteSettings } from 'api/lib/notificationSettings'
+import { BugReportButton } from '@components/BugReportButton/BugReportButton'
 
 type Props = {
     onDisplayMainPanel: () => void
@@ -78,7 +79,7 @@ export const TouchLayoutHeader = (props: Props) => {
                 ) : (
                     <Box grow />
                 )}
-
+                <BugReportButton />
                 <IconButton
                     icon="info"
                     color="default"

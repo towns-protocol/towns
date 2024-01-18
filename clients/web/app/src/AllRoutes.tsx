@@ -1,7 +1,6 @@
 import React, { Suspense } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { useZionContext } from 'use-zion-client'
-import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { Box, Stack } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
@@ -22,11 +21,6 @@ export const AllRoutes = () => {
 
     return (
         <>
-            {!isAuthenticated && (
-                <Box position="fixed" left="lg" bottom="lg">
-                    <ErrorReportModal />
-                </Box>
-            )}
             <Routes>
                 <Route element={<ResponsiveOutlet />}>
                     {/* TODO: Remove extra level */}

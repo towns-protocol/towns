@@ -1,24 +1,31 @@
 import React from 'react'
-import { Box, Stack } from '@ui'
+import { BugReportButton } from '@components/BugReportButton/BugReportButton'
 import { ProfileCardButton } from '@components/ProfileCardButton/ProfileCardButton'
 import { SearchBar } from '@components/SearchBar/SearchBar'
+import { Box, Stack } from '@ui'
 import { vars } from 'ui/styles/vars.css'
 
-export const TopBar = () => (
-    <Stack horizontal minHeight="x7">
-        <Box centerContent width="x8">
-            <a href="https://towns.com" rel="noreferrer, noopener">
-                <LogoSingleLetter />
-            </a>
-        </Box>
-        <Box grow centerContent>
-            <SearchBar />
-        </Box>
-        <Box centerContent width="x8" paddingRight="md">
-            <ProfileCardButton />
-        </Box>
-    </Stack>
-)
+export const TopBar = () => {
+    return (
+        <Stack horizontal minHeight="x7">
+            <Box centerContent width="x8">
+                <a href="https://towns.com" rel="noreferrer, noopener">
+                    <LogoSingleLetter />
+                </a>
+            </Box>
+            <Box grow centerContent>
+                <SearchBar />
+            </Box>
+
+            <Stack horizontal gap="sm" paddingRight="md">
+                {<BugReportButton />}
+                <Box centerContent width="x6">
+                    <ProfileCardButton />
+                </Box>
+            </Stack>
+        </Stack>
+    )
+}
 
 const LogoSingleLetter = () => (
     <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">

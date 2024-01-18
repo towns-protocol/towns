@@ -180,6 +180,29 @@ export const BottomAlignedEllipsis = forwardRef<SVGSVGElement, SVGIconProps>((pr
         />
     </svg>
 ))
+
+export const BugIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M12 4C8.27232 4 5.14012 6.54955 4.25203 10H11L13 10H19.748C18.8599 6.54955 15.7277 4 12 4ZM11 12L4 12C4 16.0796 7.05369 19.446 11 19.9381L11 12ZM13 19.9381C16.9463 19.446 20 16.0796 20 12H13L13 19.9381ZM2 12C2 9.34394 3.0355 6.92974 4.72483 5.13907L3.29289 3.70714C2.90237 3.31661 2.90237 2.68345 3.29289 2.29292C3.68342 1.9024 4.31658 1.9024 4.70711 2.29292L6.23922 3.82504C7.86772 2.67536 9.85499 2 12 2C14.145 2 16.1323 2.67536 17.7608 3.82504L19.2929 2.29292C19.6834 1.9024 20.3166 1.9024 20.7071 2.29292C21.0976 2.68345 21.0976 3.31661 20.7071 3.70714L19.2752 5.13907C20.9645 6.92974 22 9.34394 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
+export const BugFillIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M6.23922 3.82504C7.86772 2.67536 9.85499 2 12 2C14.145 2 16.1323 2.67536 17.7608 3.82504L19.2929 2.29292C19.6834 1.9024 20.3166 1.9024 20.7071 2.29292C21.0976 2.68345 21.0976 3.31661 20.7071 3.70714L19.2752 5.13907C20.5289 6.46797 21.4225 8.14028 21.8 10L13 10L11 10H2.20004C2.57754 8.14028 3.47114 6.46797 4.72483 5.13907L3.29289 3.70714C2.90237 3.31661 2.90237 2.68345 3.29289 2.29292C3.68342 1.9024 4.31658 1.9024 4.70711 2.29292L6.23922 3.82504ZM2 12C2 17.1853 5.94668 21.4489 11 21.9506L11 12L2 12ZM13 21.9506C18.0533 21.4489 22 17.1853 22 12H13L13 21.9506Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const BulletedListIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -1499,6 +1522,8 @@ const iconMap = {
     blockquote: BlockQuoteIcon,
     bold: BoldIcon,
     bottomAlignedEllipsis: BottomAlignedEllipsis,
+    bug: BugIcon,
+    bugFill: BugFillIcon,
     bulletedlist: BulletedListIcon,
     camera: Camera,
     check: CheckIcon,

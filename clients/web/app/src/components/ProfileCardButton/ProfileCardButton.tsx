@@ -36,8 +36,6 @@ export const ProfileCardButton = () => {
             <Box
                 hoverable={!isSpaceCreateRoute}
                 cursor={isSpaceCreateRoute ? 'auto' : 'pointer'}
-                padding="sm"
-                rounded="sm"
                 tooltip={isSpaceCreateRoute ? undefined : 'Profile Info'}
                 tooltipOptions={{ placement: 'horizontal', immediate: true }}
                 onClick={!isSpaceCreateRoute && hasAvatar ? onClick : undefined}

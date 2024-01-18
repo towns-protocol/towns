@@ -7,10 +7,12 @@ type Props = {
     label?: string
     clipboardContent?: string
     color?: TextProps['color']
+    fontSize?: TextProps['fontSize']
     children?: React.ReactNode
 }
 
 export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
+    const { fontSize = 'md' } = props
     const [copied, setCopied] = useState(false)
     const [, copy] = useCopyToClipboard()
     const color = props.color ?? 'gray2'
@@ -60,7 +62,7 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
                 ref={ref}
                 onClick={onCopy}
             >
-                <Text truncate size="md" color={color}>
+                <Text truncate size={fontSize} color={color}>
                     {props.children || props.label}
                 </Text>
                 <Box ref={iconRef} pointerEvents="none">

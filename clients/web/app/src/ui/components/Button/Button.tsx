@@ -23,7 +23,7 @@ type Props = {
     StyleProps &
     Pick<
         BoxProps,
-        'aspectRatio' | 'color' | 'fontWeight' | 'inset' | 'insetX' | 'insetY' | 'border'
+        'grow' | 'aspectRatio' | 'color' | 'fontWeight' | 'inset' | 'insetX' | 'insetY' | 'border'
     >
 
 export type ButtonProps = Props

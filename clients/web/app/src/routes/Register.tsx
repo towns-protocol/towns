@@ -1,12 +1,11 @@
 import React from 'react'
 import { Box, Stack, Text } from '@ui'
 import { SignupForm } from '@components/RegisterForm'
-import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
+
 import { useDevice } from 'hooks/useDevice'
 
 export const Register = () => {
     const { isTouch } = useDevice()
-    const offset = isTouch ? 'none' : 'lg'
     return (
         <Stack
             overflow="auto"
@@ -23,14 +22,6 @@ export const Register = () => {
                 </Box>
                 <SignupForm />
             </Stack>
-            <Box
-                position={isTouch ? 'relative' : 'fixed'}
-                left={offset}
-                bottom={offset}
-                padding="lg"
-            >
-                <ErrorReportModal />
-            </Box>
         </Stack>
     )
 }

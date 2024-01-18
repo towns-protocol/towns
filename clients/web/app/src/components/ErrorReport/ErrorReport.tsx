@@ -1,18 +1,30 @@
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { z } from 'zod'
 import { hexlify, randomBytes } from 'ethers/lib/utils'
 import { useMutation } from 'wagmi'
 import { datadogRum } from '@datadog/browser-rum'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { Button, ErrorMessage, FormRender, Icon, Paragraph, Stack, Text, TextField } from '@ui'
+import {
+    Box,
+    Button,
+    ErrorMessage,
+    FormRender,
+    Icon,
+    MotionBox,
+    Paragraph,
+    Stack,
+    Text,
+    TextField,
+} from '@ui'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { useDevice } from 'hooks/useDevice'
 import { PanelButton } from '@components/Panel/Panel'
 import { bufferedLogger } from 'utils/wrappedlogger'
+import { useStore } from 'store/store'
+import { BetaDebugger } from 'BetaDebugger'
 
 const FormStateKeys = {
     name: 'name',
@@ -28,7 +40,10 @@ type FormState = {
 
 const schema = z.object({
     [FormStateKeys.name]: z.string().min(1, 'Please enter your name.'),
-    [FormStateKeys.email]: z.string().email('Please enter a valid email address.'),
+    [FormStateKeys.email]: z.union([
+        z.literal(''),
+        z.string().email('Please enter a valid email address.'),
+    ]),
     [FormStateKeys.comments]: z.string().min(1, 'Please enter a description.'),
 })
 
@@ -86,24 +101,35 @@ export const ErrorReportModal = (props: { minimal?: boolean }) => {
 
             {modal && (
                 <ModalContainer onHide={onHide}>
-                    <ErrorReportForm onHide={onHide} />
+                    <ErrorReportForm />
                 </ModalContainer>
             )}
         </>
     )
 }
 
-export const ErrorReportForm = (props: { onHide: () => void }) => {
+export const ErrorReportForm = () => {
     const [success, setSuccess] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
-    const { isTouch } = useDevice()
     const { mutate: doCustomError, isLoading } = useMutation(postCustomError)
+
+    const { setSidePanel, setBugReportCredentials, bugReportCredentials } = useStore(
+        ({ setSidePanel, setBugReportCredentials, bugReportCredentials }) => ({
+            setSidePanel,
+            setBugReportCredentials,
+            bugReportCredentials,
+        }),
+    )
+
+    const onCancel = useCallback(() => {
+        setSidePanel(null)
+    }, [setSidePanel])
 
     if (success) {
         return (
             <Stack centerContent gap="x4" padding="x4">
                 <Text>Thank you for your submission. Our team has been notified.</Text>
-                <Button tone="cta1" onClick={props.onHide}>
+                <Button tone="cta1" onClick={onCancel}>
                     Close
                 </Button>
             </Stack>
@@ -111,78 +137,122 @@ export const ErrorReportForm = (props: { onHide: () => void }) => {
     }
 
     return (
-        <Stack padding={isTouch ? 'md' : 'none'} gap="lg">
-            <FormRender<FormState>
-                defaultValues={defaultValues}
-                schema={schema}
-                id="error-report-form"
-                onSubmit={(data) => {
-                    doCustomError(data, {
-                        onSuccess: () => {
-                            setSuccess(true)
-                        },
-                        onError: () => {
-                            setErrorMessage(
-                                `There was an error while submitting your feedback. Please try again later.`,
-                            )
-                        },
-                    })
-                }}
-            >
-                {({ register, formState }) => (
-                    <Stack gap="sm">
+        <FormRender<FormState>
+            grow
+            defaultValues={{ ...defaultValues, ...bugReportCredentials }}
+            schema={schema}
+            id="error-report-form"
+            onSubmit={(data) => {
+                setBugReportCredentials({ name: data.name, email: data.email })
+                doCustomError(data, {
+                    onSuccess: () => {
+                        setSuccess(true)
+                    },
+                    onError: () => {
+                        setErrorMessage(
+                            `There was an error while submitting your feedback. Please try again later.`,
+                        )
+                    },
+                })
+            }}
+        >
+            {({ register, formState }) => (
+                <Stack gap grow>
+                    <MotionBox layout="position">
                         <TextField
                             autoFocus
                             background="level2"
                             placeholder="Name"
+                            tone={formState.errors[FormStateKeys.name] ? 'error' : 'neutral'}
                             message={
                                 <ErrorMessage
+                                    preventSpace
                                     errors={formState.errors}
                                     fieldName={FormStateKeys.name}
                                 />
                             }
                             {...register(FormStateKeys.name)}
                         />
+                    </MotionBox>
+                    <MotionBox layout="position">
                         <TextField
                             background="level2"
-                            placeholder="Email"
+                            placeholder="Email (optional)"
+                            tone={formState.errors[FormStateKeys.email] ? 'error' : 'neutral'}
                             message={
                                 <ErrorMessage
+                                    preventSpace
                                     errors={formState.errors}
                                     fieldName={FormStateKeys.email}
                                 />
                             }
                             {...register(FormStateKeys.email)}
                         />
+                    </MotionBox>
+                    <MotionBox layout="position">
                         <TextArea
                             paddingY="md"
                             background="level2"
                             placeholder="Please describe your issue"
                             height="150"
                             maxLength={400}
+                            tone={formState.errors[FormStateKeys.comments] ? 'error' : 'neutral'}
                             message={
                                 <ErrorMessage
+                                    preventSpace
                                     errors={formState.errors}
                                     fieldName={FormStateKeys.comments}
                                 />
                             }
                             {...register(FormStateKeys.comments)}
                         />
-                        {errorMessage && (
-                            <Stack paddingBottom="sm">
-                                <Text color="error">{errorMessage}</Text>
-                            </Stack>
-                        )}
-                        <Stack horizontal gap justifyContent="end">
-                            <Button onClick={props.onHide}>Cancel</Button>
-                            <Button tone="cta1" type="submit" disabled={isLoading}>
-                                {isLoading && <ButtonSpinner />}
-                                Submit
-                            </Button>
+                    </MotionBox>
+                    <DebugInfo />
+                    {errorMessage && (
+                        <Stack paddingBottom="sm">
+                            <Text color="error">{errorMessage}</Text>
                         </Stack>
+                    )}
+
+                    <Box grow />
+                    <Stack horizontal gap justifyContent="end">
+                        <Button grow tone="cta1" type="submit" disabled={isLoading}>
+                            {isLoading && <ButtonSpinner />}
+                            Submit
+                        </Button>
                     </Stack>
-                )}
-            </FormRender>
-        </Stack>
+                </Stack>
+            )}
+        </FormRender>
+    )
+}
+
+const DebugInfo = () => {
+    const [isDebugInfoOpen, setIsDebugInfoOpen] = useState(true)
+    const onToggle = useCallback(() => {
+        setIsDebugInfoOpen((v) => !v)
+    }, [])
+    return (
+        <Box elevateReadability borderRadius="sm" overflow="hidden">
+            <Box
+                horizontal
+                height="x6"
+                cursor="pointer"
+                padding="md"
+                background={isDebugInfoOpen ? 'level2' : 'level1'}
+                color="gray2"
+                alignItems="center"
+                gap="sm"
+                onClick={onToggle}
+            >
+                <Icon type="info" size="square_sm" />
+                <Text size="sm">Debug information</Text>
+            </Box>
+            {isDebugInfoOpen && (
+                <Box padding>
+                    <BetaDebugger />
+                </Box>
+            )}
+        </Box>
     )
 }

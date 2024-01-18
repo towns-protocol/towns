@@ -1,15 +1,11 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback } from 'react'
 import { useSpaceContext, useZionContext } from 'use-zion-client'
-import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
 import { useAuth } from 'hooks/useAuth'
 import { shortAddress } from 'ui/utils/utils'
 import { Box, IconButton, MotionBox, MotionStack, Stack, Text } from '@ui'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
-import { ModalContainer } from '@components/Modals/ModalContainer'
-import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
 import { transitions } from 'ui/transitions/transitions'
-import { NavItem } from '@components/NavItem/_NavItem'
 import { PATHS } from 'routes'
 
 type Props = {
@@ -23,9 +19,6 @@ export const TouchHomeOverlay = (props: Props) => {
     const { spaces } = useZionContext()
     const { spaceId } = useSpaceContext()
     const navigate = useNavigate()
-    const [isErrorReportModalVisible, setErrorReportModalVisible] = useState(false)
-    const showErrorReportModal = useEvent(() => setErrorReportModalVisible(true))
-    const hideErrorReportModal = useEvent(() => setErrorReportModalVisible(false))
 
     const profileClicked = useCallback(() => {
         const path = `/${PATHS.SPACES}/${spaceId}/${PATHS.PROFILE}/me`
@@ -99,18 +92,7 @@ export const TouchHomeOverlay = (props: Props) => {
                             Towns {APP_VERSION} ({APP_COMMIT_HASH})
                         </Text>
                     </Box>
-                    <NavItem padding="none" onClick={showErrorReportModal}>
-                        <Text textAlign="left" color="gray1" fontSize="sm">
-                            Send us Feedback
-                        </Text>
-                    </NavItem>
                 </Stack>
-
-                {isErrorReportModalVisible && (
-                    <ModalContainer touchTitle="Report a bug" onHide={hideErrorReportModal}>
-                        <ErrorReportForm onHide={hideErrorReportModal} />
-                    </ModalContainer>
-                )}
             </MotionStack>
         </Box>
     )

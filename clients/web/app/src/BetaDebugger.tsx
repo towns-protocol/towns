@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react'
 import { useZionContext } from 'use-zion-client'
 import { usePrivyWagmi } from '@privy-io/wagmi-connector'
 import { useEmbeddedWallet } from '@towns/privy'
-import { Box, Button, Paragraph, Text, TextButton } from '@ui'
+import { Box, Button, Paragraph, Stack, Text, TextButton } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { useNetworkStatus } from 'hooks/useNetworkStatus'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 
 export function BetaDebugger() {
     const { wallet: activeWallet } = usePrivyWagmi()
@@ -26,31 +27,39 @@ export function BetaDebugger() {
     }, [activeWallet?.address, embeddedWallet?.address])
 
     return (
-        <Box paddingTop="safeAreaInsetTop" position="topLeft">
-            <Box
-                horizontal
-                paddingLeft="xs"
-                paddingTop="xs"
-                fontSize="xs"
-                zIndex="debug"
-                background="level1"
-                pointerEvents="none"
-                alignItems="center"
-                gap="sm"
-            >
-                <Box
-                    width="x1"
-                    height="x1"
-                    rounded="full"
-                    background={streamSyncActive && !isOffline ? 'cta1' : 'error'}
-                />
+        <>
+            <Box gap alignItems="start">
+                <Stack horizontal gap="sm" justifyContent="center">
+                    <Box
+                        width="x1"
+                        height="x1"
+                        rounded="full"
+                        background={streamSyncActive && !isOffline ? 'cta1' : 'error'}
+                    />
+                    <Text color={streamSyncActive && !isOffline ? 'cta1' : 'error'} fontSize="sm">
+                        {streamSyncActive && !isOffline ? 'Sync active' : 'Sync Offline'}
+                    </Text>
+                </Stack>
 
-                <Text size="xs" color={mismatchedActiveWallet ? 'error' : 'default'}>
-                    Active wallet: {shortAddress(activeWallet?.address ?? '')}
-                </Text>
-                <Box pointerEvents="all">
-                    <TextButton color="error" onClick={show}>
-                        <Paragraph size="xs">Reset</Paragraph>
+                <Stack
+                    horizontal
+                    gap="xs"
+                    color={mismatchedActiveWallet ? 'error' : 'gray1'}
+                    alignItems="center"
+                >
+                    <Paragraph size="sm">Active Wallet:</Paragraph>
+                    <ClipboardCopy
+                        clipboardContent={activeWallet?.address}
+                        label={shortAddress(activeWallet?.address ?? '')}
+                    />
+                </Stack>
+                <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
+                    <Paragraph size="sm">App Version:</Paragraph>
+                    <ClipboardCopy clipboardContent={APP_COMMIT_HASH} label={APP_COMMIT_HASH} />
+                </Stack>
+                <Box padding="sm">
+                    <TextButton tone="level3" color="negative" onClick={show}>
+                        <Paragraph size="sm">Reset Caches</Paragraph>
                     </TextButton>
                 </Box>
             </Box>
@@ -71,7 +80,7 @@ export function BetaDebugger() {
                     </Box>
                 </ModalContainer>
             )}
-        </Box>
+        </>
     )
 }
 

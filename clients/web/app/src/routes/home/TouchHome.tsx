@@ -1,7 +1,7 @@
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
-import React, { useCallback, useMemo, useState } from 'react'
-import { Outlet, useNavigate } from 'react-router'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useOutlet } from 'react-router'
 import {
     ChannelContextProvider,
     DMChannelContextUserLookupProvider,
@@ -58,6 +58,7 @@ import { vars } from 'ui/styles/vars.css'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { DMChannelMenuItem, MixedChannelMenuItem, useSortedChannels } from 'hooks/useSortedChannels'
 import { notUndefined } from 'ui/utils/utils'
+import { BugReportPanel } from 'routes/BugReportPanel'
 import { AllChannelsList, ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
@@ -343,7 +344,7 @@ export const TouchHome = () => {
                                 </MotionBox>
                             </MotionStack>
                         </AnimatePresence>
-                        <Outlet />
+                        <OutletOrPanel />
                     </CheckValidSpaceOrInvite>
                 </TouchTabBarLayout>
                 <AnimatePresence>
@@ -360,6 +361,29 @@ export const TouchHome = () => {
             </VisualViewportContextProvider>
         </ErrorBoundary>
     )
+}
+
+const OutletOrPanel = () => {
+    const { sidePanel, setSidePanel } = useStore(({ sidePanel, setSidePanel }) => ({
+        sidePanel,
+        setSidePanel,
+    }))
+    const outlet = useOutlet()
+    const outletRef = useRef(outlet)
+
+    useEffect(() => {
+        if (outlet && !outletRef.current && sidePanel) {
+            setSidePanel(null)
+        }
+        outletRef.current = outlet
+    }, [outlet, setSidePanel, sidePanel])
+
+    const panel = sidePanel === 'bugReport' ? <BugReportPanel /> : null
+
+    // precedence: panel (state) > outlet (route)
+    const panelOrOutlet = panel || outlet
+
+    return panelOrOutlet
 }
 
 const ErrorFallbackComponent = (props: { error: Error }) => {

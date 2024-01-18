@@ -21,6 +21,10 @@ interface AppState {
     searchTerms: string
     mutedChannelIds: string[]
     setMutedChannelIds: (mutedChannelIds: string[]) => void
+    sidePanel: string | null
+    setSidePanel: (sidePanel: string | null) => void
+    setBugReportCredentials: (value: Partial<{ name: string; email: string }>) => void
+    bugReportCredentials: { name: string; email: string }
 }
 
 export const GLOBAL_STORE_NAME = 'towns/global'
@@ -83,6 +87,21 @@ export const useStore = create(
             searchTerms: '',
             setSearchTerms: (searchTerms) => {
                 set(() => ({ searchTerms }))
+            },
+            sidePanel: null,
+            setSidePanel: (sidePanel) => {
+                set(() => ({ sidePanel }))
+            },
+            bugReportCredentials: { name: '', email: '' },
+            setBugReportCredentials: (
+                bugReportCredentials: Partial<{ name: string; email: string }>,
+            ) => {
+                set((state) => ({
+                    bugReportCredentials: {
+                        ...state.bugReportCredentials,
+                        ...bugReportCredentials,
+                    },
+                }))
             },
         }),
         {

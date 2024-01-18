@@ -11,7 +11,6 @@ import {
     useSpaceUnreadThreadMentions,
 } from 'use-zion-client'
 import { CreateDirectMessage } from '@components/DirectMessages/CreateDirectMessage'
-import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
@@ -275,7 +274,6 @@ export const SpaceSideBar = (props: Props) => {
                     <Text textAlign="center" color="gray2" fontSize="sm">
                         Towns {APP_VERSION} ({APP_COMMIT_HASH})
                     </Text>
-                    <ErrorReportModal />
                 </Box>
             </FadeInBox>
             {isBrowseChannelsModalVisible ? (

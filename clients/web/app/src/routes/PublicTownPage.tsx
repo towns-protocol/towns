@@ -9,7 +9,7 @@ import { Allotment } from 'allotment'
 import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
+
 import { PageLogo } from '@components/Logo/Logo'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
@@ -22,7 +22,6 @@ import { BottomBarLayout } from '@components/Web3/MembershipNFT/BottomBar'
 import { Box, BoxProps, Button, Card, Heading, Icon, IconProps, Paragraph, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
-import { useDevice } from 'hooks/useDevice'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useJoinTown } from 'hooks/useJoinTown'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
@@ -70,8 +69,6 @@ export const PublicTownPage = () => {
         }
     }, [meetsMembershipRequirements, joinSpace])
 
-    const { isTouch } = useDevice()
-
     useErrorToast({ errorMessage: isNoFundsError ? undefined : errorMessage })
 
     return spaceInfo ? (
@@ -98,7 +95,6 @@ export const PublicTownPage = () => {
                             position="fixed"
                             bottom="none"
                             zIndex="above"
-                            errorReportButton={<ErrorReportModal minimal={isTouch} />}
                             buttonContent={
                                 <Box grow>
                                     {isAuthenticatedAndConnected ? (

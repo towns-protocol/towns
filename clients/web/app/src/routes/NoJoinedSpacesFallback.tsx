@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Membership, useZionClient, useZionContext } from 'use-zion-client'
-import { ErrorReportModal } from '@components/ErrorReport/ErrorReport'
 import { Box, Button, Heading, Stack, Text } from '@ui'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { PATHS } from 'routes'
@@ -81,18 +80,6 @@ export const NoJoinedSpacesFallback = () => {
                         </Box>
                     </Stack>
                 </Stack>
-                <Box
-                    centerContent={isTouch}
-                    position="absolute"
-                    width="100%"
-                    paddingBottom="lg"
-                    paddingLeft={isTouch ? 'none' : 'lg'}
-                    bottom="none"
-                >
-                    <div>
-                        <ErrorReportModal />
-                    </div>
-                </Box>
             </Stack>
         </CentralPanelLayout>
     )
