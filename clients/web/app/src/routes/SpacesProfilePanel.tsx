@@ -18,9 +18,10 @@ import { usePushNotifications } from 'hooks/usePushNotifications'
 import { Panel, PanelButton } from '@components/Panel/Panel'
 import { NESTED_PROFILE_PANEL_PATHS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { isTouch } from 'hooks/useDevice'
+import { useDevice } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
+import { useRequestShakePermissions } from '@components/BugReportButton/ShakeToReport'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const navigate = useNavigate()
@@ -74,7 +75,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const isMeRoute = matchRoutes([{ path: '/me' }], location) || profileId === 'me'
 
     const onWalletLinkingClick = useEvent(() => {
-        if (isTouch()) {
+        if (isTouch) {
             setModal('wallets')
         } else {
             navigate(`${location.pathname}/${NESTED_PROFILE_PANEL_PATHS.WALLETS}`, {
@@ -117,7 +118,19 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const onThemeClick = () => {
         setTheme(theme === 'light' ? 'dark' : 'light')
     }
+
+    const { requestPermission, revokePermission, permissionStatus } = useRequestShakePermissions()
+    const onActivateShake = useCallback(() => {
+        if (permissionStatus === 'granted') {
+            revokePermission()
+        } else {
+            requestPermission()
+        }
+    }, [permissionStatus, requestPermission, revokePermission])
+
     const isCurrentUser = user?.userId === profileUser?.userId
+
+    const { isTouch } = useDevice()
 
     return (
         <Stack gap>
@@ -195,6 +208,21 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                                     </Paragraph>
                                 </Stack>
                             </Stack>
+                        </PanelButton>
+                    )}
+                    {isTouch && (
+                        <PanelButton onClick={onActivateShake}>
+                            <Box width="height_md" alignItems="center">
+                                <Icon
+                                    type={permissionStatus === 'granted' ? 'shakeOff' : 'shake'}
+                                    size="square_sm"
+                                />
+                            </Box>
+                            {permissionStatus === 'granted' ? (
+                                <Paragraph color="gray1">Disable Shake to Report</Paragraph>
+                            ) : (
+                                <Paragraph color="gray1">Enable Shake to Report</Paragraph>
+                            )}
                         </PanelButton>
                     )}
                     <PanelButton onClick={onThemeClick}>

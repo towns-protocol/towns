@@ -16,17 +16,21 @@ export const BugReportButton = () => {
     }, [setSidePanel, sidePanel])
 
     return (
-        <IconButton
-            alignSelf="center"
-            padding="line"
-            background="level2"
-            size="square_md"
-            icon={sidePanel === 'bugReport' ? 'bugFill' : 'bug'}
-            rounded="sm"
-            tooltip="Report a bug"
-            tooltipOptions={{ placement: 'horizontal' }}
-            color={!streamSyncActive ? 'error' : sidePanel === 'bugReport' ? 'default' : 'gray1'}
-            onClick={onBugReportClick}
-        />
+        <>
+            <IconButton
+                alignSelf="center"
+                padding="line"
+                background="level2"
+                size="square_md"
+                icon={sidePanel === 'bugReport' ? 'bugFill' : 'bug'}
+                rounded="sm"
+                tooltip="Report a bug"
+                tooltipOptions={{ placement: 'horizontal' }}
+                color={
+                    !streamSyncActive ? 'error' : sidePanel === 'bugReport' ? 'default' : 'gray1'
+                }
+                onClick={onBugReportClick}
+            />
+        </>
     )
 }

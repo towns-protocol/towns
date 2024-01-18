@@ -59,6 +59,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { DMChannelMenuItem, MixedChannelMenuItem, useSortedChannels } from 'hooks/useSortedChannels'
 import { notUndefined } from 'ui/utils/utils'
 import { BugReportPanel } from 'routes/BugReportPanel'
+import { ShakeToReport } from '@components/BugReportButton/ShakeToReport'
 import { AllChannelsList, ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
@@ -198,6 +199,7 @@ export const TouchHome = () => {
 
     return (
         <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
+            <ShakeToReport />
             <VisualViewportContextProvider>
                 <TouchTabBarLayout>
                     <CheckValidSpaceOrInvite>
