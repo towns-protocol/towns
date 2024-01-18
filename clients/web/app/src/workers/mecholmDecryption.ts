@@ -7,6 +7,7 @@ globalThis.OLM_OPTIONS = {}
 // cache the crypto store and decryptor for each user
 const cryptoStoreCache = new Map<string, CryptoStore>()
 const decryptorCache = new Map<string, MegolmDecryption>()
+const log = console.debug.bind(console, 'sw:push:')
 
 export interface PlaintextDetails {
     body: string | undefined
@@ -21,10 +22,10 @@ export async function decryptWithMegolm(
 ): Promise<PlaintextDetails | undefined> {
     const decryptor = await getDecryptor(userId)
     const plaintext = await decryptor.decrypt(channelId, encryptedData)
-    console.log('sw:push: decrypted plaintext', plaintext)
+    log('decrypted plaintext', plaintext)
     // if the decryption is successful, plaintext has the string, else it's null
     const plaintextBody = plaintext ? extractDetails(plaintext) : undefined
-    console.log('sw:push: regex plaintext body', plaintextBody ?? 'null')
+    log('regex plaintext body', plaintextBody ?? 'null')
     return plaintextBody
 }
 
@@ -70,9 +71,14 @@ function extractDetails(jsonString: string): PlaintextDetails {
     const bodyMatch = jsonString.match(bodyRegex)
     const mentionsMatch = jsonString.match(mentionsRegex)
     const threadIdMatch = jsonString.match(threadIdRegex)
+    // replace all \n with ... string because notification body cannot have newlines
+    // replace all \" with "
+    const cleanBody = bodyMatch
+        ? bodyMatch[1].replace(/\\n/g, '...').replace(/\\"/g, '"')
+        : undefined
 
     return {
-        body: bodyMatch ? bodyMatch[1] : undefined,
+        body: cleanBody,
         mentions: mentionsMatch ? mentionsMatch[1] : undefined,
         threadId: threadIdMatch ? threadIdMatch[1] : undefined,
     }
