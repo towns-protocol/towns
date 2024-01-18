@@ -28,7 +28,7 @@ export function CheckValidSpaceOrInvite({ children }: { children: React.ReactNod
         )
     }
 
-    // space is on chain, but user has no matrix data, indicating they have landed via an invite link
+    // space is on chain, but user has no river data, indicating they have landed via an invite link
     // we could wrap in initialSyncComplete check also, but skipping for now because the modal will show a "connecting"
     // and that's probably useful for debugging this screen
     const notAMember = space?.membership !== Membership.Join

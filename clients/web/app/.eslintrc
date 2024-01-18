@@ -77,7 +77,7 @@
         "paths": [
           {
             "name": "use-zion-client",
-            "importNames": ["useMatrixCredentials", "useCasablancaCredentials"],
+            "importNames": ["useCasablancaCredentials"],
             "message": "Please use useAuth for credentials or useMyProfile for userId."
           },
           {

@@ -23,22 +23,6 @@ const profiling =
           }
         : ({} as Record<string, string>)
 
-function differMatrixSourcemapsPlugins(): PluginOption {
-    const matrixPackages = ['node_modules/matrix', 'node_modules/@matrix-org']
-
-    return {
-        name: 'differ-matrix-sourcemap',
-        transform(code: string, id: string) {
-            if (matrixPackages.some((pkg) => id.includes(pkg))) {
-                return {
-                    code: code,
-                    map: { mappings: '' },
-                }
-            }
-        },
-    }
-}
-
 // https://vitejs.dev/config/
 export default ({ mode }: { mode: string }) => {
     console.log('viteconfig:mode', mode)
@@ -53,7 +37,7 @@ export default ({ mode }: { mode: string }) => {
         }) as PluginOption,
         visualizer({ filename: 'dist/stats.html', template: 'treemap' }) as PluginOption,
     ]
-    const prodPlugins: PluginOption[] = [differMatrixSourcemapsPlugins()]
+    const prodPlugins: PluginOption[] = []
 
     let config: UserConfig = {
         optimizeDeps: {
@@ -75,10 +59,6 @@ export default ({ mode }: { mode: string }) => {
                             return 'wagmi'
                         } else if (id.includes('lodash')) {
                             return 'lodash'
-                        } else if (id.includes('matrix-sdk-crypto')) {
-                            return 'matrix-sdk-crypto'
-                        } else if (id.includes('matrix-js-sdk')) {
-                            return 'matrix-js-sdk'
                         }
                     },
                 },

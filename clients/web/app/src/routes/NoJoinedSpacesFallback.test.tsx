@@ -33,9 +33,7 @@ vi.mock('use-zion-client', async () => {
         useZionContext: () => {
             return {
                 ...actual.useZionContext(),
-                matrixClient: {
-                    isInitialSyncComplete: () => true,
-                },
+                casablancaClient: {},
                 spaces: spacesMock,
             }
         },

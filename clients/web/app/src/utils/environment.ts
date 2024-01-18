@@ -45,7 +45,6 @@ const envSchema = z.object({
     VITE_TYPEFORM_ALPHA_URL: z.string().optional(),
     VITE_IGNORE_IS_DEV_CHECKS: z.string().optional(),
     VITE_TOKEN_SERVER_URL: z.string().url(),
-    VITE_MATRIX_HOMESERVER_URL: z.string().url(),
     VITE_CHAIN_ID: z.string(),
     VITE_UNFURL_SERVER_URL: z.string().url(),
     VITE_GATEWAY_URL: z.string().url(),
@@ -105,12 +104,10 @@ if (!parsed.success) {
 const rawEnv = parsed.data
 
 let tunnelOverrides: {
-    VITE_MATRIX_HOMESERVER_URL?: string
     VITE_WEB_PUSH_WORKER_URL?: string
 } = {}
 if (rawEnv.VITE_CF_TUNNEL_PREFIX) {
     tunnelOverrides = {
-        VITE_MATRIX_HOMESERVER_URL: `https://${rawEnv.VITE_CF_TUNNEL_PREFIX}-dendrite.towns.com`,
         VITE_WEB_PUSH_WORKER_URL: `https://${rawEnv.VITE_CF_TUNNEL_PREFIX}-pnw.towns.com`,
     }
 }

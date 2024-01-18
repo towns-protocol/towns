@@ -55,7 +55,6 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
     const gridWidth = width - gutterWidth
 
     // giphy api can return string or number for size
-    // but matrix types only allow for number
     function checkSize(gifySize?: string | number): number | undefined {
         if (!gifySize) {
             return undefined

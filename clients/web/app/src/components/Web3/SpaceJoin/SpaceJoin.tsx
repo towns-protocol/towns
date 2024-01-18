@@ -20,7 +20,6 @@ type ModalProps = {
     onHide: () => void
     onCancel: () => void
     onJoin: () => void
-    // we don't have access to matrix room data - we haven't joined the room yet - this joinData comes from contract
     joinData?: JoinData
     notEntitled: boolean
     maxLimitReached: boolean
@@ -179,7 +178,6 @@ const SpaceJoinModal = (props: ModalProps) => {
 
 export type Props = {
     joinData: JoinData
-    // if matrix invitation (as opposed to invite link), user can decline to remove from their invite list
     onCancel?: () => void
     onSuccessfulJoin?: () => void
 }

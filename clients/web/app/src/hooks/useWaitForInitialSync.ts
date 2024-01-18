@@ -5,8 +5,8 @@ import { useRetryUntilResolved } from './useRetryUntilResolved'
 // Note that waiting for initial sync does not guarantee that what your waiting on will be synced (e.g. all the channels for a space are synced)
 // BUT it can be helpful especially for initial loads of the app on direct links
 export const useWaitForInitialSync = (interval = 500) => {
-    const { matrixClient, casablancaClient } = useZionContext()
+    const { casablancaClient } = useZionContext()
     return useRetryUntilResolved(() => {
-        return matrixClient?.isInitialSyncComplete() === true || casablancaClient !== undefined
+        return casablancaClient !== undefined
     }, interval)
 }

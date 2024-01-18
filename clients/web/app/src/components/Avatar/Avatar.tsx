@@ -31,9 +31,6 @@ type Props = {
     inset?: BoxProps['inset']
     boxShadow?: BoxProps['boxShadow']
     children?: React.ReactNode
-    /**
-     * matrix userId or ethereum address
-     */
     userId?: string
     icon?: IconProps['type']
     imageVariant?: ImageVariant

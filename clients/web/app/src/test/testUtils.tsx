@@ -95,7 +95,7 @@ export function mockUseConnectivity(): ReturnType<typeof Lib.useConnectivity> {
         register: () => Promise.resolve(),
         getIsWalletRegistered: () => Promise.resolve(true),
         loggedInWalletAddress: '0x1234',
-        isAuthenticated: true, // matrix status
+        isAuthenticated: true,
         loginStatus: Lib.LoginStatus.LoggedIn,
         loginError: null,
         userOnWrongNetworkForSignIn: false,

@@ -13,7 +13,6 @@ export enum SpaceProtocol {
 export enum TownsEnvironment {
     Prod = 'prod',
     Test = 'test',
-    LocalMatrix = 'local-matrix',
     LocalRiver = 'local-river',
     Tunnel = 'tunnel',
     RiverTest = 'river-test',
@@ -53,7 +52,7 @@ const CF_TUNNEL_PREFIX = env.VITE_CF_TUNNEL_PREFIX
 const CASABLANCA_URL = env.VITE_CASABLANCA_HOMESERVER_URL
 const CHAIN_ID = parseInt(env.VITE_CHAIN_ID)
 
-// if you set VITE_CF_TUNNEL_PREFIX, you'll always be pointed to tunnel for matrix, and chain will always be foundry
+// if you set VITE_CF_TUNNEL_PREFIX, you'll always be pointed to tunnel for river, and chain will always be foundry
 export function useEnvironment() {
     let _environment: TownsEnvironment | undefined
 
