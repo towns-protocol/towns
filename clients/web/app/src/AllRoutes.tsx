@@ -1,15 +1,12 @@
-import React, { Suspense } from 'react'
+import React from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
-import { useZionContext } from 'use-zion-client'
 import { Box, Stack } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
-import { Register } from 'routes/Register'
+import { PublicTownPage } from 'routes/PublicTownPage'
 import { WelcomeRoute } from 'routes/Welcome'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
-import { PublicTownPage } from 'routes/PublicTownPage'
-import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const VersionsPage = React.lazy(() => import('routes/VersionsPage'))
@@ -41,16 +38,7 @@ export const AllRoutes = () => {
                                     />
                                 </>
                             ) : (
-                                <>
-                                    {/* FIXME: moving PublicTownPage to this level when authenticated prevents the page from reloading
-                                        <Route
-                                            path={`${PATHS.SPACES}/:spaceSlug/*`}
-                                            element={<PublicTownPage />}
-                                    /> */}
-                                    <Route path="*" element={<AuthenticatedOrRegister />}>
-                                        <Route path="*" element={<AuthenticatedRoutes />} />
-                                    </Route>
-                                </>
+                                <Route path="*" element={<AuthenticatedRoutes />} />
                             )}
                         </>
                     </Route>
@@ -59,17 +47,6 @@ export const AllRoutes = () => {
                 </Route>
             </Routes>
         </>
-    )
-}
-
-export const AuthenticatedOrRegister = () => {
-    const needsOnboarding = useNeedsOnboarding()
-    return needsOnboarding ? (
-        <Register />
-    ) : (
-        <Suspense fallback={<WelcomeLayout debugText="suspense outlet" />}>
-            <Outlet />
-        </Suspense>
     )
 }
 
@@ -89,14 +66,4 @@ const ResponsiveOutlet = () => {
             <Outlet />
         </Stack>
     )
-}
-
-function useNeedsOnboarding(): boolean {
-    const { casablancaOnboardingState } = useZionContext()
-    switch (casablancaOnboardingState.kind) {
-        case 'update-profile':
-            return casablancaOnboardingState.bNeedsDisplayName
-        default:
-            return false
-    }
 }
