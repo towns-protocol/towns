@@ -1,8 +1,14 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { firstBy } from 'thenby'
 import { useSpaceMembers, useUserLookupContext } from 'use-zion-client'
 import { useIndexMessages } from 'hooks/useIndexMessages'
-import { isCombinedResultItem } from '@components/SearchBar/types'
+import {
+    ActionEventDocument,
+    ChannelEventDocument,
+    UserEventDocument,
+    isCombinedResultItem,
+} from '@components/SearchBar/types'
+import { useStore } from 'store/store'
 import { useMiniSearch } from './useMiniSearch'
 import { useChannelsWithMentionCountsAndUnread } from './useChannelsWithMentionCountsAndUnread'
 // import { useOramaSearch } from './hooks/useOramaSearch'
@@ -14,7 +20,7 @@ export const useSearch = (searchTerms: string) => {
 
     const { channelsWithMentionCountsAndUnread } = useChannelsWithMentionCountsAndUnread()
 
-    const indexedChannels = useMemo(
+    const indexedChannels = useMemo<ChannelEventDocument[]>(
         () =>
             channelsWithMentionCountsAndUnread.map((c) => ({
                 key: `channel-${c.id}`,
@@ -25,7 +31,7 @@ export const useSearch = (searchTerms: string) => {
         [channelsWithMentionCountsAndUnread],
     )
 
-    const indexedMembers = useMemo(
+    const indexedMembers = useMemo<UserEventDocument[]>(
         () =>
             memberIds
                 .filter((userId) => usersMap[userId])
@@ -40,9 +46,36 @@ export const useSearch = (searchTerms: string) => {
         [memberIds, usersMap],
     )
 
+    const setSidePanel = useStore((state) => state.setSidePanel)
+    const openBugReport = useCallback(() => {
+        setSidePanel('bugReport')
+    }, [setSidePanel])
+
+    const indexedActions = useMemo<ActionEventDocument[]>(
+        () => [
+            {
+                key: `actionreport`,
+                type: 'action' as const,
+                body: 'Report Bug, Feedback, Error',
+                source: {
+                    icon: 'bug',
+                    label: 'Report Bug',
+                    callback: openBugReport,
+                },
+            },
+        ],
+        [openBugReport],
+    )
+
     const searchItems = useMemo(
-        () => [...indexedMembers, ...indexedChannels, ...indexedMessages, ...indexedDMMessages],
-        [indexedChannels, indexedMessages, indexedMembers, indexedDMMessages],
+        () => [
+            ...indexedMembers,
+            ...indexedChannels,
+            ...indexedMessages,
+            ...indexedDMMessages,
+            ...indexedActions,
+        ],
+        [indexedMembers, indexedChannels, indexedMessages, indexedDMMessages, indexedActions],
     )
 
     const order = ['user', 'channel', 'dmMessage', 'message']

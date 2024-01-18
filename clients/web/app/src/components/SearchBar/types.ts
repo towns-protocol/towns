@@ -2,12 +2,14 @@ import { RoomMember } from 'use-zion-client'
 import { SearchResult } from 'minisearch'
 import { ZRoomMessageEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { useChannelsWithMentionCountsAndUnread } from 'hooks/useChannelsWithMentionCountsAndUnread'
+import { IconName } from '@ui'
 
 export type EventDocument =
     | MessageEventDocument
     | ChannelEventDocument
     | UserEventDocument
     | DMMessageEventDocument
+    | ActionEventDocument
 
 export type MessageEventDocument = {
     type: 'message'
@@ -37,6 +39,17 @@ export type UserEventDocument = {
     key: string
     body: string
     source: RoomMember
+}
+
+export type ActionEventDocument = {
+    type: 'action'
+    key: string
+    body: string
+    source: {
+        icon: IconName
+        label: string
+        callback: () => void
+    }
 }
 
 type ChannelType = ReturnType<

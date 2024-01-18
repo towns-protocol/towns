@@ -186,6 +186,7 @@ const SearchResults = (props: { onHide: () => void; searchResults: CombinedResul
                 const link = (el?.querySelector('a') ?? el) as HTMLElement
                 if ('click' in link) {
                     link.click()
+                    props.onHide()
                 }
             }
         }

@@ -21,9 +21,10 @@ const sectionTypeNameMap = {
     message: 'Messages',
     channel: 'Channels',
     dmMessage: 'Direct Messages',
+    action: 'Actions',
 } as const
 
-export const getSectionTitle = (type: 'user' | 'message' | 'channel' | 'dmMessage') =>
+export const getSectionTitle = (type: 'user' | 'message' | 'channel' | 'dmMessage' | 'action') =>
     sectionTypeNameMap[type]
 
 export const TouchSearchTab = () => {

@@ -5,6 +5,7 @@ import { isRoomMessage } from '@components/MessageTimeline/util/getEventsByDate'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useThrottledValue } from 'hooks/useThrottledValue'
 import { notUndefined } from 'ui/utils/utils'
+import { DMMessageEventDocument, MessageEventDocument } from '@components/SearchBar/types'
 import { useDmChannels } from './useDMChannels'
 
 const log = debug('app:useMessageIndex')
@@ -19,7 +20,7 @@ export const useIndexMessages = () => {
         1000,
     )
 
-    const messages = useMemo(() => {
+    const messages = useMemo<MessageEventDocument[]>(() => {
         return (channels ?? [])
             .flatMap((channel) => {
                 return timelines[channel.id]
@@ -36,7 +37,7 @@ export const useIndexMessages = () => {
             .filter(notUndefined)
     }, [channels, timelines])
 
-    const dmMessages = useMemo(() => {
+    const dmMessages = useMemo<DMMessageEventDocument[]>(() => {
         return dmChannels
             .flatMap((channel) => {
                 return timelines[channel.id]

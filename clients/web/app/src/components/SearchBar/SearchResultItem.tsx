@@ -122,6 +122,24 @@ export const ResultItem = (
                 </ItemContainer>
             )
         }
+        case 'action': {
+            return (
+                <ItemContainer paddingY="md" {...boxProps} onClick={item.source.callback}>
+                    <Box
+                        centerContent
+                        padding="sm"
+                        aspectRatio="square"
+                        background="level3"
+                        borderRadius="full"
+                    >
+                        <Icon type={item.source.icon} size="square_xs" />
+                    </Box>
+                    <Box centerContent>
+                        <Paragraph>{item.source.label}</Paragraph>
+                    </Box>
+                </ItemContainer>
+            )
+        }
     }
 }
 
