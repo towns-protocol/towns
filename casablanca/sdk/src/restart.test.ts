@@ -2,7 +2,7 @@
  * @group restart
  */
 
-import { MembershipOp } from '@river/proto'
+import { MembershipOp, StreamSettings } from '@river/proto'
 import { setTimeout } from 'timers/promises'
 import { dlog } from '@river/mecholm'
 import {
@@ -147,10 +147,9 @@ const createNewChannelAndPostHello = async (
             streamId: channelId,
             spaceId: spacedStreamId,
             channelProperties: make_fake_encryptedData(channelProperties),
-            settings: {
-                miniblockTimeMs: 100n,
+            settings: new StreamSettings({
                 minEventsPerSnapshot: 100,
-            },
+            }),
         }),
     )
     const channelJoinEvent = await makeEvent(

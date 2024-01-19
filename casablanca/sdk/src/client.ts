@@ -351,10 +351,7 @@ export class Client
                     userId: this.userId,
                     // device keys are updated often, and we're limited to
                     // 10, so after ten just snapshot
-                    settings: {
-                        minEventsPerSnapshot: 10,
-                        miniblockTimeMs: 2000n,
-                    },
+                    settings: new StreamSettings({ minEventsPerSnapshot: 10 }),
                 }),
             ),
         ]
@@ -380,10 +377,9 @@ export class Client
                     // for different devices,
                     // this keeps us from having to re-download things for other
                     // devices. This should be configured on the node side.
-                    settings: {
+                    settings: new StreamSettings({
                         minEventsPerSnapshot: 10,
-                        miniblockTimeMs: 1000n,
-                    },
+                    }),
                 }),
             ),
         ]

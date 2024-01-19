@@ -23,6 +23,7 @@ import { sleep } from '../../src/utils/zion-utils'
 import { Permission } from '@river/web3'
 import { ZTEvent } from '../../src/types/timeline-types'
 import { TSigner } from '../../src/types/web3-types'
+import { StreamSettings } from '@river/proto'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -47,7 +48,7 @@ describe('messageHistoryHooks', () => {
                 name: 'bobs channel',
                 parentSpaceId: spaceId,
                 roleIds: [],
-                streamSettings: { miniblockTimeMs: 1000n, minEventsPerSnapshot: 5 },
+                streamSettings: new StreamSettings({ minEventsPerSnapshot: 5 }),
             })) as string
             //
             // send 15 messages, five first, then 10 more

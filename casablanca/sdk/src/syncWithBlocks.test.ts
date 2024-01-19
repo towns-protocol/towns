@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { MembershipOp, StreamAndCookie, SyncOp } from '@river/proto'
+import { MembershipOp, StreamAndCookie, StreamSettings, SyncOp } from '@river/proto'
 import { dlog } from '@river/mecholm'
 import {
     genId,
@@ -52,7 +52,7 @@ describe('syncWithBlocks', () => {
                     bobsContext,
                     make_UserPayload_Inception({
                         streamId: bobsUserStreamId,
-                        settings: { minEventsPerSnapshot: 1, miniblockTimeMs: 1n },
+                        settings: new StreamSettings({ minEventsPerSnapshot: 1 }),
                     }),
                 ),
             ],
@@ -91,7 +91,7 @@ describe('syncWithBlocks', () => {
                 streamId: channelId,
                 spaceId: spacedStreamId,
                 channelProperties: make_fake_encryptedData(channelProperties),
-                settings: { miniblockTimeMs: 1n, minEventsPerSnapshot: 1 },
+                settings: new StreamSettings({ minEventsPerSnapshot: 1 }),
             }),
         )
         const channelJoinEvent = await makeEvent(
