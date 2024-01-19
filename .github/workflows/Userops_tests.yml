@@ -41,7 +41,7 @@ jobs:
 
             - name: Spin up stackup worker
               working-directory: ./servers/workers/stackup-worker
-              run: yarn dev:local
+              run: yarn dev:local &
               env:
                 PAYMASTER_ADDRESS: ${{ env.PAYMASTER_ADDRESS }}
                 STACKUP_API_TOKEN: ${{ secrets.STACKUP_API_TOKEN }}
@@ -50,6 +50,9 @@ jobs:
                 PRIVY_APP_ID: ${{ env.PRIVY_APP_ID }}
                 ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
                 AUTH_SECRET: foo
+
+            - name: Wait for stackup worker to be up
+              run: yarn woker:wait:stackup
 
             - name: Run userops tests
               env:
