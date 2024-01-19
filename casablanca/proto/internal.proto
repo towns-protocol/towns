@@ -5,10 +5,9 @@ import "protocol.proto";
 
 message PersistedEvent {
     StreamEvent event = 1;
-    Envelope envelope = 2;
-    string hash_str = 3;
-    string prev_miniblock_hash_str = 4;
-    string creator_user_id = 5;
+    bytes hash = 2;
+    string prev_miniblock_hash_str = 3;
+    string creator_user_id = 4;
 }
 
 message PersistedMiniblock {

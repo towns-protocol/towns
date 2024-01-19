@@ -1,7 +1,6 @@
 import { PlainMessage } from '@bufbuild/protobuf'
 import {
     StreamEvent,
-    Envelope,
     ChannelMessage,
     ChannelMessage_Post_Content_Text,
     UserDeviceKeyPayload_Inception,
@@ -44,7 +43,7 @@ export interface LocalEvent {
 
 export interface ParsedEvent {
     event: StreamEvent
-    envelope: Envelope
+    hash: Uint8Array
     hashStr: string
     prevMiniblockHashStr?: string
     creatorUserId: string

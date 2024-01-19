@@ -202,7 +202,7 @@ describe('syncWithBlocks', () => {
                             ...TEST_ENCRYPTED_MESSAGE_PROPS,
                             ciphertext: text,
                         }),
-                        p.envelope.hash,
+                        p.hash,
                     )
                     nextHash = messageEvent.hash
                     const response = await bob.addEvent({

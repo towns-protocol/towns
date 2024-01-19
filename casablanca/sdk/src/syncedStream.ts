@@ -107,7 +107,7 @@ export class SyncedStream extends Stream {
             const payload = event.event.payload
             switch (payload.case) {
                 case 'miniblockHeader': {
-                    await this.onMiniblockHeader(payload.value, event, event.envelope.hash)
+                    await this.onMiniblockHeader(payload.value, event, event.hash)
                     break
                 }
                 default:

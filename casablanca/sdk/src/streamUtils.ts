@@ -1,15 +1,15 @@
 import { PersistedEvent, PersistedMiniblock, PersistedSyncedStream, SyncCookie } from '@river/proto'
 import { ParsedEvent, ParsedMiniblock } from './types'
-import { isDefined } from '@river/mecholm'
+import { bin_toHexString, isDefined } from '@river/mecholm'
 
 export function persistedEventToParsedEvent(event: PersistedEvent): ParsedEvent | undefined {
-    if (!event.event || !event.envelope) {
+    if (!event.event) {
         return undefined
     }
     return {
         event: event.event,
-        envelope: event.envelope,
-        hashStr: event.hashStr,
+        hash: event.hash,
+        hashStr: bin_toHexString(event.hash),
         prevMiniblockHashStr:
             event.prevMiniblockHashStr.length > 0 ? event.prevMiniblockHashStr : undefined,
         creatorUserId: event.creatorUserId,
@@ -40,8 +40,7 @@ export function parsedMiniblockToPersistedMiniblock(miniblock: ParsedMiniblock) 
 function parsedEventToPersistedEvent(event: ParsedEvent) {
     return new PersistedEvent({
         event: event.event,
-        envelope: event.envelope,
-        hashStr: event.hashStr,
+        hash: event.hash,
         prevMiniblockHashStr: event.prevMiniblockHashStr,
         creatorUserId: event.creatorUserId,
     })

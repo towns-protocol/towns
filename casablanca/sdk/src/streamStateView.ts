@@ -285,7 +285,7 @@ export class StreamStateView {
                         `Miniblock number out of order ${payload.value.miniblockNum} > ${this.miniblockInfo?.max}`,
                         Err.STREAM_BAD_EVENT,
                     )
-                    this.prevMiniblockHash = event.envelope.hash
+                    this.prevMiniblockHash = event.hash
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     timelineEvent.confirmedEventNum =
                         payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)

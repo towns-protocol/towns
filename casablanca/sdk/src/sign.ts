@@ -236,7 +236,7 @@ export const unpackEnvelope = async (envelope: Envelope): Promise<ParsedEvent> =
 
     return {
         event,
-        envelope,
+        hash: envelope.hash,
         hashStr: bin_toHexString(envelope.hash),
         prevMiniblockHashStr: event.prevMiniblockHash
             ? bin_toHexString(event.prevMiniblockHash)
