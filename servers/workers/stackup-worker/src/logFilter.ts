@@ -3,6 +3,7 @@ import { Environment, isErrorType } from 'worker-common'
 import BaseSepoliaTownOwnerAbi from '@towns/generated/base_sepolia/v3/abis/TownOwner.abi.json' assert { type: 'json' }
 import BaseSepoliaTownOwnerContract from '@towns/generated/base_sepolia/addresses/townOwner.json' assert { type: 'json' }
 import BaseSepoliaTownFactoryContract from '@towns/generated/base_sepolia/addresses/townFactory.json' assert { type: 'json' }
+import BaseSepoliaTownContract from '@towns/generated/base_sepolia/addresses/town.json' assert { type: 'json' }
 import { createJsonProvider as createProvider, networkMap } from './provider'
 import { Env } from '.'
 
@@ -26,6 +27,7 @@ const BaseSepoliaBlocksPerDay = 43200 // at 2s blocks
 const BaseSepoliaContracts = new Map<string, ContractDetails>([
     ['TownOwner', { address: BaseSepoliaTownOwnerContract.address, abi: BaseSepoliaTownOwnerAbi }],
     ['TownFactory', { address: BaseSepoliaTownFactoryContract.address, abi: undefined }],
+    ['Town', { address: BaseSepoliaTownContract.address, abi: undefined }],
 ])
 
 const NetworkContracts = new Map<string, Map<string, ContractDetails>>([
@@ -34,6 +36,25 @@ const NetworkContracts = new Map<string, Map<string, ContractDetails>>([
 
 export const NetworkBlocksPerDay = new Map<Environment, number>([
     ['test-beta', BaseSepoliaBlocksPerDay],
+])
+
+// map of contract method to emitted event name
+export const EventByMethod = new Map<string, string>([
+    // RoleBase.sol
+    ['createRole', 'RoleCreated'],
+    ['removeRole', 'RoleRemoved'],
+    ['updateRole', 'RoleUpdated'],
+    // ChannelBase.sol
+    ['createChannel', 'ChannelCreated'],
+    ['updateChannel', 'ChannelUpdated'],
+    ['removeChannel', 'ChannelRemoved'],
+    ['addRoleToChannel', 'ChannelRoleAdded'],
+    ['removeRoleFromChannel', 'ChannelRoleRemoved'],
+    // EntitlementsManagerBase.sol
+    ['removeEntitlementModule', 'EntitlementModuleRemoved'],
+    ['addEntitlementModule', 'EntitlementModuleAdded'],
+    // TownOwnerBase.sol
+    ['updateTown', 'TownOwner__UpdateTown'],
 ])
 
 function createContract(
@@ -58,7 +79,7 @@ function createContract(
     return new ethers.Contract(contractDetails.address, contractDetails.abi, provider)
 }
 
-function contractAddress(network: string, contractName: string): string | null {
+export function contractAddress(network: string, contractName: string): string | null {
     const networkContracts = NetworkContracts.get(network)
     if (!networkContracts) {
         console.error(`Unknown network: ${network}`)
@@ -92,8 +113,92 @@ function createFilter(
     return contract.filters[eventName](...args)
 }
 
+type FilterFunctionType = (
+    contract: ethers.Contract,
+    eventName: string,
+    eventArgs: filterArgType[],
+) => ethers.EventFilter | null
+
+export function createFilterWrapper(
+    contract: ethers.Contract,
+    eventName: string,
+    eventArgs: filterArgType[],
+): ethers.EventFilter | null {
+    const filter = createFilter(contract, eventName, [...eventArgs])
+    if (!filter) {
+        console.error(`Unable to create filter: ${filter}`)
+        return null
+    }
+    return filter
+}
+
+// Run a log query using queryFilter interface on a contract
+// with a fixed lookback window based on blockNumber offset
+export async function runLogQuery(
+    environment: Environment,
+    network: string,
+    env: Env,
+    contractName: string, // diamond contract emitting event
+    eventName: string, // name of event to filter on
+    eventArgs: filterArgType[], // args to pass into event filter
+    createFilterFunc: FilterFunctionType,
+    blockLookbackNum?: number,
+    provider?: ethers.providers.StaticJsonRpcProvider,
+): Promise<LogFilterResult | null> {
+    let rpcProvider: ethers.providers.StaticJsonRpcProvider | undefined = provider
+    if (!rpcProvider) {
+        console.log(`creating provider for environment ${environment}`)
+        rpcProvider = createProvider(environment, env)
+    }
+    if (!rpcProvider) {
+        console.error(`Unable to create provider`)
+        return null
+    }
+
+    const contract = createContract(network, contractName, rpcProvider)
+    if (!contract) {
+        console.error(`Unable to create contract: ${contract}`)
+        return null
+    }
+
+    const filter = createFilterFunc(contract, eventName, eventArgs)
+    if (!filter) {
+        console.error(`Unable to create filter: ${filter}`)
+        return null
+    }
+
+    // get latest block number
+    const latestBlockNumber = await rpcProvider.getBlockNumber()
+
+    // run queryFilter with blockLookbackNum offset or undefined for all blocks
+    let logs: ethers.Event[]
+    const blockLookback = blockLookbackNum ? latestBlockNumber - blockLookbackNum : undefined
+    try {
+        console.log(
+            `running queryFilter with blockLookbackNum ${blockLookbackNum}, blockLookBack ${blockLookback}, currentBlock ${latestBlockNumber}`,
+        )
+        console.log(`running filter: ${JSON.stringify(filter)}`)
+        console.log(`running contract: ${contract.address}`)
+        logs = await contract.queryFilter(filter, blockLookback, latestBlockNumber)
+    } catch (error) {
+        console.error(
+            `Unable to queryFilter: ${isErrorType(error) ? error?.message : 'Unkown error'}}`,
+        )
+        return null
+    }
+    return {
+        events: logs,
+        contractAddress: contract.address,
+        eventName,
+        filter,
+        blockStart: blockLookback,
+        blockEnd: latestBlockNumber,
+    }
+}
+
 // Run a log query using queryFilter interface on TownOwner contract
 // with a fixed lookback window based on blockNumber offset
+/*
 export async function runLogQueryTownOwner(
     environment: Environment,
     env: Env,
@@ -158,3 +263,4 @@ export async function runLogQueryTownOwner(
         blockEnd: latestBlockNumber,
     }
 }
+*/

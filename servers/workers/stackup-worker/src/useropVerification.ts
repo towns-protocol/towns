@@ -1,8 +1,8 @@
 import { Env } from '.'
-import { createSpaceDappForNetwork } from './provider'
+import { createSpaceDappForNetwork, networkMap } from './provider'
 import { isErrorType } from 'worker-common'
 import { BigNumber } from 'ethers'
-import { NetworkBlocksPerDay, runLogQueryTownOwner } from './logFilter'
+import { NetworkBlocksPerDay, contractAddress, createFilterWrapper, runLogQuery } from './logFilter'
 import { IVerificationResult, checkJoinTownKVOverrides, checkMintKVOverrides } from './checks'
 
 interface ITownTransactionParams {
@@ -58,13 +58,21 @@ export async function verifyCreateTown(
         if (isOverride == null) {
             return { verified: false, error: 'user not allowed to mint towns with paymaster' }
         }
+
+        const network = networkMap.get(params.env.ENVIRONMENT)
+        if (!network) {
+            throw new Error(`Unknown environment network: ${params.env.ENVIRONMENT}`)
+        }
+        const townFactoryAddress = contractAddress(network, 'TownFactory')
         // check that quota has not been breached on-chain
-        // should use the senderAddress for this check as that is msg.sender
-        const queryResult = await runLogQueryTownOwner(
+        const queryResult = await runLogQuery(
             params.env.ENVIRONMENT,
+            network,
             params.env,
+            'TownOwner',
             'Transfer',
-            params.senderAddress,
+            [townFactoryAddress, params.senderAddress],
+            createFilterWrapper,
             NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
         )
         if (!queryResult || !queryResult.events) {

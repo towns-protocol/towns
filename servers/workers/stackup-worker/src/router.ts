@@ -19,8 +19,9 @@ import {
 
 import { isErrorType, Environment } from 'worker-common'
 import { WorkerRequest, createPmSponsorUserOperationRequest, getContentAsJson } from './utils'
-import { runLogQueryTownOwner } from './logFilter'
+import { contractAddress, createFilterWrapper, runLogQuery } from './logFilter'
 import { checkMintKVOverrides } from './checks'
+import { networkMap } from './provider'
 
 // can be 'payg' or 'erc20token'
 // see https://docs.stackup.sh/reference/pm-sponsoruseroperation
@@ -49,11 +50,22 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
     try {
         switch (operation) {
             case 'createTown': {
-                const queryResult = await runLogQueryTownOwner(
+                // default: any wallet that exists in HNT Privy DB can make: 3 towns / day with no gas costs
+                // more restrictive: only wallets created by email addresses on HNT Labs curated whitelist can mint 3 towns / day with no gas costs
+                const network = networkMap.get(environment)
+                if (!network) {
+                    console.error(`Unknown environment network: ${environment}`)
+                    return null
+                }
+                const townFactoryAddress = contractAddress(network, 'TownFactory')
+                const queryResult = await runLogQuery(
                     environment as Environment,
+                    network,
                     env,
-                    'Transfer',
-                    rootAddress,
+                    'TownOwner', // contract name
+                    'Transfer', // event name
+                    [townFactoryAddress, rootAddress], // event args
+                    createFilterWrapper,
                     blockLookbackNum,
                 )
                 if (!queryResult) {
@@ -70,12 +82,36 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                 )
             }
             case 'joinTown': {
+                // default: if a town exists and membership price is $0, any wallet address that exists in HNT Privy DB
+                // can mint a membership with no gas costs. Note; $0 price means either free allocation remaining or prepaid Town.
+                // more restrictive: only towns on HNT Labs curated whitelist can allow for Users to mint with no gas costs.
                 break
             }
             case 'linkWallet': {
+                // default: any wallet address that exists in HNT Privy DB can link 10 wallets / day with no gas costs.
+                // more restrictive: only addresses in HNT Labs curated whitelist can perform these actions.
                 break
             }
-            case 'useTown': {
+            case 'createRole':
+            case 'removeRole':
+            case 'updateRole':
+            case 'addRoleToChannel':
+            case 'removeRoleFromChannel':
+            case 'removeEntitlementModule':
+            case 'addEntitlementModule': {
+                // default: roles can be changed / entitlements set for a valid town: 20 times / day
+                // more restrictive: only Towns on HNT Labs curated whitelist can perform these 2 actions
+                break
+            }
+            case 'createChannel':
+            case 'updateChannel':
+            case 'removeChannel': {
+                // default: channels can be created for a valid town 10 times / day
+                // more restrictive: only Towns on HNT Labs curated whitelist can perform these 3 actions
+                break
+            }
+            case 'updateTown': {
+                // todo:
                 break
             }
             default:
@@ -188,6 +224,28 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                         return new Response(`Unauthorized: ${verification.error}`, { status: 401 })
                     }
                 }
+                break
+            }
+            case 'createRole':
+            case 'removeRole':
+            case 'updateRole':
+            case 'addRoleToChannel':
+            case 'removeRoleFromChannel':
+            case 'removeEntitlementModule':
+            case 'addEntitlementModule': {
+                // default: roles can be changed / entitlements set for a valid town: 20 times / day
+                // more restrictive: only Towns on HNT Labs curated whitelist can perform these 2 actions
+                break
+            }
+            case 'createChannel':
+            case 'updateChannel':
+            case 'removeChannel': {
+                // default: channels can be created for a valid town 10 times / day
+                // more restrictive: only Towns on HNT Labs curated whitelist can perform these 3 actions
+                break
+            }
+            case 'updateTown': {
+                // todo:
                 break
             }
             case 'createTown_linkWallet': {
