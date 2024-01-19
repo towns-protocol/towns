@@ -28,9 +28,6 @@ export const Me = () => {
                 My User ID: <strong>{userId}</strong>
             </p>
             <p>
-                Matrix ID Localpart: <strong>{userIdentifier?.matrixUserIdLocalpart}</strong>
-            </p>
-            <p>
                 Wallet Address: <strong>{userIdentifier?.accountAddress}</strong>
             </p>
             <p>

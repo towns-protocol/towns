@@ -21,10 +21,6 @@ export default defineConfig({
                         return 'wagmi'
                     } else if (id.includes('lodash')) {
                         return 'lodash'
-                    } else if (id.includes('matrix-sdk-crypto')) {
-                        return 'matrix-sdk-crypto'
-                    } else if (id.includes('matrix-js-sdk')) {
-                        return 'matrix-js-sdk'
                     }
                 },
                 sourcemapIgnoreList: (relativeSourcePath) => {

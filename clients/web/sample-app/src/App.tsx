@@ -18,7 +18,6 @@ import { WalletLinkingPage } from 'routes/WalletLinkingPage'
 import { Home } from './routes/Home'
 import { MainLayout } from './components/MainLayout'
 import { NotFound } from './routes/NotFound'
-import { RoomSettings } from './routes/RoomSettings'
 import { SpaceInvite } from './routes/SpaceInvite'
 import { Spaces } from './routes/Spaces'
 import { SpacesIndex } from './routes/SpacesIndex'
@@ -74,12 +73,10 @@ const AppContent = () => {
                                     <Route path="spaces/new" element={<SpacesNew />} />
                                     <Route path="spaces/:spaceSlug" element={<Spaces />}>
                                         <Route index element={<SpacesIndex />} />
-                                        <Route path="settings" element={<RoomSettings />} />
                                         <Route path="invite" element={<SpaceInvite />} />
                                         <Route path="channels/new" element={<SpacesNewChannel />} />
                                         <Route path="channels/:channelSlug" element={<Channels />}>
                                             <Route index element={<ChannelsIndex />} />
-                                            <Route path="settings" element={<RoomSettings />} />
                                         </Route>
                                         <Route path="threads" element={<Threads />} />
                                         <Route
