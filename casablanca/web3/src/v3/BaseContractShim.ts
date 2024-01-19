@@ -95,7 +95,10 @@ export class BaseContractShim<
         return this.interface.encodeFunctionData(fragment, args)
     }
 
-    public parseError(error: unknown): Error {
+    public parseError(error: unknown): Error & {
+        code?: string
+        data?: unknown
+    } {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
         const anyError = error as any
         const { errorData, errorMessage, errorName } = this.getErrorData(anyError)
@@ -109,8 +112,9 @@ export class BaseContractShim<
             )
             return {
                 name: errorName ?? UNKNOWN_ERROR,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 message: errorMessage ?? anyError,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                code: anyError?.code,
             }
         }
         /**

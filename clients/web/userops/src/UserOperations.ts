@@ -2,12 +2,18 @@ import { Address, ISpaceDapp, ITownArchitectBase, SpaceDapp } from '@river/web3'
 import { ethers } from 'ethers'
 import { ISendUserOperationResponse, Client as UseropClient, Presets } from 'userop'
 import { UserOpsConfig, UserOpParams } from './types'
+import { userOpsStore } from './userOpsStore'
+// TODO: we can probably add these via @account-abrstraction/contracts if preferred
+import { EntryPoint__factory, SimpleAccountFactory__factory } from 'userop/dist/typechain'
+import { ERC4337 } from 'userop/dist/constants'
 
 export class UserOps {
     private bundlerUrl: string
     private aaRpcUrl: string
     private paymasterProxyUrl: string | undefined
+    // defaults to Stackup's deployed entry point
     private entryPointAddress: string | undefined
+    // defaults to Stackup's deployed factory
     private factoryAddress: string | undefined
     private paymasterMiddleware: UserOpsConfig['paymasterMiddleware']
     private userOpClient: UseropClient | undefined
@@ -17,14 +23,55 @@ export class UserOps {
         this.bundlerUrl = config.bundlerUrl ?? ''
         this.aaRpcUrl = config.aaRpcUrl
         this.paymasterProxyUrl = config.paymasterProxyUrl
-        this.entryPointAddress = config.entryPointAddress
-        this.factoryAddress = config.factoryAddress
+        this.entryPointAddress = config.entryPointAddress ?? ERC4337.EntryPoint
+        this.factoryAddress = config.factoryAddress ?? ERC4337.SimpleAccount.Factory
         this.paymasterMiddleware = config.paymasterMiddleware
         this.spaceDapp = config.spaceDapp
     }
 
-    public async getAbstractAccountAddress(args: UserOpParams) {
-        return (await this.initBuilder(args)).getSender() as Address
+    public async getAbstractAccountAddress({ rootKeyAddress }: { rootKeyAddress: Address }) {
+        // copied from userop.js
+        // easier b/c we don't need the signer, which we don't store
+        //
+        // alternative to this is calling Presets.Builder.SimpleAccount.init with signer, no paymaster required,
+        // which can then call getSenderAddress
+        try {
+            if (!this.factoryAddress) {
+                throw new Error('factoryAddress is required')
+            }
+            if (!this.entryPointAddress) {
+                throw new Error('entryPointAddress is required')
+            }
+            if (!this.spaceDapp?.provider) {
+                throw new Error('spaceDapp is required')
+            }
+
+            const initCode = await ethers.utils.hexConcat([
+                this.factoryAddress,
+                SimpleAccountFactory__factory.createInterface().encodeFunctionData(
+                    'createAccount',
+                    [
+                        rootKeyAddress,
+                        // ! salt must match whatever is used in initBuilder. If none, use 0, its the default for userop
+                        ethers.BigNumber.from(0),
+                    ],
+                ),
+            ])
+            const entryPoint = EntryPoint__factory.connect(
+                this.entryPointAddress,
+                this.spaceDapp.provider,
+            )
+
+            await entryPoint.callStatic.getSenderAddress(initCode)
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            const address = error?.errorArgs?.sender
+            if (!address) throw error
+
+            userOpsStore.setState({ smartAccountAddress: address })
+            return address
+        }
     }
 
     public async getUserOpClient() {
@@ -115,7 +162,7 @@ export class UserOps {
         }
 
         const abstractAccountAddress = await this.getAbstractAccountAddress({
-            signer,
+            rootKeyAddress: await getSignerAddress(signer),
         })
 
         const callDataCreateSpace = this.spaceDapp.townRegistrar.TownArchitect.encodeFunctionData(
@@ -173,6 +220,10 @@ export class UserOps {
         })
     }
 
+    public clearStore() {
+        userOpsStore.getState().clear()
+    }
+
     public async sendJoinTownOp(
         args: Parameters<SpaceDapp['joinTown']>,
     ): Promise<ISendUserOperationResponse> {
@@ -187,7 +238,7 @@ export class UserOps {
         }
 
         const abstractAccountAddress = await this.getAbstractAccountAddress({
-            signer,
+            rootKeyAddress: await getSignerAddress(signer),
         })
 
         const callDataJoinTown = town.Membership.encodeFunctionData('joinTown', [recipient])
@@ -290,4 +341,9 @@ export class UserOps {
         // const frag = contractInterface.getFunction(functionName)
         // return frag.format() // format sigHash
     }
+}
+
+async function getSignerAddress(signer: ethers.Signer): Promise<Address> {
+    const address = await signer.getAddress()
+    return address as Address
 }

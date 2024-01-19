@@ -7375,6 +7375,7 @@ __metadata:
     userop: ^0.3.7
     vitest: ^1.1.1
     zod: ^3.21.4
+    zustand: ^4.3.3
   languageName: unknown
   linkType: soft
 

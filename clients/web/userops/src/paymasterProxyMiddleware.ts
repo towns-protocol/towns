@@ -2,6 +2,9 @@ import { UserOpsConfig } from './types'
 import { BigNumber } from 'ethers'
 import { BundlerJsonRpcProvider, IUserOperation, Presets } from 'userop'
 import { z } from 'zod'
+import { userOpsStore } from './userOpsStore'
+import { Address } from '@river/web3'
+import { CodeException } from './errors'
 
 type PaymasterProxyResponse = {
     paymasterAndData: string
@@ -30,6 +33,8 @@ export const paymasterProxyMiddleware: ({
 }) => UserOpsConfig['paymasterMiddleware'] =
     ({ paymasterProxyAuthSecret }) =>
     async (args) => {
+        const { getState, setState } = userOpsStore
+
         const {
             userOpContext: ctx,
             rootKeyAddress,
@@ -41,19 +46,47 @@ export const paymasterProxyMiddleware: ({
             paymasterProxyUrl,
         } = args
 
+        if (!getState().smartAccountAddress) {
+            setState({ smartAccountAddress: ctx.op.sender as Address })
+        }
+
         async function fallbackEstimate() {
             if (provider) {
                 await Presets.Middleware.estimateUserOperationGas(
                     new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(bundlerUrl),
                 )(ctx)
+                return {
+                    maxFeePerGas: ctx.op.maxFeePerGas,
+                    maxPriorityFeePerGas: ctx.op.maxPriorityFeePerGas,
+                    preverificationGas: ctx.op.preVerificationGas,
+                    verificationGasLimit: ctx.op.verificationGasLimit,
+                    callGasLimit: ctx.op.callGasLimit,
+                }
             }
+        }
+
+        async function waitForConfirmOrDeny() {
+            const estimate = await fallbackEstimate()
+            await new Promise((resolve, reject) => {
+                setState({
+                    currOpGas: estimate,
+                    confirm: () => {
+                        setState({ currOpGas: undefined })
+                        resolve('User confirmed!')
+                    },
+                    deny: () => {
+                        setState({ currOpGas: undefined })
+                        reject(new CodeException('user rejected user operation', 'ACTION_REJECTED'))
+                    },
+                })
+            })
         }
 
         if (!paymasterProxyUrl) {
             console.warn(
                 '[paymasterProxyMiddleware] paymasterProxyUrl is not set, using fallback gas estimate',
             )
-            await fallbackEstimate()
+            await waitForConfirmOrDeny()
             return
         }
         try {
@@ -112,6 +145,6 @@ export const paymasterProxyMiddleware: ({
                 '[paymasterProxyMiddleware] Error getting paymaster proxy response, using fallback gas estimate',
                 error,
             )
-            await fallbackEstimate()
+            await waitForConfirmOrDeny()
         }
     }

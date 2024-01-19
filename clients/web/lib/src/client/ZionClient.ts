@@ -241,6 +241,7 @@ export class ZionClient implements EntitlementsDelegate {
      * stopClients
      *************************************************/
     public async stopClients() {
+        this.userOps?.clearStore()
         await this.blockchainTransactionStore.stop()
         await this.stopCasablancaClient()
     }
@@ -1581,10 +1582,9 @@ export class ZionClient implements EntitlementsDelegate {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private getDecodedErrorForSpaceFactory(error: any): Error {
+    private getDecodedErrorForSpaceFactory(error: any): Error & { code?: string } {
         try {
             return this.spaceDapp.parseSpaceFactoryError(error)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: unknown) {
             if (e instanceof Error) {
                 return e
@@ -1600,6 +1600,11 @@ export class ZionClient implements EntitlementsDelegate {
             ) {
                 const newErr = new Error(e.message)
                 newErr.name = e.name
+                if ('code' in e) {
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    newErr.code = e.code
+                }
                 return newErr
             } else {
                 return new Error(`[getDecodedErrorForSpaceFactory] cannot decode error`)
