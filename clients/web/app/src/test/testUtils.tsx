@@ -35,12 +35,6 @@ export const TestApp = (props: TestAppProps) => {
     // new query client for each test for isolation
     const Router = props.Router || MemoryRouter
     const queryClient = new QueryClient({
-        logger: {
-            log: console.log,
-            warn: console.warn,
-            // don't log network errors in tests
-            error: () => null,
-        },
         defaultOptions: {
             queries: {
                 retry: false,

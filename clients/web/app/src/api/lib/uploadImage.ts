@@ -36,7 +36,8 @@ export function useUploadImage(
         onError?: (error: unknown) => void
     } = {},
 ) {
-    return useMutation(uploadImage, {
+    return useMutation({
+        mutationFn: uploadImage,
         retry: 3,
         retryDelay: 2500,
         onSuccess: (data) => {

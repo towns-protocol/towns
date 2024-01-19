@@ -128,8 +128,8 @@ export function useSetMuteSettingForChannelOrSpace() {
     const userId = useMyProfile()?.userId
     const queryClient = useQueryClient()
 
-    return useMutation(
-        async ({
+    return useMutation({
+        mutationFn: async ({
             spaceId,
             channelId,
             muteSetting,
@@ -183,13 +183,11 @@ export function useSetMuteSettingForChannelOrSpace() {
 
             return putSettings({ userSettings: notificationSettings })
         },
-        {
-            onSuccess: async () => {
-                queryClient.invalidateQueries(queryKeys.getSettings(userId))
-            },
-            onError: (error) => {
-                console.error('[useSetNotificationSettings] error', error)
-            },
+        onSuccess: async () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.getSettings(userId) })
         },
-    )
+        onError: (error: unknown) => {
+            console.error('[useSetNotificationSettings] error', error)
+        },
+    })
 }

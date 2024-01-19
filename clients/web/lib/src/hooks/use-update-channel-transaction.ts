@@ -70,12 +70,12 @@ export function useUpdateChannelTransaction() {
                     transactionResult = await waitForUpdateChannelTransaction(transactionResult)
                     setTransactionContext(transactionResult)
                     if (transactionResult?.status === TransactionStatus.Success) {
-                        await queryClient.invalidateQueries(
-                            blockchainKeys.spaceAndChannel(
+                        await queryClient.invalidateQueries({
+                            queryKey: blockchainKeys.spaceAndChannel(
                                 updateChannelInfo.parentSpaceId,
                                 updateChannelInfo.channelId,
                             ),
-                        )
+                        })
                     }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any

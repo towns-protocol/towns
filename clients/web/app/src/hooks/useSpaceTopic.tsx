@@ -42,13 +42,14 @@ export const useGetSpaceTopic = (networkId: string | undefined) => {
         return getSpaceTopic(networkId)
     }, [networkId])
 
-    return useQuery([queryKey, networkId], _getSpaceTopic, {
+    return useQuery({
+        queryKey: [queryKey, networkId],
+        queryFn: _getSpaceTopic,
         enabled: !!networkId,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: 1000 * 60 * 60 * 24,
-        cacheTime: 1000 * 60 * 60 * 24,
     })
 }
 
@@ -75,11 +76,12 @@ export const useSetSpaceTopic = (
         [roomId],
     )
 
-    return useMutation(_setSpaceTopic, {
+    return useMutation({
+        mutationFn: _setSpaceTopic,
         onSuccess: async () => {
-            return queryClient.invalidateQueries(['roomTopic', roomId])
+            return queryClient.invalidateQueries({ queryKey: ['roomTopic', roomId] })
         },
-        onError: (error) => {
+        onError: (error: unknown) => {
             console.error('[useSetSpaceTopic] error', error)
             if (onError) {
                 onError(error)

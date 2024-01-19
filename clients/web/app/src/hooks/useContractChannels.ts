@@ -22,16 +22,16 @@ export const useContractChannels = (spaceId: string | undefined) => {
         provider,
     })
 
-    return useQuery(
-        [queryKey, spaceId],
-        () => {
+    return useQuery({
+        queryKey: [queryKey, spaceId],
+
+        queryFn: () => {
             return getChannels(spaceId, spaceDapp)
         },
-        {
-            enabled: !!spaceId,
-            refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
-            staleTime: 1000 * 15,
-        },
-    )
+
+        enabled: !!spaceId,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        staleTime: 1000 * 15,
+    })
 }

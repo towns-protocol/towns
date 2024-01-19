@@ -83,7 +83,7 @@ export const SpaceInfoPanel = () => {
     const textAreaRef = useRef<HTMLTextAreaElement>(null)
     const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(space?.id)
 
-    const { mutate, isLoading: isSettingSpaceTopic } = useSetSpaceTopic(space?.id)
+    const { mutate, isPending: isSettingSpaceTopic } = useSetSpaceTopic(space?.id)
 
     const spaceOwner = useUser(data?.owner)
 
@@ -159,7 +159,7 @@ export const SpaceInfoPanel = () => {
     const { spaceIsMuted, spaceMuteSetting } = useMuteSettings({
         spaceId: spaceID,
     })
-    const { mutate: mutateNotificationSettings, isLoading: isSettingNotification } =
+    const { mutate: mutateNotificationSettings, isPending: isSettingNotification } =
         useSetMuteSettingForChannelOrSpace()
 
     const onToggleSpaceMuted = useCallback(() => {

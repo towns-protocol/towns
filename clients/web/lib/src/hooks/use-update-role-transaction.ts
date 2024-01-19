@@ -81,9 +81,9 @@ export function useUpdateRoleTransaction() {
                     transactionResult = await waitForUpdateRoleTransaction(transactionResult)
                     setTransactionContext(transactionResult)
                     if (transactionResult?.status === TransactionStatus.Success) {
-                        await queryClient.invalidateQueries(
-                            blockchainKeys.roleDetails(spaceNetworkId, roleId),
-                        )
+                        await queryClient.invalidateQueries({
+                            queryKey: blockchainKeys.roleDetails(spaceNetworkId, roleId),
+                        })
                     }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any

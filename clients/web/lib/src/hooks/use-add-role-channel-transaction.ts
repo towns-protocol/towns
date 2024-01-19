@@ -69,9 +69,12 @@ export function useAddRoleToChannelTransaction() {
                     const rxContext = await waitForAddRoleToChannelTransaction(txContext)
                     setTransactionContext(rxContext)
                     if (rxContext?.status === TransactionStatus.Success) {
-                        await queryClient.invalidateQueries(
-                            blockchainKeys.spaceAndChannel(spaceNetworkId, channelNetworkId),
-                        )
+                        await queryClient.invalidateQueries({
+                            queryKey: blockchainKeys.spaceAndChannel(
+                                spaceNetworkId,
+                                channelNetworkId,
+                            ),
+                        })
                     }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any

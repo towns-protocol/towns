@@ -45,7 +45,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
         uploadIconPosition = 'topRight',
     } = props
 
-    const { onChange, isLoading } = useOnImageChangeEvent({
+    const { onChange, isPending } = useOnImageChangeEvent({
         overrideUploadCb,
         resourceId,
         type,
@@ -59,7 +59,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
     const ref = React.useRef<HTMLInputElement>(null)
 
     function onClick() {
-        if (isLoading) {
+        if (isPending) {
             return
         }
         ref.current?.click()
@@ -70,13 +70,13 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
     return (
         <Box position="relative" data-testid="upload-image-container">
             <Box
-                className={isLoading ? loadingStyles : ''}
+                className={isPending ? loadingStyles : ''}
                 onClick={imageAreaIsClickable ? onClick : void 0}
             >
                 {children}
             </Box>
 
-            {isLoading && (
+            {isPending && (
                 <>
                     <Box className={spinnerStyles}>
                         <Spinner />
@@ -111,7 +111,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
                     <Box position={uploadIconPosition} padding="md">
                         <Box
                             centerContent
-                            disabled={isLoading}
+                            disabled={isPending}
                             data-testid="upload-image-button"
                             role="button"
                             top="xs"

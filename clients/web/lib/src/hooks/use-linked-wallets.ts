@@ -106,9 +106,9 @@ function useLinkTransactionBuilder() {
                     // Wait for transaction to be mined
                     transactionResult = await waitWalletLinkTransaction(transactionResult)
                     if (loggedInWalletAddress) {
-                        await queryClient.invalidateQueries(
-                            blockchainKeys.linkedWallets(loggedInWalletAddress),
-                        )
+                        await queryClient.invalidateQueries({
+                            queryKey: blockchainKeys.linkedWallets(loggedInWalletAddress),
+                        })
                     }
                     setTransactionContext(transactionResult)
                 }

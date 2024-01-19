@@ -77,7 +77,7 @@ export const ChannelInfoPanel = () => {
     const onUpdatedChannel = useCallback(() => {
         onHideChannelSettingsPopup()
     }, [onHideChannelSettingsPopup])
-    const { mutate: mutateNotificationSettings, isLoading: isSettingNotification } =
+    const { mutate: mutateNotificationSettings, isPending: isSettingNotification } =
         useSetMuteSettingForChannelOrSpace()
 
     const { channelIsMuted, spaceIsMuted, channelMuteSetting } = useMuteSettings({

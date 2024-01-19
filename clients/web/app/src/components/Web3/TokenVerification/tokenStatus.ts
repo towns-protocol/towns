@@ -120,9 +120,10 @@ export function useWatchLinkedWalletsForToken({
         [chainId, token.contractAddress],
     )
 
-    return useQuery(
-        [...qKey, { wallets: allWallets }],
-        async () => {
+    return useQuery({
+        queryKey: [...qKey, { wallets: allWallets }],
+
+        queryFn: async () => {
             const store = currentWalletLinkingStore.getState()
             const newWallets = allWallets.filter((item) => !seenWallets?.includes(item))
 
@@ -140,26 +141,24 @@ export function useWatchLinkedWalletsForToken({
 
             return data
         },
-        {
-            select: (data): TokenStatus => {
-                return {
-                    tokenAddress: data.tokenAddress,
-                    status: !data || data.balance === 0 ? 'failure' : 'success',
-                }
-            },
-            refetchInterval: (data) => {
-                if (data?.status === 'success') {
-                    return false
-                }
-                // check every 3 seconds (base mines every 2 seconds)
-                // alternative is use useBlockNumber + useEffect + query.reftech() but this is simpler
-                return 3_000
-            },
-            refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
-            enabled: !!seenWallets || !!allWallets.length,
+
+        select: (data): TokenStatus => {
+            return {
+                tokenAddress: data.tokenAddress,
+                status: !data || data.balance === 0 ? 'failure' : 'success',
+            }
         },
-    )
+
+        refetchInterval: () => {
+            // check every 3 seconds (base mines every 2 seconds)
+            // alternative is use useBlockNumber + useEffect + query.reftech() but this is simpler
+            return 3_000
+        },
+
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        enabled: !!seenWallets || !!allWallets.length,
+    })
 }
 
 async function fetchTokenBalance({

@@ -42,13 +42,14 @@ export const useGetUserBio = (walletAddress: string | undefined) => {
         return getUserBio(walletAddress as string)
     }, [walletAddress])
 
-    return useQuery([queryKey, walletAddress], _getUserBio, {
+    return useQuery({
+        queryKey: [queryKey, walletAddress],
+        queryFn: _getUserBio,
         enabled: !!walletAddress,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: 1000 * 60 * 60 * 24,
-        cacheTime: 1000 * 60 * 60 * 24,
     })
 }
 
@@ -66,9 +67,10 @@ export const useSetUserBio = (walletAddress: string | undefined) => {
         [walletAddress],
     )
 
-    return useMutation(_setUserBio, {
+    return useMutation({
+        mutationFn: _setUserBio,
         onSuccess: async () => {
-            return queryClient.invalidateQueries([queryKey, walletAddress])
+            return queryClient.invalidateQueries({ queryKey: [queryKey, walletAddress] })
         },
         onError: (error) => {
             console.error('[useSetUserBio] error', error)

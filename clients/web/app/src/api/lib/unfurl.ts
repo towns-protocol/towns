@@ -16,7 +16,9 @@ export function useUnfurlContent({
     enabled: boolean
 }) {
     // using urlsArray as query key, maybe need to add event id too?
-    return useQuery(urlsArray, () => getUnfurlContent(urlsArray), {
+    return useQuery({
+        queryKey: urlsArray,
+        queryFn: () => getUnfurlContent(urlsArray),
         select: ({ data }) => data,
         enabled,
         // unfurl content doesn't need to be refetched
@@ -25,6 +27,5 @@ export function useUnfurlContent({
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: 1000 * 60 * 60 * 24,
-        cacheTime: 1000 * 60 * 60 * 24,
     })
 }

@@ -14,9 +14,10 @@ export const useContractSpaceInfo = (
         provider,
     })
 
-    return useQuery(
-        ['spaceDappGetSpaceInfo', spaceId],
-        async () => {
+    return useQuery({
+        queryKey: ['spaceDappGetSpaceInfo', spaceId],
+
+        queryFn: async () => {
             console.log('useContractSpaceInfo', { spaceId, spaceDapp })
             if (spaceId && spaceDapp) {
                 const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
@@ -28,12 +29,11 @@ export const useContractSpaceInfo = (
                 return null
             }
         },
-        {
-            enabled: !!spaceId && !!spaceDapp,
-            staleTime: 1000 * 15,
-            refetchOnMount: false,
-            refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
-        },
-    )
+
+        enabled: !!spaceId && !!spaceDapp,
+        staleTime: 1000 * 15,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+    })
 }

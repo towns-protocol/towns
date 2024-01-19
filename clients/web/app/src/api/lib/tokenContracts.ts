@@ -45,21 +45,20 @@ const zSchema: z.ZodType<GetCollectionsForOwnerResponse> = z.object({
 export function useCollectionsForOwner({ wallet, enabled, chainId }: UseTokenContractsForAdress) {
     const alchmeyNetwork = useNetworkForNftApi()
 
-    return useQuery(
-        [queryKey],
-        () =>
+    return useQuery({
+        queryKey: [queryKey],
+
+        queryFn: () =>
             chainId === 31337
                 ? getLocalHostTokens(wallet, alchmeyNetwork)
                 : getTokenContractsForAddress(wallet, alchmeyNetwork),
-        {
-            staleTime: 1000 * 15,
-            refetchOnMount: false,
-            refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
-            keepPreviousData: true,
-            enabled,
-        },
-    )
+
+        staleTime: 1000 * 15,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        enabled,
+    })
 }
 
 // Grab the tokens from the existing query

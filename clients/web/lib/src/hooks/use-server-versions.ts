@@ -19,6 +19,7 @@ export function useServerVersions(props: { homeserverUrl?: string }): {
         // unique key per query so that React Query
         // can manage the cache for us.
         [homeserverUrl],
+
         // query function that does the data fetching.
         async () => {
             if (!homeserverUrl) {
@@ -30,10 +31,10 @@ export function useServerVersions(props: { homeserverUrl?: string }): {
             }
             return (await resp.json()) as IZionServerVersions
         },
-        // options for the query.
-        // query will not execute until the homeserverUrl is defined.
-        // query will fail on first failure, since this is for availability testing
-        { enabled: homeserverUrl !== undefined && homeserverUrl.length > 0, retry: false },
+        {
+            enabled: homeserverUrl !== undefined && homeserverUrl.length > 0,
+            retry: false,
+        },
     )
 
     useEffect(() => console.log(`useServerVersions`, serverVersions), [serverVersions])

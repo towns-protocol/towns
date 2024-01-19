@@ -68,9 +68,9 @@ export function useUpdateSpaceNameTransaction() {
                     transactionResult = await waitForUpdateSpaceNameTransaction(transactionResult)
                     setTransactionContext(transactionResult)
                     if (transactionResult?.status === TransactionStatus.Success) {
-                        await queryClient.invalidateQueries(
-                            blockchainKeys.spaceName(spaceNetworkId),
-                        )
+                        await queryClient.invalidateQueries({
+                            queryKey: blockchainKeys.spaceName(spaceNetworkId),
+                        })
                     }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any

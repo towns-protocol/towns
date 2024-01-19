@@ -32,7 +32,7 @@
         "@river/proto": "workspace:^",
         "@river/sdk": "workspace:^",
         "@river/web3": "workspace:^",
-        "@tanstack/react-query": "^4.14.3",
+        "@tanstack/react-query": "^5.17.15",
         "@towns/generated": "workspace:^",
         "@towns/userops": "workspace:^",
         "@types/node-emoji": "^1.8.2",

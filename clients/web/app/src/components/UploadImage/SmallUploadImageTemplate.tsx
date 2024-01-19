@@ -39,7 +39,7 @@ export const SmallUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
         overrideUploadCb,
     } = props
 
-    const { onChange, isLoading } = useOnImageChangeEvent({
+    const { onChange, isPending } = useOnImageChangeEvent({
         overrideUploadCb,
         resourceId,
         type,
@@ -55,18 +55,18 @@ export const SmallUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
     const ref = React.useRef<HTMLInputElement>(null)
 
     function onClick() {
-        if (isLoading) {
+        if (isPending) {
             return
         }
         ref.current?.click()
     }
 
     const styles = useMemo(() => {
-        if (!imageError && isLoading) {
+        if (!imageError && isPending) {
             return smallUploadIsLoadingStyles
         }
         return imageError ? '' : smallUploadHoverStyles
-    }, [imageError, isLoading])
+    }, [imageError, isPending])
 
     return (
         <Box gap position="relative" data-testid="upload-image-container">
@@ -107,7 +107,7 @@ export const SmallUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
                             )}
                         </Box>
                         <Box absoluteFill centerContent className={styles}>
-                            {isLoading ? (
+                            {isPending ? (
                                 <ButtonSpinner />
                             ) : (
                                 <Icon type="camera" size="square_sm" />

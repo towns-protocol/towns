@@ -9,20 +9,15 @@ import {
     useQuery as useBaseQuery,
     useQueries,
     QueryClientProvider,
+    QueryClientConfig,
 } from '@tanstack/react-query'
 
 // queryClient is imported in non React contexts (where we would normally useQueryClient)
 // test query client should be the same instance as the queryClient used in lib code, hence we export it here
-let config
+let config: QueryClientConfig | undefined
 
 if (isTestEnv()) {
     config = {
-        logger: {
-            log: console.log,
-            warn: console.warn,
-            // don't log network errors in tests
-            error: () => null,
-        },
         defaultOptions: {
             queries: {
                 retry: false,
@@ -49,7 +44,9 @@ function useQuery<
     queryFn: QueryFunction<TQueryFnData, TQueryKey>,
     options?: Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryKey' | 'queryFn'>,
 ) {
-    return useBaseQuery(key, queryFn, {
+    return useBaseQuery({
+        queryKey: key,
+        queryFn,
         staleTime: 1_000 * 15,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,

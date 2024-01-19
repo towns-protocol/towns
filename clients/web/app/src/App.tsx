@@ -114,7 +114,7 @@ export const App = () => {
                         <AllRoutes />
                     </>
                     {!env.VITE_DISABLE_DEBUG_BARS && (
-                        <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
+                        <ReactQueryDevtools position="bottom" initialIsOpen={false} />
                     )}
                     <SyncNotificationSettings />
                     <Notifications />

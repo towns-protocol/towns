@@ -11,9 +11,10 @@ export function useIsMembershipNftAddress({
 }) {
     const { spaceDapp } = useZionClient()
 
-    return useQuery(
-        ['useIsMembershipNftAddress', spaceId, address],
-        async () => {
+    return useQuery({
+        queryKey: ['useIsMembershipNftAddress', spaceId, address],
+
+        queryFn: async () => {
             if (!spaceDapp || !spaceId) {
                 return false
             }
@@ -22,9 +23,8 @@ export function useIsMembershipNftAddress({
             )) as Address
             return townMembershipTokenAddress === address
         },
-        {
-            staleTime: Infinity,
-            enabled: !!spaceDapp && !!spaceId,
-        },
-    )
+
+        staleTime: Infinity,
+        enabled: !!spaceDapp && !!spaceId,
+    })
 }

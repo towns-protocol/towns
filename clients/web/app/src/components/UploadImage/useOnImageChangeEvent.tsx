@@ -43,7 +43,7 @@ export function useOnImageChangeEvent<T extends FieldValues>({
         },
     } = imageRestrictions ?? {}
 
-    const { mutate: upload, isLoading } = useUploadImage(resourceId)
+    const { mutate: upload, isPending } = useUploadImage(resourceId)
 
     async function onChange(e: ChangeEvent<HTMLInputElement>) {
         const files = e.target.files
@@ -97,7 +97,7 @@ export function useOnImageChangeEvent<T extends FieldValues>({
 
     return {
         onChange,
-        isLoading,
+        isPending,
     }
 }
 

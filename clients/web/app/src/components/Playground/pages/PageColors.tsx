@@ -60,7 +60,6 @@ export const PageColors = () => {
                     </Stack>
                 ))}
             </Container>
-
             <Container label="Text Color">
                 <Grid grow columns={2} gap="none">
                     {Object.keys(vars.color.foreground).map((c) => (
@@ -89,7 +88,6 @@ export const PageColors = () => {
                     ))}
                 </Grid>
             </Container>
-
             <Container label="Using background tokens for icons">
                 <Grid grow columns={2} gap="none">
                     {(['level1', 'level2', 'level3', 'level4'] as const).map((c) => (

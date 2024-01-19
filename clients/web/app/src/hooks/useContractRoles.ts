@@ -5,20 +5,20 @@ import { getFilteredRolesFromSpace } from '@river/web3'
 export const useContractRoles = (spaceNetworkId?: string) => {
     const { client } = useZionContext()
 
-    return useQuery(
-        ['spaceRoles', spaceNetworkId],
-        () => {
+    return useQuery({
+        queryKey: ['spaceRoles', spaceNetworkId],
+
+        queryFn: () => {
             console.log(spaceNetworkId)
             if (!client || !spaceNetworkId) {
                 return Promise.resolve([])
             }
             return getFilteredRolesFromSpace(client.spaceDapp, spaceNetworkId)
         },
-        {
-            enabled: !!client && !!spaceNetworkId,
-            refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
-            staleTime: 1000 * 15,
-        },
-    )
+
+        enabled: !!client && !!spaceNetworkId,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        staleTime: 1000 * 15,
+    })
 }

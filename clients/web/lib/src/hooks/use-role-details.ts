@@ -95,7 +95,10 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
     )
 
     const invalidateQuery = useCallback(
-        () => queryClient.invalidateQueries(blockchainKeys.multipleRoleDetails(spaceId)),
+        () =>
+            queryClient.invalidateQueries({
+                queryKey: blockchainKeys.multipleRoleDetails(spaceId),
+            }),
         [queryClient, spaceId],
     )
 

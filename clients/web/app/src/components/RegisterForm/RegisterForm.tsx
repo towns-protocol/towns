@@ -40,7 +40,7 @@ export const RegisterForm = () => {
         [loggedInWalletAddress],
     )
 
-    const { mutateAsync: upload, isLoading: imageUploading } = useUploadImage(
+    const { mutateAsync: upload, isPending: imageUploading } = useUploadImage(
         loggedInWalletAddress ?? '',
     )
 
@@ -153,7 +153,6 @@ export const RegisterForm = () => {
                 after={<Icon type="wallet" />}
                 {...register('walletAddress')}
             />
-
             <Stack gap="sm">
                 <TextField
                     autoFocus
@@ -176,7 +175,6 @@ export const RegisterForm = () => {
                     })}
                 />
             </Stack>
-
             <MotionBox gap="x4" layout="position">
                 <Stack gap>
                     <Paragraph strong>Profile picture</Paragraph>
