@@ -1334,8 +1334,14 @@ export class Client
             const response = await this.getMiniblocks(streamId, fromInclusive, toExclusive)
             const eventIds = response.miniblocks.flatMap((m) => m.events.map((e) => e.hashStr))
             const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
-            stream.prependEvents(response.miniblocks, cleartexts, response.terminus)
-            return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
+
+            // a race may occur here: if the state view has been reinitialized during the scrollback
+            // request, we need to discard the new miniblocks.
+            if ((stream.view.miniblockInfo?.min ?? -1n) === toExclusive) {
+                stream.prependEvents(response.miniblocks, cleartexts, response.terminus)
+                return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
+            }
+            return { terminus: false, firstEvent: stream.view.timeline.at(0) }
         }
 
         try {
