@@ -30,7 +30,7 @@ func TestLoad(t *testing.T) {
 	minEventsPerSnapshot := 2
 	inception, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Inception("streamid$1", &protocol.StreamSettings{MinEventsPerSnapshot: int32(minEventsPerSnapshot), MiniblockTimeMs: 1000}),
+		Make_UserPayload_Inception("streamid$1", &protocol.StreamSettings{MinEventsPerSnapshot: int32(minEventsPerSnapshot)}),
 		nil,
 	)
 	assert.NoError(t, err)

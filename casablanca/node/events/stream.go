@@ -89,18 +89,16 @@ func (s *streamImpl) loadInternal(ctx context.Context) {
 		s.loadError = err
 	} else {
 		s.view = view
-
-		s.startTicker(view.InceptionPayload().GetSettings().GetMiniblockTimeMs())
+		s.startTicker()
 	}
 }
 
-func (s *streamImpl) startTicker(miniblockTimeMs uint64) {
-	s.miniblockTickerContext, s.miniblockTickerCancelFunc = context.WithCancel(s.params.DefaultCtx)
-	if miniblockTimeMs == 0 {
-		miniblockTimeMs = 2000
+func (s *streamImpl) startTicker() {
+	if !s.view.InceptionPayload().GetSettings().GetDisableMiniblockCreation() {
+		s.miniblockTickerContext, s.miniblockTickerCancelFunc = context.WithCancel(s.params.DefaultCtx)
+		s.miniblockTicker = time.NewTicker(2 * time.Second)
+		go s.miniblockTick(s.miniblockTickerContext)
 	}
-	s.miniblockTicker = time.NewTicker(time.Duration(miniblockTimeMs) * time.Millisecond) // TODO: make configurable, disable setting from client if not test run. https://linear.app/hnt-labs/issue/HNT-2011
-	go s.miniblockTick(s.miniblockTickerContext)
 }
 
 func (s *streamImpl) miniblockTick(ctx context.Context) {

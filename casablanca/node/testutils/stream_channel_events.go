@@ -191,8 +191,8 @@ func MakeChannelInceptionEvents_T(
 	spaceStreamId string,
 ) []*events.ParsedEvent {
 	streamSettings := &protocol.StreamSettings{
-		MinEventsPerSnapshot: 2,
-		MiniblockTimeMs:      10000000,
+		MinEventsPerSnapshot:     2,
+		DisableMiniblockCreation: true,
 	}
 	channelProperties := &protocol.EncryptedData{
 		Ciphertext: "encrypted text supposed to be here",

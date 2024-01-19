@@ -355,7 +355,10 @@ func TestMethods(t *testing.T) {
 			client,
 			shared.SpaceStreamIdFromName("test"),
 			"channel1",
-			&protocol.StreamSettings{MinEventsPerSnapshot: int32(200), MiniblockTimeMs: 1}, // custom miniblock timing
+			&protocol.StreamSettings{
+				MinEventsPerSnapshot:     200,
+				DisableMiniblockCreation: true,
+			},
 		)
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
@@ -393,6 +396,11 @@ func TestMethods(t *testing.T) {
 			t.Fatalf("error calling AddEvent: %v", err)
 		}
 
+		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
+			Debug: []string{"make_miniblock", shared.ChannelStreamIdFromName("channel1")},
+		}))
+		assert.NoError(t, err)
+
 		message, err := events.MakeEnvelopeWithPayload(
 			wallet2,
 			events.Make_ChannelPayload_Message("hello"),
@@ -414,6 +422,11 @@ func TestMethods(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error calling AddEvent: %v", err)
 		}
+
+		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
+			Debug: []string{"make_miniblock", shared.ChannelStreamIdFromName("channel1")},
+		}))
+		assert.NoError(t, err)
 
 		_, err = client.GetMiniblocks(ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
 			StreamId:      shared.ChannelStreamIdFromName("channel1"),

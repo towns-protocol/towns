@@ -39,8 +39,8 @@ func makeTestSpaceStream(
 ) ([]*ParsedEvent, *protocol.Miniblock) {
 	if streamSettings == nil {
 		streamSettings = &protocol.StreamSettings{
-			MinEventsPerSnapshot: 2,
-			MiniblockTimeMs:      10000000, // should not run during test
+			MinEventsPerSnapshot:     2,
+			DisableMiniblockCreation: true,
 		}
 	}
 	inception := makeEnvelopeWithPayload_T(
@@ -79,8 +79,8 @@ func makeTestChannelStream(
 ) ([]*ParsedEvent, *protocol.Miniblock) {
 	if streamSettings == nil {
 		streamSettings = &protocol.StreamSettings{
-			MinEventsPerSnapshot: 2,
-			MiniblockTimeMs:      10000000,
+			MinEventsPerSnapshot:     2,
+			DisableMiniblockCreation: true,
 		}
 	}
 	if channelProperties == nil {
