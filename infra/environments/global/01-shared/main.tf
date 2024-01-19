@@ -196,6 +196,7 @@ module "public_ecr" {
     "river-node",
     "forked-chain-service",
     "hnt-infra",
+    "hnt-load-test-node"
   ]
   repository_type = "public"
   tags            = module.global_constants.tags

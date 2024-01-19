@@ -1,0 +1,30 @@
+version: '3'
+services:
+  leader-node:
+    build:
+      context: ../../
+      dockerfile: ./servers/load-testing/Dockerfile
+    ports:
+      - "5001:80"
+    environment:
+      - MODE=leader
+  follower-1:
+    build:
+      context: ../../
+      dockerfile: ./servers/load-testing/Dockerfile
+    ports:
+      - "5002:80"
+    environment:
+      - MODE=follower
+      - FOLLOWER_ID=follower-1
+      - LEADER_URL=http://leader-node:80
+  follower-2:
+    build:
+      context: ../../
+      dockerfile: ./servers/load-testing/Dockerfile
+    ports:
+      - "5003:80"
+    environment:
+      - MODE=follower
+      - FOLLOWER_ID=follower-2
+      - LEADER_URL=http://leader-node:80
