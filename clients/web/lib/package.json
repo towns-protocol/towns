@@ -1,6 +1,6 @@
 {
     "name": "use-zion-client",
-    "description": "Zion client, bundles matrix and web3 functionality",
+    "description": "Bundles common react hooks for the client app",
     "version": "workspace:^",
     "license": "MIT",
     "type": "module",
@@ -28,7 +28,6 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@matrix-org/olm": "^3.2.15",
         "@river/proto": "workspace:^",
         "@river/sdk": "workspace:^",
         "@river/web3": "workspace:^",
@@ -41,7 +40,6 @@
         "http-status-codes": "^2.2.0",
         "json-bigint": "^1.0.0",
         "lodash": "^4.17.21",
-        "matrix-js-sdk": "25.0.0-rc.1",
         "node-emoji": "^1.11.0",
         "siwe": "^1.1.6",
         "viem": "^1.18.2",

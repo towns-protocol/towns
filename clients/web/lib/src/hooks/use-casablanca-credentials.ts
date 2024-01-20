@@ -3,9 +3,9 @@ import { useCasablancaStore } from '../store/use-casablanca-store'
 import { useCredentialStore } from '../store/use-credential-store'
 import { ethers } from 'ethers'
 
-/// combines the matrix credentials and login status into a single hook
-/// credentials are stored in local storage
-/// login status is stored in the matrix store, and is used to show the login screen
+/// combines the credentials and login status into a single hook
+/// credentials and login status are stored in local storage, and is
+/// used to show the login screen
 export function useCasablancaCredentials() {
     const { casablancaServerUrl } = useZionContext()
     const credentials = useCredentialStore(

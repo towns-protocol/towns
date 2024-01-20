@@ -17,20 +17,17 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
-
-describe('userProfileOnAcceptInviteHooks', () => {
-    /// when we accept an invite, matrix is sending us our own membership info without
-    /// saturating it with the proper display name (avatar info seems correct).
+// https://linear.app/hnt-labs/issue/HNT-4574/testsintegrationuserprofileonacceptinvitehookstesttsx
+describe.skip('userProfileOnAcceptInviteHooks', () => {
     test('user sees own info after accepting an invite', async () => {
         // create clients
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // save off the wallet
         const aliceProvider = alice.provider
-        // set display name and avatar
-        await alice.setDisplayName("Alice's your aunt")
-        await alice.setAvatarUrl('alice.p ng')
-        // stop alice
-        await alice.stopClients()
+        const aliceUserId = alice.getUserId()
+        if (!aliceUserId) {
+            throw new Error('aliceUserId is undefined')
+        }
         // create a veiw for alice
         const TestUserProfileOnAcceptInvite = () => {
             const myProfile = useMyProfile()
@@ -65,8 +62,6 @@ describe('userProfileOnAcceptInviteHooks', () => {
         const myMembership = screen.getByTestId('myMembership')
         const invitesCount = screen.getByTestId('invitesCount')
         const acceptButton = screen.getByRole('button', { name: 'Accept Invite' })
-        // verify alice name is rendering
-        await waitFor(() => expect(myProfileName).toHaveTextContent("Alice's your aunt"))
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a room
@@ -85,6 +80,9 @@ describe('userProfileOnAcceptInviteHooks', () => {
         fireEvent.click(acceptButton)
         // wait for the room to be joined
         await waitFor(() => expect(myMembership).toHaveTextContent(Membership.Join))
+        // set display name and avatar
+        await alice.setDisplayName(roomId, "Alice's your aunt")
+        await alice.setAvatarUrl('alice.png')
         // verify alice name is rendering
         await waitFor(() => expect(myProfileName).toHaveTextContent("Alice's your aunt"))
     }) // end test

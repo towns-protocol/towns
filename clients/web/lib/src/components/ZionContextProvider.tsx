@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef } from 'react'
 import { ZionClient } from '../client/ZionClient'
 import { useContentAwareTimelineDiffCasablanca } from '../hooks/ZionContext/useContentAwareTimelineDiff'
-import { IOnboardingState } from '../hooks/ZionContext/onboarding/IOnboardingState'
-import { useOnboardingState_Casablanca } from '../hooks/ZionContext/useOnboardingState'
 import { useSpacesIds } from '../hooks/ZionContext/useSpaceIds'
 import { useSpaceUnreads } from '../hooks/ZionContext/useSpaceUnreads'
 import { useSpaces } from '../hooks/ZionContext/useSpaces'
@@ -11,7 +9,6 @@ import { useZionClientListener } from '../hooks/use-zion-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/zion-types'
 import { Web3ContextProvider } from './Web3ContextProvider'
 import { QueryProvider } from './QueryProvider'
-import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@river/sdk'
 import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
 import { useCasablancaRooms } from '../hooks/ZionContext/useCasablancaRooms'
@@ -28,9 +25,8 @@ export type InitialSyncSortPredicate = (a: string, b: string) => number
 
 export interface IZionContext {
     casablancaServerUrl?: ZionOpts['casablancaServerUrl']
-    client?: ZionClient /// only set when user is authenticated with matrix or casablanca
-    clientSingleton?: ZionClient /// always set, can be use for matrix, this duplication can be removed once we transition to casablanca
-    matrixClient?: MatrixClient /// set if we're logged in and matrix client is started
+    client?: ZionClient /// only set when user is authenticated
+    clientSingleton?: ZionClient /// always set, can be use for , this duplication can be removed once we transition to casablanca
     casablancaClient?: CasablancaClient /// set if we're logged in and casablanca client is started
     rooms: Record<string, Room | undefined>
     invitedToIds: string[] // ordered list of invites (spaces and channels)
@@ -41,7 +37,6 @@ export interface IZionContext {
     spaceHierarchies: SpaceHierarchies
     dmChannels: DMChannelIdentifier[]
     dmUnreadChannelIds: Set<string> // dmChannelId -> set of channelIds with unreads
-    casablancaOnboardingState: IOnboardingState
     streamSyncActive: boolean
 }
 
@@ -128,7 +123,7 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
     const { invitedToIds } = useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const { streamSyncActive } = useStreamSyncActive(casablancaClient)
-    const { spaces } = useSpaces(undefined, casablancaClient)
+    const { spaces } = useSpaces(casablancaClient)
     const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
 
@@ -145,7 +140,6 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
     const rooms = useCasablancaRooms(casablancaClient)
     const dynamicTimelineFilter = useTimelineFilter((state) => state.eventFilter)
     useCasablancaTimelines(casablancaClient, dynamicTimelineFilter ?? timelineFilter)
-    const casablancaOnboardingState = useOnboardingState_Casablanca(client, casablancaClient)
     useHookLogger()
 
     return (
@@ -163,7 +157,6 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
                 spaceHierarchies,
                 dmChannels,
                 dmUnreadChannelIds,
-                casablancaOnboardingState,
                 casablancaServerUrl: casablancaServerUrl,
                 streamSyncActive,
             }}

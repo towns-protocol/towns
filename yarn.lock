@@ -5006,13 +5006,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@matrix-org/matrix-sdk-crypto-js@npm:^0.1.0-alpha.6":
-  version: 0.1.0-alpha.7
-  resolution: "@matrix-org/matrix-sdk-crypto-js@npm:0.1.0-alpha.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40matrix-org%2Fmatrix-sdk-crypto-js%2F-%2Fmatrix-sdk-crypto-js-0.1.0-alpha.7.tgz"
-  checksum: 2efdc2b2ba3811aa06e2e661fd72b17fa9a28040b4e464ce89464f6659f4ea15fba0dd8579f984dee7dbc0f8a9025011a38fb5586ec7303a453e2edefb0a4200
-  languageName: node
-  linkType: hard
-
 "@matrix-org/olm@npm:^3.2.15":
   version: 3.2.15
   resolution: "@matrix-org/olm@npm:3.2.15::__archiveUrl=https%3A%2F%2Fgitlab.matrix.org%2Fapi%2Fv4%2Fprojects%2F27%2Fpackages%2Fnpm%2F%40matrix-org%2Folm%2F-%2F%40matrix-org%2Folm-3.2.15.tgz"
@@ -7621,13 +7614,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/events@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "@types/events@npm:3.0.0"
-  checksum: 9a424c2da210957d5636e0763e8c9fc3aaeee35bf411284ddec62a56a6abe31de9c7c2e713dabdd8a76ff98b47db2bd52f61310be6609641d6234cc842ecbbe3
-  languageName: node
-  linkType: hard
-
 "@types/express-serve-static-core@npm:^4.17.33":
   version: 4.17.35
   resolution: "@types/express-serve-static-core@npm:4.17.35"
@@ -7953,13 +7939,6 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: dc6a6df507656004e242dcb02c784479deca516d5f4b58a1707e708022b269ae147e1da0521f3e8ad0d63638869d87e0adc023f0bd5454aa6f72ac66c7525cf5
-  languageName: node
-  linkType: hard
-
-"@types/retry@npm:0.12.0":
-  version: 0.12.0
-  resolution: "@types/retry@npm:0.12.0"
-  checksum: 61a072c7639f6e8126588bf1eb1ce8835f2cb9c2aba795c4491cf6310e013267b0c8488039857c261c387e9728c1b43205099223f160bb6a76b4374f741b5603
   languageName: node
   linkType: hard
 
@@ -9486,13 +9465,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"another-json@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "another-json@npm:0.2.0"
-  checksum: b1d27bd5d7a35364ff2e8eb66e65ef9a53f3ab84f7a4ae38495bf14ba0b346654f107487b4f2f247dbe6a22a8fb4ca2a94330738176516b78494e641fce05178
-  languageName: node
-  linkType: hard
-
 "ansi-colors@npm:^4.1.1":
   version: 4.1.3
   resolution: "ansi-colors@npm:4.1.3"
@@ -10138,13 +10110,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"base-x@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "base-x@npm:4.0.0"
-  checksum: b25db9e07eb1998472a20557c7f00c797dc0595f79df95155ab74274e7fa98b9f2659b3ee547ac8773666b7f69540656793aeb97ad2b1ceccdb6fa5faaf69ac0
-  languageName: node
-  linkType: hard
-
 "base64-arraybuffer-es6@npm:^0.7.0":
   version: 0.7.0
   resolution: "base64-arraybuffer-es6@npm:0.7.0"
@@ -10443,15 +10408,6 @@ __metadata:
   dependencies:
     fast-json-stable-stringify: 2.x
   checksum: d34bdaf68c64bd099ab97c3ea608c9ae7d3f5faa1178b3f3f345acd94e852e608b2d4f9103fb2e503f5e69780e98293df41691b84be909b41cf5045374d54606
-  languageName: node
-  linkType: hard
-
-"bs58@npm:^5.0.0":
-  version: 5.0.0
-  resolution: "bs58@npm:5.0.0"
-  dependencies:
-    base-x: ^4.0.0
-  checksum: 2475cb0684e07077521aac718e604a13e0f891d58cff923d437a2f7e9e28703ab39fce9f84c7c703ab369815a675f11e3bd394d38643bfe8969fbe42e6833d45
   languageName: node
   linkType: hard
 
@@ -11196,7 +11152,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"content-type@npm:^1.0.4, content-type@npm:~1.0.4":
+"content-type@npm:~1.0.4":
   version: 1.0.5
   resolution: "content-type@npm:1.0.5"
   checksum: 566271e0a251642254cde0f845f9dd4f9856e52d988f4eb0d0dcffbb7a1f8ec98de7a5215fc628f3bce30fe2fb6fd2bc064b562d721658c59b544e2d34ea2766
@@ -13775,7 +13731,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"events@npm:^3.0.0, events@npm:^3.2.0, events@npm:^3.3.0":
+"events@npm:^3.0.0, events@npm:^3.3.0":
   version: 3.3.0
   resolution: "events@npm:3.3.0"
   checksum: f6f487ad2198aa41d878fa31452f1a3c00958f46e9019286ff4787c84aac329332ab45c9cdc8c445928fc6d7ded294b9e005a7fce9426488518017831b272780
@@ -17605,13 +17561,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loglevel@npm:^1.7.1":
-  version: 1.8.1
-  resolution: "loglevel@npm:1.8.1"
-  checksum: a1a62db40291aaeaef2f612334c49e531bff71cc1d01a2acab689ab80d59e092f852ab164a5aedc1a752fdc46b7b162cb097d8a9eb2cf0b299511106c29af61d
-  languageName: node
-  linkType: hard
-
 "lokijs@npm:^1.5.12":
   version: 1.5.12
   resolution: "lokijs@npm:1.5.12"
@@ -17794,43 +17743,6 @@ __metadata:
   dependencies:
     tmpl: 1.0.5
   checksum: b38a025a12c8146d6eeea5a7f2bf27d51d8ad6064da8ca9405fcf7bf9b54acd43e3b30ddd7abb9b1bfa4ddb266019133313482570ddb207de568f71ecfcf6060
-  languageName: node
-  linkType: hard
-
-"matrix-events-sdk@npm:0.0.1":
-  version: 0.0.1
-  resolution: "matrix-events-sdk@npm:0.0.1"
-  checksum: 18b61a1a2cd9947e5cec4f9332186f5609e3a47c6c6e775b306e9af0e12babcdb2f68459133c4d44ebc5a7e5ee60e7528813dfccb80d8a8b55668338cd81ee49
-  languageName: node
-  linkType: hard
-
-"matrix-js-sdk@npm:25.0.0-rc.1":
-  version: 25.0.0-rc.1
-  resolution: "matrix-js-sdk@npm:25.0.0-rc.1"
-  dependencies:
-    "@babel/runtime": ^7.12.5
-    "@matrix-org/matrix-sdk-crypto-js": ^0.1.0-alpha.6
-    another-json: ^0.2.0
-    bs58: ^5.0.0
-    content-type: ^1.0.4
-    loglevel: ^1.7.1
-    matrix-events-sdk: 0.0.1
-    matrix-widget-api: ^1.3.1
-    p-retry: 4
-    sdp-transform: ^2.14.1
-    unhomoglyph: ^1.0.6
-    uuid: 9
-  checksum: 100bd62a7f68286678cee5fe1a14c5ca05db7c4991bd17c917f4fb234c7e6bfac1d0e3fc498dd58ed488e65d950d6b95e87e463abb6ec9e3b84e73b047dcebee
-  languageName: node
-  linkType: hard
-
-"matrix-widget-api@npm:^1.3.1":
-  version: 1.3.1
-  resolution: "matrix-widget-api@npm:1.3.1"
-  dependencies:
-    "@types/events": ^3.0.0
-    events: ^3.2.0
-  checksum: 5ddcbcd3664806d9e632a4a5c61586a1958e354880a076993ff87fc4e7d924aa4cfb822c8d9564c4b64c7444605b709a50e8e09009570c39cfba4303b2132e35
   languageName: node
   linkType: hard
 
@@ -19539,16 +19451,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"p-retry@npm:4":
-  version: 4.6.2
-  resolution: "p-retry@npm:4.6.2"
-  dependencies:
-    "@types/retry": 0.12.0
-    retry: ^0.13.1
-  checksum: 45c270bfddaffb4a895cea16cb760dcc72bdecb6cb45fef1971fa6ea2e91ddeafddefe01e444ac73e33b1b3d5d29fb0dd18a7effb294262437221ddc03ce0f2e
-  languageName: node
-  linkType: hard
-
 "p-try@npm:^2.0.0":
   version: 2.2.0
   resolution: "p-try@npm:2.2.0"
@@ -21122,13 +21024,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"retry@npm:^0.13.1":
-  version: 0.13.1
-  resolution: "retry@npm:0.13.1"
-  checksum: 47c4d5be674f7c13eee4cfe927345023972197dbbdfba5d3af7e461d13b44de1bfd663bfc80d2f601f8ef3fc8164c16dd99655a221921954a65d044a2fc1233b
-  languageName: node
-  linkType: hard
-
 "reusify@npm:^1.0.4":
   version: 1.0.4
   resolution: "reusify@npm:1.0.4"
@@ -21506,15 +21401,6 @@ __metadata:
   version: 3.0.1
   resolution: "scrypt-js@npm:3.0.1"
   checksum: b7c7d1a68d6ca946f2fbb0778e0c4ec63c65501b54023b2af7d7e9f48fdb6c6580d6f7675cd53bda5944c5ebc057560d5a6365079752546865defb3b79dea454
-  languageName: node
-  linkType: hard
-
-"sdp-transform@npm:^2.14.1":
-  version: 2.14.1
-  resolution: "sdp-transform@npm:2.14.1"
-  bin:
-    sdp-verify: checker.js
-  checksum: 8b3179786db1a0f1ebfdacb1ac0dfe2833e63e8c64b638884cec212455061d53beaa8d9c8bf76fdbd5f844b7885f3892adec27e87734cfbc2b3e5c65e18a489b
   languageName: node
   linkType: hard
 
@@ -23633,13 +23519,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"unhomoglyph@npm:^1.0.6":
-  version: 1.0.6
-  resolution: "unhomoglyph@npm:1.0.6"
-  checksum: 2401fa3f8129fb1093d9ae59680b1dc8e395016e48401f9e706861a6edd28cafc60b0ac7e001cc127ee544942ed16236881b969afd856c28ebfe5d77afa1f0c2
-  languageName: node
-  linkType: hard
-
 "unicode-canonical-property-names-ecmascript@npm:^2.0.0":
   version: 2.0.0
   resolution: "unicode-canonical-property-names-ecmascript@npm:2.0.0"
@@ -24037,7 +23916,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "use-zion-client@workspace:clients/web/lib"
   dependencies:
-    "@matrix-org/olm": ^3.2.15
     "@river/proto": "workspace:^"
     "@river/sdk": "workspace:^"
     "@river/web3": "workspace:^"
@@ -24071,7 +23949,6 @@ __metadata:
     jest-runner-groups: ^2.2.0
     json-bigint: ^1.0.0
     lodash: ^4.17.21
-    matrix-js-sdk: 25.0.0-rc.1
     node-emoji: ^1.11.0
     pino: ^8.17.1
     react: ^18.2.0
@@ -24169,7 +24046,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:9, uuid@npm:>=8 <10, uuid@npm:^9.0.0":
+"uuid@npm:>=8 <10, uuid@npm:^9.0.0":
   version: 9.0.1
   resolution: "uuid@npm:9.0.1"
   bin:

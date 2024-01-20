@@ -13,7 +13,7 @@ import { useZionClient } from './use-zion-client'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
 /**
- * Combine Matrix channel creation and Smart Contract channel
+ * Combine river channel creation and Smart Contract channel
  * creation into one hook.
  */
 export function useCreateChannelTransaction() {

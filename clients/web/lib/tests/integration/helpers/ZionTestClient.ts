@@ -11,7 +11,6 @@ import {
     ZionClientEventHandlers,
     ZionOpts,
 } from '../../../src/client/ZionClientTypes'
-import { UserIdentifier, createUserIdFromEthereumAddress } from '../../../src/types/user-identifier'
 
 import { CreateSpaceInfo } from '../../../src/types/zion-types'
 import { RoleIdentifier } from '../../../src/types/web3-types'
@@ -29,8 +28,6 @@ export interface ZionTestClientProps {
 }
 
 export class ZionTestClient extends ZionClient {
-    private userIdentifier: UserIdentifier
-
     static allClients: ZionTestClient[] = []
     static async cleanup() {
         console.log(
@@ -51,7 +48,7 @@ export class ZionTestClient extends ZionClient {
     }
     public delegateWallet: ethers.Wallet
     public get walletAddress(): string | undefined {
-        return this.userIdentifier?.accountAddress
+        return this.provider.wallet.address
     }
 
     constructor(
@@ -77,11 +74,6 @@ export class ZionTestClient extends ZionClient {
         this.props = props
         // initialize our provider that wraps our wallet and chain communication
         this.provider = provider
-        // user identifier
-        this.userIdentifier = createUserIdFromEthereumAddress(
-            this.provider.wallet.address,
-            this.chainId,
-        )
         // casablanca delegate wallet
         this.delegateWallet = ethers.Wallet.createRandom()
 

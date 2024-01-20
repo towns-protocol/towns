@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import '@testing-library/jest-dom'
 import '@testing-library/jest-dom/extend-expect'
-import { AutoDiscovery } from 'matrix-js-sdk'
 import { TestConstants } from './tests/integration/helpers/TestConstants'
 import { ZionTestClient } from './tests/integration/helpers/ZionTestClient'
-import Olm from '@matrix-org/olm'
 import { configure } from '@testing-library/dom'
 import 'jest-canvas-mock'
 import { queryClient } from './src/query/queryClient'
@@ -23,7 +21,6 @@ process.env.ETHERS_NETWORK = process.env.ETHERS_NETWORK || 'http://127.0.0.1:854
 import fetch, { Headers, Request, Response } from 'node-fetch'
 
 beforeAll(async () => {
-    globalThis.Olm = Olm
     await globalThis.Olm.init()
     // dom testing library config for `waitFor(...)`
     configure({
@@ -36,7 +33,6 @@ beforeAll(async () => {
         globalThis.Request = Request as unknown as typeof globalThis.Request
         globalThis.Response = Response as unknown as typeof globalThis.Response
     }
-    AutoDiscovery.setFetchFn(globalThis.fetch)
 })
 
 afterEach(() => {

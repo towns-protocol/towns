@@ -11,7 +11,6 @@ import { Thread } from 'routes/Thread'
 import { Threads } from 'routes/Threads'
 import { Mentions } from 'routes/Mentions'
 import { Login } from '@components/Login'
-import { VersionsPage } from 'routes/VersionsPage'
 import { useEnvironment } from 'hooks/use-environment'
 import { PrivyProvider } from 'context/PrivyProvider'
 import { WalletLinkingPage } from 'routes/WalletLinkingPage'
@@ -66,7 +65,6 @@ const AppContent = () => {
                 >
                     <EmbeddedSignerContextProvider chainId={chainId}>
                         <Routes>
-                            <Route path="/versions" element={<VersionsPage />} />
                             <Route element={<MainLayout />}>
                                 <Route element={<AuthenticatedContent />}>
                                     <Route index element={<Home />} />

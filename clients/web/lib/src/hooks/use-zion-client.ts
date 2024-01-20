@@ -19,18 +19,15 @@ import {
     SendTextMessageOptions,
     UpdateChannelInfo,
 } from '../types/zion-types'
-import { MatrixError, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
 import { RoomMessageEvent } from '../types/timeline-types'
 import { ZionClient } from '../client/ZionClient'
 import { useLogout } from '../hooks/use-logout'
-import { useMatrixWalletSignIn } from './use-matrix-wallet-sign-in'
 import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers'
 import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
 import { ITownArchitectBase, TokenEntitlementDataTypes, Permission } from '@river/web3'
-import { isTestEnv } from '@river/sdk'
 import { TSigner } from 'types/web3-types'
 
 export type ZionErrorStoreState = {
@@ -47,7 +44,7 @@ export const useZionErrorStore = create<ZionErrorStoreState>((set) => ({
 }))
 
 /**
- * Matrix client API to interact with the Matrix server.
+ * client API to interact with the river server.
  */
 interface ZionClientImpl {
     chainId: number | undefined
@@ -179,11 +176,9 @@ interface ZionClientImpl {
     waitWalletLinkTransaction: (
         transactionContext: WalletLinkTransactionContext,
     ) => Promise<WalletLinkTransactionContext | undefined>
-    userOnWrongNetworkForSignIn: boolean
 }
 
 export function useZionClient(): ZionClientImpl {
-    const { userOnWrongNetworkForSignIn } = useMatrixWalletSignIn()
     const {
         getIsWalletRegisteredWithCasablanca,
         loginWithWalletToCasablanca,
@@ -248,21 +243,8 @@ export function useZionClient(): ZionClientImpl {
         removeLink: useWithCatch(client?.removeLink),
         getLinkedWallets: useWithCatch(client?.getLinkedWallets),
         waitWalletLinkTransaction: useWithCatch(client?.waitWalletLinkTransaction),
-        userOnWrongNetworkForSignIn,
     }
 }
-
-// Map all objects with a name property to an MatrixError
-export function isMatrixError(err: unknown): err is MatrixError {
-    return (
-        (err as Error).name !== undefined &&
-        typeof (err as Error).name === 'string' &&
-        (err as MatrixError).httpStatus !== undefined
-    )
-}
-
-// Used to satisfy RETRY_BACKOFF_RATELIMIT, which doesn't actually look at it
-const dummyMatrixEvent = new MatrixEvent()
 
 const useWithCatch = <T extends Array<unknown>, U>(
     fn?: (...args: T) => Promise<U | undefined>,
@@ -274,10 +256,9 @@ const useWithCatch = <T extends Array<unknown>, U>(
             async (...args: T): Promise<U | undefined> => {
                 if (fn && client) {
                     let retryCount = 0
-                    // Loop until success, or MatrixScheduler.RETRY_BACKOFF_RATELIMIT returns -1
-                    // MatrixScheduler.RETRY_BACKOFF_RATELIMIT returns -1 when retryCount > 4 or httpStatus is 400, 401 or 403
                     // eslint-disable-next-line no-constant-condition
                     while (true) {
+                        retryCount++
                         try {
                             const value = await fn.apply(client, args)
                             if (retryCount > 0) {
@@ -288,36 +269,8 @@ const useWithCatch = <T extends Array<unknown>, U>(
                             if (client.opts.verbose === true) {
                                 appendError(formatError<T, U>(err, retryCount, fn, args))
                             }
-                            if (isMatrixError(err)) {
-                                let retryDelay: number
-                                // RETRY_BACKOFF_RATELIMIT returns -1 for 401s, so we need to handle that ourselves
-                                if (err.httpStatus === 401) {
-                                    // retry 401s many times for tests, 36s total (RETRY_BACKOFF_RATELIMIT waits 30s total)
-                                    const retryLimit = isTestEnv() ? 12 : 2
-                                    retryDelay = retryCount < retryLimit ? 3000 : -1
-                                } else {
-                                    retryDelay = MatrixScheduler.RETRY_BACKOFF_RATELIMIT(
-                                        dummyMatrixEvent,
-                                        retryCount,
-                                        err,
-                                    )
-                                }
-                                if (retryDelay >= 0) {
-                                    console.log(`MatrixError`, { retryDelay, err, retryCount })
-                                    await new Promise((resolve) => setTimeout(resolve, retryDelay))
-                                    retryCount++
-                                    continue
-                                }
-                                console.log(
-                                    `MatrixError reached limit, giving up`,
-                                    retryCount,
-                                    retryDelay,
-                                    err,
-                                )
-                            } else {
-                                // Not a MatrixError, just give up
-                                console.error('Not a retryable error', err)
-                            }
+                            // just give up
+                            console.error('Not a retryable error', err)
                             return
                         }
                     }
@@ -336,9 +289,9 @@ function formatError<T extends Array<unknown>, U>(
     args: T,
 ): string {
     try {
-        return `ERROR: ${errorToString(err)} retryCount: ${retryCount} isMatrixError: ${
-            isMatrixError(err) ? 'true' : 'false'
-        } fn: ${fn.name} args: ${JSON.stringify(args)}`
+        return `ERROR: ${errorToString(err)} retryCount: ${retryCount} fn: ${
+            fn.name
+        } args: ${JSON.stringify(args)}`
     } catch (e) {
         // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         return `unformattable ERROR: ${e}`

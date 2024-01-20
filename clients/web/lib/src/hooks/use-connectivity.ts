@@ -18,7 +18,6 @@ export function useConnectivity() {
         loginWithWalletToCasablanca,
         registerWalletWithCasablanca,
         getIsWalletRegisteredWithCasablanca,
-        userOnWrongNetworkForSignIn,
         logout: _logout,
     } = useZionClient()
 
@@ -50,9 +49,8 @@ export function useConnectivity() {
         register,
         getIsWalletRegistered,
         loggedInWalletAddress,
-        isAuthenticated, // matrix status
+        isAuthenticated, // authenticated with River node or not
         loginStatus,
         loginError,
-        userOnWrongNetworkForSignIn,
     }
 }

@@ -1,5 +1,4 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { HistoryVisibility, IContent, MatrixEvent } from 'matrix-js-sdk'
 import { StreamSettings } from '@river/proto'
 import { Stream } from '@river/sdk'
 import { Attachment } from './timeline-types'
@@ -117,7 +116,6 @@ export interface CreateSpaceInfo {
 export interface CreateChannelInfo {
     name: string
     parentSpaceId: string
-    historyVisibility?: HistoryVisibility
     roleIds: number[]
     disableEncryption?: boolean
     topic?: string
@@ -161,10 +159,6 @@ export type SendGMOptions = ThreadIdOptions & {
     messageType: MessageType.GM
 }
 
-// ImageInfo from matrix-js-sdk (node_modules/matrix-js-sdk/src/@types/partials.ts) is incomplete against matrix spec (https://spec.matrix.org/v1.3/client-server-api/#mimage)
-// and missing key `url` props so rolling our own
-// note aellis 04/2023 we updated the format
-// tests in app/timelineItem.test.tsx ensure that we can render both types
 export type SendImageMessageOptions = ThreadIdOptions & {
     messageType: MessageType.Image
     info: {
@@ -234,44 +228,59 @@ export type SendMessageOptionsBase =
 
 export type SendMessageOptions = SendMessageOptionsBase & SpaceIdOptions
 
+export enum RelationType {
+    Annotation = 'm.annotation',
+    Replace = 'm.replace',
+    Reference = 'm.reference',
+    Thread = 'm.thread',
+}
+
+export interface IMentions {
+    user_ids?: string[]
+    room?: boolean
+}
+
+export interface IEventRelation {
+    rel_type?: RelationType | string
+    event_id?: string
+    is_falling_back?: boolean
+    'm.in_reply_to'?: {
+        event_id?: string
+    }
+    key?: string
+}
+
+export enum MsgType {
+    Text = 'm.text',
+    Emote = 'm.emote',
+    Notice = 'm.notice',
+    Image = 'm.image',
+    File = 'm.file',
+    Audio = 'm.audio',
+    Location = 'm.location',
+    Video = 'm.video',
+    KeyVerificationRequest = 'm.key.verification.request',
+}
+
+/* eslint-disable camelcase */
+export interface IContent {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any
+    msgtype?: MsgType | string
+    membership?: string
+    avatar_url?: string
+    displayname?: string
+    'm.relates_to'?: IEventRelation
+
+    'm.mentions'?: IMentions
+}
+
 export type ImageMessageContent = IContent & Omit<SendImageMessageOptions, 'messageType'>
 
 export type MessageContent = IContent | ImageMessageContent
 
 export interface EditMessageOptions {
     originalEventId: string
-}
-
-export interface PowerLevels {
-    userPowers: { [userId: string]: number }
-    levels: PowerLevel[]
-}
-
-export interface PowerLevel {
-    value: number
-    definition: PowerLevelDefinition
-}
-
-export interface PowerLevelDefinition {
-    key: string
-    name: string
-    description: string
-    default: number
-    parent?: string
-}
-
-export function getIdForMatrixEvent(event: MatrixEvent): string {
-    const eventId = event.getId()
-    if (eventId) {
-        return eventId
-    }
-    console.warn('getIdForMatrixEvent: event has no id', {
-        type: event.getType(),
-        content: event.getContent(),
-    })
-    // this should never??? happen, but if it does, we need to generate a unique id
-    // for things to run, so we'll use the local timestamp and a random number
-    return `UnknownId_${event.localTimestamp}_${Math.floor(Math.random() * 4095).toString(16)}`
 }
 
 export function isMentionedTextMessageOptions(

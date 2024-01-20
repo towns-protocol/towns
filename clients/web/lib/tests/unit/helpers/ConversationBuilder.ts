@@ -152,7 +152,6 @@ function makeMessage(params: {
         mentions: [],
         editsEventId: params.editsEventId,
         content: {},
-        wireContent: {},
     }
 }
 

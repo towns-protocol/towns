@@ -58,8 +58,8 @@ import {
     ChunkedMediaAttachment,
     EmbeddedMediaAttachment,
     ImageAttachment,
+    EventStatus,
 } from '../../types/timeline-types'
-import { EventStatus } from 'matrix-js-sdk'
 import { isDefined, logNever } from '@river/mecholm'
 
 type SuccessResult = {
@@ -641,7 +641,6 @@ function toTownsContent_ChannelPayload_Message_Post(
                     mentions: value.content.value.mentions,
                     editsEventId: editsEventId,
                     content: {},
-                    wireContent: {},
                     attachments: toAttachments(value.content.value.attachments, eventId),
                 } satisfies RoomMessageEvent,
             }
@@ -659,7 +658,6 @@ function toTownsContent_ChannelPayload_Message_Post(
                         info: value.content.value.info,
                         thumbnail: value.content.value.thumbnail,
                     },
-                    wireContent: {},
                 } satisfies RoomMessageEvent,
             }
 
@@ -676,7 +674,6 @@ function toTownsContent_ChannelPayload_Message_Post(
                     content: {
                         data: value.content.value.value,
                     },
-                    wireContent: {},
                 } satisfies RoomMessageEvent,
             }
         case 'embeddedMedia':
@@ -696,7 +693,6 @@ function toTownsContent_ChannelPayload_Message_Post(
                         heightPixels: value.content.value.info?.heightPixels,
                         sizeBytes: value.content.value.info?.sizeBytes,
                     },
-                    wireContent: {},
                 } satisfies RoomMessageEvent,
             }
         case 'chunkedMedia':
@@ -720,7 +716,6 @@ function toTownsContent_ChannelPayload_Message_Post(
                         secretKey: value.content.value.encryption.value?.secretKey,
                         thumbnail: value.content.value.thumbnail?.content,
                     },
-                    wireContent: {},
                 } satisfies RoomMessageEvent,
             }
         case undefined:

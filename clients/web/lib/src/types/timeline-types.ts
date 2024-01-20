@@ -1,4 +1,3 @@
-import { HistoryVisibility, IContent, JoinRule, RestrictedAllowType } from 'matrix-js-sdk'
 import {
     ChannelMessage_Post_Attachment,
     ChannelMessage_Post_Content_ChunkedMedia_AESGCM,
@@ -10,14 +9,14 @@ import {
     MiniblockHeader,
     PayloadCaseType,
 } from '@river/proto'
-import { Channel, Membership, Mention, PowerLevels } from './zion-types'
+import { Channel, IContent, Membership, Mention } from './zion-types'
 import { staticAssertNever } from '../utils/zion-utils'
 import { DecryptedContentError } from '@river/sdk'
 import { isDefined } from '@river/mecholm'
 
 /**************************************************************************
  * We're using a union type to represent the different types of events that
- * can be received from the Matrix server.
+ * can be received from the server.
  * you can read about union types
  * here: https://www.typescriptlang.org/docs/handbook/unions-and-intersections.html
  * and here: https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#union-types
@@ -59,7 +58,6 @@ export enum ZTEvent {
     RoomMessageEncrypted = 'm.room.encrypted',
     RoomName = 'm.room.name',
     RoomProperties = 'm.room.properties',
-    RoomPowerLevels = 'm.room.power_levels',
     RoomTopic = 'm.room.topic',
     SpaceChild = 'm.space.child',
     SpaceParent = 'm.space.parent',
@@ -78,24 +76,18 @@ export type TimelineEvent_OneOf =
     | RedactionActionEvent
     | RoomCanonicalAliasEvent
     | RoomEncryptionEvent
-    | RoomHistoryVisibilityEvent
-    | RoomJoinRulesEvent
     | RoomAvatarEvent
     | RoomCreateEvent
     | RoomMessageEncryptedEvent
     | RoomMemberEvent
     | RoomMessageEvent
     | RoomNameEvent
-    | RoomPowerLevelsEvent
     | RoomPropertiesEvent
     | RoomTopicEvent
     | SpaceChildEvent
     | SpaceParentEvent
     | SpaceUsernameEvent
     | SpaceDisplayNameEvent
-
-// NOTE this is an inexhaustive list, see https://spec.matrix.org/v1.2/client-server-api/#server-behaviour-16
-// and https://spec.matrix.org/v1.2/client-server-api/#stripped-state
 
 export interface MiniblockHeaderEvent {
     kind: ZTEvent.MiniblockHeader
@@ -162,17 +154,6 @@ export interface RoomMessageEncryptedEvent {
     error?: DecryptedContentError
 }
 
-export interface RoomHistoryVisibilityEvent {
-    kind: ZTEvent.RoomHistoryVisibility
-    historyVisibility: HistoryVisibility
-}
-
-export interface RoomJoinRulesEvent {
-    kind: ZTEvent.RoomJoinRules
-    joinRule: JoinRule
-    allow?: { room_id: string; type: RestrictedAllowType }[]
-}
-
 export interface RoomMemberEvent {
     kind: ZTEvent.RoomMember
     userId: string
@@ -209,7 +190,6 @@ export interface RoomMessageEvent {
     mentions: OTWMention[]
     editsEventId?: string
     content: IContent // room messages have lots of representations
-    wireContent: IContent
     attachments?: Attachment[]
 }
 
@@ -221,10 +201,6 @@ export interface RoomNameEvent {
 export interface RoomTopicEvent {
     kind: ZTEvent.RoomTopic
     topic: string
-}
-
-export interface RoomPowerLevelsEvent extends PowerLevels {
-    kind: ZTEvent.RoomPowerLevels
 }
 
 // original event: the event that was redacted
@@ -385,10 +361,6 @@ export function getFallbackContent(
             } rotationMsgs: ${content.roomEncryption.rotationPeriodMsgs?.toString() ?? 'N/A'}`
         case ZTEvent.RoomMessageEncrypted:
             return `Decrypting...`
-        case ZTEvent.RoomHistoryVisibility:
-            return `newValue: ${content.historyVisibility}`
-        case ZTEvent.RoomJoinRules:
-            return `newValue: ${content.joinRule}`
         case ZTEvent.RoomMember: {
             const name = content.displayName ?? content.userId
             const avatar = content.avatarUrl ?? 'none'
@@ -410,8 +382,6 @@ export function getFallbackContent(
             return `~Redacted~`
         case ZTEvent.RedactionActionEvent:
             return `Redacts ${content.refEventId}`
-        case ZTEvent.RoomPowerLevels:
-            return `${content.kind}`
         case ZTEvent.SpaceChild:
             return `childId: ${content.childId}`
         case ZTEvent.SpaceParent:

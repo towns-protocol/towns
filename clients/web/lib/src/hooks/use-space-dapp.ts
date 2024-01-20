@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { IWeb3Context } from '../components/Web3ContextProvider'
 import { ISpaceDapp, createSpaceDapp } from '@river/web3'
 
-// a hook to create a SpaceDapp instance outside of matrix client context
+// a hook to create a SpaceDapp instance outside of the client SDK
 export const useSpaceDapp = ({
     chainId,
     provider,

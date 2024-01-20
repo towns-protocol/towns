@@ -9,7 +9,6 @@ import { WelcomeRoute } from 'routes/Welcome'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
-const VersionsPage = React.lazy(() => import('routes/VersionsPage'))
 
 const PlaygroundRoutes = React.lazy(() => import('@components/Playground/PlaygroundRoutes'))
 
@@ -23,7 +22,6 @@ export const AllRoutes = () => {
                     {/* TODO: Remove extra level */}
                     <Route element={<Outlet />}>
                         <>
-                            <Route path={PATHS.VERSIONS} element={<VersionsPage />} />
                             {!isAuthenticated ? (
                                 <>
                                     <Route path={PATHS.REGISTER} element={<WelcomeRoute />} />

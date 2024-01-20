@@ -67,7 +67,6 @@ import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@town
 /***
  * Zion Client
  * for calls that originate from a roomIdentifier, or for createing new rooms
- * handle toggling between matrix and casablanca
  * the zion client will:
  * - always encrypt
  * - enforce space / channel relationships
@@ -539,7 +538,7 @@ export class ZionClient implements EntitlementsDelegate {
                 )
                 console.log(`[updateChannelTransaction] transaction created` /*, transaction*/)
             } else {
-                // this is a matrix/casablanca off chain state update
+                // this is an off chain state update
             }
         } catch (err) {
             console.error('[updateChannelTransaction]', err)

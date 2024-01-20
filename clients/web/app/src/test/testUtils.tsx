@@ -92,7 +92,6 @@ export function mockUseConnectivity(): ReturnType<typeof Lib.useConnectivity> {
         isAuthenticated: true,
         loginStatus: Lib.LoginStatus.LoggedIn,
         loginError: null,
-        userOnWrongNetworkForSignIn: false,
     }
 }
 

@@ -135,7 +135,6 @@ function PrivyInfo() {
         loggedInWalletAddress,
         isAuthenticated: riverIsAuthenticated,
         loginError,
-        userOnWrongNetworkForSignIn,
         loginStatus: riverLoginStatus,
     } = useConnectivity()
 
@@ -147,7 +146,6 @@ function PrivyInfo() {
             loggedInWalletAddress,
             riverIsAuthenticated,
             loginError,
-            userOnWrongNetworkForSignIn,
         })
     }, [
         loggedInWalletAddress,
@@ -156,7 +154,6 @@ function PrivyInfo() {
         privyReady,
         riverIsAuthenticated,
         riverLoginStatus,
-        userOnWrongNetworkForSignIn,
     ])
 
     if (!privyReady) {

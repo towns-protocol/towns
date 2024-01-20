@@ -54,9 +54,6 @@ function generateRoomMessageEvent(messageContent: MessageContent): RoomMessageEv
             // 4 levels deep
             ...messageContent,
         },
-        wireContent: {
-            key: '',
-        },
     }
 }
 

@@ -28,7 +28,8 @@ export function useSpaceData(inSpaceId?: string): SpaceData | undefined {
     const { spaceHierarchies } = useZionContext()
     const { spaceId: contextSpaceId } = useSpaceContext()
     const spaceId = inSpaceId ?? contextSpaceId
-    // this madness is for matrix. the space holds the channel ids, but
+    // https://linear.app/hnt-labs/issue/HNT-4575/simplify-use-space-data-hook
+    // the space holds the channel ids, but
     // we don't sync the channels until after joining, so blend the hierarchy data
     // with local data and hope the channel names come out right.
     const spaceRoom = useRoom(spaceId)

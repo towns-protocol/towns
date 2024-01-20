@@ -22,7 +22,6 @@ import { sleep } from '../../src/utils/zion-utils'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 // https://linear.app/hnt-labs/issue/HNT-38/invites-might-not-sync-show-properly-in-some-instances
-/// todo: fix matrix logout https://linear.app/hnt-labs/issue/HNT-1334/logging-out-is-problematic-in-the-tests
 describe.skip('inviteToSpace', () => {
     test('user can receive an invite, display it, and accept it', async () => {
         // create clients
@@ -61,11 +60,11 @@ describe.skip('inviteToSpace', () => {
             janesSpaceId_2,
             janesChannelId_2,
         })
-        await sleep(5000) /// todo: fix matrix logout https://linear.app/hnt-labs/issue/HNT-1334/logging-out-is-problematic-in-the-tests
+        await sleep(5000)
         // have bob logout
         await bob.logout()
         // give it a second
-        await sleep(3000) /// todo: fix matrix logout https://linear.app/hnt-labs/issue/HNT-1334/logging-out-is-problematic-in-the-tests
+        await sleep(3000)
         // send an invite to bob while he's logged out (regression)
         await jane.inviteUser(janesSpaceId_1, bobUserId)
         // create a veiw for bob

@@ -24,11 +24,6 @@ vi.mock('use-zion-client', async () => {
         ...actual,
         useZionContext: () => ({
             ...actual.useZionContext(),
-            casablancaOnboardingState: {
-                kind: 'update-profile',
-                bNeedsDisplayName: true,
-                bNeedsAvatar: true,
-            },
         }),
     }
 })
@@ -51,11 +46,6 @@ describe.skip('<AllRoutes />', () => {
         vi.spyOn(Lib, 'useZionContext').mockImplementationOnce(() => {
             return {
                 ...Lib.useZionContext(),
-                casablancaOnboardingState: {
-                    kind: 'update-profile',
-                    bNeedsDisplayName: true,
-                    bNeedsAvatar: true,
-                },
             }
         })
         render(<Wrapper />)

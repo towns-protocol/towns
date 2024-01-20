@@ -66,7 +66,6 @@ function useAuthContext(): AuthContext {
         loggedInWalletAddress,
         isAuthenticated: riverIsAuthenticated,
         loginError,
-        userOnWrongNetworkForSignIn,
         loginStatus: riverLoginStatus,
         getIsWalletRegistered,
     } = useConnectivity()
@@ -120,7 +119,6 @@ function useAuthContext(): AuthContext {
             isAuthenticatedAndConnected, // csb + wallet
             isConnected, // isConnected means privy account is created and logged in
             loginError,
-            userOnWrongNetworkForSignIn, // TODO: remove this
             isAutoLoggingInToRiver,
         }),
         [
@@ -134,7 +132,6 @@ function useAuthContext(): AuthContext {
             loginError,
             logout,
             register,
-            userOnWrongNetworkForSignIn,
             isAutoLoggingInToRiver,
         ],
     )

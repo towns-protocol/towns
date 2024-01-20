@@ -30,15 +30,15 @@ describe('delete role', () => {
             'bobWithNft',
             TestConstants.getWalletWithTestGatingNft(),
         )
-        if (!bobWithNft.walletAddress) {
-            throw new Error('bobWithNft.walletAddress is undefined')
+        if (!bobWithNft.getUserId()) {
+            throw new Error('bobWithNft userId is undefined')
         }
         const carolWithNft = await registerAndStartClient(
             'carolWithNft',
             TestConstants.getWalletWithTestGatingNft(),
         )
-        if (!carolWithNft.walletAddress) {
-            throw new Error('carolWithNft.walletAddress is undefined')
+        if (!carolWithNft.getUserId()) {
+            throw new Error('carolWithNft userId is undefined')
         }
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
@@ -151,7 +151,7 @@ describe('delete role', () => {
         expect(
             await bobWithNft.spaceDapp.isEntitledToSpace(
                 spaceId,
-                bobWithNft.walletAddress,
+                bobWithNft.getUserId()!,
                 Permission.Read,
             ),
         ).toBe(true)
@@ -160,7 +160,7 @@ describe('delete role', () => {
             await bobWithNft.spaceDapp.isEntitledToChannel(
                 spaceId,
                 channel,
-                bobWithNft.walletAddress,
+                bobWithNft.getUserId()!,
                 Permission.Read,
             ),
         ).toBe(false)
@@ -169,14 +169,14 @@ describe('delete role', () => {
     test.skip('delete user-gated role with a channel using it', async () => {
         /** Arrange */
         const { alice, bob, carol } = await registerAndStartClients(['alice', 'bob', 'carol'])
-        if (!bob.walletAddress || !carol.walletAddress) {
+        if (!bob.getUserId() || !carol.getUserId()) {
             throw new Error('bob.walletAddress or carol is undefined')
         }
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
         const newTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // add bob to the users list
-        const newUsers: string[] = [bob.walletAddress, carol.walletAddress]
+        const newUsers: string[] = [bob.getUserId()!, carol.getUserId()!]
         // create a new test space
         await alice.fundWallet()
         const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
@@ -274,14 +274,14 @@ describe('delete role', () => {
         expect(actual).toBeNull()
         // verify bob is not entitled to the space
         expect(
-            await bob.spaceDapp.isEntitledToSpace(spaceId, bob.walletAddress, Permission.Read),
+            await bob.spaceDapp.isEntitledToSpace(spaceId, bob.getUserId()!, Permission.Read),
         ).toBe(false)
         // verify bob is no longer entitled to the channel
         expect(
             await bob.spaceDapp.isEntitledToChannel(
                 spaceId,
                 channel,
-                bob.walletAddress,
+                bob.getUserId()!,
                 Permission.Read,
             ),
         ).toBe(false)
@@ -290,17 +290,17 @@ describe('delete role', () => {
     test('delete a role with no channels using it', async () => {
         /** Arrange */
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
-        if (!alice.walletAddress) {
+        if (!alice.getUserId()) {
             throw new Error('alice.walletAddress is undefined')
         }
-        if (!bob.walletAddress) {
+        if (!bob.getUserId()) {
             throw new Error('bob.walletAddress is undefined')
         }
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
         const newTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // add bob to the users list
-        const newUsers: string[] = [bob.walletAddress]
+        const newUsers: string[] = [bob.getUserId()!]
         // create a new test space
         await alice.fundWallet()
         const roomId = await createTestSpaceGatedByTownAndZionNfts(alice, [
@@ -349,14 +349,14 @@ describe('delete role', () => {
         expect(actual).toBeNull()
         // verify alice is not affected
         expect(
-            await alice.spaceDapp.isEntitledToSpace(spaceId, alice.walletAddress, Permission.Read),
+            await alice.spaceDapp.isEntitledToSpace(spaceId, alice.getUserId()!, Permission.Read),
         ).toBe(true)
         expect(
-            await alice.spaceDapp.isEntitledToSpace(spaceId, alice.walletAddress, Permission.Write),
+            await alice.spaceDapp.isEntitledToSpace(spaceId, alice.getUserId()!, Permission.Write),
         ).toBe(true)
         // verify bob is not entitled to the space
         expect(
-            await bob.spaceDapp.isEntitledToSpace(spaceId, bob.walletAddress, Permission.Read),
+            await bob.spaceDapp.isEntitledToSpace(spaceId, bob.getUserId()!, Permission.Read),
         ).toBe(false)
     })
 })

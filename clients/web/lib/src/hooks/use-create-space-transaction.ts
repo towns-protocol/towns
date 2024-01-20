@@ -12,7 +12,7 @@ import { useZionClient } from './use-zion-client'
 import { ITownArchitectBase } from '@river/web3'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 /**
- * Combine Matrix space creation and smart contract space
+ * Combine space creation and smart contract space
  * creation into one hook.
  */
 export function useCreateSpaceTransaction() {
