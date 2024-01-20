@@ -7,7 +7,7 @@ CHAIN="${1:-localhost}"
 FROZEN="${2:-}"
 ABI_DIR="packages/generated/${CHAIN}/v3/abis"
 
-forge build --extra-output-files metadata --extra-output-files abi --force
+forge build
 
 yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|StreamRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|ITownOwner|MockERC721A|MembershipFacet|Member).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
 
