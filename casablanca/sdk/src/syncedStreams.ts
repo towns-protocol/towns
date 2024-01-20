@@ -1,4 +1,4 @@
-import { DLogger, dlog, dlogError, shortenHexString } from '@river/mecholm'
+import { DLogger, dlog, dlogError, isDefined, shortenHexString } from '@river/mecholm'
 import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river/proto'
 
 import { EmittedEvents } from './client'
@@ -264,7 +264,7 @@ export class SyncedStreams {
                         // get cookies from all the known streams to sync
                         const syncCookies = Array.from(this.streams.values())
                             .map((stream) => stream.view.syncCookie)
-                            .filter((syncCookie) => syncCookie) as SyncCookie[]
+                            .filter(isDefined)
 
                         try {
                             // syncId needs to be reset before starting a new syncStreams
