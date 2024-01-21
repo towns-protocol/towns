@@ -18,12 +18,18 @@ func genkey(cfg *config.Config, overwrite bool) error {
 		return err
 	}
 
-	err = os.MkdirAll(crypto.WALLET_PATH, 0755)
+	err = os.MkdirAll(crypto.WALLET_PATH, 0o755)
 	if err != nil {
 		return err
 	}
 
-	err = wallet.SaveWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY, crypto.WALLET_PATH_PUBLIC_KEY, crypto.WALLET_PATH_NODE_ADDRESS, overwrite)
+	err = wallet.SaveWallet(
+		ctx,
+		crypto.WALLET_PATH_PRIVATE_KEY,
+		crypto.WALLET_PATH_PUBLIC_KEY,
+		crypto.WALLET_PATH_NODE_ADDRESS,
+		overwrite,
+	)
 	if err != nil {
 		return err
 	}
@@ -37,7 +43,13 @@ func readKey(cfg *config.Config, overwrite bool) error {
 	if err != nil {
 		return err
 	}
-	err = wallet.SaveWalletFromEnv(ctx, crypto.WALLET_PATH_PRIVATE_KEY, crypto.WALLET_PATH_PUBLIC_KEY, crypto.WALLET_PATH_NODE_ADDRESS, overwrite)
+	err = wallet.SaveWalletFromEnv(
+		ctx,
+		crypto.WALLET_PATH_PRIVATE_KEY,
+		crypto.WALLET_PATH_PUBLIC_KEY,
+		crypto.WALLET_PATH_NODE_ADDRESS,
+		overwrite,
+	)
 	if err != nil {
 		return err
 	}

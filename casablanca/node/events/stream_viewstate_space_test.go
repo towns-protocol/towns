@@ -24,7 +24,12 @@ var streamConfig_t = config.StreamConfig{
 	},
 }
 
-func makeEnvelopeWithPayload_T(t *testing.T, wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte) *protocol.Envelope {
+func makeEnvelopeWithPayload_T(
+	t *testing.T,
+	wallet *crypto.Wallet,
+	payload protocol.IsStreamEvent_Payload,
+	prevMiniblockHash []byte,
+) *protocol.Envelope {
 	envelope, err := MakeEnvelopeWithPayload(wallet, payload, prevMiniblockHash)
 	assert.NoError(t, err)
 	return envelope
@@ -260,7 +265,6 @@ func TestSpaceViewState(t *testing.T) {
 	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), "user_1", true)
 	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), "user_2", true)
 	spaceViewStateTest_CheckUserJoined(t, view3.(JoinableStreamView), "user_3", true)
-
 }
 
 func spaceViewStateTest_CheckUserJoined(t *testing.T, view JoinableStreamView, userId string, expected bool) {

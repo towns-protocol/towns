@@ -57,10 +57,22 @@ func NewTownsWalletLink(cfg *config.ContractConfig, backend bind.ContractBackend
 		c, err = v3.NewTownsWalletLink(address, backend)
 	}
 	if err != nil {
-		return nil, WrapRiverError(Err_CANNOT_CONNECT, err).Tags("address", cfg.Address, "version", cfg.Version).Func("NewTownsWalletLink").Message("Failed to initialize contract")
+		return nil, WrapRiverError(
+			Err_CANNOT_CONNECT,
+			err,
+		).Tags("address", cfg.Address, "version", cfg.Version).
+			Func("NewTownsWalletLink").
+			Message("Failed to initialize contract")
 	}
 	if c == nil {
-		return nil, RiverError(Err_CANNOT_CONNECT, "Unsupported version", "version", cfg.Version, "address", cfg.Address).Func("NewTownsWalletLink")
+		return nil, RiverError(
+			Err_CANNOT_CONNECT,
+			"Unsupported version",
+			"version",
+			cfg.Version,
+			"address",
+			cfg.Address,
+		).Func("NewTownsWalletLink")
 	}
 	return &TownsWalletLink{
 		contract: c,

@@ -2,34 +2,37 @@ package protocol
 
 import "fmt"
 
-type IsStreamEvent_Payload = isStreamEvent_Payload
-type IsMiniblockHeader_Content = isMiniblockHeader_Content
-type IsCommonPayload_Content = isCommonPayload_Content
-type IsSpacePayload_Content = isSpacePayload_Content
-type IsChannelPayload_Content = isChannelPayload_Content
-type IsDmChannelPayload_Content = isDmChannelPayload_Content
-type IsGdmChannelPayload_Content = isGdmChannelPayload_Content
-type IsUserPayload_Content = isUserPayload_Content
-type IsUserToDevicePayload_Content = isUserToDevicePayload_Content
-type IsUserSettingsPayload_Content = isUserSettingsPayload_Content
-type IsUserDeviceKeyPayload_Content = isUserDeviceKeyPayload_Content
-type IsMediaPayload_Content = isMediaPayload_Content
-type IsSnapshot_Content = isSnapshot_Content
+type (
+	IsStreamEvent_Payload          = isStreamEvent_Payload
+	IsMiniblockHeader_Content      = isMiniblockHeader_Content
+	IsCommonPayload_Content        = isCommonPayload_Content
+	IsSpacePayload_Content         = isSpacePayload_Content
+	IsChannelPayload_Content       = isChannelPayload_Content
+	IsDmChannelPayload_Content     = isDmChannelPayload_Content
+	IsGdmChannelPayload_Content    = isGdmChannelPayload_Content
+	IsUserPayload_Content          = isUserPayload_Content
+	IsUserToDevicePayload_Content  = isUserToDevicePayload_Content
+	IsUserSettingsPayload_Content  = isUserSettingsPayload_Content
+	IsUserDeviceKeyPayload_Content = isUserDeviceKeyPayload_Content
+	IsMediaPayload_Content         = isMediaPayload_Content
+	IsSnapshot_Content             = isSnapshot_Content
+)
 
 type IsInceptionPayload interface {
 	isInceptionPayload()
 	GetStreamId() string
 	GetSettings() *StreamSettings
 }
-func (*SpacePayload_Inception) isInceptionPayload() {}
-func (*ChannelPayload_Inception) isInceptionPayload() {}
-func (*DmChannelPayload_Inception) isInceptionPayload() {}
-func (*GdmChannelPayload_Inception) isInceptionPayload() {}
-func (*UserPayload_Inception) isInceptionPayload() {}
-func (*UserToDevicePayload_Inception) isInceptionPayload() {}
-func (*UserSettingsPayload_Inception) isInceptionPayload() {}
+
+func (*SpacePayload_Inception) isInceptionPayload()         {}
+func (*ChannelPayload_Inception) isInceptionPayload()       {}
+func (*DmChannelPayload_Inception) isInceptionPayload()     {}
+func (*GdmChannelPayload_Inception) isInceptionPayload()    {}
+func (*UserPayload_Inception) isInceptionPayload()          {}
+func (*UserToDevicePayload_Inception) isInceptionPayload()  {}
+func (*UserSettingsPayload_Inception) isInceptionPayload()  {}
 func (*UserDeviceKeyPayload_Inception) isInceptionPayload() {}
-func (*MediaPayload_Inception) isInceptionPayload() {}
+func (*MediaPayload_Inception) isInceptionPayload()         {}
 
 func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
 	switch e.Content.(type) {

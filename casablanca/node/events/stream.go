@@ -78,7 +78,11 @@ func (s *streamImpl) loadInternal(ctx context.Context) {
 	if s.view != nil || s.loadError != nil {
 		return
 	}
-	streamData, err := s.params.Storage.GetStreamFromLastSnapshot(ctx, s.streamId, max(0, s.config.RecencyConstraints.Generations-1))
+	streamData, err := s.params.Storage.GetStreamFromLastSnapshot(
+		ctx,
+		s.streamId,
+		max(0, s.config.RecencyConstraints.Generations-1),
+	)
 	if err != nil {
 		s.loadError = err
 		return
@@ -137,7 +141,10 @@ func (s *streamImpl) ProposeNextMiniblock(ctx context.Context) (*MiniblockPropos
 	return s.view.ProposeNextMiniblock(ctx)
 }
 
-func (s *streamImpl) MakeMiniblockHeader(ctx context.Context, proposal *MiniblockProposal) (*MiniblockHeader, []*ParsedEvent, error) {
+func (s *streamImpl) MakeMiniblockHeader(
+	ctx context.Context,
+	proposal *MiniblockProposal,
+) (*MiniblockHeader, []*ParsedEvent, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -153,7 +160,11 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblockHeader *Minibl
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	miniblockHeaderEvent, err := MakeParsedEventWithPayload(s.params.Wallet, Make_MiniblockHeader(miniblockHeader), miniblockHeader.PrevMiniblockHash)
+	miniblockHeaderEvent, err := MakeParsedEventWithPayload(
+		s.params.Wallet,
+		Make_MiniblockHeader(miniblockHeader),
+		miniblockHeader.PrevMiniblockHash,
+	)
 	if err != nil {
 		return err
 	}
@@ -233,7 +244,13 @@ func (s *streamImpl) MakeMiniblock(ctx context.Context) error {
 	return nil
 }
 
-func createStream(ctx context.Context, params *StreamCacheParams, config *config.StreamConfig, streamId string, genesisMiniblock *Miniblock) (*streamImpl, *streamViewImpl, error) {
+func createStream(
+	ctx context.Context,
+	params *StreamCacheParams,
+	config *config.StreamConfig,
+	streamId string,
+	genesisMiniblock *Miniblock,
+) (*streamImpl, *streamViewImpl, error) {
 	serializedMiniblock, err := proto.Marshal(genesisMiniblock)
 	if err != nil {
 		return nil, nil, err
@@ -356,7 +373,14 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error {
 	log := dlog.CtxLog(ctx)
 	if cookie.NodeAddress != s.params.Wallet.AddressStr {
-		return RiverError(Err_BAD_SYNC_COOKIE, "cookies is not for this node", "cookie.NodeAddress", cookie.NodeAddress, "s.params.Wallet.AddressStr", s.params.Wallet.AddressStr)
+		return RiverError(
+			Err_BAD_SYNC_COOKIE,
+			"cookies is not for this node",
+			"cookie.NodeAddress",
+			cookie.NodeAddress,
+			"s.params.Wallet.AddressStr",
+			s.params.Wallet.AddressStr,
+		)
 	}
 	if cookie.StreamId != s.streamId {
 		return RiverError(Err_BAD_SYNC_COOKIE, "bad stream id", "cookie.StreamId", cookie.StreamId, "s.streamId", s.streamId)

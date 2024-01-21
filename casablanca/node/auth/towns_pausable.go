@@ -25,9 +25,7 @@ type townsPausableProxy struct {
 	contract TownsPausable
 }
 
-var (
-	pausedCalls = infra.NewSuccessMetrics("paused_calls", contractCalls)
-)
+var pausedCalls = infra.NewSuccessMetrics("paused_calls", contractCalls)
 
 func NewTownsPausable(version string, address common.Address, backend bind.ContractBackend) (TownsPausable, error) {
 	var c TownsPausable
@@ -39,10 +37,22 @@ func NewTownsPausable(version string, address common.Address, backend bind.Contr
 		c, err = v3.NewTownsPausable(address, backend)
 	}
 	if err != nil {
-		return nil, WrapRiverError(Err_CANNOT_CONNECT, err).Tags("address", address, "version", version).Func("NewTownsPausable").Message("Failed to initialize contract")
+		return nil, WrapRiverError(
+			Err_CANNOT_CONNECT,
+			err,
+		).Tags("address", address, "version", version).
+			Func("NewTownsPausable").
+			Message("Failed to initialize contract")
 	}
 	if c == nil {
-		return nil, RiverError(Err_CANNOT_CONNECT, "Unsupported version", "address", address, "version", version).Func("NewTownsPausable")
+		return nil, RiverError(
+			Err_CANNOT_CONNECT,
+			"Unsupported version",
+			"address",
+			address,
+			"version",
+			version,
+		).Func("NewTownsPausable")
 	}
 	return &townsPausableProxy{
 		contract: c,

@@ -64,7 +64,7 @@ func run(cfg *config.Config) error {
 
 			// Check if the folder already exists
 			if _, err := os.Stat(folderPath); os.IsNotExist(err) {
-				err := os.Mkdir(folderPath, 0755) // 0755 sets permissions for the folder
+				err := os.Mkdir(folderPath, 0o755) // 0755 sets permissions for the folder
 				if err != nil {
 					fmt.Println("Error creating profiling folder:", err)
 					return err

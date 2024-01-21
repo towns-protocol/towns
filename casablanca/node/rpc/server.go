@@ -1,6 +1,14 @@
 package rpc
 
 import (
+	"context"
+	"fmt"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/river-build/river/auth"
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/config"
@@ -12,14 +20,6 @@ import (
 	"github.com/river-build/river/registries"
 	"github.com/river-build/river/storage"
 
-	"context"
-	"fmt"
-	"net"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-
 	connect_go "github.com/bufbuild/connect-go"
 	"github.com/rs/cors"
 	"golang.org/x/exp/slog"
@@ -30,7 +30,12 @@ import (
 
 type Cleanup func(context.Context) error
 
-func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, nodeRegistryCsv string, localNodeAddress string) (nodes.NodeRegistry, error) {
+func loadNodeRegistry(
+	ctx context.Context,
+	nodeRegistryPath string,
+	nodeRegistryCsv string,
+	localNodeAddress string,
+) (nodes.NodeRegistry, error) {
 	log := dlog.CtxLog(ctx)
 
 	if nodeRegistryCsv != "" {
@@ -61,7 +66,14 @@ func getDbURL(dbConfig config.DatabaseConfig) string {
 	return dbConfig.Url
 }
 
-func createStore(ctx context.Context, dbConfig config.DatabaseConfig, storageType string, address string, instanceId string, exitSignal chan error) (storage.StreamStorage, Cleanup, error) {
+func createStore(
+	ctx context.Context,
+	dbConfig config.DatabaseConfig,
+	storageType string,
+	address string,
+	instanceId string,
+	exitSignal chan error,
+) (storage.StreamStorage, Cleanup, error) {
 	log := dlog.CtxLog(ctx)
 	if storageType == "in-memory" {
 		log.Warn("Using in-memory storage")
@@ -81,7 +93,7 @@ func createStore(ctx context.Context, dbConfig config.DatabaseConfig, storageTyp
 
 		log.Info("Created postgres event store", "schema", schema)
 		log.Info("Current number of streams in the store", "totalStreamsCount", streamsCount)
-		var cleaner = func(ctx context.Context) error {
+		cleaner := func(ctx context.Context) error {
 			return store.CleanupStorage(ctx)
 		}
 		return store, cleaner, nil
@@ -254,7 +266,17 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		// AllowedHeaders: []string{"*"} also works for CORS issues w/ OPTIONS requests
-		AllowedHeaders: []string{"Origin", "X-Requested-With", "Accept", "Content-Type", "X-Grpc-Web", "X-User-Agent", "User-Agent", "Connect-Protocol-Version", "x-river-request-id"},
+		AllowedHeaders: []string{
+			"Origin",
+			"X-Requested-With",
+			"Accept",
+			"Content-Type",
+			"X-Grpc-Web",
+			"X-User-Agent",
+			"User-Agent",
+			"Connect-Protocol-Version",
+			"x-river-request-id",
+		},
 	})
 
 	// For gRPC clients, it's convenient to support HTTP/2 without TLS. You can
@@ -267,7 +289,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	closer := func() {
 		log.Info("closing server")
 
-		//if there is a cleaner, run it
+		// if there is a cleaner, run it
 		if storageCleaner != nil {
 			err := storageCleaner(ctx)
 			if err != nil {

@@ -568,7 +568,7 @@ func canInline(t reflect.Type) bool {
 	// nolint:exhaustive
 	switch t.Kind() {
 	case reflect.Map:
-		//return !canExpand(t.Elem())
+		// return !canExpand(t.Elem())
 		return false
 	case reflect.Struct:
 		for i := 0; i < t.NumField(); i++ {

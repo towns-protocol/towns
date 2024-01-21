@@ -48,9 +48,7 @@ func (c *devCaller) IsDisabled(opts *bind.CallOpts, channelNetworkId string) (bo
 	return ch.Disabled, nil
 }
 
-var (
-	getChannelCalls = infra.NewSuccessMetrics("get_channel_calls", contractCalls)
-)
+var getChannelCalls = infra.NewSuccessMetrics("get_channel_calls", contractCalls)
 
 func NewTownsChannels(version string, address common.Address, backend bind.ContractBackend) (TownsChannels, error) {
 	var c TownsChannels
@@ -70,10 +68,22 @@ func NewTownsChannels(version string, address common.Address, backend bind.Contr
 		}
 	}
 	if err != nil {
-		return nil, WrapRiverError(Err_CANNOT_CONNECT, err).Tags("address", address, "version", version).Func("NewTownsPausable").Message("Failed to initialize contract")
+		return nil, WrapRiverError(
+			Err_CANNOT_CONNECT,
+			err,
+		).Tags("address", address, "version", version).
+			Func("NewTownsPausable").
+			Message("Failed to initialize contract")
 	}
 	if c == nil {
-		return nil, RiverError(Err_CANNOT_CONNECT, "Unsupported version", "address", address, "version", version).Func("NewTownsPausable")
+		return nil, RiverError(
+			Err_CANNOT_CONNECT,
+			"Unsupported version",
+			"address",
+			address,
+			"version",
+			version,
+		).Func("NewTownsPausable")
 	}
 	return &townsChannelsProxy{contract: c}, nil
 }

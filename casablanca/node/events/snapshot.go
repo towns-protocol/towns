@@ -207,7 +207,13 @@ func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload
 	}
 }
 
-func update_Snapshot_DmChannel(iSnapshot *Snapshot, dmChannelPayload *DmChannelPayload, user string, eventNum int64, eventHash []byte) error {
+func update_Snapshot_DmChannel(
+	iSnapshot *Snapshot,
+	dmChannelPayload *DmChannelPayload,
+	user string,
+	eventNum int64,
+	eventHash []byte,
+) error {
 	snapshot := iSnapshot.Content.(*Snapshot_DmChannelContent)
 	if snapshot == nil {
 		return errors.New("blockheader snapshot is not a dm channel snapshot")
@@ -240,7 +246,13 @@ func update_Snapshot_DmChannel(iSnapshot *Snapshot, dmChannelPayload *DmChannelP
 	}
 }
 
-func update_Snapshot_GdmChannel(iSnapshot *Snapshot, channelPayload *GdmChannelPayload, user string, eventNum int64, eventHash []byte) error {
+func update_Snapshot_GdmChannel(
+	iSnapshot *Snapshot,
+	channelPayload *GdmChannelPayload,
+	user string,
+	eventNum int64,
+	eventHash []byte,
+) error {
 	snapshot := iSnapshot.Content.(*Snapshot_GdmChannelContent)
 	if snapshot == nil {
 		return errors.New("blockheader snapshot is not a channel snapshot")
@@ -351,7 +363,12 @@ func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userDeviceKeyPayload *Us
 	}
 }
 
-func update_Snapshot_UserToDevice(iSnapshot *Snapshot, userToDevicePayload *UserToDevicePayload, senderId string, miniblockNum int64) error {
+func update_Snapshot_UserToDevice(
+	iSnapshot *Snapshot,
+	userToDevicePayload *UserToDevicePayload,
+	senderId string,
+	miniblockNum int64,
+) error {
 	snapshot := iSnapshot.Content.(*Snapshot_UserToDeviceContent)
 	if snapshot == nil {
 		return errors.New("blockheader snapshot is not a user to device snapshot")

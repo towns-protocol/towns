@@ -46,7 +46,14 @@ func TestMain(m *testing.M) {
 	exitOnError(err, "Failed to start test database")
 	exitSignal := make(chan error, 1)
 
-	store, err = storage.NewPostgresEventStore(context.Background(), testDatabaseUrl, testSchemaName, GenShortNanoid(), true, exitSignal)
+	store, err = storage.NewPostgresEventStore(
+		context.Background(),
+		testDatabaseUrl,
+		testSchemaName,
+		GenShortNanoid(),
+		true,
+		exitSignal,
+	)
 	exitOnError(err, "Failed to create event store")
 
 	wallet, err := crypto.NewWallet(ctx)

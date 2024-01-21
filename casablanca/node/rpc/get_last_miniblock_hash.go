@@ -9,9 +9,7 @@ import (
 	. "github.com/river-build/river/protocol"
 )
 
-var (
-	getLastMiniblockHashRequests = infra.NewSuccessMetrics("get_last_miniblock_hash", serviceRequests)
-)
+var getLastMiniblockHashRequests = infra.NewSuccessMetrics("get_last_miniblock_hash", serviceRequests)
 
 func (s *Service) localGetLastMiniblockHash(
 	ctx context.Context,

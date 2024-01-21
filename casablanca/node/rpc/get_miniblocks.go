@@ -9,11 +9,12 @@ import (
 	. "github.com/river-build/river/protocol"
 )
 
-var (
-	getMiniblocksRequests = infra.NewSuccessMetrics("get_miniblocks_requests", serviceRequests)
-)
+var getMiniblocksRequests = infra.NewSuccessMetrics("get_miniblocks_requests", serviceRequests)
 
-func (s *Service) localGetMiniblocks(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
+func (s *Service) localGetMiniblocks(
+	ctx context.Context,
+	req *connect_go.Request[GetMiniblocksRequest],
+) (*connect_go.Response[GetMiniblocksResponse], error) {
 	res, err := s.getMiniblocks(ctx, req)
 	if err != nil {
 		getMiniblocksRequests.FailInc()
@@ -24,7 +25,10 @@ func (s *Service) localGetMiniblocks(ctx context.Context, req *connect_go.Reques
 	return res, nil
 }
 
-func (s *Service) getMiniblocks(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
+func (s *Service) getMiniblocks(
+	ctx context.Context,
+	req *connect_go.Request[GetMiniblocksRequest],
+) (*connect_go.Response[GetMiniblocksResponse], error) {
 	streamId := req.Msg.StreamId
 
 	stream, _, err := s.cache.GetStream(ctx, streamId)
@@ -33,7 +37,6 @@ func (s *Service) getMiniblocks(ctx context.Context, req *connect_go.Request[Get
 	}
 
 	miniblocks, terminus, err := stream.GetMiniblocks(ctx, req.Msg.FromInclusive, req.Msg.ToExclusive)
-
 	if err != nil {
 		return nil, err
 	}

@@ -56,7 +56,14 @@ func chooseStreamNodes(ctx context.Context, streamId string, nr NodeRegistry, re
 		replFactor = 1
 	}
 	if nr.NumNodes() < replFactor {
-		return nil, RiverError(Err_BAD_CONFIG, "replication factor is greater than number of nodes", "replication_factor", replFactor, "num_nodes", nr.NumNodes())
+		return nil, RiverError(
+			Err_BAD_CONFIG,
+			"replication factor is greater than number of nodes",
+			"replication_factor",
+			replFactor,
+			"num_nodes",
+			nr.NumNodes(),
+		)
 	}
 
 	indexes := make([]int, 0, replFactor)

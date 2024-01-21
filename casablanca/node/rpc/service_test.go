@@ -30,8 +30,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var testDatabaseUrl string
-var testSchemaName string
+var (
+	testDatabaseUrl string
+	testSchemaName  string
+)
 
 func TestMain(m *testing.M) {
 	db, schemaName, closer, err := dbtestutils.StartDB(context.Background())
@@ -42,13 +44,17 @@ func TestMain(m *testing.M) {
 	testDatabaseUrl = db
 	testSchemaName = schemaName
 
-	//Run tests
+	// Run tests
 	code := m.Run()
 
 	os.Exit(code)
 }
 
-func createUserDeviceKeyStream(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient) (*protocol.SyncCookie, []byte, error) {
+func createUserDeviceKeyStream(
+	ctx context.Context,
+	wallet *crypto.Wallet,
+	client protocolconnect.StreamServiceClient,
+) (*protocol.SyncCookie, []byte, error) {
 	userId, err := shared.AddressHex(wallet.Address.Bytes())
 	if err != nil {
 		return nil, nil, err
@@ -86,8 +92,11 @@ func makeDelegateSig(primaryWallet *crypto.Wallet, deviceWallet *crypto.Wallet) 
 	return delegatSig, err
 }
 
-func createUserWithMismatchedId(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient) (*protocol.SyncCookie, []byte, error) {
-
+func createUserWithMismatchedId(
+	ctx context.Context,
+	wallet *crypto.Wallet,
+	client protocolconnect.StreamServiceClient,
+) (*protocol.SyncCookie, []byte, error) {
 	userStreamId, err := shared.UserStreamIdFromAddress(wallet.Address.Bytes())
 	if err != nil {
 		return nil, nil, err
@@ -113,8 +122,11 @@ func createUserWithMismatchedId(ctx context.Context, wallet *crypto.Wallet, clie
 	return res.Msg.Stream.NextSyncCookie, inception.Hash, nil
 }
 
-func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient) (*protocol.SyncCookie, []byte, error) {
-
+func createUser(
+	ctx context.Context,
+	wallet *crypto.Wallet,
+	client protocolconnect.StreamServiceClient,
+) (*protocol.SyncCookie, []byte, error) {
 	userStreamId, err := shared.UserStreamIdFromAddress(wallet.Address.Bytes())
 	if err != nil {
 		return nil, nil, err
@@ -140,7 +152,12 @@ func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconne
 	return res.Msg.Stream.NextSyncCookie, inception.Hash, nil
 }
 
-func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string) (*protocol.SyncCookie, []byte, error) {
+func createSpace(
+	ctx context.Context,
+	wallet *crypto.Wallet,
+	client protocolconnect.StreamServiceClient,
+	spaceId string,
+) (*protocol.SyncCookie, []byte, error) {
 	spaceStreamId := shared.SpaceStreamIdFromName(spaceId)
 	space, err := events.MakeEnvelopeWithPayload(
 		wallet,
@@ -181,7 +198,14 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 	return resspace.Msg.Stream.NextSyncCookie, joinSpace.Hash, nil
 }
 
-func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string, channelId string, streamSettings *protocol.StreamSettings) (*protocol.SyncCookie, []byte, error) {
+func createChannel(
+	ctx context.Context,
+	wallet *crypto.Wallet,
+	client protocolconnect.StreamServiceClient,
+	spaceId string,
+	channelId string,
+	streamSettings *protocol.StreamSettings,
+) (*protocol.SyncCookie, []byte, error) {
 	var channelProperties protocol.EncryptedData
 	channelProperties.Ciphertext = "encrypted text supposed to be here"
 	channelStreamId := shared.ChannelStreamIdFromName(channelId)
@@ -348,7 +372,7 @@ func TestMethods(t *testing.T) {
 		}
 
 		// create channel
-		//TODO: add channel setting instead of "channel1"
+		// TODO: add channel setting instead of "channel1"
 		channel, channelHash, err := createChannel(
 			ctx,
 			wallet1,
@@ -682,7 +706,14 @@ func TestAddStreamsToSync(t *testing.T) {
 	assert.Nilf(t, err, "error calling createSpace: %v", err)
 	assert.NotNil(t, space1, "nil sync cookie")
 	// alice creates a channel
-	channel1, channelHash, err := createChannel(ctx, aliceWallet, aliceClient, shared.SpaceStreamIdFromName("space1"), "channel1", nil)
+	channel1, channelHash, err := createChannel(
+		ctx,
+		aliceWallet,
+		aliceClient,
+		shared.SpaceStreamIdFromName("space1"),
+		"channel1",
+		nil,
+	)
 	assert.Nilf(t, err, "error calling createChannel: %v", err)
 	assert.NotNil(t, channel1, "nil sync cookie")
 
@@ -927,7 +958,7 @@ func DisableTestManyUsers(t *testing.T) {
 	var channelHashes [][]byte
 	var channels []*protocol.SyncCookie
 	for i := 0; i < totalChannels; i++ {
-		//TODO: add channel setting instead of "channel1"
+		// TODO: add channel setting instead of "channel1"
 		channel, channelHash, err := createChannel(
 			ctx,
 			wallets[0],

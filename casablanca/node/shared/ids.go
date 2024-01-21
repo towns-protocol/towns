@@ -90,7 +90,14 @@ func CheckUserStreamIdForPrefix(streamId string, creatorUserId []byte, expectedP
 	if streamId == expected {
 		return nil
 	}
-	return RiverError(Err_BAD_STREAM_ID, "Stream ID doesn't match creator address or expected prefix", "streamId", streamId, "expected", expected)
+	return RiverError(
+		Err_BAD_STREAM_ID,
+		"Stream ID doesn't match creator address or expected prefix",
+		"streamId",
+		streamId,
+		"expected",
+		expected,
+	)
 }
 
 func CheckUserStreamId(streamId string, creatorUserId []byte) error {

@@ -24,7 +24,7 @@ const (
 	WALLET_PATH_PRIVATE_KEY  = "./wallet/private_key"
 	WALLET_PATH_PUBLIC_KEY   = "./wallet/public_key"
 	WALLET_PATH_NODE_ADDRESS = "./wallet/node_address"
-	KEY_FILE_PERMISSIONS     = 0600
+	KEY_FILE_PERMISSIONS     = 0o600
 )
 
 // String 'CSBLANCA' as bytes.
@@ -122,7 +122,13 @@ func LoadWallet(ctx context.Context, filename string) (*Wallet, error) {
 		nil
 }
 
-func (w *Wallet) SaveWalletFromEnv(ctx context.Context, privateKeyFilename string, publicKeyFilename string, addressFilename string, overwrite bool) error {
+func (w *Wallet) SaveWalletFromEnv(
+	ctx context.Context,
+	privateKeyFilename string,
+	publicKeyFilename string,
+	addressFilename string,
+	overwrite bool,
+) error {
 	log := dlog.CtxLog(ctx)
 
 	openFlags := os.O_WRONLY | os.O_CREATE | os.O_EXCL
@@ -184,7 +190,13 @@ func (w *Wallet) SaveWalletFromEnv(ctx context.Context, privateKeyFilename strin
 	return nil
 }
 
-func (w *Wallet) SaveWallet(ctx context.Context, privateKeyFilename string, publicKeyFilename string, addressFilename string, overwrite bool) error {
+func (w *Wallet) SaveWallet(
+	ctx context.Context,
+	privateKeyFilename string,
+	publicKeyFilename string,
+	addressFilename string,
+	overwrite bool,
+) error {
 	log := dlog.CtxLog(ctx)
 
 	openFlags := os.O_WRONLY | os.O_CREATE | os.O_EXCL
@@ -242,7 +254,15 @@ func (w *Wallet) SaveWallet(ctx context.Context, privateKeyFilename string, publ
 		return err
 	}
 
-	log.Info("Wallet saved.", "address", w.Address.Hex(), "publicKey", crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey), "filename", privateKeyFilename)
+	log.Info(
+		"Wallet saved.",
+		"address",
+		w.Address.Hex(),
+		"publicKey",
+		crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey),
+		"filename",
+		privateKeyFilename,
+	)
 	return nil
 }
 

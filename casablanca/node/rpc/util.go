@@ -1,11 +1,11 @@
 package rpc
 
 import (
+	"context"
+
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/dlog"
 	. "github.com/river-build/river/protocol"
-
-	"context"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/ethereum/go-ethereum/common"

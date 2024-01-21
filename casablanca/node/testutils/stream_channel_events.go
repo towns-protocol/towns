@@ -177,7 +177,12 @@ func ParsedEvent_T(t *testing.T, envelope *protocol.Envelope) *events.ParsedEven
 	return parsed
 }
 
-func MakeEnvelopeWithPayload_T(t *testing.T, wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte) *protocol.Envelope {
+func MakeEnvelopeWithPayload_T(
+	t *testing.T,
+	wallet *crypto.Wallet,
+	payload protocol.IsStreamEvent_Payload,
+	prevMiniblockHash []byte,
+) *protocol.Envelope {
 	envelope, err := events.MakeEnvelopeWithPayload(wallet, payload, prevMiniblockHash)
 	assert.NoError(t, err)
 	return envelope

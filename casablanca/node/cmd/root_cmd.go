@@ -1,13 +1,12 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/infra"
-
-	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

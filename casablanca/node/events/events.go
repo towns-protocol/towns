@@ -11,7 +11,11 @@ import (
 	. "github.com/river-build/river/protocol"
 )
 
-func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte) (*StreamEvent, error) {
+func MakeStreamEvent(
+	wallet *crypto.Wallet,
+	payload protocol.IsStreamEvent_Payload,
+	prevMiniblockHash []byte,
+) (*StreamEvent, error) {
 	salt := make([]byte, 32)
 	_, err := rand.Read(salt)
 	if err != nil {
@@ -30,7 +34,12 @@ func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Paylo
 	return event, nil
 }
 
-func MakeDelegatedStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte, delegateSig []byte) (*StreamEvent, error) {
+func MakeDelegatedStreamEvent(
+	wallet *crypto.Wallet,
+	payload protocol.IsStreamEvent_Payload,
+	prevMiniblockHash []byte,
+	delegateSig []byte,
+) (*StreamEvent, error) {
 	salt := make([]byte, 32)
 	_, err := rand.Read(salt)
 	if err != nil {
@@ -69,7 +78,11 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 	}, nil
 }
 
-func MakeEnvelopeWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte) (*Envelope, error) {
+func MakeEnvelopeWithPayload(
+	wallet *crypto.Wallet,
+	payload protocol.IsStreamEvent_Payload,
+	prevMiniblockHash []byte,
+) (*Envelope, error) {
 	streamEvent, err := MakeStreamEvent(wallet, payload, prevMiniblockHash)
 	if err != nil {
 		return nil, err
@@ -77,7 +90,11 @@ func MakeEnvelopeWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEve
 	return MakeEnvelopeWithEvent(wallet, streamEvent)
 }
 
-func MakeParsedEventWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevMiniblockHash []byte) (*ParsedEvent, error) {
+func MakeParsedEventWithPayload(
+	wallet *crypto.Wallet,
+	payload protocol.IsStreamEvent_Payload,
+	prevMiniblockHash []byte,
+) (*ParsedEvent, error) {
 	streamEvent, err := MakeStreamEvent(wallet, payload, prevMiniblockHash)
 	if err != nil {
 		return nil, err
@@ -97,7 +114,12 @@ func MakeParsedEventWithPayload(wallet *crypto.Wallet, payload protocol.IsStream
 	}, nil
 }
 
-func Make_ChannelPayload_Inception(streamId string, spaceId string, channelProperties *EncryptedData, settings *StreamSettings) *StreamEvent_ChannelPayload {
+func Make_ChannelPayload_Inception(
+	streamId string,
+	spaceId string,
+	channelProperties *EncryptedData,
+	settings *StreamSettings,
+) *StreamEvent_ChannelPayload {
 	return &StreamEvent_ChannelPayload{
 		ChannelPayload: &ChannelPayload{
 			Content: &ChannelPayload_Inception_{
@@ -163,7 +185,12 @@ func Make_SpacePayload_Membership(op MembershipOp, userId string) *StreamEvent_S
 	}
 }
 
-func Make_SpacePayload_Channel(op ChannelOp, channelId string, channelProperties *EncryptedData, originEvent *protocol.EventRef) *StreamEvent_SpacePayload {
+func Make_SpacePayload_Channel(
+	op ChannelOp,
+	channelId string,
+	channelProperties *EncryptedData,
+	originEvent *protocol.EventRef,
+) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
 			Content: &protocol.SpacePayload_Channel_{
@@ -211,7 +238,11 @@ func Make_UserPayload_Inception(streamId string, settings *StreamSettings) *Stre
 	}
 }
 
-func Make_UserDeviceKeyPayload_Inception(streamId string, userId string, settings *StreamSettings) *StreamEvent_UserDeviceKeyPayload {
+func Make_UserDeviceKeyPayload_Inception(
+	streamId string,
+	userId string,
+	settings *StreamSettings,
+) *StreamEvent_UserDeviceKeyPayload {
 	return &StreamEvent_UserDeviceKeyPayload{
 		UserDeviceKeyPayload: &UserDeviceKeyPayload{
 			Content: &UserDeviceKeyPayload_Inception_{
@@ -225,7 +256,12 @@ func Make_UserDeviceKeyPayload_Inception(streamId string, userId string, setting
 	}
 }
 
-func Make_UserPayload_Membership(op protocol.MembershipOp, inviterId string, streamId string, originEvent *protocol.EventRef) *StreamEvent_UserPayload {
+func Make_UserPayload_Membership(
+	op protocol.MembershipOp,
+	inviterId string,
+	streamId string,
+	originEvent *protocol.EventRef,
+) *StreamEvent_UserPayload {
 	return &StreamEvent_UserPayload{
 		UserPayload: &UserPayload{
 			Content: &protocol.UserPayload_UserMembership_{

@@ -180,7 +180,13 @@ func (s *syncHandlerImpl) handleSyncRequest(
 			stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(nodeAddr)
 			if err != nil {
 				// TODO: Handle the case when node is no longer available.
-				log.Error("SyncStreams:SyncHandlerV2.SyncStreams failed to get stream service client", "syncId", sub.syncId, "err", err)
+				log.Error(
+					"SyncStreams:SyncHandlerV2.SyncStreams failed to get stream service client",
+					"syncId",
+					sub.syncId,
+					"err",
+					err,
+				)
 				return err
 			}
 
@@ -339,7 +345,13 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 
 	err = subs.addLocalStream(ctx, cookie, &streamSub)
 	if err != nil {
-		log.Info("SyncStreams:SyncHandlerV2.addLocalStreamToSync: error subscribing to stream", "streamId", cookie.StreamId, "err", err)
+		log.Info(
+			"SyncStreams:SyncHandlerV2.addLocalStreamToSync: error subscribing to stream",
+			"streamId",
+			cookie.StreamId,
+			"err",
+			err,
+		)
 		return err
 	}
 
@@ -386,7 +398,13 @@ func (s *syncHandlerImpl) AddStreamToSync(
 		// the remote node does not exist in the subscription. add it.
 		stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(cookie.NodeAddress)
 		if err != nil {
-			log.Info("SyncStreams:SyncHandlerV2.AddStreamToSync: failed to get stream service client", "syncId", req.Msg.SyncId, "err", err)
+			log.Info(
+				"SyncStreams:SyncHandlerV2.AddStreamToSync: failed to get stream service client",
+				"syncId",
+				req.Msg.SyncId,
+				"err",
+				err,
+			)
 			// TODO: Handle the case when node is no longer available.
 			return nil, err
 		}
@@ -446,7 +464,15 @@ func (s *syncHandlerImpl) RemoveStreamFromSync(
 		log.Debug("SyncStreams:SyncHandlerV2.RemoveStreamFromSync: removing remote stream", "syncId", syncId, "streamId", streamId)
 		err := remoteNode.removeStreamFromSync(sub.ctx, streamId, sub)
 		if err != nil {
-			log.Info("SyncStreams:SyncHandlerV2.RemoveStreamFromSync: failed to remove remote stream", "syncId", syncId, "streamId", streamId, "err", err)
+			log.Info(
+				"SyncStreams:SyncHandlerV2.RemoveStreamFromSync: failed to remove remote stream",
+				"syncId",
+				syncId,
+				"streamId",
+				streamId,
+				"err",
+				err,
+			)
 			return nil, err
 		}
 		// remove any remote nodes that no longer have any streams to sync
@@ -534,7 +560,13 @@ func (n *syncNode) syncRemoteNode(
 		return
 	}
 	if n.remoteSyncId != "" {
-		log.Debug("SyncStreams: syncRemoteNode not started because there is an existing sync", "remoteSyncId", n.remoteSyncId, "forwarderSyncId", forwarderSyncId)
+		log.Debug(
+			"SyncStreams: syncRemoteNode not started because there is an existing sync",
+			"remoteSyncId",
+			n.remoteSyncId,
+			"forwarderSyncId",
+			forwarderSyncId,
+		)
 		return
 	}
 
@@ -605,7 +637,11 @@ func (n *syncNode) addStreamToSync(
 		log.Debug("SyncStreams:syncNode addStreamToSync not started", "context_error", ctx.Err())
 	}
 	if n.remoteSyncId == "" {
-		log.Debug("SyncStreams:syncNode addStreamToSync not started because there is no existing sync", "remoteSyncId", n.remoteSyncId)
+		log.Debug(
+			"SyncStreams:syncNode addStreamToSync not started because there is no existing sync",
+			"remoteSyncId",
+			n.remoteSyncId,
+		)
 	}
 
 	_, err := n.stub.AddStreamToSync(
@@ -634,7 +670,11 @@ func (n *syncNode) removeStreamFromSync(
 		return ctx.Err()
 	}
 	if n.remoteSyncId == "" {
-		log.Debug("SyncStreams:syncNode removeStreamsFromSync not started because there is no existing sync", "syncId", n.remoteSyncId)
+		log.Debug(
+			"SyncStreams:syncNode removeStreamsFromSync not started because there is no existing sync",
+			"syncId",
+			n.remoteSyncId,
+		)
 		return nil
 	}
 

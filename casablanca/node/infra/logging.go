@@ -54,7 +54,7 @@ func InitLogFromConfig(c *config.LogConfig) {
 	var slogHandlers []slog.Handler
 	if c.Console {
 		var handler slog.Handler
-		var prettyHandlerOptions = &dlog.PrettyHandlerOptions{
+		prettyHandlerOptions := &dlog.PrettyHandlerOptions{
 			Level:  &consoleLogLevel,
 			Colors: consoleColors,
 		}
@@ -72,10 +72,10 @@ func InitLogFromConfig(c *config.LogConfig) {
 	}
 
 	if c.File != "" {
-		file, err := os.OpenFile(c.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		file, err := os.OpenFile(c.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err == nil {
 			var handler slog.Handler
-			var prettyHandlerOptions = &dlog.PrettyHandlerOptions{
+			prettyHandlerOptions := &dlog.PrettyHandlerOptions{
 				Level:  &fileLogLevel,
 				Colors: dlog.ColorMap_Disabled,
 			}

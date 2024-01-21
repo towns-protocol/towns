@@ -20,11 +20,12 @@ import (
 	. "github.com/river-build/river/shared"
 )
 
-var (
-	createStreamRequests = infra.NewSuccessMetrics("create_stream_requests", serviceRequests)
-)
+var createStreamRequests = infra.NewSuccessMetrics("create_stream_requests", serviceRequests)
 
-func (s *Service) createStreamImpl(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
+func (s *Service) createStreamImpl(
+	ctx context.Context,
+	req *connect_go.Request[CreateStreamRequest],
+) (*connect_go.Response[CreateStreamResponse], error) {
 	resMsg, err := s.createStream(ctx, req.Msg)
 	if err != nil {
 		createStreamRequests.FailInc()
@@ -340,7 +341,6 @@ func (s *Service) createStream_GDMChannel(
 	parsedEvents []*ParsedEvent,
 	inception *GdmChannelPayload_Inception,
 ) (*CreateStreamResponse, error) {
-
 	// GDMs require 3+ users. The 4 required events are:
 	// 1. Inception
 	// 2. Join event for creator
@@ -602,7 +602,10 @@ func (s *Service) createStream_Media(
 	}
 
 	if inception.ChunkCount > int32(s.streamConfig.Media.MaxChunkCount) {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, fmt.Sprintf("chunk count must be less than or equal to %d", s.streamConfig.Media.MaxChunkCount))
+		return nil, RiverError(
+			Err_BAD_STREAM_CREATION_PARAMS,
+			fmt.Sprintf("chunk count must be less than or equal to %d", s.streamConfig.Media.MaxChunkCount),
+		)
 	}
 
 	// TODO: replace with stream registry stream existence check
@@ -717,7 +720,6 @@ func validateChannelJoinEvent(event *ParsedEvent) error {
 }
 
 func validateGDMChannelMembershipEvent(event *ParsedEvent, op MembershipOp) error {
-
 	payload, ok := event.Event.GetPayload().(*StreamEvent_GdmChannelPayload)
 	if !ok {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "event is not a gdm channel payload")
@@ -728,7 +730,14 @@ func validateGDMChannelMembershipEvent(event *ParsedEvent, op MembershipOp) erro
 	}
 
 	if membershipPayload.Membership.GetOp() != op {
-		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "membership op does not match", "op", membershipPayload.Membership.GetOp(), "expected", op)
+		return RiverError(
+			Err_BAD_STREAM_CREATION_PARAMS,
+			"membership op does not match",
+			"op",
+			membershipPayload.Membership.GetOp(),
+			"expected",
+			op,
+		)
 	}
 	return nil
 }
@@ -743,7 +752,6 @@ func validateSpaceJoinEvent(event *ParsedEvent) error {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "second event is not a channel join event")
 	}
 	return validateJoinEventPayload(event, membershipPayload.Membership)
-
 }
 
 func validateJoinEventPayload(event *ParsedEvent, membership *Membership) error {

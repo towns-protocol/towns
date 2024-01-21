@@ -28,9 +28,7 @@ type SpaceContractV3 struct {
 	townsLock sync.Mutex
 }
 
-var (
-	contractCalls = infra.NewSuccessMetrics("contract_calls", nil)
-)
+var contractCalls = infra.NewSuccessMetrics("contract_calls", nil)
 
 var EMPTY_ADDRESS = common.Address{}
 
@@ -38,7 +36,7 @@ func NewSpaceContractV3(
 	ctx context.Context,
 	townsArchitectCfg *config.ContractConfig,
 	backend bind.ContractBackend,
-	//walletLinkingCfg *config.ContractConfig,
+	// walletLinkingCfg *config.ContractConfig,
 ) (SpaceContract, error) {
 	townsArchitect, err := NewTownsArchitect(townsArchitectCfg, backend)
 	if err != nil {

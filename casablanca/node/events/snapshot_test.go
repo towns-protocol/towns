@@ -40,12 +40,18 @@ func make_Space_Inception(wallet *crypto.Wallet, streamId string, t *testing.T) 
 	return parsed
 }
 
-func make_User_Membership(wallet *crypto.Wallet, membershipOp MembershipOp, streamId string, prevMiniblockHash []byte, t *testing.T) *ParsedEvent {
+func make_User_Membership(
+	wallet *crypto.Wallet,
+	membershipOp MembershipOp,
+	streamId string,
+	prevMiniblockHash []byte,
+	t *testing.T,
+) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_UserPayload_Membership(
 			membershipOp,
-			"inviter$1", //inviter
+			"inviter$1", // inviter
 			streamId,
 			nil, // original event ref
 		),
@@ -57,7 +63,13 @@ func make_User_Membership(wallet *crypto.Wallet, membershipOp MembershipOp, stre
 	return parsed
 }
 
-func make_Space_Membership(wallet *crypto.Wallet, membershipOp MembershipOp, userId string, prevMiniblockHash []byte, t *testing.T) *ParsedEvent {
+func make_Space_Membership(
+	wallet *crypto.Wallet,
+	membershipOp MembershipOp,
+	userId string,
+	prevMiniblockHash []byte,
+	t *testing.T,
+) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_SpacePayload_Membership(
@@ -86,7 +98,13 @@ func make_Space_Username(wallet *crypto.Wallet, username string, streamId string
 	return parsed
 }
 
-func make_Space_DisplayName(wallet *crypto.Wallet, displayName string, streamId string, prevHash []byte, t *testing.T) *ParsedEvent {
+func make_Space_DisplayName(
+	wallet *crypto.Wallet,
+	displayName string,
+	streamId string,
+	prevHash []byte,
+	t *testing.T,
+) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_SpacePayload_DisplayName(

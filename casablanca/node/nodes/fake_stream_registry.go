@@ -26,6 +26,10 @@ func (sr *fakeStreamRegistryImpl) GetStreamInfo(ctx context.Context, streamId st
 	return nodes, ZeroHashBytes, err
 }
 
-func (sr *fakeStreamRegistryImpl) AllocateStream(ctx context.Context, streamId string, genesisMiniblockHash []byte) ([]string, error) {
+func (sr *fakeStreamRegistryImpl) AllocateStream(
+	ctx context.Context,
+	streamId string,
+	genesisMiniblockHash []byte,
+) ([]string, error) {
 	return chooseStreamNodes(ctx, streamId, sr.nodeRegistry, sr.replFactor)
 }

@@ -12,11 +12,12 @@ import (
 	"github.com/river-build/river/protocol"
 )
 
-var (
-	infoRequests = infra.NewSuccessMetrics("info_requests", serviceRequests)
-)
+var infoRequests = infra.NewSuccessMetrics("info_requests", serviceRequests)
 
-func (s *Service) Info(ctx context.Context, req *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
+func (s *Service) Info(
+	ctx context.Context,
+	req *connect_go.Request[protocol.InfoRequest],
+) (*connect_go.Response[protocol.InfoResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 
 	log.Debug("Info ENTER", "request", req.Msg)
@@ -33,7 +34,11 @@ func (s *Service) Info(ctx context.Context, req *connect_go.Request[protocol.Inf
 	return res, nil
 }
 
-func (s *Service) info(ctx context.Context, log *slog.Logger, request *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
+func (s *Service) info(
+	ctx context.Context,
+	log *slog.Logger,
+	request *connect_go.Request[protocol.InfoRequest],
+) (*connect_go.Response[protocol.InfoResponse], error) {
 	// TODO: flag to disable debug requests
 	if len(request.Msg.Debug) > 0 {
 		debug := request.Msg.Debug[0]

@@ -156,7 +156,18 @@ func (ca *chainAuth) CheckPermission(ctx context.Context, args *AuthCheckArgs) e
 		return AsRiverError(err).Func("IsAllowed")
 	}
 	if !result {
-		return RiverError(Err_PERMISSION_DENIED, "Permission denied", "spaceId", args.spaceId, "channelId", args.channelId, "userId", args.principal, "permission", args.permission.String()).Func("IsAllowed")
+		return RiverError(
+			Err_PERMISSION_DENIED,
+			"Permission denied",
+			"spaceId",
+			args.spaceId,
+			"channelId",
+			args.channelId,
+			"userId",
+			args.principal,
+			"permission",
+			args.permission.String(),
+		).Func("IsAllowed")
 	}
 	return nil
 }
@@ -179,7 +190,11 @@ func (ca *chainAuth) isSpaceEnabledUncached(ctx context.Context, args *AuthCheck
 
 func (ca *chainAuth) checkSpaceEnabled(ctx context.Context, spaceId string) error {
 	// TODO: right now this check happens for every wallet, but it needs to be done only once.
-	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(ctx, newArgsForEnabledSpace(spaceId), ca.isSpaceEnabledUncached)
+	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(
+		ctx,
+		newArgsForEnabledSpace(spaceId),
+		ca.isSpaceEnabledUncached,
+	)
 	if err != nil {
 		return err
 	}
@@ -203,7 +218,11 @@ func (ca *chainAuth) isChannelEnabledUncached(ctx context.Context, args *AuthChe
 }
 
 func (ca *chainAuth) checkChannelEnabled(ctx context.Context, spaceId string, channelId string) error {
-	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(ctx, newArgsForEnabledChannel(spaceId, channelId), ca.isChannelEnabledUncached)
+	isEnabled, cacheHit, err := ca.entitlementCache.executeUsingCache(
+		ctx,
+		newArgsForEnabledChannel(spaceId, channelId),
+		ca.isChannelEnabledUncached,
+	)
 	if err != nil {
 		return err
 	}

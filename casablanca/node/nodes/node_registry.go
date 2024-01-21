@@ -115,7 +115,12 @@ func NewNodeRegistryFromString(ctx context.Context, nodeRegistryString string, l
 	localFound := false
 	for i := 0; i < len(vals); i += 2 {
 		if i+1 >= len(vals) {
-			return nil, RiverError(Err_BAD_CONFIG, "Invalid node registry string, odd number of values", "nodeRegistryString", nodeRegistryString)
+			return nil, RiverError(
+				Err_BAD_CONFIG,
+				"Invalid node registry string, odd number of values",
+				"nodeRegistryString",
+				nodeRegistryString,
+			)
 		}
 		url := vals[i+1]
 		addr, err := AddressStrToEthAddress(vals[i])

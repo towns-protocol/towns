@@ -9,11 +9,12 @@ import (
 	. "github.com/river-build/river/protocol"
 )
 
-var (
-	getStreamRequests = infra.NewSuccessMetrics("get_stream_requests", serviceRequests)
-)
+var getStreamRequests = infra.NewSuccessMetrics("get_stream_requests", serviceRequests)
 
-func (s *Service) localGetStream(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
+func (s *Service) localGetStream(
+	ctx context.Context,
+	req *connect_go.Request[GetStreamRequest],
+) (*connect_go.Response[GetStreamResponse], error) {
 	res, err := s.getStream(ctx, req)
 	if err != nil {
 		getStreamRequests.FailInc()
@@ -24,7 +25,10 @@ func (s *Service) localGetStream(ctx context.Context, req *connect_go.Request[Ge
 	return res, nil
 }
 
-func (s *Service) getStream(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
+func (s *Service) getStream(
+	ctx context.Context,
+	req *connect_go.Request[GetStreamRequest],
+) (*connect_go.Response[GetStreamResponse], error) {
 	streamId := req.Msg.StreamId
 
 	_, streamView, err := s.cache.GetStream(ctx, streamId)

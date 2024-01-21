@@ -36,7 +36,13 @@ func (s *syncSubscriptionImpl) addLocalStream(
 	stream *events.SyncStream,
 ) error {
 	log := dlog.CtxLog(ctx)
-	log.Debug("SyncStreams:syncSubscriptionImpl:addLocalStream: adding local stream", "syncId", s.syncId, "streamId", syncCookie.StreamId)
+	log.Debug(
+		"SyncStreams:syncSubscriptionImpl:addLocalStream: adding local stream",
+		"syncId",
+		s.syncId,
+		"streamId",
+		syncCookie.StreamId,
+	)
 
 	var exists bool
 
@@ -48,7 +54,13 @@ func (s *syncSubscriptionImpl) addLocalStream(
 	s.mu.Unlock()
 
 	if exists {
-		log.Debug("SyncStreams:syncSubscriptionImpl:addLocalStream: local stream already exists", "syncId", s.syncId, "streamId", syncCookie.StreamId)
+		log.Debug(
+			"SyncStreams:syncSubscriptionImpl:addLocalStream: local stream already exists",
+			"syncId",
+			s.syncId,
+			"streamId",
+			syncCookie.StreamId,
+		)
 	} else {
 		// subscribe to the stream
 		err := (*stream).Sub(ctx, syncCookie, s)
@@ -168,7 +180,6 @@ func (s *syncSubscriptionImpl) removeRemoteStream(
 }
 
 func (s *syncSubscriptionImpl) purgeUnusedRemoteNodes(log *slog.Logger) {
-
 	nodesToRemove := make([]*syncNode, 0)
 
 	log.Debug("SyncStreams:syncSubscriptionImpl:purgeUnusedRemoteNodes: purging unused remote nodes", "syncId", s.syncId)
@@ -245,10 +256,9 @@ func (s *syncSubscriptionImpl) OnUpdate(r *protocol.StreamAndCookie) {
 		return
 	default:
 		// end the update stream if the channel is full
-		err :=
-			base.RiverError(protocol.Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.NextSyncCookie.StreamId).
-				Func("OnUpdate").
-				LogWarn(dlog.CtxLog(s.ctx))
+		err := base.RiverError(protocol.Err_BUFFER_FULL, "channel full, dropping update and canceling", "streamId", r.NextSyncCookie.StreamId).
+			Func("OnUpdate").
+			LogWarn(dlog.CtxLog(s.ctx))
 		s.setErrorAndCancel(err)
 		return
 	}
@@ -283,7 +293,13 @@ func (s *syncSubscriptionImpl) Dispatch(res *connect_go.ServerStream[protocol.Sy
 			log.Debug("SyncStreams: context done", "err", err)
 			return
 		case data, ok := <-s.dataChannel:
-			log.Debug("SyncStreams:syncSubscriptionImpl:Dispatch received response in dispatch loop", "syncId", s.syncId, "data", data)
+			log.Debug(
+				"SyncStreams:syncSubscriptionImpl:Dispatch received response in dispatch loop",
+				"syncId",
+				s.syncId,
+				"data",
+				data,
+			)
 			if ok {
 				// gather the response metadata + content, and send it
 				resp := events.SyncStreamsResponseFromStreamAndCookie(data)
@@ -305,7 +321,13 @@ func (s *syncSubscriptionImpl) Dispatch(res *connect_go.ServerStream[protocol.Sy
 					SyncOp: protocol.SyncOp_SYNC_CLOSE,
 				})
 				if err != nil {
-					log.Info("SyncStreams:syncSubscriptionImpl:Dispatch error sending close response", "syncId", s.syncId, "err", err)
+					log.Info(
+						"SyncStreams:syncSubscriptionImpl:Dispatch error sending close response",
+						"syncId",
+						s.syncId,
+						"err",
+						err,
+					)
 					dlog.CtxLog(s.ctx).Warn("SyncStreams:syncSubscriptionImpl:closeStream: error canceling stream", "err", err)
 				}
 				s.cancel()

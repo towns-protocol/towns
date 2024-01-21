@@ -1,12 +1,12 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
 	"github.com/river-build/river/dlog"
 	"github.com/river-build/river/testutils"
-
-	"context"
 
 	"github.com/spf13/cobra"
 )

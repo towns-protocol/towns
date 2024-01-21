@@ -30,12 +30,21 @@ func newStreamRegistryContractImpl(
 	log := dlog.CtxLog(ctx)
 
 	if cfg.Version != "dev" {
-		return nil, RiverError(Err_BAD_CONFIG, "Unsupported contract version", "version", cfg.Version).Func("newStreamRegistryContractImpl")
+		return nil, RiverError(
+			Err_BAD_CONFIG,
+			"Unsupported contract version",
+			"version",
+			cfg.Version,
+		).Func("newStreamRegistryContractImpl")
 	}
 
 	address, err := crypto.ParseOrLoadAddress(cfg.Address)
 	if err != nil {
-		return nil, AsRiverError(err, Err_BAD_CONFIG).Message("Failed to parse contract address").Func("newStreamRegistryContractImpl")
+		return nil, AsRiverError(
+			err,
+			Err_BAD_CONFIG,
+		).Message("Failed to parse contract address").
+			Func("newStreamRegistryContractImpl")
 	}
 
 	stream_registry, err := dev.NewStreamRegistry(address, blockchain.Client)
@@ -107,7 +116,11 @@ func (sr *streamRegistryContractImpl) GetStreamsLength(ctx context.Context) (int
 func (sr *streamRegistryContractImpl) GetStreamByIndex(ctx context.Context, index int64) (string, []string, []byte, error) {
 	stream, err := sr.registry.GetStreamByIndex(sr.callOpts(ctx), big.NewInt(index))
 	if err != nil {
-		return "", nil, nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamByIndex").Message("Smart contract call failed")
+		return "", nil, nil, WrapRiverError(
+			Err_CANNOT_CALL_CONTRACT,
+			err,
+		).Func("GetStreamByIndex").
+			Message("Smart contract call failed")
 	}
 	return stream.StreamId, EthAddressesToAddressStrs(stream.Nodes), stream.GenesisMiniblockHash[:], nil
 }

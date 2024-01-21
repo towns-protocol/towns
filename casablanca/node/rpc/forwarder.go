@@ -47,7 +47,10 @@ func (s *Service) getStubForStream(ctx context.Context, streamId string) (Stream
 	return s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
 }
 
-func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
+func (s *Service) CreateStream(
+	ctx context.Context,
+	req *connect_go.Request[CreateStreamRequest],
+) (*connect_go.Response[CreateStreamResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 	log.Debug("CreateStream ENTER")
 	r, e := s.createStreamImpl(ctx, req)
@@ -58,7 +61,10 @@ func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[Crea
 	return r, nil
 }
 
-func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
+func (s *Service) GetStream(
+	ctx context.Context,
+	req *connect_go.Request[GetStreamRequest],
+) (*connect_go.Response[GetStreamResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 	log.Debug("GetStream ENTER")
 	r, e := s.getStreamImpl(ctx, req)
@@ -69,7 +75,10 @@ func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[GetStre
 	return r, nil
 }
 
-func (s *Service) getStreamImpl(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
+func (s *Service) getStreamImpl(
+	ctx context.Context,
+	req *connect_go.Request[GetStreamRequest],
+) (*connect_go.Response[GetStreamResponse], error) {
 	stub, err := s.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
@@ -82,7 +91,10 @@ func (s *Service) getStreamImpl(ctx context.Context, req *connect_go.Request[Get
 	}
 }
 
-func (s *Service) GetMiniblocks(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
+func (s *Service) GetMiniblocks(
+	ctx context.Context,
+	req *connect_go.Request[GetMiniblocksRequest],
+) (*connect_go.Response[GetMiniblocksResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 	log.Debug("GetMiniblocks ENTER", "req", req.Msg)
 	r, e := s.getMiniblocksImpl(ctx, req)
@@ -93,7 +105,10 @@ func (s *Service) GetMiniblocks(ctx context.Context, req *connect_go.Request[Get
 	return r, nil
 }
 
-func (s *Service) getMiniblocksImpl(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
+func (s *Service) getMiniblocksImpl(
+	ctx context.Context,
+	req *connect_go.Request[GetMiniblocksRequest],
+) (*connect_go.Response[GetMiniblocksResponse], error) {
 	stub, err := s.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
@@ -136,7 +151,10 @@ func (s *Service) getLastMiniblockHashImpl(
 	}
 }
 
-func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
+func (s *Service) AddEvent(
+	ctx context.Context,
+	req *connect_go.Request[AddEventRequest],
+) (*connect_go.Response[AddEventResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 	log.Debug("AddEvent ENTER", "req", req.Msg)
 	r, e := s.addEventImpl(ctx, req)
@@ -147,7 +165,10 @@ func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[AddEvent
 	return r, nil
 }
 
-func (s *Service) addEventImpl(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
+func (s *Service) addEventImpl(
+	ctx context.Context,
+	req *connect_go.Request[AddEventRequest],
+) (*connect_go.Response[AddEventResponse], error) {
 	streamId := req.Msg.StreamId
 
 	isLocal, remotes, err := s.getNodesForStream(ctx, streamId)

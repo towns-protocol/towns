@@ -125,7 +125,6 @@ func (r *streamViewImpl) getMembers() (*mapset.Set[string], error) {
 		}
 		return true, nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +185,6 @@ func (r *streamViewImpl) getInvites() (*mapset.Set[string], error) {
 
 		return true, nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

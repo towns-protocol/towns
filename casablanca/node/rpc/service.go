@@ -10,9 +10,7 @@ import (
 	. "github.com/river-build/river/protocol/protocolconnect"
 )
 
-var (
-	serviceRequests = infra.NewSuccessMetrics(infra.RPC_CATEGORY, nil)
-)
+var serviceRequests = infra.NewSuccessMetrics(infra.RPC_CATEGORY, nil)
 
 type Service struct {
 	cache          events.StreamCache
@@ -26,5 +24,7 @@ type Service struct {
 	syncHandler    SyncHandler
 }
 
-var _ StreamServiceHandler = (*Service)(nil)
-var _ NodeToNodeHandler = (*Service)(nil)
+var (
+	_ StreamServiceHandler = (*Service)(nil)
+	_ NodeToNodeHandler    = (*Service)(nil)
+)

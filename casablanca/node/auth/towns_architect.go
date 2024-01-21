@@ -28,9 +28,7 @@ type townsArchitectProxy struct {
 	address  common.Address
 }
 
-var (
-	getTownByIdCalls = infra.NewSuccessMetrics("towns_architect_calls", contractCalls)
-)
+var getTownByIdCalls = infra.NewSuccessMetrics("towns_architect_calls", contractCalls)
 
 func NewTownsArchitect(cfg *config.ContractConfig, backend bind.ContractBackend) (TownsArchitect, error) {
 	address, err := crypto.ParseOrLoadAddress(cfg.Address)
@@ -45,10 +43,22 @@ func NewTownsArchitect(cfg *config.ContractConfig, backend bind.ContractBackend)
 		c, err = v3.NewTownsArchitect(address, backend)
 	}
 	if err != nil {
-		return nil, WrapRiverError(Err_CANNOT_CONNECT, err).Tags("address", cfg.Address, "version", cfg.Version).Func("NewTownsArchitect").Message("Failed to initialize contract")
+		return nil, WrapRiverError(
+			Err_CANNOT_CONNECT,
+			err,
+		).Tags("address", cfg.Address, "version", cfg.Version).
+			Func("NewTownsArchitect").
+			Message("Failed to initialize contract")
 	}
 	if c == nil {
-		return nil, RiverError(Err_CANNOT_CONNECT, "Unsupported version", "version", cfg.Version, "address", cfg.Address).Func("NewTownsArchitect")
+		return nil, RiverError(
+			Err_CANNOT_CONNECT,
+			"Unsupported version",
+			"version",
+			cfg.Version,
+			"address",
+			cfg.Address,
+		).Func("NewTownsArchitect")
 	}
 	return &townsArchitectProxy{
 		contract: c,
@@ -68,6 +78,16 @@ func (proxy *townsArchitectProxy) GetTownById(opts *bind.CallOpts, townId string
 		return common.Address{}, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
 	}
 	getTownByIdCalls.PassInc()
-	log.Debug("GetTownById", "address", proxy.address, "networkId", townId, "result", result, "duration", time.Since(start).Milliseconds())
+	log.Debug(
+		"GetTownById",
+		"address",
+		proxy.address,
+		"networkId",
+		townId,
+		"result",
+		result,
+		"duration",
+		time.Since(start).Milliseconds(),
+	)
 	return result, nil
 }

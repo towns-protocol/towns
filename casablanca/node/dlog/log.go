@@ -7,8 +7,10 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-var DefaultLogOut = os.Stdout
-var defaultLogger *slog.Logger = slog.New(NewPrettyTextHandler(DefaultLogOut, &PrettyHandlerOptions{}))
+var (
+	DefaultLogOut              = os.Stdout
+	defaultLogger *slog.Logger = slog.New(NewPrettyTextHandler(DefaultLogOut, &PrettyHandlerOptions{}))
+)
 
 // Log is the default logger.
 func Log() *slog.Logger {

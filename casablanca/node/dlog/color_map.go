@@ -30,7 +30,7 @@ const (
 type ColorMap []ColorCode
 
 var ColorMap_Enabled ColorMap = func() ColorMap {
-	var c = make(ColorMap, ColorMap_Length)
+	c := make(ColorMap, ColorMap_Length)
 	c[ColorMap_BoolTrue] = FgGreen
 	c[ColorMap_BoolFalse] = FgRed
 	c[ColorMap_Int] = FgHiGreen

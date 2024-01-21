@@ -188,9 +188,20 @@ func (r *streamViewImpl) ProposeNextMiniblock(ctx context.Context) (*MiniblockPr
 	}, nil
 }
 
-func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context, proposal *MiniblockProposal) (*MiniblockHeader, []*ParsedEvent, error) {
-	if r.minipool.generation != proposal.NewMiniblockNum || !bytes.Equal(proposal.PrevMiniblockHash, r.LastBlock().headerEvent.Hash) {
-		return nil, nil, RiverError(Err_STREAM_LAST_BLOCK_MISMATCH, "proposal generation or hash mismatch", "expected", r.minipool.generation, "actual", proposal.NewMiniblockNum)
+func (r *streamViewImpl) makeMiniblockHeader(
+	ctx context.Context,
+	proposal *MiniblockProposal,
+) (*MiniblockHeader, []*ParsedEvent, error) {
+	if r.minipool.generation != proposal.NewMiniblockNum ||
+		!bytes.Equal(proposal.PrevMiniblockHash, r.LastBlock().headerEvent.Hash) {
+		return nil, nil, RiverError(
+			Err_STREAM_LAST_BLOCK_MISMATCH,
+			"proposal generation or hash mismatch",
+			"expected",
+			r.minipool.generation,
+			"actual",
+			proposal.NewMiniblockNum,
+		)
 	}
 
 	log := dlog.CtxLog(ctx)
@@ -200,7 +211,12 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context, proposal *Mini
 	for _, h := range proposal.Hashes {
 		e, ok := r.minipool.events.Get(string(h))
 		if !ok {
-			return nil, nil, RiverError(Err_MINIPOOL_MISSING_EVENTS, "proposal event not found in minipool", "hash", FormatHashFromBytes(h))
+			return nil, nil, RiverError(
+				Err_MINIPOOL_MISSING_EVENTS,
+				"proposal event not found in minipool",
+				"hash",
+				FormatHashFromBytes(h),
+			)
 		}
 		hashes = append(hashes, e.Hash)
 		events = append(events, e)
@@ -262,15 +278,36 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context, proposal *Mini
 func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo, config *config.StreamConfig) (*streamViewImpl, error) {
 	header := miniblock.headerEvent.Event.GetMiniblockHeader()
 	if header == nil {
-		return nil, RiverError(Err_INTERNAL, "streamViewImpl: non block event not allowed", "stream", r.streamId, "event", miniblock.headerEvent.ShortDebugStr())
+		return nil, RiverError(
+			Err_INTERNAL,
+			"streamViewImpl: non block event not allowed",
+			"stream",
+			r.streamId,
+			"event",
+			miniblock.headerEvent.ShortDebugStr(),
+		)
 	}
 
 	lastBlock := r.LastBlock()
 	if header.MiniblockNum != lastBlock.header().MiniblockNum+1 {
-		return nil, RiverError(Err_BAD_BLOCK, "streamViewImpl: block number mismatch", "expected", lastBlock.header().MiniblockNum+1, "actual", header.MiniblockNum)
+		return nil, RiverError(
+			Err_BAD_BLOCK,
+			"streamViewImpl: block number mismatch",
+			"expected",
+			lastBlock.header().MiniblockNum+1,
+			"actual",
+			header.MiniblockNum,
+		)
 	}
 	if !bytes.Equal(lastBlock.headerEvent.Hash, header.PrevMiniblockHash) {
-		return nil, RiverError(Err_BAD_BLOCK, "streamViewImpl: block hash mismatch", "expected", FormatHashFromString(string(lastBlock.headerEvent.Hash)), "actual", FormatHashFromString(string(header.PrevMiniblockHash)))
+		return nil, RiverError(
+			Err_BAD_BLOCK,
+			"streamViewImpl: block hash mismatch",
+			"expected",
+			FormatHashFromString(string(lastBlock.headerEvent.Hash)),
+			"actual",
+			FormatHashFromString(string(header.PrevMiniblockHash)),
+		)
 	}
 
 	remaining := make(map[string]*ParsedEvent, max(r.minipool.events.Len()-len(header.EventHashes), 0))
@@ -328,13 +365,36 @@ func (r *streamViewImpl) indexOfMiniblockWithNum(mininblockNum int64) (int, erro
 		diff := int(mininblockNum - r.blocks[0].header().MiniblockNum)
 		if diff >= 0 && diff < len(r.blocks) {
 			if r.blocks[diff].header().MiniblockNum != mininblockNum {
-				return 0, RiverError(Err_INTERNAL, "indexOfMiniblockWithNum block number mismatch", "requested", mininblockNum, "actual", r.blocks[diff].header().MiniblockNum)
+				return 0, RiverError(
+					Err_INTERNAL,
+					"indexOfMiniblockWithNum block number mismatch",
+					"requested",
+					mininblockNum,
+					"actual",
+					r.blocks[diff].header().MiniblockNum,
+				)
 			}
 			return diff, nil
 		}
-		return 0, RiverError(Err_INVALID_ARGUMENT, "indexOfMiniblockWithNum index not found", "requested", mininblockNum, "min", r.blocks[0].header().MiniblockNum, "max", r.blocks[len(r.blocks)-1].header().MiniblockNum)
+		return 0, RiverError(
+			Err_INVALID_ARGUMENT,
+			"indexOfMiniblockWithNum index not found",
+			"requested",
+			mininblockNum,
+			"min",
+			r.blocks[0].header().MiniblockNum,
+			"max",
+			r.blocks[len(r.blocks)-1].header().MiniblockNum,
+		)
 	}
-	return 0, RiverError(Err_INVALID_ARGUMENT, "indexOfMiniblockWithNum No blocks loaded", "requested", mininblockNum, "streamId", r.streamId)
+	return 0, RiverError(
+		Err_INVALID_ARGUMENT,
+		"indexOfMiniblockWithNum No blocks loaded",
+		"requested",
+		mininblockNum,
+		"streamId",
+		r.streamId,
+	)
 }
 
 func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (bool, error)) error {
@@ -406,9 +466,9 @@ func (r *streamViewImpl) getMinEventsPerSnapshot() int {
 }
 
 func (r *streamViewImpl) shouldSnapshot() bool {
-	var minEventsPerSnapshot = r.getMinEventsPerSnapshot()
+	minEventsPerSnapshot := r.getMinEventsPerSnapshot()
 
-	var count = 0
+	count := 0
 	// count the events in the minipool
 	count += r.minipool.events.Len()
 	if count >= minEventsPerSnapshot {
@@ -443,11 +503,25 @@ func (r *streamViewImpl) ValidateNextEvent(parsedEvent *ParsedEvent, config *con
 	}
 	// ensure that we found it
 	if foundBlockAt == -1 {
-		return RiverError(Err_BAD_PREV_MINIBLOCK_HASH, "prevMiniblockHash not found in recent blocks", "event", parsedEvent.ShortDebugStr(), "expected", FormatFullHashFromBytes(r.LastBlock().headerEvent.Hash))
+		return RiverError(
+			Err_BAD_PREV_MINIBLOCK_HASH,
+			"prevMiniblockHash not found in recent blocks",
+			"event",
+			parsedEvent.ShortDebugStr(),
+			"expected",
+			FormatFullHashFromBytes(r.LastBlock().headerEvent.Hash),
+		)
 	}
 	// make sure we're recent
 	if !r.isRecentBlock(r.blocks[foundBlockAt], config) {
-		return RiverError(Err_BAD_PREV_MINIBLOCK_HASH, "prevMiniblockHash did not reference a recent block", "event", parsedEvent.ShortDebugStr(), "expected", FormatFullHashFromBytes(r.LastBlock().headerEvent.Hash))
+		return RiverError(
+			Err_BAD_PREV_MINIBLOCK_HASH,
+			"prevMiniblockHash did not reference a recent block",
+			"event",
+			parsedEvent.ShortDebugStr(),
+			"expected",
+			FormatFullHashFromBytes(r.LastBlock().headerEvent.Hash),
+		)
 	}
 	// loop forwards from foundBlockAt and check for duplicate event
 	for i := foundBlockAt + 1; i < len(r.blocks); i++ {
@@ -461,7 +535,14 @@ func (r *streamViewImpl) ValidateNextEvent(parsedEvent *ParsedEvent, config *con
 	// check for duplicates in the minipool
 	for _, e := range r.minipool.events.Values {
 		if bytes.Equal(e.Hash, parsedEvent.Hash) {
-			return RiverError(Err_DUPLICATE_EVENT, "event already exists in minipool", "event", parsedEvent.ShortDebugStr(), "expected", FormatHashShort(r.LastBlock().headerEvent.Hash))
+			return RiverError(
+				Err_DUPLICATE_EVENT,
+				"event already exists in minipool",
+				"event",
+				parsedEvent.ShortDebugStr(),
+				"expected",
+				FormatHashShort(r.LastBlock().headerEvent.Hash),
+			)
 		}
 	}
 	// success

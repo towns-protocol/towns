@@ -10,7 +10,10 @@ import (
 	. "github.com/river-build/river/protocol"
 )
 
-func (s *Service) AllocateStream(ctx context.Context, req *connect.Request[AllocateStreamRequest]) (*connect.Response[AllocateStreamResponse], error) {
+func (s *Service) AllocateStream(
+	ctx context.Context,
+	req *connect.Request[AllocateStreamRequest],
+) (*connect.Response[AllocateStreamResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 	log.Debug("AllocateStream ENTER")
 	r, e := s.allocateStream(ctx, req.Msg)
@@ -33,7 +36,10 @@ func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest
 	}, nil
 }
 
-func (s *Service) NewEventReceived(ctx context.Context, req *connect.Request[NewEventReceivedRequest]) (*connect.Response[NewEventReceivedResponse], error) {
+func (s *Service) NewEventReceived(
+	ctx context.Context,
+	req *connect.Request[NewEventReceivedRequest],
+) (*connect.Response[NewEventReceivedResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 	log.Debug("NewEventReceived ENTER")
 	r, e := s.newEventReceived(ctx, req.Msg)
@@ -64,6 +70,9 @@ func (s *Service) newEventReceived(ctx context.Context, req *NewEventReceivedReq
 	return &NewEventReceivedResponse{}, nil
 }
 
-func (s *Service) NewEventInPool(context.Context, *connect.Request[NewEventInPoolRequest]) (*connect.Response[NewEventInPoolResponse], error) {
+func (s *Service) NewEventInPool(
+	context.Context,
+	*connect.Request[NewEventInPoolRequest],
+) (*connect.Response[NewEventInPoolResponse], error) {
 	return nil, nil
 }
