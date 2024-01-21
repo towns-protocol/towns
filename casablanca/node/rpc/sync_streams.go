@@ -352,7 +352,7 @@ func (s *syncHandlerImpl) AddStreamToSync(
 	req *connect_go.Request[protocol.AddStreamToSyncRequest],
 ) (*connect_go.Response[protocol.AddStreamToSyncResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
-	log.Info("SyncStreams:SyncHandlerV2.AddStreamToSync ENTER", "syncId", req.Msg.SyncId, "syncPos", req.Msg.SyncPos)
+	log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync ENTER", "syncId", req.Msg.SyncId, "syncPos", req.Msg.SyncPos)
 
 	syncId := req.Msg.SyncId
 	cookie := req.Msg.SyncPos
@@ -373,7 +373,7 @@ func (s *syncHandlerImpl) AddStreamToSync(
 			return nil, err
 		}
 		// done.
-		log.Info("SyncStreams:SyncHandlerV2.AddStreamToSync: LEAVE", "syncId", syncId)
+		log.Debug("SyncStreams:SyncHandlerV2.AddStreamToSync: LEAVE", "syncId", syncId)
 		return connect_go.NewResponse(&protocol.AddStreamToSyncResponse{}), nil
 	}
 
@@ -486,7 +486,7 @@ func (s *syncHandlerImpl) addSubscription(
 		controlChannel: make(chan *protocol.SyncOp),
 	}
 	s.syncIdToSubscription[syncId] = sub
-	log.Info("SyncStreams:addSubscription: syncId subscription added", "syncId", syncId)
+	log.Debug("SyncStreams:addSubscription: syncId subscription added", "syncId", syncId)
 	return sub, nil
 }
 
