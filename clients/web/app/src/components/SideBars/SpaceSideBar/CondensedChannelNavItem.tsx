@@ -38,7 +38,9 @@ export const CondensedChannelNavItem = (props: {
                     </Box>
                 }
                 id={channel.id}
-                label={<DirectMessageName channel={channel} />}
+                label={
+                    <DirectMessageName channelId={channel.id} label={channel.properties?.name} />
+                }
                 highlight={unread}
                 link={link}
                 minHeight="x5"

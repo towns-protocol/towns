@@ -2,18 +2,20 @@ import { useMemo, useRef } from 'react'
 import {
     Channel,
     DMChannelIdentifier,
+    LookupUserMap,
     RoomMember,
     useMyChannels,
     useSpaceData,
     useSpaceMembers,
     useSpaceMentions,
+    useUserLookupContext,
     useZionContext,
 } from 'use-zion-client'
 import { isEqual } from 'lodash'
 import { notUndefined } from 'ui/utils/utils'
 import { useSpaceChannels } from './useSpaceChannels'
 
-type Params = { spaceId: string; currentRouteId?: string }
+type Params = { spaceId?: string; currentRouteId?: string }
 
 export type ChannelMenuItem = {
     type: 'channel'
@@ -31,6 +33,7 @@ export type DMChannelMenuItem = {
     type: 'dm'
     channel: DMChannelIdentifier
     id: string
+    isGroup: boolean
     label: string
     latestMs: number
     search: string
@@ -48,7 +51,10 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     const channels = useSpaceChannels()
     const { memberIds } = useSpaceMembers()
     const { joinedChannels } = useJoinedChannels(spaceId)
-    const unreadChannelIds = spaceUnreadChannelIds[spaceId]
+    const unreadChannelIds = useMemo(
+        () => (spaceId ? spaceUnreadChannelIds[spaceId] : new Set()),
+        [spaceId, spaceUnreadChannelIds],
+    )
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - collect and map channels
 
@@ -80,11 +86,12 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - collect and map all dms
 
     const dmItemsRef = useRef<DMChannelMenuItem[]>([])
+    const globalUserMap = useUserLookupContext()?.usersMap
 
     const dmItems = useMemo(() => {
-        const spaceMembers = rooms[spaceId]?.members
+        const spaceMembers = spaceId ? rooms[spaceId]?.members : undefined
         const value = Array.from(dmChannels)
-            .filter((c) => !c.left && c.userIds.every((m) => memberIds.includes(m)))
+            .filter((c) => !c.left && (!spaceId || c.userIds.every((m) => memberIds.includes(m))))
             .map((channel) => {
                 const roomMembers = rooms[channel.id]?.members
                 return channel
@@ -93,10 +100,11 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                           id: channel.id,
                           label: channel.properties?.name ?? '',
                           search: channel.userIds
-                              .map((u) => mapMember(spaceMembers, roomMembers, u))
+                              .map((u) => mapMember(globalUserMap, spaceMembers, roomMembers, u))
                               .join(),
                           channel,
                           unread: dmUnreadChannelIds.has(channel.id),
+                          isGroup: channel.isGroup,
                           latestMs: Number(channel?.lastEventCreatedAtEpocMs ?? 0),
                       } satisfies DMChannelMenuItem)
                     : undefined
@@ -106,7 +114,12 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
         dmItemsRef.current = isEqual(value, dmItemsRef.current) ? dmItemsRef.current : value
 
         return dmItemsRef.current
-    }, [dmChannels, dmUnreadChannelIds, memberIds, rooms, spaceId])
+    }, [dmChannels, dmUnreadChannelIds, globalUserMap, memberIds, rooms, spaceId])
+
+    console.log(
+        `ttt search`,
+        dmItems.map((c) => c.search),
+    )
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -171,10 +184,12 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
         readDms,
         unreadChannels,
         unjoinedChannels,
+        dmItems,
+        channelItems,
     }
 }
 
-const useJoinedChannels = (spaceId: string) => {
+const useJoinedChannels = (spaceId?: string) => {
     const space = useSpaceData(spaceId)
     const myChannelGroups = useMyChannels(space)
     const joinedChannels = useMemo(
@@ -188,15 +203,25 @@ const useJoinedChannels = (spaceId: string) => {
 }
 
 const mapMember = (
+    globalUserMap: LookupUserMap,
     spaceMembers: RoomMember[] | undefined,
     roomMembers: RoomMember[] | undefined,
     userId: string,
 ) => {
     const member = spaceMembers?.find((m) => m.userId === userId)
     const roomMember = roomMembers?.find((m) => m.userId === userId)
-    return member
-        ? [roomMember?.displayName || member.displayName, roomMember?.username || member.username]
-              .filter(notUndefined)
-              .join()
-        : ``
+
+    const result =
+        member || globalUserMap[userId]
+            ? [
+                  roomMember?.displayName ||
+                      member?.displayName ||
+                      globalUserMap[userId]?.displayName,
+                  roomMember?.username || member?.username || globalUserMap[userId]?.username,
+              ]
+                  .filter(Boolean)
+                  .join()
+            : ``
+
+    return result
 }

@@ -1,13 +1,13 @@
 import { RoomMember } from 'use-zion-client'
 import { SearchResult } from 'minisearch'
 import { ZRoomMessageEvent } from '@components/MessageTimeline/util/getEventsByDate'
-import { useChannelsWithMentionCountsAndUnread } from 'hooks/useChannelsWithMentionCountsAndUnread'
 import { IconName } from '@ui'
 
 export type EventDocument =
-    | MessageEventDocument
-    | ChannelEventDocument
     | UserEventDocument
+    | ChannelEventDocument
+    | DmChannelEventDocument
+    | MessageEventDocument
     | DMMessageEventDocument
     | ActionEventDocument
 
@@ -34,11 +34,35 @@ export type ChannelEventDocument = {
     source: ChannelType
 }
 
+export type DmChannelEventDocument = {
+    type: 'dmChannel'
+    key: string
+    body: string
+    source: DmChannelType
+}
+
 export type UserEventDocument = {
     type: 'user'
     key: string
     body: string
     source: RoomMember
+}
+
+type ChannelType = {
+    isJoined: boolean
+    mentionCount: number
+    unread: boolean
+    muted: boolean
+    id: string
+    label: string
+    private?: boolean | undefined
+    highlight?: boolean | undefined
+    topic?: string | undefined
+}
+
+type DmChannelType = {
+    id: string
+    label: string
 }
 
 export type ActionEventDocument = {
@@ -51,10 +75,6 @@ export type ActionEventDocument = {
         callback: () => void
     }
 }
-
-type ChannelType = ReturnType<
-    typeof useChannelsWithMentionCountsAndUnread
->['channelsWithMentionCountsAndUnread'][0]
 
 export type CombinedResult = {
     searchResult: SearchResult

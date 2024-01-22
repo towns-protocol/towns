@@ -1,49 +1,63 @@
 import { useCallback, useMemo } from 'react'
 import { firstBy } from 'thenby'
-import { useSpaceMembers, useUserLookupContext } from 'use-zion-client'
-import { useIndexMessages } from 'hooks/useIndexMessages'
+import { useUserLookupContext } from 'use-zion-client'
 import {
     ActionEventDocument,
     ChannelEventDocument,
+    DmChannelEventDocument,
     UserEventDocument,
     isCombinedResultItem,
 } from '@components/SearchBar/types'
+import { useIndexMessages } from 'hooks/useIndexMessages'
 import { useStore } from 'store/store'
 import { useMiniSearch } from './useMiniSearch'
-import { useChannelsWithMentionCountsAndUnread } from './useChannelsWithMentionCountsAndUnread'
+import { useSortedChannels } from './useSortedChannels'
 // import { useOramaSearch } from './hooks/useOramaSearch'
 
 export const useSearch = (searchTerms: string) => {
-    const { memberIds } = useSpaceMembers()
-    const { usersMap } = useUserLookupContext()
+    const { users } = useUserLookupContext()
     const { messages: indexedMessages, dmMessages: indexedDMMessages } = useIndexMessages()
 
-    const { channelsWithMentionCountsAndUnread } = useChannelsWithMentionCountsAndUnread()
+    const { channelItems, dmItems } = useSortedChannels({ spaceId: '' })
 
     const indexedChannels = useMemo<ChannelEventDocument[]>(
         () =>
-            channelsWithMentionCountsAndUnread.map((c) => ({
+            channelItems.map((c) => ({
                 key: `channel-${c.id}`,
                 type: 'channel' as const,
-                body: c.label,
-                source: c,
+                body: c.label + c.search,
+                source: {
+                    ...c,
+                    isJoined: true,
+                    muted: false,
+                },
             })),
-        [channelsWithMentionCountsAndUnread],
+        [channelItems],
+    )
+    const indexedDmChannels = useMemo<DmChannelEventDocument[]>(
+        () =>
+            dmItems
+                .filter((c) => c.isGroup)
+                .map((c) => ({
+                    key: `dm-channel-${c.id}`,
+                    type: 'dmChannel' as const,
+                    body: c.label + c.search,
+                    source: {
+                        ...c,
+                    },
+                })),
+        [dmItems],
     )
 
     const indexedMembers = useMemo<UserEventDocument[]>(
         () =>
-            memberIds
-                .filter((userId) => usersMap[userId])
-                .map((userId: string) => ({
-                    key: `user-${userId}`,
-                    type: 'user' as const,
-                    body: `${usersMap[userId]?.displayName ?? ''} + ${
-                        usersMap[userId]?.username ?? ''
-                    }`.trim(),
-                    source: usersMap[userId],
-                })),
-        [memberIds, usersMap],
+            users.map((u) => ({
+                key: `user-${u.userId}`,
+                type: 'user' as const,
+                body: `${u.displayName ?? ''} + ${u.username ?? ''}`.trim(),
+                source: u,
+            })),
+        [users],
     )
 
     const setSidePanel = useStore((state) => state.setSidePanel)
@@ -56,7 +70,7 @@ export const useSearch = (searchTerms: string) => {
             {
                 key: `actionreport`,
                 type: 'action' as const,
-                body: 'Report Bug, Feedback, Error',
+                body: 'Report Bug, Feedback, Error, Issue',
                 source: {
                     icon: 'bug',
                     label: 'Report Bug',
@@ -71,14 +85,22 @@ export const useSearch = (searchTerms: string) => {
         () => [
             ...indexedMembers,
             ...indexedChannels,
+            ...indexedDmChannels,
             ...indexedMessages,
             ...indexedDMMessages,
             ...indexedActions,
         ],
-        [indexedMembers, indexedChannels, indexedMessages, indexedDMMessages, indexedActions],
+        [
+            indexedMembers,
+            indexedChannels,
+            indexedDmChannels,
+            indexedMessages,
+            indexedDMMessages,
+            indexedActions,
+        ],
     )
 
-    const order = ['user', 'channel', 'dmMessage', 'message']
+    const order = ['user', 'dmChannel', 'channel', 'dmMessage', 'message']
 
     const searchResults = useMiniSearch(searchItems, searchTerms)
         .map((r) => ({ searchResult: r, item: searchItems.find((i) => i.key === r.id) }))

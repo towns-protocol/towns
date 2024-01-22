@@ -48,7 +48,10 @@ export const DirectMessageListItem = (props: {
                     {/* text on the left */}
                     <Text truncate color="default" fontWeight={unread ? 'medium' : 'normal'}>
                         {/* {data?.isGroup ? 'GM' : 'DM'} */}
-                        <DirectMessageName channel={channel} />
+                        <DirectMessageName
+                            channelId={channel.id}
+                            label={channel.properties?.name}
+                        />
                     </Text>
                     {/* date on the right */}
                     <Box grow justifyContent="end" alignItems="end">
@@ -112,15 +115,14 @@ export const DirectMessageListItem = (props: {
     )
 }
 
-export const DirectMessageName = (props: { channel: DMChannelIdentifier }) => {
-    const { channel } = props
-    const { counterParty, data } = useDMData(channel.id)
+export const DirectMessageName = (props: { channelId: string; label: string | undefined }) => {
+    const { counterParty, data } = useDMData(props.channelId)
     const userIds = useMemo(
         () => (data?.isGroup ? data.userIds : [counterParty].filter(notUndefined)),
         [counterParty, data?.isGroup, data?.userIds],
     )
     const myUserId = useMyUserId()
-    const channelName = channel.properties?.name
+    const channelName = props.label
 
     return channelName ? (
         <>{channelName}</>

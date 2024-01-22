@@ -17,15 +17,17 @@ import { useDmChannels } from 'hooks/useDMChannels'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 const sectionTypeNameMap = {
-    user: 'Persons',
+    user: 'People',
     message: 'Messages',
     channel: 'Channels',
+    dmChannel: 'Groups',
     dmMessage: 'Direct Messages',
     action: 'Actions',
 } as const
 
-export const getSectionTitle = (type: 'user' | 'message' | 'channel' | 'dmMessage' | 'action') =>
-    sectionTypeNameMap[type]
+export const getSectionTitle = (
+    type: 'user' | 'message' | 'channel' | 'dmChannel' | 'dmMessage' | 'action',
+) => sectionTypeNameMap[type]
 
 export const TouchSearchTab = () => {
     const { setSearchTerms, searchTerms } = useStore(({ setSearchTerms, searchTerms }) => ({
@@ -149,7 +151,7 @@ export const TouchSearchTab = () => {
                                         background="level1"
                                     />
                                 )
-                                const prevItemType = items[index - 1]?.item.type
+                                const prevItemType = items[index - 1]?.item?.type
                                 if (s.item.type !== prevItemType) {
                                     return (
                                         <>

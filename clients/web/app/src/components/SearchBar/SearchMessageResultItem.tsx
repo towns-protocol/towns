@@ -115,8 +115,8 @@ export const SearchMessagesResultItem = (
     const item = (
         <Box horizontal grow gap="sm">
             {isMessageSearch ? (
-                <Box width="x6">
-                    <Avatar userId={sender?.userId} size="avatar_md" />
+                <Box width="x4">
+                    <Avatar userId={sender?.userId} size="avatar_x4" />
                 </Box>
             ) : (
                 <Box width="x4" paddingY="xxs">

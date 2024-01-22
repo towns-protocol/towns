@@ -16,6 +16,8 @@ import { useDevice } from 'hooks/useDevice'
 import { TouchChannelResultRow, TouchUserResultRow } from 'routes/home/TouchHome'
 import { IsolatedMessageItem } from '@components/ResultItem/IsolatedMessageItem'
 import { Avatar } from '@components/Avatar/Avatar'
+import { DirectMessageName } from '@components/DirectMessages/DirectMessageListItem'
+import { GroupDMIcon } from '@components/DirectMessages/GroupDMIcon'
 import { CombinedResult } from './types'
 import { SearchMessagesResultItem } from './SearchMessageResultItem'
 
@@ -41,8 +43,9 @@ export const ResultItem = (
     const { createDirectMessage } = useCreateUserDM()
 
     const { isTouch } = useDevice()
-
-    boxProps.background = selected ? 'level3' : undefined
+    if (selected) {
+        boxProps.background = 'level3'
+    }
 
     switch (item.type) {
         case 'user': {
@@ -52,13 +55,12 @@ export const ResultItem = (
                 <TouchUserResultRow member={item.source} />
             ) : (
                 <ItemContainer
-                    background={selected ? 'accent' : undefined}
                     {...boxProps}
                     onClick={() => void createDirectMessage(userId, dmChannelIds)}
                 >
                     <Avatar userId={item.source.userId} size="avatar_x4" />
                     <Box centerContent>
-                        <Paragraph strong>{getPrettyDisplayName(item.source)}</Paragraph>
+                        <Paragraph>{getPrettyDisplayName(item.source)}</Paragraph>
                     </Box>
                 </ItemContainer>
             )
@@ -92,6 +94,41 @@ export const ResultItem = (
                         </Box>
                         <Box centerContent>
                             <Paragraph>{item.source.label}</Paragraph>
+                        </Box>
+                    </ItemContainer>
+                </Link>
+            ) : null
+        }
+
+        case 'dmChannel': {
+            const link = createLink({
+                spaceId: miscProps.spaceId,
+                messageId: item.source.id,
+            })
+
+            return isTouch ? (
+                <TouchChannelResultRow
+                    itemLink={{ channelId: item.source.id }}
+                    name={
+                        <DirectMessageName channelId={item.source.id} label={item.source.label} />
+                    }
+                    unread={false}
+                    mentionCount={0}
+                    muted={false}
+                />
+            ) : link ? (
+                <Link to={link}>
+                    <ItemContainer {...boxProps}>
+                        <Box centerContent width="x4">
+                            <GroupDMIcon roomIdentifier={item.source.id} width="x4" />
+                        </Box>
+                        <Box centerContent>
+                            <Paragraph>
+                                <DirectMessageName
+                                    channelId={item.source.id}
+                                    label={item.source.label}
+                                />
+                            </Paragraph>
                         </Box>
                     </ItemContainer>
                 </Link>
@@ -149,7 +186,7 @@ const ItemContainer = (props: BoxProps) => (
         shrink
         horizontal
         background="level2"
-        gap="md"
+        gap="sm"
         paddingX="md"
         paddingY="sm"
         {...props}

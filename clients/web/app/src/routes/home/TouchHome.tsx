@@ -447,7 +447,12 @@ const DirectMessageItem = (props: { dm: DMChannelMenuItem; unread: boolean }) =>
             <TouchChannelResultRow
                 key={dm.id}
                 itemLink={{ messageId: dm.id }}
-                name={<DirectMessageName channel={dm.channel} />}
+                name={
+                    <DirectMessageName
+                        channelId={dm.channel.id}
+                        label={dm.channel.properties?.name}
+                    />
+                }
                 unread={unread}
                 mentionCount={unreadCount}
                 muted={false}
