@@ -27,7 +27,7 @@ export type Props = {
     Omit<InputHTMLAttributes<HTMLTextAreaElement>, 'color'>
 
 export const TextArea = forwardRef<HTMLTextAreaElement, Props>((props, ref) => {
-    const { placeholder, onChange, fontSize, ...fieldProps } = props
+    const { placeholder, onChange, fontSize, counterOffset, ...fieldProps } = props
     const [length, setLength] = useState(
         props.defaultValue?.toString().length || props.value?.toString().length || 0,
     )
@@ -64,8 +64,8 @@ export const TextArea = forwardRef<HTMLTextAreaElement, Props>((props, ref) => {
                     {inputProps.maxLength && length ? (
                         <Box
                             position="absolute"
-                            right={props.counterOffset?.right ?? 'md'}
-                            bottom={props.counterOffset?.bottom ?? 'md'}
+                            right={counterOffset?.right ?? 'md'}
+                            bottom={counterOffset?.bottom ?? 'md'}
                         >
                             <Text size="sm">{inputProps.maxLength - length}</Text>
                         </Box>

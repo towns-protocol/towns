@@ -192,11 +192,6 @@ const DebugModal = ({
                                 Accounts
                             </Text>
                             <br />
-                            <Text size="sm" color="secondary">
-                                12/1/2023: You still need to mint mock NFT if you want to create a
-                                town locally
-                            </Text>
-                            <br />
                             {loggedInWalletAddress && (
                                 <FundButton
                                     key={loggedInWalletAddress}
