@@ -38,7 +38,7 @@ type StreamView interface {
 	ProposeNextMiniblock(ctx context.Context) (*MiniblockProposal, error)
 }
 
-func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
+func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*streamViewImpl, error) {
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}

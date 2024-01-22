@@ -78,7 +78,7 @@ func (s *streamImpl) loadInternal(ctx context.Context) {
 	if s.view != nil || s.loadError != nil {
 		return
 	}
-	streamData, err := s.params.Storage.GetStreamFromLastSnapshot(
+	streamData, err := s.params.Storage.ReadStreamFromLastSnapshot(
 		ctx,
 		s.streamId,
 		max(0, s.config.RecencyConstraints.Generations-1),
@@ -194,7 +194,7 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblockHeader *Minibl
 		newMinipool = append(newMinipool, b)
 	}
 
-	err = s.params.Storage.CreateBlock(
+	err = s.params.Storage.WriteBlock(
 		ctx,
 		s.streamId,
 		s.view.minipool.generation,
@@ -256,13 +256,13 @@ func createStream(
 		return nil, nil, err
 	}
 
-	err = params.Storage.CreateStream(ctx, streamId, serializedMiniblock)
+	err = params.Storage.CreateStreamStorage(ctx, streamId, serializedMiniblock)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// TODO: redundant parsing here.
-	view, err := MakeStreamView(&storage.GetStreamFromLastSnapshotResult{
+	view, err := MakeStreamView(&storage.ReadStreamFromLastSnapshotResult{
 		StartMiniblockNumber: 0,
 		Miniblocks:           [][]byte{serializedMiniblock},
 	})
@@ -298,7 +298,7 @@ func (s *streamImpl) GetView(ctx context.Context) (StreamView, error) {
 // miniblocks: with indexes from fromIndex inclusive, to toIndex exlusive
 // terminus: true if fromIndex is 0, or if there are no more blocks because they've been garbage collected
 func (s *streamImpl) GetMiniblocks(ctx context.Context, fromInclusive int64, toExclusive int64) ([]*Miniblock, bool, error) {
-	blocks, err := s.params.Storage.GetMiniblocks(ctx, s.streamId, fromInclusive, toExclusive)
+	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive)
 	if err != nil {
 		return nil, false, err
 	}
@@ -350,7 +350,7 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 		return err
 	}
 
-	err = s.params.Storage.AddEvent(ctx, s.streamId, s.view.minipool.generation, s.view.minipool.nextSlotNumber(), envelopeBytes)
+	err = s.params.Storage.WriteEvent(ctx, s.streamId, s.view.minipool.generation, s.view.minipool.nextSlotNumber(), envelopeBytes)
 	// TODO: for some classes of errors, it's not clear if event was added or not
 	// for those, perhaps entire Stream structure should be scrapped and reloaded
 	if err != nil {

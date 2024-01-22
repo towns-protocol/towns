@@ -19,7 +19,7 @@ type memStorage struct {
 	mutex   sync.Mutex
 }
 
-func (m *memStorage) CreateStream(ctx context.Context, streamId string, genesisMiniblock []byte) error {
+func (m *memStorage) CreateStreamStorage(ctx context.Context, streamId string, genesisMiniblock []byte) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -34,11 +34,11 @@ func (m *memStorage) CreateStream(ctx context.Context, streamId string, genesisM
 	return nil
 }
 
-func (m *memStorage) GetStreamFromLastSnapshot(
+func (m *memStorage) ReadStreamFromLastSnapshot(
 	ctx context.Context,
 	streamId string,
 	precedingBlockCount int,
-) (*GetStreamFromLastSnapshotResult, error) {
+) (*ReadStreamFromLastSnapshotResult, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -47,14 +47,14 @@ func (m *memStorage) GetStreamFromLastSnapshot(
 		return nil, RiverError(Err_NOT_FOUND, "Stream not found")
 	}
 	startIndex := max(0, stream.lastSnapshotIndex-max(0, precedingBlockCount))
-	return &GetStreamFromLastSnapshotResult{
+	return &ReadStreamFromLastSnapshotResult{
 		StartMiniblockNumber: int64(startIndex), // mem_storage, has all blocks in memory
 		Miniblocks:           stream.miniblocks[startIndex:],
 		MinipoolEnvelopes:    stream.minipool,
 	}, nil
 }
 
-func (m *memStorage) GetMiniblocks(ctx context.Context, streamId string, fromInclusive int64, toExclusive int64) ([][]byte, error) {
+func (m *memStorage) ReadMiniblocks(ctx context.Context, streamId string, fromInclusive int64, toExclusive int64) ([][]byte, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -69,7 +69,7 @@ func (m *memStorage) GetMiniblocks(ctx context.Context, streamId string, fromInc
 	return stream.miniblocks[fromInclusive:toExclusive], nil
 }
 
-func (m *memStorage) AddEvent(
+func (m *memStorage) WriteEvent(
 	ctx context.Context,
 	streamId string,
 	minipoolGeneration int64,
@@ -93,7 +93,7 @@ func (m *memStorage) AddEvent(
 	return nil
 }
 
-func (m *memStorage) CreateBlock(
+func (m *memStorage) WriteBlock(
 	ctx context.Context,
 	streamId string,
 	minipoolGeneration int64,

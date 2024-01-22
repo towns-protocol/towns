@@ -36,7 +36,7 @@ const (
 
 var dbCalls = infra.NewSuccessMetrics(infra.DB_CALLS_CATEGORY, nil)
 
-func (s *PostgresEventStore) CreateStream(ctx context.Context, streamId string, genesisMiniblock []byte) error {
+func (s *PostgresEventStore) CreateStreamStorage(ctx context.Context, streamId string, genesisMiniblock []byte) error {
 	err := s.createStream(ctx, streamId, genesisMiniblock)
 	if err != nil {
 		dbCalls.FailIncForChild("CreateStream")
@@ -118,11 +118,11 @@ func (s *PostgresEventStore) createStream(ctx context.Context, streamId string, 
 	return nil
 }
 
-func (s *PostgresEventStore) GetStreamFromLastSnapshot(
+func (s *PostgresEventStore) ReadStreamFromLastSnapshot(
 	ctx context.Context,
 	streamId string,
 	precedingBlockCount int,
-) (*GetStreamFromLastSnapshotResult, error) {
+) (*ReadStreamFromLastSnapshotResult, error) {
 	streamFromLastSnaphot, err := s.getStreamFromLastSnapshot(ctx, streamId, precedingBlockCount)
 	if err != nil {
 		dbCalls.FailIncForChild("GetStreamFromLastSnapshot")
@@ -140,7 +140,7 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(
 	ctx context.Context,
 	streamId string,
 	precedingBlockCount int,
-) (*GetStreamFromLastSnapshotResult, error) {
+) (*ReadStreamFromLastSnapshotResult, error) {
 	defer infra.StoreExecutionTimeMetrics("GetStreamFromLastSnapshot", infra.DB_CALLS_CATEGORY, time.Now())
 
 	tx, err := startTx(ctx, s.pool)
@@ -155,7 +155,7 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(
 		return nil, err
 	}
 
-	var result GetStreamFromLastSnapshotResult
+	var result ReadStreamFromLastSnapshotResult
 
 	// first let's check what is the last block with snapshot
 	var latest_snapshot_miniblock_index int64
@@ -274,7 +274,7 @@ func (s *PostgresEventStore) getStreamFromLastSnapshot(
 // Adds event to the given minipool.
 // Current generation of minipool should match minipoolGeneration,
 // and there should be exactly minipoolSlot events in the minipool.
-func (s *PostgresEventStore) AddEvent(
+func (s *PostgresEventStore) WriteEvent(
 	ctx context.Context,
 	streamId string,
 	minipoolGeneration int64,
@@ -391,7 +391,7 @@ func (s *PostgresEventStore) addEvent(
 // TODO: Do we want to check that if we get miniblocks an toIndex is greater or equal block with latest snapshot, than in results we will have at least
 // miniblock with latest snapshot?
 // This functional is not transactional as it consists of only one SELECT query
-func (s *PostgresEventStore) GetMiniblocks(
+func (s *PostgresEventStore) ReadMiniblocks(
 	ctx context.Context,
 	streamId string,
 	fromInclusive int64,
@@ -445,7 +445,7 @@ func (s *PostgresEventStore) GetMiniblocks(
 	return miniblocks, nil
 }
 
-func (s *PostgresEventStore) CreateBlock(
+func (s *PostgresEventStore) WriteBlock(
 	ctx context.Context,
 	streamId string,
 	minipoolGeneration int64,
