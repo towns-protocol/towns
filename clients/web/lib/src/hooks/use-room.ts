@@ -16,7 +16,9 @@ export function useRoomWithStreamId(streamId?: string): Room | undefined {
 export function useRoomNames(roomIds: string[]): Record<string, string> {
     const { rooms } = useZionContext()
     const roomIdsRef = useRef<string[]>([])
-    const [stableRooms, setStableRooms] = useState<Record<string, string>>({})
+    const [stableRooms, setStableRooms] = useState<Record<string, string>>(() =>
+        updateRoomNames(roomIds, rooms),
+    )
     const stableRoomIds = useMemo(() => {
         if (isEqual(roomIds, roomIdsRef.current)) {
             return roomIdsRef.current
@@ -28,15 +30,9 @@ export function useRoomNames(roomIds: string[]): Record<string, string> {
     useEffect(() => {
         setStableRooms((prev) => {
             const needsUpdate =
-                stableRoomIds.find((id) => !isEqual(prev[id], rooms[id]?.name)) !== undefined
+                stableRoomIds.some((id) => !isEqual(prev[id], rooms[id]?.name)) !== undefined
             if (needsUpdate) {
-                return stableRoomIds.reduce((acc, id) => {
-                    const room = rooms[id]
-                    if (room !== undefined) {
-                        acc[id] = room.name
-                    }
-                    return acc
-                }, {} as Record<string, string>)
+                return updateRoomNames(stableRoomIds, rooms)
             } else {
                 return prev
             }
@@ -44,4 +40,14 @@ export function useRoomNames(roomIds: string[]): Record<string, string> {
     }, [rooms, stableRoomIds])
 
     return stableRooms
+}
+
+function updateRoomNames(stableRoomIds: string[], rooms: Record<string, Room | undefined>) {
+    return stableRoomIds.reduce((acc, id) => {
+        const room = rooms[id]
+        if (room !== undefined) {
+            acc[id] = room.name
+        }
+        return acc
+    }, {} as Record<string, string>)
 }
