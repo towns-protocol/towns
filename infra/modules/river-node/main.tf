@@ -230,6 +230,7 @@ resource "aws_iam_role_policy" "river_node_credentials" {
           "${local.shared_credentials.wallet_private_key.arn}",
           "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
           "${local.global_remote_state.base_chain_network_url_secret.arn}",
+          "${local.global_remote_state.river_chain_network_url_secret.arn}",
           "${local.global_remote_state.river_global_push_notification_auth_token.arn}"
         ]
       }
