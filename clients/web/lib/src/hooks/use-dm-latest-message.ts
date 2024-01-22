@@ -41,7 +41,7 @@ export function useDMLatestMessage(roomId: string, ignoreThreads = true) {
 
     // let's not count unreads if the timeline doesn't yet contain the event marked as unread
     const hasRelevantUnreadMarker =
-        unreadMarker.isUnread && timeline.some((event) => event.eventId === unreadMarker?.eventId)
+        unreadMarker?.isUnread && timeline.some((event) => event.eventId === unreadMarker?.eventId)
 
     const latestMessage = useMemo(() => {
         let markerReached = false
