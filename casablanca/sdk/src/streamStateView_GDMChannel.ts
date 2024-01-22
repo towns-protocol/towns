@@ -29,12 +29,18 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
     applySnapshot(
         snapshot: Snapshot,
         content: GdmChannelPayload_Snapshot,
+        cleartexts: Record<string, string> | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         this.memberships.applySnapshot(content.memberships, emitter)
-        this.userMetadata.applySnapshot(content.usernames, content.displayNames, emitter)
+        this.userMetadata.applySnapshot(
+            content.usernames,
+            content.displayNames,
+            cleartexts,
+            emitter,
+        )
         if (content.channelProperties) {
-            this.channelMetadata.applySnapshot(content.channelProperties, emitter)
+            this.channelMetadata.applySnapshot(content.channelProperties, cleartexts, emitter)
         }
     }
 
@@ -61,14 +67,8 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
             case 'membership':
             case 'displayName':
             case 'username':
-                // nothing to do, conveyed in the snapshot
-                break
             case 'channelProperties':
-                this.channelMetadata.prependEncryptedData(
-                    event.hashStr,
-                    payload.content.value,
-                    emitter,
-                )
+                // nothing to do, conveyed in the snapshot
                 break
             case undefined:
                 break
@@ -117,11 +117,7 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                 )
                 break
             case 'channelProperties':
-                this.channelMetadata.appendEncryptedData(
-                    event.hashStr,
-                    payload.content.value,
-                    emitter,
-                )
+                this.channelMetadata.appendEvent(event, cleartext, emitter)
                 break
             case undefined:
                 break
@@ -138,7 +134,7 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
         if (content.kind === 'text') {
             this.userMetadata.onDecryptedContent(eventId, content.content, emitter)
         } else if (content.kind === 'channelProperties') {
-            this.channelMetadata.onDecryptedContent(eventId, content.content, emitter)
+            this.channelMetadata.onDecryptedContent(eventId, content, emitter)
         }
     }
 

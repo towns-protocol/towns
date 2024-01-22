@@ -34,12 +34,18 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     applySnapshot(
         snapshot: Snapshot,
         content: SpacePayload_Snapshot,
+        cleartexts: Record<string, string> | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         // update memberships
         this.memberships.applySnapshot(content.memberships, emitter)
+        this.userMetadata.applySnapshot(
+            content.usernames,
+            content.displayNames,
+            cleartexts,
+            emitter,
+        )
 
-        this.userMetadata.applySnapshot(content.usernames, content.displayNames, emitter)
         // loop over content.channels, update space channels metadata
         for (const [_, payload] of Object.entries(content.channels)) {
             this.addSpacePayload_Channel(payload, emitter)

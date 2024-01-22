@@ -1,7 +1,10 @@
 import TypedEmitter from 'typed-emitter'
 import { ChannelProperties, EncryptedData, WrappedEncryptedData } from '@river/proto'
 import { EmittedEvents } from './client'
-import { bin_toHexString, dlog } from '@river/mecholm'
+import { bin_toHexString, dlog, check } from '@river/mecholm'
+import { DecryptedContent, toDecryptedContent } from './encryptedContentTypes'
+import { StreamEvents } from './streamEvents'
+import { RemoteTimelineEvent } from './types'
 
 export class StreamStateView_ChannelMetadata {
     log = dlog('csb:streams:channel_metadata')
@@ -17,6 +20,7 @@ export class StreamStateView_ChannelMetadata {
 
     applySnapshot(
         encryptedChannelProperties: WrappedEncryptedData,
+        cleartexts: Record<string, string> | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         if (!encryptedChannelProperties.data) {
@@ -29,49 +33,63 @@ export class StreamStateView_ChannelMetadata {
             data: encryptedChannelProperties.data,
         }
 
-        emitter?.emit('newEncryptedContent', this.streamId, eventId, {
-            kind: 'channelProperties',
-            content: encryptedChannelProperties.data,
-        })
+        const cleartext = cleartexts?.[eventId]
+        this.decryptPayload(encryptedChannelProperties.data, eventId, cleartext, emitter)
     }
 
-    appendEncryptedData(
+    private decryptPayload(
+        payload: EncryptedData,
         eventId: string,
-        data: EncryptedData,
+        cleartext: string | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
-    ): void {
-        this.latestEncryptedChannelProperties = { eventId, data }
-        emitter?.emit('newEncryptedContent', this.streamId, eventId, {
-            kind: 'channelProperties',
-            content: data,
-        })
+    ) {
+        if (cleartext) {
+            const decryptedContent = toDecryptedContent('channelProperties', cleartext)
+            this.handleDecryptedContent(decryptedContent, emitter)
+        } else {
+            emitter?.emit('newEncryptedContent', this.streamId, eventId, {
+                kind: 'channelProperties',
+                content: payload,
+            })
+        }
     }
 
-    prependEncryptedData(
-        eventId: string,
-        data: EncryptedData,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+    private handleDecryptedContent(
+        content: DecryptedContent,
+        emitter: TypedEmitter<StreamEvents> | undefined,
+    ) {
+        if (content.kind === 'channelProperties') {
+            this.channelProperties = content.content
+            emitter?.emit('streamChannelPropertiesUpdated', this.streamId)
+        } else {
+            check(false)
+        }
+    }
+
+    appendEvent(
+        event: RemoteTimelineEvent,
+        cleartext: string | undefined,
+        emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
-        emitter?.emit('newEncryptedContent', this.streamId, eventId, {
-            kind: 'channelProperties',
-            content: data,
-        })
+        check(event.remoteEvent.event.payload.case === 'gdmChannelPayload')
+        check(event.remoteEvent.event.payload.value.content.case === 'channelProperties')
+        const payload = event.remoteEvent.event.payload.value.content.value
+        this.decryptPayload(payload, event.hashStr, cleartext, emitter)
+    }
+
+    prependEvent(
+        _event: RemoteTimelineEvent,
+        _cleartext: string | undefined,
+        _emitter: TypedEmitter<StreamEvents> | undefined,
+    ): void {
+        // conveyed in snapshot
     }
 
     onDecryptedContent(
-        eventId: string,
-        content: ChannelProperties,
-        emitter?: TypedEmitter<EmittedEvents>,
-    ) {
-        if (!this.latestEncryptedChannelProperties) {
-            return
-        }
-
-        if (this.latestEncryptedChannelProperties.eventId !== eventId) {
-            return
-        }
-
-        this.channelProperties = content
-        emitter?.emit('streamChannelPropertiesUpdated', this.streamId)
+        _eventId: string,
+        content: DecryptedContent,
+        emitter: TypedEmitter<StreamEvents>,
+    ): void {
+        this.handleDecryptedContent(content, emitter)
     }
 }

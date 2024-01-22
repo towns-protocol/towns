@@ -1,5 +1,11 @@
 import TypedEmitter from 'typed-emitter'
-import { PersistedSyncedStream, MiniblockHeader, Snapshot, SyncCookie } from '@river/proto'
+import {
+    PersistedSyncedStream,
+    MiniblockHeader,
+    Snapshot,
+    SyncCookie,
+    WrappedEncryptedData,
+} from '@river/proto'
 import { Stream } from './stream'
 import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse } from './types'
 import { EmittedEvents } from './client'
@@ -41,8 +47,13 @@ export class SyncedStream extends Stream {
             return false
         }
 
+        const snapshotEventIds = eventIdsFromSnapshot(snapshot)
         const eventIds = miniblocks.flatMap((mb) => mb.events.map((e) => e.hashStr))
-        const cleartexts = await this.persistenceStore.getCleartexts(eventIds)
+        const cleartexts = await this.persistenceStore.getCleartexts([
+            ...eventIds,
+            ...snapshotEventIds,
+        ])
+
         this.log('Initializing from persistence', this.streamId)
         super.initialize(
             cachedSyncedStream.syncCookie,
@@ -134,14 +145,12 @@ export class SyncedStream extends Stream {
         )
 
         const eventHashes = miniblockHeader.eventHashes.map(bin_toHexString)
-        const events: ParsedEvent[] = []
-        for (const eventHash of eventHashes) {
-            const event = this.view.events.get(eventHash)
-            if (event?.remoteEvent) {
-                events.push(event.remoteEvent)
-            } else {
-                throw new Error("Couldn't find event for hash in miniblock")
-            }
+        const events = eventHashes
+            .map((hash) => this.view.events.get(hash)?.remoteEvent)
+            .filter(isDefined)
+
+        if (events.length !== eventHashes.length) {
+            throw new Error("Couldn't find event for hash in miniblock")
         }
 
         const miniblock: ParsedMiniblock = {
@@ -157,7 +166,7 @@ export class SyncedStream extends Stream {
         }
 
         const minipoolEvents = this.view.timeline
-            .filter((e) => e.confirmedEventNum === undefined)
+            .filter((e) => !e.confirmedEventNum)
             .map((e) => e.remoteEvent)
             .filter(isDefined)
 
@@ -169,4 +178,39 @@ export class SyncedStream extends Stream {
         })
         await this.persistenceStore.saveSyncedStream(this.streamId, cachedSyncedStream)
     }
+}
+
+function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
+    switch (snapshot.content.case) {
+        case 'gdmChannelContent': {
+            const channelPropertiesEventIds = snapshot.content.value.channelProperties
+                ? [bin_toHexString(snapshot.content.value.channelProperties.eventHash)]
+                : []
+            const usernameEventIds = eventIdsFromWrappedEncryptedData(
+                snapshot.content.value.usernames,
+            )
+            const displayNameEventIds = eventIdsFromWrappedEncryptedData(
+                snapshot.content.value.displayNames,
+            )
+            return [...usernameEventIds, ...displayNameEventIds, ...channelPropertiesEventIds]
+        }
+        case 'dmChannelContent':
+        case 'spaceContent': {
+            const usernameEventIds = eventIdsFromWrappedEncryptedData(
+                snapshot.content.value.usernames,
+            )
+            const displayNameEventIds = eventIdsFromWrappedEncryptedData(
+                snapshot.content.value.displayNames,
+            )
+            return [...usernameEventIds, ...displayNameEventIds]
+        }
+        default:
+            return []
+    }
+}
+
+function eventIdsFromWrappedEncryptedData(content: {
+    [key: string]: WrappedEncryptedData
+}): string[] {
+    return Object.values(content).map((e) => bin_toHexString(e.eventHash))
 }

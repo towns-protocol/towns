@@ -185,19 +185,38 @@ export class StreamStateView {
         this.commonContent = new StreamStateView_CommonContent(streamId)
     }
 
-    applySnapshot(snapshot: Snapshot, emitter: TypedEmitter<EmittedEvents> | undefined) {
+    applySnapshot(
+        snapshot: Snapshot,
+        cleartexts: Record<string, string> | undefined,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ) {
         switch (snapshot.content.case) {
             case 'spaceContent':
-                this.spaceContent.applySnapshot(snapshot, snapshot.content.value, emitter)
+                this.spaceContent.applySnapshot(
+                    snapshot,
+                    snapshot.content.value,
+                    cleartexts,
+                    emitter,
+                )
                 break
             case 'channelContent':
                 this.channelContent.applySnapshot(snapshot, snapshot.content.value, emitter)
                 break
             case 'dmChannelContent':
-                this.dmChannelContent.applySnapshot(snapshot, snapshot.content.value, emitter)
+                this.dmChannelContent.applySnapshot(
+                    snapshot,
+                    snapshot.content.value,
+                    cleartexts,
+                    emitter,
+                )
                 break
             case 'gdmChannelContent':
-                this.gdmChannelContent.applySnapshot(snapshot, snapshot.content.value, emitter)
+                this.gdmChannelContent.applySnapshot(
+                    snapshot,
+                    snapshot.content.value,
+                    cleartexts,
+                    emitter,
+                )
                 break
             case 'mediaContent':
                 this.mediaContent.applySnapshot(snapshot, snapshot.content.value, emitter)
@@ -430,7 +449,7 @@ export class StreamStateView {
         check(miniblocks.length > 0, `Stream has no miniblocks ${this.streamId}`, Err.STREAM_EMPTY)
         // parse the blocks
         // initialize from snapshot data, this gets all memberships and channel data, etc
-        this.applySnapshot(snapshot, emitter)
+        this.applySnapshot(snapshot, cleartexts, emitter)
         // initialize from miniblocks, the first minblock is the snapshot block, it's events are accounted for
         const block0Events = miniblocks[0].events.map((parsedEvent, i) => {
             const eventNum = miniblocks[0].header.eventNumOffset + BigInt(i)

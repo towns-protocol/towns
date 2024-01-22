@@ -27,10 +27,16 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     applySnapshot(
         snapshot: Snapshot,
         content: DmChannelPayload_Snapshot,
+        cleartexts: Record<string, string> | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         this.memberships.applySnapshot(content.memberships, emitter)
-        this.userMetadata.applySnapshot(content.usernames, content.displayNames, emitter)
+        this.userMetadata.applySnapshot(
+            content.usernames,
+            content.displayNames,
+            cleartexts,
+            emitter,
+        )
         this.firstPartyId = content.inception?.firstPartyId
         this.secondPartyId = content.inception?.secondPartyId
     }

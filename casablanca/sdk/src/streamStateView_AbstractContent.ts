@@ -1,12 +1,11 @@
 import TypedEmitter from 'typed-emitter'
-import { ChannelMessage, ChannelProperties, EncryptedData } from '@river/proto'
+import { EncryptedData } from '@river/proto'
 import { EmittedEvents } from './client'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamStateView_Membership } from './streamStateView_Membership'
-import { DecryptedContent, EncryptedContent } from './encryptedContentTypes'
+import { DecryptedContent, EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
-import { checkNever } from '@river/mecholm'
 
 export abstract class StreamStateView_AbstractContent {
     abstract readonly streamId: string
@@ -30,28 +29,7 @@ export abstract class StreamStateView_AbstractContent {
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
         if (cleartext) {
-            switch (kind) {
-                case 'channelMessage':
-                    event.decryptedContent = {
-                        kind,
-                        content: ChannelMessage.fromJsonString(cleartext),
-                    }
-                    break
-                case 'text':
-                    event.decryptedContent = {
-                        kind,
-                        content: cleartext,
-                    }
-                    break
-                case 'channelProperties':
-                    event.decryptedContent = {
-                        kind,
-                        content: ChannelProperties.fromJsonString(cleartext),
-                    }
-                    break
-                default:
-                    checkNever(kind)
-            }
+            event.decryptedContent = toDecryptedContent(kind, cleartext)
         } else {
             emitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
                 kind,

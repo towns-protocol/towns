@@ -23,6 +23,7 @@ export class StreamStateView_UserMetadata {
     applySnapshot(
         usernames: { [userId: string]: WrappedEncryptedData },
         displayNames: { [userId: string]: WrappedEncryptedData },
+        cleartexts: Record<string, string> | undefined,
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ) {
         // Sort the payloads — this is necessary because we want to
@@ -35,7 +36,8 @@ export class StreamStateView_UserMetadata {
             const data = payload.wrappedEncryptedData.data
             const userId = payload.userId
             const eventId = bin_toHexString(payload.wrappedEncryptedData.eventHash)
-            this.usernames.addEncryptedData(eventId, data, userId, false, undefined, emitter)
+            const clearText = cleartexts?.[eventId]
+            this.usernames.addEncryptedData(eventId, data, userId, false, clearText, emitter)
         }
 
         const sortedDisplayNames = sortPayloads(displayNames)
@@ -46,7 +48,8 @@ export class StreamStateView_UserMetadata {
             const data = payload.wrappedEncryptedData.data
             const userId = payload.userId
             const eventId = bin_toHexString(payload.wrappedEncryptedData.eventHash)
-            this.displayNames.addEncryptedData(eventId, data, userId, false, undefined, emitter)
+            const clearText = cleartexts?.[eventId]
+            this.displayNames.addEncryptedData(eventId, data, userId, false, clearText, emitter)
         }
     }
 
