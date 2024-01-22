@@ -57,7 +57,14 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
 
 // pass a src prop to force using that image, otherwise pass userId
 export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean }>((props, ref) => {
-    const { src, userId, imageVariant, ...rest } = props
+    const {
+        src,
+        userId,
+        imageVariant,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        dot,
+        ...rest
+    } = props
     const _imageVariant = imageVariant ?? 'thumbnail100'
     const { imageSrc, resourceId } = useAvatarImageSrc({
         imageVariant: _imageVariant,
