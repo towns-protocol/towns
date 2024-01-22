@@ -19,7 +19,7 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { FullPanelOverlay, LinkedWallet, useConnectThenLink } from '../WalletLinkingPanel'
 import { mapToErrorMessage } from '../utils'
 import { currentWalletLinkingStore, useTokenBalances } from './tokenStatus'
-import { CopyButton, OpenSeaButton } from './Buttons'
+import { CopyWalletAddressButton, OpenSeaButton } from './Buttons'
 import { TokenBox } from './TokenBox'
 
 export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide: () => void }) {
@@ -178,7 +178,7 @@ function Content({
                         Link another wallet
                     </Button>
 
-                    <CopyButton />
+                    <CopyWalletAddressButton />
 
                     {singleTokenAddress && (
                         <OpenSeaButton singleTokenAddress={singleTokenAddress} />

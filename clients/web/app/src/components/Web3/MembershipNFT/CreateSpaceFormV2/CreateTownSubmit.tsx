@@ -13,6 +13,7 @@ import headlessToast, { Toast, toast } from 'react-hot-toast/headless'
 import { Address } from 'wagmi'
 import { datadogRum } from '@datadog/browser-rum'
 import { useGetEmbeddedSigner } from '@towns/privy'
+import { userOpsStore } from '@towns/userops'
 import { Box, Icon, IconButton, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
 import { toTransactionUIStates } from 'hooks/TransactionUIState'
@@ -20,6 +21,8 @@ import { useImageStore } from '@components/UploadImage/useImageStore'
 import { useUploadImage } from 'api/lib/uploadImage'
 import { useSetSpaceTopic } from 'hooks/useSpaceTopic'
 import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { BottomBar } from '../BottomBar'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
@@ -243,6 +246,8 @@ export function CreateTownSubmit({
         uploadSpaceBio,
     ])
 
+    const { currOpGas, deny } = userOpsStore()
+
     return (
         <Stack horizontal centerContent>
             <BottomBar
@@ -254,6 +259,11 @@ export function CreateTownSubmit({
                 transactionUIState={transactionUIState}
                 onClick={onSubmit}
             />
+            {currOpGas && (
+                <ModalContainer minWidth="auto" onHide={() => deny?.()}>
+                    <UserOpTxModal />
+                </ModalContainer>
+            )}
         </Stack>
     )
 }

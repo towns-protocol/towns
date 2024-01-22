@@ -20,6 +20,7 @@ import {
 import { useAuth } from 'hooks/useAuth'
 import { env } from 'utils'
 import { useMockNftBalance } from 'hooks/useMockNftBalance'
+import { useAccountAbstractionConfig } from 'userOpConfig'
 
 const CF_TUNNEL_PREFIX = env.VITE_CF_TUNNEL_PREFIX
 
@@ -334,6 +335,7 @@ const DebugBar = ({
     const { chain } = useNetwork()
     const { logout } = useAuth()
     const [modal, setModal] = useState(false)
+    const accountAbstractionConfig = useAccountAbstractionConfig(destinationChainId)
 
     const switchNetwork = useAsyncSwitchNetwork()
 
@@ -426,6 +428,8 @@ const DebugBar = ({
                     </>
                 ) : (
                     <>
+                        {accountAbstractionConfig && '4337 ON'}
+
                         <Box>
                             {synced && (
                                 <Box

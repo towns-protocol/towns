@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Address } from 'use-zion-client'
 import { BoxProps, Icon, MotionBox, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
@@ -20,8 +21,15 @@ const buttonStyle: Partial<BoxProps> = {
     overflow: 'hidden',
 }
 
-export function CopyButton() {
+export function CopyWalletAddressButton({
+    text = 'Copy Towns Wallet to Deposit Asset',
+    address,
+}: {
+    text?: string
+    address?: Address
+}) {
     const { loggedInWalletAddress } = useAuth()
+    const addressToCopy = address || loggedInWalletAddress
     const [copied, setCopied] = useState(false)
 
     const [, copy] = useCopyToClipboard()
@@ -29,13 +37,13 @@ export function CopyButton() {
     const onCopy = useCallback(
         async (e: React.MouseEvent) => {
             e.stopPropagation()
-            if (!loggedInWalletAddress) {
+            if (!addressToCopy) {
                 return
             }
-            await copy(loggedInWalletAddress)
+            await copy(addressToCopy)
             setCopied(true)
         },
-        [copy, loggedInWalletAddress],
+        [copy, addressToCopy],
     )
 
     useEffect(() => {
@@ -69,6 +77,7 @@ export function CopyButton() {
                 <Icon
                     size={{
                         mobile: 'square_xs',
+                        desktop: 'square_sm',
                     }}
                     type="copy"
                 />
@@ -97,6 +106,7 @@ export function CopyButton() {
                 <Icon
                     size={{
                         mobile: 'square_xs',
+                        desktop: 'square_sm',
                     }}
                     type="copy"
                 />
@@ -105,7 +115,7 @@ export function CopyButton() {
                         mobile: 'sm',
                     }}
                 >
-                    Copy Towns Wallet to Deposit Asset
+                    {text}
                 </Text>
             </MotionBox>
         </Stack>
