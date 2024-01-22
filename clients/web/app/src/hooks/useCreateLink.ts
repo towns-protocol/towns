@@ -74,6 +74,17 @@ const channelDirectoryPaths: Path[] = [
     },
 ]
 
+const initialTouchChannelPaths: Path[] = [
+    {
+        path: '/',
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId`,
+    },
+    {
+        path: '',
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId`,
+    },
+]
+
 const searchPaths: Path[] = [
     {
         path: `/${PATHS.SPACES}/:spaceId/*`,
@@ -174,7 +185,13 @@ const linkParams = {
             panel: 'channelDirectory',
         },
     },
-
+    initialTouchChannelPaths: {
+        params: {
+            initial: 'initial' as string,
+            spaceId: 'spaceId' as string | undefined,
+            channelId: 'channelId' as string | undefined,
+        },
+    },
     thread: {
         params: {
             spaceId: 'spaceId' as string | undefined,
@@ -239,6 +256,9 @@ const getSearchPathsForParams = (linkParams: LinkParams) => {
     }
     if ('spaceId' in linkParams && 'panel' in linkParams && linkParams.panel === 'townInfo') {
         return townInfoPaths
+    }
+    if ('initial' in linkParams) {
+        return initialTouchChannelPaths
     }
     if ('channelId' in linkParams) {
         if ('panel' in linkParams && linkParams.panel === 'channelInfo') {

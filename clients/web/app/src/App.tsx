@@ -1,6 +1,6 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import React, { useCallback, useRef } from 'react'
-import { matchPath, useLocation } from 'react-router'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { matchPath, useLocation, useNavigate } from 'react-router'
 import { InitialSyncSortPredicate, ZTEvent, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
 import { EmbeddedSignerContextProvider } from '@towns/privy'
@@ -25,6 +25,7 @@ import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
 import { useAccountAbstractionConfig } from 'userOpConfig'
 import { PATHS } from 'routes'
+import { useCreateLink } from 'hooks/useCreateLink'
 
 FontLoader.init()
 
@@ -33,8 +34,13 @@ export const App = () => {
         theme: state.theme,
         mutedChannelIds: state.mutedChannelIds,
     }))
+    const { createLink } = useCreateLink()
+    const { isTouch } = useDevice()
+    const navigate = useNavigate()
 
     const highPriorityStreamIds = useRef<string[]>([])
+    const [touchInitialLink, setTouchInitialLink] = useState<string | undefined>(undefined)
+
     const didSetHighpriorityStreamIds = useRef<boolean>(false)
     if (!didSetHighpriorityStreamIds.current) {
         didSetHighpriorityStreamIds.current = true
@@ -51,7 +57,22 @@ export const App = () => {
         highPriorityStreamIds.current = [match?.params.spaceId, match?.params.channelId].filter(
             isDefined,
         )
+        if (match) {
+            const link = createLink({
+                initial: 'initial',
+                spaceId: match.params.spaceId,
+                channelId: match.params.channelId,
+            })
+            setTouchInitialLink(link)
+        }
     }
+    useEffect(() => {
+        if (!isTouch || !touchInitialLink) {
+            return
+        }
+        navigate(touchInitialLink)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [touchInitialLink, isTouch])
 
     useWindowListener()
     useWatchForPrivyRequestErrors()
@@ -59,7 +80,6 @@ export const App = () => {
     // aellis april 2023, the two server urls and the chain id should all be considered
     // a single piece of state, PROD, TEST, and LOCAL each should have {casablancaUrl, chainId}
     const environment = useEnvironment()
-    const { isTouch } = useDevice()
     const location = useLocation()
     const routeOnLoad = useRef(location.pathname)
     const initalSyncSortPredicate: InitialSyncSortPredicate = useCallback((a, b) => {
