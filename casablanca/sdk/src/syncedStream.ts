@@ -74,7 +74,7 @@ export class SyncedStream extends Stream {
 
         const cachedSyncedStream = new PersistedSyncedStream({
             syncCookie: nextSyncCookie,
-            lastSnapshotMiniblockNum: prevSnapshotMiniblockNum,
+            lastSnapshotMiniblockNum: miniblocks[0].header.miniblockNum,
             minipoolEvents: events,
             lastMiniblockNum: miniblocks[miniblocks.length - 1].header.miniblockNum,
         })
