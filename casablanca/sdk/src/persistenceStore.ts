@@ -108,16 +108,15 @@ export class PersistenceStore extends Dexie {
         }
         const records = await this.miniblocks.bulkGet(ids)
         // All or nothing
-        return records.length !== ids.length
-            ? []
-            : records
-                  .map((record) => {
-                      if (!record) {
-                          return undefined
-                      }
-                      const cachedMiniblock = PersistedMiniblock.fromBinary(record.data)
-                      return persistedMiniblockToParsedMiniblock(cachedMiniblock)
-                  })
-                  .filter(isDefined)
+        const miniblocks = records
+            .map((record) => {
+                if (!record) {
+                    return undefined
+                }
+                const cachedMiniblock = PersistedMiniblock.fromBinary(record.data)
+                return persistedMiniblockToParsedMiniblock(cachedMiniblock)
+            })
+            .filter(isDefined)
+        return miniblocks.length === ids.length ? miniblocks : []
     }
 }
