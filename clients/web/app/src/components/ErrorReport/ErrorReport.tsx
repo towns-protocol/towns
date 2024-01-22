@@ -70,14 +70,10 @@ async function postCustomError(data: FormState) {
     // generate a uuid for the custom error
     const logs = bufferedLogger.getBufferAsString()
 
-    let PWAflag = ''
+    let PWAflag = 'no'
 
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        // The page is running as a PWA
+    if (window.matchMedia('(display-mode: standalone)').matches) {
         PWAflag = 'yes'
-    } else {
-        // The page is not running as a PWA
-        PWAflag = 'no'
     }
 
     let deviceType = ''
