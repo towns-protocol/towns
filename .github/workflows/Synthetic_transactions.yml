@@ -66,9 +66,12 @@ jobs:
               if: failure()
               uses: rtCamp/action-slack-notify@v2
               env:
+                  SLACK_MESSAGE_FOR_MAIN: 'Synthetic Test Failure <@${{ env.TESTS_GOALIE_SLACK_GROUP_ID }}>'
+                  SLACK_MESSAGE_FOR_TRANSIENT: 'Synthetic Test Failure'
+
                   SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
                   SLACK_TITLE: 'Failure'
                   SLACK_USERNAME: 'Synthetic Tests'
                   SLACK_ICON_EMOJI: ':test_tube:'
                   SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'Synthetic Test Failure <@Artem Vorobyev>'
+                  SLACK_MESSAGE: ${{ inputs.environment_name == 'test-beta' && env.SLACK_MESSAGE_FOR_MAIN || env.SLACK_MESSAGE_FOR_TRANSIENT}}
