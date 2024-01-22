@@ -341,6 +341,8 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
     // if so, fetch paymasterAndData from Stackup api
     const requestInit = createPmSponsorUserOperationRequest({
         userOperation,
+        // PAYMASTER_ADDRESS is actually the entrypoint address and we need to change the name of this env var
+        // https://linear.app/hnt-labs/issue/HNT-4569/change-paymaster-address-to-entrypoint-address-in-paymaster-proxy
         paymasterAddress: env.PAYMASTER_ADDRESS,
         type: { type: contextType },
     })
