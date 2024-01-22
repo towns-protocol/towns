@@ -116,11 +116,6 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
         return dmItemsRef.current
     }, [dmChannels, dmUnreadChannelIds, globalUserMap, memberIds, rooms, spaceId])
 
-    console.log(
-        `ttt search`,
-        dmItems.map((c) => c.search),
-    )
-
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     // if the current route has become unread->read, we still want to keep it in
