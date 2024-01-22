@@ -69,7 +69,39 @@ async function postCustomError(data: FormState) {
     const url = `${GATEWAY_SERVER_URL}/user-feedback`
     // generate a uuid for the custom error
     const logs = bufferedLogger.getBufferAsString()
+
+    let PWAflag = ''
+
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        // The page is running as a PWA
+        PWAflag = 'yes'
+    } else {
+        // The page is not running as a PWA
+        PWAflag = 'no'
+    }
+
+    let deviceType = ''
+
+    const userAgent = navigator.userAgent.toLowerCase()
+
+    if (userAgent.includes('android')) {
+        deviceType = 'Device type: Android'
+    } else if (
+        userAgent.includes('iphone') ||
+        userAgent.includes('ipad') ||
+        userAgent.includes('ipod')
+    ) {
+        deviceType = 'Device type: iOS'
+    } else {
+        deviceType = 'Device type: Laptop/Desktop'
+    }
+
+    data.comments += `\n\nVersion: ${env.VITE_APP_RELEASE_VERSION}`
+    data.comments += `\n\nUser Agent:  + ${navigator.userAgent}`
+    data.comments += `\n\nDevice Type: ${deviceType}`
+    data.comments += `\n\nPWA: ${PWAflag}`
     data.comments += `\n\nLogs:\n\n${logs}`
+
     const uuid = hexlify(randomBytes(16))
     const postCustom = await axiosClient.post(
         url,
