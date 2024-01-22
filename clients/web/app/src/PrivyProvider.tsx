@@ -78,7 +78,7 @@ export function PrivyProvider({ children }: { children: JSX.Element }) {
                     createOnLogin: 'all-users',
                     noPromptOnSignature: true,
                 },
-                loginMethods: ['sms', 'google', 'twitter', 'apple'],
+                // loginMethods: ['sms', 'google', 'twitter', 'apple'], // see privy console - login methods are defined there. also listing them here causes a weird privy console warning
             }}
         >
             {children}
