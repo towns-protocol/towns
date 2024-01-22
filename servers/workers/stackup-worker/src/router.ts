@@ -15,6 +15,7 @@ import {
     verifyCreateTown,
     verifyJoinTown,
     verifyLinkWallet,
+    verifyUseTown,
 } from './useropVerification'
 
 import { isErrorType, Environment } from 'worker-common'
@@ -34,7 +35,7 @@ const router = Router()
 /* Check transaction limits for a wallet
  *  Arguments:
  * - environment: Environment
- * - operation: "createTown" | "joinTown" | "linkWallet" | "useTown
+ * - operation: "createTown" | "joinTown" | "linkWallet" ...
  * - rootAddress: string
  * - blockLookbackNum (optional)
  *
@@ -232,16 +233,37 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
             case 'addRoleToChannel':
             case 'removeRoleFromChannel':
             case 'removeEntitlementModule':
-            case 'addEntitlementModule': {
-                // default: roles can be changed / entitlements set for a valid town: 20 times / day
-                // more restrictive: only Towns on HNT Labs curated whitelist can perform these 2 actions
-                break
-            }
+            case 'addEntitlementModule':
             case 'createChannel':
             case 'updateChannel':
             case 'removeChannel': {
-                // default: channels can be created for a valid town 10 times / day
-                // more restrictive: only Towns on HNT Labs curated whitelist can perform these 3 actions
+                if (!isHexString(rootKeyAddress)) {
+                    return new Response(`rootKeyAddress ${rootKeyAddress} not valid`, {
+                        status: 400,
+                    })
+                }
+                if (!isHexString(userOperation.sender)) {
+                    return new Response(`userOperation.sender ${userOperation.sender} not valid`, {
+                        status: 400,
+                    })
+                }
+                if (!townId) {
+                    return new Response(`Missing townId, cannot verify town exists`, {
+                        status: 400,
+                    })
+                }
+                if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
+                    const verification = await verifyUseTown({
+                        rootKeyAddress: rootKeyAddress,
+                        senderAddress: userOperation.sender,
+                        townId: townId,
+                        env,
+                        transactionName: functionHash,
+                    })
+                    if (!verification.verified) {
+                        return new Response(`Unauthorized: ${verification.error}`, { status: 401 })
+                    }
+                }
                 break
             }
             case 'updateTown': {
@@ -387,15 +409,13 @@ router.post('/admin/api/add-override', async (request: WorkerRequest, env: Env) 
     const { operation, enabled, n } = content
     switch (operation) {
         case Overrides.EveryWalletCanMintWhitelistedEmail: {
-            // add to KV
             await env.OVERRIDES.put(
                 operation,
                 JSON.stringify({ operation: operation, enabled: enabled }),
             )
             break
         }
-        case Overrides.EveryWalletCanLinkNWallets: {
-            // add to KV
+        case Overrides.EveryWhitelistedWalletCanLinkNWallets: {
             await env.OVERRIDES.put(
                 operation,
                 JSON.stringify({ operation: operation, enabled: enabled, n: n }),
@@ -403,7 +423,13 @@ router.post('/admin/api/add-override', async (request: WorkerRequest, env: Env) 
             break
         }
         case Overrides.EveryWalletCanJoinTownOnWhitelist: {
-            // add to KV
+            await env.OVERRIDES.put(
+                operation,
+                JSON.stringify({ operation: operation, enabled: enabled }),
+            )
+            break
+        }
+        case Overrides.EveryWalletCanUseTownOnWhitelist: {
             await env.OVERRIDES.put(
                 operation,
                 JSON.stringify({ operation: operation, enabled: enabled }),
@@ -429,6 +455,11 @@ router.post('/admin/api/add-to-whitelist', async (request: WorkerRequest, env: E
             // add to KV
             // todo: check if email is valid
             await env.EMAIL_WHITELIST.put(data, JSON.stringify({ data: data, enabled: enabled }))
+            break
+        }
+        case Whitelist.AddressWhitelist: {
+            // privy address whitelist
+            await env.ADDRESS_WHITELIST.put(data, JSON.stringify({ data: data, enabled: enabled }))
             break
         }
         case Whitelist.TownIdWhitelist: {

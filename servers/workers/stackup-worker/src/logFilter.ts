@@ -4,7 +4,8 @@ import BaseSepoliaTownOwnerAbi from '@towns/generated/base_sepolia/v3/abis/TownO
 import BaseSepoliaTownOwnerContract from '@towns/generated/base_sepolia/addresses/townOwner.json' assert { type: 'json' }
 import BaseSepoliaTownFactoryContract from '@towns/generated/base_sepolia/addresses/townFactory.json' assert { type: 'json' }
 import BaseSepoliaTownContract from '@towns/generated/base_sepolia/addresses/town.json' assert { type: 'json' }
-import { createJsonProvider as createProvider, networkMap } from './provider'
+import BaseSepoliaWalletLinkContract from '@towns/generated/base_sepolia/addresses/walletLink.json' assert { type: 'json' }
+import { createJsonProvider as createProvider } from './provider'
 import { Env } from '.'
 
 interface ContractDetails {
@@ -28,6 +29,7 @@ const BaseSepoliaContracts = new Map<string, ContractDetails>([
     ['TownOwner', { address: BaseSepoliaTownOwnerContract.address, abi: BaseSepoliaTownOwnerAbi }],
     ['TownFactory', { address: BaseSepoliaTownFactoryContract.address, abi: undefined }],
     ['Town', { address: BaseSepoliaTownContract.address, abi: undefined }],
+    ['WalletLink', { address: BaseSepoliaWalletLinkContract.address, abi: undefined }],
 ])
 
 const NetworkContracts = new Map<string, Map<string, ContractDetails>>([
@@ -53,8 +55,10 @@ export const EventByMethod = new Map<string, string>([
     // EntitlementsManagerBase.sol
     ['removeEntitlementModule', 'EntitlementModuleRemoved'],
     ['addEntitlementModule', 'EntitlementModuleAdded'],
-    // TownOwnerBase.sol
+    // TownOwnerBase.soL
     ['updateTown', 'TownOwner__UpdateTown'],
+    // WalletLink.sol
+    ['linkWalletToRootKey', 'LinkWalletToRootKey'],
 ])
 
 function createContract(

@@ -58,13 +58,15 @@ export function isTownsUserOperation(obj: any): obj is TownsUserOperation {
 
 export enum Overrides {
     EveryWalletCanMintWhitelistedEmail = 'every_wallet_can_mint_town_with_wl_email',
-    EveryWalletCanLinkNWallets = 'every_wallet_can_link_n_wallets',
+    EveryWhitelistedWalletCanLinkNWallets = 'every_wl_wallet_can_link_n_wallets',
     EveryWalletCanJoinTownOnWhitelist = 'every_wallet_can_join_town_on_wl',
+    EveryWalletCanUseTownOnWhitelist = 'every_wallet_can_use_town_on_wl',
 }
 
 export enum Whitelist {
     TownIdWhitelist = 'town_id_whitelist',
     EmailWhitelist = 'email_whitelist',
+    AddressWhitelist = 'address_whitelist',
 }
 
 export interface IOverrideOperation {

@@ -20,6 +20,7 @@ export interface Env extends AuthEnv {
     OVERRIDES: KVNamespace // KV Namespace for createTowns transactions
     EMAIL_WHITELIST: KVNamespace
     TOWN_WHITELIST: KVNamespace
+    ADDRESS_WHITELIST: KVNamespace
     //JOIN_TOWN: KVNamespace // KV Namespace for joinTowns transactions
     //LINK_WALLET_TO_ROOT_KEY: KVNamespace // KV Namespace for linkWalletToRootKey transactions
     STACKUP_API_TOKEN: string

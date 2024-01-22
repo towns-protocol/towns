@@ -33,35 +33,82 @@ function isEveryWalletCanMintNTimes(obj: any): obj is IOverrideOperation {
     )
 }
 
-async function checkLinkKVOverrides(
+// check restriction rule and if wallet is on whitelist if rule set
+export async function checkLinkKVOverrides(
     rootAddress: string,
     env: Env,
 ): Promise<IVerificationResult | null> {
     // check if wallet associated with a privy user can link
-    const everyWalletCanLinkNWallets = await env.OVERRIDES.get(
-        Overrides.EveryWalletCanLinkNWallets,
-        {
-            type: 'json',
-            cacheTtl: 3600,
-        },
-    )
-    if (
-        everyWalletCanLinkNWallets !== null &&
-        isOperationOverride(everyWalletCanLinkNWallets) &&
-        everyWalletCanLinkNWallets.enabled
-    ) {
-        // check if wallet is signed up with privy
-        const searchParam = { searchTerm: rootAddress }
-        const privyResponse = await searchPrivyForUser(searchParam, env)
-        if (isPrivyApiSearchResponse(privyResponse)) {
-            if (privyResponse.data.length > 0) {
-                return { verified: true, maxActionsPerDay: everyWalletCanLinkNWallets.n }
-            }
+    const restriction = await env.OVERRIDES.get(Overrides.EveryWhitelistedWalletCanLinkNWallets, {
+        type: 'json',
+        cacheTtl: 3600,
+    })
+    let privyVerified = false
+    // check if wallet is signed up with privy
+    const searchParam = { searchTerm: rootAddress }
+    const privyResponse = await searchPrivyForUser(searchParam, env)
+    if (isPrivyApiSearchResponse(privyResponse)) {
+        if (privyResponse.data.length > 0) {
+            privyVerified = true
         }
     }
-    return null
+    if (restriction !== null && isOperationOverride(restriction) && restriction.enabled) {
+        // check if address on HNT whitelist
+        const addressWhitelist = await env.ADDRESS_WHITELIST.get(rootAddress ?? '', {
+            type: 'json',
+            cacheTtl: 3600,
+        })
+        if (
+            isWhitelistStoredOperation(addressWhitelist) &&
+            addressWhitelist.data === rootAddress &&
+            addressWhitelist.enabled
+        ) {
+            return {
+                verified: true,
+                maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet,
+            }
+        }
+        return { verified: false, error: 'address is not on whitelist' }
+    }
+    return {
+        verified: privyVerified,
+        maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet,
+    }
 }
 
+// check for restrictive rule on using a town
+export async function checkUseTownKVOverrides(
+    townId: string,
+    env: Env,
+): Promise<IVerificationResult | null> {
+    // check if override is enabled
+    const useTownWhitelist = await env.OVERRIDES.get(Overrides.EveryWalletCanUseTownOnWhitelist, {
+        type: 'json',
+        cacheTtl: 3600,
+    })
+    if (
+        useTownWhitelist !== null &&
+        isOperationOverride(useTownWhitelist) &&
+        useTownWhitelist.enabled
+    ) {
+        // more restrictive rule: check if town is on whitelist
+        const townWhitelist = await env.TOWN_WHITELIST.get(townId, {
+            type: 'json',
+            cacheTtl: 3600,
+        })
+        if (isWhitelistStoredOperation(townWhitelist)) {
+            if (townWhitelist.data !== townId || !townWhitelist.enabled) {
+                return { verified: false, error: `TownId is not on whitelist` }
+            } else {
+                return { verified: true }
+            }
+        }
+        return { verified: false, error: `TownId is not on whitelist` }
+    }
+    return { verified: true }
+}
+
+// check for restrictive rule on join town
 export async function checkJoinTownKVOverrides(
     townId: string,
     env: Env,
@@ -76,7 +123,7 @@ export async function checkJoinTownKVOverrides(
         isOperationOverride(joinTownWhitelist) &&
         joinTownWhitelist.enabled
     ) {
-        // check if town is on whitelist
+        // more restrictive rule: check if town is on whitelist
         const townWhitelist = await env.TOWN_WHITELIST.get(townId, {
             type: 'json',
             cacheTtl: 3600,
