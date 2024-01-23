@@ -13,6 +13,7 @@ export interface PlaintextDetails {
     body: string | undefined
     mentions: string | undefined
     threadId: string | undefined
+    reaction: string | undefined
 }
 
 export async function decryptWithMegolm(
@@ -66,20 +67,22 @@ async function newMegolmDecryption(
 const bodyRegex = /"body":"(.*?)"(?=,|})/
 const mentionsRegex = /"mentions":(\[\{.*?\}\])(?=,|})/
 const threadIdRegex = /"threadId":"(.*?)"(?=,|})/
+const reactionRegex = /"reaction":"(.*?)"(?=,|})/
 
 function extractDetails(jsonString: string): PlaintextDetails {
     const bodyMatch = jsonString.match(bodyRegex)
     const mentionsMatch = jsonString.match(mentionsRegex)
     const threadIdMatch = jsonString.match(threadIdRegex)
+    const reactionMatch = jsonString.match(reactionRegex)
     // replace all \n with ... string because notification body cannot have newlines
     // replace all \" with "
     const cleanBody = bodyMatch
         ? bodyMatch[1].replace(/\\n/g, '...').replace(/\\"/g, '"')
         : undefined
-
     return {
         body: cleanBody,
         mentions: mentionsMatch ? mentionsMatch[1] : undefined,
         threadId: threadIdMatch ? threadIdMatch[1] : undefined,
+        reaction: reactionMatch ? reactionMatch[1] : undefined,
     }
 }

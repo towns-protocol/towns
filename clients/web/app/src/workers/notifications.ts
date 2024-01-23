@@ -1,3 +1,5 @@
+import * as emoji from 'node-emoji'
+
 import { UserRecord } from 'store/notificationSchema'
 import {
     AppNotification,
@@ -23,6 +25,8 @@ import { env } from '../utils/environment'
 import { getEncryptedData } from './data_transforms'
 
 const MIDDLE_DOT = '\u00B7'
+const log = console.debug.bind(console, 'sw:push:')
+const logError = console.error.bind(console, 'sw:push:')
 
 const notificationStores: Record<string, NotificationStore> = {}
 let currentUserStore: NotificationCurrentUser | undefined = undefined
@@ -38,7 +42,7 @@ async function initCurrentUserNotificationStore(): Promise<string | undefined> {
     if (currentUserId && notificationStores[currentUserId] === undefined) {
         notificationStores[currentUserId] = new NotificationStore(currentUserId)
     } else {
-        console.log('sw:push: no currentUserId in NotificationCurrentUser')
+        log('no currentUserId in NotificationCurrentUser')
     }
     return currentUserId
 }
@@ -46,58 +50,58 @@ async function initCurrentUserNotificationStore(): Promise<string | undefined> {
 export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     const prod = !env.DEV
     if (prod) {
-        console.log(`sw:push: handleNotifications() was called.`)
+        log(`handleNotifications() was called.`)
     }
 
     if (prod) {
         // print the various lifecyle / event hooks for debugging
         worker.addEventListener('install', () => {
-            console.log('sw:push: "install" event')
+            log('"install" event')
         })
 
         worker.addEventListener('pushsubscriptionchange', () => {
-            console.log('sw:push: "pushsubscriptionchange" event')
+            log('"pushsubscriptionchange" event')
         })
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         worker.addEventListener('sync', (event: any) => {
             // returns true if the user agent will not make further
             // synchronization attempts after the current attempt.
-            console.log('sw:push: "sync" event, lastChance:', event.lastChance)
+            log('"sync" event, lastChance:', event.lastChance)
         })
     }
 
     // `activate` fires once old service worker is gone and new one has taken control
     worker.addEventListener('activate', () => {
-        console.log('sw:push: "activate" event')
+        log('"activate" event')
         initCurrentUserNotificationStore()
     })
 
     worker.addEventListener('push', (event) => {
         async function handleEvent(event: PushEvent) {
-            console.log('sw:push: "push" event')
+            log('"push" event')
             const clientVisible = await checkClientIsVisible(worker)
             if (clientVisible) {
-                console.log('sw:push: client is visible, not showing notification')
+                log('client is visible, not showing notification')
                 return
             }
 
             if (!event.data) {
-                console.log('sw:push: push event contains no data')
+                log('push event contains no data')
                 return
             }
             const data = event.data.text() || '{}'
-            console.log('sw:push: received notification', data)
+            log('received notification', data)
             const notification = appNotificationFromPushEvent(data)
 
             if (!notification) {
-                console.log("sw:push: ''worker couldn't parse notification")
+                log("sw:push: ''worker couldn't parse notification")
                 return
             }
 
             const currentUserId = await initCurrentUserNotificationStore()
             const content = await getNotificationContent(notification, currentUserId)
-            console.log('sw:push:getNotificationContent', content)
+            log('getNotificationContent', content)
 
             // options: https://developer.mozilla.org/en-US/docs/Web/API/Notification
             if (content?.title && content?.body) {
@@ -110,10 +114,10 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     renotify: true,
                 }
                 await worker.registration.showNotification(content.title, options)
-                console.log('sw:push: Notification shown')
+                log('Notification shown')
             } else {
-                console.log(
-                    'sw:push: did not process notification content correctly. Something is missing',
+                log(
+                    'notification content not shown because it has one or more undefined values after processing',
                 )
             }
         }
@@ -121,17 +125,17 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     })
 
     worker.addEventListener('notificationclick', (event) => {
-        console.log('sw:push: Clicked on a notification', event)
+        log('Clicked on a notification', event)
         event.notification.close()
         event.waitUntil(
             worker.clients.matchAll({ type: 'window' }).then(async (clientsArr) => {
                 const data = notificationContentFromEvent(event.notification.data)
                 if (!data) {
-                    console.log('sw:push: worker could not parse notification data')
+                    log('worker could not parse notification data')
                     return
                 }
                 const pathToNavigateTo = pathFromAppNotification(data)
-                console.log('sw:push: pathToNavigateTo', pathToNavigateTo)
+                log('pathToNavigateTo', pathToNavigateTo)
 
                 const hadWindowToFocus = clientsArr.find((windowClient) =>
                     windowClient.url.includes(worker.location.origin),
@@ -201,7 +205,7 @@ function generateDmTitle(
     recipients: UserRecord[],
     dmChannelName: string | undefined,
 ): string {
-    console.log('sw:push: generateDmTitle INPUT', 'senderName', sender, 'recipients', recipients)
+    log('generateDmTitle INPUT', 'senderName', sender, 'recipients', recipients)
     const recipientNames = recipients
         .map((recipient) => getShortenedName(recipient.name))
         .filter((name) => name !== undefined) as string[]
@@ -240,38 +244,29 @@ function generateDM(
     sender: string | undefined,
     recipients: UserRecord[] | undefined,
     plaintext: PlaintextDetails | undefined,
-): NotificationDM {
+): NotificationDM | undefined {
     // if myUserId is available, remove it from the recipients list
     const recipientsExcludeMe =
         recipients?.filter((recipient) => (myUserId ? recipient.id !== myUserId : false)) ?? []
     const title = generateDmTitle(sender, recipientsExcludeMe, dmChannelName)
     let body = plaintext?.body
-    if (!body) {
-        switch (true) {
-            case stringHasValue(sender) && recipientsExcludeMe?.length === 0:
-                body = `@${sender} sent you a direct message`
-                break
-            case stringHasValue(sender) && recipientsExcludeMe && recipientsExcludeMe.length > 1:
-                body = `@${sender} sent a message in a group you’re in`
-                break
-            case !stringHasValue(sender) && recipientsExcludeMe?.length === 0:
-                body = `You got a direct message`
-                break
-            case !stringHasValue(sender) && recipientsExcludeMe && recipientsExcludeMe.length > 1:
-                body = `A group you’re in has a new message`
-                break
-            default:
-                body = `You got a direct message`
-                break
+    const reaction = plaintext?.reaction ? emoji.get(plaintext.reaction) : undefined
+    if (!body && reaction) {
+        if (stringHasValue(sender)) {
+            body = `@${sender} reacted with: ${reaction}`
+        } else {
+            body = `Reaction: ${reaction}`
         }
     }
-    console.log('sw:push: generateDM OUTPUT', { title, body })
-    return {
-        kind: AppNotificationType.DirectMessage,
-        channelId,
-        title,
-        body,
-    }
+    log('generateDM OUTPUT', { title, body })
+    return body
+        ? {
+              kind: AppNotificationType.DirectMessage,
+              channelId,
+              title,
+              body,
+          }
+        : undefined
 }
 
 function generateMentionTitle(
@@ -337,15 +332,7 @@ function generateReplyToTitle(
     townName: string | undefined,
     channelName: string | undefined,
 ): string {
-    console.log(
-        'sw:push: generateReplyToTitle',
-        'sender',
-        sender,
-        'townName',
-        townName,
-        'channelName',
-        channelName,
-    )
+    log('generateReplyToTitle', 'sender', sender, 'townName', townName, 'channelName', channelName)
     if (sender && townName && channelName) {
         return `${sender} replied ${MIDDLE_DOT} #${channelName} ${MIDDLE_DOT} ${townName}`
     } else if (sender && townName && !channelName) {
@@ -426,8 +413,7 @@ async function getNotificationContent(
         channelName = channel?.name
         // transform the sender name to the shortened version
         senderName = getShortenedName(sender?.name)
-        console.log(
-            'sw:push:',
+        log(
             'townName:',
             townName,
             'channelName:',
@@ -443,7 +429,7 @@ async function getNotificationContent(
             notification.content.recipients &&
             notification.content.recipients.length > 0
         ) {
-            console.log('sw:push: recipients', notification.content.recipients)
+            log('recipients', notification.content.recipients)
             const dbUsersPromises: Promise<UserRecord | undefined>[] = []
             notification.content.recipients.forEach((recipientId) => {
                 if (notificationStore) {
@@ -460,14 +446,11 @@ async function getNotificationContent(
                 .filter((user) => user !== undefined) as UserRecord[]
         }
     } catch (error) {
-        console.error(
-            'sw:push: error fetching space/channel/user names from notification store',
-            error,
-        )
+        logError('error fetching space/channel/user names from notification store', error)
     }
 
     // try to decrypt, if we can't, return undefined, and the notification will be a generic message
-    console.log('sw:push: currentUserId before calling tryDecryptEvent', currentUserId)
+    log('currentUserId before calling tryDecryptEvent', currentUserId)
     const plaintext = currentUserId ? await tryDecryptEvent(currentUserId, notification) : undefined
 
     switch (notification.content.kind) {
@@ -517,7 +500,7 @@ async function tryDecryptEvent(
     userId: string,
     notification: AppNotification,
 ): Promise<PlaintextDetails | undefined> {
-    console.log('sw:push: tryDecryptEvent', userId, notification)
+    log('tryDecryptEvent', userId, notification)
     if (!userId) {
         return undefined
     }
@@ -529,7 +512,7 @@ async function tryDecryptEvent(
     const timeoutPromise = new Promise<void>((resolve, reject) => {
         // if the decryption takes too long, reject the promise
         const timeout = setTimeout(() => {
-            console.log('sw:push: timed out waiting for decryption')
+            log('timed out waiting for decryption')
             cancelTimeout = () => {}
             reject(new Error('Timed out waiting for decryption'))
         }, 1000)
@@ -542,13 +525,13 @@ async function tryDecryptEvent(
     // attempt to decrypt the data
     const decryptPromise = async function () {
         try {
-            console.log('sw:push: tryDecryptEvent', event)
+            log('tryDecryptEvent', event)
             const encryptedData = getEncryptedData(event)
             plaintext = await decryptWithMegolm(userId, channelId, encryptedData)
-            console.log(`sw:push: decryptWithMegolm returns "${plaintext}"`)
+            log(`decryptWithMegolm returns "${plaintext}"`)
             return plaintext
         } catch (error) {
-            console.error('sw:push: error decrypting', error)
+            logError('error decrypting', error)
             return undefined
         } finally {
             cancelTimeout()
@@ -558,9 +541,9 @@ async function tryDecryptEvent(
     try {
         await Promise.race([decryptPromise(), timeoutPromise])
     } catch (error) {
-        console.error('sw:push: error decrypting event', error)
+        logError('error decrypting event', error)
     }
 
-    console.log(`sw:push: tryDecryptEvent result: "${plaintext}"`)
+    log(`tryDecryptEvent result: "${plaintext}"`)
     return plaintext
 }
