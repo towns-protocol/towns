@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"context"
 	"fmt"
 	"html"
 	"net/http"
@@ -193,12 +194,13 @@ type httpMux interface {
 	Handle(pattern string, handler http.Handler)
 }
 
-func registerDebugHandlers(mux httpMux, cache StreamCache) {
+func registerDebugHandlers(ctx context.Context, mux httpMux, cache StreamCache, streamService *Service) {
 	handler := debugHandler{}
 	mux.HandleFunc("/debug", handler.ServeHTTP)
 
 	handler.Handle(mux, "/debug/cache", &cacheHandler{cache: cache})
 	handler.Handle(mux, "/debug/memory", MemoryHandler())
+	handler.Handle(mux, "/debug/multi", MultiHandler(ctx, streamService))
 	handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
 	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)

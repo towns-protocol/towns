@@ -26,6 +26,7 @@ type NodeRegistry interface {
 	// Next two methods are required for hash-based stream placement, they will be removed once on-chain registry is implemented.
 	NumNodes() int
 	GetNodeAddressByIndex(index int) (string, error)
+	GetNodeRecordByIndex(index int) (*NodeRecord, error)
 }
 
 type nodeJson struct {
@@ -36,7 +37,7 @@ type nodeRegistryJson struct {
 	Nodes []nodeJson `json:"nodes"`
 }
 
-type nodeRecord struct {
+type NodeRecord struct {
 	address string
 	url     string
 	local   bool
@@ -48,10 +49,18 @@ type nodeRecord struct {
 	nodeToNodeClient     NodeToNodeClient
 }
 
+func (n *NodeRecord) Url() string {
+	if n.local {
+		return "http://localhost:5157"
+	} else {
+		return n.url
+	}
+}
+
 // Currently node registry is immutable, so there is no need for locking yet.
 type nodeRegistryImpl struct {
-	nodes     map[string]*nodeRecord
-	nodesFlat []*nodeRecord
+	nodes     map[string]*NodeRecord
+	nodesFlat []*NodeRecord
 
 	httpClient *http.Client
 }
@@ -75,8 +84,8 @@ func LoadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAdd
 	log.Info("Node Registry Loaded", "Nodes", registry.Nodes, "localAddress", localNodeAddress)
 
 	n := &nodeRegistryImpl{
-		nodes:      make(map[string]*nodeRecord),
-		nodesFlat:  make([]*nodeRecord, 0, len(registry.Nodes)),
+		nodes:      make(map[string]*NodeRecord),
+		nodesFlat:  make([]*NodeRecord, 0, len(registry.Nodes)),
 		httpClient: &http.Client{},
 	}
 	localFound := false
@@ -86,7 +95,7 @@ func LoadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNodeAdd
 			local = true
 			localFound = true
 		}
-		nn := &nodeRecord{
+		nn := &NodeRecord{
 			address: node.Address,
 			url:     node.Url,
 			local:   local,
@@ -108,8 +117,8 @@ func NewNodeRegistryFromString(ctx context.Context, nodeRegistryString string, l
 	vals := strings.Split(nodeRegistryString, ",")
 
 	n := &nodeRegistryImpl{
-		nodes:      make(map[string]*nodeRecord),
-		nodesFlat:  make([]*nodeRecord, 0, len(vals)/2),
+		nodes:      make(map[string]*NodeRecord),
+		nodesFlat:  make([]*NodeRecord, 0, len(vals)/2),
 		httpClient: &http.Client{},
 	}
 	localFound := false
@@ -134,7 +143,7 @@ func NewNodeRegistryFromString(ctx context.Context, nodeRegistryString string, l
 			local = true
 			localFound = true
 		}
-		nn := &nodeRecord{
+		nn := &NodeRecord{
 			address: addrStr,
 			url:     url,
 			local:   local,
@@ -149,13 +158,13 @@ func NewNodeRegistryFromString(ctx context.Context, nodeRegistryString string, l
 }
 
 func MakeSingleNodeRegistry(ctx context.Context, localNodeAddress string) *nodeRegistryImpl {
-	nn := &nodeRecord{
+	nn := &NodeRecord{
 		address: localNodeAddress,
 		local:   true,
 	}
 	return &nodeRegistryImpl{
-		nodes:      map[string]*nodeRecord{localNodeAddress: nn},
-		nodesFlat:  []*nodeRecord{nn},
+		nodes:      map[string]*NodeRecord{localNodeAddress: nn},
+		nodesFlat:  []*NodeRecord{nn},
 		httpClient: &http.Client{},
 	}
 }
@@ -211,4 +220,11 @@ func (n *nodeRegistryImpl) GetNodeAddressByIndex(index int) (string, error) {
 		return "", RiverError(Err_INTERNAL, "Invalid node index", "index", index)
 	}
 	return n.nodesFlat[index].address, nil
+}
+
+func (n *nodeRegistryImpl) GetNodeRecordByIndex(index int) (*NodeRecord, error) {
+	if index < 0 || index >= len(n.nodesFlat) {
+		return nil, RiverError(Err_INTERNAL, "Invalid node index", "index", index)
+	}
+	return n.nodesFlat[index], nil
 }

@@ -97,7 +97,7 @@ apply: env check
 
 _apply:
 	terraform -chdir=${terraform_folder} workspace select $(terraform_workspace_name) || terraform -chdir=${terraform_folder} workspace new $(terraform_workspace_name)
-	terraform -chdir=${terraform_folder} apply $(CI_AUTOAPPROVE)
+	terraform -chdir=${terraform_folder} apply $(CI_AUTOAPPROVE) -parallelism=1
 
 wait_for_lock_release:
 	$(CMD) sh lock_wait.sh

@@ -21,7 +21,7 @@ func run(cfg *config.Config) error {
 	if cfg.Metrics.Enabled {
 		go infra.StartMetricsService(ctx, cfg.Metrics)
 	}
-	if cfg.PerformanceTracking.ProfilingEnabled {
+	if cfg.PerformanceTracking.TracingEnabled {
 		if os.Getenv("DD_ENV") != "" {
 			fmt.Println("Starting Datadog tracer")
 			tracer.Start()

@@ -95,6 +95,29 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   tags = module.global_constants.tags
 }
 
+resource "aws_iam_policy" "ssm_policy" {
+  name = "${local.node_name}-ssmPolicy"
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ],
+        "Resource" : "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.ssm_policy.arn
+}
 
 # Behind the load balancer
 module "river_internal_sg" {
@@ -505,19 +528,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         # TODO: remove this env var after migrating to the actual ndoe registry smart contract
         name  = "NODEREGISTRYCSV"
-        value = <<-EOF
-        #address,url
-        ${local.nodes[0].address},${local.nodes[0].url},
-        ${local.nodes[1].address},${local.nodes[1].url},
-        ${local.nodes[2].address},${local.nodes[2].url},
-        ${local.nodes[3].address},${local.nodes[3].url},
-        ${local.nodes[4].address},${local.nodes[4].url},
-        ${local.nodes[5].address},${local.nodes[5].url},
-        ${local.nodes[6].address},${local.nodes[6].url},
-        ${local.nodes[7].address},${local.nodes[7].url},
-        ${local.nodes[8].address},${local.nodes[8].url},
-        ${local.nodes[9].address},${local.nodes[9].url}
-        EOF
+        value = "${local.nodes[0].address},${local.nodes[0].url},${local.nodes[1].address},${local.nodes[1].url},${local.nodes[2].address},${local.nodes[2].url},${local.nodes[3].address},${local.nodes[3].url},${local.nodes[4].address},${local.nodes[4].url},${local.nodes[5].address},${local.nodes[5].url},${local.nodes[6].address},${local.nodes[6].url},${local.nodes[7].address},${local.nodes[7].url},${local.nodes[8].address},${local.nodes[8].url},${local.nodes[9].address},${local.nodes[9].url}"
       },
       {
         name  = "USEBLOCKCHAINSTREAMREGISTRY",
@@ -611,12 +622,6 @@ resource "aws_iam_role" "ecs_code_deploy_role" {
   tags = module.global_constants.tags
 }
 
-resource "aws_codedeploy_app" "river-node-code-deploy-app" {
-  compute_platform = "ECS"
-  name             = local.node_name
-  tags             = local.river_node_tags
-}
-
 resource "aws_ecs_service" "river-ecs-service" {
   name                               = "${local.node_name}-fargate-service"
   cluster                            = var.ecs_cluster.id
@@ -631,6 +636,8 @@ resource "aws_ecs_service" "river-ecs-service" {
     module.post_provision_config,
     null_resource.invoke_lambda
   ]
+
+  enable_execute_command = true
 
   launch_type      = "FARGATE"
   platform_version = "1.4.0"
@@ -662,17 +669,19 @@ resource "aws_ecs_service" "river-ecs-service" {
   tags = local.river_node_tags
 }
 
+resource "aws_codedeploy_app" "river-node-code-deploy-app" {
+  compute_platform = "ECS"
+  name             = local.node_name
+  tags             = local.river_node_tags
+}
+
 resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   app_name               = aws_codedeploy_app.river-node-code-deploy-app.name
-  deployment_group_name  = "river-blue-green"
+  deployment_group_name  = local.node_name
   service_role_arn       = aws_iam_role.ecs_code_deploy_role.arn
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
 
   tags = local.river_node_tags
-
-  depends_on = [
-    aws_ecs_service.river-ecs-service
-  ]
 
   ecs_service {
     cluster_name = var.ecs_cluster.name
@@ -700,7 +709,6 @@ resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
       termination_wait_time_in_minutes = 0
     }
   }
-
   load_balancer_info {
     target_group_pair_info {
       target_group {

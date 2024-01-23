@@ -241,7 +241,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	mux.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
 		// TODO: reply with graffiti from config and with node version
-		log.Debug("Got request for /info", "request", *r)
+		log.Debug("Got request for /info", "URL", *r.URL)
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
 		_, err := w.Write([]byte("All good in the Towns land!\n"))
@@ -250,7 +250,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		}
 	})
 
-	registerDebugHandlers(mux, cache)
+	registerDebugHandlers(ctx, mux, cache, streamService)
 
 	address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 	httpListener, err := net.Listen("tcp", address)

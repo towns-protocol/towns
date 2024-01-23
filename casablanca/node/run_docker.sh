@@ -1,7 +1,5 @@
 #!/bin/bash -ue
 
-# if $MODE = "single-node" then cd into casablanca/node/run_files/docker-single
-
 if [ -z "$MODE" ]; then
     echo "MODE environment variable not set. Defaulting to single-node."
     MODE="single-node"

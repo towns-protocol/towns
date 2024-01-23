@@ -7,7 +7,7 @@ import (
 )
 
 // HTML template for displaying stats and triggering GC
-const htmlTemplate = `
+const memoryHtmlTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -82,7 +82,7 @@ func getMemStats() MemStats {
 
 // Initializes the template and returns a HTTP handler function
 func MemoryHandler() http.HandlerFunc {
-	tmpl, err := template.New("stats").Parse(htmlTemplate)
+	tmpl, err := template.New("memoryStats").Parse(memoryHtmlTemplate)
 	if err != nil {
 		// Return a simple handler that always responds with a 500 error
 		return func(w http.ResponseWriter, r *http.Request) {

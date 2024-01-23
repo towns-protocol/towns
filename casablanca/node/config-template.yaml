@@ -45,9 +45,11 @@ metrics:
     port: <METRICS_PORT>
 performanceTracking:
     profilingEnabled: false
+    tracingEnabled: false
 
 # Node registry JSON path
 nodeRegistry: <NODE_REGISTRY>
+nodeRegistryCsv:
 
 # Push notification configuration
 pushNotification:
