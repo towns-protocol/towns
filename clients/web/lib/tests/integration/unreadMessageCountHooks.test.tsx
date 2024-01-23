@@ -24,6 +24,7 @@ import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 import { TSigner } from '../../src/types/web3-types'
+import { TestConstants } from './helpers/TestConstants'
 
 describe('unreadMessageCountHooks', () => {
     test('user can join a room, see messages, and send messages', async () => {
@@ -183,7 +184,10 @@ describe('unreadMessageCountHooks', () => {
         // have jane send a message to bob
         await jane.sendMessage(janesChannelId, 'hello bob')
         // expect our message to show
-        await waitFor(() => expect(lastMessage).toHaveTextContent('hello bob'))
+        await waitFor(
+            () => expect(lastMessage).toHaveTextContent('hello bob'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
         // check count
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
