@@ -4,6 +4,7 @@ describe('AutoLinkMatcherPlugin', () => {
         'www.test.com',
         'https://polygon.technology/developers',
         'https://subdomain.subdomain.test.com',
+        "https://www.domain.com/file/apostrophe's-drafts",
         'test.com',
         'test.com?test=1',
         'test.shop/test',
@@ -20,7 +21,9 @@ describe('AutoLinkMatcherPlugin', () => {
     ]
 
     test.each(links)(`matching "%s" should resove to a link`, (link) => {
-        expect(link.match(URL_MATCHER) || link.match(NON_PREFIXED_MATCHER)).toBeTruthy()
+        expect(
+            link.match(URL_MATCHER)?.[0] === link || link.match(NON_PREFIXED_MATCHER)?.[0] === link,
+        ).toBeTruthy()
     })
 
     const nonLinks = [
