@@ -320,15 +320,17 @@ function makeTimelineStoreInterface(
         const redactsEventId = getRedactsId(event.content)
 
         if (redactsEventId) {
-            if (updatingEventId) {
-                // remove the formerly encrypted event
-                state = removeEvent(state, streamId, updatingEventId)
-            }
             const redactedEvent = makeRedactionEvent(event)
             state = replaceEvent(state, userId, streamId, redactsEventId, redactedEvent)
-            state = appendEvent(state, userId, streamId, event)
+            if (updatingEventId) {
+                // replace the formerly encrypted event
+                state = replaceEvent(state, userId, streamId, updatingEventId, event)
+            } else {
+                state = appendEvent(state, userId, streamId, event)
+            }
         } else if (editsEventId) {
             if (updatingEventId) {
+                // remove the formerly encrypted event
                 state = removeEvent(state, streamId, updatingEventId)
             }
             state = replaceEvent(state, userId, streamId, editsEventId, event)
