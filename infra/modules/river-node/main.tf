@@ -677,7 +677,7 @@ resource "aws_codedeploy_app" "river-node-code-deploy-app" {
 
 resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   app_name               = aws_codedeploy_app.river-node-code-deploy-app.name
-  deployment_group_name  = local.node_name
+  deployment_group_name  = "river-blue-green"
   service_role_arn       = aws_iam_role.ecs_code_deploy_role.arn
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
 
