@@ -11,7 +11,7 @@ import { make_UserPayload_Inception } from './types'
 
 import { EmittedEvents } from './client'
 import { PersistenceStore } from './persistenceStore'
-import { dlog } from '@river/mecholm'
+import { dlog } from '@river/waterproof'
 import { mock } from 'jest-mock-extended'
 import TypedEmitter from 'typed-emitter'
 

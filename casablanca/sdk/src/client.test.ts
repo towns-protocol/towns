@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { dlog, UserDevice, check, isDefined } from '@river/mecholm'
+import { dlog, UserDevice, check, isDefined } from '@river/waterproof'
 import { Client } from './client'
 import {
     genId,

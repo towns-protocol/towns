@@ -22,7 +22,7 @@ import {
     makeTownsDelegateSig,
     makeOldTownsDelegateSig,
     publicKeyToAddress,
-} from '@river/mecholm'
+} from '@river/waterproof'
 import { ethers } from 'ethers'
 import { RiverDbManager } from './riverDbManager'
 import { StreamRpcClientType, makeStreamRpcClient } from './makeStreamRpcClient'

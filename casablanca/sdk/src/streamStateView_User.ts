@@ -11,7 +11,7 @@ import {
 import { StreamEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
-import { check, logNever } from '@river/mecholm'
+import { check, logNever } from '@river/waterproof'
 
 export class StreamStateView_User extends StreamStateView_AbstractContent {
     readonly streamId: string

@@ -1,5 +1,5 @@
 import debug from 'debug'
-import { DLogger, check, dlog, hasElements, isDefined } from '@river/mecholm'
+import { DLogger, check, dlog, hasElements, isDefined } from '@river/waterproof'
 import { StreamRpcClientType } from './makeStreamRpcClient'
 import { unpackStream } from './sign'
 import { StreamStateView } from './streamStateView'

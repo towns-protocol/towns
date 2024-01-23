@@ -12,7 +12,7 @@ import {
     makeTownsDelegateSig,
     makeOldTownsDelegateSig,
     publicKeyToAddress,
-} from '@river/mecholm'
+} from '@river/waterproof'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { makeUserStreamId } from './id'
 import { getPublicKey } from 'ethereum-cryptography/secp256k1'

@@ -2,7 +2,7 @@
  * @group load-tests-s2
  */
 
-import { dlog } from '@river/mecholm'
+import { dlog } from '@river/waterproof'
 import {
     createAndStartClient,
     createAndStartClients,

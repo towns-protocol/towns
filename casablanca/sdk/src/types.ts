@@ -33,7 +33,7 @@ import {
     Snapshot,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { bin_toHexString, isDefined } from '@river/mecholm'
+import { bin_toHexString, isDefined } from '@river/waterproof'
 import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes'
 
 export interface LocalEvent {

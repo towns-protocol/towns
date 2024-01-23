@@ -1,5 +1,5 @@
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { bin_toHexString } from '@river/mecholm'
+import { bin_toHexString } from '@river/waterproof'
 import { Permission } from '@river/web3'
 
 export function unsafeProp<K extends keyof any | undefined>(prop: K): boolean {

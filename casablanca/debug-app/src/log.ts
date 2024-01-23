@@ -1,4 +1,4 @@
-import { dlog, dlogError } from '@river/mecholm'
+import { dlog, dlogError } from '@river/waterproof'
 
 export const logInfo = dlog('csb:debug-app:info')
 

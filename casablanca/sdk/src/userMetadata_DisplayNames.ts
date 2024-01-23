@@ -1,7 +1,7 @@
 import { EncryptedData } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { EmittedEvents } from './client'
-import { dlog } from '@river/mecholm'
+import { dlog } from '@river/waterproof'
 
 export class UserMetadata_DisplayNames {
     log = dlog('csb:streams:displaynames')

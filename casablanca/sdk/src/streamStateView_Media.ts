@@ -3,7 +3,7 @@ import { Snapshot, MediaPayload, MediaPayload_Snapshot } from '@river/proto'
 import { RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { check, logNever } from '@river/mecholm'
+import { check, logNever } from '@river/waterproof'
 
 export class StreamStateView_Media extends StreamStateView_AbstractContent {
     readonly streamId: string

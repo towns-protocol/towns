@@ -1,4 +1,4 @@
-import { DLogger, dlog, dlogError, isDefined, shortenHexString } from '@river/mecholm'
+import { DLogger, dlog, dlogError, isDefined, shortenHexString } from '@river/waterproof'
 import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river/proto'
 
 import { EmittedEvents } from './client'

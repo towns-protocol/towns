@@ -1,6 +1,6 @@
 import { utils } from 'ethers'
 import { nanoid } from 'nanoid'
-import { bin_toHexString, check } from '@river/mecholm'
+import { bin_toHexString, check } from '@river/waterproof'
 import { hashString } from './utils'
 
 export const userIdFromAddress = (address: Uint8Array): string =>

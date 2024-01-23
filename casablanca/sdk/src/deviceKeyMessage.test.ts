@@ -5,7 +5,7 @@
 import debug from 'debug'
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { UserDevice } from '@river/mecholm'
+import { UserDevice } from '@river/waterproof'
 
 const log = debug('test')
 

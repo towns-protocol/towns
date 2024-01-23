@@ -5,7 +5,7 @@
   "eslint.workingDirectories": [
     "./casablanca/proto",
     "./casablanca/debug-app",
-    "./casablanca/mecholm",
+    "./casablanca/waterproof",
     "./casablanca/sdk",
     "./casablanca/web3",
     "./clients/web/app",

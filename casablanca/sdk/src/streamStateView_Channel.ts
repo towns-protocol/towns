@@ -4,7 +4,7 @@ import { RemoteTimelineEvent } from './types'
 import { EmittedEvents } from './client'
 import { ChannelPayload, ChannelPayload_Snapshot, Snapshot } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { check, logNever } from '@river/mecholm'
+import { check, logNever } from '@river/waterproof'
 
 export class StreamStateView_Channel extends StreamStateView_AbstractContent {
     readonly streamId: string

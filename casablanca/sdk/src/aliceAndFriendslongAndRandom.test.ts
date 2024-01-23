@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { dlog } from '@river/mecholm'
+import { dlog } from '@river/waterproof'
 import seedrandom from 'seedrandom'
 import { converse } from './testDriver.test_util'
 

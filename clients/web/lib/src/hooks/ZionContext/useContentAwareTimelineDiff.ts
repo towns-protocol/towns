@@ -9,7 +9,7 @@ import {
 import { TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { TimelineStore, useTimelineStore } from '../../store/use-timeline-store'
-import { check } from '@river/mecholm'
+import { check } from '@river/waterproof'
 
 export function useContentAwareTimelineDiffCasablanca(casablancaClient?: CasablancaClient) {
     useEffect(() => {

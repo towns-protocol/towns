@@ -1,4 +1,4 @@
-import { dlog } from '@river/mecholm'
+import { dlog } from '@river/waterproof'
 import axios from 'axios'
 
 const kafkaRestProxyUrl = 'http://127.0.0.1:8082' // Replace with your Kafka REST Proxy URL

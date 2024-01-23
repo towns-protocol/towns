@@ -9,7 +9,7 @@ import {
 import { Stream } from './stream'
 import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse } from './types'
 import { EmittedEvents } from './client'
-import { DLogger, bin_toHexString, dlog, isDefined } from '@river/mecholm'
+import { DLogger, bin_toHexString, dlog, isDefined } from '@river/waterproof'
 import { PersistenceStore } from './persistenceStore'
 
 export class SyncedStream extends Stream {

@@ -13,7 +13,7 @@ import { PlainMessage } from '@bufbuild/protobuf'
 import { Channel, Membership, Mention, MessageType } from './zion-types'
 import { staticAssertNever } from '../utils/zion-utils'
 import { DecryptedContentError } from '@river/sdk'
-import { isDefined } from '@river/mecholm'
+import { isDefined } from '@river/waterproof'
 
 /**************************************************************************
  * We're using a union type to represent the different types of events that

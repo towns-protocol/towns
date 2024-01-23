@@ -8,7 +8,7 @@ import {
     UserDeviceKeyPayload_Snapshot,
 } from '@river/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { UserDevice, check, logNever } from '@river/mecholm'
+import { UserDevice, check, logNever } from '@river/waterproof'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 
 export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractContent {

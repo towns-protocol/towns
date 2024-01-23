@@ -7,7 +7,7 @@ import {
     userIdFromAddress,
     EntitlementsDelegate,
 } from '@river/sdk'
-import { bin_fromHexString, makeOldTownsDelegateSig } from '@river/mecholm'
+import { bin_fromHexString, makeOldTownsDelegateSig } from '@river/waterproof'
 import { FullyReadMarker } from '@river/proto'
 import {
     ChannelTransactionContext,

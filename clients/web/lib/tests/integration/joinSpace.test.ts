@@ -18,7 +18,7 @@ import {
 } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { ethers } from 'ethers'
-import { assert } from '@river/mecholm'
+import { assert } from '@river/waterproof'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
 
 test('create space, and have user join', async () => {

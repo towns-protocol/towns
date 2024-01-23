@@ -14,7 +14,7 @@ import {
     DLogger,
     check,
     isDefined,
-} from '@river/mecholm'
+} from '@river/waterproof'
 import { SessionKeys, UserToDevicePayload_MegolmSessions } from '@river/proto'
 import {
     KeySolicitationContent,

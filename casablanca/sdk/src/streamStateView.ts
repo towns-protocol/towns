@@ -1,4 +1,4 @@
-import { dlog, dlogError, bin_toHexString, check, isDefined, logNever } from '@river/mecholm'
+import { dlog, dlogError, bin_toHexString, check, isDefined, logNever } from '@river/waterproof'
 import {
     ChannelMessage,
     Err,

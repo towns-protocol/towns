@@ -16,7 +16,7 @@ import {
 import { StreamEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'
-import { check, isDefined, logNever, throwWithCode } from '@river/mecholm'
+import { check, isDefined, logNever, throwWithCode } from '@river/waterproof'
 
 export class StreamStateView_Space extends StreamStateView_AbstractContent {
     readonly streamId: string

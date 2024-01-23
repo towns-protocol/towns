@@ -348,7 +348,7 @@
     {
       "label": "WatchCasablancaMechOlm",
       "type": "shell",
-      "command": "cd casablanca/mecholm && yarn watch",
+      "command": "cd casablanca/waterproof && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

@@ -2,7 +2,7 @@
  * @group synthetic
  */
 
-import { check, dlog } from '@river/mecholm'
+import { check, dlog } from '@river/waterproof'
 import { makeUserContextFromWallet, makeDonePromise, waitFor } from '../util.test'
 import { ethers } from 'ethers'
 import { jest } from '@jest/globals'

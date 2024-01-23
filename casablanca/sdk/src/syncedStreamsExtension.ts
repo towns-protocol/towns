@@ -8,7 +8,7 @@ import {
     isUserStreamId,
     isUserToDeviceStreamId,
 } from './id'
-import { check, dlog, dlogError } from '@river/mecholm'
+import { check, dlog, dlogError } from '@river/waterproof'
 
 interface StreamSyncItem {
     streamId: string

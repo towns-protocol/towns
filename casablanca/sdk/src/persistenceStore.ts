@@ -7,7 +7,7 @@ import {
     parsedMiniblockToPersistedMiniblock,
 } from './streamUtils'
 
-import { dlog, isDefined } from '@river/mecholm'
+import { dlog, isDefined } from '@river/waterproof'
 
 export class PersistenceStore extends Dexie {
     log = dlog('csb:persistence')

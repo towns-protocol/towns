@@ -61,7 +61,7 @@ import {
     EventStatus,
     RoomMessageEventContent_ChunkedMedia,
 } from '../../types/timeline-types'
-import { isDefined, logNever } from '@river/mecholm'
+import { isDefined, logNever } from '@river/waterproof'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf

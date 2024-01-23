@@ -15,7 +15,7 @@ import {
 import { Permission } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
-import { check } from '@river/mecholm'
+import { check } from '@river/waterproof'
 
 describe('messageTypes', () => {
     test('send a m.gm message to test message types', async () => {

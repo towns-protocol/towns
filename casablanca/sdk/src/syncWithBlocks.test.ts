@@ -3,7 +3,7 @@
  */
 
 import { MembershipOp, StreamAndCookie, StreamSettings, SyncOp } from '@river/proto'
-import { dlog } from '@river/mecholm'
+import { dlog } from '@river/waterproof'
 import {
     genId,
     makeChannelStreamId,

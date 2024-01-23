@@ -8,7 +8,7 @@ import {
 import { EmittedEvents } from './client'
 import { ConfirmedTimelineEvent, KeySolicitationContent, ParsedEvent } from './types'
 import { removeCommon } from './utils'
-import { logNever } from '@river/mecholm'
+import { logNever } from '@river/waterproof'
 
 // common payloads exist in all streams, this data structure helps aggregates them
 export class StreamStateView_CommonContent {

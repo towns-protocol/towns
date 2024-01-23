@@ -13,7 +13,7 @@ import {
     isDefined,
     assert,
     hasElements,
-} from '@river/mecholm'
+} from '@river/waterproof'
 import { genIdBlob, userIdFromAddress } from './id'
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie, ParsedStreamResponse } from './types'
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'

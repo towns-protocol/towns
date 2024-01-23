@@ -4,7 +4,7 @@
 
 import { makeTestClient, createEventDecryptedPromise, waitFor, makeDonePromise } from './util.test'
 import { Client } from './client'
-import { dlog } from '@river/mecholm'
+import { dlog } from '@river/waterproof'
 import { MembershipOp } from '@river/proto'
 
 const log = dlog('csb:test')

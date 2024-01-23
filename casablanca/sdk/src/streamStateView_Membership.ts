@@ -3,7 +3,7 @@ import TypedEmitter from 'typed-emitter'
 import { StreamEvents } from './streamEvents'
 import { EmittedEvents } from './client'
 import { ConfirmedTimelineEvent } from './types'
-import { logNever } from '@river/mecholm'
+import { logNever } from '@river/waterproof'
 
 export class StreamStateView_Membership {
     readonly userId: string
