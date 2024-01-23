@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Icon, MotionBox } from '@ui'
 import { SECOND_MS } from 'data/constants'
 
@@ -21,13 +21,14 @@ const StepColor = new Map([
 
 export const SendStatusIndicator = (props: { status: SendStatus }) => {
     const { status } = props
-    const [isShowing, setIsShowing] = useState(true)
 
     const step = status.isEncrypting
         ? Step.Encrypting
         : status.isLocalPending
         ? Step.LocalPending
         : Step.Sent
+
+    const [isShowing, setIsShowing] = useState(step !== Step.Sent)
 
     useEffect(() => {
         if (step === Step.Sent) {
@@ -40,13 +41,14 @@ export const SendStatusIndicator = (props: { status: SendStatus }) => {
         }
     }, [step])
 
+    const animated = useMemo(() => ({ opacity: isShowing ? 1 : 0 }), [isShowing])
+
     return (
         <MotionBox
             horizontal
             position="bottomRight"
-            animate={{
-                opacity: isShowing ? 1 : 0,
-            }}
+            initial={animated}
+            animate={animated}
             transition={{ duration: 1 }}
         >
             <Icon
