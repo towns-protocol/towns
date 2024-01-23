@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { useZionContext } from 'use-zion-client'
-import { IconButton } from '@ui'
+import { Box, Icon } from '@ui'
 import { useStore } from 'store/store'
 
 export const BugReportButton = () => {
@@ -17,20 +17,32 @@ export const BugReportButton = () => {
 
     return (
         <>
-            <IconButton
-                alignSelf="center"
+            <Box
+                hoverable
+                centerContent
+                cursor="pointer"
+                tooltip={sidePanel === 'bugReport' ? undefined : 'Report a bug'}
+                tooltipOptions={{ placement: 'horizontal' }}
                 padding="line"
                 background="level2"
-                size="square_md"
-                icon={sidePanel === 'bugReport' ? 'bugFill' : 'bug'}
+                alignSelf="center"
                 rounded="sm"
-                tooltip="Report a bug"
-                tooltipOptions={{ placement: 'horizontal' }}
-                color={
-                    !streamSyncActive ? 'error' : sidePanel === 'bugReport' ? 'default' : 'gray1'
-                }
+                width="x4"
+                height="x4"
                 onClick={onBugReportClick}
-            />
+            >
+                <Icon
+                    size="square_sm"
+                    type={sidePanel === 'bugReport' ? 'bugFill' : 'bug'}
+                    color={
+                        !streamSyncActive
+                            ? 'error'
+                            : sidePanel === 'bugReport'
+                            ? 'default'
+                            : 'gray1'
+                    }
+                />
+            </Box>
         </>
     )
 }

@@ -18,7 +18,7 @@ export const TopBar = () => {
             </Box>
 
             <Stack horizontal gap="sm" paddingRight="md">
-                {<BugReportButton />}
+                <BugReportButton />
                 <Box centerContent width="x6">
                     <ProfileCardButton />
                 </Box>
