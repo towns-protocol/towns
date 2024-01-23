@@ -112,6 +112,10 @@ const threadPaths: Path[] = [
         path: `/${PATHS.SPACES}/:spaceId/channels/:channelId/*`,
         replace: `/${PATHS.SPACES}/:spaceId/channels/:channelId/replies/:threadId`,
     },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/*`,
+        replace: `/${PATHS.SPACES}/:spaceId/channels/:channelId/replies/:threadId`,
+    },
 ]
 
 const messagesPaths: Path[] = [

@@ -495,9 +495,7 @@ export const MessageTimeline = (props: Props) => {
                     return (
                         <Box paddingX="md" paddingY="md">
                             <Box cursor="pointer" onClick={onExpandClick}>
-                                <Paragraph color="default">
-                                    Show {numHidden} more messages
-                                </Paragraph>
+                                <Paragraph color="cta2">Show {numHidden} more messages</Paragraph>
                             </Box>
                         </Box>
                     )

@@ -9,6 +9,7 @@ import {
 } from 'use-zion-client'
 import { firstBy } from 'thenby'
 import { useLocation } from 'react-router'
+import { Link } from 'react-router-dom'
 import { isDefined } from '@river/mecholm'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
@@ -23,6 +24,7 @@ import { useDevice } from 'hooks/useDevice'
 import { useThrottledValue } from 'hooks/useThrottledValue'
 import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
 import { QUERY_PARAMS } from 'routes'
+import { useCreateLink } from 'hooks/useCreateLink'
 
 export const MessageThread = (props: {
     userId: string
@@ -96,6 +98,7 @@ export const MessageThread = (props: {
 
     const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
 
+    const { createLink } = useCreateLink()
     return parentMessage ? (
         <MessageTimelineWrapper
             events={messagesWithParent}
@@ -107,8 +110,13 @@ export const MessageThread = (props: {
                 <Stack gap={{ touch: 'none', default: 'md' }}>
                     <Box paddingX={{ touch: 'md', default: 'none' }} paddingTop="sm">
                         <Paragraph size="lg" color="default">
-                            #{channelLabel.toLocaleLowerCase()}
+                            <Link
+                                to={createLink({ spaceId, channelId, threadId: parentId }) ?? `#`}
+                            >
+                                #{channelLabel.toLocaleLowerCase()}
+                            </Link>
                         </Paragraph>
+
                         {usernames && <Paragraph color="gray2">{usernames}</Paragraph>}
                     </Box>
                     <Stack elevate={!isTouch} rounded="md" boxShadow="none">
