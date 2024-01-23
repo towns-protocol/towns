@@ -1606,6 +1606,12 @@ export class ZionClient implements EntitlementsDelegate {
             const fakeError = await this.spaceDapp.parseSpaceError(spaceId, error)
             const realError = new Error(fakeError.message)
             realError.name = fakeError.name
+            if ('code' in error) {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                realError.code = error.code
+            }
             return realError
         } catch (e: unknown) {
             if (e instanceof Error) {
@@ -1622,6 +1628,11 @@ export class ZionClient implements EntitlementsDelegate {
             ) {
                 const newErr = new Error(e.message)
                 newErr.name = e.name
+                if ('code' in e) {
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    newErr.code = e.code
+                }
                 return newErr
             } else {
                 return new Error(`[getDecodedErrorForSpace] cannot decode error`)

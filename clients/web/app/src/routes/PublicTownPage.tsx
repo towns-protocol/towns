@@ -6,6 +6,7 @@ import { Permission, useHasPermission, useMyProfile } from 'use-zion-client'
 import { isAddress } from 'viem'
 
 import { Allotment } from 'allotment'
+import { userOpsStore } from '@towns/userops'
 import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -17,7 +18,6 @@ import { Activity } from '@components/TownPageLayout/TownPageActivity'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
 import { FadeInBox } from '@components/Transitions'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
-import { NoFundsModal } from '@components/VisualViewportContext/NoFundsModal'
 import { BottomBarLayout } from '@components/Web3/MembershipNFT/BottomBar'
 import { Box, BoxProps, Button, Card, Heading, Icon, IconProps, Paragraph, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
@@ -28,6 +28,7 @@ import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { shortAddress } from 'ui/utils/utils'
 import { MainSideBar } from '@components/SideBars'
+import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 const log = debug('app:public-town')
@@ -54,9 +55,9 @@ export const PublicTownPage = () => {
             permission: Permission.JoinTown,
         })
 
-    const { joinSpace, errorMessage, isNoFundsError, clearErrors } = useJoinTown(
-        spaceInfo?.networkId,
-    )
+    const { joinSpace, errorMessage, isNoFundsError } = useJoinTown(spaceInfo?.networkId)
+
+    const { currOpGas, deny } = userOpsStore()
 
     const onJoinClick = useCallback(async () => {
         if (meetsMembershipRequirements) {
@@ -132,15 +133,16 @@ export const PublicTownPage = () => {
                     bio={townBio}
                 />
             </Box>
-            {isNoFundsError && (
-                <ModalContainer padding="none" minWidth="350" onHide={clearErrors}>
-                    <NoFundsModal onHide={clearErrors} />
-                </ModalContainer>
-            )}
 
             {assetModal && (
                 <ModalContainer padding="none" minWidth="350" onHide={hideAssetModal}>
                     <TokenVerification spaceId={spaceInfo.networkId} onHide={hideAssetModal} />
+                </ModalContainer>
+            )}
+
+            {currOpGas && (
+                <ModalContainer minWidth="auto" onHide={() => deny?.()}>
+                    <UserOpTxModal />
                 </ModalContainer>
             )}
         </>
