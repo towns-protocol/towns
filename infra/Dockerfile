@@ -19,7 +19,8 @@ RUN apk update && apk add --no-cache \
   bash \
   npm \
   jq \
-  aws-cli
+  aws-cli \
+  flock
 
 # Install Terraform
 RUN wget --quiet https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
