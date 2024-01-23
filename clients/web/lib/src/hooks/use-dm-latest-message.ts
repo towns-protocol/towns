@@ -111,7 +111,7 @@ function toMostRecentMessageInfo(
         return undefined
     }
 
-    switch (content.msgType) {
+    switch (content.content?.msgType) {
         case MessageType.Text:
             return {
                 kind: 'text',

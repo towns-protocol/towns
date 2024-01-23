@@ -192,7 +192,7 @@ export const MessageTimeline = (props: Props) => {
                 const itemHeight =
                     !item.isRedacted &&
                     item.content.kind === ZTEvent.RoomMessage &&
-                    item.content.msgType === MessageType.Image
+                    item.content.content.msgType === MessageType.Image
                         ? 400
                         : 60
                 return height + itemHeight
@@ -202,7 +202,9 @@ export const MessageTimeline = (props: Props) => {
         if (r.type === 'message') {
             const height = [r.item.event].reduce((height, item) => {
                 const itemHeight =
-                    isRoomMessage(item) && item.content.msgType === MessageType.Image ? 400 : 60
+                    isRoomMessage(item) && item.content.content.msgType === MessageType.Image
+                        ? 400
+                        : 60
                 return height + itemHeight
             }, 0)
             return height
@@ -367,7 +369,7 @@ export const MessageTimeline = (props: Props) => {
                             // count if message is an image
                             (!isRedactedRoomMessage(curr.item.event) &&
                                 curr.item.event.content.kind === ZTEvent.RoomMessage &&
-                                curr.item.event.content.msgType === MessageType.Image)
+                                curr.item.event.content.content.msgType === MessageType.Image)
                         ) {
                             prev.chunkCount++
                             prev.lastUserId = userId

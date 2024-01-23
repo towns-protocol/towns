@@ -2,11 +2,7 @@
 /**
  * @group casablanca
  */
-import {
-    ImageMessageContent,
-    MessageType,
-    SendImageMessageOptions,
-} from '../../src/types/zion-types'
+import { MessageType, SendImageMessageOptions } from '../../src/types/zion-types'
 import {
     createTestSpaceGatedByTownAndZionNfts,
     makeUniqueName,
@@ -19,6 +15,7 @@ import {
 import { Permission } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
+import { check } from '@river/mecholm'
 
 describe('messageTypes', () => {
     test('send a m.gm message to test message types', async () => {
@@ -61,7 +58,7 @@ describe('messageTypes', () => {
         expect(
             bob
                 .getEvents_TypedRoomMessage(channelId)
-                .find((event) => event.content.msgType === (MessageType.GM as string)),
+                .find((event) => event.content.content.msgType === MessageType.GM),
         ).toBeDefined()
     }) // end test
 
@@ -117,13 +114,12 @@ describe('messageTypes', () => {
             expect(bob.getMessages(channelId)).toContain('what.jpg')
             const imageMessage = bob
                 .getEvents_TypedRoomMessage(channelId)
-                .find((event) => event.content?.msgType === (MessageType.Image as string))
+                .find((event) => event.content?.content.msgType === MessageType.Image)
 
             expect(imageMessage).toBeDefined()
-            expect((imageMessage?.content.content as ImageMessageContent).info.url).toBe(
-                IMAGE_MSG_CONTENT.info.url,
-            )
-            expect((imageMessage?.content.content as ImageMessageContent).thumbnail?.size).toBe(30)
+            check(imageMessage?.content.content.msgType === MessageType.Image)
+            expect(imageMessage?.content.content.info?.url).toBe(IMAGE_MSG_CONTENT.info.url)
+            expect(imageMessage?.content.content.thumbnail?.size).toBe(30)
         })
     })
 }) // end describe

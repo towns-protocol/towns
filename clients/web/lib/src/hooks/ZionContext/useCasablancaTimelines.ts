@@ -59,6 +59,7 @@ import {
     EmbeddedMediaAttachment,
     ImageAttachment,
     EventStatus,
+    RoomMessageEventContent_ChunkedMedia,
 } from '../../types/timeline-types'
 import { isDefined, logNever } from '@river/mecholm'
 
@@ -635,12 +636,13 @@ function toTownsContent_ChannelPayload_Message_Post(
                 content: {
                     kind: ZTEvent.RoomMessage,
                     body: value.content.value.body,
-                    msgType: MessageType.Text,
                     inReplyTo: value.threadId,
                     threadPreview: value.threadPreview,
                     mentions: value.content.value.mentions,
                     editsEventId: editsEventId,
-                    content: {},
+                    content: {
+                        msgType: MessageType.Text,
+                    },
                     attachments: toAttachments(value.content.value.attachments, eventId),
                 } satisfies RoomMessageEvent,
             }
@@ -649,12 +651,12 @@ function toTownsContent_ChannelPayload_Message_Post(
                 content: {
                     kind: ZTEvent.RoomMessage,
                     body: value.content.value.title,
-                    msgType: MessageType.Image,
                     inReplyTo: value.threadId,
                     threadPreview: value.threadPreview,
                     mentions: [],
                     editsEventId: editsEventId,
                     content: {
+                        msgType: MessageType.Image,
                         info: value.content.value.info,
                         thumbnail: value.content.value.thumbnail,
                     },
@@ -666,12 +668,12 @@ function toTownsContent_ChannelPayload_Message_Post(
                 content: {
                     kind: ZTEvent.RoomMessage,
                     body: value.content.value.typeUrl,
-                    msgType: MessageType.GM,
                     inReplyTo: value.threadId,
                     threadPreview: value.threadPreview,
                     mentions: [],
                     editsEventId: editsEventId,
                     content: {
+                        msgType: MessageType.GM,
                         data: value.content.value.value,
                     },
                 } satisfies RoomMessageEvent,
@@ -681,12 +683,12 @@ function toTownsContent_ChannelPayload_Message_Post(
                 content: {
                     kind: ZTEvent.RoomMessage,
                     body: '',
-                    msgType: MessageType.EmbeddedMedia,
                     inReplyTo: value.threadId,
                     threadPreview: value.threadPreview,
                     mentions: [],
                     editsEventId: editsEventId,
                     content: {
+                        msgType: MessageType.EmbeddedMedia,
                         content: value.content.value.content,
                         mimetype: value.content.value.info?.mimetype,
                         widthPixels: value.content.value.info?.widthPixels,
@@ -700,12 +702,12 @@ function toTownsContent_ChannelPayload_Message_Post(
                 content: {
                     kind: ZTEvent.RoomMessage,
                     body: '',
-                    msgType: MessageType.ChunkedMedia,
                     inReplyTo: value.threadId,
                     threadPreview: value.threadPreview,
                     mentions: [],
                     editsEventId: editsEventId,
                     content: {
+                        msgType: MessageType.ChunkedMedia,
                         streamId: value.content.value.streamId,
                         mimetype: value.content.value.info?.mimetype,
                         widthPixels: value.content.value.info?.widthPixels,
@@ -715,7 +717,7 @@ function toTownsContent_ChannelPayload_Message_Post(
                         iv: value.content.value.encryption.value?.iv,
                         secretKey: value.content.value.encryption.value?.secretKey,
                         thumbnail: value.content.value.thumbnail?.content,
-                    },
+                    } satisfies RoomMessageEventContent_ChunkedMedia,
                 } satisfies RoomMessageEvent,
             }
         case undefined:

@@ -1,6 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
-import { MessageContent, MessageType, RoomMessageEvent, ZTEvent } from 'use-zion-client'
+import {
+    MessageType,
+    RoomMessageEvent,
+    RoomMessageEventContentOneOf,
+    ZTEvent,
+} from 'use-zion-client'
 import { describe, expect, test, vi } from 'vitest'
 import { TestApp } from 'test/testUtils'
 import { image, normal, twitter } from '../../../mocks/unfurl/data'
@@ -10,6 +15,12 @@ import {
 } from '../MessageTimeline/MessageTimelineContext'
 import { MessageRenderEvent, RenderEventType } from '../MessageTimeline/util/getEventsByDate'
 import { MessageTimelineItem } from './TimelineItem'
+
+interface MessageContent {
+    msgtype?: MessageType
+    content?: RoomMessageEventContentOneOf
+    body: string
+}
 
 vi.mock('use-zion-client', async () => {
     return {
@@ -48,12 +59,8 @@ function generateRoomMessageEvent(messageContent: MessageContent): RoomMessageEv
     return {
         kind: ZTEvent.RoomMessage,
         body: messageContent.body,
-        msgType: messageContent.msgtype ?? '',
         mentions: [],
-        content: {
-            // 4 levels deep
-            ...messageContent,
-        },
+        content: messageContent.content ?? { msgType: MessageType.Text },
     }
 }
 
@@ -110,20 +117,22 @@ describe('#TimelineItem', () => {
             <Wrapper
                 messageContent={{
                     body: 'The Office Crying GIF',
-                    msgtype: MessageType.Image,
-                    info: {
-                        url: url,
-                        height: 250,
-                        width: 250,
-                        mimetype: 'image/gif',
-                        size: 929864,
-                    },
-                    thumbnail: {
-                        url: url,
-                        height: 250,
-                        width: 250,
-                        mimetype: 'image/gif',
-                        size: 929864,
+                    content: {
+                        msgType: MessageType.Image,
+                        info: {
+                            url: url,
+                            height: 250,
+                            width: 250,
+                            mimetype: 'image/gif',
+                            size: 929864,
+                        },
+                        thumbnail: {
+                            url: url,
+                            height: 250,
+                            width: 250,
+                            mimetype: 'image/gif',
+                            size: 929864,
+                        },
                     },
                 }}
             />,

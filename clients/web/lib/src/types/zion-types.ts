@@ -228,61 +228,6 @@ export type SendMessageOptionsBase =
 
 export type SendMessageOptions = SendMessageOptionsBase & SpaceIdOptions
 
-export enum RelationType {
-    Annotation = 'm.annotation',
-    Replace = 'm.replace',
-    Reference = 'm.reference',
-    Thread = 'm.thread',
-}
-
-export interface IMentions {
-    user_ids?: string[]
-    room?: boolean
-}
-
-export interface IEventRelation {
-    rel_type?: RelationType | string
-    event_id?: string
-    is_falling_back?: boolean
-    'm.in_reply_to'?: {
-        event_id?: string
-    }
-    key?: string
-}
-
-export enum MsgType {
-    Text = 'm.text',
-    Emote = 'm.emote',
-    Notice = 'm.notice',
-    Image = 'm.image',
-    File = 'm.file',
-    Audio = 'm.audio',
-    Location = 'm.location',
-    Video = 'm.video',
-    KeyVerificationRequest = 'm.key.verification.request',
-}
-
-/* eslint-disable camelcase */
-export interface IContent {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any
-    msgtype?: MsgType | string
-    membership?: string
-    avatar_url?: string
-    displayname?: string
-    'm.relates_to'?: IEventRelation
-
-    'm.mentions'?: IMentions
-}
-
-export type ImageMessageContent = IContent & Omit<SendImageMessageOptions, 'messageType'>
-
-export type MessageContent = IContent | ImageMessageContent
-
-export interface EditMessageOptions {
-    originalEventId: string
-}
-
 export function isMentionedTextMessageOptions(
     options: SendMessageOptions,
 ): options is SendTextMessageOptions {

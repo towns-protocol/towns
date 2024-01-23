@@ -134,30 +134,30 @@ export const MessageItem = (props: Props) => {
                             />
                         )}
                     </>
-                ) : event.content.msgType === MessageType.Image ? (
+                ) : event.content.content.msgType === MessageType.Image ? (
                     <RatioedBackgroundImage
-                        url={event.content.content.info.url}
+                        url={event.content.content.info?.url ?? ''}
                         width={event.content.content.thumbnail?.width}
                         height={event.content.content.thumbnail?.height}
                         onClick={onMediaClick}
                     />
-                ) : event.content.msgType === MessageType.EmbeddedMedia ? (
+                ) : event.content.content.msgType === MessageType.EmbeddedMedia ? (
                     <EmbeddedMedia
-                        mimetype={event.content.content.mimetype}
-                        width={event.content.content.widthPixels}
-                        height={event.content.content.heightPixels}
+                        mimetype={event.content.content.mimetype ?? ''}
+                        width={event.content.content.widthPixels ?? 0}
+                        height={event.content.content.heightPixels ?? 0}
                         content={event.content.content.content}
                         onClick={onMediaClick}
                     />
-                ) : event.content.msgType === MessageType.ChunkedMedia ? (
+                ) : event.content.content.msgType === MessageType.ChunkedMedia ? (
                     <ChunkedFile
-                        mimetype={event.content.content.mimetype}
-                        width={event.content.content.widthPixels}
-                        height={event.content.content.heightPixels}
-                        filename={event.content.content.filename}
+                        mimetype={event.content.content.mimetype ?? ''}
+                        width={event.content.content.widthPixels ?? 0}
+                        height={event.content.content.heightPixels ?? 0}
+                        filename={event.content.content.filename ?? ''}
                         streamId={event.content.content.streamId}
-                        iv={event.content.content.iv}
-                        secretKey={event.content.content.secretKey}
+                        iv={event.content.content.iv ?? new Uint8Array()}
+                        secretKey={event.content.content.secretKey ?? new Uint8Array()}
                         thumbnail={event.content.content.thumbnail}
                         onClick={onMediaClick}
                     />
@@ -295,7 +295,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
 function getItemContentKey(itemData: ItemDataType): string {
     switch (itemData.type) {
         case RenderEventType.Message:
-            return itemData.event.content.msgType ?? ''
+            return itemData.event.content.content.msgType ?? ''
         case RenderEventType.EncryptedMessage:
             return itemData.event.content.error === undefined ? 'enc' : 'enc-error'
         case RenderEventType.RedactedMessage:

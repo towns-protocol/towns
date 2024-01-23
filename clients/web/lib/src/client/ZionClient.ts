@@ -1392,18 +1392,6 @@ export class ZionClient implements EntitlementsDelegate {
     }
 
     /************************************************
-     * getProfileInfo
-     ************************************************/
-    // eslint-disable-next-line @typescript-eslint/require-await
-    public async getProfileInfo(
-        userId: string,
-    ): Promise<{ avatar_url?: string; displayname?: string }> {
-        // todo casablanca look for user in casablanca
-        console.warn('[getProfileInfo] not implemented', userId)
-        return { avatar_url: undefined, displayname: undefined }
-    }
-
-    /************************************************
      * setDisplayName
      ************************************************/
     // eslint-disable-next-line @typescript-eslint/require-await

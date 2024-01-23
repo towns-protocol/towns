@@ -9,7 +9,8 @@ import {
     MiniblockHeader,
     PayloadCaseType,
 } from '@river/proto'
-import { Channel, IContent, Membership, Mention } from './zion-types'
+import { PlainMessage } from '@bufbuild/protobuf'
+import { Channel, Membership, Mention, MessageType } from './zion-types'
 import { staticAssertNever } from '../utils/zion-utils'
 import { DecryptedContentError } from '@river/sdk'
 import { isDefined } from '@river/mecholm'
@@ -181,15 +182,62 @@ export interface SpaceDisplayNameEvent {
 // and we can't guarantee that it will be there (we have issues in prod as i write this)
 export type OTWMention = Omit<Mention, 'userId'> & { userId?: string }
 
+export interface RoomMessageEventContent_Image {
+    msgType: MessageType.Image
+    info?:
+        | ChannelMessage_Post_Content_Image_Info
+        | PlainMessage<ChannelMessage_Post_Content_Image_Info>
+    thumbnail?:
+        | ChannelMessage_Post_Content_Image_Info
+        | PlainMessage<ChannelMessage_Post_Content_Image_Info>
+}
+
+export interface RoomMessageEventContent_GM {
+    msgType: MessageType.GM
+    data?: Uint8Array
+}
+
+export interface RoomMessageEventContent_EmbeddedMedia {
+    msgType: MessageType.EmbeddedMedia
+    content: Uint8Array
+    mimetype?: string
+    widthPixels?: number
+    heightPixels?: number
+    sizeBytes?: bigint
+}
+
+export interface RoomMessageEventContent_ChunkedMedia {
+    msgType: MessageType.ChunkedMedia
+    streamId: string
+    mimetype?: string
+    widthPixels?: number
+    heightPixels?: number
+    sizeBytes?: bigint
+    filename?: string
+    iv?: Uint8Array
+    secretKey?: Uint8Array
+    thumbnail?: Uint8Array
+}
+
+export interface RoomMessageEventContent_Text {
+    msgType: MessageType.Text
+}
+
+export type RoomMessageEventContentOneOf =
+    | RoomMessageEventContent_Image
+    | RoomMessageEventContent_GM
+    | RoomMessageEventContent_EmbeddedMedia
+    | RoomMessageEventContent_ChunkedMedia
+    | RoomMessageEventContent_Text
+
 export interface RoomMessageEvent {
     kind: ZTEvent.RoomMessage
     inReplyTo?: string
     threadPreview?: string
     body: string
-    msgType: string
     mentions: OTWMention[]
     editsEventId?: string
-    content: IContent // room messages have lots of representations
+    content: RoomMessageEventContentOneOf
     attachments?: Attachment[]
 }
 

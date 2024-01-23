@@ -2,6 +2,7 @@ import {
     OTWMention,
     RedactionActionEvent,
     RoomMessageEvent,
+    RoomMessageEventContent_Text,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
@@ -146,13 +147,12 @@ function makeMessage(params: {
     return {
         kind: ZTEvent.RoomMessage,
         body: params.body,
-        msgType: MessageType.Text,
         inReplyTo: params.threadId,
         threadPreview: undefined,
         mentions: [],
         editsEventId: params.editsEventId,
-        content: {},
-    }
+        content: { msgType: MessageType.Text } satisfies RoomMessageEventContent_Text,
+    } satisfies RoomMessageEvent
 }
 
 function makeEdit(params: {
