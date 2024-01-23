@@ -20,6 +20,7 @@ import { ZTEvent } from '../types/timeline-types'
 import { useStreamSyncActive } from '../hooks/ZionContext/useStreamSyncActive'
 import { GlobalContextUserLookupProvider } from './UserLookupContextProviders'
 import { ZionOpts } from '../client/ZionClientTypes'
+import { Chain } from 'viem/chains'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
@@ -54,7 +55,7 @@ export function useZionContext(): IZionContext {
 }
 
 interface ZionContextProviderProps {
-    chainId: number
+    chain: Chain
     casablancaServerUrl?: string | undefined
     enableSpaceRootUnreads?: boolean
     timelineFilter?: Set<ZTEvent>
@@ -74,7 +75,7 @@ export function ZionContextProvider({
 }: ZionContextProviderProps): JSX.Element {
     return (
         <QueryClientProvider>
-            <Web3ContextProvider chainId={props.chainId}>
+            <Web3ContextProvider chain={props.chain}>
                 <ZionContextImplMemo {...props}></ZionContextImplMemo>
             </Web3ContextProvider>
         </QueryClientProvider>
@@ -113,7 +114,7 @@ const ZionContextImpl = (props: ZionContextProviderProps): JSX.Element => {
     previousProps.current = props
 
     const { client, clientSingleton, casablancaClient } = useZionClientListener({
-        chainId: props.chainId,
+        chainId: props.chain.id,
         casablancaServerUrl: props.casablancaServerUrl,
         pushNotificationAuthToken: props.pushNotificationAuthToken,
         pushNotificationWorkerUrl: props.pushNotificationWorkerUrl,

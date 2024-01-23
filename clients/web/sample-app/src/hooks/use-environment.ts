@@ -12,13 +12,14 @@ export function useEnvironment() {
     if (!environmentInfo) {
         throw new Error(`Unknown environment: ${environment}`)
     }
-    const chainId = environmentInfo.chainId
+    const chain = environmentInfo.chain
     const chainName = environmentInfo.chain.name
     const casablancaUrl = environmentInfo.casablancaUrl
 
     return {
         environment, // only defined if IS_DEV
-        chainId,
+        chain,
+        chainId: chain.id,
         chainName,
         casablancaUrl,
     }

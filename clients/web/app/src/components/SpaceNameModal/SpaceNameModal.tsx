@@ -3,7 +3,6 @@ import {
     SignerUndefinedError,
     TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
-    useCurrentWalletEqualsSignedInAccount,
     useSpaceData,
     useUpdateSpaceNameTransaction,
 } from 'use-zion-client'
@@ -18,6 +17,7 @@ import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork
 import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
+import { useCurrentWalletEqualsSignedInAccount } from 'hooks/useCurrentWalletEqualsSignedInAccount'
 
 type Props = {
     onHide: () => void

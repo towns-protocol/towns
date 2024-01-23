@@ -23957,7 +23957,6 @@ __metadata:
     ts-jest: ^29.1.1
     typescript: ^5.1.6
     viem: ^1.18.2
-    wagmi: ^1.4.12
     zustand: ^4.3.3
   languageName: unknown
   linkType: soft

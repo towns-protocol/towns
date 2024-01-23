@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Chain } from 'wagmi'
-import { getChainName } from 'use-zion-client'
 import { env } from 'utils'
 import { baseSepoliaClone, foundryClone } from 'customChains'
 
@@ -51,9 +50,14 @@ export type UseEnvironmentReturn = ReturnType<typeof useEnvironment>
 const CF_TUNNEL_PREFIX = env.VITE_CF_TUNNEL_PREFIX
 const CASABLANCA_URL = env.VITE_CASABLANCA_HOMESERVER_URL
 const CHAIN_ID = parseInt(env.VITE_CHAIN_ID)
+const CHAIN = ENVIRONMENTS.find((e) => e.chainId === CHAIN_ID)?.chain
 
 // if you set VITE_CF_TUNNEL_PREFIX, you'll always be pointed to tunnel for river, and chain will always be foundry
 export function useEnvironment() {
+    if (!CHAIN) {
+        throw new Error(`Invalid chain id: ${CHAIN_ID}`)
+    }
+
     let _environment: TownsEnvironment | undefined
 
     if (env.DEV) {
@@ -81,14 +85,16 @@ export function useEnvironment() {
     }, [])
 
     const environmentInfo = environment ? ENVIRONMENTS.find((e) => e.id === environment) : undefined
-    const chainId = environmentInfo?.chainId ?? CHAIN_ID
-    const chainName = environmentInfo?.chain.name ?? getChainName(chainId)
+    const chain = environmentInfo?.chain ?? CHAIN
+    const chainId = chain.id
+    const chainName = chain.name
     const casablancaUrl = environmentInfo?.casablancaUrl ?? CASABLANCA_URL
     const protocol = environmentInfo?.protocol ?? SpaceProtocol.Casablanca
 
     return useMemo(
         () => ({
             environment, // only defined if DEV
+            chain,
             chainId,
             chainName,
             casablancaUrl,
@@ -98,6 +104,7 @@ export function useEnvironment() {
         }),
         [
             casablancaUrl,
+            chain,
             chainId,
             chainName,
             clearEnvironment,

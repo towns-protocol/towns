@@ -11,7 +11,6 @@ import { LoginWithWallet } from './helpers/TestComponents'
 import { fireEvent, render, screen, waitFor, act } from '@testing-library/react'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { registerAndStartClients } from './helpers/TestUtils'
-import { useWeb3Context } from '../../src/components/Web3ContextProvider'
 import { LoginStatus } from '../../src/hooks/login'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useZionClient } from '../../src/hooks/use-zion-client'
@@ -104,7 +103,7 @@ describe('signInFromGlobalStorageHooks', () => {
         // build a view for alice to render
         const TestComponent = () => {
             const { casablancaServerUrl } = useZionContext()
-            const { isConnected } = useWeb3Context()
+            const isConnected = Boolean(dummyProvider.wallet.provider)
             const { delegateSig } =
                 useCredentialStore().casablancaCredentialsMap[casablancaServerUrl ?? ''] ?? {}
             const { loginStatus, loginError } = useCasablancaStore()
@@ -158,7 +157,7 @@ describe('signInFromGlobalStorageHooks', () => {
 
         // build a view for alice to render
         const TestComponent = () => {
-            const { isConnected } = useWeb3Context()
+            const isConnected = Boolean(dummyProvider.wallet.provider)
             const { loginStatus, loginError } = useCasablancaStore()
             console.log('$$$$ loginStatus', { isConnected, loginStatus })
             const { casablancaCredentialsMap } = useCredentialStore()

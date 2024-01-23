@@ -2,8 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useCasablancaCredentials } from '../../../src/hooks/use-casablanca-credentials'
 import { useMyMembership } from '../../../src/hooks/use-my-membership'
 import { useZionClient } from '../../../src/hooks/use-zion-client'
-import { useWeb3Context } from '../../../src/components/Web3ContextProvider'
-import { TSigner, WalletStatus } from '../../../src/types/web3-types'
+import { TSigner } from '../../../src/types/web3-types'
 import { useCreateSpaceTransaction } from '../../../src/hooks/use-create-space-transaction'
 import { useCreateChannelTransaction } from '../../../src/hooks/use-create-channel-transaction'
 import { useAddRoleToChannelTransaction } from '../../../src/hooks/use-add-role-channel-transaction'
@@ -12,11 +11,8 @@ import { useCreateRoleTransaction } from '../../../src/hooks/use-create-role-tra
 import { useDeleteRoleTransaction } from '../../../src/hooks/use-delete-role-transaction'
 import { useUpdateRoleTransaction } from '../../../src/hooks/use-update-role-transaction'
 import { useUpdateSpaceNameTransaction } from '../../../src/hooks/use-update-space-name-transaction'
-import { useAccount } from 'wagmi'
 
 export const RegisterWallet = ({ signer }: { signer: TSigner }) => {
-    const { isConnected } = useWeb3Context()
-    const walletStatus = useAccount().status
     const riverCridentials = useCasablancaCredentials()
     const loginStatus = riverCridentials.loginStatus
     const loginError = riverCridentials.loginError
@@ -25,22 +21,22 @@ export const RegisterWallet = ({ signer }: { signer: TSigner }) => {
     const { clientRunning, registerWalletWithCasablanca } = useZionClient()
     const registeringWallet = useRef(false)
     const [registeredWallet, setRegisteredWallet] = useState(false)
+    const isConnected = Boolean(signer.provider)
 
     useEffect(() => {
-        if (walletStatus === WalletStatus.Connected && !registeringWallet.current) {
+        if (isConnected && !registeringWallet.current) {
             registeringWallet.current = true
             void (async () => {
                 await registerWalletWithCasablanca('login...', signer)
                 setRegisteredWallet(true)
             })()
         }
-    }, [signer, registerWalletWithCasablanca, walletStatus])
+    }, [signer, registerWalletWithCasablanca, isConnected])
     return (
         <>
             <div data-testid="isConnected">{isConnected.toString()}</div>
             <div data-testid="registeredWallet">{String(registeredWallet)}</div>
             <div data-testid="userId">{userId}</div>
-            <div data-testid="walletStatus">{walletStatus}</div>
             <div data-testid="loginStatus">{loginStatus}</div>
             <div data-testid="loginError">{loginError?.message ?? ''}</div>
             <div data-testid="clientRunning">{clientRunning ? 'true' : 'false'}</div>
@@ -49,27 +45,25 @@ export const RegisterWallet = ({ signer }: { signer: TSigner }) => {
 }
 
 export const LoginWithWallet = ({ signer }: { signer: TSigner }) => {
-    const { isConnected } = useWeb3Context()
-    const walletStatus = useAccount().status
     const riverCridentials = useCasablancaCredentials()
     const loginStatus = riverCridentials.loginStatus
     const loginError = riverCridentials.loginError
     const { clientRunning, loginWithWalletToCasablanca } = useZionClient()
     const logingInWithWallet = useRef(false)
+    const isConnected = Boolean(signer.provider)
 
     useEffect(() => {
-        if (walletStatus === WalletStatus.Connected && !logingInWithWallet.current) {
+        if (isConnected && !logingInWithWallet.current) {
             logingInWithWallet.current = true
             void (async () => {
                 await loginWithWalletToCasablanca('login...', signer)
                 logingInWithWallet.current = false
             })()
         }
-    }, [loginWithWalletToCasablanca, walletStatus, signer])
+    }, [loginWithWalletToCasablanca, signer, isConnected])
     return (
         <>
             <div data-testid="isConnected">{isConnected.toString()}</div>
-            <div data-testid="walletStatus">{walletStatus}</div>
             <div data-testid="loginStatus">{loginStatus}</div>
             <div data-testid="loginError">{loginError?.message ?? ''}</div>
             <div data-testid="clientRunning">{clientRunning ? 'true' : 'false'}</div>

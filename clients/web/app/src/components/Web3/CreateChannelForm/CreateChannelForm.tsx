@@ -4,7 +4,6 @@ import {
     TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
     useCreateChannelTransaction,
-    useCurrentWalletEqualsSignedInAccount,
     useMultipleRoleDetails,
 } from 'use-zion-client'
 import React, { useCallback, useEffect, useMemo } from 'react'
@@ -27,6 +26,7 @@ import { env } from 'utils'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { useContractRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { useCurrentWalletEqualsSignedInAccount } from 'hooks/useCurrentWalletEqualsSignedInAccount'
 
 type Props = {
     spaceId: string

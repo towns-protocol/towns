@@ -54,14 +54,14 @@ export const App = () => {
 }
 
 const AppContent = () => {
-    const { casablancaUrl, chainId } = useEnvironment()
+    const { casablancaUrl, chain, chainId } = useEnvironment()
     return (
         <ThemeProvider theme={theme}>
             <Container maxWidth="md">
                 <ZionContextProvider
                     enableSpaceRootUnreads
                     casablancaServerUrl={casablancaUrl}
-                    chainId={chainId}
+                    chain={chain}
                 >
                     <EmbeddedSignerContextProvider chainId={chainId}>
                         <Routes>

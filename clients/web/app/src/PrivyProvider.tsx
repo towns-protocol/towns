@@ -9,6 +9,15 @@ import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
 import { baseSepoliaClone, foundryClone } from 'customChains'
 import { useStore } from 'store/store'
 import { Figma } from 'ui/styles/palette'
+import { Buffer } from 'buffer'
+
+// polyfill Buffer for client
+// lib/src/index.ts does this too but this module can load faster apparently
+// the error is thrown from coinbase wallet sdk, which is included w/ wagmi.
+// Though we don't use coinbase wallet, it's triggered either b/c of wagmi or b/c of privy's wagmi connector
+if (!window.Buffer) {
+    window.Buffer = Buffer
+}
 
 if (env.VITE_CF_TUNNEL_PREFIX) {
     const rpcUrl = `https://${env.VITE_CF_TUNNEL_PREFIX}-anvil.towns.com`

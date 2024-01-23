@@ -5,8 +5,7 @@ import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 import { LoginStatus } from './login'
 import { bin_toHexString } from '@river/mecholm'
-import { TSigner } from 'types/web3-types'
-import { Address } from 'wagmi'
+import { TSigner, Address } from '../types/web3-types'
 import { SignerUndefinedError } from '../types/error-types'
 
 export function useCasablancaWalletSignIn() {

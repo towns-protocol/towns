@@ -159,6 +159,11 @@ vi.mock('use-zion-client', async () => {
                 invalidateQuery: () => null,
             }
         },
+    }
+})
+
+vi.mock('hooks/useCurrentWalletEqualsSignedInAccount', () => {
+    return {
         useCurrentWalletEqualsSignedInAccount: () => true,
     }
 })

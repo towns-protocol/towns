@@ -43,7 +43,6 @@
         "node-emoji": "^1.11.0",
         "siwe": "^1.1.6",
         "viem": "^1.18.2",
-        "wagmi": "^1.4.12",
         "zustand": "^4.3.3"
     },
     "devDependencies": {

@@ -1,5 +1,4 @@
 import React from 'react'
-import { useCurrentWalletEqualsSignedInAccount } from 'use-zion-client'
 import { useEvent } from 'react-use-event-hook'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
@@ -7,6 +6,7 @@ import { Box, Button, Heading, Icon, MotionIcon, Stack, Text } from '@ui'
 import { AccordionGroup, AccordionGroupProps } from 'ui/components/Accordion/Accordion'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { useCurrentWalletEqualsSignedInAccount } from 'hooks/useCurrentWalletEqualsSignedInAccount'
 import { TRANSACTION_HIDDEN_BUTTON, TransactionHookInstance } from './TransactionHookInstances'
 import {
     SettingsTransactionStatus,

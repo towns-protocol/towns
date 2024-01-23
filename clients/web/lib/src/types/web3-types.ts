@@ -1,12 +1,10 @@
-import { Chain, Connector } from 'wagmi'
-import { useEthersProvider } from '../hooks/Web3Context/useEthersProvider'
 import {
     TokenEntitlementDataTypes,
     RoleEntitlements as R_RoleEntitlements,
     RoleDetails as R_RoleDetails,
     ISpaceDapp as R_ISpaceDapp,
 } from '@river/web3'
-import { ContractReceipt, ContractTransaction, Signer } from 'ethers'
+import { ContractReceipt, ContractTransaction, Signer, providers } from 'ethers'
 import { ISendUserOperationResponse } from 'userop.js'
 
 // TODO: replace instances of wagmi/viem Address with this type
@@ -30,7 +28,7 @@ export interface RoleIdentifier {
     spaceNetworkId: string
 }
 
-export type TProvider = ReturnType<typeof useEthersProvider>
+export type TProvider = providers.StaticJsonRpcProvider
 export type TSigner = Signer
 
 export enum BlockchainTransactionType {
@@ -54,8 +52,6 @@ export type BlockchainTransaction = {
     }
     type: BlockchainTransactionType
 }
-
-export type Connectors = (args: { chains: Chain[] }) => Connector[]
 
 // aliasing this type b/c we might change to viem and it's unclear if we're going to be removing typechain generated types
 export type TokenEntitlementStruct = TokenEntitlementDataTypes.ExternalTokenStruct

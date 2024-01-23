@@ -5,7 +5,6 @@ import {
     TransactionStatus,
     UpdateChannelInfo,
     WalletDoesNotMatchSignedInAccountError,
-    useCurrentWalletEqualsSignedInAccount,
     useRoom,
     useTransactionStore,
     useUpdateChannelTransaction,
@@ -22,6 +21,7 @@ import { RequireTransactionNetworkMessage } from '@components/RequireTransaction
 import { TransactionButton } from '@components/TransactionButton'
 import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
+import { useCurrentWalletEqualsSignedInAccount } from 'hooks/useCurrentWalletEqualsSignedInAccount'
 import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
 import { ModalContainer } from '../Modals/ModalContainer'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'

@@ -101,7 +101,7 @@ export const App = () => {
         <ZionContextProvider
             mutedChannelIds={mutedChannelIds}
             casablancaServerUrl={environment.casablancaUrl}
-            chainId={environment.chainId}
+            chain={environment.chain}
             initalSyncSortPredicate={initalSyncSortPredicate}
             timelineFilter={new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicitation])}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}

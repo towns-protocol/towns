@@ -1,5 +1,4 @@
 import React from 'react'
-import { useCurrentWalletEqualsSignedInAccount } from 'use-zion-client'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { TransactionButton } from '@components/TransactionButton'
 import { Box, BoxProps, Button, MotionStack, Stack } from '@ui'
@@ -7,6 +6,7 @@ import { TransactionUIState } from 'hooks/TransactionUIState'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { useDevice } from 'hooks/useDevice'
+import { useCurrentWalletEqualsSignedInAccount } from 'hooks/useCurrentWalletEqualsSignedInAccount'
 
 type Props = {
     onClick?: () => void

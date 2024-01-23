@@ -1,5 +1,5 @@
 import isEqual from 'lodash/isEqual'
-import { Address } from 'wagmi'
+import { Address } from '../types/web3-types'
 import { create, StateCreator } from 'zustand'
 import { createJSONStorage, persist, PersistOptions } from 'zustand/middleware'
 

@@ -37,7 +37,6 @@ vi.mock('use-zion-client', async () => {
     const actual = (await vi.importActual('use-zion-client')) as typeof zionClient
     return {
         ...actual,
-        useCurrentWalletEqualsSignedInAccount: () => true,
         useMultipleRoleDetails: (): {
             data: zionClient.RoleDetails[]
             invalidateQuery: () => void
@@ -47,6 +46,12 @@ vi.mock('use-zion-client', async () => {
                 invalidateQuery: () => null,
             }
         },
+    }
+})
+
+vi.mock('hooks/useCurrentWalletEqualsSignedInAccount', () => {
+    return {
+        useCurrentWalletEqualsSignedInAccount: () => true,
     }
 })
 

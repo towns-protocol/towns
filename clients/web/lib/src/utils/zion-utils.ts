@@ -1,4 +1,4 @@
-import * as allChains from 'wagmi/chains'
+import * as allChains from 'viem/chains'
 
 export function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms))

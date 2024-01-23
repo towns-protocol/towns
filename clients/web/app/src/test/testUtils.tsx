@@ -48,7 +48,7 @@ export const TestApp = (props: TestAppProps) => {
             <ZLayerProvider>
                 <Lib.ZionContextProvider
                     casablancaServerUrl={env.VITE_CASABLANCA_HOMESERVER_URL}
-                    chainId={31337}
+                    chain={foundryClone}
                     {...props.zionContextProviderProps}
                 >
                     <AuthContextProvider>
