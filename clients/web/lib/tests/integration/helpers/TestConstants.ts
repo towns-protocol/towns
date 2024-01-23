@@ -5,6 +5,9 @@ import { waitForOptions } from '@testing-library/react'
 import { getJsonProvider, parseOptInt } from './TestUtils'
 import { TestGatingNFT } from '@river/web3'
 
+const amount = ethers.BigNumber.from(10).pow(18).toHexString()
+const provider = getJsonProvider()
+
 export class TestConstants {
     public static readonly EveryoneAddress = '0x0000000000000000000000000000000000000001'
 
@@ -19,11 +22,9 @@ export class TestConstants {
     public static async getWalletWithTestGatingNft(): Promise<ethers.Wallet> {
         try {
             const wallet = await this.getWalletWithoutNft()
-            const { provider } = wallet
 
-            const testGatingNft = new TestGatingNFT(31337, provider, wallet)
+            const testGatingNft = new TestGatingNFT()
             await testGatingNft.publicMint(wallet.address)
-            console.log('minted TestGatingNFT nft')
 
             return wallet
         } catch (e) {
@@ -34,15 +35,11 @@ export class TestConstants {
 
     public static async getWalletWithoutNft(): Promise<ethers.Wallet> {
         const tempWallet = ethers.Wallet.createRandom()
+        const fund = provider.send('anvil_setBalance', [tempWallet.address, amount])
 
-        const provider = getJsonProvider()
         const wallet = tempWallet.connect(provider)
 
-        const amount = ethers.BigNumber.from(10).pow(18).toHexString()
-
-        await provider.send('anvil_setBalance', [wallet.address, amount])
-
-        console.log('fundWallet receipt')
+        await fund
 
         return wallet
     }

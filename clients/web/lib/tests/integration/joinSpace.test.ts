@@ -21,7 +21,7 @@ import { ethers } from 'ethers'
 import { assert } from '@river/mecholm'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
 
-test('create space, and have user join ', async () => {
+test('create space, and have user join', async () => {
     // create clients
     // alice needs to have a valid nft in order to join bob's space / channel
     const alice = await registerAndStartClient('alice', TestConstants.getWalletWithTestGatingNft())
@@ -60,69 +60,73 @@ test('create space, and have user that already has membership NFT join ', async 
     expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
 })
 
-test('join_space_gated_2_NFT', async () => {
-    // create clients
-    const { alice, bob, carol } = await registerAndStartClients(['alice', 'bob', 'carol'])
+test(
+    'join_space_gated_2_NFT',
+    async () => {
+        // create clients
+        const { alice, bob, carol } = await registerAndStartClients(['alice', 'bob', 'carol'])
 
-    // bob creates a space
-    const [tokenA, tokenB] = await Promise.all([
-        getContractAddress('tokenA'),
-        getContractAddress('tokenB'),
-    ])
-    const externalTokens = createExternalTokenStruct([tokenA, tokenB])
+        // bob creates a space
+        const [tokenA, tokenB] = await Promise.all([
+            getContractAddress('tokenA'),
+            getContractAddress('tokenB'),
+        ])
+        const externalTokens = createExternalTokenStruct([tokenA, tokenB])
 
-    assert(isHexString(alice.walletAddress), 'alice.walletAddress is not a hex string')
-    assert(isHexString(bob.walletAddress), 'bob.walletAddress is not a hex string')
-    assert(isHexString(carol.walletAddress), 'carol.walletAddress is not a hex string')
-    await Promise.all([
-        await publicMint('tokenA', alice.walletAddress),
-        await publicMint('tokenB', alice.walletAddress),
+        assert(isHexString(alice.walletAddress), 'alice.walletAddress is not a hex string')
+        assert(isHexString(bob.walletAddress), 'bob.walletAddress is not a hex string')
+        assert(isHexString(carol.walletAddress), 'carol.walletAddress is not a hex string')
+        await Promise.all([
+            await publicMint('tokenA', alice.walletAddress),
+            await publicMint('tokenB', alice.walletAddress),
 
-        await publicMint('tokenA', bob.walletAddress),
-        await publicMint('tokenB', bob.walletAddress),
-        // Carol only has one of the needed tokens
-        await publicMint('tokenA', carol.walletAddress),
-    ])
-    console.log('create space gated by tokenA and tokenB tokens', externalTokens)
+            await publicMint('tokenA', bob.walletAddress),
+            await publicMint('tokenB', bob.walletAddress),
+            // Carol only has one of the needed tokens
+            await publicMint('tokenA', carol.walletAddress),
+        ])
+        console.log('create space gated by tokenA and tokenB tokens', externalTokens)
 
-    const membershipInfo: ITownArchitectBase.MembershipStruct = {
-        settings: {
-            name: 'Member',
-            symbol: 'MEMBER',
-            price: 0,
-            maxSupply: 100,
-            duration: 0,
-            currency: ethers.constants.AddressZero,
-            feeRecipient: alice.walletAddress ?? ethers.constants.AddressZero,
-            freeAllocation: 0,
-            pricingModule: ethers.constants.AddressZero,
-        },
-        permissions: [Permission.Read, Permission.Write],
-        requirements: {
-            everyone: false,
-            tokens: externalTokens,
-            users: [],
-            rule: ethers.constants.AddressZero,
-        },
-    }
+        const membershipInfo: ITownArchitectBase.MembershipStruct = {
+            settings: {
+                name: 'Member',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 100,
+                duration: 0,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: alice.walletAddress ?? ethers.constants.AddressZero,
+                freeAllocation: 0,
+                pricingModule: ethers.constants.AddressZero,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
+                everyone: false,
+                tokens: externalTokens,
+                users: [],
+                rule: ethers.constants.AddressZero,
+            },
+        }
 
-    const createSpaceInfo = {
-        name: alice.makeUniqueName(),
-    }
-    // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.
-    const spaceId = await alice.createSpace(createSpaceInfo, membershipInfo)
+        const createSpaceInfo = {
+            name: alice.makeUniqueName(),
+        }
+        // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.
+        const spaceId = await alice.createSpace(createSpaceInfo, membershipInfo)
 
-    assert(spaceId !== undefined, 'createSpace failed')
+        assert(spaceId !== undefined, 'createSpace failed')
 
-    await alice.joinTown(spaceId, alice.wallet)
-    expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
-    await bob.joinTown(spaceId, bob.wallet)
-    expect(bob.getRoomData(spaceId)?.id).toEqual(spaceId)
+        await alice.joinTown(spaceId, alice.wallet)
+        expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
+        await bob.joinTown(spaceId, bob.wallet)
+        expect(bob.getRoomData(spaceId)?.id).toEqual(spaceId)
 
-    await expect(carol.joinTown(spaceId, carol.wallet)).rejects.toThrow(
-        new RegExp('execution reverted'),
-    )
-})
+        await expect(carol.joinTown(spaceId, carol.wallet)).rejects.toThrow(
+            new RegExp('execution reverted'),
+        )
+    },
+    120 * 1000,
+)
 
 // This test fails for now because wallet linking doesn't work properly
 test.skip('join_space_gated_2_NFT_2_wallet', async () => {

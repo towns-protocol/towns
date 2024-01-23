@@ -105,11 +105,7 @@ export async function fundWallet(walletToFund: ethers.Wallet) {
 
     const result = provider.send('anvil_setBalance', [walletToFund.address, amountInWei])
 
-    console.log('fundWallet tx', result, amountInWei, walletToFund.address)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const receipt = await result
-    console.log('fundWallet receipt', receipt)
-    return true
+    await result
 }
 
 /**
