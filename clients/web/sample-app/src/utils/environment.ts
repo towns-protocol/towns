@@ -4,6 +4,7 @@ export enum TownsEnvironment {
     Prod = 'prod',
     TestBeta = 'test-beta',
     Local = 'local',
+    Multinode = 'multinode',
 }
 
 export interface TownsEnvironmentInfo {
@@ -15,6 +16,15 @@ export interface TownsEnvironmentInfo {
 }
 
 export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
+    {
+        id: TownsEnvironment.Multinode,
+        name: 'Multinode (local)',
+        casablancaUrl: Array.from({ length: 10 }, (_, i) => `http://localhost:${5170 + i}`).join(
+            ',',
+        ),
+        chainId: foundry.id,
+        chain: foundry,
+    },
     {
         id: TownsEnvironment.Local,
         name: 'Local',

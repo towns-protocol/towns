@@ -85,7 +85,11 @@ func (s *Service) getStreamImpl(
 	}
 
 	if stub != nil {
-		return stub.GetStream(ctx, req)
+		ret, err := stub.GetStream(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return connect_go.NewResponse(ret.Msg), nil
 	} else {
 		return s.localGetStream(ctx, req)
 	}
@@ -115,7 +119,11 @@ func (s *Service) getMiniblocksImpl(
 	}
 
 	if stub != nil {
-		return stub.GetMiniblocks(ctx, req)
+		ret, err := stub.GetMiniblocks(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return connect_go.NewResponse(ret.Msg), nil
 	} else {
 		return s.localGetMiniblocks(ctx, req)
 	}
@@ -145,7 +153,11 @@ func (s *Service) getLastMiniblockHashImpl(
 	}
 
 	if stub != nil {
-		return stub.GetLastMiniblockHash(ctx, req)
+		ret, err := stub.GetLastMiniblockHash(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return connect_go.NewResponse(ret.Msg), nil
 	} else {
 		return s.localGetLastMiniblockHash(ctx, req)
 	}
@@ -188,5 +200,9 @@ func (s *Service) addEventImpl(
 		return nil, err
 	}
 
-	return stub.AddEvent(ctx, req)
+	ret, err := stub.AddEvent(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return connect_go.NewResponse(ret.Msg), nil
 }

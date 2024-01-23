@@ -96,6 +96,7 @@ function NetworkInfo() {
         }
     }, [casablancaLoginStatus, onLoginCasablanca])
 
+    //{`Remote Url: ${(casablancaUrl ?? '').substring(0, 50)}`}
     return (
         <>
             <Box
@@ -113,7 +114,7 @@ function NetworkInfo() {
                 />
                 <Paper elevation={3} sx={{ padding: '20px' }}>
                     <Typography variant="h6" component="p" sx={{ marginTop: '20px' }}>
-                        {`Remote Url: ${casablancaUrl ?? ''}`}
+                        {`Remote Url: ${(casablancaUrl ?? '').substring(0, 50)}`}
                     </Typography>
                     {casablancaButton}
                 </Paper>
