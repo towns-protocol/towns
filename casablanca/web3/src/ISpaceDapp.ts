@@ -11,9 +11,9 @@ import {
 } from './ContractTypes'
 
 import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
-import { ContractTransaction, ethers } from 'ethers'
+import { BytesLike, ContractTransaction, ethers } from 'ethers'
 import { SpaceInfo } from './SpaceDappTypes'
-import { Town, TownRegistrar } from './v3'
+import { IRolesBase, Town, TownRegistrar } from './v3'
 
 export type SignerType = ethers.Signer
 export interface EventsContractInfo {
@@ -76,7 +76,12 @@ export interface ISpaceDapp {
         users: string[],
         signer: SignerType,
     ): Promise<TransactionType>
+    createUpdatedEntitlements(
+        town: Town,
+        params: UpdateRoleParams,
+    ): Promise<IRolesBase.CreateEntitlementStruct[]>
     deleteRole(spaceId: string, roleId: number, signer: SignerType): Promise<TransactionType>
+    encodedUpdateChannelData(town: Town, params: UpdateChannelParams): Promise<BytesLike[]>
     getChannels: (spaceId: string) => Promise<ChannelMetadata[]>
     getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails | null>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>

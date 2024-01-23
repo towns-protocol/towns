@@ -438,8 +438,9 @@ export class ZionClient implements EntitlementsDelegate {
 
         console.log('[createChannelTransaction] Channel created', roomId)
 
-        let transaction: ContractTransaction | undefined = undefined
+        let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
+
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.CreateChannel,
             data: {
@@ -447,14 +448,21 @@ export class ZionClient implements EntitlementsDelegate {
                 channeStreamId: roomId,
             },
         })
+
+        const args = [
+            createChannelInfo.parentSpaceId,
+            createChannelInfo.name,
+            roomId,
+            createChannelInfo.roleIds,
+            signer,
+        ] as const
+
         try {
-            transaction = await this.spaceDapp.createChannel(
-                createChannelInfo.parentSpaceId,
-                createChannelInfo.name,
-                roomId,
-                createChannelInfo.roleIds,
-                signer,
-            )
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendCreateChannelOp([...args])
+            } else {
+                transaction = await this.spaceDapp.createChannel(...args)
+            }
             console.log(`[createChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[createChannelTransaction] error', err)
@@ -516,8 +524,9 @@ export class ZionClient implements EntitlementsDelegate {
             })
         }
 
-        let transaction: ContractTransaction | undefined = undefined
+        let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
+
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.EditChannel,
             data: {
@@ -525,17 +534,22 @@ export class ZionClient implements EntitlementsDelegate {
                 channeStreamId: updateChannelInfo.channelId,
             },
         })
+
         try {
             if (updateChannelInfo.updatedChannelName && updateChannelInfo.updatedRoleIds) {
-                transaction = await this.spaceDapp.updateChannel(
-                    {
-                        spaceId: updateChannelInfo.parentSpaceId,
-                        channelId: updateChannelInfo.channelId,
-                        channelName: updateChannelInfo.updatedChannelName,
-                        roleIds: updateChannelInfo.updatedRoleIds,
-                    },
-                    signer,
-                )
+                const newChannelInfo = {
+                    spaceId: updateChannelInfo.parentSpaceId,
+                    channelId: updateChannelInfo.channelId,
+                    channelName: updateChannelInfo.updatedChannelName,
+                    roleIds: updateChannelInfo.updatedRoleIds,
+                }
+
+                if (this.isAccountAbstractionEnabled()) {
+                    transaction = await this.userOps?.sendUpdateChannelOp([newChannelInfo, signer])
+                } else {
+                    transaction = await this.spaceDapp.updateChannel(newChannelInfo, signer)
+                }
+
                 console.log(`[updateChannelTransaction] transaction created` /*, transaction*/)
             } else {
                 // this is an off chain state update
@@ -733,7 +747,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!signer) {
             throw new SignerUndefinedError()
         }
-        let transaction: ContractTransaction | undefined = undefined
+        let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.CreateRole,
@@ -742,15 +756,15 @@ export class ZionClient implements EntitlementsDelegate {
             },
         })
 
+        const args = [spaceNetworkId, roleName, permissions, tokens, users, signer] as const
+
         try {
-            transaction = await this.spaceDapp.createRole(
-                spaceNetworkId,
-                roleName,
-                permissions,
-                tokens,
-                users,
-                signer,
-            )
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendCreateRoleOp([...args])
+            } else {
+                transaction = await this.spaceDapp.createRole(...args)
+            }
+
             console.log(`[createRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
@@ -780,9 +794,15 @@ export class ZionClient implements EntitlementsDelegate {
         const txResult = await this._waitForBlockchainTransaction(context)
 
         if (txResult.status === TransactionStatus.Success && txResult.data?.spaceNetworkId) {
-            const roleId = BigNumber.from(txResult.receipt.logs[0].topics[2]).toNumber()
+            // w/o user ops, the first event log contains the relevant data
+            // w/ user ops, the first event log is the user op, so get the second log
+            const logTarget = this.isAccountAbstractionEnabled()
+                ? txResult.receipt.logs[1]
+                : txResult.receipt.logs[0]
+
+            const roleId = BigNumber.from(logTarget.topics[2]).toNumber()
             // John: how can we best decode this 32 byte hex string to a human readable string ?
-            const roleName = txResult.receipt.logs[0].topics[1]
+            const roleName = logTarget.topics[1]
             const roleIdentifier: RoleIdentifier = {
                 roleId,
                 name: roleName,
@@ -885,7 +905,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!signer) {
             throw new SignerUndefinedError()
         }
-        let transaction: ContractTransaction | undefined = undefined
+        let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.UpdateRole,
@@ -893,18 +913,22 @@ export class ZionClient implements EntitlementsDelegate {
                 spaceStreamId: spaceNetworkId,
             },
         })
+
+        const args = {
+            spaceNetworkId,
+            roleId,
+            roleName,
+            permissions,
+            tokens,
+            users,
+        }
         try {
-            transaction = await this.spaceDapp.updateRole(
-                {
-                    spaceNetworkId,
-                    roleId,
-                    roleName,
-                    permissions,
-                    tokens,
-                    users,
-                },
-                signer,
-            )
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendUpdateRoleOp([args, signer])
+            } else {
+                transaction = await this.spaceDapp.updateRole(args, signer)
+            }
+
             console.log(`[updateRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
@@ -955,7 +979,7 @@ export class ZionClient implements EntitlementsDelegate {
         if (!signer) {
             throw new SignerUndefinedError()
         }
-        let transaction: ContractTransaction | undefined = undefined
+        let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.DeleteRole,
@@ -964,7 +988,11 @@ export class ZionClient implements EntitlementsDelegate {
             },
         })
         try {
-            transaction = await this.spaceDapp.deleteRole(spaceNetworkId, roleId, signer)
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendDeleteRoleOp([spaceNetworkId, roleId, signer])
+            } else {
+                transaction = await this.spaceDapp.deleteRole(spaceNetworkId, roleId, signer)
+            }
             console.log(`[deleteRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
@@ -1455,14 +1483,19 @@ export class ZionClient implements EntitlementsDelegate {
         const walletAddress = await wallet.getAddress()
         const walletLink = this.spaceDapp.getWalletLink()
 
-        let transaction: ContractTransaction | undefined = undefined
+        let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.LinkWallet,
         })
 
         try {
-            transaction = await walletLink.linkWallet(rootKey, wallet)
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendWalletLinkOp([rootKey, wallet])
+            } else {
+                transaction = await walletLink.linkWallet(rootKey, wallet)
+            }
+            console.log(`[linkWallet] transaction created` /*, transaction*/)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             const parsedError = walletLink.parseError(err)

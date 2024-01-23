@@ -242,6 +242,11 @@ export class SpaceDapp implements ISpaceDapp {
         if (!town) {
             throw new Error(`Town with spaceId "${params.spaceId}" is not found.`)
         }
+        const encodedCallData = await this.encodedUpdateChannelData(town, params)
+        return town.Multicall.write(signer).multicall(encodedCallData)
+    }
+
+    public async encodedUpdateChannelData(town: Town, params: UpdateChannelParams) {
         // data for the multicall
         const encodedCallData: BytesLike[] = []
         // update the channel metadata
@@ -261,7 +266,7 @@ export class SpaceDapp implements ISpaceDapp {
         for (const callData of encodedUpdateChannelRoles) {
             encodedCallData.push(callData)
         }
-        return town.Multicall.write(signer).multicall(encodedCallData)
+        return encodedCallData
     }
 
     public async updateRole(
@@ -443,7 +448,7 @@ export class SpaceDapp implements ISpaceDapp {
         return encodedCallData
     }
 
-    private async createUpdatedEntitlements(
+    public async createUpdatedEntitlements(
         town: Town,
         params: UpdateRoleParams,
     ): Promise<IRolesBase.CreateEntitlementStruct[]> {

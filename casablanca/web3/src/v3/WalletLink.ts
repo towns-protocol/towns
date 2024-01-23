@@ -96,6 +96,10 @@ export class WalletLink {
 
         return await this.walletLinkShim.write(rootKey).removeLink(walletAddress)
     }
+
+    public getInterface() {
+        return this.walletLinkShim.interface
+    }
 }
 
 function packAddressWithNonce(address: string, nonce: BigNumber): Uint8Array {
