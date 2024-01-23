@@ -166,7 +166,7 @@ export class SyncedStream extends Stream {
         }
 
         const minipoolEvents = this.view.timeline
-            .filter((e) => e.confirmedEventNum !== undefined)
+            .filter((e) => e.confirmedEventNum === undefined)
             .map((e) => e.remoteEvent)
             .filter(isDefined)
 
