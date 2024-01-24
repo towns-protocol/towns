@@ -302,7 +302,7 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
     const [space, setSpace] = useState<SpaceData | undefined>(undefined)
 
     useEffect(() => {
-        if (!stream || !casablancaClient || isLoading) {
+        if (!stream || !casablancaClient) {
             return
         }
         if (stream.view.contentKind !== 'spaceContent') {
@@ -372,7 +372,7 @@ function rollupSpace(
 
     return {
         id: stream.view.streamId,
-        name: spaceName ?? stream.view.streamId,
+        name: spaceName ?? '',
         avatarSrc: '',
         channelGroups: [
             {
