@@ -26,14 +26,22 @@ export function useCasablancaStreamMembership(
             }
         }
 
+        const onStreamInitialized = (streamId: string) => {
+            if (streamId === roomId) {
+                updateMember()
+            }
+        }
+
         channelStream.on('streamNewUserJoined', onStreamUserEvent)
         channelStream.on('streamNewUserInvited', onStreamUserEvent)
         channelStream.on('streamUserLeft', onStreamUserEvent)
+        channelStream.on('streamInitialized', onStreamInitialized)
 
         return () => {
             channelStream.off('streamNewUserJoined', onStreamUserEvent)
             channelStream.off('streamNewUserInvited', onStreamUserEvent)
             channelStream.off('streamUserLeft', onStreamUserEvent)
+            channelStream.off('streamInitialized', onStreamInitialized)
         }
     }, [roomId, channelStream, userId])
 
