@@ -21,7 +21,6 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
-import { useRequestShakePermissions } from '@components/BugReportButton/ShakeToReport'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const navigate = useNavigate()
@@ -119,15 +118,6 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
         setTheme(theme === 'light' ? 'dark' : 'light')
     }
 
-    const { requestPermission, revokePermission, permissionStatus } = useRequestShakePermissions()
-    const onActivateShake = useCallback(() => {
-        if (permissionStatus === 'granted') {
-            revokePermission()
-        } else {
-            requestPermission()
-        }
-    }, [permissionStatus, requestPermission, revokePermission])
-
     const isCurrentUser = user?.userId === profileUser?.userId
 
     const { isTouch } = useDevice()
@@ -210,21 +200,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
                             </Stack>
                         </PanelButton>
                     )}
-                    {isTouch && (
-                        <PanelButton onClick={onActivateShake}>
-                            <Box width="height_md" alignItems="center">
-                                <Icon
-                                    type={permissionStatus === 'granted' ? 'shakeOff' : 'shake'}
-                                    size="square_sm"
-                                />
-                            </Box>
-                            {permissionStatus === 'granted' ? (
-                                <Paragraph color="gray1">Disable Shake to Report</Paragraph>
-                            ) : (
-                                <Paragraph color="gray1">Enable Shake to Report</Paragraph>
-                            )}
-                        </PanelButton>
-                    )}
+
                     <PanelButton onClick={onThemeClick}>
                         <Box
                             border

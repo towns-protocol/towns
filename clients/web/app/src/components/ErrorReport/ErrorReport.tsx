@@ -25,6 +25,8 @@ import { PanelButton } from '@components/Panel/Panel'
 import { bufferedLogger } from 'utils/wrappedlogger'
 import { useStore } from 'store/store'
 import { BetaDebugger } from 'BetaDebugger'
+import { useRequestShakePermissions } from '@components/BugReportButton/ShakeToReport'
+import { useDevice } from 'hooks/useDevice'
 
 const FormStateKeys = {
     name: 'name',
@@ -140,6 +142,7 @@ export const ErrorReportForm = () => {
     const [success, setSuccess] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
     const { mutate: doCustomError, isLoading } = useMutation(postCustomError)
+    const { isTouch } = useDevice()
 
     const { setSidePanel, setBugReportCredentials, bugReportCredentials } = useStore(
         ({ setSidePanel, setBugReportCredentials, bugReportCredentials }) => ({
@@ -152,6 +155,15 @@ export const ErrorReportForm = () => {
     const onCancel = useCallback(() => {
         setSidePanel(null)
     }, [setSidePanel])
+
+    const { requestPermission, revokePermission, permissionStatus } = useRequestShakePermissions()
+    const onActivateShake = useCallback(() => {
+        if (permissionStatus === 'granted') {
+            revokePermission()
+        } else {
+            requestPermission()
+        }
+    }, [permissionStatus, requestPermission, revokePermission])
 
     if (success) {
         return (
@@ -235,6 +247,21 @@ export const ErrorReportForm = () => {
                             {...register(FormStateKeys.comments)}
                         />
                     </MotionBox>
+                    {isTouch && (
+                        <PanelButton onClick={onActivateShake}>
+                            <Box width="height_md" alignItems="center">
+                                <Icon
+                                    type={permissionStatus === 'granted' ? 'shakeOff' : 'shake'}
+                                    size="square_sm"
+                                />
+                            </Box>
+                            {permissionStatus === 'granted' ? (
+                                <Paragraph color="gray1">Disable Shake to Report</Paragraph>
+                            ) : (
+                                <Paragraph color="gray1">Enable Shake to Report</Paragraph>
+                            )}
+                        </PanelButton>
+                    )}
                     <DebugInfo />
                     {errorMessage && (
                         <Stack paddingBottom="sm">
