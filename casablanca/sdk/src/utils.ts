@@ -1,6 +1,7 @@
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { bin_toHexString } from '@river/waterproof'
+import { bin_toHexString, isJest } from '@river/waterproof'
 import { Permission } from '@river/web3'
+import { isBrowser, isNode } from 'browser-or-node'
 
 export function unsafeProp<K extends keyof any | undefined>(prop: K): boolean {
     return prop === '__proto__' || prop === 'prototype' || prop === 'constructor'
@@ -100,4 +101,18 @@ export function genPersistenceStoreName(userId: string, url?: string): string {
         .replaceAll('/', '')
 
     return `persistence-${userId}-${persistenceStoreSuffix}`
+}
+
+export function getEnvVar(key: string, defaultValue: string = ''): string {
+    if (isNode || isJest()) {
+        return process.env[key] ?? defaultValue
+    }
+
+    if (isBrowser) {
+        if (localStorage != undefined) {
+            return localStorage.getItem(key) ?? defaultValue
+        }
+    }
+
+    return defaultValue
 }

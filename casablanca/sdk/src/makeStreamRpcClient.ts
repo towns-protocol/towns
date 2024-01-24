@@ -10,11 +10,11 @@ import {
     Code,
 } from '@connectrpc/connect'
 import { AnyMessage } from '@bufbuild/protobuf'
-import { createConnectTransport } from '@connectrpc/connect-web'
+import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-web'
 import { Err, StreamService } from '@river/proto'
 import { check, dlog, dlogError } from '@river/waterproof'
 import { genShortId } from './id'
-import { isIConnectError } from './utils'
+import { getEnvVar, isIConnectError } from './utils'
 
 const logInfo = dlog('csb:rpc:info', { defaultEnabled: true })
 const logCallsHistogram = dlog('csb:rpc:histogram', { defaultEnabled: true })
@@ -337,11 +337,21 @@ export function makeStreamRpcClient(
     if (typeof dest === 'string') {
         url = randomUrlSelector(dest)
         logInfo('makeStreamRpcClient: Connecting to url=', url, ' allUrls=', dest)
-        transport = createConnectTransport({
+        const options: ConnectTransportOptions = {
             baseUrl: url,
-            useBinaryFormat: true,
             interceptors: [retryInterceptor(retryParams), loggingInterceptor(transportId)],
-        })
+        }
+        if (getEnvVar('RIVER_DEBUG_TRANSPORT') !== 'true') {
+            options.useBinaryFormat = true
+        } else {
+            logInfo('makeStreamRpcClient: running in debug mode, using JSON format')
+            options.useBinaryFormat = false
+            options.jsonOptions = {
+                emitDefaultValues: true,
+                useProtoFieldName: true,
+            }
+        }
+        transport = createConnectTransport(options)
     } else {
         logInfo('makeStreamRpcClient: Connecting to provided transport')
         transport = dest
