@@ -1,8 +1,8 @@
 import TypedEmitter from 'typed-emitter'
-import { EmittedEvents } from './client'
 import { EncryptedData } from '@river/proto'
 import { usernameChecksum } from './utils'
 import { dlog } from '@river/waterproof'
+import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export class UserMetadata_Usernames {
     log = dlog('csb:streams:usernames')
@@ -25,8 +25,9 @@ export class UserMetadata_Usernames {
         encryptedData: EncryptedData,
         userId: string,
         pending: boolean = true,
-        cleartext?: string,
-        emitter?: TypedEmitter<EmittedEvents>,
+        cleartext: string | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {
         if (!encryptedData.checksum) {
             this.log('no checksum in encrypted data')
@@ -45,7 +46,7 @@ export class UserMetadata_Usernames {
         } else {
             // Clear the plaintext username for this user on name change
             this.plaintextUsernames.delete(userId)
-            emitter?.emit('newEncryptedContent', this.streamId, eventId, {
+            encryptionEmitter?.emit('newEncryptedContent', this.streamId, eventId, {
                 kind: 'text',
                 content: encryptedData,
             })
@@ -55,10 +56,10 @@ export class UserMetadata_Usernames {
             this.confirmedUserIds.add(userId)
         }
 
-        this.emitUsernameUpdated(eventId, emitter)
+        this.emitUsernameUpdated(eventId, stateEmitter)
     }
 
-    onConfirmEvent(eventId: string, emitter?: TypedEmitter<EmittedEvents>) {
+    onConfirmEvent(eventId: string, emitter?: TypedEmitter<StreamStateEvents>) {
         const event = this.usernameEvents.get(eventId)
         if (!event) {
             return
@@ -73,7 +74,11 @@ export class UserMetadata_Usernames {
         }
     }
 
-    onDecryptedContent(eventId: string, content: string, emitter?: TypedEmitter<EmittedEvents>) {
+    onDecryptedContent(
+        eventId: string,
+        content: string,
+        emitter?: TypedEmitter<StreamStateEvents>,
+    ) {
         const event = this.usernameEvents.get(eventId)
         if (!event) {
             return
@@ -105,7 +110,7 @@ export class UserMetadata_Usernames {
         return !this.checksums.has(checksum)
     }
 
-    private emitUsernameUpdated(eventId: string, emitter?: TypedEmitter<EmittedEvents>) {
+    private emitUsernameUpdated(eventId: string, emitter?: TypedEmitter<StreamStateEvents>) {
         const event = this.usernameEvents.get(eventId)
         if (!event) {
             return

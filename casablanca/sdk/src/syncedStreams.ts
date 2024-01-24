@@ -1,13 +1,12 @@
 import { DLogger, dlog, dlogError, isDefined, shortenHexString } from '@river/waterproof'
 import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river/proto'
-
-import { EmittedEvents } from './client'
 import { PersistenceStore } from './persistenceStore'
 import { Stream } from './stream'
 import { StreamRpcClientType, errorContains } from './makeStreamRpcClient'
 import TypedEmitter from 'typed-emitter'
 import { unpackStreamAndCookie, unpackStream } from './sign'
 import { SyncedStream } from './syncedStream'
+import { StreamStateEvents } from './streamEvents'
 
 export enum SyncState {
     Canceling = 'Canceling', // syncLoop, maybe syncId if was syncing, not is was starting or retrying
@@ -56,7 +55,7 @@ export class SyncedStreams {
     private readonly logStream: DLogger
     private readonly logError: DLogger
     // clientEmitter is used to proxy the events from the streams to the client
-    private readonly clientEmitter: TypedEmitter<EmittedEvents>
+    private readonly clientEmitter: TypedEmitter<StreamStateEvents>
     private readonly persistenceStore: PersistenceStore
 
     // Starting the client creates the syncLoop
@@ -84,7 +83,7 @@ export class SyncedStreams {
         userId: string,
         rpcClient: StreamRpcClientType,
         persistenceStore: PersistenceStore,
-        clientEmitter: TypedEmitter<EmittedEvents>,
+        clientEmitter: TypedEmitter<StreamStateEvents>,
     ) {
         this.userId = userId
         this.rpcClient = rpcClient

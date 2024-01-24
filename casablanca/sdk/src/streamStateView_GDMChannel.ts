@@ -1,12 +1,11 @@
 import TypedEmitter from 'typed-emitter'
 import { GdmChannelPayload, GdmChannelPayload_Snapshot, Snapshot } from '@river/proto'
-import { EmittedEvents } from './client'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { ConfirmedTimelineEvent, ParsedEvent, RemoteTimelineEvent } from './types'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { DecryptedContent } from './encryptedContentTypes'
-import { StreamEvents } from './streamEvents'
+import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { check, logNever } from '@river/waterproof'
 
@@ -30,24 +29,29 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
         snapshot: Snapshot,
         content: GdmChannelPayload_Snapshot,
         cleartexts: Record<string, string> | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        this.memberships.applySnapshot(content.memberships, emitter)
+        this.memberships.applySnapshot(content.memberships, encryptionEmitter)
         this.userMetadata.applySnapshot(
             content.usernames,
             content.displayNames,
             cleartexts,
-            emitter,
+            encryptionEmitter,
         )
         if (content.channelProperties) {
-            this.channelMetadata.applySnapshot(content.channelProperties, cleartexts, emitter)
+            this.channelMetadata.applySnapshot(
+                content.channelProperties,
+                cleartexts,
+                encryptionEmitter,
+            )
         }
     }
 
     prependEvent(
         event: RemoteTimelineEvent,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'gdmChannelPayload')
         const payload: GdmChannelPayload = event.remoteEvent.event.payload.value
@@ -61,7 +65,7 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                     event,
                     payload.content.value,
                     cleartext,
-                    emitter,
+                    encryptionEmitter,
                 )
                 break
             case 'membership':
@@ -80,7 +84,8 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
     appendEvent(
         event: RemoteTimelineEvent,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'gdmChannelPayload')
         const payload: GdmChannelPayload = event.remoteEvent.event.payload.value
@@ -94,7 +99,7 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                     event,
                     payload.content.value,
                     cleartext,
-                    emitter,
+                    encryptionEmitter,
                 )
                 this.updateLastEvent(event.remoteEvent)
                 break
@@ -102,7 +107,7 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                 this.memberships.appendMembershipEvent(
                     event.hashStr,
                     payload.content.value,
-                    emitter,
+                    encryptionEmitter,
                 )
                 break
             case 'displayName':
@@ -113,11 +118,12 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                     payload.content.case,
                     event.creatorUserId,
                     cleartext,
-                    emitter,
+                    encryptionEmitter,
+                    stateEmitter,
                 )
                 break
             case 'channelProperties':
-                this.channelMetadata.appendEvent(event, cleartext, emitter)
+                this.channelMetadata.appendEvent(event, cleartext, encryptionEmitter)
                 break
             case undefined:
                 break

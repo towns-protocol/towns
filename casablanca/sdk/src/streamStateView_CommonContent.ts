@@ -5,10 +5,10 @@ import {
     CommonPayload_KeySolicitation,
     CommonPayload_KeyFulfillment,
 } from '@river/proto'
-import { EmittedEvents } from './client'
 import { ConfirmedTimelineEvent, KeySolicitationContent, ParsedEvent } from './types'
 import { removeCommon } from './utils'
 import { logNever } from '@river/waterproof'
+import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 // common payloads exist in all streams, this data structure helps aggregates them
 export class StreamStateView_CommonContent {
@@ -19,7 +19,10 @@ export class StreamStateView_CommonContent {
         this.streamId = streamId
     }
 
-    applySnapshot(snapshot: Snapshot, emitter: TypedEmitter<EmittedEvents> | undefined): void {
+    applySnapshot(
+        snapshot: Snapshot,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+    ): void {
         if (!snapshot.common) {
             return
         }
@@ -36,7 +39,7 @@ export class StreamStateView_CommonContent {
         }, {} as Record<string, KeySolicitationContent[]>)
         for (const [userId, solicitation] of Object.entries(this.solicitations)) {
             for (const event of solicitation) {
-                emitter?.emit('newKeySolicitation', this.streamId, userId, event)
+                encryptionEmitter?.emit('newKeySolicitation', this.streamId, userId, event)
             }
         }
     }
@@ -44,7 +47,8 @@ export class StreamStateView_CommonContent {
     prependCommonContent(
         _event: ParsedEvent,
         _payload: CommonPayload,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
+        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         // nothing to do
     }
@@ -52,14 +56,20 @@ export class StreamStateView_CommonContent {
     appendCommonContent(
         event: ParsedEvent,
         payload: CommonPayload,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         switch (payload.content.case) {
             case 'keySolicitation':
-                this.applySolicitation(event.creatorUserId, payload.content.value, emitter)
+                this.applySolicitation(
+                    event.creatorUserId,
+                    payload.content.value,
+                    encryptionEmitter,
+                    stateEmitter,
+                )
                 break
             case 'keyFulfillment':
-                this.applyFulfillment(payload.content.value, emitter)
+                this.applyFulfillment(payload.content.value, encryptionEmitter)
                 break
             case undefined:
                 break
@@ -70,7 +80,8 @@ export class StreamStateView_CommonContent {
 
     onConfirmedEvent(
         _event: ConfirmedTimelineEvent,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
+        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         // nothing to do
     }
@@ -78,7 +89,8 @@ export class StreamStateView_CommonContent {
     private applySolicitation(
         creator: string,
         solicitation: CommonPayload_KeySolicitation,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         if (!this.solicitations[creator]) {
             this.solicitations[creator] = [
@@ -95,12 +107,12 @@ export class StreamStateView_CommonContent {
             )
             this.solicitations[creator].push(solicitation)
         }
-        emitter?.emit('newKeySolicitation', this.streamId, creator, solicitation)
+        encryptionEmitter?.emit('newKeySolicitation', this.streamId, creator, solicitation)
     }
 
     private applyFulfillment(
         fulfillment: CommonPayload_KeyFulfillment,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         const index = this.solicitations[fulfillment.userId]?.findIndex(
             (x) => x.deviceKey === fulfillment.deviceKey,
@@ -116,6 +128,11 @@ export class StreamStateView_CommonContent {
             sessionIds: [...removeCommon(prev.sessionIds, fulfillment.sessionIds)],
         }
         this.solicitations[fulfillment.userId][index] = newEvent
-        emitter?.emit('updatedKeySolicitation', this.streamId, fulfillment.userId, newEvent)
+        encryptionEmitter?.emit(
+            'updatedKeySolicitation',
+            this.streamId,
+            fulfillment.userId,
+            newEvent,
+        )
     }
 }

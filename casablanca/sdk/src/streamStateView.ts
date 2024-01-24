@@ -20,7 +20,6 @@ import {
     isLocalEvent,
     makeRemoteTimelineEvent,
 } from './types'
-import { EmittedEvents } from './client'
 import { StreamStateView_Space } from './streamStateView_Space'
 import { StreamStateView_Channel } from './streamStateView_Channel'
 import { StreamStateView_User } from './streamStateView_User'
@@ -49,6 +48,7 @@ import { DecryptedContent, DecryptedContentError } from './encryptedContentTypes
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
+import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import isEqual from 'lodash/isEqual'
 
 const log = dlog('csb:streams')
@@ -188,7 +188,7 @@ export class StreamStateView {
     applySnapshot(
         snapshot: Snapshot,
         cleartexts: Record<string, string> | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
         switch (snapshot.content.case) {
             case 'spaceContent':
@@ -196,18 +196,22 @@ export class StreamStateView {
                     snapshot,
                     snapshot.content.value,
                     cleartexts,
-                    emitter,
+                    encryptionEmitter,
                 )
                 break
             case 'channelContent':
-                this.channelContent.applySnapshot(snapshot, snapshot.content.value, emitter)
+                this.channelContent.applySnapshot(
+                    snapshot,
+                    snapshot.content.value,
+                    encryptionEmitter,
+                )
                 break
             case 'dmChannelContent':
                 this.dmChannelContent.applySnapshot(
                     snapshot,
                     snapshot.content.value,
                     cleartexts,
-                    emitter,
+                    encryptionEmitter,
                 )
                 break
             case 'gdmChannelContent':
@@ -215,23 +219,31 @@ export class StreamStateView {
                     snapshot,
                     snapshot.content.value,
                     cleartexts,
-                    emitter,
+                    encryptionEmitter,
                 )
                 break
             case 'mediaContent':
-                this.mediaContent.applySnapshot(snapshot, snapshot.content.value, emitter)
+                this.mediaContent.applySnapshot(snapshot, snapshot.content.value, encryptionEmitter)
                 break
             case 'userContent':
-                this.userContent.applySnapshot(snapshot, snapshot.content.value, emitter)
+                this.userContent.applySnapshot(snapshot, snapshot.content.value, encryptionEmitter)
                 break
             case 'userDeviceKeyContent':
-                this.userDeviceKeyContent.applySnapshot(snapshot, snapshot.content.value, emitter)
+                this.userDeviceKeyContent.applySnapshot(
+                    snapshot,
+                    snapshot.content.value,
+                    encryptionEmitter,
+                )
                 break
             case 'userSettingsContent':
                 this.userSettingsContent.applySnapshot(snapshot, snapshot.content.value)
                 break
             case 'userToDeviceContent':
-                this.userToDeviceContent.applySnapshot(snapshot, snapshot.content.value, emitter)
+                this.userToDeviceContent.applySnapshot(
+                    snapshot,
+                    snapshot.content.value,
+                    encryptionEmitter,
+                )
                 break
             case undefined:
                 check(false, `Snapshot has no content ${this.streamId}`, Err.STREAM_BAD_EVENT)
@@ -239,14 +251,15 @@ export class StreamStateView {
             default:
                 logNever(snapshot.content)
         }
-        this.commonContent.applySnapshot(snapshot, emitter)
+        this.commonContent.applySnapshot(snapshot, encryptionEmitter)
     }
 
     private appendStreamAndCookie(
         nextSyncCookie: SyncCookie,
         minipoolEvents: ParsedEvent[],
         cleartexts: Record<string, string> | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): {
         appended: StreamTimelineEvent[]
         updated: StreamTimelineEvent[]
@@ -271,7 +284,8 @@ export class StreamStateView {
                 const newlyConfirmed = this.processAppendedEvent(
                     event,
                     cleartexts?.[event.hashStr],
-                    emitter,
+                    encryptionEmitter,
+                    stateEmitter,
                 )
                 appended.push(event)
                 if (newlyConfirmed) {
@@ -286,7 +300,8 @@ export class StreamStateView {
     private processAppendedEvent(
         timelineEvent: RemoteTimelineEvent,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): ConfirmedTimelineEvent[] | undefined {
         check(!this.events.has(timelineEvent.hashStr))
         this.events.set(timelineEvent.hashStr, timelineEvent)
@@ -319,18 +334,28 @@ export class StreamStateView {
                         event.miniblockNum = payload.value.miniblockNum
                         event.confirmedEventNum = payload.value.eventNumOffset + BigInt(i)
                         check(isConfirmedEvent(event), `Event is not confirmed ${eventId}`)
-                        this.getContent().onConfirmedEvent(event, emitter)
-                        this.commonContent.onConfirmedEvent(event, emitter)
+                        this.getContent().onConfirmedEvent(event, stateEmitter)
+                        this.commonContent.onConfirmedEvent(event, encryptionEmitter, stateEmitter)
                         confirmed.push(event)
                     }
                     break
                 case 'commonPayload':
-                    this.commonContent.appendCommonContent(event, payload.value, emitter)
+                    this.commonContent.appendCommonContent(
+                        event,
+                        payload.value,
+                        encryptionEmitter,
+                        stateEmitter,
+                    )
                     break
                 case undefined:
                     break
                 default:
-                    this.getContent().appendEvent(timelineEvent, cleartext, emitter)
+                    this.getContent().appendEvent(
+                        timelineEvent,
+                        cleartext,
+                        encryptionEmitter,
+                        stateEmitter,
+                    )
             }
         } catch (e) {
             logError(`StreamStateView::Error appending event ${event.hashStr}`, e)
@@ -341,7 +366,8 @@ export class StreamStateView {
     private processPrependedEvent(
         timelineEvent: RemoteTimelineEvent,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(!this.events.has(timelineEvent.hashStr))
         this.events.set(timelineEvent.hashStr, timelineEvent)
@@ -357,7 +383,12 @@ export class StreamStateView {
                     this.prevSnapshotMiniblockNum = payload.value.prevSnapshotMiniblockNum
                     break
                 case 'commonPayload':
-                    this.commonContent.prependCommonContent(event, payload.value, emitter)
+                    this.commonContent.prependCommonContent(
+                        event,
+                        payload.value,
+                        encryptionEmitter,
+                        stateEmitter,
+                    )
                     break
                 case undefined:
                     logError(
@@ -366,7 +397,12 @@ export class StreamStateView {
                     )
                     break
                 default:
-                    this.getContent().prependEvent(timelineEvent, cleartext, emitter)
+                    this.getContent().prependEvent(
+                        timelineEvent,
+                        cleartext,
+                        encryptionEmitter,
+                        stateEmitter,
+                    )
             }
         } catch (e) {
             logError(`StreamStateView::Error prepending event ${event.hashStr}`, e)
@@ -400,7 +436,7 @@ export class StreamStateView {
     updateDecryptedContent(
         eventId: string,
         content: DecryptedContent,
-        emitter: TypedEmitter<EmittedEvents>,
+        emitter: TypedEmitter<StreamStateEvents>,
     ) {
         this.getContent().onDecryptedContent(eventId, content, emitter)
         const timelineEvent = this.events.get(eventId)
@@ -425,7 +461,7 @@ export class StreamStateView {
     updateDecryptedContentError(
         eventId: string,
         content: DecryptedContentError,
-        emitter: TypedEmitter<EmittedEvents>,
+        emitter: TypedEmitter<StreamStateEvents>,
     ) {
         const timelineEvent = this.events.get(eventId)
         if (timelineEvent && !isEqual(timelineEvent.decryptedContentError, content)) {
@@ -444,7 +480,7 @@ export class StreamStateView {
         miniblocks: ParsedMiniblock[],
         prevSnapshotMiniblockNum: bigint,
         cleartexts: Record<string, string> | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
         check(miniblocks.length > 0, `Stream has no miniblocks ${this.streamId}`, Err.STREAM_EMPTY)
         // parse the blocks
@@ -478,12 +514,12 @@ export class StreamStateView {
         this.timeline.push(...block0Events)
         for (let i = block0Events.length - 1; i >= 0; i--) {
             const event = block0Events[i]
-            this.processPrependedEvent(event, cleartexts?.[event.hashStr], emitter)
+            this.processPrependedEvent(event, cleartexts?.[event.hashStr], emitter, undefined)
         }
         // append the new block events
         this.timeline.push(...rest)
         for (const event of rest) {
-            this.processAppendedEvent(event, cleartexts?.[event.hashStr], emitter)
+            this.processAppendedEvent(event, cleartexts?.[event.hashStr], emitter, undefined)
         }
         // initialize the lastEventNum
         const lastBlock = miniblocks[miniblocks.length - 1]
@@ -491,7 +527,7 @@ export class StreamStateView {
         // and the prev miniblock has (if there were more than 1 miniblocks, this should already be set)
         this.prevMiniblockHash = lastBlock.hash
         // append the minipool events
-        this.appendStreamAndCookie(nextSyncCookie, minipoolEvents, cleartexts, emitter)
+        this.appendStreamAndCookie(nextSyncCookie, minipoolEvents, cleartexts, emitter, undefined)
         this.prevSnapshotMiniblockNum = prevSnapshotMiniblockNum
         // let everyone know
         this.isInitialized = true
@@ -502,12 +538,13 @@ export class StreamStateView {
         events: ParsedEvent[],
         nextSyncCookie: SyncCookie,
         cleartexts: Record<string, string> | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        emitter: TypedEmitter<StreamEvents>,
     ) {
         const { appended, updated, confirmed } = this.appendStreamAndCookie(
             nextSyncCookie,
             events,
             cleartexts,
+            emitter,
             emitter,
         )
         emitter?.emit('streamUpdated', this.streamId, this.contentKind, {
@@ -521,7 +558,7 @@ export class StreamStateView {
         miniblocks: ParsedMiniblock[],
         cleartexts: Record<string, string> | undefined,
         terminus: boolean,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        emitter: TypedEmitter<StreamEvents> | undefined,
     ) {
         const prependedFull = miniblocks.flatMap((mb) =>
             mb.events.map((parsedEvent, i) =>
@@ -549,7 +586,7 @@ export class StreamStateView {
         // prepend the new block events in reverse order
         for (let i = prepended.length - 1; i >= 0; i--) {
             const event = prepended[i]
-            this.processPrependedEvent(event, cleartexts?.[event.hashStr], emitter)
+            this.processPrependedEvent(event, cleartexts?.[event.hashStr], emitter, emitter)
         }
 
         if (this.miniblockInfo && terminus) {
@@ -561,7 +598,7 @@ export class StreamStateView {
 
     appendLocalEvent(
         channelMessage: ChannelMessage,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        emitter: TypedEmitter<StreamEvents> | undefined,
     ) {
         const localId = genLocalId()
         const timelineEvent = {
@@ -582,7 +619,7 @@ export class StreamStateView {
     updateLocalEvent(
         localId: string,
         parsedEventHash: string,
-        emitter: TypedEmitter<EmittedEvents>,
+        emitter: TypedEmitter<StreamEvents>,
     ) {
         const timelineEvent = this.events.get(localId)
         check(isDefined(timelineEvent), `Local event not found ${localId}`)

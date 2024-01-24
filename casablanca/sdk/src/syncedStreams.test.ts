@@ -8,12 +8,11 @@ import { SyncedStreams } from './syncedStreams'
 import { makeDonePromise, makeRandomUserContext, makeTestRpcClient } from './util.test'
 import { makeUserStreamId, userIdFromAddress } from './id'
 import { make_UserPayload_Inception } from './types'
-
-import { EmittedEvents } from './client'
 import { PersistenceStore } from './persistenceStore'
 import { dlog } from '@river/waterproof'
 import { mock } from 'jest-mock-extended'
 import TypedEmitter from 'typed-emitter'
+import { StreamEvents } from './streamEvents'
 
 const log = dlog('csb:test:syncedStreams')
 
@@ -50,9 +49,9 @@ describe('syncStreams', () => {
         })
         const { streamAndCookie } = await unpackStream(aliceUserStream.stream)
 
-        const mockClientEmitter = {} as TypedEmitter<EmittedEvents>
+        const mockClientEmitter = {} as TypedEmitter<StreamEvents>
 
-        mockClientEmitter.emit = (event: keyof EmittedEvents, ...args: any[]): boolean => {
+        mockClientEmitter.emit = (event: keyof StreamEvents, ...args: any[]): boolean => {
             log('event', event, args)
             if (args[0]) {
                 done.done()

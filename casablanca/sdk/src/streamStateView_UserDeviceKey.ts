@@ -1,6 +1,5 @@
 import TypedEmitter from 'typed-emitter'
 import { RemoteTimelineEvent } from './types'
-import { EmittedEvents } from './client'
 import {
     Snapshot,
     UserDeviceKeyPayload,
@@ -10,6 +9,7 @@ import {
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { UserDevice, check, logNever } from '@river/waterproof'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
+import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -29,26 +29,28 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
     applySnapshot(
         snapshot: Snapshot,
         content: UserDeviceKeyPayload_Snapshot,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         // dispatch events for all device keys, todo this seems inefficient?
         for (const value of content.megolmDevices) {
-            this.addUserDeviceKey(value, emitter)
+            this.addUserDeviceKey(value, encryptionEmitter)
         }
     }
 
     prependEvent(
         _event: RemoteTimelineEvent,
         _cleartext: string | undefined,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
+        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         // nohing to do
     }
 
     appendEvent(
         event: RemoteTimelineEvent,
-        cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        _cleartext: string | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userDeviceKeyPayload')
         const payload: UserDeviceKeyPayload = event.remoteEvent.event.payload.value
@@ -56,7 +58,7 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
             case 'inception':
                 break
             case 'megolmDevice':
-                this.addUserDeviceKey(payload.content.value, emitter)
+                this.addUserDeviceKey(payload.content.value, encryptionEmitter)
                 break
             case undefined:
                 break
@@ -67,7 +69,7 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
 
     private addUserDeviceKey(
         value: UserDeviceKeyPayload_MegolmDevice,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
         const device = {
             deviceKey: value.deviceKey,
@@ -78,6 +80,6 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
             this.megolmKeys.splice(existing, 1)
         }
         this.megolmKeys.push(device)
-        emitter?.emit('userDeviceKeyMessage', this.streamId, this.streamCreatorId, device)
+        encryptionEmitter?.emit('userDeviceKeyMessage', this.streamId, this.streamCreatorId, device)
     }
 }

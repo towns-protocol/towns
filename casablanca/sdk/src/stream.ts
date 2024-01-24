@@ -1,14 +1,13 @@
 import { MembershipOp, Snapshot, SyncCookie } from '@river/proto'
-
 import { DLogger } from '@river/waterproof'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView } from './streamStateView'
-import { EmittedEvents } from './client'
 import { ParsedEvent, ParsedMiniblock } from './types'
+import { StreamEvents } from './streamEvents'
 
-export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
-    readonly clientEmitter: TypedEmitter<EmittedEvents>
+export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
+    readonly clientEmitter: TypedEmitter<StreamEvents>
     readonly logEmitFromStream: DLogger
     readonly userId: string
     view: StreamStateView
@@ -16,7 +15,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     constructor(
         userId: string,
         streamId: string,
-        clientEmitter: TypedEmitter<EmittedEvents>,
+        clientEmitter: TypedEmitter<StreamEvents>,
         logEmitFromStream: DLogger,
     ) {
         super()
@@ -70,7 +69,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.view.prependEvents(miniblocks, cleartexts, terminus, this)
     }
 
-    emit<E extends keyof EmittedEvents>(event: E, ...args: Parameters<EmittedEvents[E]>): boolean {
+    emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
         this.logEmitFromStream(event, ...args)
         this.clientEmitter.emit(event, ...args)
         return super.emit(event, ...args)
@@ -98,18 +97,18 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
      * Wait for a stream event to be emitted
      * optionally pass a condition function to check the event args
      */
-    public async waitFor<E extends keyof EmittedEvents>(
+    public async waitFor<E extends keyof StreamEvents>(
         event: E,
-        fn?: (...args: Parameters<EmittedEvents[E]>) => boolean,
+        fn?: (...args: Parameters<StreamEvents[E]>) => boolean,
         opts: { timeoutMs: number } = { timeoutMs: 20000 },
     ): Promise<void> {
         this.logEmitFromStream('waitFor', this.streamId, event)
         return new Promise((resolve, reject) => {
             // Set up the event listener
-            const handler = (...args: Parameters<EmittedEvents[E]>): void => {
+            const handler = (...args: Parameters<StreamEvents[E]>): void => {
                 if (!fn || fn(...args)) {
                     this.logEmitFromStream('waitFor success', this.streamId, event)
-                    this.off(event, handler as EmittedEvents[E])
+                    this.off(event, handler as StreamEvents[E])
                     clearTimeout(timeout)
                     resolve()
                 }
@@ -118,11 +117,11 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             // Set up the timeout
             const timeout = setTimeout(() => {
                 this.logEmitFromStream('waitFor timeout', this.streamId, event)
-                this.off(event, handler as EmittedEvents[E])
+                this.off(event, handler as StreamEvents[E])
                 reject(new Error(`Timed out waiting for event: ${event}`))
             }, opts.timeoutMs)
 
-            this.on(event, handler as EmittedEvents[E])
+            this.on(event, handler as StreamEvents[E])
         })
     }
 }

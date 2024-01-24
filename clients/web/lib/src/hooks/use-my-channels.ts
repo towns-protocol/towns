@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
 import { Channel, Membership, SpaceData } from '../types/zion-types'
 import isEqual from 'lodash/isEqual'
+import { isChannelStreamId, isSpaceStreamId } from '@river/sdk'
 
 export function useMyChannels(space?: SpaceData) {
     const channelIds = useMemo(() => {
@@ -76,14 +77,22 @@ function useMyMembershipsCasablanca(channelIds: string[]) {
             }
         }
 
+        const onStreamInitialized = (streamId: string) => {
+            if (isSpaceStreamId(streamId) || isChannelStreamId(streamId)) {
+                updateState()
+            }
+        }
+
         updateState()
 
         casablancaClient.on('streamNewUserJoined', onStreamUserMembership)
         casablancaClient.on('streamUserLeft', onStreamUserMembership)
+        casablancaClient.on('streamInitialized', onStreamInitialized)
 
         return () => {
             casablancaClient.off('streamNewUserJoined', onStreamUserMembership)
             casablancaClient.off('streamUserLeft', onStreamUserMembership)
+            casablancaClient.off('streamInitialized', onStreamInitialized)
         }
     }, [channelIds, client, casablancaClient])
 

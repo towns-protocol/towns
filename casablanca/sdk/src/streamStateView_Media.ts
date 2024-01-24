@@ -1,9 +1,9 @@
 import TypedEmitter from 'typed-emitter'
 import { Snapshot, MediaPayload, MediaPayload_Snapshot } from '@river/proto'
 import { RemoteTimelineEvent } from './types'
-import { EmittedEvents } from './client'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check, logNever } from '@river/waterproof'
+import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export class StreamStateView_Media extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -23,7 +23,7 @@ export class StreamStateView_Media extends StreamStateView_AbstractContent {
     applySnapshot(
         _snapshot: Snapshot,
         content: MediaPayload_Snapshot,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
+        _emitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         const inception = content.inception
         if (!inception?.chunkCount || !inception.channelId || !inception.chunkCount) {
@@ -39,7 +39,8 @@ export class StreamStateView_Media extends StreamStateView_AbstractContent {
     appendEvent(
         event: RemoteTimelineEvent,
         _cleartext: string | undefined,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
+        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'mediaPayload')
         if (!this.info) {
@@ -68,9 +69,10 @@ export class StreamStateView_Media extends StreamStateView_AbstractContent {
     prependEvent(
         event: RemoteTimelineEvent,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         // append / prepend are identical for media content
-        this.appendEvent(event, cleartext, emitter)
+        this.appendEvent(event, cleartext, encryptionEmitter, stateEmitter)
     }
 }

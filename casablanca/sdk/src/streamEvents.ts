@@ -22,7 +22,25 @@ export type StreamChange = {
     confirmed?: ConfirmedTimelineEvent[]
 }
 
-export type StreamEvents = {
+/// Encryption events, emitted by streams, always emitted.
+export type StreamEncryptionEvents = {
+    newMegolmSessions: (sessions: UserToDevicePayload_MegolmSessions, senderId: string) => void
+    newEncryptedContent: (streamId: string, eventId: string, content: EncryptedContent) => void
+    newKeySolicitation: (
+        streamId: string,
+        fromUserId: string,
+        event: KeySolicitationContent,
+    ) => void
+    updatedKeySolicitation: (
+        streamId: string,
+        fromUserId: string,
+        event: KeySolicitationContent,
+    ) => void
+    userDeviceKeyMessage: (streamId: string, userId: string, userDevice: UserDevice) => void
+}
+
+/// Stream state events, emitted after initialization
+export type StreamStateEvents = {
     streamNewUserJoined: (streamId: string, userId: string) => void
     streamNewUserInvited: (streamId: string, userId: string) => void
     streamUserLeft: (streamId: string, userId: string) => void
@@ -51,24 +69,11 @@ export type StreamEvents = {
         channelId: string,
         fullyReadMarkers: Record<string, FullyReadMarker>,
     ) => void
-    newMegolmSessions: (sessions: UserToDevicePayload_MegolmSessions, senderId: string) => void
-    newEncryptedContent: (streamId: string, eventId: string, content: EncryptedContent) => void
-    newKeySolicitation: (
-        streamId: string,
-        fromUserId: string,
-        event: KeySolicitationContent,
-    ) => void
-    updatedKeySolicitation: (
-        streamId: string,
-        fromUserId: string,
-        event: KeySolicitationContent,
-    ) => void
     eventDecrypted: (
         streamId: string,
         contentKind: SnapshotCaseType,
         event: DecryptedTimelineEvent,
     ) => void
-    userDeviceKeyMessage: (streamId: string, userId: string, userDevice: UserDevice) => void
     streamInitialized: (streamId: string, contentKind: SnapshotCaseType) => void
     streamUpdated: (streamId: string, contentKind: SnapshotCaseType, change: StreamChange) => void
     streamLocalEventIdReplaced: (
@@ -85,4 +90,4 @@ export type StreamEvents = {
     streamRemovedFromSync: (streamId: string) => void
 }
 
-export type StreamEventKeys = keyof StreamEvents
+export type StreamEvents = StreamEncryptionEvents & StreamStateEvents

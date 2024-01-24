@@ -17,7 +17,15 @@ describe('userMetadata_DisplayNamesTests', () => {
         const encryptedData = new EncryptedData({
             ciphertext: displayName,
         })
-        displayNames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        displayNames.addEncryptedData(
+            'eventid-1',
+            encryptedData,
+            'userid-1',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
 
         // the plaintext map is empty until we've decrypted the display name
         expect(displayNames.plaintextDisplayNames).toEqual(new Map([]))
@@ -30,8 +38,24 @@ describe('userMetadata_DisplayNamesTests', () => {
         const encryptedData = new EncryptedData({
             ciphertext: displayName,
         })
-        displayNames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
-        displayNames.addEncryptedData('eventid-2', encryptedData, 'userid-2')
+        displayNames.addEncryptedData(
+            'eventid-1',
+            encryptedData,
+            'userid-1',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
+        displayNames.addEncryptedData(
+            'eventid-2',
+            encryptedData,
+            'userid-2',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
         expect(displayNames.plaintextDisplayNames).toEqual(new Map([]))
 
         displayNames.onDecryptedContent('eventid-1', displayName)
@@ -53,7 +77,15 @@ describe('userMetadata_DisplayNamesTests', () => {
             ciphertext: displayName,
         })
 
-        displayNames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        displayNames.addEncryptedData(
+            'eventid-1',
+            encryptedData,
+            'userid-1',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
         const info = displayNames.info('userid-1')
         expect(info.displayNameEncrypted).toEqual(true)
 

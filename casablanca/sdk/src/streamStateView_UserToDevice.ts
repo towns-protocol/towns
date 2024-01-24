@@ -1,6 +1,5 @@
 import TypedEmitter from 'typed-emitter'
 import { ConfirmedTimelineEvent, ParsedEvent, RemoteTimelineEvent } from './types'
-import { EmittedEvents } from './client'
 import {
     Snapshot,
     UserToDevicePayload,
@@ -12,6 +11,7 @@ import {
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 import { check, logNever } from '@river/waterproof'
+import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export class StreamStateView_UserToDevice extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -31,7 +31,7 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
     applySnapshot(
         snapshot: Snapshot,
         content: UserToDevicePayload_Snapshot,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
+        _emitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         Object.entries(content.deviceSummary).map(([deviceId, summary]) => {
             this.deviceSummary[deviceId] = summary
@@ -40,7 +40,7 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
 
     onConfirmedEvent(
         event: ConfirmedTimelineEvent,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        emitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         super.onConfirmedEvent(event, emitter)
         const eventId = event.hashStr
@@ -53,8 +53,9 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
 
     prependEvent(
         event: RemoteTimelineEvent,
-        cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        _cleartext: string | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userToDevicePayload')
         const payload: UserToDevicePayload = event.remoteEvent.event.payload.value
@@ -62,7 +63,11 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
             case 'inception':
                 break
             case 'megolmSessions':
-                this.addMegolmSessions(event.creatorUserId, payload.content.value, emitter)
+                this.addMegolmSessions(
+                    event.creatorUserId,
+                    payload.content.value,
+                    encryptionEmitter,
+                )
                 break
             case 'ack':
                 break
@@ -76,7 +81,8 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
     appendEvent(
         event: RemoteTimelineEvent,
         _cleartext: string | undefined,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
+        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userToDevicePayload')
         const payload: UserToDevicePayload = event.remoteEvent.event.payload.value
@@ -114,9 +120,9 @@ export class StreamStateView_UserToDevice extends StreamStateView_AbstractConten
     private addMegolmSessions(
         creatorUserId: string,
         content: UserToDevicePayload_MegolmSessions,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
-        emitter?.emit('newMegolmSessions', content, creatorUserId)
+        encryptionEmitter?.emit('newMegolmSessions', content, creatorUserId)
     }
 
     private updateDeviceSummary(event: ParsedEvent, content: UserToDevicePayload_Ack) {

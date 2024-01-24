@@ -21,7 +21,15 @@ describe('userMetadata_UsernamesTests', () => {
             checksum: checksum,
         })
 
-        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        usernames.addEncryptedData(
+            'eventid-1',
+            encryptedData,
+            'userid-1',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
         usernames.onDecryptedContent('eventid-1', username)
         expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
     })
@@ -34,11 +42,27 @@ describe('userMetadata_UsernamesTests', () => {
             checksum: checksum,
         })
 
-        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        usernames.addEncryptedData(
+            'eventid-1',
+            encryptedData,
+            'userid-1',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
         usernames.onDecryptedContent('eventid-1', username)
         expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
 
-        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-2')
+        usernames.addEncryptedData(
+            'eventid-1',
+            encryptedData,
+            'userid-2',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
         usernames.onDecryptedContent('eventid-1', username)
         expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
     })
@@ -58,11 +82,27 @@ describe('userMetadata_UsernamesTests', () => {
             checksum: checksum2,
         })
 
-        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        usernames.addEncryptedData(
+            'eventid-1',
+            encryptedData,
+            'userid-1',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
         usernames.onDecryptedContent('eventid-1', username)
         expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
 
-        usernames.addEncryptedData('eventid-2', encryptedData2, 'userid-2')
+        usernames.addEncryptedData(
+            'eventid-2',
+            encryptedData2,
+            'userid-2',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
         usernames.onDecryptedContent('eventid-2', username2)
         expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
     })
@@ -75,7 +115,15 @@ describe('userMetadata_UsernamesTests', () => {
             checksum: checksum,
         })
 
-        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        usernames.addEncryptedData(
+            'eventid-1',
+            encryptedData,
+            'userid-1',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
         usernames.onDecryptedContent('eventid-1', username)
         expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username]]))
 
@@ -87,12 +135,28 @@ describe('userMetadata_UsernamesTests', () => {
         })
 
         // userid-1 changes their username
-        usernames.addEncryptedData('eventid-2', encryptedData2, 'userid-1')
+        usernames.addEncryptedData(
+            'eventid-2',
+            encryptedData2,
+            'userid-1',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
         usernames.onDecryptedContent('eventid-2', username2)
         expect(usernames.plaintextUsernames).toEqual(new Map([['userid-1', username2]]))
 
         // userid-2 can now use the old username
-        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-2')
+        usernames.addEncryptedData(
+            'eventid-1',
+            encryptedData,
+            'userid-2',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
         usernames.onDecryptedContent('eventid-1', username)
 
         expect(usernames.plaintextUsernames).toEqual(
@@ -111,7 +175,15 @@ describe('userMetadata_UsernamesTests', () => {
             checksum: checksum,
         })
 
-        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        usernames.addEncryptedData(
+            'eventid-1',
+            encryptedData,
+            'userid-1',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
         usernames.onDecryptedContent('eventid-1', username)
         expect(usernames.plaintextUsernames).toEqual(new Map([]))
     })
@@ -124,7 +196,15 @@ describe('userMetadata_UsernamesTests', () => {
             checksum: checksum,
         })
 
-        usernames.addEncryptedData('eventid-1', encryptedData, 'userid-1')
+        usernames.addEncryptedData(
+            'eventid-1',
+            encryptedData,
+            'userid-1',
+            true,
+            undefined,
+            undefined,
+            undefined,
+        )
         const info = usernames.info('userid-1')
         expect(info.usernameEncrypted).toEqual(true)
 

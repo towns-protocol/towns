@@ -9,8 +9,7 @@ import {
 } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { RemoteTimelineEvent } from './types'
-import { EmittedEvents } from './client'
-import { StreamEvents } from './streamEvents'
+import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { check, dlog, logNever } from '@river/waterproof'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { toPlainMessage } from '@bufbuild/protobuf'
@@ -41,7 +40,8 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
     prependEvent(
         event: RemoteTimelineEvent,
         _cleartext: string | undefined,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
+        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userSettingsPayload')
         const payload: UserSettingsPayload = event.remoteEvent.event.payload.value
@@ -60,8 +60,9 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
 
     appendEvent(
         event: RemoteTimelineEvent,
-        cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        _cleartext: string | undefined,
+        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userSettingsPayload')
         const payload: UserSettingsPayload = event.remoteEvent.event.payload.value
@@ -69,7 +70,7 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
             case 'inception':
                 break
             case 'fullyReadMarkers':
-                this.fullyReadMarkerUpdate(payload.content.value, emitter)
+                this.fullyReadMarkerUpdate(payload.content.value, stateEmitter)
                 break
             case undefined:
                 break
@@ -80,7 +81,7 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
 
     private fullyReadMarkerUpdate(
         payload: UserSettingsPayload_FullyReadMarkers,
-        emitter?: TypedEmitter<StreamEvents>,
+        emitter?: TypedEmitter<StreamStateEvents>,
     ): void {
         const { content } = payload
         log('$ fullyReadMarkerUpdate', { content })

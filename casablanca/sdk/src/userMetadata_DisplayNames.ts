@@ -1,7 +1,7 @@
 import { EncryptedData } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
-import { EmittedEvents } from './client'
 import { dlog } from '@river/waterproof'
+import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export class UserMetadata_DisplayNames {
     log = dlog('csb:streams:displaynames')
@@ -22,8 +22,9 @@ export class UserMetadata_DisplayNames {
         encryptedData: EncryptedData,
         userId: string,
         pending: boolean = true,
-        cleartext?: string,
-        emitter?: TypedEmitter<EmittedEvents>,
+        cleartext: string | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {
         this.removeEventForUserId(userId)
         this.addEventForUserId(userId, eventId, encryptedData, pending)
@@ -33,15 +34,15 @@ export class UserMetadata_DisplayNames {
         } else {
             // Clear the plaintext display name for this user on name change
             this.plaintextDisplayNames.delete(userId)
-            emitter?.emit('newEncryptedContent', this.streamId, eventId, {
+            encryptionEmitter?.emit('newEncryptedContent', this.streamId, eventId, {
                 kind: 'text',
                 content: encryptedData,
             })
         }
-        this.emitDisplayNameUpdated(eventId, emitter)
+        this.emitDisplayNameUpdated(eventId, stateEmitter)
     }
 
-    onConfirmEvent(eventId: string, emitter?: TypedEmitter<EmittedEvents>) {
+    onConfirmEvent(eventId: string, emitter?: TypedEmitter<StreamStateEvents>) {
         const event = this.displayNameEvents.get(eventId)
         if (!event) {
             return
@@ -55,7 +56,11 @@ export class UserMetadata_DisplayNames {
         }
     }
 
-    onDecryptedContent(eventId: string, content: string, emitter?: TypedEmitter<EmittedEvents>) {
+    onDecryptedContent(
+        eventId: string,
+        content: string,
+        emitter?: TypedEmitter<StreamStateEvents>,
+    ) {
         const event = this.displayNameEvents.get(eventId)
         if (!event) {
             return
@@ -66,7 +71,7 @@ export class UserMetadata_DisplayNames {
         this.emitDisplayNameUpdated(eventId, emitter)
     }
 
-    private emitDisplayNameUpdated(eventId: string, emitter?: TypedEmitter<EmittedEvents>) {
+    private emitDisplayNameUpdated(eventId: string, emitter?: TypedEmitter<StreamStateEvents>) {
         const event = this.displayNameEvents.get(eventId)
         if (!event) {
             return

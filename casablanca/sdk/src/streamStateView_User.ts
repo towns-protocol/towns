@@ -1,6 +1,5 @@
 import TypedEmitter from 'typed-emitter'
 import { ParsedEvent, RemoteTimelineEvent } from './types'
-import { EmittedEvents } from './client'
 import {
     MembershipOp,
     Snapshot,
@@ -8,7 +7,7 @@ import {
     UserPayload_Snapshot,
     UserPayload_UserMembership,
 } from '@river/proto'
-import { StreamEvents } from './streamEvents'
+import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_UserStreamMembership } from './streamStateView_Membership'
 import { check, logNever } from '@river/waterproof'
@@ -30,18 +29,19 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
     applySnapshot(
         snapshot: Snapshot,
         content: UserPayload_Snapshot,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         // initialize memberships
         for (const [_, payload] of Object.entries(content.memberships)) {
-            this.addUserPayload_userMembership(payload, emitter)
+            this.addUserPayload_userMembership(payload, encryptionEmitter)
         }
     }
 
     prependEvent(
         event: RemoteTimelineEvent,
         _cleartext: string | undefined,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
+        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userPayload')
         const payload: UserPayload = event.remoteEvent.event.payload.value
@@ -61,7 +61,8 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
     appendEvent(
         event: RemoteTimelineEvent,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userPayload')
         const payload: UserPayload = event.remoteEvent.event.payload.value
@@ -69,7 +70,7 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'userMembership':
-                this.addUserPayload_userMembership(payload.content.value, emitter)
+                this.addUserPayload_userMembership(payload.content.value, stateEmitter)
                 break
             case undefined:
                 break

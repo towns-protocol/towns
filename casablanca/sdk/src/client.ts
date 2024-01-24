@@ -111,10 +111,8 @@ import { SyncState, SyncedStreams } from './syncedStreams'
 import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
 
-export type EmittedEvents = StreamEvents
-
 export class Client
-    extends (EventEmitter as new () => TypedEmitter<EmittedEvents>)
+    extends (EventEmitter as new () => TypedEmitter<StreamEvents>)
     implements IMegolmClient
 {
     readonly signerContext: SignerContext
@@ -857,7 +855,7 @@ export class Client
         await this.streams.stopSync()
     }
 
-    emit<E extends keyof EmittedEvents>(event: E, ...args: Parameters<EmittedEvents[E]>): boolean {
+    emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
         this.logEmitFromClient(event, ...args)
         return super.emit(event, ...args)
     }

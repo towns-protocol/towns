@@ -341,12 +341,14 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
         update()
 
         // add listeners
+        casablancaClient.on('streamInitialized', onSpaceChannelUpdated)
         casablancaClient.on('spaceChannelCreated', onSpaceChannelUpdated)
         casablancaClient.on('spaceChannelUpdated', onSpaceChannelUpdated)
         casablancaClient.on('streamMyMembershipUpdated', onSpaceChannelUpdated)
 
         return () => {
             // remove lsiteners and clear state when the effect stops
+            casablancaClient.off('streamInitialized', onSpaceChannelUpdated)
             casablancaClient.off('spaceChannelCreated', onSpaceChannelUpdated)
             casablancaClient.off('spaceChannelUpdated', onSpaceChannelUpdated)
             casablancaClient.off('streamMyMembershipUpdated', onSpaceChannelUpdated)

@@ -2,7 +2,6 @@ import TypedEmitter from 'typed-emitter'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
-import { EmittedEvents } from './client'
 import {
     ChannelOp,
     ChannelProperties,
@@ -13,7 +12,7 @@ import {
     SpacePayload_Channel,
     SpacePayload_Snapshot,
 } from '@river/proto'
-import { StreamEvents } from './streamEvents'
+import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'
 import { check, isDefined, logNever, throwWithCode } from '@river/waterproof'
@@ -35,20 +34,20 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
         snapshot: Snapshot,
         content: SpacePayload_Snapshot,
         cleartexts: Record<string, string> | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         // update memberships
-        this.memberships.applySnapshot(content.memberships, emitter)
+        this.memberships.applySnapshot(content.memberships, encryptionEmitter)
         this.userMetadata.applySnapshot(
             content.usernames,
             content.displayNames,
             cleartexts,
-            emitter,
+            encryptionEmitter,
         )
 
         // loop over content.channels, update space channels metadata
         for (const [_, payload] of Object.entries(content.channels)) {
-            this.addSpacePayload_Channel(payload, emitter)
+            this.addSpacePayload_Channel(payload, undefined)
         }
     }
 
@@ -63,7 +62,8 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     prependEvent(
         event: RemoteTimelineEvent,
         _cleartext: string | undefined,
-        _emitter: TypedEmitter<EmittedEvents> | undefined,
+        _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'spacePayload')
         const payload: SpacePayload = event.remoteEvent.event.payload.value
@@ -92,7 +92,8 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     appendEvent(
         event: RemoteTimelineEvent,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'spacePayload')
         const payload: SpacePayload = event.remoteEvent.event.payload.value
@@ -100,13 +101,13 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'channel':
-                this.addSpacePayload_Channel(payload.content.value, emitter)
+                this.addSpacePayload_Channel(payload.content.value, stateEmitter)
                 break
             case 'membership':
                 this.memberships.appendMembershipEvent(
                     event.hashStr,
                     payload.content.value,
-                    emitter,
+                    encryptionEmitter,
                 )
                 break
             case 'displayName':
@@ -117,7 +118,8 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                     payload.content.case,
                     event.creatorUserId,
                     cleartext,
-                    emitter,
+                    encryptionEmitter,
+                    stateEmitter,
                 )
                 break
             case undefined:
@@ -129,25 +131,25 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
 
     private addSpacePayload_Channel(
         payload: SpacePayload_Channel,
-        emitter?: TypedEmitter<StreamEvents>,
+        stateEmitter?: TypedEmitter<StreamStateEvents>,
     ): void {
         const { op, channelId, channelProperties } = payload
         switch (op) {
             case ChannelOp.CO_CREATED: {
                 const props = this.decryptChannelProps(channelProperties)
                 this.spaceChannelsMetadata.set(channelId, props)
-                emitter?.emit('spaceChannelCreated', this.streamId, channelId, props)
+                stateEmitter?.emit('spaceChannelCreated', this.streamId, channelId, props)
                 break
             }
             case ChannelOp.CO_DELETED:
                 if (this.spaceChannelsMetadata.delete(channelId)) {
-                    emitter?.emit('spaceChannelDeleted', this.streamId, channelId)
+                    stateEmitter?.emit('spaceChannelDeleted', this.streamId, channelId)
                 }
                 break
             case ChannelOp.CO_UPDATED: {
                 const props = this.decryptChannelProps(channelProperties)
                 this.spaceChannelsMetadata.set(channelId, props)
-                emitter?.emit('spaceChannelUpdated', this.streamId, channelId, props)
+                stateEmitter?.emit('spaceChannelUpdated', this.streamId, channelId, props)
                 break
             }
             default:
@@ -167,10 +169,10 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     onDecryptedContent(
         eventId: string,
         content: DecryptedContent,
-        emitter: TypedEmitter<StreamEvents>,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         if (content.kind === 'text') {
-            this.userMetadata.onDecryptedContent(eventId, content.content, emitter)
+            this.userMetadata.onDecryptedContent(eventId, content.content, stateEmitter)
         }
     }
 

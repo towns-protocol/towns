@@ -8,9 +8,9 @@ import {
 } from '@river/proto'
 import { Stream } from './stream'
 import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse } from './types'
-import { EmittedEvents } from './client'
 import { DLogger, bin_toHexString, dlog, isDefined } from '@river/waterproof'
 import { PersistenceStore } from './persistenceStore'
+import { StreamEvents } from './streamEvents'
 
 export class SyncedStream extends Stream {
     log: DLogger
@@ -18,7 +18,7 @@ export class SyncedStream extends Stream {
     constructor(
         userId: string,
         streamId: string,
-        clientEmitter: TypedEmitter<EmittedEvents>,
+        clientEmitter: TypedEmitter<StreamEvents>,
         logEmitFromStream: DLogger,
         persistenceStore: PersistenceStore,
     ) {

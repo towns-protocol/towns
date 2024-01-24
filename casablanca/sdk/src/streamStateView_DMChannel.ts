@@ -1,12 +1,11 @@
 import TypedEmitter from 'typed-emitter'
 import { DmChannelPayload_Snapshot, Snapshot, DmChannelPayload } from '@river/proto'
-import { EmittedEvents } from './client'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { ConfirmedTimelineEvent, ParsedEvent, RemoteTimelineEvent } from './types'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { DecryptedContent } from './encryptedContentTypes'
-import { StreamEvents } from './streamEvents'
+import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { check, logNever } from '@river/waterproof'
 
 export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
@@ -28,14 +27,14 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
         snapshot: Snapshot,
         content: DmChannelPayload_Snapshot,
         cleartexts: Record<string, string> | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        this.memberships.applySnapshot(content.memberships, emitter)
+        this.memberships.applySnapshot(content.memberships, encryptionEmitter)
         this.userMetadata.applySnapshot(
             content.usernames,
             content.displayNames,
             cleartexts,
-            emitter,
+            encryptionEmitter,
         )
         this.firstPartyId = content.inception?.firstPartyId
         this.secondPartyId = content.inception?.secondPartyId
@@ -44,7 +43,8 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     appendEvent(
         event: RemoteTimelineEvent,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'dmChannelPayload')
         const payload: DmChannelPayload = event.remoteEvent.event.payload.value
@@ -59,7 +59,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                     event,
                     payload.content.value,
                     cleartext,
-                    emitter,
+                    encryptionEmitter,
                 )
                 this.updateLastEvent(event.remoteEvent)
                 break
@@ -68,7 +68,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                 this.memberships.appendMembershipEvent(
                     event.hashStr,
                     payload.content.value,
-                    emitter,
+                    encryptionEmitter,
                 )
                 break
             case 'displayName':
@@ -79,7 +79,8 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                     payload.content.case,
                     event.creatorUserId,
                     cleartext,
-                    emitter,
+                    encryptionEmitter,
+                    stateEmitter,
                 )
                 break
             case undefined:
@@ -92,7 +93,8 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     prependEvent(
         event: RemoteTimelineEvent,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'dmChannelPayload')
         const payload: DmChannelPayload = event.remoteEvent.event.payload.value
@@ -106,7 +108,7 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                     event,
                     payload.content.value,
                     cleartext,
-                    emitter,
+                    encryptionEmitter,
                 )
                 break
             case 'membership':
@@ -124,19 +126,19 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
     onDecryptedContent(
         eventId: string,
         content: DecryptedContent,
-        emitter: TypedEmitter<StreamEvents>,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         if (content.kind === 'text') {
-            this.userMetadata.onDecryptedContent(eventId, content.content, emitter)
+            this.userMetadata.onDecryptedContent(eventId, content.content, stateEmitter)
         }
     }
 
     onConfirmedEvent(
         event: ConfirmedTimelineEvent,
-        emitter: TypedEmitter<StreamEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        super.onConfirmedEvent(event, emitter)
-        this.userMetadata.onConfirmedEvent(event, emitter)
+        super.onConfirmedEvent(event, stateEmitter)
+        this.userMetadata.onConfirmedEvent(event, stateEmitter)
     }
 
     private updateLastEvent(event: ParsedEvent) {

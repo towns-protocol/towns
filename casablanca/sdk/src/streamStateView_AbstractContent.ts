@@ -1,11 +1,11 @@
 import TypedEmitter from 'typed-emitter'
 import { EncryptedData } from '@river/proto'
-import { EmittedEvents } from './client'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 import { DecryptedContent, EncryptedContent, toDecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
+import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 export abstract class StreamStateView_AbstractContent {
     abstract readonly streamId: string
@@ -13,12 +13,14 @@ export abstract class StreamStateView_AbstractContent {
     abstract prependEvent(
         event: RemoteTimelineEvent,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void
     abstract appendEvent(
         event: RemoteTimelineEvent,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void
 
     decryptEvent(
@@ -26,12 +28,12 @@ export abstract class StreamStateView_AbstractContent {
         event: RemoteTimelineEvent,
         content: EncryptedData,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
         if (cleartext) {
             event.decryptedContent = toDecryptedContent(kind, cleartext)
         } else {
-            emitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
+            encryptionEmitter?.emit('newEncryptedContent', this.streamId, event.hashStr, {
                 kind,
                 content,
             })
@@ -40,15 +42,15 @@ export abstract class StreamStateView_AbstractContent {
 
     onConfirmedEvent(
         event: ConfirmedTimelineEvent,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        this.memberships?.onConfirmedEvent(event, emitter)
+        this.memberships?.onConfirmedEvent(event, stateEmitter)
     }
 
     onDecryptedContent(
         _eventId: string,
         _content: DecryptedContent,
-        _emitter: TypedEmitter<EmittedEvents>,
+        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         //
     }

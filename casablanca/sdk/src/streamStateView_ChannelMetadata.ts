@@ -1,9 +1,8 @@
 import TypedEmitter from 'typed-emitter'
 import { ChannelProperties, EncryptedData, WrappedEncryptedData } from '@river/proto'
-import { EmittedEvents } from './client'
 import { bin_toHexString, dlog, check } from '@river/waterproof'
 import { DecryptedContent, toDecryptedContent } from './encryptedContentTypes'
-import { StreamEvents } from './streamEvents'
+import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { RemoteTimelineEvent } from './types'
 
 export class StreamStateView_ChannelMetadata {
@@ -21,7 +20,7 @@ export class StreamStateView_ChannelMetadata {
     applySnapshot(
         encryptedChannelProperties: WrappedEncryptedData,
         cleartexts: Record<string, string> | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         if (!encryptedChannelProperties.data) {
             return
@@ -34,20 +33,20 @@ export class StreamStateView_ChannelMetadata {
         }
 
         const cleartext = cleartexts?.[eventId]
-        this.decryptPayload(encryptedChannelProperties.data, eventId, cleartext, emitter)
+        this.decryptPayload(encryptedChannelProperties.data, eventId, cleartext, encryptionEmitter)
     }
 
     private decryptPayload(
         payload: EncryptedData,
         eventId: string,
         cleartext: string | undefined,
-        emitter: TypedEmitter<EmittedEvents> | undefined,
+        encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
         if (cleartext) {
             const decryptedContent = toDecryptedContent('channelProperties', cleartext)
-            this.handleDecryptedContent(decryptedContent, emitter)
+            this.handleDecryptedContent(decryptedContent, encryptionEmitter)
         } else {
-            emitter?.emit('newEncryptedContent', this.streamId, eventId, {
+            encryptionEmitter?.emit('newEncryptedContent', this.streamId, eventId, {
                 kind: 'channelProperties',
                 content: payload,
             })
@@ -88,8 +87,8 @@ export class StreamStateView_ChannelMetadata {
     onDecryptedContent(
         _eventId: string,
         content: DecryptedContent,
-        emitter: TypedEmitter<StreamEvents>,
+        stateEmitter: TypedEmitter<StreamStateEvents>,
     ): void {
-        this.handleDecryptedContent(content, emitter)
+        this.handleDecryptedContent(content, stateEmitter)
     }
 }
