@@ -25,12 +25,12 @@ describe('clientCrypto', () => {
 
     test('clientCanEncryptDecryptEvent', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
-        await alicesClient.startSync()
+        alicesClient.startSync()
         const keys = new SessionKeys({ keys: ['hi!'] })
         // create a message to encrypt with Bob's devices over Olm
         const envelope = await alicesClient.encryptOlm(keys, [bobsClient.userDeviceKey()])
@@ -48,12 +48,12 @@ describe('clientCrypto', () => {
 
     test('clientCanEncryptDecryptToDeviceMultipleEventObjects', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()
         expect(
             alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
         ).toBe(true)
-        await alicesClient.startSync()
+        alicesClient.startSync()
 
         for (const message of ['oh hello', 'why how are you?']) {
             const keys = new SessionKeys({ keys: [message] })

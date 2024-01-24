@@ -221,7 +221,7 @@ export class ZionClient implements EntitlementsDelegate {
             userId: this.casablancaClient.userId,
         })
 
-        await this.casablancaClient.startSync()
+        this.casablancaClient.startSync()
         return this.casablancaClient
     }
 

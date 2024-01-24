@@ -10,7 +10,7 @@ describe('dmsTests', () => {
     const makeInitAndStartClient = async () => {
         const client = await makeTestClient()
         await client.initializeUser()
-        await client.startSync()
+        client.startSync()
         clients.push(client)
         return client
     }

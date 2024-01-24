@@ -9,11 +9,11 @@ describe('syncedStream', () => {
     test('clientRefreshesStreamOnBadSyncCookie', async () => {
         const bob = await makeTestClient()
         await bob.initializeUser()
-        await bob.startSync()
+        bob.startSync()
 
         const alice = await makeTestClient()
         await alice.initializeUser()
-        await alice.startSync()
+        alice.startSync()
 
         const { streamId } = await bob.createDMChannel(
             alice.userId,
@@ -37,7 +37,7 @@ describe('syncedStream', () => {
         // later, Bob returns
         const bob2 = await makeTestClient({ context: bob.signerContext })
         await bob2.initializeUser()
-        await bob2.startSync()
+        bob2.startSync()
 
         // the stream is now loaded from cache
         const bobStreamFresh = await bob2.waitForStream(streamId)

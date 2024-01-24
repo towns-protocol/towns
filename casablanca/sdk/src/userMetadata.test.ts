@@ -24,9 +24,9 @@ describe('userMetadataTests', () => {
 
     test('clientCanSetDisplayNamesInSpace', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()
-        await alicesClient.startSync()
+        alicesClient.startSync()
 
         const { streamId } = await bobsClient.createSpace(undefined)
         await bobsClient.waitForStream(streamId)
@@ -65,9 +65,9 @@ describe('userMetadataTests', () => {
 
     test('clientCanSetDisplayNamesInDM', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()
-        await alicesClient.startSync()
+        alicesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
@@ -112,11 +112,11 @@ describe('userMetadataTests', () => {
 
     test('clientCanSetDisplayNamesInGDM', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()
-        await alicesClient.startSync()
+        alicesClient.startSync()
         await expect(evesClient.initializeUser()).toResolve()
-        await evesClient.startSync()
+        evesClient.startSync()
 
         const { streamId } = await bobsClient.createGDMChannel([
             alicesClient.userId,
@@ -172,13 +172,13 @@ describe('userMetadataTests', () => {
 
     test('clientsPickUpDisplayNamesAfterJoin', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
         const { streamId } = await bobsClient.createSpace(undefined)
         await bobsClient.waitForStream(streamId)
         await bobsClient.setDisplayName(streamId, 'bob')
 
         await expect(alicesClient.initializeUser()).toResolve()
-        await alicesClient.startSync()
+        alicesClient.startSync()
         await bobsClient.inviteUser(streamId, alicesClient.userId)
         await expect(alicesClient.joinStream(streamId)).toResolve()
 
@@ -199,9 +199,9 @@ describe('userMetadataTests', () => {
 
     test('clientCanSetUsernamesInSpaces', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()
-        await alicesClient.startSync()
+        alicesClient.startSync()
 
         const { streamId } = await bobsClient.createSpace(undefined)
         await bobsClient.waitForStream(streamId)
@@ -236,9 +236,9 @@ describe('userMetadataTests', () => {
 
     test('clientCanSetUsernamesInDMs', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()
-        await alicesClient.startSync()
+        alicesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         const stream = await bobsClient.waitForStream(streamId)
@@ -280,11 +280,11 @@ describe('userMetadataTests', () => {
 
     test('clientCanSetUsernamesInGDMs', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
         await expect(alicesClient.initializeUser()).toResolve()
-        await alicesClient.startSync()
+        alicesClient.startSync()
         await expect(evesClient.initializeUser()).toResolve()
-        await evesClient.startSync()
+        evesClient.startSync()
 
         const { streamId } = await bobsClient.createGDMChannel([
             alicesClient.userId,

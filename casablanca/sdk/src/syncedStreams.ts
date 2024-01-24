@@ -110,6 +110,10 @@ export class SyncedStreams {
         this.streams.set(streamId, stream)
     }
 
+    public delete(streamId: string) {
+        this.streams.delete(streamId)
+    }
+
     public size(): number {
         return this.streams.size
     }
@@ -122,7 +126,7 @@ export class SyncedStreams {
         return Array.from(this.streams.keys())
     }
 
-    public async startSync() {
+    public async startSyncStreams() {
         return await this.createSyncLoop()
     }
 

@@ -42,7 +42,7 @@ export async function createAndStartClient(
     const client = new Client(context, rpcClient, cryptoStore, new MockEntitlementsDelegate())
     client.setMaxListeners(100)
     await client.initializeUser()
-    await client.startSync()
+    client.startSync()
     return {
         client: client,
         etherWallet: wallet,

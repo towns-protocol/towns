@@ -189,7 +189,12 @@ export class Client
             genPersistenceStoreName(this.userId, this.rpcClient.url),
         )
         this.streams = new SyncedStreams(this.userId, this.rpcClient, this.persistenceStore, this)
-        this.syncedStreamsExtensions = new SyncedStreamsExtension(this)
+        this.syncedStreamsExtensions = new SyncedStreamsExtension({
+            startSyncStreams: () => this.streams.startSyncStreams(),
+            initStream: (streamId, allowGetStream) => this.initStream(streamId, allowGetStream),
+            emitStreamSyncActive: (active) => this.emit('streamSyncActive', active),
+        })
+
         this.syncedStreamsExtensions.setHighPriority(highPriorityStreamIds ?? [])
         this.logCall('new Client')
     }
@@ -778,7 +783,7 @@ export class Client
         }
     }
 
-    async initStream(streamId: string, forceDownload: boolean = false): Promise<Stream> {
+    async initStream(streamId: string, allowGetStream: boolean = true): Promise<Stream> {
         try {
             this.logCall('initStream', streamId)
             const stream = this.stream(streamId)
@@ -790,27 +795,32 @@ export class Client
                     return this.waitForStream(streamId)
                 }
             } else {
+                this.logCall('initStream', streamId)
                 const stream = this.createSyncedStream(streamId)
-                if (forceDownload || !(await stream.initializeFromPersistence())) {
-                    this.logCall('initStream', streamId)
-                    const response = await this.rpcClient.getStream({ streamId })
-                    const unpacked = await unpackStream(response.stream)
-                    await stream.initializeFromResponse(unpacked)
-                }
-                if (!stream.view.syncCookie) {
-                    throw new Error('Sync cookie not set')
-                }
-                try {
-                    await this.streams.addStreamToSync(stream.view.syncCookie)
-                } catch (err) {
-                    if (!forceDownload && errorContains(err, Err.BAD_SYNC_COOKIE)) {
-                        this.logError('Bad sync cookie', streamId)
-                        await this.streams.removeStreamFromSync(streamId)
-                        return await this.initStream(streamId, true)
-                    } else {
-                        this.logError('addStreamToSync failed', err)
+
+                // Try initializing from persistence
+                if (await stream.initializeFromPersistence()) {
+                    if (stream.view.syncCookie) {
+                        await this.streams.addStreamToSync(stream.view.syncCookie)
                     }
+                    return stream
                 }
+
+                // if we're only allowing initializing from persistence, we've failed.
+                if (!allowGetStream) {
+                    // We need to remove the stream from syncedStreams, since we added it above
+                    this.streams.delete(streamId)
+                    throw new Error(`Failed to initialize stream ${streamId} from persistence`)
+                }
+
+                const response = await this.rpcClient.getStream({ streamId })
+                const unpacked = await unpackStream(response.stream)
+                await stream.initializeFromResponse(unpacked)
+
+                if (stream.view.syncCookie) {
+                    await this.streams.addStreamToSync(stream.view.syncCookie)
+                }
+
                 return stream
             }
         } catch (err) {
@@ -836,21 +846,13 @@ export class Client
         return await this.streams.removeStreamFromSync(streamId)
     }
 
-    async startSync(opt?: { onFailure?: (err: unknown) => void }): Promise<unknown> {
-        const { onFailure } = opt ?? {}
-        assert(this.userStreamId !== undefined, 'streamId must be set')
-        try {
-            await this.streams.startSync()
-            return undefined
-        } catch (err) {
-            this.logSync('sync failure', err)
-            onFailure?.(err)
-            this.emit('streamSyncActive', false)
-            return err
-        }
+    startSync() {
+        check(this.syncedStreamsExtensions !== undefined, 'syncedStreamsExtensions must be set')
+        this.syncedStreamsExtensions.setStartSyncRequested(true)
     }
 
     async stopSync() {
+        this.syncedStreamsExtensions?.setStartSyncRequested(false)
         await this.streams.stopSync()
     }
 

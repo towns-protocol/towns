@@ -165,7 +165,7 @@ describe('mirrorMessages', () => {
             log('Wallet balance:', balance.toString())
             log('Wallet address:', followerWallet.address)
             log('Wallet address:', walletWithProvider.address)
-            const startSyncResult = await client.startSync()
+            const startSyncResult = client.startSync()
             log('startSyncResult', startSyncResult)
             log('client', client.userId)
 

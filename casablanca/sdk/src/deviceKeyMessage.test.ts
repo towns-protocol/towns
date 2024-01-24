@@ -41,8 +41,8 @@ describe('deviceKeyMessageTest', () => {
                 })
             },
         )
-        await bobsClient.startSync()
-        await alicesClient.startSync()
+        bobsClient.startSync()
+        alicesClient.startSync()
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
         await bobSelfToDevice.expectToSucceed()
     })
@@ -51,7 +51,7 @@ describe('deviceKeyMessageTest', () => {
         log('bobDownloadsOwnDeviceKeys')
         // Bob gets created, starts syncing, and uploads his device keys.
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
         const bobsUserId = bobsClient.userId
         const bobSelfToDevice = makeDonePromise()
         bobsClient.once(
@@ -76,8 +76,8 @@ describe('deviceKeyMessageTest', () => {
         // Bob gets created, starts syncing, and uploads his device keys.
         await expect(bobsClient.initializeUser()).toResolve()
         await expect(alicesClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
-        await alicesClient.startSync()
+        bobsClient.startSync()
+        alicesClient.startSync()
         const alicesUserId = alicesClient.userId
         const alicesSelfToDevice = makeDonePromise()
         alicesClient.once(
@@ -101,8 +101,8 @@ describe('deviceKeyMessageTest', () => {
         // Bob, Alice get created, starts syncing, and uploads respective device keys.
         await expect(bobsClient.initializeUser()).toResolve()
         await expect(alicesClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
-        await alicesClient.startSync()
+        bobsClient.startSync()
+        alicesClient.startSync()
         const bobsUserId = bobsClient.userId
         const alicesUserId = alicesClient.userId
         const bobSelfToDevice = makeDonePromise()
@@ -134,8 +134,8 @@ describe('deviceKeyMessageTest', () => {
         // Bob, Alice get created, starts syncing, and uploads respective device keys.
         await expect(bobsClient.initializeUser()).toResolve()
         await expect(alicesClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
-        await alicesClient.startSync()
+        bobsClient.startSync()
+        alicesClient.startSync()
         const bobsUserId = bobsClient.userId
         const alicesUserId = alicesClient.userId
         const bobSelfToDevice = makeDonePromise()

@@ -12,7 +12,7 @@ describe('mediaTests', () => {
     beforeEach(async () => {
         bobsClient = await makeTestClient()
         await bobsClient.initializeUser()
-        await bobsClient.startSync()
+        bobsClient.startSync()
     })
 
     afterEach(async () => {
@@ -71,7 +71,7 @@ describe('mediaTests', () => {
 
         const alicesClient = await makeTestClient()
         await alicesClient.initializeUser()
-        await alicesClient.startSync()
+        alicesClient.startSync()
 
         // @ts-ignore
         await alicesClient.initStream(mediaStreamId)
@@ -87,7 +87,7 @@ describe('mediaTests', () => {
     test('dmChannelNeedsToExistBeforeCreatingMediaStream', async () => {
         const alicesClient = await makeTestClient()
         await alicesClient.initializeUser()
-        await alicesClient.startSync()
+        alicesClient.startSync()
 
         const nonExistentChannelId = makeDMStreamId(bobsClient.userId, alicesClient.userId)
         await expect(bobsClient.createMediaStream(nonExistentChannelId, 10)).toReject()
@@ -97,7 +97,7 @@ describe('mediaTests', () => {
     test('userCanUploadMediaToDmIfMember', async () => {
         const alicesClient = await makeTestClient()
         await alicesClient.initializeUser()
-        await alicesClient.startSync()
+        alicesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
         await expect(bobsClient.createMediaStream(streamId, 10)).toResolve()
@@ -108,11 +108,11 @@ describe('mediaTests', () => {
     test('userCanUploadMediaToGdmIfMember', async () => {
         const alicesClient = await makeTestClient()
         await alicesClient.initializeUser()
-        await alicesClient.startSync()
+        alicesClient.startSync()
 
         const charliesClient = await makeTestClient()
         await charliesClient.initializeUser()
-        await charliesClient.startSync()
+        charliesClient.startSync()
 
         const { streamId } = await bobsClient.createGDMChannel([
             alicesClient.userId,
@@ -126,11 +126,11 @@ describe('mediaTests', () => {
     test('userCannotUploadMediaToDmUnlessMember', async () => {
         const alicesClient = await makeTestClient()
         await alicesClient.initializeUser()
-        await alicesClient.startSync()
+        alicesClient.startSync()
 
         const charliesClient = await makeTestClient()
         await charliesClient.initializeUser()
-        await charliesClient.startSync()
+        charliesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
 

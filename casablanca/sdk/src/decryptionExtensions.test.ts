@@ -15,7 +15,7 @@ describe('DecryptionExtensions', () => {
     const makeAndStartClient = async (opts?: TestClientOpts) => {
         const client = await makeTestClient(opts)
         await client.initializeUser()
-        await client.startSync()
+        client.startSync()
         log('started client', client.userId, client.signerContext)
         clients.push(client)
         return client

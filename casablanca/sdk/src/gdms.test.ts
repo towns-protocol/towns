@@ -18,19 +18,19 @@ describe('gdmsTests', () => {
     beforeEach(async () => {
         bobsClient = await makeTestClient()
         await bobsClient.initializeUser()
-        await bobsClient.startSync()
+        bobsClient.startSync()
 
         alicesClient = await makeTestClient()
         await alicesClient.initializeUser()
-        await alicesClient.startSync()
+        alicesClient.startSync()
 
         charliesClient = await makeTestClient()
         await charliesClient.initializeUser()
-        await charliesClient.startSync()
+        charliesClient.startSync()
 
         chucksClient = await makeTestClient()
         await chucksClient.initializeUser()
-        await chucksClient.startSync()
+        chucksClient.startSync()
     })
 
     afterEach(async () => {

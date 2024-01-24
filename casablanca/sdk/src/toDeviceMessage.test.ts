@@ -27,12 +27,12 @@ describe('toDeviceMessageTest', () => {
         log('bobSendsAliceToDeviceMessage')
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
         // Alice gets created.
         await expect(alicesClient.initializeUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
         log('aliceUserStreamId', aliceUserStreamId)
-        await alicesClient.startSync()
+        alicesClient.startSync()
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(

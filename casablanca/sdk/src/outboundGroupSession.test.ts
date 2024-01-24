@@ -22,7 +22,7 @@ describe('outboundSessionTests', () => {
     // store, but instead the local-storage store.
     test('sameOutboundSessionIsUsedBetweenClientSessions', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
 
         const spaceId = makeSpaceStreamId('bobs-space-' + genId())
         await expect(bobsClient.createSpace(spaceId)).toResolve()
@@ -45,7 +45,7 @@ describe('outboundSessionTests', () => {
 
         const bobsOtherClient = await makeTestClient({ context: bobsClient.signerContext })
         await expect(bobsOtherClient.initializeUser()).toResolve()
-        await bobsOtherClient.startSync()
+        bobsOtherClient.startSync()
 
         const encrypted1 = await bobsClient.encryptMegolmEvent(message, channelId)
         const encrypted2 = await bobsOtherClient.encryptMegolmEvent(message, channelId)
@@ -59,7 +59,7 @@ describe('outboundSessionTests', () => {
 
     test('differentOutboundSessionIdsForDifferentStreams', async () => {
         await expect(bobsClient.initializeUser()).toResolve()
-        await bobsClient.startSync()
+        bobsClient.startSync()
 
         const spaceId = makeSpaceStreamId('bobs-space-' + genId())
         await expect(bobsClient.createSpace(spaceId)).toResolve()

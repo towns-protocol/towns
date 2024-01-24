@@ -65,7 +65,7 @@ describe('syncStreams', () => {
             mockStore,
             mockClientEmitter,
         )
-        await alicesSyncedStreams.startSync()
+        await alicesSyncedStreams.startSyncStreams()
         await done.promise
         await alicesSyncedStreams.addStreamToSync(streamAndCookie.nextSyncCookie)
 

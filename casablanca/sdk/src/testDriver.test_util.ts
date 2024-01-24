@@ -32,7 +32,7 @@ class TestDriver {
         this.client.on('userJoinedStream', (s) => void this.userJoinedStream.bind(this)(s))
         this.client.on('eventDecrypted', (e, f, g) => void this.eventDecrypted.bind(this)(e, f, g))
 
-        await this.client.startSync()
+        this.client.startSync()
         this.log(`driver started client`)
     }
 

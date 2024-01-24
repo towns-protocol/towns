@@ -32,7 +32,7 @@ describe('withEntitlements', () => {
         const bob = await makeTestClient({ context: bobsContext })
         const bobsUserStreamId = makeUserStreamId(bob.userId)
         await expect(bob.initializeUser()).toResolve()
-        await bob.startSync()
+        bob.startSync()
 
         // create a space stream,
         const spaceId = makeSpaceStreamId('bobs-space-' + genId())

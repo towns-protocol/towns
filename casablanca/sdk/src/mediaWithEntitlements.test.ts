@@ -43,7 +43,7 @@ describe('mediaWithEntitlementsTests', () => {
         bobClient = await makeTestClient({ context: bobContext })
 
         await bobClient.initializeUser()
-        await bobClient.startSync()
+        bobClient.startSync()
 
         aliceWallet = ethers.Wallet.createRandom()
         aliceContext = await makeUserContextFromWallet(aliceWallet)
@@ -113,7 +113,7 @@ describe('mediaWithEntitlementsTests', () => {
         await bobClient.stop()
 
         await aliceClient.initializeUser()
-        await aliceClient.startSync()
+        aliceClient.startSync()
 
         // Alice is NOT a member of the channel is prevented from creating a media stream
         await expect(aliceClient.createMediaStream(channelId, 10)).toReject()

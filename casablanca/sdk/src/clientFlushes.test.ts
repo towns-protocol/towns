@@ -69,7 +69,7 @@ describe('clientFlushes', () => {
 
         await sendFlush(bobsClient.rpcClient)
 
-        await bobsClient.startSync()
+        bobsClient.startSync()
 
         await sendFlush(bobsClient.rpcClient)
 
@@ -156,7 +156,7 @@ describe('clientFlushes', () => {
 
         await sendFlush(bobsClient.rpcClient)
 
-        await bobsAnotherClient.startSync()
+        bobsAnotherClient.startSync()
 
         await sendFlush(bobsClient.rpcClient)
 
