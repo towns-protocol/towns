@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/crypto"
@@ -28,6 +29,7 @@ func parsedEvent(t *testing.T, envelope *protocol.Envelope) *ParsedEvent {
 func TestLoad(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	minEventsPerSnapshot := 2
+
 	inception, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_UserPayload_Inception("streamid$1", &protocol.StreamSettings{MinEventsPerSnapshot: int32(minEventsPerSnapshot)}),
@@ -165,22 +167,45 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
 	assert.NoError(t, err)
-	// with 5 generations
-	newSV, err := view.copyAndApplyBlock(miniblock, &config.StreamConfig{
+	// with 5 generations (5 blocks kept in memory)
+	newSV1, err := view.copyAndApplyBlock(miniblock, &config.StreamConfig{
 		RecencyConstraints: config.RecencyConstraintsConfig{
 			Generations: 5,
 			AgeSeconds:  11,
 		},
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, len(newSV.blocks), 2)
-	// with 0 generations
-	newSV, err = view.copyAndApplyBlock(miniblock, &config.StreamConfig{
+	assert.Equal(t, len(newSV1.blocks), 2) // we should have both blocks in memory
+	// with 0 generations (0 in memory block history)
+	newSV2, err := view.copyAndApplyBlock(miniblock, &config.StreamConfig{
 		RecencyConstraints: config.RecencyConstraintsConfig{
 			Generations: 0,
 			AgeSeconds:  11,
 		},
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, len(newSV.blocks), 1)
+	assert.Equal(t, len(newSV2.blocks), 1) // we should only have the latest block in memory
+	// add an event with an old hash
+	join4, err := MakeEnvelopeWithPayload(
+		wallet,
+		Make_UserPayload_Membership(protocol.MembershipOp_SO_LEAVE, "userid$3", "streamid$1", nil),
+		newSV1.blocks[len(newSV1.blocks)-2].Hash,
+	)
+	assert.NoError(t, err)
+	nextEvent = parsedEvent(t, join4)
+	assert.NoError(t, err)
+	err = newSV1.ValidateNextEvent(nextEvent, &recencyConstraintsConfig_t)
+	assert.NoError(t, err)
+	_, err = newSV1.copyAndAddEvent(nextEvent)
+	assert.NoError(t, err)
+	// wait 1 second
+	time.Sleep(1 * time.Second)
+	// try with tighter recency constraints
+	err = newSV1.ValidateNextEvent(nextEvent, &config.RecencyConstraintsConfig{
+		Generations: 5,
+		AgeSeconds:  1,
+	})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "BAD_PREV_MINIBLOCK_HASH")
+
 }

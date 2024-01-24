@@ -555,7 +555,8 @@ func (r *streamViewImpl) isRecentBlock(block *miniblockInfo, config *config.Rece
 	}
 	currentTime := time.Now()
 	maxAgeDuration := time.Duration(config.AgeSeconds) * time.Second
-	return currentTime.Sub(block.header().Timestamp.AsTime()) <= maxAgeDuration
+	diff := currentTime.Sub(block.header().Timestamp.AsTime())
+	return diff <= maxAgeDuration
 }
 
 func (r *streamViewImpl) GetStats() StreamViewStats {
