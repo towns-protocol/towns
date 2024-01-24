@@ -18,12 +18,15 @@ echo "ENVIRONMENT_NAME: ${ENVIRONMENT_NAME}"
 echo "NODE_NUMBER: ${NODE_NUMBER}"
 NODE_NAME="river${NODE_NUMBER}"
 
-CODE_DEPLOY_APP_NAME="${NODE_NAME}-${ENVIRONMENT_NAME}"
-CODE_DEPLOY_GROUP_NAME="river-blue-green"
-
 CLUSTER_NAME="${ENVIRONMENT_NAME}-river-ecs-cluster"
 REGISTERED_TASK_DEFINITION_FILENAME="$( pwd )/registered-task-definition.json"
 SERVICE_NAME="${NODE_NAME}-${ENVIRONMENT_NAME}-fargate-service"
+
+# if CLUSTER_NAME contains transient, use the transient-global ecs cluster
+if [[ $CLUSTER_NAME == *"transient"* ]]; then
+    CLUSTER_NAME="transient-global-river-ecs-cluster"
+    
+fi
 
 # Get the ARN of the registered task definition
 TASK_DEFINITION_ARN="$( jq -r '.taskDefinition.taskDefinitionArn' ${REGISTERED_TASK_DEFINITION_FILENAME} )"
@@ -32,27 +35,22 @@ echo "Updating service ${SERVICE_NAME} to use task definition ${TASK_DEFINITION_
 
 DEPLOYMENT_ID_FILENAME="$( pwd )/deploy-id.json"
 
-aws deploy create-deployment \
-    --application-name ${CODE_DEPLOY_APP_NAME} \
-    --deployment-group-name ${CODE_DEPLOY_GROUP_NAME} \
-    --revision '{"revisionType": "AppSpecContent", "appSpecContent": {"content": "{\"Resources\":[{\"TargetService\":{\"Properties\":{\"TaskDefinition\":\"'${TASK_DEFINITION_ARN}'\",\"LoadBalancerInfo\": {\"ContainerName\": \"river-node\", \"ContainerPort\": 5157} }, \"Type\":\"AWS::ECS::Service\"}}],\"version\":1}"}}' > ${DEPLOYMENT_ID_FILENAME}
+function deploy_and_wait() {
+    # Update the service to use the new task definition
+    aws ecs update-service \
+        --service=${SERVICE_NAME} \
+        --cluster=${CLUSTER_NAME} \
+        --task-definition=${TASK_DEFINITION_ARN} > /dev/null \
+        --force-new-deployment
+}
 
-# Get the deploy id
-DEPLOYMENT_ID="$( jq -r '.deploymentId' ${DEPLOYMENT_ID_FILENAME} )"
+function main() {
+   # Run the deploy and wait function, with a timeout of 10 minutes
+   deploy_and_wait
+   if ! ( timeout 600 aws ecs wait services-stable --cluster="${CLUSTER_NAME}" --services="${SERVICE_NAME}" ); then
+        echo "Service failed to stabilize in time"
+        exit 1
+    fi
+}
 
-echo "Deploy id: ${DEPLOYMENT_ID}"
-
-echo "Waiting for successful deploy on Deployment Id: ${DEPLOYMENT_ID} for ${SERVICE_NAME}..."
-
-# Wait for the deploy to succeed with a timeout of 5 minutes (300 seconds)
-TIMEOUT_SECONDS=300
-
-if ! timeout $TIMEOUT_SECONDS aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}; then
-    echo "Deployment was not successful in ${TIMEOUT_SECONDS} seconds. Stopping deployment..."
-    aws deploy stop-deployment --deployment-id ${DEPLOYMENT_ID}
-    exit 1
-else
-    echo "Deployment successful"
-fi
-
-echo "Exiting"
+main

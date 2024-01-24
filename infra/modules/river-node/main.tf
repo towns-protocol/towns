@@ -601,29 +601,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
   tags = module.global_constants.tags
 }
 
-
-resource "aws_iam_role" "ecs_code_deploy_role" {
-  name                = "${local.node_name}-ecs-code-deploy-role"
-  managed_policy_arns = ["arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"]
-
-
-  assume_role_policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Sid" : "",
-        "Effect" : "Allow",
-        "Principal" : {
-          "Service" : "codedeploy.amazonaws.com"
-        },
-        "Action" : "sts:AssumeRole"
-      }
-    ]
-  })
-
-  tags = module.global_constants.tags
-}
-
 resource "aws_ecs_service" "river-ecs-service" {
   name                               = "${local.node_name}-fargate-service"
   cluster                            = var.ecs_cluster.id
@@ -643,10 +620,6 @@ resource "aws_ecs_service" "river-ecs-service" {
 
   launch_type      = "FARGATE"
   platform_version = "1.4.0"
-
-  deployment_controller {
-    type = "CODE_DEPLOY"
-  }
 
   lifecycle {
     ignore_changes = [task_definition, desired_count, load_balancer]
@@ -669,63 +642,6 @@ resource "aws_ecs_service" "river-ecs-service" {
     delete = "60m"
   }
   tags = local.river_node_tags
-}
-
-resource "aws_codedeploy_app" "river-node-code-deploy-app" {
-  compute_platform = "ECS"
-  name             = local.node_name
-  tags             = local.river_node_tags
-}
-
-resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
-  app_name               = aws_codedeploy_app.river-node-code-deploy-app.name
-  deployment_group_name  = "river-blue-green"
-  service_role_arn       = aws_iam_role.ecs_code_deploy_role.arn
-  deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
-
-  tags = local.river_node_tags
-
-  ecs_service {
-    cluster_name = var.ecs_cluster.name
-    service_name = aws_ecs_service.river-ecs-service.name
-  }
-
-  auto_rollback_configuration {
-    enabled = true
-    events  = ["DEPLOYMENT_FAILURE"]
-  }
-
-  deployment_style {
-    deployment_option = "WITH_TRAFFIC_CONTROL"
-    deployment_type   = "BLUE_GREEN"
-  }
-
-  blue_green_deployment_config {
-    deployment_ready_option {
-      action_on_timeout    = "CONTINUE_DEPLOYMENT"
-      wait_time_in_minutes = 0
-    }
-
-    terminate_blue_instances_on_deployment_success {
-      action                           = "TERMINATE"
-      termination_wait_time_in_minutes = 0
-    }
-  }
-  load_balancer_info {
-    target_group_pair_info {
-      target_group {
-        name = aws_lb_target_group.blue.name
-      }
-
-      target_group {
-        name = aws_lb_target_group.green.name
-      }
-
-      prod_traffic_route {
-        listener_arns = [var.alb_https_listener_arn]
-      }
-    }
-  }
 }
 
 data "cloudflare_zone" "zone" {
