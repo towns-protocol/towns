@@ -356,6 +356,8 @@ locals {
     name  = "REGISTRYCONTRACT__ADDRESS",
     value = "0xEd142Ee3F6B445B70f063A30A3F61e5d7855F6Fd"
   }] : []
+
+  node_registry_csv_multinode = "${local.nodes[0].address},${local.nodes[0].url},${local.nodes[1].address},${local.nodes[1].url},${local.nodes[2].address},${local.nodes[2].url},${local.nodes[3].address},${local.nodes[3].url},${local.nodes[4].address},${local.nodes[4].url},${local.nodes[5].address},${local.nodes[5].url},${local.nodes[6].address},${local.nodes[6].url},${local.nodes[7].address},${local.nodes[7].url},${local.nodes[8].address},${local.nodes[8].url},${local.nodes[9].address},${local.nodes[9].url}"
 }
 
 resource "aws_ecs_task_definition" "river-fargate" {
@@ -528,7 +530,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         # TODO: remove this env var after migrating to the actual ndoe registry smart contract
         name  = "NODEREGISTRYCSV"
-        value = "${local.nodes[0].address},${local.nodes[0].url},${local.nodes[1].address},${local.nodes[1].url},${local.nodes[2].address},${local.nodes[2].url},${local.nodes[3].address},${local.nodes[3].url},${local.nodes[4].address},${local.nodes[4].url},${local.nodes[5].address},${local.nodes[5].url},${local.nodes[6].address},${local.nodes[6].url},${local.nodes[7].address},${local.nodes[7].url},${local.nodes[8].address},${local.nodes[8].url},${local.nodes[9].address},${local.nodes[9].url}"
+        value = var.is_transient ? local.node_registry_csv_multinode : ""
       },
       {
         name  = "USEBLOCKCHAINSTREAMREGISTRY",
