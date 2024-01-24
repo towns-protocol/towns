@@ -13,9 +13,8 @@ import {
     userIdFromAddress,
 } from './id'
 import { StreamRpcClientType } from './makeStreamRpcClient'
-import { makeEvent, SignerContext, unpackEnvelopes, unpackStream } from './sign'
+import { makeEvent, SignerContext, unpackStream, unpackStreamEnvelopes } from './sign'
 import {
-    ParsedEvent,
     getChannelPayload,
     getMessagePayload,
     make_ChannelPayload_Inception,
@@ -34,7 +33,6 @@ import {
 } from './util.test'
 
 const log = dlog('csb:test:nodeRestart')
-const data_log = log.extend('data')
 
 describe('nodeRestart', () => {
     let bobsContext: SignerContext
@@ -176,7 +174,7 @@ const createNewChannelAndPostHello = async (
     // Now there must be "channel created" event in the space stream.
     const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
     const channelCreatePayload = lastEventFiltered(
-        await unpackEnvelopes(spaceResponse.stream!.events),
+        await unpackStreamEnvelopes(spaceResponse.stream!),
         getChannelPayload,
     )
     expect(channelCreatePayload).toBeDefined()
@@ -228,25 +226,10 @@ const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: stri
     expect(channel2.stream).toBeDefined()
     expect(channel2.stream?.nextSyncCookie?.streamId).toEqual(channelId)
 
-    const all_events: ParsedEvent[] = []
-    for (const mb of channel2.stream!.miniblocks) {
-        const mb_events = await unpackEnvelopes(mb.events)
-        data_log('Got miniblock data', 'events=', mb_events)
-        log('Miniblock event_num=', mb.events.length)
-        all_events.push(...mb_events)
-    }
-
-    const events = await unpackEnvelopes(channel2.stream!.events)
-    data_log('Got channel data, looking for hello', 'events=', events)
-    log(
-        'Got channel data, looking for hello',
-        'num_miniblocks=',
-        channel2.stream!.miniblocks.length,
-        'num_events=',
-        channel2.stream!.events.length,
+    const hello = lastEventFiltered(
+        await unpackStreamEnvelopes(channel2.stream!),
+        getMessagePayload,
     )
-    all_events.push(...events)
-    const hello = lastEventFiltered(all_events, getMessagePayload)
     expect(hello).toBeDefined()
     expect(hello?.ciphertext).toEqual('hello')
 }

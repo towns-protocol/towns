@@ -3,7 +3,6 @@ package events
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/river-build/river/config"
 	"github.com/river-build/river/dlog"
@@ -53,6 +52,7 @@ type streamImpl struct {
 	params *StreamCacheParams
 
 	streamId string
+	nodes    *StreamNodes
 	config   *config.StreamConfig
 
 	// Mutex protects fields below
@@ -64,10 +64,6 @@ type streamImpl struct {
 	view      *streamViewImpl
 	loadError error
 	receivers mapset.Set[SyncResultReceiver]
-
-	miniblockTicker           *time.Ticker
-	miniblockTickerContext    context.Context
-	miniblockTickerCancelFunc context.CancelFunc
 }
 
 var _ SyncStream = (*streamImpl)(nil)
@@ -93,40 +89,7 @@ func (s *streamImpl) loadInternal(ctx context.Context) {
 		s.loadError = err
 	} else {
 		s.view = view
-		s.startTicker()
 	}
-}
-
-func (s *streamImpl) startTicker() {
-	if !s.view.InceptionPayload().GetSettings().GetDisableMiniblockCreation() {
-		s.miniblockTickerContext, s.miniblockTickerCancelFunc = context.WithCancel(s.params.DefaultCtx)
-		s.miniblockTicker = time.NewTicker(2 * time.Second)
-		go s.miniblockTick(s.miniblockTickerContext)
-	}
-}
-
-func (s *streamImpl) miniblockTick(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-s.miniblockTicker.C:
-			_ = s.MakeMiniblock(ctx)
-		}
-	}
-}
-
-func (s *streamImpl) stopTicker() {
-	// Should be called under lock.
-	if s.miniblockTicker == nil {
-		s.miniblockTicker.Stop()
-		s.miniblockTicker = nil
-	}
-	if s.miniblockTickerCancelFunc != nil {
-		s.miniblockTickerCancelFunc()
-		s.miniblockTickerCancelFunc = nil
-	}
-	s.miniblockTickerContext = nil
 }
 
 func (s *streamImpl) ProposeNextMiniblock(ctx context.Context) (*MiniblockProposal, error) {
@@ -249,6 +212,7 @@ func createStream(
 	params *StreamCacheParams,
 	config *config.StreamConfig,
 	streamId string,
+	nodes *StreamNodes,
 	genesisMiniblock *Miniblock,
 ) (*streamImpl, *streamViewImpl, error) {
 	serializedMiniblock, err := proto.Marshal(genesisMiniblock)
@@ -273,6 +237,7 @@ func createStream(
 	stream := &streamImpl{
 		params:   params,
 		streamId: streamId,
+		nodes:    nodes,
 		config:   config,
 		view:     view,
 	}
@@ -292,6 +257,18 @@ func (s *streamImpl) GetView(ctx context.Context) (StreamView, error) {
 	defer s.mu.Unlock()
 	s.loadInternal(ctx)
 	return s.view, s.loadError
+}
+
+// Returns StreamView if it's already loaded, or nil if it's not.
+func (s *streamImpl) tryGetView() StreamView {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	// Return nil interface, if implementation is nil. This is go for you.
+	if s.view != nil {
+		return s.view
+	} else {
+		return nil
+	}
 }
 
 // Returns
@@ -497,6 +474,11 @@ func (s *streamImpl) ForceFlush(ctx context.Context) {
 		}
 	}
 	s.receivers = nil
+}
 
-	s.stopTicker()
+// Periodic miniblock creation maybe disabled in tests.
+func (s *streamImpl) mbCreationEnabled() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.view != nil && !s.view.snapshot.GetInceptionPayload().GetSettings().GetDisableMiniblockCreation()
 }

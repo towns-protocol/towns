@@ -11,7 +11,7 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from './id'
-import { SignerContext, makeEvent, unpackEnvelopes, unpackStream } from './sign'
+import { SignerContext, makeEvent, unpackStream, unpackStreamEnvelopes } from './sign'
 import {
     getMessagePayload,
     getMiniblockHeader,
@@ -165,7 +165,7 @@ describe('syncWithBlocks', () => {
             }
             const stream: StreamAndCookie | undefined = res.stream
             expect(stream).toBeDefined()
-            const parsed = await unpackEnvelopes(res.stream.events)
+            const parsed = await unpackStreamEnvelopes(res.stream)
             log('===================sunk===================', { parsed })
             for (const p of parsed) {
                 if (knownHashes.has(p.hashStr)) {

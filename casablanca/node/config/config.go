@@ -70,8 +70,11 @@ type DatabaseConfig struct {
 }
 
 type ChainConfig struct {
-	NetworkUrl                         string
-	ChainId                            int
+	NetworkUrl      string
+	ChainId         int
+	FakeBlockTimeMs int64
+
+	// TODO: these need to be removed from here
 	LinkedWalletsLimit                 int
 	ContractCallsTimeoutMs             int
 	PositiveEntitlementCacheSize       int

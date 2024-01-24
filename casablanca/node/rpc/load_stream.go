@@ -18,16 +18,16 @@ type remoteStream struct {
 var _ Stream = (*remoteStream)(nil)
 
 func (s *Service) loadStream(ctx context.Context, streamID string) (Stream, StreamView, error) {
-	isLocal, remotes, err := s.getNodesForStream(ctx, streamID)
+	nodes, err := s.getNodesForStream(ctx, streamID)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if isLocal {
-		return s.cache.GetStream(ctx, streamID)
+	if nodes.IsLocal() {
+		return s.cache.GetStream(ctx, streamID, nodes)
 	}
 
-	targetNode := remotes[0]
+	targetNode := nodes.GetRemotes()[0]
 	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(targetNode)
 	if err != nil {
 		return nil, nil, err

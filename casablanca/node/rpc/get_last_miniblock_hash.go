@@ -5,6 +5,7 @@ import (
 
 	connect_go "github.com/bufbuild/connect-go"
 
+	. "github.com/river-build/river/events"
 	"github.com/river-build/river/infra"
 	. "github.com/river-build/river/protocol"
 )
@@ -14,8 +15,9 @@ var getLastMiniblockHashRequests = infra.NewSuccessMetrics("get_last_miniblock_h
 func (s *Service) localGetLastMiniblockHash(
 	ctx context.Context,
 	req *connect_go.Request[GetLastMiniblockHashRequest],
+	nodes *StreamNodes,
 ) (*connect_go.Response[GetLastMiniblockHashResponse], error) {
-	res, err := s.getLastMiniblockHash(ctx, req)
+	res, err := s.getLastMiniblockHash(ctx, req, nodes)
 	if err != nil {
 		getLastMiniblockHashRequests.FailInc()
 		return nil, err
@@ -28,10 +30,11 @@ func (s *Service) localGetLastMiniblockHash(
 func (s *Service) getLastMiniblockHash(
 	ctx context.Context,
 	req *connect_go.Request[GetLastMiniblockHashRequest],
+	nodes *StreamNodes,
 ) (*connect_go.Response[GetLastMiniblockHashResponse], error) {
 	streamId := req.Msg.StreamId
 
-	_, streamView, err := s.cache.GetStream(ctx, streamId)
+	_, streamView, err := s.cache.GetStream(ctx, streamId, nodes)
 	if err != nil {
 		return nil, err
 	}

@@ -133,7 +133,9 @@ func mbTest(
 	spaceStreamId := GenShortNanoid()
 	miniblockProto := MakeGenesisMiniblockForSpaceStream(t, streamCacheParams.Wallet, spaceStreamId)
 
-	stream, view, err := createStream(ctx, streamCacheParams, &config.StreamConfig{}, spaceStreamId, miniblockProto)
+	streamNodes := NewStreamNodes([]string{streamCacheParams.Wallet.AddressStr}, streamCacheParams.Wallet.AddressStr)
+
+	stream, view, err := createStream(ctx, streamCacheParams, &config.StreamConfig{}, spaceStreamId, streamNodes, miniblockProto)
 	assert.NoError(err)
 
 	addEvent(t, stream, "1", view.LastBlock().Hash)

@@ -24,6 +24,12 @@ var streamConfig_t = config.StreamConfig{
 	},
 }
 
+type noopBlockMonitor struct{}
+
+var _ crypto.BlockMonitor = (*noopBlockMonitor)(nil)
+
+func (b *noopBlockMonitor) AddListener(listener crypto.OnNewBlock) {}
+
 func makeEnvelopeWithPayload_T(
 	t *testing.T,
 	wallet *crypto.Wallet,
@@ -203,6 +209,10 @@ func leaveChannel_T(
 	}
 }
 
+func getStreamNodes() *StreamNodes {
+	return NewStreamNodes([]string{"node_1", "node_2", "node_3"}, "node_1")
+}
+
 func TestSpaceViewState(t *testing.T) {
 	ctx := context.Background()
 	nodeWallet, _ := crypto.NewWallet(ctx)
@@ -210,14 +220,17 @@ func TestSpaceViewState(t *testing.T) {
 	user2Wallet, _ := crypto.NewWallet(ctx)
 	user3Wallet, _ := crypto.NewWallet(ctx)
 
-	streamCache := NewStreamCache(&StreamCacheParams{
-		Storage:    storage.NewMemStorage(),
-		Wallet:     nodeWallet,
-		DefaultCtx: ctx,
-	}, &streamConfig_t)
+	streamCache := NewStreamCache(
+		&StreamCacheParams{
+			Storage:                storage.NewMemStorage(),
+			Wallet:                 nodeWallet,
+			DefaultCtx:             ctx,
+			RiverChainBlockMonitor: &noopBlockMonitor{},
+		},
+		&streamConfig_t)
 	// create a stream
 	_, mb := makeTestSpaceStream(t, user1Wallet, "user_1", "space_1", nil)
-	s, _, err := streamCache.CreateStream(ctx, "streamid$1", mb)
+	s, _, err := streamCache.CreateStream(ctx, "streamid$1", getStreamNodes(), mb)
 	stream := s.(*streamImpl)
 	assert.NoError(t, err)
 	assert.NotNil(t, stream)
@@ -284,18 +297,19 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	spaceStreamId := "space_1_streamId"
 	channelStreamId := "channel_1_streamId"
 	streamCache := NewStreamCache(&StreamCacheParams{
-		Storage:    storage.NewMemStorage(),
-		Wallet:     nodeWallet,
-		DefaultCtx: ctx,
+		Storage:                storage.NewMemStorage(),
+		Wallet:                 nodeWallet,
+		DefaultCtx:             ctx,
+		RiverChainBlockMonitor: &noopBlockMonitor{},
 	}, &streamConfig_t)
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
-	sStream, _, _ := streamCache.CreateStream(ctx, spaceStreamId, mb)
+	sStream, _, _ := streamCache.CreateStream(ctx, spaceStreamId, getStreamNodes(), mb)
 	spaceStream := sStream.(*streamImpl)
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
 	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil, nil)
-	cStream, _, _ := streamCache.CreateStream(ctx, channelStreamId, mb)
+	cStream, _, _ := streamCache.CreateStream(ctx, channelStreamId, getStreamNodes(), mb)
 	channelStream := cStream.(*streamImpl)
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// make a miniblock
@@ -337,18 +351,19 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	spaceStreamId := "space_1_streamId"
 	channelStreamId := "channel_1_streamId"
 	streamCache := NewStreamCache(&StreamCacheParams{
-		Storage:    storage.NewMemStorage(),
-		Wallet:     nodeWallet,
-		DefaultCtx: ctx,
+		Storage:                storage.NewMemStorage(),
+		Wallet:                 nodeWallet,
+		DefaultCtx:             ctx,
+		RiverChainBlockMonitor: &noopBlockMonitor{},
 	}, &streamConfig_t)
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, alice, spaceStreamId, nil)
-	sStream, _, _ := streamCache.CreateStream(ctx, spaceStreamId, mb)
+	sStream, _, _ := streamCache.CreateStream(ctx, spaceStreamId, getStreamNodes(), mb)
 	spaceStream := sStream.(*streamImpl)
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
 	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil, nil)
-	cStream, _, _ := streamCache.CreateStream(ctx, channelStreamId, mb)
+	cStream, _, _ := streamCache.CreateStream(ctx, channelStreamId, getStreamNodes(), mb)
 	channelStream := cStream.(*streamImpl)
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// bob leaves the channel

@@ -1757,4 +1757,8 @@ export class Client
             fallbackKey: this.olmDevice.fallbackKey.key,
         }
     }
+
+    public async debugForceMakeMiniblock(streamId: string): Promise<void> {
+        await this.rpcClient.info({ debug: ['make_miniblock', streamId] })
+    }
 }

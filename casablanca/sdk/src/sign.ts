@@ -257,6 +257,19 @@ export const unpackEnvelopes = async (event: Envelope[]): Promise<ParsedEvent[]>
     return ret
 }
 
+// First unpacks miniblocks, including header events, then unpacks events from the minipool
+export const unpackStreamEnvelopes = async (stream: StreamAndCookie): Promise<ParsedEvent[]> => {
+    const ret: ParsedEvent[] = []
+
+    for (const mb of stream.miniblocks) {
+        ret.push(...(await unpackEnvelopes(mb.events)))
+        ret.push(await unpackEnvelope(mb.header!))
+    }
+
+    ret.push(...(await unpackEnvelopes(stream.events)))
+    return ret
+}
+
 export const makeEventRef = (streamId: string, event: Envelope): EventRef => {
     return new EventRef({
         streamId,

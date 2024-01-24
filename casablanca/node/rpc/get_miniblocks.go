@@ -5,6 +5,7 @@ import (
 
 	connect_go "github.com/bufbuild/connect-go"
 
+	. "github.com/river-build/river/events"
 	"github.com/river-build/river/infra"
 	. "github.com/river-build/river/protocol"
 )
@@ -14,8 +15,9 @@ var getMiniblocksRequests = infra.NewSuccessMetrics("get_miniblocks_requests", s
 func (s *Service) localGetMiniblocks(
 	ctx context.Context,
 	req *connect_go.Request[GetMiniblocksRequest],
+	nodes *StreamNodes,
 ) (*connect_go.Response[GetMiniblocksResponse], error) {
-	res, err := s.getMiniblocks(ctx, req)
+	res, err := s.getMiniblocks(ctx, req, nodes)
 	if err != nil {
 		getMiniblocksRequests.FailInc()
 		return nil, err
@@ -28,10 +30,11 @@ func (s *Service) localGetMiniblocks(
 func (s *Service) getMiniblocks(
 	ctx context.Context,
 	req *connect_go.Request[GetMiniblocksRequest],
+	nodes *StreamNodes,
 ) (*connect_go.Response[GetMiniblocksResponse], error) {
 	streamId := req.Msg.StreamId
 
-	stream, _, err := s.cache.GetStream(ctx, streamId)
+	stream, _, err := s.cache.GetStream(ctx, streamId, nodes)
 	if err != nil {
 		return nil, err
 	}

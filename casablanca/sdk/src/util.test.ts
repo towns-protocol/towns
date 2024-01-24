@@ -1,4 +1,4 @@
-import { SignerContext, _impl_makeEvent_impl_, unpackEnvelopes } from './sign'
+import { SignerContext, _impl_makeEvent_impl_, unpackStreamEnvelopes } from './sign'
 
 import {
     EncryptedData,
@@ -262,7 +262,7 @@ export async function* iterableWrapper<T>(
 // For example, use like this:
 //
 //    joinPayload = lastEventFiltered(
-//        unpackEnvelopes(userResponse.stream!.events),
+//        unpackStreamEnvelopes(userResponse.stream!),
 //        getUserPayload_Membership,
 //    )
 //
@@ -360,7 +360,7 @@ export async function waitForSyncStreamsMessage(
         if (res.syncOp === SyncOp.SYNC_UPDATE) {
             const stream = res.stream
             if (stream) {
-                const env = await unpackEnvelopes(stream.events)
+                const env = await unpackStreamEnvelopes(stream)
                 for (const e of env) {
                     if (e.event.payload.case === 'channelPayload') {
                         const p = e.event.payload.value.content

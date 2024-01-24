@@ -1,13 +1,14 @@
 package rpc
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"html"
 	"net/http"
 	"net/http/pprof"
 	"runtime"
-	"sort"
+	"slices"
 	"strings"
 
 	. "github.com/river-build/river/events"
@@ -72,18 +73,18 @@ func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	printStreams := r.URL.Query().Get("streams") == "1"
 
-	streams := h.cache.ListStreams(ctx)
-	sort.Strings(streams)
+	streams := h.cache.GetLoadedViews(ctx)
+	slices.SortFunc(
+		streams,
+		func(a, b StreamView) int {
+			return cmp.Compare(a.StreamId(), b.StreamId())
+		},
+	)
 
 	var miniblocks, eventsInMiniblocks, snapshotsInMiniblocks, eventsInMinipools, trimmedStreams, totalEventsEver int
 
 	var streamTable strings.Builder
-	for i, stream := range streams {
-		_, view, err := h.cache.GetStream(ctx, stream)
-		if err != nil {
-			continue
-		}
-
+	for i, view := range streams {
 		stats := view.GetStats()
 		miniblocks += int(stats.LastMiniblockNum - stats.FirstMiniblockNum + 1)
 		eventsInMiniblocks += stats.EventsInMiniblocks
@@ -99,7 +100,7 @@ func (h *cacheHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				&streamTable,
 				"<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td></tr>",
 				i,
-				stream,
+				view.StreamId(),
 				stats.FirstMiniblockNum,
 				stats.LastMiniblockNum,
 				stats.LastMiniblockNum-stats.FirstMiniblockNum+1,

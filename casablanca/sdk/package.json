@@ -24,8 +24,8 @@
         "test:ci:with-entitlements": "RIVER_TEST_CONNECT=single_ent yarn my-jest --group=with-entitilements",
         "test:ci:wallet-management-tests": "RIVER_TEST_CONNECT=single yarn my-jest --group=wallet-management-tests --testTimeout=180000",
         "test:ci:synthetic:all": "RIVER_TEST_CONNECT=single yarn my-jest --group=synthetic --testTimeout=180000",
-        "test:ci:multi": "RIVER_TEST_CONNECT=multi yarn my-jest --group=main",
-        "test:ci:multi:ent": "RIVER_TEST_CONNECT=multi yarn my-jest --group=with-entitilements",
+        "test:ci:multi": "RIVER_TEST_CONNECT=multi yarn my-jest --group=main --testTimeout=180000",
+        "test:ci:multi:ent": "RIVER_TEST_CONNECT=multi yarn my-jest --group=with-entitilements --testTimeout=180000",
         "test:node-minipool-flush": "RIVER_TEST_CONNECT=single yarn my-jest --group=node-minipool-flush --numWorkers=1",
         "test:restart": "RIVER_TEST_CONNECT=single yarn my-jest --group=restart --numWorkers=1",
         "watch": "tsc --watch"

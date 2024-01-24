@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { makeEvent, makeEvents, SignerContext, unpackEnvelopes } from './sign'
+import { makeEvent, makeEvents, SignerContext, unpackStreamEnvelopes } from './sign'
 import { MembershipOp, SyncStreamsResponse, SyncCookie, SyncOp } from '@river/proto'
 import { dlog } from '@river/waterproof'
 import {
@@ -589,7 +589,7 @@ describe('streamRpcClient', () => {
         const channel = await alice.getStream({ streamId: channelId })
         let messageCount = 0
         if (!channel.stream) throw new Error('channel stream not found')
-        const envelopes = await unpackEnvelopes(channel.stream.events)
+        const envelopes = await unpackStreamEnvelopes(channel.stream)
         envelopes.forEach((e) => {
             const p = e.event.payload
             if (p?.case === 'channelPayload' && p.value.content.case === 'message') {
@@ -887,7 +887,7 @@ const waitForEvent = async (
     for await (const res of iterableWrapper(syncStream)) {
         const stream = res.stream
         if (stream?.nextSyncCookie?.streamId === streamId) {
-            const events = await unpackEnvelopes(stream.events)
+            const events = await unpackStreamEnvelopes(stream)
             for (const e of events) {
                 if (matcher(e)) {
                     return stream.nextSyncCookie

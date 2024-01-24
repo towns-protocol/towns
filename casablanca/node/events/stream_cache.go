@@ -12,41 +12,63 @@ import (
 )
 
 type StreamCacheParams struct {
-	Storage    storage.StreamStorage
-	Wallet     *crypto.Wallet
-	DefaultCtx context.Context
+	Storage                storage.StreamStorage
+	Wallet                 *crypto.Wallet
+	DefaultCtx             context.Context
+	RiverChainBlockMonitor crypto.BlockMonitor
 }
 
 type StreamCache interface {
-	GetStream(ctx context.Context, streamId string) (SyncStream, StreamView, error)
-	CreateStream(ctx context.Context, streamId string, genesisMiniblock *Miniblock) (SyncStream, StreamView, error)
+	GetStream(ctx context.Context, streamId string, nodes *StreamNodes) (SyncStream, StreamView, error)
+	CreateStream(
+		ctx context.Context,
+		streamId string,
+		nodes *StreamNodes,
+		genesisMiniblock *Miniblock,
+	) (SyncStream, StreamView, error)
 	ForceFlushAll(ctx context.Context)
-	ListStreams(ctx context.Context) []string
-	MakeMiniblock(ctx context.Context, streamId string) error
+	GetLoadedViews(ctx context.Context) []StreamView
 }
 
 type streamCacheImpl struct {
-	params *StreamCacheParams
-	config *config.StreamConfig
-	cache  sync.Map
+	params          *StreamCacheParams
+	config          *config.StreamConfig
+	cache           sync.Map
+	onNewBlockMutex sync.Mutex
 }
 
 var _ StreamCache = (*streamCacheImpl)(nil)
 
 func NewStreamCache(params *StreamCacheParams, config *config.StreamConfig) *streamCacheImpl {
-	return &streamCacheImpl{
+	c := &streamCacheImpl{
 		params: params,
 		config: config,
 	}
+	params.RiverChainBlockMonitor.AddListener(c.onNewBlock)
+	return c
 }
 
-func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (SyncStream, StreamView, error) {
+func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string, nodes *StreamNodes) (SyncStream, StreamView, error) {
+	if !nodes.IsLocal() {
+		return nil, nil, RiverError(
+			Err_INTERNAL,
+			"Cache can only be used for local streams",
+			"streamId",
+			streamId,
+			"nodes",
+			nodes.GetNodes(),
+			"localNode",
+			s.params.Wallet.AddressStr,
+		)
+	}
+
 	entry, _ := s.cache.Load(streamId)
 	if entry == nil {
 		entry, _ = s.cache.LoadOrStore(streamId, &streamImpl{
 			params:   s.params,
-			streamId: streamId,
 			config:   s.config,
+			streamId: streamId,
+			nodes:    nodes,
 		})
 	}
 	stream := entry.(*streamImpl)
@@ -67,26 +89,37 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (SyncS
 func (s *streamCacheImpl) CreateStream(
 	ctx context.Context,
 	streamId string,
+	nodes *StreamNodes,
 	genesisMiniblock *Miniblock,
 ) (SyncStream, StreamView, error) {
+	if !nodes.IsLocal() {
+		return nil, nil, RiverError(
+			Err_INTERNAL,
+			"Cache can only be used for local streams",
+			"streamId",
+			streamId,
+			"nodes",
+			nodes.GetNodes(),
+			"localNode",
+			s.params.Wallet.AddressStr,
+		)
+	}
+
 	if existing, _ := s.cache.Load(streamId); existing != nil {
 		return nil, nil, RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", streamId)
 	}
 
-	stream, view, err := createStream(ctx, s.params, s.config, streamId, genesisMiniblock)
+	stream, view, err := createStream(ctx, s.params, s.config, streamId, nodes, genesisMiniblock)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	_, loaded := s.cache.LoadOrStore(streamId, stream)
 	if !loaded {
-		stream.mu.RLock()
-		defer stream.mu.RUnlock()
-		stream.startTicker()
 		return stream, view, nil
 	} else {
 		// Assume that parallel GetStream created cache entry, fallback to it to retrieve winning cache entry.
-		return s.GetStream(ctx, streamId)
+		return s.GetStream(ctx, streamId, nodes)
 	}
 }
 
@@ -98,20 +131,37 @@ func (s *streamCacheImpl) ForceFlushAll(ctx context.Context) {
 	})
 }
 
-func (s *streamCacheImpl) ListStreams(ctx context.Context) []string {
-	var result []string
+func (s *streamCacheImpl) GetLoadedViews(ctx context.Context) []StreamView {
+	var result []StreamView
 	s.cache.Range(func(key, value interface{}) bool {
-		result = append(result, key.(string))
+		stream := value.(*streamImpl)
+		view := stream.tryGetView()
+		if view != nil {
+			result = append(result, view)
+		}
 		return true
 	})
 	return result
 }
 
-func (s *streamCacheImpl) MakeMiniblock(ctx context.Context, streamId string) error {
-	entry, _ := s.cache.Load(streamId)
-	if entry == nil {
-		return RiverError(Err_NOT_FOUND, "stream not in cache", "streamId", streamId)
+func (s *streamCacheImpl) onNewBlock(ctx context.Context, blockNum int64, blockHash []byte) {
+	// Try lock to have only one invocation at a time. Previous onNewBlock may still be running.
+	if !s.onNewBlockMutex.TryLock() {
+		return
 	}
-	stream := entry.(*streamImpl)
-	return stream.MakeMiniblock(ctx)
+	defer s.onNewBlockMutex.Unlock()
+
+	s.cache.Range(func(key, value interface{}) bool {
+		stream := value.(*streamImpl)
+
+		if stream.mbCreationEnabled() {
+			// TODO: replace with vote
+			// For now: only first assigned node produces blocks.
+			if stream.nodes.localNodeIndex == 0 {
+				// Nothing to do on error, MakeMiniblock logs on error level if there is an error.
+				_ = stream.MakeMiniblock(ctx)
+			}
+		}
+		return true
+	})
 }

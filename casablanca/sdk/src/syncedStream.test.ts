@@ -3,7 +3,6 @@
  */
 
 import { MembershipOp, StreamSettings } from '@river/proto'
-import { wait } from './load/load_tests_util'
 import { makeTestClient, waitFor } from './util.test'
 
 describe('syncedStream', () => {
@@ -32,8 +31,7 @@ describe('syncedStream', () => {
         // Force the creation of N snapshots, which will make the sync cookie invalid
         for (let i = 0; i < 100; i++) {
             await alice.sendMessage(streamId, `'hello ${i}`)
-            // make_miniblock doesn't work atm in multinode CI — let's wait 100ms instead
-            await wait(100)
+            await alice.debugForceMakeMiniblock(streamId)
         }
 
         // later, Bob returns

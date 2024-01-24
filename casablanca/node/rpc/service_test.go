@@ -50,6 +50,8 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+var channel1Name = shared.ChannelStreamIdFromName("channel1")
+
 func createUserDeviceKeyStream(
 	ctx context.Context,
 	wallet *crypto.Wallet,
@@ -330,9 +332,7 @@ func TestMethods(t *testing.T) {
 		}
 
 		_, _, err = createUserDeviceKeyStream(ctx, wallet1, client)
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 
 		_, _, err = createUserWithMismatchedId(ctx, wallet1, client)
 		if err == nil {
@@ -341,32 +341,24 @@ func TestMethods(t *testing.T) {
 
 		// create user stream for user 1
 		res, _, err := createUser(ctx, wallet1, client)
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 		if res == nil {
 			t.Errorf("nil sync cookie")
 		}
 
 		_, _, err = createUserDeviceKeyStream(ctx, wallet2, client)
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 
 		// create user stream for user 2
 		resuser, _, err := createUser(ctx, wallet2, client)
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 		if resuser == nil {
 			t.Errorf("nil sync cookie")
 		}
 
 		// create space
 		resspace, _, err := createSpace(ctx, wallet1, client, "test")
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 		if resspace == nil {
 			t.Errorf("nil sync cookie")
 		}
@@ -384,9 +376,7 @@ func TestMethods(t *testing.T) {
 				DisableMiniblockCreation: true,
 			},
 		)
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 		if channel == nil {
 			t.Errorf("nil sync cookie")
 		}
@@ -411,14 +401,15 @@ func TestMethods(t *testing.T) {
 			ctx,
 			connect.NewRequest(
 				&protocol.AddEventRequest{
-					StreamId: shared.ChannelStreamIdFromName("channel1"),
+					StreamId: channel1Name,
 					Event:    join,
 				},
 			),
 		)
-		if err != nil {
-			t.Fatalf("error calling AddEvent: %v", err)
-		}
+		assert.NoError(t, err)
+
+		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channel1Name}}))
+		assert.NoError(t, err)
 
 		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
 			Debug: []string{"make_miniblock", shared.ChannelStreamIdFromName("channel1")},
@@ -438,14 +429,15 @@ func TestMethods(t *testing.T) {
 			ctx,
 			connect.NewRequest(
 				&protocol.AddEventRequest{
-					StreamId: shared.ChannelStreamIdFromName("channel1"),
+					StreamId: channel1Name,
 					Event:    message,
 				},
 			),
 		)
-		if err != nil {
-			t.Fatalf("error calling AddEvent: %v", err)
-		}
+		assert.NoError(t, err)
+
+		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channel1Name}}))
+		assert.NoError(t, err)
 
 		_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
 			Debug: []string{"make_miniblock", shared.ChannelStreamIdFromName("channel1")},
@@ -453,14 +445,11 @@ func TestMethods(t *testing.T) {
 		assert.NoError(t, err)
 
 		_, err = client.GetMiniblocks(ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
-			StreamId:      shared.ChannelStreamIdFromName("channel1"),
+			StreamId:      channel1Name,
 			FromInclusive: 0,
 			ToExclusive:   1,
 		}))
-
-		if err != nil {
-			t.Fatalf("error calling GetMiniblocks: %v", err)
-		}
+		assert.NoError(t, err)
 
 		syncCtx, syncCancel := context.WithCancel(context.Background())
 		syncRes, err := client.SyncStreams(
@@ -473,9 +462,7 @@ func TestMethods(t *testing.T) {
 				},
 			),
 		)
-		if err != nil {
-			t.Fatalf("error calling SyncStreams: %v", err)
-		}
+		assert.NoError(t, err)
 
 		syncRes.Receive()
 		// verify the first message is new a sync
@@ -522,38 +509,28 @@ func TestRiverDeviceId(t *testing.T) {
 	defer closer()
 	{
 		resuser, _, err := createUser(ctx, wallet, client)
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 		if resuser == nil {
 			t.Errorf("nil sync cookie")
 		}
 
 		_, _, err = createUserDeviceKeyStream(ctx, wallet, client)
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 
 		space, _, err := createSpace(ctx, wallet, client, "test")
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 		if space == nil {
 			t.Errorf("nil sync cookie")
 		}
 
 		channel, channelHash, err := createChannel(ctx, wallet, client, shared.SpaceStreamIdFromName("test"), "channel1", nil)
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 		if channel == nil {
 			t.Errorf("nil sync cookie")
 		}
 
 		delegateSig, err := makeDelegateSig(wallet, deviceWallet)
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 
 		event, err := events.MakeDelegatedStreamEvent(
 			wallet,
@@ -563,9 +540,7 @@ func TestRiverDeviceId(t *testing.T) {
 			channelHash,
 			delegateSig,
 		)
-		if err != nil {
-			t.Fatalf("error creating message event: %v", err)
-		}
+		assert.NoError(t, err)
 		msg, err := events.MakeEnvelopeWithEvent(
 			deviceWallet,
 			event,
@@ -578,20 +553,18 @@ func TestRiverDeviceId(t *testing.T) {
 			ctx,
 			connect.NewRequest(
 				&protocol.AddEventRequest{
-					StreamId: shared.ChannelStreamIdFromName("channel1"),
+					StreamId: channel1Name,
 					Event:    msg,
 				},
 			),
 		)
-		if err != nil {
-			t.Fatalf("error calling AddEvent: %v", err)
-		}
+		assert.NoError(t, err)
 
 		_, err = client.AddEvent(
 			ctx,
 			connect.NewRequest(
 				&protocol.AddEventRequest{
-					StreamId: shared.ChannelStreamIdFromName("channel1"),
+					StreamId: channel1Name,
 					Event:    msg,
 				},
 			),
@@ -655,7 +628,7 @@ func TestSyncStreams(t *testing.T) {
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: shared.ChannelStreamIdFromName("channel1"),
+				StreamId: channel1Name,
 				Event:    message,
 			},
 		),
@@ -745,7 +718,7 @@ func TestAddStreamsToSync(t *testing.T) {
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
-				StreamId: shared.ChannelStreamIdFromName("channel1"),
+				StreamId: channel1Name,
 				Event:    message,
 			},
 		),
@@ -790,9 +763,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	assert.Nilf(t, err, "error calling createUser: %v", err)
 	assert.NotNil(t, alice, "nil sync cookie for alice")
 	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
-	if err != nil {
-		t.Fatalf("error calling createUser: %v", err)
-	}
+	assert.NoError(t, err)
 	// create bob's client, wallet, and streams
 	bobClient := protocolconnect.NewStreamServiceClient(
 		http.DefaultClient,
@@ -810,7 +781,7 @@ func TestRemoveStreamsFromSync(t *testing.T) {
 	assert.NotNil(t, space1, "nil sync cookie")
 	// alice creates a channel
 	space1StreamId := shared.SpaceStreamIdFromName("space1")
-	channel1StreamId := shared.ChannelStreamIdFromName("channel1")
+	channel1StreamId := channel1Name
 	channel1, channelHash, err := createChannel(ctx, aliceWallet, aliceClient, space1StreamId, "channel1", nil)
 	assert.Nilf(t, err, "error calling createChannel: %v", err)
 	assert.NotNil(t, channel1, "nil sync cookie")
@@ -937,9 +908,7 @@ func DisableTestManyUsers(t *testing.T) {
 		wallets = append(wallets, wallet)
 
 		res, _, err := createUser(ctx, wallet, client)
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 		if res == nil {
 			t.Fatalf("nil sync cookie")
 		}
@@ -947,9 +916,7 @@ func DisableTestManyUsers(t *testing.T) {
 
 	// create space
 	resspace, _, err := createSpace(ctx, wallets[0], client, "test")
-	if err != nil {
-		t.Fatalf("error calling CreateStream: %v", err)
-	}
+	assert.NoError(t, err)
 	if resspace == nil {
 		t.Fatalf("nil sync cookie")
 	}
@@ -967,9 +934,7 @@ func DisableTestManyUsers(t *testing.T) {
 			fmt.Sprintf("channel-%d", i),
 			nil,
 		)
-		if err != nil {
-			t.Fatalf("error calling CreateStream: %v", err)
-		}
+		assert.NoError(t, err)
 		if channel == nil {
 			t.Fatalf("nil sync cookie")
 		}
@@ -981,9 +946,7 @@ func DisableTestManyUsers(t *testing.T) {
 		// users joins channels
 		for j := 0; j < totalChannels; j++ {
 			userId, err := shared.AddressHex(wallets[i].Address.Bytes())
-			if err != nil {
-				t.Fatalf("error getting user id: %v", err)
-			}
+			assert.NoError(t, err)
 
 			join, err := events.MakeEnvelopeWithPayload(
 				wallets[i],
@@ -995,35 +958,27 @@ func DisableTestManyUsers(t *testing.T) {
 			)
 			channelHashes[j] = join.Hash
 
-			if err != nil {
-				t.Fatalf("error creating join event: %v", err)
-			}
+			assert.NoError(t, err)
 			_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
 				StreamId: shared.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
 				Event:    join,
 			},
 			))
-			if err != nil {
-				t.Fatalf("error calling AddEvent: %v", err)
-			}
+			assert.NoError(t, err)
 
 			message, err := events.MakeEnvelopeWithPayload(
 				wallets[i],
 				events.Make_ChannelPayload_Message("hello"),
 				channelHashes[j],
 			)
-			if err != nil {
-				t.Fatalf("error creating message event: %v", err)
-			}
+			assert.NoError(t, err)
 
 			_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
 				StreamId: shared.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
 				Event:    message,
 			},
 			))
-			if err != nil {
-				t.Fatalf("error calling AddEvent: %v", err)
-			}
+			assert.NoError(t, err)
 		}
 	}
 
@@ -1032,9 +987,7 @@ func DisableTestManyUsers(t *testing.T) {
 	syncRes, err := client.SyncStreams(syncCtx, connect.NewRequest(&protocol.SyncStreamsRequest{
 		SyncPos: channels,
 	}))
-	if err != nil {
-		t.Fatalf("error calling SyncStreams: %v", err)
-	}
+	assert.NoError(t, err)
 
 	streams := make([]*protocol.StreamAndCookie, 0)
 	for syncRes.Receive() {

@@ -15,11 +15,12 @@ import (
 // Use NewReadOnlyBlockchain to create a read-only Blockchain.
 // Use NewReadWriteBlockchain to create a read-write Blockchain that tracks nonce used by the account.
 type Blockchain struct {
-	ChainId  *big.Int
-	Wallet   *Wallet
-	Client   *ethclient.Client
-	TxRunner *TxRunner
-	Config   *config.ChainConfig
+	ChainId      *big.Int
+	Wallet       *Wallet
+	Client       *ethclient.Client
+	TxRunner     *TxRunner
+	Config       *config.ChainConfig
+	BlockMonitor BlockMonitor
 }
 
 func NewReadOnlyBlockchain(ctx context.Context, cfg *config.ChainConfig) (*Blockchain, error) {
@@ -40,9 +41,10 @@ func NewReadOnlyBlockchain(ctx context.Context, cfg *config.ChainConfig) (*Block
 	}
 
 	return &Blockchain{
-		ChainId: big.NewInt(int64(cfg.ChainId)),
-		Client:  client,
-		Config:  cfg,
+		ChainId:      big.NewInt(int64(cfg.ChainId)),
+		Client:       client,
+		Config:       cfg,
+		BlockMonitor: NewFakeBlockMonitor(ctx, cfg.FakeBlockTimeMs),
 	}, nil
 }
 

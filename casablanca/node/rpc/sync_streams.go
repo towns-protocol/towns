@@ -33,11 +33,13 @@ func NewSyncHandler(
 	wallet *crypto.Wallet,
 	cache events.StreamCache,
 	nodeRegistry nodes.NodeRegistry,
+	streamRegistry nodes.StreamRegistry,
 ) SyncHandler {
 	return &syncHandlerImpl{
 		wallet:               wallet,
 		cache:                cache,
 		nodeRegistry:         nodeRegistry,
+		streamRegistry:       streamRegistry,
 		mu:                   sync.Mutex{},
 		syncIdToSubscription: make(map[string]*syncSubscriptionImpl),
 	}
@@ -67,6 +69,7 @@ type syncHandlerImpl struct {
 	wallet               *crypto.Wallet
 	cache                events.StreamCache
 	nodeRegistry         nodes.NodeRegistry
+	streamRegistry       nodes.StreamRegistry
 	mu                   sync.Mutex
 	syncIdToSubscription map[string]*syncSubscriptionImpl
 }
@@ -337,7 +340,12 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 		return nil
 	}
 
-	streamSub, _, err := s.cache.GetStream(ctx, cookie.StreamId)
+	nodes, _, err := s.streamRegistry.GetStreamInfo(ctx, cookie.StreamId)
+	if err != nil {
+		return err
+	}
+
+	streamSub, _, err := s.cache.GetStream(ctx, cookie.StreamId, events.NewStreamNodes(nodes, s.wallet.AddressStr))
 	if err != nil {
 		log.Info("SyncStreams:SyncHandlerV2.addLocalStreamToSync: failed to get stream", "streamId", cookie.StreamId, "err", err)
 		return err

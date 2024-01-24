@@ -101,7 +101,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     public async waitFor<E extends keyof EmittedEvents>(
         event: E,
         fn?: (...args: Parameters<EmittedEvents[E]>) => boolean,
-        opts: { timeoutMs: number } = { timeoutMs: 10000 },
+        opts: { timeoutMs: number } = { timeoutMs: 20000 },
     ): Promise<void> {
         this.logEmitFromStream('waitFor', this.streamId, event)
         return new Promise((resolve, reject) => {

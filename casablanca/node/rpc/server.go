@@ -175,29 +175,18 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	if err != nil {
 		return nil, 0, nil, err
 	}
-	cache := events.NewStreamCache(
-		&events.StreamCacheParams{
-			Storage:    store,
-			Wallet:     wallet,
-			DefaultCtx: ctx,
-		},
-		&cfg.Stream,
-	)
-	syncHandler := NewSyncHandler(
-		wallet,
-		cache,
-		nodeRegistry,
-	)
 
 	var streamRegistry nodes.StreamRegistry
+	var riverChainBlockMonitor crypto.BlockMonitor
 	if cfg.UseBlockChainStreamRegistry {
-		blockchain, err := crypto.NewReadWriteBlockchain(ctx, &cfg.RiverChain, wallet)
+		riverChain, err := crypto.NewReadWriteBlockchain(ctx, &cfg.RiverChain, wallet)
 		if err != nil {
 			log.Error("Failed to initialize blockchain for river", "error", err, "chain_config", cfg.RiverChain)
 			return nil, 0, nil, err
 		}
+		riverChainBlockMonitor = riverChain.BlockMonitor
 
-		streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, blockchain, &cfg.RegistryContract)
+		streamRegistryContract, err := registries.NewStreamRegistryContract(ctx, riverChain, &cfg.RegistryContract)
 		if err != nil {
 			log.Error("NewStreamRegistryContract", "error", err)
 			return nil, 0, nil, err
@@ -208,7 +197,25 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	} else {
 		streamRegistry = nodes.NewFakeStreamRegistry(nodeRegistry, cfg.Stream.ReplicationFactor)
 		log.Warn("Using fake stream registry")
+		riverChainBlockMonitor = crypto.NewFakeBlockMonitor(ctx, cfg.RiverChain.FakeBlockTimeMs)
 	}
+
+	cache := events.NewStreamCache(
+		&events.StreamCacheParams{
+			Storage:                store,
+			Wallet:                 wallet,
+			DefaultCtx:             ctx,
+			RiverChainBlockMonitor: riverChainBlockMonitor,
+		},
+		&cfg.Stream,
+	)
+
+	syncHandler := NewSyncHandler(
+		wallet,
+		cache,
+		nodeRegistry,
+		streamRegistry,
+	)
 
 	streamService := &Service{
 		cache:          cache,

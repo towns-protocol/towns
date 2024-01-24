@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { makeEvent, SignerContext, unpackEnvelopes, unpackStream } from './sign'
+import { makeEvent, SignerContext, unpackStreamEnvelopes } from './sign'
 import { MembershipOp } from '@river/proto'
 import { dlog } from '@river/waterproof'
 import { lastEventFiltered, makeRandomUserContext, makeTestRpcClient } from './util.test'
@@ -24,7 +24,7 @@ import {
     make_UserPayload_Inception,
 } from './types'
 
-const base_log = dlog('test:workflows')
+const base_log = dlog('csb:test:workflows')
 
 describe('workflows', () => {
     let bobsContext: SignerContext
@@ -78,7 +78,7 @@ describe('workflows', () => {
         let userResponse = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userResponse.stream).toBeDefined()
         let joinPayload = lastEventFiltered(
-            await unpackEnvelopes(userResponse.stream!.events),
+            await unpackStreamEnvelopes(userResponse.stream!),
             getUserPayload_Membership,
         )
         expect(joinPayload).toBeDefined()
@@ -113,12 +113,7 @@ describe('workflows', () => {
         userResponse = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userResponse.stream).toBeDefined()
         joinPayload = lastEventFiltered(
-            [
-                ...(await unpackStream(userResponse.stream)).streamAndCookie.miniblocks.flatMap(
-                    (x) => x.events,
-                ),
-                ...(await unpackEnvelopes(userResponse.stream!.events)),
-            ],
+            await unpackStreamEnvelopes(userResponse.stream!),
             getUserPayload_Membership,
         )
 
@@ -129,13 +124,10 @@ describe('workflows', () => {
         // Not there must be "channel created" event in the space stream.
         const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
         expect(spaceResponse.stream).toBeDefined()
-        const envelopes = [
-            ...(await unpackStream(spaceResponse.stream)).streamAndCookie.miniblocks.flatMap(
-                (x) => x.events,
-            ),
-            ...(await unpackEnvelopes(spaceResponse.stream!.events)),
-        ]
-        const channelCreatePayload = lastEventFiltered(envelopes, getChannelPayload)
+        const channelCreatePayload = lastEventFiltered(
+            await unpackStreamEnvelopes(spaceResponse.stream!),
+            getChannelPayload,
+        )
         expect(channelCreatePayload).toBeDefined()
         expect(channelCreatePayload?.channelId).toEqual(channelId)
 

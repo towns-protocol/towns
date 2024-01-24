@@ -13,6 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func getStreamNodes() *events.StreamNodes {
+	return events.NewStreamNodes([]string{"node_1", "node_2", "node_3"}, "node_1")
+}
+
 var streamConfig_t = &config.StreamConfig{
 	Media: config.MediaStreamConfig{
 		MaxChunkCount: 100,
@@ -36,7 +40,7 @@ func (s *StreamContext_T) Refresh() *StreamContext_T {
 	// force a new miniblock to be created so that the stream view is updated
 	_ = s.SyncStream.MakeMiniblock(s.Context)
 	// reload the stream and the view
-	syncStream, streamView, err := s.StreamCache.GetStream(s.Context, s.StreamView.StreamId())
+	syncStream, streamView, err := s.StreamCache.GetStream(s.Context, s.StreamView.StreamId(), getStreamNodes())
 	assert.NoError(s.t, err)
 	s.SyncStream = syncStream
 	s.StreamView = streamView
@@ -52,9 +56,10 @@ func MakeChannelStreamContext_T(
 	spaceStreamId string,
 ) *StreamContext_T {
 	streamCache := events.NewStreamCache(&events.StreamCacheParams{
-		Storage:    storage.NewMemStorage(),
-		Wallet:     wallet,
-		DefaultCtx: ctx,
+		Storage:                storage.NewMemStorage(),
+		Wallet:                 wallet,
+		DefaultCtx:             ctx,
+		RiverChainBlockMonitor: crypto.NewFakeBlockMonitor(ctx, 100),
 	}, streamConfig_t)
 	// create a channel stream and auto-add the creator as a member
 	channelEvents := MakeChannelInceptionEvents_T(
@@ -66,7 +71,7 @@ func MakeChannelStreamContext_T(
 	)
 	mb, err := events.MakeGenesisMiniblock(wallet, channelEvents)
 	assert.NoError(t, err)
-	syncStream, streamView, err := streamCache.CreateStream(ctx, channelStreamId, mb)
+	syncStream, streamView, err := streamCache.CreateStream(ctx, channelStreamId, getStreamNodes(), mb)
 	assert.NoError(t, err)
 
 	return &StreamContext_T{

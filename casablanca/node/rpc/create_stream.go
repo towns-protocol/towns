@@ -120,18 +120,18 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	nodes, err := s.streamRegistry.AllocateStream(ctx, streamId, mb.Header.Hash)
+	nodesList, err := s.streamRegistry.AllocateStream(ctx, streamId, mb.Header.Hash)
 	if err != nil {
 		return nil, err
 	}
 
-	isLocal, remotes := s.splitLocalAndRemote(ctx, nodes)
-	sender := newQuorumPool(len(remotes))
+	nodes := NewStreamNodes(nodesList, s.wallet.AddressStr)
+	sender := newQuorumPool(nodes.NumRemotes())
 
 	var localSyncCookie *SyncCookie
-	if isLocal {
+	if nodes.IsLocal() {
 		sender.GoLocal(func() error {
-			_, sv, err := s.cache.CreateStream(ctx, streamId, mb)
+			_, sv, err := s.cache.CreateStream(ctx, streamId, nodes, mb)
 			if err != nil {
 				return err
 			}
@@ -142,8 +142,8 @@ func (s *Service) createReplicatedStream(
 
 	var remoteSyncCookie *SyncCookie
 	var remoteSyncCookieOnce sync.Once
-	if len(remotes) > 0 {
-		for _, n := range remotes {
+	if nodes.NumRemotes() > 0 {
+		for _, n := range nodes.GetRemotes() {
 			sender.GoRemote(
 				n,
 				func(node string) error {

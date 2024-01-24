@@ -12,26 +12,27 @@ import (
 type replicatedStream struct {
 	streamId    string
 	localStream AddableStream
-	remotes     []string
+	nodes       *StreamNodes
 	service     *Service
 }
 
 var _ AddableStream = (*replicatedStream)(nil)
 
 func (r *replicatedStream) AddEvent(ctx context.Context, event *ParsedEvent) error {
+	numRemotes := r.nodes.NumRemotes()
 	// TODO: remove
-	if len(r.remotes) == 0 {
+	if numRemotes == 0 {
 		return r.localStream.AddEvent(ctx, event)
 	}
 
-	sender := newQuorumPool(len(r.remotes))
+	sender := newQuorumPool(numRemotes)
 
 	sender.GoLocal(func() error {
 		return r.localStream.AddEvent(ctx, event)
 	})
 
-	if len(r.remotes) > 0 {
-		for _, n := range r.remotes {
+	if numRemotes > 0 {
+		for _, n := range r.nodes.GetRemotes() {
 			sender.GoRemote(
 				n,
 				func(node string) error {

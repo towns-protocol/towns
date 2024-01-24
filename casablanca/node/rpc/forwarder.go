@@ -5,46 +5,38 @@ import (
 
 	. "github.com/river-build/river/base"
 	"github.com/river-build/river/dlog"
+	. "github.com/river-build/river/events"
 	. "github.com/river-build/river/protocol"
 	. "github.com/river-build/river/protocol/protocolconnect"
 
 	connect_go "github.com/bufbuild/connect-go"
 )
 
-// Returns isLocal, remoteNodes
-func (s *Service) splitLocalAndRemote(ctx context.Context, nodes []string) (bool, []string) {
-	for i, n := range nodes {
-		if n == s.wallet.AddressStr {
-			return true, append(nodes[:i], nodes[i+1:]...)
-		}
-	}
-
-	return false, nodes
-}
-
-// Returns isLocal, remoteNodes, error
-func (s *Service) getNodesForStream(ctx context.Context, streamId string) (bool, []string, error) {
+func (s *Service) getNodesForStream(ctx context.Context, streamId string) (*StreamNodes, error) {
 	nodes, _, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
-	if err != nil {
-		return false, nil, err
-	}
-
-	isLocal, remotes := s.splitLocalAndRemote(ctx, nodes)
-	return isLocal, remotes, nil
-}
-
-func (s *Service) getStubForStream(ctx context.Context, streamId string) (StreamServiceClient, error) {
-	isLocal, remotes, err := s.getNodesForStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
-	if isLocal {
-		return nil, nil
+
+	return NewStreamNodes(nodes, s.wallet.AddressStr), nil
+}
+
+func (s *Service) getStubForStream(ctx context.Context, streamId string) (StreamServiceClient, *StreamNodes, error) {
+	nodes, err := s.getNodesForStream(ctx, streamId)
+	if err != nil {
+		return nil, nil, err
+	}
+	if nodes.IsLocal() {
+		return nil, nodes, nil
 	}
 
-	firstRemote := remotes[0]
+	firstRemote := nodes.GetRemotes()[0]
 	dlog.CtxLog(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
-	return s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
+	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
+	if err != nil {
+		return nil, nil, err
+	}
+	return stub, nodes, nil
 }
 
 func (s *Service) CreateStream(
@@ -79,7 +71,7 @@ func (s *Service) getStreamImpl(
 	ctx context.Context,
 	req *connect_go.Request[GetStreamRequest],
 ) (*connect_go.Response[GetStreamResponse], error) {
-	stub, err := s.getStubForStream(ctx, req.Msg.StreamId)
+	stub, nodes, err := s.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +83,7 @@ func (s *Service) getStreamImpl(
 		}
 		return connect_go.NewResponse(ret.Msg), nil
 	} else {
-		return s.localGetStream(ctx, req)
+		return s.localGetStream(ctx, req, nodes)
 	}
 }
 
@@ -113,7 +105,7 @@ func (s *Service) getMiniblocksImpl(
 	ctx context.Context,
 	req *connect_go.Request[GetMiniblocksRequest],
 ) (*connect_go.Response[GetMiniblocksResponse], error) {
-	stub, err := s.getStubForStream(ctx, req.Msg.StreamId)
+	stub, nodes, err := s.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +117,7 @@ func (s *Service) getMiniblocksImpl(
 		}
 		return connect_go.NewResponse(ret.Msg), nil
 	} else {
-		return s.localGetMiniblocks(ctx, req)
+		return s.localGetMiniblocks(ctx, req, nodes)
 	}
 }
 
@@ -147,7 +139,7 @@ func (s *Service) getLastMiniblockHashImpl(
 	ctx context.Context,
 	req *connect_go.Request[GetLastMiniblockHashRequest],
 ) (*connect_go.Response[GetLastMiniblockHashResponse], error) {
-	stub, err := s.getStubForStream(ctx, req.Msg.StreamId)
+	stub, nodes, err := s.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +151,7 @@ func (s *Service) getLastMiniblockHashImpl(
 		}
 		return connect_go.NewResponse(ret.Msg), nil
 	} else {
-		return s.localGetLastMiniblockHash(ctx, req)
+		return s.localGetLastMiniblockHash(ctx, req, nodes)
 	}
 }
 
@@ -183,17 +175,17 @@ func (s *Service) addEventImpl(
 ) (*connect_go.Response[AddEventResponse], error) {
 	streamId := req.Msg.StreamId
 
-	isLocal, remotes, err := s.getNodesForStream(ctx, streamId)
+	nodes, err := s.getNodesForStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
 
-	if isLocal {
-		return s.localAddEvent(ctx, req, remotes)
+	if nodes.IsLocal() {
+		return s.localAddEvent(ctx, req, nodes)
 	}
 
 	// TODO: smarter remote select? random?
-	firstRemote := remotes[0]
+	firstRemote := nodes.GetRemotes()[0]
 	dlog.CtxLog(ctx).Debug("Forwarding request", "nodeAddress", firstRemote)
 	stub, err := s.nodeRegistry.GetStreamServiceClientForAddress(firstRemote)
 	if err != nil {

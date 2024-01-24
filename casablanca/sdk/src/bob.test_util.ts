@@ -1,4 +1,4 @@
-import { makeEvent, SignerContext, unpackEnvelopes, unpackStream } from './sign'
+import { makeEvent, SignerContext, unpackStreamEnvelopes } from './sign'
 import { MembershipOp, SyncStreamsResponse, Envelope, SyncOp } from '@river/proto'
 import { DLogger } from '@river/waterproof'
 import {
@@ -116,13 +116,10 @@ export const bobTalksToHimself = async (
 
     // Now there must be "channel created" event in the space stream.
     const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
-    const envelopes = [
-        ...(await unpackStream(spaceResponse.stream)).streamAndCookie.miniblocks.flatMap(
-            (x) => x.events,
-        ),
-        ...(await unpackEnvelopes(spaceResponse.stream!.events)),
-    ]
-    const channelCreatePayload = lastEventFiltered(envelopes, getChannelPayload)
+    const channelCreatePayload = lastEventFiltered(
+        await unpackStreamEnvelopes(spaceResponse.stream!),
+        getChannelPayload,
+    )
     expect(channelCreatePayload).toBeDefined()
     expect(channelCreatePayload?.channelId).toEqual(channelId)
     expect(channelCreatePayload?.channelProperties?.ciphertext).toEqual(channelProperties)
@@ -179,7 +176,7 @@ export const bobTalksToHimself = async (
                 presync ? [...channelEvents, presyncEvent] : channelEvents,
             )
         } else {
-            expect(stream?.events).toEqual([presyncEvent])
+            expect(stream?.events).toEqual(expect.arrayContaining([presyncEvent]))
         }
 
         syncCookie = stream.nextSyncCookie!
