@@ -5,8 +5,8 @@ env:
 on:
     workflow_dispatch: 
     schedule: 
-        # Once per hour
-        - cron: '0 * * * *'
+        # Once per hour between 8 - 4 PST
+        - cron: '0 16-23,0 * * *'
 
 jobs:
     user_ops_tests:
