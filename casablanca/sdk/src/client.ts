@@ -346,7 +346,6 @@ export class Client
                 this.signerContext,
                 make_UserDeviceKeyPayload_Inception({
                     streamId: userDeviceKeyStreamId,
-                    userId: this.userId,
                     // device keys are updated often, and we're limited to
                     // 10, so after ten just snapshot
                     settings: new StreamSettings({ minEventsPerSnapshot: 10 }),

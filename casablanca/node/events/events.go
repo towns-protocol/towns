@@ -240,7 +240,6 @@ func Make_UserPayload_Inception(streamId string, settings *StreamSettings) *Stre
 
 func Make_UserDeviceKeyPayload_Inception(
 	streamId string,
-	userId string,
 	settings *StreamSettings,
 ) *StreamEvent_UserDeviceKeyPayload {
 	return &StreamEvent_UserDeviceKeyPayload{
@@ -248,7 +247,6 @@ func Make_UserDeviceKeyPayload_Inception(
 			Content: &UserDeviceKeyPayload_Inception_{
 				Inception: &UserDeviceKeyPayload_Inception{
 					StreamId: streamId,
-					UserId:   userId,
 					Settings: settings,
 				},
 			},

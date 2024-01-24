@@ -413,7 +413,6 @@ message UserDeviceKeyPayload {
 
     message Inception {
         string stream_id = 1;
-        string user_id = 2;
         StreamSettings settings = 3;
     }
 

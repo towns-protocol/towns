@@ -69,7 +69,6 @@ func createUserDeviceKeyStream(
 		wallet,
 		events.Make_UserDeviceKeyPayload_Inception(
 			userDeviceKeyStreamId,
-			userId,
 			nil,
 		),
 		nil,
