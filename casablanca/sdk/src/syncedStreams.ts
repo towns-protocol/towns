@@ -388,10 +388,8 @@ export class SyncedStreams {
 
             // currentRetryCount will increment until MAX_RETRY_COUNT. Then it will stay
             // fixed at this value
-            // 3 retries = 2^3 = 8 seconds
-            // 5 retries = 2^5 = 32 seconds
-            // 8 retries = 2^8 = 256 seconds (~4 min)
-            const MAX_RETRY_DELAY_FACTOR = 2
+            // 6 retries = 2^6 = 64 seconds (~1 min)
+            const MAX_RETRY_DELAY_FACTOR = 6
             const nextRetryCount =
                 this.currentRetryCount >= MAX_RETRY_DELAY_FACTOR
                     ? MAX_RETRY_DELAY_FACTOR
