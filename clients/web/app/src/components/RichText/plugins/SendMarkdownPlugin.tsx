@@ -15,6 +15,7 @@ import { AnimatePresence } from 'framer-motion'
 import { Button, Icon, MotionBox, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { useDevice } from 'hooks/useDevice'
+import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { $isMentionNode } from '../nodes/MentionNode'
 
 export const SendMarkdownPlugin = (props: {
@@ -150,6 +151,7 @@ const EditMessageButtons = (props: {
     hasImage: boolean
 }) => {
     const { isTouch } = useDevice()
+    const { isOffline } = useNetworkStatus()
     const { onCancel, onSave, isEditing, isEditorEmpty, hasImage } = props
 
     useEffect(() => {
@@ -185,7 +187,7 @@ const EditMessageButtons = (props: {
         [onSave],
     )
 
-    const disabled = isEditorEmpty && !hasImage
+    const disabled = (isEditorEmpty && !hasImage) || isOffline
 
     return (
         <Stack horizontal gap paddingX={isTouch ? 'none' : 'xs'}>
@@ -208,7 +210,7 @@ const EditMessageButtons = (props: {
                 <Icon
                     type={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
                     size="square_md"
-                    onClick={props.onSave}
+                    onClick={disabled ? undefined : props.onSave}
                 />
             )}
         </Stack>
