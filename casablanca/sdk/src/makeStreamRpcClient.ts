@@ -304,11 +304,11 @@ function getRetryDelay(error: unknown, attempts: number, retryParams: RetryParam
     if (error !== null && typeof error === 'object') {
         if ('message' in error) {
             // this happens in the tests when the server is totally down
-            if (error.message === 'fetch failed') {
+            if ((error.message as string).toLowerCase().includes('fetch failed')) {
                 return retryDelay
             }
             // this happens in the browser when the server is totally down
-            if (error.message === 'failed to fetch') {
+            if ((error.message as string).toLowerCase().includes('failed to fetch')) {
                 return retryDelay
             }
         }
