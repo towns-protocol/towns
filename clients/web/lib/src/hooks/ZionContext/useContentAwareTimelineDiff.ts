@@ -34,42 +34,48 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
                 )
                 if (!cancelled) {
                     const markers = stream.view.userSettingsContent.fullyReadMarkers
-                    markers.forEach((value, key) => {
-                        updateFullyReadMarkersFromRemote(key, value)
-                    })
+                    updateFullyReadMarkersFromRemote(markers)
                 }
             }
         }
         void initFulyReadMarkers()
         // subscribe
         const unsubTimeline = useTimelineStore.subscribe(onTimelineChange)
-        casablancaClient.on('fullyReadMarkersUpdated', updateFullyReadMarkersFromRemote)
+        casablancaClient.on('fullyReadMarkersUpdated', fullyReadMarkersUpdated)
         // return ability to unsubscribe
         return () => {
             cancelled = true
             unsubTimeline()
-            casablancaClient.off('fullyReadMarkersUpdated', updateFullyReadMarkersFromRemote)
+            casablancaClient.off('fullyReadMarkersUpdated', fullyReadMarkersUpdated)
         }
     }, [casablancaClient])
 }
 
+function fullyReadMarkersUpdated(
+    channelId: string,
+    fullyReadMarkers: Record<string, FullyReadMarker>,
+) {
+    updateFullyReadMarkersFromRemote(new Map([[channelId, fullyReadMarkers]]))
+}
+
 /// when we get an update from the server, update our local state
 function updateFullyReadMarkersFromRemote(
-    _channelId: string,
-    fullyReadMarkers: Record<string, FullyReadMarker>,
+    fullyReadMarkersMap: Map<string, Record<string, FullyReadMarker>>,
 ) {
     useFullyReadMarkerStore.setState((state) => {
         let didUpdate = false
         const updated = { ...state.markers }
-        for (const [key, marker] of Object.entries(fullyReadMarkers)) {
-            // if we don't have a marker, or if the remote marker has been marked as read more recently than our local marker, update
-            if (!updated[key] || updated[key].beginUnreadWindow < marker.beginUnreadWindow) {
-                console.log('$ onRoomAccountDataEvent: setting marker for', {
-                    key,
-                    marker,
-                })
-                updated[key] = marker
-                didUpdate = true
+        for (const [_, fullyReadMarkers] of fullyReadMarkersMap) {
+            for (const [key, marker] of Object.entries(fullyReadMarkers)) {
+                // if we don't have a marker, or if the remote marker has been marked as read more recently than our local marker, update
+                if (!updated[key] || updated[key].beginUnreadWindow < marker.beginUnreadWindow) {
+                    console.log('$ onRoomAccountDataEvent: setting marker for', {
+                        key,
+                        marker,
+                    })
+                    updated[key] = marker
+                    didUpdate = true
+                }
             }
         }
         if (didUpdate) {
